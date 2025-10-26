@@ -49,6 +49,7 @@ export const intrinsics = intrinsicsV1.concat([
   'span:id',
   'span:kind',
   'span:name',
+  'span:parentID',
   'span:status',
   'span:statusMessage',
   'trace:duration',
@@ -63,6 +64,7 @@ export const enumIntrinsics = ['kind', 'span:kind', 'status', 'span:status'];
 const aggregatorFunctions = ['avg', 'count', 'max', 'min', 'sum'];
 const functions = aggregatorFunctions.concat([
   'by',
+  'compare',
   'count_over_time',
   'min_over_time',
   'max_over_time',
@@ -74,7 +76,11 @@ const functions = aggregatorFunctions.concat([
   'select',
 ]);
 
-const keywords = intrinsics.concat(scopes);
+// Add with clause keywords and parameters
+const withClauseKeywords = ['with'];
+const withParameters = ['most_recent'];
+
+const keywords = intrinsics.concat(scopes).concat(withClauseKeywords);
 
 const statusValues = ['ok', 'unset', 'error', 'false', 'true'];
 
@@ -87,6 +93,8 @@ const language: languages.IMonarchLanguage = {
   operators,
   statusValues,
   functions,
+  withClauseKeywords,
+  withParameters,
 
   symbols: /[=><!~?:&|+\-*\/^%]+/,
   escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
@@ -105,6 +113,9 @@ const language: languages.IMonarchLanguage = {
 
       // trace ID
       [/^\s*[0-9A-Fa-f]+\s*$/, 'tag'],
+
+      // with clause - match 'with' keyword
+      [/\bwith\b/, { token: 'keyword', next: '@withStart' }],
 
       // keywords
       [
@@ -127,6 +138,7 @@ const language: languages.IMonarchLanguage = {
           cases: {
             '@functions': 'predefined',
             '@statusValues': 'type',
+            '@withParameters': 'variable',
             '@default': 'tag', // fallback, used for tag names
           },
         },
@@ -158,6 +170,28 @@ const language: languages.IMonarchLanguage = {
       [/0[bB](@binarydigits)[Ll]?/, 'number.binary'],
       [/(@digits)[fFdD]/, 'number.float'],
       [/(@digits)[lL]?/, 'number'],
+    ],
+
+    withStart: [
+      [/\s+/, ''], // whitespace
+      [/\(/, { token: 'delimiter.bracket', next: '@withClause' }], // opening parenthesis - enter with clause
+      [/(?=.)/, { token: '', next: '@pop' }], // anything else - go back to root (use lookahead to not consume the character)
+    ],
+
+    withClause: [
+      [/\s+/, ''], // whitespace
+      [
+        /\w+/,
+        {
+          // parameter names
+          cases: {
+            '@withParameters': 'variable',
+          },
+        },
+      ],
+      [/=/, 'delimiter'], // operator
+      [/\b(true|false)\b/, 'type'], // values
+      [/\)/, { token: 'delimiter.bracket', next: '@pop' }], // closing parenthesis - return to previous state
     ],
 
     string_double: [
@@ -196,7 +230,7 @@ export const languageDefinition = {
 };
 
 // For "Search" tab (query builder)
-export const traceqlGrammar: Grammar = {
+export const traceqlGrammar = {
   comment: {
     pattern: /\/\/.*/,
   },
@@ -223,7 +257,25 @@ export const traceqlGrammar: Grammar = {
       punctuation: /[}{&|]/,
     },
   },
+  'with-clause': {
+    pattern: /\bwith\s*\([^)]*\)/,
+    inside: {
+      'with-keyword': {
+        pattern: /\bwith\b/,
+        alias: 'keyword',
+      },
+      'parameter-name': {
+        pattern: /\b[a-zA-Z_][a-zA-Z0-9_]*(?=\s*=)/,
+        alias: 'attr-name',
+      },
+      'parameter-value': {
+        pattern: /\b(true|false)\b|"(?:\\.|[^\\"])*"|'(?:\\.|[^\\'])*'|\d+(?:\.\d+)?/,
+        alias: 'attr-value',
+      },
+      punctuation: /[()=,]/,
+    },
+  },
   number: /\b-?\d+((\.\d*)?([eE][+-]?\d+)?)?\b/,
   operator: new RegExp(`/[-+*/=%^~]|&&?|\\|?\\||!=?|<(?:=>?|<|>)?|>[>=]?|`, 'i'),
   punctuation: /[{};()`,.]/,
-};
+} satisfies Grammar;

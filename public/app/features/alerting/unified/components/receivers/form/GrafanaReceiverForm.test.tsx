@@ -13,7 +13,7 @@ import {
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerConfigBuilder, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions } from '../../../mocks';
@@ -387,7 +387,7 @@ describe('GrafanaReceiverForm', () => {
       await user.click(newIntegrationRadio.get());
       expect(newIntegrationRadio.get()).toBeChecked();
 
-      await user.type(ui.newOnCallIntegrationName.get(), 'emea-oncall');
+      await user.type(await ui.newOnCallIntegrationName.find(), 'emea-oncall');
 
       // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({

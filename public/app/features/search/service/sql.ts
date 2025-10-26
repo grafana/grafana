@@ -2,7 +2,7 @@ import { DataFrame, DataFrameView, FieldType, getDisplayProcessor, SelectableVal
 import { config } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { PermissionLevelString } from 'app/types';
+import { PermissionLevel } from 'app/types/acl';
 
 import { DEFAULT_MAX_VALUES, GENERAL_FOLDER_UID, TYPE_KIND_MAP } from '../constants';
 import { DashboardSearchHit, DashboardSearchItemType } from '../types';
@@ -21,7 +21,7 @@ interface APIQuery {
   folderUIDs?: string[];
   sort?: string;
   starred?: boolean;
-  permission?: PermissionLevelString;
+  permission?: PermissionLevel;
   deleted?: boolean;
 }
 
@@ -128,6 +128,10 @@ export class SQLSearcher implements GrafanaSearcher {
   async tags(query: SearchQuery): Promise<TermCount[]> {
     const terms = await backendSrv.get<TermCount[]>('/api/dashboards/tags');
     return terms.sort((a, b) => b.count - a.count);
+  }
+
+  async getLocationInfo() {
+    return this.locationInfo;
   }
 
   async doAPIQuery(query: APIQuery): Promise<QueryResponse> {

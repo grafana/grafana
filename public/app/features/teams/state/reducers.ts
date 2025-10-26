@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { Team, TeamGroup, TeamMember, TeamsState, TeamState } from 'app/types';
+import { TeamsState, Team, TeamState, TeamGroup } from 'app/types/teams';
 
 export const initialTeamsState: TeamsState = {
   teams: [],
@@ -56,7 +56,6 @@ export const initialTeamState: TeamState = {
   team: {} as Team,
   members: [],
   groups: [],
-  searchMemberQuery: '',
 };
 
 const teamSlice = createSlice({
@@ -66,19 +65,13 @@ const teamSlice = createSlice({
     teamLoaded: (state, action: PayloadAction<Team>): TeamState => {
       return { ...state, team: action.payload };
     },
-    teamMembersLoaded: (state, action: PayloadAction<TeamMember[]>): TeamState => {
-      return { ...state, members: action.payload };
-    },
-    setSearchMemberQuery: (state, action: PayloadAction<string>): TeamState => {
-      return { ...state, searchMemberQuery: action.payload };
-    },
     teamGroupsLoaded: (state, action: PayloadAction<TeamGroup[]>): TeamState => {
       return { ...state, groups: action.payload };
     },
   },
 });
 
-export const { teamLoaded, teamGroupsLoaded, teamMembersLoaded, setSearchMemberQuery } = teamSlice.actions;
+export const { teamLoaded, teamGroupsLoaded } = teamSlice.actions;
 
 export const teamReducer = teamSlice.reducer;
 

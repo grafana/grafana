@@ -2,13 +2,7 @@ import path, { dirname, join } from 'node:path';
 import type { StorybookConfig } from '@storybook/react-webpack5';
 import { copyAssetsSync } from './copyAssets';
 
-// Internal stories should only be visible during development
-const coreComponentsGlobs: StorybookConfig['stories'] = [
-  '../src/Intro.mdx',
-  process.env.NODE_ENV === 'production'
-    ? '../src/components/**/!(*.internal).story.tsx'
-    : '../src/components/**/*.story.tsx',
-];
+const coreComponentsGlobs: StorybookConfig['stories'] = ['../src/Intro.mdx', '../src/**/*.story.tsx'];
 
 const alertingComponentsGlobs: StorybookConfig['stories'] = [
   {

@@ -9,7 +9,7 @@ import mdx from './ErrorBoundary.mdx';
 import { ErrorWithStack } from './ErrorWithStack';
 
 const meta: Meta<typeof ErrorBoundary> = {
-  title: 'General/ErrorBoundary',
+  title: 'Utilities/ErrorBoundary',
   component: ErrorBoundary,
   parameters: {
     docs: {

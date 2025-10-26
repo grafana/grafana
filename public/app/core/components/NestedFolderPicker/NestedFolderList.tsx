@@ -9,11 +9,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { IconButton, useStyles2, Text } from '@grafana/ui';
 import { Indent } from 'app/core/components/Indent/Indent';
-import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state';
+import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state/hooks';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
+import { FolderParent } from './FolderParent';
 import { FolderRepo } from './FolderRepo';
 
 const ROW_HEIGHT = 40;
@@ -31,6 +32,7 @@ interface NestedFolderListProps {
   onFolderSelect: (item: DashboardViewItem) => void;
   isItemLoaded: (itemIndex: number) => boolean;
   requestLoadMore: (folderUid: string | undefined) => void;
+  emptyFolders: Set<string>;
 }
 
 export function NestedFolderList({
@@ -43,6 +45,7 @@ export function NestedFolderList({
   onFolderSelect,
   isItemLoaded,
   requestLoadMore,
+  emptyFolders,
 }: NestedFolderListProps) {
   const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const styles = useStyles2(getStyles);
@@ -56,8 +59,18 @@ export function NestedFolderList({
       onFolderExpand,
       onFolderSelect,
       idPrefix,
+      emptyFolders,
     }),
-    [items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderExpand, onFolderSelect, idPrefix]
+    [
+      items,
+      focusedItemIndex,
+      foldersAreOpenable,
+      selectedFolder,
+      onFolderExpand,
+      onFolderSelect,
+      idPrefix,
+      emptyFolders,
+    ]
   );
 
   const handleIsItemLoaded = useCallback(
@@ -118,8 +131,16 @@ interface RowProps {
 const SKELETON_WIDTHS = [100, 200, 130, 160, 150];
 
 function Row({ index, style: virtualStyles, data }: RowProps) {
-  const { items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderExpand, onFolderSelect, idPrefix } =
-    data;
+  const {
+    items,
+    focusedItemIndex,
+    foldersAreOpenable,
+    selectedFolder,
+    onFolderExpand,
+    onFolderSelect,
+    idPrefix,
+    emptyFolders,
+  } = data;
   const { item, isOpen, level, parentUID } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
@@ -172,6 +193,11 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     ) : null;
   }
 
+  // We don't have a direct value of whether things are coming from user searching but this seems to be a good
+  // approximation as when searching all items will be at top level, while things that are actually in the top level
+  // when just looking at a folders tree should not have parent.
+  const isSearchItem = level === 0 && item.parentUID !== undefined;
+
   return (
     // don't need a key handler here, it's handled at the input level in NestedFolderPicker
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events
@@ -197,12 +223,17 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       <div className={styles.rowBody}>
         <Indent level={level} spacing={2} />
 
-        {foldersAreOpenable ? (
+        {foldersAreOpenable && !emptyFolders.has(item.uid) ? (
           <IconButton
             size={CHEVRON_SIZE}
             // by using onMouseDown here instead of onClick we can stop focus moving
             // to the button when the user clicks it (via preventDefault + stopPropagation)
             onMouseDown={handleExpand}
+            // Additionally, prevent the click event from bubbling to the row, which would select the folder
+            onClick={(ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+            }}
             // tabIndex not needed here because we handle keyboard navigation at the input level
             tabIndex={-1}
             aria-label={isOpen ? `Collapse folder ${item.title}` : `Expand folder ${item.title}`}
@@ -216,6 +247,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
           <Text truncate>{item.title}</Text>
           <FolderRepo folder={item} />
         </label>
+        {isSearchItem && <FolderParent item={items[index]} />}
       </div>
     </div>
   );
@@ -245,7 +277,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     folderButtonSpacer: css({
-      paddingLeft: theme.spacing(0.5),
+      paddingLeft: theme.spacing(2.5),
     }),
 
     row: css({
@@ -282,7 +314,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       gap: theme.spacing(1),
       lineHeight: ROW_HEIGHT + 'px',
-      flexGrow: 1,
       minWidth: 0,
       overflow: 'hidden',
       textOverflow: 'ellipsis',

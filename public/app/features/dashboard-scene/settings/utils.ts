@@ -5,7 +5,8 @@ import { t } from '@grafana/i18n';
 import { SceneObject, SceneObjectState } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { AccessControlAction, useSelector } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { useSelector } from 'app/types/store';
 
 import { DashboardScene } from '../scene/DashboardScene';
 

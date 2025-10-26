@@ -2,12 +2,15 @@ import { useMemo } from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { enrichHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
-import { performInviteUserClick, shouldRenderInviteUserButton } from 'app/core/components/InviteUserButton/utils';
+import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
+import {
+  shouldRenderInviteUserButton,
+  performInviteUserClick,
+} from 'app/core/components/AppChrome/TopBar/InviteUserButtonUtils';
 import { changeTheme } from 'app/core/services/theme';
 import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
+import { useSelector } from 'app/types/store';
 
-import { useSelector } from '../../../types';
 import { CommandPaletteAction } from '../types';
 import { ACTIONS_PRIORITY, DEFAULT_PRIORITY, PREFERENCES_PRIORITY } from '../values';
 
@@ -22,7 +25,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
   for (let navItem of navTree) {
     // help node needs enriching with the frontend links
     if (navItem.id === 'help') {
-      navItem = enrichHelpItem({ ...navItem });
+      navItem = getEnrichedHelpItem({ ...navItem });
       delete navItem.url;
     }
     const { url, target, text, isCreateAction, children, onClick, keywords } = navItem;
@@ -139,10 +142,10 @@ export function useStaticActions(): CommandPaletteAction[] {
   return useMemo(() => {
     const navBarActions = navTreeToActions(navBarTree);
 
-    if (shouldRenderInviteUserButton) {
+    if (shouldRenderInviteUserButton()) {
       navBarActions.push({
         id: 'invite-user',
-        name: t('navigation.invite-user.invite-new-member-button', 'Invite new member'),
+        name: t('navigation.invite-user.invite-new-user-button', 'Invite new user'),
         section: t('command-palette.section.actions', 'Actions'),
         priority: ACTIONS_PRIORITY,
         perform: () => {

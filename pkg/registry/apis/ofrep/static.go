@@ -1,21 +1,30 @@
 package ofrep
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
+	"go.opentelemetry.io/otel/attribute"
 )
 
-func (b *APIBuilder) evalAllFlagsStatic(isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
-	result, err := b.staticEvaluator.EvalAllFlags(r.Context())
+func (b *APIBuilder) evalAllFlagsStatic(ctx context.Context, isAuthedUser bool, w http.ResponseWriter) {
+	_, span := tracing.Start(ctx, "ofrep.static.evalAllFlags")
+	defer span.End()
+
+	result, err := b.staticEvaluator.EvalAllFlags(ctx)
 	if err != nil {
+		err = tracing.Error(span, err)
 		b.logger.Error("Failed to evaluate all static flags", "error", err)
 		http.Error(w, "failed to evaluate flags", http.StatusInternalServerError)
 		return
 	}
 
+	span.SetAttributes(attribute.Int("total_flags_count", len(result.Flags)))
+
 	if !isAuthedUser {
-		var publicOnly []featuremgmt.OFREPFlag
+		var publicOnly []goffmodel.OFREPFlagBulkEvaluateSuccessResponse
 
 		for _, flag := range result.Flags {
 			if isPublicFlag(flag.Key) {
@@ -24,14 +33,21 @@ func (b *APIBuilder) evalAllFlagsStatic(isAuthedUser bool, w http.ResponseWriter
 		}
 
 		result.Flags = publicOnly
+		span.SetAttributes(attribute.Int("public_flags_count", len(publicOnly)))
 	}
 
 	writeResponse(http.StatusOK, result, b.logger, w)
 }
 
-func (b *APIBuilder) evalFlagStatic(flagKey string, w http.ResponseWriter, r *http.Request) {
-	result, err := b.staticEvaluator.EvalFlag(r.Context(), flagKey)
+func (b *APIBuilder) evalFlagStatic(ctx context.Context, flagKey string, w http.ResponseWriter) {
+	_, span := tracing.Start(ctx, "ofrep.static.evalFlag")
+	defer span.End()
+
+	span.SetAttributes(attribute.String("flag_key", flagKey))
+
+	result, err := b.staticEvaluator.EvalFlag(ctx, flagKey)
 	if err != nil {
+		err = tracing.Error(span, err)
 		b.logger.Error("Failed to evaluate static flag", "key", flagKey, "error", err)
 		http.Error(w, "failed to evaluate flag", http.StatusInternalServerError)
 		return

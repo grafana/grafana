@@ -11,24 +11,60 @@ interface Props {
   testId?: string;
 }
 
-const SORT_OPTIONS = [
-  { label: 'Disabled', value: VariableSort.disabled },
-  { label: 'Alphabetical (asc)', value: VariableSort.alphabeticalAsc },
-  { label: 'Alphabetical (desc)', value: VariableSort.alphabeticalDesc },
-  { label: 'Numerical (asc)', value: VariableSort.numericalAsc },
-  { label: 'Numerical (desc)', value: VariableSort.numericalDesc },
-  { label: 'Alphabetical (case-insensitive, asc)', value: VariableSort.alphabeticalCaseInsensitiveAsc },
-  { label: 'Alphabetical (case-insensitive, desc)', value: VariableSort.alphabeticalCaseInsensitiveDesc },
-  { label: 'Natural (asc)', value: VariableSort.naturalAsc },
-  { label: 'Natural (desc)', value: VariableSort.naturalDesc },
-];
-
 export function QueryVariableSortSelect({ onChange, sort, testId }: PropsWithChildren<Props>) {
-  const value = useMemo(() => SORT_OPTIONS.find((o) => o.value === sort) ?? SORT_OPTIONS[0], [sort]);
+  const SORT_OPTIONS = useMemo(
+    () => [
+      {
+        label: t('variables.query-variable-sort-select.sort_options.label.disabled', 'Disabled'),
+        value: VariableSort.disabled,
+      },
+      {
+        label: t('variables.query-variable-sort-select.sort_options.label.alphabetical-asc', 'Alphabetical (asc)'),
+        value: VariableSort.alphabeticalAsc,
+      },
+      {
+        label: t('variables.query-variable-sort-select.sort_options.label.alphabetical-desc', 'Alphabetical (desc)'),
+        value: VariableSort.alphabeticalDesc,
+      },
+      {
+        label: t('variables.query-variable-sort-select.sort_options.label.numerical-asc', 'Numerical (asc)'),
+        value: VariableSort.numericalAsc,
+      },
+      {
+        label: t('variables.query-variable-sort-select.sort_options.label.numerical-desc', 'Numerical (desc)'),
+        value: VariableSort.numericalDesc,
+      },
+      {
+        label: t(
+          'variables.query-variable-sort-select.sort_options.label.alphabetical-caseinsensitive-asc',
+          'Alphabetical (case-insensitive, asc)'
+        ),
+        value: VariableSort.alphabeticalCaseInsensitiveAsc,
+      },
+      {
+        label: t(
+          'variables.query-variable-sort-select.sort_options.label.alphabetical-caseinsensitive-desc',
+          'Alphabetical (case-insensitive, desc)'
+        ),
+        value: VariableSort.alphabeticalCaseInsensitiveDesc,
+      },
+      {
+        label: t('variables.query-variable-sort-select.sort_options.label.natural-asc', 'Natural (asc)'),
+        value: VariableSort.naturalAsc,
+      },
+      {
+        label: t('variables.query-variable-sort-select.sort_options.label.natural-desc', 'Natural (desc)'),
+        value: VariableSort.naturalDesc,
+      },
+    ],
+    []
+  );
+
+  const value = useMemo(() => SORT_OPTIONS.find((o) => o.value === sort) ?? SORT_OPTIONS[0], [sort, SORT_OPTIONS]);
 
   return (
     <VariableSelectField
-      name="Sort"
+      name={t('variables.query-variable-sort-select.name-sort', 'Sort')}
       description={t(
         'variables.query-variable-sort-select.description-values-variable',
         'How to sort the values of this variable'

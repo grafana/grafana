@@ -106,7 +106,7 @@ func (u *StaticRequester) GetExtra() map[string][]string {
 	}
 
 	result := map[string][]string{}
-	if u.AccessTokenClaims.Rest.ServiceIdentity != "" {
+	if u.AccessTokenClaims != nil && u.AccessTokenClaims.Rest.ServiceIdentity != "" {
 		result[authnlib.ServiceIdentityKey] = []string{u.AccessTokenClaims.Rest.ServiceIdentity}
 	}
 	return result

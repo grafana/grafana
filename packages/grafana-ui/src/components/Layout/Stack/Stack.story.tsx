@@ -9,6 +9,16 @@ import { JustifyContent, Wrap, Direction } from '../types';
 import { Stack } from './Stack';
 import mdx from './Stack.mdx';
 
+const meta: Meta<typeof Stack> = {
+  title: 'Layout/Stack',
+  component: Stack,
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
+};
+
 const Item = ({ color, text, height }: { color: string; text?: string | number; height?: string }) => {
   return (
     <div
@@ -24,16 +34,6 @@ const Item = ({ color, text, height }: { color: string; text?: string | number; 
       {text && <h3 style={{ color: 'black' }}>{text}</h3>}
     </div>
   );
-};
-
-const meta: Meta<typeof Stack> = {
-  title: 'General/Layout/Stack',
-  component: Stack,
-  parameters: {
-    docs: {
-      page: mdx,
-    },
-  },
 };
 
 export const Basic: StoryFn<typeof Stack> = (args) => {

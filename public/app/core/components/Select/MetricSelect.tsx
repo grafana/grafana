@@ -2,6 +2,7 @@ import { flatten } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 import { Variable } from 'app/types/templates';
 
@@ -32,7 +33,7 @@ export const MetricSelect = (props: Props) => {
       isSearchable={isSearchable}
       maxMenuHeight={500}
       placeholder={placeholder}
-      noOptionsMessage="No options found"
+      noOptionsMessage={t('metric-select.noOptionsMessage-no-options-found', 'No options found')}
       value={selected}
     />
   );

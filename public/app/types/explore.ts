@@ -141,6 +141,11 @@ export interface ExploreItemState {
    */
   initialized: boolean;
   /**
+   * Query library reference identifier when editing a query from the query library
+   *
+   */
+  queryLibraryRef?: string;
+  /**
    * Log query result to be displayed in the logs result viewer.
    */
   logsResult: LogsModel | null;
@@ -229,6 +234,11 @@ export interface ExploreItemState {
   correlationEditorHelperData?: ExploreCorrelationHelperData;
 
   correlations?: CorrelationData[];
+
+  /**
+   * If set to true, all query rows will be collapsed initially and the content outline will be hidden
+   */
+  compact: boolean;
 }
 
 export interface ExploreUpdateState {

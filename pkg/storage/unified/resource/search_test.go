@@ -2,13 +2,20 @@ package resource
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"iter"
+	"sync"
 	"testing"
+	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -17,6 +24,17 @@ var _ ResourceIndex = &MockResourceIndex{}
 // Mock implementations
 type MockResourceIndex struct {
 	mock.Mock
+
+	updateIndexError error
+
+	updateIndexMu    sync.Mutex
+	updateIndexCalls int
+
+	buildInfo IndexBuildInfo
+}
+
+func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
+	return m.buildInfo, nil
 }
 
 func (m *MockResourceIndex) BulkIndex(req *BulkIndexRequest) error {
@@ -42,6 +60,14 @@ func (m *MockResourceIndex) DocCount(ctx context.Context, folder string) (int64,
 func (m *MockResourceIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
 	args := m.Called(ctx, req)
 	return args.Get(0).(*resourcepb.ListManagedObjectsResponse), args.Error(1)
+}
+
+func (m *MockResourceIndex) UpdateIndex(_ context.Context) (int64, error) {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+
+	m.updateIndexCalls++
+	return 0, m.updateIndexError
 }
 
 var _ DocumentBuilder = &MockDocumentBuilder{}
@@ -94,31 +120,40 @@ func (m *mockStorageBackend) ListHistory(ctx context.Context, req *resourcepb.Li
 	return 0, nil
 }
 
+func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+	return 0, func(yield func(*ModifiedResource, error) bool) {
+		yield(nil, errors.New("not implemented"))
+	}
+}
+
+func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
+	return func(yield func(ResourceLastImportTime, error) bool) {
+		yield(ResourceLastImportTime{}, errors.New("not implemented"))
+	}
+}
+
 // mockSearchBackend implements SearchBackend for testing with tracking capabilities
 type mockSearchBackend struct {
-	buildIndexCalls      []buildIndexCall
-	buildEmptyIndexCalls []buildEmptyIndexCall
+	openIndexes []NamespacedResource
+
+	mu              sync.Mutex
+	buildIndexCalls []buildIndexCall
+	cache           map[NamespacedResource]ResourceIndex
 }
 
 type buildIndexCall struct {
-	key             NamespacedResource
-	size            int64
-	resourceVersion int64
-	fields          SearchableDocumentFields
+	key    NamespacedResource
+	size   int64
+	fields SearchableDocumentFields
 }
 
-type buildEmptyIndexCall struct {
-	key             NamespacedResource
-	size            int64 // should be 0 for empty indexes
-	resourceVersion int64
-	fields          SearchableDocumentFields
+func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.cache[key]
 }
 
-func (m *mockSearchBackend) GetIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
-	return nil, nil
-}
-
-func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
+func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
 	index.On("BulkIndex", mock.Anything).Return(nil).Maybe()
 	index.On("DocCount", mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
@@ -129,25 +164,21 @@ func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResour
 		return nil, err
 	}
 
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.cache == nil {
+		m.cache = make(map[NamespacedResource]ResourceIndex)
+	}
+	m.cache[key] = index
+
 	// Determine if this is an empty index based on size
 	// Empty indexes are characterized by size == 0
-	if size == 0 {
-		// This is an empty index (buildEmptyIndex was called)
-		m.buildEmptyIndexCalls = append(m.buildEmptyIndexCalls, buildEmptyIndexCall{
-			key:             key,
-			size:            size,
-			resourceVersion: resourceVersion,
-			fields:          fields,
-		})
-	} else {
-		// This is a normal index (build was called)
-		m.buildIndexCalls = append(m.buildIndexCalls, buildIndexCall{
-			key:             key,
-			size:            size,
-			resourceVersion: resourceVersion,
-			fields:          fields,
-		})
-	}
+	m.buildIndexCalls = append(m.buildIndexCalls, buildIndexCall{
+		key:    key,
+		size:   size,
+		fields: fields,
+	})
 
 	return index, nil
 }
@@ -156,118 +187,565 @@ func (m *mockSearchBackend) TotalDocs() int64 {
 	return 0
 }
 
-func TestBuildIndexes_MaxCountThreshold(t *testing.T) {
-	tests := []struct {
-		name                 string
-		initMaxSize          int
-		resourceStats        []ResourceStats
-		expectedNormalBuilds []string // expected NamespacedResource strings that should be built normally
-		expectedEmptyBuilds  []string // expected NamespacedResource strings that should be built as empty
-	}{
-		{
-			name:        "max count disabled (0) - all resources built normally",
-			initMaxSize: 0,
-			resourceStats: []ResourceStats{
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group1", Resource: "resource1"}, Count: 50},
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group1", Resource: "resource2"}, Count: 150},
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group2", Resource: "resource1"}, Count: 250},
-			},
-			expectedNormalBuilds: []string{
-				"ns1/group1/resource1",
-				"ns1/group1/resource2",
-				"ns1/group2/resource1",
-			},
-			expectedEmptyBuilds: []string{},
+func (m *mockSearchBackend) GetOpenIndexes() []NamespacedResource {
+	return m.openIndexes
+}
+
+func TestSearchGetOrCreateIndex(t *testing.T) {
+	// Setup mock implementations
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{
+			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
 		},
-		{
-			name:        "max count 100 - resources above threshold get empty indexes",
-			initMaxSize: 100,
-			resourceStats: []ResourceStats{
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group1", Resource: "resource1"}, Count: 50},  // normal build
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group1", Resource: "resource2"}, Count: 150}, // empty build
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group2", Resource: "resource1"}, Count: 250}, // empty build
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group2", Resource: "resource2"}, Count: 80},  // normal build
-			},
-			expectedNormalBuilds: []string{
-				"ns1/group1/resource1",
-				"ns1/group2/resource2",
-			},
-			expectedEmptyBuilds: []string{
-				"ns1/group1/resource2",
-				"ns1/group2/resource1",
-			},
-		},
-		{
-			name:        "max count 300 - no resources exceed threshold",
-			initMaxSize: 300,
-			resourceStats: []ResourceStats{
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group1", Resource: "resource1"}, Count: 50},  // normal build
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group1", Resource: "resource2"}, Count: 150}, // normal build
-				{NamespacedResource: NamespacedResource{Namespace: "ns1", Group: "group2", Resource: "resource1"}, Count: 250}, // normal build
-			},
-			expectedNormalBuilds: []string{
-				"ns1/group1/resource1",
-				"ns1/group1/resource2",
-				"ns1/group2/resource1",
-			},
-			expectedEmptyBuilds: []string{},
+	}
+	search := &mockSearchBackend{}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"group": "resource",
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup mock implementations
-			storage := &mockStorageBackend{
-				resourceStats: tt.resourceStats,
-			}
-			search := &mockSearchBackend{
-				buildIndexCalls:      []buildIndexCall{},
-				buildEmptyIndexCalls: []buildEmptyIndexCall{},
-			}
-			supplier := &TestDocumentBuilderSupplier{
-				GroupsResources: map[string]string{
-					"group1": "resource1",
-					"group2": "resource2",
-				},
+	opts := SearchOptions{
+		Backend:      search,
+		Resources:    supplier,
+		InitMinCount: 1, // set min count to default for this test
+	}
+
+	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	start := make(chan struct{})
+
+	const concurrency = 100
+	wg := sync.WaitGroup{}
+	for i := 0; i < concurrency; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			_, _ = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "test")
+		}()
+	}
+
+	// Wait a bit for goroutines to start (hopefully)
+	time.Sleep(10 * time.Millisecond)
+	// Unblock all goroutines.
+	close(start)
+	wg.Wait()
+
+	require.NotEmpty(t, search.buildIndexCalls)
+	require.Less(t, len(search.buildIndexCalls), concurrency, "Should not have built index more than a few times (ideally once)")
+	require.Equal(t, int64(50), search.buildIndexCalls[0].size)
+}
+
+func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
+	// Setup mock implementations
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{
+			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
+		},
+	}
+	failedErr := fmt.Errorf("failed to update index")
+	search := &mockSearchBackend{
+		cache: map[NamespacedResource]ResourceIndex{
+			{Namespace: "ns", Group: "group", Resource: "bad"}: &MockResourceIndex{
+				updateIndexError: failedErr,
+			},
+		},
+	}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"group": "resource",
+		},
+	}
+
+	opts := SearchOptions{
+		Backend:      search,
+		Resources:    supplier,
+		InitMinCount: 1, // set min count to default for this test
+	}
+
+	// Enable searchAfterWrite
+	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	idx, err := support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "initial call")
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+	checkMockIndexUpdateCalls(t, idx, 1)
+
+	idx, err = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "second call")
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+	checkMockIndexUpdateCalls(t, idx, 2)
+
+	idx, err = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "bad"}, "call to bad index")
+	require.ErrorIs(t, err, failedErr)
+	require.Nil(t, idx)
+}
+
+func checkMockIndexUpdateCalls(t *testing.T, idx ResourceIndex, calls int) {
+	mi, ok := idx.(*MockResourceIndex)
+	require.True(t, ok)
+	mi.updateIndexMu.Lock()
+	defer mi.updateIndexMu.Unlock()
+	require.Equal(t, calls, mi.updateIndexCalls)
+}
+
+func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
+	// Setup mock implementations
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{
+			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
+		},
+	}
+	search := &slowSearchBackendWithCache{
+		mockSearchBackend: mockSearchBackend{},
+	}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"group": "resource",
+		},
+	}
+
+	opts := SearchOptions{
+		Backend:      search,
+		Resources:    supplier,
+		InitMinCount: 1, // set min count to default for this test
+	}
+
+	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
+	defer cancel()
+
+	_, err = support.getOrCreateIndex(ctx, key, "test")
+	// Make sure we get context deadline error
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+
+	// Wait until indexing is finished.
+	search.wg.Wait()
+
+	require.NotEmpty(t, search.buildIndexCalls)
+
+	// Wait until new index is put into cache.
+	require.Eventually(t, func() bool {
+		idx := support.search.GetIndex(key)
+		return idx != nil
+	}, 1*time.Second, 100*time.Millisecond, "Indexing finishes despite context cancellation")
+
+	// Second call to getOrCreateIndex returns index immediately, even if context is canceled, as the index is now ready and cached.
+	_, err = support.getOrCreateIndex(ctx, key, "test")
+	require.NoError(t, err)
+}
+
+type slowSearchBackendWithCache struct {
+	mockSearchBackend
+	wg sync.WaitGroup
+}
+
+func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIndex {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.cache[key]
+}
+
+func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool) (ResourceIndex, error) {
+	m.wg.Add(1)
+	defer m.wg.Done()
+
+	time.Sleep(1 * time.Second)
+
+	// Simulate erroring out when context is cancelled.
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	idx, err := m.mockSearchBackend.BuildIndex(ctx, key, size, fields, reason, builder, updater, rebuild)
+	if err != nil {
+		return nil, err
+	}
+	return idx, nil
+}
+
+func TestCombineBuildRequests(t *testing.T) {
+	type testcase struct {
+		a, b  rebuildRequest
+		exp   rebuildRequest
+		expOK bool
+	}
+
+	now := time.Now()
+	for name, tc := range map[string]testcase{
+		"mismatched resource": {
+			a:     rebuildRequest{NamespacedResource: NamespacedResource{Namespace: "a", Group: "a", Resource: "a"}},
+			b:     rebuildRequest{NamespacedResource: NamespacedResource{Namespace: "b", Group: "b", Resource: "b"}},
+			expOK: false,
+		},
+		"equal values": {
+			a:     rebuildRequest{minBuildTime: now, minBuildVersion: semver.MustParse("10.15.20")},
+			b:     rebuildRequest{minBuildTime: now, minBuildVersion: semver.MustParse("10.15.20")},
+			expOK: true,
+			exp:   rebuildRequest{minBuildTime: now, minBuildVersion: semver.MustParse("10.15.20")},
+		},
+		"empty field": {
+			a:     rebuildRequest{minBuildTime: now},
+			b:     rebuildRequest{minBuildVersion: semver.MustParse("10.15.20")},
+			expOK: true,
+			exp:   rebuildRequest{minBuildTime: now, minBuildVersion: semver.MustParse("10.15.20")},
+		},
+		"use max build time": {
+			a:     rebuildRequest{minBuildTime: now.Add(2 * time.Hour)},
+			b:     rebuildRequest{minBuildTime: now.Add(-time.Hour)},
+			expOK: true,
+			exp:   rebuildRequest{minBuildTime: now.Add(2 * time.Hour)},
+		},
+		"use max version": {
+			a:     rebuildRequest{minBuildVersion: semver.MustParse("12.10.99")},
+			b:     rebuildRequest{minBuildVersion: semver.MustParse("10.15.20")},
+			expOK: true,
+			exp:   rebuildRequest{minBuildVersion: semver.MustParse("12.10.99")},
+		},
+		"both fields": {
+			a:     rebuildRequest{minBuildTime: now.Add(2 * time.Hour), minBuildVersion: semver.MustParse("12.10.99")},
+			b:     rebuildRequest{minBuildTime: now.Add(-time.Hour), minBuildVersion: semver.MustParse("10.15.20")},
+			expOK: true,
+			exp:   rebuildRequest{minBuildTime: now.Add(2 * time.Hour), minBuildVersion: semver.MustParse("12.10.99")},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			res1, ok := combineRebuildRequests(tc.a, tc.b)
+			require.Equal(t, tc.expOK, ok)
+			if ok {
+				require.Equal(t, tc.exp, res1)
 			}
 
-			// Create search support with the specified initMaxSize
-			opts := SearchOptions{
-				Backend:       search,
-				Resources:     supplier,
-				WorkerThreads: 1,
-				InitMinCount:  1, // set min count to default for this test
-				InitMaxCount:  tt.initMaxSize,
+			// commutativity
+			res2, ok := combineRebuildRequests(tc.b, tc.a)
+			require.Equal(t, tc.expOK, ok)
+			if ok {
+				require.Equal(t, tc.exp, res2)
 			}
-
-			support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil)
-			require.NoError(t, err)
-			require.NotNil(t, support)
-
-			// Call buildIndexes
-			ctx := context.Background()
-			indexesBuilt, err := support.buildIndexes(ctx, false)
-			require.NoError(t, err)
-
-			// Verify the correct number of indexes were built (normal + empty)
-			expectedTotal := len(tt.expectedNormalBuilds) + len(tt.expectedEmptyBuilds)
-			require.Equal(t, expectedTotal, indexesBuilt)
-
-			// Verify the correct resources were built normally
-			actualNormalBuilds := make([]string, len(search.buildIndexCalls))
-			for i, call := range search.buildIndexCalls {
-				actualNormalBuilds[i] = call.key.String()
-			}
-			require.ElementsMatch(t, tt.expectedNormalBuilds, actualNormalBuilds)
-
-			// Verify the correct resources were built as empty indexes
-			actualEmptyBuilds := make([]string, len(search.buildEmptyIndexCalls))
-			for i, call := range search.buildEmptyIndexCalls {
-				actualEmptyBuilds[i] = call.key.String()
-				// Verify that empty indexes are built with size 0
-				require.Equal(t, int64(0), call.size, "Empty index should be built with size 0")
-			}
-			require.ElementsMatch(t, tt.expectedEmptyBuilds, actualEmptyBuilds)
 		})
+	}
+}
+
+func TestShouldRebuildIndex(t *testing.T) {
+	type testcase struct {
+		buildInfo       IndexBuildInfo
+		minTime         time.Time
+		lastImportTime  time.Time
+		minBuildVersion *semver.Version
+
+		expected bool
+	}
+
+	now := time.Now()
+
+	for name, tc := range map[string]testcase{
+		"empty build info, with no rebuild conditions": {
+			buildInfo: IndexBuildInfo{},
+			expected:  false,
+		},
+		"empty build info, with minTime": {
+			buildInfo: IndexBuildInfo{},
+			minTime:   now,
+			expected:  true,
+		},
+		"empty build info, with lastImportTime": {
+			buildInfo:      IndexBuildInfo{},
+			lastImportTime: now,
+			expected:       true,
+		},
+		"empty build info, with minVersion": {
+			buildInfo:       IndexBuildInfo{},
+			minBuildVersion: semver.MustParse("10.15.20"),
+			expected:        true,
+		},
+		"build time before min time": {
+			buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
+			minTime:   now,
+			expected:  true,
+		},
+		"build time after min time": {
+			buildInfo: IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
+			minTime:   now,
+			expected:  false,
+		},
+		"build time before last import time": {
+			buildInfo:      IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
+			lastImportTime: now,
+			expected:       true,
+		},
+		"build time after last import time": {
+			buildInfo:      IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
+			lastImportTime: now,
+			expected:       false,
+		},
+		"build version before min version": {
+			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("10.15.19")},
+			minBuildVersion: semver.MustParse("10.15.20"),
+			expected:        true,
+		},
+		"build version after min version": {
+			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("11.0.0")},
+			minBuildVersion: semver.MustParse("10.15.20"),
+			expected:        false,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.minTime, tc.lastImportTime, nil)
+			require.Equal(t, tc.expected, res)
+		})
+	}
+}
+
+func TestFindIndexesForRebuild(t *testing.T) {
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{
+			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
+		},
+	}
+
+	now := time.Now().UTC()
+
+	search := &mockSearchBackend{
+		openIndexes: []NamespacedResource{
+			{Namespace: "resource-2h-v5", Group: "group", Resource: "folder"},
+			{Namespace: "resource-2h-v6", Group: "group", Resource: "folder"},
+			{Namespace: "resource-10h-v5", Group: "group", Resource: "folder"},
+			{Namespace: "resource-10h-v6", Group: "group", Resource: "folder"},
+			{Namespace: "resource-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
+			{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
+			{Namespace: "resource-2h-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
+			{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
+			{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
+
+			// We report this index as open, but it's really not. This can happen if index expires between the call
+			// to GetOpenIndexes and the call to GetIndex.
+			{Namespace: "ns", Group: "group", Resource: "missing"},
+		},
+
+		cache: map[NamespacedResource]ResourceIndex{
+			// To be rebuilt because of minVersion
+			{Namespace: "resource-2h-v5", Group: "group", Resource: "folder"}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour), BuildVersion: semver.MustParse("5.0.0")},
+			},
+
+			// Not rebuilt
+			{Namespace: "resource-2h-v6", Group: "group", Resource: "folder"}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour), BuildVersion: semver.MustParse("6.0.0")},
+			},
+
+			// To be rebuilt because of minTime
+			{Namespace: "resource-10h-v5", Group: "group", Resource: "folder"}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-10 * time.Hour), BuildVersion: semver.MustParse("5.0.0")},
+			},
+
+			// To be rebuilt because of minTime
+			{Namespace: "resource-10h-v6", Group: "group", Resource: "folder"}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-10 * time.Hour), BuildVersion: semver.MustParse("6.0.0")},
+			},
+
+			// To be rebuilt because of minVersion
+			{Namespace: "resource-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now, BuildVersion: semver.MustParse("5.0.0")},
+			},
+
+			// Not rebuilt
+			{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now, BuildVersion: semver.MustParse("6.0.0")},
+			},
+
+			// To be rebuilt because of minTime (1h for dashboards)
+			{Namespace: "resource-2h-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour), BuildVersion: semver.MustParse("5.0.0")},
+			},
+
+			// To be rebuilt because of minTime (1h for dashboards)
+			{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour), BuildVersion: semver.MustParse("6.0.0")},
+			},
+
+			// Built recently, to be rebuilt because of last import time
+			{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-30 * time.Minute), BuildVersion: semver.MustParse("6.0.0")},
+			},
+		},
+	}
+
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"group": "resource",
+		},
+	}
+
+	opts := SearchOptions{
+		Backend:   search,
+		Resources: supplier,
+
+		DashboardIndexMaxAge: 1 * time.Hour,
+		MaxIndexAge:          5 * time.Hour,
+		MinBuildVersion:      semver.MustParse("5.5.5"),
+	}
+
+	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	lastImportTime := now.Add(-10 * time.Minute)
+	importTimes := map[NamespacedResource]time.Time{
+		{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: lastImportTime,
+
+		// This index was "just" built, and should not be rebuilt.
+		{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: lastImportTime,
+	}
+
+	support.findIndexesToRebuild(importTimes, now)
+	require.Equal(t, 7, support.rebuildQueue.Len())
+
+	now5m := now.Add(5 * time.Minute)
+
+	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing
+	// ones should be "combined" with new ones (this will "bump" minBuildTime)
+	support.findIndexesToRebuild(importTimes, now5m)
+	require.Equal(t, 7, support.rebuildQueue.Len())
+
+	// Values that we expect to find in rebuild requests.
+	minBuildVersion := semver.MustParse("5.5.5")
+	minBuildTime := now5m.Add(-5 * time.Hour)
+	minBuildTimeDashboard := now5m.Add(-1 * time.Hour)
+
+	vals := support.rebuildQueue.Elements()
+	require.ElementsMatch(t, vals, []rebuildRequest{
+		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v5", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
+		{NamespacedResource: NamespacedResource{Namespace: "resource-10h-v5", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
+		{NamespacedResource: NamespacedResource{Namespace: "resource-10h-v6", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
+
+		{NamespacedResource: NamespacedResource{Namespace: "resource-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
+		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
+		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
+
+		{NamespacedResource: NamespacedResource{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard, lastImportTime: lastImportTime},
+	})
+}
+
+func TestRebuildIndexes(t *testing.T) {
+	storage := &mockStorageBackend{}
+
+	now := time.Now()
+
+	search := &mockSearchBackend{
+		cache: map[NamespacedResource]ResourceIndex{
+			{Namespace: "idx1", Group: "group", Resource: "res"}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildVersion: semver.MustParse("5.0.0")},
+			},
+
+			{Namespace: "idx2", Group: "group", Resource: "res"}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
+			},
+
+			{Namespace: "idx3", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{},
+		},
+	}
+
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"group": "resource",
+		},
+	}
+
+	opts := SearchOptions{
+		Backend:   search,
+		Resources: supplier,
+	}
+
+	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	// Note: we can only rebuild each index once, after that it "loses" it's build info.
+
+	t.Run("Don't rebuild if min build version is old", func(t *testing.T) {
+		checkRebuildIndex(t, support, rebuildRequest{
+			NamespacedResource: NamespacedResource{Namespace: "idx1", Group: "group", Resource: "res"},
+			minBuildVersion:    semver.MustParse("4.5"),
+		}, true, false)
+	})
+
+	t.Run("Rebuild if min build version is more recent", func(t *testing.T) {
+		checkRebuildIndex(t, support, rebuildRequest{
+			NamespacedResource: NamespacedResource{Namespace: "idx1", Group: "group", Resource: "res"},
+			minBuildVersion:    semver.MustParse("5.5.5"),
+		}, true, true)
+	})
+
+	t.Run("Don't rebuild if min build time is very old", func(t *testing.T) {
+		checkRebuildIndex(t, support, rebuildRequest{
+			NamespacedResource: NamespacedResource{Namespace: "idx2", Group: "group", Resource: "res"},
+			minBuildTime:       now.Add(-5 * time.Hour),
+		}, true, false)
+	})
+
+	t.Run("Rebuild if min build time is more recent", func(t *testing.T) {
+		checkRebuildIndex(t, support, rebuildRequest{
+			NamespacedResource: NamespacedResource{Namespace: "idx2", Group: "group", Resource: "res"},
+			minBuildTime:       now.Add(-1 * time.Hour),
+		}, true, true)
+	})
+
+	t.Run("Don't rebuild if index doesn't exist.", func(t *testing.T) {
+		checkRebuildIndex(t, support, rebuildRequest{
+			NamespacedResource: NamespacedResource{Namespace: "unknown", Group: "group", Resource: "res"},
+			minBuildTime:       now.Add(-5 * time.Hour),
+		}, false, true)
+	})
+
+	t.Run("Rebuild dashboard index (it has no build info), verify that builders cache was emptied.", func(t *testing.T) {
+		dashKey := NamespacedResource{Namespace: "idx3", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}
+
+		support.builders.ns.Add(dashKey, &MockDocumentBuilder{})
+		_, ok := support.builders.ns.Get(dashKey)
+		require.True(t, ok)
+
+		checkRebuildIndex(t, support, rebuildRequest{
+			NamespacedResource: dashKey,
+			minBuildTime:       now,
+		}, true, true)
+
+		// Verify that builders cache was emptied.
+		_, ok = support.builders.ns.Get(dashKey)
+		require.False(t, ok)
+	})
+}
+
+func checkRebuildIndex(t *testing.T, support *searchSupport, req rebuildRequest, indexExists, expectedRebuild bool) {
+	ctx := context.Background()
+
+	idxBefore := support.search.GetIndex(req.NamespacedResource)
+	if indexExists {
+		require.NotNil(t, idxBefore, "index should exist before rebuildIndex")
+	} else {
+		require.Nil(t, idxBefore, "index should not exist before rebuildIndex")
+	}
+
+	support.rebuildIndex(ctx, req)
+
+	idxAfter := support.search.GetIndex(req.NamespacedResource)
+
+	if indexExists {
+		require.NotNil(t, idxAfter, "index should exist after rebuildIndex")
+		if expectedRebuild {
+			require.NotSame(t, idxBefore, idxAfter, "index should be rebuilt")
+		} else {
+			require.Same(t, idxBefore, idxAfter, "index should not be rebuilt")
+		}
+	} else {
+		require.Nil(t, idxAfter, "index should not exist after rebuildIndex")
 	}
 }

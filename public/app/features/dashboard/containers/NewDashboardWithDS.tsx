@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { setInitialDatasource } from '../state/reducers';
 
@@ -22,7 +22,7 @@ export default function NewDashboardWithDS() {
 
     dispatch(setInitialDatasource(datasourceUid));
 
-    locationService.replace('/dashboard/new');
+    locationService.replace(`/dashboard/new?dashboardLibraryDatasourceUid=${datasourceUid}`);
   }, [datasourceUid, dispatch]);
 
   if (error) {

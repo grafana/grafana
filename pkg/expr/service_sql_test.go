@@ -10,8 +10,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -56,14 +58,14 @@ func TestSQLService(t *testing.T) {
 	t.Run("no feature flag no queries for you", func(t *testing.T) {
 		s, req := newMockQueryService(resp, newABSQLQueries(""))
 
-		_, err := s.BuildPipeline(req)
+		_, err := s.BuildPipeline(t.Context(), req)
 		require.Error(t, err, "should not be able to build pipeline without feature flag")
 	})
 
 	t.Run("with feature flag basic select works", func(t *testing.T) {
 		s, req := newMockQueryService(resp, newABSQLQueries("SELECT * FROM A"))
 		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
-		pl, err := s.BuildPipeline(req)
+		pl, err := s.BuildPipeline(t.Context(), req)
 		require.NoError(t, err)
 
 		res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
@@ -83,14 +85,17 @@ func TestSQLService(t *testing.T) {
 
 		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
 
-		pl, err := s.BuildPipeline(req)
+		pl, err := s.BuildPipeline(t.Context(), req)
 		require.NoError(t, err)
 
 		rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
 		require.NoError(t, err)
 
 		require.Error(t, rsp.Responses["B"].Error, "should return invalid sql error")
-		require.ErrorContains(t, rsp.Responses["B"].Error, "blocked function load_file")
+		require.ErrorContains(t, rsp.Responses["B"].Error, "not in the allowed list of")
+		var sqlErr *sql.ErrorWithCategory
+		require.ErrorAs(t, rsp.Responses["B"].Error, &sqlErr)
+		require.Equal(t, sql.ErrCategoryBlockedNodeOrFunc, sqlErr.Category())
 	})
 
 	t.Run("parse error should be returned", func(t *testing.T) {
@@ -100,7 +105,7 @@ func TestSQLService(t *testing.T) {
 
 		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
 
-		pl, err := s.BuildPipeline(req)
+		pl, err := s.BuildPipeline(t.Context(), req)
 		require.NoError(t, err)
 
 		rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
@@ -108,5 +113,135 @@ func TestSQLService(t *testing.T) {
 
 		require.Error(t, rsp.Responses["B"].Error, "should return sql error on parsing")
 		require.ErrorContains(t, rsp.Responses["B"].Error, "limit expression expected to be numeric")
+		var sqlErr *sql.ErrorWithCategory
+		require.ErrorAs(t, rsp.Responses["B"].Error, &sqlErr)
+		require.Equal(t, sql.ErrCategoryGeneralGMSError, sqlErr.Category())
+	})
+}
+
+func TestSQLServiceErrors(t *testing.T) {
+	tsMulti := data.NewFrame("",
+		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+		data.NewField("value", data.Labels{"testLabelKey": "testLabelValue"}, []*float64{fp(2)}),
+	).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+
+	tsMultiNoType := data.NewFrame("",
+		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+		data.NewField("value", data.Labels{"testLabelKey": "testLabelValue"}, []*float64{fp(2)}),
+	)
+
+	resp := map[string]backend.DataResponse{
+		"tsMulti":       {Frames: data.Frames{tsMulti}},
+		"tsMultiNoType": {Frames: data.Frames{tsMultiNoType}},
+	}
+
+	newABSQLQueries := func(q string) []Query {
+		escaped, err := json.Marshal(q)
+		require.NoError(t, err)
+		return []Query{
+			{
+				RefID: "tsMulti",
+				DataSource: &datasources.DataSource{
+					OrgID: 1,
+					UID:   "test",
+					Type:  "test",
+				},
+				JSON: json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+				TimeRange: AbsoluteTimeRange{
+					From: time.Time{},
+					To:   time.Time{},
+				},
+			},
+			{
+				RefID: "tsMultiNoType",
+				DataSource: &datasources.DataSource{
+					OrgID: 1,
+					UID:   "test",
+					Type:  "test",
+				},
+				JSON: json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+				TimeRange: AbsoluteTimeRange{
+					From: time.Time{},
+					To:   time.Time{},
+				},
+			},
+			{
+				RefID:      "sqlExpression",
+				DataSource: dataSourceModel(),
+				JSON:       json.RawMessage(fmt.Sprintf(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": %s }`, escaped)),
+				TimeRange: AbsoluteTimeRange{
+					From: time.Time{},
+					To:   time.Time{},
+				},
+			},
+		}
+	}
+
+	t.Run("conversion failure (and therefore dependency error)", func(t *testing.T) {
+		reg := prometheus.NewPedanticRegistry()
+
+		s, req := newMockQueryServiceWithMetricsRegistry(resp,
+			newABSQLQueries(`SELECT * FROM tsMultiNoType`),
+			reg,
+		)
+
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+		pl, err := s.BuildPipeline(t.Context(), req)
+		require.NoError(t, err)
+
+		rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+		require.NoError(t, err)
+
+		require.Error(t, rsp.Responses["tsMultiNoType"].Error, "should return conversion error on DS response")
+		require.ErrorContains(t, rsp.Responses["tsMultiNoType"].Error, "missing the data type")
+		var sqlErr *sql.ErrorWithCategory
+		require.ErrorAs(t, rsp.Responses["tsMultiNoType"].Error, &sqlErr)
+		require.Equal(t, sql.ErrCategoryInputConversion, sqlErr.Category())
+
+		require.Error(t, rsp.Responses["sqlExpression"].Error, "should return dependency error")
+		require.ErrorContains(t, rsp.Responses["sqlExpression"].Error, "dependency")
+		require.ErrorAs(t, rsp.Responses["sqlExpression"].Error, &sqlErr)
+		require.Equal(t, sql.ErrCategoryDependency, sqlErr.Category())
+
+		require.Equal(t, 0.0, counterVal(t, s.metrics.SqlCommandCount, "ok", "none"))
+		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryInputConversion))
+		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandInputCount, "error", "false", "test", "missing"))
+	})
+
+	t.Run("pipeline (expressions and DS queries) will fail if the table is not found, before execution of the sql expression", func(t *testing.T) {
+		reg := prometheus.NewPedanticRegistry()
+
+		s, req := newMockQueryServiceWithMetricsRegistry(resp,
+			newABSQLQueries(`SELECT * FROM nonExisting`), reg,
+		)
+
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+		_, err := s.BuildPipeline(t.Context(), req)
+		var sqlErr *sql.ErrorWithCategory
+		require.ErrorAs(t, err, &sqlErr)
+		require.Equal(t, sql.ErrCategoryTableNotFound, sqlErr.Category())
+		require.Error(t, err, "whole pipeline fails when selecting a dependency that does not exist")
+
+		// Metrics
+		require.Equal(t, 0.0, counterVal(t, s.metrics.SqlCommandCount, "ok", "none"))
+		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryTableNotFound))
+	})
+
+	t.Run("pipeline will fail if query is longer than the configured limit", func(t *testing.T) {
+		s, req := newMockQueryService(resp,
+			newABSQLQueries(`SELECT This is too long and does not need to be valid SQL`),
+		)
+		s.cfg.SQLExpressionQueryLengthLimit = 5
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+		_, err := s.BuildPipeline(t.Context(), req)
+		require.ErrorContains(t, err, "exceeded the configured limit of 5 characters")
+		var sqlErr *sql.ErrorWithCategory
+		require.ErrorAs(t, err, &sqlErr)
+		require.Equal(t, sql.ErrCategoryQueryTooLong, sqlErr.Category())
+
+		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryQueryTooLong))
 	})
 }

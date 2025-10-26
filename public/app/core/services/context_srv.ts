@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { featureEnabled, getBackendSrv } from '@grafana/runtime';
 import { getSessionExpiry } from 'app/core/utils/auth';
-import { AccessControlAction, UserPermission } from 'app/types';
+import { UserPermission, AccessControlAction } from 'app/types/accessControl';
 import { CurrentUserInternal } from 'app/types/config';
 
 import config from '../../core/config';

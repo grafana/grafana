@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"slices"
 	"time"
 
@@ -58,7 +59,7 @@ type DataSource struct {
 }
 
 func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Config, error) {
-	if region == defaultRegion {
+	if region == defaultRegion || region == "" {
 		if len(ds.Settings.Region) == 0 {
 			return aws.Config{}, models.ErrMissingRegion
 		}
@@ -73,6 +74,7 @@ func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Conf
 		Region:             region,
 		AccessKey:          ds.Settings.AccessKey,
 		SecretKey:          ds.Settings.SecretKey,
+		HTTPClient:         &http.Client{},
 	}
 	if ds.Settings.GrafanaSettings.SecureSocksDSProxyEnabled && ds.Settings.SecureSocksProxyEnabled {
 		authSettings.ProxyOptions = ds.ProxyOpts

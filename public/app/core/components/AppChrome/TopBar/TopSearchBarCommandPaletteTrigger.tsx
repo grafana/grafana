@@ -40,6 +40,7 @@ export const TopSearchBarCommandPaletteTrigger = React.memo(() => {
 
   return <PretendTextInput onClick={onOpenSearch} />;
 });
+TopSearchBarCommandPaletteTrigger.displayName = 'TopSearchBarCommandPaletteTrigger';
 
 interface PretendTextInputProps {
   onClick: () => void;

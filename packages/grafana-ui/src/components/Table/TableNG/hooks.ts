@@ -1,14 +1,23 @@
-import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
-import { Column, DataGridProps, SortColumn } from 'react-data-grid';
+import { useState, useMemo, useCallback, useRef, useLayoutEffect, RefObject, CSSProperties, useEffect } from 'react';
+import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 
-import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
+import { compareArrayValues, Field, FieldType, formattedValueToString, reduceField, ReducerID } from '@grafana/data';
 
-import { useTheme2 } from '../../../themes/ThemeContext';
-import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
+import { TableColumnResizeActionCallback } from '../types';
 
 import { TABLE } from './constants';
-import { ColumnTypes, FilterType, TableFooterCalc, TableRow, TableSortByFieldState, TableSummaryRow } from './types';
-import { getDisplayName, processNestedTableRows, getCellHeightCalculator, applySort, getCellOptions } from './utils';
+import { FilterType, FooterFieldState, TableRow, TableSortByFieldState, TableSummaryRow, TypographyCtx } from './types';
+import {
+  getDisplayName,
+  processNestedTableRows,
+  applySort,
+  getColumnTypes,
+  getRowHeight,
+  computeColWidths,
+  buildHeaderHeightMeasurers,
+  buildCellHeightMeasurers,
+  IS_SAFARI_26,
+} from './utils';
 
 // Helper function to get displayed value
 const getDisplayedValue = (row: TableRow, key: string, fields: Field[]) => {
@@ -79,7 +88,6 @@ export function useFilteredRows(
 }
 
 export interface SortedRowsOptions {
-  columnTypes: ColumnTypes;
   hasNestedFrames: boolean;
   initialSortBy?: TableSortByFieldState[];
 }
@@ -93,7 +101,7 @@ export interface SortedRowsResult {
 export function useSortedRows(
   rows: TableRow[],
   fields: Field[],
-  { initialSortBy, columnTypes, hasNestedFrames }: SortedRowsOptions
+  { initialSortBy, hasNestedFrames }: SortedRowsOptions
 ): SortedRowsResult {
   const initialSortColumns = useMemo<SortColumn[]>(
     () =>
@@ -111,6 +119,7 @@ export function useSortedRows(
     [] // eslint-disable-line react-hooks/exhaustive-deps
   );
   const [sortColumns, setSortColumns] = useState<SortColumn[]>(initialSortColumns);
+  const columnTypes = useMemo(() => getColumnTypes(fields), [fields]);
 
   const sortedRows = useMemo(
     () => applySort(rows, fields, sortColumns, columnTypes, hasNestedFrames),
@@ -127,11 +136,11 @@ export function useSortedRows(
 export interface PaginatedRowsOptions {
   height: number;
   width: number;
-  rowHeight: number | ((row: TableRow) => number);
-  hasHeader?: boolean;
-  hasFooter?: boolean;
+  rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
+  headerHeight: number;
+  footerHeight: number;
   paginationHeight?: number;
-  enabled?: boolean;
+  enabled: boolean;
 }
 
 export interface PaginatedRowsResult {
@@ -150,7 +159,7 @@ const PAGINATION_HEIGHT = 38;
 
 export function usePaginatedRows(
   rows: TableRow[],
-  { height, width, hasHeader, hasFooter, rowHeight, enabled }: PaginatedRowsOptions
+  { height, width, headerHeight, footerHeight, rowHeight, enabled }: PaginatedRowsOptions
 ): PaginatedRowsResult {
   // TODO: allow persisted page selection via url
   const [page, setPage] = useState(0);
@@ -158,27 +167,39 @@ export function usePaginatedRows(
 
   // calculate average row height if row height is variable.
   const avgRowHeight = useMemo(() => {
+    if (!enabled) {
+      return 0;
+    }
+
     if (typeof rowHeight === 'number') {
       return rowHeight;
     }
-    return rows.reduce((avg, row, _, { length }) => avg + rowHeight(row) / length, 0);
-  }, [rows, rowHeight]);
+
+    // when using auto-sized rows, we're just going to have to pick a number. the alternative
+    // is to measure each row, which we could do but would be expensive.
+    if (typeof rowHeight === 'string') {
+      return TABLE.MAX_CELL_HEIGHT;
+    }
+
+    // we'll just measure 100 rows to estimate
+    return rows.slice(0, 100).reduce((avg, row, _, { length }) => avg + rowHeight(row) / length, 0);
+  }, [rows, rowHeight, enabled]);
+
+  const smallPagination = useMemo(() => enabled && width < TABLE.PAGINATION_LIMIT, [enabled, width]);
 
   // using dimensions of the panel, calculate pagination parameters
-  const { numPages, rowsPerPage, pageRangeStart, pageRangeEnd, smallPagination } = useMemo((): {
+  const { numPages, rowsPerPage, pageRangeStart, pageRangeEnd } = useMemo((): {
     numPages: number;
     rowsPerPage: number;
     pageRangeStart: number;
     pageRangeEnd: number;
-    smallPagination: boolean;
   } => {
     if (!enabled) {
-      return { numPages: 0, rowsPerPage: 0, pageRangeStart: 1, pageRangeEnd: numRows, smallPagination: false };
+      return { numPages: 0, rowsPerPage: 0, pageRangeStart: 1, pageRangeEnd: numRows };
     }
 
     // calculate number of rowsPerPage based on height stack
-    const rowAreaHeight =
-      height - (hasHeader ? TABLE.HEADER_ROW_HEIGHT : 0) - (hasFooter ? avgRowHeight : 0) - PAGINATION_HEIGHT;
+    const rowAreaHeight = height - headerHeight - footerHeight - PAGINATION_HEIGHT;
     const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
     // ensure at least one row per page is displayed
     let rowsPerPage = heightPerRow > 1 ? heightPerRow : 1;
@@ -189,19 +210,18 @@ export function usePaginatedRows(
     if (pageRangeEnd > numRows) {
       pageRangeEnd = numRows;
     }
-    const smallPagination = width < TABLE.PAGINATION_LIMIT;
+
     const numPages = Math.ceil(numRows / rowsPerPage);
     return {
       numPages,
       rowsPerPage,
       pageRangeStart,
       pageRangeEnd,
-      smallPagination,
     };
-  }, [width, height, hasHeader, hasFooter, avgRowHeight, enabled, numRows, page]);
+  }, [height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page]);
 
   // safeguard against page overflow on panel resize or other factors
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!enabled) {
       return;
     }
@@ -233,202 +253,140 @@ export function usePaginatedRows(
   };
 }
 
-export interface FooterCalcsOptions {
-  enabled?: boolean;
-  isCountRowsSet?: boolean;
-  footerOptions?: TableFooterCalc;
+const ICON_WIDTH = 16;
+const ICON_GAP = 4;
+
+interface UseHeaderHeightOptions {
+  enabled: boolean;
+  fields: Field[];
+  columnWidths: number[];
+  sortColumns: SortColumn[];
+  typographyCtx: TypographyCtx;
+  showTypeIcons?: boolean;
 }
 
-export function useFooterCalcs(
-  rows: TableRow[],
-  fields: Field[],
-  { enabled, footerOptions, isCountRowsSet }: FooterCalcsOptions
-): string[] {
-  return useMemo(() => {
-    const footerReducers = footerOptions?.reducer;
+export function useHeaderHeight({
+  fields,
+  enabled,
+  columnWidths,
+  sortColumns,
+  typographyCtx,
+  showTypeIcons = false,
+}: UseHeaderHeightOptions): number {
+  const perIconSpace = ICON_WIDTH + ICON_GAP;
 
-    if (!enabled || !footerOptions || !Array.isArray(footerReducers) || !footerReducers.length) {
-      return [];
-    }
+  const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
 
-    return fields.map((field, index) => {
-      if (field.state?.calcs) {
-        delete field.state?.calcs;
-      }
-
-      if (isCountRowsSet) {
-        return index === 0 ? `${rows.length}` : '';
-      }
-
-      if (index === 0) {
-        const footerCalcReducer = footerReducers[0];
-        return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
-      }
-
-      if (field.type !== FieldType.number) {
-        return '';
-      }
-
-      // if field.display is undefined, don't throw
-      const displayFn = field.display;
-      if (!displayFn) {
-        return '';
-      }
-
-      // If fields array is specified, only show footer for fields included in that array
-      if (footerOptions.fields?.length && !footerOptions.fields?.includes(getDisplayName(field))) {
-        return '';
-      }
-
-      const calc = footerReducers[0];
-      const value = reduceField({
-        field: {
-          ...field,
-          values: rows.map((row) => row[getDisplayName(field)]),
-        },
-        reducers: footerReducers,
-      })[calc];
-
-      return formattedValueToString(displayFn(value));
-    });
-  }, [fields, enabled, footerOptions, isCountRowsSet, rows]);
-}
-
-export function useTextWraps(fields: Field[]): Record<string, boolean> {
-  return useMemo(
+  const columnAvailableWidths = useMemo(
     () =>
-      fields.reduce<{ [key: string]: boolean }>((acc, field) => {
-        const cellOptions = getCellOptions(field);
-        const displayName = getDisplayName(field);
-        const wrapText = 'wrapText' in cellOptions && cellOptions.wrapText;
-        return { ...acc, [displayName]: !!wrapText };
-      }, {}),
-    [fields]
-  );
-}
-
-export function useTypographyCtx() {
-  const theme = useTheme2();
-  const { ctx, font, avgCharWidth } = useMemo(() => {
-    const font = `${theme.typography.fontSize}px ${theme.typography.fontFamily}`;
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d')!;
-    // set in grafana/data in createTypography.ts
-    const letterSpacing = 0.15;
-
-    ctx.letterSpacing = `${letterSpacing}px`;
-    ctx.font = font;
-    const txt =
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s";
-    const txtWidth = ctx.measureText(txt).width;
-    const avgCharWidth = txtWidth / txt.length + letterSpacing;
-
-    return {
-      ctx,
-      font,
-      avgCharWidth,
-    };
-  }, [theme.typography.fontSize, theme.typography.fontFamily]);
-  return { ctx, font, avgCharWidth };
-}
-
-export function useRowHeight(
-  columnWidths: number[],
-  fields: Field[],
-  hasNestedFrames: boolean,
-  defaultRowHeight: number,
-  expandedRows: Record<string, boolean>
-): number | ((row: TableRow) => number) {
-  const [wrappedColIdxs, hasWrappedCols] = useMemo(() => {
-    let hasWrappedCols = false;
-    return [
-      fields.map((field) => {
-        if (field.type !== FieldType.string) {
-          return false;
+      columnWidths.map((c, idx) => {
+        if (idx >= fields.length) {
+          return 0; // no width available for this column yet
         }
 
-        const cellOptions = getCellOptions(field);
-        const wrapText = 'wrapText' in cellOptions && cellOptions.wrapText;
-        const type = cellOptions.type;
-        const result = !!wrapText && type !== TableCellDisplayMode.Image;
-        if (result === true) {
-          hasWrappedCols = true;
+        let width = c - 2 * TABLE.CELL_PADDING - TABLE.BORDER_RIGHT;
+        const field = fields[idx];
+
+        // filtering icon
+        if (field.config?.custom?.filterable) {
+          width -= perIconSpace;
         }
-        return result;
+        // sorting icon
+        if (sortColumns.some((col) => col.columnKey === getDisplayName(field))) {
+          width -= perIconSpace;
+        }
+        // type icon
+        if (showTypeIcons) {
+          width -= perIconSpace;
+        }
+        // sadly, the math for this is off by exactly 1 pixel. shrug.
+        return Math.floor(width) - 1;
       }),
-      hasWrappedCols,
-    ];
-  }, [fields]);
+    [fields, columnWidths, sortColumns, showTypeIcons, perIconSpace]
+  );
 
-  const { ctx, avgCharWidth } = useTypographyCtx();
+  const headerHeight = useMemo(() => {
+    if (!enabled) {
+      return 0;
+    }
+    return getRowHeight(
+      fields,
+      -1,
+      columnAvailableWidths,
+      TABLE.HEADER_HEIGHT,
+      measurers,
+      TABLE.LINE_HEIGHT,
+      TABLE.CELL_PADDING
+    );
+  }, [fields, enabled, columnAvailableWidths, measurers]);
+
+  return headerHeight;
+}
+
+interface UseRowHeightOptions {
+  columnWidths: number[];
+  fields: Field[];
+  hasNestedFrames: boolean;
+  defaultHeight: NonNullable<CSSProperties['height']>;
+  expandedRows: Set<number>;
+  typographyCtx: TypographyCtx;
+  maxHeight?: number;
+}
+
+export function useRowHeight({
+  columnWidths,
+  fields,
+  hasNestedFrames,
+  defaultHeight,
+  expandedRows,
+  typographyCtx,
+  maxHeight,
+}: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
+  const measurers = useMemo(
+    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
+    [fields, typographyCtx, maxHeight]
+  );
+  const hasWrappedCols = useMemo(() => measurers?.length ?? 0 > 0, [measurers]);
+
+  const colWidths = useMemo(() => {
+    const columnWidthAffordance = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
+    return columnWidths.map((c) => c - columnWidthAffordance);
+  }, [columnWidths]);
 
   const rowHeight = useMemo(() => {
     // row height is only complicated when there are nested frames or wrapped columns.
-    if (!hasNestedFrames && !hasWrappedCols) {
-      return defaultRowHeight;
+    if ((!hasNestedFrames && !hasWrappedCols) || typeof defaultHeight === 'string') {
+      return defaultHeight;
     }
 
-    const HPADDING = TABLE.CELL_PADDING;
-    const VPADDING = TABLE.CELL_PADDING;
-    const BORDER_RIGHT = 0.666667;
-    const LINE_HEIGHT = 22;
-
-    const wrapWidths = columnWidths.map((c) => c - 2 * HPADDING - BORDER_RIGHT);
-    const calc = getCellHeightCalculator(ctx, LINE_HEIGHT, defaultRowHeight, VPADDING);
-
+    // this cache should get blown away on resize, data refresh, updated fields, etc.
+    // caching by __index is ok because sorting does not modify the __index.
+    const cache: Array<number | undefined> = Array(fields[0].values.length);
     return (row: TableRow) => {
       // nested rows
-      if (Number(row.__depth) > 0) {
+      if (row.__depth > 0) {
         // if unexpanded, height === 0
-        if (!expandedRows[row.__index]) {
+        if (!expandedRows.has(row.__index)) {
           return 0;
         }
 
-        // Ensure we have a minimum height (defaultRowHeight) for the nested table even if data is empty
-        const headerCount = row?.data?.meta?.custom?.noHeader ? 0 : 1;
         const rowCount = row.data?.length ?? 0;
-        return Math.max(defaultRowHeight, defaultRowHeight * (rowCount + headerCount));
+        if (rowCount === 0) {
+          return TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2;
+        }
+
+        const nestedHeaderHeight = row.data?.meta?.custom?.noHeader ? 0 : defaultHeight;
+        return defaultHeight * rowCount + nestedHeaderHeight + TABLE.CELL_PADDING * 2;
       }
 
       // regular rows
-      let maxLines = 1;
-      let maxLinesIdx = -1;
-      let maxLinesText = '';
-
-      for (let i = 0; i < columnWidths.length; i++) {
-        if (wrappedColIdxs[i]) {
-          const cellTextRaw = fields[i].values[row.__index];
-          if (cellTextRaw != null) {
-            const cellText = String(cellTextRaw);
-            const charsPerLine = wrapWidths[i] / avgCharWidth;
-            const approxLines = cellText.length / charsPerLine;
-
-            if (approxLines > maxLines) {
-              maxLines = approxLines;
-              maxLinesIdx = i;
-              maxLinesText = cellText;
-            }
-          }
-        }
+      let result = cache[row.__index];
+      if (!result) {
+        result = cache[row.__index] = getRowHeight(fields, row.__index, colWidths, defaultHeight, measurers);
       }
-
-      if (maxLinesIdx === -1) {
-        return defaultRowHeight;
-      }
-
-      return calc(maxLinesText, wrapWidths[maxLinesIdx]);
+      return result;
     };
-  }, [
-    avgCharWidth,
-    columnWidths,
-    ctx,
-    defaultRowHeight,
-    expandedRows,
-    fields,
-    hasNestedFrames,
-    hasWrappedCols,
-    wrappedColIdxs,
-  ]);
+  }, [hasNestedFrames, hasWrappedCols, defaultHeight, fields, colWidths, measurers, expandedRows]);
 
   return rowHeight;
 }
@@ -504,3 +462,159 @@ export function useColumnResize(
 
   return dataGridResizeHandler;
 }
+
+export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number) {
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = ref.current?.element;
+
+    if (!el || IS_SAFARI_26) {
+      return;
+    }
+
+    const updateScrollbarDimensions = () => {
+      setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    };
+
+    updateScrollbarDimensions();
+
+    const resizeObserver = new ResizeObserver(updateScrollbarDimensions);
+    resizeObserver.observe(el);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [ref, height]);
+
+  return scrollbarWidth;
+}
+
+const numIsEqual = (a: number, b: number) => a === b;
+
+export function useColWidths(
+  visibleFields: Field[],
+  availableWidth: number,
+  frozenColumns?: number
+): [number[], number] {
+  const [widths, setWidths] = useState<number[]>(computeColWidths(visibleFields, availableWidth));
+
+  // only replace the widths array if something actually changed
+  useEffect(() => {
+    const newWidths = computeColWidths(visibleFields, availableWidth);
+    if (!compareArrayValues(widths, newWidths, numIsEqual)) {
+      setWidths(newWidths);
+    }
+  }, [availableWidth, widths, visibleFields]);
+
+  // this is to avoid buggy situations where all visible columns are frozen
+  const numFrozenColsFullyInView = useMemo(() => {
+    if (!frozenColumns || frozenColumns <= 0) {
+      return -1;
+    }
+
+    const fullyVisibleCols = widths.reduce(
+      ([count, remainingWidth], nextWidth) => {
+        if (remainingWidth - nextWidth >= 0) {
+          return [count + 1, remainingWidth - nextWidth];
+        }
+        return [count, 0];
+      },
+      [0, availableWidth]
+    )[0];
+
+    // de-noise memoized changes to the columns array, and only change this
+    // number when the number of frozen columns changes or once there are fewer
+    // visible columns than the number of frozen columns.
+    return Math.min(fullyVisibleCols, frozenColumns);
+  }, [widths, availableWidth, frozenColumns]);
+
+  return [widths, numFrozenColsFullyInView];
+}
+
+const isReducer = (maybeReducer: string): maybeReducer is ReducerID => maybeReducer in ReducerID;
+const nonMathReducers = new Set<ReducerID>([
+  ReducerID.allValues,
+  ReducerID.changeCount,
+  ReducerID.count,
+  ReducerID.countAll,
+  ReducerID.distinctCount,
+  ReducerID.first,
+  ReducerID.firstNotNull,
+  ReducerID.last,
+  ReducerID.lastNotNull,
+  ReducerID.uniqueValues,
+]);
+const isNonMathReducer = (reducer: string) => isReducer(reducer) && nonMathReducers.has(reducer);
+const noFormattingReducers = new Set<ReducerID>([ReducerID.count, ReducerID.countAll]);
+const shouldReducerSkipFormatting = (reducer: string) => isReducer(reducer) && noFormattingReducers.has(reducer);
+
+export const useReducerEntries = (
+  field: Field,
+  rows: TableRow[],
+  displayName: string,
+  colIdx: number
+): Array<[string, string | null]> => {
+  return useMemo(() => {
+    const reducers: string[] = field.config.custom?.footer?.reducers ?? [];
+
+    if (
+      reducers.length === 0 ||
+      (field.type !== FieldType.number && reducers.every((reducerId) => !isNonMathReducer(reducerId)))
+    ) {
+      return [];
+    }
+
+    // Create a new state object that matches the original behavior exactly
+    const newState: FooterFieldState = {
+      lastProcessedRowCount: 0,
+      ...(field.state || {}), // Preserve any existing state properties
+    };
+
+    // Assign back to field
+    field.state = newState;
+
+    const currentRowCount = rows.length;
+    const lastRowCount = newState.lastProcessedRowCount;
+
+    // Check if we need to invalidate the cache
+    if (lastRowCount !== currentRowCount) {
+      // Cache should be invalidated as row count has changed
+      if (newState.calcs) {
+        delete newState.calcs;
+      }
+      // Update the row count tracker
+      newState.lastProcessedRowCount = currentRowCount;
+    }
+
+    // Calculate all specified reducers
+    const results: Record<string, number | null> = reduceField({
+      field: {
+        ...field,
+        values: rows.map((row) => row[displayName]),
+      },
+      reducers,
+    });
+
+    return reducers.map((reducerId) => {
+      if (
+        results[reducerId] === undefined ||
+        // For non-number fields, only show special count reducers
+        (field.type !== FieldType.number && !isNonMathReducer(reducerId)) ||
+        // for countAll, only show the reducer in the first column
+        (reducerId === ReducerID.countAll && colIdx !== 0)
+      ) {
+        return [reducerId, null];
+      }
+
+      const value = results[reducerId];
+      let result = null;
+      if (!shouldReducerSkipFormatting(reducerId) && field.display) {
+        result = formattedValueToString(field.display(value));
+      } else if (value != null) {
+        result = String(value);
+      }
+
+      return [reducerId, result];
+    });
+  }, [field, rows, displayName, colIdx]);
+};

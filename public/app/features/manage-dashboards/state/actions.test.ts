@@ -7,7 +7,8 @@ import {
   defaultSpec as defaultDashboardV2Spec,
   defaultPanelSpec,
   defaultQueryVariableSpec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+  defaultDataQueryKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
@@ -40,7 +41,7 @@ jest.mock('@grafana/runtime', () => ({
           uid: string;
           name: string;
           type: string;
-          meta: { id: string };
+          meta: { id: string; builtIn?: boolean };
         };
       } = {
         prometheus: {
@@ -55,18 +56,21 @@ jest.mock('@grafana/runtime', () => ({
           type: 'loki',
           meta: { id: 'loki' },
         },
+        // grafana datasource is what we call "-- Grafana --" datasource and it's returned
+        // from datasourceSrv with meta: {builtIn: true}
         grafana: {
           uid: 'grafana-uid',
           name: 'Grafana',
           type: 'grafana',
-          meta: { id: 'grafana' },
+          meta: { id: 'grafana', builtIn: true },
         },
-        // "datasource" type is what we call "--Dashboard--" datasource
+        // "datasource" type is what we call "-- Dashboard --" datasource and it's returned
+        // from datasourceSrv with meta: {builtIn: true}
         datasource: {
           uid: '--Dashboard--',
           name: '--Dashboard--',
           type: 'datasource',
-          meta: { id: 'dashboard' },
+          meta: { id: 'dashboard', builtIn: true },
         },
       };
       return dsListTypeDSMock[dsType.type];
@@ -836,7 +840,9 @@ describe('processV2Datasources', () => {
                     refId: 'A',
                     hidden: false,
                     query: {
-                      kind: 'prometheus',
+                      kind: 'DataQuery',
+                      version: defaultDataQueryKind().version,
+                      group: 'prometheus',
                       spec: {
                         expr: 'access_evaluation_duration_count',
                         range: true,
@@ -862,7 +868,9 @@ describe('processV2Datasources', () => {
             ...defaultQueryVariableSpec(),
             name: 'var1',
             query: {
-              kind: 'loki',
+              kind: 'DataQuery',
+              version: defaultDataQueryKind().version,
+              group: 'loki',
               spec: {
                 expr: 'access_evaluation_duration_count',
                 range: true,
@@ -880,7 +888,9 @@ describe('processV2Datasources', () => {
             hide: false,
             iconColor: 'red',
             query: {
-              kind: 'loki',
+              kind: 'DataQuery',
+              version: defaultDataQueryKind().version,
+              group: 'loki',
               spec: {
                 expr: 'access_evaluation_duration_count',
                 range: true,
@@ -975,25 +985,30 @@ describe('processV2Datasources', () => {
 
 describe('processV2DatasourceInput', () => {
   // should not map grafana datasource input or dashboard datasource input
-  it('Should not map grafana datasource input', async () => {
+  // grafana datasource input is built in and
+  it('Should not map grafana datasource input (built in)', async () => {
     const queryVariable = {
       kind: 'QueryVariable',
       spec: {
         ...defaultQueryVariableSpec(),
         name: 'var2WithGrafanaDs',
         query: {
-          kind: 'grafana',
+          kind: 'DataQuery' as const,
+          version: defaultDataQueryKind().version,
+          group: 'grafana',
           spec: {
-            panelId: 2,
+            expr: 'access_evaluation_duration_count',
+            range: true,
           },
         },
       },
     };
+
     const result = await processV2DatasourceInput(queryVariable.spec, {});
     expect(result).toEqual({});
   });
 
-  it('Should not map dashboard datasource input', async () => {
+  it('Should not map dashboard datasource input (built in)', async () => {
     // create a panel with dashboard datasource input
     const panelQuery = {
       kind: 'PanelQuery',
@@ -1001,7 +1016,9 @@ describe('processV2DatasourceInput', () => {
         refId: 'A',
         hidden: false,
         query: {
-          kind: 'datasource',
+          kind: 'DataQuery' as const,
+          version: defaultDataQueryKind().version,
+          group: 'datasource',
           spec: {
             panelId: 2,
           },

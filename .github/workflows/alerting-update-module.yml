@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4 # 4.2.2
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Check if update branch exists
@@ -29,7 +29,7 @@ jobs:
           fi
 
       - name: Setup Go
-        uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # 5.3.0
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # 6.0.0
         with:
           "go-version-file": "go.mod"
 
@@ -51,7 +51,7 @@ jobs:
         run: |
           TO_COMMIT="$(gh api repos/grafana/alerting/commits/"$BRANCH" --jq '.sha')"
            if [ -z "$TO_COMMIT" ]; then
-            echo "Branch $BRANCH not found in alerting repo, falling back to main branch"
+            echo "Branch $BRANCH not found in alerting repo"
             exit 1
           fi
           echo "to_commit=$TO_COMMIT" >> "$GITHUB_OUTPUT"
@@ -60,10 +60,10 @@ jobs:
         run: |
           FROM_COMMIT="${{ steps.current-commit.outputs.from_commit }}"
           TO_COMMIT="${{ steps.latest-commit.outputs.to_commit }}"
-          
+
           # Compare just the length of the shorter hash
           SHORT_TO_COMMIT="${TO_COMMIT:0:${#FROM_COMMIT}}"
-          
+
           if [ "$FROM_COMMIT" = "$SHORT_TO_COMMIT" ]; then
             echo "Current version ($FROM_COMMIT) is already at latest ($SHORT_TO_COMMIT). No update needed."
             exit 0
@@ -85,7 +85,7 @@ jobs:
           printf "%s\n" "$ALERTING_COMMITS"
 
           # make the list for markdown and replace PR numbers with links
-          ALERTING_COMMITS_FORMATTED="$(echo "$ALERTING_COMMITS" | while read -r line; do echo "- $line" | sed -E 's/\(#([0-9]+)\)/[#\1](https:\/\/github.com\/grafana\/grafana\/pull\/\1)/g'; done)"
+          ALERTING_COMMITS_FORMATTED="$(echo "$ALERTING_COMMITS" | while read -r line; do echo "- $line" | sed -E 's/\(#([0-9]+)\)/[#\1](https:\/\/github.com\/grafana\/alerting\/pull\/\1)/g'; done)"
 
           {
             echo "alerting_commits<<EOF"
@@ -123,6 +123,9 @@ jobs:
           title:  'Alerting: Update alerting module to ${{ steps.latest-commit.outputs.to_commit }}'
           branch: alerting/update-alerting-module
           delete-branch: true
+          labels: |
+            no-changelog
+            no-backport
           body: |
             Updates Grafana Alerting module to latest version.
 
@@ -144,3 +147,14 @@ jobs:
             echo "## Pull Request Created"
             echo "🔗 [View Pull Request]($PR_URL)"
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Send Slack Message
+        uses: grafana/shared-workflows/actions/send-slack-message@send-slack-message/v2.0.4
+        with:
+          method: 'chat.postMessage'
+          # send to alerting-reviews channel
+          payload-templated: true
+          payload:  |
+            {
+              "channel": "C076RNRRZ2N",
+              "text": "Update alerting module in Grafana ${{ steps.create-pr.outputs.pull-request-url }}"
+            }

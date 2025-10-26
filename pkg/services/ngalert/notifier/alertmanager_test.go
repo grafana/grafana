@@ -23,6 +23,7 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -58,12 +59,14 @@ func setupAMTest(t *testing.T) *alertmanager {
 	stateStore := NewFileStore(int64(orgID), kvStore)
 	crypto := NewCrypto(secretsService, s, l)
 
-	am, err := NewAlertmanager(context.Background(), 1, cfg, s, stateStore, &NilPeer{}, decryptFn, nil, m, featuremgmt.WithFeatures(), crypto)
+	am, err := NewAlertmanager(context.Background(), 1, cfg, s, stateStore, &NilPeer{}, decryptFn, nil, m, featuremgmt.WithFeatures(), crypto, nil)
 	require.NoError(t, err)
 	return am
 }
 
 func TestIntegrationAlertmanager_newAlertmanager(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	am := setupAMTest(t)
 	require.False(t, am.Ready())
 }

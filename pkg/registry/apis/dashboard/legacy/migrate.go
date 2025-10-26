@@ -11,11 +11,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
+
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -32,8 +34,9 @@ type MigrateOptions struct {
 	LargeObjects apistore.LargeObjectSupport
 	BlobStore    resourcepb.BlobStoreClient
 	Resources    []schema.GroupResource
-	WithHistory  bool // only applies to dashboards
-	OnlyCount    bool // just count the values
+	WithHistory  bool   // only applies to dashboards
+	OnlyCount    bool   // just count the values
+	StackID      string // stack identifier for logging
 	Progress     func(count int, msg string)
 }
 
@@ -49,10 +52,12 @@ func ProvideLegacyMigrator(
 	sql db.DB, // direct access to tables
 	provisioning provisioning.ProvisioningService, // only needed for dashboard settings
 	libraryPanelSvc librarypanels.Service,
+	dashboardPermissionSvc accesscontrol.DashboardPermissionsService,
 	accessControl accesscontrol.AccessControl,
+	features featuremgmt.FeatureToggles,
 ) LegacyMigrator {
 	dbp := legacysql.NewDatabaseProvider(sql)
-	return NewDashboardAccess(dbp, authlib.OrgNamespaceFormatter, nil, provisioning, libraryPanelSvc, sort.ProvideService(), accessControl)
+	return NewDashboardAccess(dbp, authlib.OrgNamespaceFormatter, nil, provisioning, libraryPanelSvc, sort.ProvideService(), dashboardPermissionSvc, accessControl, features)
 }
 
 type BlobStoreInfo struct {
@@ -135,6 +140,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 
 	// Now run each migration
 	blobStore := BlobStoreInfo{}
+	opts.StackID = fmt.Sprintf("%d", info.StackID) // Pass stack ID through options
 	a.log.Info("start migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
 	for _, m := range migratorFuncs {
 		blobs, err := m(ctx, info.OrgID, opts, stream)
@@ -211,10 +217,11 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 
 func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
 	query := &DashboardQuery{
-		OrgID:      orgId,
-		Limit:      100000000,
-		GetHistory: opts.WithHistory, // include history
-		Order:      "ASC",            // oldest first
+		OrgID:         orgId,
+		Limit:         100000000,
+		GetHistory:    opts.WithHistory, // include history
+		AllowFallback: true,             // allow fallback to dashboard table during migration
+		Order:         "ASC",            // oldest first
 	}
 
 	blobs := &BlobStoreInfo{}
@@ -306,9 +313,12 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 		for _, row := range rows.rejected {
 			id := row.Dash.Labels[utils.LabelKeyDeprecatedInternalID]
 			a.log.Warn("rejected dashboard",
+				"namespace", opts.Namespace,
 				"dashboard", row.Dash.Name,
 				"uid", row.Dash.UID,
 				"id", id,
+				"version", row.Dash.Generation,
+				"stackId", opts.StackID,
 			)
 			opts.Progress(-2, fmt.Sprintf("rejected: id:%s, uid:%s", id, row.Dash.Name))
 		}

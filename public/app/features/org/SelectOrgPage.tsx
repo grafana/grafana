@@ -5,7 +5,8 @@ import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { StoreState, UserOrg } from 'app/types';
+import { StoreState } from 'app/types/store';
+import { UserOrg } from 'app/types/user';
 
 import { getUserOrganizations, setUserOrganization } from './state/actions';
 

@@ -2,15 +2,20 @@ import { BuildInfo } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { Faro, Instrumentation } from '@grafana/faro-core';
 import * as faroWebSdkModule from '@grafana/faro-web-sdk';
-import { BrowserConfig, FetchTransport, SessionInstrumentation } from '@grafana/faro-web-sdk';
+import {
+  BrowserConfig,
+  FetchTransport,
+  SessionInstrumentation,
+  UserActionInstrumentation,
+  ErrorsInstrumentation,
+  WebVitalsInstrumentation,
+  ViewInstrumentation,
+} from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
-import {
-  GrafanaJavascriptAgentBackend,
-  GrafanaJavascriptAgentBackendOptions,
-  TRACKING_URLS,
-} from './GrafanaJavascriptAgentBackend';
+import { GrafanaJavascriptAgentBackend, TRACKING_URLS } from './GrafanaJavascriptAgentBackend';
+import { GrafanaJavascriptAgentBackendOptions } from './types';
 
 describe('GrafanaJavascriptAgentEchoBackend', () => {
   let mockedSetUser: jest.Mock;
@@ -55,8 +60,10 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
   });
 
   const buildInfo: BuildInfo = {
+    buildstamp: 12345,
     version: '1.0',
     commit: 'abcd123',
+    commitShort: 'abc',
     env: 'production',
     versionString: 'Grafana v1.0 (abcd123)',
     edition: GrafanaEdition.OpenSource,
@@ -66,22 +73,18 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
   };
 
   const options: GrafanaJavascriptAgentBackendOptions = {
-    buildInfo,
-    app: {
-      version: '1.0',
-    },
-    allInstrumentationsEnabled: true,
-    errorInstrumentalizationEnabled: true,
-    consoleInstrumentalizationEnabled: true,
-    webVitalsInstrumentalizationEnabled: true,
-    tracingInstrumentalizationEnabled: true,
     customEndpoint: '/log-grafana-javascript-agent',
-    user: {
-      email: 'darth.vader@sith.glx',
-      id: '504',
-      orgId: 1,
-    },
+
+    webVitalsAttribution: true,
+    consoleInstrumentalizationEnabled: true,
+    performanceInstrumentalizationEnabled: true,
+    cspInstrumentalizationEnabled: true,
+    tracingInstrumentalizationEnabled: true,
+
+    buildInfo: buildInfo,
+    userIdentifier: 'abc123',
     ignoreUrls: [],
+    botFilterEnabled: false,
   };
 
   it('will set up FetchTransport if customEndpoint is provided', () => {
@@ -111,13 +114,13 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
 
     //assert
     expect(initializeFaroMock).toHaveBeenCalledTimes(1);
-    expect(mockedSetUser).toHaveBeenCalledTimes(1);
-    expect(mockedSetUser).toHaveBeenCalledWith({
-      id: '504',
-      attributes: {
-        orgId: '1',
-      },
-    });
+    expect(initializeFaroMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user: {
+          id: 'abc123',
+        },
+      })
+    );
   });
 
   test('will ensure the performance of TRACKING_URLS', async () => {
@@ -134,22 +137,46 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
   it('correctly set instrumentation based on options', async () => {
     let opts = {
       ...options,
-      allInstrumentationsEnabled: false,
-      errorInstrumentalizationEnabled: false,
       consoleInstrumentalizationEnabled: false,
-      webVitalsInstrumentalizationEnabled: false,
+      performanceInstrumentalizationEnabled: false,
+      cspInstrumentalizationEnabled: false,
       tracingInstrumentalizationEnabled: false,
     };
     new GrafanaJavascriptAgentBackend(opts);
-    expect(initializeFaroMock.mock.calls[0][0].instrumentations?.length).toEqual(1);
-    expect(initializeFaroMock.mock.calls[0][0].instrumentations?.[0]).toBeInstanceOf(SessionInstrumentation);
+
+    let lastInstrumentations = initializeFaroMock.mock.calls.at(-1)?.[0].instrumentations;
+    expect(lastInstrumentations).toHaveLength(5);
+    expect(lastInstrumentations).toEqual(
+      expect.arrayContaining([
+        expect.any(SessionInstrumentation),
+        expect.any(UserActionInstrumentation),
+        expect.any(ErrorsInstrumentation),
+        expect.any(WebVitalsInstrumentation),
+        expect.any(ViewInstrumentation),
+      ])
+    );
 
     opts.tracingInstrumentalizationEnabled = true;
-
     new GrafanaJavascriptAgentBackend(opts);
-    expect(initializeFaroMock.mock.calls[1][0].instrumentations?.length).toEqual(2);
-    expect(initializeFaroMock.mock.calls[1][0].instrumentations?.[0]).toBeInstanceOf(TracingInstrumentation);
-    expect(initializeFaroMock.mock.calls[1][0].instrumentations?.[1]).toBeInstanceOf(SessionInstrumentation);
+    lastInstrumentations = initializeFaroMock.mock.calls.at(-1)?.[0].instrumentations;
+    expect(lastInstrumentations).toHaveLength(6);
+    expect(lastInstrumentations).toEqual(
+      expect.arrayContaining([
+        expect.any(SessionInstrumentation),
+        expect.any(UserActionInstrumentation),
+        expect.any(ErrorsInstrumentation),
+        expect.any(WebVitalsInstrumentation),
+        expect.any(ViewInstrumentation),
+        expect.any(TracingInstrumentation),
+      ])
+    );
+  });
+
+  it('should use a beforeSend handler', () => {
+    new GrafanaJavascriptAgentBackend(options);
+
+    expect(initializeFaroMock).toHaveBeenCalledTimes(1);
+    expect(initializeFaroMock.mock.calls[0][0].beforeSend).toBeDefined();
   });
 
   //@FIXME - make integration test work

@@ -17,6 +17,7 @@ const (
 	WeightDashboard
 	WeightExplore
 	WeightDrilldown
+	WeightAssistant
 	WeightAlerting
 	WeightAlertsAndIncidents
 	WeightAIAndML
@@ -40,6 +41,7 @@ const (
 	NavIDDashboards           = "dashboards/browse"
 	NavIDExplore              = "explore"
 	NavIDDrilldown            = "drilldown"
+	NavIDAdaptiveTelemetry    = "adaptive-telemetry"
 	NavIDCfg                  = "cfg" // NavIDCfg is the id for org configuration navigation node
 	NavIDAlertsAndIncidents   = "alerts-and-incidents"
 	NavIDTestingAndSynthetics = "testing-and-synthetics"
@@ -153,14 +155,6 @@ func Sort(nodes []*NavLink) {
 
 	for _, child := range nodes {
 		child.Sort()
-	}
-}
-
-func (root *NavTreeRoot) ApplyHelpVersion(version string) {
-	helpNode := root.FindById("help")
-
-	if helpNode != nil {
-		helpNode.SubTitle = version
 	}
 }
 

@@ -3,17 +3,27 @@ import { SyntaxNode } from '@lezer/common';
 import { LRParser } from '@lezer/lr';
 
 // Although 0 isn't explicitly provided in the @grafana/lezer-logql library as the error node ID, it does appear to be the ID of error nodes within lezer.
-export const ErrorId = 0;
+const ErrorId = 0;
 
-interface ParserErrorBoundary {
+export const warningTypes: Record<string, string> = {
+  SubqueryExpr:
+    'This subquery may return only one data point, preventing rate/increase/delta calculations. Use a range at least twice the step size (e.g., [2x:x]).',
+};
+
+enum NodeType {
+  SubqueryExpr = 'SubqueryExpr',
+  Duration = 'NumberDurationLiteralInDurationContext',
+}
+
+interface ParserIssueBoundary {
   startLineNumber: number;
   startColumn: number;
   endLineNumber: number;
   endColumn: number;
-  error: string;
+  issue: string;
 }
 
-interface ParseError {
+interface ParseIssue {
   text: string;
   node: SyntaxNode;
 }
@@ -30,9 +40,9 @@ export function validateQuery(
   interpolatedQuery: string,
   queryLines: string[],
   parser: LRParser
-): ParserErrorBoundary[] | false {
+): { errors: ParserIssueBoundary[]; warnings: ParserIssueBoundary[] } {
   if (!query) {
-    return false;
+    return { errors: [], warnings: [] };
   }
 
   /**
@@ -42,51 +52,93 @@ export function validateQuery(
    * have different lengths. With this, we also exclude irrelevant parser errors that are produced by
    * lezer not understanding $variables and $__variables, which usually generate 2 or 3 error SyntaxNode.
    */
-  const interpolatedErrors: ParseError[] = parseQuery(interpolatedQuery, parser);
-  if (!interpolatedErrors.length) {
-    return false;
+  const { errors: interpolatedErrors, warnings: interpolatedWarnings } = parseQuery(interpolatedQuery, parser);
+  if (!interpolatedErrors.length && !interpolatedWarnings.length) {
+    return { errors: [], warnings: [] };
   }
 
-  let parseErrors: ParseError[] = interpolatedErrors;
+  let parseErrors: ParseIssue[] = interpolatedErrors;
+  let parseWarnings: ParseIssue[] = interpolatedWarnings;
   if (query !== interpolatedQuery) {
-    const queryErrors: ParseError[] = parseQuery(query, parser);
+    const { errors: queryErrors, warnings: queryWarnings } = parseQuery(query, parser);
     parseErrors = interpolatedErrors.flatMap(
       (interpolatedError) =>
         queryErrors.filter((queryError) => interpolatedError.text === queryError.text) || interpolatedError
     );
+    parseWarnings = interpolatedWarnings.flatMap(
+      (interpolatedWarning) =>
+        queryWarnings.filter((queryWarning) => interpolatedWarning.node.from === queryWarning.node.from) ||
+        interpolatedWarning
+    );
   }
 
-  return parseErrors.map((parseError) => findErrorBoundary(query, queryLines, parseError)).filter(isErrorBoundary);
+  const errorBoundaries = parseErrors
+    .map((parseError) => findIssueBoundary(query, queryLines, parseError, 'error'))
+    .filter(isValidIssueBoundary);
+  const warningBoundaries = parseWarnings
+    .map((parseWarning) => findIssueBoundary(query, queryLines, parseWarning, 'warning'))
+    .filter(isValidIssueBoundary);
+
+  return {
+    errors: errorBoundaries,
+    warnings: warningBoundaries,
+  };
 }
 
 function parseQuery(query: string, parser: LRParser) {
-  const parseErrors: ParseError[] = [];
+  const parseErrors: ParseIssue[] = [];
+  const parseWarnings: ParseIssue[] = [];
+
   const tree = parser.parse(query);
   tree.iterate({
     enter: (nodeRef): false | void => {
       if (nodeRef.type.id === ErrorId) {
         const node = nodeRef.node;
-        parseErrors.push({
-          node: node,
-          text: query.substring(node.from, node.to),
-        });
+        parseErrors.push({ node: node, text: query.substring(node.from, node.to) });
+      }
+
+      if (nodeRef.type.name === NodeType.SubqueryExpr) {
+        const node = nodeRef.node;
+        const durations: string[] = [];
+
+        const children = node.getChildren(NodeType.Duration);
+        for (const child of children) {
+          durations.push(query.substring(child.from, child.to));
+        }
+
+        if (durations.length === 2 && durations[0] === durations[1]) {
+          parseWarnings.push({ node: node, text: query.substring(node.from, node.to) });
+        }
       }
     },
   });
-  return parseErrors;
+
+  return { errors: parseErrors, warnings: parseWarnings };
 }
 
-function findErrorBoundary(query: string, queryLines: string[], parseError: ParseError): ParserErrorBoundary | null {
+function findIssueBoundary(
+  query: string,
+  queryLines: string[],
+  parseError: ParseIssue,
+  issueType: 'error' | 'warning'
+): ParserIssueBoundary | null {
   if (queryLines.length === 1) {
     const isEmptyString = parseError.node.from === parseError.node.to;
     const errorNode = isEmptyString && parseError.node.parent ? parseError.node.parent : parseError.node;
-    const error = isEmptyString ? query.substring(errorNode.from, errorNode.to) : parseError.text;
+    let issue: string;
+
+    if (issueType === 'error') {
+      issue = isEmptyString ? query.substring(errorNode.from, errorNode.to) : parseError.text;
+    } else {
+      issue = warningTypes[parseError.node.type.name];
+    }
+
     return {
       startLineNumber: 1,
       startColumn: errorNode.from + 1,
       endLineNumber: 1,
       endColumn: errorNode.to + 1,
-      error,
+      issue,
     };
   }
 
@@ -105,14 +157,14 @@ function findErrorBoundary(query: string, queryLines: string[], parseError: Pars
       startColumn: parseError.node.from - startPos + 1,
       endLineNumber: line + 1,
       endColumn: parseError.node.to - startPos + 1,
-      error: parseError.text,
+      issue: issueType === 'error' ? parseError.text : warningTypes[parseError.node.type.name],
     };
   }
 
   return null;
 }
 
-function isErrorBoundary(boundary: ParserErrorBoundary | null): boundary is ParserErrorBoundary {
+function isValidIssueBoundary(boundary: ParserIssueBoundary | null): boundary is ParserIssueBoundary {
   return boundary !== null;
 }
 

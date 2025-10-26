@@ -12,7 +12,8 @@ import {
   updateRichHistorySettings,
   updateStarredInRichHistory,
 } from 'app/core/utils/richHistory';
-import { RichHistoryQuery, ThunkResult } from 'app/types';
+import { RichHistoryQuery } from 'app/types/explore';
+import { ThunkResult } from 'app/types/store';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';

@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -20,7 +21,7 @@ import (
 func TargetCommand(version, commit, buildBranch, buildstamp string) *cli.Command {
 	return &cli.Command{
 		Name:  "target",
-		Usage: "target specific grafana dskit services",
+		Usage: "target specific grafana services",
 		Flags: commonFlags,
 		Action: func(context *cli.Context) error {
 			return RunTargetServer(standalone.BuildInfo{
@@ -91,6 +92,10 @@ func RunTargetServer(opts standalone.BuildInfo, cli *cli.Context) error {
 
 	metrics.SetBuildInformation(metrics.ProvideRegisterer(), opts.Version, opts.Commit, opts.BuildBranch, getBuildstamp(opts))
 
+	// Initialize the OpenFeature client with the configuration
+	if err := featuremgmt.InitOpenFeatureWithCfg(cfg); err != nil {
+		return err
+	}
 	s, err := server.InitializeModuleServer(
 		cfg,
 		server.Options{

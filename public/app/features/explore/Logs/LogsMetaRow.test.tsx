@@ -3,17 +3,8 @@ import userEvent from '@testing-library/user-event';
 import saveAs from 'file-saver';
 import { ComponentProps } from 'react';
 
-import {
-  FieldType,
-  LogLevel,
-  LogsDedupStrategy,
-  LogsMetaItem,
-  LogsMetaKind,
-  standardTransformersRegistry,
-  store,
-  toDataFrame,
-} from '@grafana/data';
-import { organizeFieldsTransformer } from '@grafana/data/internal';
+import { FieldType, LogLevel, LogsDedupStrategy, LogsMetaItem, LogsMetaKind, store, toDataFrame } from '@grafana/data';
+import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 
 import { logRowsToReadableJson } from '../../logs/utils';
@@ -35,7 +26,8 @@ const defaultProps: LogsMetaRowProps = {
   dedupCount: 0,
   displayedFields: [],
   logRows: [],
-  clearDetectedFields: jest.fn(),
+  clearDisplayedFields: jest.fn(),
+  defaultDisplayedFields: [],
 };
 
 const setup = (propOverrides?: object, disableDownload = false) => {
@@ -70,7 +62,7 @@ describe('LogsMetaRow', () => {
 
   it('renders a button to clear displayedfields', () => {
     const clearSpy = jest.fn();
-    setup({ displayedFields: ['testField1234'], clearDetectedFields: clearSpy });
+    setup({ displayedFields: ['testField1234'], clearDisplayedFields: clearSpy });
     fireEvent(
       screen.getByRole('button', {
         name: 'Show original line',
@@ -177,18 +169,7 @@ describe('LogsMetaRow', () => {
 
   it('renders a button to download CSV', async () => {
     const transformers = [extractFieldsTransformer, organizeFieldsTransformer];
-    standardTransformersRegistry.setInit(() => {
-      return transformers.map((t) => {
-        return {
-          id: t.id,
-          aliasIds: t.aliasIds,
-          name: t.name,
-          transformation: t,
-          description: t.description,
-          editor: () => null,
-        };
-      });
-    });
+    mockTransformationsRegistry(transformers);
 
     const rows = [
       {

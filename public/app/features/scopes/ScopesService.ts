@@ -70,7 +70,16 @@ export class ScopesService implements ScopesContextValue {
 
     // Init from the URL when we first load
     const queryParams = new URLSearchParams(locationService.getLocation().search);
-    this.changeScopes(queryParams.getAll('scopes'));
+    const parentNodeId = queryParams.get('scope_parent');
+
+    this.changeScopes(queryParams.getAll('scopes'), parentNodeId ?? undefined);
+
+    // Pre-load parent node, to prevent UI flickering
+    if (parentNodeId) {
+      this.selectorService.resolvePathToRoot(parentNodeId, this.selectorService.state.tree!).catch((error) => {
+        console.error('Failed to pre-load parent node path', error);
+      });
+    }
 
     // Update scopes state based on URL.
     this.subscriptions.push(
@@ -80,24 +89,39 @@ export class ScopesService implements ScopesContextValue {
           return;
         }
         const queryParams = new URLSearchParams(location.search);
+
+        // If we have a parent node in the URL, fetch and expand it
+        const parentNode = queryParams.get('scope_parent');
         const scopes = queryParams.getAll('scopes');
-        //const scopesFromState = this.state.value.map((scope) => scope.metadata.name);
-        if (scopes.length) {
+
+        // Check if new scopes are different from the old scopes
+        const currentScopes = this.selectorService.state.appliedScopes.map((scope) => scope.scopeId);
+        if (scopes.length && !isEqual(scopes, currentScopes)) {
           // We only update scopes but never delete them. This is to keep the scopes in memory if user navigates to
           // page that does not use scopes (like from dashboard to dashboard list back to dashboard). If user
           // changes the URL directly, it would trigger a reload so scopes would still be reset.
-          this.changeScopes(scopes);
+          this.changeScopes(scopes, parentNode ?? undefined);
         }
       })
     );
 
     // Update the URL based on change in the scopes state
     this.subscriptions.push(
-      selectorService.subscribeToState((state, prev) => {
-        const oldScopeNames = prev.appliedScopes.map((scope) => scope.scopeId);
+      selectorService.subscribeToState((state, prevState) => {
+        const oldParentNode = prevState.appliedScopes[0]?.parentNodeId;
+        const newParentNode = state.appliedScopes[0]?.parentNodeId;
+
+        const parentNodeChanged = oldParentNode !== newParentNode;
+
+        const oldScopeNames = prevState.appliedScopes.map((scope) => scope.scopeId);
         const newScopeNames = state.appliedScopes.map((scope) => scope.scopeId);
-        if (!isEqual(oldScopeNames, newScopeNames)) {
-          this.locationService.partial({ scopes: newScopeNames }, true);
+
+        const scopesChanged = !isEqual(oldScopeNames, newScopeNames);
+        if (scopesChanged) {
+          this.locationService.partial(
+            { scopes: newScopeNames, scope_parent: parentNodeChanged ? newParentNode || null : oldParentNode },
+            true
+          );
         }
       })
     );
@@ -124,7 +148,8 @@ export class ScopesService implements ScopesContextValue {
     return this._stateObservable;
   }
 
-  public changeScopes = (scopeNames: string[]) => this.selectorService.changeScopes(scopeNames);
+  public changeScopes = (scopeNames: string[], parentNodeId?: string) =>
+    this.selectorService.changeScopes(scopeNames, parentNodeId);
 
   public setReadOnly = (readOnly: boolean) => {
     if (this.state.readOnly !== readOnly) {

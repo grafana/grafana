@@ -482,6 +482,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
+Note that the UID cannot be modified.
+
 **Example Response**:
 
 ```http
@@ -547,7 +549,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
   "id":1,
-  "uid": "updated UID",
+  "uid": "uid",
   "orgId":1,
   "name":"test_datasource",
   "type":"graphite",
@@ -566,6 +568,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
+Note that the UID cannot be modified.
+
 **Example Response**:
 
 ```http
@@ -575,7 +579,7 @@ Content-Type: application/json
 {
   "datasource": {
     "id": 1,
-    "uid": "updated UID",
+    "uid": "uid",
     "orgId": 1,
     "name": "test_datasource",
     "type": "graphite",

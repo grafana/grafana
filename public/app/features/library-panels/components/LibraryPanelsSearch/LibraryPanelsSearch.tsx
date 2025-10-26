@@ -4,8 +4,8 @@ import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useStyles2, VerticalGroup, FilterInput } from '@grafana/ui';
-import { FolderInfo } from 'app/types';
+import { useStyles2, Stack, FilterInput } from '@grafana/ui';
+import { FolderInfo } from 'app/types/folders';
 
 import { FolderFilter } from '../../../../core/components/FolderFilter/FolderFilter';
 import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
@@ -53,11 +53,11 @@ export const LibraryPanelsSearch = ({
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
 
   const sortOrFiltersVisible = showSort || showPanelFilter || showFolderFilter;
-  const verticalGroupSpacing = variant === LibraryPanelsSearchVariant.Tight ? 'lg' : 'xs';
+  const verticalGroupSpacing = variant === LibraryPanelsSearchVariant.Tight ? 3 : 0.5;
 
   return (
     <div className={styles.container}>
-      <VerticalGroup spacing={verticalGroupSpacing}>
+      <Stack direction="column" gap={verticalGroupSpacing}>
         <div
           className={cx(styles.gridContainer, {
             [styles.tightLayout]: variant === LibraryPanelsSearchVariant.Tight,
@@ -69,7 +69,7 @@ export const LibraryPanelsSearch = ({
               onChange={setSearchQuery}
               placeholder={t(
                 'library-panels.library-panels-search.placeholder-search-by-name-or-description',
-                'Search by name or description'
+                'Search by name, description or folder name'
               )}
               width={0}
               escapeRegex={false}
@@ -101,7 +101,7 @@ export const LibraryPanelsSearch = ({
             perPage={perPage}
           />
         </div>
-      </VerticalGroup>
+      </Stack>
     </div>
   );
 };

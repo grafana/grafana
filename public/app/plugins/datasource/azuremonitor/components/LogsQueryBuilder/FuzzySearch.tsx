@@ -10,7 +10,8 @@ import {
   BuilderQueryEditorWhereExpression,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
 
 import { BuildAndUpdateOptions, removeExtraQuotes } from './utils';
 
@@ -125,10 +126,20 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
                   onChange={(e: SelectableValue<string>) => updateFuzzySearch(e.value ?? '*', searchTerm)}
                   width="auto"
                 />
-                <Button variant="secondary" icon="times" onClick={onDeleteFuzzySearch} />
+                <Button
+                  aria-label={t('components.fuzzy-search.aria-label-remove-fuzzy-search', 'Remove fuzzy search')}
+                  variant="secondary"
+                  icon="times"
+                  onClick={onDeleteFuzzySearch}
+                />
               </>
             ) : (
-              <Button variant="secondary" onClick={() => setIsOpen(true)} icon="plus" />
+              <Button
+                aria-label={t('components.fuzzy-search.aria-label-add-fuzzy-search', 'Add fuzzy search')}
+                variant="secondary"
+                onClick={() => setIsOpen(true)}
+                icon="plus"
+              />
             )}
           </InputGroup>
         </EditorField>

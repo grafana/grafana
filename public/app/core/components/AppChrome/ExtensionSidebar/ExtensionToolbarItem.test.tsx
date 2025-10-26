@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { EventBusSrv, store } from '@grafana/data';
-import { config, setAppEvents, usePluginLinks } from '@grafana/runtime';
+import { setAppEvents, usePluginLinks } from '@grafana/runtime';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
@@ -26,13 +26,6 @@ jest.mock('@grafana/data', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: {
-      ...jest.requireActual('@grafana/runtime').config.featureToggles,
-      extensionSidebar: true,
-    },
-  },
   usePluginLinks: jest.fn().mockImplementation(() => ({
     links: [
       {
@@ -81,18 +74,11 @@ describe('ExtensionToolbarItem', () => {
     (store.get as jest.Mock).mockClear();
     (store.set as jest.Mock).mockClear();
     (store.delete as jest.Mock).mockClear();
-    jest.replaceProperty(config.featureToggles, 'extensionSidebar', true);
     setAppEvents(new EventBusSrv());
   });
 
   afterEach(() => {
     jest.clearAllMocks();
-  });
-
-  it('should not render when feature toggle is disabled', () => {
-    jest.replaceProperty(config.featureToggles, 'extensionSidebar', false);
-    setup();
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('should not render when no components are available', () => {
@@ -228,5 +214,42 @@ describe('ExtensionToolbarItem', () => {
     await userEvent.click(closeButton);
 
     expect(screen.getByTestId('is-open')).toHaveTextContent('false');
+  });
+
+  it('should render individual buttons when multiple plugins are available', async () => {
+    const plugin1Meta = {
+      pluginId: 'grafana-investigations-app',
+      addedComponents: [{ ...mockComponent, title: 'Investigations' }],
+    };
+
+    const plugin2Meta = {
+      pluginId: 'grafana-assistant-app',
+      addedComponents: [{ ...mockComponent, title: 'Assistant' }],
+    };
+
+    (usePluginLinks as jest.Mock).mockReturnValue({
+      links: [
+        { pluginId: plugin1Meta.pluginId, title: plugin1Meta.addedComponents[0].title },
+        { pluginId: plugin2Meta.pluginId, title: plugin2Meta.addedComponents[0].title },
+      ],
+      isLoading: false,
+    });
+
+    (getExtensionPointPluginMeta as jest.Mock).mockReturnValue(
+      new Map([
+        [plugin1Meta.pluginId, plugin1Meta],
+        [plugin2Meta.pluginId, plugin2Meta],
+      ])
+    );
+
+    setup();
+
+    // Should render two separate buttons, not a dropdown
+    const buttons = screen.getAllByTestId(/extension-toolbar-button-open/);
+    expect(buttons).toHaveLength(2);
+
+    // Each button should have the correct title
+    expect(buttons[0]).toHaveAttribute('aria-label', 'Open Investigations');
+    expect(buttons[1]).toHaveAttribute('aria-label', 'Open Assistant');
   });
 });

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 
 import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
@@ -160,7 +161,10 @@ export const FilterList = ({ options, values, caseSensitive, onChange, searchFil
           >
             {ItemRenderer}
           </List>
-          <div className={styles.filterListRow}>
+          <div
+            className={styles.filterListRow}
+            data-testid={selectors.components.Panels.Visualization.TableNG.Filters.SelectAll}
+          >
             <Checkbox
               value={selectCheckValue}
               indeterminate={selectCheckIndeterminate}

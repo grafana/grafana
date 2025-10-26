@@ -228,7 +228,7 @@ func Test_StartSnapshot(t *testing.T) {
 			SnapshotID:           "uuid",
 			MaxItemsPerPartition: 1024,
 			Algo:                 "nacl",
-			EncryptionKey:        []uint8{0x66, 0x6f, 0x6f, 0xa},                               // foo
+			GMSPublicKey:         []uint8{0x66, 0x6f, 0x6f, 0xa},                               // foo
 			Metadata:             []uint8{0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xa}, // metadata
 		}
 

@@ -6,7 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Select, Button, Field } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorDataSourceJsonData } from '../../types';
+import { AzureMonitorDataSourceJsonData } from '../../types/types';
 
 export interface Props {
   options: AzureMonitorDataSourceJsonData;

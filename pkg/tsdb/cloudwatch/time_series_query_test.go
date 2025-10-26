@@ -138,9 +138,6 @@ func TestTimeSeriesQuery(t *testing.T) {
 func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMetricData_is_called_once_per_grouping_of_queries_by_region(t *testing.T) {
 	/* TODO: This test aims to verify the logic to group regions which has been extracted from ParseMetricDataQueries.
 	It should be replaced by a test at a lower level when grouping by regions is incorporated into a separate business logic layer */
-	// FIXME: this test is broken - it only works because we're recovering from the panic that the Mock
-	// produces - see time_series_query.go line 78. If that recover is commented out, the test fails.
-	t.Skip("skipping broken test")
 	ds := newTestDatasource()
 
 	origNewCWClient := NewCWClient
@@ -152,6 +149,8 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 	NewCWClient = func(aws.Config) models.CWClient {
 		return &mockMetricClient
 	}
+	oneToTwoHoursAgo := backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)}
+	twoToThreeHoursAgo := backend.TimeRange{From: time.Now().Add(time.Hour * -3), To: time.Now().Add(time.Hour * -2)}
 
 	t.Run("Queries with the same region should call GetMetricData 1 time", func(t *testing.T) {
 		mockMetricClient = mocks.MetricsAPI{}
@@ -164,7 +163,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 			Queries: []backend.DataQuery{
 				{
 					RefID:     "A",
-					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					TimeRange: oneToTwoHoursAgo,
 					JSON: json.RawMessage(`{
 						"type":      "timeSeriesQuery",
 						"namespace": "AWS/EC2",
@@ -176,7 +175,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 				},
 				{
 					RefID:     "B",
-					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					TimeRange: oneToTwoHoursAgo,
 					JSON: json.RawMessage(`{
 						"type":      "timeSeriesQuery",
 						"namespace": "AWS/EC2",
@@ -206,7 +205,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 			Queries: []backend.DataQuery{
 				{
 					RefID:     "A",
-					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					TimeRange: oneToTwoHoursAgo,
 					JSON: json.RawMessage(`{
 						"type":      "timeSeriesQuery",
 						"namespace": "AWS/EC2",
@@ -218,7 +217,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 				},
 				{
 					RefID:     "A2",
-					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					TimeRange: oneToTwoHoursAgo,
 					JSON: json.RawMessage(`{
 						"type":      "timeSeriesQuery",
 						"namespace": "AWS/EC2",
@@ -230,7 +229,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 				},
 				{
 					RefID:     "B",
-					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					TimeRange: oneToTwoHoursAgo,
 					JSON: json.RawMessage(`{
 						"type":      "timeSeriesQuery",
 						"namespace": "AWS/EC2",
@@ -260,7 +259,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 			Queries: []backend.DataQuery{
 				{
 					RefID:     "A",
-					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now()},
+					TimeRange: twoToThreeHoursAgo,
 					JSON: json.RawMessage(`{
 						"type":      "timeSeriesQuery",
 						"namespace": "AWS/EC2",
@@ -272,7 +271,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 				},
 				{
 					RefID:     "A2",
-					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now()},
+					TimeRange: twoToThreeHoursAgo,
 					JSON: json.RawMessage(`{
 						"type":      "timeSeriesQuery",
 						"namespace": "AWS/EC2",
@@ -284,7 +283,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 				},
 				{
 					RefID:     "B",
-					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					TimeRange: oneToTwoHoursAgo,
 					JSON: json.RawMessage(`{
 						"type":      "timeSeriesQuery",
 						"namespace": "AWS/EC2",

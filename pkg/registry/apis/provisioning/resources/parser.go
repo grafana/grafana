@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path"
 
+	"go.opentelemetry.io/otel/attribute"
 	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,12 +17,13 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -65,6 +67,7 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 		},
 		urls:    urls,
 		clients: clients,
+		config:  config,
 	}, nil
 }
 
@@ -74,6 +77,8 @@ type parser struct {
 
 	// for repositories that have URL support
 	urls repository.RepositoryWithURLs
+
+	config *provisioning.Repository
 
 	// ResourceClients give access to k8s apis
 	clients ResourceClients
@@ -87,7 +92,7 @@ type ParsedResource struct {
 	Repo provisioning.ResourceRepositoryInfo
 
 	// Resource URLs
-	URLs *provisioning.ResourceURLs
+	URLs *provisioning.RepositoryURLs
 
 	// Check for classic file types (dashboard.json, etc)
 	Classic provisioning.ClassicFileType
@@ -168,8 +173,8 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	if obj.GetNamespace() != "" && obj.GetNamespace() != r.repo.Namespace {
 		return nil, apierrors.NewBadRequest("the file namespace does not match target namespace")
 	}
-
 	obj.SetNamespace(r.repo.Namespace)
+
 	parsed.Meta.SetManagerProperties(utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,
 		Identity: r.repo.Name,
@@ -192,6 +197,8 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		dirPath := safepath.Dir(info.Path)
 		if dirPath != "" {
 			parsed.Meta.SetFolder(ParseFolder(dirPath, r.repo.Name).ID)
+		} else {
+			parsed.Meta.SetFolder(RootFolder(r.config))
 		}
 	}
 	obj.SetUID("")             // clear identifiers
@@ -203,7 +210,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	// TODO: catch the not found gvk error to return bad request
-	parsed.Client, parsed.GVR, err = r.clients.ForKind(parsed.GVK)
+	parsed.Client, parsed.GVR, err = r.clients.ForKind(ctx, parsed.GVK)
 	if err != nil {
 		return nil, fmt.Errorf("get client for kind: %w", err)
 	}
@@ -232,9 +239,48 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
 	}
 
+	// Handle deletion action separately
+	if f.Action == provisioning.ResourceActionDelete {
+		// For delete, we need the existing resource to validate deletion
+		f.Existing, err = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				// Resource doesn't exist, nothing to delete - this is fine for dry run
+				return nil
+			}
+			return fmt.Errorf("failed to get existing resource for delete dry run: %w", err)
+		}
+
+		// Check for ownership conflicts
+		requestingManager := utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: f.Repo.Name,
+		}
+		if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+			return err
+		}
+
+		// For delete dry run, we simulate the delete operation
+		// The dry run response will be the existing resource that would be deleted
+		f.DryRunResponse = f.Existing.DeepCopy()
+		return nil
+	}
+
 	// FIXME: shouldn't we check for the specific error?
 	// Dry run CREATE or UPDATE
 	f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
+
+	// Check for ownership conflicts after fetching existing resource
+	requestingManager := utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: f.Repo.Name,
+	}
+
+	// Check for ownership conflicts after fetching existing resource
+	if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+		return err
+	}
+
 	if f.Existing == nil {
 		f.Action = provisioning.ResourceActionCreate
 		f.DryRunResponse, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
@@ -258,22 +304,98 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	}
 
 	// Always use the provisioning identity when writing
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
+	identityCtx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
+	ctx, identitySpan := tracing.Start(identityCtx, "provisioning.resources.run_resource.set_identity")
+
 	if err != nil {
+		identitySpan.RecordError(err)
+		identitySpan.End()
 		return err
 	}
+	identitySpan.End()
 
 	fieldValidation := "Strict"
 	if f.GVR == DashboardResource {
 		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
 	}
 
+	// Check for ownership conflicts
+	requestingManager := utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: f.Repo.Name,
+	}
+
+	actionsCtx, actionsSpan := tracing.Start(ctx, "provisioning.resources.run_resource.actions")
+	defer actionsSpan.End()
+
+	// Handle deletion action
+	if f.Action == provisioning.ResourceActionDelete {
+		deleteCtx, deleteSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.delete")
+		deleteSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))
+
+		// If we don't have existing resource from DryRun, fetch it now
+		if f.DryRunResponse == nil {
+			f.Existing, err = f.Client.Get(deleteCtx, f.Obj.GetName(), metav1.GetOptions{})
+			if err != nil {
+				deleteSpan.RecordError(err)
+				if apierrors.IsNotFound(err) {
+					// Resource doesn't exist, nothing to delete - this is fine
+					deleteSpan.End()
+					return nil
+				}
+				deleteSpan.End()
+				return fmt.Errorf("failed to get existing resource for delete: %w", err)
+			}
+		}
+
+		// Check ownership with the existing resource
+		if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+			deleteSpan.RecordError(err)
+			deleteSpan.End()
+			return err
+		}
+
+		// Perform the actual delete
+		err = f.Client.Delete(deleteCtx, f.Obj.GetName(), metav1.DeleteOptions{})
+		if apierrors.IsNotFound(err) {
+			err = nil // ignorable - resource was already deleted
+		}
+		if err != nil {
+			deleteSpan.RecordError(err)
+		}
+
+		// Set the deleted resource as the result
+		if err == nil && f.Existing != nil {
+			f.Upsert = f.Existing.DeepCopy()
+		}
+
+		deleteSpan.End()
+		return err
+	}
+
+	// If we don't have existing resource from DryRun, fetch it now
+	if f.DryRunResponse == nil {
+		f.Existing, _ = f.Client.Get(actionsCtx, f.Obj.GetName(), metav1.GetOptions{})
+	}
+
+	// Check ownership with the existing resource (if any)
+	if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+		return err
+	}
+
 	// If we have already tried loading existing, start with create
 	if f.DryRunResponse != nil && f.Existing == nil {
 		f.Action = provisioning.ResourceActionCreate
-		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
+		createCtx, createSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.create")
+		createSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))
+		f.Upsert, err = f.Client.Create(createCtx, f.Obj, metav1.CreateOptions{
 			FieldValidation: fieldValidation,
 		})
+		if err != nil {
+			createSpan.RecordError(err)
+		}
+		createSpan.End()
+
 		if err == nil {
 			return nil // it worked, return
 		}
@@ -281,14 +403,28 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 
 	// Try update, otherwise create
 	f.Action = provisioning.ResourceActionUpdate
-	f.Upsert, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
+
+	updateCtx, updateSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.update")
+	updateSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))
+	f.Upsert, err = f.Client.Update(updateCtx, f.Obj, metav1.UpdateOptions{
 		FieldValidation: fieldValidation,
 	})
+	if err != nil {
+		updateSpan.RecordError(err)
+	}
+	updateSpan.End()
+
 	if apierrors.IsNotFound(err) {
 		f.Action = provisioning.ResourceActionCreate
-		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
+		fallbackCreateCtx, fallbackCreateSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.create_fallback")
+		fallbackCreateSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))
+		f.Upsert, err = f.Client.Create(fallbackCreateCtx, f.Obj, metav1.CreateOptions{
 			FieldValidation: fieldValidation,
 		})
+		if err != nil {
+			fallbackCreateSpan.RecordError(err)
+		}
+		fallbackCreateSpan.End()
 	}
 	return err
 }

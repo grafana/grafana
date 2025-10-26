@@ -13,7 +13,6 @@ import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 
-import { DashboardInteractions } from '../../utils/interactions';
 import { ShareExportTab } from '../ShareExportTab';
 
 import { ExportMode, ResourceExport } from './ResourceExport';
@@ -84,8 +83,8 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
       )}
 
       <div className={styles.codeEditorBox}>
-        <AutoSizer data-testid={selector.codeEditor}>
-          {({ width, height }) => {
+        <AutoSizer data-testid={selector.codeEditor} disableWidth>
+          {({ height }) => {
             if (stringifiedDashboard) {
               return (
                 <CodeEditor
@@ -94,7 +93,7 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
                   showLineNumbers={true}
                   showMiniMap={false}
                   height={height}
-                  width={width}
+                  width="100%"
                   readOnly={true}
                 />
               );
@@ -120,9 +119,7 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
             icon="copy"
             disabled={dashboardJson.loading}
             getText={() => stringifiedDashboard ?? ''}
-            onClipboardCopy={() => {
-              DashboardInteractions.exportCopyJsonClicked();
-            }}
+            onClipboardCopy={model.onClipboardCopy}
           >
             <Trans i18nKey="export.json.copy-button">Copy to clipboard</Trans>
           </ClipboardButton>

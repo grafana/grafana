@@ -1,32 +1,65 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
+    commit-message:
+      prefix: deps(actions)
     directory: "/"
     schedule:
       interval: "daily"
   - package-ecosystem: "gomod"
+    commit-message:
+      prefix: deps(go)
     directories:
       - "/"
-      - "/apps/playlist"
+      - "/apps/advisor"
+      - "/apps/alerting/alertenrichment"
+      - "/apps/alerting/notifications"
+      - "/apps/alerting/rules"
+      - "/apps/correlations"
+      - "/apps/dashboard"
+      - "/apps/folder"
+      - "/apps/iam"
       - "/apps/investigations"
+      - "/apps/playlist"
+      - "/apps/plugins"
+      - "/apps/preferences"
+      - "/apps/provisioning"
+      - "/apps/scope"
+      - "/apps/secret"
+      - "/apps/shorturl"
+      - "/hack"
       - "/pkg/aggregator"
       - "/pkg/apimachinery"
-      - "/pkg/apis/folder"
-      - "/pkg/apis/secret"
       - "/pkg/apiserver"
       - "/pkg/build"
       - "/pkg/build/wire"
+      - "/pkg/codegen"
+      - "/pkg/plugins/codegen"
       - "/pkg/promlib"
       - "/pkg/semconv"
-      - "/pkg/storage/unified/apistore"
-      - "/pkg/storage/unified/resource"
       - "/pkg/util/xorm"
+      - "/scripts/go-workspace"
+      - "/scripts/modowners"
     schedule:
       interval: "daily"
       time: "02:00"
       timezone: Etc/UTC
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 20
+    # group some updates together for easier review
+    groups:
+      go.opentelemetry.io:
+        patterns:
+          - "go.opentelemetry.io/*"
+      k8s.io:
+        patterns:
+          - "k8s.io/*"
+      aws-sdk-go:
+        patterns:
+          - "github.com/aws/aws-sdk-go*"
+          - "github.com/aws/smithy-go"
   - package-ecosystem: "docker"
+    commit-message:
+      prefix: deps(docker)
     directories:
       - "/"
       - "/packaging/docker/custom"
@@ -35,4 +68,4 @@ updates:
       interval: "daily"
       time: "02:00"
       timezone: Etc/UTC
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 20

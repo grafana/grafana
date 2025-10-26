@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { endpoints } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { FolderDTO, FolderState } from 'app/types';
+import { FolderState, FolderDTO } from 'app/types/folders';
 
 export const initialState: FolderState = {
   id: 0,

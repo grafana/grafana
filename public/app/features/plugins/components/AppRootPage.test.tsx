@@ -15,16 +15,16 @@ import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsR
 import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from '../extensions/registry/ExposedComponentsRegistry';
+import { pluginImporter } from '../importer/pluginImporter';
 import { getPluginSettings } from '../pluginSettings';
-import { importAppPlugin } from '../plugin_loader';
 
 import AppRootPage from './AppRootPage';
 
 jest.mock('../pluginSettings', () => ({
   getPluginSettings: jest.fn(),
 }));
-jest.mock('../plugin_loader', () => ({
-  importAppPlugin: jest.fn(),
+jest.mock('../importer/pluginImporter', () => ({
+  pluginImporter: { importApp: jest.fn() },
 }));
 
 jest.mock('@grafana/runtime', () => ({
@@ -45,9 +45,9 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-const importAppPluginMock = importAppPlugin as jest.Mock<
-  ReturnType<typeof importAppPlugin>,
-  Parameters<typeof importAppPlugin>
+const importAppPluginMock = pluginImporter.importApp as jest.Mock<
+  ReturnType<typeof pluginImporter.importApp>,
+  Parameters<typeof pluginImporter.importApp>
 >;
 
 const getPluginSettingsMock = getPluginSettings as jest.Mock<

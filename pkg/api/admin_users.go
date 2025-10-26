@@ -17,6 +17,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -222,7 +223,7 @@ func (hs *HTTPServer) AdminDeleteUser(c *contextmodel.ReqContext) response.Respo
 		return nil
 	})
 	g.Go(func() error {
-		if err := hs.preferenceService.DeleteByUser(ctx, cmd.UserID); err != nil {
+		if err := hs.preferenceService.Delete(ctx, &pref.DeleteCommand{UserID: cmd.UserID}); err != nil {
 			return err
 		}
 		return nil

@@ -1,13 +1,17 @@
 package resource
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"iter"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/bwmarrin/snowflake"
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 )
 
 const (
@@ -25,41 +29,48 @@ type EventKey struct {
 	Resource        string
 	Name            string
 	ResourceVersion int64
+	Action          DataAction
+	Folder          string
 }
 
 func (k EventKey) String() string {
-	return fmt.Sprintf("%d~%s~%s~%s~%s", k.ResourceVersion, k.Namespace, k.Group, k.Resource, k.Name)
+	return fmt.Sprintf("%d~%s~%s~%s~%s~%s~%s", k.ResourceVersion, k.Namespace, k.Group, k.Resource, k.Name, k.Action, k.Folder)
 }
 
 func (k EventKey) Validate() error {
 	if k.Namespace == "" {
-		return fmt.Errorf("namespace cannot be empty")
-	}
-	if k.Group == "" {
-		return fmt.Errorf("group cannot be empty")
-	}
-	if k.Resource == "" {
-		return fmt.Errorf("resource cannot be empty")
-	}
-	if k.Name == "" {
-		return fmt.Errorf("name cannot be empty")
+		return NewValidationError("namespace", k.Namespace, ErrNamespaceRequired)
 	}
 	if k.ResourceVersion < 0 {
-		return fmt.Errorf("resource version must be non-negative")
+		return errors.New(ErrResourceVersionInvalid)
+	}
+	if k.Action == "" {
+		return NewValidationError("action", string(k.Action), ErrActionRequired)
 	}
 
-	// Validate each field against the naming rules (reusing the regex from datastore.go)
-	if !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+	// Validate each field against the naming rules
+	// Validate naming conventions for all required fields
+	if err := validation.IsValidNamespace(k.Namespace); err != nil {
+		return NewValidationError("namespace", k.Namespace, err[0])
 	}
-	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid", k.Group)
+	if err := validation.IsValidGroup(k.Group); err != nil {
+		return NewValidationError("group", k.Group, err[0])
 	}
-	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid", k.Resource)
+	if err := validation.IsValidResource(k.Resource); err != nil {
+		return NewValidationError("resource", k.Resource, err[0])
 	}
-	if !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
+	if err := validation.IsValidGrafanaName(k.Name); err != nil {
+		return NewValidationError("name", k.Name, err[0])
+	}
+	if k.Folder != "" {
+		if err := validation.IsValidGrafanaName(k.Folder); err != nil {
+			return NewValidationError("folder", k.Folder, err[0])
+		}
+	}
+	switch k.Action {
+	case DataActionCreated, DataActionUpdated, DataActionDeleted:
+	default:
+		return NewValidationError("action", string(k.Action), ErrActionInvalid)
 	}
 
 	return nil
@@ -85,8 +96,8 @@ func newEventStore(kv KV) *eventStore {
 // ParseEventKey parses a key string back into an EventKey struct
 func ParseEventKey(key string) (EventKey, error) {
 	parts := strings.Split(key, "~")
-	if len(parts) != 5 {
-		return EventKey{}, fmt.Errorf("invalid key format: expected 5 parts, got %d", len(parts))
+	if len(parts) != 7 {
+		return EventKey{}, fmt.Errorf("invalid key format: expected 6 parts, got %d", len(parts))
 	}
 
 	rv, err := strconv.ParseInt(parts[0], 10, 64)
@@ -100,6 +111,8 @@ func ParseEventKey(key string) (EventKey, error) {
 		Group:           parts[2],
 		Resource:        parts[3],
 		Name:            parts[4],
+		Action:          DataAction(parts[5]),
+		Folder:          parts[6],
 	}, nil
 }
 
@@ -128,18 +141,25 @@ func (n *eventStore) Save(ctx context.Context, event Event) error {
 		Resource:        event.Resource,
 		Name:            event.Name,
 		ResourceVersion: event.ResourceVersion,
+		Action:          event.Action,
+		Folder:          event.Folder,
 	}
 
 	if err := eventKey.Validate(); err != nil {
 		return fmt.Errorf("invalid event key: %w", err)
 	}
 
-	var buf bytes.Buffer
-	encoder := json.NewEncoder(&buf)
-	if err := encoder.Encode(event); err != nil {
+	writer, err := n.kv.Save(ctx, eventsSection, eventKey.String())
+	if err != nil {
 		return err
 	}
-	return n.kv.Save(ctx, eventsSection, eventKey.String(), &buf)
+	encoder := json.NewEncoder(writer)
+	if err := encoder.Encode(event); err != nil {
+		_ = writer.Close()
+		return err
+	}
+
+	return writer.Close()
 }
 
 func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
@@ -147,43 +167,91 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 		return Event{}, fmt.Errorf("invalid event key: %w", err)
 	}
 
-	obj, err := n.kv.Get(ctx, eventsSection, key.String())
+	reader, err := n.kv.Get(ctx, eventsSection, key.String())
 	if err != nil {
 		return Event{}, err
 	}
+	defer func() { _ = reader.Close() }()
 	var event Event
-	if err = json.NewDecoder(obj.Value).Decode(&event); err != nil {
-		_ = obj.Value.Close()
+	if err = json.NewDecoder(reader).Decode(&event); err != nil {
 		return Event{}, err
 	}
-	defer func() { _ = obj.Value.Close() }()
 	return event, nil
 }
 
 // ListSince returns a sequence of events since the given resource version.
-func (n *eventStore) ListSince(ctx context.Context, sinceRV int64) iter.Seq2[Event, error] {
+func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64) iter.Seq2[string, error] {
 	opts := ListOptions{
 		Sort: SortOrderAsc,
 		StartKey: EventKey{
 			ResourceVersion: sinceRV,
 		}.String(),
 	}
+	return func(yield func(string, error) bool) {
+		for evtKey, err := range n.kv.Keys(ctx, eventsSection, opts) {
+			if err != nil {
+				yield("", err)
+				return
+			}
+			if !yield(evtKey, nil) {
+				return
+			}
+		}
+	}
+}
+
+func (n *eventStore) ListSince(ctx context.Context, sinceRV int64) iter.Seq2[Event, error] {
 	return func(yield func(Event, error) bool) {
-		for key, err := range n.kv.Keys(ctx, eventsSection, opts) {
+		for evtKey, err := range n.ListKeysSince(ctx, sinceRV) {
 			if err != nil {
+				yield(Event{}, err)
 				return
 			}
-			obj, err := n.kv.Get(ctx, eventsSection, key)
+
+			reader, err := n.kv.Get(ctx, eventsSection, evtKey)
 			if err != nil {
+				yield(Event{}, err)
 				return
 			}
+
 			var event Event
-			if err := json.NewDecoder(obj.Value).Decode(&event); err != nil {
+			if err := json.NewDecoder(reader).Decode(&event); err != nil {
+				_ = reader.Close()
+				yield(Event{}, err)
 				return
 			}
+
+			_ = reader.Close()
 			if !yield(event, nil) {
 				return
 			}
 		}
 	}
+}
+
+// CleanupOldEvents deletes events older than the specified retention period.
+func (n *eventStore) CleanupOldEvents(ctx context.Context, cutoff time.Time) (int, error) {
+	deletedCount := 0
+
+	// Keys are stored in the format of "resource_version~namespace~group~resource~name"
+	// With a start key of "1" and an end key of the cutoff time we can get all expired events.
+	endKey := fmt.Sprintf("%d", snowflakeFromTime(cutoff))
+	for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{StartKey: "1", EndKey: endKey}) {
+		if err != nil {
+			return deletedCount, fmt.Errorf("failed to list event keys: %w", err)
+		}
+
+		// TODO should use batch deletes here when available
+		if err := n.kv.Delete(ctx, eventsSection, key); err != nil {
+			return deletedCount, fmt.Errorf("failed to delete event key %s: %w", key, err)
+		}
+		deletedCount++
+	}
+
+	return deletedCount, nil
+}
+
+// snowflake id with last two sections set to 0 (machine id and sequence)
+func snowflakeFromTime(t time.Time) int64 {
+	return (t.UnixMilli() - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)
 }

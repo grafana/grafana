@@ -1,0 +1,80 @@
+{
+  "title": "V32 No-Op Migration Test Dashboard",
+  "schemaVersion": 31,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Panel with transformations remains unchanged",
+      "id": 1,
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "rows",
+            "keepLabels": ["job", "instance"]
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        }
+      ]
+    },
+    {
+      "type": "graph", 
+      "title": "Graph panel remains unchanged",
+      "id": 2,
+      "yAxes": [
+        {
+          "show": true,
+          "min": null,
+          "max": null
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Row with nested panels",
+      "id": 3,
+      "collapsed": false,
+      "panels": [
+        {
+          "type": "stat",
+          "title": "Nested stat panel",
+          "id": 4,
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "environment",
+        "type": "query",
+        "datasource": "prometheus",
+        "options": []
+      }
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "name": "Deployments",
+        "datasource": "grafana",
+        "enable": true
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+  }
+} 

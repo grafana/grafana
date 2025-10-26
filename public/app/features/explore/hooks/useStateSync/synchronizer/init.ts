@@ -9,7 +9,7 @@ import { clearPanes, syncTimesAction } from 'app/features/explore/state/main';
 import { fromURLRange } from 'app/features/explore/state/utils';
 import { withUniqueRefIds } from 'app/features/explore/utils/queries';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { ThunkDispatch } from 'app/types';
+import { ThunkDispatch } from 'app/types/store';
 
 import { getUrlStateFromPaneState } from '../index';
 import {
@@ -33,7 +33,7 @@ export function initializeFromURL(
   dispatch(clearPanes());
 
   Promise.all(
-    Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState }]) => {
+    Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState, compact }]) => {
       return getPaneDatasource(datasource, queries, orgId).then((paneDatasource) => {
         return Promise.resolve(
           // Given the Grafana datasource will always be present, this should always be defined.
@@ -64,13 +64,13 @@ export function initializeFromURL(
             ];
           }
 
-          return { exploreId, range, panelsState, queries: validQueries, datasource: paneDatasource };
+          return { exploreId, compact, range, panelsState, queries: validQueries, datasource: paneDatasource };
         });
       });
     })
   ).then(async (panes) => {
     const initializedPanes = await Promise.all(
-      panes.map(({ exploreId, range, panelsState, queries, datasource }) => {
+      panes.map(({ exploreId, range, panelsState, queries, datasource, compact }) => {
         return dispatch(
           initializeExplore({
             exploreId,
@@ -79,6 +79,7 @@ export function initializeFromURL(
             range: fromURLRange(range),
             panelsState,
             eventBridge: new EventBusSrv(),
+            compact: !!compact,
           })
         ).unwrap();
       })

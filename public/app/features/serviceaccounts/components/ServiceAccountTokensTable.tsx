@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { DeleteButton, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
-import { ApiKey } from 'app/types';
+import { ApiKey } from 'app/types/apiKeys';
 
 interface Props {
   tokens: ApiKey[];

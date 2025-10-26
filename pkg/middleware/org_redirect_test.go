@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -20,6 +21,12 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		{
 			desc:        "when setting a correct org for the user",
 			input:       "/?orgId=3",
+			expStatus:   302,
+			expLocation: "/?orgId=3",
+		},
+		{
+			desc:        "when setting a correct org for the user with an empty path",
+			input:       "?orgId=3",
 			expStatus:   302,
 			expLocation: "/?orgId=3",
 		},
@@ -62,6 +69,21 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		sc.fakeReq("GET", "/?orgId=1").exec()
 
 		require.Equal(t, 404, sc.resp.Code)
+	})
+
+	middlewareScenario(t, "when redirecting to an invalid path", func(t *testing.T, sc *scenarioContext) {
+		testPaths := []string{
+			url.QueryEscape(`/\example.com`),
+			`/%2fexample.com`,
+		}
+		for _, path := range testPaths {
+			sc.withIdentity(&authn.Identity{})
+
+			sc.m.Get(url.QueryEscape(path), sc.defaultHandler)
+			sc.fakeReq("GET", fmt.Sprintf("%s?orgId=3", path)).exec()
+
+			require.Equal(t, 404, sc.resp.Code, "path: %s", path)
+		}
 	})
 
 	middlewareScenario(t, "works correctly when grafana is served under a subpath", func(t *testing.T, sc *scenarioContext) {

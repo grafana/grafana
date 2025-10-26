@@ -703,12 +703,16 @@ PostgreSQL, MySQL, and MSSQL data sources don't use the proxy and are not affect
 
 Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout).
 Default is `false`.
-An existing user's account is unable to login for five minutes if all login attempts are spent within a 5 minute window.
+Login is blocked for five minutes if all login attempts are spent within a 5 minute window.
 
 #### `brute_force_login_protection_max_attempts`
 
-Configure how many login attempts a user can have within a five minute window before their account is locked.
+Configure how many login attempts can be made within a five minute window before being blocked.
 Default is `5`.
+
+#### `disable_username_login_protection`
+
+Set to `true` to disable [brute force login protection by username](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`. User will be unable to login for 5 minutes if all login attempts are spent within a 5 minute window.
 
 #### `disable_ip_address_login_protection`
 
@@ -721,6 +725,8 @@ Set to `true` if you host Grafana behind HTTPS. Default is `false`.
 #### `cookie_samesite`
 
 Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is to mitigate the risk of cross-origin information leakage. This setting also provides some protection against cross-site request forgery attacks (CSRF), [read more about SameSite here](https://owasp.org/www-community/SameSite). Valid values are `lax`, `strict`, `none`, and `disabled`. Default is `lax`. Using value `disabled` does not add any `SameSite` attribute to cookies.
+
+If you want to use OAuth/SAML for login, it is necessary to configure this attribute as `lax`.
 
 #### `allow_embedding`
 
@@ -787,20 +793,6 @@ The following example allows access to all plugins that have a backend:
 The following example limits access to the backend of a single plugin:
 
 `actions_allow_post_url=/api/plugins/grafana-special-app`
-
-<hr />
-
-#### `angular_support_enabled`
-
-This is set to false by default, meaning that the angular framework and support components aren't be loaded.
-This means that all [plugins](../../developers/angular_deprecation/angular-plugins/) and core features that depend on angular support won't work.
-
-The core features that depend on angular are:
-
-- Old graph panel
-- Old table panel
-
-These features each have supported alternatives, and we recommend using them.
 
 #### `csrf_trusted_origins`
 
@@ -1022,7 +1014,7 @@ This is a comma-separated list of usernames. Users specified here are hidden in 
 
 ### `[auth]`
 
-Grafana provides many ways to authenticate users. Refer to the Grafana [Authentication overview](../configure-security/configure-authentication/) and other authentication documentation for detailed instructions on how to set up and configure authentication.
+Grafana provides many ways to authenticate users. Refer to the Grafana [Authentication overview](../configure-access/configure-authentication/) and other authentication documentation for detailed instructions on how to set up and configure authentication.
 
 #### `login_cookie_name`
 
@@ -1227,25 +1219,25 @@ This means the plugin can only access data and resources within that specific or
 
 ### `[auth.anonymous]`
 
-Refer to [Anonymous authentication](../configure-security/configure-authentication/grafana/#anonymous-authentication) for detailed instructions.
+Refer to [Anonymous authentication](../configure-access/configure-authentication/grafana/#anonymous-authentication) for detailed instructions.
 
 <hr />
 
 ### `[auth.github]`
 
-Refer to [GitHub OAuth2 authentication](../configure-security/configure-authentication/github/) for detailed instructions.
+Refer to [GitHub OAuth2 authentication](../configure-access/configure-authentication/github/) for detailed instructions.
 
 <hr />
 
 ### `[auth.gitlab]`
 
-Refer to [GitLab OAuth 2.0 authentication](../configure-security/configure-authentication/gitlab/) for detailed instructions.
+Refer to [GitLab OAuth 2.0 authentication](../configure-access/configure-authentication/gitlab/) for detailed instructions.
 
 <hr />
 
 ### `[auth.google]`
 
-Refer to [Google OAuth2 authentication](../configure-security/configure-authentication/google/) for detailed instructions.
+Refer to [Google OAuth2 authentication](../configure-access/configure-authentication/google/) for detailed instructions.
 
 <hr />
 
@@ -1263,37 +1255,37 @@ Legacy key names, still in the configuration file so they work in environment va
 
 ### `[auth.azuread]`
 
-Refer to [Azure AD OAuth2 authentication](../configure-security/configure-authentication/azuread/) for detailed instructions.
+Refer to [Entra ID OAuth2 authentication](../configure-access/configure-authentication/azuread/) for detailed instructions.
 
 <hr />
 
 ### `[auth.okta]`
 
-Refer to [Okta OAuth2 authentication](../configure-security/configure-authentication/okta/) for detailed instructions.
+Refer to [Okta OAuth2 authentication](../configure-access/configure-authentication/okta/) for detailed instructions.
 
 <hr />
 
 ### `[auth.generic_oauth]`
 
-Refer to [Generic OAuth authentication](../configure-security/configure-authentication/generic-oauth/) for detailed instructions.
+Refer to [Generic OAuth authentication](../configure-access/configure-authentication/generic-oauth/) for detailed instructions.
 
 <hr />
 
 ### `[auth.basic]`
 
-Refer to [Basic authentication](../configure-security/configure-authentication/#basic-authentication) for detailed instructions.
+Refer to [Basic authentication](../configure-access/configure-authentication/#basic-authentication) for detailed instructions.
 
 <hr />
 
 ### `[auth.proxy]`
 
-Refer to [Auth proxy authentication](../configure-security/configure-authentication/auth-proxy/) for detailed instructions.
+Refer to [Auth proxy authentication](../configure-access/configure-authentication/auth-proxy/) for detailed instructions.
 
 <hr />
 
 ### `[auth.ldap]`
 
-Refer to [LDAP authentication](../configure-security/configure-authentication/ldap/) for detailed instructions.
+Refer to [LDAP authentication](../configure-access/configure-authentication/ldap/) for detailed instructions.
 
 ### `[aws]`
 
@@ -1366,27 +1358,27 @@ Should be set for user-assigned identity and should be empty for system-assigned
 
 #### `workload_identity_enabled`
 
-Specifies whether Azure AD Workload Identity authentication should be enabled in data sources that support it.
+Specifies whether Entra ID Workload Identity authentication should be enabled in data sources that support it.
 
-For more documentation on Azure AD Workload Identity, review [Azure AD Workload Identity](https://azure.github.io/azure-workload-identity/docs/) documentation.
+For more documentation on Entra ID Workload Identity, review [Entra ID Workload Identity](https://azure.github.io/azure-workload-identity/docs/) documentation.
 
 Disabled by default, needs to be explicitly enabled.
 
 #### `workload_identity_tenant_id`
 
-Tenant ID of the Azure AD Workload Identity.
+Tenant ID of the Entra ID Workload Identity.
 
-Allows to override default tenant ID of the Azure AD identity associated with the Kubernetes service account.
+Allows to override default tenant ID of the Entra ID identity associated with the Kubernetes service account.
 
 #### `workload_identity_client_id`
 
-Client ID of the Azure AD Workload Identity.
+Client ID of the Entra ID Workload Identity.
 
-Allows to override default client ID of the Azure AD identity associated with the Kubernetes service account.
+Allows to override default client ID of the Entra ID identity associated with the Kubernetes service account.
 
 #### `workload_identity_token_file`
 
-Custom path to token file for the Azure AD Workload Identity.
+Custom path to token file for the Entra ID Workload Identity.
 
 Allows to set a custom path to the projected service account token file.
 
@@ -1452,7 +1444,7 @@ Disabled by default, needs to be explicitly enabled.
 
 ### `[auth.jwt]`
 
-Refer to [JWT authentication](../configure-security/configure-authentication/jwt/) for more information.
+Refer to [JWT authentication](../configure-access/configure-authentication/jwt/) for more information.
 
 <hr />
 
@@ -1547,7 +1539,7 @@ Use spaces to separate multiple modes, for example, `console file`.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is `info`.
+Options are `debug`, `info`, `warn`, `error`. `critical` is an alias for `error`. Default is `info`.
 
 #### `filters`
 
@@ -1576,7 +1568,7 @@ Only applicable when `console` is used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
@@ -1590,7 +1582,7 @@ Only applicable when `file` used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
@@ -1625,7 +1617,7 @@ Only applicable when `syslog` used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
@@ -1649,11 +1641,35 @@ Syslog tag. By default, the process's `argv[0]` is used.
 
 #### `enabled`
 
-Faro JavaScript agent is initialized. Default is `false`.
+Grafana Faro instrumentation is initialized. Default is `false`. Enables the default set of instrumentations from `getWebInstrumentations`. See the options below to selectively disable some of these.
 
 #### `custom_endpoint`
 
-Custom HTTP endpoint to send events captured by the Faro agent to. Default, `/log-grafana-javascript-agent`, logs the events to standard output.
+Custom HTTP endpoint to send events captured by the Grafana Faro agent to. Default, `/log-grafana-javascript-agent`, logs the events to standard output.
+
+#### `api_key`
+
+If `custom_endpoint` required authentication, you can set the API key here. Only relevant for Grafana JavaScript Agent provider.
+
+#### `instrumentations_console_enabled`
+
+Enables the [Console instrumentation](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/console-instrumentation/) for Grafana Faro, defaults to `true`.
+
+#### `instrumentations_performance_enabled`
+
+Enables the [Performance instrumentation](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/performance-instrumentation/) for Grafana Faro, defaults to `true`.
+
+#### `instrumentations_csp_enabled`
+
+Enables the [Content Security Policy Violations instrumentation](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/csp-violation-tracking/) for Grafana Faro, defaults to `true`.
+
+#### `instrumentations_tracing_enabled`
+
+Enables the [Tracing instrumentation](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/tracing-instrumentation/) for Grafana Faro, defaults to `true`.
+
+#### `web_vitals_attribution_enabled`
+
+Enables sending [attribution data for web vitals](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/web-vitals/#web-vitals-attribution-data) with the Performance instrumentation, defaults to `true`.
 
 #### `log_endpoint_requests_per_second_limit`
 
@@ -1663,29 +1679,9 @@ Requests per second limit enforced per an extended period, for Grafana backend l
 
 Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log-grafana-javascript-agent`. Default is `15`.
 
-#### `instrumentations_all_enabled`
+#### `bot_filter_enabled`
 
-Enables all Faro default instrumentation by using `getWebInstrumentations`. Overrides other instrumentation flags.
-
-#### `instrumentations_errors_enabled`
-
-Turn on error instrumentation. Only affects Grafana JavaScript Agent.
-
-#### `instrumentations_console_enabled`
-
-Turn on console instrumentation. Only affects Grafana JavaScript Agent
-
-#### `instrumentations_webvitals_enabled`
-
-Turn on web vitals instrumentation. Only affects Grafana JavaScript Agent
-
-#### `instrumentations_tracing_enabled`
-
-Turns on tracing instrumentation. Only affects Grafana JavaScript Agent.
-
-#### `api_key`
-
-If `custom_endpoint` required authentication, you can set the API key here. Only relevant for Grafana JavaScript Agent provider.
+Enables the bot filter for the Grafana Faro JavaScript agent integration. Default is `false`. When enabled, it will filter out requests from known bots and crawlers.
 
 <hr>
 
@@ -1923,7 +1919,40 @@ The timeout string is a possibly signed sequence of decimal numbers, followed by
 
 #### `max_attempts`
 
-Sets a maximum number of times Grafana attempts to evaluate an alert rule before giving up on that evaluation. The default value is `3`.
+The maximum number of times Grafana retries evaluating an alert rule before giving up on that evaluation. Default is `3`.
+
+The retry mechanism:
+
+- Adds jitter to retry delays to prevent thundering herd problems when multiple rules fail simultaneously.
+- Stops when either `max_attempts` is reached or the rule’s evaluation interval is exceeded.
+
+You can customize retry behaviour with `initial_retry_delay`, `max_retry_delay`, and `randomization_factor`.
+
+#### `initial_retry_delay`
+
+The initial delay before retrying a failed alert evaluation. Default is `1s`.
+
+This value is the starting point for exponential backoff.
+
+#### `max_retry_delay`
+
+The maximum delay between retries during exponential backoff. Default is `4s`.
+
+After the retry delay reaches `max_retry_delay`, all subsequent retries use this delay.
+
+To avoid overlapping retries with scheduled evaluations, `max_retry_delay` must be less than the rule’s evaluation interval.
+
+#### `randomization_factor`
+
+The randomization factor for exponential backoff retries. Default is `0.1`.
+
+The value must be between `0` and `1`.
+
+The actual retry delay is chosen randomly between:
+
+```
+[current_delay*(1-randomization_factor), current_delay*(1+randomization_factor)]
+```
 
 #### `min_interval`
 
@@ -2655,8 +2684,6 @@ If `true`, propagate the tracing context to the plugin backend and enable tracin
 
 Load an external version of a core plugin if it has been installed.
 
-Experimental. Requires the feature toggle `externalCorePlugins` to be enabled.
-
 <hr>
 
 ### `[plugin.grafana-image-renderer]`
@@ -2838,22 +2865,14 @@ For example:
 
 ```ini
 [time_picker]
-quick_ranges = [
-  {
-    "display": "Last 5 minutes",
-    "from": "now-5m",
-    "to": "now",
-  },
-  {
-    "display": "Yesterday",
-    "from": "now-1d/d",
-  },
-  {
-    "display": "Today so far",
-    "from": "now/d",
-    "to": "now",
-  }
-]
+quick_ranges = """[
+{"from":"now-6s","to":"now","display":"Last 6 seconds"},
+{"from":"now-10m","to":"now","display":"Last 10 minutes"},
+{"from":"now-25h","to":"now","display":"Last 24 hours"},
+{"from":"now/w","to":"now/w","display":"This week"},
+{"from":"now-1w/w","to":"now-1w/w","display":"Last week"},
+{"from":"now-10d","to":"now","display":"Last 10 days"}
+]"""
 ```
 
 ### `[expressions]`
@@ -2864,15 +2883,19 @@ Set this to `false` to disable expressions and hide them in the Grafana UI. Defa
 
 #### `sql_expression_cell_limit`
 
-Set the maximum number of cells that can be passed to a SQL expression. Default is `100000`.
+Set the maximum number of cells that can be passed to a SQL expression. Default is `100000`. A setting of `0` means no limit.
 
-#### `sql_expression_cell_output_limit`
+#### `sql_expression_output_cell_limit`
 
-Set the maximum number of cells that can be returned from a SQL expression. Default is `100000`.
+Set the maximum number of cells that can be returned from a SQL expression. Default is `100000`. A setting of `0` means no limit.
+
+### `sql_expression_query_length_limit`
+
+Set the maximum length of a SQL query that can be used in a SQL expression. Default is `10000` characters. A setting of `0` means no limit.
 
 #### `sql_expression_timeout`
 
-The duration a SQL expression will run before being cancelled. The default is `10s`.
+The duration a SQL expression will run before being cancelled. The default is `10s`. A setting of `0s` means no limit.
 
 ### `[geomap]`
 

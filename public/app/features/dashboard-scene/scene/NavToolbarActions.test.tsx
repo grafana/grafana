@@ -4,16 +4,30 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { LocationServiceProvider, config, locationService } from '@grafana/runtime';
+import { LocationServiceProvider, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
+import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { DashboardMeta } from 'app/types';
+import { DashboardMeta } from 'app/types/dashboard';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
 import { ToolbarActions } from './NavToolbarActions';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+
+jest.mock('../utils/interactions', () => ({
+  DashboardInteractions: {
+    editButtonClicked: jest.fn(),
+  },
+}));
+
+const localStorageMock = mockLocalStorage();
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock,
+  writable: true,
+});
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
   playlistSrv: {
@@ -142,30 +156,49 @@ describe('NavToolbarActions', () => {
       expect(await screen.findByText('Discard panel changes')).toBeInTheDocument();
       expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
     });
+    describe('edit dashboard button tracking', () => {
+      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is undefined', async () => {
+        setup();
+        await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
+        expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({
+          dashboardUid: 'dash-1',
+          outlineExpanded: false,
+        });
+      });
+
+      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is false', async () => {
+        localStorageMock.setItem('grafana.dashboard.edit-pane.outline.collapsed', 'false');
+        setup();
+        await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
+        expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({
+          dashboardUid: 'dash-1',
+          outlineExpanded: true,
+        });
+      });
+
+      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:false if grafana.dashboard.edit-pane.outline.collapsed is true', async () => {
+        localStorageMock.setItem('grafana.dashboard.edit-pane.outline.collapsed', 'true');
+        setup();
+        await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
+        expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({
+          dashboardUid: 'dash-1',
+          outlineExpanded: false,
+        });
+      });
+    });
   });
 
   describe('Given new sharing button', () => {
-    it('Should show old share button when newDashboardSharingComponent FF is disabled', async () => {
-      setup();
-
-      expect(await screen.findByText('Share')).toBeInTheDocument();
-      const newShareButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
-      expect(newShareButton).not.toBeInTheDocument();
-      const newExportButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
-      expect(newExportButton).not.toBeInTheDocument();
-    });
-    it('Should show new share button when newDashboardSharingComponent FF is enabled', async () => {
-      config.featureToggles.newDashboardSharingComponent = true;
+    it('Should show new share button', async () => {
       setup();
 
       expect(await screen.queryByTestId(selectors.pages.Dashboard.DashNav.shareButton)).not.toBeInTheDocument();
       const newShareButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
       expect(newShareButton).toBeInTheDocument();
     });
-    it('Should show new export button when newDashboardSharingComponent FF is enabled', async () => {
-      config.featureToggles.newDashboardSharingComponent = true;
+    it('Should show new export button', async () => {
       setup();
-      const newExportButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
+      const newExportButton = screen.getByRole('button', { name: /export dashboard/i });
       expect(newExportButton).toBeInTheDocument();
     });
   });

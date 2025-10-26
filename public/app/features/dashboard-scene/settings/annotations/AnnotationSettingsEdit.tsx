@@ -245,7 +245,7 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
         >
           <>
             <Select
-              options={panelFilters}
+              options={getPanelFilters()}
               value={panelFilter}
               onChange={onFilterTypeChange}
               data-testid={selectors.components.Annotations.annotationsTypeInput}
@@ -320,20 +320,29 @@ enum PanelFilterType {
   ExcludePanels,
 }
 
-const panelFilters = [
+const getPanelFilters = () => [
   {
-    label: 'All panels',
+    label: t('dashboard-scene.get-panel-filters.label.all-panels', 'All panels'),
     value: PanelFilterType.AllPanels,
-    description: 'Send the annotation data to all panels that support annotations',
+    description: t(
+      'dashboard-scene.get-panel-filters.description.annotation-panels-support-annotations',
+      'Send the annotation data to all panels that support annotations'
+    ),
   },
   {
-    label: 'Selected panels',
+    label: t('dashboard-scene.get-panel-filters.label.selected-panels', 'Selected panels'),
     value: PanelFilterType.IncludePanels,
-    description: 'Send the annotations to the explicitly listed panels',
+    description: t(
+      'dashboard-scene.get-panel-filters.description.annotations-explicitly-listed-panels',
+      'Send the annotations to the explicitly listed panels'
+    ),
   },
   {
-    label: 'All panels except',
+    label: t('dashboard-scene.get-panel-filters.label.all-panels-except', 'All panels except'),
     value: PanelFilterType.ExcludePanels,
-    description: 'Do not send annotation data to the following panels',
+    description: t(
+      'dashboard-scene.get-panel-filters.description.annotation-following-panels',
+      'Do not send annotation data to the following panels'
+    ),
   },
 ];

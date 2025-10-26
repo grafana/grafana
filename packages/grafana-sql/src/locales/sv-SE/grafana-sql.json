@@ -2,26 +2,26 @@
   "grafana-sql": {
     "components": {
       "confirm-modal": {
-        "builder-mode": "",
+        "builder-mode": "Byggläge visar inte ändringar gjorda i koden. Frågebyggaren visar de senaste ändringarna du gjorde i byggläget.",
         "cancel": "Avbryt",
-        "clipboard": "",
-        "copy-code-and-switch": "",
-        "discard-code-and-switch": "",
+        "clipboard": "Vill du kopiera din kod till urklippet?",
+        "copy-code-and-switch": "Kopiera kod och växla",
+        "discard-code-and-switch": "Kassera kod och växla",
         "warning": "Varning"
       },
       "connection-limits": {
-        "auto-max-idle": "",
-        "content-auto-max-idle": "",
-        "content-max-idle": "",
-        "content-max-lifetime": "",
-        "content-max-open": "",
-        "max-idle": "",
-        "max-lifetime": "",
-        "max-open": "",
-        "title-connection-limits": ""
+        "auto-max-idle": "Automatisk max. inaktiv",
+        "content-auto-max-idle": "Om det är aktiverat ställer du automatiskt in antalet <1>Maximalt antal inaktiva anslutningar</1> till samma värde som<3> Max öppna anslutningar</3>. Om antalet maximala öppna anslutningar inte är inställt kommer det att ställas in på standard ({{defaultMaxIdle}}).",
+        "content-max-idle": "Det maximala antalet anslutningar i den inaktiva anslutningspoolen. Om <1>Max öppna anslutningar</1> är större än 0 men mindre än <3>Max inaktiva anslutningar</3> kommer <5>Max inaktiva anslutningar</5> att reduceras för att matcha gränsen för <8>Max öppna anslutningar</8>. Om inställningen är 0 behålls inga inaktiva anslutningar.",
+        "content-max-lifetime": "Den maximala tiden i sekunder som en anslutning kan återanvändas. Om inställningen är 0 återanvänds anslutningarna för evigt.",
+        "content-max-open": "Det maximala antalet öppna anslutningar till databasen. Om <1>Max inaktiva anslutningar</1> är större än 0 och <3>Max öppna anslutningar</3> är mindre än <5>Max inaktiva anslutningar</5> kommer <7>Max inaktiva anslutningar</7> att reduceras för att matcha gränsen för <9>Max öppna anslutningar</9>. Om inställningen är 0 finns det ingen gräns för antalet öppna anslutningar.",
+        "max-idle": "Max inaktiv",
+        "max-lifetime": "Max livstid",
+        "max-open": "Max öppen",
+        "title-connection-limits": "Anslutningsbegränsningar"
       },
       "dataset-selector": {
-        "aria-label-dataset-selector": ""
+        "aria-label-dataset-selector": "Datauppsättningsväljare"
       },
       "error-boundary": {
         "fall-back": {
@@ -31,21 +31,21 @@
       "get-custom-operators": {
         "custom-operators": {
           "label": {
-            "macros": ""
+            "macros": "Makron"
           }
         }
       },
       "make-render-column": {
         "render-column": {
           "aria-label-group-by": "Gruppera efter",
-          "title-remove-group-by-column": ""
+          "title-remove-group-by-column": "Ta bort gruppen efter kolumn"
         }
       },
       "order-by-row": {
-        "aria-label-order-by": "",
+        "aria-label-order-by": "Sortera efter",
         "label-limit": "Gräns",
-        "label-offset": "",
-        "label-order-by": ""
+        "label-offset": "Förskjutning",
+        "label-order-by": "Sortera efter"
       },
       "preview": {
         "label-element": {
@@ -54,96 +54,100 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
-        "label-dataset": "",
+        "content-invalid-query": "Din fråga är ogiltig. Se nedan för mer information. <1></1>Du kan däremot fortfarande köra denna fråga.",
+        "editor-modes": {
+          "label-builder": "Builder",
+          "label-code": "Kod"
+        },
+        "label-dataset": "Datauppsättning",
         "label-filter": "Filtrera",
         "label-format": "Format",
         "label-group": "Grupp",
-        "label-order": "",
+        "label-order": "Beställning",
         "label-preview": "Förhandsgranska",
         "label-table": "Tabell",
-        "placeholder-select-format": "",
+        "placeholder-select-format": "Välj format",
         "run-query": "Kör fråga"
       },
       "query-toolbox": {
-        "content-hit-ctrlcmdreturn-to-run-query": "",
-        "tooltip-collapse": "",
-        "tooltip-expand": "",
-        "tooltip-format-query": ""
+        "content-hit-ctrlcmdreturn-to-run-query": "Tryck på CTRL/CMD+Retur för att köra frågan",
+        "tooltip-collapse": "Minimera redigeraren",
+        "tooltip-expand": "Expandera redigeraren",
+        "tooltip-format-query": "Formatera fråga"
       },
       "query-validator": {
-        "query-will-process": "",
-        "validating-query": ""
+        "query-will-process": "<0></0> Den här frågan kommer att behandla <2>{{bytes}}</2> när den körs.",
+        "validating-query": "Validerar frågan …"
       },
       "raw-editor": {
         "render-placeholder": {
-          "editing-in-expanded-code-editor": ""
+          "editing-in-expanded-code-editor": "Redigering i expanderad kodredigerare"
         },
-        "title-query-num": ""
+        "title-query-num": "Fråga {{queryNum}}"
       },
       "select-column": {
         "label-column": "Kolumn"
       },
       "select-custom-function-parameters": {
-        "aria-label-parameter": "",
+        "aria-label-parameter": "Parameter {{index}} för kolumnen {{columnIndex}}",
         "render-parameters": {
           "params": {
-            "title-remove-parameter": ""
+            "title-remove-parameter": "Ta bort parameter"
           }
         },
-        "title-add-parameter": ""
+        "title-add-parameter": "Lägg till parameter"
       },
       "select-row": {
         "aggregate-options": {
           "options": {
             "label": {
-              "aggregations": "",
-              "macros": ""
+              "aggregations": "Aggregeringar",
+              "macros": "Makron"
             }
           }
         },
         "label": {
-          "time": "",
+          "time": "tid",
           "value": "värde"
         },
         "label-alias": "Alias",
-        "label-data-operations": "",
-        "title-add-column": "",
-        "title-remove-column": ""
+        "label-data-operations": "Dataåtgärder",
+        "title-add-column": "Lägg till kolumn",
+        "title-remove-column": "Ta bort kolumn"
       },
       "settings": {
-        "aria-label-conjunction": "",
+        "aria-label-conjunction": "Konjunktion",
         "aria-label-field": "Fält",
         "aria-label-operator": "Operatör",
-        "title-button-filter": ""
+        "title-button-filter": "{{ buttonLabel }} filter"
       },
       "sql-query-editor-lazy": {
         "text-loading-editor": "Laddar redigerare"
       },
       "table-selector": {
-        "aria-label-table-selector": "",
-        "placeholder-loading": "",
-        "placeholder-select-table": ""
+        "aria-label-table-selector": "Tabellväljare",
+        "placeholder-loading": "Laddar tabeller",
+        "placeholder-select-table": "Välj tabell"
       },
       "tlssecrets-config": {
-        "content-tlsssl-client-certificate": "",
-        "content-tlsssl-client-key": "",
-        "content-tlsssl-root-certificate": "",
-        "tlsssl-client-certificate": "",
-        "tlsssl-client-key": "",
+        "content-tlsssl-client-certificate": "För autentisering med ett TLS-/SSL-klientcertifikat anger du klientcertifikatet här.",
+        "content-tlsssl-client-key": "För autentisering med ett TLS-/SSL-klientcertifikat anger du nyckeln här.",
+        "content-tlsssl-root-certificate": "Om det valda TLS-/SSL-läget kräver ett serverrotcertifikat anger du det här",
+        "tlsssl-client-certificate": "TLS-/SSL-klientcertifikat",
+        "tlsssl-client-key": "TLS/SSL-klientnyckel",
         "tlsssl-root-certificate": "TLS-/SSL-rotcertifikat"
       },
       "visual-editor": {
-        "label-filter-by-column-value": "",
-        "label-group-by-column": ""
+        "label-filter-by-column-value": "Filtrera efter kolumnvärde",
+        "label-group-by-column": "Gruppera efter kolumn"
       },
       "widgets": {
-        "aria-label-macros-value-selector": ""
+        "aria-label-macros-value-selector": "Makrovärdesväljare"
       }
     },
     "utils": {
       "get-columns-width-indices": {
-        "label-selected-columns": ""
+        "label-selected-columns": "Valda kolumner"
       }
     }
   }

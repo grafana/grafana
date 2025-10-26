@@ -44,7 +44,7 @@ describe('DerivedFields', () => {
     const onChange = jest.fn();
     render(<DerivedFields fields={testFields} onChange={onChange} />);
 
-    await userEvent.click((await screen.findAllByTitle('Remove field'))[0]);
+    await userEvent.click((await screen.findAllByLabelText('Remove field'))[0]);
 
     await waitFor(() => expect(onChange).toHaveBeenCalledWith([testFields[1]]));
   });

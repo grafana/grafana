@@ -3,7 +3,6 @@ package search_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"runtime"
 	"testing"
 	"time"
@@ -14,14 +13,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupIndex() (resource.ResourceIndex, string) {
+func setupIndex(b testing.TB) resource.ResourceIndex {
 	// size := 1000000  // TODO: 200k documents standard size?
 	size := 200000
 	// batchSize := 1000 slower 8s (for 200k documents) - 34s (for 1M documents)
 	// batchSize := 10000 // faster 5s  (for 200k documents) - 27s (for 1M documents)
 	batchSize := 100000 // fasterer 3.5s  (for 200k documents) - 27s  (for 1M documents)
 	writer := newTestWriter(size, batchSize)
-	return newTestDashboardsIndex(nil, 1, int64(size), int64(batchSize), writer)
+	return newTestDashboardsIndex(b, 1, int64(size), writer)
 }
 
 const maxAllowedTime = 20 * time.Millisecond // Reasonable (can vary per env) performance threshold per query (e.g., 20ms)
@@ -33,17 +32,14 @@ const verbose = false
 // changes the the indexer settings can cause unforeseen performance issues ( for example: using wildcard queries )
 // this will fail if the stats exceed the "normal" thresholds
 func BenchmarkBleveQuery(b *testing.B) {
+	testIndex := setupIndex(b)
+	runBenchmark(b, testIndex)
+}
+
+func runBenchmark(b *testing.B, testIndex resource.ResourceIndex) {
 	var memStatsStart runtime.MemStats
 	var memStatsAfterIndex runtime.MemStats
 	runtime.ReadMemStats(&memStatsStart)
-
-	testIndex, testIndexDir := setupIndex()
-	defer func() {
-		err := os.RemoveAll(testIndexDir)
-		if err != nil {
-			fmt.Printf("Error removing index directory: %v\n", err)
-		}
-	}()
 
 	runtime.ReadMemStats(&memStatsAfterIndex)
 
@@ -86,7 +82,7 @@ func BenchmarkBleveQuery(b *testing.B) {
 	}
 }
 
-func newTestWriter(size int, batchSize int) IndexWriter {
+func newTestWriter(size int, batchSize int) resource.BuildFn {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",

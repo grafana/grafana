@@ -1,5 +1,5 @@
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
-import { Role } from 'app/types';
+import { Role } from 'app/types/accessControl';
 
 import { addDisplayNameForFixedRole, addFilteredDisplayName } from './utils';
 
@@ -16,7 +16,7 @@ export const fetchRoleOptions = async (orgId?: number): Promise<Role[]> => {
 };
 
 export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Role[]> => {
-  let userRolesUrl = `/api/access-control/users/${userId}/roles?includeMapped=true`;
+  let userRolesUrl = `/api/access-control/users/${userId}/roles?includeMapped=true&includeHidden=true`;
   if (orgId) {
     userRolesUrl += `&targetOrgId=${orgId}`;
   }

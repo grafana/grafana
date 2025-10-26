@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 import { LocalValueVariable } from '@grafana/scenes';
@@ -7,6 +7,42 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+
+function useEditPaneOptions(this: LocalVariableEditableElement): OptionsPaneCategoryDescriptor[] {
+  const variable = this.variable;
+  const localVariableCategoryId = useId();
+  const localVariableId = useId();
+
+  return useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: '',
+      id: localVariableCategoryId,
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: localVariableId,
+        skipField: true,
+        render: () => {
+          return (
+            <Box paddingBottom={1}>
+              <Stack>
+                <Stack>
+                  <span>${variable.state.name}</span>
+                  <span>=</span>
+                  <span>{variable.getValueText()}</span>
+                </Stack>
+              </Stack>
+            </Box>
+          );
+        },
+      })
+    );
+
+    return [category];
+  }, [localVariableCategoryId, localVariableId, variable]);
+}
 
 export class LocalVariableEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
@@ -22,36 +58,5 @@ export class LocalVariableEditableElement implements EditableDashboardElement {
     };
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    const variable = this.variable;
-
-    return useMemo(() => {
-      const category = new OptionsPaneCategoryDescriptor({
-        title: '',
-        id: 'local-variable-options',
-      });
-
-      category.addItem(
-        new OptionsPaneItemDescriptor({
-          title: '',
-          skipField: true,
-          render: () => {
-            return (
-              <Box paddingBottom={1}>
-                <Stack>
-                  <Stack>
-                    <span>${variable.state.name}</span>
-                    <span>=</span>
-                    <span>{variable.getValueText()}</span>
-                  </Stack>
-                </Stack>
-              </Box>
-            );
-          },
-        })
-      );
-
-      return [category];
-    }, [variable]);
-  }
+  public useEditPaneOptions = useEditPaneOptions.bind(this);
 }

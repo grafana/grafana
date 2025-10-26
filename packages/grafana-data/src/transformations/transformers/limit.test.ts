@@ -35,18 +35,21 @@ describe('Limit transformer', () => {
         {
           name: 'time',
           type: FieldType.time,
+          state: { calcs: undefined },
           values: [3000, 4000, 5000],
           config: {},
         },
         {
           name: 'message',
           type: FieldType.string,
+          state: { calcs: undefined },
           values: ['one', 'two', 'two'],
           config: {},
         },
         {
           name: 'values',
           type: FieldType.number,
+          state: { calcs: undefined },
           values: [1, 2, 2],
           config: {},
         },
@@ -79,18 +82,21 @@ describe('Limit transformer', () => {
         {
           name: 'time',
           type: FieldType.time,
+          state: { calcs: undefined },
           values: [6000, 7000, 8000],
           config: {},
         },
         {
           name: 'message',
           type: FieldType.string,
+          state: { calcs: undefined },
           values: ['three', 'three', 'three'],
           config: {},
         },
         {
           name: 'values',
           type: FieldType.number,
+          state: { calcs: undefined },
           values: [3, 3, 3],
           config: {},
         },

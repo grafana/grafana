@@ -1,6 +1,6 @@
 import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
 
-import { AzureMonitorDataSourceInstanceSettings } from '../types';
+import { AzureMonitorDataSourceInstanceSettings } from '../types/types';
 
 import { DeepPartial, mapPartialArrayObject } from './utils';
 

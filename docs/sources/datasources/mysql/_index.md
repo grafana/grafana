@@ -2,10 +2,11 @@
 aliases:
   - ../data-sources/mysql/
   - ../features/datasources/mysql/
-description: introduction to the MySQL data source in Grafana
+description: Introduction to the MySQL data source in Grafana
 keywords:
   - grafana
   - mysql
+  - data source
   - guide
 labels:
   products:
@@ -45,7 +46,7 @@ refs:
 
 # MySQL data source
 
-Grafana ships with a built-in MySQL data source plugin that allows you to query and visualize data from a MySQL-compatible database like MariaDB or Percona Server. You don't need to install a plugin in order to add the MySQL data source to your Grafana instance.
+Grafana ships with a built-in MySQL data source plugin that allows you to query and visualize data from a MySQL-compatible database like [MariaDB](https://mariadb.org/) or [Percona Server](https://www.percona.com/). You don't need to install a plugin in order to add the MySQL data source to your Grafana instance.
 
 Grafana offers several configuration options for this data source as well as a visual and code-based query editor.
 

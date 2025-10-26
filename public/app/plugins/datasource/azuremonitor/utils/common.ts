@@ -3,7 +3,7 @@ import { map } from 'lodash';
 import { ScopedVars, SelectableValue, VariableWithMultiSupport } from '@grafana/data';
 import { TemplateSrv, VariableInterpolation } from '@grafana/runtime';
 
-import { AzureMonitorOption, VariableOptionGroup } from '../types';
+import { AzureMonitorOption, VariableOptionGroup } from '../types/types';
 
 export const hasOption = (options: AzureMonitorOption[], value: string): boolean =>
   options.some((v) => (v.options ? hasOption(v.options, value) : v.value === value));

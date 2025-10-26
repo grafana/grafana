@@ -36,28 +36,34 @@ func TestV34(t *testing.T) {
 						"type": "timeseries",
 						"targets": []interface{}{
 							map[string]interface{}{
-								"refId":      "A",
-								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-								"namespace":  "AWS/EC2",
-								"region":     "us-east-1",
-								"metricName": "CPUUtilization",
-								"statistic":  "Average",
+								"refId":            "A",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"statistic":        "Average",
+								"metricEditorMode": 0,
+								"metricQueryType":  0,
 							},
 							map[string]interface{}{
-								"refId":      "B",
-								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-								"namespace":  "AWS/EC2",
-								"region":     "us-east-1",
-								"metricName": "CPUUtilization",
-								"statistic":  "Maximum",
+								"refId":            "B",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"statistic":        "Maximum",
+								"metricEditorMode": 0,
+								"metricQueryType":  0,
 							},
 							map[string]interface{}{
-								"refId":      "C",
-								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-								"namespace":  "AWS/EC2",
-								"region":     "us-east-1",
-								"metricName": "CPUUtilization",
-								"statistic":  "Minimum",
+								"refId":            "C",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"statistic":        "Minimum",
+								"metricEditorMode": 0,
+								"metricQueryType":  0,
 							},
 						},
 					},
@@ -90,12 +96,14 @@ func TestV34(t *testing.T) {
 						"id": 1,
 						"targets": []interface{}{
 							map[string]interface{}{
-								"refId":      "A",
-								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-								"namespace":  "AWS/EC2",
-								"region":     "us-east-1",
-								"metricName": "CPUUtilization",
-								"statistic":  "Average",
+								"refId":            "A",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"statistic":        "Average",
+								"metricEditorMode": 0,
+								"metricQueryType":  0,
 							},
 						},
 					},
@@ -177,7 +185,7 @@ func TestV34(t *testing.T) {
 			},
 		},
 		{
-			name: "handles invalid statistics in CloudWatch annotation queries",
+			name: "handles annotation with empty statistics array",
 			input: map[string]interface{}{
 				"annotations": map[string]interface{}{
 					"list": []interface{}{
@@ -187,7 +195,7 @@ func TestV34(t *testing.T) {
 							"namespace":      "AWS/EC2",
 							"region":         "us-east-1",
 							"prefixMatching": false,
-							"statistics":     []interface{}{123, "Sum", nil},
+							"statistics":     []interface{}{},
 						},
 					},
 				},
@@ -202,14 +210,13 @@ func TestV34(t *testing.T) {
 							"namespace":      "AWS/EC2",
 							"region":         "us-east-1",
 							"prefixMatching": false,
-							"statistic":      "Sum",
 						},
 					},
 				},
 			},
 		},
 		{
-			name: "handles multiple valid statistics mixed with invalid ones in annotation",
+			name: "handles annotation with single statistic",
 			input: map[string]interface{}{
 				"annotations": map[string]interface{}{
 					"list": []interface{}{
@@ -219,7 +226,7 @@ func TestV34(t *testing.T) {
 							"namespace":      "AWS/EC2",
 							"region":         "us-east-1",
 							"prefixMatching": false,
-							"statistics":     []interface{}{123, "Sum", nil, "Average"},
+							"statistics":     []interface{}{"Average"},
 						},
 					},
 				},
@@ -229,15 +236,7 @@ func TestV34(t *testing.T) {
 				"annotations": map[string]interface{}{
 					"list": []interface{}{
 						map[string]interface{}{
-							"name":           "CloudWatch Annotation - Sum",
-							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
-							"namespace":      "AWS/EC2",
-							"region":         "us-east-1",
-							"prefixMatching": false,
-							"statistic":      "Sum",
-						},
-						map[string]interface{}{
-							"name":           "CloudWatch Annotation - Average",
+							"name":           "CloudWatch Annotation",
 							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
 							"namespace":      "AWS/EC2",
 							"region":         "us-east-1",
@@ -249,7 +248,7 @@ func TestV34(t *testing.T) {
 			},
 		},
 		{
-			name: "handles CloudWatch annotation with all invalid statistics",
+			name: "handles annotation with null statistic",
 			input: map[string]interface{}{
 				"annotations": map[string]interface{}{
 					"list": []interface{}{
@@ -259,7 +258,7 @@ func TestV34(t *testing.T) {
 							"namespace":      "AWS/EC2",
 							"region":         "us-east-1",
 							"prefixMatching": false,
-							"statistics":     []interface{}{123, nil, map[string]interface{}{"invalid": "value"}},
+							"statistics":     []interface{}{nil},
 						},
 					},
 				},
@@ -274,6 +273,87 @@ func TestV34(t *testing.T) {
 							"namespace":      "AWS/EC2",
 							"region":         "us-east-1",
 							"prefixMatching": false,
+							// No statistic property for null
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "handles annotation with all suffix types (for getSuffixForStat coverage)",
+			input: map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":           "CloudWatch Annotation",
+							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
+							"namespace":      "AWS/EC2",
+							"region":         "us-east-1",
+							"prefixMatching": false,
+							"statistics":     []interface{}{123, true, false, map[string]interface{}{}, []interface{}{}, "", "Average"},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": int(34),
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":           "CloudWatch Annotation - 123",
+							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
+							"namespace":      "AWS/EC2",
+							"region":         "us-east-1",
+							"prefixMatching": false,
+							"statistic":      123,
+						},
+						map[string]interface{}{
+							"name":           "CloudWatch Annotation - true",
+							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
+							"namespace":      "AWS/EC2",
+							"region":         "us-east-1",
+							"prefixMatching": false,
+							"statistic":      true,
+						},
+						map[string]interface{}{
+							"name":           "CloudWatch Annotation - false",
+							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
+							"namespace":      "AWS/EC2",
+							"region":         "us-east-1",
+							"prefixMatching": false,
+							"statistic":      false,
+						},
+						map[string]interface{}{
+							"name":           "CloudWatch Annotation - [object Object]",
+							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
+							"namespace":      "AWS/EC2",
+							"region":         "us-east-1",
+							"prefixMatching": false,
+							"statistic":      map[string]interface{}{},
+						},
+						map[string]interface{}{
+							"name":           "CloudWatch Annotation - ",
+							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
+							"namespace":      "AWS/EC2",
+							"region":         "us-east-1",
+							"prefixMatching": false,
+							"statistic":      []interface{}{},
+						},
+						map[string]interface{}{
+							"name":           "CloudWatch Annotation - ",
+							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
+							"namespace":      "AWS/EC2",
+							"region":         "us-east-1",
+							"prefixMatching": false,
+							"statistic":      "",
+						},
+						map[string]interface{}{
+							"name":           "CloudWatch Annotation - Average",
+							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
+							"namespace":      "AWS/EC2",
+							"region":         "us-east-1",
+							"prefixMatching": false,
+							"statistic":      "Average",
 						},
 					},
 				},
@@ -310,12 +390,14 @@ func TestV34(t *testing.T) {
 						"id": 1,
 						"targets": []interface{}{
 							map[string]interface{}{
-								"refId":      "A",
-								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-								"namespace":  "AWS/EC2",
-								"region":     "us-east-1",
-								"metricName": "CPUUtilization",
-								"statistic":  "Average",
+								"refId":            "A",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"statistic":        "Average",
+								"metricEditorMode": 0,
+								"metricQueryType":  0,
 							},
 							map[string]interface{}{
 								"refId":      "B",
@@ -323,12 +405,14 @@ func TestV34(t *testing.T) {
 								"datasource": "prometheus",
 							},
 							map[string]interface{}{
-								"refId":      "C",
-								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-								"namespace":  "AWS/EC2",
-								"region":     "us-east-1",
-								"metricName": "CPUUtilization",
-								"statistic":  "Maximum",
+								"refId":            "C",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"statistic":        "Maximum",
+								"metricEditorMode": 0,
+								"metricQueryType":  0,
 							},
 						},
 					},
@@ -360,11 +444,13 @@ func TestV34(t *testing.T) {
 						"id": 1,
 						"targets": []interface{}{
 							map[string]interface{}{
-								"refId":      "A",
-								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-								"namespace":  "AWS/EC2",
-								"region":     "us-east-1",
-								"metricName": "CPUUtilization",
+								"refId":            "A",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"metricEditorMode": 0,
+								"metricQueryType":  0,
 							},
 						},
 					},
@@ -427,86 +513,13 @@ func TestV34(t *testing.T) {
 						"id": 1,
 						"targets": []interface{}{
 							map[string]interface{}{
-								"refId":      "A",
-								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-								"namespace":  "AWS/EC2",
-								"region":     "us-east-1",
-								"metricName": "CPUUtilization",
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "handles invalid statistics values gracefully",
-			input: map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id": 1,
-						"targets": []interface{}{
-							map[string]interface{}{
-								"refId":      "A",
-								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-								"namespace":  "AWS/EC2",
-								"region":     "us-east-1",
-								"metricName": "CPUUtilization",
-								"statistics": []interface{}{123, nil, "Average", map[string]interface{}{"invalid": "value"}},
-							},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": int(34),
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id": 1,
-						"targets": []interface{}{
-							map[string]interface{}{
-								"refId":      "A",
-								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-								"namespace":  "AWS/EC2",
-								"region":     "us-east-1",
-								"metricName": "CPUUtilization",
-								"statistic":  "Average",
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "handles CloudWatch query with all invalid statistics",
-			input: map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id": 1,
-						"targets": []interface{}{
-							map[string]interface{}{
-								"refId":      "A",
-								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-								"namespace":  "AWS/EC2",
-								"region":     "us-east-1",
-								"metricName": "CPUUtilization",
-								"statistics": []interface{}{123, nil, map[string]interface{}{"invalid": "value"}},
-							},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": int(34),
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id": 1,
-						"targets": []interface{}{
-							map[string]interface{}{
-								"refId":      "A",
-								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-								"namespace":  "AWS/EC2",
-								"region":     "us-east-1",
-								"metricName": "CPUUtilization",
+								"refId":            "A",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"metricEditorMode": 0,
+								"metricQueryType":  0,
 							},
 						},
 					},
@@ -541,24 +554,28 @@ func TestV34(t *testing.T) {
 						"id": 1,
 						"targets": []interface{}{
 							map[string]interface{}{
-								"refId":      "A",
-								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-								"namespace":  "AWS/EC2",
-								"region":     "us-east-1",
-								"metricName": "CPUUtilization",
-								"statistic":  "Average",
-								"period":     "300",
-								"alias":      "CPU Usage",
+								"refId":            "A",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"statistic":        "Average",
+								"period":           "300",
+								"alias":            "CPU Usage",
+								"metricEditorMode": 0,
+								"metricQueryType":  0,
 							},
 							map[string]interface{}{
-								"refId":      "B",
-								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-								"namespace":  "AWS/EC2",
-								"region":     "us-east-1",
-								"metricName": "CPUUtilization",
-								"statistic":  "Maximum",
-								"period":     "300",
-								"alias":      "CPU Usage",
+								"refId":            "B",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"statistic":        "Maximum",
+								"period":           "300",
+								"alias":            "CPU Usage",
+								"metricEditorMode": 0,
+								"metricQueryType":  0,
 							},
 						},
 					},
@@ -650,36 +667,44 @@ func TestV34(t *testing.T) {
 								"id": 4,
 								"targets": []interface{}{
 									map[string]interface{}{
-										"refId":      "C",
-										"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-										"namespace":  "AWS/EC2",
-										"region":     "default",
-										"metricName": "CPUUtilization",
-										"statistic":  "Average",
+										"refId":            "C",
+										"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+										"namespace":        "AWS/EC2",
+										"region":           "default",
+										"metricName":       "CPUUtilization",
+										"statistic":        "Average",
+										"metricEditorMode": 0,
+										"metricQueryType":  0,
 									},
 									map[string]interface{}{
-										"refId":      "B",
-										"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-										"namespace":  "AWS/EC2",
-										"region":     "us-east-2",
-										"metricName": "CPUUtilization",
-										"statistic":  "Sum",
+										"refId":            "B",
+										"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+										"namespace":        "AWS/EC2",
+										"region":           "us-east-2",
+										"metricName":       "CPUUtilization",
+										"statistic":        "Sum",
+										"metricEditorMode": 0,
+										"metricQueryType":  0,
 									},
 									map[string]interface{}{
-										"refId":      "A",
-										"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-										"namespace":  "AWS/EC2",
-										"region":     "default",
-										"metricName": "CPUUtilization",
-										"statistic":  "Minimum",
+										"refId":            "A",
+										"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+										"namespace":        "AWS/EC2",
+										"region":           "default",
+										"metricName":       "CPUUtilization",
+										"statistic":        "Minimum",
+										"metricEditorMode": 0,
+										"metricQueryType":  0,
 									},
 									map[string]interface{}{
-										"refId":      "D",
-										"dimensions": map[string]interface{}{"InstanceId": "i-123"},
-										"namespace":  "AWS/EC2",
-										"region":     "default",
-										"metricName": "CPUUtilization",
-										"statistic":  "p12.21",
+										"refId":            "D",
+										"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+										"namespace":        "AWS/EC2",
+										"region":           "default",
+										"metricName":       "CPUUtilization",
+										"statistic":        "p12.21",
+										"metricEditorMode": 0,
+										"metricQueryType":  0,
 									},
 								},
 							},
@@ -687,24 +712,336 @@ func TestV34(t *testing.T) {
 								"id": 5,
 								"targets": []interface{}{
 									map[string]interface{}{
-										"refId":      "A",
-										"dimensions": map[string]interface{}{"InstanceId": "i-456"},
-										"namespace":  "AWS/EC2",
-										"region":     "us-west-1",
-										"metricName": "NetworkIn",
-										"statistic":  "Sum",
+										"refId":            "A",
+										"dimensions":       map[string]interface{}{"InstanceId": "i-456"},
+										"namespace":        "AWS/EC2",
+										"region":           "us-west-1",
+										"metricName":       "NetworkIn",
+										"statistic":        "Sum",
+										"metricEditorMode": 0,
+										"metricQueryType":  0,
 									},
 									map[string]interface{}{
-										"refId":      "B",
-										"dimensions": map[string]interface{}{"InstanceId": "i-456"},
-										"namespace":  "AWS/EC2",
-										"region":     "us-west-1",
-										"metricName": "NetworkIn",
-										"statistic":  "Min",
+										"refId":            "B",
+										"dimensions":       map[string]interface{}{"InstanceId": "i-456"},
+										"namespace":        "AWS/EC2",
+										"region":           "us-west-1",
+										"metricName":       "NetworkIn",
+										"statistic":        "Min",
+										"metricEditorMode": 0,
+										"metricQueryType":  0,
 									},
 								},
 							},
 						},
+					},
+				},
+			},
+		},
+		{
+			name: "preserves existing metricQueryType (hasOwnProperty test)",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+						"targets": []interface{}{
+							map[string]interface{}{
+								"refId":           "A",
+								"dimensions":      map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":       "AWS/EC2",
+								"region":          "us-east-1",
+								"metricName":      "CPUUtilization",
+								"metricQueryType": 1, // Already exists - should be preserved
+								"statistics":      []interface{}{"Average"},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": int(34),
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+						"targets": []interface{}{
+							map[string]interface{}{
+								"refId":            "A",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"metricQueryType":  1, // Preserved
+								"metricEditorMode": 1, // Set to Code due to Insights
+								"statistic":        "Average",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "preserves existing metricEditorMode (hasOwnProperty test)",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+						"targets": []interface{}{
+							map[string]interface{}{
+								"refId":            "A",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"metricEditorMode": 1, // Already exists - should be preserved
+								"statistics":       []interface{}{"Average"},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": int(34),
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+						"targets": []interface{}{
+							map[string]interface{}{
+								"refId":            "A",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"metricEditorMode": 1, // Preserved
+								"metricQueryType":  0, // Set to default
+								"statistic":        "Average",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "preserves existing metricEditorMode and metricQueryType values",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+						"targets": []interface{}{
+							map[string]interface{}{
+								"refId":            "A",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"statistics":       []interface{}{"Average", "Maximum"},
+								"metricEditorMode": 1,
+								"metricQueryType":  1,
+								"period":           "300",
+								"alias":            "CPU Usage",
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": int(34),
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+						"targets": []interface{}{
+							map[string]interface{}{
+								"refId":            "A",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"statistic":        "Average",
+								"period":           "300",
+								"alias":            "CPU Usage",
+								"metricEditorMode": 1,
+								"metricQueryType":  1,
+							},
+							map[string]interface{}{
+								"refId":            "B",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"statistic":        "Maximum",
+								"period":           "300",
+								"alias":            "CPU Usage",
+								"metricEditorMode": 1,
+								"metricQueryType":  1,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "handles refId generation with existing refIds",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+						"targets": []interface{}{
+							map[string]interface{}{"refId": "A", "expr": "prometheus"},
+							map[string]interface{}{"refId": "C", "expr": "prometheus"}, // Skip B to test gap filling
+							map[string]interface{}{
+								"refId":      "D",
+								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":  "AWS/EC2",
+								"region":     "us-east-1",
+								"metricName": "CPUUtilization",
+								"statistics": []interface{}{"Average", "Maximum"},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": int(34),
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+						"targets": []interface{}{
+							map[string]interface{}{"refId": "A", "expr": "prometheus"},
+							map[string]interface{}{"refId": "C", "expr": "prometheus"},
+							map[string]interface{}{
+								"refId":            "D",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"statistic":        "Average",
+								"metricEditorMode": 0,
+								"metricQueryType":  0,
+							},
+							map[string]interface{}{
+								"refId":            "B", // Should use the available B
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"statistic":        "Maximum",
+								"metricEditorMode": 0,
+								"metricQueryType":  0,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "handles non-CloudWatch annotation (skips migration)",
+			input: map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":       "Regular Annotation",
+							"datasource": "prometheus",
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": int(34),
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":       "Regular Annotation",
+							"datasource": "prometheus",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "handles missing annotations list",
+			input: map[string]interface{}{
+				"annotations": map[string]interface{}{},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": int(34),
+				"annotations":   map[string]interface{}{},
+			},
+		},
+		{
+			name: "handles missing annotations entirely",
+			input: map[string]interface{}{
+				"panels": []interface{}{},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": int(34),
+				"panels":        []interface{}{},
+			},
+		},
+		{
+			name: "tests generateNextRefId double letter generation",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+						"targets": func() []interface{} {
+							targets := []interface{}{}
+							// Create A-Z refIds
+							for c := 'A'; c <= 'Z'; c++ {
+								targets = append(targets, map[string]interface{}{
+									"refId": string(c),
+									"expr":  "prometheus",
+								})
+							}
+							// Add CloudWatch query that will need double letter refId
+							targets = append(targets, map[string]interface{}{
+								"refId":      "AA",
+								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":  "AWS/EC2",
+								"region":     "us-east-1",
+								"metricName": "CPUUtilization",
+								"statistics": []interface{}{"Average", "Maximum"},
+							})
+							return targets
+						}(),
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": int(34),
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+						"targets": func() []interface{} {
+							targets := []interface{}{}
+							// Create A-Z refIds
+							for c := 'A'; c <= 'Z'; c++ {
+								targets = append(targets, map[string]interface{}{
+									"refId": string(c),
+									"expr":  "prometheus",
+								})
+							}
+							// Add the migrated CloudWatch queries
+							targets = append(targets, map[string]interface{}{
+								"refId":            "AA",
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"statistic":        "Average",
+								"metricEditorMode": 0,
+								"metricQueryType":  0,
+							})
+							targets = append(targets, map[string]interface{}{
+								"refId":            "AB", // Next available double letter
+								"dimensions":       map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":        "AWS/EC2",
+								"region":           "us-east-1",
+								"metricName":       "CPUUtilization",
+								"statistic":        "Maximum",
+								"metricEditorMode": 0,
+								"metricQueryType":  0,
+							})
+							return targets
+						}(),
 					},
 				},
 			},

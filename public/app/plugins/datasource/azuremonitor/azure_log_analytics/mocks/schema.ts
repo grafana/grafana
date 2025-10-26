@@ -1,4 +1,5 @@
-import { AzureLogAnalyticsMetadataTable, EngineSchema } from '../../types';
+import { AzureLogAnalyticsMetadataTable } from '../../types/logAnalyticsMetadata';
+import { EngineSchema } from '../../types/types';
 
 export default class FakeSchemaData {
   static getLogAnalyticsFakeSchema() {

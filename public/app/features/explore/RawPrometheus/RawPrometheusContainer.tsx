@@ -8,8 +8,8 @@ import { TimeZone } from '@grafana/schema';
 import { RadioButtonGroup, Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
-import { StoreState, TABLE_RESULTS_STYLE } from 'app/types';
-import { ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
+import { ExploreItemState, TABLE_RESULTS_STYLE, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
+import { StoreState } from 'app/types/store';
 
 import { MetaInfoText } from '../MetaInfoText';
 import RawListContainer from '../PrometheusListView/RawListContainer';
@@ -32,12 +32,11 @@ interface PrometheusContainerState {
 function mapStateToProps(state: StoreState, { exploreId }: RawPrometheusContainerProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
-  const { tableResult, rawPrometheusResult, range, queryResponse } = item;
+  const { rawPrometheusResult, range, queryResponse } = item;
   const rawPrometheusFrame: DataFrame[] = rawPrometheusResult ? [rawPrometheusResult] : [];
-  const result = (tableResult?.length ?? 0) > 0 && rawPrometheusResult ? tableResult : rawPrometheusFrame;
   const loading = queryResponse.state;
 
-  return { loading, tableResult: result, range };
+  return { loading, tableResult: rawPrometheusFrame, range };
 }
 
 const connector = connect(mapStateToProps, {});

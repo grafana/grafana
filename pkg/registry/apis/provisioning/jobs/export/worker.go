@@ -6,37 +6,41 @@ import (
 	"fmt"
 	"time"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/logging"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
 //go:generate mockery --name ExportFn --structname MockExportFn --inpackage --filename mock_export_fn.go --with-expecter
 type ExportFn func(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error
 
-//go:generate mockery --name WrapWithCloneFn --structname MockWrapWithCloneFn --inpackage --filename mock_wrap_with_clone_fn.go --with-expecter
-type WrapWithCloneFn func(ctx context.Context, repo repository.Repository, cloneOptions repository.CloneOptions, pushOptions repository.PushOptions, fn func(repo repository.Repository, cloned bool) error) error
+//go:generate mockery --name WrapWithStageFn --structname MockWrapWithStageFn --inpackage --filename mock_wrap_with_stage_fn.go --with-expecter
+type WrapWithStageFn func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repo repository.Repository, staged bool) error) error
 
 type ExportWorker struct {
 	clientFactory       resources.ClientFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	exportFn            ExportFn
-	wrapWithCloneFn     WrapWithCloneFn
+	wrapWithStageFn     WrapWithStageFn
+	metrics             jobs.JobMetrics
 }
 
 func NewExportWorker(
 	clientFactory resources.ClientFactory,
 	repositoryResources resources.RepositoryResourcesFactory,
 	exportFn ExportFn,
-	wrapWithCloneFn WrapWithCloneFn,
+	wrapWithStageFn WrapWithStageFn,
+	metrics jobs.JobMetrics,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory:       clientFactory,
 		repositoryResources: repositoryResources,
 		exportFn:            exportFn,
-		wrapWithCloneFn:     wrapWithCloneFn,
+		wrapWithStageFn:     wrapWithStageFn,
+		metrics:             metrics,
 	}
 }
 
@@ -51,58 +55,75 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return errors.New("missing export settings")
 	}
 
+	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	start := time.Now()
+	outcome := utils.ErrorOutcome
+	resourcesExported := 0
+	defer func() {
+		r.metrics.RecordJob(string(provisioning.JobActionPush), outcome, resourcesExported, time.Since(start).Seconds())
+	}()
 	cfg := repo.Config()
 	// Can write to external branch
 	if err := repository.IsWriteAllowed(cfg, options.Branch); err != nil {
 		return err
 	}
 
-	writer := gogit.Progress(func(line string) {
-		progress.SetMessage(ctx, line)
-	}, "finished")
-
-	cloneOptions := repository.CloneOptions{
-		Timeout:      10 * time.Minute,
-		PushOnWrites: false,
-		Progress:     writer,
-		BeforeFn: func() error {
-			progress.SetMessage(ctx, "clone target")
-			// :( the branch is now baked into the repo
-			if options.Branch != "" {
-				return fmt.Errorf("branch is not supported for clonable repositories")
-			}
-
-			return nil
-		},
+	msg := options.Message
+	if msg == "" {
+		msg = fmt.Sprintf("Export from Grafana %s", job.Name)
 	}
 
-	pushOptions := repository.PushOptions{
-		Timeout:  10 * time.Minute,
-		Progress: writer,
-		BeforeFn: func() error {
-			progress.SetMessage(ctx, "push changes")
-			return nil
-		},
+	cloneOptions := repository.StageOptions{
+		Ref:                   options.Branch,
+		Timeout:               10 * time.Minute,
+		PushOnWrites:          false,
+		Mode:                  repository.StageModeCommitOnlyOnce,
+		CommitOnlyOnceMessage: msg,
 	}
 
 	fn := func(repo repository.Repository, _ bool) error {
 		clients, err := r.clientFactory.Clients(ctx, cfg.Namespace)
 		if err != nil {
+			logger.Error("failed to create clients", "error", err)
 			return fmt.Errorf("create clients: %w", err)
 		}
 
 		rw, ok := repo.(repository.ReaderWriter)
 		if !ok {
+			logger.Error("export job submitted targeting repository that is not a ReaderWriter")
 			return errors.New("export job submitted targeting repository that is not a ReaderWriter")
 		}
 
 		repositoryResources, err := r.repositoryResources.Client(ctx, rw)
 		if err != nil {
+			logger.Error("failed to create repository resource client", "error", err)
 			return fmt.Errorf("create repository resource client: %w", err)
 		}
 
 		return r.exportFn(ctx, cfg.Name, *options, clients, repositoryResources, progress)
 	}
 
-	return r.wrapWithCloneFn(ctx, repo, cloneOptions, pushOptions, fn)
+	err := r.wrapWithStageFn(ctx, repo, cloneOptions, fn)
+
+	// Set RefURLs if the repository supports it and we have a target branch
+	if options.Branch != "" {
+		if repoWithURLs, ok := repo.(repository.RepositoryWithURLs); ok {
+			if refURLs, urlErr := repoWithURLs.RefURLs(ctx, options.Branch); urlErr == nil && refURLs != nil {
+				progress.SetRefURLs(ctx, refURLs)
+			}
+		}
+	}
+
+	if err != nil {
+		logger.Error("failed to export", "error", err)
+		return err
+	}
+
+	outcome = utils.SuccessOutcome
+	jobStatus := progress.Complete(ctx, nil)
+	for _, summary := range jobStatus.Summary {
+		resourcesExported += int(summary.Write)
+	}
+
+	return nil
 }

@@ -2,26 +2,26 @@
   "grafana-sql": {
     "components": {
       "confirm-modal": {
-        "builder-mode": "",
+        "builder-mode": "빌더 모드에서는 코드의 변경 사항이 표시되지 않습니다. 쿼리 빌더는 빌더 모드에서 마지막으로 변경한 사항을 표시합니다.",
         "cancel": "취소",
-        "clipboard": "",
-        "copy-code-and-switch": "",
-        "discard-code-and-switch": "",
+        "clipboard": "코드를 클립보드에 복사하시겠어요?",
+        "copy-code-and-switch": "코드 복사 및 전환",
+        "discard-code-and-switch": "코드 삭제 및 전환",
         "warning": "경고"
       },
       "connection-limits": {
-        "auto-max-idle": "",
-        "content-auto-max-idle": "",
-        "content-max-idle": "",
-        "content-max-lifetime": "",
-        "content-max-open": "",
-        "max-idle": "",
-        "max-lifetime": "",
-        "max-open": "",
-        "title-connection-limits": ""
+        "auto-max-idle": "자동 최대 유휴",
+        "content-auto-max-idle": "활성화하면, <1>유휴 연결 수 최대 한도</1>를 <3>열린 연결 수 최대 한도</3>와 동일한 값으로 자동 설정합니다. 열린 연결 수 최대 한도를 설정하지 않으면, 기본값({{defaultMaxIdle}})으로 설정됩니다.",
+        "content-max-idle": "유휴 연결 풀의 연결 최대 한도입니다. <1>열린 연결 최대 한도</1>가 0보다 크지만 <3>유휴 연결 최대 한도</3>보다 작으면, <5>유휴 연결 최대 한도</5>가 <8>열린 연결 최대 한도</8>에 맞춰 감소합니다. 0으로 설정된 경우, 유휴 연결이 유지되지 않습니다.",
+        "content-max-lifetime": "연결을 재사용할 수 있는 최대 시간(초)입니다. 0으로 설정하면, 연결이 영구적으로 재사용됩니다.",
+        "content-max-open": "데이터베이스에 대한 열린 연결 최대 한도입니다. <1>유휴 연결 최대 한도</1>가 0보다 크고 <3>열린 연결 최대 한도</3>가 <5>유휴 연결 최대 한도</5>보다 작으면, <7>유휴 연결 최대 한도</7>가 <9>열린 연결 최대 한도</9>와 일치하도록 감소합니다. 0으로 설정하면, 열린 연결 수에 제한이 없습니다.",
+        "max-idle": "유휴 최대 한도",
+        "max-lifetime": "최대 수명 기간",
+        "max-open": "열 한도",
+        "title-connection-limits": "연결 한도"
       },
       "dataset-selector": {
-        "aria-label-dataset-selector": ""
+        "aria-label-dataset-selector": "데이터 집합 선택기"
       },
       "error-boundary": {
         "fall-back": {
@@ -31,21 +31,21 @@
       "get-custom-operators": {
         "custom-operators": {
           "label": {
-            "macros": ""
+            "macros": "매크로"
           }
         }
       },
       "make-render-column": {
         "render-column": {
           "aria-label-group-by": "그룹화 기준",
-          "title-remove-group-by-column": ""
+          "title-remove-group-by-column": "열별로 그룹 제거"
         }
       },
       "order-by-row": {
-        "aria-label-order-by": "",
+        "aria-label-order-by": "주문자",
         "label-limit": "제한",
-        "label-offset": "",
-        "label-order-by": ""
+        "label-offset": "오프셋",
+        "label-order-by": "주문자"
       },
       "preview": {
         "label-element": {
@@ -54,96 +54,100 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
-        "label-dataset": "",
+        "content-invalid-query": "쿼리가 유효하지 않습니다. 자세한 내용은 아래에서 확인하세요. <1></1>하지만 이 쿼리는 계속 실행할 수 있습니다.",
+        "editor-modes": {
+          "label-builder": "빌더",
+          "label-code": "코드"
+        },
+        "label-dataset": "데이터 집합",
         "label-filter": "필터",
         "label-format": "형식",
         "label-group": "그룹",
-        "label-order": "",
+        "label-order": "주문",
         "label-preview": "미리보기",
         "label-table": "표",
-        "placeholder-select-format": "",
+        "placeholder-select-format": "형식 선택",
         "run-query": "쿼리 실행"
       },
       "query-toolbox": {
-        "content-hit-ctrlcmdreturn-to-run-query": "",
-        "tooltip-collapse": "",
-        "tooltip-expand": "",
-        "tooltip-format-query": ""
+        "content-hit-ctrlcmdreturn-to-run-query": "쿼리를 실행하려면 CTRL/CMD+리턴 키를 누르세요.",
+        "tooltip-collapse": "편집기 접기",
+        "tooltip-expand": "편집기 펼치기",
+        "tooltip-format-query": "형식 쿼리"
       },
       "query-validator": {
-        "query-will-process": "",
-        "validating-query": ""
+        "query-will-process": "<0></0> 이 쿼리는 실행 시 <2>{{bytes}}</2>를 처리합니다.",
+        "validating-query": "쿼리 유효성 검사 중..."
       },
       "raw-editor": {
         "render-placeholder": {
-          "editing-in-expanded-code-editor": ""
+          "editing-in-expanded-code-editor": "확장된 코드 편집기에서 편집 중"
         },
-        "title-query-num": ""
+        "title-query-num": "{{queryNum}} 쿼리"
       },
       "select-column": {
         "label-column": "열"
       },
       "select-custom-function-parameters": {
-        "aria-label-parameter": "",
+        "aria-label-parameter": "{{columnIndex}} 열에 대한 {{index}} 매개변수",
         "render-parameters": {
           "params": {
-            "title-remove-parameter": ""
+            "title-remove-parameter": "매개변수 제거"
           }
         },
-        "title-add-parameter": ""
+        "title-add-parameter": "매개변수 추가"
       },
       "select-row": {
         "aggregate-options": {
           "options": {
             "label": {
-              "aggregations": "",
-              "macros": ""
+              "aggregations": "집계",
+              "macros": "매크로"
             }
           }
         },
         "label": {
-          "time": "",
+          "time": "시간",
           "value": "값"
         },
         "label-alias": "별칭",
-        "label-data-operations": "",
-        "title-add-column": "",
-        "title-remove-column": ""
+        "label-data-operations": "데이터 운영",
+        "title-add-column": "열 추가",
+        "title-remove-column": "열 삭제"
       },
       "settings": {
-        "aria-label-conjunction": "",
+        "aria-label-conjunction": "결합",
         "aria-label-field": "필드",
         "aria-label-operator": "작업 수행자",
-        "title-button-filter": ""
+        "title-button-filter": "{{ buttonLabel }} 필터"
       },
       "sql-query-editor-lazy": {
         "text-loading-editor": "편집기 로딩 중"
       },
       "table-selector": {
-        "aria-label-table-selector": "",
-        "placeholder-loading": "",
-        "placeholder-select-table": ""
+        "aria-label-table-selector": "테이블 선택기",
+        "placeholder-loading": "테이블 로딩 중",
+        "placeholder-select-table": "테이블 선택"
       },
       "tlssecrets-config": {
-        "content-tlsssl-client-certificate": "",
-        "content-tlsssl-client-key": "",
-        "content-tlsssl-root-certificate": "",
-        "tlsssl-client-certificate": "",
-        "tlsssl-client-key": "",
+        "content-tlsssl-client-certificate": "TLS/SSL 클라이언트 인증서를 사용하여 인증하려면 여기에서 클라이언트 인증서를 제공하세요. ",
+        "content-tlsssl-client-key": "클라이언트 TLS/SSL 인증서를 사용하여 인증하려면, 여기에 키를 제공하세요.",
+        "content-tlsssl-root-certificate": "선택한 TLS/SSL 모드에 서버 루트 인증서가 필요한 경우, 여기에서 제공하세요.",
+        "tlsssl-client-certificate": "TLS/SSL 클라이언트 인증서",
+        "tlsssl-client-key": "TLS/SSL 클라이언트 키",
         "tlsssl-root-certificate": "TLS/SSL 루트 인증서"
       },
       "visual-editor": {
-        "label-filter-by-column-value": "",
-        "label-group-by-column": ""
+        "label-filter-by-column-value": "열 값으로 필터링하기",
+        "label-group-by-column": "열별로 그룹화하기"
       },
       "widgets": {
-        "aria-label-macros-value-selector": ""
+        "aria-label-macros-value-selector": "매크로 값 선택기"
       }
     },
     "utils": {
       "get-columns-width-indices": {
-        "label-selected-columns": ""
+        "label-selected-columns": "선택한 열"
       }
     }
   }

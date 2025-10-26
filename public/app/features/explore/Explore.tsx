@@ -33,7 +33,7 @@ import {
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 
 import { getTimeZone } from '../profile/state/selectors';
 
@@ -42,7 +42,6 @@ import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineCo
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { CorrelationHelper } from './CorrelationHelper';
 import { CustomContainer } from './CustomContainer';
-import { DrilldownAlertBox } from './DrilldownAlertBox';
 import { ExploreToolbar } from './ExploreToolbar';
 import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
 import { GraphContainer } from './Graph/GraphContainer';
@@ -58,7 +57,7 @@ import { SecondaryActions } from './SecondaryActions';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeDatasource } from './state/datasource';
-import { changeSize } from './state/explorePane';
+import { changeSize, changeCompactMode } from './state/explorePane';
 import { splitOpen } from './state/main';
 import {
   addQueryRow,
@@ -78,7 +77,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'exploreMain',
       // Is needed for some transition animations to work.
       position: 'relative',
-      marginTop: '21px',
+      marginTop: theme.spacing(3),
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
@@ -182,14 +181,16 @@ export class Explore extends PureComponent<Props, ExploreState> {
   onContentOutlineToogle = () => {
     store.set(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, !this.state.contentOutlineVisible);
     this.setState((state) => {
+      const newContentOutlineVisible = this.props.compact ? true : !state.contentOutlineVisible;
       reportInteraction('explore_toolbar_contentoutline_clicked', {
         item: 'outline',
-        type: state.contentOutlineVisible ? 'close' : 'open',
+        type: newContentOutlineVisible ? 'open' : 'close',
       });
       return {
-        contentOutlineVisible: !state.contentOutlineVisible,
+        contentOutlineVisible: newContentOutlineVisible,
       };
     });
+    this.props.changeCompactMode(this.props.exploreId, false);
   };
 
   /**
@@ -306,9 +307,24 @@ export class Explore extends PureComponent<Props, ExploreState> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
+  /**
+   * Used for interaction from the visualizations. Will open split view in compact mode.
+   */
   onSplitOpen = (panelType: string) => {
     return async (options?: SplitOpenOptions) => {
-      this.props.splitOpen(options);
+      let compact = true;
+
+      /**
+       * Temporary fix grafana-clickhouse-datasource as it requires the query editor to be fully rendered to update the query
+       * Proposed fixes:
+       * - https://github.com/grafana/clickhouse-datasource/issues/1363 - handle query update in data source
+       * - https://github.com/grafana/grafana/issues/110868 - allow data links to provide meta info if the link can be handled in compact mode (default to false)
+       */
+      if (options?.queries?.some((q) => q.datasource?.type === 'grafana-clickhouse-datasource')) {
+        compact = false;
+      }
+
+      this.props.splitOpen(options ? { ...options, compact } : options);
       if (options && this.props.datasourceInstance) {
         const target = (await getDataSourceSrv().get(options.datasourceUid)).type;
         const source =
@@ -573,6 +589,8 @@ export class Explore extends PureComponent<Props, ExploreState> {
       correlationEditorHelperData,
       showQueryInspector,
       setShowQueryInspector,
+      compact,
+      queryLibraryRef,
     } = this.props;
     const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
@@ -614,7 +632,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           }}
         >
           <div className={styles.wrapper}>
-            {contentOutlineVisible && (
+            {contentOutlineVisible && !compact && (
               <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
             )}
             <ScrollContainer
@@ -631,13 +649,22 @@ export class Explore extends PureComponent<Props, ExploreState> {
                       mergeSingleChild={true}
                     >
                       <PanelContainer className={styles.queryContainer}>
-                        <DrilldownAlertBox datasourceType={datasourceInstance?.type || ''} />
                         {correlationsBox}
-                        <QueryRows exploreId={exploreId} />
+                        <QueryRows
+                          exploreId={exploreId}
+                          // Don't simply pass isOpen here to avoid opening the row when content outline is openend and
+                          // triggers exiting from compact mode. If it's confusing we can change the behavior to exit
+                          // compact mode explicitly with a button in the UI instead of exiting when row is opened or
+                          // content outline is opened.
+                          isOpen={compact ? false : undefined}
+                          changeCompactMode={(compact: boolean) =>
+                            this.props.changeCompactMode(this.props.exploreId, false)
+                          }
+                        />
                         <SecondaryActions
                           // do not allow people to add queries with potentially different datasources in correlations editor mode
                           addQueryRowButtonDisabled={
-                            isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed)
+                            isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed) || !!queryLibraryRef
                           }
                           // We cannot show multiple traces at the same time right now so we do not show add query button.
                           //TODO:unification
@@ -680,29 +707,59 @@ export class Explore extends PureComponent<Props, ExploreState> {
 
                         return (
                           <main className={cx(styles.exploreMain)} style={{ width }}>
-                            <ErrorBoundaryAlert>
+                            <ErrorBoundaryAlert boundaryName="explore-main">
                               {showPanels && (
                                 <>
                                   {showMetrics && graphResult && (
-                                    <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
+                                    <ErrorBoundaryAlert boundaryName="explore-graph-panel">
+                                      {this.renderGraphPanel(width)}
+                                    </ErrorBoundaryAlert>
                                   )}
                                   {showRawPrometheus && (
-                                    <ErrorBoundaryAlert>{this.renderRawPrometheus(width)}</ErrorBoundaryAlert>
+                                    <ErrorBoundaryAlert boundaryName="explore-raw-prometheus">
+                                      {this.renderRawPrometheus(width)}
+                                    </ErrorBoundaryAlert>
                                   )}
-                                  {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
-                                  {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
+                                  {showTable && (
+                                    <ErrorBoundaryAlert boundaryName="explore-table-panel">
+                                      {this.renderTablePanel(width)}
+                                    </ErrorBoundaryAlert>
+                                  )}
+                                  {showLogs && (
+                                    <ErrorBoundaryAlert boundaryName="explore-logs-panel">
+                                      {this.renderLogsPanel(width)}
+                                    </ErrorBoundaryAlert>
+                                  )}
                                   {showNodeGraph && (
-                                    <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>
+                                    <ErrorBoundaryAlert boundaryName="explore-node-graph-panel">
+                                      {this.renderNodeGraphPanel()}
+                                    </ErrorBoundaryAlert>
                                   )}
                                   {showFlameGraph && (
-                                    <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>
+                                    <ErrorBoundaryAlert boundaryName="explore-flame-graph-panel">
+                                      {this.renderFlameGraphPanel()}
+                                    </ErrorBoundaryAlert>
                                   )}
-                                  {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
+                                  {showTrace && (
+                                    <ErrorBoundaryAlert boundaryName="explore-trace-view-panel">
+                                      {this.renderTraceViewPanel()}
+                                    </ErrorBoundaryAlert>
+                                  )}
                                   {showLogsSample && (
-                                    <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>
+                                    <ErrorBoundaryAlert boundaryName="explore-logs-sample-panel">
+                                      {this.renderLogsSamplePanel()}
+                                    </ErrorBoundaryAlert>
                                   )}
-                                  {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
-                                  {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
+                                  {showCustom && (
+                                    <ErrorBoundaryAlert boundaryName="explore-custom-panel">
+                                      {this.renderCustom(width)}
+                                    </ErrorBoundaryAlert>
+                                  )}
+                                  {showNoData && (
+                                    <ErrorBoundaryAlert boundaryName="explore-no-data">
+                                      {this.renderNoData()}
+                                    </ErrorBoundaryAlert>
+                                  )}
                                 </>
                               )}
                             </ErrorBoundaryAlert>
@@ -748,6 +805,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showRawPrometheus,
     supplementaryQueries,
     correlationEditorHelperData,
+    compact,
+    queryLibraryRef,
   } = item;
 
   const loading = selectIsWaitingForData(exploreId)(state);
@@ -774,12 +833,14 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showRawPrometheus,
     showFlameGraph,
     splitted: isSplit(state),
+    compact,
     loading,
     logsSample,
     showLogsSample,
     correlationEditorHelperData,
     correlationEditorDetails: explore.correlationEditorDetails,
     exploreActiveDS: selectExploreDSMaps(state),
+    queryLibraryRef,
   };
 }
 
@@ -794,6 +855,7 @@ const mapDispatchToProps = {
   addQueryRow,
   splitOpen,
   setSupplementaryQueryEnabled,
+  changeCompactMode,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

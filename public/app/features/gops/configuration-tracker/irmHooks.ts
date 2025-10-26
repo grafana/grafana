@@ -305,8 +305,9 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                   },
                   label: t('gops.use-get-essentials-configuration.essential-content.label.connect', 'Connect'),
                   urlLinkOnDone: {
-                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations`,
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations/apps/grate.irm.slack`,
                   },
+                  labelOnDone: 'View',
                 },
                 done: isChatOpsInstalled,
               },

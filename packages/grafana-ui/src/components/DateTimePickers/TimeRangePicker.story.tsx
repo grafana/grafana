@@ -10,7 +10,7 @@ const to = dateTime();
 const from = to.subtract(6, 'h');
 
 const meta: Meta<typeof TimeRangePicker> = {
-  title: 'Pickers and Editors/TimePickers/TimeRangePicker',
+  title: 'Date time pickers/TimeRangePicker',
   component: TimeRangePicker,
   args: {
     value: {

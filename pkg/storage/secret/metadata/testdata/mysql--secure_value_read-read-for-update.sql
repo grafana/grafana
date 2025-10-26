@@ -8,16 +8,22 @@ SELECT
   `created_by`,
   `updated`,
   `updated_by`,
-  `status_phase`,
-  `status_message`,
   `description`,
   `keeper`,
   `decrypters`,
   `ref`,
-  `external_id`
+  `external_id`,
+  `active`,
+  `version`,
+  `owner_reference_api_group`,
+  `owner_reference_api_version`,
+  `owner_reference_kind`,
+  `owner_reference_name`
 FROM
   `secret_secure_value`
-WHERE `namespace` = 'ns' AND
-  `name` = 'name'
+WHERE 
+  `namespace` = 'ns' AND
+  `name` = 'name' AND
+  `active` = true
 FOR UPDATE
 ;

@@ -1,12 +1,14 @@
 package definitions
 
 import (
+	"embed"
 	"encoding/json"
-	"os"
+	"path"
+	"reflect"
 	"strings"
 	"testing"
 
-	alertingTemplates "github.com/grafana/alerting/templates"
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -14,6 +16,32 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
+
+//go:embed test-data/*.*
+var testData embed.FS
+
+func Test_GettableStatusUnmarshalJSON(t *testing.T) {
+	incoming, err := testData.ReadFile(path.Join("test-data", "gettable-status.json"))
+	require.Nil(t, err)
+
+	var actual GettableStatus
+	require.NoError(t, json.Unmarshal(incoming, &actual))
+
+	actualJson, err := json.Marshal(actual)
+	require.NoError(t, err)
+
+	expected, err := testData.ReadFile(path.Join("test-data", "gettable-status-expected.json"))
+	require.NoError(t, err)
+	assert.JSONEq(t, string(expected), string(actualJson))
+
+	v := reflect.ValueOf(actual.Config.Config)
+	ty := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldName := ty.Field(i).Name
+		assert.False(t, field.IsZero(), "Field %s should not be zero value", fieldName)
+	}
+}
 
 func Test_GettableUserConfigUnmarshaling(t *testing.T) {
 	for _, tc := range []struct {
@@ -140,10 +168,10 @@ alertmanager_config: |
 func Test_GettableUserConfigRoundtrip(t *testing.T) {
 	// raw contains secret fields. We'll unmarshal, re-marshal, and ensure
 	// the fields are not redacted.
-	yamlEncoded, err := os.ReadFile("alertmanager_test_artifact.yaml")
+	yamlEncoded, err := testData.ReadFile(path.Join("test-data", "alertmanager_test_artifact.yaml"))
 	require.Nil(t, err)
 
-	jsonEncoded, err := os.ReadFile("alertmanager_test_artifact.json")
+	jsonEncoded, err := testData.ReadFile(path.Join("test-data", "alertmanager_test_artifact.json"))
 	require.Nil(t, err)
 
 	// test GettableUserConfig (yamlDecode -> jsonEncode)
@@ -162,7 +190,7 @@ func Test_GettableUserConfigRoundtrip(t *testing.T) {
 }
 
 func Test_Marshaling_Validation(t *testing.T) {
-	jsonEncoded, err := os.ReadFile("alertmanager_test_artifact.json")
+	jsonEncoded, err := testData.ReadFile(path.Join("test-data", "alertmanager_test_artifact.json"))
 	require.Nil(t, err)
 
 	var tmp GettableUserConfig
@@ -383,22 +411,112 @@ func TestPostableUserConfig_GetMergedTemplateDefinitions(t *testing.T) {
 			require.Len(t, result, tc.expectedTemplates)
 
 			templateMap := make(map[string]string)
-			kindMap := make(map[string]alertingTemplates.Kind)
+			kindMap := make(map[string]definition.TemplateKind)
 			for _, tmpl := range result {
-				templateMap[tmpl.Name] = tmpl.Template
+				templateMap[tmpl.Name] = tmpl.Content
 				kindMap[tmpl.Name] = tmpl.Kind
 			}
 
 			for name, content := range tc.config.TemplateFiles {
 				require.Equal(t, content, templateMap[name])
-				require.Equal(t, alertingTemplates.GrafanaKind, kindMap[name])
+				require.Equal(t, definition.GrafanaTemplateKind, kindMap[name])
 			}
 
 			if len(tc.config.ExtraConfigs) > 0 {
 				for name, content := range tc.config.ExtraConfigs[0].TemplateFiles {
 					require.Equal(t, content, templateMap[name])
-					require.Equal(t, alertingTemplates.MimirKind, kindMap[name])
+					require.Equal(t, definition.MimirTemplateKind, kindMap[name])
 				}
+			}
+		})
+	}
+}
+
+func TestExtraConfiguration_Validate(t *testing.T) {
+	testCases := []struct {
+		name          string
+		config        ExtraConfiguration
+		expectedError string
+	}{
+		{
+			name: "valid configuration",
+			config: ExtraConfiguration{
+				Identifier:    "test-config",
+				MergeMatchers: config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `route:
+  receiver: default
+receivers:
+  - name: default`,
+			},
+		},
+		{
+			name: "empty identifier",
+			config: ExtraConfiguration{
+				Identifier:         "",
+				MergeMatchers:      config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `route: {receiver: default}`,
+			},
+			expectedError: "identifier is required",
+		},
+		{
+			name: "invalid matcher type",
+			config: ExtraConfiguration{
+				Identifier:    "test-config",
+				MergeMatchers: config.Matchers{{Type: labels.MatchNotEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `route:
+  receiver: default
+receivers:
+  - name: default`,
+			},
+			expectedError: "only matchers with type equal are supported",
+		},
+		{
+			name: "invalid YAML alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:         "test-config",
+				MergeMatchers:      config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `invalid: yaml: content: [`,
+			},
+			expectedError: "failed to parse alertmanager config",
+		},
+		{
+			name: "missing route in alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:    "test-config",
+				MergeMatchers: config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `receivers:
+  - name: default`,
+			},
+			expectedError: "no routes provided",
+		},
+		{
+			name: "missing receivers in alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:    "test-config",
+				MergeMatchers: config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: `route:
+  receiver: default`,
+			},
+			expectedError: "undefined receiver",
+		},
+		{
+			name: "empty alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:         "test-config",
+				MergeMatchers:      config.Matchers{{Type: labels.MatchEqual, Name: "env", Value: "prod"}},
+				AlertmanagerConfig: "",
+			},
+			expectedError: "failed to parse alertmanager config",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.config.Validate()
+			if tc.expectedError == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tc.expectedError)
 			}
 		})
 	}

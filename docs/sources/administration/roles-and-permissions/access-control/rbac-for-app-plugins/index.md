@@ -5,6 +5,7 @@ description: Learn about how to configure access to app plugins using RBAC
 labels:
   products:
     - cloud
+    - enterprise
 menuTitle: RBAC for app plugins
 title: RBAC for app plugins
 weight: 90
@@ -25,6 +26,8 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/#grafana-adaptive-metrics-action-definitions
   cloud-access-policies-action-definitions:
+    - pattern: /docs/grafana/
+      destination: docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#cloud-access-policies-action-definitions
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#cloud-access-policies-action-definitions
   rbac-role-definitions:
@@ -37,7 +40,7 @@ refs:
 # RBAC for app plugins
 
 {{< admonition type="note" >}}
-Available in [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
 {{< /admonition >}}
 
 RBAC can be used to manage access to [app plugins](https://grafana.com/docs/grafana/latest/administration/plugin-management/#app-plugins).
@@ -72,6 +75,7 @@ The following list contains app plugins that have fine-grained RBAC support.
 | [Performance Testing (K6)](https://grafana.com/docs/grafana-cloud/testing/k6/)                                                                                                        | `k6-app`                       | [Configure RBAC for K6](https://grafana.com/docs/grafana-cloud/testing/k6/projects-and-users/configure-rbac/)                                                              |
 | [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/)                                                    | `grafana-pdc-app`              | n/a                                                                                                                                                                        |
 | [Service Level Objective (SLO)](https://grafana.com/docs/grafana-cloud/alerting-and-irm/slo/)                                                                                         | `grafana-slo-app`              | [Configure RBAC for SLO](https://grafana.com/docs/grafana-cloud/alerting-and-irm/slo/set-up/rbac/)                                                                         |
+| [Cloud Provider](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/monitor-cloud-provider/)                                                                               | `grafana-csp-app`              | [Cloud Provider Observability role-based access control](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/monitor-cloud-provider/rbac/)                       |
 
 ### Revoke fine-grained access from app plugins
 

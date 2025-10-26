@@ -23,15 +23,13 @@ type ResourcePermissionspecPermission struct {
 	Kind ResourcePermissionSpecPermissionKind `json:"kind"`
 	// uid of the identity getting the permission
 	Name string `json:"name"`
-	// list of actions granted to the user (e.g. "admin" or "get", "update")
-	Verbs []string `json:"verbs"`
+	// action set granted to the user (e.g. "admin" or "edit", "view")
+	Verb string `json:"verb"`
 }
 
 // NewResourcePermissionspecPermission creates a new ResourcePermissionspecPermission object.
 func NewResourcePermissionspecPermission() *ResourcePermissionspecPermission {
-	return &ResourcePermissionspecPermission{
-		Verbs: []string{},
-	}
+	return &ResourcePermissionspecPermission{}
 }
 
 // +k8s:openapi-gen=true

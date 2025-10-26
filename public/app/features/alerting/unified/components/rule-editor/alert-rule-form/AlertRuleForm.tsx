@@ -244,6 +244,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
           <Stack direction="column" gap={3}>
             {/* Step 1 */}
             <AlertRuleNameAndMetric />
+
             {/* Step 2 */}
             <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} mode="edit" />
             {/* Step 3-4-5 */}

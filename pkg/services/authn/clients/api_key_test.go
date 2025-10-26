@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/components/satokengen"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -21,7 +21,7 @@ import (
 
 var (
 	revoked      = true
-	secret, hash = genApiKey(false)
+	secret, hash = genApiKey()
 )
 
 func TestAPIKey_Authenticate(t *testing.T) {
@@ -106,7 +106,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := ProvideAPIKey(&apikeytest.Service{ExpectedAPIKey: tt.expectedKey})
+			c := ProvideAPIKey(&apikeytest.Service{ExpectedAPIKey: tt.expectedKey}, tracing.InitializeTracerForTest())
 
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			if tt.expectedErr != nil {
@@ -173,7 +173,7 @@ func TestAPIKey_Test(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := ProvideAPIKey(&apikeytest.Service{})
+			c := ProvideAPIKey(&apikeytest.Service{}, tracing.InitializeTracerForTest())
 			assert.Equal(t, tt.expected, c.Test(context.Background(), tt.req))
 		})
 	}
@@ -187,11 +187,7 @@ func boolPtr(b bool) *bool {
 	return &b
 }
 
-func genApiKey(legacy bool) (string, string) {
-	if legacy {
-		res, _ := apikeygen.New(1, "test")
-		return res.ClientSecret, res.HashedKey
-	}
+func genApiKey() (string, string) {
 	res, _ := satokengen.New("test")
 	return res.ClientSecret, res.HashedKey
 }

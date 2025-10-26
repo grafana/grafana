@@ -48,7 +48,7 @@ const onOpenSnapshotOriginalDashboard = (originalUrl: string) => {
               </>
             ),
             confirmVariant: 'primary',
-            confirmText: 'Proceed',
+            confirmText: t('dashboard-scene.on-open-snapshot-original-dashboard.confirmText.proceed', 'Proceed'),
             onConfirm: () => {
               window.location.href = sanitizedAppUrl.href;
             },

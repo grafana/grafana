@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
+	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -39,6 +41,9 @@ var getViewIndex = func() string {
 	return viewIndex
 }
 
+// Only allow redirects that start with a slash followed by an alphanumerical character, a dash or an underscore.
+var redirectRe = regexp.MustCompile(`^/[a-zA-Z0-9-_].*`)
+
 var (
 	errAbsoluteRedirectTo  = errors.New("absolute URLs are not allowed for redirect_to cookie value")
 	errInvalidRedirectTo   = errors.New("invalid redirect_to cookie value")
@@ -65,6 +70,20 @@ func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 	}
 
 	if strings.HasPrefix(to.Path, "//") {
+		return errForbiddenRedirectTo
+	}
+
+	if to.Path != "/" && !redirectRe.MatchString(to.Path) {
+		return errForbiddenRedirectTo
+	}
+
+	cleanPath := path.Clean(to.Path)
+	// "." is what path.Clean returns for empty paths
+	if cleanPath == "." {
+		return errForbiddenRedirectTo
+	}
+
+	if cleanPath != "/" && !redirectRe.MatchString(cleanPath) {
 		return errForbiddenRedirectTo
 	}
 
@@ -183,6 +202,7 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 	for providerName, provider := range oauthInfos {
 		if provider.AutoLogin || hs.Cfg.OAuthAutoLogin {
 			redirectUrl := hs.Cfg.AppSubURL + "/login/" + providerName
+			//nolint:staticcheck // not yet migrated to OpenFeature
 			if hs.Features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection) {
 				redirectUrl += hs.getRedirectToForAutoLogin(c)
 			}
@@ -194,6 +214,7 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 
 	if samlAutoLogin {
 		redirectUrl := hs.Cfg.AppSubURL + "/login/saml"
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if hs.Features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection) {
 			redirectUrl += hs.getRedirectToForAutoLogin(c)
 		}

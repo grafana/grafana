@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Card, useStyles2 } from '@grafana/ui';
 
-import promqlGrammar from '../promql';
+import { promqlGrammar } from '../promql';
 
 import { RawQuery } from './shared/RawQuery';
 import { promQueryModeller } from './shared/modeller_instance';
@@ -28,7 +28,7 @@ export const QueryPattern = (props: Props) => {
   const lang = { grammar: promqlGrammar, name: 'promql' };
 
   return (
-    <Card className={styles.card}>
+    <Card noMargin className={styles.card}>
       <Card.Heading>{pattern.name}</Card.Heading>
       <div className={styles.rawQueryContainer}>
         <RawQuery

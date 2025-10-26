@@ -30,12 +30,12 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ruleKey := models.GenerateRuleKey(1)
 
 	fakeAM := NewFakeExternalAlertmanager(t)
@@ -102,9 +102,8 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 }
 
 func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ruleKey1 := models.GenerateRuleKey(1)
 	ruleKey2 := models.GenerateRuleKey(2)
 
@@ -504,6 +503,7 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 		log.New("testlogger"),
 		secretsService,
 		featuremgmt.WithFeatures(),
+		nil,
 	)
 	require.NoError(t, err)
 	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))

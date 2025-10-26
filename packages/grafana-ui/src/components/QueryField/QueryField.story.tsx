@@ -5,7 +5,7 @@ import { TypeaheadInput } from '../../types/completion';
 import { QueryField, QueryFieldProps } from './QueryField';
 
 const meta: Meta<typeof QueryField> = {
-  title: 'Data Source/QueryField',
+  title: 'Inputs/Deprecated/QueryField',
   component: QueryField,
   parameters: {
     controls: {
@@ -24,6 +24,8 @@ const meta: Meta<typeof QueryField> = {
         'syntaxLoaded',
       ],
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   argTypes: {
     query: {

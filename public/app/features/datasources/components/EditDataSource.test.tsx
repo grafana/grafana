@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
 import { DataSourceJsonData, PluginExtensionDataSourceConfigContext, PluginState } from '@grafana/data';
-import { setPluginComponentsHook } from '@grafana/runtime';
+import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { configureStore } from 'app/store/configureStore';
 
@@ -26,6 +26,8 @@ jest.mock('@grafana/runtime', () => {
     })),
   };
 });
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 const setup = (props?: Partial<ViewProps>) => {
   const store = configureStore();
@@ -105,6 +107,14 @@ describe('<EditDataSource>', () => {
       });
 
       expect(screen.queryByText(readOnlyMessage)).toBeVisible();
+    });
+
+    it('should render a message if the datasource is not found', () => {
+      setup({
+        dataSource: getMockDataSource({ uid: undefined, id: 0 }),
+      });
+
+      expect(screen.queryByText('Data source not found')).toBeVisible();
     });
   });
 
@@ -324,7 +334,7 @@ describe('<EditDataSource>', () => {
 
     it('should pass a context prop to the rendered UI extension component', () => {
       const message = "I'm a UI extension component!";
-      const component = jest.fn().mockReturnValue(<div>{message}</div>);
+      const Component = jest.fn().mockReturnValue(<div>{message}</div>);
 
       setPluginComponentsHook(
         jest.fn().mockReturnValue({
@@ -335,7 +345,7 @@ describe('<EditDataSource>', () => {
                 pluginId: 'grafana-pdc-app',
                 title: 'Example component',
                 description: 'Example description',
-                component,
+                component: Component,
               },
               '1'
             ),
@@ -351,9 +361,9 @@ describe('<EditDataSource>', () => {
         },
       });
 
-      expect(component).toHaveBeenCalled();
+      expect(Component).toHaveBeenCalled();
 
-      const props = component.mock.calls[0][0];
+      const props = Component.mock.calls[0][0];
 
       expect(props.context).toBeDefined();
       expect(props.context.dataSource).toBeDefined();
@@ -366,7 +376,7 @@ describe('<EditDataSource>', () => {
 
   it('should be possible to update the `jsonData` first and `secureJsonData` directly afterwards from the extension component', () => {
     const message = "I'm a UI extension component!";
-    const component = ({ context }: { context: PluginExtensionDataSourceConfigContext }) => {
+    const Component = ({ context }: { context: PluginExtensionDataSourceConfigContext }) => {
       useEffect(() => {
         context.setJsonData({ test: 'test' } as unknown as DataSourceJsonData);
         context.setSecureJsonData({ test: 'test' });
@@ -385,7 +395,7 @@ describe('<EditDataSource>', () => {
               pluginId: 'grafana-pdc-app',
               title: 'Example component',
               description: 'Example description',
-              component: component as unknown as React.ComponentType<{}>,
+              component: Component as unknown as React.ComponentType<{}>,
             },
             '1'
           ),
@@ -411,7 +421,7 @@ describe('<EditDataSource>', () => {
 
   it('should be possible to update the `secureJsonData` first and `jsonData` directly afterwards from the extension component', () => {
     const message = "I'm a UI extension component!";
-    const component = ({ context }: { context: PluginExtensionDataSourceConfigContext }) => {
+    const Component = ({ context }: { context: PluginExtensionDataSourceConfigContext }) => {
       useEffect(() => {
         context.setSecureJsonData({ test: 'test' });
         context.setJsonData({ test: 'test' } as unknown as DataSourceJsonData);
@@ -430,7 +440,7 @@ describe('<EditDataSource>', () => {
               pluginId: 'grafana-pdc-app',
               title: 'Example component',
               description: 'Example description',
-              component: component as unknown as React.ComponentType<{}>,
+              component: Component as unknown as React.ComponentType<{}>,
             },
             '1'
           ),

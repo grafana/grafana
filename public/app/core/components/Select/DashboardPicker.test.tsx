@@ -1,133 +1,68 @@
-import { noop } from 'lodash';
-import { Props } from 'react-virtualized-auto-sizer';
-import { render, screen, userEvent, waitFor } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
-import { defaultDashboard as defaultDashboardData } from '@grafana/schema';
-import {
-  Spec as DashboardV2Spec,
-  defaultSpec as defaultDashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { DashboardSearchItemType } from 'app/features/search/types';
-import { DashboardDTO } from 'app/types';
 
 import { DashboardPicker } from './DashboardPicker';
 
-jest.mock('app/core/services/backend_srv', () => ({
-  ...jest.requireActual('app/core/services/backend_srv'),
-  backendSrv: {
-    ...jest.requireActual('app/core/services/backend_srv').backendSrv,
-    search: jest.fn(),
-  },
-}));
+setBackendSrv(backendSrv);
+setupMockServer();
 
-const getDashboardDTO = jest.fn();
+const [_, { folderA, folderA_dashbdD }] = getFolderFixtures();
 
-jest.mock('app/features/dashboard/api/dashboard_api', () => ({
-  getDashboardAPI: () => ({
-    getDashboardDTO: getDashboardDTO,
-  }),
-}));
-
-jest.mock('react-virtualized-auto-sizer', () => {
-  return ({ children }: Props) =>
-    children({
-      height: 600,
-      scaledHeight: 600,
-      scaledWidth: 1,
-      width: 1,
-    });
-});
-
-jest.mocked(backendSrv.search).mockResolvedValue([
-  {
-    uid: 'dash-1',
-    type: DashboardSearchItemType.DashDB,
-    title: 'Dashboard 1',
-    uri: '',
-    url: '',
-    tags: [],
-    isStarred: false,
-  },
-  {
-    uid: 'dash-2',
-    type: DashboardSearchItemType.DashDB,
-    title: 'Dashboard 2',
-    uri: '',
-    url: '',
-    tags: [],
-    isStarred: false,
-  },
-  {
-    uid: 'dash-3',
-    type: DashboardSearchItemType.DashDB,
-    title: 'Dashboard 3',
-    uri: '',
-    url: '',
-    tags: [],
-    isStarred: false,
-  },
-]);
-
-const mockDashboard: DashboardDTO = {
-  dashboard: {
-    ...defaultDashboardData,
-    uid: 'dash-2',
-    title: 'Dashboard 2',
-  },
-  meta: {},
-};
-
-const mockDashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
-  apiVersion: 'v2alpha1',
-  kind: 'DashboardWithAccessInfo',
-  spec: {
-    ...defaultDashboardV2Spec(),
-    title: 'Dashboard 2',
-  },
-  metadata: {
-    name: 'dash-2',
-    resourceVersion: '0',
-    creationTimestamp: '0',
-    annotations: {},
-  },
-  access: {
-    canEdit: true,
-    canSave: true,
-    canStar: true,
-    canShare: true,
-  },
-};
-
+const fixtures: Array<
+  [
+    // Test title
+    string,
+    // Feature toggle setup
+    Parameters<typeof testWithFeatureToggles>[0],
+  ]
+> = [
+  ['app platform APIs enabled', { enable: ['kubernetesDashboards'] }],
+  ['app platform APIs disabled', {}],
+];
 describe('DashboardPicker', () => {
-  describe.each([
-    ['v1', mockDashboard],
-    ['v2', mockDashboardV2],
-  ])('Dashboard %s', (format, dashboard) => {
-    beforeEach(() => {
-      getDashboardDTO.mockResolvedValue(dashboard);
-    });
+  describe.each(fixtures)('%s', (_title, featureToggleSetup) => {
+    const onChange = jest.fn();
+
+    testWithFeatureToggles(featureToggleSetup);
 
     it('should fetch and display dashboards', async () => {
-      render(<DashboardPicker value="dash-2" onChange={noop} />);
+      render(<DashboardPicker value={folderA_dashbdD.item.uid} />);
 
-      await waitFor(() => {
-        expect(screen.getByText('Dashboards/Dashboard 2')).toBeInTheDocument();
-        expect(getDashboardDTO).toHaveBeenCalledWith('dash-2', undefined);
-      });
+      expect(await screen.findByText(`${folderA.item.title}/${folderA_dashbdD.item.title}`)).toBeInTheDocument();
     });
 
-    it('should search for dashboards', async () => {
-      render(<DashboardPicker onChange={noop} />);
+    it('should search for dashboards and allow selection', async () => {
+      const { user } = render(<DashboardPicker onChange={onChange} />);
 
-      await userEvent.type(screen.getByRole('combobox'), 'Dashboard 2');
+      const expectedDash = folderA_dashbdD.item;
+      const expectedFolder = folderA.item;
 
-      await waitFor(() => {
-        expect(screen.getByText('Dashboards/Dashboard 2')).toBeInTheDocument();
-      });
+      await user.type(screen.getByRole('combobox'), expectedDash.title);
 
-      expect(backendSrv.search).toHaveBeenCalledWith({ type: 'dash-db', query: 'Dashboard 2', limit: 100 });
+      expect(await screen.findByText(`${expectedFolder.title}/${expectedDash.title}`)).toBeInTheDocument();
+
+      await user.click(screen.getByText(`${expectedFolder.title}/${expectedDash.title}`));
+
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          folderTitle: expectedFolder.title,
+          folderUid: expectedFolder.uid,
+          name: expectedDash.title,
+          uid: expectedDash.uid,
+        })
+      );
+    });
+  });
+
+  xdescribe('dashboard v2 (v2beta1 API)', () => {
+    testWithFeatureToggles({ enable: ['dashboardNewLayouts', 'kubernetesDashboards'] });
+    it('renders dashboard correctly', async () => {
+      render(<DashboardPicker value="v2-special-case-override" />);
+      expect(await screen.findByText('TODO')).toBeInTheDocument();
     });
   });
 });

@@ -2,17 +2,20 @@ import { cloneDeep } from 'lodash';
 import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { useDispatch } from 'app/types';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { DashboardSavedEvent } from 'app/types/events';
+import { useDispatch } from 'app/types/store';
 
 import { updateDashboardUidLastUsedDatasource } from '../../utils/dashboard';
+import { trackDashboardCreatedOrSaved } from '../../utils/tracking';
 
 import { SaveDashboardOptions } from './types';
 
@@ -54,21 +57,15 @@ export const useDashboardSave = (isCopy = false) => {
 
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());
-        notifyApp.success('Dashboard saved');
+        notifyApp.success(t('dashboard.save-dashboard.message-dashboard-saved', 'Dashboard saved'));
 
-        //Update local storage dashboard to handle things like last used datasource
+        // Update local storage dashboard to handle things like last used datasource
         updateDashboardUidLastUsedDatasource(result.uid);
 
         if (isCopy) {
-          reportInteraction('grafana_dashboard_copied', {
-            name: dashboard.title,
-            url: result.url,
-          });
+          DashboardInteractions.dashboardCopied({ name: dashboard.title || '', url: result.url });
         } else {
-          reportInteraction(`grafana_dashboard_${dashboard.id ? 'saved' : 'created'}`, {
-            name: dashboard.title,
-            url: result.url,
-          });
+          trackDashboardCreatedOrSaved(!!dashboard.id, { name: dashboard.title, url: result.url });
         }
 
         const currentPath = locationService.getLocation().pathname;

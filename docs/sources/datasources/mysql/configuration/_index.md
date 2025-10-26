@@ -45,10 +45,14 @@ This document provides instructions for configuring the MySQL data source and ex
 You must have the `Organization administrator` role in order to configure the MySQL data source.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
-Grafana ships with the MySQL plugin, so no additional installation is required.
-
 {{< admonition type="note" >}}
-When adding a data source, ensure the database user you specify has only `SELECT` permissions on the relevant database and tables. Grafana does not validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb;` or `DROP TABLE user;`, which could get executed. To minimize this risk, Grafana strongly recommends creating a dedicated MySQL user with restricted permissions.
+Grafana ships with the MySQL data source by default, so no additional installation is required.
+{{< /admonition >}}
+
+{{< admonition type="caution" >}}
+When adding a data source, ensure the database user you specify has only `SELECT` permissions on the relevant database and tables. Grafana does not validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb;` or `DROP TABLE user;`, which could get executed.
+
+To minimize this risk, Grafana strongly recommends creating a dedicated MySQL user with restricted permissions.
 {{< /admonition >}}
 
 Example:
@@ -81,7 +85,7 @@ Following is a list of MySQL configuration options:
 
 **Connection:**
 
-- **Host URL** - Enter the IP address/hostname and optional port of your MySQL instance. If the port is omitted the default 3306 port will be used.
+- **Host URL** - Enter the IP address/hostname and optional port of your MySQL instance. If the port is omitted the default `3306` port will be used.
 - **Database** - Enter the name of your MySQL database.
 
 **Authentication:**

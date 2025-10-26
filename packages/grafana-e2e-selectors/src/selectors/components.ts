@@ -33,6 +33,9 @@ export const versionedComponents = {
     ungroup: {
       '12.1.0': 'data-testid CanvasGridAddActions ungroup',
     },
+    ungroupRows: {
+      '12.1.0': 'data-testid CanvasGridAddActions ungroup-rows',
+    },
     addRow: {
       '12.1.0': 'data-testid CanvasGridAddActions add-row',
     },
@@ -44,6 +47,9 @@ export const versionedComponents = {
     },
     pasteTab: {
       '12.1.0': 'data-testid CanvasGridAddActions paste-tab',
+    },
+    pastePanel: {
+      '12.1.0': 'data-testid CanvasGridAddActions paste-panel',
     },
   },
   DashboardEditPaneSplitter: {
@@ -481,6 +487,40 @@ export const versionedComponents = {
           '10.2.0': 'data-testid table body',
         },
       },
+      TableNG: {
+        Filters: {
+          HeaderButton: {
+            '12.1.0': 'data-testid tableng header filter',
+          },
+          Container: {
+            '12.1.0': 'data-testid tablenf filter container',
+          },
+          SelectAll: {
+            '12.1.0': 'data-testid tableng filter select-all',
+          },
+        },
+        Tooltip: {
+          Wrapper: {
+            '12.2.0': 'data-testid tableng tooltip wrapper',
+          },
+          Caret: {
+            '12.2.0': 'data-testid tableng tooltip caret',
+          },
+        },
+        Footer: {
+          ReducerLabel: {
+            '12.2.0': 'data-testid tableng footer reducer-label',
+          },
+          Value: {
+            '12.2.0': 'data-testid tableng footer value',
+          },
+        },
+      },
+      Tooltip: {
+        Wrapper: {
+          '12.3.0': 'data-testid viz-tooltip-wrapper',
+        },
+      },
     },
   },
   VizLegend: {
@@ -636,6 +676,11 @@ export const versionedComponents = {
         },
         fillScreen: {
           '12.1.0': 'data-testid fill screen switch',
+        },
+      },
+      TabsLayout: {
+        titleInput: {
+          '12.2.0': 'data-testid tab title input',
         },
       },
     },
@@ -1179,11 +1224,6 @@ export const versionedComponents = {
       '12.1.0': 'data-testid Data links actions tooltip wrapper',
     },
   },
-  TablePanel: {
-    autoCell: {
-      '12.1.0': 'data-testid Table panel auto cell',
-    },
-  },
   CodeEditor: {
     container: {
       '10.2.3': 'data-testid Code editor container',
@@ -1230,6 +1270,9 @@ export const versionedComponents = {
   DashboardRow: {
     title: {
       [MIN_GRAFANA_VERSION]: (title: string) => `data-testid dashboard-row-title-${title}`,
+    },
+    wrapper: {
+      '12.1.0': (title: string) => `data-testid dashboard-row-wrapper-for-${title}`,
     },
   },
   UserProfile: {
@@ -1365,6 +1408,63 @@ export const versionedComponents = {
   Portal: {
     container: {
       '11.5.0': 'data-testid portal-container',
+    },
+  },
+  ExportImage: {
+    formatOptions: {
+      container: {
+        ['12.1.0']: 'data-testid export-image-format-options',
+      },
+      png: {
+        ['12.1.0']: 'data-testid export-image-format-png',
+      },
+      jpg: {
+        ['12.1.0']: 'data-testid export-image-format-jpg',
+      },
+    },
+    rendererAlert: {
+      container: {
+        ['12.1.0']: 'data-testid export-image-renderer-alert',
+      },
+      title: {
+        ['12.1.0']: 'data-testid export-image-renderer-alert-title',
+      },
+      description: {
+        ['12.1.0']: 'data-testid export-image-renderer-alert-description',
+      },
+    },
+    buttons: {
+      generate: {
+        ['12.1.0']: 'data-testid export-image-generate-button',
+      },
+      download: {
+        ['12.1.0']: 'data-testid export-image-download-button',
+      },
+      cancel: {
+        ['12.1.0']: 'data-testid export-image-cancel-button',
+      },
+    },
+    preview: {
+      container: {
+        ['12.1.0']: 'data-testid export-image-preview-container',
+      },
+      loading: {
+        ['12.1.0']: 'data-testid export-image-preview-loading',
+      },
+      image: {
+        ['12.1.0']: 'data-testid export-image-preview',
+      },
+      error: {
+        container: {
+          ['12.1.0']: 'data-testid export-image-error',
+        },
+        title: {
+          ['12.1.0']: 'data-testid export-image-error-title',
+        },
+        message: {
+          ['12.1.0']: 'data-testid export-image-error-message',
+        },
+      },
     },
   },
 } satisfies VersionedSelectorGroup;

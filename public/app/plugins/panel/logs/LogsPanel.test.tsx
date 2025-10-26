@@ -16,6 +16,7 @@ import {
   LogSortOrderChangeEvent,
 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
+// eslint-disable-next-line no-restricted-imports
 import * as grafanaUI from '@grafana/ui';
 import * as styles from 'app/features/logs/components/getLogRowStyles';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
@@ -56,6 +57,13 @@ jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
   hasLogsContextSupport: (ds: MockDataSourceApi) => hasLogsContextSupport(ds),
 }));
+
+jest.mock('@grafana/assistant', () => {
+  return {
+    ...jest.requireActual('@grafana/assistant'),
+    useAssistant: jest.fn().mockReturnValue({ isAvailable: true }),
+  };
+});
 
 const defaultProps = {
   data: {

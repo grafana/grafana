@@ -1,5 +1,10 @@
 package schemaversion
 
+import (
+	"context"
+	"fmt"
+)
+
 // V34 migrates CloudWatch queries that use multiple statistics into separate queries.
 //
 // This migration addresses CloudWatch queries where a single query uses multiple statistics
@@ -53,30 +58,33 @@ package schemaversion
 //	  { name: "CloudWatch Alerts - Maximum", dimensions: {"InstanceId": "i-123"}, namespace: "AWS/EC2", region: "us-east-1", prefixMatching: false, statistic: "Maximum" },
 //	  { name: "CloudWatch Alerts - Minimum", dimensions: {"InstanceId": "i-123"}, namespace: "AWS/EC2", region: "us-east-1", prefixMatching: false, statistic: "Minimum" }
 //	]
-func V34(dashboard map[string]interface{}) error {
+func V34(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = int(34)
 
-	// Migrate panel queries if panels exist
-	panels, _ := dashboard["panels"].([]interface{})
-	for _, panel := range panels {
-		p, ok := panel.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		migrateCloudWatchQueriesInPanel(p)
-
-		// Handle nested panels in collapsed rows
-		nestedPanels, hasNested := p["panels"].([]interface{})
-		if !hasNested {
-			continue
-		}
-		for _, nestedPanel := range nestedPanels {
-			np, ok := nestedPanel.(map[string]interface{})
+	// Migrate panel queries if panels exist and are an array
+	if panelsValue, exists := dashboard["panels"]; exists && IsArray(panelsValue) {
+		panels := panelsValue.([]interface{})
+		for _, panel := range panels {
+			p, ok := panel.(map[string]interface{})
 			if !ok {
 				continue
 			}
-			migrateCloudWatchQueriesInPanel(np)
+
+			migrateCloudWatchQueriesInPanel(p)
+
+			// Handle nested panels in collapsed rows
+			if !IsArray(p["panels"]) {
+				continue
+			}
+			nestedPanels := p["panels"].([]interface{})
+
+			for _, nestedPanel := range nestedPanels {
+				np, ok := nestedPanel.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				migrateCloudWatchQueriesInPanel(np)
+			}
 		}
 	}
 
@@ -88,10 +96,10 @@ func V34(dashboard map[string]interface{}) error {
 
 // migrateCloudWatchQueriesInPanel migrates CloudWatch queries within a panel that use multiple statistics.
 func migrateCloudWatchQueriesInPanel(panel map[string]interface{}) {
-	targets, ok := panel["targets"].([]interface{})
-	if !ok {
+	if !IsArray(panel["targets"]) {
 		return
 	}
+	targets := panel["targets"].([]interface{})
 
 	var newTargets []interface{}
 	var additionalTargets []interface{}
@@ -108,63 +116,71 @@ func migrateCloudWatchQueriesInPanel(panel map[string]interface{}) {
 			continue
 		}
 
-		// Check if this query has multiple statistics
-		statistics, hasStatistics := t["statistics"].([]interface{})
-		if !hasStatistics || len(statistics) <= 1 {
-			// Convert single statistic or no statistics to proper format
-			if hasStatistics && len(statistics) == 1 {
-				if stat, ok := statistics[0].(string); ok {
-					t["statistic"] = stat
-				}
-			}
-			delete(t, "statistics")
-			newTargets = append(newTargets, t)
-			continue
+		// Add CloudWatch fields if missing (matches frontend migrateCloudWatchQuery logic)
+		if _, hasMetricQueryType := t["metricQueryType"]; !hasMetricQueryType {
+			t["metricQueryType"] = 0 // MetricQueryType.Search
 		}
 
-		// Split query with multiple statistics into separate queries
-		// First, collect all valid statistics
-		var validStatistics []string
-		for _, stat := range statistics {
-			statString, ok := stat.(string)
-			if !ok {
-				continue
-			}
-			validStatistics = append(validStatistics, statString)
-		}
-
-		// If no valid statistics found, remove statistics field and keep original query
-		if len(validStatistics) == 0 {
-			delete(t, "statistics")
-			newTargets = append(newTargets, t)
-			continue
-		}
-
-		// Create separate queries for each valid statistic
-		for i, statString := range validStatistics {
-			// Create a copy of the original query
-			newQuery := make(map[string]interface{})
-			for k, v := range t {
-				if k != "statistics" {
-					newQuery[k] = v
-				}
-			}
-
-			// Set the single statistic
-			newQuery["statistic"] = statString
-
-			if i == 0 {
-				// First query replaces the original
-				newTargets = append(newTargets, newQuery)
+		if _, hasMetricEditorMode := t["metricEditorMode"]; !hasMetricEditorMode {
+			metricQueryType := GetIntValue(t, "metricQueryType", 0)
+			if metricQueryType == 1 { // MetricQueryType.Insights
+				t["metricEditorMode"] = 1 // MetricEditorMode.Code
 			} else {
-				// Additional queries get new refIds and are added at the end
-				newQuery["refId"] = generateNextRefId(append(targets, additionalTargets...), len(additionalTargets))
-				additionalTargets = append(additionalTargets, newQuery)
+				expression := GetStringValue(t, "expression")
+				if expression != "" {
+					t["metricEditorMode"] = 1 // MetricEditorMode.Code
+				} else {
+					t["metricEditorMode"] = 0 // MetricEditorMode.Builder
+				}
+			}
+		}
+
+		// Get valid statistics (including null and empty strings)
+		validStats, isEmpty := getValidStatistics(t["statistics"])
+
+		// Handle empty array case (delete statistics field like frontend)
+		if isEmpty {
+			// Delete statistics field to match frontend behavior
+			delete(t, "statistics")
+			newTargets = append(newTargets, t)
+			continue
+		}
+
+		// Remove statistics field for processing
+		delete(t, "statistics")
+
+		// Handle based on number of valid statistics
+		switch len(validStats) {
+		case 0:
+			// No valid statistics - keep query as-is
+			newTargets = append(newTargets, t)
+		case 1:
+			// Single statistic - set statistic field
+			// Frontend doesn't set statistic property for null values
+			if validStats[0] != nil {
+				t["statistic"] = validStats[0]
+			}
+			newTargets = append(newTargets, t)
+		default:
+			// Multiple statistics - create separate queries
+			for i, stat := range validStats {
+				newQuery := copyMap(t)
+				// Set statistic field
+				// Frontend doesn't set statistic property for null values
+				if stat != nil {
+					newQuery["statistic"] = stat
+				}
+
+				if i == 0 {
+					newTargets = append(newTargets, newQuery)
+				} else {
+					newQuery["refId"] = generateNextRefId(append(targets, additionalTargets...), len(additionalTargets))
+					additionalTargets = append(additionalTargets, newQuery)
+				}
 			}
 		}
 	}
 
-	// Append additional queries at the end
 	panel["targets"] = append(newTargets, additionalTargets...)
 }
 
@@ -175,10 +191,10 @@ func migrateCloudWatchAnnotationQueries(dashboard map[string]interface{}) {
 		return
 	}
 
-	annotationsList, ok := annotations["list"].([]interface{})
-	if !ok {
+	if !IsArray(annotations["list"]) {
 		return
 	}
+	annotationsList := annotations["list"].([]interface{})
 
 	var additionalAnnotations []interface{}
 
@@ -192,93 +208,116 @@ func migrateCloudWatchAnnotationQueries(dashboard map[string]interface{}) {
 			continue
 		}
 
-		// Check if this annotation has multiple statistics
-		statistics, hasStatistics := a["statistics"].([]interface{})
-		if !hasStatistics || len(statistics) <= 1 {
-			// Convert single statistic to proper format
-			if hasStatistics && len(statistics) == 1 {
-				if stat, ok := statistics[0].(string); ok {
-					// Create new annotation with single statistic
-					newAnnotation := make(map[string]interface{})
-					for k, v := range a {
-						if k != "statistics" {
-							newAnnotation[k] = v
-						}
-					}
+		// Get original name for suffix generation
+		originalName := GetStringValue(a, "name")
+
+		// Get valid statistics (including null and empty strings)
+		validStats, isEmpty := getValidStatistics(a["statistics"])
+
+		// Handle empty array case (delete statistics field like frontend)
+		if isEmpty {
+			// Delete statistics field to match frontend behavior
+			delete(a, "statistics")
+			annotationsList[i] = a
+			continue
+		}
+
+		// Handle based on number of valid statistics
+		switch len(validStats) {
+		case 0:
+			// No valid statistics - remove statistics field
+			delete(a, "statistics")
+			annotationsList[i] = a
+		case 1:
+			// Single statistic - set statistic field (matches frontend behavior)
+			delete(a, "statistics")
+			// Frontend doesn't set statistic property for null values
+			if validStats[0] != nil {
+				a["statistic"] = validStats[0]
+			}
+			annotationsList[i] = a
+		default:
+			// Multiple statistics - create separate annotations
+			delete(a, "statistics")
+			for j, stat := range validStats {
+				newAnnotation := copyMap(a)
+				// Set statistic field (matches frontend behavior)
+				// Frontend doesn't set statistic property for null values
+				if stat != nil {
 					newAnnotation["statistic"] = stat
+				}
+
+				// Add suffix to name
+				if originalName != "" {
+					suffix := getSuffixForStat(stat)
+					newAnnotation["name"] = originalName + " - " + suffix
+				}
+
+				if j == 0 {
 					annotationsList[i] = newAnnotation
+				} else {
+					additionalAnnotations = append(additionalAnnotations, newAnnotation)
 				}
-			} else {
-				// Always remove statistics field, even if empty or no statistics
-				newAnnotation := make(map[string]interface{})
-				for k, v := range a {
-					if k != "statistics" {
-						newAnnotation[k] = v
-					}
-				}
-				annotationsList[i] = newAnnotation
-			}
-			continue
-		}
-
-		// Split annotation with multiple statistics into separate annotations
-		// First, collect all valid statistics
-		var validStatistics []string
-		for _, stat := range statistics {
-			statString, ok := stat.(string)
-			if !ok {
-				continue
-			}
-			validStatistics = append(validStatistics, statString)
-		}
-
-		// If no valid statistics found, remove statistics field and keep original annotation
-		if len(validStatistics) == 0 {
-			// Create new annotation without statistics field
-			newAnnotation := make(map[string]interface{})
-			for k, v := range a {
-				if k != "statistics" {
-					newAnnotation[k] = v
-				}
-			}
-			annotationsList[i] = newAnnotation
-			continue
-		}
-
-		// Create new annotations for each valid statistic, replace original with first one
-		originalName, hasName := a["name"].(string)
-
-		for j, statString := range validStatistics {
-			// Create new annotation for this statistic
-			newAnnotation := make(map[string]interface{})
-			for k, v := range a {
-				if k != "statistics" {
-					newAnnotation[k] = v
-				}
-			}
-
-			// Set the single statistic
-			newAnnotation["statistic"] = statString
-
-			// Set the name with statistic suffix if multiple valid statistics
-			if len(validStatistics) > 1 && hasName {
-				newAnnotation["name"] = originalName + " - " + statString
-			}
-
-			if j == 0 {
-				// Replace the original annotation with the first new one
-				annotationsList[i] = newAnnotation
-			} else {
-				// Add additional annotations to be appended later
-				additionalAnnotations = append(additionalAnnotations, newAnnotation)
 			}
 		}
 	}
 
-	// Add additional annotations to the end of the list
 	if len(additionalAnnotations) > 0 {
 		annotations["list"] = append(annotationsList, additionalAnnotations...)
 	}
+}
+
+// getValidStatistics extracts valid statistics from the statistics field
+func getValidStatistics(statisticsField interface{}) ([]interface{}, bool) {
+	statistics, ok := statisticsField.([]interface{})
+	if !ok {
+		return nil, false
+	}
+
+	// Special case: empty arrays should be preserved
+	if len(statistics) == 0 {
+		return nil, true // Return nil with true flag to indicate "empty array"
+	}
+
+	// Frontend processes ALL values in statistics array, regardless of type
+	// It doesn't filter out invalid types - it processes them as-is
+	return statistics, false
+}
+
+// getSuffixForStat returns the appropriate suffix for annotation names
+func getSuffixForStat(stat interface{}) string {
+	if stat == nil {
+		return "null"
+	}
+	if statString, ok := stat.(string); ok {
+		if statString == "" {
+			return ""
+		}
+		return statString
+	}
+	// For non-string types, convert to string representation like JavaScript does
+	switch v := stat.(type) {
+	case map[string]interface{}:
+		return "[object Object]" // JavaScript behavior for objects
+	case []interface{}:
+		return "" // JavaScript behavior for arrays (empty string)
+	case bool:
+		if v {
+			return "true"
+		}
+		return "false"
+	default:
+		return fmt.Sprintf("%v", stat) // Numbers and other types
+	}
+}
+
+// copyMap creates a shallow copy of a map
+func copyMap(original map[string]interface{}) map[string]interface{} {
+	copy := make(map[string]interface{})
+	for k, v := range original {
+		copy[k] = v
+	}
+	return copy
 }
 
 // isCloudWatchQuery checks if a query target is a CloudWatch query.

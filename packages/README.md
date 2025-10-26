@@ -20,7 +20,7 @@ All packages are versioned according to the current Grafana version:
 - Grafana v6.2.5 -> @grafana/\* packages @ 6.2.5
 - Grafana - main branch version (based on package.json, i.e. 6.4.0-pre) -> @grafana/\* packages @ 6.4.0-pre-<COMMIT-SHA> (see details below about packages publishing channels)
 
-> Please note that @grafana/ui, @grafana/data, and @grafana/runtime packages are considered ALPHA even though they are not released as alpha versions.
+> Please note that the @grafana/api-clients package is considered ALPHA even though it is not released as an alpha version.
 
 ### Stable releases
 
@@ -53,7 +53,6 @@ Every commit to main that has changes within the `packages` directory is a subje
 3. Run `yarn packages:build` script that compiles distribution code in `packages/grafana-*/dist`.
 4. Run `yarn packages:pack` script to compress each package into `npm-artifacts/*.tgz` files. This is required for yarn to replace properties in the package.json files declared in the `publishConfig` property.
 5. Depending on whether or not it's a prerelease:
-
    - When releasing a prerelease run `./scripts/publish-npm-packages.sh --dist-tag 'next' --registry 'https://registry.npmjs.org/'` to publish new versions.
    - When releasing a stable version run `./scripts/publish-npm-packages.sh --dist-tag 'latest' --registry 'https://registry.npmjs.org/'` to publish new versions.
    - When releasing a test version run `./scripts/publish-npm-packages.sh --dist-tag 'test' --registry 'https://registry.npmjs.org/'` to publish test versions.

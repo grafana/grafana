@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var gvrTeams = schema.GroupVersionResource{
@@ -26,14 +27,19 @@ var gvrUsers = schema.GroupVersionResource{
 	Resource: "users",
 }
 
+var gvrTeamBindings = schema.GroupVersionResource{
+	Group:    "iam.grafana.app",
+	Version:  "v0alpha1",
+	Resource: "teambindings",
+}
+
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
 func TestIntegrationIdentity(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental APIs
 		DisableAnonymous:  true,
@@ -66,7 +72,9 @@ func TestIntegrationIdentity(t *testing.T) {
           },
           "spec": {
             "email": "staff@Org1",
-            "title": "staff"
+            "title": "staff",
+			"provisioned": false,
+			"externalUID": ""
           }
         }
       ]
@@ -84,20 +92,54 @@ func TestIntegrationIdentity(t *testing.T) {
 		found = teamClient.SpecJSON(rsp)
 		require.JSONEq(t, `[
 			{
+				"disabled": false,
 				"email": "admin@localhost",
-				"login": "admin"
+				"emailVerified": false,
+				"grafanaAdmin": true,
+				"login": "admin",
+				"title": "",
+				"provisioned": false,
+				"role": "Admin"
 			},
 			{
-				"email": "admin2-1",
-				"login": "admin2-1"
+				"disabled": false,
+				"email": "grafana-admin",
+				"emailVerified": false,
+				"grafanaAdmin": true,
+				"login": "grafana-admin",
+				"title": "admin2",
+				"provisioned": false,
+				"role": "Admin"
 			},
 			{
-				"email": "editor-1",
-				"login": "editor-1"
+				"disabled": false,
+				"email": "editor",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "editor",
+				"title": "editor",
+				"provisioned": false,
+				"role": "Editor"
 			},
 			{
-				"email": "viewer-1",
-				"login": "viewer-1"
+				"disabled": false,
+				"email": "viewer",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "viewer",
+				"title": "viewer",
+				"provisioned": false,
+				"role": "Viewer"
+			},
+			{
+				"disabled": false,
+				"email": "none",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "none",
+				"title": "none",
+				"provisioned": false,
+				"role": "None"
 			}
 		]`, found)
 
@@ -114,21 +156,55 @@ func TestIntegrationIdentity(t *testing.T) {
 		found = teamClient.SpecJSON(rsp)
 		require.JSONEq(t, `[
 			{
-				"email": "admin2-1",
-				"login": "admin2-1"
+				"disabled": false,
+				"email": "grafana-admin",
+				"emailVerified": false,
+				"grafanaAdmin": true,
+				"login": "grafana-admin",
+				"title": "admin2",
+				"provisioned": false,
+				"role": "Admin"
 			},
 			{
-				"email": "admin2-2",
-				"login": "admin2-2"
+				"disabled": false,
+				"email": "admin2-org-2",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "admin2-org-2",
+				"title": "admin2",
+				"provisioned": false,
+				"role": "Admin"
 			},
 			{
-				"email": "editor-2",
-				"login": "editor-2"
+				"disabled": false,
+				"email": "editor-org-2",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "editor-org-2",
+				"title": "editor",
+				"provisioned": false,
+				"role": "Editor"
 			},
 			{
-				"email": "viewer-2",
-				"login": "viewer-2"
+				"disabled": false,
+				"email": "viewer-org-2",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "viewer-org-2",
+				"title": "viewer",
+				"provisioned": false,
+				"role": "Viewer"
+			},
+			{
+				"disabled": false,
+				"email": "none-org-2",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "none-org-2",
+				"title": "none",
+				"provisioned": false,
+				"role": "None"
 			}
-		]`, found)
+		] `, found)
 	})
 }

@@ -4,8 +4,7 @@ import { BackendSrvRequest } from '@grafana/runtime';
 import { getDefaultCacheHeaders } from './caching';
 import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, MATCH_ALL_LABELS, METRIC_LABEL } from './constants';
 import { PrometheusDatasource } from './datasource';
-import { removeQuotesIfExist } from './language_provider';
-import { getRangeSnapInterval, processHistogramMetrics } from './language_utils';
+import { getRangeSnapInterval, processHistogramMetrics, removeQuotesIfExist } from './language_utils';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { PrometheusCacheLevel } from './types';
 import { escapeForUtf8Support, utf8Support } from './utf8_support';
@@ -44,8 +43,16 @@ export abstract class BaseResourceClient {
     this.seriesLimit = this.datasource.seriesLimit;
   }
 
+  /**
+   * Returns the effective limit to use for API requests.
+   * Uses the provided limit if specified, otherwise falls back to the datasource's configured series limit.
+   * When zero is provided, it returns zero (which means no limit in Prometheus API).
+   *
+   * @param {number} [limit] - Optional limit parameter from the API call
+   * @returns {number} The limit to use - either the provided limit or datasource's default series limit
+   */
   protected getEffectiveLimit(limit?: number): number {
-    return limit || this.seriesLimit;
+    return limit ?? this.seriesLimit;
   }
 
   protected async requestLabels(
@@ -73,7 +80,7 @@ export abstract class BaseResourceClient {
    * @param {string} match - Label matcher to filter time series
    * @param {string} limit - Maximum number of series to return
    */
-  public querySeries = async (timeRange: TimeRange, match: string, limit: number) => {
+  public querySeries = async (timeRange: TimeRange, match: string | undefined, limit: number) => {
     const effectiveMatch = !match || match === EMPTY_SELECTOR ? MATCH_ALL_LABELS : match;
     const timeParams = this.datasource.getTimeRangeParams(timeRange);
     const searchParams = { ...timeParams, 'match[]': effectiveMatch, limit };
@@ -94,10 +101,23 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
     this.labelKeys = await this.queryLabelKeys(timeRange);
   };
 
-  public queryMetrics = async (timeRange: TimeRange): Promise<{ metrics: string[]; histogramMetrics: string[] }> => {
-    this.metrics = await this.queryLabelValues(timeRange, METRIC_LABEL);
+  /**
+   * Fetches all available metrics from Prometheus using the labels values endpoint for __name__.
+   * Also processes and identifies histogram metrics (those ending with '_bucket').
+   * Results are cached and stored in the client instance for future use.
+   *
+   * @param {TimeRange} timeRange - Time range to search for metrics
+   * @param {number} [limit] - Optional maximum number of metrics to return, uses datasource default if not specified
+   * @returns {Promise<{metrics: string[], histogramMetrics: string[]}>} Object containing all metrics and filtered histogram metrics
+   */
+  public queryMetrics = async (
+    timeRange: TimeRange,
+    limit?: number
+  ): Promise<{ metrics: string[]; histogramMetrics: string[] }> => {
+    const effectiveLimit = this.getEffectiveLimit(limit);
+    this.metrics = await this.queryLabelValues(timeRange, METRIC_LABEL, undefined, effectiveLimit);
     this.histogramMetrics = processHistogramMetrics(this.metrics);
-    this._cache.setLabelValues(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT, this.metrics);
+    this._cache.setLabelValues(timeRange, undefined, effectiveLimit, this.metrics);
     return { metrics: this.metrics, histogramMetrics: this.histogramMetrics };
   };
 
@@ -177,19 +197,19 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
   };
 
   public queryMetrics = async (timeRange: TimeRange): Promise<{ metrics: string[]; histogramMetrics: string[] }> => {
-    const series = await this.querySeries(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT);
+    const series = await this.querySeries(timeRange, undefined, DEFAULT_SERIES_LIMIT);
     const { metrics, labelKeys } = processSeries(series, METRIC_LABEL);
     this.metrics = metrics;
     this.histogramMetrics = processHistogramMetrics(this.metrics);
     this.labelKeys = labelKeys;
-    this._cache.setLabelValues(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT, metrics);
-    this._cache.setLabelKeys(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT, labelKeys);
+    this._cache.setLabelValues(timeRange, undefined, DEFAULT_SERIES_LIMIT, metrics);
+    this._cache.setLabelKeys(timeRange, undefined, DEFAULT_SERIES_LIMIT, labelKeys);
     return { metrics: this.metrics, histogramMetrics: this.histogramMetrics };
   };
 
   public queryLabelKeys = async (timeRange: TimeRange, match?: string, limit?: number): Promise<string[]> => {
     const effectiveLimit = this.getEffectiveLimit(limit);
-    const effectiveMatch = !match || match === EMPTY_SELECTOR ? MATCH_ALL_LABELS : match;
+    const effectiveMatch = !match || match === EMPTY_SELECTOR ? undefined : match;
     const maybeCachedKeys = this._cache.getLabelKeys(timeRange, effectiveMatch, effectiveLimit);
     if (maybeCachedKeys) {
       return maybeCachedKeys;
@@ -247,7 +267,7 @@ class ResourceClientsCache {
 
   constructor(private cacheLevel: PrometheusCacheLevel = PrometheusCacheLevel.High) {}
 
-  public setLabelKeys(timeRange: TimeRange, match: string, limit: number, keys: string[]) {
+  public setLabelKeys(timeRange: TimeRange, match: string | undefined, limit: number, keys: string[]) {
     if (keys.length === 0) {
       return;
     }
@@ -258,7 +278,7 @@ class ResourceClientsCache {
     this._accessTimestamps[cacheKey] = Date.now();
   }
 
-  public getLabelKeys(timeRange: TimeRange, match: string, limit: number): string[] | undefined {
+  public getLabelKeys(timeRange: TimeRange, match: string | undefined, limit: number): string[] | undefined {
     const cacheKey = this.getCacheKey(timeRange, match, limit, 'key');
     const result = this._cache[cacheKey];
     if (result) {
@@ -268,7 +288,7 @@ class ResourceClientsCache {
     return result;
   }
 
-  public setLabelValues(timeRange: TimeRange, match: string, limit: number, values: string[]) {
+  public setLabelValues(timeRange: TimeRange, match: string | undefined, limit: number, values: string[]) {
     if (values.length === 0) {
       return;
     }
@@ -289,7 +309,7 @@ class ResourceClientsCache {
     return result;
   }
 
-  private getCacheKey(timeRange: TimeRange, match: string, limit: number, type: 'key' | 'value') {
+  private getCacheKey(timeRange: TimeRange, match: string | undefined, limit: number, type: 'key' | 'value') {
     const snappedTimeRange = getRangeSnapInterval(this.cacheLevel, timeRange);
     return [snappedTimeRange.start, snappedTimeRange.end, limit, match, type].join('|');
   }

@@ -31,7 +31,7 @@ export const ListItem = (props: ListItemProps) => {
         {/* icon */}
         <span className={styles.statusIcon}>{icon}</span>
 
-        <Stack direction="column" gap={0} flex="1" minWidth={0}>
+        <Stack direction="column" gap={0.5} flex="1" minWidth={0}>
           {/* title */}
           <Stack direction="column" gap={0}>
             <div className={styles.textOverflow}>{title}</div>
@@ -39,7 +39,7 @@ export const ListItem = (props: ListItemProps) => {
           </Stack>
 
           {/* metadata */}
-          <Stack direction="row" gap={0.5} alignItems="center">
+          <Stack direction="row" gap={1} alignItems="center">
             {meta?.map((item, index) => (
               <React.Fragment key={index}>
                 {index > 0 && <Separator />}
@@ -72,7 +72,7 @@ export const SkeletonListItem = () => {
 
 const Separator = () => (
   <Text color="secondary" variant="bodySmall">
-    {'·'}
+    {'|'}
   </Text>
 );
 

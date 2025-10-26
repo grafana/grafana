@@ -269,6 +269,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 	t.Run("Should error for any request when a default region is not selected", func(t *testing.T) {
 		ds := newTestDatasource(func(ds *DataSource) {
 			ds.Settings.GrafanaSettings.ListMetricsPageLimit = 1000
+			ds.Settings.Region = ""
 		})
 
 		req := &backend.CallResourceRequest{

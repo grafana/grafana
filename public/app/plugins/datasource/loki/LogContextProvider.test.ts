@@ -1,5 +1,4 @@
 import { of } from 'rxjs';
-import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
 import {
   DataQueryResponse,
@@ -9,7 +8,7 @@ import {
   createDataFrame,
   dateTime,
 } from '@grafana/data';
-import { setTemplateSrv } from '@grafana/runtime';
+import { setTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import LokiLanguageProvider from './LanguageProvider';
 import {
@@ -66,8 +65,10 @@ const frameWithoutTypes = {
 describe('LogContextProvider', () => {
   let logContextProvider: LogContextProvider;
   beforeEach(() => {
-    const templateSrv = initTemplateSrv('key', [{ type: 'query', name: 'foo', current: { value: 'baz' } }]);
-    setTemplateSrv(templateSrv);
+    const templateSrv = {
+      replace: jest.fn((str: string) => str?.replace('$test', 'baz')),
+    };
+    setTemplateSrv(templateSrv as unknown as TemplateSrv);
     const defaultDatasourceMock = createLokiDatasource(templateSrv);
     defaultDatasourceMock.query = jest.fn(() => of({ data: [] } as DataQueryResponse));
     defaultDatasourceMock.languageProvider = defaultLanguageProviderMock;

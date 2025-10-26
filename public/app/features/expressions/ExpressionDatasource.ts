@@ -1,15 +1,27 @@
-import { from, mergeMap, Observable } from 'rxjs';
+import { from, lastValueFrom, map, mergeMap, Observable } from 'rxjs';
 
 import {
+  DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
   PluginType,
   ScopedVars,
+  TimeRange,
 } from '@grafana/data';
-import { DataSourceWithBackend, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { SQLQuery } from '@grafana/plugin-ui';
+import {
+  BackendDataSourceResponse,
+  DataSourceWithBackend,
+  FetchResponse,
+  getBackendSrv,
+  getDataSourceSrv,
+  getTemplateSrv,
+  toDataQueryResponse,
+} from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { DataQuery } from '@grafana/schema/dist/esm/index';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
@@ -58,6 +70,38 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
       type: query?.type ?? ExpressionQueryType.math,
       ...query,
     };
+  }
+
+  runMetaSQLExprQuery(request: Partial<SQLQuery>, range: TimeRange, queries: DataQuery[]): Promise<DataFrame> {
+    const refId = request.refId || 'meta';
+    const metaSqlExpressionQuery: ExpressionQuery = {
+      window: '',
+      hide: false,
+      expression: request.rawSql,
+      datasource: ExpressionDatasourceRef,
+      refId,
+      type: ExpressionQueryType.sql,
+    };
+    return lastValueFrom(
+      getBackendSrv()
+        .fetch<BackendDataSourceResponse>({
+          url: '/api/ds/query',
+          method: 'POST',
+          headers: this.getRequestHeaders(),
+          data: {
+            from: range.from.valueOf().toString(),
+            to: range.to.valueOf().toString(),
+            queries: [...queries, metaSqlExpressionQuery],
+          },
+          requestId: refId,
+        })
+        .pipe(
+          map((res: FetchResponse<BackendDataSourceResponse>) => {
+            const rsp = toDataQueryResponse(res, queries);
+            return rsp.data[0] ?? { fields: [] };
+          })
+        )
+    );
   }
 }
 

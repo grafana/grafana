@@ -6,15 +6,10 @@ import { FetchDataArgs } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import {
-  ThunkResult,
-  LdapUser,
-  UserSession,
-  UserDTO,
-  AccessControlAction,
-  UserFilter,
-  AnonUserFilter,
-} from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { LdapUser } from 'app/types/ldap';
+import { ThunkResult } from 'app/types/store';
+import { UserDTO, UserSession, UserFilter, AnonUserFilter } from 'app/types/user';
 
 import {
   userAdminPageLoadedAction,

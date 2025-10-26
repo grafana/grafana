@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -17,9 +18,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationFeatures(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Enable a random flag -- check that it is reported as enabled
 	flag := featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs
@@ -40,14 +39,9 @@ func TestIntegrationFeatures(t *testing.T) {
 
 		require.Equal(t, 200, rsp.Response.StatusCode)
 		require.JSONEq(t, `{
-			"Value": true,
-			"FlagKey": "`+flag+`",
-			"FlagType": 0,
-			"Variant": "enabled",
-			"Reason": "STATIC",
-			"ErrorCode": "",
-			"ErrorMessage": "",
-			"FlagMetadata": {}
-		}`, string(rsp.Body))
+			"value": true,
+			"key":"`+flag+`",
+			"reason":"static provider evaluation result",
+			"variant":"enabled"}`, string(rsp.Body))
 	})
 }

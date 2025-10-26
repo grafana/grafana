@@ -27,32 +27,32 @@ export const ActionIcon = ({
 }: Props) => {
   const ariaLabel = typeof tooltip === 'string' ? tooltip : undefined;
 
-  return (
-    <Tooltip content={tooltip} placement={tooltipPlacement}>
-      {to ? (
-        <LinkButton
-          variant="secondary"
-          fill="text"
-          icon={icon}
-          href={to}
-          size="sm"
-          target={target}
-          {...rest}
-          aria-label={ariaLabel}
-        />
-      ) : (
-        <Button
-          className={className}
-          variant="secondary"
-          fill="text"
-          size="sm"
-          icon={icon}
-          type="button"
-          onClick={onClick}
-          {...rest}
-          aria-label={ariaLabel}
-        />
-      )}
-    </Tooltip>
+  return to ? (
+    <LinkButton
+      tooltip={tooltip}
+      tooltipPlacement={tooltipPlacement}
+      variant="secondary"
+      fill="text"
+      icon={icon}
+      href={to}
+      size="sm"
+      target={target}
+      {...rest}
+      aria-label={ariaLabel}
+    />
+  ) : (
+    <Button
+      tooltip={tooltip}
+      tooltipPlacement={tooltipPlacement}
+      className={className}
+      variant="secondary"
+      fill="text"
+      size="sm"
+      icon={icon}
+      type="button"
+      onClick={onClick}
+      {...rest}
+      aria-label={ariaLabel}
+    />
   );
 };

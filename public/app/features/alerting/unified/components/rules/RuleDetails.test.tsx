@@ -7,6 +7,7 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { getCloudRule, getGrafanaRule } from '../../mocks';
+import { mimirDataSource } from '../../mocks/server/configure';
 
 import { RuleDetails } from './RuleDetails';
 
@@ -31,6 +32,8 @@ const ui = {
 };
 
 setupMswServer();
+
+const { dataSource: mimirDs } = mimirDataSource();
 
 beforeAll(() => {
   jest.clearAllMocks();
@@ -81,7 +84,7 @@ describe('RuleDetails RBAC', () => {
   });
 
   describe('Cloud rules action buttons', () => {
-    const cloudRule = getCloudRule({ name: 'Cloud' });
+    const cloudRule = getCloudRule({ name: 'Cloud' }, { rulesSource: mimirDs });
 
     it('Should not render Edit button for users with the update permission', async () => {
       // Arrange

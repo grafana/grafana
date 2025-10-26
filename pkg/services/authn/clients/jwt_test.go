@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -262,7 +263,7 @@ func TestAuthenticateJWT(t *testing.T) {
 			jwtClient := ProvideJWT(jwtService,
 				connectors.ProvideOrgRoleMapper(tc.cfg,
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-				tc.cfg)
+				tc.cfg, tracing.InitializeTracerForTest())
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
 					jwtHeaderName: {"sample-token"}},
@@ -380,7 +381,7 @@ func TestJWTClaimConfig(t *testing.T) {
 			}
 			jwtClient := ProvideJWT(jwtService, connectors.ProvideOrgRoleMapper(cfg,
 				&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-				cfg)
+				cfg, tracing.InitializeTracerForTest())
 			_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
 				OrgID:       1,
 				HTTPRequest: httpReq,
@@ -493,7 +494,7 @@ func TestJWTTest(t *testing.T) {
 			jwtClient := ProvideJWT(jwtService,
 				connectors.ProvideOrgRoleMapper(cfg,
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-				cfg)
+				cfg, tracing.InitializeTracerForTest())
 			httpReq := &http.Request{
 				URL: &url.URL{RawQuery: "auth_token=" + tc.token},
 				Header: map[string][]string{
@@ -549,7 +550,7 @@ func TestJWTStripParam(t *testing.T) {
 	jwtClient := ProvideJWT(jwtService,
 		connectors.ProvideOrgRoleMapper(cfg,
 			&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-		cfg)
+		cfg, tracing.InitializeTracerForTest())
 	_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
 		OrgID:       1,
 		HTTPRequest: httpReq,
@@ -608,7 +609,7 @@ func TestJWTSubClaimsConfig(t *testing.T) {
 	jwtClient := ProvideJWT(jwtService,
 		connectors.ProvideOrgRoleMapper(cfg,
 			&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-		cfg)
+		cfg, tracing.InitializeTracerForTest())
 	identity, err := jwtClient.Authenticate(context.Background(), &authn.Request{
 		OrgID:       1,
 		HTTPRequest: httpReq,

@@ -24,9 +24,10 @@ describe('Carousel', () => {
     render(<Carousel images={testImages} />);
 
     testImages.forEach((image) => {
-      const imgElement = screen.getByAltText(image.name);
-      expect(imgElement).toBeInTheDocument();
-      expect(imgElement).toHaveAttribute('src', image.path);
+      const name = screen.getByText(image.name);
+      expect(name).toBeInTheDocument();
+      const imageElement = document.querySelector(`img[src="${image.path}"]`);
+      expect(imageElement).toBeInTheDocument();
     });
   });
 
@@ -140,7 +141,7 @@ describe('Carousel', () => {
 
     render(<Carousel images={testImages} />);
 
-    const images = screen.getAllByRole('img');
+    const images = screen.getAllByRole('presentation');
     images.forEach((img) => {
       fireEvent.error(img);
     });

@@ -40,6 +40,7 @@ type InvestigationCollectable struct {
 // NewInvestigationCollectable creates a new InvestigationCollectable object.
 func NewInvestigationCollectable() *InvestigationCollectable {
 	return &InvestigationCollectable{
+		Queries:    []string{},
 		TimeRange:  *NewInvestigationTimeRange(),
 		Datasource: *NewInvestigationDatasourceRef(),
 	}
@@ -101,6 +102,7 @@ type InvestigationSpec struct {
 func NewInvestigationSpec() *InvestigationSpec {
 	return &InvestigationSpec{
 		CreatedByProfile: *NewInvestigationPerson(),
+		Collectables:     []InvestigationCollectable{},
 		ViewMode:         *NewInvestigationViewMode(),
 	}
 }

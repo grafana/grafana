@@ -1,9 +1,12 @@
 import { StoryFn, Meta } from '@storybook/react';
+import { useId } from 'react';
+
+import { Field } from '../Forms/Field';
 
 import { Slider } from './Slider';
 
 const meta: Meta<typeof Slider> = {
-  title: 'Forms/Slider',
+  title: 'Inputs/Slider',
   component: Slider,
   parameters: {
     controls: {
@@ -29,17 +32,25 @@ const meta: Meta<typeof Slider> = {
 };
 
 export const Basic: StoryFn<typeof Slider> = (args) => {
+  const id = useId();
+
   return (
     <div style={{ width: '300px', height: '300px' }}>
-      <Slider {...args} />
+      <Field label="Slider">
+        <Slider {...args} inputId={id} />
+      </Field>
     </div>
   );
 };
 
 export const WithMarks: StoryFn<typeof Slider> = (args) => {
+  const id = useId();
+
   return (
     <div style={{ width: '300px', height: '300px' }}>
-      <Slider {...args} />
+      <Field label="Slider">
+        <Slider {...args} inputId={id} />
+      </Field>
     </div>
   );
 };

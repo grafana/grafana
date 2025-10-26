@@ -1,22 +1,25 @@
-import { TemplateSrvStub } from 'test/specs/helpers';
+import { getTemplateSrv } from '@grafana/runtime';
 
-import { dispatch } from 'app/store/store';
-
+import { GraphiteDatasource } from '../datasource';
 import gfunc from '../gfunc';
 import { actions } from '../state/actions';
 import {
   getAltSegmentsSelectables,
-  getTagsSelectables,
   getTagsAsSegmentsSelectables,
+  getTagsSelectables,
   getTagValuesSelectables,
 } from '../state/providers';
 import { createStore } from '../state/store';
 import { GraphiteSegment } from '../types';
 
-jest.mock('app/store/store', () => ({
-  dispatch: jest.fn(),
+const mockPublish = jest.fn();
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getAppEvents: () => ({
+    publish: mockPublish,
+  }),
+  // getTemplateSrv: jest.fn().mockReturnValue({ replace: jest.fn(), getVariables: jest.fn() }),
 }));
-const mockDispatch = dispatch as jest.Mock;
 
 /**
  * Simulate switching to text editor, changing the query and switching back to visual editor
@@ -30,22 +33,28 @@ async function changeTarget(ctx: any, target: string): Promise<void> {
 
 describe('Graphite actions', () => {
   const ctx = {
-    datasource: {
-      metricFindQuery: jest.fn(() => Promise.resolve([])),
-      getFuncDefs: jest.fn(() => Promise.resolve(gfunc.getFuncDefs('1.0'))),
-      getFuncDef: gfunc.getFuncDef,
-      waitForFuncDefsLoaded: jest.fn(() => Promise.resolve(null)),
-      createFuncInstance: gfunc.createFuncInstance,
-      getTagsAutoComplete: jest.fn().mockReturnValue(Promise.resolve([])),
-      getTagValuesAutoComplete: jest.fn().mockReturnValue(Promise.resolve([])),
-    },
     target: { target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)' },
   } as any;
 
   beforeEach(async () => {
     jest.clearAllMocks();
 
-    ctx.state = null;
+    const instanceSettings = {
+      url: '/api/datasources/proxy/1',
+      name: 'graphiteProd',
+      jsonData: {
+        rollupIndicatorEnabled: true,
+      },
+    };
+    ctx.datasource = new GraphiteDatasource(instanceSettings);
+    ctx.datasource.metricFindQuery = jest.fn(() => Promise.resolve([]));
+    ctx.datasource.getFuncDefs = jest.fn(() => Promise.resolve(gfunc.getFuncDefs('1.0')));
+    ctx.datasource.getFuncDef = gfunc.getFuncDef;
+    ctx.datasource.waitForFuncDefsLoaded = jest.fn(() => Promise.resolve(null));
+    ctx.datasource.createFuncInstance = gfunc.createFuncInstance;
+    ctx.datasource.getTagsAutoComplete = jest.fn().mockReturnValue(Promise.resolve([]));
+    ctx.datasource.getTagValuesAutoComplete = jest.fn().mockReturnValue(Promise.resolve([]));
+    ctx.state = { datasource: ctx.datasource };
     ctx.dispatch = createStore((state) => {
       ctx.state = state;
     });
@@ -57,7 +66,7 @@ describe('Graphite actions', () => {
         refresh: jest.fn(),
         queries: [],
         //@ts-ignore
-        templateSrv: new TemplateSrvStub(),
+        templateSrv: getTemplateSrv(),
       })
     );
   });
@@ -220,7 +229,8 @@ describe('Graphite actions', () => {
   });
 
   it('limit is passed when getting list of tag values', async () => {
-    await getTagValuesSelectables(ctx.state, { key: 'key', operator: '=', value: 'value' }, 1, 'test');
+    ctx.state.templateSrv = { replace: jest.fn(), getVariables: jest.fn() };
+    ctx.datasource = await getTagValuesSelectables(ctx.state, { key: 'key', operator: '=', value: 'value' }, 1, 'test');
     expect(ctx.state.datasource.getTagValuesAutoComplete).toHaveBeenCalledWith([], 'key', 'test', { limit: 5000 });
   });
 
@@ -237,20 +247,18 @@ describe('Graphite actions', () => {
     it('getAltSegmentsSelectables should handle autocomplete errors', async () => {
       await expect(async () => {
         await getAltSegmentsSelectables(ctx.state, 0, 'any');
-        expect(mockDispatch).toHaveBeenCalledWith(
-          expect.objectContaining({
-            type: 'appNotifications/notifyApp',
-          })
+        expect(mockPublish).toHaveBeenCalledWith(
+          expect.objectContaining({ payload: ['Fetching metrics failed: .'], type: 'alert-error' })
         );
       }).not.toThrow();
     });
 
     it('getAltSegmentsSelectables should display the error message only once', async () => {
       await getAltSegmentsSelectables(ctx.state, 0, 'any');
-      expect(mockDispatch.mock.calls.length).toBe(1);
+      expect(mockPublish.mock.calls.length).toBe(1);
 
       await getAltSegmentsSelectables(ctx.state, 0, 'any');
-      expect(mockDispatch.mock.calls.length).toBe(1);
+      expect(mockPublish.mock.calls.length).toBe(1);
     });
   });
 
@@ -267,39 +275,35 @@ describe('Graphite actions', () => {
     it('getTagsSelectables should handle autocomplete errors', async () => {
       await expect(async () => {
         await getTagsSelectables(ctx.state, 0, 'any');
-        expect(mockDispatch).toHaveBeenCalledWith(
-          expect.objectContaining({
-            type: 'appNotifications/notifyApp',
-          })
+        expect(mockPublish).toHaveBeenCalledWith(
+          expect.objectContaining({ payload: ['Fetching tags failed: .'], type: 'alert-error' })
         );
       }).not.toThrow();
     });
 
     it('getTagsSelectables should display the error message only once', async () => {
       await getTagsSelectables(ctx.state, 0, 'any');
-      expect(mockDispatch.mock.calls.length).toBe(1);
+      expect(mockPublish.mock.calls.length).toBe(1);
 
       await getTagsSelectables(ctx.state, 0, 'any');
-      expect(mockDispatch.mock.calls.length).toBe(1);
+      expect(mockPublish.mock.calls.length).toBe(1);
     });
 
     it('getTagsAsSegmentsSelectables should handle autocomplete errors', async () => {
       await expect(async () => {
         await getTagsAsSegmentsSelectables(ctx.state, 'any');
-        expect(mockDispatch).toHaveBeenCalledWith(
-          expect.objectContaining({
-            type: 'appNotifications/notifyApp',
-          })
+        expect(mockPublish).toHaveBeenCalledWith(
+          expect.objectContaining({ payload: ['Fetching tags failed: .'], type: 'alert-error' })
         );
       }).not.toThrow();
     });
 
     it('getTagsAsSegmentsSelectables should display the error message only once', async () => {
       await getTagsAsSegmentsSelectables(ctx.state, 'any');
-      expect(mockDispatch.mock.calls.length).toBe(1);
+      expect(mockPublish.mock.calls.length).toBe(1);
 
       await getTagsAsSegmentsSelectables(ctx.state, 'any');
-      expect(mockDispatch.mock.calls.length).toBe(1);
+      expect(mockPublish.mock.calls.length).toBe(1);
     });
   });
 
@@ -491,6 +495,7 @@ describe('Graphite actions', () => {
 
     it('uses limited metrics and tags list', async () => {
       ctx.state.supportsTags = true;
+      ctx.state.templateSrv = { replace: jest.fn(), getVariables: jest.fn() };
       const segments = await getAltSegmentsSelectables(ctx.state, 0, '');
       expect(segments).toHaveLength(10000);
       expect(segments[0].value!.value).toBe('*'); // * - is a fixed metric name, always added at the top
@@ -501,6 +506,7 @@ describe('Graphite actions', () => {
 
     it('uses correct limit for metrics and tags list when tags are not supported', async () => {
       ctx.state.supportsTags = false;
+      ctx.state.templateSrv = { replace: jest.fn(), getVariables: jest.fn() };
       const segments = await getAltSegmentsSelectables(ctx.state, 0, '');
       expect(segments).toHaveLength(5000);
       expect(segments[0].value!.value).toBe('*'); // * - is a fixed metric name, always added at the top
@@ -508,6 +514,7 @@ describe('Graphite actions', () => {
     });
 
     it('uses limited metrics when adding more metrics', async () => {
+      ctx.state.templateSrv = { replace: jest.fn(), getVariables: jest.fn() };
       const segments = await getAltSegmentsSelectables(ctx.state, 1, '');
       expect(segments).toHaveLength(5000);
     });

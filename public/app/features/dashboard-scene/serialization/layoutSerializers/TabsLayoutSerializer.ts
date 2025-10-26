@@ -1,12 +1,7 @@
-import {
-  Spec as DashboardV2Spec,
-  TabsLayoutTabKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec, TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
-import { TabItemRepeaterBehavior } from '../../scene/layout-tabs/TabItemRepeaterBehavior';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
-import { isClonedKey } from '../../utils/clone';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 import { getConditionalRendering } from './utils';
@@ -15,7 +10,7 @@ export function serializeTabsLayout(layoutManager: TabsLayoutManager): Dashboard
   return {
     kind: 'TabsLayout',
     spec: {
-      tabs: layoutManager.state.tabs.filter((tab) => !isClonedKey(tab.state.key!)).map(serializeTab),
+      tabs: layoutManager.state.tabs.filter((tab) => !tab.state.repeatSourceKey).map(serializeTab),
     },
   };
 }
@@ -27,6 +22,12 @@ export function serializeTab(tab: TabItem): TabsLayoutTabKind {
     spec: {
       title: tab.state.title,
       layout: layout,
+      ...(tab.state.repeatByVariable && {
+        repeat: {
+          mode: 'variable',
+          value: tab.state.repeatByVariable,
+        },
+      }),
     },
   };
 
@@ -34,17 +35,6 @@ export function serializeTab(tab: TabItem): TabsLayoutTabKind {
   // Only serialize the conditional rendering if it has items
   if (conditionalRenderingRootGroup?.spec.items.length) {
     tabKind.spec.conditionalRendering = conditionalRenderingRootGroup;
-  }
-
-  if (tab.state.$behaviors) {
-    for (const behavior of tab.state.$behaviors) {
-      if (behavior instanceof TabItemRepeaterBehavior) {
-        if (tabKind.spec.repeat) {
-          throw new Error('Multiple repeaters are not supported');
-        }
-        tabKind.spec.repeat = { value: behavior.state.variableName, mode: 'variable' };
-      }
-    }
   }
 
   return tabKind;
@@ -74,14 +64,11 @@ export function deserializeTab(
   panelIdGenerator?: () => number
 ): TabItem {
   const layout = tab.spec.layout;
-  const $behaviors = !tab.spec.repeat
-    ? undefined
-    : [new TabItemRepeaterBehavior({ variableName: tab.spec.repeat.value })];
 
   return new TabItem({
     title: tab.spec.title,
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
-    $behaviors,
+    repeatByVariable: tab.spec.repeat?.value,
     conditionalRendering: getConditionalRendering(tab),
   });
 }

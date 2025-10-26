@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 const (
@@ -57,15 +57,26 @@ func NewCheckReportFailureWithMoreInfo(
 	}
 }
 
-func GetNamespace(stackID string) (string, error) {
-	if stackID == "" {
-		return metav1.NamespaceDefault, nil
+func GetNamespaces(ctx context.Context, stackID string, orgService org.Service) ([]string, error) {
+	var namespaces []string
+	if stackID != "" {
+		// Single namespace for cloud stack
+		stackId, err := strconv.ParseInt(stackID, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid stack id: %s", stackID)
+		}
+		namespaces = []string{types.CloudNamespaceFormatter(stackId)}
+	} else {
+		// Multiple namespaces for each org
+		orgs, err := orgService.Search(ctx, &org.SearchOrgsQuery{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch orgs: %w", err)
+		}
+		for _, o := range orgs {
+			namespaces = append(namespaces, types.OrgNamespaceFormatter(o.ID))
+		}
 	}
-	stackId, err := strconv.ParseInt(stackID, 10, 64)
-	if err != nil {
-		return "", fmt.Errorf("invalid stack id: %s", stackID)
-	}
-	return types.CloudNamespaceFormatter(stackId), nil
+	return namespaces, nil
 }
 
 func GetStatusAnnotation(obj resource.Object) string {
@@ -105,4 +116,26 @@ func SetStatusAnnotation(ctx context.Context, client resource.Client, obj resour
 			Value:     annotations,
 		}},
 	}, resource.PatchOptions{}, obj)
+}
+
+func SetAnnotations(ctx context.Context, client resource.Client, obj resource.Object, annotations map[string]string) error {
+	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
+		Operations: []resource.PatchOperation{{
+			Operation: resource.PatchOpAdd,
+			Path:      "/metadata/annotations",
+			Value:     annotations,
+		}},
+	}, resource.PatchOptions{}, obj)
+}
+
+func SetStatus(ctx context.Context, client resource.Client, obj resource.Object, status any) error {
+	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
+		Operations: []resource.PatchOperation{{
+			Operation: resource.PatchOpAdd,
+			Path:      "/status",
+			Value:     status,
+		}},
+	}, resource.PatchOptions{
+		Subresource: "status",
+	}, obj)
 }

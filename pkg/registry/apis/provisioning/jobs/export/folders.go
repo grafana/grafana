@@ -8,10 +8,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -32,8 +32,9 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 		}
 
 		manager, _ := meta.GetManagerProperties()
-		if manager.Identity == repoName {
-			return nil // skip it... already in tree?
+		// Skip if already managed by any manager (repository, file provisioning, etc.)
+		if manager.Identity != "" {
+			return nil
 		}
 
 		return tree.AddUnstructured(item)
@@ -44,12 +45,15 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 	progress.SetMessage(ctx, "write folders to repository")
 	err := repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, tree, func(folder resources.Folder, created bool, err error) error {
 		result := jobs.JobResourceResult{
-			Action:   repository.FileActionCreated,
-			Name:     folder.ID,
-			Resource: resources.FolderResource.Resource,
-			Group:    resources.FolderResource.Group,
-			Path:     folder.Path,
-			Error:    err,
+			Action: repository.FileActionCreated,
+			Name:   folder.ID,
+			Group:  resources.FolderResource.Group,
+			Kind:   resources.FolderKind.Kind,
+			Path:   folder.Path,
+		}
+
+		if err != nil {
+			result.Error = fmt.Errorf("creating folder %s at path %s: %w", folder.ID, folder.Path, err)
 		}
 
 		if !created {

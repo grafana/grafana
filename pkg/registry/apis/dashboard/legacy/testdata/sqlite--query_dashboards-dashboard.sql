@@ -2,6 +2,7 @@ SELECT
   dashboard.org_id,
   dashboard.id,
   dashboard.uid,
+  dashboard.title,
   dashboard.folder_uid,
   dashboard.deleted,
   plugin_id,

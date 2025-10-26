@@ -1,6 +1,6 @@
 import { monacoTypes } from '@grafana/ui';
 
-export const singleLineEmptyQuery = {
+export const sqlTestDataSingleLineEmptyQuery = {
   query: '',
   tokens: [] as monacoTypes.Token[][],
 };

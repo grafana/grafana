@@ -646,12 +646,28 @@ describe('QueryCache: Prometheus', function () {
 });
 
 describe('findDataPointStep', () => {
-  it('should interpolate custom interval', () => {
+  it('should interpolate custom interval when there is no calculatedMinStep in response', () => {
     const mockApplyInterpolation = jest.fn().mockImplementation(() => '1m');
     const req = mockPromRequest();
     req.targets[0].interval = '$interval';
     const respFrames = trimmedFirstPointInPromFrames as unknown as DataFrame[];
     findDatapointStep(req, respFrames, mockApplyInterpolation);
     expect(mockApplyInterpolation).toBeCalledTimes(1);
+  });
+
+  it('should use the calculated minStep coming in response frame', () => {
+    const mockApplyInterpolation = jest.fn().mockImplementation(() => '1m');
+    const req = mockPromRequest();
+    // Cannot be interpolated on frontend as it was calculated on backend.
+    req.targets[0].interval = '$__rate_interval';
+    const respFrames = trimmedFirstPointInPromFrames as unknown as DataFrame[];
+    const expectedMinStep = 60000;
+    respFrames[0].meta = {
+      custom: {
+        calculatedMinStep: expectedMinStep,
+      },
+    };
+    const result = findDatapointStep(req, respFrames, mockApplyInterpolation);
+    expect(result).toBe(expectedMinStep);
   });
 });

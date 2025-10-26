@@ -187,14 +187,6 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       margin: theme.spacing(2.5, 1, 2.5, 2),
       cursor: 'default',
     }),
-    logDetailsSidebarContainer: css({
-      label: 'logs-row-details-table',
-      border: `1px solid ${theme.colors.border.medium}`,
-      padding: theme.spacing(0, 1, 1),
-      borderRadius: theme.shape.radius.default,
-      margin: theme.spacing(0, 1, 0, 1),
-      cursor: 'default',
-    }),
     logDetailsTable: css({
       label: 'logs-row-details-table',
       lineHeight: '18px',

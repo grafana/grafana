@@ -4,7 +4,7 @@
 import { useMemo, useState } from 'react';
 import uPlot from 'uplot';
 
-import { Field, getDisplayProcessor, PanelProps } from '@grafana/data';
+import { Field, getDisplayProcessor, PanelProps, useDataLinksContext } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { DashboardCursorSync, TooltipDisplayMode } from '@grafana/schema';
 import {
@@ -50,9 +50,13 @@ export const CandlestickPanel = ({
     onThresholdsChange,
     canEditThresholds,
     showThresholds,
-    dataLinkPostProcessor,
     eventBus,
+    canExecuteActions,
   } = usePanelContext();
+
+  const { dataLinkPostProcessor } = useDataLinksContext();
+
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   const theme = useTheme2();
 
@@ -309,6 +313,7 @@ export const CandlestickPanel = ({
                       maxHeight={options.tooltip.maxHeight}
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
+                      canExecuteActions={userCanExecuteActions}
                     />
                   );
                 }}
@@ -316,6 +321,7 @@ export const CandlestickPanel = ({
               />
             )}
             <AnnotationsPlugin2
+              replaceVariables={replaceVariables}
               annotations={data.annotations ?? []}
               config={uplotConfig}
               timeZone={timeZone}
@@ -324,7 +330,13 @@ export const CandlestickPanel = ({
             />
             <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
             {data.annotations && (
-              <ExemplarsPlugin config={uplotConfig} exemplars={data.annotations} timeZone={timeZone} />
+              <ExemplarsPlugin
+                config={uplotConfig}
+                exemplars={data.annotations}
+                timeZone={timeZone}
+                maxHeight={options.tooltip.maxHeight}
+                maxWidth={options.tooltip.maxWidth}
+              />
             )}
             {((canEditThresholds && onThresholdsChange) || showThresholds) && (
               <ThresholdControlsPlugin

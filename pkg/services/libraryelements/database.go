@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -200,12 +199,12 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 			ConnectedDashboards: 0,
 			Created:             element.Created,
 			Updated:             element.Updated,
-			CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+			CreatedBy: model.LibraryElementDTOMetaUser{
 				Id:        element.CreatedBy,
 				Name:      signedInUser.GetLogin(),
 				AvatarUrl: dtos.GetGravatarUrl(l.Cfg, signedInUser.GetEmail()),
 			},
-			UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+			UpdatedBy: model.LibraryElementDTOMetaUser{
 				Id:        element.UpdatedBy,
 				Name:      signedInUser.GetLogin(),
 				AvatarUrl: dtos.GetGravatarUrl(l.Cfg, signedInUser.GetEmail()),
@@ -363,12 +362,12 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 				ConnectedDashboards: libraryElement.ConnectedDashboards,
 				Created:             libraryElement.Created,
 				Updated:             libraryElement.Updated,
-				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+				CreatedBy: model.LibraryElementDTOMetaUser{
 					Id:        libraryElement.CreatedBy,
 					Name:      libraryElement.CreatedByName,
 					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, libraryElement.CreatedByEmail),
 				},
-				UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+				UpdatedBy: model.LibraryElementDTOMetaUser{
 					Id:        libraryElement.UpdatedBy,
 					Name:      libraryElement.UpdatedByName,
 					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, libraryElement.UpdatedByEmail),
@@ -426,6 +425,11 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 	if folderFilter.parseError != nil {
 		return model.LibraryElementSearchResult{}, folderFilter.parseError
 	}
+
+	foldersWithMatchingTitles, err := getFoldersWithMatchingTitles(c, l, signedInUser, query)
+	if err != nil {
+		return model.LibraryElementSearchResult{}, err
+	}
 	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
 		builder := db.NewSqlBuilder(l.Cfg, l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
 		if folderFilter.includeGeneralFolder {
@@ -434,7 +438,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
 			builder.Write(` WHERE le.org_id=?  AND le.folder_id=0`, signedInUser.GetOrgID())
 			writeKindSQL(query, &builder)
-			writeSearchStringSQL(query, l.SQLStore, &builder)
+			writeSearchStringSQL(query, l.SQLStore, &builder, foldersWithMatchingTitles)
 			writeExcludeSQL(query, &builder)
 			writeTypeFilterSQL(typeFilter, &builder)
 			builder.Write(" ")
@@ -446,7 +450,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
 		builder.Write(` WHERE le.org_id=? AND le.folder_id<>0`, signedInUser.GetOrgID())
 		writeKindSQL(query, &builder)
-		writeSearchStringSQL(query, l.SQLStore, &builder)
+		writeSearchStringSQL(query, l.SQLStore, &builder, foldersWithMatchingTitles)
 		writeExcludeSQL(query, &builder)
 		writeTypeFilterSQL(typeFilter, &builder)
 		if err := folderFilter.writeFolderFilterSQL(false, &builder); err != nil {
@@ -504,12 +508,12 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 					ConnectedDashboards: element.ConnectedDashboards,
 					Created:             element.Created,
 					Updated:             element.Updated,
-					CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+					CreatedBy: model.LibraryElementDTOMetaUser{
 						Id:        element.CreatedBy,
 						Name:      element.CreatedByName,
 						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.CreatedByEmail),
 					},
-					UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+					UpdatedBy: model.LibraryElementDTOMetaUser{
 						Id:        element.UpdatedBy,
 						Name:      element.UpdatedByName,
 						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.UpdatedByEmail),
@@ -525,7 +529,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
 			countBuilder.Write(` WHERE le.org_id=? AND le.folder_id=0`, signedInUser.GetOrgID())
 			writeKindSQL(query, &countBuilder)
-			writeSearchStringSQL(query, l.SQLStore, &countBuilder)
+			writeSearchStringSQL(query, l.SQLStore, &countBuilder, foldersWithMatchingTitles)
 			writeExcludeSQL(query, &countBuilder)
 			writeTypeFilterSQL(typeFilter, &countBuilder)
 			countBuilder.Write(" ")
@@ -536,7 +540,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
 		countBuilder.Write(` WHERE le.org_id=? AND le.folder_id<>0`, signedInUser.GetOrgID())
 		writeKindSQL(query, &countBuilder)
-		writeSearchStringSQL(query, l.SQLStore, &countBuilder)
+		writeSearchStringSQL(query, l.SQLStore, &countBuilder, foldersWithMatchingTitles)
 		writeExcludeSQL(query, &countBuilder)
 		writeTypeFilterSQL(typeFilter, &countBuilder)
 		if err := folderFilter.writeFolderFilterSQL(true, &countBuilder); err != nil {
@@ -665,12 +669,12 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 				ConnectedDashboards: elementInDB.ConnectedDashboards,
 				Created:             libraryElement.Created,
 				Updated:             libraryElement.Updated,
-				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+				CreatedBy: model.LibraryElementDTOMetaUser{
 					Id:        elementInDB.CreatedBy,
 					Name:      elementInDB.CreatedByName,
 					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, elementInDB.CreatedByEmail),
 				},
-				UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+				UpdatedBy: model.LibraryElementDTOMetaUser{
 					Id:        libraryElement.UpdatedBy,
 					Name:      signedInUser.GetLogin(),
 					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, signedInUser.GetEmail()),
@@ -756,12 +760,12 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 					ConnectedDashboards: element.ConnectedDashboards,
 					Created:             element.Created,
 					Updated:             element.Updated,
-					CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+					CreatedBy: model.LibraryElementDTOMetaUser{
 						Id:        element.CreatedBy,
 						Name:      element.CreatedByName,
 						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.CreatedByEmail),
 					},
-					UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+					UpdatedBy: model.LibraryElementDTOMetaUser{
 						Id:        element.UpdatedBy,
 						Name:      element.UpdatedByName,
 						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.UpdatedByEmail),
@@ -881,4 +885,27 @@ func contains(slice []string, element string) bool {
 		}
 	}
 	return false
+}
+
+func getFoldersWithMatchingTitles(c context.Context, l *LibraryElementService, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) ([]string, error) {
+	if len(strings.TrimSpace(query.SearchString)) <= 0 {
+		return nil, nil
+	}
+
+	searchQuery := folder.SearchFoldersQuery{
+		OrgID:        signedInUser.GetOrgID(),
+		Title:        query.SearchString,
+		SignedInUser: signedInUser,
+	}
+
+	folderHits, err := l.folderService.SearchFolders(c, searchQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	foldersWithMatchingTitles := make([]string, 0, len(folderHits))
+	for _, hit := range folderHits {
+		foldersWithMatchingTitles = append(foldersWithMatchingTitles, hit.UID)
+	}
+	return foldersWithMatchingTitles, nil
 }

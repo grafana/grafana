@@ -9,9 +9,10 @@ import { Input } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, AzureQueryType, ResultFormat } from '../../types';
+import { AzureMonitorQuery, AzureQueryType, ResultFormat } from '../../types/query';
+import { AzureMonitorErrorish, AzureMonitorOption } from '../../types/types';
 import AdvancedResourcePicker from '../LogsQueryEditor/AdvancedResourcePicker';
-import ResourceField from '../ResourceField';
+import ResourceField from '../ResourceField/ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 import { Field } from '../shared/Field';

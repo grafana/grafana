@@ -121,7 +121,7 @@ For an example of the `IsDisabled` method and custom initialization code when th
 
 ## Run Wire (generate code)
 
-Running `make run` calls `make gen-go` on the first run. The `gen-go` in turn calls the Wire binary and generates the code in [`wire_gen.go`](/pkg/server/wire_gen.go). The Wire binary is installed using [`bingo`](https://github.com/bwplotka/bingo) which downloads and installs all the tools needed, including the Wire binary at the specified version.
+Running `make run` calls `make gen-go` on the first run. The `gen-go` in turn calls the Wire binary and generates the code in [`wire_gen.go`](/pkg/server/wire_gen.go). The Wire binary is installed using `go tool` which downloads and installs all the tools needed, including the Wire binary at the specified version.
 
 ## OSS vs. Enterprise
 

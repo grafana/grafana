@@ -29,11 +29,12 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
+import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
+import { EditorColumnHeader } from '../EditorColumnHeader';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { Spacer } from '../Spacer';
-import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
 import {
   NotificationTemplate,
   useCreateNotificationTemplate,
@@ -106,6 +107,9 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const [payload, setPayload] = useState(defaultPayloadString);
   const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
 
+  // AI feedback state
+  const [aiGeneratedTemplate, setAiGeneratedTemplate] = useState(false);
+
   const { isProvisioned } = useNotificationTemplateMetadata(originalTemplate);
   const originalTemplatePrefill: TemplateFormValues | undefined = originalTemplate
     ? { title: originalTemplate.title, content: originalTemplate.content }
@@ -162,6 +166,11 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
     const content = getValues('content'),
       newValue = !content ? example : `${content}\n${example}`;
     setValue('content', newValue);
+  };
+
+  const handleTemplateGenerated = (template: string) => {
+    setValue('content', template);
+    setAiGeneratedTemplate(true);
   };
 
   return (
@@ -275,6 +284,13 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                     </Button>
                                   </Dropdown>
                                 )}
+                                {/* GenAI button – only available for Grafana Alertmanager and enterprise */}
+                                {isGrafanaAlertManager && (
+                                  <AITemplateButtonComponent
+                                    onTemplateGenerated={handleTemplateGenerated}
+                                    disabled={isProvisioned}
+                                  />
+                                )}
                                 <Button
                                   icon="question-circle"
                                   size="sm"
@@ -340,6 +356,8 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                       setPayloadFormatError={setPayloadFormatError}
                       payloadFormatError={payloadFormatError}
                       className={cx(styles.templatePreview, styles.minEditorSize)}
+                      aiGeneratedTemplate={aiGeneratedTemplate}
+                      setAiGeneratedTemplate={setAiGeneratedTemplate}
                     />
                   </div>
                 )}
@@ -493,10 +511,15 @@ const defaultPayload: TestTemplateAlert[] = [
     status: 'firing',
     annotations: {
       summary: 'Instance instance1 has been down for more than 5 minutes',
+      description:
+        'The instance instance1 has been unreachable for more than 5 minutes, indicating a potential service outage.',
     },
     labels: {
       alertname: 'InstanceDown',
       instance: 'instance1',
+      severity: 'critical',
+      service: 'service1',
+      environment: 'production',
     },
     startsAt: subDays(new Date(), 1).toISOString(),
     endsAt: addMinutes(new Date(), 5).toISOString(),
@@ -507,10 +530,15 @@ const defaultPayload: TestTemplateAlert[] = [
     status: 'resolved',
     annotations: {
       summary: 'CPU usage above 90%',
+      description:
+        'The CPU usage on instance1 has exceeded 90% for an extended period, which may indicate performance issues or resource constraints.',
     },
     labels: {
       alertname: 'CpuUsage',
       instance: 'instance1',
+      severity: 'warning',
+      service: 'service1',
+      environment: 'dev',
     },
     startsAt: subHours(new Date(), 4).toISOString(),
     endsAt: new Date().toISOString(),

@@ -7,7 +7,7 @@ import {
   ImageRenderType,
 } from '../../public/app/features/transformers/docs/content';
 
-const WRITE_PATH = 'docs/sources/panels-visualizations/query-transform-data/transform-data/index.md';
+const WRITE_PATH = 'docs/sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md';
 
 export const readMeContent = `
   To update this Markdown, navigate to the following Typescript files and edit them based on what you need to update:
@@ -101,6 +101,8 @@ Transformations are a powerful way to manipulate data returned by a query before
 - Join time series/SQL-like data
 - Perform mathematical operations across queries
 - Use the output of one transformation as the input to another transformation
+
+{{< docs/learning-journeys title="Transform data in a Grafana Cloud dashboard" url="https://grafana.com/docs/learning-journeys/data-transformation/" >}}
 
 For users that rely on multiple views of the same dataset, transformations offer an efficient method of creating and maintaining numerous dashboards.
 

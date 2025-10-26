@@ -5,16 +5,23 @@ import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { labelsMatchMatchers } from '../../../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
-import { LogRecord } from '../state-history/common';
-import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
+import { historyDataFrameToLogRecords } from '../state-history/common';
 
-import { StateFilterValues } from './CentralAlertHistoryScene';
+import { StateFilterValues } from './constants';
 
-const emptyFilters = {
+type StateFilter = (typeof StateFilterValues)[keyof typeof StateFilterValues];
+
+const emptyFilters: HistoryRecordFilters = {
   labels: '',
-  stateFrom: 'all',
-  stateTo: 'all',
+  stateFrom: StateFilterValues.all,
+  stateTo: StateFilterValues.all,
 };
+
+interface HistoryRecordFilters {
+  labels: string;
+  stateFrom?: StateFilter;
+  stateTo?: StateFilter;
+}
 
 /**
  * This hook filters the history records based on the label, stateTo and stateFrom filters.
@@ -24,42 +31,32 @@ const emptyFilters = {
  * @param stateHistory the original history records
  * @returns the filtered history records
  */
-export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filters = emptyFilters) {
+export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filters: HistoryRecordFilters = emptyFilters) {
   return useMemo(() => ruleHistoryToRecords(stateHistory, filters), [filters, stateHistory]);
 }
 
-export function ruleHistoryToRecords(stateHistory?: DataFrameJSON, filters = emptyFilters) {
-  const { labels, stateFrom, stateTo } = filters;
+export function ruleHistoryToRecords(stateHistory?: DataFrameJSON, filters: HistoryRecordFilters = emptyFilters) {
+  const { labels, stateFrom = StateFilterValues.all, stateTo = StateFilterValues.all } = filters;
 
-  if (!stateHistory?.data) {
+  const allLogRecords = historyDataFrameToLogRecords(stateHistory);
+
+  if (allLogRecords.length === 0) {
     return { historyRecords: [] };
   }
 
   const filterMatchers = labels ? parsePromQLStyleMatcherLooseSafe(labels) : [];
 
-  const [tsValues, lines] = stateHistory.data.values;
-  const timestamps = isNumbers(tsValues) ? tsValues : [];
-
-  // merge timestamp with "line"
-  const logRecords = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
-    const line = lines[index];
-    if (!isLine(line)) {
-      return acc;
-    }
+  const filteredRecords = allLogRecords.filter(({ line }) => {
     // values property can be undefined for some instance states (e.g. NoData)
     const filterMatch = line.labels && labelsMatchMatchers(line.labels, filterMatchers);
     const baseStateTo = mapStateWithReasonToBaseState(line.current);
     const baseStateFrom = mapStateWithReasonToBaseState(line.previous);
     const stateToMatch = stateTo !== StateFilterValues.all ? stateTo === baseStateTo : true;
     const stateFromMatch = stateFrom !== StateFilterValues.all ? stateFrom === baseStateFrom : true;
-    if (filterMatch && stateToMatch && stateFromMatch) {
-      acc.push({ timestamp, line });
-    }
-
-    return acc;
-  }, []);
+    return filterMatch && stateToMatch && stateFromMatch;
+  });
 
   return {
-    historyRecords: logRecords,
+    historyRecords: filteredRecords,
   };
 }

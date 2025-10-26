@@ -25,7 +25,12 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
       value = JSON.parse(value);
     } catch {} // ignore errors
   } else {
-    displayValue = JSON.stringify(value, null, ' ');
+    try {
+      // JSON may refer to itself, which errors on stringify
+      displayValue = JSON.stringify(value, null, ' ');
+    } catch {
+      displayValue = undefined; // if it won't stringify, mark undefined
+    }
   }
 
   const links = getCellLinks(field, row) || [];

@@ -1,6 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
 import { KBarProvider } from 'kbar';
-import { Component } from 'react';
 import { useEffectOnce } from 'react-use';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { render } from 'test/test-utils';
@@ -14,7 +13,7 @@ import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
+import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
 
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
 import { DashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
@@ -34,11 +33,9 @@ jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
 });
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => {
-  class GeneralSettings extends Component<{}, {}> {
-    render() {
-      return <>general settings</>;
-    }
-  }
+  const GeneralSettings = () => {
+    return <>general settings</>;
+  };
 
   return { GeneralSettings };
 });

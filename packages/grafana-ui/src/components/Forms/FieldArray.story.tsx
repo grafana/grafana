@@ -6,6 +6,7 @@ import { Button } from '../Button/Button';
 import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 
+import { Field } from './Field';
 import { FieldArray } from './FieldArray';
 import mdx from './FieldArray.mdx';
 import { Form } from './Form';
@@ -44,16 +45,22 @@ export const Simple: StoryFn = (args) => {
                 <div style={{ marginBottom: '1rem' }}>
                   {fields.map((field, index) => (
                     <Stack key={field.id}>
-                      <Input
-                        key={field.id}
-                        {...register(`people.${index}.firstName` as const)}
-                        defaultValue={field.firstName}
-                      />
-                      <Input
-                        key={field.id}
-                        {...register(`people.${index}.lastName` as const)}
-                        defaultValue={field.lastName}
-                      />
+                      <Field noMargin label="First name">
+                        <Input
+                          key={field.id}
+                          {...register(`people.${index}.firstName` as const)}
+                          defaultValue={field.firstName}
+                          id={`${field.id}-first-name`}
+                        />
+                      </Field>
+                      <Field noMargin label="Last name">
+                        <Input
+                          key={field.id}
+                          {...register(`people.${index}.lastName` as const)}
+                          defaultValue={field.lastName}
+                          id={`${field.id}-last-name`}
+                        />
+                      </Field>
                     </Stack>
                   ))}
                 </div>

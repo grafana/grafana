@@ -21,17 +21,17 @@ export function RuleListPageTitle({ title }: { title: string }) {
     window.location.reload();
   };
 
-  const { text, ...configToUse }: ButtonProps & { text: string; 'data-testid': string } = listViewV2Enabled
+  const configToUse: ButtonProps & { 'data-testid': string } = listViewV2Enabled
     ? {
         variant: 'secondary',
         icon: undefined,
-        text: t('alerting.rule-list.toggle.go-back-to-old-look', 'Go back to the old look'),
+        children: t('alerting.rule-list.toggle.go-back-to-old-look', 'Go back to the old look'),
         'data-testid': 'alerting-list-view-toggle-v1',
       }
     : {
         variant: 'primary',
         icon: 'rocket',
-        text: t('alerting.rule-list.toggle.try-out-the-new-look', 'Try out the new look!'),
+        children: t('alerting.rule-list.toggle.try-out-the-new-look', 'Try out the new look!'),
         'data-testid': 'alerting-list-view-toggle-v2',
       };
 
@@ -40,9 +40,7 @@ export function RuleListPageTitle({ title }: { title: string }) {
       <h1>{title}</h1>
       {shouldShowV2Toggle && (
         <div>
-          <Button size="sm" fill="outline" {...configToUse} onClick={toggleListView} className="fs-unmask">
-            {text}
-          </Button>
+          <Button size="sm" fill="outline" {...configToUse} onClick={toggleListView} className="fs-unmask" />
         </div>
       )}
     </Stack>

@@ -57,7 +57,7 @@ export const resourceTypeDisplayNames: { [k: string]: string } = {
   'microsoft.cache/redis': 'Azure Cache for Redis',
   'microsoft.cache/redisenterprise': 'Redis Enterprise',
   'microsoft.cdn/cdnwebapplicationfirewallpolicies': 'Content Delivery Network WAF policies',
-  'microsoft.cdn/profiles': '(front doors standard/premium Preview)',
+  'microsoft.cdn/profiles': '(Front Doors Standard/Premium Preview)',
   'microsoft.cdn/profiles/afdendpoints': 'Endpoints',
   'microsoft.cdn/profiles/endpoints': 'Endpoints',
   'microsoft.certificateregistration/certificateorders': 'App Service Certificates',

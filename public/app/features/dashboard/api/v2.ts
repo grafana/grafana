@@ -1,10 +1,9 @@
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { Status } from '@grafana/schema/src/schema/dashboard/v2alpha1/types.status.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Status } from '@grafana/schema/src/schema/dashboard/v2';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
-import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   AnnoKeyFolder,
@@ -19,7 +18,7 @@ import {
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
@@ -28,7 +27,7 @@ import { isDashboardV2Spec } from './utils';
 
 export const K8S_V2_DASHBOARD_API_CONFIG = {
   group: 'dashboard.grafana.app',
-  version: 'v2alpha1',
+  version: 'v2beta1',
   resource: 'dashboards',
 };
 
@@ -64,7 +63,10 @@ export class K8sDashboardV2API
           dashboard.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
           dashboard.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
         } catch (e) {
-          throw new Error('Failed to load folder');
+          // If user has access to dashboard but not to folder, continue without folder info
+          if (getStatusFromError(e) !== 403) {
+            throw new Error('Failed to load folder');
+          }
         }
       } else if (dashboard.metadata.annotations && !dashboard.metadata.annotations[AnnoKeyFolder]) {
         // Set AnnoKeyFolder to empty string for top-level dashboards
@@ -121,7 +123,7 @@ export class K8sDashboardV2API
     }
 
     // add folder annotation
-    if (options.folderUid) {
+    if (options.folderUid !== undefined) {
       // remove frontend folder annotations
       delete obj.metadata.annotations?.[AnnoKeyFolderTitle];
       delete obj.metadata.annotations?.[AnnoKeyFolderUrl];
@@ -145,11 +147,14 @@ export class K8sDashboardV2API
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardV2Spec>): SaveDashboardResponseDTO {
+    //TODO: use slug from response once implemented
+    const slug = '';
+
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
         uid: v.metadata.name,
         currentQueryParams: '',
-        slug: kbn.slugifyForUrl(v.spec.title.trim()),
+        slug,
       })
     );
 
@@ -164,7 +169,7 @@ export class K8sDashboardV2API
       id: dashId,
       status: 'success',
       url,
-      slug: '',
+      slug,
     };
   }
 

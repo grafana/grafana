@@ -19,6 +19,7 @@ interface Props {
   colorIndicator?: ColorIndicator;
   position?: ColorIndicatorPosition;
   lineStyle?: LineStyle;
+  isHollow?: boolean;
 }
 
 export type ColorIndicatorStyles = ReturnType<typeof getStyles>;
@@ -28,22 +29,27 @@ export const VizTooltipColorIndicator = ({
   colorIndicator = DEFAULT_COLOR_INDICATOR,
   position = ColorIndicatorPosition.Leading,
   lineStyle,
+  isHollow,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
-  if (colorIndicator === ColorIndicator.series) {
+  if (colorIndicator === ColorIndicator.series && !isHollow) {
     return (
       <SeriesIcon
         color={color}
         lineStyle={lineStyle}
-        className={position === ColorIndicatorPosition.Leading ? styles.leading : styles.trailing}
+        noMargin
+        className={cx(
+          position === ColorIndicatorPosition.Leading ? styles.leading : styles.trailing,
+          styles.seriesIndicator
+        )}
       />
     );
   }
 
   return (
-    <span
-      style={{ backgroundColor: color }}
+    <div
+      style={isHollow ? { border: `1px solid ${color}` } : { backgroundColor: color }}
       className={cx(
         position === ColorIndicatorPosition.Leading ? styles.leading : styles.trailing,
         getColorIndicatorClass(colorIndicator, styles)
@@ -59,6 +65,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   trailing: css({
     marginLeft: theme.spacing(0.5),
+  }),
+  seriesIndicator: css({
+    position: 'relative',
+    top: -2, // half the height of the color indicator, since the top is aligned with flex center.
+  }),
+  series: css({
+    width: '14px',
+    height: '4px',
+    borderRadius: theme.shape.radius.pill,
+    minWidth: '14px',
   }),
   value: css({
     width: '12px',

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 )
 
+//go:generate mockery --name FeatureToggles --structname MockFeatureToggles --inpackage --filename feature_toggles_mock.go --with-expecter
 type FeatureToggles interface {
 	// IsEnabled checks if a feature is enabled for a given context.
 	// The settings may be per user, tenant, or globally set in the cloud
@@ -16,6 +17,9 @@ type FeatureToggles interface {
 	// are configured by the operator and shared across all tenants.
 	// Use of global feature flags should be limited and careful as they require
 	// a full server restart for a change to take place.
+	//
+	// Deprecated: FeatureToggles.IsEnabledGlobally is deprecated and will be removed in a future release.
+	// Evaluate with OpenFeature instead (see [github.com/open-feature/go-sdk/openfeature.Client])
 	IsEnabledGlobally(flag string) bool
 
 	// Get the enabled flags -- this *may* also include disabled flags (with value false)

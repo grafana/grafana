@@ -1,3 +1,4 @@
+/* eslint-disable @grafana/i18n/no-translation-top-level */
 import { useSessionStorage } from 'react-use';
 
 import { BusEventWithPayload } from '@grafana/data';
@@ -16,6 +17,7 @@ import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRo
 import { redoButtonId, undoButtonID } from '../scene/new-toolbar/RightActions';
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
+import { VariableAdd, VariableAddEditableElement } from '../settings/variables/VariableAddEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import { isSceneVariable } from '../settings/variables/utils';
@@ -58,6 +60,10 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
 
   if (isSceneVariable(sceneObj)) {
     return new VariableEditableElement(sceneObj);
+  }
+
+  if (sceneObj instanceof VariableAdd) {
+    return new VariableAddEditableElement(sceneObj);
   }
 
   return undefined;
@@ -191,8 +197,17 @@ export const dashboardEditActions = {
     });
   },
 
+  changeTitle: makeEditAction<DashboardScene, 'title'>({
+    description: t('dashboard.title.action', 'Change dashboard title'),
+    prop: 'title',
+  }),
+  changeDescription: makeEditAction<DashboardScene, 'description'>({
+    description: t('dashboard.description.action', 'Change dashboard description'),
+    prop: 'description',
+  }),
+
   addVariable({ source, addedObject }: AddVariableActionHelperProps) {
-    const varsBeforeAddition = [...source.state.variables];
+    const varsBeforeAddition = [...(source.state.variables ?? [])];
 
     dashboardEditActions.addElement({
       source,
@@ -219,32 +234,22 @@ export const dashboardEditActions = {
       },
     });
   },
-
-  changeTitle({ source, oldTitle, newTitle }: ChangeTitleActionHelperProps) {
-    dashboardEditActions.edit({
-      description: t('dashboard.title.action', 'Change dashboard title'),
-      source,
-      perform: () => {
-        source.setState({ title: newTitle });
-      },
-      undo: () => {
-        source.setState({ title: oldTitle });
-      },
-    });
-  },
-
-  changeDescription({ source, oldDescription, newDescription }: ChangeDescriptionActionHelperProps) {
-    dashboardEditActions.edit({
-      description: t('dashboard.description.action', 'Change dashboard description'),
-      source,
-      perform: () => {
-        source.setState({ description: newDescription });
-      },
-      undo: () => {
-        source.setState({ description: oldDescription });
-      },
-    });
-  },
+  changeVariableName: makeEditAction<SceneVariable, 'name'>({
+    description: t('dashboard.variable.name.action', 'Change variable name'),
+    prop: 'name',
+  }),
+  changeVariableLabel: makeEditAction<SceneVariable, 'label'>({
+    description: t('dashboard.variable.label.action', 'Change variable label'),
+    prop: 'label',
+  }),
+  changeVariableDescription: makeEditAction<SceneVariable, 'description'>({
+    description: t('dashboard.variable.description.action', 'Change variable description'),
+    prop: 'description',
+  }),
+  changeVariableHideValue: makeEditAction<SceneVariable, 'hide'>({
+    description: t('dashboard.variable.hide.action', 'Change variable hide option'),
+    prop: 'hide',
+  }),
 
   moveElement(props: MoveElementActionHelperProps) {
     const { movedObject, source, perform, undo } = props;
@@ -265,6 +270,35 @@ export const dashboardEditActions = {
     });
   },
 };
+
+interface MakeEditActionProps<Source extends SceneObject, T extends keyof Source['state']> {
+  description: string;
+  prop: T;
+}
+
+interface EditActionProps<Source extends SceneObject, T extends keyof Source['state']> {
+  source: Source;
+  oldValue: Source['state'][T];
+  newValue: Source['state'][T];
+}
+
+function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
+  description,
+  prop,
+}: MakeEditActionProps<Source, T>) {
+  return ({ source, oldValue, newValue }: EditActionProps<Source, T>) => {
+    dashboardEditActions.edit({
+      description,
+      source,
+      perform: () => {
+        source.setState({ [prop]: newValue });
+      },
+      undo: () => {
+        source.setState({ [prop]: oldValue });
+      },
+    });
+  };
+}
 
 export function undoRedoWasClicked(e: React.FocusEvent) {
   return e.relatedTarget && (e.relatedTarget.id === undoButtonID || e.relatedTarget.id === redoButtonId);

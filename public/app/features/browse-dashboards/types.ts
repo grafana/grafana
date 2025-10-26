@@ -2,6 +2,10 @@ import { CellProps, Column, HeaderProps } from 'react-table';
 
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
+/**
+ * Object of what is selected in the tree. It is record where keys are categories from DashboardViewItemKind and
+ * each category is a record where the key is the UID of the object and value is whether it is selected or not.
+ */
 export type DashboardTreeSelection = Record<DashboardViewItemKind, Record<string, boolean | undefined>> & {
   $all: boolean;
 };
@@ -49,6 +53,7 @@ interface RendererUserProps {
   onAllSelectionChange?: (newState: boolean) => void;
   onItemSelectionChange?: (item: DashboardViewItem, newState: boolean) => void;
   treeID?: string;
+  permissions?: BrowseDashboardsPermissions;
 }
 
 export type DashboardsTreeColumn = Column<DashboardsTreeItem>;
@@ -59,4 +64,12 @@ export enum SelectionState {
   Unselected,
   Selected,
   Mixed,
+}
+
+export interface BrowseDashboardsPermissions {
+  canEditFolders: boolean;
+  canEditDashboards: boolean;
+  canDeleteFolders?: boolean;
+  canDeleteDashboards?: boolean;
+  isReadOnlyRepo?: boolean;
 }

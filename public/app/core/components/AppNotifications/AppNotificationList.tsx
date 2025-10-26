@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
-import { AppEvents, GrafanaTheme2 } from '@grafana/data';
+import { AlertErrorPayload, AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Stack } from '@grafana/ui';
 import { notifyApp, hideAppNotification } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { selectVisible } from 'app/core/reducers/appNotification';
-import { useSelector, useDispatch } from 'app/types';
+import { useSelector, useDispatch } from 'app/types/store';
 
 import {
   createErrorNotification,
@@ -21,13 +23,28 @@ export function AppNotificationList() {
   const appNotifications = useSelector((state) => selectVisible(state.appNotifications));
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
+  const { chrome } = useGrafana();
+  const location = useLocation();
 
   useEffect(() => {
+    // Suppress error notifications in kiosk mode on dashboards.
+    // Kiosk mode is typically used for TV displays which are non-interactive.
+    // Backend errors like "Failed to fetch" cannot be dismissed and would remain visible,
+    // degrading the viewing experience. Other notification types (success, warning, info)
+    // are still shown as they indicate successful operations or important information.
+    const handleErrorAlert = (payload: AlertErrorPayload) => {
+      const isKioskDashboard = chrome.state.getValue().kioskMode && location.pathname.startsWith('/d/');
+
+      if (!isKioskDashboard) {
+        dispatch(notifyApp(createErrorNotification(...payload)));
+      }
+    };
+
     appEvents.on(AppEvents.alertWarning, (payload) => dispatch(notifyApp(createWarningNotification(...payload))));
     appEvents.on(AppEvents.alertSuccess, (payload) => dispatch(notifyApp(createSuccessNotification(...payload))));
-    appEvents.on(AppEvents.alertError, (payload) => dispatch(notifyApp(createErrorNotification(...payload))));
+    appEvents.on(AppEvents.alertError, handleErrorAlert);
     appEvents.on(AppEvents.alertInfo, (payload) => dispatch(notifyApp(createInfoNotification(...payload))));
-  }, [dispatch]);
+  }, [dispatch, chrome, location.pathname]);
 
   const onClearAppNotification = (id: string) => {
     dispatch(hideAppNotification(id));

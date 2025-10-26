@@ -9,16 +9,11 @@ import { Alert, LinkButton, Space, Text, TextLink } from '@grafana/ui';
 import { LogsEditorMode } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import {
-  AzureMonitorErrorish,
-  AzureMonitorOption,
-  AzureMonitorQuery,
-  ResultFormat,
-  EngineSchema,
-  AzureLogAnalyticsMetadataTable,
-} from '../../types';
+import { AzureLogAnalyticsMetadataTable } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery, ResultFormat } from '../../types/query';
+import { AzureMonitorErrorish, AzureMonitorOption, EngineSchema } from '../../types/types';
 import { LogsQueryBuilder } from '../LogsQueryBuilder/LogsQueryBuilder';
-import ResourceField from '../ResourceField';
+import ResourceField from '../ResourceField/ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 import FormatAsField from '../shared/FormatAsField';
@@ -113,11 +108,9 @@ const LogsQueryEditor = ({
             if (schema.database?.tables) {
               schema.database.tables = t;
             }
-            setSchema(schema);
           });
-        } else {
-          setSchema(schema);
         }
+        setSchema(schema);
         setIsLoadingSchema(false);
       });
     }
@@ -286,7 +279,7 @@ const LogsQueryEditor = ({
         !!config.featureToggles.azureMonitorLogsBuilderEditor ? (
           <LogsQueryBuilder
             query={query}
-            schema={schema!}
+            schema={schema}
             basicLogsEnabled={basicLogsEnabled}
             onQueryChange={onQueryChange}
             templateVariableOptions={templateVariableOptions}

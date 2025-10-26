@@ -12,12 +12,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationAlertRulePauseNamespace(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
+
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,

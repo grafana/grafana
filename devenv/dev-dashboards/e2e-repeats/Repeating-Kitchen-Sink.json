@@ -27,7 +27,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -115,7 +115,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -192,7 +192,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -267,7 +267,7 @@
     },
     {
       "datasource": {
-        "type": "testdata"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -350,12 +350,8 @@
       {
         "current": {
           "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
+          "text": ["All"],
+          "value": ["$__all"]
         },
         "hide": 0,
         "includeAll": true,
@@ -391,12 +387,8 @@
       {
         "current": {
           "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
+          "text": ["All"],
+          "value": ["$__all"]
         },
         "hide": 0,
         "includeAll": true,
@@ -432,12 +424,8 @@
       {
         "current": {
           "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
+          "text": ["All"],
+          "value": ["$__all"]
         },
         "hide": 0,
         "includeAll": true,

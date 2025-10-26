@@ -58,6 +58,16 @@ func Test_validateIndex_Warning_ErrorValidatingIndex(t *testing.T) {
 	assert.Equal(t, "Elasticsearch data source is healthy. Warning: Error validating index: index_not_found", res.Message)
 }
 
+func Test_validateIndex_Warning_ErrorValidatingIndex2(t *testing.T) {
+	service := GetMockService(http.StatusOK, "200 OK", `{"status":"green"}`, `{"error":"not a map"}`)
+	res, _ := service.CheckHealth(mockedCfg, &backend.CheckHealthRequest{
+		PluginContext: backend.PluginContext{},
+		Headers:       nil,
+	})
+	assert.Equal(t, backend.HealthStatusOk, res.Status)
+	assert.Equal(t, "Elasticsearch data source is healthy. Warning: Error validating index", res.Message)
+}
+
 func Test_validateIndex_Warning_WrongTimestampType(t *testing.T) {
 	service := GetMockService(http.StatusOK, "200 OK", `{"status":"green"}`, `{"fields":{"timestamp":{"float":{"metadata_field":true}}}}`)
 	res, _ := service.CheckHealth(mockedCfg, &backend.CheckHealthRequest{

@@ -2,6 +2,7 @@ import { defaults, each, sortBy } from 'lodash';
 
 import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { Panel } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   PanelKind,
@@ -9,19 +10,22 @@ import {
   AnnotationQueryKind,
   QueryVariableKind,
   LibraryPanelRef,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+  LibraryPanelKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { notifyApp } from 'app/core/actions';
 import config from 'app/core/config';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { buildPanelKind } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel, GridPos } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
-import { variableRegex } from 'app/features/variables/utils';
+import { variableRegexExec } from 'app/features/variables/utils';
+import { dispatch } from 'app/store/store';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
 import { DashboardJson } from '../../../manage-dashboards/types';
 import { isConstant } from '../../../variables/guard';
-
-import { removePanelRefFromLayout } from './utils';
 
 export interface InputUsage {
   libraryPanels?: LibraryPanelRef[];
@@ -106,6 +110,8 @@ export async function makeExportableV1(dashboard: DashboardModel) {
     variableLookup[variable.name] = variable;
   }
 
+  const datasourceVariableRefNameMap: { [key: string]: string } = {};
+
   const templateizeDatasourceUsage = (obj: any, fallback?: DataSourceRef) => {
     if (obj.datasource === undefined) {
       obj.datasource = fallback;
@@ -116,11 +122,11 @@ export async function makeExportableV1(dashboard: DashboardModel) {
     let datasourceVariable: any = null;
 
     const datasourceUid: string | undefined = datasource?.uid;
-    const match = datasourceUid && variableRegex.exec(datasourceUid);
+    const match = datasourceUid && variableRegexExec(datasourceUid);
+    let varName: string | undefined;
 
-    // ignore data source properties that contain a variable
     if (match) {
-      const varName = match[1] || match[2] || match[4];
+      varName = match[1] || match[2] || match[4];
       datasourceVariable = variableLookup[varName];
       if (datasourceVariable && datasourceVariable.current) {
         datasource = datasourceVariable.current.value;
@@ -142,14 +148,10 @@ export async function makeExportableV1(dashboard: DashboardModel) {
           version: ds.meta.info.version || '1.0.0',
         };
 
-        // if used via variable we can skip templatizing usage
-        if (datasourceVariable) {
-          return;
-        }
-
         const libraryPanel = obj.libraryPanel;
         const libraryPanelSuffix = !!libraryPanel ? '-for-library-panel' : '';
         let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase() + libraryPanelSuffix.toUpperCase();
+        const templatedUid = '${' + refName + '}';
 
         datasources[refName] = {
           name: refName,
@@ -170,7 +172,14 @@ export async function makeExportableV1(dashboard: DashboardModel) {
           };
         }
 
-        obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
+        // if it panel or query is relying on a datasource variable
+        // skip templating datasource uid but save the reference so we can set datasource variable's current prop
+        if (datasourceVariable && varName) {
+          datasourceVariableRefNameMap[varName] = '${' + refName + '}';
+          return;
+        }
+
+        obj.datasource = { type: ds.meta.id, uid: templatedUid };
       });
   };
 
@@ -236,7 +245,16 @@ export async function makeExportableV1(dashboard: DashboardModel) {
         variable.refresh =
           variable.refresh !== VariableRefresh.never ? variable.refresh : VariableRefresh.onDashboardLoad;
       } else if (variable.type === 'datasource') {
-        variable.current = {};
+        const templateizedUID = datasourceVariableRefNameMap[variable.name];
+        if (templateizedUID) {
+          variable.current = {
+            text: '',
+            value: templateizedUID,
+            selected: true,
+          };
+        } else {
+          variable.current = {};
+        }
       } else if (variable.type === 'adhoc') {
         await templateizeDatasourceUsage(variable);
       }
@@ -331,7 +349,66 @@ export async function makeExportableV1(dashboard: DashboardModel) {
   }
 }
 
-export async function makeExportableV2(dashboard: DashboardV2Spec) {
+/**
+ * Converts a LibraryPanelKind to a PanelKind with embedded panel configuration
+ */
+async function convertLibraryPanelToInlinePanel(libraryPanelElement: LibraryPanelKind): Promise<PanelKind> {
+  const { libraryPanel, id, title } = libraryPanelElement.spec;
+
+  try {
+    // Load the full library panel definition
+    const fullLibraryPanel = await getLibraryPanel(libraryPanel.uid, true);
+    const panelModel: Panel = fullLibraryPanel.model;
+    const inlinePanel = buildPanelKind(panelModel);
+    // keep the original id
+    inlinePanel.spec.id = id;
+    return inlinePanel;
+  } catch (error) {
+    console.error(`Failed to load library panel ${libraryPanel.uid}:`, error);
+
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    dispatch(
+      notifyApp(
+        createErrorNotification(
+          `Unable to load library panel "${libraryPanel.name}": ${errorMessage}. It will appear as a placeholder in the export.`
+        )
+      )
+    );
+
+    // Return a placeholder panel if library panel can't be loaded
+    return {
+      kind: 'Panel',
+      spec: {
+        id,
+        title: title || `Library Panel: ${libraryPanel.name}`,
+        description: '',
+        links: [],
+        data: {
+          kind: 'QueryGroup',
+          spec: {
+            queries: [],
+            transformations: [],
+            queryOptions: {},
+          },
+        },
+        vizConfig: {
+          kind: 'VizConfig',
+          group: 'text',
+          version: '',
+          spec: {
+            options: {
+              content: `**Library Panel Load Error**\n\nUnable to load library panel: ${libraryPanel.name} (${libraryPanel.uid})\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              mode: 'markdown',
+            },
+            fieldConfig: { defaults: {}, overrides: [] },
+          },
+        },
+      },
+    };
+  }
+}
+
+export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExternally = false) {
   const variableLookup: { [key: string]: any } = {};
 
   // get all datasource variables
@@ -344,7 +421,8 @@ export async function makeExportableV2(dashboard: DashboardV2Spec) {
   const removeDataSourceRefs = (
     obj: AnnotationQueryKind['spec'] | QueryVariableKind['spec'] | PanelQueryKind['spec']
   ) => {
-    const datasourceUid = obj.datasource?.uid;
+    const datasourceUid = obj.query?.datasource?.name;
+
     if (datasourceUid?.startsWith('${') && datasourceUid?.endsWith('}')) {
       const varName = datasourceUid.slice(2, -1);
       // if there's a match we don't want to remove the datasource ref
@@ -354,7 +432,7 @@ export async function makeExportableV2(dashboard: DashboardV2Spec) {
       }
     }
 
-    obj.datasource = undefined;
+    obj.query && (obj.query.datasource = undefined);
   };
 
   const processPanel = (panel: PanelKind) => {
@@ -367,17 +445,21 @@ export async function makeExportableV2(dashboard: DashboardV2Spec) {
 
   try {
     const elements = dashboard.elements;
-    const layout = dashboard.layout;
 
     // process elements
     for (const [key, element] of Object.entries(elements)) {
       if (element.kind === 'Panel') {
         processPanel(element);
       } else if (element.kind === 'LibraryPanel') {
-        // just remove the library panel
-        delete elements[key];
-        // remove reference from layout
-        removePanelRefFromLayout(layout, key);
+        if (isSharingExternally) {
+          // Convert library panel to inline panel for external sharing
+          const inlinePanel = await convertLibraryPanelToInlinePanel(element);
+          // Apply datasource templating to the converted panel
+          processPanel(inlinePanel);
+          // Replace the library panel with the inline panel
+          elements[key] = inlinePanel;
+        }
+        // For internal exports, keep library panels as-is
       }
     }
 

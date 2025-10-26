@@ -23,14 +23,14 @@ jobs:
 
     steps:
       - name: "Checkout Grafana repo"
-        uses: "actions/checkout@v4"
+        uses: "actions/checkout@v5"
         with:
           # required for the `grafana/grafana-github-actions/has-matching-release-tag` action to work
           fetch-depth: 0
           persist-credentials: false
 
       - name: "Setup Go"
-        uses: "actions/setup-go@19bb51245e9c80abacb2e91cc42b33fa478b8639"
+        uses: "actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00"
         with:
           go-version-file: go.mod
 
@@ -38,7 +38,7 @@ jobs:
         run: go run .github/workflows/scripts/kinds/verify-kinds.go
 
       - name: "Checkout Actions library"
-        uses: "actions/checkout@v4"
+        uses: "actions/checkout@v5"
         with:
           repository: "grafana/grafana-github-actions"
           path: "./actions"

@@ -4,7 +4,7 @@ import { ButtonProps, Button } from '../Button/Button';
 
 type DataLinkButtonProps = {
   link: LinkModel<Field>;
-  buttonProps?: ButtonProps;
+  buttonProps?: Omit<ButtonProps, 'children'>;
 };
 
 /**

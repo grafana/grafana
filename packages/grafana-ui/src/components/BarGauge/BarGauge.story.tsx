@@ -9,7 +9,7 @@ import { BarGauge, Props } from './BarGauge';
 import mdx from './BarGauge.mdx';
 
 const meta: Meta = {
-  title: 'Visualizations/BarGauge',
+  title: 'Plugins/BarGauge',
   component: BarGauge,
   parameters: {
     docs: {

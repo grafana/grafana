@@ -1,12 +1,22 @@
 import { FeatureLike } from 'ol/Feature';
-import Map from 'ol/Map';
+import OpenLayersMap from 'ol/Map';
 import VectorImage from 'ol/layer/VectorImage';
 import { Stroke, Style } from 'ol/style';
 import Photo from 'ol-ext/style/Photo';
 
-import { MapLayerRegistryItem, PanelData, GrafanaTheme2, EventBus, PluginState, FieldType, Field } from '@grafana/data';
-import { FrameGeometrySourceMode, MapLayerOptions } from '@grafana/schema';
-import { findField } from 'app/features/dimensions';
+import {
+  MapLayerRegistryItem,
+  PanelData,
+  GrafanaTheme2,
+  EventBus,
+  PluginState,
+  FieldType,
+  Field,
+  MapLayerOptions,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { FrameGeometrySourceMode } from '@grafana/schema';
+import { findField } from 'app/features/dimensions/utils';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
 
@@ -69,7 +79,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: Map, options: MapLayerOptions<PhotoConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: OpenLayersMap, options: MapLayerOptions<PhotoConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -187,7 +197,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
             name: 'Image Source field',
             settings: {
               filter: (f: Field) => f.type === FieldType.string,
-              noFieldsMessage: 'No string fields found',
+              noFieldsMessage: t('geomap.photos-layer.noFieldsMessage-no-string-fields', 'No string fields found'),
             },
           })
           .addRadio({

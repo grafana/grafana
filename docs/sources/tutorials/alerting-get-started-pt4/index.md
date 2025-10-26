@@ -74,6 +74,8 @@ refs:
 
 This tutorial is a continuation of the [Get started with Grafana Alerting - Grouping notifications](http://www.grafana.com/tutorials/alerting-get-started-pt3/) tutorial.
 
+{{< youtube id="9CSrQGKeZwQ" >}}
+
 In this tutorial, you will learn:
 
 - The two types of templates in Grafana Alerting: labels and annotations and notification templates.
@@ -100,17 +102,14 @@ There are different ways you can follow along with this tutorial.
 > Note: Some of the templating features in Grafana Alerting discussed in this tutorial are currently available in Grafana Cloud but have not yet been released to the Open Source (OSS) version.
 
 - **Grafana Cloud**
-
   - As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://www.grafana.com/auth/sign-up/create-user).
 
   Continue to [how templating works](#how-templating-works).
 
 - **Interactive learning environment**
-
   - Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting - Templating](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt4/). It's a fully configured environment with all the dependencies already installed.
 
 - **Grafana OSS**
-
   - If you opt to run a Grafana stack locally, ensure you have the following applications installed:
 
   - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
@@ -215,7 +214,6 @@ Now that we've introduced how templating works, let’s move on to the next step
 ### Create an alert rule
 
 1. Sign in to Grafana:
-
    - **Grafana Cloud** users: Log in via Grafana Cloud.
    - **OSS users**: Go to [http://localhost:3000](http://localhost:3000).
 
@@ -224,7 +222,6 @@ Now that we've introduced how templating works, let’s move on to the next step
    - Click **+ New alert rule**.
    - Enter an **alert rule name**. Name it `High CPU usage`
 1. **Define query an alert condition** section:
-
    - Select TestData data source from the drop-down menu.
 
      [TestData](https://grafana.com/docs/grafana/latest/datasources/testdata/) is included in the demo environment. If you’re working in Grafana Cloud or your own local Grafana instance, you can add the data source through the Connections menu.
@@ -243,7 +240,6 @@ Now that we've introduced how templating works, let’s move on to the next step
      This dataset simulates a data source returning multiple time series, with each time series generating a separate alert instance.
 
 1. **Alert condition** section:
-
    - Keep Last as the value for the reducer function (`WHEN`), and `IS ABOVE 75` as the threshold value, representing CPU usage above 75% .This is the value above which the alert rule should trigger.
    - Click **Preview alert rule condition** to run the queries.
 
@@ -252,7 +248,6 @@ Now that we've introduced how templating works, let’s move on to the next step
    {{< figure src="/media/docs/alerting/part-4-firing-instances-preview.png" max-width="1200px" caption="Preview of a query returning alert instances" >}}
 
 1. Add folders and labels section:
-
    - In **Folder**, click **+ New folder** and enter a name. For example: `System metrics` . This folder contains our alert rules.
 
      Note: while it's possible to template labels here, in this tutorial, we focus on templating the summary and annotations fields instead.
@@ -265,13 +260,11 @@ Now that we've introduced how templating works, let’s move on to the next step
 1. **Configure notifications** section:
 
    Select who should receive a notification when an alert rule fires.
-
    - Select a **Contact point**. If you don’t have any contact points, click _View or create contact points_.
 
 1. **Configure notification message** section:
 
    In this step, you’ll configure the **summary** and **description** annotations to make your alert notifications informative and easy to understand. These annotations use templates to dynamically include key information about the alert.
-
    - **Summary** annotation: Enter the following code as the value for the annotation.:
 
      ```go
@@ -412,7 +405,6 @@ In this tutorial, we learned how to use templating in Grafana Alerting to create
 To deepen your understanding of Grafana’s templating, explore the following resources:
 
 - **Overview of the functions and operators used in templates**:
-
   - [Notification template language](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/language/)
   - [Alert rule template language](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/language/)
 

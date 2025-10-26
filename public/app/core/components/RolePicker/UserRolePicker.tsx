@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
+import { OrgRole } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
-import { Role, OrgRole, AccessControlAction } from 'app/types';
+import { Role, AccessControlAction } from 'app/types/accessControl';
 
 import { RolePicker } from './RolePicker';
 import { fetchUserRoles, updateUserRoles } from './api';

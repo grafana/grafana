@@ -6,14 +6,14 @@ import { IconButton, UnitPicker, useStyles2 } from '@grafana/ui';
 
 type Props = StandardEditorProps<string, UnitFieldConfigSettings>;
 
-export function UnitValueEditor({ value, onChange, item }: Props) {
+export function UnitValueEditor({ value, onChange, item, id }: Props) {
   const styles = useStyles2(getStyles);
 
   if (item?.settings?.isClearable && value != null) {
     return (
       <div className={styles.wrapper}>
         <span className={styles.first}>
-          <UnitPicker value={value} onChange={onChange} />
+          <UnitPicker value={value} onChange={onChange} id={id} />
         </span>
         <IconButton
           name="times"
@@ -23,7 +23,7 @@ export function UnitValueEditor({ value, onChange, item }: Props) {
       </div>
     );
   }
-  return <UnitPicker value={value} onChange={onChange} />;
+  return <UnitPicker value={value} onChange={onChange} id={id} />;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

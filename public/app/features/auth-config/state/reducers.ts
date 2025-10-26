@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { Settings } from 'app/types';
+import { Settings } from 'app/types/settings';
 
 import { SettingsError, AuthProviderStatus, AuthConfigState, SSOProvider } from '../types';
 

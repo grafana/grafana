@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceSpan } from '../../types';
+import { TraceSpan } from '../../types/trace';
 import test3 from '../testCases/test3';
 import test4 from '../testCases/test4';
 import test6 from '../testCases/test6';

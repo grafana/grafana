@@ -392,6 +392,8 @@ type DashboardFieldConfig struct {
 	Color *DashboardFieldColor `json:"color,omitempty"`
 	// The behavior when clicking on a result
 	Links []interface{} `json:"links,omitempty"`
+	// Define interactive HTTP requests that can be triggered from data visualizations.
+	Actions []DashboardAction `json:"actions,omitempty"`
 	// Alternative to empty string
 	NoValue *string `json:"noValue,omitempty"`
 	// custom is specified by the FieldConfig field
@@ -624,6 +626,95 @@ const (
 )
 
 // +k8s:openapi-gen=true
+type DashboardAction struct {
+	Type         DashboardActionType           `json:"type"`
+	Title        string                        `json:"title"`
+	Fetch        *DashboardFetchOptions        `json:"fetch,omitempty"`
+	Infinity     *DashboardInfinityOptions     `json:"infinity,omitempty"`
+	Confirmation *string                       `json:"confirmation,omitempty"`
+	OneClick     *bool                         `json:"oneClick,omitempty"`
+	Variables    []DashboardActionVariable     `json:"variables,omitempty"`
+	Style        *DashboardV2alpha1ActionStyle `json:"style,omitempty"`
+}
+
+// NewDashboardAction creates a new DashboardAction object.
+func NewDashboardAction() *DashboardAction {
+	return &DashboardAction{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardActionType string
+
+const (
+	DashboardActionTypeFetch    DashboardActionType = "fetch"
+	DashboardActionTypeInfinity DashboardActionType = "infinity"
+)
+
+// +k8s:openapi-gen=true
+type DashboardFetchOptions struct {
+	Method DashboardHttpRequestMethod `json:"method"`
+	Url    string                     `json:"url"`
+	Body   *string                    `json:"body,omitempty"`
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	QueryParams [][]string `json:"queryParams,omitempty"`
+	Headers     [][]string `json:"headers,omitempty"`
+}
+
+// NewDashboardFetchOptions creates a new DashboardFetchOptions object.
+func NewDashboardFetchOptions() *DashboardFetchOptions {
+	return &DashboardFetchOptions{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardHttpRequestMethod string
+
+const (
+	DashboardHttpRequestMethodGET    DashboardHttpRequestMethod = "GET"
+	DashboardHttpRequestMethodPUT    DashboardHttpRequestMethod = "PUT"
+	DashboardHttpRequestMethodPOST   DashboardHttpRequestMethod = "POST"
+	DashboardHttpRequestMethodDELETE DashboardHttpRequestMethod = "DELETE"
+	DashboardHttpRequestMethodPATCH  DashboardHttpRequestMethod = "PATCH"
+)
+
+// +k8s:openapi-gen=true
+type DashboardInfinityOptions struct {
+	Method DashboardHttpRequestMethod `json:"method"`
+	Url    string                     `json:"url"`
+	Body   *string                    `json:"body,omitempty"`
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	QueryParams   [][]string `json:"queryParams,omitempty"`
+	DatasourceUid string     `json:"datasourceUid"`
+	Headers       [][]string `json:"headers,omitempty"`
+}
+
+// NewDashboardInfinityOptions creates a new DashboardInfinityOptions object.
+func NewDashboardInfinityOptions() *DashboardInfinityOptions {
+	return &DashboardInfinityOptions{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardActionVariable struct {
+	Key  string `json:"key"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+// NewDashboardActionVariable creates a new DashboardActionVariable object.
+func NewDashboardActionVariable() *DashboardActionVariable {
+	return &DashboardActionVariable{
+		Type: DashboardActionVariableType,
+	}
+}
+
+// Action variable type
+// +k8s:openapi-gen=true
+const DashboardActionVariableType = "string"
+
+// +k8s:openapi-gen=true
 type DashboardDynamicConfigValue struct {
 	Id    string      `json:"id"`
 	Value interface{} `json:"value,omitempty"`
@@ -763,7 +854,9 @@ type DashboardRepeatOptions struct {
 
 // NewDashboardRepeatOptions creates a new DashboardRepeatOptions object.
 func NewDashboardRepeatOptions() *DashboardRepeatOptions {
-	return &DashboardRepeatOptions{}
+	return &DashboardRepeatOptions{
+		Mode: DashboardRepeatMode,
+	}
 }
 
 // other repeat modes will be added in the future: label, frame
@@ -938,7 +1031,9 @@ type DashboardRowRepeatOptions struct {
 
 // NewDashboardRowRepeatOptions creates a new DashboardRowRepeatOptions object.
 func NewDashboardRowRepeatOptions() *DashboardRowRepeatOptions {
-	return &DashboardRowRepeatOptions{}
+	return &DashboardRowRepeatOptions{
+		Mode: DashboardRepeatMode,
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -1011,7 +1106,9 @@ type DashboardAutoGridRepeatOptions struct {
 
 // NewDashboardAutoGridRepeatOptions creates a new DashboardAutoGridRepeatOptions object.
 func NewDashboardAutoGridRepeatOptions() *DashboardAutoGridRepeatOptions {
-	return &DashboardAutoGridRepeatOptions{}
+	return &DashboardAutoGridRepeatOptions{
+		Mode: DashboardRepeatMode,
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -1077,7 +1174,9 @@ type DashboardTabRepeatOptions struct {
 
 // NewDashboardTabRepeatOptions creates a new DashboardTabRepeatOptions object.
 func NewDashboardTabRepeatOptions() *DashboardTabRepeatOptions {
-	return &DashboardTabRepeatOptions{}
+	return &DashboardTabRepeatOptions{
+		Mode: DashboardRepeatMode,
+	}
 }
 
 // Links with references to other dashboards or external resources
@@ -1214,24 +1313,26 @@ func NewDashboardQueryVariableKind() *DashboardQueryVariableKind {
 // Query variable specification
 // +k8s:openapi-gen=true
 type DashboardQueryVariableSpec struct {
-	Name             string                    `json:"name"`
-	Current          DashboardVariableOption   `json:"current"`
-	Label            *string                   `json:"label,omitempty"`
-	Hide             DashboardVariableHide     `json:"hide"`
-	Refresh          DashboardVariableRefresh  `json:"refresh"`
-	SkipUrlSync      bool                      `json:"skipUrlSync"`
-	Description      *string                   `json:"description,omitempty"`
-	Datasource       *DashboardDataSourceRef   `json:"datasource,omitempty"`
-	Query            DashboardDataQueryKind    `json:"query"`
-	Regex            string                    `json:"regex"`
-	Sort             DashboardVariableSort     `json:"sort"`
-	Definition       *string                   `json:"definition,omitempty"`
-	Options          []DashboardVariableOption `json:"options"`
-	Multi            bool                      `json:"multi"`
-	IncludeAll       bool                      `json:"includeAll"`
-	AllValue         *string                   `json:"allValue,omitempty"`
-	Placeholder      *string                   `json:"placeholder,omitempty"`
-	AllowCustomValue bool                      `json:"allowCustomValue"`
+	Name               string                                        `json:"name"`
+	Current            DashboardVariableOption                       `json:"current"`
+	Label              *string                                       `json:"label,omitempty"`
+	Hide               DashboardVariableHide                         `json:"hide"`
+	Refresh            DashboardVariableRefresh                      `json:"refresh"`
+	SkipUrlSync        bool                                          `json:"skipUrlSync"`
+	Description        *string                                       `json:"description,omitempty"`
+	Datasource         *DashboardDataSourceRef                       `json:"datasource,omitempty"`
+	Query              DashboardDataQueryKind                        `json:"query"`
+	Regex              string                                        `json:"regex"`
+	Sort               DashboardVariableSort                         `json:"sort"`
+	Definition         *string                                       `json:"definition,omitempty"`
+	Options            []DashboardVariableOption                     `json:"options"`
+	Multi              bool                                          `json:"multi"`
+	IncludeAll         bool                                          `json:"includeAll"`
+	AllValue           *string                                       `json:"allValue,omitempty"`
+	Placeholder        *string                                       `json:"placeholder,omitempty"`
+	AllowCustomValue   bool                                          `json:"allowCustomValue"`
+	StaticOptions      []DashboardVariableOption                     `json:"staticOptions,omitempty"`
+	StaticOptionsOrder *DashboardQueryVariableSpecStaticOptionsOrder `json:"staticOptionsOrder,omitempty"`
 }
 
 // NewDashboardQueryVariableSpec creates a new DashboardQueryVariableSpec object.
@@ -1680,14 +1781,16 @@ type DashboardAdHocFilterWithLabels struct {
 	KeyLabel    *string  `json:"keyLabel,omitempty"`
 	ValueLabels []string `json:"valueLabels,omitempty"`
 	ForceEdit   *bool    `json:"forceEdit,omitempty"`
-	Origin      string   `json:"origin,omitempty"`
+	Origin      *string  `json:"origin,omitempty"`
 	// @deprecated
 	Condition *string `json:"condition,omitempty"`
 }
 
 // NewDashboardAdHocFilterWithLabels creates a new DashboardAdHocFilterWithLabels object.
 func NewDashboardAdHocFilterWithLabels() *DashboardAdHocFilterWithLabels {
-	return &DashboardAdHocFilterWithLabels{}
+	return &DashboardAdHocFilterWithLabels{
+		Origin: (func(input string) *string { return &input })(DashboardFilterOrigin),
+	}
 }
 
 // Determine the origin of the adhoc variable filter
@@ -1820,6 +1923,16 @@ func NewDashboardV2alpha1SpecialValueMapOptions() *DashboardV2alpha1SpecialValue
 }
 
 // +k8s:openapi-gen=true
+type DashboardV2alpha1ActionStyle struct {
+	BackgroundColor *string `json:"backgroundColor,omitempty"`
+}
+
+// NewDashboardV2alpha1ActionStyle creates a new DashboardV2alpha1ActionStyle object.
+func NewDashboardV2alpha1ActionStyle() *DashboardV2alpha1ActionStyle {
+	return &DashboardV2alpha1ActionStyle{}
+}
+
+// +k8s:openapi-gen=true
 type DashboardRepeatOptionsDirection string
 
 const (
@@ -1847,8 +1960,10 @@ const (
 type DashboardConditionalRenderingVariableSpecOperator string
 
 const (
-	DashboardConditionalRenderingVariableSpecOperatorEquals    DashboardConditionalRenderingVariableSpecOperator = "equals"
-	DashboardConditionalRenderingVariableSpecOperatorNotEquals DashboardConditionalRenderingVariableSpecOperator = "notEquals"
+	DashboardConditionalRenderingVariableSpecOperatorEquals     DashboardConditionalRenderingVariableSpecOperator = "equals"
+	DashboardConditionalRenderingVariableSpecOperatorNotEquals  DashboardConditionalRenderingVariableSpecOperator = "notEquals"
+	DashboardConditionalRenderingVariableSpecOperatorMatches    DashboardConditionalRenderingVariableSpecOperator = "matches"
+	DashboardConditionalRenderingVariableSpecOperatorNotMatches DashboardConditionalRenderingVariableSpecOperator = "notMatches"
 )
 
 // +k8s:openapi-gen=true
@@ -1878,6 +1993,15 @@ const (
 	DashboardTimeSettingsSpecWeekStartSaturday DashboardTimeSettingsSpecWeekStart = "saturday"
 	DashboardTimeSettingsSpecWeekStartMonday   DashboardTimeSettingsSpecWeekStart = "monday"
 	DashboardTimeSettingsSpecWeekStartSunday   DashboardTimeSettingsSpecWeekStart = "sunday"
+)
+
+// +k8s:openapi-gen=true
+type DashboardQueryVariableSpecStaticOptionsOrder string
+
+const (
+	DashboardQueryVariableSpecStaticOptionsOrderBefore DashboardQueryVariableSpecStaticOptionsOrder = "before"
+	DashboardQueryVariableSpecStaticOptionsOrderAfter  DashboardQueryVariableSpecStaticOptionsOrder = "after"
+	DashboardQueryVariableSpecStaticOptionsOrderSorted DashboardQueryVariableSpecStaticOptionsOrder = "sorted"
 )
 
 // +k8s:openapi-gen=true

@@ -1,4 +1,5 @@
-import { AlertRulesState, StoreState } from 'app/types';
+import { AlertRulesState } from 'app/features/alerting/unified/types/alerting';
+import { StoreState } from 'app/types/store';
 
 import { getAlertRuleItems, getSearchQuery } from './selectors';
 

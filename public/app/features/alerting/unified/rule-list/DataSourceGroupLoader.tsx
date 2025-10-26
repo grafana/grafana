@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
+import { Alert, useStyles2 } from '@grafana/ui';
 import { DataSourceRuleGroupIdentifier } from 'app/types/unified-alerting';
 import {
   PromRuleDTO,
@@ -16,15 +18,16 @@ import {
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { prometheusApi } from '../api/prometheusApi';
-import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
+import { useContinuousPagination } from '../hooks/usePagination';
+import { DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP, RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import { hashRule } from '../utils/rule-id';
 import { getRuleName, isCloudRulerGroup } from '../utils/rules';
 
 import { DataSourceRuleListItem } from './DataSourceRuleListItem';
 import { RuleOperationListItem } from './components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
+import { LoadMoreButton } from './components/LoadMoreButton';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
-import { RuleOperation } from './components/RuleListIcon';
 import { matchRulesGroup } from './ruleMatching';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
@@ -174,54 +177,79 @@ export function RulerBasedGroupRules({
   promGroup,
   rulerGroup,
 }: RulerBasedGroupRulesProps) {
+  const styles = useStyles2(getStyles);
   const { namespace, groupName } = groupIdentifier;
 
   const { matches, promOnlyRules } = useMemo(() => {
     return matchRulesGroup(rulerGroup, promGroup);
   }, [promGroup, rulerGroup]);
 
+  const { pageItems, hasMore, loadMore } = useContinuousPagination(
+    rulerGroup.rules,
+    DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP
+  );
+
   return (
     <>
-      {rulerGroup.rules.map((rulerRule) => {
+      {pageItems.map((rulerRule, index) => {
+        // If rules are indistinguishable by name, labels, annotations, and query, we need to use the index to disambiguate
         const promRule = matches.get(rulerRule);
 
-        return promRule ? (
-          <DataSourceRuleListItem
-            key={hashRule(promRule)}
-            rule={promRule}
-            rulerRule={rulerRule}
-            groupIdentifier={groupIdentifier}
-            application={application}
-            actions={
-              <RuleActionsButtons rule={rulerRule} promRule={promRule} groupIdentifier={groupIdentifier} compact />
-            }
-            showLocation={false}
-          />
-        ) : (
+        if (promRule) {
+          return (
+            <DataSourceRuleListItem
+              key={`${hashRule(promRule)}-${index}`}
+              rule={promRule}
+              rulerRule={rulerRule}
+              groupIdentifier={groupIdentifier}
+              application={application}
+              actions={
+                <RuleActionsButtons rule={rulerRule} promRule={promRule} groupIdentifier={groupIdentifier} compact />
+              }
+              showLocation={false}
+            />
+          );
+        }
+
+        return (
           <RuleOperationListItem
-            key={getRuleName(rulerRule)}
+            key={`${getRuleName(rulerRule)}-${index}`}
             name={getRuleName(rulerRule)}
             namespace={namespace.name}
             group={groupName}
             rulesSource={groupIdentifier.rulesSource}
             application={application}
-            operation={RuleOperation.Creating}
+            operation="creating"
             showLocation={false}
           />
         );
       })}
-      {promOnlyRules.map((rule) => (
-        <RuleOperationListItem
-          key={rule.name}
-          name={rule.name}
-          namespace={namespace.name}
-          group={groupName}
-          rulesSource={groupIdentifier.rulesSource}
-          application={application}
-          operation={RuleOperation.Deleting}
-          showLocation={false}
-        />
-      ))}
+      {promOnlyRules.map((rule, index) => {
+        return (
+          <RuleOperationListItem
+            key={`${rule.name}-${index}`}
+            name={rule.name}
+            namespace={namespace.name}
+            group={groupName}
+            rulesSource={groupIdentifier.rulesSource}
+            application={application}
+            operation="deleting"
+            showLocation={false}
+          />
+        );
+      })}
+      {hasMore && (
+        <li aria-selected="false" role="treeitem" className={styles.loadMoreWrapper}>
+          <LoadMoreButton onClick={loadMore} />
+        </li>
+      )}
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  loadMoreWrapper: css({
+    listStyle: 'none',
+    paddingTop: theme.spacing(1),
+  }),
+});

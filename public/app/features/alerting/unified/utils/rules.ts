@@ -44,7 +44,7 @@ import {
 
 import { CombinedRuleNamespace } from '../../../../types/unified-alerting';
 import { State } from '../components/StateTag';
-import { RuleHealth } from '../search/rulesSearchParser';
+import { RuleHealth, RuleSource } from '../search/rulesSearchParser';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
@@ -120,6 +120,7 @@ export const rulerRuleType = {
     recordingRule: isCloudRecordingRulerRule,
   },
   any: {
+    rule: (rule?: RulerRuleDTO) => isCloudRulerRule(rule) || isGrafanaRulerRule(rule),
     recordingRule: (rule?: RulerRuleDTO) => isCloudRecordingRulerRule(rule) || isGrafanaRecordingRule(rule),
     alertingRule: (rule?: RulerRuleDTO) => isAlertingRulerRule(rule) || isGrafanaAlertingRule(rule),
   },
@@ -168,6 +169,10 @@ export function isProvisionedRule(rulerRule: RulerRuleDTO): boolean {
   return isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
 }
 
+export function isProvisionedPromRule(promRule: PromRuleDTO): boolean {
+  return prometheusRuleType.grafana.rule(promRule) && Boolean(promRule.provenance);
+}
+
 export function isProvisionedRuleGroup(group: RulerRuleGroupDTO): boolean {
   return group.rules.some((rule) => isProvisionedRule(rule));
 }
@@ -186,6 +191,16 @@ export function getRuleHealth(health: string): RuleHealth | undefined {
     default:
       return undefined;
   }
+}
+
+export function getRuleSource(source: string): RuleSource | undefined {
+  if (source === 'grafana') {
+    return RuleSource.Grafana;
+  }
+  if (source === 'datasource') {
+    return RuleSource.DataSource;
+  }
+  return undefined;
 }
 
 export function getPendingPeriod(rule: CombinedRule): string | undefined {
@@ -528,4 +543,23 @@ export function isRecordingRuleByType(type?: RuleFormType) {
 
 export function isDataSourceManagedRuleByType(type?: RuleFormType) {
   return isCloudAlertingRuleByType(type) || isCloudRecordingRuleByType(type);
+}
+
+/*
+ * Grab the UID from either a rulerRule definition or a Prometheus rule definition, only Grafana-managed rules will have a UID.
+ */
+export function getRuleUID(rule?: RulerRuleDTO | Rule) {
+  if (!rule) {
+    return;
+  }
+
+  let ruleUid: string | undefined;
+
+  if ('grafana_alert' in rule && rulerRuleType.grafana.rule(rule)) {
+    ruleUid = rule.grafana_alert.uid;
+  } else if ('uid' in rule && prometheusRuleType.grafana.rule(rule)) {
+    ruleUid = rule.uid;
+  }
+
+  return ruleUid;
 }

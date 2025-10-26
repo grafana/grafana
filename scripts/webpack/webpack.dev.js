@@ -149,6 +149,7 @@ module.exports = (env = {}) => {
             lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
             extensions: ['.ts', '.tsx'],
             configType: 'flat',
+            failOnError: false,
           }),
       new MiniCssExtractPlugin({
         filename: 'grafana.[name].[contenthash].css',

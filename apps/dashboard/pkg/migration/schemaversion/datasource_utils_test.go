@@ -81,35 +81,35 @@ func TestGetDefaultDSInstanceSettings(t *testing.T) {
 		{
 			name: "no default datasource",
 			datasources: []schemaversion.DataSourceInfo{
-				{UID: "ds1", Type: "prometheus", Name: "DS1", Default: false},
-				{UID: "ds2", Type: "elasticsearch", Name: "DS2", Default: false},
+				{UID: "existing-ref-uid", Type: "prometheus", Name: "Existing Ref Name", Default: false},
+				{UID: "existing-target-uid", Type: "elasticsearch", Name: "Existing Target Name", Default: false},
 			},
 			expected: nil,
 		},
 		{
 			name: "single default datasource",
 			datasources: []schemaversion.DataSourceInfo{
-				{UID: "ds1", Type: "prometheus", Name: "DS1", Default: false},
-				{UID: "default-ds", Type: "prometheus", Name: "Default", Default: true, APIVersion: "v1"},
-				{UID: "ds2", Type: "elasticsearch", Name: "DS2", Default: false},
+				{UID: "existing-ref-uid", Type: "prometheus", Name: "Existing Ref Name", Default: false},
+				{UID: "default-ds-uid", Type: "prometheus", Name: "Default Test Datasource Name", Default: true, APIVersion: "v1"},
+				{UID: "existing-target-uid", Type: "elasticsearch", Name: "Existing Target Name", Default: false},
 			},
 			expected: &schemaversion.DataSourceInfo{
-				UID:        "default-ds",
+				UID:        "default-ds-uid",
 				Type:       "prometheus",
-				Name:       "Default",
+				Name:       "Default Test Datasource Name",
 				APIVersion: "v1",
 			},
 		},
 		{
 			name: "multiple default datasources returns first",
 			datasources: []schemaversion.DataSourceInfo{
-				{UID: "ds1", Type: "prometheus", Name: "Default1", Default: true, APIVersion: "v1"},
-				{UID: "ds2", Type: "elasticsearch", Name: "Default2", Default: true, APIVersion: "v2"},
+				{UID: "first-default", Type: "prometheus", Name: "First Default", Default: true, APIVersion: "v1"},
+				{UID: "second-default", Type: "elasticsearch", Name: "Second Default", Default: true, APIVersion: "v2"},
 			},
 			expected: &schemaversion.DataSourceInfo{
-				UID:        "ds1",
+				UID:        "first-default",
 				Type:       "prometheus",
-				Name:       "Default1",
+				Name:       "First Default",
 				APIVersion: "v1",
 			},
 		},
@@ -123,137 +123,11 @@ func TestGetDefaultDSInstanceSettings(t *testing.T) {
 	}
 }
 
-func TestGetInstanceSettings(t *testing.T) {
-	datasources := []schemaversion.DataSourceInfo{
-		{UID: "default-ds", Type: "prometheus", Name: "Default", Default: true, APIVersion: "v1"},
-		{UID: "other-ds", Type: "elasticsearch", Name: "Elasticsearch", Default: false, APIVersion: "v2"},
-		{UID: "test-uid", Type: "influxdb", Name: "InfluxDB", Default: false},
-	}
-
-	tests := []struct {
-		name      string
-		nameOrRef interface{}
-		expected  *schemaversion.DataSourceInfo
-	}{
-		{
-			name:      "nil should return default",
-			nameOrRef: nil,
-			expected: &schemaversion.DataSourceInfo{
-				UID:        "default-ds",
-				Type:       "prometheus",
-				Name:       "Default",
-				APIVersion: "v1",
-			},
-		},
-		{
-			name:      "default string should return default",
-			nameOrRef: "default",
-			expected: &schemaversion.DataSourceInfo{
-				UID:        "default-ds",
-				Type:       "prometheus",
-				Name:       "Default",
-				APIVersion: "v1",
-			},
-		},
-		{
-			name:      "lookup by UID",
-			nameOrRef: "other-ds",
-			expected: &schemaversion.DataSourceInfo{
-				UID:        "other-ds",
-				Type:       "elasticsearch",
-				Name:       "Elasticsearch",
-				APIVersion: "v2",
-			},
-		},
-		{
-			name:      "lookup by name",
-			nameOrRef: "Elasticsearch",
-			expected: &schemaversion.DataSourceInfo{
-				UID:        "other-ds",
-				Type:       "elasticsearch",
-				Name:       "Elasticsearch",
-				APIVersion: "v2",
-			},
-		},
-		{
-			name:      "lookup by UID without apiVersion",
-			nameOrRef: "test-uid",
-			expected: &schemaversion.DataSourceInfo{
-				UID:        "test-uid",
-				Type:       "influxdb",
-				Name:       "InfluxDB",
-				APIVersion: "",
-			},
-		},
-		{
-			name: "lookup by reference object with UID",
-			nameOrRef: map[string]interface{}{
-				"uid": "other-ds",
-			},
-			expected: &schemaversion.DataSourceInfo{
-				UID:        "other-ds",
-				Type:       "elasticsearch",
-				Name:       "Elasticsearch",
-				APIVersion: "v2",
-			},
-		},
-		{
-			name: "lookup by reference object without UID",
-			nameOrRef: map[string]interface{}{
-				"type": "prometheus",
-			},
-			expected: &schemaversion.DataSourceInfo{
-				UID:        "default-ds",
-				Type:       "prometheus",
-				Name:       "Default",
-				APIVersion: "v1",
-			},
-		},
-		{
-			name:      "unknown datasource should return default",
-			nameOrRef: "unknown-ds",
-			expected: &schemaversion.DataSourceInfo{
-				UID:        "default-ds",
-				Type:       "prometheus",
-				Name:       "Default",
-				APIVersion: "v1",
-			},
-		},
-		{
-			name:      "empty string should return default",
-			nameOrRef: "",
-			expected: &schemaversion.DataSourceInfo{
-				UID:        "default-ds",
-				Type:       "prometheus",
-				Name:       "Default",
-				APIVersion: "v1",
-			},
-		},
-		{
-			name:      "unsupported input type should return default",
-			nameOrRef: 123,
-			expected: &schemaversion.DataSourceInfo{
-				UID:        "default-ds",
-				Type:       "prometheus",
-				Name:       "Default",
-				APIVersion: "v1",
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := schemaversion.GetInstanceSettings(tt.nameOrRef, datasources)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
 func TestMigrateDatasourceNameToRef(t *testing.T) {
 	datasources := []schemaversion.DataSourceInfo{
-		{UID: "default-ds", Type: "prometheus", Name: "Default", Default: true, APIVersion: "v1"},
-		{UID: "other-ds", Type: "elasticsearch", Name: "Elasticsearch", Default: false, APIVersion: "v2"},
-		{UID: "test-uid", Type: "influxdb", Name: "InfluxDB", Default: false},
+		{UID: "default-ds-uid", Type: "prometheus", Name: "Default Test Datasource Name", Default: true, APIVersion: "v1"},
+		{UID: "existing-target-uid", Type: "elasticsearch", Name: "Existing Target Name", Default: false, APIVersion: "v2"},
+		{UID: "existing-ref-uid", Type: "prometheus", Name: "Existing Ref Name", Default: false, APIVersion: "v1"},
 	}
 
 	t.Run("returnDefaultAsNull: true", func(t *testing.T) {
@@ -287,39 +161,33 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 			},
 			{
 				name:      "lookup by UID",
-				nameOrRef: "other-ds",
+				nameOrRef: "existing-target-uid",
 				expected: map[string]interface{}{
-					"uid":        "other-ds",
+					"uid":        "existing-target-uid",
 					"type":       "elasticsearch",
 					"apiVersion": "v2",
 				},
 			},
 			{
 				name:      "lookup by name",
-				nameOrRef: "Elasticsearch",
+				nameOrRef: "Existing Target Name",
 				expected: map[string]interface{}{
-					"uid":        "other-ds",
+					"uid":        "existing-target-uid",
 					"type":       "elasticsearch",
 					"apiVersion": "v2",
 				},
 			},
 			{
-				name:      "unknown datasource should return default reference",
+				name:      "unknown datasource should preserve as UID",
 				nameOrRef: "unknown-ds",
 				expected: map[string]interface{}{
-					"uid":        "default-ds",
-					"type":       "prometheus",
-					"apiVersion": "v1",
+					"uid": "unknown-ds",
 				},
 			},
 			{
-				name:      "empty string should return default reference",
+				name:      "empty string should return empty object",
 				nameOrRef: "",
-				expected: map[string]interface{}{
-					"uid":        "default-ds",
-					"type":       "prometheus",
-					"apiVersion": "v1",
-				},
+				expected:  map[string]interface{}{},
 			},
 		}
 
@@ -343,7 +211,7 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 				name:      "nil should return default reference",
 				nameOrRef: nil,
 				expected: map[string]interface{}{
-					"uid":        "default-ds",
+					"uid":        "default-ds-uid",
 					"type":       "prometheus",
 					"apiVersion": "v1",
 				},
@@ -352,7 +220,7 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 				name:      "default should return default reference",
 				nameOrRef: "default",
 				expected: map[string]interface{}{
-					"uid":        "default-ds",
+					"uid":        "default-ds-uid",
 					"type":       "prometheus",
 					"apiVersion": "v1",
 				},
@@ -370,30 +238,24 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 			},
 			{
 				name:      "lookup by UID",
-				nameOrRef: "other-ds",
+				nameOrRef: "existing-target-uid",
 				expected: map[string]interface{}{
-					"uid":        "other-ds",
+					"uid":        "existing-target-uid",
 					"type":       "elasticsearch",
 					"apiVersion": "v2",
 				},
 			},
 			{
-				name:      "unknown datasource should return default reference",
+				name:      "unknown datasource should preserve as UID",
 				nameOrRef: "unknown-ds",
 				expected: map[string]interface{}{
-					"uid":        "default-ds",
-					"type":       "prometheus",
-					"apiVersion": "v1",
+					"uid": "unknown-ds",
 				},
 			},
 			{
-				name:      "empty string should return default reference",
+				name:      "empty string should return empty object",
 				nameOrRef: "",
-				expected: map[string]interface{}{
-					"uid":        "default-ds",
-					"type":       "prometheus",
-					"apiVersion": "v1",
-				},
+				expected:  map[string]interface{}{},
 			},
 		}
 
@@ -408,26 +270,20 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 	t.Run("edge cases", func(t *testing.T) {
 		options := map[string]bool{"returnDefaultAsNull": false}
 
-		t.Run("reference without uid should lookup default", func(t *testing.T) {
+		t.Run("reference without uid should be preserved as-is", func(t *testing.T) {
 			nameOrRef := map[string]interface{}{
 				"type": "prometheus",
 			}
 			result := schemaversion.MigrateDatasourceNameToRef(nameOrRef, options, datasources)
 			expected := map[string]interface{}{
-				"uid":        "default-ds",
-				"type":       "prometheus",
-				"apiVersion": "v1",
+				"type": "prometheus",
 			}
 			assert.Equal(t, expected, result)
 		})
 
-		t.Run("integer input should return default reference", func(t *testing.T) {
+		t.Run("integer input should return nil", func(t *testing.T) {
 			result := schemaversion.MigrateDatasourceNameToRef(123, options, datasources)
-			expected := map[string]interface{}{
-				"uid":        "default-ds",
-				"type":       "prometheus",
-				"apiVersion": "v1",
-			}
+			expected := map[string]interface{}(nil)
 			assert.Equal(t, expected, result)
 		})
 

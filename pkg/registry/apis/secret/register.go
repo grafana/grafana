@@ -19,17 +19,13 @@ func RegisterDependencies(
 	secretDBMigrator contracts.SecretDBMigrator,
 	accessControlService accesscontrol.Service,
 ) (*DependencyRegisterer, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) || !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
-		return nil, nil
-	}
-
 	// Permissions for requests in multi-tenant mode will come from HG.
 	if err := registerAccessControlRoles(accessControlService); err != nil {
 		return nil, fmt.Errorf("registering access control roles: %w", err)
 	}
 
 	// We shouldn't need to create the DB in HG, as that will use the MT api server.
-	if cfg.StackID == "" {
+	if cfg.StackID == "" || cfg.SecretsManagement.IsDeveloperMode {
 		// Some DBs that claim to be MySQL/Postgres-compatible might not support table locking.
 		lockDatabase := cfg.Raw.Section("database").Key("migration_locking").MustBool(true)
 

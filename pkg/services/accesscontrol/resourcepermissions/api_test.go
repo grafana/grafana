@@ -19,6 +19,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -31,6 +32,8 @@ type getDescriptionTestCase struct {
 }
 
 func TestIntegrationApi_getDescription(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []getDescriptionTestCase{
 		{
 			desc: "should return description",
@@ -136,6 +139,8 @@ type getPermissionsTestCase struct {
 }
 
 func TestIntegrationApi_getPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []getPermissionsTestCase{
 		{
 			desc:       "expect permissions for resource with id 1",
@@ -182,6 +187,8 @@ type setBuiltinPermissionTestCase struct {
 }
 
 func TestIntegrationApi_setBuiltinRolePermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []setBuiltinPermissionTestCase{
 		{
 			desc:           "should set Edit permission for Viewer",
@@ -261,6 +268,8 @@ type setTeamPermissionTestCase struct {
 }
 
 func TestIntegrationApi_setTeamPermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []setTeamPermissionTestCase{
 		{
 			desc:           "should set Edit permission for team 1",
@@ -368,6 +377,8 @@ type setUserPermissionTestCase struct {
 }
 
 func TestIntegrationApi_setUserPermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []setUserPermissionTestCase{
 		{
 			desc:           "should set Edit permission for user 1",
@@ -443,6 +454,8 @@ func TestIntegrationApi_setUserPermission(t *testing.T) {
 }
 
 func TestIntegrationApi_setUserPermissionForTeams(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	type setUserPermissionForTeamsTestCase struct {
 		setUserPermissionTestCase
 		teamCmd *team.CreateTeamCommand

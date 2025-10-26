@@ -34,7 +34,7 @@ func ProvideService(routeRegister routing.RouteRegister,
 		features:               features,
 	}
 
-	dashboardImportAPI := api.New(s, quotaService, pluginStore, ac)
+	dashboardImportAPI := api.New(s, quotaService, pluginStore, ac, features)
 	dashboardImportAPI.RegisterAPIEndpoints(routeRegister)
 
 	return s
@@ -48,7 +48,7 @@ type ImportDashboardService struct {
 	features               featuremgmt.FeatureToggles
 }
 
-func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
+func (s *ImportDashboardService) InterpolateDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*simplejson.Json, error) {
 	var draftDashboard *dashboards.Dashboard
 	if req.PluginId != "" {
 		loadReq := &plugindashboards.LoadPluginDashboardRequest{
@@ -66,6 +66,15 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 
 	evaluator := utils.NewDashTemplateEvaluator(draftDashboard.Data, req.Inputs)
 	generatedDash, err := evaluator.Eval()
+	if err != nil {
+		return nil, err
+	}
+
+	return generatedDash, nil
+}
+
+func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
+	generatedDash, err := s.InterpolateDashboard(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -145,14 +154,6 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		return nil, err
 	}
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()
-
-	// in the k8s flow, we connect the library panels in pkg/registry/apis/dashboard/legacy/sql_dashboards.go
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		err = s.libraryPanelService.ConnectLibraryPanelsForDashboard(ctx, req.User, savedDashboard)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	revision := savedDashboard.Data.Get("revision").MustInt64(0)
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()

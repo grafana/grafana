@@ -77,7 +77,7 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
 
   return (
     <DataSourceSection
-      name="Grafana"
+      name="Grafana-managed"
       application="grafana"
       uid={GrafanaRulesSourceSymbol}
       isLoading={isLoading}

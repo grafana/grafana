@@ -3,12 +3,14 @@ import { ReactElement, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useMeasure } from 'react-use';
 
+import { AlertLabels } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   CustomVariable,
   SceneComponentProps,
   SceneObjectBase,
+  SceneObjectState,
   TextBoxVariable,
   VariableDependencyConfig,
   VariableValue,
@@ -25,11 +27,11 @@ import {
 
 import { trackUseCentralHistoryFilterByClicking, trackUseCentralHistoryMaxEventsReached } from '../../../Analytics';
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
+import { AITriageButtonComponent } from '../../../enterprise-components/AI/AIGenTriageButton/addAITriageButton';
 import { usePagination } from '../../../hooks/usePagination';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { createRelativeUrl } from '../../../utils/url';
-import { AlertLabels } from '../../AlertLabels';
 import { CollapseToggle } from '../../CollapseToggle';
 import { LogRecord } from '../state-history/common';
 
@@ -37,6 +39,7 @@ import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO } from './CentralAler
 import { EventDetails } from './EventDetails';
 import { HistoryErrorMessage } from './HistoryErrorMessage';
 import { useRuleHistoryRecords } from './useRuleHistoryRecords';
+import { parseBackendLabelFilters } from './utils';
 
 export const LIMIT_EVENTS = 5000; // limit is hard-capped at 5000 at the BE level.
 const PAGE_SIZE = 100;
@@ -53,6 +56,7 @@ interface HistoryEventsListProps {
   valueInStateToFilter: VariableValue;
   valueInStateFromFilter: VariableValue;
   addFilter: (key: string, value: string, type: FilterType) => void;
+  hideAlertRuleColumn?: boolean;
 }
 export const HistoryEventsList = ({
   timeRange,
@@ -60,9 +64,15 @@ export const HistoryEventsList = ({
   valueInStateToFilter,
   valueInStateFromFilter,
   addFilter,
+  hideAlertRuleColumn,
 }: HistoryEventsListProps) => {
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
+
+  const labelFilters = parseBackendLabelFilters(valueInLabelFilter.toString());
+
+  const stateTo = valueInStateToFilter.toString();
+  const stateFrom = valueInStateFromFilter.toString();
 
   const {
     data: stateHistory,
@@ -73,12 +83,13 @@ export const HistoryEventsList = ({
     from: from,
     to: to,
     limit: LIMIT_EVENTS,
+    labels: labelFilters,
+    current: stateTo !== 'all' ? stateTo : undefined,
+    previous: stateFrom !== 'all' ? stateFrom : undefined,
   });
 
   const { historyRecords: historyRecordsNotSorted } = useRuleHistoryRecords(stateHistory, {
     labels: valueInLabelFilter.toString(),
-    stateFrom: valueInStateFromFilter.toString(),
-    stateTo: valueInStateToFilter.toString(),
   });
 
   const historyRecords = historyRecordsNotSorted.sort((a, b) => b.timestamp - a.timestamp);
@@ -93,7 +104,7 @@ export const HistoryEventsList = ({
   }
 
   return (
-    <>
+    <Stack direction="column" gap={0.5}>
       {maximumEventsReached && (
         <Alert
           severity="warning"
@@ -101,13 +112,18 @@ export const HistoryEventsList = ({
         >
           {t(
             'alerting.central-alert-history.too-many-events.text',
-            'The selected time period has too many events to display. Diplaying the latest 5000 events. Try using a shorter time period.'
+            'The selected time period has too many events to display. Displaying the latest 5000 events. Try using a shorter time period.'
           )}
         </Alert>
       )}
       <LoadingIndicator visible={isLoading} />
-      <HistoryLogEvents logRecords={historyRecords} addFilter={addFilter} timeRange={timeRange} />
-    </>
+      <HistoryLogEvents
+        logRecords={historyRecords}
+        addFilter={addFilter}
+        timeRange={timeRange}
+        hideAlertRuleColumn={hideAlertRuleColumn}
+      />
+    </Stack>
   );
 };
 
@@ -121,12 +137,21 @@ interface HistoryLogEventsProps {
   logRecords: LogRecord[];
   addFilter: (key: string, value: string, type: FilterType) => void;
   timeRange: TimeRange;
+  hideAlertRuleColumn?: boolean;
 }
-function HistoryLogEvents({ logRecords, addFilter, timeRange }: HistoryLogEventsProps) {
+function HistoryLogEvents({ logRecords, addFilter, timeRange, hideAlertRuleColumn }: HistoryLogEventsProps) {
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, PAGE_SIZE);
+  const styles = useStyles2(getStyles);
+
   return (
     <Stack direction="column" gap={0}>
-      <ListHeader />
+      <div className={styles.headerContainer}>
+        <ListHeader hideAlertRuleColumn={hideAlertRuleColumn} />
+
+        <div className={styles.triageButtonContainer}>
+          <AITriageButtonComponent logRecords={logRecords} timeRange={timeRange} />
+        </div>
+      </div>
       <ul>
         {pageItems.map((record) => {
           return (
@@ -135,6 +160,7 @@ function HistoryLogEvents({ logRecords, addFilter, timeRange }: HistoryLogEvents
               record={record}
               addFilter={addFilter}
               timeRange={timeRange}
+              hideAlertRuleColumn={hideAlertRuleColumn}
             />
           );
         })}
@@ -145,31 +171,31 @@ function HistoryLogEvents({ logRecords, addFilter, timeRange }: HistoryLogEvents
   );
 }
 
-function ListHeader() {
+function ListHeader({ hideAlertRuleColumn }: { hideAlertRuleColumn?: boolean }) {
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.headerWrapper}>
-      <div className={styles.mainHeader}>
-        <div className={styles.timeCol}>
-          <Text variant="body">
-            <Trans i18nKey="alerting.central-alert-history.details.header.timestamp">Timestamp</Trans>
-          </Text>
-        </div>
-        <div className={styles.transitionCol}>
-          <Text variant="body">
-            <Trans i18nKey="alerting.central-alert-history.details.header.state">State</Trans>
-          </Text>
-        </div>
+    <div className={styles.mainHeader}>
+      <div className={styles.timeCol}>
+        <Text variant="body">
+          <Trans i18nKey="alerting.central-alert-history.details.header.timestamp">Timestamp</Trans>
+        </Text>
+      </div>
+      <div className={styles.transitionCol}>
+        <Text variant="body">
+          <Trans i18nKey="alerting.central-alert-history.details.header.state">State</Trans>
+        </Text>
+      </div>
+      {!hideAlertRuleColumn && (
         <div className={styles.alertNameCol}>
           <Text variant="body">
             <Trans i18nKey="alerting.central-alert-history.details.header.alert-rule">Alert rule</Trans>
           </Text>
         </div>
-        <div className={styles.labelsCol}>
-          <Text variant="body">
-            <Trans i18nKey="alerting.central-alert-history.details.header.instance">Instance</Trans>
-          </Text>
-        </div>
+      )}
+      <div className={styles.labelsCol}>
+        <Text variant="body">
+          <Trans i18nKey="alerting.central-alert-history.details.header.instance">Instance</Trans>
+        </Text>
       </div>
     </div>
   );
@@ -179,12 +205,15 @@ interface EventRowProps {
   record: LogRecord;
   addFilter: (key: string, value: string, type: FilterType) => void;
   timeRange: TimeRange;
+  hideAlertRuleColumn?: boolean;
 }
-function EventRow({ record, addFilter, timeRange }: EventRowProps) {
+function EventRow({ record, addFilter, timeRange, hideAlertRuleColumn }: EventRowProps) {
   const styles = useStyles2(getStyles);
   const [isCollapsed, setIsCollapsed] = useState(true);
-  function onLabelClick(label: string, value: string) {
-    addFilter(label, value, 'label');
+  function onLabelClick([value, label]: [string | undefined, string | undefined]) {
+    if (label && value) {
+      addFilter(label, value, 'label');
+    }
   }
 
   return (
@@ -206,9 +235,11 @@ function EventRow({ record, addFilter, timeRange }: EventRowProps) {
           <div className={styles.transitionCol}>
             <EventTransition previous={record.line.previous} current={record.line.current} addFilter={addFilter} />
           </div>
-          <div className={styles.alertNameCol}>
-            {record.line.labels ? <AlertRuleName labels={record.line.labels} ruleUID={record.line.ruleUID} /> : null}
-          </div>
+          {!hideAlertRuleColumn && (
+            <div className={styles.alertNameCol}>
+              {record.line.labels ? <AlertRuleName labels={record.line.labels} ruleUID={record.line.ruleUID} /> : null}
+            </div>
+          )}
           <div className={styles.labelsCol}>
             <AlertLabels labels={record.line.labels ?? {}} size="xs" onClick={onLabelClick} />
           </div>
@@ -482,9 +513,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
         cursor: 'pointer',
       },
     }),
-    headerWrapper: css({
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-    }),
     mainHeader: css({
       display: 'flex',
       flexDirection: 'row',
@@ -494,6 +522,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
       padding: `${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0`,
       gap: theme.spacing(0.5),
     }),
+    headerContainer: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    triageButtonContainer: css({
+      padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
+    }),
   };
 };
 
@@ -501,7 +538,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
  * This is a scene object that displays a list of history events.
  */
 
-export class HistoryEventsListObject extends SceneObjectBase {
+interface HistoryEventsListObjectState extends SceneObjectState {
+  hideAlertRuleColumn?: boolean;
+}
+
+export class HistoryEventsListObject extends SceneObjectBase<HistoryEventsListObjectState> {
   public static Component = HistoryEventsListObjectRenderer;
 
   protected _variableDependency = new VariableDependencyConfig(this, {
@@ -513,7 +554,7 @@ export type FilterType = 'label' | 'stateFrom' | 'stateTo';
 
 export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
   // This make sure the component is re-rendered when the variables change
-  model.useState();
+  const { hideAlertRuleColumn } = model.useState();
 
   const { value: timeRange } = sceneGraph.getTimeRange(model).useState(); // get time range from scene graph
 
@@ -548,6 +589,7 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
         addFilter={addFilter}
         valueInStateToFilter={stateToFilterVariable.state.value}
         valueInStateFromFilter={stateFromFilterVariable.state.value}
+        hideAlertRuleColumn={hideAlertRuleColumn}
       />
     );
   } else {

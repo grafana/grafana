@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // run tests with cleanup
@@ -26,6 +27,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardFolderStore(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore dashboards.Store
@@ -41,7 +44,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 		setup()
 		var orgId int64 = 1
 		sqlStore := db.InitTestDB(t)
-		folderStore := ProvideDashboardFolderStore(sqlStore)
+		folderStore := newDashboardFolderStore(sqlStore)
 		folder := insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
 		dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, folder.UID, "prod")
 
@@ -66,7 +69,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 		setup()
 		var orgId int64 = 1
 		sqlStore := db.InitTestDB(t)
-		folderStore := ProvideDashboardFolderStore(sqlStore)
+		folderStore := newDashboardFolderStore(sqlStore)
 		folder := insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
 		dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, folder.UID, "prod")
 
@@ -113,15 +116,13 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 }
 
 func TestIntegrationGetDashFolderStore(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)
 	dashboardStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
 	require.NoError(t, err)
-	dashFolderStore := ProvideDashboardFolderStore(db)
+	dashFolderStore := newDashboardFolderStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 

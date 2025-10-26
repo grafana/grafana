@@ -1,0 +1,41 @@
+{
+  "template_files": {
+    "test": "{{ define \"my_templ\" }}TEST{{ end }}"
+  },
+  "alertmanager_config": {
+    "route": {
+      "receiver": "grafana-default-email",
+      "group_by": [
+        "grafana_folder",
+        "alertname"
+      ]
+    },
+    "receivers": [
+      {
+        "name": "grafana-default-email",
+        "grafana_managed_receiver_configs": [
+          {
+            "uid": "",
+            "name": "some other name",
+            "type": "email",
+            "disableResolveMessage": false,
+            "settings": {
+              "addresses": "<example@email.com>"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "extra_config": [
+    {
+      "identifier": "imported",
+      "merge_matchers": ["imported=\"true\""],
+      "template_files":
+      {
+        "extra_template": "{{ define \"my_message\" }}TEST{{ end }}"
+      },
+      "alertmanager_config": "{\"receivers\":[{\"webhook_configs\":[{\"url\":\"http://localhost\"}],\"name\":\"webhook\"}],\"route\":{\"receiver\":\"webhook\"}}"
+    }
+  ]
+}

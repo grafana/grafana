@@ -9,10 +9,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationAccessControlStore_SaveExternalServiceRole(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	type run struct {
 		cmd     accesscontrol.SaveExternalServiceRoleCommand
 		wantErr bool
@@ -153,6 +156,8 @@ func TestIntegrationAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 }
 
 func TestIntegrationAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	extID := "app1"
 	tests := []struct {
 		name    string
@@ -241,6 +246,98 @@ func TestIntegrationAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
 				require.Nil(t, storedRole)
 				return nil
 			})
+		})
+	}
+}
+
+func Test_permissionDiff(t *testing.T) {
+	tests := []struct {
+		name        string
+		previous    []accesscontrol.Permission
+		new         []accesscontrol.Permission
+		wantAdded   []accesscontrol.Permission
+		wantRemoved []accesscontrol.Permission
+	}{
+		{
+			name: "no changes",
+			previous: []accesscontrol.Permission{
+				{ID: 1, Action: "users:read", Scope: "users:id:1", Kind: "users", Attribute: "id", Identifier: "1"},
+				{ID: 2, Action: "users:write", Scope: "users:id:2", Kind: "users", Attribute: "id", Identifier: "2"},
+			},
+			new: []accesscontrol.Permission{
+				{Action: "users:read", Scope: "users:id:1", Kind: "users", Attribute: "id", Identifier: "1"},
+				{Action: "users:write", Scope: "users:id:2", Kind: "users", Attribute: "id", Identifier: "2"},
+			},
+			wantAdded:   []accesscontrol.Permission{},
+			wantRemoved: []accesscontrol.Permission{},
+		},
+		{
+			name: "add new permissions",
+			previous: []accesscontrol.Permission{
+				{ID: 1, Action: "users:read", Scope: "users:id:1", Kind: "users", Attribute: "id", Identifier: "1"},
+			},
+			new: []accesscontrol.Permission{
+				{Action: "users:read", Scope: "users:id:1", Kind: "users", Attribute: "id", Identifier: "1"},
+				{Action: "users:write", Scope: "users:id:2", Kind: "users", Attribute: "id", Identifier: "2"},
+			},
+			wantAdded: []accesscontrol.Permission{
+				{Action: "users:write", Scope: "users:id:2", Kind: "users", Attribute: "id", Identifier: "2"},
+			},
+			wantRemoved: []accesscontrol.Permission{},
+		},
+		{
+			name: "remove existing permissions",
+			previous: []accesscontrol.Permission{
+				{ID: 1, Action: "users:read", Scope: "users:id:1", Kind: "users", Attribute: "id", Identifier: "1"},
+				{ID: 2, Action: "users:write", Scope: "users:id:2", Kind: "users", Attribute: "id", Identifier: "2"},
+			},
+			new: []accesscontrol.Permission{
+				{Action: "users:read", Scope: "users:id:1", Kind: "users", Attribute: "id", Identifier: "1"},
+			},
+			wantAdded: []accesscontrol.Permission{},
+			wantRemoved: []accesscontrol.Permission{
+				{ID: 2, Action: "users:write", Scope: "users:id:2"},
+			},
+		},
+		{
+			name: "add and remove permissions",
+			previous: []accesscontrol.Permission{
+				{ID: 1, Action: "users:read", Scope: "users:id:1", Kind: "users", Attribute: "id", Identifier: "1"},
+				{ID: 2, Action: "users:write", Scope: "users:id:2", Kind: "users", Attribute: "id", Identifier: "2"},
+			},
+			new: []accesscontrol.Permission{
+				{Action: "users:read", Scope: "users:id:1", Kind: "users", Attribute: "id", Identifier: "1"},
+				{Action: "users:delete", Scope: "users:id:3", Kind: "users", Attribute: "id", Identifier: "3"},
+			},
+			wantAdded: []accesscontrol.Permission{
+				{Action: "users:delete", Scope: "users:id:3", Kind: "users", Attribute: "id", Identifier: "3"},
+			},
+			wantRemoved: []accesscontrol.Permission{
+				{ID: 2, Action: "users:write", Scope: "users:id:2"},
+			},
+		},
+		{
+			name: "recreate unsplit permissions",
+			previous: []accesscontrol.Permission{
+				{ID: 1, Action: "users:read", Scope: "users:id:1"},
+			},
+			new: []accesscontrol.Permission{
+				{Action: "users:read", Scope: "users:id:1", Kind: "users", Attribute: "id", Identifier: "1"},
+			},
+			wantAdded: []accesscontrol.Permission{
+				{Action: "users:read", Scope: "users:id:1", Kind: "users", Attribute: "id", Identifier: "1"},
+			},
+			wantRemoved: []accesscontrol.Permission{
+				{ID: 1, Action: "users:read", Scope: "users:id:1"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotAdded, gotRemoved := permissionDiff(tt.previous, tt.new)
+			require.ElementsMatch(t, tt.wantAdded, gotAdded, "added permissions do not match")
+			require.ElementsMatch(t, tt.wantRemoved, gotRemoved, "removed permissions do not match")
 		})
 	}
 }

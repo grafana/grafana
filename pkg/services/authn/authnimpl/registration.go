@@ -48,32 +48,32 @@ func ProvideRegistration(
 	logger := log.New("authn.registration")
 
 	authnSvc.RegisterClient(clients.ProvideRender(renderService))
-	authnSvc.RegisterClient(clients.ProvideAPIKey(apikeyService))
+	authnSvc.RegisterClient(clients.ProvideAPIKey(apikeyService, tracer))
 
 	if cfg.LoginCookieName != "" {
-		authnSvc.RegisterClient(clients.ProvideSession(cfg, sessionService, authInfoService))
+		authnSvc.RegisterClient(clients.ProvideSession(cfg, sessionService, authInfoService, tracer))
 	}
 
 	var proxyClients []authn.ProxyClient
 	var passwordClients []authn.PasswordClient
 
 	// always register LDAP if LDAP is enabled in SSO settings
-	ssoSettingsLDAP := features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) && features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsLDAP)
-	if cfg.LDAPAuthEnabled || ssoSettingsLDAP {
-		ldap := clients.ProvideLDAP(cfg, ldapService, userService, authInfoService)
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if cfg.LDAPAuthEnabled || features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsLDAP) {
+		ldap := clients.ProvideLDAP(cfg, ldapService, userService, authInfoService, tracer)
 		proxyClients = append(proxyClients, ldap)
 		passwordClients = append(passwordClients, ldap)
 	}
 
 	if !cfg.DisableLogin {
-		grafana := clients.ProvideGrafana(cfg, userService)
+		grafana := clients.ProvideGrafana(cfg, userService, tracer)
 		proxyClients = append(proxyClients, grafana)
 		passwordClients = append(passwordClients, grafana)
 	}
 
 	// if we have password clients configure check if basic auth or form auth is enabled
 	if len(passwordClients) > 0 {
-		passwordClient := clients.ProvidePassword(loginAttempts, passwordClients...)
+		passwordClient := clients.ProvidePassword(loginAttempts, tracer, passwordClients...)
 		if cfg.BasicAuthEnabled {
 			authnSvc.RegisterClient(clients.ProvideBasic(passwordClient))
 		}
@@ -104,7 +104,7 @@ func ProvideRegistration(
 	}
 
 	if cfg.AuthProxy.Enabled && len(proxyClients) > 0 {
-		proxy, err := clients.ProvideProxy(cfg, cache, proxyClients...)
+		proxy, err := clients.ProvideProxy(cfg, cache, tracer, proxyClients...)
 		if err != nil {
 			logger.Error("Failed to configure auth proxy", "err", err)
 		} else {
@@ -114,18 +114,19 @@ func ProvideRegistration(
 
 	if cfg.JWTAuth.Enabled {
 		orgRoleMapper := connectors.ProvideOrgRoleMapper(cfg, orgService)
-		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, orgRoleMapper, cfg))
+		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, orgRoleMapper, cfg, tracer))
 	}
 
 	if cfg.ExtJWTAuth.Enabled {
-		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg))
+		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg, tracer))
 	}
 
 	for name := range socialService.GetOAuthProviders() {
 		clientName := authn.ClientWithPrefix(name)
-		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService, features))
+		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService, features, tracer))
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		authnSvc.RegisterClient(clients.ProvideProvisioning())
 	}
@@ -141,11 +142,13 @@ func ProvideRegistration(
 	authnSvc.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService, tracer, features).SyncOauthTokenHook, 60)
 	authnSvc.RegisterPostAuthHook(userSync.FetchSyncedUserHook, 100)
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagEnableSCIM) {
 		authnSvc.RegisterPostAuthHook(userSync.ValidateUserProvisioningHook, 30)
 	}
 
 	rbacSync := sync.ProvideRBACSync(accessControlService, tracer, permRegistry)
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
 		authnSvc.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
 		authnSvc.RegisterPreLogoutHook(gcomsso.ProvideGComSSOService(cfg).LogoutHook, 50)
@@ -153,6 +156,7 @@ func ProvideRegistration(
 
 	authnSvc.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
 	authnSvc.RegisterPostLoginHook(orgSync.SetDefaultOrgHook, 140)
+	authnSvc.RegisterPostLoginHook(userSync.CatalogLoginHook, 145)
 	authnSvc.RegisterPostLoginHook(rbacSync.ClearUserPermissionCacheHook, 170)
 
 	nsSync := sync.ProvideNamespaceSync(cfg)

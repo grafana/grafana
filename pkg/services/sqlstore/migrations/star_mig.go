@@ -37,6 +37,9 @@ func addStarMigrations(mg *Migrator) {
 			Cols: []string{"user_id", "dashboard_uid", "org_id"},
 			Type: UniqueIndex,
 		}))
+
+	// NOTE: in Grafana 12.2 the dashboard_id is no longer used
+	// However, we will keep the column + index so that rollback is still possible
 }
 
 // relies on the dashboard table existing & must be run after the dashboard migrations are run

@@ -11,7 +11,7 @@ import { Button, Cascader, CascaderOption, useStyles2, Stack } from '@grafana/ui
 import { OperationEditor } from './OperationEditor';
 import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from './types';
 
-export interface Props<T extends QueryWithOperations> {
+interface Props<T extends QueryWithOperations> {
   query: T;
   datasource: DataSourceApi;
   onChange: (query: T) => void;

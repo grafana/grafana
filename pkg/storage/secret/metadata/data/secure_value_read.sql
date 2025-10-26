@@ -8,17 +8,23 @@ SELECT
   {{ .Ident "created_by" }},
   {{ .Ident "updated" }},
   {{ .Ident "updated_by" }},
-  {{ .Ident "status_phase" }},
-  {{ .Ident "status_message" }},
   {{ .Ident "description" }},
   {{ .Ident "keeper" }},
   {{ .Ident "decrypters" }},
   {{ .Ident "ref" }},
-  {{ .Ident "external_id" }}
+  {{ .Ident "external_id" }},
+  {{ .Ident "active" }},
+  {{ .Ident "version" }},
+  {{ .Ident "owner_reference_api_group" }},
+  {{ .Ident "owner_reference_api_version" }},
+  {{ .Ident "owner_reference_kind" }},
+  {{ .Ident "owner_reference_name" }}
 FROM
   {{ .Ident "secret_secure_value" }}
-WHERE {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
-  {{ .Ident "name" }} = {{ .Arg .Name }}
+WHERE 
+  {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
+  {{ .Ident "name" }} = {{ .Arg .Name }} AND
+  {{ .Ident "active" }} = true
 {{ if .IsForUpdate }}
 {{ .SelectFor "UPDATE" }}
 {{ end }}

@@ -4,7 +4,6 @@ import { useCallback } from 'react';
 import {
   DataTransformerID,
   ReducerID,
-  SelectableValue,
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
@@ -13,10 +12,12 @@ import {
 } from '@grafana/data';
 import { GroupByFieldOptions, GroupByOperationID, GroupByTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { useTheme2, Select, StatsPicker, InlineField, Stack, Alert } from '@grafana/ui';
+import { useTheme2, StatsPicker, InlineField, Stack, Alert, Combobox, ComboboxOption } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
-import { useAllFieldNamesFromDataFrames } from '../utils';
+import darkImage from '../images/dark/groupBy.svg';
+import lightImage from '../images/light/groupBy.svg';
+import { DataFieldsErrorWrapper } from '../utils';
 
 interface FieldProps {
   fieldName: string;
@@ -24,13 +25,11 @@ interface FieldProps {
   onConfigChange: (config: GroupByFieldOptions) => void;
 }
 
-export const GroupByTransformerEditor = ({
-  input,
-  options,
-  onChange,
-}: TransformerUIProps<GroupByTransformerOptions>) => {
-  const fieldNames = useAllFieldNamesFromDataFrames(input, true);
+interface GroupByTransformerEditorProps extends TransformerUIProps<GroupByTransformerOptions> {
+  fieldNames: string[];
+}
 
+export const GroupByTransformerEditorBase = ({ options, onChange, fieldNames }: GroupByTransformerEditorProps) => {
   const onConfigChange = useCallback(
     (fieldName: string) => (config: GroupByFieldOptions) => {
       onChange({
@@ -86,31 +85,41 @@ export const GroupByTransformerEditor = ({
   );
 };
 
-const options = [
-  { label: 'Group by', value: GroupByOperationID.groupBy },
-  { label: 'Calculate', value: GroupByOperationID.aggregate },
-];
+const GroupByTransformerEditor = DataFieldsErrorWrapper(GroupByTransformerEditorBase, {
+  withBaseFieldNames: true,
+});
 
-export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
+const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
   const theme = useTheme2();
 
   const styles = getStyles(theme);
 
   const onChange = useCallback(
-    (value: SelectableValue<GroupByOperationID | null>) => {
+    (option: ComboboxOption<GroupByOperationID> | null) => {
       onConfigChange({
         aggregations: config?.aggregations ?? [],
-        operation: value?.value ?? null,
+        operation: option?.value ?? null,
       });
     },
     [config, onConfigChange]
   );
 
+  const options = [
+    {
+      label: t('transformers.group-by-field-configuration.options.label.group-by', 'Group by'),
+      value: GroupByOperationID.groupBy,
+    },
+    {
+      label: t('transformers.group-by-field-configuration.options.label.calculate', 'Calculate'),
+      value: GroupByOperationID.aggregate,
+    },
+  ];
+
   return (
     <InlineField className={styles.label} label={fieldName} grow shrink>
       <Stack gap={0.5} direction="row">
         <div className={styles.operation}>
-          <Select
+          <Combobox
             options={options}
             value={config?.operation}
             placeholder={t('transformers.group-by-field-configuration.placeholder-ignored', 'Ignored')}
@@ -119,15 +128,18 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
           />
         </div>
 
-        {config?.operation === GroupByOperationID.aggregate && (
+        {config?.operation && (
           <StatsPicker
             className={styles.aggregations}
             placeholder={t('transformers.group-by-field-configuration.placeholder-select-stats', 'Select stats')}
             allowMultiple
             stats={config.aggregations}
-            onChange={(stats) => {
-              onConfigChange({ ...config, aggregations: stats as ReducerID[] });
+            onChange={(stats: string[]) => {
+              onConfigChange({ ...config, aggregations: stats.filter((stat): stat is ReducerID => stat in ReducerID) });
             }}
+            filterOptions={(option) =>
+              config?.operation === GroupByOperationID.groupBy ? option.id === ReducerID.count : true
+            }
           />
         )}
       </Stack>
@@ -153,16 +165,21 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const groupByTransformRegistryItem: TransformerRegistryItem<GroupByTransformerOptions> = {
+export const getGroupByTransformRegistryItem: () => TransformerRegistryItem<GroupByTransformerOptions> = () => ({
   id: DataTransformerID.groupBy,
   editor: GroupByTransformerEditor,
   transformation: standardTransformers.groupByTransformer,
-  name: standardTransformers.groupByTransformer.name,
-  description: standardTransformers.groupByTransformer.description,
+  name: t('transformers.group-by-transformer-editor.name.group-by', 'Group by'),
+  description: t(
+    'transformers.group-by-transformer-editor.description.group-series-by-field-calculate-stats',
+    'Group data by a field value and create aggregate data.'
+  ),
   categories: new Set([
     TransformerCategory.Combine,
     TransformerCategory.CalculateNewFields,
     TransformerCategory.Reformat,
   ]),
   help: getTransformationContent(DataTransformerID.groupBy).helperDocs,
-};
+  imageDark: darkImage,
+  imageLight: lightImage,
+});

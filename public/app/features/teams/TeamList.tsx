@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
@@ -24,7 +23,9 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Role, StoreState, TeamWithRoles } from 'app/types';
+import { Role, AccessControlAction } from 'app/types/accessControl';
+import { StoreState } from 'app/types/store';
+import { TeamWithRoles } from 'app/types/teams';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
 import { EnterpriseAuthFeaturesCard } from '../admin/EnterpriseAuthFeaturesCard';
@@ -48,7 +49,7 @@ const skeletonData: TeamWithRoles[] = new Array(3).fill(null).map((_, index) => 
   isProvisioned: false,
 }));
 
-export const TeamList = ({
+const TeamList = ({
   teams,
   query,
   noTeams,
@@ -194,9 +195,7 @@ export const TeamList = ({
           }
 
           const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
-          const canDelete =
-            contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original) &&
-            !original.isProvisioned;
+          const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
           return (
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
@@ -328,7 +327,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 export default connector(TeamList);
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   blockSkeleton: css({
     lineHeight: 1,
     // needed for things to align properly in the table

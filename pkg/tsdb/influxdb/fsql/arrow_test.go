@@ -77,7 +77,11 @@ func TestNewQueryDataResponse(t *testing.T) {
 		arr = append(arr, tarr)
 	}
 
+	//TODO: fix deprecation warning
+	//nolint:staticcheck
 	record := array.NewRecord(schema, arr, -1)
+	//TODO: fix deprecation warning
+	//nolint:staticcheck
 	records := []arrow.Record{record}
 	reader, err := array.NewRecordReader(schema, records)
 	assert.NoError(t, err)
@@ -202,7 +206,11 @@ func TestNewQueryDataResponse_Error(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
+	//TODO: fix deprecation warning
+	//nolint:staticcheck
 	record := array.NewRecord(schema, []arrow.Array{i64s, f64s}, -1)
+	//TODO: fix deprecation warning
+	//nolint:staticcheck
 	records := []arrow.Record{record}
 	reader, err := array.NewRecordReader(schema, records)
 	assert.NoError(t, err)
@@ -247,7 +255,11 @@ func TestNewQueryDataResponse_WideTable(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
+	//TODO: fix deprecation warning
+	//nolint:staticcheck
 	record := array.NewRecord(schema, []arrow.Array{times, strs, i64s}, -1)
+	//TODO: fix deprecation warning
+	//nolint:staticcheck
 	records := []arrow.Record{record}
 	reader, err := array.NewRecordReader(schema, records)
 	assert.NoError(t, err)
@@ -469,6 +481,43 @@ func TestCopyData_Float64(t *testing.T) {
 	assert.Equal(t, float64(3.3), *field.CopyAt(2).(*float64))
 }
 
+func TestCopyData_StringView(t *testing.T) {
+	// Non-nullable StringView
+	field := data.NewField("field", nil, []string{})
+	builder := array.NewStringViewBuilder(memory.DefaultAllocator)
+	builder.Append("apple")
+	builder.Append("banana")
+	builder.Append("cherry")
+	arr := builder.NewArray()
+	defer arr.Release()
+
+	svArr := array.NewStringViewData(arr.Data())
+	defer svArr.Release()
+
+	err := copyData(field, svArr)
+	assert.NoError(t, err)
+	assert.Equal(t, "apple", field.CopyAt(0))
+	assert.Equal(t, "banana", field.CopyAt(1))
+	assert.Equal(t, "cherry", field.CopyAt(2))
+
+	// Nullable StringView
+	field = data.NewField("field", nil, []*string{})
+	builder = array.NewStringViewBuilder(memory.DefaultAllocator)
+	builder.Append("dog")
+	builder.AppendNull()
+	builder.Append("cat")
+	arr2 := builder.NewArray()
+	defer arr2.Release()
+	svArr2 := array.NewStringViewData(arr2.Data())
+	defer svArr2.Release()
+
+	err = copyData(field, svArr2)
+	assert.NoError(t, err)
+	assert.Equal(t, "dog", *(field.CopyAt(0).(*string)))
+	assert.Nil(t, field.CopyAt(1))
+	assert.Equal(t, "cat", *(field.CopyAt(2).(*string)))
+}
+
 func TestCustomMetadata(t *testing.T) {
 	schema := arrow.NewSchema([]arrow.Field{
 		{
@@ -485,7 +534,11 @@ func TestCustomMetadata(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
+	//TODO: fix deprecation warning
+	//nolint:staticcheck
 	record := array.NewRecord(schema, []arrow.Array{i64s}, -1)
+	//TODO: fix deprecation warning
+	//nolint:staticcheck
 	records := []arrow.Record{record}
 	reader, err := array.NewRecordReader(schema, records)
 	assert.NoError(t, err)

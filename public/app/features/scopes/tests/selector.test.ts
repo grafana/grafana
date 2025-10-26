@@ -21,6 +21,7 @@ import {
   expectRecentScopeNotPresent,
   expectRecentScopeNotPresentInDocument,
   expectRecentScopesSection,
+  expectResultApplicationsGrafanaSelected,
   expectScopesSelectorValue,
 } from './utils/assertions';
 import { getDatasource, getInstanceSettings, getMock, mocksScopes } from './utils/mocks';
@@ -44,6 +45,7 @@ describe('Selector', () => {
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
+    config.featureToggles.useScopeSingleNodeEndpoint = true;
   });
 
   beforeEach(async () => {
@@ -85,6 +87,29 @@ describe('Selector', () => {
     expect(dashboardReloadSpy).not.toHaveBeenCalled();
   });
 
+  it('Should initializae values from the URL', async () => {
+    const mockLocation = {
+      pathname: '/dashboard',
+      search: '?scopes=grafana&scope_parent=applications',
+      hash: '',
+      key: 'test',
+      state: null,
+    };
+
+    jest.spyOn(locationService, 'getLocation').mockReturnValue(mockLocation);
+    jest.spyOn(locationService, 'getSearch').mockReturnValue(new URLSearchParams(mockLocation.search));
+
+    await resetScenes([fetchSelectedScopesSpy, dashboardReloadSpy]);
+    await renderDashboard();
+    // Lowercase because we don't have any backend that returns the correct case, then it falls back to the value in the URL
+    expectScopesSelectorValue('grafana');
+    await openSelector();
+    expectResultApplicationsGrafanaSelected();
+
+    jest.spyOn(locationService, 'getLocation').mockRestore();
+    jest.spyOn(locationService, 'getSearch').mockRestore();
+  });
+
   describe('Recent scopes', () => {
     it('Recent scopes should appear after selecting a second set of scopes', async () => {
       await openSelector();
@@ -102,20 +127,23 @@ describe('Selector', () => {
       await openSelector();
       expectRecentScopesSection();
       await expandRecentScopes();
-      expectRecentScope('Grafana');
-      expectRecentScope('Grafana, Mimir');
-      await selectRecentScope('Grafana');
+      expectRecentScope('Grafana Applications');
+      expectRecentScope('Grafana, Mimir Applications');
+      await selectRecentScope('Grafana Applications');
 
       expectScopesSelectorValue('Grafana');
 
       await openSelector();
-      await expandRecentScopes();
-      expectRecentScope('Grafana, Mimir');
-      expectRecentScopeNotPresent('Grafana');
-      expectRecentScopeNotPresent('Mimir');
-      await selectRecentScope('Grafana, Mimir');
+      // Close to root node so we can see the recent scopes
+      await expandResultApplications();
 
-      expectScopesSelectorValue('Grafana, Mimir');
+      await expandRecentScopes();
+      expectRecentScope('Grafana, Mimir Applications');
+      expectRecentScopeNotPresent('Grafana Applications');
+      expectRecentScopeNotPresent('Mimir Applications');
+      await selectRecentScope('Grafana, Mimir Applications');
+
+      expectScopesSelectorValue('Grafana + Mimir');
     });
 
     it('recent scopes should not be visible when the first scope is selected', async () => {
@@ -125,6 +153,8 @@ describe('Selector', () => {
       await applyScopes();
 
       await openSelector();
+      // Close to root node so we can try to see the recent scopes
+      await expandResultApplications();
       expectRecentScopeNotPresentInDocument();
     });
 
@@ -148,7 +178,7 @@ describe('Selector', () => {
       await openSelector();
       expectRecentScopesSection();
       await expandRecentScopes();
-      expectRecentScope('Grafana, Mimir');
+      expectRecentScope('Grafana, Mimir Applications');
     });
 
     it('should update recent scopes when selecting a different combination', async () => {
@@ -169,8 +199,8 @@ describe('Selector', () => {
       // Check recent scopes are updated
       await openSelector();
       await expandRecentScopes();
-      expectRecentScope('Grafana, Mimir');
-      expectRecentScope('Grafana');
+      expectRecentScope('Grafana, Mimir Applications');
+      expectRecentScope('Grafana Applications');
     });
   });
 });

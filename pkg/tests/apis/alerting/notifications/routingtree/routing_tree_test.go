@@ -16,10 +16,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1/fakes"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1/fakes"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -47,9 +48,7 @@ func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 }
 
 func TestIntegrationNotAllowedMethods(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -71,9 +70,7 @@ func TestIntegrationNotAllowedMethods(t *testing.T) {
 }
 
 func TestIntegrationAccessControl(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -282,9 +279,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 }
 
 func TestIntegrationProvisioning(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -336,9 +331,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 }
 
 func TestIntegrationOptimisticConcurrency(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -379,9 +372,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 }
 
 func TestIntegrationDataConsistency(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -662,4 +653,65 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		}
 		assert.ElementsMatch(t, expected, tree.Spec.Routes[0].Matchers)
 	})
+}
+
+func TestIntegrationExtraConfigsConflicts(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{"alertingImportAlertmanagerAPI"},
+	})
+
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	client := common.NewRoutingTreeClient(t, helper.Org1.Admin)
+
+	// Now upload a new extra config
+	testAlertmanagerConfigYAML := `
+route:
+  receiver: default
+
+receivers:
+- name: default
+  webhook_configs:
+  - url: 'http://localhost/webhook'
+`
+
+	headers := map[string]string{
+		"Content-Type":                         "application/yaml",
+		"X-Grafana-Alerting-Config-Identifier": "external-system",
+		"X-Grafana-Alerting-Merge-Matchers":    "imported=true",
+	}
+
+	// Post the configuration to Grafana
+	response := legacyCli.ConvertPrometheusPostAlertmanagerConfig(t, definitions.AlertmanagerUserConfig{
+		AlertmanagerConfig: testAlertmanagerConfigYAML,
+	}, headers)
+	require.Equal(t, "success", response.Status)
+
+	current, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+	require.NoError(t, err)
+	updated := current.Copy().(*v0alpha1.RoutingTree)
+	updated.Spec.Routes = append(updated.Spec.Routes, v0alpha1.RoutingTreeRoute{
+		Matchers: []v0alpha1.RoutingTreeMatcher{
+			{
+				Label: "imported",
+				Type:  v0alpha1.RoutingTreeMatcherTypeEqual,
+				Value: "true",
+			},
+		},
+	})
+
+	_, err = client.Update(ctx, updated, v1.UpdateOptions{})
+	require.Error(t, err)
+	require.Truef(t, errors.IsBadRequest(err), "Should get BadRequest error but got: %s", err)
+
+	// Now delete extra config
+	legacyCli.ConvertPrometheusDeleteAlertmanagerConfig(t, headers)
+
+	// and try again
+	_, err = client.Update(ctx, updated, v1.UpdateOptions{})
+	require.NoError(t, err)
 }

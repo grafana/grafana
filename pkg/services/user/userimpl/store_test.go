@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -32,12 +34,12 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationUserDataAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ss, cfg := db.InitTestDBWithCfg(t)
-	quotaService := quotaimpl.ProvideService(ss, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), ss, cfgProvider)
 	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
@@ -396,7 +398,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			_, err = userStore.GetSignedInUser(context.Background(),
 				&user.GetSignedInUserQuery{
 					OrgID:  users[1].OrgID,
-					UserID: userID}) // zero
+					UserID: userID,
+				}) // zero
 			require.Error(t, err)
 		}
 	})
@@ -739,6 +742,47 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.True(t, usr.IsDisabled)
 	})
 
+	t.Run("Update IsProvisioned", func(t *testing.T) {
+		// Create a user with IsProvisioned set to false (default)
+		id, err := userStore.Insert(context.Background(), &user.User{
+			Name:    "provisioned_user",
+			Email:   "provisioned@test.com",
+			Login:   "provisioned_user",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		// Verify initial state
+		usr, err := userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
+		require.False(t, usr.IsProvisioned)
+
+		// Update user to set IsProvisioned to true
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID:        id,
+			IsProvisioned: boolPtr(true),
+		})
+		require.NoError(t, err)
+
+		// Verify IsProvisioned is now true
+		usr, err = userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
+		require.True(t, usr.IsProvisioned)
+
+		// Update user to set IsProvisioned to false
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID:        id,
+			IsProvisioned: boolPtr(false),
+		})
+		require.NoError(t, err)
+
+		// Verify IsProvisioned is now false
+		usr, err = userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
+		require.False(t, usr.IsProvisioned)
+	})
+
 	t.Run("Testing DB - multiple users", func(t *testing.T) {
 		ss = db.InitTestDB(t)
 
@@ -953,9 +997,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 }
 
 func TestIntegrationUserUpdate(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, cfg)
@@ -1022,9 +1064,13 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 }
 
 func TestIntegrationMetricsUsage(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, setting.NewCfg())
-	quotaService := quotaimpl.ProvideService(ss, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), ss, cfgProvider)
 	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
 
@@ -1083,7 +1129,9 @@ func assertEqualUser(t *testing.T, expected, got *user.User) {
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {
 	t.Helper()
 
-	quotaService := quotaimpl.ProvideService(store, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), store, cfgProvider)
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := ProvideService(

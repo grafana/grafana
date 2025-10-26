@@ -3,7 +3,9 @@ package legacy
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"iter"
 	"net/http"
 	"time"
 
@@ -117,8 +119,13 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 				}
 
 				// dashboard version is the RV in legacy storage
+				// and deprecatedInternalID must be set here (as SaveDashboard does below for non-provisioned dashboards)
 				if after != nil {
 					rv = int64(after.Version)
+					access := GetLegacyAccess(ctx)
+					if access != nil {
+						access.DashboardID = after.ID
+					}
 				}
 			} else {
 				failOnExisting := event.Type == resourcepb.WatchEvent_ADDED
@@ -232,6 +239,18 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resourcepb.R
 // ListHistory implements StorageBackend.
 func (a *dashboardSqlAccess) ListHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	return a.ListIterator(ctx, req, cb)
+}
+
+func (a *dashboardSqlAccess) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+	return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+		yield(nil, errors.New("not implemented"))
+	}
+}
+
+func (a *dashboardSqlAccess) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
+	return func(yield func(resource.ResourceLastImportTime, error) bool) {
+		yield(resource.ResourceLastImportTime{}, errors.New("not implemented"))
+	}
 }
 
 // List implements StorageBackend.

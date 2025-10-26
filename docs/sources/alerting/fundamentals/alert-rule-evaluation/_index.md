@@ -81,13 +81,17 @@ Alert instances are routed for [notifications](ref:notifications) in two scenari
 
 ## Evaluation group
 
-Every alert rule and recording rule is assigned to an evaluation group.
+{{< shared id="evaluation-group-basics" >}}
 
-Each evaluation group contains an **evaluation interval** that determines how frequently the rule is checked. For instance, the evaluation may occur every `10s`, `30s`, `1m`, `10m`, etc.
+Every alert rule and recording rule is assigned to an evaluation group. Each evaluation group contains an **evaluation interval** that determines how frequently the rule is checked. For instance, the evaluation may occur every `10s`, `30s`, `1m`, `10m`, etc.
+
+{{< /shared >}}
 
 Rules can be evaluated concurrently or sequentially. For details, see [How rules are evaluated within a group](ref:evaluation-within-a-group).
 
 ## Pending period
+
+{{< shared id="pending-period-basics" >}}
 
 You can set a **Pending period** to prevent unnecessary notifications caused by temporary issues.
 
@@ -95,15 +99,21 @@ When the alert condition is met, the alert instance enters the **Pending** state
 
 This ensures the condition breach is stable before the alert transitions to the **Alerting** state and routed for notification.
 
+{{< /shared >}}
+
 - **Normal** -> **Pending** -> **Alerting**<sup>\*</sup>
 
 You can also set the **Pending period** to zero to skip the **Pending** state entirely and transition to **Alerting** immediately.
 
 ## Keep firing for
 
+{{< shared id="keep-firing-for" >}}
+
 You can set a **Keep firing for** period to avoid repeated firing-resolving-firing notifications caused by flapping conditions.
 
 When the alert condition is no longer met during the **Alerting** state, the alert instance enters the **Recovering** state.
+
+{{< /shared >}}
 
 - **Alerting** → **Recovering** → **Normal (Resolved)**<sup>\*</sup>
 - After the **Keep firing for** period elapses, the alert transitions to the **Normal** state and is marked as **Resolved**.

@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func createRuleWithNotificationSettings(t *testing.T, client apiClient, folder string, nfSettings *definitions.AlertRuleNotificationSettings) (definitions.PostableRuleGroupConfig, string) {
@@ -77,6 +78,8 @@ func createRuleWithNotificationSettings(t *testing.T, client apiClient, folder s
 }
 
 func TestIntegrationProvisioning(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -559,6 +562,8 @@ func TestIntegrationProvisioning(t *testing.T) {
 }
 
 func TestIntegrationProvisioningRules(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -655,7 +660,7 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 							Model:         json.RawMessage([]byte(`{"type":"math","expression":"2 + 3 \u003e 1"}`)),
 						},
 					},
-					MissingSeriesEvalsToResolve: util.Pointer(3),
+					MissingSeriesEvalsToResolve: util.Pointer[int64](3),
 				},
 			},
 		}
@@ -670,7 +675,7 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 			for _, rule := range result.Rules {
 				require.NotEmpty(t, rule.UID)
 				if rule.UID == "rule3" {
-					require.Equal(t, 3, *rule.MissingSeriesEvalsToResolve)
+					require.Equal(t, int64(3), *rule.MissingSeriesEvalsToResolve)
 				}
 			}
 		})
@@ -980,6 +985,8 @@ func createTestRequest(method string, url string, user string, body string) *htt
 }
 
 func TestIntegrationExportFileProvision(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -1018,6 +1025,15 @@ func TestIntegrationExportFileProvision(t *testing.T) {
 		data, status, _ := apiClient.GetAllRulesWithStatus(t)
 		require.Equal(t, http.StatusOK, status)
 		require.Greater(t, len(data), 0)
+
+		t.Run("provisioned alert rules should have proper data", func(t *testing.T) {
+			provisionedRule, status, _ := apiClient.GetProvisioningAlertRule(t, "my_id_1")
+			require.Equal(t, http.StatusOK, status)
+
+			require.Equal(t, model.Duration(time.Second*120), provisionedRule.KeepFiringFor)
+			require.NotNil(t, provisionedRule.MissingSeriesEvalsToResolve)
+			require.Equal(t, int64(3), *provisionedRule.MissingSeriesEvalsToResolve)
+		})
 
 		t.Run("exported alert rules should escape $ characters", func(t *testing.T) {
 			// call export endpoint
@@ -1068,6 +1084,8 @@ func TestIntegrationExportFileProvision(t *testing.T) {
 }
 
 func TestIntegrationExportFileProvisionMixed(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -1114,6 +1132,8 @@ func TestIntegrationExportFileProvisionMixed(t *testing.T) {
 }
 
 func TestIntegrationExportFileProvisionContactPoints(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -1167,5 +1187,130 @@ func TestIntegrationExportFileProvisionContactPoints(t *testing.T) {
 			require.Len(t, export.ContactPoints, 1)
 			require.YAMLEq(t, string(expectedYaml), exportRaw)
 		})
+	})
+}
+
+func TestIntegrationFullpath(t *testing.T) {
+	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "password",
+		Login:          "grafana",
+	})
+
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+
+	namespaceUID := "my-namespace"
+	namespaceTitle := namespaceUID
+	apiClient.CreateFolder(t, namespaceUID, namespaceTitle)
+
+	t.Run("for a rule under a root folder should set the right fullpath", func(t *testing.T) {
+		interval, err := model.ParseDuration("1m")
+		require.NoError(t, err)
+		doubleInterval := 2 * interval
+		rules := definitions.PostableRuleGroupConfig{
+			Name:     "group",
+			Interval: interval,
+			Rules: []definitions.PostableExtendedRuleNode{
+				{
+					ApiRuleNode: &definitions.ApiRuleNode{
+						For:         &doubleInterval,
+						Labels:      map[string]string{"label1": "val1"},
+						Annotations: map[string]string{"annotation1": "val1"},
+					},
+					GrafanaManagedAlert: &definitions.PostableGrafanaRule{
+						Title:     "rule",
+						Condition: "A",
+						Data: []definitions.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: definitions.RelativeTimeRange{
+									From: definitions.Duration(time.Duration(5) * time.Hour),
+									To:   definitions.Duration(time.Duration(3) * time.Hour),
+								},
+								DatasourceUID: expr.DatasourceUID,
+								Model: json.RawMessage(`{
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+			},
+		}
+
+		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, namespaceUID, &rules, false)
+		require.Equal(t, http.StatusAccepted, status)
+		require.Len(t, resp.Created, 1)
+		ruleUID := resp.Created[0]
+
+		status, response := apiClient.GetProvisioningAlertRuleExport(t, ruleUID, &definitions.ExportQueryParams{Format: "json"})
+		require.Equal(t, http.StatusOK, status)
+		var export definitions.AlertingFileExport
+		require.NoError(t, json.Unmarshal([]byte(response), &export))
+		require.Len(t, export.Groups, 1)
+		assert.Equal(t, "", export.Groups[0].Folder)
+	})
+
+	t.Run("for a rule under a subfolder should set the right fullpath", func(t *testing.T) {
+		otherNamespaceUID := "my-other-namespace"
+		otherNamespaceTitle := "my-other-namespace containing multiple //"
+		apiClient.CreateFolder(t, otherNamespaceUID, otherNamespaceTitle, namespaceUID)
+
+		interval, err := model.ParseDuration("1m")
+		require.NoError(t, err)
+		doubleInterval := 2 * interval
+		rules := definitions.PostableRuleGroupConfig{
+			Name:     "group-2",
+			Interval: interval,
+			Rules: []definitions.PostableExtendedRuleNode{
+				{
+					ApiRuleNode: &definitions.ApiRuleNode{
+						For:         &doubleInterval,
+						Labels:      map[string]string{"label1": "val1"},
+						Annotations: map[string]string{"annotation1": "val1"},
+					},
+					GrafanaManagedAlert: &definitions.PostableGrafanaRule{
+						Title:     "rule-2",
+						Condition: "A",
+						Data: []definitions.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: definitions.RelativeTimeRange{
+									From: definitions.Duration(time.Duration(5) * time.Hour),
+									To:   definitions.Duration(time.Duration(3) * time.Hour),
+								},
+								DatasourceUID: expr.DatasourceUID,
+								Model: json.RawMessage(`{
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+			},
+		}
+
+		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, otherNamespaceUID, &rules, false)
+		require.Equal(t, http.StatusAccepted, status)
+		require.Len(t, resp.Created, 1)
+		ruleUID := resp.Created[0]
+
+		status, response := apiClient.GetProvisioningAlertRuleExport(t, ruleUID, &definitions.ExportQueryParams{Format: "json"})
+		require.Equal(t, http.StatusOK, status)
+		var export definitions.AlertingFileExport
+		require.NoError(t, json.Unmarshal([]byte(response), &export))
+		require.Len(t, export.Groups, 1)
+		assert.Equal(t, "my-namespace/my-other-namespace containing multiple //", export.Groups[0].Folder)
 	})
 }

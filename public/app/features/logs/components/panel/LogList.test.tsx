@@ -1,17 +1,38 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, getDefaultTimeRange, LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import {
+  CoreApp,
+  FieldType,
+  getDefaultTimeRange,
+  LogLevel,
+  LogRowModel,
+  LogsDedupStrategy,
+  LogsSortOrder,
+  store,
+  toDataFrame,
+} from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
-import { createLogRow } from '../mocks/logRow';
+import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { createLogLine, createLogRow } from '../mocks/logRow';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME, OTEL_PROBE_FIELD } from '../otel/formats';
 
 import { LogList, Props } from './LogList';
+
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  useAssistant: jest.fn().mockReturnValue({
+    isAvailable: true,
+  }),
+}));
 
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
+    reportInteraction: jest.fn(),
     config: {
       ...jest.requireActual('@grafana/runtime').config,
       featureToggles: {
@@ -29,6 +50,14 @@ jest.mock('../../utils', () => ({
   enablePopoverMenu: jest.fn(),
 }));
 
+const originalFlagValue = config.featureToggles.newLogsPanel;
+beforeAll(() => {
+  config.featureToggles.newLogsPanel = true;
+});
+afterAll(() => {
+  config.featureToggles.newLogsPanel = originalFlagValue;
+});
+
 describe('LogList', () => {
   let logs: LogRowModel[], defaultProps: Props;
   beforeEach(() => {
@@ -41,6 +70,7 @@ describe('LogList', () => {
       containerElement: document.createElement('div'),
       dedupStrategy: LogsDedupStrategy.none,
       displayedFields: [],
+      dataFrames: [],
       enableLogDetails: true,
       logs,
       showControls: false,
@@ -75,6 +105,12 @@ describe('LogList', () => {
   });
 
   test('Supports showing log details', async () => {
+    jest.spyOn(store, 'get').mockImplementation((option: string) => {
+      if (option === 'storage-key.detailsMode') {
+        return 'sidebar';
+      }
+      return undefined;
+    });
     const onClickFilterLabel = jest.fn();
     const onClickFilterOutLabel = jest.fn();
     const onClickShowField = jest.fn();
@@ -86,6 +122,50 @@ describe('LogList', () => {
         onClickFilterLabel={onClickFilterLabel}
         onClickFilterOutLabel={onClickFilterOutLabel}
         onClickShowField={onClickShowField}
+        logOptionsStorageKey="storage-key"
+      />
+    );
+
+    await userEvent.click(screen.getByText('log message 1'));
+    await screen.findByText('Fields');
+
+    expect(screen.getByText('name_of_the_label')).toBeInTheDocument();
+    expect(screen.getByText('value of the label')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Filter for value in query A'));
+    expect(onClickFilterLabel).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByLabelText('Filter out value in query A'));
+    expect(onClickFilterOutLabel).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
+    expect(onClickShowField).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByLabelText('Close log details'));
+
+    expect(screen.queryByText('Fields')).not.toBeInTheDocument();
+    expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+  });
+
+  test('Supports showing inline log details', async () => {
+    jest.spyOn(store, 'get').mockImplementation((option: string) => {
+      if (option === 'storage-key.detailsMode') {
+        return 'inline';
+      }
+      return undefined;
+    });
+    const onClickFilterLabel = jest.fn();
+    const onClickFilterOutLabel = jest.fn();
+    const onClickShowField = jest.fn();
+
+    render(
+      <LogList
+        {...defaultProps}
+        enableLogDetails={true}
+        onClickFilterLabel={onClickFilterLabel}
+        onClickFilterOutLabel={onClickFilterOutLabel}
+        onClickShowField={onClickShowField}
+        logOptionsStorageKey="storage-key"
       />
     );
 
@@ -128,6 +208,87 @@ describe('LogList', () => {
     expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
 
     spy.mockRestore();
+  });
+
+  test('Shows controls with level filters based on the displayed logs', async () => {
+    logs = [createLogRow({ uid: '1', logLevel: LogLevel.info }), createLogRow({ uid: '2', logLevel: LogLevel.debug })];
+
+    render(<LogList {...defaultProps} showControls logs={logs} />);
+
+    expect(screen.getByText('info')).toBeInTheDocument();
+    expect(screen.getByText('debug')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Filter levels'));
+
+    expect(await screen.findByText('All levels')).toBeVisible();
+    expect(screen.getByText('Info')).toBeVisible();
+    expect(screen.getByText('Debug')).toBeVisible();
+
+    await userEvent.click(screen.getByText('Debug'));
+
+    expect(screen.queryByText('info')).not.toBeInTheDocument();
+    expect(screen.getByText('debug')).toBeInTheDocument();
+  });
+
+  describe('OTel log lines', () => {
+    const originalState = config.featureToggles.otelLogsFormatting;
+
+    test('Does not perform OTel-related actions when the flag is disabled', () => {
+      config.featureToggles.otelLogsFormatting = false;
+      const onLogOptionsChange = jest.fn();
+      const setDisplayedFields = jest.fn();
+
+      render(
+        <LogList {...defaultProps} onLogOptionsChange={onLogOptionsChange} setDisplayedFields={setDisplayedFields} />
+      );
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(onLogOptionsChange).not.toHaveBeenCalled();
+      expect(setDisplayedFields).not.toHaveBeenCalled();
+
+      config.featureToggles.otelLogsFormatting = originalState;
+    });
+
+    test('Reports the default displayed fields for non-OTel logs', () => {
+      config.featureToggles.otelLogsFormatting = true;
+      const onLogOptionsChange = jest.fn();
+      const setDisplayedFields = jest.fn();
+
+      render(
+        <LogList {...defaultProps} onLogOptionsChange={onLogOptionsChange} setDisplayedFields={setDisplayedFields} />
+      );
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(onLogOptionsChange).toHaveBeenCalledWith('defaultDisplayedFields', []);
+
+      // No fields to display, no call
+      expect(setDisplayedFields).not.toHaveBeenCalled();
+
+      config.featureToggles.otelLogsFormatting = originalState;
+    });
+
+    test('Reports the default OTel displayed fields', () => {
+      config.featureToggles.otelLogsFormatting = true;
+      const onLogOptionsChange = jest.fn();
+      const setDisplayedFields = jest.fn();
+
+      const logs = [createLogRow({ uid: '1', labels: { [OTEL_PROBE_FIELD]: '1' } })];
+
+      render(
+        <LogList
+          {...defaultProps}
+          logs={logs}
+          onLogOptionsChange={onLogOptionsChange}
+          setDisplayedFields={setDisplayedFields}
+        />
+      );
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(onLogOptionsChange).toHaveBeenCalledWith('defaultDisplayedFields', [
+        LOG_LINE_BODY_FIELD_NAME,
+        OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME,
+      ]);
+      expect(setDisplayedFields).toHaveBeenCalledWith([LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]);
+
+      config.featureToggles.otelLogsFormatting = originalState;
+    });
   });
 
   describe('Popover menu', () => {
@@ -286,6 +447,135 @@ describe('LogList', () => {
 
       expect(screen.getByText('log message 1')).toBeInTheDocument();
       expect(screen.getByText('some text')).toBeInTheDocument();
+    });
+
+    test('Allows to toggle between ms and ns precision timestamps', async () => {
+      logs = [createLogRow({ uid: '1', timeEpochMs: 1754472919504, timeEpochNs: '1754472919504133766' })];
+
+      render(<LogList {...defaultProps} showTime showControls logs={logs} />);
+
+      expect(screen.getByText('2025-08-06 03:35:19.504')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Log timestamps'));
+      await userEvent.click(screen.getByText('Show nanosecond timestamps'));
+
+      expect(screen.getByText('2025-08-06 03:35:19.504133766')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Log timestamps'));
+      await userEvent.click(screen.getByText('Hide timestamps'));
+
+      expect(screen.queryByText(/2025-08-06 03:35:19/)).not.toBeInTheDocument();
+    });
+  });
+  describe('Interactions', () => {
+    beforeEach(() => {
+      sessionStorage.clear();
+      jest.mocked(reportInteraction).mockClear();
+    });
+    test('Reports interactions ', async () => {
+      render(<LogList {...defaultProps} />);
+      await screen.findByText('log message 1');
+      expect(reportInteraction).toHaveBeenCalled();
+    });
+    test('Can disable interaction report ', async () => {
+      render(<LogList {...defaultProps} noInteractions={true} />);
+      await screen.findByText('log message 1');
+      expect(reportInteraction).not.toHaveBeenCalled();
+    });
+  });
+  describe('Field selector', () => {
+    const logs = [
+      createLogLine({ uid: '1', entry: 'log 1', labels: { service: 'frontend', level: 'info' } }),
+      createLogLine({ uid: '2', entry: 'log 2', labels: { service: 'backend', level: 'error' } }),
+    ];
+
+    const dataFrames = [
+      toDataFrame({
+        fields: [
+          { name: 'timestamp', type: FieldType.time, values: [1, 2] },
+          { name: 'body', type: FieldType.string, values: ['log 1', 'log 2'] },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [
+              { service: 'frontend', level: 'info' },
+              { service: 'backend', level: 'error' },
+            ],
+          },
+        ],
+      }),
+    ];
+
+    const extraProps = {
+      onClickShowField: jest.fn(),
+      onClickHideField: jest.fn(),
+      setDisplayedFields: jest.fn(),
+      logs,
+      dataFrames,
+    };
+
+    test('Does not display the field selector if not enabled', async () => {
+      render(<LogList {...defaultProps} {...extraProps} showFieldSelector={false} />);
+
+      expect(screen.queryByPlaceholderText('Search fields by name')).not.toBeInTheDocument();
+      expect(screen.queryByText('Fields')).not.toBeInTheDocument();
+    });
+
+    test('Displays the field selector if enabled', async () => {
+      render(<LogList {...defaultProps} {...extraProps} showFieldSelector />);
+
+      expect(screen.getByPlaceholderText('Search fields by name')).toBeInTheDocument();
+      expect(screen.getByText('Fields')).toBeInTheDocument();
+    });
+
+    test('Toggles displayed fields on and off', async () => {
+      const { rerender } = render(<LogList {...defaultProps} {...extraProps} showFieldSelector />);
+
+      await screen.findByText('log 1');
+      await screen.findByText('log 2');
+
+      await userEvent.click(screen.getByText('service'));
+
+      expect(extraProps.onClickShowField).toHaveBeenCalledWith('service');
+
+      rerender(<LogList {...defaultProps} displayedFields={['service']} {...extraProps} showFieldSelector />);
+
+      expect(screen.getByText('frontend')).toBeInTheDocument();
+      expect(screen.getByText('backend')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('service'));
+
+      expect(extraProps.onClickHideField).toHaveBeenCalledWith('service');
+    });
+
+    test('Applies OTel default displayed fields and suggested fields', () => {
+      const originalState = config.featureToggles.otelLogsFormatting;
+      config.featureToggles.otelLogsFormatting = true;
+
+      const logs = [
+        createLogRow({
+          uid: '1',
+          entry: 'log message 1',
+          labels: { service: 'frontend', level: 'info', [OTEL_PROBE_FIELD]: '1', scope_name: 'test' },
+        }),
+      ];
+
+      render(<LogList {...defaultProps} {...extraProps} showFieldSelector logs={logs} />);
+
+      // Log line message
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+
+      // Label
+      expect(screen.getByText('service')).toBeInTheDocument();
+
+      // Default displayed fields
+      expect(screen.getByText('Log line')).toBeInTheDocument();
+      expect(screen.getByText('OTel attributes')).toBeInTheDocument();
+
+      // Suggested field
+      expect(screen.getByText('scope_name')).toBeInTheDocument();
+
+      config.featureToggles.otelLogsFormatting = originalState;
     });
   });
 });

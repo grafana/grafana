@@ -147,6 +147,7 @@ func requestContextMiddleware() web.Middleware {
 				c.RequestNonce = ctx.RequestNonce
 				c.PerfmonTimer = ctx.PerfmonTimer
 				c.LookupTokenErr = ctx.LookupTokenErr
+				c.UseSessionStorageRedirect = ctx.UseSessionStorageRedirect
 			}
 
 			next.ServeHTTP(w, r)

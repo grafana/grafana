@@ -14,9 +14,9 @@ import {
 } from '@grafana/data';
 import { FetchResponse, reportInteraction, getBackendSrv, setBackendSrv, BackendSrv, config } from '@grafana/runtime';
 
+import { ElasticsearchDataQuery, Filters } from './dataquery.gen';
 import { ElasticDatasource } from './datasource';
 import { createElasticDatasource, createElasticQuery, mockResponseFrames } from './mocks';
-import { Filters, ElasticsearchQuery } from './types';
 
 const originalConsoleError = console.error;
 jest.mock('@grafana/runtime', () => ({
@@ -270,7 +270,7 @@ describe('ElasticDatasource', () => {
               refId: 'A',
               metrics: [{ type: 'logs', id: '1' }],
               query: 'foo="bar"',
-            } as ElasticsearchQuery,
+            } as ElasticsearchDataQuery,
           ],
           app: CoreApp.Explore,
         };
@@ -299,7 +299,7 @@ describe('ElasticDatasource', () => {
               refId: 'A',
               metrics: [{ type: 'raw_data', id: '1' }],
               query: 'foo="bar"',
-            } as ElasticsearchQuery,
+            } as ElasticsearchDataQuery,
           ],
           app: CoreApp.Explore,
         };
@@ -328,7 +328,7 @@ describe('ElasticDatasource', () => {
               refId: 'A',
               metrics: [{ type: 'raw_data', id: '1' }],
               query: 'foo="bar"',
-            } as ElasticsearchQuery,
+            } as ElasticsearchDataQuery,
           ],
           app: CoreApp.Dashboard,
         };
@@ -342,7 +342,7 @@ describe('ElasticDatasource', () => {
 
   describe('interpolateVariablesInQueries', () => {
     it('should correctly interpolate variables in query', () => {
-      const query: ElasticsearchQuery = {
+      const query: ElasticsearchDataQuery = {
         refId: 'A',
         bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
         metrics: [{ type: 'count', id: '1' }],
@@ -356,7 +356,7 @@ describe('ElasticDatasource', () => {
 
     it('should correctly add ad hoc filters when interpolating variables in query', () => {
       const adHocFilters = [{ key: 'bar', operator: '=', value: 'test' }];
-      const query: ElasticsearchQuery = {
+      const query: ElasticsearchDataQuery = {
         refId: 'A',
         bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
         metrics: [{ type: 'count', id: '1' }],
@@ -368,7 +368,7 @@ describe('ElasticDatasource', () => {
     });
 
     it('should correctly handle empty query strings in filters bucket aggregation', () => {
-      const query: ElasticsearchQuery = {
+      const query: ElasticsearchDataQuery = {
         refId: 'A',
         bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '', label: '' }] }, id: '1' }],
         metrics: [{ type: 'count', id: '1' }],
@@ -491,7 +491,7 @@ describe('ElasticDatasource', () => {
 
   describe('getDataProvider', () => {
     it('does not create a logs sample provider for non time series query', () => {
-      const options: DataQueryRequest<ElasticsearchQuery> = {
+      const options: DataQueryRequest<ElasticsearchDataQuery> = {
         ...dataQueryDefaults,
         targets: [
           {
@@ -505,7 +505,7 @@ describe('ElasticDatasource', () => {
     });
 
     it('does not create a logs volume provider for hidden queries', () => {
-      const options: DataQueryRequest<ElasticsearchQuery> = {
+      const options: DataQueryRequest<ElasticsearchDataQuery> = {
         ...dataQueryDefaults,
         targets: [
           {
@@ -520,7 +520,7 @@ describe('ElasticDatasource', () => {
     });
 
     it('does create a logs sample provider for time series query', () => {
-      const options: DataQueryRequest<ElasticsearchQuery> = {
+      const options: DataQueryRequest<ElasticsearchDataQuery> = {
         ...dataQueryDefaults,
         targets: [
           {
@@ -536,7 +536,7 @@ describe('ElasticDatasource', () => {
 
   describe('getLogsSampleDataProvider', () => {
     it("doesn't return a logs sample provider given a non time series query", () => {
-      const request: DataQueryRequest<ElasticsearchQuery> = {
+      const request: DataQueryRequest<ElasticsearchDataQuery> = {
         ...dataQueryDefaults,
         targets: [
           {
@@ -550,7 +550,7 @@ describe('ElasticDatasource', () => {
     });
 
     it('returns a logs sample provider given a time series query', () => {
-      const request: DataQueryRequest<ElasticsearchQuery> = {
+      const request: DataQueryRequest<ElasticsearchDataQuery> = {
         ...dataQueryDefaults,
         targets: [
           {
@@ -577,7 +577,7 @@ describe('ElasticDatasource', () => {
   });
 
   describe('modifyQuery', () => {
-    let query: ElasticsearchQuery;
+    let query: ElasticsearchDataQuery;
     beforeEach(() => {
       query = { query: '', refId: 'A' };
     });
@@ -603,7 +603,7 @@ describe('ElasticDatasource', () => {
       });
 
       describe('with non-empty query', () => {
-        let query: ElasticsearchQuery;
+        let query: ElasticsearchDataQuery;
         beforeEach(() => {
           query = { query: 'test:"value"', refId: 'A' };
         });
@@ -645,7 +645,7 @@ describe('ElasticDatasource', () => {
     });
 
     describe('with non-empty query', () => {
-      let query: ElasticsearchQuery;
+      let query: ElasticsearchDataQuery;
       beforeEach(() => {
         query = { query: 'test:"value"', refId: 'A' };
       });
@@ -665,7 +665,7 @@ describe('ElasticDatasource', () => {
 
     describe('toggleQueryFilter', () => {
       describe('with empty query', () => {
-        let query: ElasticsearchQuery;
+        let query: ElasticsearchDataQuery;
         beforeEach(() => {
           query = { query: '', refId: 'A' };
         });
@@ -698,7 +698,7 @@ describe('ElasticDatasource', () => {
       });
 
       describe('with non-empty query', () => {
-        let query: ElasticsearchQuery;
+        let query: ElasticsearchDataQuery;
         beforeEach(() => {
           query = { query: 'test:"value"', refId: 'A' };
         });
@@ -844,7 +844,7 @@ describe('ElasticDatasource', () => {
   });
 
   describe('targetContainsTemplate', () => {
-    let target: ElasticsearchQuery;
+    let target: ElasticsearchDataQuery;
     beforeEach(() => {
       target = {
         refId: 'test',

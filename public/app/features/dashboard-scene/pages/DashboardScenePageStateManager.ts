@@ -1,33 +1,36 @@
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { BASE_URL } from 'app/api/clients/provisioning/v0alpha1/baseAPI';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import {
+  AnnoKeyEmbedded,
   AnnoKeyFolder,
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
 } from 'app/features/apiserver/types';
-import { transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
+import { ensureV2Response, transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { isDashboardV2Resource, isDashboardV2Spec, isV2StoredVersion } from 'app/features/dashboard/api/utils';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
-import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
+import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ProvisioningPreview } from 'app/features/provisioning/types';
+import { dispatch } from 'app/store/store';
 import {
   DashboardDataDTO,
   DashboardDTO,
   DashboardRoutes,
   HomeDashboardRedirectDTO,
   isRedirectResponse,
-} from 'app/types';
+} from 'app/types/dashboard';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -36,7 +39,7 @@ import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSav
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
-import { updateNavModel } from './utils';
+import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
 
 export interface LoadError {
   status?: number;
@@ -176,26 +179,46 @@ abstract class DashboardScenePageStateManagerBase<T>
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref') ?? undefined; // commit hash or branch
 
-    const url = `${BASE_URL}/repositories/${repo}/files/${path}`;
-    return getBackendSrv()
-      .get(url, ref ? { ref } : undefined)
-      .then((v) => {
-        // Load the results from dryRun
-        const dryRun = v.resource.dryRun;
-        if (!dryRun) {
-          return Promise.reject('failed to read provisioned dashboard');
-        }
+    const loadWithRef = async (refParam: string | undefined) => {
+      const result = await dispatch(
+        provisioningAPIv0alpha1.endpoints.getRepositoryFilesWithPath.initiate({
+          name: repo,
+          path: path,
+          ref: refParam,
+        })
+      );
 
-        if (!dryRun.apiVersion.startsWith('dashboard.grafana.app')) {
-          return Promise.reject('unexpected resource type: ' + dryRun.apiVersion);
-        }
+      if (result && 'error' in result) {
+        throw result.error;
+      }
 
-        return this.processDashboardFromProvisioning(repo, path, dryRun, {
-          file: url,
-          ref: ref,
-          repo: repo,
-        });
+      const v: GetRepositoryFilesWithPathApiResponse = structuredClone(result.data);
+      // Load the results from dryRun
+      const dryRun = v.resource.dryRun;
+      if (!dryRun) {
+        return Promise.reject('failed to read provisioned dashboard');
+      }
+
+      if (!dryRun.apiVersion.startsWith('dashboard.grafana.app')) {
+        return Promise.reject('unexpected resource type: ' + dryRun.apiVersion);
+      }
+
+      return this.processDashboardFromProvisioning(repo, path, dryRun, {
+        file: v.path ?? '',
+        ref: refParam,
+        repo: repo,
       });
+    };
+
+    try {
+      return await loadWithRef(ref);
+    } catch (err) {
+      // If ref is not found (404), retry without ref to default to the main branch
+      if (ref && isFetchError(err) && err.status === 404) {
+        return await loadWithRef(undefined);
+      }
+      throw err;
+    }
   }
 
   private processDashboardFromProvisioning(
@@ -204,7 +227,7 @@ abstract class DashboardScenePageStateManagerBase<T>
     dryRun: any,
     provisioningPreview: ProvisioningPreview
   ) {
-    if (dryRun.apiVersion.split('/')[1] === 'v2alpha1') {
+    if (dryRun.apiVersion.split('/')[1] === 'v2beta1') {
       return {
         ...dryRun,
         kind: 'DashboardWithAccessInfo',
@@ -229,6 +252,12 @@ abstract class DashboardScenePageStateManagerBase<T>
     anno[AnnoKeyManagerIdentity] = repo;
     anno[AnnoKeySourcePath] = provisioningPreview.ref ? path + '#' + provisioningPreview.ref : path;
 
+    // Include version information to align with the current dashboard schema
+    const specWithVersion = {
+      ...dryRun.spec,
+      version: dryRun.metadata.generation || 0,
+    };
+
     return {
       meta: {
         canStar: false,
@@ -246,7 +275,7 @@ abstract class DashboardScenePageStateManagerBase<T>
         // lookup info
         provisioning: provisioningPreview,
       },
-      dashboard: dryRun.spec,
+      dashboard: specWithVersion,
     };
   }
 
@@ -267,7 +296,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       const queryController = sceneGraph.getQueryController(dashboard);
 
       trackDashboardSceneLoaded(dashboard, measure?.duration);
-      queryController?.startProfile('DashboardScene');
+      queryController?.startProfile('dashboard_view');
 
       if (options.route !== DashboardRoutes.New) {
         emitDashboardViewEvent({
@@ -362,6 +391,10 @@ abstract class DashboardScenePageStateManagerBase<T>
     this.cache[cacheKey] = scene;
   }
 
+  public removeSceneCache(cacheKey: string) {
+    delete this.cache[cacheKey];
+  }
+
   public clearSceneCache() {
     this.cache = {};
   }
@@ -371,12 +404,23 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
   transformResponseToScene(rsp: DashboardDTO | null, options: LoadDashboardOptions): DashboardScene | null {
     const fromCache = this.getSceneFromCache(options.uid);
 
-    if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+    if (
+      fromCache &&
+      fromCache.state.version === rsp?.dashboard.version &&
+      fromCache.state.meta.created === rsp?.meta.created
+    ) {
       return fromCache;
     }
 
     if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);
+
+      // Special handling for Template route - set up edit mode and dirty state
+      if (config.featureToggles.dashboardLibrary && options.route === DashboardRoutes.Template) {
+        scene.setInitialSaveModel(rsp.dashboard, rsp.meta);
+        scene.onEnterEditMode();
+        scene.setState({ isDirty: true });
+      }
 
       // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
       if (options.uid) {
@@ -393,11 +437,66 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const rsp = await dashboardLoaderSrv.loadSnapshot(slug);
 
     if (rsp?.dashboard) {
+      if (isDashboardV2Spec(rsp.dashboard)) {
+        throw new DashboardVersionError('v2beta1', 'Using legacy snapshot API to get a V2 dashboard');
+      }
+
       const scene = transformSaveModelToScene(rsp);
       return scene;
     }
 
     throw new Error('Snapshot not found');
+  }
+
+  private async loadTemplateDashboard(): Promise<DashboardDTO> {
+    // Extract template parameters from URL
+    const searchParams = new URLSearchParams(window.location.search);
+    const datasource = searchParams.get('datasource');
+    const pluginId = searchParams.get('pluginId');
+    const path = searchParams.get('path');
+
+    if (!datasource || !pluginId || !path) {
+      throw new Error('Missing required parameters for template dashboard');
+    }
+
+    const ds = getDataSourceSrv().getInstanceSettings(datasource);
+    if (!ds) {
+      throw new Error(`Datasource "${datasource}" not found. Please check your datasource configuration.`);
+    }
+
+    const data = {
+      pluginId,
+      path,
+      overwrite: true,
+      inputs: [
+        {
+          name: '*',
+          type: 'datasource',
+          pluginId,
+          value: datasource,
+        },
+      ],
+    };
+
+    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+
+    return {
+      dashboard: {
+        ...interpolatedDashboard,
+        uid: '',
+        version: 0,
+        id: null,
+      },
+      meta: {
+        canSave: true,
+        canEdit: true,
+        canStar: false,
+        canShare: false,
+        canDelete: false,
+        isNew: true,
+        folderUid: '',
+      },
+    };
   }
 
   public async fetchDashboard({
@@ -433,20 +532,39 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         case DashboardRoutes.New:
           rsp = await buildNewDashboardSaveModel(urlFolderUid);
           break;
+        case DashboardRoutes.Template:
+          rsp = await this.loadTemplateDashboard();
+          break;
         case DashboardRoutes.Provisioning:
           return this.loadProvisioningDashboard(slug || '', uid);
         case DashboardRoutes.Public: {
-          return await dashboardLoaderSrv.loadDashboard('public', '', uid);
+          const result = await dashboardLoaderSrv.loadDashboard('public', '', uid);
+          // public dashboards use legacy API but can return V2 dashboards
+          // in this case we need to throw a dashboard version error so that the call can be delegated
+          // to V2 state manager which will run fetchDashboard
+          if (isDashboardV2Spec(result.dashboard)) {
+            throw new DashboardVersionError('v2beta1', 'Using legacy public dashboard API to get a V2 dashboard');
+          }
+          return result;
         }
         default:
-          rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid);
+          // If reloadDashboardsOnParamsChange is on, we need to process query params for dashboard load
+          // Since the scene is not yet there, we need to process whatever came through URL
+          if (config.featureToggles.reloadDashboardsOnParamsChange) {
+            const queryParamsObject = processQueryParamsForDashboardLoad();
+            rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid, queryParamsObject);
+          } else {
+            rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid);
+          }
 
           if (route === DashboardRoutes.Embedded) {
             rsp.meta.isEmbedded = true;
           }
       }
 
-      if (rsp.meta.url && route === DashboardRoutes.Normal) {
+      // Fix outdated URLs (e.g., old slugs from title changes) but skip during playlist navigation
+      // Playlists manage their own URL generation and redirects would break the navigation flow
+      if (rsp.meta.url && route === DashboardRoutes.Normal && !playlistSrv.state.isPlaying) {
         const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
         const currentPath = locationService.getLocation().pathname;
 
@@ -561,9 +679,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
   public async loadSnapshotScene(slug: string): Promise<DashboardScene> {
     const rsp = await this.dashboardLoader.loadSnapshot(slug);
+    const v2Response = ensureV2Response(rsp);
 
-    if (rsp?.spec) {
-      const scene = transformSaveModelSchemaV2ToScene(rsp);
+    if (v2Response.spec) {
+      const scene = transformSaveModelSchemaV2ToScene(v2Response);
       return scene;
     }
 
@@ -624,11 +743,13 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid);
 
           if (route === DashboardRoutes.Embedded) {
-            throw new Error('Method not implemented.');
-            // rsp.meta.isEmbedded = true;
+            rsp.metadata.annotations = rsp.metadata.annotations || {};
+            rsp.metadata.annotations[AnnoKeyEmbedded] = 'embedded';
           }
       }
-      if (rsp.access.url && route === DashboardRoutes.Normal) {
+      // Fix outdated URLs (e.g., old slugs from title changes) but skip during playlist navigation
+      // Playlists manage their own URL generation and redirects would break the navigation flow
+      if (rsp.access.url && route === DashboardRoutes.Normal && !playlistSrv.state.isPlaying) {
         const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.access.url);
         const currentPath = locationService.getLocation().pathname;
         if (dashboardUrl !== currentPath) {
@@ -743,7 +864,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       return await operation(this.activeManager);
     } catch (error) {
       if (error instanceof DashboardVersionError) {
-        const manager = error.data.storedVersion === 'v2alpha1' ? this.v2Manager : this.v1Manager;
+        const manager = isV2StoredVersion(error.data.storedVersion) ? this.v2Manager : this.v1Manager;
         this.activeManager = manager;
         return await operation(manager);
       } else {
@@ -789,7 +910,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     try {
       return await this.v1Manager.loadSnapshotScene(slug);
     } catch (error) {
-      if (error instanceof DashboardVersionError && error.data.storedVersion === 'v2alpha1') {
+      if (error instanceof DashboardVersionError && isV2StoredVersion(error.data.storedVersion)) {
         return await this.v2Manager.loadSnapshotScene(slug);
       }
       throw new Error('Snapshot not found');
@@ -797,7 +918,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async loadSnapshot(slug: string) {
-    return this.withVersionHandling((manager) => manager.loadSnapshot(slug));
+    return this.withVersionHandling((manager) => manager.loadSnapshot.call(this, slug));
   }
 
   public clearDashboardCache() {
@@ -817,6 +938,11 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   public setSceneCache(cacheKey: string, scene: DashboardScene): void {
     this.activeManager.setSceneCache(cacheKey, scene);
+  }
+
+  public removeSceneCache(cacheKey: string): void {
+    this.v1Manager.removeSceneCache(cacheKey);
+    this.v2Manager.removeSceneCache(cacheKey);
   }
 
   public getCache() {

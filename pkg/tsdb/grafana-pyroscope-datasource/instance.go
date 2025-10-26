@@ -79,6 +79,9 @@ func (d *PyroscopeDatasource) CallResource(ctx context.Context, req *backend.Cal
 	if req.Path == "labelValues" {
 		return d.labelValues(ctx, req, sender)
 	}
+	if req.Path == "profileMetadata" {
+		return d.profileMetadata(ctx, req, sender)
+	}
 	return sender.Send(&backend.CallResourceResponse{
 		Status: 404,
 	})
@@ -90,7 +93,7 @@ func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.Cal
 	u, err := url.Parse(req.URL)
 	if err != nil {
 		ctxLogger.Error("Failed to parse URL", "error", err, "function", logEntrypoint())
-		return err
+		return backend.DownstreamErrorf("URL could not be parsed: %w", err)
 	}
 	query := u.Query()
 
@@ -99,14 +102,18 @@ func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.Cal
 		start, err = strconv.ParseInt(query.Get("start"), 10, 64)
 		if err != nil {
 			ctxLogger.Error("Failed to parse start as int", "error", err, "function", logEntrypoint())
-			return err
+			return backend.DownstreamError(fmt.Errorf("failed to parse start as int: %w", err))
 		}
 
 		end, err = strconv.ParseInt(query.Get("end"), 10, 64)
 		if err != nil {
 			ctxLogger.Error("Failed to parse end as int", "error", err, "function", logEntrypoint())
-			return err
+			return backend.DownstreamError(fmt.Errorf("failed to parse end as int: %w", err))
 		}
+	} else {
+		// Make sure to pass a valid time range to the client as v2 will not work without it.
+		start = time.Now().Add(-time.Hour).UnixMilli()
+		end = time.Now().Add(time.Hour).UnixMilli()
 	}
 
 	types, err := d.client.ProfileTypes(ctx, start, end)
@@ -133,7 +140,7 @@ func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallR
 	u, err := url.Parse(req.URL)
 	if err != nil {
 		ctxLogger.Error("Failed to parse URL", "error", err, "function", logEntrypoint())
-		return err
+		return backend.DownstreamError(fmt.Errorf("URL could not be parsed: %w", err))
 	}
 	query := u.Query()
 
@@ -143,13 +150,13 @@ func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallR
 	matchers, err := parser.ParseMetricSelector(labelSelector)
 	if err != nil {
 		ctxLogger.Error("Could not parse label selector", "error", err, "function", logEntrypoint())
-		return fmt.Errorf("failed parsing label selector: %v", err)
+		return backend.DownstreamError(fmt.Errorf("failed parsing label selector: %v", err))
 	}
 
 	labelNames, err := d.client.LabelNames(ctx, labelSelector, start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
-		return fmt.Errorf("error calling LabelNames: %v", err)
+		return backend.DownstreamError(fmt.Errorf("error calling LabelNames: %v", err))
 	}
 
 	finalLabels := make([]string, 0)
@@ -187,7 +194,7 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 	u, err := url.Parse(req.URL)
 	if err != nil {
 		ctxLogger.Error("Failed to parse URL", "error", err, "function", logEntrypoint())
-		return err
+		return backend.DownstreamError(fmt.Errorf("URL could not be parsed: %w", err))
 	}
 	query := u.Query()
 
@@ -198,13 +205,13 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 	res, err := d.client.LabelValues(ctx, label, query.Get("query"), start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
-		return fmt.Errorf("error calling LabelValues: %v", err)
+		return backend.DownstreamError(fmt.Errorf("error calling LabelValues: %v", err))
 	}
 
 	data, err := json.Marshal(res)
 	if err != nil {
 		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
-		return err
+		return backend.DownstreamErrorf("failed to marshall response: %w", err)
 	}
 
 	err = sender.Send(&backend.CallResourceResponse{Body: data, Status: 200})
@@ -214,6 +221,32 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 	}
 
 	return nil
+}
+
+// profileMetadata returns the embedded profile-metrics.json data containing metadata
+// for all known profile types, including their aggregation type (cumulative/instant),
+// units, descriptions, and grouping information.
+func (d *PyroscopeDatasource) profileMetadata(ctx context.Context, _ *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ctxLogger := logger.FromContext(ctx)
+
+	registry := GetProfileMetadataRegistry()
+
+	jsonData, err := json.Marshal(registry.profiles)
+	if err != nil {
+		ctxLogger.Error("Failed to marshal profile metadata", "error", err, "function", logEntrypoint())
+		return sender.Send(&backend.CallResourceResponse{
+			Status: 500,
+			Body:   []byte(`{"error": "Failed to marshal profile metadata"}`),
+		})
+	}
+
+	return sender.Send(&backend.CallResourceResponse{
+		Status: 200,
+		Body:   jsonData,
+		Headers: map[string][]string{
+			"Content-Type": {"application/json"},
+		},
+	})
 }
 
 // QueryData handles multiple queries and returns multiple responses.
@@ -266,8 +299,8 @@ func (d *PyroscopeDatasource) CheckHealth(ctx context.Context, _ *backend.CheckH
 	}, nil
 }
 
-// SubscribeStream is called when a client wants to connect to a stream. This callback
-// allows sending the first message.
+// SubscribeStream is called when a client wants to connect to a stream.
+// This callback allows sending the first message.
 func (d *PyroscopeDatasource) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	logger.Debug("Subscribing stream called", "function", logEntrypoint())
 
@@ -281,8 +314,8 @@ func (d *PyroscopeDatasource) SubscribeStream(_ context.Context, req *backend.Su
 	}, nil
 }
 
-// RunStream is called once for any open channel.  Results are shared with everyone
-// subscribed to the same channel.
+// RunStream is called once for any open channel.
+// Results are shared with everyone subscribed to the same channel.
 func (d *PyroscopeDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	ctxLogger := logger.FromContext(ctx)
 	ctxLogger.Debug("Running stream", "path", req.Path, "function", logEntrypoint())

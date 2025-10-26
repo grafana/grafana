@@ -9,8 +9,7 @@ import { DataLinkButton, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
-import { SpanLinkFunc } from '../../types';
-import { SpanLinkDef, SpanLinkType } from '../../types/links';
+import { SpanLinkDef, SpanLinkFunc, SpanLinkType } from '../../types/links';
 import { TraceSpan } from '../../types/trace';
 
 export type ProfilesButtonContext = {
@@ -197,6 +196,7 @@ const createLinkModel = (
     className,
     type,
     linkModel: {
+      ...link.linkModel,
       ...link,
       title: title,
       target: '_blank',

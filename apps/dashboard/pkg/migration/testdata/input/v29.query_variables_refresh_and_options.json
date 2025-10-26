@@ -1,0 +1,137 @@
+{
+  "title": "V29 Query Variables Refresh and Options Migration Test Dashboard",
+  "schemaVersion": 28,
+  "templating": {
+    "list": [
+      {
+        "name": "never_refresh_with_options",
+        "type": "query",
+        "datasource": "prometheus",
+        "options": [
+          {"text": "A", "value": "A"},
+          {"text": "B", "value": "B"}
+        ],
+        "refresh": 0
+      },
+      {
+        "name": "never_refresh_without_options",
+        "type": "query",
+        "datasource": "prometheus",
+        "options": [],
+        "refresh": 0
+      },
+      {
+        "name": "dashboard_refresh_with_options",
+        "type": "query",
+        "datasource": "prometheus",
+        "options": [
+          {"text": "C", "value": "C"}
+        ],
+        "refresh": 1
+      },
+      {
+        "name": "dashboard_refresh_without_options",
+        "type": "query",
+        "datasource": "prometheus",
+        "options": [],
+        "refresh": 1
+      },
+      {
+        "name": "timerange_refresh_with_options",
+        "type": "query",
+        "datasource": "prometheus",
+        "options": [
+          {"text": "D", "value": "D"},
+          {"text": "E", "value": "E"}
+        ],
+        "refresh": 2
+      },
+      {
+        "name": "timerange_refresh_without_options",
+        "type": "query",
+        "datasource": "prometheus",
+        "options": [],
+        "refresh": 2
+      },
+      {
+        "name": "no_refresh_with_options",
+        "type": "query",
+        "datasource": "prometheus",
+        "options": [
+          {"text": "F", "value": "F"}
+        ]
+      },
+      {
+        "name": "no_refresh_without_options",
+        "type": "query",
+        "datasource": "prometheus",
+        "options": []
+      },
+      {
+        "name": "unknown_refresh_with_options",
+        "type": "query",
+        "datasource": "prometheus",
+        "options": [
+          {"text": "G", "value": "G"}
+        ],
+        "refresh": 2001
+      },
+      {
+        "name": "unknown_refresh_without_options",
+        "type": "query",
+        "datasource": "prometheus",
+        "options": [],
+        "refresh": 2001
+      },
+      {
+        "name": "custom_variable",
+        "type": "custom",
+        "options": [
+          {"text": "custom", "value": "custom"}
+        ]
+      },
+      {
+        "name": "textbox_variable",
+        "type": "textbox",
+        "options": [
+          {"text": "Hello", "value": "World"}
+        ]
+      },
+      {
+        "name": "datasource_variable",
+        "type": "datasource",
+        "options": [
+          {"text": "ds", "value": "ds"}
+        ]
+      },
+      {
+        "name": "interval_variable",
+        "type": "interval",
+        "options": [
+          {"text": "1m", "value": "1m"}
+        ]
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Test Panel",
+      "type": "timeseries",
+      "datasource": "prometheus",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up"
+        }
+      ]
+    }
+  ],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+  }
+} 

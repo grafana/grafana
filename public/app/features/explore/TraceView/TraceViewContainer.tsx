@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 
-import { DataFrame, SplitOpen, TimeRange } from '@grafana/data';
+import { DataFrame, DataLinksContext, SplitOpen, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { PanelChrome } from '@grafana/ui';
-import { StoreState, useSelector } from 'app/types';
+import { StoreState, useSelector } from 'app/types/store';
+
+import { useExploreDataLinkPostProcessor } from '../hooks/useExploreDataLinkPostProcessor';
 
 import { TraceView } from './TraceView';
 import { transformDataFrames } from './utils/transform';
@@ -25,21 +27,25 @@ export function TraceViewContainer(props: Props) {
     (state: StoreState) => state.explore.panes[props.exploreId]?.datasourceInstance ?? undefined
   );
 
+  const dataLinkPostProcessor = useExploreDataLinkPostProcessor(splitOpenFn, timeRange);
+
   if (!traceProp) {
     return null;
   }
 
   return (
     <PanelChrome padding="none" title={t('explore.trace-view-container.title-trace', 'Trace')}>
-      <TraceView
-        exploreId={exploreId}
-        dataFrames={dataFrames}
-        splitOpenFn={splitOpenFn}
-        scrollElement={scrollElement}
-        traceProp={traceProp}
-        datasource={datasource}
-        timeRange={timeRange}
-      />
+      <DataLinksContext.Provider value={{ dataLinkPostProcessor }}>
+        <TraceView
+          exploreId={exploreId}
+          dataFrames={dataFrames}
+          splitOpenFn={splitOpenFn}
+          scrollElement={scrollElement}
+          traceProp={traceProp}
+          datasource={datasource}
+          timeRange={timeRange}
+        />
+      </DataLinksContext.Provider>
     </PanelChrome>
   );
 }

@@ -1,7 +1,6 @@
 import { SpanStatusCode } from '@opentelemetry/api';
 import { uniq } from 'lodash';
 
-import { Trace } from '../components';
 import {
   ID,
   KIND,
@@ -11,6 +10,7 @@ import {
   STATUS_MESSAGE,
   TRACE_STATE,
 } from '../components/constants/span';
+import { Trace } from '../components/types/trace';
 
 export const getTraceServiceNames = (trace: Trace) => {
   const serviceNames = trace.spans.map((span) => {

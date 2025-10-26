@@ -33,14 +33,18 @@ on:
         type: string
         required: false
         default: github-prerelease-writer@grafanalabs-workload-identity.iam.gserviceaccount.com
+      runs-on:
+        type: string
+        required: false
+        default: github-hosted-ubuntu-x64-small
 jobs:
   publish:
-    runs-on: github-hosted-ubuntu-x64-small
+    runs-on: ${{ inputs.runs-on }}
     name: Publish
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
         with:
           name: ${{ inputs.name }}
           pattern: ${{ inputs.pattern }}
@@ -48,7 +52,7 @@ jobs:
           path: ./artifact
       - name: Log in to GCS
         id: login-to-gcs
-        uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs/v0.2.1
+        uses: grafana/shared-workflows/actions/login-to-gcs@main
         with:
           environment: ${{ inputs.environment }}
           service_account: ${{ inputs.service-account }}
@@ -58,7 +62,7 @@ jobs:
           find ./artifact -mindepth 2 -maxdepth 2 -exec cp -r {} out/ \;
           ls -al out
       - name: Upload artifacts
-        uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
+        uses: grafana/shared-workflows/actions/push-to-gcs@main
         with:
           bucket: ${{ inputs.bucket }}
           environment: ${{ inputs.environment }}
@@ -66,3 +70,4 @@ jobs:
           path: out
           bucket_path: ${{ inputs.bucket-path }}
           service_account: ${{ inputs.service-account }}
+          gzip: false

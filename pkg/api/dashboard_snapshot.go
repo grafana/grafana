@@ -25,6 +25,7 @@ import (
 
 // r.Post("/api/snapshots/"
 func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
 		namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +58,7 @@ func (hs *HTTPServer) GetSharingOptions(c *contextmodel.ReqContext) {
 	})
 }
 
-// swagger:route POST /snapshots snapshots createDashboardSnapshot
+// swagger:route POST /snapshots dashboards snapshots createDashboardSnapshot
 //
 // When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI.
 //
@@ -93,7 +94,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) {
 }
 
 // GET /api/snapshots/:key
-// swagger:route GET /snapshots/{key} snapshots getDashboardSnapshot
+// swagger:route GET /snapshots/{key} dashboards snapshots getDashboardSnapshot
 //
 // Get Snapshot by Key.
 //
@@ -142,7 +143,7 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *contextmodel.ReqContext) response.
 	return response.JSON(http.StatusOK, dto).SetHeader("Cache-Control", "public, max-age=3600")
 }
 
-// swagger:route GET /snapshots-delete/{deleteKey} snapshots deleteDashboardSnapshotByDeleteKey
+// swagger:route GET /snapshots-delete/{deleteKey} dashboards snapshots deleteDashboardSnapshotByDeleteKey
 //
 // Delete Snapshot by deleteKey.
 //
@@ -178,7 +179,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *contextmodel.ReqCont
 	})
 }
 
-// swagger:route DELETE /snapshots/{key} snapshots deleteDashboardSnapshot
+// swagger:route DELETE /snapshots/{key} dashboards snapshots deleteDashboardSnapshot
 //
 // Delete Snapshot by Key.
 //
@@ -250,7 +251,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 	})
 }
 
-// swagger:route GET /dashboard/snapshots snapshots searchDashboardSnapshots
+// swagger:route GET /dashboard/snapshots dashboards snapshots searchDashboardSnapshots
 //
 // List snapshots.
 //
@@ -266,7 +267,7 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *contextmodel.ReqContext) respo
 	query := c.Query("query")
 	limit := c.QueryInt("limit")
 
-	if limit == 0 {
+	if limit <= 0 {
 		limit = 1000
 	}
 

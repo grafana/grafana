@@ -5,7 +5,7 @@ import { store } from '@grafana/data';
 
 export const promQueryEditorExplainKey = 'PrometheusQueryEditorExplainDefault';
 
-export type QueryEditorFlags = typeof promQueryEditorExplainKey;
+type QueryEditorFlags = typeof promQueryEditorExplainKey;
 
 function getFlagValue(key: QueryEditorFlags, defaultValue = false): boolean {
   const val = store.get(key);

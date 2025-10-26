@@ -27,7 +27,8 @@ type GrafanaServiceOpts struct {
 	GrafanaTarGz         *dagger.File
 	YarnCache            *dagger.CacheVolume
 	License              *dagger.File
-	InstallImageRenderer bool
+	StartImageRenderer   bool
+	ImageRendererVersion string
 }
 
 func Frontend(src *dagger.Directory) *dagger.Directory {
@@ -82,6 +83,7 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 		WithExec([]string{"tar", "--strip-components=1", "-xzf", "/src/grafana.tar.gz", "-C", "/src/grafana"}).
 		WithDirectory("/src/grafana/devenv", src.Directory("/src/devenv")).
 		WithDirectory("/src/grafana/e2e", src.Directory("/src/e2e")).
+		WithDirectory("/src/grafana/e2e-playwright/test-plugins", src.Directory("/src/e2e-playwright/test-plugins")).
 		WithDirectory("/src/grafana/scripts", src.Directory("/src/scripts")).
 		WithDirectory("/src/grafana/tools", src.Directory("/src/tools")).
 		WithWorkdir("/src/grafana").
@@ -96,10 +98,14 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 		licenseArg = "/src/license.jwt"
 	}
 
-	if opts.InstallImageRenderer {
-		container = container.WithEnvVariable("INSTALL_IMAGE_RENDERER", "true").
+	if opts.StartImageRenderer {
+		container = container.WithEnvVariable("START_IMAGE_RENDERER", "true").
 			WithExec([]string{"apt-get", "update"}).
 			WithExec([]string{"apt-get", "install", "-y", "ca-certificates"})
+
+		if opts.ImageRendererVersion != "" {
+			container = container.WithEnvVariable("IMAGE_RENDERER_VERSION", opts.ImageRendererVersion)
+		}
 	}
 
 	// We add all GF_ environment variables to allow for overriding Grafana configuration.

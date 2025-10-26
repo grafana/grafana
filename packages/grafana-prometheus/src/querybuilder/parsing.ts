@@ -34,6 +34,7 @@ import {
   getAllByType,
   getLeftMostChild,
   getString,
+  isFunctionOrAggregation,
   makeBinOp,
   makeError,
   replaceBuiltInVariable,
@@ -110,7 +111,7 @@ interface Context {
  * @param node
  * @param context
  */
-export function handleExpression(expr: string, node: SyntaxNode, context: Context) {
+function handleExpression(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
 
   switch (node.type.id) {
@@ -330,24 +331,6 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
       let child = node.firstChild;
 
       while (child) {
-        let binaryExpressionWithinFunctionArgs: SyntaxNode | null;
-        if (child.type.id === BinaryExpr) {
-          binaryExpressionWithinFunctionArgs = child;
-        } else {
-          binaryExpressionWithinFunctionArgs = child.getChild(BinaryExpr);
-        }
-
-        if (binaryExpressionWithinFunctionArgs) {
-          context.errors.push({
-            text: t(
-              'grafana-prometheus.querybuilder.update-function-args.text.query-parsing-is-ambiguous',
-              'Query parsing is ambiguous.'
-            ),
-            from: binaryExpressionWithinFunctionArgs.from,
-            to: binaryExpressionWithinFunctionArgs.to,
-          });
-        }
-
         updateFunctionArgs(expr, child, context, op);
         child = child.nextSibling;
       }
@@ -392,7 +375,7 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
  * @param node
  * @param context
  */
-function handleBinary(expr: string, node: SyntaxNode, context: Context) {
+function handleBinary(expr: string, node: SyntaxNode, context: Context, idx = 0) {
   const visQuery = context.query;
   const left = node.firstChild!;
   const op = getString(expr, left.nextSibling);
@@ -407,6 +390,16 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
 
   const rightBinary = right.type.id === BinaryExpr;
 
+  // binary operations that are part of a function argument do not get processed and added to the query until the end, this index helps keep track
+  // of where to add the operation in the list rather than just appending it to the end. If the binary operation is just part of a nested binary exp,
+  // we append at the end
+  const parent = node.parent;
+  const child = node.firstChild;
+  const shouldOffsetTail =
+    parent && !parent.type.isTop && (isFunctionOrAggregation(parent) || (child && isFunctionOrAggregation(child)));
+  if (shouldOffsetTail) {
+    idx += 1;
+  }
   if (leftNumber) {
     // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
     //  if query starts with a number that isn't handled now.
@@ -416,14 +409,18 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     handleExpression(expr, left, context);
   }
 
+  // in the case we have an expression like func(...) / 2 or func(...) + 5, the binary expression will be at the top of the tree
+  // in which case, the idx will be 0. In this case it means that the binary operation must be added to the end of the array, and
+
+  const newIdx = idx === 0 ? visQuery.operations.length : -idx;
   if (rightNumber) {
-    visQuery.operations.push(makeBinOp(opDef, expr, right, !!binModifier?.isBool));
+    visQuery.operations.splice(newIdx, 0, makeBinOp(opDef, expr, right, !!binModifier?.isBool));
   } else if (rightBinary) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
     const leftMostChild = getLeftMostChild(right);
     if (leftMostChild?.type.id === NumberDurationLiteral) {
-      visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
+      visQuery.operations.splice(newIdx, 0, makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
     }
 
     // If we added the first number literal as operation here we still can continue and handle the rest as the first

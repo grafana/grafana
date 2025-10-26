@@ -85,6 +85,15 @@ func TestDashboardQueries(t *testing.T) {
 						Order:      "ASC",
 					}),
 				},
+				{
+					Name: "migration_with_fallback",
+					Data: getQuery(&DashboardQuery{
+						OrgID:         1,
+						GetHistory:    true,
+						AllowFallback: true,
+						Order:         "ASC",
+					}),
+				},
 			},
 			sqlQueryPanels: {
 				{

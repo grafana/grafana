@@ -1,6 +1,7 @@
 import { monacoTypes } from '@grafana/ui';
 
-import { multiLineFullQuery, singleLineFullQuery } from '../../mocks/cloudwatch-sql-test-data';
+import { sqlTestDataMultiLineFullQuery } from '../../mocks/cloudwatch-sql-test-data/multiLineFullQuery';
+import { sqlTestDataSingleLineFullQuery } from '../../mocks/cloudwatch-sql-test-data/singleLineFullQuery';
 import MonacoMock from '../../mocks/monarch/Monaco';
 import TextModel from '../../mocks/monarch/TextModel';
 import { SQLTokenTypes } from '../cloudwatch-sql/completion/types';
@@ -11,7 +12,7 @@ import { linkedTokenBuilder } from './linkedTokenBuilder';
 
 describe('linkedTokenBuilder', () => {
   describe('singleLineFullQuery', () => {
-    const testModel = TextModel(singleLineFullQuery.query);
+    const testModel = TextModel(sqlTestDataSingleLineFullQuery.query);
 
     it('should add correct references to next LinkedToken', () => {
       const position: monacoTypes.IPosition = { lineNumber: 1, column: 0 };
@@ -28,7 +29,7 @@ describe('linkedTokenBuilder', () => {
     });
 
     it('should add correct references to previous LinkedToken', () => {
-      const position: monacoTypes.IPosition = { lineNumber: 1, column: singleLineFullQuery.query.length };
+      const position: monacoTypes.IPosition = { lineNumber: 1, column: sqlTestDataSingleLineFullQuery.query.length };
       const current = linkedTokenBuilder(
         MonacoMock,
         cloudWatchSqlLanguageDefinition,
@@ -45,7 +46,7 @@ describe('linkedTokenBuilder', () => {
   });
 
   describe('multiLineFullQuery', () => {
-    const testModel = TextModel(multiLineFullQuery.query);
+    const testModel = TextModel(sqlTestDataMultiLineFullQuery.query);
 
     it('should add LinkedToken with whitespace in case empty lines', () => {
       const position: monacoTypes.IPosition = { lineNumber: 3, column: 0 };

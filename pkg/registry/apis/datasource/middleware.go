@@ -3,8 +3,8 @@ package datasource
 import (
 	"context"
 
+	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	"github.com/grafana/grafana-aws-sdk/pkg/sigv4"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 )
@@ -16,8 +16,7 @@ func contextualMiddlewares(ctx context.Context) context.Context {
 
 	sigv4Settings := awsds.ReadSigV4Settings(ctx)
 	if sigv4Settings.Enabled {
-		authSettings, _ := awsds.ReadAuthSettingsFromContext(ctx)
-		ctx = httpclient.WithContextualMiddleware(ctx, sigv4.SigV4MiddlewareWithAuthSettings(sigv4Settings.VerboseLogging, *authSettings))
+		ctx = httpclient.WithContextualMiddleware(ctx, awsauth.NewSigV4Middleware())
 	}
 
 	return ctx

@@ -13,6 +13,19 @@ import { LogListModel } from './processing';
 
 jest.mock('./LogListContext');
 
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  useAssistant: jest.fn().mockReturnValue({
+    isAvailable: true,
+    openAssistant: jest.fn(),
+  }),
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  isAssistantAvailable: true,
+}));
+
 const theme = createTheme();
 const styles = getStyles(theme);
 const contextProps = {

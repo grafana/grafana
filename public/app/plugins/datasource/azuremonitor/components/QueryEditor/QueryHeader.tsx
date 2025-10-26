@@ -8,7 +8,7 @@ import { Button, ConfirmModal, RadioButtonGroup } from '@grafana/ui';
 
 import { LogsEditorMode } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorQuery, AzureQueryType } from '../../types';
+import { AzureMonitorQuery, AzureQueryType } from '../../types/query';
 
 interface QueryTypeFieldProps {
   query: AzureMonitorQuery;
@@ -18,11 +18,6 @@ interface QueryTypeFieldProps {
   onRunQuery: () => void;
   app: CoreApp | undefined;
 }
-
-const EDITOR_MODES = [
-  { label: 'Builder', value: LogsEditorMode.Builder },
-  { label: 'KQL', value: LogsEditorMode.Raw },
-];
 
 export const QueryHeader = ({
   query,
@@ -36,6 +31,11 @@ export const QueryHeader = ({
 
   const [showModeSwitchWarning, setShowModeSwitchWarning] = useState(false);
   const [pendingModeChange, setPendingModeChange] = useState<LogsEditorMode | null>(null);
+
+  const EDITOR_MODES = [
+    { label: t('components.query-header.editor-modes.label-builder', 'Builder'), value: LogsEditorMode.Builder },
+    { label: t('components.query-header.editor-modes.label-kql', 'KQL'), value: LogsEditorMode.Raw },
+  ];
 
   const currentMode = query.azureLogAnalytics?.mode;
 
@@ -64,7 +64,13 @@ export const QueryHeader = ({
         ...query,
         azureLogAnalytics: {
           ...query.azureLogAnalytics,
-          mode: LogsEditorMode.Builder,
+          // Builder mode is default unless there is an existing Log Analytics query
+          // that was not created with the builder
+          mode:
+            (query.azureLogAnalytics?.builderQuery === undefined && query.azureLogAnalytics?.query !== undefined) ||
+            !config.featureToggles.azureMonitorLogsBuilderEditor
+              ? LogsEditorMode.Raw
+              : LogsEditorMode.Builder,
           dashboardTime: true,
         },
       };
@@ -113,10 +119,18 @@ export const QueryHeader = ({
           title={t('components.query-header.title-switch-mode', 'Switch editor mode?')}
           body={
             pendingModeChange === LogsEditorMode.Builder
-              ? 'Switching to Builder will discard your current KQL query and clear the KQL editor. Are you sure?'
-              : 'Switching to KQL will discard your current builder settings. Are you sure?'
+              ? t(
+                  'components.query-header.body-switching-to-builder',
+                  'Switching to Builder will discard your current KQL query and clear the KQL editor. Are you sure?'
+                )
+              : t(
+                  'components.query-header.body-switching-to-kql',
+                  'Switching to KQL will discard your current builder settings. Are you sure?'
+                )
           }
-          confirmText={`Switch to ${pendingModeChange === LogsEditorMode.Builder ? 'Builder' : 'KQL'}`}
+          confirmText={t('components.query-header.confirmText-switch-to', 'Switch to {{newMode}}', {
+            newMode: pendingModeChange === LogsEditorMode.Builder ? 'Builder' : 'KQL',
+          })}
           onConfirm={() => {
             if (pendingModeChange) {
               applyModeChange(pendingModeChange);

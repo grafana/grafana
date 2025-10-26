@@ -293,7 +293,10 @@ export function runSplitQuery(
   request: DataQueryRequest<LokiQuery>,
   options: QuerySplittingOptions = {}
 ) {
-  const queries = request.targets.filter((query) => !query.hide).filter((query) => query.expr);
+  const queries = request.targets
+    .filter((query) => !query.hide)
+    .filter((query) => query.expr)
+    .map((query) => datasource.applyTemplateVariables(query, request.scopedVars, request.filters));
   const [nonSplittingQueries, normalQueries] = partition(queries, (query) => !querySupportsSplitting(query));
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 

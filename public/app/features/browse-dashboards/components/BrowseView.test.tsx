@@ -1,61 +1,54 @@
-import { getByLabelText, render as rtlRender, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { getByLabelText, render, screen, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardViewItem } from 'app/features/search/types';
-
-import { wellFormedTree } from '../fixtures/dashboardsTreeItem.fixture';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { BrowseView } from './BrowseView';
 
 const [mockTree, { folderA, folderA_folderA, folderA_folderB, folderA_folderB_dashbdB, dashbdD, folderB_empty }] =
-  wellFormedTree();
+  getFolderFixtures();
 
-function render(...[ui, options]: Parameters<typeof rtlRender>) {
-  rtlRender(<TestProvider>{ui}</TestProvider>, options);
-}
-
-jest.mock('app/features/browse-dashboards/api/services', () => {
-  const orig = jest.requireActual('app/features/browse-dashboards/api/services');
-
-  return {
-    ...orig,
-    listFolders(parentUID?: string) {
-      const childrenForUID = mockTree
-        .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUID)
-        .map((v) => v.item);
-
-      return Promise.resolve(childrenForUID);
-    },
-
-    listDashboards(parentUID?: string) {
-      const childrenForUID = mockTree
-        .filter((v) => v.item.kind === 'dashboard' && v.item.parentUID === parentUID)
-        .map((v) => v.item);
-
-      return Promise.resolve(childrenForUID);
-    },
-  };
-});
+setBackendSrv(backendSrv);
+setupMockServer();
 
 describe('browse-dashboards BrowseView', () => {
   const WIDTH = 800;
   const HEIGHT = 600;
+  const mockPermissions = {
+    canEditFolders: true,
+    canEditDashboards: true,
+    canDeleteFolders: true,
+    canDeleteDashboards: true,
+  };
+
+  beforeEach(() => {
+    jest.spyOn(contextSrv, 'hasPermission').mockImplementation((permission: string) => {
+      if (permission === AccessControlAction.FoldersRead) {
+        return true;
+      }
+      return false;
+    });
+  });
 
   it('expands and collapses a folder', async () => {
-    render(<BrowseView canSelect folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     await expandFolder(folderA.item);
-    expect(screen.queryByText(folderA_folderA.item.title)).toBeInTheDocument();
+    expect(screen.getByText(folderA_folderA.item.title)).toBeInTheDocument();
 
     await collapseFolder(folderA.item);
     expect(screen.queryByText(folderA_folderA.item.title)).not.toBeInTheDocument();
   });
 
   it('checks items when selected', async () => {
-    render(<BrowseView canSelect folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
 
     const checkbox = await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashbdD.item.uid));
     expect(checkbox).not.toBeChecked();
@@ -65,7 +58,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('checks all descendants when a folder is selected', async () => {
-    render(<BrowseView canSelect folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     // First expand then click folderA
@@ -82,7 +75,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('checks descendants loaded after a folder is selected', async () => {
-    render(<BrowseView canSelect folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     // First expand then click folderA
@@ -102,7 +95,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('unchecks ancestors when unselecting an item', async () => {
-    render(<BrowseView canSelect folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     await expandFolder(folderA.item);
@@ -126,7 +119,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('shows indeterminate checkboxes when a descendant is selected', async () => {
-    render(<BrowseView canSelect={true} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     await expandFolder(folderA.item);
@@ -147,12 +140,28 @@ describe('browse-dashboards BrowseView', () => {
 
   describe('when there is no item in the folder', () => {
     it('shows a CTA for creating a dashboard if the user has editor rights', async () => {
-      render(<BrowseView canSelect={true} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />);
+      render(
+        <BrowseView permissions={mockPermissions} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />
+      );
       expect(await screen.findByText('Create dashboard')).toBeInTheDocument();
     });
 
     it('shows a simple message if the user has viewer rights', async () => {
-      render(<BrowseView canSelect={false} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />);
+      const mockPermissionsDisabled = {
+        canEditFolders: false,
+        canEditDashboards: false,
+        canDeleteFolders: false,
+        canDeleteDashboards: false,
+      };
+
+      render(
+        <BrowseView
+          permissions={mockPermissionsDisabled}
+          folderUID={folderB_empty.item.uid}
+          width={WIDTH}
+          height={HEIGHT}
+        />
+      );
       expect(await screen.findByText('This folder is empty')).toBeInTheDocument();
     });
   });

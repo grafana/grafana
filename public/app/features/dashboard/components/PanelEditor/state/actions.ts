@@ -4,7 +4,7 @@ import store from 'app/core/store';
 import { removePanel } from 'app/features/dashboard/utils/panel';
 import { cleanUpPanelState } from 'app/features/panel/state/actions';
 import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
-import { ThunkResult } from 'app/types';
+import { ThunkResult } from 'app/types/store';
 
 import { DashboardModel } from '../../../state/DashboardModel';
 import { PanelModel } from '../../../state/PanelModel';
@@ -161,7 +161,7 @@ export function exitPanelEditor(): ThunkResult<void> {
 }
 
 function hasPanelChangedInPanelEdit(panel: PanelModel) {
-  return panel.hasChanged || panel.hasSavedPanelEditChange || panel.isAngularPlugin();
+  return panel.hasChanged || panel.hasSavedPanelEditChange;
 }
 
 export function updatePanelEditorUIState(uiState: Partial<PanelEditorUIState>): ThunkResult<void> {

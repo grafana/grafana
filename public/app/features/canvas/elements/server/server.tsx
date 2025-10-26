@@ -4,8 +4,9 @@ import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ColorDimensionConfig, ScalarDimensionConfig } from '@grafana/schema';
 import config from 'app/core/config';
-import { DimensionContext } from 'app/features/dimensions';
-import { ColorDimensionEditor, ScalarDimensionEditor } from 'app/features/dimensions/editors';
+import { DimensionContext } from 'app/features/dimensions/context';
+import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
+import { ScalarDimensionEditor } from 'app/features/dimensions/editors/ScalarDimensionEditor';
 
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps } from '../../element';
 

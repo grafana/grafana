@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { autoUpdate, flip, shift, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { autoUpdate, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
@@ -9,6 +9,7 @@ import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
+import { getPositioningMiddleware } from '../../../utils/floating';
 import { Button } from '../../Button/Button';
 import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
@@ -16,7 +17,7 @@ import { getInputStyles, Input } from '../../Input/Input';
 import { ScrollContainer } from '../../ScrollContainer/ScrollContainer';
 import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
 import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
-import { quickOptions } from '../options';
+import { getQuickOptions } from '../options';
 
 import {
   isRangeValid,
@@ -39,8 +40,6 @@ type InputState = {
   validation: RangeValidation;
 };
 
-const validOptions = quickOptions.filter((o) => isRelativeFormat(o.from));
-
 /**
  * @internal
  */
@@ -57,21 +56,16 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
     ref
   );
   const { dialogProps } = useDialog({}, ref);
+  const validOptions = getQuickOptions().filter((o) => isRelativeFormat(o.from));
+  const placement = 'bottom-start';
 
   // the order of middleware is important!
   // see https://floating-ui.com/docs/arrow#order
-  const middleware = [
-    flip({
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: false,
-      boundary: document.body,
-    }),
-    shift(),
-  ];
+  const middleware = getPositioningMiddleware(placement);
 
   const { context, refs, floatingStyles } = useFloating({
     open: isOpen,
-    placement: 'bottom-start',
+    placement,
     onOpenChange: setIsOpen,
     middleware,
     whileElementsMounted: autoUpdate,

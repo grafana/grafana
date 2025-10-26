@@ -11,7 +11,7 @@ import { AsyncSelect, Select } from '@grafana/ui';
 import { truncateResult } from '../../language_utils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 
-export interface LabelFilterItemProps {
+interface LabelFilterItemProps {
   defaultOp: string;
   item: Partial<QueryBuilderLabelFilter>;
   onChange: (value: QueryBuilderLabelFilter) => void;

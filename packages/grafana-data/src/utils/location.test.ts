@@ -5,13 +5,14 @@ import { GrafanaConfig } from '../types/config';
 import { locationUtil } from './location';
 
 describe('locationUtil', () => {
-  const { location } = window;
+  const win: typeof globalThis = window;
+  const { location } = win;
 
   beforeEach(() => {
     // @ts-ignore
-    delete window.location;
+    delete win.location;
 
-    window.location = {
+    win.location = {
       ...location,
       hash: '#hash',
       host: 'www.domain.com:9877',
@@ -26,7 +27,7 @@ describe('locationUtil', () => {
   });
 
   afterEach(() => {
-    window.location = location;
+    win.location = location;
   });
 
   describe('stripBaseFromUrl', () => {
@@ -106,7 +107,7 @@ describe('locationUtil', () => {
 
     describe('when origin does not have a port in it', () => {
       beforeEach(() => {
-        window.location = {
+        win.location = {
           ...location,
           hash: '#hash',
           host: 'www.domain.com',

@@ -1,7 +1,7 @@
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
-import { DataSourcePluginCategory } from 'app/types';
+import { DataSourcePluginCategory } from 'app/types/datasources';
 import grafanaIconSvg from 'img/grafana_icon.svg';
 import adobeAnalyticsSvg from 'img/plugins/adobe-analytics.svg';
 import appdynamicsSvg from 'img/plugins/appdynamics.svg';
@@ -29,6 +29,7 @@ import sapHanaPng from 'img/plugins/sap_hana.png';
 import servicenowSvg from 'img/plugins/servicenow.svg';
 import signalfxLogoSvg from 'img/plugins/signalfx-logo.svg';
 import snowflakeSvg from 'img/plugins/snowflake.svg';
+import solarWindsSvg from 'img/plugins/solarWinds.svg';
 import splunkLogo128Png from 'img/plugins/splunk_logo_128.png';
 import sumoSvg from 'img/plugins/sumo.svg';
 import wavefrontSvg from 'img/plugins/wavefront.svg';
@@ -407,6 +408,15 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       ),
       name: 'LogicMonitor Devices',
       imgUrl: logicMonitorSvg,
+    }),
+    getPhantomPlugin({
+      id: 'grafana-solarwinds-datasource',
+      description: t(
+        'datasources.get-enterprise-phantom-plugins.description.solarwinds-datasource',
+        'SolarWinds datasource'
+      ),
+      name: 'SolarWinds',
+      imgUrl: solarWindsSvg,
     }),
   ];
 }

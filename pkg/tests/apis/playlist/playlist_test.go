@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -39,9 +40,7 @@ var gvr = schema.GroupVersionResource{
 var RESOURCEGROUP = gvr.GroupResource().String()
 
 func TestIntegrationPlaylist(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("default setup", func(t *testing.T) {
 		h := doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -67,6 +66,21 @@ func TestIntegrationPlaylist(t *testing.T) {
 				  },
 				  "scope": "Namespaced",
 				  "singularResource": "playlist",
+				  "subresources": [
+					{
+					  "responseKind": {
+						"group": "",
+						"kind": "Playlist",
+						"version": ""
+					  },
+					  "subresource": "status",
+					  "verbs": [
+						"get",
+						"patch",
+						"update"
+					  ]
+					}
+				  ],
 				  "verbs": [
 					"create",
 					"delete",
@@ -468,6 +482,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			Path:   "/api/playlists",
 			Body:   []byte(legacyPayload),
 		}, &playlist.Playlist{})
+		require.Equal(t, 200, legacyCreate.Response.StatusCode)
 		require.NotNil(t, legacyCreate.Result)
 		uid := legacyCreate.Result.UID
 		require.NotEmpty(t, uid)

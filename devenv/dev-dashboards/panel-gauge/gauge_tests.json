@@ -33,7 +33,9 @@
       "type": "row"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -102,7 +104,9 @@
       "type": "gauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -171,7 +175,9 @@
       "type": "gauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -240,7 +246,9 @@
       "type": "gauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -309,7 +317,9 @@
       "type": "gauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -378,7 +388,9 @@
       "type": "gauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -447,7 +459,9 @@
       "type": "gauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -604,7 +618,9 @@
       "type": "row"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -683,7 +699,9 @@
       "type": "gauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "description": "should read N/A",
       "fieldConfig": {
         "defaults": {
@@ -763,7 +781,9 @@
       "type": "gauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "description": "should read N/A",
       "fieldConfig": {
         "defaults": {
@@ -843,7 +863,9 @@
       "type": "gauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "description": "should read N/A",
       "fieldConfig": {
         "defaults": {
@@ -946,7 +968,9 @@
       "type": "row"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1024,7 +1048,9 @@
       "type": "gauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1103,7 +1129,9 @@
       "type": "gauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1182,7 +1210,9 @@
       "type": "gauge"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {

@@ -10,9 +10,8 @@ import CloudMonitoringDatasource from '../datasource';
 import { TimeSeriesList, CloudMonitoringQuery, QueryType } from '../types/query';
 import { CloudMonitoringOptions } from '../types/types';
 
+import { AnnotationsHelp } from './AnnotationsHelp';
 import { MetricQueryEditor, defaultTimeSeriesList } from './MetricQueryEditor';
-
-import { AnnotationsHelp } from './';
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 

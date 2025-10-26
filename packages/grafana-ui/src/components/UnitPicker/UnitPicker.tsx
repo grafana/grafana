@@ -9,6 +9,7 @@ export interface UnitPickerProps {
   onChange: (item?: string) => void;
   value?: string;
   width?: number;
+  id?: string;
 }
 
 function formatCreateLabel(input: string) {
@@ -21,7 +22,7 @@ export class UnitPicker extends PureComponent<UnitPickerProps> {
   };
 
   render() {
-    const { value, width } = this.props;
+    const { value, width, id } = this.props;
 
     // Set the current selection
     let current: SelectableValue<string> | undefined = undefined;
@@ -56,6 +57,7 @@ export class UnitPicker extends PureComponent<UnitPickerProps> {
 
     return (
       <Cascader
+        id={id}
         width={width}
         initialValue={current && current.label}
         allowCustomValue

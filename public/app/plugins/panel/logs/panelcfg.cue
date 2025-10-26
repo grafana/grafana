@@ -28,6 +28,7 @@ composableKinds: PanelCfg: {
 				Options: {
 					showLabels:               bool
 					showCommonLabels:         bool
+					showFieldSelector?:       bool
 					showTime:                 bool
 					showLogContextToggle:     bool
 					showControls?:            bool
@@ -39,7 +40,11 @@ composableKinds: PanelCfg: {
 					sortOrder:                common.LogsSortOrder
 					dedupStrategy:            common.LogsDedupStrategy
 					enableInfiniteScrolling?: bool
+					noInteractions?:          bool
+					showLogAttributes?:       bool
 					fontSize?:                "default" | "small"                  @cuetsy(kind="enum", memberNames="default|small")
+					detailsMode?:             "inline" | "sidebar"                  @cuetsy(kind="enum", memberNames="inline|sidebar")
+					timestampResolution?:     "ms" | "ns"                  @cuetsy(kind="enum", memberNames="ms|ns")
 					// TODO: figure out how to define callbacks
 					onClickFilterLabel?:     _
 					onClickFilterOutLabel?:  _
@@ -54,6 +59,7 @@ composableKinds: PanelCfg: {
 					logLineMenuCustomItems?: _
 					onNewLogsReceived?:      _
 					displayedFields?: [...string]
+					setDisplayedFields?:     _
 				} @cuetsy(kind="interface")
 			}
 		}]

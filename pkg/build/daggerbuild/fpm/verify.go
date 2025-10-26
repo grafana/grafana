@@ -41,7 +41,12 @@ func VerifyDeb(ctx context.Context, d *dagger.Client, file *dagger.File, src *da
 		Args: []string{"grafana-server"},
 	})
 
-	if _, err := containers.ExitError(ctx, e2e.ValidatePackage(d, svc, src, yarn, nodeVersion)); err != nil {
+	result, err := e2e.ValidatePackage(ctx, d, svc, src, yarn, nodeVersion)
+	if err != nil {
+		return err
+	}
+
+	if _, err := containers.ExitError(ctx, result); err != nil {
 		return err
 	}
 
@@ -75,7 +80,16 @@ func VerifyRpm(ctx context.Context, d *dagger.Client, file *dagger.File, src *da
 		WithExec([]string{"grafana-server"}).
 		WithExposedPort(3000)
 
-	if _, err := containers.ExitError(ctx, e2e.ValidatePackage(d, service.AsService(), src, yarn, nodeVersion)); err != nil {
+	svc := service.WithExposedPort(3000).AsService(dagger.ContainerAsServiceOpts{
+		Args: []string{"grafana-server"},
+	})
+
+	result, err := e2e.ValidatePackage(ctx, d, svc, src, yarn, nodeVersion)
+	if err != nil {
+		return err
+	}
+
+	if _, err := containers.ExitError(ctx, result); err != nil {
 		return err
 	}
 	if !sign {

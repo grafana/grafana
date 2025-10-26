@@ -2,7 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
-import { defaultFilters } from '../../../useSearch';
+import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
+
 import { Trace } from '../../types/trace';
 
 import { SpanFilters } from './SpanFilters';
@@ -50,7 +51,7 @@ const trace: Trace = {
 describe('SpanFilters', () => {
   let user: ReturnType<typeof userEvent.setup>;
   const SpanFiltersWithProps = ({ showFilters = true, matches }: { showFilters?: boolean; matches?: Set<string> }) => {
-    const [search, setSearch] = useState(defaultFilters);
+    const [search, setSearch] = useState(DEFAULT_SPAN_FILTERS);
     const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
     const [showCriticalPathSpansOnly, setShowCriticalPathSpansOnly] = useState(false);
     const props = {

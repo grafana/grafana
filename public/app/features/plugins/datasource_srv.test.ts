@@ -7,7 +7,6 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePlugin,
-  DataSourcePluginMeta,
   ScopedVars,
 } from '@grafana/data';
 import { RuntimeDataSource, TemplateSrv } from '@grafana/runtime';
@@ -61,9 +60,9 @@ class TestRuntimeDataSource extends RuntimeDataSource {
   }
 }
 
-jest.mock('./plugin_loader', () => ({
-  importDataSourcePlugin: (meta: DataSourcePluginMeta) => {
-    return Promise.resolve(new DataSourcePlugin(TestDataSource as any));
+jest.mock('./importer/pluginImporter', () => ({
+  pluginImporter: {
+    importDataSource: () => Promise.resolve(new DataSourcePlugin(TestDataSource as any)),
   },
 }));
 
@@ -298,6 +297,19 @@ describe('datasource_srv', () => {
       it('should not return settings for runtime datasource when called with name', () => {
         const settings = dataSourceSrv.getInstanceSettings(runtimeDataSource.name);
         expect(settings).toBe(undefined);
+      });
+
+      it('should handle type-only datasource references consistently', async () => {
+        const typeOnlyRef = { type: 'jaeger-db' };
+
+        const datasource = await dataSourceSrv.get(typeOnlyRef);
+        const settings = dataSourceSrv.getInstanceSettings(typeOnlyRef);
+
+        expect(datasource.uid).toBe('uid-code-Jaeger');
+        expect(datasource.type).toBe('jaeger-db');
+        expect(settings?.uid).toBe(datasource.uid);
+        expect(settings?.type).toBe(datasource.type);
+        expect(settings?.name).toBe('Jaeger');
       });
     });
 

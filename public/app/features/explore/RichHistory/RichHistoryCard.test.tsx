@@ -6,8 +6,8 @@ import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta } from 
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { MixedDatasource } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreState, RichHistoryQuery } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
+import { ExploreState, RichHistoryQuery } from 'app/types/explore';
 
 import { RichHistoryCard, Props } from './RichHistoryCard';
 

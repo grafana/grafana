@@ -1,7 +1,7 @@
 import { PluginExtensionAddedLinkConfig, PluginExtensionPoints } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
 import { dispatch } from 'app/store/store';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { log } from '../../plugins/extensions/logs/log';
 import { createAddedLinkConfig } from '../../plugins/extensions/utils';

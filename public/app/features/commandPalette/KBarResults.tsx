@@ -121,6 +121,10 @@ export const KBarResults = (props: KBarResultsProps) => {
       const url = (item as ActionImpl & { url?: string }).url;
 
       if (item.command) {
+        if (url) {
+          // If the item also has a url we should block navigation.
+          ev.preventDefault();
+        }
         item.command.perform(item);
         // TODO: ideally the perform method would return some marker or we would have something like preventDefault()
         if (!item.id.startsWith('scopes/') || item.id === 'scopes/apply') {

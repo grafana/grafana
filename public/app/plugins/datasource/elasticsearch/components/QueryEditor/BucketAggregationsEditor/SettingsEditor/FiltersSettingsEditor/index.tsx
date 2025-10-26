@@ -3,9 +3,9 @@ import { uniqueId } from 'lodash';
 import { useEffect, useRef } from 'react';
 
 import { InlineField, Input, QueryField } from '@grafana/ui';
+import { Filters } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
 
 import { useDispatch, useStatelessReducer } from '../../../../../hooks/useStatelessReducer';
-import { Filters } from '../../../../../types';
 import { AddRemove } from '../../../../AddRemove';
 import { changeBucketAggregationSetting } from '../../state/actions';
 

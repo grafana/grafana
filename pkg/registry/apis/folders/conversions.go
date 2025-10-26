@@ -22,7 +22,6 @@ func LegacyCreateCommandToUnstructured(cmd *folder.CreateFolderCommand) (*unstru
 			"spec": map[string]any{
 				"title":       cmd.Title,
 				"description": cmd.Description,
-				"version":     1,
 			},
 		},
 	}
@@ -37,6 +36,14 @@ func LegacyCreateCommandToUnstructured(cmd *folder.CreateFolderCommand) (*unstru
 	}
 	meta.SetName(cmd.UID)
 	meta.SetFolder(cmd.ParentUID)
+
+	// nolint:staticcheck
+	if cmd.ManagerKindClassicFP != "" {
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:     utils.ManagerKindClassicFP,
+			Identity: cmd.ManagerKindClassicFP,
+		})
+	}
 
 	return obj, nil
 }
@@ -57,7 +64,7 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 		},
 		Spec: folders.FolderSpec{
 			Title:       v.Title,
-			Description: descr(v.Description),
+			Description: &v.Description,
 		},
 	}
 
@@ -93,11 +100,4 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f, nil
-}
-
-func descr(str string) *string {
-	if str == "" {
-		return nil
-	}
-	return &str
 }

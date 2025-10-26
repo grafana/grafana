@@ -56,13 +56,22 @@ const sanitizeTextPanelWhitelist = new xss.FilterXSS({
  */
 export function sanitize(unsanitizedString: string): string {
   try {
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+      if (node.tagName === 'A' && node.getAttribute('target') === '_blank') {
+        node.setAttribute('rel', 'noopener noreferrer');
+      }
+    });
+
     return DOMPurify.sanitize(unsanitizedString, {
       USE_PROFILES: { html: true },
       FORBID_TAGS: ['form', 'input'],
+      ADD_ATTR: ['target'],
     });
   } catch (error) {
     console.error('String could not be sanitized', unsanitizedString);
     return escapeHtml(unsanitizedString);
+  } finally {
+    DOMPurify.removeHook('afterSanitizeAttributes');
   }
 }
 
@@ -137,27 +146,25 @@ export class PathValidationError extends Error {
  */
 export function validatePath<OriginalPath extends string>(path: OriginalPath): OriginalPath {
   try {
-    let originalDecoded: string = path; // down-cast to a string to indicate this can't be returned
+    let decoded: string = path;
     while (true) {
-      const nextDecode = decodeURIComponent(originalDecoded);
-      if (nextDecode === originalDecoded) {
+      const nextDecode = decodeURIComponent(decoded);
+      if (nextDecode === decoded) {
         break; // String is fully decoded.
       }
-      originalDecoded = nextDecode;
+      decoded = nextDecode;
     }
 
-    // Remove query params and fragments to check only the path portion
-    const cleaned = originalDecoded.split(/[\?&#]/)[0];
-    originalDecoded = cleaned;
-
-    // If the original string contains traversal attempts, block it
-    if (originalDecoded.includes('..') || originalDecoded.includes('/\\')) {
+    // Validate the entire decoded string for traversal attempts
+    // This prevents attacks that use query separators to hide traversal payloads
+    if (/\.\.|\/\\|[\t\n\r]/.test(decoded)) {
       throw new PathValidationError();
     }
 
+    // Return the original path (not the decoded version) to preserve the full URL
     return path;
   } catch (err) {
-    // Rethrow the original InvalidPathError to preserve the stack trace
+    // Rethrow the original PathValidationError to preserve the stack trace
     if (err instanceof PathValidationError) {
       throw err;
     }

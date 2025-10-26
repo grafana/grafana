@@ -6,16 +6,14 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 
 import { getCredentials } from '../credentials';
 import TimegrainConverter from '../time_grain_converter';
+import { AzureMetricQuery, AzureMonitorQuery, AzureQueryType } from '../types/query';
 import {
   AzureAPIResponse,
-  AzureMetricQuery,
   AzureMonitorDataSourceInstanceSettings,
   AzureMonitorDataSourceJsonData,
   AzureMonitorLocations,
   AzureMonitorMetricsMetadataResponse,
   AzureMonitorProvidersResponse,
-  AzureMonitorQuery,
-  AzureQueryType,
   DatasourceValidationResult,
   GetLogAnalyticsTableResponse,
   GetMetricMetadataQuery,
@@ -27,7 +25,7 @@ import {
   MetricNamespace,
   Subscription,
   TablePlan,
-} from '../types';
+} from '../types/types';
 import { replaceTemplateVariables, routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
 

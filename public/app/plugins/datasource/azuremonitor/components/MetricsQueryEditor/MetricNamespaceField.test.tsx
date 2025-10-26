@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import createMockDatasource from '../../mocks/datasource';
 import createMockQuery from '../../mocks/query';
-import { AzureMonitorOption } from '../../types';
+import { AzureMonitorOption } from '../../types/types';
 
 import MetricNamespaceField from './MetricNamespaceField';
 

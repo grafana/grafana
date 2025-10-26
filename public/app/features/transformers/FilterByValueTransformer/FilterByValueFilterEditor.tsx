@@ -99,7 +99,12 @@ export const FilterByValueFilterEditor = (props: Props) => {
         <editor.component field={field} options={filter.config.options ?? {}} onChange={onChangeMatcherOptions} />
       </InlineField>
       <Box marginBottom={0.5}>
-        <Button icon="times" onClick={onDelete} variant="secondary" />
+        <Button
+          aria-label={t('transformers.filter-by-value-filter-editor.aria-label-remove-filter', 'Remove filter')}
+          icon="times"
+          onClick={onDelete}
+          variant="secondary"
+        />
       </Box>
     </InlineFieldRow>
   );

@@ -113,7 +113,7 @@ describe('dashboardActions', () => {
       });
 
       it('returns an empty array if anonymous access is not enabled', async () => {
-        config.bootData.settings.anonymousEnabled = false;
+        config.anonymousEnabled = false;
         const searchQuery = 'mySearchQuery';
         const results = await getSearchResultActions(searchQuery);
         expect(grafanaSearcherSpy).not.toHaveBeenCalled();
@@ -121,7 +121,7 @@ describe('dashboardActions', () => {
       });
 
       it('calls the search backend and returns an array of CommandPaletteActions if anonymous access is enabled', async () => {
-        config.bootData.settings.anonymousEnabled = true;
+        config.anonymousEnabled = true;
         const searchQuery = 'mySearchQuery';
         const results = await getSearchResultActions(searchQuery);
         expect(grafanaSearcherSpy).toHaveBeenCalledWith({

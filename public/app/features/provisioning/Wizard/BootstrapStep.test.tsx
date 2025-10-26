@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -7,7 +7,7 @@ import { useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/cl
 
 import { BootstrapStep, Props } from './BootstrapStep';
 import { StepStatusProvider } from './StepStatusContext';
-import { getResourceStats, useModeOptions } from './actions';
+import { useModeOptions } from './hooks/useModeOptions';
 import { WizardFormData } from './types';
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
@@ -15,9 +15,12 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetResourceStatsQuery: jest.fn(),
 }));
 
-jest.mock('./actions', () => ({
-  getResourceStats: jest.fn(),
+jest.mock('./hooks/useModeOptions', () => ({
   useModeOptions: jest.fn(),
+}));
+
+jest.mock('./hooks/useResourceStats', () => ({
+  useResourceStats: jest.fn(),
 }));
 
 // Wrapper component to provide form context
@@ -53,7 +56,6 @@ function setup(props: Partial<Props> = {}, formDefaultValues?: Partial<WizardFor
   const user = userEvent.setup();
 
   const defaultProps: Props = {
-    onOptionSelect: jest.fn(),
     repoName: 'test-repo',
     settingsData: undefined,
     ...props,
@@ -86,10 +88,15 @@ describe('BootstrapStep', () => {
       isLoading: false,
     });
 
-    (getResourceStats as jest.Mock).mockReturnValue({
+    const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
+    mockUseResourceStats.mockReturnValue({
       fileCount: 0,
       resourceCount: 0,
-      resourceCountString: '',
+      resourceCountString: 'Empty',
+      fileCountString: 'Empty',
+      isLoading: false,
+      requiresMigration: false,
+      shouldSkipSync: true,
     });
 
     (useModeOptions as jest.Mock).mockReturnValue([
@@ -115,6 +122,17 @@ describe('BootstrapStep', () => {
         isLoading: true,
       });
 
+      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
+      mockUseResourceStats.mockReturnValue({
+        fileCount: 0,
+        resourceCount: 0,
+        resourceCountString: 'Empty',
+        fileCountString: 'Empty',
+        isLoading: true,
+        requiresMigration: false,
+        shouldSkipSync: true,
+      });
+
       setup();
 
       expect(screen.getByText('Loading resource information...')).toBeInTheDocument();
@@ -122,9 +140,8 @@ describe('BootstrapStep', () => {
 
     it('should render correct info for GitHub repository type', async () => {
       setup();
-      expect(await screen.findByText('Grafana instance')).toBeInTheDocument();
-      expect(screen.getByText('External storage')).toBeInTheDocument();
-      expect(screen.getAllByText('Empty')).toHaveLength(2); // Both should show empty
+      expect(screen.getAllByText('External storage')).toHaveLength(2);
+      expect(screen.getAllByText('Empty')).toHaveLength(3); // Three elements should have the role "Empty" (2 external + 1 unmanaged)
     });
 
     it('should render correct info for local file repository type', async () => {
@@ -139,15 +156,20 @@ describe('BootstrapStep', () => {
         isLoading: false,
       });
 
-      (getResourceStats as jest.Mock).mockReturnValue({
+      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
+      mockUseResourceStats.mockReturnValue({
         fileCount: 2,
         resourceCount: 0,
-        resourceCountString: '',
+        resourceCountString: 'Empty',
+        fileCountString: '2 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
       });
 
       setup();
 
-      expect(await screen.findByText('2 files')).toBeInTheDocument();
+      expect(await screen.getAllByText('2 files')).toHaveLength(2);
     });
 
     it('should display resource counts when resources exist', async () => {
@@ -161,10 +183,15 @@ describe('BootstrapStep', () => {
         isLoading: false,
       });
 
-      (getResourceStats as jest.Mock).mockReturnValue({
+      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
+      mockUseResourceStats.mockReturnValue({
         fileCount: 0,
         resourceCount: 7,
         resourceCountString: '7 resources',
+        fileCountString: 'Empty',
+        isLoading: false,
+        requiresMigration: true,
+        shouldSkipSync: false,
       });
 
       setup();
@@ -173,47 +200,26 @@ describe('BootstrapStep', () => {
     });
   });
 
-  describe('option selection', () => {
-    it('should call onOptionSelect with correct argument when no migration needed', async () => {
-      const { props } = setup();
+  describe('hook integration', () => {
+    it('should use useResourceStats hook correctly', async () => {
+      setup();
 
-      await waitFor(() => {
-        expect(props.onOptionSelect).toHaveBeenCalledWith(false);
-      });
+      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
+      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', undefined);
     });
 
-    it('should call onOptionSelect with true when legacy storage exists', async () => {
-      const { props } = setup({
+    it('should use useResourceStats hook with legacy storage flag', async () => {
+      setup({
         settingsData: {
           legacyStorage: true,
+          allowImageRendering: true,
           items: [],
+          availableRepositoryTypes: [],
         },
       });
 
-      await waitFor(() => {
-        expect(props.onOptionSelect).toHaveBeenCalledWith(true);
-      });
-    });
-
-    it('should call onOptionSelect with true when resources exist', async () => {
-      (useGetResourceStatsQuery as jest.Mock).mockReturnValue({
-        data: {
-          instance: [{ group: 'dashboard.grafana.app', count: 1 }],
-        },
-        isLoading: false,
-      });
-
-      (getResourceStats as jest.Mock).mockReturnValue({
-        fileCount: 0,
-        resourceCount: 1,
-        resourceCountString: '1 resource',
-      });
-
-      const { props } = setup();
-
-      await waitFor(() => {
-        expect(props.onOptionSelect).toHaveBeenCalledWith(true);
-      });
+      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
+      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', true);
     });
   });
 
@@ -238,7 +244,9 @@ describe('BootstrapStep', () => {
       setup({
         settingsData: {
           legacyStorage: true,
+          allowImageRendering: true,
           items: [],
+          availableRepositoryTypes: [],
         },
       });
 

@@ -1,6 +1,6 @@
 import { AnnotationQuery } from '@grafana/data';
 
-import { AzureMonitorQuery, AzureQueryType } from '../types';
+import { AzureMonitorQuery, AzureQueryType } from '../types/query';
 
 import migrateAnnotation from './migrateAnnotation';
 

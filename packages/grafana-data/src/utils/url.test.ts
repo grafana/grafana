@@ -100,11 +100,12 @@ describe('parseKeyValue', () => {
 });
 
 describe('getUrlSearchParams', () => {
-  const { location } = window;
+  const win: typeof globalThis = window;
+  const { location } = win;
   // @ts-ignore
-  delete window.location;
+  delete win.location;
 
-  window.location = {
+  win.location = {
     ...location,
     hash: '#hash',
     host: 'www.domain.com:9877',

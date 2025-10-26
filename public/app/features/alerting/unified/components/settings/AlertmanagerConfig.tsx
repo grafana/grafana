@@ -209,7 +209,7 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
           'Reset Alertmanager configuration'
         )}
         body={confirmationText}
-        confirmText="Yes, reset configuration"
+        confirmText={t('alerting.alertmanager-config.confirmText-yes-reset-configuration', 'Yes, reset configuration')}
         onConfirm={() => {
           onReset(alertmanagerName);
           setShowResetConfirmation(false);

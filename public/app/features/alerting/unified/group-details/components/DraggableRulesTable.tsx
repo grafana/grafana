@@ -152,6 +152,7 @@ const ListItem = forwardRef<HTMLDivElement, ListItemProps>(
     );
   }
 );
+ListItem.displayName = 'ListItem';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   listItem: css({

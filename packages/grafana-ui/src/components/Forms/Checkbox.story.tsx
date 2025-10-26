@@ -9,7 +9,7 @@ import mdx from './Checkbox.mdx';
 import { Field } from './Field';
 
 const meta: Meta<typeof Checkbox> = {
-  title: 'Forms/Checkbox',
+  title: 'Inputs/Checkbox',
   component: Checkbox,
   parameters: {
     docs: {
@@ -92,7 +92,7 @@ export const AllStates: StoryFn<typeof Checkbox> = (args) => {
         <Checkbox value={checked} onChange={onChange} {...args} />
         <Checkbox value={true} label="Checked" />
         <Checkbox value={false} label="Unchecked" />
-        <Checkbox value={false} indeterminate={true} label="Interdeterminate" />
+        <Checkbox value={false} indeterminate={true} label="Indeterminate" />
         <Checkbox value={false} invalid={true} label="Invalid and unchecked" />
         <Checkbox value={true} invalid={true} label="Invalid and checked" />
       </Stack>

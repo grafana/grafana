@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 
 import { Alert } from '@grafana/ui';
 import { getMessageFromError } from 'app/core/utils/errors';
-import { DashboardInitError, AppNotificationSeverity } from 'app/types';
+import { AppNotificationSeverity } from 'app/types/appNotifications';
+import { DashboardInitError } from 'app/types/dashboard';
 
 export interface Props {
   initError?: DashboardInitError;

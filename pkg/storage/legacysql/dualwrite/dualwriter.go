@@ -187,6 +187,22 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		return nil, fmt.Errorf("name or generatename have to be set")
 	}
 
+	readFromUnifiedWriteToBothStorages := d.readUnified && d.legacy != nil && d.unified != nil
+
+	permissions := ""
+	if readFromUnifiedWriteToBothStorages {
+		objIn, err := utils.MetaAccessor(in)
+		if err != nil {
+			return nil, err
+		}
+
+		// keep permissions, we will set it back after the object is created
+		permissions = objIn.GetAnnotation(utils.AnnoKeyGrantPermissions)
+		if permissions != "" {
+			objIn.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation for now
+		}
+	}
+
 	// create in legacy first, and then unistore. if unistore fails, but legacy succeeds,
 	// will try to cleanup the object in legacy.
 	createdFromLegacy, err := d.legacy.Create(ctx, in, createValidation, options)
@@ -202,6 +218,17 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 	}
 	accCreated.SetResourceVersion("")
 	accCreated.SetUID("")
+
+	if readFromUnifiedWriteToBothStorages {
+		objCopy, err := utils.MetaAccessor(createdCopy)
+		if err != nil {
+			return nil, err
+		}
+		// restore the permissions annotation, as we removed it before creating in legacy
+		if permissions != "" {
+			objCopy.SetAnnotation(utils.AnnoKeyGrantPermissions, permissions)
+		}
+	}
 
 	// If unified storage is the primary storage, let's just create it in the foreground and return it.
 	if d.readUnified {
@@ -250,10 +277,20 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	// we want to delete from legacy first, otherwise if the delete from unistore was successful,
 	// but legacy failed, the user would get a failure, but not be able to retry the delete
 	// as they would not be able to see the object in unistore anymore.
+
+	// By setting RemovePermissions to false in the context, we will skip the deletion of permissions
+	// in the legacy store. This is needed as otherwise the permissions would be missing when executing
+	// the delete operation in the unified storage store.
+	ctx = utils.SetFolderRemovePermissions(ctx, false)
+
 	objFromLegacy, asyncLegacy, err := d.legacy.Delete(ctx, name, deleteValidation, options)
 	if err != nil && (!d.readUnified || !d.errorIsOK && !apierrors.IsNotFound(err)) {
 		return nil, false, err
 	}
+
+	// We can now flip it again.
+	ctx = utils.SetFolderRemovePermissions(ctx, true)
+
 	// If unified storage is our primary store, just delete it and return
 	if d.readUnified {
 		objFromStorage, asyncStorage, err := d.unified.Delete(ctx, name, deleteValidation, options)
@@ -295,10 +332,10 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	unifiedInfo := objInfo
 	unifiedForceCreate := forceAllowCreate
 	if d.readUnified {
-		legacyInfo = &wrappedUpdateInfo{objInfo}
+		legacyInfo = &wrappedUpdateInfo{objInfo: objInfo}
 		legacyForceCreate = true
 	} else {
-		unifiedInfo = &wrappedUpdateInfo{objInfo}
+		unifiedInfo = &wrappedUpdateInfo{objInfo: objInfo}
 		unifiedForceCreate = true
 	}
 
@@ -306,6 +343,21 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	if err != nil {
 		log.With("object", objFromLegacy).Error("could not update in legacy storage", "err", err)
 		return nil, false, err
+	}
+
+	// add any metadata returned from legacy to what is saved in unified storage when forceCreate is used.
+	// this is especially needed for legacy internal IDs
+	if createdLegacy {
+		legacyMeta, err := utils.MetaAccessor(objFromLegacy)
+		if err != nil {
+			log.With("object", objFromLegacy).Error("could not get meta accessor for legacy object", "err", err)
+			return nil, false, err
+		}
+		unifiedInfo = &wrappedUpdateInfo{
+			objInfo:           objInfo,
+			legacyLabels:      legacyMeta.GetLabels(),
+			legacyAnnotations: legacyMeta.GetAnnotations(),
+		}
 	}
 
 	if d.readUnified {
@@ -390,7 +442,9 @@ func (d *dualWriter) ConvertToTable(ctx context.Context, object runtime.Object, 
 }
 
 type wrappedUpdateInfo struct {
-	objInfo rest.UpdatedObjectInfo
+	objInfo           rest.UpdatedObjectInfo
+	legacyLabels      map[string]string
+	legacyAnnotations map[string]string
 }
 
 // Preconditions implements rest.UpdatedObjectInfo.
@@ -408,6 +462,29 @@ func (w *wrappedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime.Ob
 	if err != nil {
 		return nil, err
 	}
+
+	// add any labels or annotations set by legacy storage
+	if len(w.legacyLabels) > 0 {
+		existingLabels := meta.GetLabels()
+		if existingLabels == nil {
+			existingLabels = make(map[string]string)
+		}
+		for key, value := range w.legacyLabels {
+			existingLabels[key] = value
+		}
+		meta.SetLabels(existingLabels)
+	}
+	if len(w.legacyAnnotations) > 0 {
+		existingAnnotations := meta.GetAnnotations()
+		if existingAnnotations == nil {
+			existingAnnotations = make(map[string]string)
+		}
+		for key, value := range w.legacyAnnotations {
+			existingAnnotations[key] = value
+		}
+		meta.SetAnnotations(existingAnnotations)
+	}
+
 	meta.SetResourceVersion("")
 	meta.SetUID("")
 	return obj, err

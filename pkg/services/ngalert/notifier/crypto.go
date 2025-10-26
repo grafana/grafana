@@ -6,12 +6,27 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
+)
+
+const (
+	// encryptedContentPrefix is a marker that identifies encrypted Alertmanager configurations.
+	// When this prefix is present at the beginning of a configuration string:
+	// 1. During encryption: It indicates the content is already encrypted and should be skipped
+	// 2. During decryption: It indicates the content (minus this prefix) should be base64 decoded
+	//    and then decrypted using the secrets service
+	// This prefix helps maintain idempotency in encryption/decryption operations.
+	cryptoPrefix = "crypto_"
 )
 
 // Crypto allows decryption of Alertmanager Configuration and encryption of arbitrary payloads.
@@ -28,16 +43,16 @@ type Crypto interface {
 
 // alertmanagerCrypto implements decryption of Alertmanager configuration and encryption of arbitrary payloads based on Grafana's encryptions.
 type alertmanagerCrypto struct {
-	secrets secrets.Service
+	*ExtraConfigsCrypto
 	configs configurationStore
 	log     log.Logger
 }
 
 func NewCrypto(secrets secrets.Service, configs configurationStore, log log.Logger) Crypto {
 	return &alertmanagerCrypto{
-		secrets: secrets,
-		configs: configs,
-		log:     log,
+		ExtraConfigsCrypto: NewExtraConfigsCrypto(secrets),
+		configs:            configs,
+		log:                log,
 	}
 }
 
@@ -74,81 +89,78 @@ func EncryptReceiverConfigSettings(c []*definitions.PostableApiReceiver, encrypt
 func encryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt definitions.EncryptFn, encryptExisting bool) error {
 	// encrypt secure settings for storing them in DB
 	for _, r := range c {
-		switch r.Type() {
-		case definitions.GrafanaReceiverType:
-			for _, gr := range r.GrafanaManagedReceivers {
-				if encryptExisting {
-					for k, v := range gr.SecureSettings {
-						encryptedData, err := encrypt(context.Background(), []byte(v))
+		for _, gr := range r.GrafanaManagedReceivers {
+			if encryptExisting {
+				for k, v := range gr.SecureSettings {
+					encryptedData, err := encrypt(context.Background(), []byte(v))
+					if err != nil {
+						return fmt.Errorf("failed to encrypt secure settings: %w", err)
+					}
+					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
+				}
+			}
+
+			if len(gr.Settings) > 0 {
+				// We need to parse the settings to check for secret keys. If we find any, we encrypt them and
+				// store them in SecureSettings. This can happen from incorrect configuration or when an integration
+				// definition is updated to make a field secure.
+				settings := make(map[string]any)
+				if err := json.Unmarshal(gr.Settings, &settings); err != nil {
+					return fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", gr.Type, gr.Name, err)
+				}
+
+				typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(schema.IntegrationType(gr.Type), schema.V1)
+				if !ok {
+					return fmt.Errorf("failed to get secret keys for contact point type %s", gr.Type)
+				}
+				secretPaths := typeSchema.GetSecretFieldsPaths()
+				secureSettings := gr.SecureSettings
+				if secureSettings == nil {
+					secureSettings = make(map[string]string)
+				}
+
+				settingsChanged := false
+				secureSettingsChanged := false
+				for _, secretPath := range secretPaths {
+					secretKey := secretPath.String()
+					settingsValue, ok := settings[secretKey]
+					if !ok {
+						continue
+					}
+
+					// Secrets should not be stored in settings regardless.
+					delete(settings, secretKey)
+					settingsChanged = true
+
+					// If the secret is already encrypted, we don't need to encrypt it again.
+					if _, ok := secureSettings[secretKey]; ok {
+						continue
+					}
+
+					if strVal, isString := settingsValue.(string); isString {
+						encrypted, err := encrypt(context.Background(), []byte(strVal))
 						if err != nil {
 							return fmt.Errorf("failed to encrypt secure settings: %w", err)
 						}
-						gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
+						secureSettings[secretKey] = base64.StdEncoding.EncodeToString(encrypted)
+						secureSettingsChanged = true
 					}
 				}
 
-				if len(gr.Settings) > 0 {
-					// We need to parse the settings to check for secret keys. If we find any, we encrypt them and
-					// store them in SecureSettings. This can happen from incorrect configuration or when an integration
-					// definition is updated to make a field secure.
-					settings := make(map[string]any)
-					if err := json.Unmarshal(gr.Settings, &settings); err != nil {
-						return fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", gr.Type, gr.Name, err)
-					}
-
-					secretKeys, err := channels_config.GetSecretKeysForContactPointType(gr.Type)
+				// Defensive checks to limit the risk of unintentional edge case changes in this legacy API.
+				if settingsChanged {
+					// If we removed any secret keys from settings, we need to save the updated settings.
+					jsonBytes, err := json.Marshal(settings)
 					if err != nil {
-						return fmt.Errorf("failed to get secret keys for contact point type %s: %w", gr.Type, err)
+						return err
 					}
-
-					secureSettings := gr.SecureSettings
-					if secureSettings == nil {
-						secureSettings = make(map[string]string)
-					}
-
-					settingsChanged := false
-					secureSettingsChanged := false
-					for _, secretKey := range secretKeys {
-						settingsValue, ok := settings[secretKey]
-						if !ok {
-							continue
-						}
-
-						// Secrets should not be stored in settings regardless.
-						delete(settings, secretKey)
-						settingsChanged = true
-
-						// If the secret is already encrypted, we don't need to encrypt it again.
-						if _, ok := secureSettings[secretKey]; ok {
-							continue
-						}
-
-						if strVal, isString := settingsValue.(string); isString {
-							encrypted, err := encrypt(context.Background(), []byte(strVal))
-							if err != nil {
-								return fmt.Errorf("failed to encrypt secure settings: %w", err)
-							}
-							secureSettings[secretKey] = base64.StdEncoding.EncodeToString(encrypted)
-							secureSettingsChanged = true
-						}
-					}
-
-					// Defensive checks to limit the risk of unintentional edge case changes in this legacy API.
-					if settingsChanged {
-						// If we removed any secret keys from settings, we need to save the updated settings.
-						jsonBytes, err := json.Marshal(settings)
-						if err != nil {
-							return err
-						}
-						gr.Settings = jsonBytes
-					}
-					if secureSettingsChanged {
-						// If we added any secure settings, we need to save the updated secure settings.
-						gr.SecureSettings = secureSettings
-					}
+					gr.Settings = jsonBytes
+				}
+				if secureSettingsChanged {
+					// If we added any secure settings, we need to save the updated secure settings.
+					gr.SecureSettings = secureSettings
 				}
 			}
-		default:
 		}
 	}
 	return nil
@@ -241,26 +253,44 @@ func (c *alertmanagerCrypto) Decrypt(ctx context.Context, payload []byte) ([]byt
 	return c.secrets.Decrypt(ctx, payload)
 }
 
-func (c *alertmanagerCrypto) EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
+type ExtraConfigsCrypto struct {
+	secrets secretService
+}
+
+func NewExtraConfigsCrypto(secrets secretService) *ExtraConfigsCrypto {
+	return &ExtraConfigsCrypto{
+		secrets: secrets,
+	}
+}
+
+func (c *ExtraConfigsCrypto) EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
 	for i := range config.ExtraConfigs {
+		// If it has prefix, consider it encrypted already
+		if strings.HasPrefix(config.ExtraConfigs[i].AlertmanagerConfig, cryptoPrefix) {
+			continue
+		}
+
 		encryptedValue, err := c.secrets.Encrypt(ctx, []byte(config.ExtraConfigs[i].AlertmanagerConfig), secrets.WithoutScope())
 		if err != nil {
 			return fmt.Errorf("failed to encrypt extra configuration: %w", err)
 		}
 
-		config.ExtraConfigs[i].AlertmanagerConfig = base64.StdEncoding.EncodeToString(encryptedValue)
+		config.ExtraConfigs[i].AlertmanagerConfig = cryptoPrefix + base64.StdEncoding.EncodeToString(encryptedValue)
 	}
 
 	return nil
 }
 
-func (c *alertmanagerCrypto) DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
+func (c *ExtraConfigsCrypto) DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
 	for i := range config.ExtraConfigs {
-		// Check if the config is encrypted by trying to base64 decode it
-		encryptedValue, err := base64.StdEncoding.DecodeString(config.ExtraConfigs[i].AlertmanagerConfig)
-		if err != nil {
-			// If it can't be base64 decoded, assume it's already decrypted and skip
+		// If it does not have prefix, consider it decrypted already
+		if !strings.HasPrefix(config.ExtraConfigs[i].AlertmanagerConfig, cryptoPrefix) {
 			continue
+		}
+		// Check if the config is encrypted by trying to base64 decode it
+		encryptedValue, err := base64.StdEncoding.DecodeString(config.ExtraConfigs[i].AlertmanagerConfig[len(cryptoPrefix):])
+		if err != nil {
+			return fmt.Errorf("failed to decode extra configuration: %w", err)
 		}
 
 		decryptedValue, err := c.secrets.Decrypt(ctx, encryptedValue)
@@ -272,4 +302,50 @@ func (c *alertmanagerCrypto) DecryptExtraConfigs(ctx context.Context, config *de
 	}
 
 	return nil
+}
+
+func DecryptedReceivers(receivers []*definitions.PostableApiReceiver, decryptFn models.DecryptFn) ([]*definitions.PostableApiReceiver, error) {
+	decrypted := make([]*definitions.PostableApiReceiver, len(receivers))
+	for i, r := range receivers {
+		// We don't care about the provenance here, so we pass ProvenanceNone.
+		rcv, err := legacy_storage.PostableApiReceiverToReceiver(r, models.ProvenanceNone, models.ResourceOriginGrafana)
+		if err != nil {
+			return nil, err
+		}
+
+		err = rcv.Decrypt(decryptFn)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt receiver %q: %w", rcv.Name, err)
+		}
+
+		postable, err := legacy_storage.ReceiverToPostableApiReceiver(rcv)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert Receiver %q to APIReceiver: %w", rcv.Name, err)
+		}
+		decrypted[i] = postable
+	}
+	return decrypted, nil
+}
+
+func EncryptedReceivers(receivers []*definitions.PostableApiReceiver, encryptFn models.EncryptFn) ([]*definitions.PostableApiReceiver, error) {
+	encrypted := make([]*definitions.PostableApiReceiver, len(receivers))
+	for i, r := range receivers {
+		// We don't care about the provenance here, so we pass ProvenanceNone.
+		rcv, err := legacy_storage.PostableApiReceiverToReceiver(r, models.ProvenanceNone, models.ResourceOriginGrafana)
+		if err != nil {
+			return nil, err
+		}
+
+		err = rcv.Encrypt(encryptFn)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt receiver %q: %w", rcv.Name, err)
+		}
+
+		postable, err := legacy_storage.ReceiverToPostableApiReceiver(rcv)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert Receiver %q to APIReceiver: %w", rcv.Name, err)
+		}
+		encrypted[i] = postable
+	}
+	return encrypted, nil
 }

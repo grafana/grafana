@@ -13,6 +13,7 @@ const (
 	ZanzanaServer           string = "zanzana-server"
 	InstrumentationServer   string = "instrumentation-server"
 	FrontendServer          string = "frontend-server"
+	OperatorServer          string = "operator"
 )
 
 var dependencyMap = map[string][]string{
@@ -25,4 +26,5 @@ var dependencyMap = map[string][]string{
 	Core:                    {},
 	All:                     {Core},
 	FrontendServer:          {},
+	OperatorServer:          {InstrumentationServer},
 }

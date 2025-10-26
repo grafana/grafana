@@ -77,7 +77,7 @@ export function PlacementEditor({ item }: Props) {
 
   const onHorizontalConstraintChange = (h: HorizontalConstraint) => {
     element.options.constraint!.horizontal = h;
-    element.setPlacementFromConstraint();
+    element.setPlacementFromConstraint(undefined, undefined, settings.scene.scale);
     settings.scene.revId++;
     settings.scene.save(true);
     reselectElementAfterChange();
@@ -89,7 +89,7 @@ export function PlacementEditor({ item }: Props) {
 
   const onVerticalConstraintChange = (v: VerticalConstraint) => {
     element.options.constraint!.vertical = v;
-    element.setPlacementFromConstraint();
+    element.setPlacementFromConstraint(undefined, undefined, settings.scene.scale);
     settings.scene.revId++;
     settings.scene.save(true);
     reselectElementAfterChange();

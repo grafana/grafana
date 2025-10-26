@@ -61,49 +61,8 @@ ldd chrome-headless-shell/linux-132.0.6781.0/chrome-headless-shell-linux64/chrom
         ...
 ```
 
-**Ubuntu:**
-
-On Ubuntu 18.10 the following dependencies are required for the image rendering to function.
-
-```bash
-libx11-6 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrender1 libxtst6 libglib2.0-0 libnss3 libcups2  libdbus-1-3 libxss1 libxrandr2 libgtk-3-0 libasound2 libxcb-dri3-0 libgbm1 libxshmfence1
-```
-
-**Debian:**
-
-On Debian 9 (Stretch) the following dependencies are required for the image rendering to function.
-
-```bash
-libx11 libcairo libcairo2 libxtst6 libxcomposite1 libx11-xcb1 libxcursor1 libxdamage1 libnss3 libcups libcups2 libxss libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libgtk-3-0 libgbm1 libxshmfence1
-```
-
-On Debian 10 (Buster) the following dependencies are required for the image rendering to function.
-
-```bash
-libxdamage1 libxext6 libxi6 libxtst6 libnss3 libcups2 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libpango-1.0-0 libcairo2 libatspi2.0-0 libgtk3.0-cil libgdk3.0-cil libx11-xcb-dev libgbm1 libxshmfence1
-```
-
-**Centos:**
-
-On a minimal CentOS 7 installation, the following dependencies are required for the image rendering to function:
-
-```bash
-libXcomposite libXdamage libXtst cups libXScrnSaver pango atk adwaita-cursor-theme adwaita-icon-theme at at-spi2-atk at-spi2-core cairo-gobject colord-libs dconf desktop-file-utils ed emacs-filesystem gdk-pixbuf2 glib-networking gnutls gsettings-desktop-schemas gtk-update-icon-cache gtk3 hicolor-icon-theme jasper-libs json-glib libappindicator-gtk3 libdbusmenu libdbusmenu-gtk3 libepoxy liberation-fonts liberation-narrow-fonts liberation-sans-fonts liberation-serif-fonts libgusb libindicator-gtk3 libmodman libproxy libsoup libwayland-cursor libwayland-egl libxkbcommon m4 mailx nettle patch psmisc redhat-lsb-core redhat-lsb-submod-security rest spax time trousers xdg-utils xkeyboard-config alsa-lib
-```
-
-On a minimal CentOS 8 installation, the following dependencies are required for the image rendering to function:
-
-```bash
-libXcomposite libXdamage libXtst cups libXScrnSaver pango atk adwaita-cursor-theme adwaita-icon-theme at at-spi2-atk at-spi2-core cairo-gobject colord-libs dconf desktop-file-utils ed emacs-filesystem gdk-pixbuf2 glib-networking gnutls gsettings-desktop-schemas gtk-update-icon-cache gtk3 hicolor-icon-theme jasper-libs json-glib libappindicator-gtk3 libdbusmenu libdbusmenu-gtk3 libepoxy liberation-fonts liberation-narrow-fonts liberation-sans-fonts liberation-serif-fonts libgusb libindicator-gtk3 libmodman libproxy libsoup libwayland-cursor libwayland-egl libxkbcommon m4 mailx nettle patch psmisc redhat-lsb-core redhat-lsb-submod-security rest spax time trousers xdg-utils xkeyboard-config alsa-lib libX11-xcb
-```
-
-**RHEL:**
-
-On a minimal RHEL 8 installation, the following dependencies are required for the image rendering to function:
-
-```bash
-linux-vdso.so.1 libdl.so.2 libpthread.so.0 libgobject-2.0.so.0 libglib-2.0.so.0 libnss3.so libnssutil3.so libsmime3.so libnspr4.so libatk-1.0.so.0 libatk-bridge-2.0.so.0 libcups.so.2 libgio-2.0.so.0 libdrm.so.2 libdbus-1.so.3 libexpat.so.1 libxcb.so.1 libxkbcommon.so.0 libm.so.6 libX11.so.6 libXcomposite.so.1 libXdamage.so.1 libXext.so.6 libXfixes.so.3 libXrandr.so.2 libgbm.so.1 libpango-1.0.so.0 libcairo.so.2 libasound.so.2 libatspi.so.0 libgcc_s.so.1 libc.so.6 /lib64/ld-linux-x86-64.so.2 libgnutls.so.30 libpcre.so.1 libffi.so.6 libplc4.so libplds4.so librt.so.1 libgmodule-2.0.so.0 libgssapi_krb5.so.2 libkrb5.so.3 libk5crypto.so.3 libcom_err.so.2 libavahi-common.so.3 libavahi-client.so.3 libcrypt.so.1 libz.so.1 libselinux.so.1 libresolv.so.2 libmount.so.1 libsystemd.so.0 libXau.so.6 libXrender.so.1 libthai.so.0 libfribidi.so.0 libpixman-1.so.0 libfontconfig.so.1 libpng16.so.16 libxcb-render.so.0 libidn2.so.0 libunistring.so.2 libtasn1.so.6 libnettle.so.6 libhogweed.so.4 libgmp.so.10 libkrb5support.so.0 libkeyutils.so.1 libpcre2-8.so.0 libuuid.so.1 liblz4.so.1 libgcrypt.so.20 libbz2.so.1
-```
+You can find a reference to all the relevant Debian packages for the service to function [in the Dockerfile](https://github.com/grafana/grafana-image-renderer/blob/master/Dockerfile).
+If you are using an operating system that is not Debian 12, you should look up what each of those packages are called on your system.
 
 ## Certificate signed by internal certificate authorities
 
@@ -127,6 +86,9 @@ If this happens, then you have to add the certificate to the trust store. If you
 [root@server ~]# chown -R grafana: /usr/share/grafana/.pki/nssdb
 ```
 
+You may also have to use other tooling than `certutil`, such as `update-ca-certificates` and its accompanying paths.
+This depends on the Linux distribution you use; distributions often have a wiki with this type of information.
+
 **Windows:**
 
 ```
@@ -138,16 +100,29 @@ certutil –addstore "Root" <path>/internal-root-ca.crt.pem
 ```Dockerfile
 FROM grafana/grafana-image-renderer:latest
 
+# Elevate our permissions to access system resources.
 USER root
 
-RUN apk add --no-cache nss-tools
+RUN mkdir -p /usr/local/share/ca-certificates/
+# Convert from .pem to .crt
+RUN openssl x509 -inform PEM -in rootCA.pem -out /usr/local/share/ca-certificates/rootCA.crt
 
-USER grafana
+# Regenerate the CA certificates in the container.
+RUN update-ca-certificates --fresh
 
-COPY internal-root-ca.crt.pem /etc/pki/tls/certs/internal-root-ca.crt.pem
-RUN mkdir -p /home/grafana/.pki/nssdb
-RUN certutil -d sql:/home/grafana/.pki/nssdb -A -n internal-root-ca -t C -i /etc/pki/tls/certs/internal-root-ca.crt.pem
+# Reassume the nonroot user for the service execution.
+USER nonroot
+
+# Some CA certificates also need to explicitly be included in the user's network security services database.
+# certutil is shipped in v4.0.8 and onwards of the image.
+RUN mkdir -p /home/nonroot/.pki/nssdb
+RUN certutil -d sql:/home/nonroot/.pki/nssdb -A -n internal-root-ca -t C -i /usr/local/share/ca-certificates/rootCA.crt
 ```
+
+{{< admonition type="note" >}}
+The container image was based on Alpine until v4.0.0.
+After this point, it is based on distroless Debian.
+{{< /admonition >}}
 
 ## Custom Chrome/Chromium
 

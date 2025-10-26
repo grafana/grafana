@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"net"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel"
@@ -56,6 +59,7 @@ type service struct {
 	subservicesWatcher *services.FailureWatcher
 	hasSubservices     bool
 
+	backend   resource.StorageBackend
 	cfg       *setting.Cfg
 	features  featuremgmt.FeatureToggles
 	db        infraDB.DB
@@ -75,8 +79,8 @@ type service struct {
 
 	docBuilders resource.DocumentBuilderSupplier
 
-	storageRing *ring.Ring
-	lifecycler  *ring.BasicLifecycler
+	searchRing     *ring.Ring
+	ringLifecycler *ring.BasicLifecycler
 
 	queue     QOSEnqueueDequeuer
 	scheduler *scheduler.Scheduler
@@ -91,8 +95,10 @@ func ProvideUnifiedStorageGrpcService(
 	docBuilders resource.DocumentBuilderSupplier,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
-	storageRing *ring.Ring,
+	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
+	httpServerRouter *mux.Router,
+	backend resource.StorageBackend,
 ) (UnifiedStorageGrpcService, error) {
 	var err error
 	tracer := otel.Tracer("unified-storage")
@@ -105,6 +111,7 @@ func ProvideUnifiedStorageGrpcService(
 	})
 
 	s := &service{
+		backend:            backend,
 		cfg:                cfg,
 		features:           features,
 		stopCh:             make(chan struct{}),
@@ -116,7 +123,7 @@ func ProvideUnifiedStorageGrpcService(
 		docBuilders:        docBuilders,
 		storageMetrics:     storageMetrics,
 		indexMetrics:       indexMetrics,
-		storageRing:        storageRing,
+		searchRing:         searchRing,
 		subservicesWatcher: services.NewFailureWatcher(),
 	}
 
@@ -143,7 +150,7 @@ func ProvideUnifiedStorageGrpcService(
 		delegate = ring.NewLeaveOnStoppingDelegate(delegate, log)
 		delegate = ring.NewAutoForgetDelegate(resource.RingHeartbeatTimeout*2, delegate, log)
 
-		s.lifecycler, err = ring.NewBasicLifecycler(
+		s.ringLifecycler, err = ring.NewBasicLifecycler(
 			lifecyclerCfg,
 			resource.RingName,
 			resource.RingKey,
@@ -155,7 +162,13 @@ func ProvideUnifiedStorageGrpcService(
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize storage-ring lifecycler: %s", err)
 		}
-		subservices = append(subservices, s.lifecycler)
+
+		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(true)
+		subservices = append(subservices, s.ringLifecycler)
+
+		if httpServerRouter != nil {
+			httpServerRouter.Path("/prepare-downscale").Methods("GET", "POST", "DELETE").Handler(http.HandlerFunc(s.PrepareDownscale))
+		}
 	}
 
 	if cfg.QOSEnabled {
@@ -191,6 +204,49 @@ func ProvideUnifiedStorageGrpcService(
 	return s, nil
 }
 
+func (s *service) PrepareDownscale(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		s.log.Info("Preparing for downscale. Will not keep instance in ring on shutdown.")
+		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(false)
+	case http.MethodDelete:
+		s.log.Info("Downscale canceled. Will keep instance in ring on shutdown.")
+		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(true)
+	case http.MethodGet:
+		// used for delayed downscale use case, which we don't support. Leaving here for completion sake
+		s.log.Info("Received GET request for prepare-downscale. Behavior not implemented.")
+	default:
+	}
+}
+
+var (
+	// operation used by the search-servers to check if they own the namespace
+	searchOwnerRead = ring.NewOp([]ring.InstanceState{ring.JOINING, ring.ACTIVE, ring.LEAVING}, nil)
+)
+
+func (s *service) OwnsIndex(key resource.NamespacedResource) (bool, error) {
+	if s.searchRing == nil {
+		return true, nil
+	}
+
+	if st := s.searchRing.State(); st != services.Running {
+		return false, fmt.Errorf("ring is not Running: %s", st)
+	}
+
+	ringHasher := fnv.New32a()
+	_, err := ringHasher.Write([]byte(key.Namespace))
+	if err != nil {
+		return false, fmt.Errorf("error hashing namespace: %w", err)
+	}
+
+	rs, err := s.searchRing.GetWithOptions(ringHasher.Sum32(), searchOwnerRead, ring.WithReplicationFactor(s.searchRing.ReplicationFactor()))
+	if err != nil {
+		return false, fmt.Errorf("error getting replicaset from ring: %w", err)
+	}
+
+	return rs.Includes(s.ringLifecycler.GetInstanceAddr()), nil
+}
+
 func (s *service) starting(ctx context.Context) error {
 	if s.hasSubservices {
 		s.subservicesWatcher.WatchManager(s.subservices)
@@ -199,17 +255,18 @@ func (s *service) starting(ctx context.Context) error {
 		}
 	}
 
-	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing)
+	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing, s.reg)
 	if err != nil {
 		return err
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.tracing, s.docBuilders, s.indexMetrics)
+	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.tracing, s.docBuilders, s.indexMetrics, s.OwnsIndex)
 	if err != nil {
 		return err
 	}
 
 	serverOptions := ServerOptions{
+		Backend:        s.backend,
 		DB:             s.db,
 		Cfg:            s.cfg,
 		Tracer:         s.tracing,
@@ -220,6 +277,7 @@ func (s *service) starting(ctx context.Context) error {
 		IndexMetrics:   s.indexMetrics,
 		Features:       s.features,
 		QOSQueue:       s.queue,
+		OwnsIndexFn:    s.OwnsIndex,
 	}
 	server, err := NewResourceServer(serverOptions)
 	if err != nil {
@@ -252,14 +310,14 @@ func (s *service) starting(ctx context.Context) error {
 
 	if s.cfg.EnableSharding {
 		s.log.Info("waiting until resource server is JOINING in the ring")
-		lfcCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		lfcCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ResourceServerJoinRingTimeout)
 		defer cancel()
-		if err := ring.WaitInstanceState(lfcCtx, s.storageRing, s.lifecycler.GetInstanceID(), ring.JOINING); err != nil {
+		if err := ring.WaitInstanceState(lfcCtx, s.searchRing, s.ringLifecycler.GetInstanceID(), ring.JOINING); err != nil {
 			return fmt.Errorf("error switching to JOINING in the ring: %s", err)
 		}
 		s.log.Info("resource server is JOINING in the ring")
 
-		if err := s.lifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
+		if err := s.ringLifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
 			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
 		}
 		s.log.Info("resource server is ACTIVE in the ring")

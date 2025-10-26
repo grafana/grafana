@@ -4,11 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 
 	"github.com/gorilla/mux"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -31,6 +35,8 @@ var _ builder.APIGroupRouteProvider = (*APIBuilder)(nil)
 var _ builder.APIGroupVersionProvider = (*APIBuilder)(nil)
 
 const ofrepPath = "/ofrep/v1/evaluate/flags"
+
+const namespaceMismatchMsg = "rejecting request with namespace mismatch"
 
 var groupVersion = schema.GroupVersion{
 	Group:   "features.grafana.app",
@@ -57,10 +63,23 @@ func NewAPIBuilder(providerType string, url *url.URL, insecure bool, caFile stri
 	}
 }
 
-func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg, staticEvaluator featuremgmt.StaticFlagEvaluator) *APIBuilder {
+func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg) (*APIBuilder, error) {
+	if !cfg.OpenFeature.APIEnabled {
+		return nil, nil
+	}
+
+	var staticEvaluator featuremgmt.StaticFlagEvaluator //  No static evaluator needed for non-static provider
+	var err error
+	if cfg.OpenFeature.ProviderType == setting.StaticProviderType {
+		staticEvaluator, err = featuremgmt.CreateStaticEvaluator(cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create static evaluator: %w", err)
+		}
+	}
+
 	b := NewAPIBuilder(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, true, "", staticEvaluator)
 	apiregistration.RegisterAPI(b)
-	return b
+	return b, nil
 }
 
 func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
@@ -126,7 +145,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
-				Path: "ofrep/v1/evaluate/flags/",
+				Path: "ofrep/v1/evaluate/flags",
 				Spec: &spec3.PathProps{
 					Post: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
@@ -224,50 +243,77 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 }
 
 func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
-	if !b.validateNamespace(r) {
-		b.logger.Error("stackId in evaluation context does not match requested namespace")
-		http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusUnauthorized)
+	ctx, span := tracing.Start(r.Context(), "ofrep.handler.evalFlag")
+	defer span.End()
+
+	r = r.WithContext(ctx)
+
+	valid := b.validateNamespace(r)
+	b.logger.Debug("validating namespace in oneFlagHandler handler", "valid", valid)
+	if !valid {
+		_ = tracing.Errorf(span, namespaceMismatchMsg)
+		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
+		b.logger.Error(namespaceMismatchMsg)
+		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 		return
 	}
 
 	flagKey := mux.Vars(r)["flagKey"]
 	if flagKey == "" {
+		_ = tracing.Errorf(span, "flagKey parameter is required")
+		span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
 		http.Error(w, "flagKey parameter is required", http.StatusBadRequest)
 		return
 	}
 
+	span.SetAttributes(attribute.String("flag_key", flagKey))
+
 	isAuthedReq := b.isAuthenticatedRequest(r)
+	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
 	// Unless the request is authenticated, we only allow public flags evaluations
 	if !isAuthedReq && !isPublicFlag(flagKey) {
+		_ = tracing.Errorf(span, "unauthorized to evaluate flag: %s", flagKey)
+		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
 		b.logger.Error("Unauthorized to evaluate flag", "flagKey", flagKey)
 		http.Error(w, "unauthorized to evaluate flag", http.StatusUnauthorized)
 		return
 	}
 
 	if b.providerType == setting.GOFFProviderType {
-		b.proxyFlagReq(flagKey, isAuthedReq, w, r)
+		b.proxyFlagReq(ctx, flagKey, isAuthedReq, w, r)
 		return
 	}
 
-	b.evalFlagStatic(flagKey, w, r)
+	b.evalFlagStatic(ctx, flagKey, w)
 }
 
 func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
-	if !b.validateNamespace(r) {
-		b.logger.Error("stackId in evaluation context does not match requested namespace")
-		http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusUnauthorized)
+	ctx, span := tracing.Start(r.Context(), "ofrep.handler.evalAllFlags")
+	defer span.End()
+
+	r = r.WithContext(ctx)
+
+	valid := b.validateNamespace(r)
+	b.logger.Debug("validating namespace in allFlagsHandler handler", "valid", valid)
+
+	if !valid {
+		_ = tracing.Errorf(span, namespaceMismatchMsg)
+		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
+		b.logger.Error(namespaceMismatchMsg)
+		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 		return
 	}
 
 	isAuthedReq := b.isAuthenticatedRequest(r)
+	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
 	if b.providerType == setting.GOFFProviderType {
-		b.proxyAllFlagReq(isAuthedReq, w, r)
+		b.proxyAllFlagReq(ctx, isAuthedReq, w, r)
 		return
 	}
 
-	b.evalAllFlagsStatic(isAuthedReq, w, r)
+	b.evalAllFlagsStatic(ctx, isAuthedReq, w)
 }
 
 func writeResponse(statusCode int, result any, logger log.Logger, w http.ResponseWriter) {
@@ -279,25 +325,28 @@ func writeResponse(statusCode int, result any, logger log.Logger, w http.Respons
 	}
 }
 
-func (b *APIBuilder) stackIdFromEvalCtx(body []byte) int64 {
-	// Extract stackID from request body without consuming it
+func (b *APIBuilder) namespaceFromEvalCtx(body []byte) string {
+	// TODO: eval ctx should be added to span attributes, not log
+	b.logger.Debug("evaluation context from request", "ctx", string(body))
+
 	var evalCtx struct {
+		// Extract namespace from request body without consuming it
 		Context struct {
-			StackID int64 `json:"stackId"` // TODO -- replace with namespace "stackId" ONLY makes sense in cloud
+			Namespace string `json:"namespace"`
 		} `json:"context"`
 	}
 
 	if err := json.Unmarshal(body, &evalCtx); err != nil {
 		b.logger.Debug("Failed to unmarshal evaluation context", "error", err, "body", string(body))
-		return 0
+		return ""
 	}
 
-	if evalCtx.Context.StackID <= 0 {
-		b.logger.Debug("Invalid or missing stackId in evaluation context", "stackId", evalCtx.Context.StackID)
-		return 0
+	if evalCtx.Context.Namespace == "" {
+		b.logger.Debug("namespace missing from evaluation context", "namespace", evalCtx.Context.Namespace)
+		return ""
 	}
 
-	return evalCtx.Context.StackID
+	return evalCtx.Context.Namespace
 }
 
 // isAuthenticatedRequest returns true if the request is authenticated
@@ -306,12 +355,14 @@ func (b *APIBuilder) isAuthenticatedRequest(r *http.Request) bool {
 	if !ok {
 		return false
 	}
-	return user.GetIdentityType() != ""
+	return user.GetIdentityType() != types.TypeUnauthenticated
 }
 
-// validateNamespace checks if the stackId in the evaluation context matches the namespace in the request
+// validateNamespace checks if the namespace in the evaluation context matches the namespace in the request
 func (b *APIBuilder) validateNamespace(r *http.Request) bool {
-	// Extract namespace from request context or URL path
+	_, span := tracing.Start(r.Context(), "ofrep.validateNamespace")
+	defer span.End()
+
 	var namespace string
 	user, ok := types.AuthInfoFrom(r.Context())
 	if !ok {
@@ -324,24 +375,25 @@ func (b *APIBuilder) validateNamespace(r *http.Request) bool {
 		namespace = mux.Vars(r)["namespace"]
 	}
 
-	info, err := types.ParseNamespace(namespace)
-	if err != nil {
-		b.logger.Error("Error parsing namespace", "error", err)
-		return false
-	}
-
-	// Extract stackId from feature flag evaluation context
+	// Read request body for namespace validation and tracing
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		_ = tracing.Errorf(span, "failed to read request body: %w", err)
 		b.logger.Error("Error reading evaluation request body", "error", err)
+		span.SetAttributes(attribute.Bool("validation.success", false))
 		return false
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
+	span.SetAttributes(attribute.String("request.body", string(body)))
+
+	evalCtxNamespace := b.namespaceFromEvalCtx(body)
 	// "default" namespace case can only occur in on-prem grafana
-	if b.stackIdFromEvalCtx(body) == info.StackID {
+	if (namespace == "default" && evalCtxNamespace == "") || (evalCtxNamespace == namespace) {
+		span.SetAttributes(attribute.Bool("validation.success", true))
 		return true
 	}
 
+	span.SetAttributes(attribute.Bool("validation.success", false))
 	return false
 }

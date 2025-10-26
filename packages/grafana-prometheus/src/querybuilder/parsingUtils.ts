@@ -1,5 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/parsingUtils.ts
 import { SyntaxNode, TreeCursor } from '@lezer/common';
+import { AggregateExpr, FunctionCallBody } from '@prometheus-io/lezer-promql';
 
 import { QueryBuilderOperation, QueryBuilderOperationParamValue } from './shared/types';
 
@@ -70,7 +71,7 @@ const varTypeFunc = [
  * Get back the text with variables in their original format.
  * @param expr
  */
-export function returnVariables(expr: string) {
+function returnVariables(expr: string) {
   return expr.replace(/__V_(\d)__(.+?)__V__(?:__F__(\w+)__F__)?/g, (match, type, v, f) => {
     return varTypeFunc[parseInt(type, 10)](v, f);
   });
@@ -193,4 +194,8 @@ export function replaceBuiltInVariable(expr: string): string {
  */
 export function returnBuiltInVariable(expr: string): string {
   return expr.replace(builtInReplacementRegex, (match) => replacementToVariable[match]);
+}
+
+export function isFunctionOrAggregation(node: SyntaxNode): boolean {
+  return node.type.id === AggregateExpr || node.type.id === FunctionCallBody;
 }

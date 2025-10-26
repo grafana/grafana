@@ -89,15 +89,21 @@ type TeamHTTPHeadersJSONData struct {
 }
 
 type TeamHTTPHeaders struct {
-	Headers        TeamHeaders `json:"headers"`
-	RestrictAccess bool        `json:"restrictAccess"`
+	Headers TeamHeaders `json:"headers"`
 }
 
-type TeamHeaders map[string][]TeamHTTPHeader
+type TeamHeaders map[string][]AccessRule
 
-type TeamHTTPHeader struct {
+// a header is composed of a key:value. the key is the headername X-Prom-Label-Policy
+// a header value is composed of a tenantID:rule. the tenantID is the tenantID of the tenant that the rule is for.
+// the value is taken from https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/#acl
+// and each rule is
+type AccessRule struct {
 	Header string `json:"header"`
-	Value  string `json:"value"`
+	// the LBACRule is the rule that is used to restrict access to the data source
+	// currently <tenantid>:<promqlrule>
+	// LBAC rule (e.g., "tenant:{ label=value }")
+	LBACRule string `json:"value"`
 }
 
 func GetTeamHTTPHeaders(jsonData *simplejson.Json) (*TeamHTTPHeaders, error) {
@@ -126,7 +132,7 @@ func GetTeamHTTPHeaders(jsonData *simplejson.Json) (*TeamHTTPHeaders, error) {
 			if header.Header == "" {
 				return nil, errors.New("header name is missing or empty")
 			}
-			if header.Value == "" {
+			if header.LBACRule == "" {
 				return nil, errors.New("header value is missing or empty")
 			}
 		}
@@ -156,8 +162,8 @@ type AddDataSourceCommand struct {
 	Type            string            `json:"type" binding:"Required"`
 	Access          DsAccess          `json:"access" binding:"Required"`
 	URL             string            `json:"url"`
-	Database        string            `json:"database"`
 	User            string            `json:"user"`
+	Database        string            `json:"database"`
 	BasicAuth       bool              `json:"basicAuth"`
 	BasicAuthUser   string            `json:"basicAuthUser"`
 	WithCredentials bool              `json:"withCredentials"`
@@ -166,9 +172,9 @@ type AddDataSourceCommand struct {
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	UID             string            `json:"uid"`
 	// swagger:ignore
-	APIVersion string `json:"apiVersion"`
+	APIVersion string `json:"apiVersion,omitempty"`
 	// swagger:ignore
-	IsPrunable bool
+	IsPrunable bool `json:"-"`
 
 	OrgID                   int64             `json:"-"`
 	UserID                  int64             `json:"-"`
@@ -191,12 +197,15 @@ type UpdateDataSourceCommand struct {
 	IsDefault       bool              `json:"isDefault"`
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
-	Version         int               `json:"version"`
 	UID             string            `json:"uid"`
 	// swagger:ignore
-	APIVersion string `json:"apiVersion"`
+	APIVersion string `json:"apiVersion,omitempty"`
 	// swagger:ignore
-	IsPrunable bool
+	IsPrunable bool `json:"-"`
+	// Everything above is identical in AddDataSourceCommand
+
+	// The previous version -- used for optimistic locking
+	Version int `json:"version"`
 
 	OrgID                   int64             `json:"-"`
 	ID                      int64             `json:"-"`
@@ -251,10 +260,16 @@ type GetDataSourcesByTypeQuery struct {
 // GetDataSourceQuery will get a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
 // At least one of the UID, ID, or Name properties must be set in addition to OrgID.
 type GetDataSourceQuery struct {
-	ID   int64
-	UID  string
+	// Deprecated: use UID
+	ID int64
+
+	// The datasource unique id
+	UID string
+
+	// Deprecated: Use UID
 	Name string
 
+	// Required
 	OrgID int64
 }
 

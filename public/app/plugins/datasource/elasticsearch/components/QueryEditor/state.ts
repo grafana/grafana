@@ -1,6 +1,6 @@
 import { Action, createAction } from '@reduxjs/toolkit';
 
-import { ElasticsearchQuery } from '../../types';
+import { ElasticsearchDataQuery } from '../../dataquery.gen';
 
 /**
  * When the `initQuery` Action is dispatched, the query gets populated with default values where values are not present.
@@ -8,11 +8,11 @@ import { ElasticsearchQuery } from '../../types';
  */
 export const initQuery = createAction('init');
 
-export const changeQuery = createAction<ElasticsearchQuery['query']>('change_query');
+export const changeQuery = createAction<ElasticsearchDataQuery['query']>('change_query');
 
-export const changeAliasPattern = createAction<ElasticsearchQuery['alias']>('change_alias_pattern');
+export const changeAliasPattern = createAction<ElasticsearchDataQuery['alias']>('change_alias_pattern');
 
-export const queryReducer = (prevQuery: ElasticsearchQuery['query'], action: Action) => {
+export const queryReducer = (prevQuery: ElasticsearchDataQuery['query'], action: Action) => {
   if (changeQuery.match(action)) {
     return action.payload;
   }
@@ -24,7 +24,7 @@ export const queryReducer = (prevQuery: ElasticsearchQuery['query'], action: Act
   return prevQuery;
 };
 
-export const aliasPatternReducer = (prevAliasPattern: ElasticsearchQuery['alias'], action: Action) => {
+export const aliasPatternReducer = (prevAliasPattern: ElasticsearchDataQuery['alias'], action: Action) => {
   if (changeAliasPattern.match(action)) {
     return action.payload;
   }

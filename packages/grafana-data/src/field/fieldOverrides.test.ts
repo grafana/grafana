@@ -1,4 +1,3 @@
-import { ArrayDataFrame } from '../dataframe/ArrayDataFrame';
 import { createDataFrame, toDataFrame } from '../dataframe/processDataFrame';
 import { relativeToTimeRange } from '../datetime/rangeutil';
 import { createTheme } from '../themes/createTheme';
@@ -83,7 +82,7 @@ locationUtil.initialize({
 
 describe('Global MinMax', () => {
   it('find global min max', () => {
-    const f0 = new ArrayDataFrame<{ title: string; value: number; value2: number | null }>([
+    const f0 = toDataFrame([
       { title: 'AAA', value: 100, value2: 1234 },
       { title: 'BBB', value: -20, value2: null },
       { title: 'CCC', value: 200, value2: 1000 },
@@ -95,7 +94,7 @@ describe('Global MinMax', () => {
   });
 
   it('find global min max when all values are zero', () => {
-    const f0 = new ArrayDataFrame<{ title: string; value: number; value2: number | null }>([
+    const f0 = toDataFrame([
       { title: 'AAA', value: 0, value2: 0 },
       { title: 'CCC', value: 0, value2: 0 },
     ]);
@@ -144,7 +143,7 @@ describe('Global MinMax', () => {
 });
 
 describe('applyFieldOverrides', () => {
-  const f0 = new ArrayDataFrame<{ title: string; value: number; value2: number | null }>([
+  const f0 = toDataFrame([
     { title: 'AAA', value: 100, value2: 1234 },
     { title: 'BBB', value: -20, value2: null },
     { title: 'CCC', value: 200, value2: 1000 },
@@ -242,6 +241,80 @@ describe('applyFieldOverrides', () => {
       expect(withOverrides[0].fields[1].values[0][0].fields[0].state!.scopedVars?.__dataContext?.value.field).toBe(
         withOverrides[0].fields[1].values[0][0].fields[0]
       );
+    });
+  });
+
+  describe('given a frame field', () => {
+    const f0Internal = createDataFrame({
+      name: 'frame',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1752170223000, 1752170224000] },
+        { name: 'value', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+
+    it('will apply field overrides to the fields within the frame', () => {
+      const f0 = createDataFrame({
+        name: 'A',
+        fields: [
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['foo'],
+          },
+          {
+            name: 'frame',
+            type: FieldType.frame,
+            values: [f0Internal],
+          },
+        ],
+      });
+      const withOverrides = applyFieldOverrides({
+        data: [f0],
+        fieldConfig: {
+          defaults: {
+            max: 30,
+          },
+          overrides: [],
+        },
+        replaceVariables: (value) => value,
+        theme: createTheme(),
+        fieldConfigRegistry: customFieldRegistry,
+      });
+
+      expect(withOverrides[0].fields[1].values[0].fields[1].state.range.max).toBe(30);
+    });
+
+    it('will not crash when some of the nested frames are undefined', () => {
+      const f0 = createDataFrame({
+        name: 'A',
+        fields: [
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['foo', 'bar'],
+          },
+          {
+            name: 'frame',
+            type: FieldType.frame,
+            values: [f0Internal, undefined],
+          },
+        ],
+      });
+      expect(() =>
+        applyFieldOverrides({
+          data: [f0],
+          fieldConfig: {
+            defaults: {
+              max: 30,
+            },
+            overrides: [],
+          },
+          replaceVariables: (value) => value,
+          theme: createTheme(),
+          fieldConfigRegistry: customFieldRegistry,
+        })
+      ).not.toThrow();
     });
   });
 

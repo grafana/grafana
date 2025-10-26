@@ -90,7 +90,7 @@ export const WithTabs: StoryFn = (args) => {
   );
   return (
     <div>
-      <Modal title={modalHeader} isOpen={true}>
+      <Modal ariaLabel={args.title} title={modalHeader} isOpen={true}>
         <TabContent>
           {activeTab === tabs[0].value && <div>{args.body}</div>}
           {activeTab === tabs[1].value && <div>Second tab content</div>}
@@ -108,7 +108,8 @@ WithTabs.args = {
 export const UsingContentClassName: StoryFn = ({ title, body, ...args }) => {
   const override = {
     modalContent: css({
-      backgroundColor: 'darkorange',
+      backgroundColor: 'red',
+      color: 'black',
     }),
   };
   return (

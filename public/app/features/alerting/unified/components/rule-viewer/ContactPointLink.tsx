@@ -1,9 +1,11 @@
 import { ComponentProps } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { alertingAPIv0alpha1 } from '@grafana/alerting/unstable';
+import { base64UrlEncode } from '@grafana/alerting';
+import { notificationsAPIv0alpha1 } from '@grafana/alerting/unstable';
 import { TextLink } from '@grafana/ui';
 
+import { stringifyFieldSelector } from '../../utils/k8s/utils';
 import { makeEditContactPointLink } from '../../utils/misc';
 
 interface ContactPointLinkProps extends Omit<ComponentProps<typeof TextLink>, 'href' | 'children'> {
@@ -11,9 +13,11 @@ interface ContactPointLinkProps extends Omit<ComponentProps<typeof TextLink>, 'h
 }
 
 export const ContactPointLink = ({ name, ...props }: ContactPointLinkProps) => {
-  // find receiver by name – since this is what we store in the alert rule definition
-  const { currentData, isLoading, isSuccess } = alertingAPIv0alpha1.endpoints.listReceiver.useQuery({
-    fieldSelector: `spec.title=${name}`,
+  const encodedName = base64UrlEncode(name);
+
+  // find receiver by name using metadata.name field selector
+  const { currentData, isLoading, isSuccess } = notificationsAPIv0alpha1.endpoints.listReceiver.useQuery({
+    fieldSelector: stringifyFieldSelector([['metadata.name', encodedName]]),
   });
 
   // grab the first result from the fieldSelector result

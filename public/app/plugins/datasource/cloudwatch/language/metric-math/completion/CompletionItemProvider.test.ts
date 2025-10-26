@@ -1,7 +1,12 @@
 import { Monaco, monacoTypes } from '@grafana/ui';
 
 import { setupMockedTemplateService } from '../../../mocks/CloudWatchDataSource';
-import * as MetricMathTestData from '../../../mocks/metric-math-test-data';
+import { afterFunctionQuery } from '../../../mocks/metric-math-test-data/afterFunctionQuery';
+import { secondArgAfterSearchQuery } from '../../../mocks/metric-math-test-data/secondArgAfterSearchQuery';
+import { secondArgQuery } from '../../../mocks/metric-math-test-data/secondArgQuery';
+import { singleLineEmptyQuery } from '../../../mocks/metric-math-test-data/singleLineEmptyQuery';
+import { thirdArgAfterSearchQuery } from '../../../mocks/metric-math-test-data/thirdArgAfterSearchQuery';
+import { withinStringQuery } from '../../../mocks/metric-math-test-data/withinStringQuery';
 import MonacoMock from '../../../mocks/monarch/Monaco';
 import TextModel from '../../../mocks/monarch/TextModel';
 import { ResourcesAPI } from '../../../resources/ResourcesAPI';
@@ -34,37 +39,37 @@ const getSuggestions = async (value: string, position: monacoTypes.IPosition) =>
 describe('MetricMath: CompletionItemProvider', () => {
   describe('getSuggestions', () => {
     it('returns a suggestion for every metric math function when the input field is empty', async () => {
-      const { query, position } = MetricMathTestData.singleLineEmptyQuery;
+      const { query, position } = singleLineEmptyQuery;
       const suggestions = await getSuggestions(query, position);
       expect(suggestions.length).toEqual(METRIC_MATH_FNS.length);
     });
 
     it('returns a suggestion for every metric math operator when at the end of a function', async () => {
-      const { query, position } = MetricMathTestData.afterFunctionQuery;
+      const { query, position } = afterFunctionQuery;
       const suggestions = await getSuggestions(query, position);
       expect(suggestions.length).toEqual(METRIC_MATH_OPERATORS.length);
     });
 
     it('returns a suggestion for every metric math function and keyword if at the start of the second argument of a function', async () => {
-      const { query, position } = MetricMathTestData.secondArgQuery;
+      const { query, position } = secondArgQuery;
       const suggestions = await getSuggestions(query, position);
       expect(suggestions.length).toEqual(METRIC_MATH_FNS.length + METRIC_MATH_KEYWORDS.length);
     });
 
     it('does not have any particular suggestions if within a string', async () => {
-      const { query, position } = MetricMathTestData.withinStringQuery;
+      const { query, position } = withinStringQuery;
       const suggestions = await getSuggestions(query, position);
       expect(suggestions.length).toEqual(0);
     });
 
     it('returns a suggestion for every statistic if the second arg of a search function', async () => {
-      const { query, position } = MetricMathTestData.secondArgAfterSearchQuery;
+      const { query, position } = secondArgAfterSearchQuery;
       const suggestions = await getSuggestions(query, position);
       expect(suggestions.length).toEqual(METRIC_MATH_STATISTIC_KEYWORD_STRINGS.length);
     });
 
     it('returns a suggestion for every period if the third arg of a search function', async () => {
-      const { query, position } = MetricMathTestData.thirdArgAfterSearchQuery;
+      const { query, position } = thirdArgAfterSearchQuery;
       const suggestions = await getSuggestions(query, position);
       // +1 because one suggestion is also added for the  $__period_auto macro
       const expectedSuggestionsLength = METRIC_MATH_PERIODS.length + 1;

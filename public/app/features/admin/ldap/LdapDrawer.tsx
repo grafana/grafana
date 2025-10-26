@@ -23,7 +23,7 @@ import {
   RadioButtonGroup,
   SecretInput,
 } from '@grafana/ui';
-import { LdapPayload, MapKeyCertConfigured } from 'app/types';
+import { MapKeyCertConfigured, LdapPayload } from 'app/types/ldap';
 
 import { GroupMappingComponent } from './LdapGroupMapping';
 

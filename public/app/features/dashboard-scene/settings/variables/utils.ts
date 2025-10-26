@@ -1,6 +1,7 @@
 import { chain } from 'lodash';
 
 import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   ConstantVariable,
@@ -17,6 +18,7 @@ import {
   AdHocFiltersVariable,
   SceneVariableState,
   SceneVariableSet,
+  SwitchVariable,
 } from '@grafana/scenes';
 import { VariableHide, VariableType } from '@grafana/schema';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -25,17 +27,19 @@ import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
 import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor, getConstantVariableOptions } from './editors/ConstantVariableEditor';
-import { CustomVariableEditor, getCustomVariableOptions } from './editors/CustomVariableEditor';
+import { CustomVariableEditor } from './editors/CustomVariableEditor/CustomVariableEditor';
+import { getCustomVariableOptions } from './editors/CustomVariableEditor/getCustomVariableOptions';
 import { DataSourceVariableEditor, getDataSourceVariableOptions } from './editors/DataSourceVariableEditor';
 import { getGroupByVariableOptions, GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { getIntervalVariableOptions, IntervalVariableEditor } from './editors/IntervalVariableEditor';
 import { getQueryVariableOptions, QueryVariableEditor } from './editors/QueryVariableEditor';
+import { getSwitchVariableOptions, SwitchVariableEditor } from './editors/SwitchVariableEditor';
 import { TextBoxVariableEditor, getTextBoxVariableOptions } from './editors/TextBoxVariableEditor';
 
 interface EditableVariableConfig {
   name: string;
   description: string;
-  editor: React.ComponentType<any>;
+  editor: React.ComponentType<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   getOptions?: (variable: SceneVariable) => OptionsPaneItemDescriptor[];
 }
 
@@ -46,59 +50,91 @@ export function isEditableVariableType(type: VariableType): type is EditableVari
   return type !== 'system';
 }
 
-export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableConfig> = {
+export const getEditableVariables: () => Record<EditableVariableType, EditableVariableConfig> = () => ({
   custom: {
-    name: 'Custom',
-    description: 'Values are static and defined manually',
+    name: t('dashboard-scene.get-editable-variables.name.custom', 'Custom'),
+    description: t(
+      'dashboard-scene.get-editable-variables.description.values-are-static-and-defined-manually',
+      'Values are static and defined manually'
+    ),
     editor: CustomVariableEditor,
     getOptions: getCustomVariableOptions,
   },
   query: {
-    name: 'Query',
-    description: 'Values are fetched from a data source query',
+    name: t('dashboard-scene.get-editable-variables.name.query', 'Query'),
+    description: t(
+      'dashboard-scene.get-editable-variables.description.values-fetched-source-query',
+      'Values are fetched from a data source query'
+    ),
     editor: QueryVariableEditor,
     getOptions: getQueryVariableOptions,
   },
   constant: {
-    name: 'Constant',
-    description: 'A hidden constant variable, useful for metric prefixes in dashboards you want to share',
+    name: t('dashboard-scene.get-editable-variables.name.constant', 'Constant'),
+    description: t(
+      'dashboard-scene.get-editable-variables.description.hidden-constant-variable',
+      'A hidden constant variable, useful for metric prefixes in dashboards you want to share'
+    ),
     editor: ConstantVariableEditor,
     getOptions: getConstantVariableOptions,
   },
   interval: {
-    name: 'Interval',
-    description: 'Values are timespans, ex 1m, 1h, 1d',
+    name: t('dashboard-scene.get-editable-variables.name.interval', 'Interval'),
+    description: t(
+      'dashboard-scene.get-editable-variables.description.values-timespans',
+      'Values are timespans, ex 1m, 1h, 1d'
+    ),
     editor: IntervalVariableEditor,
     getOptions: getIntervalVariableOptions,
   },
   datasource: {
-    name: 'Data source',
-    description: 'Dynamically switch the data source for multiple panels',
+    name: t('dashboard-scene.get-editable-variables.name.data-source', 'Data source'),
+    description: t(
+      'dashboard-scene.get-editable-variables.description.dynamically-switch-source-multiple-panels',
+      'Dynamically switch the data source for multiple panels'
+    ),
     editor: DataSourceVariableEditor,
     getOptions: getDataSourceVariableOptions,
   },
   adhoc: {
-    name: 'Ad hoc filters',
-    description: 'Add key/value filters on the fly',
+    name: t('dashboard-scene.get-editable-variables.name.ad-hoc-filters', 'Ad hoc filters'),
+    description: t(
+      'dashboard-scene.get-editable-variables.description.add-keyvalue-filters-on-the-fly',
+      'Add key/value filters on the fly'
+    ),
     editor: AdHocFiltersVariableEditor,
     getOptions: getAdHocFilterOptions,
   },
   groupby: {
-    name: 'Group by',
-    description: 'Add keys to group by on the fly',
+    name: t('dashboard-scene.get-editable-variables.name.group-by', 'Group by'),
+    description: t('dashboard-scene.get-editable-variables.description.group', 'Add keys to group by on the fly'),
     editor: GroupByVariableEditor,
     getOptions: getGroupByVariableOptions,
   },
   textbox: {
-    name: 'Textbox',
-    description: 'Users can enter any arbitrary strings in a textbox',
+    name: t('dashboard-scene.get-editable-variables.name.textbox', 'Textbox'),
+    description: t(
+      'dashboard-scene.get-editable-variables.description.users-enter-arbitrary-strings-textbox',
+      'Users can enter any arbitrary strings in a textbox'
+    ),
     editor: TextBoxVariableEditor,
     getOptions: getTextBoxVariableOptions,
   },
-};
+  switch: {
+    name: t('dashboard-scene.get-editable-variables.name.switch', 'Switch'),
+    description: t(
+      'dashboard-scene.get-editable-variables.description.users-enter-arbitrary-strings-switch',
+      'A variable that can be toggled on and off'
+    ),
+    editor: SwitchVariableEditor,
+    getOptions: getSwitchVariableOptions,
+  },
+});
 
 export function getEditableVariableDefinition(type: string): EditableVariableConfig {
-  const editableVariable = EDITABLE_VARIABLES[type as EditableVariableType];
+  const editableVariables = getEditableVariables();
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const editableVariable = editableVariables[type as EditableVariableType];
   if (!editableVariable) {
     throw new Error(`Variable type ${type} not found`);
   }
@@ -114,14 +150,16 @@ export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
   'datasource',
   'interval',
   'adhoc',
+  'switch',
   'groupby',
 ];
 
 export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVariableType>> {
+  const editableVariables = getEditableVariables();
   const results = EDITABLE_VARIABLES_SELECT_ORDER.map((variableType) => ({
-    label: EDITABLE_VARIABLES[variableType].name,
+    label: editableVariables[variableType].name,
     value: variableType,
-    description: EDITABLE_VARIABLES[variableType].description,
+    description: editableVariables[variableType].description,
   }));
 
   if (!config.featureToggles.groupByVariable) {
@@ -133,7 +171,8 @@ export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVa
 }
 
 export function getVariableEditor(type: EditableVariableType) {
-  return EDITABLE_VARIABLES[type].editor;
+  const editableVariables = getEditableVariables();
+  return editableVariables[type].editor;
 }
 
 interface CommonVariableProperties {
@@ -162,6 +201,8 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
       return new GroupByVariable(initialState);
     case 'textbox':
       return new TextBoxVariable(initialState);
+    case 'switch':
+      return new SwitchVariable(initialState);
   }
 }
 
@@ -237,7 +278,8 @@ export function isSceneVariableInstance(sceneObject: SceneObject): sceneObject i
     sceneUtils.isIntervalVariable(sceneObject) ||
     sceneUtils.isQueryVariable(sceneObject) ||
     sceneUtils.isTextBoxVariable(sceneObject) ||
-    sceneUtils.isGroupByVariable(sceneObject)
+    sceneUtils.isGroupByVariable(sceneObject) ||
+    sceneUtils.isSwitchVariable(sceneObject)
   );
 }
 

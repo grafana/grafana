@@ -8,12 +8,11 @@ import { Button, InlineField, InlineFieldRow, Combobox, ComboboxOption } from '@
 
 import { METRIC_LABEL } from '../../constants';
 import { PrometheusDatasource } from '../../datasource';
-import { regexifyLabelValuesQueryString } from '../parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
+import { formatKeyValueStrings } from './formatter';
 import { MetricsModal } from './metrics-modal/MetricsModal';
-import { tracking } from './metrics-modal/state/helpers';
 
 export interface MetricComboboxProps {
   metricLookupDisabled: boolean;
@@ -76,18 +75,6 @@ export function MetricCombobox({
     [getMetricLabels, onGetMetrics]
   );
 
-  const loadMetricsExplorerMetrics = useCallback(async () => {
-    const allMetrics = await onGetMetrics();
-    const metrics: string[] = [];
-    for (const metric of allMetrics) {
-      if (metric.value) {
-        metrics.push(metric.value);
-      }
-    }
-
-    return metrics;
-  }, [onGetMetrics]);
-
   const asyncSelect = () => {
     return (
       <InputGroup>
@@ -115,10 +102,7 @@ export function MetricCombobox({
           )}
           variant="secondary"
           icon="book-open"
-          onClick={() => {
-            tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
-            setMetricsModalOpen(true);
-          }}
+          onClick={() => setMetricsModalOpen(true)}
         />
       </InputGroup>
     );
@@ -133,7 +117,6 @@ export function MetricCombobox({
           onClose={() => setMetricsModalOpen(false)}
           query={query}
           onChange={onChange}
-          initialMetrics={loadMetricsExplorerMetrics}
           timeRange={timeRange}
         />
       )}
@@ -163,27 +146,3 @@ export function MetricCombobox({
     </>
   );
 }
-
-export const formatPrometheusLabelFiltersToString = (
-  queryString: string,
-  labelsFilters: QueryBuilderLabelFilter[] | undefined
-): string => {
-  const filterArray = labelsFilters ? formatPrometheusLabelFilters(labelsFilters) : [];
-
-  return `{__name__=~".*${queryString}"${filterArray ? filterArray.join('') : ''}}`;
-};
-
-export const formatPrometheusLabelFilters = (labelsFilters: QueryBuilderLabelFilter[]): string[] => {
-  return labelsFilters.map((label) => {
-    return `,${label.label}="${label.value}"`;
-  });
-};
-
-/**
- * Reformat the query string and label filters to return all valid results for current query editor state
- */
-const formatKeyValueStrings = (query: string, labelsFilters?: QueryBuilderLabelFilter[]): string => {
-  const queryString = regexifyLabelValuesQueryString(query);
-
-  return formatPrometheusLabelFiltersToString(queryString, labelsFilters);
-};

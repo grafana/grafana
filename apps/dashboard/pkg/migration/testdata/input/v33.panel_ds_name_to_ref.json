@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 32,
+  "title": "V33 Panel Datasource Name to Ref Test",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Panel Datasource: null → should stay null",
+      "description": "Tests v33 migration behavior when panel datasource is explicitly null. Should remain null after migration (returnDefaultAsNull: true).",
+      "id": 1,
+      "datasource": null,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "non-default-test-ds-uid",
+          "description": "Target with UID reference should migrate to full object"
+        }
+      ]
+    },
+    {
+      "type": "stat", 
+      "title": "Panel Datasource: existing object → should stay unchanged",
+      "description": "Tests v33 migration behavior when panel datasource is already a proper object reference. Should remain unchanged.",
+      "id": 2,
+      "datasource": {
+        "uid": "existing-ref-uid",
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "existing-target-uid",
+            "type": "elasticsearch"  
+          },
+          "description": "Target with existing object should remain unchanged"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Panel Datasource: string name → should migrate to object",
+      "description": "Tests v33 migration when panel datasource is a string name. Should convert to proper object with uid, type, apiVersion.",
+      "id": 3,
+      "datasource": "Non Default Test Datasource Name"
+    },
+    {
+      "type": "table",
+      "title": "Panel Datasource: string name with empty targets → should migrate",
+      "description": "Tests v33 migration when panel has datasource string but empty targets array. Panel datasource should still migrate.",
+      "id": 4,
+      "datasource": "Default Test Datasource Name",
+      "targets": []
+    },
+    {
+      "type": "graph",
+      "title": "Target Datasources: mixed null/string/non-existing scenarios",
+      "description": "Tests v33 target migration with various edge cases: null target (unchanged), valid string (migrated), non-existing string (preserved), missing datasource field (unchanged).",
+      "id": 5,
+      "datasource": "non-default-test-ds-uid",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": null,
+          "description": "Null target datasource should remain null"
+        },
+        {
+          "refId": "B",
+          "datasource": "Default Test Datasource Name",
+          "description": "Valid string should migrate to object"
+        },
+        {
+          "refId": "C",
+          "datasource": "non-existing-ds",
+          "description": "Non-existing datasource should be preserved as-is (migration returns nil)"
+        },
+        {
+          "refId": "D",
+          "description": "Target without datasource field should remain unchanged"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Panel: null datasource with mixed target types",
+      "description": "Tests v33 migration when panel datasource is null but targets have mixed reference types (object, string). Panel should stay null, targets should migrate appropriately.",
+      "id": 6,
+      "datasource": null,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "existing-ref",
+            "type": "prometheus"
+          },
+          "description": "Existing object target should remain unchanged"
+        },
+        {
+          "refId": "B", 
+          "datasource": "Non Default Test Datasource Name",
+          "description": "String target should migrate to object"
+        },
+        {
+          "refId": "C",
+          "datasource": "Default Test Datasource Name",
+          "description": "Default datasource string should migrate to object"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Empty string datasource → should return empty object {}",
+      "description": "Tests v33 migration behavior with empty string datasource. Should migrate to empty object {} based on MigrateDatasourceNameToRef logic.",
+      "id": 7,
+      "datasource": "",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "",
+          "description": "Empty string target should also migrate to empty object {}"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Non-existing datasources → should be preserved as-is",
+      "description": "Tests v33 migration with completely unknown datasource names. Since migration returns nil for unknown datasources, they should be preserved unchanged.",
+      "id": 8,
+      "datasource": "completely-missing-ds",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "also-missing-ds",
+          "description": "Unknown target datasource should remain unchanged (migration returns nil)"
+        },
+        {
+          "refId": "B",
+          "datasource": "",
+          "description": "Empty string target should migrate to {}"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Row Panel: nested panels should also migrate",
+      "description": "Tests v33 migration handles nested panels within collapsed rows. Nested panel datasources should migrate same as top-level panels.",
+      "id": 9,
+      "collapsed": true,
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "Nested Panel: string datasource → should migrate to object",
+          "description": "Nested panel with string datasource should migrate to proper object reference, proving row panel recursion works.",
+          "id": 10,
+          "datasource": "Non Default Test Datasource Name",
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": "Default Test Datasource Name",
+              "description": "Nested target should also migrate from string to object"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -32,6 +32,12 @@ Alert notifications can include images, but rendering many images at the same ti
 
 ## Install Grafana Image Renderer plugin
 
+{{< admonition type="caution" >}}
+Starting with Grafana v12.2, the Grafana Image Renderer plugin is deprecated and is no longer maintained.
+
+Instead, use the Grafana Image Renderer remote rendering service.
+{{< /admonition >}}
+
 {{< admonition type="note" >}}
 All PhantomJS support has been removed. Instead, use the Grafana Image Renderer plugin or remote rendering service.
 {{< /admonition >}}
@@ -59,10 +65,15 @@ You can update your settings by using a configuration file, see [default.json](h
 You can volume mount your custom configuration file when starting the docker container:
 
 ```bash
-docker run -d --name=renderer --network=host -v /some/path/config.json:/usr/src/app/config.json grafana/grafana-image-renderer:latest
+docker run -d --name=renderer --network=host -v /some/path/config.json:/home/nonroot/config.json grafana/grafana-image-renderer:latest
 ```
 
 You can see a docker-compose example using a custom configuration file [here](https://github.com/grafana/grafana-image-renderer/tree/master/devenv/docker/custom-config).
+
+{{< admonition type="note" >}}
+The configuration files were located in `/usr/src/app` up until v4.0.0 and later.
+After this point, they are located in `/home/nonroot`.
+{{< /admonition >}}
 
 ### Security
 

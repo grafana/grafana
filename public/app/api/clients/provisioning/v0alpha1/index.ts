@@ -1,11 +1,23 @@
+import {
+  generatedAPI,
+  type JobSpec,
+  type JobStatus,
+  type RepositorySpec,
+  type RepositoryStatus,
+  type ErrorDetails,
+  type Status,
+} from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
+import { clearFolders } from 'app/features/browse-dashboards/state/slice';
+import { getState } from 'app/store/store';
 
 import { notifyApp } from '../../../../core/actions';
 import { createSuccessNotification, createErrorNotification } from '../../../../core/copy/appNotification';
+import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
+import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
+import { handleError } from '../../../utils';
 import { createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
-
-import { generatedAPI, JobSpec, JobStatus, RepositorySpec, RepositoryStatus, ErrorDetails } from './endpoints.gen';
 
 export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
@@ -51,6 +63,12 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         }
+        // Refetch dashboards and folders after deleting a provisioned repository.
+        // We need to add timeout to ensure that the deletion is processed before refetching since the deletion is done
+        // via a background job.
+        setTimeout(() => {
+          dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
+        }, 1000);
       },
     },
     deletecollectionRepository: {
@@ -76,6 +94,9 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         }
+        setTimeout(() => {
+          dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
+        }, 1000);
       },
     },
     createRepositoryTest: {
@@ -83,29 +104,49 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         try {
           await queryFulfilled;
         } catch (e) {
-          if (!e) {
-            dispatch(notifyApp(createErrorNotification('Error validating repository', new Error('Unknown error'))));
-          } else if (e instanceof Error) {
-            dispatch(notifyApp(createErrorNotification('Error validating repository', e)));
-          } else if (typeof e === 'object' && 'error' in e && isFetchError(e.error)) {
+          // Handle special cases first
+          if (typeof e === 'object' && e && 'error' in e && isFetchError(e.error)) {
+            // Handle Status error responses (Kubernetes style)
+            if (e.error.data.kind === 'Status' && e.error.data.status === 'Failure') {
+              const statusError: Status = e.error.data;
+              dispatch(
+                notifyApp(
+                  createErrorNotification(
+                    'Error validating repository',
+                    new Error(statusError.message || 'Unknown error')
+                  )
+                )
+              );
+              return;
+            }
+            // Handle TestResults error responses with field errors
             if (Array.isArray(e.error.data.errors) && e.error.data.errors.length) {
               const nonFieldErrors = e.error.data.errors.filter((err: ErrorDetails) => !err.field);
               // Only show notification if there are errors that don't have a field, field errors are handled by the form
               if (nonFieldErrors.length > 0) {
                 dispatch(notifyApp(createErrorNotification('Error validating repository')));
               }
+              return;
             }
           }
+
+          // For all other cases, use handleError
+          handleError(e, dispatch, 'Error validating repository');
         }
       },
     },
     createRepositoryJobs: {
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+      onQueryStarted: async ({ jobSpec }, { queryFulfilled, dispatch }) => {
         try {
+          const showMsg = jobSpec.action === 'pull' || jobSpec.action === 'migrate';
           await queryFulfilled;
-          dispatch(
-            notifyApp(createSuccessNotification(t('provisioning.sync-repository.success-pull-started', 'Pull started')))
-          );
+          if (showMsg) {
+            dispatch(
+              notifyApp(
+                createSuccessNotification(t('provisioning.sync-repository.success-pull-started', 'Pull started'))
+              )
+            );
+          }
         } catch (e) {
           if (e instanceof Error) {
             dispatch(
@@ -168,10 +209,39 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         }
+        // Refetch dashboards and folders after creating/updating a provisioned repository
+        dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
+      },
+    },
+    getRepositoryJobsWithPath: {
+      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+        try {
+          const result = await queryFulfilled;
+          const job = result.data;
+
+          // Clear folder cache after successful move/delete jobs
+          // We use clearFolders here to clear cached data and closes folders (immediate visual feedback)
+          // Force a refetch of subfolders if user has opened them, so user see latest data
+          if (job.status?.state === 'success' && (job.spec?.action === 'delete' || job.spec?.action === 'move')) {
+            const state = getState().browseDashboards;
+            const action = job.spec?.action;
+            let childrenKeys = Object.keys(state.childrenByParentUID);
+
+            if (action === 'delete') {
+              // Do not clear deleted resources to avoid 404s when refetching them
+              const deletedResourceNames =
+                job.spec?.[action]?.resources?.map((resource) => resource.name).filter(Boolean) || [];
+              childrenKeys = childrenKeys.filter((key) => !deletedResourceNames.includes(key));
+            }
+            dispatch(clearFolders(childrenKeys));
+          }
+        } catch (e) {
+          console.error('Error in getRepositoryJobsWithPath:', e);
+        }
       },
     },
   },
 });
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export * from './endpoints.gen';
+export * from '@grafana/api-clients/rtkq/provisioning/v0alpha1';

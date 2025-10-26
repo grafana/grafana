@@ -7,53 +7,59 @@ package apis
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	v0alpha1 "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1"
 )
 
 var (
-	rawSchemaInvestigationv0alpha1          = []byte(`{"spec":{"description":"spec is the schema of our resource","properties":{"collectables":{"items":{"properties":{"createdAt":{"type":"string"},"datasource":{"properties":{"uid":{"type":"string"}},"required":["uid"],"type":"object"},"fieldConfig":{"type":"string"},"id":{"type":"string"},"logoPath":{"type":"string"},"note":{"type":"string"},"noteUpdatedAt":{"type":"string"},"origin":{"type":"string"},"queries":{"items":{"type":"string"},"type":"array"},"timeRange":{"properties":{"from":{"type":"string"},"raw":{"properties":{"from":{"type":"string"},"to":{"type":"string"}},"required":["from","to"],"type":"object"},"to":{"type":"string"}},"required":["from","to","raw"],"type":"object"},"title":{"type":"string"},"type":{"type":"string"},"url":{"type":"string"}},"required":["id","createdAt","title","origin","type","queries","timeRange","datasource","url","note","noteUpdatedAt","fieldConfig"],"type":"object"},"type":"array"},"createdByProfile":{"properties":{"gravatarUrl":{"type":"string"},"name":{"type":"string"},"uid":{"type":"string"}},"required":["uid","name","gravatarUrl"],"type":"object"},"hasCustomName":{"type":"boolean"},"isFavorite":{"type":"boolean"},"overviewNote":{"type":"string"},"overviewNoteUpdatedAt":{"type":"string"},"title":{"type":"string"},"viewMode":{"properties":{"mode":{"enum":["compact","full"],"type":"string"},"showComments":{"type":"boolean"},"showTooltips":{"type":"boolean"}},"required":["mode","showComments","showTooltips"],"type":"object"}},"required":["title","createdByProfile","hasCustomName","isFavorite","overviewNote","overviewNoteUpdatedAt","collectables","viewMode"],"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	rawSchemaInvestigationv0alpha1          = []byte(`{"Collectable":{"additionalProperties":false,"description":"Collectable represents an item collected during investigation","properties":{"createdAt":{"type":"string"},"datasource":{"$ref":"#/components/schemas/DatasourceRef"},"fieldConfig":{"type":"string"},"id":{"type":"string"},"logoPath":{"type":"string"},"note":{"type":"string"},"noteUpdatedAt":{"type":"string"},"origin":{"type":"string"},"queries":{"description":"+listType=atomic","items":{"type":"string"},"type":"array"},"timeRange":{"$ref":"#/components/schemas/TimeRange"},"title":{"type":"string"},"type":{"type":"string"},"url":{"type":"string"}},"required":["id","createdAt","title","origin","type","queries","timeRange","datasource","url","note","noteUpdatedAt","fieldConfig"],"type":"object"},"DatasourceRef":{"additionalProperties":false,"description":"DatasourceRef is a reference to a datasource","properties":{"uid":{"type":"string"}},"required":["uid"],"type":"object"},"Investigation":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"Person":{"additionalProperties":false,"description":"Person represents a user profile with basic information","properties":{"gravatarUrl":{"description":"URL to user's Gravatar image","type":"string"},"name":{"description":"Display name of the user","type":"string"},"uid":{"description":"Unique identifier for the user","type":"string"}},"required":["uid","name","gravatarUrl"],"type":"object"},"TimeRange":{"additionalProperties":false,"description":"TimeRange represents a time range with both absolute and relative values","properties":{"from":{"type":"string"},"raw":{"additionalProperties":false,"properties":{"from":{"type":"string"},"to":{"type":"string"}},"required":["from","to"],"type":"object"},"to":{"type":"string"}},"required":["from","to","raw"],"type":"object"},"ViewMode":{"additionalProperties":false,"properties":{"mode":{"enum":["compact","full"],"type":"string"},"showComments":{"type":"boolean"},"showTooltips":{"type":"boolean"}},"required":["mode","showComments","showTooltips"],"type":"object"},"spec":{"additionalProperties":false,"description":"spec is the schema of our resource","properties":{"collectables":{"description":"+listType=atomic","items":{"$ref":"#/components/schemas/Collectable"},"type":"array"},"createdByProfile":{"$ref":"#/components/schemas/Person"},"hasCustomName":{"type":"boolean"},"isFavorite":{"type":"boolean"},"overviewNote":{"type":"string"},"overviewNoteUpdatedAt":{"type":"string"},"title":{"type":"string"},"viewMode":{"$ref":"#/components/schemas/ViewMode"}},"required":["title","createdByProfile","hasCustomName","isFavorite","overviewNote","overviewNoteUpdatedAt","collectables","viewMode"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
 	versionSchemaInvestigationv0alpha1      app.VersionSchema
 	_                                       = json.Unmarshal(rawSchemaInvestigationv0alpha1, &versionSchemaInvestigationv0alpha1)
-	rawSchemaInvestigationIndexv0alpha1     = []byte(`{"spec":{"properties":{"investigationSummaries":{"description":"Array of investigation summaries","items":{"properties":{"collectableSummaries":{"items":{"properties":{"id":{"type":"string"},"logoPath":{"type":"string"},"origin":{"type":"string"},"title":{"type":"string"}},"required":["id","title","logoPath","origin"],"type":"object"},"type":"array"},"createdByProfile":{"properties":{"gravatarUrl":{"type":"string"},"name":{"type":"string"},"uid":{"type":"string"}},"required":["uid","name","gravatarUrl"],"type":"object"},"hasCustomName":{"type":"boolean"},"isFavorite":{"type":"boolean"},"overviewNote":{"type":"string"},"overviewNoteUpdatedAt":{"type":"string"},"title":{"type":"string"},"viewMode":{"properties":{"mode":{"enum":["compact","full"],"type":"string"},"showComments":{"type":"boolean"},"showTooltips":{"type":"boolean"}},"required":["mode","showComments","showTooltips"],"type":"object"}},"required":["title","createdByProfile","hasCustomName","isFavorite","overviewNote","overviewNoteUpdatedAt","viewMode","collectableSummaries"],"type":"object"},"type":"array"},"owner":{"description":"The Person who owns this investigation index","properties":{"gravatarUrl":{"type":"string"},"name":{"type":"string"},"uid":{"type":"string"}},"required":["uid","name","gravatarUrl"],"type":"object"},"title":{"description":"Title of the index, e.g. 'Favorites' or 'My Investigations'","type":"string"}},"required":["title","owner","investigationSummaries"],"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	rawSchemaInvestigationIndexv0alpha1     = []byte(`{"CollectableSummary":{"additionalProperties":false,"properties":{"id":{"type":"string"},"logoPath":{"type":"string"},"origin":{"type":"string"},"title":{"type":"string"}},"required":["id","title","logoPath","origin"],"type":"object"},"InvestigationIndex":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"InvestigationSummary":{"additionalProperties":false,"description":"Type definition for investigation summaries","properties":{"collectableSummaries":{"description":"+listType=atomic","items":{"$ref":"#/components/schemas/CollectableSummary"},"type":"array"},"createdByProfile":{"$ref":"#/components/schemas/Person"},"hasCustomName":{"type":"boolean"},"isFavorite":{"type":"boolean"},"overviewNote":{"type":"string"},"overviewNoteUpdatedAt":{"type":"string"},"title":{"type":"string"},"viewMode":{"$ref":"#/components/schemas/ViewMode"}},"required":["title","createdByProfile","hasCustomName","isFavorite","overviewNote","overviewNoteUpdatedAt","viewMode","collectableSummaries"],"type":"object"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"Person":{"additionalProperties":false,"description":"Person represents a user profile with basic information","properties":{"gravatarUrl":{"description":"URL to user's Gravatar image","type":"string"},"name":{"description":"Display name of the user","type":"string"},"uid":{"description":"Unique identifier for the user","type":"string"}},"required":["uid","name","gravatarUrl"],"type":"object"},"ViewMode":{"additionalProperties":false,"properties":{"mode":{"enum":["compact","full"],"type":"string"},"showComments":{"type":"boolean"},"showTooltips":{"type":"boolean"}},"required":["mode","showComments","showTooltips"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"investigationSummaries":{"description":"Array of investigation summaries\n+listType=atomic","items":{"$ref":"#/components/schemas/InvestigationSummary"},"type":"array"},"owner":{"$ref":"#/components/schemas/Person","description":"The Person who owns this investigation index"},"title":{"description":"Title of the index, e.g. 'Favorites' or 'My Investigations'","type":"string"}},"required":["title","owner","investigationSummaries"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
 	versionSchemaInvestigationIndexv0alpha1 app.VersionSchema
 	_                                       = json.Unmarshal(rawSchemaInvestigationIndexv0alpha1, &versionSchemaInvestigationIndexv0alpha1)
 )
 
 var appManifestData = app.ManifestData{
-	AppName: "investigations",
-	Group:   "investigations.grafana.app",
-	Kinds: []app.ManifestKind{
+	AppName:          "investigations",
+	Group:            "investigations.grafana.app",
+	PreferredVersion: "v0alpha1",
+	Versions: []app.ManifestVersion{
 		{
-			Kind:       "Investigation",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
+			Name:   "v0alpha1",
+			Served: true,
+			Kinds: []app.ManifestVersionKind{
 				{
-					Name:   "v0alpha1",
-					Schema: &versionSchemaInvestigationv0alpha1,
+					Kind:       "Investigation",
+					Plural:     "Investigations",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Schema:     &versionSchemaInvestigationv0alpha1,
+				},
+
+				{
+					Kind:       "InvestigationIndex",
+					Plural:     "InvestigationIndexes",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Schema:     &versionSchemaInvestigationIndexv0alpha1,
 				},
 			},
-		},
-
-		{
-			Kind:       "InvestigationIndex",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
-				{
-					Name:   "v0alpha1",
-					Schema: &versionSchemaInvestigationIndexv0alpha1,
-				},
+			Routes: app.ManifestVersionRoutes{
+				Namespaced: map[string]spec3.PathProps{},
+				Cluster:    map[string]spec3.PathProps{},
+				Schemas:    map[string]spec.Schema{},
 			},
 		},
 	},
-}
-
-func jsonToMap(j string) map[string]any {
-	m := make(map[string]any)
-	json.Unmarshal([]byte(j), &j)
-	return m
 }
 
 func LocalManifest() app.Manifest {
@@ -62,4 +68,69 @@ func LocalManifest() app.Manifest {
 
 func RemoteManifest() app.Manifest {
 	return app.NewAPIServerManifest("investigations")
+}
+
+var kindVersionToGoType = map[string]resource.Kind{
+	"Investigation/v0alpha1":      v0alpha1.InvestigationKind(),
+	"InvestigationIndex/v0alpha1": v0alpha1.InvestigationIndexKind(),
+}
+
+// ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
+// If there is no association for the provided Kind and Version, exists will return false.
+func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exists bool) {
+	goType, exists = kindVersionToGoType[fmt.Sprintf("%s/%s", kind, version)]
+	return goType, exists
+}
+
+var customRouteToGoResponseType = map[string]any{}
+
+// ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
+// kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.
+// If there is no association for the provided kind, version, custom route path, and method, exists will return false.
+// Resource routes (those without a kind) should prefix their route with "<namespace>/" if the route is namespaced (otherwise the route is assumed to be cluster-scope)
+func ManifestCustomRouteResponsesAssociator(kind, version, path, verb string) (goType any, exists bool) {
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	goType, exists = customRouteToGoResponseType[fmt.Sprintf("%s|%s|%s|%s", version, kind, path, strings.ToUpper(verb))]
+	return goType, exists
+}
+
+var customRouteToGoParamsType = map[string]runtime.Object{}
+
+func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goType runtime.Object, exists bool) {
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	goType, exists = customRouteToGoParamsType[fmt.Sprintf("%s|%s|%s|%s", version, kind, path, strings.ToUpper(verb))]
+	return goType, exists
+}
+
+var customRouteToGoRequestBodyType = map[string]any{}
+
+func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	goType, exists = customRouteToGoRequestBodyType[fmt.Sprintf("%s|%s|%s|%s", version, kind, path, strings.ToUpper(verb))]
+	return goType, exists
+}
+
+type GoTypeAssociator struct{}
+
+func NewGoTypeAssociator() *GoTypeAssociator {
+	return &GoTypeAssociator{}
+}
+
+func (g *GoTypeAssociator) KindToGoType(kind, version string) (goType resource.Kind, exists bool) {
+	return ManifestGoTypeAssociator(kind, version)
+}
+func (g *GoTypeAssociator) CustomRouteReturnGoType(kind, version, path, verb string) (goType any, exists bool) {
+	return ManifestCustomRouteResponsesAssociator(kind, version, path, verb)
+}
+func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb string) (goType runtime.Object, exists bool) {
+	return ManifestCustomRouteQueryAssociator(kind, version, path, verb)
+}
+func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
+	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
 }

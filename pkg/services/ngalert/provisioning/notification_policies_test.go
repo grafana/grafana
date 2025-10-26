@@ -189,6 +189,93 @@ func TestUpdatePolicyTree(t *testing.T) {
 		assert.Equal(t, orgID, prov.Calls[0].Arguments[2].(int64))
 	})
 
+	t.Run("ErrRouteConflictingMatchers if the new route has conflicting matchers ", func(t *testing.T) {
+		rev := getDefaultConfigRevision()
+		rev.Config.ExtraConfigs = append(rev.Config.ExtraConfigs, definitions.ExtraConfiguration{
+			Identifier: "test",
+			MergeMatchers: config.Matchers{
+				{
+					Type:  labels.MatchEqual,
+					Name:  "imported",
+					Value: "true",
+				},
+			},
+			AlertmanagerConfig: `{"route":{"receiver":"mimir-receiver"},"receivers":[{"name":"mimir-receiver"}]}`,
+		})
+
+		route := definitions.Route{
+			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+			Routes: []*definitions.Route{
+				{
+					ObjectMatchers: definitions.ObjectMatchers{
+						{
+							Type:  labels.MatchEqual,
+							Name:  "imported",
+							Value: "true",
+						},
+						{
+							Type:  labels.MatchEqual,
+							Name:  "label",
+							Value: "value",
+						},
+					},
+				},
+			},
+		}
+
+		sut, store, _ := createNotificationPolicyServiceSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &rev, nil
+		}
+
+		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, route, models.ProvenanceAPI, defaultVersion)
+		require.ErrorIs(t, err, ErrRouteConflictingMatchers)
+	})
+
+	t.Run("should ignore extra config validation if it is invalid", func(t *testing.T) {
+		extra := definitions.ExtraConfiguration{
+			MergeMatchers: config.Matchers{
+				{
+					Type:  labels.MatchEqual,
+					Name:  "imported",
+					Value: "true",
+				},
+			},
+		}
+		rev := getDefaultConfigRevision()
+		rev.Config.ExtraConfigs = append(rev.Config.ExtraConfigs, extra)
+
+		route := definitions.Route{
+			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+			Routes: []*definitions.Route{
+				{
+					ObjectMatchers: definitions.ObjectMatchers{
+						{
+							Type:  labels.MatchEqual,
+							Name:  "imported",
+							Value: "true",
+						},
+						{
+							Type:  labels.MatchEqual,
+							Name:  "label",
+							Value: "value",
+						},
+					},
+				},
+			},
+		}
+
+		sut, store, _ := createNotificationPolicyServiceSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &rev, nil
+		}
+
+		result, version, err := sut.UpdatePolicyTree(context.Background(), orgID, route, models.ProvenanceAPI, defaultVersion)
+		require.NoError(t, err)
+		assert.Equal(t, route, result)
+		assert.Equal(t, calculateRouteFingerprint(route), version)
+	})
+
 	t.Run("updates Route and sets provenance in transaction if route is valid and version matches", func(t *testing.T) {
 		sut, store, prov := createNotificationPolicyServiceSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {

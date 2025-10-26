@@ -2,9 +2,9 @@ import { Dashboard } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { ResourceList } from 'app/features/apiserver/types';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
@@ -64,7 +64,7 @@ describe('UnifiedDashboardAPI', () => {
 
     it('should fallback to v2 if v1 throws DashboardVersionError', async () => {
       const mockV2Response = { spec: { title: 'test' } };
-      v1Client.getDashboardDTO.mockRejectedValue(new DashboardVersionError('v2alpha1', 'Dashboard is V1 format'));
+      v1Client.getDashboardDTO.mockRejectedValue(new DashboardVersionError('v2beta1', 'Dashboard is V1 format'));
       v2Client.getDashboardDTO.mockResolvedValue(mockV2Response as DashboardWithAccessInfo<DashboardV2Spec>);
 
       const result = await api.getDashboardDTO('123');
@@ -88,7 +88,7 @@ describe('UnifiedDashboardAPI', () => {
         },
       };
 
-      v1Client.getDashboardDTO.mockRejectedValue(new DashboardVersionError('v2alpha1', 'Dashboard is V1 format'));
+      v1Client.getDashboardDTO.mockRejectedValue(new DashboardVersionError('v2beta1', 'Dashboard is V1 format'));
       v2Client.getDashboardDTO.mockImplementation((params) => {
         const actualClient = jest.requireActual('./v2').K8sDashboardV2API;
         const client = new actualClient();
@@ -152,7 +152,7 @@ describe('UnifiedDashboardAPI', () => {
 
   describe('deleteDashboard', () => {
     it('should not try other version if fails', async () => {
-      v1Client.deleteDashboard.mockRejectedValue(new DashboardVersionError('v2alpha1', 'Dashboard is V1 format'));
+      v1Client.deleteDashboard.mockRejectedValue(new DashboardVersionError('v2beta1', 'Dashboard is V1 format'));
 
       try {
         await api.deleteDashboard('123', true);
@@ -188,7 +188,7 @@ describe('UnifiedDashboardAPI', () => {
           {
             metadata: { name: 'v2-dash', resourceVersion: '123', creationTimestamp: '2023-01-01T00:00:00Z' },
             spec: null,
-            status: { conversion: { failed: true, storedVersion: 'v2alpha1', error: 'conversion failed' } },
+            status: { conversion: { failed: true, storedVersion: 'v2beta1', error: 'conversion failed' } },
           },
           {
             kind: 'Dashboard',
@@ -200,13 +200,13 @@ describe('UnifiedDashboardAPI', () => {
         ],
       };
       const mockV2Response = {
-        apiVersion: 'dashboard.grafana.app/v2alpha1',
+        apiVersion: 'dashboard.grafana.app/v2beta1',
         kind: 'DashboardList',
         metadata: { resourceVersion: '456' },
         items: [
           {
             kind: 'Dashboard',
-            apiVersion: 'dashboard.grafana.app/v2alpha1',
+            apiVersion: 'dashboard.grafana.app/v2beta1',
             metadata: { name: 'v2-dash', resourceVersion: '456', creationTimestamp: '2023-01-01T00:00:00Z' },
             spec: { title: 'v2', elements: {} },
             status: {},
@@ -273,7 +273,7 @@ describe('UnifiedDashboardAPI', () => {
 
     it('should use v2 client for v2 dashboard resource', async () => {
       const mockV2Dashboard = {
-        apiVersion: 'dashboard.grafana.app/v2alpha1',
+        apiVersion: 'dashboard.grafana.app/v2beta1',
         kind: 'Dashboard',
         metadata: {
           name: 'dash-1',

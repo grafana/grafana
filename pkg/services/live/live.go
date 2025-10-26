@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/centrifugal/centrifuge"
-	"github.com/go-redis/redis/v8"
 	"github.com/gobwas/glob"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -25,7 +25,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -39,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -84,7 +82,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	pluginStore pluginstore.Store, pluginClient plugins.Client, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore db.DB, secretsService secrets.Service,
 	usageStatsService usagestats.Service, queryDataService query.Service, toggles featuremgmt.FeatureToggles,
-	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService, annotationsRepo annotations.Repository,
+	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
 	orgService org.Service, configProvider apiserver.RestConfigProvider) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
@@ -198,6 +196,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
 
 	// Testing watch with just the provisioning support -- this will be removed when it is well validated
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if toggles.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		g.GrafanaScope.Features["watch"] = features.NewWatchRunner(g.Publish, configProvider)
 	}
@@ -641,6 +640,20 @@ func runConcurrentlyIfNeeded(ctx context.Context, semaphore chan struct{}, fn fu
 	return nil
 }
 
+func (g *GrafanaLive) checkIDTokenExpirationAndRefresh(user identity.Requester, client *centrifuge.Client) bool {
+	if !identity.IsIDTokenExpired(user) {
+		return false
+	}
+
+	logger.Debug("ID token expired, triggering refresh", "user", client.UserID(), "client", client.ID())
+	err := g.node.Refresh(client.UserID(), centrifuge.WithRefreshExpired(true))
+	if err != nil {
+		logger.Error("Failed to refresh expired ID token", "user", client.UserID(), "client", client.ID(), "error", err)
+	}
+
+	return true
+}
+
 func (g *GrafanaLive) HandleDatasourceDelete(orgID int64, dsUID string) {
 	if g.runStreamManager == nil {
 		return
@@ -676,6 +689,12 @@ func (g *GrafanaLive) handleOnRPC(clientContextWithSpan context.Context, client 
 		logger.Error("No user found in context", "user", client.UserID(), "client", client.ID(), "method", e.Method)
 		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
 	}
+
+	// Check if ID token is expired and trigger refresh if needed
+	if expired := g.checkIDTokenExpirationAndRefresh(user, client); expired {
+		return centrifuge.RPCReply{}, centrifuge.ErrorExpired
+	}
+
 	var req dtos.MetricRequest
 	err := json.Unmarshal(e.Data, &req)
 	if err != nil {
@@ -710,6 +729,11 @@ func (g *GrafanaLive) handleOnSubscribe(clientContextWithSpan context.Context, c
 	if !ok {
 		logger.Error("No user found in context", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+	}
+
+	// Check if ID token is expired and trigger refresh if needed
+	if expired := g.checkIDTokenExpirationAndRefresh(user, client); expired {
+		return centrifuge.SubscribeReply{}, centrifuge.ErrorExpired
 	}
 
 	// See a detailed comment for StripOrgID about orgID management in Live.
@@ -811,6 +835,11 @@ func (g *GrafanaLive) handleOnPublish(clientCtxWithSpan context.Context, client 
 	if !ok {
 		logger.Error("No user found in context", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 		return centrifuge.PublishReply{}, centrifuge.ErrorInternal
+	}
+
+	// Check if ID token is expired and trigger refresh if needed
+	if expired := g.checkIDTokenExpirationAndRefresh(user, client); expired {
+		return centrifuge.PublishReply{}, centrifuge.ErrorExpired
 	}
 
 	// See a detailed comment for StripOrgID about orgID management in Live.

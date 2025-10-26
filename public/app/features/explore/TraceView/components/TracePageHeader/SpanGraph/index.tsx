@@ -14,10 +14,10 @@
 
 import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
-import * as React from 'react';
+import { memo } from 'react';
 
-import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '../../index';
-import { TraceSpan, Trace } from '../../types';
+import { ViewRange, TUpdateViewRangeTimeFunction, ViewRangeTimeUpdate } from '../../TraceTimelineViewer/types';
+import { Trace, TraceSpan } from '../../types/trace';
 
 import CanvasSpanGraph from './CanvasSpanGraph';
 import TickLabels from './TickLabels';
@@ -65,13 +65,8 @@ function getItems(trace: Trace): SpanItem[] {
 
 const memoizedGetitems = memoizeOne(getItems);
 
-export default class SpanGraph extends React.PureComponent<SpanGraphProps> {
-  static defaultProps = {
-    height: DEFAULT_HEIGHT,
-  };
-
-  render() {
-    const { height, trace, viewRange, updateNextViewRangeTime, updateViewRangeTime } = this.props;
+const SpanGraph = memo(
+  ({ height = DEFAULT_HEIGHT, trace, viewRange, updateNextViewRangeTime, updateViewRangeTime }: SpanGraphProps) => {
     const styles = getStyles();
 
     if (!trace) {
@@ -87,7 +82,7 @@ export default class SpanGraph extends React.PureComponent<SpanGraphProps> {
           <ViewingLayer
             viewRange={viewRange}
             numTicks={TIMELINE_TICK_INTERVAL}
-            height={height || DEFAULT_HEIGHT}
+            height={height}
             updateViewRangeTime={updateViewRangeTime}
             updateNextViewRangeTime={updateNextViewRangeTime}
           />
@@ -95,4 +90,8 @@ export default class SpanGraph extends React.PureComponent<SpanGraphProps> {
       </div>
     );
   }
-}
+);
+
+SpanGraph.displayName = 'SpanGraph';
+
+export default SpanGraph;

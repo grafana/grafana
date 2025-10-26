@@ -92,7 +92,11 @@ describe('Plugin Extensions / Utils', () => {
       // Check if the right components are selected
       const limitedComponents = getLimitedComponentsToRender({ props, components, limit: 3 });
       const rendered = render(
-        <>{limitedComponents?.map((Component, index) => <Component key={index} {...props} />)}</>
+        <>
+          {limitedComponents?.map((Component, index) => (
+            <Component key={index} {...props} />
+          ))}
+        </>
       );
 
       expect(rendered.getByText('Test 1')).toBeInTheDocument();
@@ -104,11 +108,15 @@ describe('Plugin Extensions / Utils', () => {
 
     test('should work when using class components', () => {
       const props = {};
+      // this specifically needs to be a class component
+      // eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
       const Component1 = class extends React.Component<{}> {
         render() {
           return <div>Test 1</div>;
         }
       };
+      // this specifically needs to be a class component
+      // eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
       const Component2 = class extends React.Component<{}> {
         render() {
           return <div>Test 2</div>;
@@ -127,7 +135,11 @@ describe('Plugin Extensions / Utils', () => {
       // Check if the right components are selected
       const limitedComponents = getLimitedComponentsToRender({ props, components, limit: 1 });
       const rendered = render(
-        <>{limitedComponents?.map((Component, index) => <Component key={index} {...props} />)}</>
+        <>
+          {limitedComponents?.map((Component, index) => (
+            <Component key={index} {...props} />
+          ))}
+        </>
       );
 
       expect(rendered.getByText('Test 1')).toBeInTheDocument();
@@ -158,7 +170,11 @@ describe('Plugin Extensions / Utils', () => {
         pluginId: ['plugin-id-2', 'plugin-id-3'],
       });
       const rendered = render(
-        <>{limitedComponents?.map((Component, index) => <Component key={index} {...props} />)}</>
+        <>
+          {limitedComponents?.map((Component, index) => (
+            <Component key={index} {...props} />
+          ))}
+        </>
       );
 
       expect(rendered.getByText('Test 2')).toBeInTheDocument();

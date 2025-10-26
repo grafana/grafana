@@ -9,7 +9,7 @@ This is a Flamegraph component that is used in Grafana and Pyroscope web app to 
 Currently this library exposes single component `Flamegraph` that renders whole visualization used for profiling which contains a header, a table representation of the data and a flamegraph.
 
 ```tsx
-import { Flamegraph } from '@grafana/flamegraph';
+import { FlameGraph } from '@grafana/flamegraph';
 
 <FlameGraph
   getTheme={() => createTheme({ colors: { mode: 'dark' } })}

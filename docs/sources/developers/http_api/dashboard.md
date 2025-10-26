@@ -568,8 +568,6 @@ Gets a dashboard via the dashboard uid.
 - namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
 - uid: the unique identifier of the dashboard to update. this will be the _name_ in the dashboard response
 
-Note: For large dashboards, add `/dto` to the end of the URL to get the full dashboard body.
-
 **Required permissions**
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.

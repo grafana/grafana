@@ -371,6 +371,10 @@ enabled = false
 loggers = file
 # Keep dashboard content in the logs (request or response fields); this can significantly increase the size of your logs.
 log_dashboard_content = false
+# Whether to record data source queries' request body. This can significantly increase the size of your logs. Enabled by default.
+log_datasource_query_request_body = true
+# Whether to record data source queries' response body. This can significantly increase the size of your logs. Enabled by default.
+log_datasource_query_response_body = true
 # Keep requests and responses body; this can significantly increase the size of your logs.
 verbose = false
 # Write an audit log for every status code.
@@ -420,9 +424,11 @@ tenant_id =
 
 If you have multiple Grafana instances sending logs to the same Loki service or if you are using Loki for non-audit logs, audit logs come with additional labels to help identifying them:
 
-- **host** - OS hostname on which the Grafana instance is running.
-- **grafana_instance** - Application URL.
-- **kind** - `auditing`
+| Label            | Value                                                |
+| ---------------- | ---------------------------------------------------- |
+| host             | OS hostname on which the Grafana instance is running |
+| grafana_instance | Application URL                                      |
+| kind             | `auditing`                                           |
 
 When basic authentication is needed to ingest logs in your Loki instance, you can specify credentials in the URL field. For example:
 

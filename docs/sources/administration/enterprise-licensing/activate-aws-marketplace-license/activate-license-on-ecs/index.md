@@ -79,7 +79,6 @@ To configure Grafana for high availability:
 In this task you configure Grafana Enterprise to validate the license with AWS instead of Grafana Labs.
 
 1. In AWS IAM, create an access policy with the following permissions:
-
    - `"license-manager:CheckoutLicense"`
    - `"license-manager:ListReceivedLicenses"`
    - `"license-manager:GetLicenseUsage"`

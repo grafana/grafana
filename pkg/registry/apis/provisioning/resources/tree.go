@@ -3,14 +3,14 @@ package resources
 import (
 	"context"
 	"fmt"
-	"sort"
+	"sync"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 // FolderTree contains the entire set of folders (at a given snapshot in time) of the Grafana instance.
@@ -31,11 +31,18 @@ type folderTree struct {
 	tree    map[string]string
 	folders map[string]Folder
 	count   int
+	mu      sync.RWMutex
 }
 
 // In determines if the given folder is in the tree at all. That is, it answers "does the folder even exist in the Grafana instance?"
 // An empty folder string means the root folder, and is special-cased to always return true.
 func (t *folderTree) In(folder string) bool {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.in(folder)
+}
+
+func (t *folderTree) in(folder string) bool {
 	_, ok := t.tree[folder]
 	return ok || folder == ""
 }
@@ -48,7 +55,19 @@ func (t *folderTree) In(folder string) bool {
 // If In(folder) or In(baseFolder) is false, this will return ok=false, because it would be undefined behaviour.
 // If baseFolder is not a parent of folder, ok=false is returned.
 func (t *folderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
-	if !t.In(folder) || !t.In(baseFolder) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.dirPath(folder, baseFolder)
+}
+
+// dirPath is the internal implementation that assumes the mutex is already held
+// Needed to avoid deadlock when called from other methods that hold locks like Walk()
+func (t *folderTree) dirPath(folder, baseFolder string) (fid Folder, ok bool) {
+	// Inline In() logic to avoid deadlock when called from other methods that hold locks
+	folderInTree := t.in(folder)
+	baseFolderInTree := t.in(baseFolder)
+
+	if !folderInTree || !baseFolderInTree {
 		return Folder{}, false
 	}
 	if folder == "" && baseFolder != "" {
@@ -77,28 +96,32 @@ func (t *folderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
 }
 
 func (t *folderTree) Add(folder Folder, parent string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	t.tree[folder.ID] = parent
 	t.folders[folder.ID] = folder
 	t.count++
 }
 
 func (t *folderTree) Count() int {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 	return t.count
 }
 
 type WalkFunc func(ctx context.Context, folder Folder, parent string) error
 
 func (t *folderTree) Walk(ctx context.Context, fn WalkFunc) error {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 	toWalk := make([]Folder, 0, len(t.folders))
 	for _, folder := range t.folders {
-		folder, _ := t.DirPath(folder.ID, "")
+		folder, _ := t.dirPath(folder.ID, "")
 		toWalk = append(toWalk, folder)
 	}
 
-	// sort by depth of the paths
-	sort.Slice(toWalk, func(i, j int) bool {
-		return safepath.Depth(toWalk[i].Path) < safepath.Depth(toWalk[j].Path)
-	})
+	// sort by depth (shallowest first)
+	safepath.SortByDepth(toWalk, func(f Folder) string { return f.Path }, true)
 
 	for _, folder := range toWalk {
 		if err := fn(ctx, folder, t.tree[folder.ID]); err != nil {
@@ -126,6 +149,8 @@ func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {
 		Title: meta.FindTitle(item.GetName()),
 		ID:    item.GetName(),
 	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	t.tree[folder.ID] = meta.GetFolder()
 	t.folders[folder.ID] = folder
 	t.count++

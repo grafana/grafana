@@ -37,6 +37,7 @@ import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
+import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 import { combineResponses } from 'app/plugins/datasource/loki/mergeResponses';
@@ -46,6 +47,7 @@ import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
 import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
 
+import type { Options } from './panelcfg.gen';
 import {
   GetFieldLinksFn,
   isCoreApp,
@@ -60,8 +62,8 @@ import {
   isOnLogOptionsChange,
   isOnNewLogsReceivedType,
   isReactNodeArray,
+  isSetDisplayedFields,
   onNewLogsReceivedType,
-  Options,
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
 
@@ -91,6 +93,9 @@ interface LogsPanelProps extends PanelProps<Options> {
    * Called from the "eye" icon in Log Details to request hiding the displayed field. If ommited, a default implementation is used.
    * onClickHideField?: (key: string) => void;
    *
+   * Called from the new Log Details Panel when fields are reordered. If ommited, a default implementation is used.
+   * setDisplayedFields?: (key: string) => void;
+   *
    * Passed to the LogRowMenuCell component to be rendered before the default actions in the menu.
    * logRowMenuIconsBefore?: ReactNode[];
    *
@@ -109,11 +114,25 @@ interface LogsPanelProps extends PanelProps<Options> {
    * controlsStorageKey?: string
    *
    * If controls are enabled, this function is called when a change is made in one of the options from the controls.
-   * onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
+   * onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
    *
    * When the feature toggle newLogsPanel is enabled, you can pass extra options to the LogLineMenu component.
    * These options are an array of items with { label, onClick } or { divider: true } for dividers.
    * logLineMenuCustomItems?: LogLineMenuCustomItem[];
+   *
+   * Use the default, bigger, font size, or a smaller one. Defaults to "default".
+   * fontSize?: 'default' | 'small'
+   *
+   * Set the mode used by the Log Details panel. Displayed as a sidebar, or inline below the log line. Defaults to "inline".
+   * detailsMode?: 'inline' | 'sidebar'
+   *
+   * When showing timestamps, toggle between showing nanoseconds or milliseconds.
+   * timestampResolution?: 'ms' | 'ns'
+   *
+   * Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.
+   * Requires the `otelLogsFormatting`.
+   * @alpha
+   * showLogAttributes?: boolean
    */
 }
 interface LogsPermalinkUrlState {
@@ -130,6 +149,7 @@ export const LogsPanel = ({
   fieldConfig,
   options: {
     showControls,
+    showFieldSelector,
     controlsStorageKey,
     showLabels,
     showTime,
@@ -153,8 +173,13 @@ export const LogsPanel = ({
     onNewLogsReceived,
     fontSize,
     syntaxHighlighting,
+    detailsMode: detailsModeProp,
+    noInteractions,
+    timestampResolution,
+    showLogAttributes,
     ...options
   },
+  height,
   id,
 }: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
@@ -510,10 +535,16 @@ export const LogsPanel = ({
 
   const onClickShowField = isOnClickShowField(options.onClickShowField) ? options.onClickShowField : showField;
   const onClickHideField = isOnClickHideField(options.onClickHideField) ? options.onClickHideField : hideField;
+  const setDisplayedFieldsFn = isSetDisplayedFields(options.setDisplayedFields)
+    ? options.setDisplayedFields
+    : setDisplayedFields;
+
+  // In Dashboards, default to inline. Otherwise, let apps control or have automatic behavior.
+  const detailsMode = detailsModeProp ? detailsModeProp : app === CoreApp.Dashboard ? 'inline' : undefined;
 
   return (
     <>
-      {contextRow && (
+      {(!config.featureToggles.newLogsPanel || !config.featureToggles.newLogContext) && contextRow && (
         <LogRowContextModal
           open={contextRow !== null}
           row={contextRow}
@@ -524,17 +555,36 @@ export const LogsPanel = ({
           getLogRowContextUi={getLogRowContextUi}
         />
       )}
+      {config.featureToggles.newLogsPanel && config.featureToggles.newLogContext && getLogRowContext && contextRow && (
+        <LogLineContext
+          open={contextRow !== null}
+          log={contextRow}
+          onClose={onCloseContext}
+          getRowContext={(row, options) => getLogRowContext(row, contextRow, options)}
+          getLogRowContextUi={getLogRowContextUi}
+          logOptionsStorageKey={controlsStorageKey}
+          logLineMenuCustomItems={isLogLineMenuCustomItems(logLineMenuCustomItems) ? logLineMenuCustomItems : undefined}
+          timeZone={timeZone}
+          displayedFields={displayedFields}
+          onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
+          onClickShowField={showField}
+          onClickHideField={hideField}
+        />
+      )}
       {config.featureToggles.newLogsPanel && (
         <div
           onMouseLeave={onLogContainerMouseLeave}
           className={style.logListContainer}
+          style={height ? { minHeight: height } : undefined}
           ref={(element: HTMLDivElement) => setScrollElement(element)}
         >
           {deduplicatedRows.length > 0 && scrollElement && (
             <LogList
               app={isCoreApp(app) ? app : CoreApp.Dashboard}
               containerElement={scrollElement}
+              dataFrames={panelData.series}
               dedupStrategy={dedupStrategy}
+              detailsMode={detailsMode}
               displayedFields={displayedFields}
               enableLogDetails={enableLogDetails}
               fontSize={fontSize}
@@ -548,6 +598,7 @@ export const LogsPanel = ({
               logs={deduplicatedRows}
               logSupportsContext={showContextToggle}
               loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
+              noInteractions={noInteractions}
               onClickFilterLabel={
                 isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : defaultOnClickFilterLabel
               }
@@ -565,12 +616,18 @@ export const LogsPanel = ({
               onOpenContext={onOpenContext}
               onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
               permalinkedLogId={getLogsPanelState()?.logs?.id ?? undefined}
+              prettifyJSON={prettifyLogMessage}
+              setDisplayedFields={setDisplayedFieldsFn}
               showControls={Boolean(showControls)}
+              showFieldSelector={showFieldSelector}
+              showLogAttributes={showLogAttributes}
               showTime={showTime}
+              showUniqueLabels={showLabels}
               sortOrder={sortOrder}
               logOptionsStorageKey={storageKey}
               syntaxHighlighting={syntaxHighlighting}
               timeRange={data.timeRange}
+              timestampResolution={timestampResolution}
               timeZone={timeZone}
               wrapLogMessage={wrapLogMessage}
             />
@@ -629,6 +686,7 @@ export const LogsPanel = ({
                 logRowMenuIconsAfter={isReactNodeArray(logRowMenuIconsAfter) ? logRowMenuIconsAfter : undefined}
                 // Ascending order causes scroll to stick to the bottom, so previewing is futile
                 renderPreview={isAscending ? false : true}
+                timeRange={data.timeRange}
               />
             </InfiniteScroll>
             {showCommonLabels && isAscending && renderCommonLabels()}
@@ -682,6 +740,7 @@ export const LogsPanel = ({
             logOptionsStorageKey={controlsStorageKey}
             // Ascending order causes scroll to stick to the bottom, so previewing is futile
             renderPreview={isAscending ? false : true}
+            timeRange={data.timeRange}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}
         </div>
@@ -700,6 +759,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flex: 1,
     flexDirection: 'column',
+    overflow: 'hidden',
   }),
   controlledLogsContainer: css({
     height: '100%',

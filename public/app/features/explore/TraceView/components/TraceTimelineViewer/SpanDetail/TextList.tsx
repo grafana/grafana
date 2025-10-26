@@ -15,9 +15,10 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   TextList: css({
     maxHeight: '450px',
     overflow: 'auto',
@@ -32,7 +33,7 @@ const getStyles = () => ({
     padding: '0.25rem 0.5rem',
     verticalAlign: 'top',
     '&:nth-child(2n)': {
-      background: '#f5f5f5',
+      background: theme.colors.background.secondary,
     },
   }),
 });

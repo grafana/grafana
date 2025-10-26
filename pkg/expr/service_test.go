@@ -11,6 +11,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -19,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -60,7 +63,7 @@ func TestService(t *testing.T) {
 
 	s, req := newMockQueryService(resp, queries)
 
-	pl, err := s.BuildPipeline(req)
+	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
 	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
@@ -134,7 +137,7 @@ func TestDSQueryError(t *testing.T) {
 
 	s, req := newMockQueryService(resp, queries)
 
-	pl, err := s.BuildPipeline(req)
+	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
 	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
@@ -145,6 +148,25 @@ func TestDSQueryError(t *testing.T) {
 	require.ErrorAs(t, res.Responses["B"].Error, &utilErr)
 	require.ErrorIs(t, utilErr, DependencyError)
 	require.Equal(t, fp(42), res.Responses["C"].Frames[0].Fields[0].At(0))
+}
+
+func TestParseError(t *testing.T) {
+	resp := map[string]backend.DataResponse{}
+
+	queries := []Query{
+		{
+			RefID:      "A",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "asdf" }`),
+		},
+	}
+
+	s, req := newMockQueryService(resp, queries)
+
+	_, err := s.BuildPipeline(t.Context(), req)
+	require.ErrorContains(t, err, "parse")
+	require.ErrorContains(t, err, "math")
+	require.ErrorContains(t, err, "asdf")
 }
 
 func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
@@ -194,12 +216,13 @@ func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
 				converter: &ResultConverter{
 					Features: features,
 				},
+				tracer: &testTracer{},
 			}
 
 			req := &Request{Queries: queries, User: &user.SignedInUser{}}
 
 			// Build the pipeline
-			pipeline, err := s.BuildPipeline(req)
+			pipeline, err := s.BuildPipeline(t.Context(), req)
 			require.NoError(t, err)
 
 			node := pipeline[0]
@@ -255,5 +278,25 @@ func newMockQueryService(responses map[string]backend.DataResponse, queries []Qu
 			Features: features,
 			Tracer:   tracing.InitializeTracerForTest(),
 		},
+		qsDatasourceClientBuilder: dsquerierclient.NewNullQSDatasourceClientBuilder(),
 	}, &Request{Queries: queries, User: &user.SignedInUser{}}
+}
+
+func newMockQueryServiceWithMetricsRegistry(
+	responses map[string]backend.DataResponse,
+	queries []Query,
+	reg *prometheus.Registry,
+) (*Service, *Request) {
+	s, req := newMockQueryService(responses, queries)
+	// Replace the default metrics with a set bound to our private registry.
+	s.metrics = metrics.NewSSEMetrics(reg)
+	return s, req
+}
+
+// Return the value of a prometheus counter with the given labels to test if it has been incremented, if the labels don't exist 0 will still be returned.
+func counterVal(t *testing.T, cv *prometheus.CounterVec, labels ...string) float64 {
+	t.Helper()
+	ch, err := cv.GetMetricWithLabelValues(labels...)
+	require.NoError(t, err)
+	return testutil.ToFloat64(ch)
 }

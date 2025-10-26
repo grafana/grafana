@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
@@ -11,7 +12,7 @@ import { ButtonSelect } from '../../../Dropdown/ButtonSelect';
 import { FilterInput } from '../../../FilterInput/FilterInput';
 import { Label } from '../../../Forms/Label';
 import { Stack } from '../../../Layout/Stack/Stack';
-import { FilterType } from '../types';
+import { FilterType, TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
 import { FilterList } from './FilterList';
@@ -35,9 +36,9 @@ const OPERATORS = Object.values(operatorSelectableValues);
 
 interface Props {
   name: string;
-  rows: any[];
-  filterValue: any;
-  setFilter: (value: any) => void;
+  rows: TableRow[];
+  filterValue?: Array<SelectableValue<unknown>>;
+  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   onClose: () => void;
   field?: Field;
   searchFilter: string;
@@ -64,6 +65,7 @@ export const FilterPopup = ({
   const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
   const [matchCase, setMatchCase] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const onCancel = useCallback((event?: React.MouseEvent) => onClose(), [onClose]);
 
@@ -101,6 +103,7 @@ export const FilterPopup = ({
     [setFilter, onClose] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
+  const filterInputPlaceholder = t('grafana-ui.table.filter-popup-input-placeholder', 'Filter values');
   const clearFilterVisible = useMemo(() => filterValue !== undefined, [filterValue]);
   const styles = useStyles2(getStyles);
 
@@ -108,7 +111,12 @@ export const FilterPopup = ({
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
       {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-      <div className={styles.filterContainer} onClick={stopPropagation}>
+      <div
+        className={styles.filterContainer}
+        onClick={stopPropagation}
+        data-testid={selectors.components.Panels.Visualization.TableNG.Filters.Container}
+        ref={containerRef}
+      >
         <Stack direction="column">
           <Stack alignItems="center">
             {field && <Label className={styles.label}>{getDisplayName(field)}</Label>}
@@ -118,6 +126,7 @@ export const FilterPopup = ({
               onChange={setOperator}
               value={operator}
               tooltip={operator.description}
+              root={containerRef.current ?? undefined}
             />
           </Stack>
 
@@ -125,11 +134,13 @@ export const FilterPopup = ({
 
           <Stack gap={1}>
             <FilterInput
-              placeholder={t('grafana-ui.table.filter-popup-input-placeholder', 'Filter values')}
+              placeholder={filterInputPlaceholder}
+              title={filterInputPlaceholder}
               onChange={setSearchFilter}
               value={searchFilter}
             />
             <Button
+              tooltip={t('grafana-ui.table.filter-popup-aria-label-match-case', 'Match case')}
               variant="secondary"
               style={{ color: matchCase ? theme.colors.text.link : theme.colors.text.disabled }}
               onClick={() => {

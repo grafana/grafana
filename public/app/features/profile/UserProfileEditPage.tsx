@@ -6,7 +6,7 @@ import { usePluginComponents } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 
 import UserOrganizations from './UserOrganizations';
 import UserProfileEditForm from './UserProfileEditForm';

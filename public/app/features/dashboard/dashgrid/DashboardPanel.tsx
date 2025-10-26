@@ -1,7 +1,7 @@
 import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 
 import { initPanelState } from '../../panel/state/actions';
 import { setPanelInstanceState } from '../../panel/state/reducers';

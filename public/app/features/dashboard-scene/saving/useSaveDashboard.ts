@@ -1,19 +1,22 @@
 import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import appEvents from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { SaveDashboardAsOptions, SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
-import { useDispatch } from 'app/types';
 import { DashboardSavedEvent } from 'app/types/events';
+import { useDispatch } from 'app/types/store';
 
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
 import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardInteractions } from '../utils/interactions';
+import { trackDashboardSceneCreatedOrSaved } from '../utils/tracking';
 
 export function useSaveDashboard(isCopy = false) {
   const dispatch = useDispatch();
@@ -54,25 +57,33 @@ export function useSaveDashboard(isCopy = false) {
           throw result.error;
         }
 
-        const resultData = result.data;
+        // result.data is readonly so spreading to allow for slug edits
+        const resultData: typeof result.data = { ...result.data };
+
+        // TODO: use slug from response once implemented
+        // reuse existing slug to avoid "Unsaved changes" modal after save
+        //   due to slugify logic difference between frontend and backend
+        if (!result.data.slug && scene.state.meta.slug) {
+          const slug = scene.state.meta.slug;
+          resultData.slug = slug;
+          resultData.url = `${result.data.url}/${slug}`;
+        }
+
         scene.saveCompleted(saveModel, resultData, options.folderUid);
 
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());
-        notifyApp.success('Dashboard saved');
+        notifyApp.success(t('dashboard-scene.use-save-dashboard.message-dashboard-saved', 'Dashboard saved'));
 
-        //Update local storage dashboard to handle things like last used datasource
         updateDashboardUidLastUsedDatasource(resultData.uid);
 
         if (isCopy) {
-          reportInteraction('grafana_dashboard_copied', {
-            name: saveModel.title,
-            url: resultData.url,
-          });
+          DashboardInteractions.dashboardCopied({ name: saveModel.title || '', url: resultData.url });
         } else {
-          reportInteraction(`grafana_dashboard_${resultData.uid ? 'saved' : 'created'}`, {
-            name: saveModel.title,
-            url: resultData.url,
+          trackDashboardSceneCreatedOrSaved(!!options.isNew, scene, {
+            name: saveModel.title || '',
+            url: resultData.url || '',
+            expression_types: scene.getExpressionTypes(saveModel),
           });
         }
 

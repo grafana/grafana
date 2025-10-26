@@ -99,7 +99,7 @@
     :versions: []
     :when: 2025-05-03 13:10:00.000000000 Z
 - - :license
-  - github.com/grafana/grafana/pkg/apis/secret
+  - github.com/grafana/grafana/apps/secret
   - unknown
   - :who: Carl Bergquist
     :why: repository is owned by Grafana Labs

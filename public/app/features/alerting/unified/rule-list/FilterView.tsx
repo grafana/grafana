@@ -12,7 +12,7 @@ import { hashRule } from '../utils/rule-id';
 
 import { DataSourceRuleLoader } from './DataSourceRuleLoader';
 import { FilterProgressState, FilterStatus } from './FilterViewStatus';
-import { GrafanaRuleLoader } from './GrafanaRuleLoader';
+import { GrafanaRuleListItem } from './GrafanaRuleListItem';
 import LoadMoreHelper from './LoadMoreHelper';
 import { UnknownRuleListItem } from './components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
@@ -154,15 +154,15 @@ function FilterViewResults({ filterState }: FilterViewProps) {
           switch (origin) {
             case 'grafana':
               return (
-                <GrafanaRuleLoader
-                  key={key}
-                  ruleIdentifier={{ ruleSourceName: 'grafana', uid: rule.uid }}
+                <GrafanaRuleListItem
+                  rule={rule}
                   groupIdentifier={groupIdentifier}
                   namespaceName={ruleWithOrigin.namespaceName}
+                  showLocation={true}
                 />
               );
             case 'datasource':
-              return <DataSourceRuleLoader key={key} rule={rule} groupIdentifier={groupIdentifier} />;
+              return <DataSourceRuleLoader key={key} ruleWithOrigin={ruleWithOrigin} />;
             default:
               return (
                 <UnknownRuleListItem
@@ -212,7 +212,9 @@ function getGrafanaRuleKey(ruleWithOrigin: GrafanaRuleWithOrigin) {
 function getDataSourceRuleKey(ruleWithOrigin: PromRuleWithOrigin) {
   const {
     rule,
+    rulePositionHash,
     groupIdentifier: { rulesSource, namespace, groupName },
   } = ruleWithOrigin;
-  return `${rulesSource.name}-${namespace.name}-${groupName}-${rule.name}-${rule.type}-${hashRule(rule)}`;
+
+  return `${rulesSource.name}-${namespace.name}-${groupName}-${rule.name}-${rule.type}-${hashRule(rule)}-${rulePositionHash}`;
 }

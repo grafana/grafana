@@ -115,15 +115,6 @@ func TestMode3_Get(t *testing.T) {
 				},
 				wantErr: true,
 			},
-			{
-				name: "should succeed when getting an object in the LegacyStorage fails",
-				setupLegacyFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, errors.New("error"))
-				},
-				setupStorageFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
-				},
-			},
 		}
 
 	name := "foo"

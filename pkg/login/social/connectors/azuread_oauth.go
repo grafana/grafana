@@ -12,8 +12,8 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	jose "github.com/go-jose/go-jose/v3"
-	"github.com/go-jose/go-jose/v3/jwt"
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 
@@ -29,12 +29,16 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded credential
+const (
+	forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded credential
+	domainHintKey       = "domain_hint"
+)
 
 var (
 	ExtraAzureADSettingKeys = map[string]ExtraKeyInfo{
 		forceUseGraphAPIKey:     {Type: Bool, DefaultValue: false},
 		allowedOrganizationsKey: {Type: String},
+		domainHintKey:           {Type: String},
 	}
 	errAzureADMissingGroups = &SocialError{"either the user does not have any group membership or the groups claim is missing from the token."}
 )
@@ -106,9 +110,7 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper 
 		appendUniqueScope(provider.Config, social.OfflineAccessScope)
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettings.RegisterReloadable(social.AzureADProviderName, provider)
-	}
+	ssoSettings.RegisterReloadable(social.AzureADProviderName, provider)
 
 	return provider
 }
@@ -122,7 +124,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		return nil, ErrIDTokenNotFound
 	}
 
-	parsedToken, err := jwt.ParseSigned(idToken.(string))
+	parsedToken, err := jwt.ParseSigned(idToken.(string), []jose.SignatureAlgorithm{jose.PS256, jose.RS256, jose.RS512, jose.ES256})
 	if err != nil {
 		return nil, fmt.Errorf("error parsing id token: %w", err)
 	}
@@ -290,7 +292,8 @@ func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOS
 		validateAllowedGroups,
 		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
 		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
-		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"))
+		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"),
+		validation.DomainValidator(info.Extra[domainHintKey], "Domain Hint"))
 }
 
 func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester) error {
@@ -323,6 +326,17 @@ func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client,
 		return nil, &SocialError{"AzureAD OAuth: tenant mismatch"}
 	}
 	return claims, nil
+}
+
+func (s *SocialAzureAD) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	if domainHint, ok := s.info.Extra[domainHintKey]; ok && domainHint != "" {
+		opts = append(opts, oauth2.SetAuthURLParam("domain_hint", domainHint))
+	}
+
+	return s.getAuthCodeURL(state, opts...)
 }
 
 func (s *SocialAzureAD) validateIDTokenSignature(ctx context.Context, client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {
@@ -534,7 +548,7 @@ func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Tok
 		tenantID := claims.TenantID
 		// If tenantID wasn't found in the id_token, parse access token
 		if tenantID == "" {
-			parsedToken, err := jwt.ParseSigned(token.AccessToken)
+			parsedToken, err := jwt.ParseSigned(token.AccessToken, []jose.SignatureAlgorithm{jose.PS256, jose.RS256, jose.RS512, jose.ES256})
 			if err != nil {
 				return "", fmt.Errorf("error parsing access token: %w", err)
 			}

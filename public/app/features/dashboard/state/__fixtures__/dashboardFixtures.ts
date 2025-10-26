@@ -8,7 +8,7 @@ import {
   VariableModel,
 } from '@grafana/schema';
 import { GetVariables } from 'app/features/variables/state/selectors';
-import { DashboardMeta } from 'app/types';
+import { DashboardMeta } from 'app/types/dashboard';
 
 import { DashboardModel } from '../DashboardModel';
 

@@ -18,7 +18,8 @@ import {
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { queryLogsSample, queryLogsVolume } from 'app/features/logs/logsModel';
-import { createAsyncThunk, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
+import { ExploreItemState } from 'app/types/explore';
+import { createAsyncThunk, StoreState, ThunkDispatch } from 'app/types/store';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import * as richHistory from '../../../core/utils/richHistory';
@@ -419,6 +420,36 @@ describe('changeQueries', () => {
         })
       );
 
+      expect(actions.changeQueriesAction).toHaveBeenCalled();
+      expect(actions.importQueries).not.toHaveBeenCalled();
+    });
+
+    it('should not import queries when skipAutoImport is true', async () => {
+      jest.spyOn(actions, 'importQueries');
+      jest.spyOn(actions, 'changeQueriesAction');
+
+      const { dispatch } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              datasourceInstance: datasources[0],
+              queries: [{ refId: 'A', datasource: datasources[0].getRef() }],
+            },
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      await dispatch(
+        changeQueries({
+          queries: [{ refId: 'A', datasource: datasources[0].getRef(), queryType: 'someValue' }],
+          exploreId: 'left',
+          options: {
+            skipAutoImport: true,
+          },
+        })
+      );
       expect(actions.changeQueriesAction).toHaveBeenCalled();
       expect(actions.importQueries).not.toHaveBeenCalled();
     });

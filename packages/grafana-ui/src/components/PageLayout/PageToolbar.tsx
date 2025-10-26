@@ -34,7 +34,7 @@ export interface Props {
   forceShowLeftItems?: boolean;
 }
 
-/** @alpha */
+/** @deprecated Use Page instead */
 export const PageToolbar = memo(
   ({
     title,

@@ -8,8 +8,9 @@ import { Button, Icon, Modal, useStyles2, IconName } from '@grafana/ui';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
-import { AzureQueryEditorFieldProps, AzureMonitorResource } from '../../types';
-import ResourcePicker from '../ResourcePicker';
+import { AzureMonitorResource } from '../../types/query';
+import { AzureQueryEditorFieldProps } from '../../types/types';
+import ResourcePicker from '../ResourcePicker/ResourcePicker';
 import getStyles from '../ResourcePicker/styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseMultipleResourceDetails, setResources } from '../ResourcePicker/utils';
@@ -81,6 +82,7 @@ const ResourceField = ({
           disableRow={disableRow}
           renderAdvanced={renderAdvanced}
           selectionNotice={selectionNotice}
+          datasource={datasource}
         />
       </Modal>
       <Field

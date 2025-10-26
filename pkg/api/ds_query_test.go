@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -60,16 +61,27 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 				return &backend.QueryDataResponse{Responses: resp}, nil
 			},
 		},
-		plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
-			PluginList: []pluginstore.Plugin{
-				{
-					JSONData: plugins.JSONData{
-						ID: "grafana",
+		plugincontext.ProvideService(
+			cfg,
+			localcache.ProvideService(),
+			&pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{
+					{
+						JSONData: plugins.JSONData{
+							ID: "grafana",
+						},
 					},
 				},
 			},
-		}, &fakeDatasources.FakeCacheService{}, &fakeDatasources.FakeDataSourceService{},
-			pluginSettings.ProvideService(dbtest.NewFakeDB(), secretstest.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider()),
+			&fakeDatasources.FakeCacheService{},
+			&fakeDatasources.FakeDataSourceService{},
+			pluginSettings.ProvideService(
+				dbtest.NewFakeDB(),
+				secretstest.NewFakeSecretsService(),
+			),
+			pluginconfig.NewFakePluginRequestConfigProvider(),
+		),
+		dsquerierclient.NewNullQSDatasourceClientBuilder(),
 	)
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
@@ -252,6 +264,7 @@ func TestDataSourceQueryError(t *testing.T) {
 						&fakeDatasources.FakeCacheService{}, ds,
 						pluginSettings.ProvideService(dbtest.NewFakeDB(),
 							secretstest.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider()),
+					dsquerierclient.NewNullQSDatasourceClientBuilder(),
 				)
 				hs.QuotaService = quotatest.New(false, nil)
 			})

@@ -8,6 +8,7 @@ const (
 	grafanaAppPlatformSquad                     codeowner = "@grafana/grafana-app-platform-squad"
 	grafanaDashboardsSquad                      codeowner = "@grafana/dashboards-squad"
 	grafanaDatavizSquad                         codeowner = "@grafana/dataviz-squad"
+	grafanaDataProSquad                         codeowner = "@grafana/datapro"
 	grafanaFrontendPlatformSquad                codeowner = "@grafana/grafana-frontend-platform"
 	grafanaFrontendSearchNavOrganise            codeowner = "@grafana/grafana-search-navigate-organise"
 	grafanaBackendServicesSquad                 codeowner = "@grafana/grafana-backend-services-squad"
@@ -31,4 +32,5 @@ const (
 	growthAndOnboarding                         codeowner = "@grafana/growth-and-onboarding"
 	grafanaDatasourcesCoreServicesSquad         codeowner = "@grafana/grafana-datasources-core-services"
 	grafanaBackendGroup                         codeowner = "@grafana/grafana-backend-group"
+	grafanaPathfinderSquad                      codeowner = "@grafana/pathfinder"
 )
