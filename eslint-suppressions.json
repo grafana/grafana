@@ -2616,11 +2616,6 @@
       "count": 1
     }
   },
-  "public/app/features/datasources/components/DataSourceLoadError.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/datasources/components/DataSourcePluginState.tsx": {
     "no-restricted-syntax": {
       "count": 3
