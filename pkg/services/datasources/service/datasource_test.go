@@ -63,6 +63,15 @@ func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *data
 	return nil, datasources.ErrDataSourceNotFound
 }
 
+func (d *dataSourceMockRetriever) GetDataSourceWithType(ctx context.Context, uid string, orgID int64, dsType string) (*datasources.DataSource, error) {
+	for _, dataSource := range d.res {
+		if uid == dataSource.UID && orgID == dataSource.OrgID && dsType == dataSource.Type {
+			return dataSource, nil
+		}
+	}
+	return nil, datasources.ErrDataSourceNotFound
+}
+
 func TestIntegrationService_AddDataSource(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

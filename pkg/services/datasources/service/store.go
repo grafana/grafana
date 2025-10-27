@@ -24,6 +24,7 @@ import (
 // Store is the interface for the datasource Service's storage.
 type Store interface {
 	GetDataSource(context.Context, *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
+	GetDataSourceWithType(context.Context, string, int64, string) (*datasources.DataSource, error)
 	GetDataSources(context.Context, *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error)
 	GetDataSourcesByType(context.Context, *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error)
 	DeleteDataSource(context.Context, *datasources.DeleteDataSourceCommand) error
@@ -84,6 +85,38 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 		return nil, err
 	} else if !has {
 		ss.logger.Debug("Data source not found", "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID) // nolint:staticcheck
+		return nil, datasources.ErrDataSourceNotFound
+	}
+
+	return datasource, nil
+}
+
+func (ss *SqlStore) GetDataSourceWithType(ctx context.Context, uid string, orgID int64, dsType string) (*datasources.DataSource, error) {
+	metrics.MDBDataSourceQueryByID.Inc()
+
+	var (
+		dataSource *datasources.DataSource
+		err        error
+	)
+	return dataSource, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		dataSource, err = ss.getDataSourceWithType(ctx, uid, orgID, dsType, sess)
+		return err
+	})
+}
+
+func (ss *SqlStore) getDataSourceWithType(_ context.Context, uid string, orgID int64, dsType string, sess *db.Session) (*datasources.DataSource, error) {
+	datasource := &datasources.DataSource{
+		OrgID: orgID,
+		Type:  dsType,
+		UID:   uid,
+	}
+	has, err := sess.Get(datasource)
+
+	if err != nil {
+		ss.logger.Error("Failed getting data source", "err", err, "uid", uid, "orgId", orgID, "dsType", dsType)
+		return nil, err
+	} else if !has {
+		ss.logger.Error("Failed getting data source", "err", err, "uid", uid, "orgId", orgID, "dsType", dsType)
 		return nil, datasources.ErrDataSourceNotFound
 	}
 
