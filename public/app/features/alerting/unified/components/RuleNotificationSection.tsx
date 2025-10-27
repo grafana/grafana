@@ -12,8 +12,8 @@ import {
   Field,
   Input,
   Label,
+  RadioButtonGroup,
   Stack,
-  Switch,
   Text,
   TextArea,
   TextLink,
@@ -61,46 +61,57 @@ export function RuleNotificationSection() {
       <div className={styles.contentIndented}>
         <Stack direction="column" gap={2}>
           <Stack direction="column" gap={1}>
-            <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={1}>
-              <Label
-                htmlFor={recipientLabelId}
-                description={
-                  useNotificationPolicy ? (
-                    <Text variant="bodySmall" color="secondary">
-                      <Trans i18nKey="alerting.simplified.notification.policy-selected">
-                        Notifications for firing alerts are routed to contact points based on matching labels and the
-                        notification policy tree.
-                      </Trans>
-                    </Text>
-                  ) : (
-                    <Text variant="bodySmall" color="secondary">
-                      <Trans i18nKey="alerting.simplified.notification.contact-point-selected">
-                        Notifications for firing alerts are routed to a selected contact point.
-                      </Trans>
-                    </Text>
-                  )
-                }
-              >
-                <span id={recipientLabelId}>{t('alerting.simplified.notification.recipient.label', 'Recipient')}</span>
-              </Label>
-              <div className={styles.manualRoutingInline}>
-                <Text variant="bodySmall" color="secondary">
-                  {t('alerting.simplified.notification.manual-routing.label', 'Manual routing')}
-                </Text>
-                <Switch
-                  value={manualRouting}
-                  onChange={(e) => {
-                    const next = e.currentTarget.checked;
-                    setValue('manualRouting', next, { shouldDirty: true, shouldValidate: true });
-                    setValue('editorSettings.simplifiedNotificationEditor', next, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    });
-                  }}
-                  aria-labelledby={recipientLabelId}
-                  aria-label={t('alerting.simplified.notification.manual-routing.aria', 'Toggle manual routing')}
-                />
-              </div>
+            <Stack direction="column" gap={1}>
+              <Stack direction="row" alignItems="end" justifyContent="space-between" gap={1}>
+                <Label htmlFor={recipientLabelId}>
+                  <span id={recipientLabelId}>
+                    {t('alerting.simplified.notification.recipient.label', 'Recipient')}
+                  </span>
+                </Label>
+                <div className={styles.manualRoutingInline}>
+                  <RadioButtonGroup
+                    size="sm"
+                    options={[
+                      {
+                        label: t(
+                          'alerting.manual-and-automatic-routing.routing-options.label.contact-point',
+                          'Contact point'
+                        ),
+                        value: 'contact',
+                      },
+                      {
+                        label: t(
+                          'alerting.manual-and-automatic-routing.routing-options.label.notification-policy',
+                          'Notification policy'
+                        ),
+                        value: 'policy',
+                      },
+                    ]}
+                    value={manualRouting ? 'contact' : 'policy'}
+                    onChange={(val: 'contact' | 'policy') => {
+                      const next = val === 'contact';
+                      setValue('manualRouting', next, { shouldDirty: true, shouldValidate: true });
+                      setValue('editorSettings.simplifiedNotificationEditor', next, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+                    }}
+                    aria-label={t('alerting.simplified.notification.manual-routing.aria', 'Toggle manual routing')}
+                  />
+                </div>
+              </Stack>
+              <Text variant="bodySmall" color="secondary">
+                {useNotificationPolicy ? (
+                  <Trans i18nKey="alerting.simplified.notification.policy-selected">
+                    Notifications for firing alerts are routed to contact points based on matching labels and the
+                    notification policy tree.
+                  </Trans>
+                ) : (
+                  <Trans i18nKey="alerting.simplified.notification.contact-point-selected">
+                    Notifications for firing alerts are routed to a selected contact point.
+                  </Trans>
+                )}
+              </Text>
             </Stack>
             {useNotificationPolicy ? (
               <div className={styles.contentTopSpacer}>
@@ -226,6 +237,7 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       gap: theme.spacing(0.5),
       whiteSpace: 'nowrap',
+      maxWidth: '100%',
     }),
   };
 }
