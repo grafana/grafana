@@ -13569,21 +13569,6 @@
         "format-string": "Format string"
       }
     },
-    "format-time-transfomer-editor": {
-      "label-format": "Format",
-      "label-set-timezone": "Set timezone",
-      "label-time-field": "Time field",
-      "tooltip-format": "The output format for the field specified as a <2>Moment.js format string</2> .",
-      "tooltip-timezone-manually": "Set the timezone of the date manually"
-    },
-    "format-time-transformer-editor": {
-      "description": {
-        "set-based-on-time": "Set the output format of a time field"
-      },
-      "name": {
-        "format-time": "Format time"
-      }
-    },
     "get-calculate-field-transform-registry-item": {
       "description": {
         "values-calculate-field": "Use the row values to calculate a new field."
