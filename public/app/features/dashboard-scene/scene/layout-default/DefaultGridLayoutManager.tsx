@@ -63,7 +63,7 @@ interface DefaultGridLayoutManagerState extends SceneObjectState {
 
 export class DefaultGridLayoutManager
   extends SceneObjectBase<DefaultGridLayoutManagerState>
-  implements DashboardLayoutManager, DashboardLayoutGrid
+  implements DashboardLayoutGrid
 {
   public static Component = DefaultGridLayoutManagerRenderer;
 

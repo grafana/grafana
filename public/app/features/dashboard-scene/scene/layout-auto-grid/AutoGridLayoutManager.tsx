@@ -39,10 +39,7 @@ export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
 export const AUTO_GRID_DEFAULT_COLUMN_WIDTH = 'standard';
 export const AUTO_GRID_DEFAULT_ROW_HEIGHT = 'standard';
 
-export class AutoGridLayoutManager
-  extends SceneObjectBase<AutoGridLayoutManagerState>
-  implements DashboardLayoutManager, DashboardLayoutGrid
-{
+export class AutoGridLayoutManager extends SceneObjectBase<AutoGridLayoutManagerState> implements DashboardLayoutGrid {
   public static Component = AutoGridLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;

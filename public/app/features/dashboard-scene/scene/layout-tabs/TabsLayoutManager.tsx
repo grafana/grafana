@@ -35,10 +35,7 @@ interface TabsLayoutManagerState extends SceneObjectState {
   currentTabSlug?: string;
 }
 
-export class TabsLayoutManager
-  extends SceneObjectBase<TabsLayoutManagerState>
-  implements DashboardLayoutManager, DashboardLayoutGroup
-{
+export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> implements DashboardLayoutGroup {
   public static Component = TabsLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;

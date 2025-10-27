@@ -35,7 +35,7 @@ interface RowsLayoutManagerState extends SceneObjectState {
   rows: RowItem[];
 }
 
-export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> implements DashboardLayoutManager {
+export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> implements DashboardLayoutGroup {
   public static Component = RowLayoutManagerRenderer;
   public readonly isDashboardLayoutManager = true;
 
