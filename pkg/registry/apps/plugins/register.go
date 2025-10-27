@@ -43,24 +43,6 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
-<<<<<<< HEAD
-func (p *PluginsAppInstaller) InstallAPIs(
-	server appsdkapiserver.GenericAPIServer,
-	restOptsGetter generic.RESTOptionsGetter,
-) error {
-	pluginMetaGVR := pluginsv0alpha1.PluginMetaKind().GroupVersionResource()
-	replacedStorage := map[schema.GroupVersionResource]rest.Storage{
-		pluginMetaGVR: pluginsapp.NewPluginMetaStorage(request.GetNamespaceMapper(p.cfg)),
-	}
-	wrappedServer := &customStorageWrapper{
-		wrapped: server,
-		replace: replacedStorage,
-	}
-	return p.AppInstaller.InstallAPIs(wrappedServer, restOptsGetter)
-}
-
-=======
->>>>>>> 9efed62277c (Plugins API: Merge meta and installs)
 // GetAuthorizer returns the authorizer for the plugins app.
 func (p *PluginsAppInstaller) GetAuthorizer() authorizer.Authorizer {
 	return pluginsapp.GetAuthorizer()

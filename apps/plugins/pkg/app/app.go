@@ -51,6 +51,11 @@ func New(cfg app.Config) (app.App, error) {
 							return err
 						}
 						logging.DefaultLogger.Debug("fetched plugin", "plugin", plugin)
+						// TODO: Implement this in future PR
+						w.WriteHeader(http.StatusNotImplemented)
+						if _, err := w.Write([]byte("Not implemented")); err != nil {
+							return err
+						}
 						return nil
 					},
 				},
