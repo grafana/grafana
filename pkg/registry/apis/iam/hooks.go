@@ -758,12 +758,12 @@ func (b *IdentityAccessManagementAPIBuilder) BeginRoleUpdate(ctx context.Context
 
 		// Grab a ticket to write to Zanzana
 		wait := time.Now()
-		<-b.zTickets
+		b.zTickets <- true
 		hooksWaitHistogram.WithLabelValues(roleType, "update").Observe(time.Since(wait).Seconds()) // Record wait time
 
 		go func() {
 			defer func() {
-				b.zTickets <- true
+				<-b.zTickets
 			}()
 
 			b.logger.Debug("updating role permissions in zanzana",
