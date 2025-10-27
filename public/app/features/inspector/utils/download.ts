@@ -21,7 +21,7 @@ import { transformToZipkin } from '../../../plugins/datasource/zipkin/utils/tran
  * @param {(Pick<LogsModel, 'meta' | 'rows'>)} logsModel
  * @param {string} title
  */
-export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows'>, title = '') {
+export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows'>, title = '', fields: string[] = []) {
   let textToDownload = '';
 
   logsModel.meta?.forEach((metaItem) => {
@@ -31,7 +31,8 @@ export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows
   textToDownload = textToDownload + '\n\n';
 
   logsModel.rows.forEach((row) => {
-    const newRow = row.timeEpochMs + '\t' + dateTime(row.timeEpochMs).toISOString() + '\t' + row.entry + '\n';
+    const entry = !fields.length ? row.entry : fields.map((field) => row.labels[field] ?? '').join(' ');
+    const newRow = row.timeEpochMs + '\t' + dateTime(row.timeEpochMs).toISOString() + '\t' + entry + '\n';
     textToDownload = textToDownload + newRow;
   });
 
