@@ -87,6 +87,7 @@ func ProvideSyncer(
 }
 
 func (s *syncer) Sync(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !s.featureToggles.IsEnabled(ctx, featuremgmt.FlagPluginInstallAPISync) {
 		return nil
 	}
