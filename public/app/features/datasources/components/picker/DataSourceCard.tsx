@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Card, Icon, Stack, TagList, Text, useTheme2 } from '@grafana/ui';
+import { Card, Icon, TagList, useTheme2 } from '@grafana/ui';
 
 interface DataSourceCardProps {
   ds: DataSourceInstanceSettings;
@@ -34,26 +34,11 @@ export function DataSourceCard({
     >
       <Card.Heading className={styles.heading}>
         <div className={styles.headingContent}>
-          <Stack direction="row" gap={2} alignItems="center" minWidth={0}>
-            <Text color="primary" truncate>
-              {ds.name}
-            </Text>
-            {ds.isDefault && <TagList tags={['default']} />}
-          </Stack>
-          <Stack
-            direction="row"
-            gap={1}
-            alignItems="center"
-            justifyContent={{
-              xs: 'flex-start',
-              sm: 'flex-end',
-            }}
-            minWidth={0}
-            flex={1}
-          >
-            <Text color="secondary" variant="bodySmall" truncate>
-              {description || ds.meta.name}
-            </Text>
+          <span className={styles.name}>
+            {ds.name} {ds.isDefault ? <TagList tags={['default']} /> : null}
+          </span>
+          <div className={styles.rightSection}>
+            <small className={styles.type}>{description || ds.meta.name}</small>
             {onToggleFavorite && !ds.meta.builtIn && (
               <Icon
                 name={isFavorite ? 'favorite' : 'star'}
@@ -64,7 +49,7 @@ export function DataSourceCard({
                 className={styles.favoriteButton}
               />
             )}
-          </Stack>
+          </div>
         </div>
       </Card.Heading>
       <Card.Figure className={styles.logo}>
@@ -97,6 +82,9 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
     headingContent: css({
       color: theme.colors.text.secondary,
       width: '100%',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
       display: 'flex',
       justifyContent: 'space-between',
       columnGap: theme.spacing(1),
@@ -107,6 +95,16 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
         gridTemplateColumns: '1fr',
         gridTemplateRows: 'repeat(2, 1fr)',
       },
+    }),
+    rightSection: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      minWidth: 0,
+      flex: 1,
+      justifyContent: 'flex-end',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
     }),
     logo: css({
       width: '32px',
@@ -120,6 +118,18 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
         minWidth: '24px',
         filter: `invert(${builtIn && theme.isLight ? 1 : 0})`,
       },
+    }),
+    name: css({
+      color: theme.colors.text.primary,
+      display: 'flex',
+      gap: theme.spacing(2),
+    }),
+    type: css({
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      display: 'flex',
+      alignItems: 'center',
     }),
     favoriteButton: css({
       flexShrink: 0,
