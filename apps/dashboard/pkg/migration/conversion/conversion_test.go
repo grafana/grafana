@@ -305,23 +305,6 @@ func TestConversionMetrics(t *testing.T) {
 			expectedSourceSchema: "v2alpha1",
 			expectedTargetSchema: "v2beta1",
 		},
-		{
-			name: "v0 to v1 conversion with minimum version error (succeeds but marks failed)",
-			source: &dashv0.Dashboard{
-				ObjectMeta: metav1.ObjectMeta{UID: "test-uid-4"},
-				Spec: common.Unstructured{Object: map[string]any{
-					"title":         "old dashboard",
-					"schemaVersion": 5, // Below minimum version (13)
-				}},
-			},
-			target:               &dashv1.Dashboard{},
-			expectAPISuccess:     true, // Conversion succeeds but status indicates failure
-			expectMetricsSuccess: false,
-			expectedSourceAPI:    dashv0.APIVERSION,
-			expectedTargetAPI:    dashv1.APIVERSION,
-			expectedSourceSchema: "5",
-			expectedTargetSchema: fmt.Sprintf("%d", 41), // LATEST_VERSION
-		},
 	}
 
 	for _, tt := range tests {

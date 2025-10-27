@@ -104,6 +104,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 	}
 
 	var renderKeyProvider renderKeyProvider
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagRenderAuthJWT) {
 		renderKeyProvider = &jwtRenderKeyProvider{
 			log:       logger,
@@ -199,7 +200,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	}
 
 	rs.log.Debug("No image renderer found/installed. " +
-		"For image rendering support please install the grafana-image-renderer plugin. " +
+		"For image rendering support please use the Grafana Image Renderer remote rendering service. " +
 		"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
 
 	<-ctx.Done()
@@ -271,7 +272,7 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 
 	if !rs.IsAvailable(ctx) {
 		logger.Warn("Could not render image, no image renderer found/installed. " +
-			"For image rendering support please install the grafana-image-renderer plugin. " +
+			"For image rendering support please use the Grafana Image Renderer remote rendering service. " +
 			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
 		if opts.ErrorRenderUnavailable {
 			return nil, ErrRenderUnavailable

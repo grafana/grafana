@@ -65,10 +65,6 @@ type BleveOptions struct {
 	// The resource count where values switch from memory to file based
 	FileThreshold int64
 
-	// How big should a batch get before flushing
-	// ?? not totally sure the units
-	BatchSize int
-
 	// Index cache TTL for bleve indices. 0 disables expiration for in-memory indexes.
 	// Also used for file-based indexes, if they are not owned by this instance, and they are not fetched from the cache recently.
 	IndexCacheTTL time.Duration
@@ -76,8 +72,6 @@ type BleveOptions struct {
 	BuildVersion string
 
 	Logger *slog.Logger
-
-	UseFullNgram bool
 
 	// Minimum time between index updates.
 	IndexMinUpdateInterval time.Duration
@@ -100,9 +94,6 @@ type bleveBackend struct {
 	cache   map[resource.NamespacedResource]*bleveIndex
 
 	indexMetrics *resource.BleveIndexMetrics
-
-	// if true will use ngram instead of edge_ngram for title indexes. See custom_analyzers.go
-	useFullNgram bool
 
 	bgTasksCancel func()
 	bgTasksWg     sync.WaitGroup
@@ -152,7 +143,6 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 		opts:         opts,
 		ownsIndexFn:  ownFn,
 		indexMetrics: indexMetrics,
-		useFullNgram: opts.UseFullNgram,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -379,7 +369,7 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	mapper, err := GetBleveMappings(fields, b.useFullNgram)
+	mapper, err := GetBleveMappings(fields)
 	if err != nil {
 		return nil, err
 	}
@@ -1550,6 +1540,14 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 	case selection.Equals, selection.DoubleEquals:
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
+		}
+
+		// FIXME: special case for login and email to use term query only because those fields are using keyword analyzer
+		// This should be fixed by using the info from the schema
+		if (req.Key == "login" || req.Key == "email") && len(req.Values) == 1 {
+			tq := bleve.NewTermQuery(req.Values[0])
+			tq.SetField(prefix + req.Key)
+			return tq, nil
 		}
 
 		if len(req.Values) == 1 {

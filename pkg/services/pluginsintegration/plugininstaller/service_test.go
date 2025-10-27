@@ -6,10 +6,11 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync/installsyncfakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -26,10 +27,10 @@ func TestService_IsDisabled(t *testing.T) {
 		&setting.Cfg{
 			PreinstallPluginsAsync: []setting.InstallPlugin{{ID: "myplugin"}},
 		},
-		pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{}),
-		&fakes.FakePluginInstaller{},
+		pluginstore.New(registry.NewInMemory(), &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer()),
+		&pluginfakes.FakePluginInstaller{},
 		prometheus.NewRegistry(),
-		&fakes.FakePluginRepo{},
+		&pluginfakes.FakePluginRepo{},
 		featuremgmt.WithFeatures(),
 		&pluginchecker.FakePluginUpdateChecker{},
 	)
@@ -160,7 +161,7 @@ func TestService_Run(t *testing.T) {
 			}
 			installed := 0
 			installedFromURL := 0
-			store, err := pluginstore.NewPluginStoreForTest(preg, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
+			store, err := pluginstore.NewPluginStoreForTest(preg, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
 			require.NoError(t, err)
 			s, err := ProvideService(
 				&setting.Cfg{
@@ -168,7 +169,7 @@ func TestService_Run(t *testing.T) {
 					PreinstallPluginsSync:  tt.pluginsToInstallSync,
 				},
 				store,
-				&fakes.FakePluginInstaller{
+				&pluginfakes.FakePluginInstaller{
 					AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.AddOpts) error {
 						for _, plugin := range tt.pluginsToFail {
 							if plugin == pluginID {
@@ -193,7 +194,7 @@ func TestService_Run(t *testing.T) {
 					},
 				},
 				prometheus.NewRegistry(),
-				&fakes.FakePluginRepo{
+				&pluginfakes.FakePluginRepo{
 					GetPluginArchiveInfoFunc: func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
 						return tt.latestPlugin, nil
 					},

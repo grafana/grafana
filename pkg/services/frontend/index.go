@@ -12,13 +12,18 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type IndexProvider struct {
-	log   logging.Logger
-	index *template.Template
-	data  IndexViewData
+	log          logging.Logger
+	index        *template.Template
+	data         IndexViewData
+	hooksService *hooks.HooksService
 }
 
 type IndexViewData struct {
@@ -35,7 +40,7 @@ type IndexViewData struct {
 	AppTitle     string
 
 	Assets      dtos.EntryPointAssets // Includes CDN info
-	Settings    dtos.FrontendSettingsDTO
+	Settings    FSFrontendSettings
 	DefaultUser dtos.CurrentUser
 
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
@@ -51,15 +56,17 @@ var (
 	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `*.html`))
 )
 
-func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets) (*IndexProvider, error) {
+func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets, license licensing.Licensing, hooksService *hooks.HooksService) (*IndexProvider, error) {
 	t := htmlTemplates.Lookup("index.html")
 	if t == nil {
 		return nil, fmt.Errorf("missing index template")
 	}
 
+	logger := logging.DefaultLogger.With("logger", "index-provider")
+
 	// subset of frontend settings needed for the login page
 	// TODO what about enterprise settings here?
-	frontendSettings := dtos.FrontendSettingsDTO{
+	frontendSettings := FSFrontendSettings{
 		AnalyticsConsoleReporting:           cfg.FrontendAnalyticsConsoleReporting,
 		AnonymousEnabled:                    cfg.Anonymous.Enabled,
 		ApplicationInsightsConnectionString: cfg.ApplicationInsightsConnectionString,
@@ -87,13 +94,13 @@ func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets) (*
 		RudderstackWriteKey:                 cfg.RudderstackWriteKey,
 		TrustedTypesDefaultPolicyEnabled:    (cfg.CSPEnabled && strings.Contains(cfg.CSPTemplate, "require-trusted-types-for")) || (cfg.CSPReportOnlyEnabled && strings.Contains(cfg.CSPReportOnlyTemplate, "require-trusted-types-for")),
 		VerifyEmailEnabled:                  cfg.VerifyEmailEnabled,
+		BuildInfo:                           getBuildInfo(license, cfg),
 	}
 
-	defaultUser := dtos.CurrentUser{}
-
 	return &IndexProvider{
-		log:   logging.DefaultLogger.With("logger", "index-provider"),
-		index: t,
+		log:          logger,
+		index:        t,
+		hooksService: hooksService,
 		data: IndexViewData{
 			AppTitle:     "Grafana",
 			AppSubUrl:    cfg.AppSubURL, // Based on the request?
@@ -109,13 +116,13 @@ func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets) (*
 
 			Assets:      assetsManifest,
 			Settings:    frontendSettings,
-			DefaultUser: defaultUser,
+			DefaultUser: dtos.CurrentUser{},
 		},
 	}, nil
 }
 
 func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.Request) {
-	_, span := tracer.Start(request.Context(), "frontend.index.HandleRequest")
+	ctx, span := tracer.Start(request.Context(), "frontend.index.HandleRequest")
 	defer span.End()
 
 	if request.Method != "GET" {
@@ -142,6 +149,9 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		writer.Header().Set("Content-Security-Policy-Report-Only", policy)
 	}
 
+	reqCtx := contexthandler.FromContext(ctx)
+	p.runIndexDataHooks(reqCtx, &data)
+
 	writer.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	writer.WriteHeader(200)
 	if err := p.index.Execute(writer, &data); err != nil {
@@ -150,4 +160,44 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		}
 		panic(fmt.Sprintf("Error rendering index\n %s", err.Error()))
 	}
+}
+
+func (p *IndexProvider) runIndexDataHooks(reqCtx *contextmodel.ReqContext, data *IndexViewData) {
+	// Create a dummy struct to pass to the hooks, and then extract the data back out from it
+	legacyIndexViewData := dtos.IndexViewData{
+		Settings: &dtos.FrontendSettingsDTO{
+			BuildInfo: data.Settings.BuildInfo,
+		},
+	}
+
+	p.hooksService.RunIndexDataHooks(&legacyIndexViewData, reqCtx)
+
+	data.Settings.BuildInfo = legacyIndexViewData.Settings.BuildInfo
+}
+
+func getBuildInfo(license licensing.Licensing, cfg *setting.Cfg) dtos.FrontendSettingsBuildInfoDTO {
+	version := setting.BuildVersion
+	commit := setting.BuildCommit
+	commitShort := getShortCommitHash(setting.BuildCommit, 10)
+	buildstamp := setting.BuildStamp
+	versionString := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, version, commitShort)
+
+	buildInfo := dtos.FrontendSettingsBuildInfoDTO{
+		Version:       version,
+		VersionString: versionString,
+		Commit:        commit,
+		CommitShort:   commitShort,
+		Buildstamp:    buildstamp,
+		Edition:       license.Edition(),
+		Env:           cfg.Env,
+	}
+
+	return buildInfo
+}
+
+func getShortCommitHash(commitHash string, maxLength int) string {
+	if len(commitHash) > maxLength {
+		return commitHash[:maxLength]
+	}
+	return commitHash
 }
