@@ -597,6 +597,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         {(innerWidth, innerHeight) => (
           <>
             <ErrorBoundary
+              boundaryName="panel-state-wrapper"
               dependencies={[data, plugin, panel.getOptions()]}
               onError={this.onPanelError}
               onRecover={this.onPanelErrorRecover}
