@@ -122,7 +122,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5.5.0
+        uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
           cache: ${{ !github.event.pull_request.head.repo.fork }}
@@ -267,7 +267,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
 
@@ -395,7 +395,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
 
@@ -525,7 +525,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
       - name: Install dependencies

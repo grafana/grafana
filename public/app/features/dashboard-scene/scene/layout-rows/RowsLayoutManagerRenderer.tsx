@@ -58,6 +58,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
                   variant="primary"
                   fill="text"
                   onClick={() => model.addNewRow()}
+                  onPointerUp={(evt) => evt.stopPropagation()}
                   data-testid={selectors.components.CanvasGridAddActions.addRow}
                 >
                   <Trans i18nKey="dashboard.canvas-actions.new-row">New row</Trans>
@@ -68,6 +69,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
                     variant="primary"
                     fill="text"
                     onClick={() => model.pasteRow()}
+                    onPointerUp={(evt) => evt.stopPropagation()}
                     data-testid={selectors.components.CanvasGridAddActions.pasteRow}
                   >
                     <Trans i18nKey="dashboard.canvas-actions.paste-row">Paste row</Trans>

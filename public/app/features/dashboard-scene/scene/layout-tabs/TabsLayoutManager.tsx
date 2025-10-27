@@ -133,7 +133,7 @@ export class TabsLayoutManager
   }
 
   public addPanel(vizPanel: VizPanel) {
-    const tab = this.getCurrentTab();
+    const tab = this.getCurrentTab() ?? this.state.tabs[0];
 
     if (tab) {
       tab.getLayout().addPanel(vizPanel);

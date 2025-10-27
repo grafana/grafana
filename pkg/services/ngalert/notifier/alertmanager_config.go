@@ -133,7 +133,7 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 		// Otherwise, broken settings (e.g. a receiver that doesn't exist) will cause the config returned here to be
 		// different than the config currently in-use.
 		// TODO: Preferably, we'd be getting the config directly from the in-memory AM so adding the autogen config would not be necessary.
-		err := AddAutogenConfig(ctx, moa.logger, moa.configStore, org, &cfg.AlertmanagerConfig, true, moa.featureManager)
+		err := AddAutogenConfig(ctx, moa.logger, moa.configStore, org, &cfg.AlertmanagerConfig, LogInvalidReceivers, moa.featureManager)
 		if err != nil {
 			return definitions.GettableUserConfig{}, err
 		}

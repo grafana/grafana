@@ -3692,7 +3692,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "Em ordem alfabética (A–Z)",
-        "alphabetically-za": "Em ordem alfabética (Z–A)"
+        "alphabetically-za": "Em ordem alfabética (Z–A)",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -4600,7 +4602,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "A renderização condicional não é compatível com o layout de grade personalizado. Mude para a grade automática para poder usá-la.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5984,6 +5987,13 @@
       "usage-count_one": "Usado em {{count}} painéis",
       "usage-count_other": "Usado em {{count}} painéis"
     },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
+    },
     "move-provisioned-dashboard-form": {
       "api-error": "Falha ao mover o painel de controle",
       "cancel-action": "Cancelar",
@@ -6293,6 +6303,9 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Esta variável é referenciada por outras variáveis ou painel.",
       "content-variable-not-referenced-other-variables-dashboard": "Esta variável não é referenciada por outras variáveis ou painel.",
       "content-variable-referenced-other-variables-dashboard": "Esta variável é referenciada por outras variáveis ou painel."
+    },
+    "variable-controls": {
+      "add-variable": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulário do editor de variáveis",
@@ -7151,9 +7164,6 @@
       "title-failed-sample-query": "Falha ao carregar a amostra de logs para esta consulta",
       "tooltip": "Exibir linhas de log que contribuíram para as métricas visualizadas"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "{{labelName}} aparece em {{percentage}}% das linhas de log"
-    },
     "logs-table-empty-fields": {
       "no-fields": "Sem campos"
     },
@@ -7161,10 +7171,6 @@
       "fields": "Campos",
       "reset": "Redefinir",
       "selected-fields": "Campos selecionados"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "Ícone de arrastar e soltar",
-      "title-drag-and-drop-to-reorder": "Arraste e solte para reordenar"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Selecionar consulta por nome",
@@ -7633,7 +7639,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Limpar pastas",
     "noOptionsMessage-no-folders-found": "Nenhuma pasta encontrada",
     "select-aria-label": "Filtro de pasta",
     "select-placeholder": "Filtrar por pasta"
@@ -7699,7 +7704,8 @@
     "name-neutral": "Neutro",
     "name-show-threshold-labels": "Mostrar rótulos de limite",
     "name-show-threshold-markers": "Mostrar marcadores de limite",
-    "placeholder-neutral": "automático"
+    "placeholder-neutral": "automático",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Aplicar",
@@ -8000,6 +8006,52 @@
     "select-group": "Selecionar grupo"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "",
+          "previousFiscalQuarter": "",
+          "previousFiscalYear": "",
+          "previousMonth": "",
+          "previousWeek": "",
+          "previousYear": "",
+          "thisDayLastWeek": "",
+          "thisFiscalQuarter": "",
+          "thisFiscalQuarterSoFar": "",
+          "thisFiscalYear": "",
+          "thisFiscalYearSoFar": "",
+          "thisMonth": "",
+          "thisMonthSoFar": "",
+          "thisWeek": "",
+          "thisWeekSoFar": "",
+          "thisYear": "",
+          "thisYearSoFar": "",
+          "today": "",
+          "todaySoFar": "",
+          "yesterday": ""
+        },
+        "lastNDays_one": "",
+        "lastNDays_other": "",
+        "lastNHours_one": "",
+        "lastNHours_other": "",
+        "lastNMinutes_one": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_one": "",
+        "lastNMonths_other": "",
+        "lastNYears_one": "",
+        "lastNYears_other": "",
+        "nextNDays_one": "",
+        "nextNDays_other": "",
+        "nextNHours_one": "",
+        "nextNHours_other": "",
+        "nextNMinutes_one": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_one": "",
+        "nextNMonths_other": "",
+        "nextNYears_one": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9535,6 +9587,15 @@
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Exibir controles para pular para a última ou primeira linha do log e filtros por nível de log",
     "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
@@ -10753,11 +10814,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -11758,6 +11817,11 @@
       "next": "Avançar",
       "previous": "Anterior"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Etapa concluída",
       "label-current-step": "Etapa atual",
@@ -12076,6 +12140,7 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "threshold-labels": "",
       "threshold-markers": ""
     }
   },
@@ -12614,6 +12679,7 @@
       "theme-label": "Tema da interface",
       "week-start-label": "Início da semana"
     },
+    "save": "",
     "theme": {
       "default-label": "Padrão",
       "experimental": "Em testes"
@@ -12709,6 +12775,10 @@
     "sql-suggestion-history": "Histórico de sugestões de SQL",
     "suggestions": "Sugestões",
     "view-explanation": "Ver explicação"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {
@@ -13011,13 +13081,13 @@
       "placeholder-search-teams": "Pesquisar equipes"
     },
     "team-settings": {
-      "description-email": "Isso é opcional e é usado principalmente para definir o avatar do perfil da equipe (através do serviço gravatar)",
+      "description-email": "",
       "label-email": "E-mail",
       "label-name": "Nome",
       "label-numerical-identifier": "Identificador numérico",
       "label-role": "Função",
       "label-team-details": "Detalhes da equipe",
-      "save": "Salvar"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "A sincronização de equipes facilita o gerenciamento do acesso dos usuários na Grafana, pois atualiza imediatamente as equipes e permissões da Grafana de cada usuário, considerando a associação do usuário ao grupo de autenticação única, em vez de considerar o momento em que os usuários iniciaram sessão"

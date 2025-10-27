@@ -1,7 +1,4 @@
-import { FieldDisplay } from '@grafana/data';
-
-import { useTheme2 } from '../../themes/ThemeContext';
-import { getFormattedThresholds } from '../Gauge/utils';
+import { FieldDisplay, Threshold } from '@grafana/data';
 
 import { RadialArcPath } from './RadialArcPath';
 import { RadialColorDefs } from './RadialColorDefs';
@@ -16,6 +13,7 @@ export interface Props {
   roundedBars?: boolean;
   glowFilter?: string;
   colorDefs: RadialColorDefs;
+  thresholds: Threshold[];
 }
 export function ThresholdsBar({
   dimensions,
@@ -25,19 +23,16 @@ export function ThresholdsBar({
   roundedBars,
   glowFilter,
   colorDefs,
+  thresholds,
 }: Props) {
-  const theme = useTheme2();
   const fieldConfig = fieldDisplay.field;
-  const decimals = fieldConfig.decimals ?? 2;
   const min = fieldConfig.min ?? 0;
   const max = fieldConfig.max ?? 100;
-  const thresholds = getFormattedThresholds(decimals, fieldConfig, theme);
 
-  const outerRadius = dimensions.radius + dimensions.barWidth / 2;
   const thresholdDimensions = {
     ...dimensions,
     barWidth: dimensions.thresholdsBarWidth,
-    radius: outerRadius + dimensions.thresholdsBarWidth / 2 + dimensions.thresholdsBarSpacing,
+    radius: dimensions.thresholdsBarRadius,
   };
 
   let currentStart = startAngle;
@@ -45,8 +40,15 @@ export function ThresholdsBar({
 
   for (let i = 1; i < thresholds.length; i++) {
     const threshold = thresholds[i];
-    const valueDeg = ((threshold.value - min) / (max - min)) * angleRange;
-    const lengthDeg = valueDeg - currentStart + startAngle;
+    let valueDeg = ((threshold.value - min) / (max - min)) * angleRange;
+
+    if (valueDeg > angleRange) {
+      valueDeg = angleRange;
+    } else if (valueDeg < 0) {
+      valueDeg = 0;
+    }
+
+    let lengthDeg = valueDeg - currentStart + startAngle;
 
     paths.push(
       <RadialArcPath

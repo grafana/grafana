@@ -133,10 +133,10 @@ jobs:
           path: .grafana-main
 
       - name: Setup nodejs environment
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
-      - uses: actions/setup-go@v5.5.0
+      - uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
       - name: Configure git user
