@@ -19,8 +19,8 @@ const meta: Meta<typeof FileDropzone> = {
 const Template: StoryFn<typeof FileDropzone> = (args) => {
   const inputId = useId();
   return (
-    <Field label="Test JSON file" htmlFor={inputId}>
-      <FileDropzone {...args} inputId={inputId} />
+    <Field label="Test JSON file">
+      <FileDropzone {...args} id={inputId} />
     </Field>
   );
 };

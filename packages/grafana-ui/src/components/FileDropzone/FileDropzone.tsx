@@ -51,7 +51,7 @@ export interface FileDropzoneProps {
    * Optional id attribute for the underlying input element
    * Use to link a label to the input for accessibility
    */
-  inputId?: string;
+  id?: string;
 }
 
 export interface DropzoneFile {
@@ -70,7 +70,7 @@ export function FileDropzone({
   onLoad,
   fileListRenderer,
   onFileRemove,
-  inputId,
+  id,
 }: FileDropzoneProps) {
   const [files, setFiles] = useState<DropzoneFile[]>([]);
   const [fileErrors, setErrorMessages] = useState<FileError[]>([]);
@@ -231,7 +231,7 @@ export function FileDropzone({
   return (
     <div className={styles.container}>
       <div data-testid="dropzone" {...getRootProps({ className: styles.dropzone })}>
-        <input {...getInputProps()} id={inputId} />
+        <input {...getInputProps()} id={id} />
         {children ?? <FileDropzoneDefaultChildren primaryText={getPrimaryText(files, options)} />}
       </div>
       {fileErrors.length > 0 && renderErrorMessages(fileErrors)}
