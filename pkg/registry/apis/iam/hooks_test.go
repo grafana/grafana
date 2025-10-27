@@ -69,15 +69,11 @@ func requireDeleteTuplesMatch(t *testing.T, actual []*v1.TupleKeyWithoutConditio
 }
 
 func TestAfterResourcePermissionCreate(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{
+		logger:   log.NewNopLogger(),
+		zTickets: make(chan bool, 1),
+	}
 	t.Run("should create zanzana entries for folder resource permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		folderPerm := iamv0.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "org-2",
@@ -111,16 +107,9 @@ func TestAfterResourcePermissionCreate(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testFolderEntries}
 		b.AfterResourcePermissionCreate(&folderPerm, nil)
 	})
+	<-b.zTickets
 
 	t.Run("should create zanzana entries for dashboard resource permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		dashPerm := iamv0.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
@@ -162,18 +151,15 @@ func TestAfterResourcePermissionCreate(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testDashEntries}
 		b.AfterResourcePermissionCreate(&dashPerm, nil)
 	})
+	<-b.zTickets
 }
 
 func TestBeginResourcePermissionUpdate(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{
+		logger:   log.NewNopLogger(),
+		zTickets: make(chan bool, 1),
+	}
 	t.Run("should update zanzana entries for folder resource permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		oldFolderPerm := iamv0.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "org-2",
@@ -239,15 +225,8 @@ func TestBeginResourcePermissionUpdate(t *testing.T) {
 		finishFunc(context.Background(), true)
 	})
 
+	<-b.zTickets
 	t.Run("should update zanzana entries for dashboard resource permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		oldDashPerm := iamv0.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
@@ -318,18 +297,15 @@ func TestBeginResourcePermissionUpdate(t *testing.T) {
 		// Call the finish function with success=true to trigger the zanzana write
 		finishFunc(context.Background(), true)
 	})
+	<-b.zTickets
 }
 
 func TestAfterResourcePermissionDelete(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{
+		logger:   log.NewNopLogger(),
+		zTickets: make(chan bool, 1),
+	}
 	t.Run("should delete zanzana entries for folder resource permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		folderPerm := iamv0.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "org-2",
@@ -371,15 +347,8 @@ func TestAfterResourcePermissionDelete(t *testing.T) {
 		b.AfterResourcePermissionDelete(&folderPerm, nil)
 	})
 
+	<-b.zTickets
 	t.Run("should delete zanzana entries for dashboard resource permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		dashPerm := iamv0.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
@@ -423,18 +392,15 @@ func TestAfterResourcePermissionDelete(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testDashDelete}
 		b.AfterResourcePermissionDelete(&dashPerm, nil)
 	})
+	<-b.zTickets
 }
 
 func TestAfterCoreRoleCreate(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{
+		logger:   log.NewNopLogger(),
+		zTickets: make(chan bool, 1),
+	}
 	t.Run("should create zanzana entries for core role with folder permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		coreRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-role-uid",
@@ -468,16 +434,9 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testCoreRoleEntries}
 		b.AfterRoleCreate(&coreRole, nil)
 	})
+	<-b.zTickets
 
 	t.Run("should create zanzana entries for core role with dashboard permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		coreRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "dashboard-role-uid",
@@ -512,16 +471,9 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testDashboardRoleEntries}
 		b.AfterRoleCreate(&coreRole, nil)
 	})
+	<-b.zTickets
 
 	t.Run("should handle wildcard scopes", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		coreRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "wildcard-role-uid",
@@ -551,16 +503,9 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testWildcardEntries}
 		b.AfterRoleCreate(&coreRole, nil)
 	})
+	<-b.zTickets
 
 	t.Run("should skip untranslatable permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		coreRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "mixed-role-uid",
@@ -591,18 +536,15 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testMixedEntries}
 		b.AfterRoleCreate(&coreRole, nil)
 	})
+	<-b.zTickets
 }
 
 func TestAfterRoleCreate(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{
+		logger:   log.NewNopLogger(),
+		zTickets: make(chan bool, 1),
+	}
 	t.Run("should create zanzana entries for role with folder permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		role := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "custom-role-uid",
@@ -636,16 +578,9 @@ func TestAfterRoleCreate(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testRoleEntries}
 		b.AfterRoleCreate(&role, nil)
 	})
+	<-b.zTickets
 
 	t.Run("should create zanzana entries for role with dashboard permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		role := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "dash-role-uid",
@@ -679,16 +614,9 @@ func TestAfterRoleCreate(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testDashRoleEntries}
 		b.AfterRoleCreate(&role, nil)
 	})
+	<-b.zTickets
 
 	t.Run("should merge folder resource tuples with same object and user", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		role := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "merge-role-uid",
@@ -720,18 +648,15 @@ func TestAfterRoleCreate(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testMergedEntries}
 		b.AfterRoleCreate(&role, nil)
 	})
+	<-b.zTickets
 }
 
 func TestAfterCoreRoleDelete(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{
+		logger:   log.NewNopLogger(),
+		zTickets: make(chan bool, 1),
+	}
 	t.Run("should delete zanzana entries for core role with folder permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		coreRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-role-uid",
@@ -765,16 +690,9 @@ func TestAfterCoreRoleDelete(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testCoreRoleDeletes}
 		b.AfterRoleDelete(&coreRole, nil)
 	})
+	<-b.zTickets
 
 	t.Run("should delete zanzana entries for core role with dashboard permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		coreRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "dashboard-role-uid",
@@ -808,16 +726,9 @@ func TestAfterCoreRoleDelete(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testDashboardRoleDeletes}
 		b.AfterRoleDelete(&coreRole, nil)
 	})
+	<-b.zTickets
 
 	t.Run("should handle wildcard scopes on delete", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		coreRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "wildcard-role-uid",
@@ -846,16 +757,9 @@ func TestAfterCoreRoleDelete(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testWildcardDeletes}
 		b.AfterRoleDelete(&coreRole, nil)
 	})
+	<-b.zTickets
 
 	t.Run("should skip untranslatable permissions on delete", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		coreRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "mixed-role-uid",
@@ -886,18 +790,15 @@ func TestAfterCoreRoleDelete(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testMixedDeletes}
 		b.AfterRoleDelete(&coreRole, nil)
 	})
+	<-b.zTickets
 }
 
 func TestAfterRoleDelete(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{
+		logger:   log.NewNopLogger(),
+		zTickets: make(chan bool, 1),
+	}
 	t.Run("should delete zanzana entries for role with folder permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		role := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "custom-role-uid",
@@ -931,16 +832,9 @@ func TestAfterRoleDelete(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testRoleDeletes}
 		b.AfterRoleDelete(&role, nil)
 	})
+	<-b.zTickets
 
 	t.Run("should delete zanzana entries for role with dashboard permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		role := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "dash-role-uid",
@@ -975,15 +869,8 @@ func TestAfterRoleDelete(t *testing.T) {
 		b.AfterRoleDelete(&role, nil)
 	})
 
+	<-b.zTickets
 	t.Run("should handle multiple permissions on delete", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		role := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "multi-role-uid",
@@ -1025,18 +912,15 @@ func TestAfterRoleDelete(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testMultiDeletes}
 		b.AfterRoleDelete(&role, nil)
 	})
+	<-b.zTickets
 }
 
-func TestBeginRoleUpdate(t *testing.T) {
+func TestBeginCoreRoleUpdate(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{
+		logger:   log.NewNopLogger(),
+		zTickets: make(chan bool, 1),
+	}
 	t.Run("should update zanzana entries when permissions change", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		oldRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-role-uid",
@@ -1102,16 +986,9 @@ func TestBeginRoleUpdate(t *testing.T) {
 		// Call the finish function with success=true to trigger the zanzana write
 		finishFunc(context.Background(), true)
 	})
+	<-b.zTickets
 
 	t.Run("should handle adding new permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		oldRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "expand-role-uid",
@@ -1165,16 +1042,9 @@ func TestBeginRoleUpdate(t *testing.T) {
 		// Call the finish function with success=true to trigger the zanzana write
 		finishFunc(context.Background(), true)
 	})
+	<-b.zTickets
 
 	t.Run("should handle removing all permissions", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		oldRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "clear-role-uid",
@@ -1224,18 +1094,15 @@ func TestBeginRoleUpdate(t *testing.T) {
 		// Call the finish function with success=true to trigger the zanzana write
 		finishFunc(context.Background(), true)
 	})
+	<-b.zTickets
 }
 
-func TestBeginCoreRoleUpdate(t *testing.T) {
+func TestBeginRoleUpdate(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{
+		logger:   log.NewNopLogger(),
+		zTickets: make(chan bool, 1),
+	}
 	t.Run("should update zanzana entries when permissions change", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
-
 		oldRole := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "custom-role-uid",
@@ -1303,15 +1170,9 @@ func TestBeginCoreRoleUpdate(t *testing.T) {
 		finishFunc(context.Background(), true)
 	})
 
-	t.Run("should handle completely new permission set", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
+	<-b.zTickets
 
+	t.Run("should handle completely new permission set", func(t *testing.T) {
 		oldRole := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "swap-role-uid",
@@ -1371,15 +1232,9 @@ func TestBeginCoreRoleUpdate(t *testing.T) {
 		finishFunc(context.Background(), true)
 	})
 
-	t.Run("should handle adding permissions to empty role", func(t *testing.T) {
-		b := &IdentityAccessManagementAPIBuilder{
-			logger:   log.NewNopLogger(),
-			zTickets: make(chan bool, 1),
-		}
-		t.Cleanup(func() {
-			<-b.zTickets
-		})
+	<-b.zTickets
 
+	t.Run("should handle adding permissions to empty role", func(t *testing.T) {
 		oldRole := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "empty-role-uid",
@@ -1430,4 +1285,5 @@ func TestBeginCoreRoleUpdate(t *testing.T) {
 		// Call the finish function with success=true to trigger the zanzana write
 		finishFunc(context.Background(), true)
 	})
+	<-b.zTickets
 }
