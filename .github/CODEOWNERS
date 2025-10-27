@@ -1083,6 +1083,7 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/cloudwatch/ @grafana/aws-datasources
 /public/app/plugins/datasource/elasticsearch/ @grafana/partner-datasources
 /public/app/plugins/datasource/grafana/ @grafana/grafana-frontend-platform
+/public/app/plugins/datasource/grafana/components/QueryEditor.test.tsx @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/grafana-testdata-datasource/ @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/azuremonitor/ @grafana/partner-datasources
 /public/app/plugins/datasource/graphite/ @grafana/partner-datasources
