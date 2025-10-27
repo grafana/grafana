@@ -387,6 +387,30 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Empty(t, res.NextPageToken)
 	})
 
+	t.Run("fetch all with limit 0", func(t *testing.T) {
+		res, err := server.List(ctx, &resourcepb.ListRequest{
+			Limit: 0,
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: ns,
+					Group:     "group",
+					Resource:  "resource",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Items, 5)
+		// should be sorted by key ASC
+		require.Contains(t, string(res.Items[0].Value), "item1 ADDED")
+		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
+		require.Contains(t, string(res.Items[2].Value), "item4 ADDED")
+		require.Contains(t, string(res.Items[3].Value), "item5 ADDED")
+		require.Contains(t, string(res.Items[4].Value), "item6 ADDED")
+
+		require.Empty(t, res.NextPageToken)
+	})
+
 	t.Run("list latest first page ", func(t *testing.T) {
 		res, err := server.List(ctx, &resourcepb.ListRequest{
 			Limit: 3,
