@@ -24,7 +24,6 @@ import {
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
-import { CustomTimeRangeCompare } from '../../scene/CustomTimeRangeCompare';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';

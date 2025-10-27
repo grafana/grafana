@@ -1,7 +1,8 @@
 /* eslint @grafana/i18n/no-untranslated-strings: 0 */
 
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
-import { Badge, Box, Button, Combobox, ComboboxOption, Drawer, Field, Label, Stack } from '@grafana/ui';
+import { Badge, Box, Button, Combobox, Drawer, Field, Label, Stack, Switch } from '@grafana/ui';
 
 import { getQuickOptions } from '../../../../../../packages/grafana-ui/src/components/DateTimePickers/options';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
@@ -76,7 +77,7 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
   };
 
   static Component = ({ model }: SceneComponentProps<PanelTimeRangeDrawer>) => {
-    const { timeFrom, timeShift, compareWith, zoomBehavior = 'panel_and_dashboard' } = model.useState();
+    const { timeFrom, timeShift, compareWith, hideTimeOverride } = model.useState();
 
     const timeOptions = getQuickOptions().map((option, index) => ({ label: option.display, value: option.from }));
     timeOptions.unshift({ label: 'Disabled', value: '' });
@@ -89,21 +90,6 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
       { label: '1 day', value: '24h' },
       { label: '7 days', value: '7d' },
       { label: '30 days', value: '30d' },
-    ];
-
-    const zoomBehaviorOptions: Array<ComboboxOption<PanelTimeRangeZoomBehavior>> = [
-      {
-        label: 'Panel and dashboard time',
-        value: 'panel_and_dashboard',
-      },
-      {
-        label: 'Panel time only',
-        value: 'panel',
-      },
-      {
-        label: 'Dashboard time only',
-        value: 'dashboard',
-      },
     ];
 
     return (
@@ -124,15 +110,6 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
               />
             </Stack>
           </Field>
-          <Field label="Zoom behavior" noMargin description="What time range should zoom actions modify">
-            <Combobox
-              options={zoomBehaviorOptions}
-              value={zoomBehavior}
-              onChange={(x) => {
-                model.setState({ zoomBehavior: x.value });
-              }}
-            />
-          </Field>
           <Field label="Time shift" noMargin description="Add a time shift relative to the dashboard time range">
             <Combobox
               options={timeShiftOptions}
@@ -142,6 +119,22 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
               }}
             />
           </Field>
+
+          {(timeFrom || timeShift || compareWith) && (
+            <Field
+              noMargin
+              label={t('dashboard.panel.time-range-settings.hide-time-info', 'Hidden time info')}
+              description={t(
+                'dashboard.panel.time-range-settings.hide-time-info-description',
+                'Do not show the custom time range in the panel header'
+              )}
+            >
+              <Switch
+                value={hideTimeOverride}
+                onChange={(x) => model.setState({ hideTimeOverride: x.currentTarget.checked })}
+              />
+            </Field>
+          )}
           <Field
             noMargin
             label={
