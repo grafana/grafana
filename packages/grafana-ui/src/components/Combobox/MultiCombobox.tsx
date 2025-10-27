@@ -35,6 +35,11 @@ interface MultiComboboxBaseProps<T extends string | number>
 
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
+/**
+ * The behavior of the MultiCombobox is similar to that of the Combobox, but it allows you to select multiple options. For all non-multi behaviors, see the Combobox documentation.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-multicombobox--docs
+ */
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
   const {
     placeholder,

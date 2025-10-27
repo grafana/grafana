@@ -9,6 +9,9 @@ interface DividerProps {
   spacing?: ThemeSpacingTokens;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-divider--docs
+ */
 export const Divider = ({ direction = 'horizontal', spacing = 2 }: DividerProps) => {
   const styles = useStyles2(getStyles, spacing);
 
