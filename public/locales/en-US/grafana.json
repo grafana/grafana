@@ -2846,13 +2846,18 @@
         "immediate-warning": "Immediate firing might lead to unnecessary alerts being sent for temporary issues"
       },
       "notification": {
-        "contact-point": {
-          "description": "Select who should receive a notification when the alert rule fires",
-          "label": "Contact point"
-        },
+        "contact-point-selected": "Notifications for firing alerts are routed to a selected contact point.",
         "description": {
           "label": "Description (optional)",
           "placeholder": "Enter a description of what the alert rule does…"
+        },
+        "manual-routing": {
+          "aria": "Toggle manual routing",
+          "label": "Manual routing"
+        },
+        "policy-selected": "Notifications for firing alerts are routed to contact points based on matching labels and the notification policy tree.",
+        "recipient": {
+          "label": "Recipient"
         },
         "runbook-url": {
           "label": "Runbook URL (optional)",
