@@ -88,7 +88,7 @@ const getStyles = (color: string) => ({
     border: 'none',
     background: `${color}10`,
     borderBottom: `1px solid ${color}CF`,
-    paddingRight: '4px',
+    paddingInline: '4px',
   }),
   button: css({
     background: 'transparent',
