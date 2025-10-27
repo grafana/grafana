@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import { uniqueId } from 'lodash';
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -16,8 +15,11 @@ import { ProvisioningBadge } from '../Provisioning';
 
 import { EvaluationGroupCreationModal } from './GrafanaEvaluationBehavior';
 
+export type GroupOption = SelectableValue<string> & { isProvisioned?: boolean };
+
 export function EvaluationGroupFieldRow({ enableProvisionedGroups }: { enableProvisionedGroups: boolean }) {
   const styles = useStyles2(getStyles);
+  const groupInputId = useId();
 
   const {
     watch,
@@ -31,7 +33,6 @@ export function EvaluationGroupFieldRow({ enableProvisionedGroups }: { enablePro
   const { currentData: rulerNamespace, isLoading: loadingGroups } = useFetchGroupsForFolder(folder?.uid ?? '');
 
   const collator = useMemo(() => new Intl.Collator(), []);
-  type GroupOption = SelectableValue<string> & { isProvisioned?: boolean };
   const groupOptions = useMemo<GroupOption[]>(() => {
     if (!rulerNamespace) {
       return [];
@@ -71,7 +72,7 @@ export function EvaluationGroupFieldRow({ enableProvisionedGroups }: { enablePro
 
   return (
     <Stack alignItems="center">
-      <div style={{ width: 420 }}>
+      <div className={styles.formContainer}>
         <Field
           noMargin
           label={label}
@@ -85,8 +86,7 @@ export function EvaluationGroupFieldRow({ enableProvisionedGroups }: { enablePro
             render={({ field: { ref, ...field }, fieldState }) => (
               <Select
                 disabled={!folder?.uid || loadingGroups}
-                inputId="group"
-                key={uniqueId()}
+                inputId={groupInputId}
                 {...field}
                 onChange={(group) => {
                   field.onChange(group.label ?? '');
@@ -176,6 +176,10 @@ export function EvaluationGroupFieldRow({ enableProvisionedGroups }: { enablePro
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    formContainer: css({
+      width: '100%',
+      maxWidth: theme.breakpoints.values.sm,
+    }),
     formInput: css({
       flexGrow: 1,
     }),
