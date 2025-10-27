@@ -1,14 +1,14 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
+import {
+  useGetStarsQuery as useLegacyGetStarsQuery,
+  useStarDashboardByUidMutation as useLegacyStarDashboardMutation,
+  useUnstarDashboardByUidMutation as useLegacyUnstarDashboardMutation,
+} from '@grafana/api-clients/rtkq/legacy/user';
 import { locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/preferences/v1alpha1';
-import {
-  useGetStarsQuery as useLegacyGetStarsQuery,
-  useStarDashboardMutation as useLegacyStarDashboardMutation,
-  useUnstarDashboardMutation as useLegacyUnstarDashboardMutation,
-} from 'app/api/legacy/user/api';
 import { contextSrv } from 'app/core/core';
 import { setStarred } from 'app/core/reducers/navBarTree';
 import { dispatch } from 'app/store/store';
@@ -45,9 +45,9 @@ export const useStarItem = (group: string, kind: string) => {
 
   return async ({ id, title }: StarItemArgs, newStarredState: boolean) => {
     if (newStarredState) {
-      await addStarLegacy({ id });
+      await addStarLegacy({ dashboardUid: id });
     } else {
-      await removeStarLegacy({ id });
+      await removeStarLegacy({ dashboardUid: id });
     }
 
     updateStarred({ id, title }, newStarredState);

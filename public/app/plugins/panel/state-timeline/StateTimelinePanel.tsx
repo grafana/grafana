@@ -29,9 +29,6 @@ import { containerStyles } from './styles';
 
 interface TimelinePanelProps extends PanelProps<Options> {}
 
-/**
- * @alpha
- */
 export const StateTimelinePanel = ({
   data,
   timeRange,
@@ -151,6 +148,7 @@ export const StateTimelinePanel = ({
               )}
               {alignedFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
                 <AnnotationsPlugin2
+                  replaceVariables={replaceVariables}
                   annotations={data.annotations ?? []}
                   config={builder}
                   timeZone={timeZone}

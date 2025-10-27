@@ -3672,7 +3672,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "알파벳순(A~Z)",
-        "alphabetically-za": "알파벳순(Z~A)"
+        "alphabetically-za": "알파벳순(Z~A)",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -4580,7 +4582,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "맞춤형 그리드 레이아웃에서는 조건부 렌더링이 지원되지 않습니다. 조건부 렌더링을 사용하려면 자동 그리드로 전환하세요.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5962,6 +5965,13 @@
       "last-edited": "<person /> 님({{timeAgo}}에)",
       "usage-count_other": "{{count}}개의 대시보드에서 사용됨"
     },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
+    },
     "move-provisioned-dashboard-form": {
       "api-error": "대시보드를 이동하지 못했습니다",
       "cancel-action": "취소",
@@ -6270,6 +6280,9 @@
       "aria-label-variable-referenced-other-variables-dashboard": "이 변수는 다른 변수 또는 대시보드에서 참조됩니다.",
       "content-variable-not-referenced-other-variables-dashboard": "이 변수는 다른 변수 또는 대시보드에서 참조되지 않습니다.",
       "content-variable-referenced-other-variables-dashboard": "이 변수는 다른 변수 또는 대시보드에서 참조됩니다."
+    },
+    "variable-controls": {
+      "add-variable": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "변수 편집기 양식",
@@ -7128,9 +7141,6 @@
       "title-failed-sample-query": "이 쿼리에 대한 로그 샘플 로딩 실패",
       "tooltip": "시각화된 메트릭에 기여한 로그 줄 표시"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "로그 줄의 {{percentage}}%에서 {{labelName}}이(가) 등장합니다"
-    },
     "logs-table-empty-fields": {
       "no-fields": "필드 없음"
     },
@@ -7138,10 +7148,6 @@
       "fields": "필드",
       "reset": "재설정",
       "selected-fields": "선택된 필드"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "드래그 앤 드롭 아이콘",
-      "title-drag-and-drop-to-reorder": "끌어 놓아서 순서 변경"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "이름으로 쿼리 선택",
@@ -7610,7 +7616,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "폴더 비우기",
     "noOptionsMessage-no-folders-found": "폴더를 찾을 수 없습니다",
     "select-aria-label": "폴더 필터",
     "select-placeholder": "폴더별로 필터링"
@@ -7978,6 +7983,42 @@
     "select-group": "그룹 선택"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "",
+          "previousFiscalQuarter": "",
+          "previousFiscalYear": "",
+          "previousMonth": "",
+          "previousWeek": "",
+          "previousYear": "",
+          "thisDayLastWeek": "",
+          "thisFiscalQuarter": "",
+          "thisFiscalQuarterSoFar": "",
+          "thisFiscalYear": "",
+          "thisFiscalYearSoFar": "",
+          "thisMonth": "",
+          "thisMonthSoFar": "",
+          "thisWeek": "",
+          "thisWeekSoFar": "",
+          "thisYear": "",
+          "thisYearSoFar": "",
+          "today": "",
+          "todaySoFar": "",
+          "yesterday": ""
+        },
+        "lastNDays_other": "",
+        "lastNHours_other": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_other": "",
+        "lastNYears_other": "",
+        "nextNDays_other": "",
+        "nextNHours_other": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_other": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9508,6 +9549,15 @@
     "description-enable-logs-highlighting": "",
     "description-show-controls": "마지막 또는 첫 번째 로그 라인으로 이동하는 컨트롤과 로그 단계별 필터를 표시합니다",
     "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
@@ -10720,11 +10770,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -11719,6 +11767,11 @@
       "next": "다음",
       "previous": "이전"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "완료된 단계",
       "label-current-step": "현재 단계",
@@ -12572,6 +12625,7 @@
       "theme-label": "인터페이스 테마",
       "week-start-label": "주 시작 요일"
     },
+    "save": "",
     "theme": {
       "default-label": "기본값",
       "experimental": "실험적 기능"
@@ -12667,6 +12721,10 @@
     "sql-suggestion-history": "SQL 제안 내역",
     "suggestions": "제안",
     "view-explanation": "설명 보기"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {
@@ -12968,13 +13026,13 @@
       "placeholder-search-teams": "팀 검색"
     },
     "team-settings": {
-      "description-email": "이 항목은 선택 사항이며 주로 (gravatar 서비스를 통해) 팀 프로필 아바타를 설정하는 데 사용됩니다",
+      "description-email": "",
       "label-email": "이메일",
       "label-name": "이름",
       "label-numerical-identifier": "숫자 식별자",
       "label-role": "역할",
       "label-team-details": "팀 세부 정보",
-      "save": "저장"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "팀 동기화를 사용하면 사용자가 로그인할 때가 아니라 싱글 사인온 그룹에 속한 사용자인지 여부를 토대로 각 사용자의 Grafana 팀 및 권한을 즉시 업데이트하여 Grafana에서 사용자의 액세스를 보다 쉽게 관리할 수 있습니다"

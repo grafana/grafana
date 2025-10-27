@@ -238,6 +238,7 @@ func RegisterAPIService(
 	extraWorkers []jobs.Worker,
 	repoFactory repository.Factory,
 ) (*APIBuilder, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		return nil, nil
 	}
@@ -648,11 +649,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 
-			// Informer with resync interval used for health check and reconciliation
-			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
-			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
-			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
-
 			b.client = c.ProvisioningV0alpha1()
 
 			// Initialize the API client-based job store
@@ -669,6 +665,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return nil
 			}
 
+			// Informer with resync interval used for health check and reconciliation
+			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
+			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
+			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
 			go repoInformer.Informer().Run(postStartHookCtx.Done())
 			go jobInformer.Informer().Run(postStartHookCtx.Done())
 

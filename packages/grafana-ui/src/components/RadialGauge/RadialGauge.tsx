@@ -293,10 +293,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      // Adds subtle shadow in light themes to help bar stand out
-      '.radial-arc-path': {
-        filter: theme.isLight ? `drop-shadow(0px 0px 1px #888);` : '',
-      },
     }),
     clearButton: css({
       background: 'transparent',

@@ -60,12 +60,6 @@ A key capability of SQL expressions is the ability to JOIN data from multiple ta
 
 To work with SQL expressions, you must use data from a backend data source. In Grafana, a backend data source refers to a data source plugin or integration that communicates with a database, service, or API through the Grafana server, rather than directly from the browser (frontend).
 
-## Known limitations
-
-- Currently, only one SQL expression is supported per panel or alert.
-- Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
-- Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
-
 ## Compatible data sources
 
 The following are compatible data sources:
@@ -237,6 +231,91 @@ During conversion:
 - If available, the `display_name` column contains a human-readable name.
 - The `metric_name` column stores the raw metric identifier.
 - For time series data, Grafana includes a `time` column with timestamps
+
+## Known limitations
+
+- Currently, only one SQL expression is supported per panel or alert.
+- Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
+- Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
+
+### Schema changes and missing data
+
+SQL expressions have known limitations that may cause queries to fail or return unexpected results. These constraints are inherent to how the feature is implemented and should be understood when building queries.
+
+The following situations are affected:
+
+- Error responses – When a data source query returns an error, SQL expressions cannot interpret the result.
+
+- No data responses – If a query returns no rows, the SQL expression engine cannot infer a schema.
+
+- Dynamic schema responses – If the set of columns or labels changes between query executions, SQL expressions may fail because it treats column changes as schema changes.
+
+SQL expressions are powered by an embedded SQL engine where each query result is treated as a table. The schema of that table is derived from the columns returned by the underlying data source.
+
+Unlike traditional SQL databases, where schemas are usually fixed, many Grafana data sources (for example, Prometheus) can return results with varying label sets or no data at all.
+
+When this happens:
+
+- A missing column appears to the SQL engine as if it doesn’t exist.
+- A completely empty result provides no schema for subsequent SQL operations.
+- Error responses break the assumption that the query returns tabular data.
+
+As a result, SQL expressions can’t gracefully handle changes in schema or no-data conditions, since these cases violate the static schema model that SQL relies on.
+
+#### Workarounds
+
+You can mitigate these issues in the following ways:
+
+- Avoid `SELECT *` – Explicitly select only the columns you expect to exist.
+
+- Ensure a consistent schema – If possible, configure your query to always return columns, even when no data is present.
+
+#### Example: Handling Prometheus no data
+
+When joining results from the same Prometheus query across different data source instances, you can use this pattern:
+
+```sql
+-- Prometheus query
+sum by (cluster) (up{job=~".*zruler.*"})
+or on (cluster) (
+  (0/0) *
+  (
+    label_replace(vector(1), "cluster", "fake", "", "")
+  )
+)
+
+-- SQL expression
+SELECT
+    COALESCE(a.time, b.time) AS time,
+    COALESCE(a.cluster, b.cluster) AS cluster,
+    COALESCE(a.up, 0) + COALESCE(b.up, 0) AS unified_up
+FROM (
+    SELECT time, cluster, __value__ AS up
+    FROM A
+    WHERE cluster != 'fake'
+    ORDER BY time
+    LIMIT 5
+) a
+FULL OUTER JOIN (
+    SELECT time, cluster, __value__ AS up
+    FROM B
+    WHERE cluster != 'fake'
+    ORDER BY time
+    LIMIT 5
+) b ON a.time = b.time;
+```
+
+This approach ensures that a schema exists even when one query returns no data.
+
+### Regular Expressions
+
+Regular expressions are not fully compatible with MySQL standards. SQL expressions that use regular expression functions will have limitations such as:
+
+- Lack of back-references
+- No before/after text matching
+- Differences in handling CR ('\r')
+
+There may be other minor differences as well.
 
 ## SQL expressions examples
 
