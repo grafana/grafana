@@ -11,6 +11,7 @@ import {
   ComboboxOption,
   Field,
   Input,
+  Label,
   Stack,
   Switch,
   Text,
@@ -23,13 +24,16 @@ import { RuleFormValues } from '../types/rule-form';
 
 import { NeedHelpInfoForNotificationPolicy } from './rule-editor/NotificationsStep';
 
+// Centralized form path for selected contact point
+const CONTACT_POINT_PATH = 'contactPoints.grafana.selectedContactPoint' as const;
+
 export function RuleNotificationSection() {
   const styles = useStyles2(getStyles);
 
   const { watch, setValue } = useFormContext<RuleFormValues>();
   const manualRouting = watch('manualRouting');
   const useNotificationPolicy = !manualRouting;
-  const selectedContactPoint = watch('contactPoints.grafana.selectedContactPoint');
+  const selectedContactPoint = watch(CONTACT_POINT_PATH);
   // Fetch contact points from Alerting API v0alpha1
   const { currentData, status, refetch } = notificationsAPIv0alpha1.endpoints.listReceiver.useQuery({});
   const options = useMemo<Array<ComboboxOption<string>>>(
@@ -40,6 +44,8 @@ export function RuleNotificationSection() {
       })),
     [currentData]
   );
+
+  const recipientLabelId = 'recipient-label';
 
   return (
     <div className={styles.section}>
@@ -54,100 +60,107 @@ export function RuleNotificationSection() {
 
       <div className={styles.contentIndented}>
         <Stack direction="column" gap={2}>
-          <Field
-            label={
-              <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
-                <span>{t('alerting.simplified.notification.recipient.label', 'Recipient')}</span>
-                <Stack direction="row" alignItems="center" gap={0.5}>
-                  <Text variant="bodySmall" color="secondary">
-                    {t('alerting.simplified.notification.manual-routing.label', 'Manual routing')}
-                  </Text>
-                  <Switch
-                    value={manualRouting}
-                    onChange={(e) => {
-                      const next = e.currentTarget.checked;
-                      setValue('manualRouting', next, { shouldDirty: true });
-                      setValue('editorSettings.simplifiedNotificationEditor', next, { shouldDirty: true });
-                    }}
-                    aria-label={t('alerting.simplified.notification.manual-routing.aria', 'Toggle manual routing')}
-                  />
-                </Stack>
-              </Stack>
-            }
-            noMargin
-          >
+          <Stack direction="column" gap={1}>
+            <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={1}>
+              <Label
+                htmlFor={recipientLabelId}
+                description={
+                  useNotificationPolicy ? (
+                    <Text variant="bodySmall" color="secondary">
+                      <Trans i18nKey="alerting.simplified.notification.policy-selected">
+                        Notifications for firing alerts are routed to contact points based on matching labels and the
+                        notification policy tree.
+                      </Trans>
+                    </Text>
+                  ) : (
+                    <Text variant="bodySmall" color="secondary">
+                      <Trans i18nKey="alerting.simplified.notification.contact-point-selected">
+                        Notifications for firing alerts are routed to a selected contact point.
+                      </Trans>
+                    </Text>
+                  )
+                }
+              >
+                <span id={recipientLabelId}>{t('alerting.simplified.notification.recipient.label', 'Recipient')}</span>
+              </Label>
+              <div className={styles.manualRoutingInline}>
+                <Text variant="bodySmall" color="secondary">
+                  {t('alerting.simplified.notification.manual-routing.label', 'Manual routing')}
+                </Text>
+                <Switch
+                  value={manualRouting}
+                  onChange={(e) => {
+                    const next = e.currentTarget.checked;
+                    setValue('manualRouting', next, { shouldDirty: true, shouldValidate: true });
+                    setValue('editorSettings.simplifiedNotificationEditor', next, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
+                  }}
+                  aria-labelledby={recipientLabelId}
+                  aria-label={t('alerting.simplified.notification.manual-routing.aria', 'Toggle manual routing')}
+                />
+              </div>
+            </Stack>
             {useNotificationPolicy ? (
               <div className={styles.contentTopSpacer}>
-                <Stack direction="column" gap={1} alignItems="start">
-                  <Text variant="bodySmall" color="secondary">
-                    <Trans i18nKey="alerting.simplified.notification.policy-selected">
-                      Notifications for firing alerts are routed to contact points based on matching labels and the
-                      notification policy tree.
-                    </Trans>
-                  </Text>
-                  <NeedHelpInfoForNotificationPolicy />
-                </Stack>
+                <NeedHelpInfoForNotificationPolicy />
               </div>
             ) : (
               <div className={styles.contentTopSpacer}>
-                <Stack direction="column" gap={1}>
-                  <Text variant="bodySmall" color="secondary">
-                    <Trans i18nKey="alerting.simplified.notification.contact-point-selected">
-                      Notifications for firing alerts are routed to a selected contact point.
+                <Stack direction="row" gap={1} alignItems="center">
+                  <Combobox<ComboboxOption<string>['value']>
+                    options={options}
+                    value={
+                      selectedContactPoint ? (options.find((o) => o.value === selectedContactPoint) ?? null) : null
+                    }
+                    onChange={(opt) =>
+                      setValue(CONTACT_POINT_PATH, opt?.value ?? '', {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                    width={30}
+                    placeholder={t(
+                      'alerting.simplified.notification.select-contact-point',
+                      'Select a contact point...'
+                    )}
+                    isClearable
+                    data-testid="contact-point"
+                    loading={status === 'pending'}
+                  />
+                  <Button
+                    icon="sync"
+                    variant="secondary"
+                    fill="text"
+                    size="sm"
+                    aria-label={t('alerting.common.refresh', 'Refresh')}
+                    onClick={() => {
+                      if (refetch) {
+                        refetch();
+                      }
+                    }}
+                  />
+                  <TextLink
+                    external
+                    href={'/alerting/notifications'}
+                    aria-label={t(
+                      'alerting.link-to-contact-points.aria-label-view-or-create-contact-points',
+                      'View or create contact points'
+                    )}
+                  >
+                    <Trans i18nKey="alerting.link-to-contact-points.view-or-create-contact-points">
+                      View or create contact points
                     </Trans>
-                  </Text>
-                  <Stack direction="row" gap={1} alignItems="center">
-                    <Combobox<ComboboxOption<string>['value']>
-                      options={options}
-                      value={
-                        selectedContactPoint ? (options.find((o) => o.value === selectedContactPoint) ?? null) : null
-                      }
-                      onChange={(opt) =>
-                        setValue('contactPoints.grafana.selectedContactPoint', opt?.value ?? '', {
-                          shouldDirty: true,
-                        })
-                      }
-                      width={30}
-                      placeholder={t(
-                        'alerting.simplified.notification.select-contact-point',
-                        'Select a contact point...'
-                      )}
-                      isClearable
-                      data-testid="contact-point"
-                      loading={status === 'pending'}
-                    />
-                    <Button
-                      icon="sync"
-                      variant="secondary"
-                      fill="text"
-                      size="sm"
-                      aria-label={t('alerting.common.refresh', 'Refresh')}
-                      onClick={() => {
-                        if (refetch) {
-                          refetch();
-                        }
-                      }}
-                    />
-                    <TextLink
-                      external
-                      href={'/alerting/notifications'}
-                      aria-label={t(
-                        'alerting.link-to-contact-points.aria-label-view-or-create-contact-points',
-                        'View or create contact points'
-                      )}
-                    >
-                      <Trans i18nKey="alerting.link-to-contact-points.view-or-create-contact-points">
-                        View or create contact points
-                      </Trans>
-                    </TextLink>
-                  </Stack>
+                  </TextLink>
                 </Stack>
               </div>
             )}
-          </Field>
+          </Stack>
 
           <Field label={t('alerting.simplified.notification.summary.label', 'Summary (optional)')} noMargin>
             <TextArea
+              id="summary-text-area"
               placeholder={t(
                 'alerting.simplified.notification.summary.placeholder',
                 'Enter a summary of what happened and why…'
@@ -157,6 +170,7 @@ export function RuleNotificationSection() {
 
           <Field label={t('alerting.simplified.notification.description.label', 'Description (optional)')} noMargin>
             <TextArea
+              id="description-text-area"
               placeholder={t(
                 'alerting.simplified.notification.description.placeholder',
                 'Enter a description of what the alert rule does…'
@@ -166,6 +180,7 @@ export function RuleNotificationSection() {
 
           <Field label={t('alerting.simplified.notification.runbook-url.label', 'Runbook URL (optional)')} noMargin>
             <Input
+              id="runbook-url-input"
               placeholder={t(
                 'alerting.simplified.notification.runbook-url.placeholder',
                 'Enter the webpage where you keep your runbook for the alert…'
@@ -206,5 +221,11 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     contentIndented: css({ marginLeft: `calc(20px + ${theme.spacing(1)})` }),
     contentTopSpacer: css({ marginTop: theme.spacing(0.5) }),
+    manualRoutingInline: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      whiteSpace: 'nowrap',
+    }),
   };
 }

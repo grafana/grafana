@@ -52,6 +52,35 @@ describe('formValuesToRulerGrafanaRuleDTO', () => {
     expect(formValuesToRulerGrafanaRuleDTO(formValues)).toMatchSnapshot();
   });
 
+  it('sets notification_settings.receiver only when manualRouting is true', () => {
+    const base: RuleFormValues = {
+      ...getDefaultFormValues(),
+      type: RuleFormType.grafana,
+      condition: 'A',
+      contactPoints: {
+        grafana: {
+          selectedContactPoint: 'team-receiver',
+          muteTimeIntervals: [],
+          activeTimeIntervals: [],
+          overrideGrouping: false,
+          overrideTimings: false,
+          groupBy: [],
+          groupWaitValue: '',
+          groupIntervalValue: '',
+          repeatIntervalValue: '',
+        },
+      },
+    };
+
+    // manualRouting false → no notification_settings
+    const dtoNoManual = formValuesToRulerGrafanaRuleDTO({ ...base, manualRouting: false });
+    expect(dtoNoManual.grafana_alert.notification_settings).toBeUndefined();
+
+    // manualRouting true → notification_settings.receiver present
+    const dtoManual = formValuesToRulerGrafanaRuleDTO({ ...base, manualRouting: true });
+    expect(dtoManual.grafana_alert.notification_settings?.receiver).toBe('team-receiver');
+  });
+
   it('should not save both instant and range type queries', () => {
     const defaultValues = getDefaultFormValues();
 
