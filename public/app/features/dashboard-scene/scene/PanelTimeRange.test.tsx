@@ -12,7 +12,7 @@ import {
 
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { PanelTimeRange } from './PanelTimeRange';
+import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 
 describe('PanelTimeRange', () => {
   const fakeCurrentDate = dateTime('2019-02-11T19:00:00.000Z').toDate();

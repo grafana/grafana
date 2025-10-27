@@ -22,7 +22,7 @@ import { getPanelIdForVizPanel } from '../utils/utils';
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { VizPanelLinks } from './PanelLinks';
-import { PanelTimeRange } from './PanelTimeRange';
+import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 

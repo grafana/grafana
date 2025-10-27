@@ -13,7 +13,7 @@ import { getPanelIdForVizPanel } from '../utils/utils';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelLinksBehavior } from './PanelMenuBehavior';
 import { PanelNotices } from './PanelNotices';
-import { PanelTimeRange } from './PanelTimeRange';
+import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 
 export interface LibraryPanelBehaviorState extends SceneObjectState {

@@ -1,11 +1,8 @@
 /* eslint @grafana/i18n/no-untranslated-strings: 0 */
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
-import { useState } from 'react';
-import { of } from 'rxjs';
 
 import {
-  DataQuery,
   DataQueryRequest,
   dateMath,
   dateTime,
@@ -16,7 +13,6 @@ import {
   TimeRange,
 } from '@grafana/data';
 import {
-  ExtraQueryDataProcessor,
   ExtraQueryDescriptor,
   SceneComponentProps,
   SceneDataQuery,
@@ -25,33 +21,24 @@ import {
   SceneTimeRangeState,
   SceneTimeRangeTransformerBase,
   VariableDependencyConfig,
+  VizPanel,
 } from '@grafana/scenes';
-import {
-  Badge,
-  Box,
-  Button,
-  Drawer,
-  Icon,
-  Input,
-  Label,
-  PanelChrome,
-  Stack,
-  TimePickerTooltip,
-  Tooltip,
-  Field,
-  useStyles2,
-  Combobox,
-} from '@grafana/ui';
+import { Icon, PanelChrome, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { TimeOverrideResult } from 'app/features/dashboard/utils/panel';
+
+import { getDashboardSceneFor } from '../../utils/utils';
+
+import { DEFAULT_COMPARE_OPTIONS, PanelTimeRangeDrawer, PanelTimeRangeZoomBehavior } from './PanelTimeRangeDrawer';
+import { getCompareTimeRange, timeShiftAlignmentProcessor } from './utils';
 
 export interface PanelTimeRangeState extends SceneTimeRangeState {
   enabled?: boolean;
   timeFrom?: string;
+  zoomBehavior?: PanelTimeRangeZoomBehavior;
   timeShift?: string;
   hideTimeOverride?: boolean;
   timeInfo?: string;
   compareWith?: string;
-  isSettingsOpen?: boolean;
 }
 
 export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRangeState> implements SceneTimeRangeLike {
@@ -98,6 +85,10 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
   }
 
   protected ancestorTimeRangeChanged(timeRange: SceneTimeRangeState): void {
+    if (this.state.timeFrom && this.state.zoomBehavior === 'dashboard') {
+      return;
+    }
+
     const overrideResult = this.getTimeOverride(timeRange.value);
     this.setState({ value: overrideResult.timeRange, timeInfo: overrideResult.timeInfo });
   }
@@ -187,13 +178,21 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
       infoBlocks.push(final);
     }
 
-    newTimeData.timeInfo = infoBlocks.join(' + ');
+    newTimeData.timeInfo = infoBlocks.join(', ');
     return newTimeData;
+  }
+
+  public onOpenSettings() {
+    const panel = this.parent;
+    const dashboard = getDashboardSceneFor(this);
+    if (panel instanceof VizPanel) {
+      dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
+    }
   }
 }
 
 function PanelTimeRangeRenderer({ model }: SceneComponentProps<PanelTimeRange>) {
-  const { timeInfo, hideTimeOverride, isSettingsOpen } = model.useState();
+  const { timeInfo, hideTimeOverride } = model.useState();
   const styles = useStyles2(getStyles);
 
   if (!timeInfo || hideTimeOverride) {
@@ -202,13 +201,8 @@ function PanelTimeRangeRenderer({ model }: SceneComponentProps<PanelTimeRange>) 
 
   return (
     <>
-      {isSettingsOpen && (
-        <Drawer title="Panel time range settings" onClose={() => model.setState({ isSettingsOpen: false })} size="sm">
-          <PanelTimeRangeSettings model={model} />
-        </Drawer>
-      )}
       <Tooltip content={'Click to open panel time range settings'}>
-        <PanelChrome.TitleItem className={styles.timeshift} onClick={() => model.setState({ isSettingsOpen: true })}>
+        <PanelChrome.TitleItem className={styles.timeshift} onClick={() => model.onOpenSettings()}>
           <Stack gap={1} alignItems={'center'}>
             <Icon name="clock-nine" size="sm" />
             <div>{timeInfo}</div>
@@ -216,72 +210,6 @@ function PanelTimeRangeRenderer({ model }: SceneComponentProps<PanelTimeRange>) 
         </PanelChrome.TitleItem>
       </Tooltip>
     </>
-  );
-}
-
-const DEFAULT_COMPARE_OPTIONS = [
-  { label: 'Disabled', value: '' },
-  { label: 'Day before', value: '24h' },
-  { label: 'Week before', value: '1w' },
-  { label: 'Month before', value: '1M' },
-];
-
-function PanelTimeRangeSettings({ model }: SceneComponentProps<PanelTimeRange>) {
-  const { timeFrom, timeShift, hideTimeOverride, compareWith } = model.useState();
-  const [localTimeFrom, setLocalTimeFrom] = useState(timeFrom);
-  const [localTimeShift, setLocalTimeShift] = useState(timeShift);
-  const [localHideTimeOverride, setLocalHideTimeOverride] = useState(hideTimeOverride);
-  const [timeCompare, setTimeCompare] = useState(compareWith ?? '');
-
-  return (
-    <Stack direction="column" gap={2}>
-      <Field label="Relative time override" noMargin>
-        <Input
-          value={localTimeFrom}
-          onChange={(e) => setLocalTimeFrom(e.currentTarget.value)}
-          placeholder="e.g. now-1h"
-        />
-      </Field>
-      <Field label="Time shift" noMargin>
-        <Input
-          value={localTimeShift}
-          onChange={(e) => setLocalTimeShift(e.currentTarget.value)}
-          placeholder="e.g. 1h"
-        />
-      </Field>
-      <Field
-        noMargin
-        label={
-          <Stack>
-            <Label>Time window comparison</Label> <Badge color="blue" text="New" />
-          </Stack>
-        }
-      >
-        <Combobox options={DEFAULT_COMPARE_OPTIONS} value={timeCompare} onChange={(x) => setTimeCompare(x.value)} />
-      </Field>
-
-      <Box paddingTop={3}>
-        <Stack>
-          <Button variant="secondary" onClick={() => model.setState({ isSettingsOpen: false })}>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={() => {
-              model.setState({
-                timeFrom: localTimeFrom,
-                timeShift: localTimeShift,
-                hideTimeOverride: localHideTimeOverride,
-                isSettingsOpen: false,
-                compareWith: timeCompare,
-              });
-            }}
-          >
-            Apply
-          </Button>
-        </Stack>
-      </Box>
-    </Stack>
   );
 }
 
@@ -294,54 +222,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-const PREVIOUS_PERIOD_VALUE = '__previousPeriod';
-const NO_PERIOD_VALUE = '__noPeriod';
-
-function getCompareTimeRange(timeRange: TimeRange, compareWith: string | undefined): TimeRange | undefined {
-  let compareFrom: DateTime;
-  let compareTo: DateTime;
-
-  if (compareWith) {
-    if (compareWith === PREVIOUS_PERIOD_VALUE) {
-      const diffMs = timeRange.to.diff(timeRange.from);
-      compareFrom = dateTime(timeRange.from!).subtract(diffMs);
-      compareTo = dateTime(timeRange.to!).subtract(diffMs);
-    } else {
-      compareFrom = dateTime(timeRange.from!).subtract(rangeUtil.intervalToMs(compareWith));
-      compareTo = dateTime(timeRange.to!).subtract(rangeUtil.intervalToMs(compareWith));
-    }
-    return {
-      from: compareFrom,
-      to: compareTo,
-      raw: {
-        from: compareFrom,
-        to: compareTo,
-      },
-    };
-  }
-
-  return undefined;
-}
-
-// Processor function for use with time shifted comparison series.
-// This aligns the secondary series with the primary and adds custom
-// metadata and config to the secondary series' fields so that it is
-// rendered appropriately.
-const timeShiftAlignmentProcessor: ExtraQueryDataProcessor = (primary, secondary) => {
-  const diff = secondary.timeRange.from.diff(primary.timeRange.from);
-  secondary.series.forEach((series) => {
-    series.refId = getCompareSeriesRefId(series.refId || '');
-    series.meta = {
-      ...series.meta,
-      // @ts-ignore Remove when https://github.com/grafana/grafana/pull/71129 is released
-      timeCompare: {
-        diffMs: diff,
-        isTimeShiftQuery: true,
-      },
-    };
-  });
-  return of(secondary);
-};
-
-export const getCompareSeriesRefId = (refId: string) => `${refId}-compare`;
