@@ -70,6 +70,7 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 	if ctx.Err() != nil {
 		return
 	}
+	logger := logging.FromContext(ctx)
 
 	if change.Action == repository.FileActionDeleted {
 		deleteCtx, deleteSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.delete")
@@ -140,6 +141,7 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 
 	writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.write_resource_from_file")
 	name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, "")
+	logger.Info("Writing file started", "file", change.Path, "action", "name", name)
 	result := jobs.JobResourceResult{
 		Path:   change.Path,
 		Action: change.Action,
@@ -147,12 +149,15 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 		Group:  gvk.Group,
 		Kind:   gvk.Kind,
 	}
-
+	logger.Info("Writing file ended", "file", change.Path, "action", "name", name)
 	if err != nil {
 		writeSpan.RecordError(err)
 		result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
 	}
+
+	logger.Info("Recording started", "file", change.Path, "action", "name", name)
 	progress.Record(writeCtx, result)
+	logger.Info("Recording ended", "file", change.Path, "action", "name", name)
 	writeSpan.End()
 }
 
@@ -200,6 +205,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 		attribute.Int("file_creations", len(fileCreations)),
 	)
 
+	// TODO: Give a Time limited context per operation, to avoid hanging
 	if len(fileDeletions) > 0 {
 		if err := applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers); err != nil {
 			return err
@@ -271,6 +277,7 @@ loop:
 	for _, change := range resources {
 		// Check for early termination conditions
 		// Test is actually progress.TooManyErrors is hanging in large repos
+		// SO THIS IS ACTUALLY HANGING!
 		// if err := progress.TooManyErrors(); err != nil {
 		// 	break
 		// }
