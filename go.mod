@@ -655,6 +655,8 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
+require github.com/grafana/grafana/apps/example v0.0.0-20251027162426-edef69fdc82b
+
 require (
 	github.com/go-openapi/swag/conv v0.25.1 // indirect
 	github.com/go-openapi/swag/fileutils v0.25.1 // indirect
