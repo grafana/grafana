@@ -4602,7 +4602,8 @@
       },
       "editor": {
         "info": "Set rules to control {{type}} visibility by matching any or all rules.",
-        "not-supported-for-custom-grid": "Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.",
+        "learn-more": "Learn more",
+        "not-supported-for-custom-grid": "Show/hide rules aren't supported for panels in the Custom panel layout. Change the panel layout to Auto grid to enable this feature.",
         "unsupported-object-type": "Conditional rendering not supported for this item type"
       },
       "overlay": {
@@ -5989,6 +5990,7 @@
     "managed-badge": {
       "kubectl": "Managed by: Kubectl",
       "plugin": "Managed by: Plugin {{id}}",
+      "provisioned": "Provisioned",
       "repository": "Managed by: Repository {{title}}",
       "terraform": "Managed by: Terraform"
     },
@@ -7637,7 +7639,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Clear folders",
     "noOptionsMessage-no-folders-found": "No folders found",
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
@@ -12678,6 +12679,7 @@
       "theme-label": "Interface theme",
       "week-start-label": "Week start"
     },
+    "save": "Save preferences",
     "theme": {
       "default-label": "Default",
       "experimental": "Experimental"
@@ -13079,13 +13081,13 @@
       "placeholder-search-teams": "Search teams"
     },
     "team-settings": {
-      "description-email": "This is optional and is primarily used to set the team profile avatar (via gravatar service)",
+      "description-email": "This is optional and is primarily used to set the team profile avatar (via the Gravatar service)",
       "label-email": "Email",
       "label-name": "Name",
       "label-numerical-identifier": "Numerical identifier",
       "label-role": "Role",
       "label-team-details": "Team details",
-      "save": "Save"
+      "save": "Save team details"
     },
     "team-sync-upgrade-content": {
       "description": "Team Sync makes it easier for you to manage users' access in Grafana, by immediately updating each user's Grafana teams and permissions based on their single sign-on group membership, instead of when users sign in"

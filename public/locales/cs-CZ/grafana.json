@@ -4642,7 +4642,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "Podmíněné vykreslení není pro vlastní rozvržení mřížky podporováno. Chcete-li použít podmíněné vykreslení, přepněte na automatickou mřížku.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -6029,6 +6030,13 @@
       "usage-count_few": "Použito na {{count}} nástěnkách",
       "usage-count_many": "Použito na {{count}} nástěnkách",
       "usage-count_other": "Použito na {{count}} nástěnkách"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "Nástěnku se nepodařilo přesunout",
@@ -7677,7 +7685,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Vymazat složky",
     "noOptionsMessage-no-folders-found": "Nebyly nalezeny žádné složky",
     "select-aria-label": "Filtr složky",
     "select-placeholder": "Filtrovat podle složky"
@@ -11910,6 +11917,11 @@
       "next": "Další",
       "previous": "Předchozí"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Dokončený krok",
       "label-current-step": "Aktuální krok",
@@ -12775,6 +12787,7 @@
       "theme-label": "Motiv rozhraní",
       "week-start-label": "Začátek týdne"
     },
+    "save": "",
     "theme": {
       "default-label": "Výchozí",
       "experimental": "Experimentální"
@@ -13178,13 +13191,13 @@
       "placeholder-search-teams": "Hledat týmy"
     },
     "team-settings": {
-      "description-email": "Toto je volitelné a používá se především k nastavení avatara profilu týmu (prostřednictvím služby Gravatar)",
+      "description-email": "",
       "label-email": "E-mail",
       "label-name": "Název",
       "label-numerical-identifier": "Číselný identifikátor",
       "label-role": "Role",
       "label-team-details": "Podrobnosti o týmu",
-      "save": "Uložit"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "Synchronizace týmu usnadňuje správu přístupu uživatelů v Grafaně tím, že okamžitě aktualizuje týmy a oprávnění každého uživatele Grafany na základě členství ve skupině jednotného přihlášení místo jednotlivého přihlášení uživatele"

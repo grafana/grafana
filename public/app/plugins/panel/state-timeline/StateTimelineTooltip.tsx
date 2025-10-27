@@ -53,8 +53,8 @@ export const StateTimelineTooltip = ({
     const field = series.fields[seriesIdx!];
     const nextStateIdx = findNextStateIndex(field, dataIdx!);
     let nextStateTs;
-    if (nextStateIdx) {
-      nextStateTs = xField.values[nextStateIdx!];
+    if (nextStateIdx != null) {
+      nextStateTs = xField.values[nextStateIdx];
     }
 
     const stateTs = xField.values[dataIdx!];

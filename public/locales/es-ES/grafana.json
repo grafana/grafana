@@ -4602,7 +4602,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "La representación condicional no es compatible con el diseño de cuadrícula personalizado. Emplea la cuadrícula automática para poder usarla.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5985,6 +5986,13 @@
       "last-edited": "{{timeAgo}} por <person />",
       "usage-count_one": "Utilizado en {{count}} dashboards",
       "usage-count_other": "Utilizado en {{count}} dashboards"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "No se ha podido mover el dashboard",
@@ -7631,7 +7639,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Borrar carpetas",
     "noOptionsMessage-no-folders-found": "No se han encontrado carpetas",
     "select-aria-label": "Filtro de carpeta",
     "select-placeholder": "Filtrar por carpeta"
@@ -11810,6 +11817,11 @@
       "next": "Siguiente",
       "previous": "Anterior"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Paso completado",
       "label-current-step": "Paso actual",
@@ -12667,6 +12679,7 @@
       "theme-label": "Tema de interfaz de usuario",
       "week-start-label": "Inicio de la semana"
     },
+    "save": "",
     "theme": {
       "default-label": "Por defecto",
       "experimental": "Experimental"
@@ -13068,13 +13081,13 @@
       "placeholder-search-teams": "Buscar equipos"
     },
     "team-settings": {
-      "description-email": "Esto es opcional y se utiliza principalmente para establecer el avatar del perfil del equipo (a través del servicio gravatar)",
+      "description-email": "",
       "label-email": "Correo electrónico",
       "label-name": "Nombre",
       "label-numerical-identifier": "Identificador numérico",
       "label-role": "Rol",
       "label-team-details": "Detalles del equipo",
-      "save": "Guardar"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "La sincronización de equipos facilita la gestión del acceso de los usuarios en Grafana, ya que actualiza inmediatamente los equipos y los permisos de Grafana de cada usuario en función de su pertenencia a un grupo de inicio de sesión único, en lugar de hacerlo cuando los usuarios inician sesión"

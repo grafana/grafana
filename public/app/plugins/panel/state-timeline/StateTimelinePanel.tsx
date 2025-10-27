@@ -29,9 +29,6 @@ import { containerStyles } from './styles';
 
 interface TimelinePanelProps extends PanelProps<Options> {}
 
-/**
- * @alpha
- */
 export const StateTimelinePanel = ({
   data,
   timeRange,

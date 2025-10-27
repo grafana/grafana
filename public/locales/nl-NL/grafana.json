@@ -4602,7 +4602,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "Voorwaardelijke weergave wordt niet ondersteund in de aangepaste rasterindeling. Schakel over naar auto grid om dit te gebruiken.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5985,6 +5986,13 @@
       "last-edited": "{{timeAgo}} door <person />",
       "usage-count_one": "Gebruikt op {{count}} dashboards",
       "usage-count_other": "Gebruikt op {{count}} dashboards"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "Kan dashboard niet verplaatsen",
@@ -7631,7 +7639,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Mappen wissen",
     "noOptionsMessage-no-folders-found": "Geen mappen gevonden",
     "select-aria-label": "Mapfilter",
     "select-placeholder": "Filteren op map"
@@ -11810,6 +11817,11 @@
       "next": "Volgende",
       "previous": "Vorige"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Voltooide stap",
       "label-current-step": "Huidige stap",
@@ -12667,6 +12679,7 @@
       "theme-label": "Interfacethema",
       "week-start-label": "Begin van de week"
     },
+    "save": "",
     "theme": {
       "default-label": "Standaard",
       "experimental": "Experimenteel"
@@ -13068,13 +13081,13 @@
       "placeholder-search-teams": "Teams zoeken"
     },
     "team-settings": {
-      "description-email": "Dit is optioneel en wordt voornamelijk gebruikt voor het instellen van de teamprofielavatar (via gravatar-service)",
+      "description-email": "",
       "label-email": "E-mailadres",
       "label-name": "Naam",
       "label-numerical-identifier": "Numerieke id",
       "label-role": "Rol",
       "label-team-details": "Teamgegevens",
-      "save": "Opslaan"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "Teamsynchronisatie maakt het makkelijker voor je om de toegang van gebruikers in Grafana te beheren door onmiddellijk de Grafana-teams en toestemmingen van elke gebruiker bij te werken op basis van hun lidmaatschap van een single sign-on-groep, in plaats van wanneer gebruikers zich aanmelden"
