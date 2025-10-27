@@ -100,6 +100,7 @@ export class DashboardMigrator {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateSchema(old: any, targetSchemaVersion?: number) {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
@@ -170,6 +171,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 8 && finalTargetVersion >= 8) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       panelUpgrades.push((panel: any) => {
         each(panel.targets, (target) => {
           // update old influxdb query schema
@@ -223,6 +225,7 @@ export class DashboardMigrator {
     // schema version 10 changes
     if (oldVersion < 10 && finalTargetVersion >= 10) {
       // move aliasYAxis changes
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'table') {
           return panel;
@@ -273,6 +276,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 17 && finalTargetVersion >= 17) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       panelUpgrades.push((panel: any) => {
         if (panel.minSpan) {
           const max = GRID_COLUMN_COUNT / panel.minSpan;
@@ -295,6 +299,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 18 && finalTargetVersion >= 18) {
       // migrate change to gauge options
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       panelUpgrades.push((panel: any) => {
         if (panel['options-gauge']) {
           panel.options = panel['options-gauge'];
@@ -327,6 +332,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 19 && finalTargetVersion >= 19) {
       // migrate change to gauge options
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       panelUpgrades.push((panel: any) => {
         if (panel.links && isArray(panel.links)) {
           panel.links = panel.links.map(upgradePanelLink);
@@ -343,6 +349,7 @@ export class DashboardMigrator {
           url: updateVariablesSyntax(link.url),
         };
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       panelUpgrades.push((panel: any) => {
         // For graph panel
         if (panel.options && panel.options.dataLinks && isArray(panel.options.dataLinks)) {
@@ -372,6 +379,7 @@ export class DashboardMigrator {
           url: link.url.replace(/__series.labels/g, '__field.labels'),
         };
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       panelUpgrades.push((panel: any) => {
         // For graph panel
         if (panel.options && panel.options.dataLinks && isArray(panel.options.dataLinks)) {
@@ -390,6 +398,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 22 && finalTargetVersion >= 22) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'table') {
           return panel;
@@ -419,6 +428,7 @@ export class DashboardMigrator {
     if (oldVersion < 24 && finalTargetVersion >= 24) {
       // 7.0
       // - migrate existing tables to 'table-old'
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       panelUpgrades.push((panel: any) => {
         const wasAngularTable = panel.type === 'table';
         if (wasAngularTable && !panel.styles) {
@@ -446,6 +456,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 26 && finalTargetVersion >= 26) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       panelUpgrades.push((panel: PanelModel) => {
         const wasReactText = panel.type === 'text2';
         if (!wasReactText) {
@@ -527,6 +538,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 31 && finalTargetVersion >= 31) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       panelUpgrades.push((panel: PanelModel) => {
         if (panel.transformations) {
           for (const t of panel.transformations) {
@@ -815,6 +827,7 @@ export class DashboardMigrator {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   upgradeToGridLayout(old: any) {
     let yPos = 0;
     const widthFactor = GRID_COLUMN_COUNT / 12;
@@ -844,6 +857,7 @@ export class DashboardMigrator {
       const height = row.height || DEFAULT_ROW_HEIGHT;
       const rowGridHeight = getGridHeight(height);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rowPanel: any = {};
       let rowPanelModel: PanelModel | undefined;
 
@@ -947,6 +961,7 @@ class RowArea {
   /**
    * Update area after adding the panel.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   addPanel(gridPos: any) {
     for (let i = gridPos.x; i < gridPos.x + gridPos.w; i++) {
       if (!this.area[i] || gridPos.y + gridPos.h - this.yPos > this.area[i]) {
@@ -959,6 +974,7 @@ class RowArea {
   /**
    * Calculate position for the new panel in the row.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getPanelPosition(panelHeight: number, panelWidth: number, callOnce = false): any {
     let startPlace, endPlace;
     let place;
@@ -997,6 +1013,7 @@ class RowArea {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function upgradePanelLink(link: any): DataLink {
   let url = link.url;
 
@@ -1142,6 +1159,7 @@ function isLegacyCloudWatchAnnotationQuery(
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function upgradeValueMappings(oldMappings: any, thresholds?: ThresholdsConfig): ValueMapping[] | undefined {
   if (!oldMappings) {
     return undefined;
@@ -1283,11 +1301,13 @@ function migrateHideFromFunctionality(panel: PanelModel) {
 function migrateFormatTimeToConvertFieldType(panel: PanelModel) {
   // Migrate formatTime transformations to convertFieldType transformations
   if (panel.transformations) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     panel.transformations = panel.transformations.map((transformation: any) => {
       if (transformation.id === 'formatTime') {
         const options = transformation.options || {};
-        
+
         // Create the conversion object for convertFieldType
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const conversion: any = {
           destinationType: 'string',
         };
