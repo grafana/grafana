@@ -168,7 +168,7 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
       infoBlocks.push(text);
     }
 
-    newTimeData.timeInfo = capitalize(infoBlocks.join(', '));
+    newTimeData.timeInfo = capitalize(infoBlocks.join(' + '));
     return newTimeData;
   }
 

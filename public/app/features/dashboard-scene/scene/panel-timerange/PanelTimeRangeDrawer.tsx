@@ -10,7 +10,7 @@ import { PanelTimeRange } from './PanelTimeRange';
 
 export const DEFAULT_COMPARE_OPTIONS = [
   { label: 'Disabled', value: '' },
-  { label: 'Day before', value: '24h' },
+  { label: 'Day before', value: '1d' },
   { label: 'Week before', value: '1w' },
   { label: 'Month before', value: '1M' },
 ];
@@ -128,7 +128,7 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
             noMargin
             description={t(
               'dashboard.panel.time-range-settings.time-shift-description',
-              'Add a time shift relative to the dashboard time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h'
+              'Adds a time shift relative to the dashboard or panel time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h'
             )}
           >
             <Combobox

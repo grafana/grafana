@@ -52,7 +52,23 @@ describe('PanelTimeRange', () => {
     buildAndActivateSceneFor(panelTime);
 
     expect(panelTime.state.value.from.toISOString()).toBe('2019-02-11T15:00:00.000Z');
-    expect(panelTime.state.timeInfo).toBe('Last 2 hours, timeshift -2h');
+    expect(panelTime.state.timeInfo).toBe('Last 2 hours + timeshift -2h');
+  });
+
+  it('should add time comparison to timeInfo', () => {
+    const panelTime = new PanelTimeRange({ compareWith: '1d' });
+
+    buildAndActivateSceneFor(panelTime);
+
+    expect(panelTime.state.timeInfo).toBe('Compared to day before');
+  });
+
+  it('should add time override and time comparison to timeInfo', () => {
+    const panelTime = new PanelTimeRange({ timeFrom: '1h', compareWith: '1d' });
+
+    buildAndActivateSceneFor(panelTime);
+
+    expect(panelTime.state.timeInfo).toBe('Last 1 hour + compared to day before');
   });
 
   it('should update timeInfo when timeShift and timeFrom are variable expressions', async () => {
@@ -75,14 +91,14 @@ describe('PanelTimeRange', () => {
     });
     activateFullSceneTree(scene);
 
-    expect(panelTime.state.timeInfo).toBe('Last 10 seconds, timeshift -20s');
+    expect(panelTime.state.timeInfo).toBe('Last 10 seconds + timeshift -20s');
 
     customTimeFrom.setState({ value: '15s' });
     customTimeShift.setState({ value: '25s' });
 
     panelTime.forceRender();
 
-    expect(panelTime.state.timeInfo).toBe('Last 15 seconds, timeshift -25s');
+    expect(panelTime.state.timeInfo).toBe('Last 15 seconds + timeshift -25s');
   });
 
   it('should update panelTimeRange from/to based on scene timeRange on activate', () => {

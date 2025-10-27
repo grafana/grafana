@@ -5138,7 +5138,7 @@
         "time-from": "Custom panel time range",
         "time-from-description": "Overrides the dashboard time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
         "time-shift": "Time shift",
-        "time-shift-description": "Add a time shift relative to the dashboard time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
+        "time-shift-description": "Adds a time shift relative to the dashboard or panel time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
         "time-window-compare": "Time window comparison",
         "time-window-compare-description": "Query and overlay data from a different time period",
         "title": "Panel time range settings"
