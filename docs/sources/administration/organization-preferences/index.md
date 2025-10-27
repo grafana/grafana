@@ -11,7 +11,7 @@ labels:
     - enterprise
     - oss
 title: Organization preferences
-weight: 2500
+weight: 3600
 ---
 
 # Organization preferences
