@@ -3,13 +3,14 @@ import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Box, Grid, Modal, Spinner, Text, useStyles2 } from '@grafana/ui';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { DashboardCard } from './DashboardCard';
+import { DashboardLibraryInteractions } from './interactions';
 import { GnetDashboard, Link } from './types';
 
 const TEMPLATE_DASHBOARD_COMMUNITY_UIDS = [24279, 24280, 24281, 24282];
@@ -28,6 +29,13 @@ export const TemplateDashboardModal = () => {
   };
 
   const onImportDashboardClick = async (dashboard: GnetDashboard) => {
+    DashboardLibraryInteractions.itemClicked({
+      contentKind: 'template_dashboard',
+      libraryItemId: dashboard.id,
+      libraryItemTitle: dashboard.name,
+      sourceEntryPoint: 'template_dashboard_modal',
+    });
+
     const params = new URLSearchParams({
       datasource: testDataSources[0].uid || '',
       title: dashboard.name,
@@ -53,6 +61,7 @@ export const TemplateDashboardModal = () => {
           const result = await getBackendSrv().get(`/api/gnet/dashboards/${uid}`, undefined, undefined, {
             showErrorAlert: false,
           });
+          console.log('result', result);
           return result;
         } catch (error) {
           console.error('Error loading template dashboard', uid, error);
@@ -75,7 +84,7 @@ export const TemplateDashboardModal = () => {
       isOpen={isOpen}
       onDismiss={onClose}
       className={styles.modal}
-      title={t('dashboard.template-dashboard-modal.title', 'Start a dashboard from a template')}
+      title={t('dashboard-library.template-dashboard-modal.title', 'Start a dashboard from a template')}
     >
       {loading ? (
         <div className={styles.loadingOverlay}>
@@ -83,7 +92,11 @@ export const TemplateDashboardModal = () => {
         </div>
       ) : null}
       <Box direction="column" gap={4} display="flex">
-        <Text element="p">Browse and select from a template made by Grafana</Text>
+        <Text element="p">
+          <Trans i18nKey="dashboard-library.template-dashboard-modal.description">
+            Browse and select from a template made by Grafana
+          </Trans>
+        </Text>
         <Grid
           gap={4}
           columns={{
@@ -103,6 +116,16 @@ export const TemplateDashboardModal = () => {
                 imageUrl={thumbnailUrl}
                 onClick={() => onImportDashboardClick(dashboard)}
                 dashboard={dashboard}
+                details={{
+                  id: dashboard.id,
+                  datasource: testDataSources[0].type,
+                  dependencies: dashboard.dependencies.items.map(
+                    (item: { pluginName: string; pluginVersion: string }) =>
+                      `${item.pluginName} ${item.pluginVersion.split('-')[0]}`
+                  ),
+                  publishedBy: dashboard.orgName,
+                  lastUpdate: dashboard.updatedAt,
+                }}
               />
             );
           })}

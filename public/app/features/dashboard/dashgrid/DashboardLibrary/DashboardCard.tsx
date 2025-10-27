@@ -47,17 +47,17 @@ export function DashboardCard({ title, imageUrl, onClick, onDetailsClick, dashbo
       </div>
       <Card.Actions className={styles.actionsContainer}>
         <Button variant="secondary" onClick={onClick}>
-          <Trans i18nKey="dashboard-template.card.use-template-button">Use template</Trans>
+          <Trans i18nKey="dashboard-library.dashboard-card.use-template-button">Use template</Trans>
         </Button>
         {details && (
           <Toggletip
-            title={t('dashboard-template.card.details-title', 'Details')}
+            title={t('dashboard-library.dashboard-card.details-title', 'Details')}
             content={<DetailsToggletipContent details={details} />}
             closeButton={true}
             placement="right"
           >
             <Button variant="secondary" fill="outline" onClick={onDetailsClick}>
-              <Trans i18nKey="dashboard-template.card.details-button">Details</Trans>
+              <Trans i18nKey="dashboard-library.dashboard-card.details-button">Details</Trans>
             </Button>
           </Toggletip>
         )}
@@ -81,11 +81,23 @@ function DetailsToggletipContent({ details }: { details: Details }) {
   return (
     <Box display="flex">
       <Box display="flex" direction="column" gap={1} width={{ xs: 'auto', md: 340 }}>
-        <Section label="ID" value={details.id} />
-        <Section label="Datasource" value={details.datasource} />
-        <Section label="Dependencies" value={details.dependencies.join(' | ')} />
-        <Section label="Published By" value={details.publishedBy} />
-        <Section label="Last Update" value={details.lastUpdate} />
+        <Section label={t('dashboard-library.dashboard-card.details.id', 'ID')} value={details.id} />
+        <Section
+          label={t('dashboard-library.dashboard-card.details.datasource-label', 'Datasource')}
+          value={details.datasource}
+        />
+        <Section
+          label={t('dashboard-library.dashboard-card.details.dependencies-label', 'Dependencies')}
+          value={details.dependencies.join(' | ')}
+        />
+        <Section
+          label={t('dashboard-library.dashboard-card.details.published-by-label', 'Published By')}
+          value={details.publishedBy}
+        />
+        <Section
+          label={t('dashboard-library.dashboard-card.details.last-update-label', 'Last Update')}
+          value={details.lastUpdate}
+        />
       </Box>
     </Box>
   );
