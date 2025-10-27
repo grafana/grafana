@@ -25,7 +25,6 @@ import ViewingLayer from './ViewingLayer';
 
 const getStyles = () => {
   return {
-    container: css({}),
     canvasContainer: css({
       position: 'relative',
     }),
@@ -78,7 +77,7 @@ export default class SpanGraph extends React.PureComponent<SpanGraphProps> {
 
     const items = memoizedGetitems(trace);
     return (
-      <div className={styles.container}>
+      <div>
         <TickLabels numTicks={TIMELINE_TICK_INTERVAL} duration={trace.duration} />
         <div className={styles.canvasContainer}>
           <CanvasSpanGraph valueWidth={trace.duration} items={items} />
