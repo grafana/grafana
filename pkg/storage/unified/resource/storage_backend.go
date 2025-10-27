@@ -283,6 +283,40 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	if req.Key == nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "missing key"}}
 	}
+
+	// If a specific resource version is requested, validate that it's not too high
+	if req.ResourceVersion > 0 {
+		// Fetch the latest RV
+		latestRV := k.snowflake.Generate().Int64()
+		if lastEventKey, err := k.eventStore.LastEventKey(ctx); err == nil {
+			latestRV = lastEventKey.ResourceVersion
+		} else if !errors.Is(err, ErrNotFound) {
+			return &BackendReadResponse{Error: &resourcepb.ErrorResult{
+				Code:    http.StatusInternalServerError,
+				Message: fmt.Sprintf("failed to fetch latest resource version: %v", err),
+			}}
+		}
+
+		// Check if the requested RV is higher than the latest available RV
+		if req.ResourceVersion > latestRV {
+			return &BackendReadResponse{
+				Error: &resourcepb.ErrorResult{
+					Code:    http.StatusGatewayTimeout,
+					Reason:  string(metav1.StatusReasonTimeout), // match etcd behavior
+					Message: "ResourceVersion is larger than max",
+					Details: &resourcepb.ErrorDetails{
+						Causes: []*resourcepb.ErrorCause{
+							{
+								Reason:  string(metav1.CauseTypeResourceVersionTooLarge),
+								Message: fmt.Sprintf("requested: %d, current %d", req.ResourceVersion, latestRV),
+							},
+						},
+					},
+				},
+			}
+		}
+	}
+
 	meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
