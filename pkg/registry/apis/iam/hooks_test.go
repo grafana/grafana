@@ -16,11 +16,20 @@ import (
 type FakeZanzanaClient struct {
 	zanzana.Client
 	writeCallback func(context.Context, *v1.WriteRequest) error
+	readCallback  func(context.Context, *v1.ReadRequest) (*v1.ReadResponse, error)
 }
 
 // Write implements zanzana.Client.
 func (f *FakeZanzanaClient) Write(ctx context.Context, req *v1.WriteRequest) error {
 	return f.writeCallback(ctx, req)
+}
+
+// Read implements zanzana.Client.
+func (f *FakeZanzanaClient) Read(ctx context.Context, req *v1.ReadRequest) (*v1.ReadResponse, error) {
+	if f.readCallback != nil {
+		return f.readCallback(ctx, req)
+	}
+	return &v1.ReadResponse{}, nil
 }
 
 func requireTuplesMatch(t *testing.T, actual []*v1.TupleKey, expected []*v1.TupleKey, msgAndArgs ...interface{}) {
@@ -135,6 +144,254 @@ func TestAfterResourcePermissionCreate(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testDashEntries}
 		b.AfterResourcePermissionCreate(&dashPerm, nil)
 	})
+}
+
+func TestBeginResourcePermissionUpdate(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{
+		logger:   log.NewNopLogger(),
+		zTickets: make(chan bool, 1),
+	}
+
+	t.Run("should update zanzana entries for folder resource permissions", func(t *testing.T) {
+		oldFolderPerm := iamv0.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "org-2",
+			},
+			Spec: iamv0.ResourcePermissionSpec{
+				Resource: iamv0.ResourcePermissionspecResource{
+					ApiGroup: "folder.grafana.app", Resource: "folders", Name: "fold1",
+				},
+				Permissions: []iamv0.ResourcePermissionspecPermission{
+					{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "u1", Verb: "View"},
+				},
+			},
+		}
+
+		newFolderPerm := iamv0.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "org-2",
+			},
+			Spec: iamv0.ResourcePermissionSpec{
+				Resource: iamv0.ResourcePermissionspecResource{
+					ApiGroup: "folder.grafana.app", Resource: "folders", Name: "fold1",
+				},
+				Permissions: []iamv0.ResourcePermissionspecPermission{
+					{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "u2", Verb: "Edit"},
+					{Kind: iamv0.ResourcePermissionSpecPermissionKindTeam, Name: "team1", Verb: "View"},
+				},
+			},
+		}
+
+		testFolderWrite := func(ctx context.Context, req *v1.WriteRequest) error {
+			require.NotNil(t, req)
+			require.Equal(t, "org-2", req.Namespace)
+
+			// Should delete old permission
+			require.NotNil(t, req.Deletes)
+			require.Len(t, req.Deletes.TupleKeys, 1)
+			require.Equal(
+				t,
+				req.Deletes.TupleKeys[0],
+				&v1.TupleKeyWithoutCondition{User: "user:u1", Relation: "view", Object: "folder:fold1"},
+			)
+
+			// Should write new permissions
+			require.NotNil(t, req.Writes)
+			require.Len(t, req.Writes.TupleKeys, 2)
+
+			expectedWrites := []*v1.TupleKey{
+				{User: "user:u2", Relation: "edit", Object: "folder:fold1"},
+				{User: "team:team1#member", Relation: "view", Object: "folder:fold1"},
+			}
+			requireTuplesMatch(t, req.Writes.TupleKeys, expectedWrites)
+			return nil
+		}
+
+		b.zClient = &FakeZanzanaClient{writeCallback: testFolderWrite}
+
+		// Call BeginUpdate which does all the work
+		finishFunc, err := b.BeginResourcePermissionUpdate(context.Background(), &newFolderPerm, &oldFolderPerm, nil)
+		require.NoError(t, err)
+		require.NotNil(t, finishFunc)
+
+		// Call the finish function with success=true to trigger the zanzana write
+		finishFunc(context.Background(), true)
+	})
+
+	// Wait for the ticket to be released
+	<-b.zTickets
+
+	t.Run("should update zanzana entries for dashboard resource permissions", func(t *testing.T) {
+		oldDashPerm := iamv0.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: iamv0.ResourcePermissionSpec{
+				Resource: iamv0.ResourcePermissionspecResource{
+					ApiGroup: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",
+				},
+				Permissions: []iamv0.ResourcePermissionspecPermission{
+					{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "u1", Verb: "View"},
+				},
+			},
+		}
+
+		newDashPerm := iamv0.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: iamv0.ResourcePermissionSpec{
+				Resource: iamv0.ResourcePermissionspecResource{
+					ApiGroup: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",
+				},
+				Permissions: []iamv0.ResourcePermissionspecPermission{
+					{Kind: iamv0.ResourcePermissionSpecPermissionKindServiceAccount, Name: "sa1", Verb: "Edit"},
+				},
+			},
+		}
+
+		object := "resource:dashboard.grafana.app/dashboards/dash1"
+
+		testDashWrite := func(ctx context.Context, req *v1.WriteRequest) error {
+			require.NotNil(t, req)
+			require.Equal(t, "default", req.Namespace)
+
+			// Should delete old permission
+			require.NotNil(t, req.Deletes)
+			require.Len(t, req.Deletes.TupleKeys, 1)
+			require.Equal(
+				t,
+				req.Deletes.TupleKeys[0],
+				&v1.TupleKeyWithoutCondition{User: "user:u1", Relation: "view", Object: object},
+			)
+
+			// Should write new permission
+			require.NotNil(t, req.Writes)
+			require.Len(t, req.Writes.TupleKeys, 1)
+
+			tuple := req.Writes.TupleKeys[0]
+			require.NotNil(t, tuple.Condition)
+			require.Equal(t, "group_filter", tuple.Condition.Name)
+			tuple.Condition = nil
+			require.Equal(
+				t,
+				tuple,
+				&v1.TupleKey{User: "service-account:sa1", Relation: "edit", Object: object},
+			)
+
+			return nil
+		}
+
+		b.zClient = &FakeZanzanaClient{writeCallback: testDashWrite}
+
+		// Call BeginUpdate which does all the work
+		finishFunc, err := b.BeginResourcePermissionUpdate(context.Background(), &newDashPerm, &oldDashPerm, nil)
+		require.NoError(t, err)
+		require.NotNil(t, finishFunc)
+
+		// Call the finish function with success=true to trigger the zanzana write
+		finishFunc(context.Background(), true)
+	})
+}
+
+func TestAfterResourcePermissionDelete(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{
+		logger:   log.NewNopLogger(),
+		zTickets: make(chan bool, 1),
+	}
+
+	t.Run("should delete zanzana entries for folder resource permissions", func(t *testing.T) {
+		folderPerm := iamv0.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "org-2",
+			},
+			Spec: iamv0.ResourcePermissionSpec{
+				Resource: iamv0.ResourcePermissionspecResource{
+					ApiGroup: "folder.grafana.app", Resource: "folders", Name: "fold1",
+				},
+				Permissions: []iamv0.ResourcePermissionspecPermission{
+					{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "u1", Verb: "View"},
+					{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "Edit"},
+				},
+			},
+		}
+
+		testFolderDelete := func(ctx context.Context, req *v1.WriteRequest) error {
+			require.NotNil(t, req)
+			require.Equal(t, "org-2", req.Namespace)
+
+			// Should have deletes but no writes
+			require.NotNil(t, req.Deletes)
+			require.Len(t, req.Deletes.TupleKeys, 2)
+			require.Nil(t, req.Writes)
+
+			require.Equal(
+				t,
+				req.Deletes.TupleKeys[0],
+				&v1.TupleKeyWithoutCondition{User: "user:u1", Relation: "view", Object: "folder:fold1"},
+			)
+			require.Equal(
+				t,
+				req.Deletes.TupleKeys[1],
+				&v1.TupleKeyWithoutCondition{User: "role:basic_editor#assignee", Relation: "edit", Object: "folder:fold1"},
+			)
+			return nil
+		}
+
+		b.zClient = &FakeZanzanaClient{writeCallback: testFolderDelete}
+		b.AfterResourcePermissionDelete(&folderPerm, nil)
+	})
+
+	// Wait for the ticket to be released
+	<-b.zTickets
+
+	t.Run("should delete zanzana entries for dashboard resource permissions", func(t *testing.T) {
+		dashPerm := iamv0.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: iamv0.ResourcePermissionSpec{
+				Resource: iamv0.ResourcePermissionspecResource{
+					ApiGroup: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",
+				},
+				Permissions: []iamv0.ResourcePermissionspecPermission{
+					{Kind: iamv0.ResourcePermissionSpecPermissionKindServiceAccount, Name: "sa1", Verb: "View"},
+					{Kind: iamv0.ResourcePermissionSpecPermissionKindTeam, Name: "team1", Verb: "Edit"},
+				},
+			},
+		}
+
+		testDashDelete := func(ctx context.Context, req *v1.WriteRequest) error {
+			object := "resource:dashboard.grafana.app/dashboards/dash1"
+
+			require.NotNil(t, req)
+			require.Equal(t, "default", req.Namespace)
+
+			// Should have deletes but no writes
+			require.NotNil(t, req.Deletes)
+			require.Len(t, req.Deletes.TupleKeys, 2)
+			require.Nil(t, req.Writes)
+
+			require.Equal(
+				t,
+				req.Deletes.TupleKeys[0],
+				&v1.TupleKeyWithoutCondition{User: "service-account:sa1", Relation: "view", Object: object},
+			)
+			require.Equal(
+				t,
+				req.Deletes.TupleKeys[1],
+				&v1.TupleKeyWithoutCondition{User: "team:team1#member", Relation: "edit", Object: object},
+			)
+
+			return nil
+		}
+
+		b.zClient = &FakeZanzanaClient{writeCallback: testDashDelete}
+		b.AfterResourcePermissionDelete(&dashPerm, nil)
+	})
+
+	// Wait for the ticket to be released
+	<-b.zTickets
 }
 
 func TestAfterCoreRoleCreate(t *testing.T) {
