@@ -8,6 +8,7 @@ title: 'Custom webhook example'
 ---
 
 ```go
+{- /* Generates a pretty-printed JSON payload with alert group info and individual alerts metadata. */ -}}
 {{ define "webhook.custom.payload" -}}
   {{ coll.Dict
   "receiver" .Receiver

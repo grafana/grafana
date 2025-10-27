@@ -123,11 +123,6 @@ jobs:
       - name: Validate packages
         run: ./scripts/validate-npm-packages.sh
 
-      - name: Debug OIDC Claims
-        uses: github/actions-oidc-debugger@2e9ba5d3f4bebaad1f91a2cede055115738b7ae8
-        with:
-          audience: '${{ github.server_url }}/${{ github.repository_owner }}'
-
       - name: Publish packages
         env:
           NPM_TAG: ${{ steps.npm-tag.outputs.NPM_TAG }}
