@@ -23,7 +23,7 @@ func (s *frontendService) contextMiddleware() web.Middleware {
 			ctx := r.Context()
 
 			span := trace.SpanFromContext(ctx)
-			ctx = setRequestContext(ctx)
+			ctx = setRequestContext(ctx, w, r)
 
 			// Preserve the original span so the setRequestContext span doesn't get propagated as a parent of the rest of the request
 			ctx = trace.ContextWithSpan(ctx, span)
@@ -33,7 +33,7 @@ func (s *frontendService) contextMiddleware() web.Middleware {
 	}
 }
 
-func setRequestContext(ctx context.Context) context.Context {
+func setRequestContext(ctx context.Context, w http.ResponseWriter, r *http.Request) context.Context {
 	ctx, span := tracing.Start(ctx, "setRequestContext")
 	defer span.End()
 
@@ -50,9 +50,18 @@ func setRequestContext(ctx context.Context) context.Context {
 	// This modifies both r and reqContext.Req since they point to the same value
 	*reqContext.Req = *reqContext.Req.WithContext(ctx)
 
+	// add traceID to logger context
 	traceID := tracing.TraceIDFromContext(ctx, false)
 	if traceID != "" {
 		reqContext.Logger = reqContext.Logger.New("traceID", traceID)
+		// set trace ID in response headers as well
+		w.Header().Set("Trace-ID", traceID)
+	}
+
+	// add hostname to logger context
+	hostname := r.Host
+	if hostname != "" {
+		reqContext.Logger = reqContext.Logger.New("hostname", hostname)
 	}
 
 	return ctx

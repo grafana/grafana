@@ -2092,6 +2092,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "pluginInstallAPISync",
+			Description:  "Enable syncing plugin installations to the installs API",
+			FrontendOnly: false,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "newGauge",
 			Description:  "Enable new gauge visualization",
 			Stage:        FeatureStageExperimental,
