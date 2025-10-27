@@ -26,23 +26,21 @@ const fixtures: Array<
   ['app platform APIs disabled', {}],
 ];
 
-describe('FolderFilter', () => {
-  describe.each(fixtures)('%s', (_title, featureToggleSetup) => {
-    beforeEach(() => {
-      resetGrafanaSearcher();
-    });
+describe.each(fixtures)('FolderFilter - %s', (_title, featureToggleSetup) => {
+  beforeEach(() => {
+    resetGrafanaSearcher();
+  });
 
-    testWithFeatureToggles(featureToggleSetup);
+  testWithFeatureToggles(featureToggleSetup);
 
-    it('allows selecting folders', async () => {
-      const onChange = jest.fn();
-      const { user } = render(<FolderFilter onChange={onChange} />);
+  it('allows selecting folders', async () => {
+    const onChange = jest.fn();
+    const { user } = render(<FolderFilter onChange={onChange} />);
 
-      await user.click(screen.getByPlaceholderText('Filter by folder'));
+    await user.click(screen.getByPlaceholderText('Filter by folder'));
 
-      await user.click(await screen.findByText(folderA.item.title));
-      await user.click(await screen.findByText(folderB.item.title));
-      expect(onChange).toHaveBeenCalledWith([folderA.item.uid, folderB.item.uid]);
-    });
+    await user.click(await screen.findByText(folderA.item.title));
+    await user.click(await screen.findByText(folderB.item.title));
+    expect(onChange).toHaveBeenCalledWith([folderA.item.uid, folderB.item.uid]);
   });
 });
