@@ -114,6 +114,7 @@ COPY apps/alerting/notifications apps/alerting/notifications
 COPY apps/alerting/rules apps/alerting/rules
 COPY pkg/codegen pkg/codegen
 COPY pkg/plugins/codegen pkg/plugins/codegen
+COPY apps/example apps/example
 
 RUN go mod download
 

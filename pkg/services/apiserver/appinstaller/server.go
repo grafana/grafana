@@ -116,6 +116,13 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 		return statusStore
 	}
 
+	// if the storage is a subresource store, we need to extract the underlying generic registry store
+	if subresourceStore, ok := storage.(*appsdkapiserver.SubresourceREST); ok {
+		subresourceStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
+		subresourceStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
+		return subresourceStore
+	}
+
 	return storage
 }
 

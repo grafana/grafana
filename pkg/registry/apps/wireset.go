@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
+	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
@@ -26,4 +27,5 @@ var WireSet = wire.NewSet(
 	rules.RegisterAppInstaller,
 	notifications.RegisterAppInstaller,
 	logsdrilldown.RegisterAppInstaller,
+	example.RegisterAppInstaller,
 )
