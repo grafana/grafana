@@ -567,6 +567,10 @@ const (
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
 
+	// FlagZanzanaNoLegacyClient
+	// Use openFGA as main authorization engine and disable legacy RBAC clietn.
+	FlagZanzanaNoLegacyClient = "zanzanaNoLegacyClient"
+
 	// FlagReloadDashboardsOnParamsChange
 	// Enables reload of dashboards on scopes, time range and variables changes
 	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"
@@ -646,10 +650,6 @@ const (
 	// FlagUnifiedStorageSearchSprinkles
 	// Enable sprinkles on unified storage search
 	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
-
-	// FlagUnifiedStorageUseFullNgram
-	// Use full n-gram indexing instead of edge n-gram for unified storage search
-	FlagUnifiedStorageUseFullNgram = "unifiedStorageUseFullNgram"
 
 	// FlagManagedDualWriter
 	// Pick the dual write mode from database configs
@@ -954,10 +954,6 @@ const (
 	// Enables restore deleted dashboards feature
 	FlagRestoreDashboards = "restoreDashboards"
 
-	// FlagSkipTokenRotationIfRecent
-	// Skip token rotation if it was already rotated less than 5 seconds ago
-	FlagSkipTokenRotationIfRecent = "skipTokenRotationIfRecent"
-
 	// FlagAlertEnrichment
 	// Enable configuration of alert enrichments in Grafana Cloud.
 	FlagAlertEnrichment = "alertEnrichment"
@@ -1005,10 +1001,6 @@ const (
 	// FlagFoldersAppPlatformAPI
 	// Enables use of app platform API for folders
 	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
-
-	// FlagEnablePluginImporter
-	// Set this to true to use the new PluginImporter functionality
-	FlagEnablePluginImporter = "enablePluginImporter"
 
 	// FlagOtelLogsFormatting
 	// Applies OTel formatting templates to displayed logs
@@ -1058,9 +1050,9 @@ const (
 	// Enables team folders functionality
 	FlagTeamFolders = "teamFolders"
 
-	// FlagGrafanaPathfinder
-	// Enables Pathfinder app
-	FlagGrafanaPathfinder = "grafanaPathfinder"
+	// FlagInteractiveLearning
+	// Enables the interactive learning app
+	FlagInteractiveLearning = "interactiveLearning"
 
 	// FlagAlertingTriage
 	// Enables the alerting triage feature
@@ -1094,6 +1086,10 @@ const (
 	// Enable loading plugins via declarative URLs
 	FlagCdnPluginsUrls = "cdnPluginsUrls"
 
+	// FlagPluginInstallAPISync
+	// Enable syncing plugin installations to the installs API
+	FlagPluginInstallAPISync = "pluginInstallAPISync"
+
 	// FlagNewGauge
 	// Enable new gauge visualization
 	FlagNewGauge = "newGauge"
@@ -1103,7 +1099,7 @@ const (
 	FlagPreventPanelChromeOverflow = "preventPanelChromeOverflow"
 
 	// FlagPluginStoreServiceLoading
-	// Load plugins during store service startup instead of wire provider
+	// Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
 	FlagPluginStoreServiceLoading = "pluginStoreServiceLoading"
 
 	// FlagOnlyStoreActionSets
