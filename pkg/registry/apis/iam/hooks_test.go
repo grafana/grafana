@@ -15,7 +15,6 @@ import (
 
 type FakeZanzanaClient struct {
 	zanzana.Client
-	readCallback  func(context.Context, *v1.ReadRequest) (*v1.ReadResponse, error)
 	writeCallback func(context.Context, *v1.WriteRequest) error
 	readCallback  func(context.Context, *v1.ReadRequest) (*v1.ReadResponse, error)
 }
@@ -31,14 +30,6 @@ func (f *FakeZanzanaClient) Read(ctx context.Context, req *v1.ReadRequest) (*v1.
 // Write implements zanzana.Client.
 func (f *FakeZanzanaClient) Write(ctx context.Context, req *v1.WriteRequest) error {
 	return f.writeCallback(ctx, req)
-}
-
-// Read implements zanzana.Client.
-func (f *FakeZanzanaClient) Read(ctx context.Context, req *v1.ReadRequest) (*v1.ReadResponse, error) {
-	if f.readCallback != nil {
-		return f.readCallback(ctx, req)
-	}
-	return &v1.ReadResponse{}, nil
 }
 
 func requireTuplesMatch(t *testing.T, actual []*v1.TupleKey, expected []*v1.TupleKey, msgAndArgs ...interface{}) {
@@ -174,12 +165,15 @@ func TestAfterResourcePermissionCreate(t *testing.T) {
 }
 
 func TestBeginResourcePermissionUpdate(t *testing.T) {
-	b := &IdentityAccessManagementAPIBuilder{
-		logger:   log.NewNopLogger(),
-		zTickets: make(chan bool, 1),
-	}
-
 	t.Run("should update zanzana entries for folder resource permissions", func(t *testing.T) {
+		b := &IdentityAccessManagementAPIBuilder{
+			logger:   log.NewNopLogger(),
+			zTickets: make(chan bool, 1),
+		}
+		t.Cleanup(func() {
+			<-b.zTickets
+		})
+
 		oldFolderPerm := iamv0.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "org-2",
@@ -245,10 +239,15 @@ func TestBeginResourcePermissionUpdate(t *testing.T) {
 		finishFunc(context.Background(), true)
 	})
 
-	// Wait for the ticket to be released
-	<-b.zTickets
-
 	t.Run("should update zanzana entries for dashboard resource permissions", func(t *testing.T) {
+		b := &IdentityAccessManagementAPIBuilder{
+			logger:   log.NewNopLogger(),
+			zTickets: make(chan bool, 1),
+		}
+		t.Cleanup(func() {
+			<-b.zTickets
+		})
+
 		oldDashPerm := iamv0.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
@@ -322,12 +321,15 @@ func TestBeginResourcePermissionUpdate(t *testing.T) {
 }
 
 func TestAfterResourcePermissionDelete(t *testing.T) {
-	b := &IdentityAccessManagementAPIBuilder{
-		logger:   log.NewNopLogger(),
-		zTickets: make(chan bool, 1),
-	}
-
 	t.Run("should delete zanzana entries for folder resource permissions", func(t *testing.T) {
+		b := &IdentityAccessManagementAPIBuilder{
+			logger:   log.NewNopLogger(),
+			zTickets: make(chan bool, 1),
+		}
+		t.Cleanup(func() {
+			<-b.zTickets
+		})
+
 		folderPerm := iamv0.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "org-2",
@@ -369,10 +371,15 @@ func TestAfterResourcePermissionDelete(t *testing.T) {
 		b.AfterResourcePermissionDelete(&folderPerm, nil)
 	})
 
-	// Wait for the ticket to be released
-	<-b.zTickets
-
 	t.Run("should delete zanzana entries for dashboard resource permissions", func(t *testing.T) {
+		b := &IdentityAccessManagementAPIBuilder{
+			logger:   log.NewNopLogger(),
+			zTickets: make(chan bool, 1),
+		}
+		t.Cleanup(func() {
+			<-b.zTickets
+		})
+
 		dashPerm := iamv0.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
@@ -416,9 +423,6 @@ func TestAfterResourcePermissionDelete(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testDashDelete}
 		b.AfterResourcePermissionDelete(&dashPerm, nil)
 	})
-
-	// Wait for the ticket to be released
-	<-b.zTickets
 }
 
 func TestAfterCoreRoleCreate(t *testing.T) {
@@ -1023,7 +1027,7 @@ func TestAfterRoleDelete(t *testing.T) {
 	})
 }
 
-func TestAfterCoreRoleUpdate(t *testing.T) {
+func TestBeginRoleUpdate(t *testing.T) {
 	t.Run("should update zanzana entries when permissions change", func(t *testing.T) {
 		b := &IdentityAccessManagementAPIBuilder{
 			logger:   log.NewNopLogger(),
@@ -1222,7 +1226,7 @@ func TestAfterCoreRoleUpdate(t *testing.T) {
 	})
 }
 
-func TestAfterRoleUpdate(t *testing.T) {
+func TestBeginCoreRoleUpdate(t *testing.T) {
 	t.Run("should update zanzana entries when permissions change", func(t *testing.T) {
 		b := &IdentityAccessManagementAPIBuilder{
 			logger:   log.NewNopLogger(),
