@@ -133,7 +133,7 @@ export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderi
     }
   }
 
-  public render(): ReactElement {
+  public renderCmp(): ReactElement {
     return <this.Component model={this} key={this.state.key} />;
   }
 

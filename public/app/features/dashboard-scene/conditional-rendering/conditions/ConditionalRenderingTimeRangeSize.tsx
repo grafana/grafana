@@ -80,7 +80,7 @@ export class ConditionalRenderingTimeRangeSize extends SceneObjectBase<Condition
     }
   }
 
-  public render(): ReactElement {
+  public renderCmp(): ReactElement {
     return <this.Component model={this} key={this.state.key} />;
   }
 
