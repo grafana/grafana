@@ -163,7 +163,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
       minWidth={CONTAINER_MIN_WIDTH}
     >
       <CollapsableSection
-        label={<Text element="h3">1. {CONFIG_SECTION_HEADERS[0].label}</Text>}
+        label={<Text element="h3">{CONFIG_SECTION_HEADERS[0].label}</Text>}
         isOpen={CONFIG_SECTION_HEADERS[0].isOpen}
       >
         <Text color="secondary">

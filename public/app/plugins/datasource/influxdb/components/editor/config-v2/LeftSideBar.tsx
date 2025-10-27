@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { Box, InlineField, LinkButton, Space, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Icon, LinkButton, Space, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { CONFIG_SECTION_HEADERS, CONFIG_SECTION_HEADERS_WITH_PDC } from './constants';
 
@@ -14,37 +14,36 @@ export const LeftSideBar = ({ pdcInjected }: LeftSideBarProps) => {
 
   return (
     <Stack>
-      <Box flex={1} marginY={10}>
-        <Box height="75px"></Box>
+      <Box flex={1} marginY={1}>
         <Text element="h4">Connect data source</Text>
         <Box paddingTop={2}>
           {headers.map((header, index) => (
             <div key={index} data-testid={`${header.label}-sidebar`}>
-              <InlineField label={`${index + 1}`} className={styles.inlineField} labelWidth={3} grow>
-                <LinkButton
-                  variant="secondary"
-                  fill="text"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const target = document.getElementById(header.id);
-                    if (target) {
-                      const y = target.getBoundingClientRect().top + window.scrollY - 60;
-                      window.scrollTo({ top: y, behavior: 'smooth' });
-                    }
-                  }}
-                >
-                  <div className={styles.sidebarText}>
-                    <div className={styles.sidebarLabel}>{header.label}</div>
-                    {header.isOptional && (
-                      <div className={styles.sidebarOptional}>
-                        <Text color="secondary" variant="bodySmall">
-                          optional
-                        </Text>
-                      </div>
-                    )}
-                  </div>
-                </LinkButton>
-              </InlineField>
+              <Icon name="circle" size="xs" />
+              <LinkButton
+                style={header.isOptional ? { padding: '5px 15px', height: '50px', width: '225px' } : {}}
+                variant="secondary"
+                fill="text"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const target = document.getElementById(header.id);
+                  if (target) {
+                    const y = target.getBoundingClientRect().top + window.scrollY - 60;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                  }
+                }}
+              >
+                <div className={styles.sidebarText}>
+                  <div className={styles.sidebarLabel}>{header.label}</div>
+                  {header.isOptional && (
+                    <div className={styles.sidebarOptional}>
+                      <Text color="secondary" variant="bodySmall">
+                        optional
+                      </Text>
+                    </div>
+                  )}
+                </div>
+              </LinkButton>
               <Space v={1} />
             </div>
           ))}

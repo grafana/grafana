@@ -3,8 +3,9 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { Input, SecretInput, Field, Box } from '@grafana/ui';
+import { InlineFieldRow, InlineField, Input, SecretInput } from '@grafana/ui';
 
+import { DB_SETTINGS_LABEL_WIDTH } from './constants';
 import {
   trackInfluxDBConfigV2SQLDBDetailsDatabaseInputField,
   trackInfluxDBConfigV2SQLDBDetailsTokenInputField,
@@ -17,8 +18,8 @@ export const InfluxSQLDBConnection = (props: Props) => {
 
   return (
     <>
-      <Box marginBottom={2}>
-        <Field label="Database" required noMargin>
+      <InlineFieldRow>
+        <InlineField label="Database" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow required>
           <Input
             id="database"
             placeholder="mydb"
@@ -26,10 +27,10 @@ export const InfluxSQLDBConnection = (props: Props) => {
             onChange={onUpdateDatasourceJsonDataOption(props, 'dbName')}
             onBlur={trackInfluxDBConfigV2SQLDBDetailsDatabaseInputField}
           />
-        </Field>
-      </Box>
-      <Box marginBottom={2}>
-        <Field label="Token" required noMargin>
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField labelWidth={DB_SETTINGS_LABEL_WIDTH} label="Token" grow required>
           <SecretInput
             id="token"
             isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
@@ -38,8 +39,8 @@ export const InfluxSQLDBConnection = (props: Props) => {
             onReset={() => updateDatasourcePluginResetOption(props, 'token')}
             value={secureJsonData?.token || ''}
           />
-        </Field>
-      </Box>
+        </InlineField>
+      </InlineFieldRow>
     </>
   );
 };

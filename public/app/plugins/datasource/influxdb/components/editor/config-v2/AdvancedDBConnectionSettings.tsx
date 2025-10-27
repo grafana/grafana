@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import { useState } from 'react';
 
 import {
@@ -6,11 +7,11 @@ import {
   onUpdateDatasourceJsonDataOptionSelect,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { Combobox, Input, Space, Checkbox, Field, Button, Box } from '@grafana/ui';
+import { InlineFieldRow, InlineField, Combobox, InlineSwitch, Input, Space, useStyles2 } from '@grafana/ui';
 
 import { InfluxVersion } from '../../../types';
 
-import { HTTP_MODES } from './constants';
+import { DB_SETTINGS_LABEL_WIDTH, getInlineLabelStyles, HTTP_MODES } from './constants';
 import {
   trackInfluxDBConfigV2AdvancedDbConnectionSettingsAutocompleteClicked,
   trackInfluxDBConfigV2AdvancedDbConnectionSettingsHTTPMethodClicked,
@@ -23,6 +24,7 @@ import { Props } from './types';
 
 export const AdvancedDbConnectionSettings = (props: Props) => {
   const { options } = props;
+  const styles = useStyles2(getInlineLabelStyles);
   const [maxSeriesValue, setMaxSeriesValue] = useState(options.jsonData.maxSeries?.toString() || '');
 
   const [advancedDbConnectionSettingsIsOpen, setAdvancedDbConnectionSettingsIsOpen] = useState(
@@ -37,25 +39,27 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
 
   return (
     <>
-      <Space v={1} />
-      <Button
-        icon={advancedDbConnectionSettingsIsOpen ? 'angle-down' : 'angle-right'}
-        size="sm"
-        variant="secondary"
-        onClick={() => setAdvancedDbConnectionSettingsIsOpen(!advancedDbConnectionSettingsIsOpen)}
-        onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsToggleClicked}
-        data-testid="influxdb-v2-config-toggle-switch"
-      >
-        Advanced Database settings
-      </Button>
+      <Space v={2} />
+      <InlineField label={<div className={cx(styles.label)}>Advanced Database Settings</div>} labelWidth={40}>
+        <InlineSwitch
+          data-testid="influxdb-v2-config-toggle-switch"
+          value={advancedDbConnectionSettingsIsOpen}
+          onChange={() => setAdvancedDbConnectionSettingsIsOpen(!advancedDbConnectionSettingsIsOpen)}
+          onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsToggleClicked}
+        />
+      </InlineField>
+
       {advancedDbConnectionSettingsIsOpen && (
-        <div style={{ marginTop: '10px', marginLeft: '30px' }}>
+        <>
           {options.jsonData.version === InfluxVersion.InfluxQL && (
-            <Box marginBottom={2}>
-              <Field
+            <InlineFieldRow>
+              <InlineField
                 label="HTTP Method"
-                description="POST allows you to perform heavy requests while GET will return an error if the query is too large"
-                noMargin
+                labelWidth={DB_SETTINGS_LABEL_WIDTH}
+                tooltip="You can use either GET or POST HTTP method to query your InfluxDB database. The POST
+                        method allows you to perform heavy requests (with a lots of WHERE clause) while the GET method
+                        will restrict you and return an error if the query is too large."
+                grow
               >
                 <Combobox
                   value={HTTP_MODES.find((httpMode) => httpMode.value === options.jsonData.httpMode)}
@@ -64,16 +68,17 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
                   onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsHTTPMethodClicked}
                   data-testid="influxdb-v2-config-http-method-select"
                 />
-              </Field>
-            </Box>
+              </InlineField>
+            </InlineFieldRow>
           )}
 
           {(options.jsonData.version === InfluxVersion.InfluxQL || options.jsonData.version === InfluxVersion.Flux) && (
-            <Box marginBottom={2}>
-              <Field
+            <InlineFieldRow>
+              <InlineField
                 label="Min time interval"
-                description="A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example 1m if your data is written every minute."
-                noMargin
+                labelWidth={DB_SETTINGS_LABEL_WIDTH}
+                tooltip="A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example 1m if your data is written every minute."
+                grow
               >
                 <Input
                   data-testid="influxdb-v2-config-time-interval"
@@ -82,16 +87,17 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
                   placeholder="10s"
                   value={options.jsonData.timeInterval || ''}
                 />
-              </Field>
-            </Box>
+              </InlineField>
+            </InlineFieldRow>
           )}
 
           {options.jsonData.version === InfluxVersion.InfluxQL && (
-            <Box marginBottom={2}>
-              <Field
+            <InlineFieldRow>
+              <InlineField
                 label="Autocomplete Range"
-                description="This time range is used in the query editor's autocomplete to reduce the execution time of tag filter queries."
-                noMargin
+                labelWidth={DB_SETTINGS_LABEL_WIDTH}
+                tooltip="This time range is used in the query editor's autocomplete to reduce the execution time of tag filter queries."
+                grow
               >
                 <Input
                   data-testid="influxdb-v2-config-autocomplete-range"
@@ -100,14 +106,16 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
                   placeholder="12h"
                   value={options.jsonData.showTagTime || ''}
                 />
-              </Field>
-            </Box>
+              </InlineField>
+            </InlineFieldRow>
           )}
-          <Box marginBottom={2}>
-            <Field
+
+          <InlineFieldRow>
+            <InlineField
               label="Max series"
-              description="Limit the number of series/tables that Grafana will process. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000."
-              noMargin
+              labelWidth={DB_SETTINGS_LABEL_WIDTH}
+              tooltip="Limit the number of series/tables that Grafana will process. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000."
+              grow
             >
               <Input
                 data-testid="influxdb-v2-config-max-series"
@@ -117,19 +125,21 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
                 value={maxSeriesValue}
                 type="number"
               />
-            </Field>
-          </Box>
-
+            </InlineField>
+          </InlineFieldRow>
           {options.jsonData.version === InfluxVersion.SQL && (
-            <Checkbox
-              label="Insecure connection"
-              data-testid="influxdb-v2-config-insecure-switch"
-              value={options.jsonData.insecureGrpc ?? false}
-              onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'insecureGrpc')}
-              onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsInsecureConnectClicked}
-            />
+            <InlineFieldRow>
+              <InlineField label="Insecure Connection" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow>
+                <InlineSwitch
+                  data-testid="influxdb-v2-config-insecure-switch"
+                  value={options.jsonData.insecureGrpc ?? false}
+                  onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'insecureGrpc')}
+                  onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsInsecureConnectClicked}
+                />
+              </InlineField>
+            </InlineFieldRow>
           )}
-        </div>
+        </>
       )}
     </>
   );
