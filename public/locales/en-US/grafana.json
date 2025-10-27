@@ -2043,8 +2043,8 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Learn about problems in your systems moments after they occur",
-        "title": "Triage"
+        "subtitle": "See what is currently alerting and explore historical data to investigate current or past issues.",
+        "title": "Alerts"
       }
     },
     "panel-alert-tab-content": {
