@@ -270,9 +270,10 @@ func applyResourcesInParallel(ctx context.Context, resources []ResourceFileChang
 loop:
 	for _, change := range resources {
 		// Check for early termination conditions
-		if err := progress.TooManyErrors(); err != nil {
-			break
-		}
+		// Test is actually progress.TooManyErrors is hanging in large repos
+		// if err := progress.TooManyErrors(); err != nil {
+		// 	break
+		// }
 		if ctx.Err() != nil {
 			break
 		}
@@ -322,6 +323,7 @@ func applyChangeWithTimeout(ctx context.Context, change ResourceFileChange, clie
 	case <-changeCtx.Done():
 		if changeCtx.Err() == context.DeadlineExceeded {
 			logger.Error("operation timed out after 15 seconds", "path", change.Path, "action", change.Action)
+			// Also this received the full 20m ctx, we should also use a timeout for this operation!
 			// Test is actually progress.Record is hanging in testing!
 			// progress.Record(ctx, jobs.JobResourceResult{
 			// 	Path:   change.Path,
