@@ -453,7 +453,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		DefaultConfig: defaultGrafanaConfig,
 	}
 
-	testAutogenFn := func(_ context.Context, _ log.Logger, _ int64, config *apimodels.PostableApiAlertingConfig, _ bool) error {
+	testAutogenFn := func(_ context.Context, _ log.Logger, _ int64, config *apimodels.PostableApiAlertingConfig, _ notifier.InvalidReceiversAction) error {
 		newRoute := definition.Route{
 			Receiver: config.Receivers[0].Name,
 			Match:    map[string]string{"auto-gen-test": "true"},
@@ -497,7 +497,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 
 	testAutogenRoutes, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 	require.NoError(t, err)
-	require.NoError(t, testAutogenFn(nil, nil, 0, &testAutogenRoutes.AlertmanagerConfig, false))
+	require.NoError(t, testAutogenFn(nil, nil, 0, &testAutogenRoutes.AlertmanagerConfig, notifier.ErrorOnInvalidReceivers))
 	cfgWithAutogenRoutes := client.GrafanaAlertmanagerConfig{
 		TemplateFiles:      testAutogenRoutes.TemplateFiles,
 		AlertmanagerConfig: testAutogenRoutes.AlertmanagerConfig,
@@ -1420,7 +1420,7 @@ func genAlert(active bool, labels map[string]string) amv2.PostableAlert {
 }
 
 // errAutogenFn is an AutogenFn that always returns an error.
-func errAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *definition.PostableApiAlertingConfig, _ bool) error {
+func errAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *definition.PostableApiAlertingConfig, _ notifier.InvalidReceiversAction) error {
 	return errTest
 }
 
