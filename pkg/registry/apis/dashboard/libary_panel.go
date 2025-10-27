@@ -10,11 +10,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 )
 
 var (
@@ -32,6 +35,7 @@ type LibraryPanelStore struct {
 	Access        legacy.DashboardAccess
 	ResourceInfo  utils.ResourceInfo
 	AccessControl accesscontrol.AccessControl
+	service       libraryelements.Service
 }
 
 func (s *LibraryPanelStore) New() runtime.Object {
@@ -57,15 +61,65 @@ func (s *LibraryPanelStore) ConvertToTable(ctx context.Context, object runtime.O
 }
 
 func (s *LibraryPanelStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("method not yet implemented")
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	cmd, err := libraryelements.ToCreateLibraryElementCommand(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	out, err := s.service.CreateElement(ctx, user, *cmd)
+	if err != nil {
+		return nil, err
+	}
+	if out.UID == "" {
+		return nil, fmt.Errorf("created library panel has empty UID")
+	}
+	return s.Get(ctx, out.UID, &metav1.GetOptions{})
 }
 
 func (s *LibraryPanelStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return nil, false, fmt.Errorf("method not yet implemented")
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	old, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+	obj, err := objInfo.UpdatedObject(ctx, old)
+	if err != nil {
+		return nil, false, err
+	}
+
+	cmd, err := libraryelements.ToPatchLibraryElementCommand(obj)
+	if err != nil {
+		return nil, false, err
+	}
+
+	out, err := s.service.PatchLibraryElement(ctx, user, *cmd, name)
+	if err != nil {
+		return nil, false, err
+	}
+	if out.UID == "" {
+		return nil, false, fmt.Errorf("created library panel has empty UID")
+	}
+	obj, err = s.Get(ctx, out.UID, &metav1.GetOptions{})
+	return obj, false, err
 }
 
 func (s *LibraryPanelStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, fmt.Errorf("method not yet implemented")
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	_, err = s.service.DeleteLibraryElement(ctx, user, name)
+	if err != nil {
+		return nil, false, err
+	}
+	return nil, true, nil
 }
 
 func (s *LibraryPanelStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {

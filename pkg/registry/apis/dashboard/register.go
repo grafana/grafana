@@ -50,6 +50,7 @@ import (
 	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -108,6 +109,7 @@ type DashboardsAPIBuilder struct {
 	minRefreshInterval           string
 	dualWriter                   dualwrite.Service
 	folderClientProvider         client.K8sHandlerProvider
+	libraryPanels                libraryelements.Service // for legacy library panels
 
 	isStandalone bool // skips any handling including anything to do with legacy storage
 }
@@ -135,6 +137,7 @@ func RegisterAPIService(
 	libraryPanelSvc librarypanels.Service,
 	restConfigProvider apiserver.RestConfigProvider,
 	userService user.Service,
+	libraryPanels libraryelements.Service,
 ) *DashboardsAPIBuilder {
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -157,6 +160,7 @@ func RegisterAPIService(
 		minRefreshInterval:           cfg.MinRefreshInterval,
 		dualWriter:                   dual,
 		folderClientProvider:         newSimpleFolderClientProvider(folderClient),
+		libraryPanels:                libraryPanels,
 
 		legacy: &DashboardStorage{
 			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
@@ -229,7 +233,10 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 func (b *DashboardsAPIBuilder) AllowedV0Alpha1Resources() []string {
-	return []string{dashv0.DashboardKind().Plural()}
+	return []string{
+		dashv0.DashboardKind().Plural(),
+		dashv0.LIBRARY_PANEL_RESOURCE,
+	}
 }
 
 // Validate validates dashboard operations for the apiserver
@@ -648,6 +655,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			Access:        b.legacy.Access,
 			ResourceInfo:  *libraryPanels,
 			AccessControl: b.accessControl,
+			service:       b.libraryPanels,
 		}
 
 		unifiedLibraryStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
