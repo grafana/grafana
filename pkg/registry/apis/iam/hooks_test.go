@@ -141,7 +141,7 @@ func TestAfterResourcePermissionCreate(t *testing.T) {
 
 			expectedTuples := []*v1.TupleKey{
 				{User: "service-account:sa1", Relation: "view", Object: object},
-				{User: "team:team1", Relation: "edit", Object: object},
+				{User: "team:team1#member", Relation: "edit", Object: object},
 			}
 
 			requireTuplesMatch(t, req.Writes.TupleKeys, expectedTuples)
