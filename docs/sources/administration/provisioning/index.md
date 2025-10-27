@@ -12,7 +12,7 @@ labels:
     - oss
 title: Provision Grafana
 menuTitle: Provision Grafana
-weight: 2300
+weight: 4100
 ---
 
 # Provision Grafana

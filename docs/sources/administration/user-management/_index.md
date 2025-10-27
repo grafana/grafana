@@ -6,7 +6,7 @@ labels:
     - enterprise
     - oss
 title: User management
-weight: 200
+weight: 1500
 ---
 
 # User management

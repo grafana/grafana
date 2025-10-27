@@ -12,7 +12,7 @@ labels:
     - oss
     - cloud
 title: Roles and permissions
-weight: 300
+weight: 1000
 ---
 
 # Roles and permissions

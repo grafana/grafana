@@ -11,9 +11,9 @@ labels:
   products:
     - cloud
     - enterprise
-title: Recorded queries
+title: Recorded queries (deprecated)
 menuTitle: Recorded queries (deprecated)
-weight: 5000
+weight: 9000
 ---
 
 # Recorded queries (deprecated)

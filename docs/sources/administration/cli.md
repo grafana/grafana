@@ -14,7 +14,7 @@ labels:
     - oss
 title: Grafana server CLI
 menuTitle: Admin with Grafana server CLI
-weight: 2500
+weight: 4000
 ---
 
 # Administer Grafana with the Grafana server CLI
