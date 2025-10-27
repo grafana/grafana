@@ -277,8 +277,10 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 		if enableZanzanaSync {
-			b.logger.Info("Enabling AfterCreate hook for CoreRole to sync to Zanzana")
+			b.logger.Info("Enabling hooks for CoreRole to sync to Zanzana")
 			coreRoleStore.AfterCreate = b.AfterRoleCreate
+			coreRoleStore.AfterDelete = b.AfterRoleDelete
+			coreRoleStore.BeginUpdate = b.BeginRoleUpdate
 		}
 		storage[iamv0.CoreRoleInfo.StoragePath()] = coreRoleStore
 
@@ -287,8 +289,10 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 		if enableZanzanaSync {
-			b.logger.Info("Enabling AfterCreate hook for Role to sync to Zanzana")
+			b.logger.Info("Enabling hooks for Role to sync to Zanzana")
 			roleStore.AfterCreate = b.AfterRoleCreate
+			roleStore.AfterDelete = b.AfterRoleDelete
+			roleStore.BeginUpdate = b.BeginRoleUpdate
 		}
 		storage[iamv0.RoleInfo.StoragePath()] = roleStore
 
