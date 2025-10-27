@@ -9,7 +9,7 @@ use (
 	./apps/alerting/alertenrichment
 	./apps/alerting/notifications
 	./apps/alerting/rules
-  ./apps/annotation
+	./apps/annotation
 	./apps/correlations
 	./apps/dashboard
 	./apps/example
