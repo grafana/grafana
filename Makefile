@@ -14,6 +14,16 @@ GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_RACE_FLAG := $(if $(GO_RACE),-race)
+
+## Always include gms_pure_go for go-mysql-server dependency
+ifneq (,$(findstring gms_pure_go,$(GO_BUILD_TAGS)))
+  GO_BUILD_TAGS := $(GO_BUILD_TAGS)
+else ifneq (,$(strip $(GO_BUILD_TAGS)))
+  GO_BUILD_TAGS := $(GO_BUILD_TAGS),gms_pure_go
+else
+  GO_BUILD_TAGS := gms_pure_go
+endif
+
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
@@ -135,14 +145,14 @@ i18n-extract-enterprise:
 	@echo "Skipping i18n extract for Enterprise: not enabled"
 else
 i18n-extract-enterprise:
-	@echo "Extracting i18n strings for Enterprise"
-	yarn run i18next --config public/locales/i18next-parser-enterprise.config.cjs
+	@echo "Extracting i18n strings for Enterprise"	
+	cd public/locales/enterprise && yarn run i18next-cli extract --sync-primary
 endif
 
 .PHONY: i18n-extract
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
-	yarn run i18next --config public/locales/i18next-parser.config.cjs
+	yarn run i18next-cli extract --sync-primary
 	@echo "Extracting i18n strings for packages"
 	yarn run packages:i18n-extract
 	@echo "Extracting i18n strings for plugins"

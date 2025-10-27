@@ -156,16 +156,16 @@ jobs:
             artifacts: targz:grafana:linux/arm/v6,deb:grafana:linux/arm/v6
             verify: true
           - name: windows-amd64
-            artifacts: targz:grafana:windows/amd64,zip:grafana:windows/amd64,msi:grafana:windows/amd64
+            artifacts: targz:grafana:windows/amd64:nocgo,zip:grafana:windows/amd64:nocgo,msi:grafana:windows/amd64:nocgo
             verify: true
           - name: windows-arm64
-            artifacts: targz:grafana:windows/arm64,zip:grafana:windows/arm64
+            artifacts: targz:grafana:windows/arm64:nocgo,zip:grafana:windows/arm64:nocgo
             verify: true
           - name: darwin-amd64
-            artifacts: targz:grafana:darwin/amd64
+            artifacts: targz:grafana:darwin/amd64:nocgo
             verify: true
           - name: darwin-arm64
-            artifacts: targz:grafana:darwin/arm64
+            artifacts: targz:grafana:darwin/arm64:nocgo
             verify: true
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
@@ -224,27 +224,27 @@ jobs:
       - build
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
         with:
           name: artifacts-list-linux-amd64
           path: .
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
         with:
           name: artifacts-list-linux-arm64
           path: .
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
         with:
           name: artifacts-list-linux-armv7
           path: .
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
         with:
           name: artifacts-linux-amd64
           path: dist
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
         with:
           name: artifacts-linux-arm64
           path: dist
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
         with:
           name: artifacts-linux-armv7
           path: dist
@@ -333,7 +333,7 @@ jobs:
           body-includes: GitHub Actions Build
           token: ${{ steps.generate_token.outputs.token }}
       - name: Create or update comment
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v4
         with:
           token: ${{ steps.generate_token.outputs.token }}
           comment-id: ${{ steps.fc.outputs.comment-id }}

@@ -866,6 +866,13 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref common.ReferenceCallback) 
 							Format:      "",
 						},
 					},
+					"redirectPath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Redirect to a specific path when this node is selected.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"nodeType", "title", "disableMultiSelect"},
 			},

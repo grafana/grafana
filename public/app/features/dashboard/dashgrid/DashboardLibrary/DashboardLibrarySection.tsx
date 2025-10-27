@@ -89,7 +89,7 @@ export const DashboardLibrarySection = () => {
   }
 
   return (
-    <Box borderColor="strong" borderStyle="dashed" padding={4} flex={1}>
+    <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={4} flex={1}>
       <Stack direction="column" alignItems="center" gap={2}>
         <Text element="h3" textAlignment="center" weight="medium">
           <Trans i18nKey="dashboard.empty.start-with-suggested-dashboards">
@@ -191,6 +191,7 @@ function getStyles(theme: GrafanaTheme2, dashboardsLength?: number) {
       borderColor: theme.colors.text.primary,
       borderWidth: 1,
       borderStyle: 'solid',
+      objectFit: 'cover',
     }),
     showMoreButton: css({
       marginTop: theme.spacing(2),

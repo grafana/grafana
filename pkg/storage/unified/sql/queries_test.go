@@ -515,5 +515,14 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlResourceLastImportTimeDelete: {
+				{
+					Name: "delete",
+					Data: &sqlResourceLastImportTimeDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Threshold:   time.Date(2025, 10, 15, 14, 30, 05, 0, time.UTC),
+					},
+				},
+			},
 		}})
 }

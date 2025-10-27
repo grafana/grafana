@@ -3692,7 +3692,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "In ordine alfabetico (A-Z)",
-        "alphabetically-za": "In ordine alfabetico (Z-A)"
+        "alphabetically-za": "In ordine alfabetico (Z-A)",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -4535,7 +4537,8 @@
       "paste-row": "Incolla riga",
       "paste-tab": "Incolla scheda",
       "un-group-panels": "Annulla raggruppamento",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4599,7 +4602,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "Il rendering condizionale non è supportato per il layout della griglia personalizzata. Passa alla griglia automatica per utilizzare il rendering condizionale.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5046,6 +5050,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "Copia",
         "copy-or-duplicate": "Copia o duplica",
@@ -5055,7 +5060,10 @@
         "group-layout-disabled": "Non esistono gruppi a questo livello",
         "panel-layout": "Layout del pannello",
         "panel-layout-disabled": "Seleziona una riga o una scheda per modificare le opzioni di layout del pannello"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5205,7 +5213,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "L'eliminazione di questa riga rimuoverà anche tutti i pannelli. Desideri continuare?",
       "delete-row-title": "Elimina riga?",
@@ -5245,9 +5252,7 @@
         "title-not-unique": "Questo titolo non è univoco"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard salvata"
@@ -5337,6 +5342,9 @@
       "delete-tab-title": "Eliminare la scheda?",
       "delete-tab-yes": "Elimina",
       "description": "Organizza i pannelli in schede orizzontali",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "Schede",
       "tab": {
         "new": "Nuova scheda",
@@ -5979,6 +5987,13 @@
       "usage-count_one": "Utilizzato su {{count}} dashboard",
       "usage-count_other": "Utilizzato su {{count}} dashboard"
     },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
+    },
     "move-provisioned-dashboard-form": {
       "api-error": "Impossibile spostare la dashboard",
       "cancel-action": "Annulla",
@@ -6288,6 +6303,9 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Questa variabile è referenziata da altre variabili o dashboard.",
       "content-variable-not-referenced-other-variables-dashboard": "Questa variabile non ha riferimenti da altre variabili o dashboard.",
       "content-variable-referenced-other-variables-dashboard": "Questa variabile ha riferimenti da altre variabili o dashboard."
+    },
+    "variable-controls": {
+      "add-variable": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Modulo di modifica delle variabili",
@@ -7146,9 +7164,6 @@
       "title-failed-sample-query": "Impossibile caricare alcun esempio di registri per questa query",
       "tooltip": "Mostra le righe del registro che hanno contribuito alle metriche visualizzate"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "{{labelName}} appare in {{percentage}}% delle righe di registro"
-    },
     "logs-table-empty-fields": {
       "no-fields": "Nessun campo"
     },
@@ -7156,10 +7171,6 @@
       "fields": "Campi",
       "reset": "Ripristino",
       "selected-fields": "Campi selezionati"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "Trascina e rilascia l'icona",
-      "title-drag-and-drop-to-reorder": "Trascina e rilascia per riordinare"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Seleziona query per nome",
@@ -7628,7 +7639,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Cancella cartelle",
     "noOptionsMessage-no-folders-found": "Nessuna cartella trovata",
     "select-aria-label": "Filtro cartelle",
     "select-placeholder": "Filtra per cartella"
@@ -7678,6 +7688,7 @@
   },
   "gauge": {
     "category-gauge": "Calibro",
+    "category-radial-bar": "",
     "description-min-height": "Altezza minima della riga (orientamento orizzontale)",
     "description-min-width": "Larghezza minima della colonna (orientamento verticale)",
     "description-neutral": "Lascia vuoto per utilizzare Min come punto neutro",
@@ -7693,7 +7704,8 @@
     "name-neutral": "Normale",
     "name-show-threshold-labels": "Mostra etichette di soglia",
     "name-show-threshold-markers": "Mostra indicatori di soglia",
-    "placeholder-neutral": "automatico"
+    "placeholder-neutral": "automatico",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Applica",
@@ -7994,6 +8006,52 @@
     "select-group": "Seleziona gruppo"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "",
+          "previousFiscalQuarter": "",
+          "previousFiscalYear": "",
+          "previousMonth": "",
+          "previousWeek": "",
+          "previousYear": "",
+          "thisDayLastWeek": "",
+          "thisFiscalQuarter": "",
+          "thisFiscalQuarterSoFar": "",
+          "thisFiscalYear": "",
+          "thisFiscalYearSoFar": "",
+          "thisMonth": "",
+          "thisMonthSoFar": "",
+          "thisWeek": "",
+          "thisWeekSoFar": "",
+          "thisYear": "",
+          "thisYearSoFar": "",
+          "today": "",
+          "todaySoFar": "",
+          "yesterday": ""
+        },
+        "lastNDays_one": "",
+        "lastNDays_other": "",
+        "lastNHours_one": "",
+        "lastNHours_other": "",
+        "lastNMinutes_one": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_one": "",
+        "lastNMonths_other": "",
+        "lastNYears_one": "",
+        "lastNYears_other": "",
+        "nextNDays_one": "",
+        "nextNDays_other": "",
+        "nextNHours_one": "",
+        "nextNHours_other": "",
+        "nextNMinutes_one": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_one": "",
+        "nextNMonths_other": "",
+        "nextNYears_one": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9097,6 +9155,8 @@
       "make-time-range-permanent": "Rendi l'intervallo di tempo assoluto/permanente",
       "move-time-range-back": "Sposta indietro l'intervallo di tempo",
       "move-time-range-forward": "Sposta avanti l'intervallo di tempo",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "Apri ricerca",
       "open-share-embed-drawer": "Condividi incorporamento pannello",
       "open-share-link-drawer": "Condividi link pannello",
@@ -9527,6 +9587,15 @@
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Visualizza i controlli per passare all'ultima o alla prima riga del registro e filtra per livello di registro",
     "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
@@ -10745,11 +10814,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -11750,6 +11817,11 @@
       "next": "Avanti",
       "previous": "Precedente"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Passaggio completato",
       "label-current-step": "Passaggio corrente",
@@ -11825,7 +11897,8 @@
       "button-cancelling": "Annullamento in corso...",
       "button-previous": "Precedente",
       "button-submitting": "Invio in corso...",
-      "error-instance-repository-exists": "Il repository delle istanze esiste già"
+      "error-instance-repository-exists": "Il repository delle istanze esiste già",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12048,6 +12121,28 @@
       "show-response": "Mostra la risposta"
     },
     "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12584,6 +12679,7 @@
       "theme-label": "Tema dell'interfaccia",
       "week-start-label": "Inizio settimana"
     },
+    "save": "",
     "theme": {
       "default-label": "Predefinito",
       "experimental": "Sperimentale"
@@ -12679,6 +12775,10 @@
     "sql-suggestion-history": "Cronologia dei suggerimenti SQL",
     "suggestions": "Suggerimenti",
     "view-explanation": "Visualizza spiegazione"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {
@@ -12981,13 +13081,13 @@
       "placeholder-search-teams": "Cerca team"
     },
     "team-settings": {
-      "description-email": "Questo è facoltativo e viene utilizzato principalmente per impostare l'avatar del profilo del team (tramite il servizio gravatar)",
+      "description-email": "",
       "label-email": "E-mail",
       "label-name": "Nome",
       "label-numerical-identifier": "Identificatore numerico",
       "label-role": "Ruolo",
       "label-team-details": "Dettagli team",
-      "save": "Salva"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "La sincronizzazione dei team semplifica la gestione degli accessi degli utenti in Grafana, aggiornando immediatamente i team e le autorizzazioni di ciascun utente in base alla sua appartenenza al gruppo Single Sign-On, anziché al momento dell'accesso"
