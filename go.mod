@@ -239,6 +239,7 @@ require (
 	github.com/grafana/grafana/apps/alerting/rules v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/correlations v0.0.0 // @grafana/datapro
 	github.com/grafana/grafana/apps/dashboard v0.0.0 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
+	github.com/grafana/grafana/apps/example v0.0.0-20251027162426-edef69fdc82b // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/folder v0.0.0 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/apps/iam v0.0.0 // @grafana/identity-access-team
 	github.com/grafana/grafana/apps/investigations v0.0.0 // @fcjack @matryer
@@ -259,7 +260,6 @@ require (
 	// Check go.work file for details
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // @grafana/oss-big-tent
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250804150913-990f1c69ecc2 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/apps/example v0.0.0-20251027162426-edef69fdc82b // @grafana/grafana-app-platform-squad
 )
 
 // Replace the workspace versions
@@ -655,7 +655,6 @@ require (
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
-
 
 require (
 	github.com/go-openapi/swag/conv v0.25.1 // indirect
