@@ -74,6 +74,7 @@ export function useProvisionedRequestHandler<T>({
   resourceType,
 }: Props<T>) {
   const dispatch = useDispatch();
+  // useRef to ensure handlers are only called once per request
   const hasHandled = useRef(false);
 
   useEffect(() => {
