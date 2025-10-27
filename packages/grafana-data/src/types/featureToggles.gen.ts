@@ -1051,11 +1051,6 @@ export interface FeatureToggles {
   */
   restoreDashboards?: boolean;
   /**
-  * Skip token rotation if it was already rotated less than 5 seconds ago
-  * @default true
-  */
-  skipTokenRotationIfRecent?: boolean;
-  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
@@ -1212,6 +1207,11 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsUrls?: boolean;
+  /**
+  * Enable syncing plugin installations to the installs API
+  * @default false
+  */
+  pluginInstallAPISync?: boolean;
   /**
   * Enable new gauge visualization
   * @default false

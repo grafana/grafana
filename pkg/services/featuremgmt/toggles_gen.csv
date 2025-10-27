@@ -236,7 +236,6 @@ kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team
 kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,false
 restoreDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
-skipTokenRotationIfRecent,GA,@grafana/identity-access-team,false,false,false
 alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
 alertEnrichmentMultiStep,experimental,@grafana/alerting-squad,false,false,false
 alertEnrichmentConditional,experimental,@grafana/alerting-squad,false,false,false
@@ -270,6 +269,7 @@ pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,fal
 tempoSearchBackendMigration,GA,@grafana/oss-big-tent,false,true,false
 cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false
 cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false
+pluginInstallAPISync,experimental,@grafana/plugins-platform-backend,false,false,false
 newGauge,experimental,@grafana/dataviz-squad,false,false,true
 preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false

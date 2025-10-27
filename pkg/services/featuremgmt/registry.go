@@ -1820,15 +1820,6 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:              "skipTokenRotationIfRecent",
-			Description:       "Skip token rotation if it was already rotated less than 5 seconds ago",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             identityAccessTeam,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			Expression:        "true", // enabled by default
-		},
-		{
 			Name:              "alertEnrichment",
 			Description:       "Enable configuration of alert enrichments in Grafana Cloud.",
 			Stage:             FeatureStageExperimental,
@@ -2097,6 +2088,14 @@ var (
 			Description:  "Enable loading plugins via declarative URLs",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "pluginInstallAPISync",
+			Description:  "Enable syncing plugin installations to the installs API",
+			FrontendOnly: false,
+			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
 		},

@@ -4602,7 +4602,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "Villkorsstyrd rendering stöds inte för den anpassade rutnätslayouten. Byt till automatiskt rutnät om du vill använda villkorsstyrd rendering.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5985,6 +5986,13 @@
       "last-edited": "{{timeAgo}} av <person />",
       "usage-count_one": "Används på {{count}} instrumentpaneler",
       "usage-count_other": "Används på {{count}} instrumentpaneler"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "Det gick inte att flytta kontrollpanelen",
@@ -7631,7 +7639,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Rensa mappar",
     "noOptionsMessage-no-folders-found": "Inga mappar hittades",
     "select-aria-label": "Mappfilter",
     "select-placeholder": "Filtrera efter mapp"
@@ -11810,6 +11817,11 @@
       "next": "Nästa",
       "previous": "Föregående"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Slutfört steg",
       "label-current-step": "Nuvarande steg",
@@ -12667,6 +12679,7 @@
       "theme-label": "Gränssnittstema",
       "week-start-label": "Veckostart"
     },
+    "save": "",
     "theme": {
       "default-label": "Standard",
       "experimental": "Experimentellt"
@@ -13068,13 +13081,13 @@
       "placeholder-search-teams": "Sök team"
     },
     "team-settings": {
-      "description-email": "Detta är valfritt och används främst för att ställa in teamprofilens avatar (via gravatartjänsten)",
+      "description-email": "",
       "label-email": "E-post",
       "label-name": "Namn",
       "label-numerical-identifier": "Numerisk identifierare",
       "label-role": "Roll",
       "label-team-details": "Teamdetaljer",
-      "save": "Spara"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "Team Sync gör det enklare att hantera användarnas åtkomst i Grafana genom att omedelbart uppdatera varje användares Grafana-team och behörigheter baserat på deras gruppmedlemskap med enkel inloggning, istället för när användare loggar in"

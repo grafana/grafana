@@ -2984,6 +2984,19 @@
     },
     {
       "metadata": {
+        "name": "pluginInstallAPISync",
+        "resourceVersion": "1760543624249",
+        "creationTimestamp": "2025-10-15T15:53:44Z"
+      },
+      "spec": {
+        "description": "Enable syncing plugin installations to the installs API",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginProxyPreserveTrailingSlash",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-06-05T11:36:14Z"
@@ -3601,7 +3614,8 @@
       "metadata": {
         "name": "skipTokenRotationIfRecent",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-06-03T06:59:40Z"
+        "creationTimestamp": "2025-06-03T06:59:40Z",
+        "deletionTimestamp": "2025-10-22T10:29:12Z"
       },
       "spec": {
         "description": "Skip token rotation if it was already rotated less than 5 seconds ago",
