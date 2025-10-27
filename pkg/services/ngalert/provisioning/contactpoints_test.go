@@ -114,16 +114,6 @@ func TestIntegrationContactPointService(t *testing.T) {
 		require.Equal(t, customUID, cps[0].UID)
 	})
 
-	t.Run("it's not possible to use invalid UID", func(t *testing.T) {
-		customUID := strings.Repeat("1", util.MaxUIDLength+1)
-		sut := createContactPointServiceSut(t, secretsService)
-		newCp := createTestContactPoint()
-		newCp.UID = customUID
-
-		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
-		require.ErrorIs(t, err, ErrValidation)
-	})
-
 	t.Run("it's not possible to use the same uid twice", func(t *testing.T) {
 		customUID := "1337"
 		sut := createContactPointServiceSut(t, secretsService)
@@ -137,14 +127,40 @@ func TestIntegrationContactPointService(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("create rejects contact points that fail validation", func(t *testing.T) {
+	t.Run("create rejects invalid contact points", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
-		newCp := createTestContactPoint()
-		newCp.Type = ""
+		testCases := []struct {
+			name string
+			cp   func(*definitions.EmbeddedContactPoint)
+		}{
+			{
+				name: "empty type",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Type = ""
+				},
+			},
+			{
+				name: "empty name",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Name = ""
+				},
+			},
+			{
+				name: "invalid UID",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.UID = strings.Repeat("1", util.MaxUIDLength+1)
+				},
+			},
+		}
 
-		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
-
-		require.ErrorIs(t, err, ErrValidation)
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				newCp := createTestContactPoint()
+				tc.cp(&newCp)
+				_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+				require.ErrorIs(t, err, ErrValidation)
+			})
+		}
 	})
 
 	t.Run("create accepts contact point with type in different cases", func(t *testing.T) {
@@ -162,40 +178,57 @@ func TestIntegrationContactPointService(t *testing.T) {
 		assert.EqualValues(t, slack.Type, got[0].Type)
 	})
 
-	t.Run("update rejects contact points with no settings", func(t *testing.T) {
+	t.Run("update rejects invalid contact points", func(t *testing.T) {
+		testCases := []struct {
+			name string
+			cp   func(*definitions.EmbeddedContactPoint)
+		}{
+			{
+				name: "empty type",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Type = ""
+				},
+			},
+			{
+				name: "empty name",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Name = ""
+				},
+			},
+			{
+				name: "nil settings",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Settings = nil
+				},
+			},
+			{
+				name: "invalid settings after merge",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Settings, _ = simplejson.NewJson([]byte(`{}`))
+				},
+			},
+		}
+
 		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
 		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
-		newCp.Settings = nil
 
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
-
-		require.ErrorIs(t, err, ErrValidation)
-	})
-
-	t.Run("update rejects contact points with no type", func(t *testing.T) {
-		sut := createContactPointServiceSut(t, secretsService)
-		newCp := createTestContactPoint()
-		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
-		require.NoError(t, err)
-		newCp.Type = ""
-
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
-
-		require.ErrorIs(t, err, ErrValidation)
-	})
-
-	t.Run("update rejects contact points which fail validation after merging", func(t *testing.T) {
-		sut := createContactPointServiceSut(t, secretsService)
-		newCp := createTestContactPoint()
-		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
-		require.NoError(t, err)
-		newCp.Settings, _ = simplejson.NewJson([]byte(`{}`))
-
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
-
-		require.ErrorIs(t, err, ErrValidation)
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				cp := definitions.EmbeddedContactPoint{
+					UID:                   newCp.UID,
+					Name:                  newCp.Name,
+					Type:                  newCp.Type,
+					Settings:              newCp.Settings.DeepCopy(),
+					DisableResolveMessage: newCp.DisableResolveMessage,
+					Provenance:            newCp.Provenance,
+				}
+				tc.cp(&cp)
+				err = sut.UpdateContactPoint(context.Background(), 1, cp, models.ProvenanceAPI)
+				require.ErrorIs(t, err, ErrValidation)
+			})
+		}
 	})
 
 	t.Run("update accepts contact points with type in another case", func(t *testing.T) {
@@ -1337,7 +1370,8 @@ func TestStitchReceivers(t *testing.T) {
 			}
 
 			renamedReceiver, fullRemoval, createdReceiver := stitchReceiver(cfg, c.new)
-			assert.Equalf(t, c.expOldReceiver, renamedReceiver, "expected old receiver to be %s, got %s", c.expOldReceiver, renamedReceiver)
+			require.NotNil(t, renamedReceiver)
+			assert.Equalf(t, c.expOldReceiver, *renamedReceiver, "expected old receiver to be %s, got %s", c.expOldReceiver, renamedReceiver)
 			assert.Equalf(t, c.expFullRemoval, fullRemoval, "expected full removal to be %t, got %t", c.expFullRemoval, fullRemoval)
 			assert.Equalf(t, c.expCreatedReceiver, createdReceiver, "expected created receiver to be %t, got %t", c.expCreatedReceiver, createdReceiver)
 			require.Equal(t, c.expCfg, cfg.AlertmanagerConfig)
