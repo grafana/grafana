@@ -258,7 +258,7 @@ describe('usePluginLinks()', () => {
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
     const linkConfig = {
-      targets: extensionPointId,
+      targets: [extensionPointId],
       title: '1',
       description: '1',
       path: `/a/${pluginId}/2`,

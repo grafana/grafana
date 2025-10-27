@@ -3066,6 +3066,7 @@ __metadata:
   dependencies:
     "@braintree/sanitize-url": "npm:7.0.1"
     "@grafana/i18n": "npm:12.3.0-pre"
+    "@grafana/plugin-types": "npm:^0.0.46"
     "@grafana/scenes": "npm:6.38.0"
     "@grafana/schema": "npm:12.3.0-pre"
     "@leeoniya/ufuzzy": "npm:1.0.19"
@@ -3408,6 +3409,13 @@ __metadata:
   peerDependencies:
     "@playwright/test": ^1.52.0
   checksum: 10/4e14bda1c6304c89a1ffca972dda18d3ab1fad59ee30e6735112d75f7c5c40856091e2e17f46451aec5261b6368f67c245edb112072d98c9067723f4ca2c71c3
+  languageName: node
+  linkType: hard
+
+"@grafana/plugin-types@npm:^0.0.46":
+  version: 0.0.46
+  resolution: "@grafana/plugin-types@npm:0.0.46"
+  checksum: 10/f21b42356a8bf8010c38eb2f5f40651c2cb36e982738860f1212eb4a672d210a42b0c0de2aa534ec918bcb189a21a31808c905da49932541b9f9e3d9e1202a53
   languageName: node
   linkType: hard
 

@@ -321,7 +321,7 @@ describe('usePluginFunctions()', () => {
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
     const functionConfig = {
-      targets: extensionPointId,
+      targets: [extensionPointId],
       title: '1',
       description: '1',
       fn: () => 'function1',

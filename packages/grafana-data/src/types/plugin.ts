@@ -1,5 +1,7 @@
 import { ComponentType } from 'react';
 
+import { PluginSchema } from '@grafana/plugin-types/plugin-schema';
+
 import { KeyValue } from './data';
 import { IconName } from './icon';
 
@@ -122,34 +124,25 @@ export interface PluginDependencies {
   };
 }
 
+type Extensions = NonNullable<PluginSchema['extensions']>;
+type AddedComponents = NonNullable<Extensions['addedComponents']>;
+type AddedFunctions = NonNullable<Extensions['addedFunctions']>;
+type AddedLinks = NonNullable<Extensions['addedLinks']>;
+type ExposedComponents = NonNullable<Extensions['exposedComponents']>;
+type ExtensionPoints = NonNullable<Extensions['extensionPoints']>;
+
 export type ExtensionInfo = {
   targets: string | string[];
   title: string;
   description?: string;
 };
 
-export interface PluginExtensions {
-  // The component extensions that the plugin registers
-  addedComponents: ExtensionInfo[];
-
-  addedFunctions: ExtensionInfo[];
-
-  // The link extensions that the plugin registers
-  addedLinks: ExtensionInfo[];
-
-  // The React components that the plugin exposes
-  exposedComponents: Array<{
-    id: string;
-    title: string;
-    description?: string;
-  }>;
-
-  // The extension points that the plugin provides
-  extensionPoints: Array<{
-    id: string;
-    title: string;
-    description?: string;
-  }>;
+export interface PluginExtensions extends Extensions {
+  addedComponents: AddedComponents;
+  addedFunctions: AddedFunctions;
+  addedLinks: AddedLinks;
+  exposedComponents: ExposedComponents;
+  extensionPoints: ExtensionPoints;
 }
 
 export enum PluginIncludeType {
