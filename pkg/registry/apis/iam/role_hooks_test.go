@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -9,398 +10,18 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/stretchr/testify/require"
 )
 
-type FakeZanzanaClient struct {
-	zanzana.Client
-	writeCallback func(context.Context, *v1.WriteRequest) error
-	readCallback  func(context.Context, *v1.ReadRequest) (*v1.ReadResponse, error)
-}
-
-// Read implements zanzana.Client.
-func (f *FakeZanzanaClient) Read(ctx context.Context, req *v1.ReadRequest) (*v1.ReadResponse, error) {
-	if f.readCallback != nil {
-		return f.readCallback(ctx, req)
-	}
-	return &v1.ReadResponse{}, nil
-}
-
-// Write implements zanzana.Client.
-func (f *FakeZanzanaClient) Write(ctx context.Context, req *v1.WriteRequest) error {
-	return f.writeCallback(ctx, req)
-}
-
-func requireTuplesMatch(t *testing.T, actual []*v1.TupleKey, expected []*v1.TupleKey, msgAndArgs ...interface{}) {
-	t.Helper()
-	for _, exp := range expected {
-		found := false
-		for _, act := range actual {
-			if act.User == exp.User &&
-				act.Relation == exp.Relation &&
-				act.Object == exp.Object {
-				found = true
-				break
-			}
-		}
-		if !found {
-			require.Fail(t, "Expected tuple not found", "Tuple: %+v\n%v", exp, msgAndArgs)
-		}
-	}
-}
-
-func requireDeleteTuplesMatch(t *testing.T, actual []*v1.TupleKeyWithoutCondition, expected []*v1.TupleKeyWithoutCondition, msgAndArgs ...interface{}) {
-	t.Helper()
-	for _, exp := range expected {
-		found := false
-		for _, act := range actual {
-			if act.User == exp.User &&
-				act.Relation == exp.Relation &&
-				act.Object == exp.Object {
-				found = true
-				break
-			}
-		}
-		if !found {
-			require.Fail(t, "Expected delete tuple not found", "Tuple: %+v\n%v", exp, msgAndArgs)
-		}
-	}
-}
-
-func TestAfterResourcePermissionCreate(t *testing.T) {
-	b := &IdentityAccessManagementAPIBuilder{
-		logger:   log.NewNopLogger(),
-		zTickets: make(chan bool, 1),
-	}
-	t.Run("should create zanzana entries for folder resource permissions", func(t *testing.T) {
-		folderPerm := iamv0.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "org-2",
-			},
-			Spec: iamv0.ResourcePermissionSpec{
-				Resource: iamv0.ResourcePermissionspecResource{
-					ApiGroup: "folder.grafana.app", Resource: "folders", Name: "fold1",
-				},
-				Permissions: []iamv0.ResourcePermissionspecPermission{
-					{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "u1", Verb: "View"},
-					{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "Edit"},
-				},
-			},
-		}
-
-		testFolderEntries := func(ctx context.Context, req *v1.WriteRequest) error {
-			require.NotNil(t, req)
-			require.NotNil(t, req.Writes)
-			require.Len(t, req.Writes.TupleKeys, 2)
-			require.Equal(t, "org-2", req.Namespace)
-
-			expectedTuples := []*v1.TupleKey{
-				{User: "user:u1", Relation: "view", Object: "folder:fold1"},
-				{User: "role:basic_editor#assignee", Relation: "edit", Object: "folder:fold1"},
-			}
-
-			requireTuplesMatch(t, req.Writes.TupleKeys, expectedTuples)
-			return nil
-		}
-
-		b.zClient = &FakeZanzanaClient{writeCallback: testFolderEntries}
-		b.AfterResourcePermissionCreate(&folderPerm, nil)
-	})
-	<-b.zTickets
-
-	t.Run("should create zanzana entries for dashboard resource permissions", func(t *testing.T) {
-		dashPerm := iamv0.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-			},
-			Spec: iamv0.ResourcePermissionSpec{
-				Resource: iamv0.ResourcePermissionspecResource{
-					ApiGroup: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",
-				},
-				Permissions: []iamv0.ResourcePermissionspecPermission{
-					{Kind: iamv0.ResourcePermissionSpecPermissionKindServiceAccount, Name: "sa1", Verb: "View"},
-					{Kind: iamv0.ResourcePermissionSpecPermissionKindTeam, Name: "team1", Verb: "Edit"},
-				},
-			},
-		}
-
-		testDashEntries := func(ctx context.Context, req *v1.WriteRequest) error {
-			object := "resource:dashboard.grafana.app/dashboards/dash1"
-
-			require.NotNil(t, req)
-			require.NotNil(t, req.Writes)
-			require.Len(t, req.Writes.TupleKeys, 2)
-			require.Equal(t, "default", req.Namespace)
-
-			// Verify all tuples have the group_filter condition
-			for _, tuple := range req.Writes.TupleKeys {
-				require.NotNil(t, tuple.Condition, "Condition should not be nil for tuple %+v", tuple)
-				require.Equal(t, "group_filter", tuple.Condition.Name)
-			}
-
-			expectedTuples := []*v1.TupleKey{
-				{User: "service-account:sa1", Relation: "view", Object: object},
-				{User: "team:team1#member", Relation: "edit", Object: object},
-			}
-
-			requireTuplesMatch(t, req.Writes.TupleKeys, expectedTuples)
-			return nil
-		}
-
-		b.zClient = &FakeZanzanaClient{writeCallback: testDashEntries}
-		b.AfterResourcePermissionCreate(&dashPerm, nil)
-	})
-	<-b.zTickets
-}
-
-func TestBeginResourcePermissionUpdate(t *testing.T) {
-	b := &IdentityAccessManagementAPIBuilder{
-		logger:   log.NewNopLogger(),
-		zTickets: make(chan bool, 1),
-	}
-	t.Run("should update zanzana entries for folder resource permissions", func(t *testing.T) {
-		oldFolderPerm := iamv0.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "org-2",
-			},
-			Spec: iamv0.ResourcePermissionSpec{
-				Resource: iamv0.ResourcePermissionspecResource{
-					ApiGroup: "folder.grafana.app", Resource: "folders", Name: "fold1",
-				},
-				Permissions: []iamv0.ResourcePermissionspecPermission{
-					{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "u1", Verb: "View"},
-				},
-			},
-		}
-
-		newFolderPerm := iamv0.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "org-2",
-			},
-			Spec: iamv0.ResourcePermissionSpec{
-				Resource: iamv0.ResourcePermissionspecResource{
-					ApiGroup: "folder.grafana.app", Resource: "folders", Name: "fold1",
-				},
-				Permissions: []iamv0.ResourcePermissionspecPermission{
-					{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "u2", Verb: "Edit"},
-					{Kind: iamv0.ResourcePermissionSpecPermissionKindTeam, Name: "team1", Verb: "View"},
-				},
-			},
-		}
-
-		testFolderWrite := func(ctx context.Context, req *v1.WriteRequest) error {
-			require.NotNil(t, req)
-			require.Equal(t, "org-2", req.Namespace)
-
-			// Should delete old permission
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 1)
-			require.Equal(
-				t,
-				req.Deletes.TupleKeys[0],
-				&v1.TupleKeyWithoutCondition{User: "user:u1", Relation: "view", Object: "folder:fold1"},
-			)
-
-			// Should write new permissions
-			require.NotNil(t, req.Writes)
-			require.Len(t, req.Writes.TupleKeys, 2)
-
-			expectedWrites := []*v1.TupleKey{
-				{User: "user:u2", Relation: "edit", Object: "folder:fold1"},
-				{User: "team:team1#member", Relation: "view", Object: "folder:fold1"},
-			}
-			requireTuplesMatch(t, req.Writes.TupleKeys, expectedWrites)
-			return nil
-		}
-
-		b.zClient = &FakeZanzanaClient{writeCallback: testFolderWrite}
-
-		// Call BeginUpdate which does all the work
-		finishFunc, err := b.BeginResourcePermissionUpdate(context.Background(), &newFolderPerm, &oldFolderPerm, nil)
-		require.NoError(t, err)
-		require.NotNil(t, finishFunc)
-
-		// Call the finish function with success=true to trigger the zanzana write
-		finishFunc(context.Background(), true)
-	})
-
-	<-b.zTickets
-	t.Run("should update zanzana entries for dashboard resource permissions", func(t *testing.T) {
-		oldDashPerm := iamv0.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-			},
-			Spec: iamv0.ResourcePermissionSpec{
-				Resource: iamv0.ResourcePermissionspecResource{
-					ApiGroup: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",
-				},
-				Permissions: []iamv0.ResourcePermissionspecPermission{
-					{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "u1", Verb: "View"},
-				},
-			},
-		}
-
-		newDashPerm := iamv0.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-			},
-			Spec: iamv0.ResourcePermissionSpec{
-				Resource: iamv0.ResourcePermissionspecResource{
-					ApiGroup: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",
-				},
-				Permissions: []iamv0.ResourcePermissionspecPermission{
-					{Kind: iamv0.ResourcePermissionSpecPermissionKindServiceAccount, Name: "sa1", Verb: "Edit"},
-				},
-			},
-		}
-
-		object := "resource:dashboard.grafana.app/dashboards/dash1"
-
-		testDashWrite := func(ctx context.Context, req *v1.WriteRequest) error {
-			require.NotNil(t, req)
-			require.Equal(t, "default", req.Namespace)
-
-			// Should delete old permission
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 1)
-			require.Equal(
-				t,
-				req.Deletes.TupleKeys[0],
-				&v1.TupleKeyWithoutCondition{User: "user:u1", Relation: "view", Object: object},
-			)
-
-			// Should write new permission
-			require.NotNil(t, req.Writes)
-			require.Len(t, req.Writes.TupleKeys, 1)
-
-			tuple := req.Writes.TupleKeys[0]
-			require.NotNil(t, tuple.Condition)
-			require.Equal(t, "group_filter", tuple.Condition.Name)
-			tuple.Condition = nil
-			require.Equal(
-				t,
-				tuple,
-				&v1.TupleKey{User: "service-account:sa1", Relation: "edit", Object: object},
-			)
-
-			return nil
-		}
-
-		b.zClient = &FakeZanzanaClient{writeCallback: testDashWrite}
-
-		// Call BeginUpdate which does all the work
-		finishFunc, err := b.BeginResourcePermissionUpdate(context.Background(), &newDashPerm, &oldDashPerm, nil)
-		require.NoError(t, err)
-		require.NotNil(t, finishFunc)
-
-		// Call the finish function with success=true to trigger the zanzana write
-		finishFunc(context.Background(), true)
-	})
-	<-b.zTickets
-}
-
-func TestAfterResourcePermissionDelete(t *testing.T) {
-	b := &IdentityAccessManagementAPIBuilder{
-		logger:   log.NewNopLogger(),
-		zTickets: make(chan bool, 1),
-	}
-	t.Run("should delete zanzana entries for folder resource permissions", func(t *testing.T) {
-		folderPerm := iamv0.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "org-2",
-			},
-			Spec: iamv0.ResourcePermissionSpec{
-				Resource: iamv0.ResourcePermissionspecResource{
-					ApiGroup: "folder.grafana.app", Resource: "folders", Name: "fold1",
-				},
-				Permissions: []iamv0.ResourcePermissionspecPermission{
-					{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "u1", Verb: "View"},
-					{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "Edit"},
-				},
-			},
-		}
-
-		testFolderDelete := func(ctx context.Context, req *v1.WriteRequest) error {
-			require.NotNil(t, req)
-			require.Equal(t, "org-2", req.Namespace)
-
-			// Should have deletes but no writes
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 2)
-			require.Nil(t, req.Writes)
-
-			require.Equal(
-				t,
-				req.Deletes.TupleKeys[0],
-				&v1.TupleKeyWithoutCondition{User: "user:u1", Relation: "view", Object: "folder:fold1"},
-			)
-			require.Equal(
-				t,
-				req.Deletes.TupleKeys[1],
-				&v1.TupleKeyWithoutCondition{User: "role:basic_editor#assignee", Relation: "edit", Object: "folder:fold1"},
-			)
-			return nil
-		}
-
-		b.zClient = &FakeZanzanaClient{writeCallback: testFolderDelete}
-		b.AfterResourcePermissionDelete(&folderPerm, nil)
-	})
-
-	<-b.zTickets
-	t.Run("should delete zanzana entries for dashboard resource permissions", func(t *testing.T) {
-		dashPerm := iamv0.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-			},
-			Spec: iamv0.ResourcePermissionSpec{
-				Resource: iamv0.ResourcePermissionspecResource{
-					ApiGroup: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",
-				},
-				Permissions: []iamv0.ResourcePermissionspecPermission{
-					{Kind: iamv0.ResourcePermissionSpecPermissionKindServiceAccount, Name: "sa1", Verb: "View"},
-					{Kind: iamv0.ResourcePermissionSpecPermissionKindTeam, Name: "team1", Verb: "Edit"},
-				},
-			},
-		}
-
-		testDashDelete := func(ctx context.Context, req *v1.WriteRequest) error {
-			object := "resource:dashboard.grafana.app/dashboards/dash1"
-
-			require.NotNil(t, req)
-			require.Equal(t, "default", req.Namespace)
-
-			// Should have deletes but no writes
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 2)
-			require.Nil(t, req.Writes)
-
-			require.Equal(
-				t,
-				req.Deletes.TupleKeys[0],
-				&v1.TupleKeyWithoutCondition{User: "service-account:sa1", Relation: "view", Object: object},
-			)
-			require.Equal(
-				t,
-				req.Deletes.TupleKeys[1],
-				&v1.TupleKeyWithoutCondition{User: "team:team1#member", Relation: "edit", Object: object},
-			)
-
-			return nil
-		}
-
-		b.zClient = &FakeZanzanaClient{writeCallback: testDashDelete}
-		b.AfterResourcePermissionDelete(&dashPerm, nil)
-	})
-	<-b.zTickets
-}
-
 func TestAfterCoreRoleCreate(t *testing.T) {
+	var wg sync.WaitGroup
+
 	b := &IdentityAccessManagementAPIBuilder{
 		logger:   log.NewNopLogger(),
 		zTickets: make(chan bool, 1),
 	}
 	t.Run("should create zanzana entries for core role with folder permissions", func(t *testing.T) {
+		wg.Add(1)
 		coreRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-role-uid",
@@ -417,6 +38,7 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 		}
 
 		testCoreRoleEntries := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.NotNil(t, req.Writes)
 			require.Len(t, req.Writes.TupleKeys, 2)
@@ -433,10 +55,11 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testCoreRoleEntries}
 		b.AfterRoleCreate(&coreRole, nil)
+		wg.Wait()
 	})
-	<-b.zTickets
 
 	t.Run("should create zanzana entries for core role with dashboard permissions", func(t *testing.T) {
+		wg.Add(1)
 		coreRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "dashboard-role-uid",
@@ -453,6 +76,7 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 		}
 
 		testDashboardRoleEntries := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.NotNil(t, req.Writes)
 			require.Len(t, req.Writes.TupleKeys, 2)
@@ -470,10 +94,11 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testDashboardRoleEntries}
 		b.AfterRoleCreate(&coreRole, nil)
+		wg.Wait()
 	})
-	<-b.zTickets
 
 	t.Run("should handle wildcard scopes", func(t *testing.T) {
+		wg.Add(1)
 		coreRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "wildcard-role-uid",
@@ -488,6 +113,7 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 		}
 
 		testWildcardEntries := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.NotNil(t, req.Writes)
 			require.Len(t, req.Writes.TupleKeys, 1)
@@ -502,10 +128,11 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testWildcardEntries}
 		b.AfterRoleCreate(&coreRole, nil)
+		wg.Wait()
 	})
-	<-b.zTickets
 
 	t.Run("should skip untranslatable permissions", func(t *testing.T) {
+		wg.Add(1)
 		coreRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "mixed-role-uid",
@@ -521,6 +148,7 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 		}
 
 		testMixedEntries := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.NotNil(t, req.Writes)
 			// Should only have 1 tuple (the untranslatable one should be skipped)
@@ -535,16 +163,18 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testMixedEntries}
 		b.AfterRoleCreate(&coreRole, nil)
+		wg.Wait()
 	})
-	<-b.zTickets
 }
 
 func TestAfterRoleCreate(t *testing.T) {
+	var wg sync.WaitGroup
 	b := &IdentityAccessManagementAPIBuilder{
 		logger:   log.NewNopLogger(),
 		zTickets: make(chan bool, 1),
 	}
 	t.Run("should create zanzana entries for role with folder permissions", func(t *testing.T) {
+		wg.Add(1)
 		role := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "custom-role-uid",
@@ -561,6 +191,7 @@ func TestAfterRoleCreate(t *testing.T) {
 		}
 
 		testRoleEntries := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.NotNil(t, req.Writes)
 			require.Len(t, req.Writes.TupleKeys, 2)
@@ -577,10 +208,11 @@ func TestAfterRoleCreate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testRoleEntries}
 		b.AfterRoleCreate(&role, nil)
+		wg.Wait()
 	})
-	<-b.zTickets
 
 	t.Run("should create zanzana entries for role with dashboard permissions", func(t *testing.T) {
+		wg.Add(1)
 		role := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "dash-role-uid",
@@ -597,6 +229,7 @@ func TestAfterRoleCreate(t *testing.T) {
 		}
 
 		testDashRoleEntries := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.NotNil(t, req.Writes)
 			require.Len(t, req.Writes.TupleKeys, 2)
@@ -613,10 +246,11 @@ func TestAfterRoleCreate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testDashRoleEntries}
 		b.AfterRoleCreate(&role, nil)
+		wg.Wait()
 	})
-	<-b.zTickets
 
 	t.Run("should merge folder resource tuples with same object and user", func(t *testing.T) {
+		wg.Add(1)
 		role := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "merge-role-uid",
@@ -633,6 +267,7 @@ func TestAfterRoleCreate(t *testing.T) {
 		}
 
 		testMergedEntries := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.NotNil(t, req.Writes)
 			// After merging, we should have tuples for the folder resource actions
@@ -647,16 +282,18 @@ func TestAfterRoleCreate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testMergedEntries}
 		b.AfterRoleCreate(&role, nil)
+		wg.Wait()
 	})
-	<-b.zTickets
 }
 
 func TestBeginCoreRoleUpdate(t *testing.T) {
+	var wg sync.WaitGroup
 	b := &IdentityAccessManagementAPIBuilder{
 		logger:   log.NewNopLogger(),
 		zTickets: make(chan bool, 1),
 	}
 	t.Run("should update zanzana entries when permissions change", func(t *testing.T) {
+		wg.Add(1)
 		oldRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-role-uid",
@@ -686,6 +323,7 @@ func TestBeginCoreRoleUpdate(t *testing.T) {
 		}
 
 		testUpdate := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-1", req.Namespace)
 
@@ -721,10 +359,11 @@ func TestBeginCoreRoleUpdate(t *testing.T) {
 
 		// Call the finish function with success=true to trigger the zanzana write
 		finishFunc(context.Background(), true)
+		wg.Wait()
 	})
-	<-b.zTickets
 
 	t.Run("should handle adding new permissions", func(t *testing.T) {
+		wg.Add(1)
 		oldRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "expand-role-uid",
@@ -754,6 +393,7 @@ func TestBeginCoreRoleUpdate(t *testing.T) {
 		}
 
 		testExpand := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-2", req.Namespace)
 
@@ -777,10 +417,11 @@ func TestBeginCoreRoleUpdate(t *testing.T) {
 
 		// Call the finish function with success=true to trigger the zanzana write
 		finishFunc(context.Background(), true)
+		wg.Wait()
 	})
-	<-b.zTickets
 
 	t.Run("should handle removing all permissions", func(t *testing.T) {
+		wg.Add(1)
 		oldRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "clear-role-uid",
@@ -807,6 +448,7 @@ func TestBeginCoreRoleUpdate(t *testing.T) {
 		}
 
 		testClear := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-3", req.Namespace)
 
@@ -829,16 +471,18 @@ func TestBeginCoreRoleUpdate(t *testing.T) {
 
 		// Call the finish function with success=true to trigger the zanzana write
 		finishFunc(context.Background(), true)
+		wg.Wait()
 	})
-	<-b.zTickets
 }
 
 func TestBeginRoleUpdate(t *testing.T) {
+	var wg sync.WaitGroup
 	b := &IdentityAccessManagementAPIBuilder{
 		logger:   log.NewNopLogger(),
 		zTickets: make(chan bool, 1),
 	}
 	t.Run("should update zanzana entries when permissions change", func(t *testing.T) {
+		wg.Add(1)
 		oldRole := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "custom-role-uid",
@@ -868,6 +512,7 @@ func TestBeginRoleUpdate(t *testing.T) {
 		}
 
 		testUpdate := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-1", req.Namespace)
 
@@ -904,11 +549,11 @@ func TestBeginRoleUpdate(t *testing.T) {
 
 		// Call the finish function with success=true to trigger the zanzana write
 		finishFunc(context.Background(), true)
+		wg.Wait()
 	})
 
-	<-b.zTickets
-
 	t.Run("should handle completely new permission set", func(t *testing.T) {
+		wg.Add(1)
 		oldRole := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "swap-role-uid",
@@ -937,6 +582,7 @@ func TestBeginRoleUpdate(t *testing.T) {
 		}
 
 		testSwap := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "default", req.Namespace)
 
@@ -966,11 +612,11 @@ func TestBeginRoleUpdate(t *testing.T) {
 
 		// Call the finish function with success=true to trigger the zanzana write
 		finishFunc(context.Background(), true)
+		wg.Wait()
 	})
 
-	<-b.zTickets
-
 	t.Run("should handle adding permissions to empty role", func(t *testing.T) {
+		wg.Add(1)
 		oldRole := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "empty-role-uid",
@@ -996,6 +642,7 @@ func TestBeginRoleUpdate(t *testing.T) {
 		}
 
 		testAddToEmpty := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-2", req.Namespace)
 
@@ -1020,16 +667,18 @@ func TestBeginRoleUpdate(t *testing.T) {
 
 		// Call the finish function with success=true to trigger the zanzana write
 		finishFunc(context.Background(), true)
+		wg.Wait()
 	})
-	<-b.zTickets
 }
 
 func TestAfterCoreRoleDelete(t *testing.T) {
+	var wg sync.WaitGroup
 	b := &IdentityAccessManagementAPIBuilder{
 		logger:   log.NewNopLogger(),
 		zTickets: make(chan bool, 1),
 	}
 	t.Run("should delete zanzana entries for core role with folder permissions", func(t *testing.T) {
+		wg.Add(1)
 		coreRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-role-uid",
@@ -1046,6 +695,7 @@ func TestAfterCoreRoleDelete(t *testing.T) {
 		}
 
 		testCoreRoleDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.NotNil(t, req.Deletes)
 			require.Len(t, req.Deletes.TupleKeys, 2)
@@ -1062,10 +712,11 @@ func TestAfterCoreRoleDelete(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testCoreRoleDeletes}
 		b.AfterRoleDelete(&coreRole, nil)
+		wg.Wait()
 	})
-	<-b.zTickets
 
 	t.Run("should delete zanzana entries for core role with dashboard permissions", func(t *testing.T) {
+		wg.Add(1)
 		coreRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "dashboard-role-uid",
@@ -1082,6 +733,7 @@ func TestAfterCoreRoleDelete(t *testing.T) {
 		}
 
 		testDashboardRoleDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.NotNil(t, req.Deletes)
 			require.Len(t, req.Deletes.TupleKeys, 2)
@@ -1098,10 +750,11 @@ func TestAfterCoreRoleDelete(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testDashboardRoleDeletes}
 		b.AfterRoleDelete(&coreRole, nil)
+		wg.Wait()
 	})
-	<-b.zTickets
 
 	t.Run("should handle wildcard scopes on delete", func(t *testing.T) {
+		wg.Add(1)
 		coreRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "wildcard-role-uid",
@@ -1116,6 +769,7 @@ func TestAfterCoreRoleDelete(t *testing.T) {
 		}
 
 		testWildcardDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.NotNil(t, req.Deletes)
 			require.Len(t, req.Deletes.TupleKeys, 1)
@@ -1129,10 +783,11 @@ func TestAfterCoreRoleDelete(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testWildcardDeletes}
 		b.AfterRoleDelete(&coreRole, nil)
+		wg.Wait()
 	})
-	<-b.zTickets
 
 	t.Run("should skip untranslatable permissions on delete", func(t *testing.T) {
+		wg.Add(1)
 		coreRole := iamv0.CoreRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "mixed-role-uid",
@@ -1148,6 +803,7 @@ func TestAfterCoreRoleDelete(t *testing.T) {
 		}
 
 		testMixedDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.NotNil(t, req.Deletes)
 			// Should only delete 1 tuple (the untranslatable one should be skipped)
@@ -1162,16 +818,18 @@ func TestAfterCoreRoleDelete(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testMixedDeletes}
 		b.AfterRoleDelete(&coreRole, nil)
+		wg.Wait()
 	})
-	<-b.zTickets
 }
 
 func TestAfterRoleDelete(t *testing.T) {
+	var wg sync.WaitGroup
 	b := &IdentityAccessManagementAPIBuilder{
 		logger:   log.NewNopLogger(),
 		zTickets: make(chan bool, 1),
 	}
 	t.Run("should delete zanzana entries for role with folder permissions", func(t *testing.T) {
+		wg.Add(1)
 		role := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "custom-role-uid",
@@ -1188,6 +846,7 @@ func TestAfterRoleDelete(t *testing.T) {
 		}
 
 		testRoleDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.NotNil(t, req.Deletes)
 			require.Len(t, req.Deletes.TupleKeys, 2)
@@ -1204,10 +863,11 @@ func TestAfterRoleDelete(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testRoleDeletes}
 		b.AfterRoleDelete(&role, nil)
+		wg.Wait()
 	})
-	<-b.zTickets
 
 	t.Run("should delete zanzana entries for role with dashboard permissions", func(t *testing.T) {
+		wg.Add(1)
 		role := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "dash-role-uid",
@@ -1224,6 +884,7 @@ func TestAfterRoleDelete(t *testing.T) {
 		}
 
 		testDashRoleDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.NotNil(t, req.Deletes)
 			require.Len(t, req.Deletes.TupleKeys, 2)
@@ -1240,10 +901,11 @@ func TestAfterRoleDelete(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testDashRoleDeletes}
 		b.AfterRoleDelete(&role, nil)
+		wg.Wait()
 	})
 
-	<-b.zTickets
 	t.Run("should handle multiple permissions on delete", func(t *testing.T) {
+		wg.Add(1)
 		role := iamv0.Role{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "multi-role-uid",
@@ -1260,6 +922,7 @@ func TestAfterRoleDelete(t *testing.T) {
 		}
 
 		testMultiDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
 			require.NotNil(t, req)
 			require.NotNil(t, req.Deletes)
 			require.Len(t, req.Deletes.TupleKeys, 3)
@@ -1284,6 +947,6 @@ func TestAfterRoleDelete(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testMultiDeletes}
 		b.AfterRoleDelete(&role, nil)
+		wg.Wait()
 	})
-	<-b.zTickets
 }
