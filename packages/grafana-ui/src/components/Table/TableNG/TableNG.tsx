@@ -874,6 +874,7 @@ export function TableNG(props: TableNGProps) {
         <TableCellInspector
           mode={inspectCell.mode ?? TableCellInspectorMode.text}
           value={inspectCell.value}
+          preformatted={inspectCell.preformatted}
           onDismiss={() => setInspectCell(null)}
         />
       )}

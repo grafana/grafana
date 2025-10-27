@@ -15,6 +15,8 @@ import {
   DisplayValueAlignmentFactors,
   DataFrame,
   DisplayProcessor,
+  isDataFrame,
+  FieldSparkline,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -993,6 +995,46 @@ export const displayJsonValue: DisplayProcessor = (value: unknown): DisplayValue
 
   return { text: displayValue, numeric: Number.NaN };
 };
+
+export function prepareSparklineValue(value: unknown, field: Field): FieldSparkline | undefined {
+  if (Array.isArray(value)) {
+    return {
+      y: {
+        name: `${field.name}-sparkline`,
+        type: FieldType.number,
+        values: value,
+        config: {},
+      },
+    };
+  }
+
+  if (isDataFrame(value)) {
+    const timeField = value.fields.find((x) => x.type === FieldType.time);
+    const numberField = value.fields.find((x) => x.type === FieldType.number);
+
+    if (timeField && numberField) {
+      return { x: timeField, y: numberField };
+    }
+  }
+
+  return;
+}
+
+export function buildSparklineInspect(fieldSparkline?: FieldSparkline): string {
+  let result = '[';
+  if (fieldSparkline != null) {
+    // if an x value exists, render as a tuple [x,y], otherwise just y
+    const buildValString: (idx: number) => string =
+      fieldSparkline.x != null
+        ? (idx) => `[${fieldSparkline.x!.values[idx] ?? 'null'}, ${fieldSparkline.y.values[idx] ?? 'null'}]`
+        : (idx) => `${fieldSparkline.y.values[idx] ?? 'null'}`;
+    for (let i = 0; i < fieldSparkline.y.values.length; i++) {
+      result += `\n  ${buildValString(i)}${i === fieldSparkline.y.values.length - 1 ? '\n' : ','}`;
+    }
+  }
+  result += ']';
+  return result;
+}
 
 export function getSummaryCellTextAlign(textAlign: TextAlign, cellType: TableCellDisplayMode): TextAlign {
   // gauge is weird. left-aligned gauge has the viz on the left and its numbers on the right, and vice-versa.

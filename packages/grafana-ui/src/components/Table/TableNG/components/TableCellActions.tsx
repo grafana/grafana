@@ -8,14 +8,15 @@ import { t } from '@grafana/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
 import { TableCellInspectorMode } from '../../TableCellInspector';
 import { TableCellDisplayMode } from '../../types';
+import { getAutoRendererDisplayMode } from '../Cells/renderers';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellActionsProps } from '../types';
+import { buildSparklineInspect, prepareSparklineValue } from '../utils';
 
 export const TableCellActions = memo(
   ({
     field,
     value,
     cellOptions,
-    displayName,
     setInspectCell,
     onCellFilterAdded,
     className,
@@ -33,6 +34,7 @@ export const TableCellActions = memo(
           onClick={() => {
             let inspectValue = value;
             let mode = TableCellInspectorMode.text;
+            let preformatted = false;
 
             if (field.type === FieldType.geo && value instanceof Geometry) {
               inspectValue = new WKT().writeGeometry(value, {
@@ -41,6 +43,15 @@ export const TableCellActions = memo(
               });
               mode = TableCellInspectorMode.code;
             }
+            if (
+              cellOptions.type === TableCellDisplayMode.Sparkline ||
+              getAutoRendererDisplayMode(field) === TableCellDisplayMode.Sparkline
+            ) {
+              // rather than JSON.stringify this, manually format it to make the coordinate tuples more legible to the user.
+              inspectValue += buildSparklineInspect(prepareSparklineValue(value, field));
+              mode = TableCellInspectorMode.code;
+              preformatted = true;
+            }
             if (cellOptions.type === TableCellDisplayMode.JSONView) {
               mode = TableCellInspectorMode.code;
             }
@@ -48,6 +59,7 @@ export const TableCellActions = memo(
             setInspectCell({
               value: String(inspectValue ?? ''),
               mode,
+              preformatted,
             });
           }}
         />

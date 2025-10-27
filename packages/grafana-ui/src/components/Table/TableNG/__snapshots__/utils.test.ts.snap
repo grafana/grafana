@@ -1,0 +1,21 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TableNG utils buildSparklineInspect should build inspect info for sparkline values with x and y values 1`] = `
+"[
+  [0, 10],
+  [1000, 20],
+  [2000, 30],
+  [3000, 40],
+  [4000, 50]
+]"
+`;
+
+exports[`TableNG utils buildSparklineInspect should build inspect info for sparkline values with y values (no x values) 1`] = `
+"[
+  10,
+  20,
+  30,
+  40,
+  50
+]"
+`;

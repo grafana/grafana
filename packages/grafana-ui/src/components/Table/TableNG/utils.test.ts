@@ -48,6 +48,8 @@ import {
   predicateByName,
   parseStyleJson,
   calculateFooterHeight,
+  prepareSparklineValue,
+  buildSparklineInspect,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -1503,6 +1505,105 @@ describe('TableNG utils', () => {
 
     it('returns an object with invalid style properties, because we do not validate the style properties', () => {
       expect(parseStyleJson('{"notARealStyle": "someValue"}')).toEqual({ notARealStyle: 'someValue' });
+    });
+  });
+
+  describe('prepareSparklineValue', () => {
+    it('should return an array of numbers when given an array of numbers', () => {
+      expect(
+        prepareSparklineValue([1, 2, 3, 4, 5], {
+          name: 'test',
+          type: FieldType.number,
+          values: [1, 2, 3, 4, 5],
+          config: {},
+        })
+      ).toEqual({
+        y: {
+          name: `test-sparkline`,
+          type: FieldType.number,
+          values: [1, 2, 3, 4, 5],
+          config: {},
+        },
+      });
+    });
+
+    it('should parse the x and y values from a dataframe', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'x', type: FieldType.time, values: [0, 1000, 2000, 3000, 4000] },
+          { name: 'y', type: FieldType.number, values: [10, 20, 30, 40, 50] },
+        ],
+      });
+      expect(
+        prepareSparklineValue(frame, {
+          name: 'test',
+          type: FieldType.frame,
+          values: [frame],
+          config: {},
+        })
+      ).toEqual({
+        x: {
+          name: 'x',
+          type: FieldType.time,
+          values: [0, 1000, 2000, 3000, 4000],
+          config: {},
+        },
+        y: {
+          name: 'y',
+          type: FieldType.number,
+          values: [10, 20, 30, 40, 50],
+          config: {},
+        },
+      });
+    });
+
+    it('should return undefined for non-array and non-dataframe values', () => {
+      expect(
+        prepareSparklineValue('not an array or dataframe', {
+          name: 'test',
+          type: FieldType.string,
+          values: ['a', 'b', 'c'],
+          config: {},
+        })
+      ).toBeUndefined();
+    });
+  });
+
+  describe('buildSparklineInspect', () => {
+    it('should build inspect info for sparkline values with x and y values', () => {
+      expect(
+        buildSparklineInspect({
+          x: {
+            name: 'x',
+            type: FieldType.time,
+            values: [0, 1000, 2000, 3000, 4000],
+            config: {},
+          },
+          y: {
+            name: 'y',
+            type: FieldType.number,
+            values: [10, 20, 30, 40, 50],
+            config: {},
+          },
+        })
+      ).toMatchSnapshot();
+    });
+
+    it('should build inspect info for sparkline values with y values (no x values)', () => {
+      expect(
+        buildSparklineInspect({
+          y: {
+            name: 'y',
+            type: FieldType.number,
+            values: [10, 20, 30, 40, 50],
+            config: {},
+          },
+        })
+      ).toMatchSnapshot();
+    });
+
+    it('should render an empty array if the SparklineField is undefined', () => {
+      expect(buildSparklineInspect()).toEqual('[]');
     });
   });
 });

@@ -20,16 +20,17 @@ interface TableCellInspectorProps {
   value: any;
   onDismiss: () => void;
   mode: TableCellInspectorMode;
+  preformatted?: boolean;
 }
 
-export function TableCellInspector({ value, onDismiss, mode }: TableCellInspectorProps) {
+export function TableCellInspector({ value, onDismiss, mode, preformatted }: TableCellInspectorProps) {
   let displayValue = value;
   const [currentMode, setMode] = useState(mode);
 
   if (isString(value)) {
     const trimmedValue = value.trim();
     // Exclude numeric strings like '123' from being displayed in code/JSON mode
-    if (trimmedValue[0] === '{' || trimmedValue[0] === '[' || mode === 'code') {
+    if (!preformatted && (trimmedValue[0] === '{' || trimmedValue[0] === '[' || mode === 'code')) {
       try {
         value = JSON.parse(value);
         displayValue = JSON.stringify(value, null, '  ');
