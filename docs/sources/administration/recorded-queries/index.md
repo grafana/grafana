@@ -12,10 +12,11 @@ labels:
     - cloud
     - enterprise
 title: Recorded queries
-weight: 300
+menuTitle: Recorded queries (deprecated)
+weight: 5000
 ---
 
-# DEPRECATED Recorded queries
+# Recorded queries (deprecated)
 
 {{< admonition type="warning" >}}
 Recorded queries are deprecated. Please use the new [Grafana-managed recording rules](/docs/grafana/latest/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules) instead.

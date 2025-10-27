@@ -15,6 +15,7 @@ labels:
     - oss
 menutitle: Search
 title: Search
+weight: 3200
 ---
 
 # Grafana search

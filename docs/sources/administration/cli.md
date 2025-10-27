@@ -1,51 +1,54 @@
 ---
 aliases:
   - ../cli/ # /docs/grafana/latest/cli/
-description: Guide to using grafana server cli
+description: Guide to using the Grafana server CLI
 keywords:
   - grafana
   - cli
   - grafana cli
   - command line interface
+  - admin
 labels:
   products:
     - enterprise
     - oss
 title: Grafana server CLI
-weight: 1100
+menuTitle: Admin with Grafana server CLI
+weight: 2500
 ---
 
-# Grafana server CLI
+# Administer Grafana with the Grafana server CLI
 
-Grafana server CLI is a small executable that's bundled with Grafana server.
-You can run it on the same machine Grafana server is running on.
-Grafana server CLI has `plugins` and `admin` commands, as well as global options.
+You can administer your Grafana instance with the Grafana server CLI, a small executable bundled with Grafana server. 
 
-To list all commands and options:
+The Grafana server CLI has `plugins` and `admin` commands, as well as global options. To list them, run:
 
 ```
 grafana cli -h
 ```
 
-## Run Grafana server CLI
+For more details read on.
 
-To run Grafana server CLI, add the path to the Grafana binaries in your `PATH` environment variable.
-Alternately, if your current directory is the `bin` directory, run `./grafana cli`.
-Otherwise, you can specify full path to the binary.
-For example, on Linux `/usr/share/grafana/bin/grafana` and on Windows `C:\Program Files\GrafanaLabs\grafana\bin\grafana.exe`, and run it with `grafana cli`.
+## Run the Grafana server CLI
 
-{{< admonition type="note" >}}
-Some commands, such as installing or removing plugins, require `sudo` on Linux.
-If you're on Windows, run Windows PowerShell as Administrator.
-{{< /admonition >}}
+You can run the Grafana server CLI on the same machine Grafana server is running on.
 
-## Grafana CLI command syntax
+To run the CLI you have the following options:
+
+- Add the path to the Grafana binaries in your `PATH` environment variable.
+- If your current directory is the `bin` directory, run `./grafana cli`.
+- Otherwise, you can specify full path to the binary. For example, `/usr/share/grafana/bin/grafana` on Linux and `C:\Program Files\GrafanaLabs\grafana\bin\grafana.exe` on Windows.
 
 The general syntax for commands in Grafana server CLI is:
 
 ```bash
 grafana cli [global options] command [command options] [arguments...]
 ```
+
+{{< admonition type="note" >}}
+Some commands, such as installing or removing plugins, require `sudo` on Linux.
+If you're on Windows, run Windows PowerShell as Administrator.
+{{< /admonition >}}
 
 ## Global options
 

@@ -11,7 +11,7 @@ labels:
     - cloud
     - oss
 title: Plugin management
-weight: 600
+weight: 200
 ---
 
 # Plugin management

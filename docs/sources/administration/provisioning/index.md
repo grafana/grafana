@@ -11,7 +11,8 @@ labels:
     - enterprise
     - oss
 title: Provision Grafana
-weight: 600
+menuTitle: Provision Grafana
+weight: 2300
 ---
 
 # Provision Grafana
