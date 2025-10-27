@@ -1823,6 +1823,8 @@
     "manual-and-automatic-routing": {
       "routing-options": {
         "label": {
+          "contact-point": "Contact point",
+          "notification-policy": "Notification policy",
           "select-contact-point": "Select contact point",
           "use-notification-policy": "Use notification policy"
         }
@@ -2852,8 +2854,7 @@
           "placeholder": "Enter a description of what the alert rule does…"
         },
         "manual-routing": {
-          "aria": "Toggle manual routing",
-          "label": "Manual routing"
+          "aria": "Toggle manual routing"
         },
         "policy-selected": "Notifications for firing alerts are routed to contact points based on matching labels and the notification policy tree.",
         "recipient": {

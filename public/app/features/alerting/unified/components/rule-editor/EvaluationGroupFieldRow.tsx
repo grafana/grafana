@@ -71,7 +71,7 @@ export function EvaluationGroupFieldRow({ enableProvisionedGroups }: { enablePro
     : t('alerting.rule-form.evaluation.evaluation-group-and-interval', 'Evaluation group and interval');
 
   return (
-    <Stack alignItems="center">
+    <Stack alignItems="end">
       <div className={styles.formContainer}>
         <Field
           noMargin
