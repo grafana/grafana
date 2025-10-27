@@ -37,7 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-type BuildHandlerChainFuncFromBuilders = func([]APIGroupBuilder) BuildHandlerChainFunc
+type BuildHandlerChainFuncFromBuilders = func([]APIGroupBuilder, prometheus.Registerer) BuildHandlerChainFunc
 type BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler
 
 func ProvideDefaultBuildHandlerChainFuncFromBuilders() BuildHandlerChainFuncFromBuilders {
@@ -66,12 +66,13 @@ var PathRewriters = []filters.PathRewriter{
 	},
 }
 
-func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder) BuildHandlerChainFunc {
+func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		requestHandler, err := GetCustomRoutesHandler(
 			delegateHandler,
 			c.LoopbackClientConfig,
-			builders)
+			builders,
+			reg)
 		if err != nil {
 			panic(fmt.Sprintf("could not build the request handler for specified API builders: %s", err.Error()))
 		}
@@ -106,6 +107,7 @@ func SetupConfig(
 	buildHandlerChainFuncFromBuilders BuildHandlerChainFuncFromBuilders,
 	gvs []schema.GroupVersion,
 	additionalOpenAPIDefGetters []common.GetOpenAPIDefinitions,
+	reg prometheus.Registerer,
 ) error {
 	serverConfig.AdmissionControl = NewAdmissionFromBuilders(builders)
 	defsGetter := GetOpenAPIDefinitions(builders, additionalOpenAPIDefGetters...)
@@ -229,7 +231,7 @@ func SetupConfig(
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
-	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders)
+	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders, reg)
 
 	// set priority for aggregated discovery
 	for i, b := range builders {
@@ -404,6 +406,7 @@ func InstallAPIs(
 			}
 
 			// if grafanaAPIServerWithExperimentalAPIs is not enabled, remove v0alpha1 resources unless explicitly allowed
+			//nolint:staticcheck // not yet migrated to OpenFeature
 			if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 				if resources, ok := g.VersionedResourcesStorageMap["v0alpha1"]; ok {
 					for name := range resources {

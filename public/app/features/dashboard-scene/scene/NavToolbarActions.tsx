@@ -38,7 +38,7 @@ import { isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
-import ManagedDashboardNavBarBadge from './ManagedDashboardNavBarBadge';
+import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
 import { LeftActions } from './new-toolbar/LeftActions';
 import { RightActions } from './new-toolbar/RightActions';
 import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
@@ -66,7 +66,7 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanel, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
+  const { isEditing, viewPanel, isDirty, uid, meta, editview, editPanel, editable, title } = dashboard.useState();
 
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
@@ -101,12 +101,16 @@ export function ToolbarActions({ dashboard }: Props) {
     group: 'icon-actions',
     condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
     render: () => {
+      if (!uid) {
+        return null;
+      }
       return (
         <StarToolbarButton
           key="star-dashboard-button"
           group="dashboard.grafana.app"
           kind="Dashboard"
-          dashboard={dashboard}
+          title={title}
+          id={uid}
         />
       );
     },
@@ -141,7 +145,7 @@ export function ToolbarActions({ dashboard }: Props) {
       group: 'icon-actions',
       condition: true,
       render: () => {
-        return <ManagedDashboardNavBarBadge meta={meta} key="managed-dashboard-badge" />;
+        return <ManagedDashboardNavBarBadge dashboard={dashboard} key="managed-dashboard-badge" />;
       },
     });
   }

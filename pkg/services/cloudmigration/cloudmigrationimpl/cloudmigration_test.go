@@ -435,16 +435,17 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 		require.Eventually(
 			t,
 			func() bool { return gmsClientMock.GetSnapshotStatusCallCount() == i+1 },
-			2*time.Second,
+			5*time.Second,
 			100*time.Millisecond,
-			"GMS client mock GetSnapshotStatus count: %d", gmsClientMock.GetSnapshotStatusCallCount(),
+			"GMS client mock GetSnapshotStatus count: %d on status: %s (want: %d)",
+			gmsClientMock.GetSnapshotStatusCallCount(), string(status), i+1,
 		)
 	}
 
 	assert.Never(
 		t,
 		func() bool { return gmsClientMock.GetSnapshotStatusCallCount() > 2 },
-		2*time.Second,
+		5*time.Second,
 		100*time.Millisecond,
 		"GMS client mock GetSnapshotStatus called more than expected: %d times", gmsClientMock.GetSnapshotStatusCallCount(),
 	)

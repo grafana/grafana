@@ -486,11 +486,6 @@
         "message-no-metrics-found": "Tidak ada metrik yang ditemukan di sumber data.",
         "name": "Nama",
         "type": "Jenis"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Penguraian kueri mengalami masalah ketidakjelasan."
-        }
       }
     }
   }
