@@ -181,7 +181,9 @@ Query expressions are different for each data source. For more information, refe
 
 1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
    - **Multi-value** - Enables multiple values to be selected at the same time.
-   - **Include All option** - Enables an option to include all variables.
+   - **Allow custom values** - Enables users to add custom values to the list.
+   - **Include All option** - Enables an option to include all variables. Enter a value in the **Custom all value** field to set your own "all" option.
+
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
