@@ -1,6 +1,5 @@
 import { cx } from '@emotion/css';
-import { PureComponent } from 'react';
-import * as React from 'react';
+import { memo, type MouseEventHandler } from 'react';
 
 import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline } from '@grafana/data';
 import { PercentChangeColorMode, VizTextDisplayOptions } from '@grafana/schema';
@@ -51,7 +50,7 @@ export interface Props extends Themeable2 {
   /** Sparkline values for showing a graph under/behind the value  */
   sparkline?: FieldSparkline;
   /** onClick handler for the value */
-  onClick?: React.MouseEventHandler<HTMLElement>;
+  onClick?: MouseEventHandler<HTMLElement>;
   /** Custom styling */
   className?: string;
   /** Color mode for coloring the value or the background */
@@ -83,58 +82,55 @@ export interface Props extends Themeable2 {
   disableWideLayout?: boolean;
 }
 
-export class BigValue extends PureComponent<Props> {
-  static defaultProps: Partial<Props> = {
-    justifyMode: BigValueJustifyMode.Auto,
-  };
+export const BigValue = memo<Props>((props) => {
+  const { onClick, className, hasLinks, theme, justifyMode = BigValueJustifyMode.Auto } = props;
 
-  render() {
-    const { onClick, className, hasLinks, theme } = this.props;
-    const layout = buildLayout(this.props);
-    const panelStyles = layout.getPanelStyles();
-    const valueAndTitleContainerStyles = layout.getValueAndTitleContainerStyles();
-    const valueStyles = layout.getValueStyles();
-    const titleStyles = layout.getTitleStyles();
-    const textValues = layout.textValues;
-    const percentChange = this.props.value.percentChange;
-    const percentChangeColorMode = this.props.percentChangeColorMode;
-    const showPercentChange = percentChange != null && !Number.isNaN(percentChange);
+  const layout = buildLayout({ ...props, justifyMode });
+  const panelStyles = layout.getPanelStyles();
+  const valueAndTitleContainerStyles = layout.getValueAndTitleContainerStyles();
+  const valueStyles = layout.getValueStyles();
+  const titleStyles = layout.getTitleStyles();
+  const textValues = layout.textValues;
+  const percentChange = props.value.percentChange;
+  const percentChangeColorMode = props.percentChangeColorMode;
+  const showPercentChange = percentChange != null && !Number.isNaN(percentChange);
 
-    // When there is an outer data link this tooltip will override the outer native tooltip
-    const tooltip = hasLinks ? undefined : textValues.tooltip;
+  // When there is an outer data link this tooltip will override the outer native tooltip
+  const tooltip = hasLinks ? undefined : textValues.tooltip;
 
-    if (!onClick) {
-      return (
-        <div className={className} style={panelStyles} title={tooltip}>
-          <div style={valueAndTitleContainerStyles}>
-            {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
-            <FormattedValueDisplay value={textValues} style={valueStyles} />
-            {showPercentChange && (
-              <PercentChange
-                percentChange={percentChange}
-                styles={layout.getPercentChangeStyles(percentChange, percentChangeColorMode, valueStyles)}
-              />
-            )}
-          </div>
-          {layout.renderChart()}
-        </div>
-      );
-    }
-
+  if (!onClick) {
     return (
-      <button
-        type="button"
-        className={cx(clearButtonStyles(theme), className)}
-        style={panelStyles}
-        onClick={onClick}
-        title={tooltip}
-      >
+      <div className={className} style={panelStyles} title={tooltip}>
         <div style={valueAndTitleContainerStyles}>
           {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
           <FormattedValueDisplay value={textValues} style={valueStyles} />
+          {showPercentChange && (
+            <PercentChange
+              percentChange={percentChange}
+              styles={layout.getPercentChangeStyles(percentChange, percentChangeColorMode, valueStyles)}
+            />
+          )}
         </div>
         {layout.renderChart()}
-      </button>
+      </div>
     );
   }
-}
+
+  return (
+    <button
+      type="button"
+      className={cx(clearButtonStyles(theme), className)}
+      style={panelStyles}
+      onClick={onClick}
+      title={tooltip}
+    >
+      <div style={valueAndTitleContainerStyles}>
+        {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
+        <FormattedValueDisplay value={textValues} style={valueStyles} />
+      </div>
+      {layout.renderChart()}
+    </button>
+  );
+});
+
+BigValue.displayName = 'BigValue';
