@@ -105,6 +105,9 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       justifyContent: 'flex-end',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
+      [theme.breakpoints.down('sm')]: {
+        justifyContent: 'flex-start',
+      },
     }),
     logo: css({
       width: '32px',
