@@ -411,7 +411,7 @@ func TestMerge(t *testing.T) {
 								"extra":     "label",
 							},
 							Values: []lokiclient.Sample{
-								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "condition": "test", "dashboardUID": "123", "fingerprint": "test", "labels": {}, "panelID": 123, "ruleTitle": "test", "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1", "ruleID": 123}`},
 							},
 						},
 						{
@@ -422,7 +422,7 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-1",
 							},
 							Values: []lokiclient.Sample{
-								{T: time.Unix(2, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-2"}`},
+								{T: time.Unix(2, 0), V: `{"schemaVersion": 1, "condition": "test", "dashboardUID": "123", "fingerprint": "test", "labels": {}, "panelID": 123, "ruleTitle": "test", "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-2", "ruleID": 123}`},
 							},
 						},
 					},
@@ -434,8 +434,8 @@ func TestMerge(t *testing.T) {
 					time.Unix(2, 0),
 				}),
 				data.NewField(dfLine, data.Labels{}, []json.RawMessage{
-					toJson(LokiEntry{RuleUID: "test-rule-1", SchemaVersion: 1, Previous: "normal", Current: "pending", Values: jsonifyValues(map[string]float64{"a": 1.5})}),
-					toJson(LokiEntry{RuleUID: "test-rule-2", SchemaVersion: 1, Previous: "pending", Current: "firing", Values: jsonifyValues(map[string]float64{"a": 2.5})}),
+					toJson(LokiEntry{RuleUID: "test-rule-1", SchemaVersion: 1, Previous: "normal", Current: "pending", Fingerprint: "test", PanelID: 123, RuleTitle: "test", InstanceLabels: map[string]string{}, RuleID: 123, Condition: "test", DashboardUID: "123", Values: jsonifyValues(map[string]float64{"a": 1.5})}),
+					toJson(LokiEntry{RuleUID: "test-rule-2", SchemaVersion: 1, Previous: "pending", Current: "firing", Fingerprint: "test", PanelID: 123, RuleTitle: "test", InstanceLabels: map[string]string{}, RuleID: 123, Condition: "test", DashboardUID: "123", Values: jsonifyValues(map[string]float64{"a": 2.5})}),
 				}),
 				data.NewField(dfLabels, data.Labels{}, []json.RawMessage{
 					toJson(map[string]string{
@@ -487,8 +487,8 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-1",
 							},
 							Values: []lokiclient.Sample{
-								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
-								{T: time.Unix(5, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
+								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "condition": "test", "dashboardUID": "123", "fingerprint": "test", "labels": {}, "panelID": 123, "ruleTitle": "test", "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1", "ruleID": 123}`},
+								{T: time.Unix(5, 0), V: `{"schemaVersion": 1, "condition": "test", "dashboardUID": "123", "fingerprint": "test", "labels": {}, "panelID": 123, "ruleTitle": "test", "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2", "ruleID": 123}`},
 							},
 						},
 						{
@@ -499,7 +499,7 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-1",
 							},
 							Values: []lokiclient.Sample{
-								{T: time.Unix(2, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`},
+								{T: time.Unix(2, 0), V: `{"schemaVersion": 1, "condition": "test", "dashboardUID": "123", "fingerprint": "test", "labels": {}, "panelID": 123, "ruleTitle": "test", "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3", "ruleID": 123}`},
 							},
 						},
 					},
@@ -512,9 +512,9 @@ func TestMerge(t *testing.T) {
 					time.Unix(5, 0),
 				}),
 				data.NewField(dfLine, data.Labels{}, []json.RawMessage{
-					toJson(LokiEntry{RuleUID: "test-rule-1", SchemaVersion: 1, Previous: "normal", Current: "pending", Values: jsonifyValues(map[string]float64{"a": 1.5})}),
-					toJson(LokiEntry{RuleUID: "test-rule-3", SchemaVersion: 1, Previous: "pending", Current: "firing", Values: jsonifyValues(map[string]float64{"a": 2.5})}),
-					toJson(LokiEntry{RuleUID: "test-rule-2", SchemaVersion: 1, Previous: "pending", Current: "normal", Values: jsonifyValues(map[string]float64{"a": 0.5})}),
+					toJson(LokiEntry{RuleUID: "test-rule-1", SchemaVersion: 1, Previous: "normal", Current: "pending", Fingerprint: "test", PanelID: 123, RuleTitle: "test", InstanceLabels: map[string]string{}, RuleID: 123, Condition: "test", DashboardUID: "123", Values: jsonifyValues(map[string]float64{"a": 1.5})}),
+					toJson(LokiEntry{RuleUID: "test-rule-3", SchemaVersion: 1, Previous: "pending", Current: "firing", Fingerprint: "test", PanelID: 123, RuleTitle: "test", InstanceLabels: map[string]string{}, RuleID: 123, Condition: "test", DashboardUID: "123", Values: jsonifyValues(map[string]float64{"a": 2.5})}),
+					toJson(LokiEntry{RuleUID: "test-rule-2", SchemaVersion: 1, Previous: "pending", Current: "normal", Fingerprint: "test", PanelID: 123, RuleTitle: "test", InstanceLabels: map[string]string{}, RuleID: 123, Condition: "test", DashboardUID: "123", Values: jsonifyValues(map[string]float64{"a": 0.5})}),
 				}),
 				data.NewField(dfLabels, data.Labels{}, []json.RawMessage{
 					toJson(map[string]string{
@@ -551,8 +551,8 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-1",
 							},
 							Values: []lokiclient.Sample{
-								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
-								{T: time.Unix(5, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2", "bad_label": "\e"}`},
+								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "condition": "test", "dashboardUID": "123", "fingerprint": "test", "labels": {}, "panelID": 123, "ruleTitle": "test", "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1", "ruleID": 123}`},
+								{T: time.Unix(5, 0), V: `{"schemaVersion": 1, "condition": "test", "dashboardUID": "123", "fingerprint": "test", "labels": {}, "panelID": 123, "ruleTitle": "test", "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2", "ruleID": 123, "bad_label": "\e"}`},
 							},
 						},
 						{
@@ -563,7 +563,7 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-1",
 							},
 							Values: []lokiclient.Sample{
-								{T: time.Unix(2, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`},
+								{T: time.Unix(2, 0), V: `{"schemaVersion": 1, "condition": "test", "dashboardUID": "123", "fingerprint": "test", "labels": {}, "panelID": 123, "ruleTitle": "test", "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3", "ruleID": 123}`},
 							},
 						},
 					},
@@ -575,8 +575,8 @@ func TestMerge(t *testing.T) {
 					time.Unix(2, 0),
 				}),
 				data.NewField(dfLine, data.Labels{}, []json.RawMessage{
-					toJson(LokiEntry{RuleUID: "test-rule-1", SchemaVersion: 1, Previous: "normal", Current: "pending", Values: jsonifyValues(map[string]float64{"a": 1.5})}),
-					toJson(LokiEntry{RuleUID: "test-rule-3", SchemaVersion: 1, Previous: "pending", Current: "firing", Values: jsonifyValues(map[string]float64{"a": 2.5})}),
+					toJson(LokiEntry{RuleUID: "test-rule-1", SchemaVersion: 1, Previous: "normal", Current: "pending", Fingerprint: "test", PanelID: 123, RuleTitle: "test", InstanceLabels: map[string]string{}, RuleID: 123, Condition: "test", DashboardUID: "123", Values: jsonifyValues(map[string]float64{"a": 1.5})}),
+					toJson(LokiEntry{RuleUID: "test-rule-3", SchemaVersion: 1, Previous: "pending", Current: "firing", Fingerprint: "test", PanelID: 123, RuleTitle: "test", InstanceLabels: map[string]string{}, RuleID: 123, Condition: "test", DashboardUID: "123", Values: jsonifyValues(map[string]float64{"a": 2.5})}),
 				}),
 				data.NewField(dfLabels, data.Labels{}, []json.RawMessage{
 					toJson(map[string]string{
@@ -608,8 +608,8 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-1",
 							},
 							Values: []lokiclient.Sample{
-								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
-								{T: time.Unix(5, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
+								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "condition": "test", "dashboardUID": "123", "fingerprint": "test", "labels": {}, "panelID": 123, "ruleTitle": "test", "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1", "ruleID": 123}`},
+								{T: time.Unix(5, 0), V: `{"schemaVersion": 1, "condition": "test", "dashboardUID": "123", "fingerprint": "test", "labels": {}, "panelID": 123, "ruleTitle": "test", "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2", "ruleID": 123}`},
 							},
 						},
 						{
@@ -620,7 +620,7 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-2",
 							},
 							Values: []lokiclient.Sample{
-								{T: time.Unix(2, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`},
+								{T: time.Unix(2, 0), V: `{"schemaVersion": 1, "condition": "test", "dashboardUID": "123", "fingerprint": "test", "labels": {}, "panelID": 123, "ruleTitle": "test", "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3", "ruleID": 123}`},
 							},
 						},
 					},
@@ -632,8 +632,8 @@ func TestMerge(t *testing.T) {
 					time.Unix(5, 0),
 				}),
 				data.NewField(dfLine, data.Labels{}, []json.RawMessage{
-					toJson(LokiEntry{RuleUID: "test-rule-1", SchemaVersion: 1, Previous: "normal", Current: "pending", Values: jsonifyValues(map[string]float64{"a": 1.5})}),
-					toJson(LokiEntry{RuleUID: "test-rule-2", SchemaVersion: 1, Previous: "pending", Current: "normal", Values: jsonifyValues(map[string]float64{"a": 0.5})}),
+					toJson(LokiEntry{RuleUID: "test-rule-1", SchemaVersion: 1, Previous: "normal", Current: "pending", Fingerprint: "test", PanelID: 123, RuleTitle: "test", InstanceLabels: map[string]string{}, RuleID: 123, Condition: "test", DashboardUID: "123", Values: jsonifyValues(map[string]float64{"a": 1.5})}),
+					toJson(LokiEntry{RuleUID: "test-rule-2", SchemaVersion: 1, Previous: "pending", Current: "normal", Fingerprint: "test", PanelID: 123, RuleTitle: "test", InstanceLabels: map[string]string{}, RuleID: 123, Condition: "test", DashboardUID: "123", Values: jsonifyValues(map[string]float64{"a": 0.5})}),
 				}),
 				data.NewField(dfLabels, data.Labels{}, []json.RawMessage{
 					toJson(map[string]string{
@@ -662,8 +662,8 @@ func TestMerge(t *testing.T) {
 								"group": "test-group-1",
 							},
 							Values: []lokiclient.Sample{
-								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
-								{T: time.Unix(5, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
+								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "condition": "test", "dashboardUID": "123", "fingerprint": "test", "labels": {}, "panelID": 123, "ruleTitle": "test", "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1", "ruleID": 123}`},
+								{T: time.Unix(5, 0), V: `{"schemaVersion": 1, "condition": "test", "dashboardUID": "123", "fingerprint": "test", "labels": {}, "panelID": 123, "ruleTitle": "test", "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2", "ruleID": 123}`},
 							},
 						},
 					},
@@ -686,7 +686,7 @@ func TestMerge(t *testing.T) {
 								"group": "test-group-1",
 							},
 							Values: []lokiclient.Sample{
-								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "condition": "test", "dashboardUID": "123", "fingerprint": "test", "labels": {}, "panelID": 123, "ruleTitle": "test", "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1", "ruleID": 123}`},
 							},
 						},
 					},
@@ -697,7 +697,7 @@ func TestMerge(t *testing.T) {
 					time.Unix(1, 0),
 				}),
 				data.NewField(dfLine, data.Labels{}, []json.RawMessage{
-					toJson(LokiEntry{RuleUID: "test-rule-1", SchemaVersion: 1, Previous: "normal", Current: "pending", Values: jsonifyValues(map[string]float64{"a": 1.5})}),
+					toJson(LokiEntry{RuleUID: "test-rule-1", SchemaVersion: 1, Previous: "normal", Current: "pending", Fingerprint: "test", PanelID: 123, RuleTitle: "test", InstanceLabels: map[string]string{}, RuleID: 123, Condition: "test", DashboardUID: "123", Values: jsonifyValues(map[string]float64{"a": 1.5})}),
 				}),
 				data.NewField(dfLabels, data.Labels{}, []json.RawMessage{
 					toJson(map[string]string{

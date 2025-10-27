@@ -119,6 +119,44 @@ func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInf
 	}, nil
 }
 
+func (s *Service) fetchUsers(ctx context.Context, ns types.NamespaceInfo) (map[int64]string, error) {
+	users, err := s.identityStore.ListUsers(ctx, ns, legacy.ListUserQuery{})
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch users: %w", err)
+	}
+	userIDs := make(map[int64]string, len(users.Items))
+	for _, user := range users.Items {
+		userIDs[user.ID] = user.UID
+	}
+	return userIDs, nil
+}
+
+// Should return an error if we fail to build the resolver.
+func (s *Service) newUserNameResolver(ctx context.Context, ns types.NamespaceInfo) (ScopeResolverFunc, error) {
+	return func(scope string) (string, error) {
+		userIDs, err := s.fetchUsers(ctx, ns)
+		if err != nil {
+			return "", fmt.Errorf("could not build resolver: %w", err)
+		}
+
+		userIDStr := strings.TrimPrefix(scope, "users:id:")
+		if userIDStr == "" {
+			return "", fmt.Errorf("user ID is empty")
+		}
+		if userIDStr == "*" {
+			return "users:uid:*", nil
+		}
+		userID, err := strconv.ParseInt(userIDStr, 10, 64)
+		if err != nil {
+			return "", fmt.Errorf("invalid user ID %s: %w", userIDStr, err)
+		}
+		if userName, ok := userIDs[userID]; ok {
+			return "users:uid:" + userName, nil
+		}
+		return "", fmt.Errorf("user ID %s not found", userIDStr)
+	}, nil
+}
+
 func permissionsDelegateResolverFunc(scope string) (string, error) {
 	if strings.TrimPrefix(scope, "permissions:type:") == "delegate" {
 		// The permissions:type:delegate scope does not have any discriminating value,
@@ -137,6 +175,9 @@ func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, scop
 	}
 	if scopePrefix == "serviceaccounts:id:" {
 		return s.newServiceAccountNameResolver(ctx, ns)
+	}
+	if scopePrefix == "users:id:" {
+		return s.newUserNameResolver(ctx, ns)
 	}
 	// No resolver found for the given scope prefix.
 	return nil, nil

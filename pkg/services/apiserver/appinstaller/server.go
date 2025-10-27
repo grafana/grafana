@@ -120,5 +120,8 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 }
 
 func (s *serverWrapper) RegisteredWebServices() []*restful.WebService {
-	return []*restful.WebService{}
+	if s.Handler != nil && s.Handler.GoRestfulContainer != nil {
+		return s.Handler.GoRestfulContainer.RegisteredWebServices()
+	}
+	return nil
 }

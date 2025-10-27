@@ -196,6 +196,8 @@ func arrowToNestedSetDataFrame(flamegraph *v1alpha1.FlamegraphArrow) (*data.Fram
 	defer arrowReader.Release()
 
 	arrowReader.Next()
+	//TODO: fix deprecation warning
+	//nolint:staticcheck
 	rec := arrowReader.Record()
 
 	fi, err := newFlamegraphIterator(rec)
@@ -236,6 +238,9 @@ type flamegraphIterator struct {
 	addressBuilder *bytes.Buffer
 }
 
+// TODO: fix deprecation warning
+//
+//nolint:staticcheck
 func newFlamegraphIterator(rec arrow.Record) (*flamegraphIterator, error) {
 	schema := rec.Schema()
 

@@ -22,7 +22,7 @@ export const EditDashboardSwitch = ({ dashboard }: ToolbarActionProps) => {
         evt.stopPropagation();
 
         if (!dashboard.state.isEditing) {
-          trackDashboardSceneEditButtonClicked();
+          trackDashboardSceneEditButtonClicked(dashboard.state.uid);
           dashboard.onEnterEditMode();
         } else {
           DashboardInteractions.exitEditButtonClicked();

@@ -3671,6 +3671,32 @@
         }
       }
     },
+    "/dashboards/interpolate": {
+      "post": {
+        "tags": [
+          "dashboards"
+        ],
+        "summary": "Interpolate dashboard. This is an experimental endpoint under dashboardLibrary FF and is subject to change.",
+        "operationId": "interpolateDashboard",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/interpolateDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "422": {
+            "$ref": "#/responses/unprocessableEntityError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/dashboards/public-dashboards": {
       "get": {
         "description": "Get list of public dashboards",
@@ -15270,6 +15296,20 @@
         }
       }
     },
+    "DashboardVersionResponseMeta": {
+      "type": "object",
+      "properties": {
+        "continueToken": {
+          "type": "string"
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardVersionMeta"
+          }
+        }
+      }
+    },
     "DataLink": {
       "description": "DataLink define what",
       "type": "object",
@@ -21973,6 +22013,9 @@
         "teamUID": {
           "type": "string"
         },
+        "uid": {
+          "type": "string"
+        },
         "userId": {
           "type": "integer",
           "format": "int64"
@@ -24491,10 +24534,7 @@
     "dashboardVersionsResponse": {
       "description": "(empty)",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/DashboardVersionMeta"
-        }
+        "$ref": "#/definitions/DashboardVersionResponseMeta"
       }
     },
     "deleteCorrelationResponse": {
@@ -25138,6 +25178,10 @@
       "schema": {
         "$ref": "#/definitions/publicError"
       }
+    },
+    "interpolateDashboardResponse": {
+      "description": "(empty)",
+      "schema": {}
     },
     "jwksResponse": {
       "description": "(empty)",

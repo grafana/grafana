@@ -140,27 +140,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.ReceiverList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.ReceiverList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverList"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.ReceiverList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverList"
                 }
               },
               "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.ReceiverList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.ReceiverList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverList"
                 }
               }
             }
@@ -212,17 +212,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
               }
             }
           },
@@ -234,17 +234,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               }
             }
@@ -254,17 +254,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               }
             }
@@ -274,17 +274,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               }
             }
@@ -486,17 +486,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               }
             }
@@ -548,17 +548,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
               }
             }
           },
@@ -570,17 +570,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               }
             }
@@ -590,17 +590,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               }
             }
@@ -790,17 +790,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               }
             }
@@ -810,17 +810,307 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Receiver"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Receiver",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/{namespace}/receivers/{name}/status": {
+      "get": {
+        "tags": [
+          "Receiver"
+        ],
+        "description": "read status of the specified Receiver",
+        "operationId": "getReceiverStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Receiver"
+        }
+      },
+      "put": {
+        "tags": [
+          "Receiver"
+        ],
+        "description": "replace status of the specified Receiver",
+        "operationId": "replaceReceiverStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+              }
+            },
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Receiver"
+        }
+      },
+      "patch": {
+        "tags": [
+          "Receiver"
+        ],
+        "description": "partially update status of the specified Receiver",
+        "operationId": "updateReceiverStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/apply-patch+yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/strategic-merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               }
             }
@@ -970,27 +1260,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeList"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeList"
                 }
               },
               "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeList"
                 }
               }
             }
@@ -1042,17 +1332,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
               }
             }
           },
@@ -1064,17 +1354,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               }
             }
@@ -1084,17 +1374,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               }
             }
@@ -1104,17 +1394,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               }
             }
@@ -1316,17 +1606,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               }
             }
@@ -1378,17 +1668,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
               }
             }
           },
@@ -1400,17 +1690,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               }
             }
@@ -1420,17 +1710,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               }
             }
@@ -1620,17 +1910,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               }
             }
@@ -1640,17 +1930,307 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "RoutingTree"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the RoutingTree",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/{namespace}/routingtrees/{name}/status": {
+      "get": {
+        "tags": [
+          "RoutingTree"
+        ],
+        "description": "read status of the specified RoutingTree",
+        "operationId": "getRoutingTreeStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "RoutingTree"
+        }
+      },
+      "put": {
+        "tags": [
+          "RoutingTree"
+        ],
+        "description": "replace status of the specified RoutingTree",
+        "operationId": "replaceRoutingTreeStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+              }
+            },
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "RoutingTree"
+        }
+      },
+      "patch": {
+        "tags": [
+          "RoutingTree"
+        ],
+        "description": "partially update status of the specified RoutingTree",
+        "operationId": "updateRoutingTreeStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/apply-patch+yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/strategic-merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               }
             }
@@ -1800,27 +2380,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroupList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroupList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupList"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroupList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupList"
                 }
               },
               "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroupList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroupList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupList"
                 }
               }
             }
@@ -1872,17 +2452,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
               }
             }
           },
@@ -1894,17 +2474,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               }
             }
@@ -1914,17 +2494,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               }
             }
@@ -1934,17 +2514,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               }
             }
@@ -2146,17 +2726,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               }
             }
@@ -2208,17 +2788,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
               }
             }
           },
@@ -2230,17 +2810,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               }
             }
@@ -2250,17 +2830,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               }
             }
@@ -2450,17 +3030,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               }
             }
@@ -2470,17 +3050,307 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "TemplateGroup"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the TemplateGroup",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/{namespace}/templategroups/{name}/status": {
+      "get": {
+        "tags": [
+          "TemplateGroup"
+        ],
+        "description": "read status of the specified TemplateGroup",
+        "operationId": "getTemplateGroupStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "TemplateGroup"
+        }
+      },
+      "put": {
+        "tags": [
+          "TemplateGroup"
+        ],
+        "description": "replace status of the specified TemplateGroup",
+        "operationId": "replaceTemplateGroupStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+              }
+            },
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "TemplateGroup"
+        }
+      },
+      "patch": {
+        "tags": [
+          "TemplateGroup"
+        ],
+        "description": "partially update status of the specified TemplateGroup",
+        "operationId": "updateTemplateGroupStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/apply-patch+yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/strategic-merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               }
             }
@@ -2630,27 +3500,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeIntervalList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeIntervalList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalList"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeIntervalList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalList"
                 }
               },
               "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeIntervalList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeIntervalList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalList"
                 }
               }
             }
@@ -2702,17 +3572,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
               }
             }
           },
@@ -2724,17 +3594,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               }
             }
@@ -2744,17 +3614,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               }
             }
@@ -2764,17 +3634,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               }
             }
@@ -2976,17 +3846,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               }
             }
@@ -3038,17 +3908,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
               }
             }
           },
@@ -3060,17 +3930,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               }
             }
@@ -3080,17 +3950,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               }
             }
@@ -3280,17 +4150,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               }
             }
@@ -3300,17 +4170,307 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "TimeInterval"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the TimeInterval",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/{namespace}/timeintervals/{name}/status": {
+      "get": {
+        "tags": [
+          "TimeInterval"
+        ],
+        "description": "read status of the specified TimeInterval",
+        "operationId": "getTimeIntervalStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "TimeInterval"
+        }
+      },
+      "put": {
+        "tags": [
+          "TimeInterval"
+        ],
+        "description": "replace status of the specified TimeInterval",
+        "operationId": "replaceTimeIntervalStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+              }
+            },
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha1",
+          "kind": "TimeInterval"
+        }
+      },
+      "patch": {
+        "tags": [
+          "TimeInterval"
+        ],
+        "description": "partially update status of the specified TimeInterval",
+        "operationId": "updateTimeIntervalStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/apply-patch+yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            },
+            "application/strategic-merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               }
             }
@@ -3358,12 +4518,13 @@
   },
   "components": {
     "schemas": {
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver": {
         "type": "object",
         "required": [
+          "kind",
+          "apiVersion",
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -3383,21 +4544,10 @@
             ]
           },
           "spec": {
-            "description": "Spec is the spec of the Receiver",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.ReceiverSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverSpec"
           },
           "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.ReceiverStatus"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
@@ -3408,7 +4558,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.ReceiverIntegration": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverIntegration": {
         "type": "object",
         "required": [
           "type",
@@ -3422,30 +4572,29 @@
           "secureFields": {
             "type": "object",
             "additionalProperties": {
-              "type": "boolean",
-              "default": false
+              "type": "boolean"
             }
           },
           "settings": {
             "type": "object",
             "additionalProperties": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": {}
             }
           },
           "type": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "uid": {
             "type": "string"
           },
           "version": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           }
-        }
+        },
+        "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.ReceiverList": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverList": {
         "type": "object",
         "required": [
           "metadata",
@@ -3462,7 +4611,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.Receiver"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
                 }
               ]
             }
@@ -3488,55 +4637,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.ReceiverSpec": {
-        "type": "object",
-        "required": [
-          "title",
-          "integrations"
-        ],
-        "properties": {
-          "integrations": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.ReceiverIntegration"
-                }
-              ]
-            }
-          },
-          "title": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.ReceiverStatus": {
-        "type": "object",
-        "properties": {
-          "additionalFields": {
-            "description": "additionalFields is reserved for future use",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-            "type": "object",
-            "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.ReceiverstatusOperatorState"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.ReceiverstatusOperatorState": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverOperatorState": {
         "type": "object",
         "required": [
           "lastEvaluation",
@@ -3551,27 +4652,73 @@
             "description": "details contains any extra information that is operator-specific",
             "type": "object",
             "additionalProperties": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": {}
             }
           },
           "lastEvaluation": {
             "description": "lastEvaluation is the ResourceVersion last evaluated",
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+            "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
             "type": "string",
-            "default": ""
+            "enum": [
+              "success",
+              "in_progress",
+              "failed"
+            ]
           }
-        }
+        },
+        "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverSpec": {
         "type": "object",
         "required": [
+          "title",
+          "integrations"
+        ],
+        "properties": {
+          "integrations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverIntegration"
+            }
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverStatus": {
+        "type": "object",
+        "properties": {
+          "additionalFields": {
+            "description": "additionalFields is reserved for future use",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "operatorStates": {
+            "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverOperatorState"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree": {
+        "type": "object",
+        "required": [
+          "kind",
+          "apiVersion",
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -3591,21 +4738,10 @@
             ]
           },
           "spec": {
-            "description": "Spec is the spec of the RoutingTree",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeSpec"
           },
           "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeStatus"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
@@ -3616,7 +4752,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeList": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeList": {
         "type": "object",
         "required": [
           "metadata",
@@ -3633,7 +4769,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTree"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
                 }
               ]
             }
@@ -3659,7 +4795,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeMatcher": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeMatcher": {
         "type": "object",
         "required": [
           "type",
@@ -3668,167 +4804,24 @@
         ],
         "properties": {
           "label": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "type": {
             "type": "string",
-            "default": ""
-          },
-          "value": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeRoute": {
-        "type": "object",
-        "required": [
-          "continue"
-        ],
-        "properties": {
-          "active_time_intervals": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            }
-          },
-          "continue": {
-            "type": "boolean",
-            "default": false
-          },
-          "group_by": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            }
-          },
-          "group_interval": {
-            "type": "string"
-          },
-          "group_wait": {
-            "type": "string"
-          },
-          "matchers": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeMatcher"
-                }
-              ]
-            }
-          },
-          "mute_time_intervals": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            }
-          },
-          "receiver": {
-            "type": "string"
-          },
-          "repeat_interval": {
-            "type": "string"
-          },
-          "routes": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeRoute"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeRouteDefaults": {
-        "type": "object",
-        "required": [
-          "receiver"
-        ],
-        "properties": {
-          "group_by": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            }
-          },
-          "group_interval": {
-            "type": "string"
-          },
-          "group_wait": {
-            "type": "string"
-          },
-          "receiver": {
-            "type": "string",
-            "default": ""
-          },
-          "repeat_interval": {
-            "type": "string"
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeSpec": {
-        "type": "object",
-        "required": [
-          "defaults",
-          "routes"
-        ],
-        "properties": {
-          "defaults": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeRouteDefaults"
-              }
+            "enum": [
+              "=",
+              "!=",
+              "=~",
+              "!~"
             ]
           },
-          "routes": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeRoute"
-                }
-              ]
-            }
+          "value": {
+            "type": "string"
           }
-        }
+        },
+        "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeStatus": {
-        "type": "object",
-        "properties": {
-          "additionalFields": {
-            "description": "additionalFields is reserved for future use",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-            "type": "object",
-            "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreestatusOperatorState"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreestatusOperatorState": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeOperatorState": {
         "type": "object",
         "required": [
           "lastEvaluation",
@@ -3843,27 +4836,154 @@
             "description": "details contains any extra information that is operator-specific",
             "type": "object",
             "additionalProperties": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": {}
             }
           },
           "lastEvaluation": {
             "description": "lastEvaluation is the ResourceVersion last evaluated",
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+            "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
             "type": "string",
-            "default": ""
+            "enum": [
+              "success",
+              "in_progress",
+              "failed"
+            ]
           }
-        }
+        },
+        "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeRoute": {
         "type": "object",
         "required": [
+          "continue"
+        ],
+        "properties": {
+          "active_time_intervals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "continue": {
+            "type": "boolean"
+          },
+          "group_by": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "group_interval": {
+            "type": "string"
+          },
+          "group_wait": {
+            "type": "string"
+          },
+          "matchers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeMatcher"
+            }
+          },
+          "mute_time_intervals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "repeat_interval": {
+            "type": "string"
+          },
+          "routes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeRoute"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeRouteDefaults": {
+        "type": "object",
+        "required": [
+          "receiver"
+        ],
+        "properties": {
+          "group_by": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "group_interval": {
+            "type": "string"
+          },
+          "group_wait": {
+            "type": "string"
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "repeat_interval": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeSpec": {
+        "type": "object",
+        "required": [
+          "defaults",
+          "routes"
+        ],
+        "properties": {
+          "defaults": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeRouteDefaults"
+          },
+          "routes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeRoute"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeStatus": {
+        "type": "object",
+        "properties": {
+          "additionalFields": {
+            "description": "additionalFields is reserved for future use",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "operatorStates": {
+            "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeOperatorState"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup": {
+        "type": "object",
+        "required": [
+          "kind",
+          "apiVersion",
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -3883,21 +5003,10 @@
             ]
           },
           "spec": {
-            "description": "Spec is the spec of the TemplateGroup",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroupSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupSpec"
           },
           "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroupStatus"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
@@ -3908,7 +5017,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroupList": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupList": {
         "type": "object",
         "required": [
           "metadata",
@@ -3925,7 +5034,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroup"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroup"
                 }
               ]
             }
@@ -3951,48 +5060,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroupSpec": {
-        "type": "object",
-        "required": [
-          "title",
-          "content"
-        ],
-        "properties": {
-          "content": {
-            "type": "string",
-            "default": ""
-          },
-          "title": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroupStatus": {
-        "type": "object",
-        "properties": {
-          "additionalFields": {
-            "description": "additionalFields is reserved for future use",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-            "type": "object",
-            "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroupstatusOperatorState"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TemplateGroupstatusOperatorState": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupOperatorState": {
         "type": "object",
         "required": [
           "lastEvaluation",
@@ -4007,27 +5075,70 @@
             "description": "details contains any extra information that is operator-specific",
             "type": "object",
             "additionalProperties": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": {}
             }
           },
           "lastEvaluation": {
             "description": "lastEvaluation is the ResourceVersion last evaluated",
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+            "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
             "type": "string",
-            "default": ""
+            "enum": [
+              "success",
+              "in_progress",
+              "failed"
+            ]
           }
-        }
+        },
+        "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupSpec": {
         "type": "object",
         "required": [
+          "title",
+          "content"
+        ],
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupStatus": {
+        "type": "object",
+        "properties": {
+          "additionalFields": {
+            "description": "additionalFields is reserved for future use",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "operatorStates": {
+            "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TemplateGroupOperatorState"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval": {
+        "type": "object",
+        "required": [
+          "kind",
+          "apiVersion",
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -4047,21 +5158,10 @@
             ]
           },
           "spec": {
-            "description": "Spec is the spec of the TimeInterval",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeIntervalSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalSpec"
           },
           "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeIntervalStatus"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
@@ -4072,14 +5172,13 @@
           }
         ]
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeIntervalInterval": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalInterval": {
         "type": "object",
         "properties": {
           "days_of_month": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "location": {
@@ -4088,38 +5187,31 @@
           "months": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "times": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeIntervalTimeRange"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalTimeRange"
             }
           },
           "weekdays": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "years": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
-        }
+        },
+        "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeIntervalList": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalList": {
         "type": "object",
         "required": [
           "metadata",
@@ -4136,7 +5228,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeInterval"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
                 }
               ]
             }
@@ -4162,72 +5254,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeIntervalSpec": {
-        "type": "object",
-        "required": [
-          "name",
-          "time_intervals"
-        ],
-        "properties": {
-          "name": {
-            "type": "string",
-            "default": ""
-          },
-          "time_intervals": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeIntervalInterval"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeIntervalStatus": {
-        "type": "object",
-        "properties": {
-          "additionalFields": {
-            "description": "additionalFields is reserved for future use",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-            "type": "object",
-            "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeIntervalstatusOperatorState"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeIntervalTimeRange": {
-        "type": "object",
-        "required": [
-          "start_time",
-          "end_time"
-        ],
-        "properties": {
-          "end_time": {
-            "type": "string",
-            "default": ""
-          },
-          "start_time": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.TimeIntervalstatusOperatorState": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalOperatorState": {
         "type": "object",
         "required": [
           "lastEvaluation",
@@ -4242,20 +5269,81 @@
             "description": "details contains any extra information that is operator-specific",
             "type": "object",
             "additionalProperties": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": {}
             }
           },
           "lastEvaluation": {
             "description": "lastEvaluation is the ResourceVersion last evaluated",
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+            "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
             "type": "string",
-            "default": ""
+            "enum": [
+              "success",
+              "in_progress",
+              "failed"
+            ]
           }
-        }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalSpec": {
+        "type": "object",
+        "required": [
+          "name",
+          "time_intervals"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "time_intervals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalInterval"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalStatus": {
+        "type": "object",
+        "properties": {
+          "additionalFields": {
+            "description": "additionalFields is reserved for future use",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "operatorStates": {
+            "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalOperatorState"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalTimeRange": {
+        "type": "object",
+        "required": [
+          "start_time",
+          "end_time"
+        ],
+        "properties": {
+          "end_time": {
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",

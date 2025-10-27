@@ -273,12 +273,22 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     drawerMotion: css({
       '&-appear': {
-        transform: 'translateX(100%)',
-        transition: 'none !important',
-
+        [theme.transitions.handleMotion('no-preference')]: {
+          transform: 'translateX(100%)',
+          transition: 'none !important',
+        },
+        [theme.transitions.handleMotion('reduce')]: {
+          opacity: 0,
+        },
         '&-active': {
-          transition: `${theme.transitions.create('transform')} !important`,
-          transform: 'translateX(0)',
+          [theme.transitions.handleMotion('no-preference')]: {
+            transform: 'translateX(0)',
+            transition: `${theme.transitions.create('transform')} !important`,
+          },
+          [theme.transitions.handleMotion('reduce')]: {
+            transition: `opacity 0.2s ease-in-out`,
+            opacity: 1,
+          },
         },
       },
     }),
@@ -308,7 +318,9 @@ const getStyles = (theme: GrafanaTheme2) => {
 
         '&-active': {
           opacity: 1,
-          transition: theme.transitions.create('opacity'),
+          [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+            transition: theme.transitions.create('opacity'),
+          },
         },
       },
     }),

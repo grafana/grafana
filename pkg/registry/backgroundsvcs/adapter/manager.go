@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/dskit/services"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -13,10 +14,10 @@ import (
 )
 
 var (
-	stopTimeout = 30 * time.Second
+	stopTimeout = 5 * time.Second
 )
 
-type managerAdapter struct {
+type ManagerAdapter struct {
 	services.NamedService
 
 	reg           registry.BackgroundServiceRegistry
@@ -32,8 +33,8 @@ type managerAdapter struct {
 //   - Graceful shutdown with proper cleanup ordering
 //
 // Services implementing CanBeDisabled that are disabled will be skipped.
-func NewManagerAdapter(reg registry.BackgroundServiceRegistry) *managerAdapter {
-	m := &managerAdapter{
+func NewManagerAdapter(reg registry.BackgroundServiceRegistry) *ManagerAdapter {
+	m := &ManagerAdapter{
 		reg:           reg,
 		dependencyMap: dependencyMap(),
 	}
@@ -41,7 +42,12 @@ func NewManagerAdapter(reg registry.BackgroundServiceRegistry) *managerAdapter {
 	return m
 }
 
-func (m *managerAdapter) starting(ctx context.Context) error {
+func (m *ManagerAdapter) WithDependencies(dependencyMap map[string][]string) *ManagerAdapter {
+	m.dependencyMap = dependencyMap
+	return m
+}
+
+func (m *ManagerAdapter) starting(ctx context.Context) error {
 	spanCtx, span := tracing.Start(ctx, "backgroundsvcs.managerAdapter.starting")
 	defer span.End()
 	logger := log.New("backgroundsvcs.managerAdapter").FromContext(spanCtx)
@@ -57,6 +63,7 @@ func (m *managerAdapter) starting(ctx context.Context) error {
 		// skip disabled services
 		if s, ok := bgSvc.(registry.CanBeDisabled); ok && s.IsDisabled() {
 			logger.Debug("Skipping disabled service", "service", namedService.ServiceName())
+			manager.RegisterInvisibleModule(namedService.ServiceName(), nil)
 			continue
 		}
 
@@ -76,16 +83,20 @@ func (m *managerAdapter) starting(ctx context.Context) error {
 	manager.RegisterModule(BackgroundServices, nil)
 
 	m.manager = manager
-	return nil
+	if err := m.manager.StartAsync(ctx); err != nil {
+		return err
+	}
+	return m.manager.AwaitRunning(ctx)
 }
 
-func (m *managerAdapter) running(ctx context.Context) error {
-	spanCtx, span := tracing.Start(ctx, "backgroundsvcs.managerAdapter.running")
+func (m *ManagerAdapter) running(ctx context.Context) error {
+	newCtx := trace.ContextWithSpan(context.Background(), trace.SpanFromContext(ctx))
+	spanCtx, span := tracing.Start(newCtx, "backgroundsvcs.managerAdapter.running")
 	defer span.End()
-	return m.manager.Run(spanCtx)
+	return m.manager.AwaitTerminated(spanCtx)
 }
 
-func (m *managerAdapter) stopping(failure error) error {
+func (m *ManagerAdapter) stopping(failure error) error {
 	ctx, cancel := context.WithTimeout(context.Background(), stopTimeout)
 	defer cancel()
 	spanCtx, span := tracing.Start(ctx, "backgroundsvcs.managerAdapter.stopping")
@@ -98,15 +109,16 @@ func (m *managerAdapter) stopping(failure error) error {
 }
 
 // Run initializes and starts all background services using dskit's module and service patterns.
-func (m *managerAdapter) Run(ctx context.Context) error {
+func (m *ManagerAdapter) Run(ctx context.Context) error {
 	if err := m.StartAsync(ctx); err != nil {
 		return err
 	}
-	return m.AwaitTerminated(ctx)
+	stopCtx := trace.ContextWithSpan(context.Background(), trace.SpanFromContext(ctx))
+	return m.AwaitTerminated(stopCtx)
 }
 
 // Shutdown calls calls the underlying manager's Shutdown
-func (m *managerAdapter) Shutdown(ctx context.Context, reason string) error {
+func (m *ManagerAdapter) Shutdown(ctx context.Context, reason string) error {
 	m.StopAsync()
 	return m.AwaitTerminated(ctx)
 }

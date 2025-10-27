@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getAppEvents, isFetchError, reportInteraction } from '@grafana/runtime';
 import {
   Button,
   Checkbox,
@@ -23,12 +25,15 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
+import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
 import { InlineSecureValueWarning } from '../components/InlineSecureValueWarning';
+import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { RepositoryFormData } from '../types';
 import { dataToSpec } from '../utils/data';
+import { getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions } from '../utils/git';
 import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
 
@@ -62,7 +67,12 @@ export function ConfigForm({ data }: ConfigFormProps) {
     setError,
     watch,
     getValues,
-  } = useForm<RepositoryFormData>({ defaultValues: getDefaultValues(data?.spec) });
+  } = useForm<RepositoryFormData>({
+    defaultValues: getDefaultValues({
+      repository: data?.spec,
+      allowedTargets: settings.data?.allowedTargets,
+    }),
+  });
 
   const isEdit = Boolean(repositoryName);
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
@@ -111,18 +121,37 @@ export function ConfigForm({ data }: ConfigFormProps) {
   useEffect(() => {
     if (request.isSuccess) {
       const formData = getValues();
+
+      reportInteraction('grafana_provisioning_repository_updated', {
+        repositoryName: repositoryName ?? 'unknown',
+        repositoryType: formData.type,
+        target: formData.sync?.target ?? 'unknown',
+      });
+
       reset(formData);
       setTimeout(() => {
         navigate('/admin/provisioning');
       }, 300);
     }
-  }, [request.isSuccess, reset, getValues, navigate]);
+  }, [request.isSuccess, reset, getValues, navigate, repositoryName]);
 
   const onSubmit = async (form: RepositoryFormData) => {
     setIsLoading(true);
     try {
       const spec = dataToSpec(form);
       await submitData(spec, form.token);
+    } catch (err) {
+      if (isFetchError(err)) {
+        const [field, errorMessage] = getConfigFormErrors(err.data?.errors);
+
+        if (field && errorMessage) {
+          setError(field, errorMessage);
+          return;
+        }
+      }
+
+      // fallback for non-fetch errors or unmapped fields
+      defaultAlert();
     } finally {
       setIsLoading(false);
     }
@@ -133,7 +162,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
       <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
       <Stack direction="column" gap={2}>
         <Field noMargin label={t('provisioning.config-form.label-repository-type', 'Repository type')}>
-          <Input value={getRepositoryTypeConfig(type)?.label || type} disabled />
+          <Input id="repository-type" value={getRepositoryTypeConfig(type)?.label || type} disabled />
         </Field>
         <Field
           noMargin
@@ -245,7 +274,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
               />
             </Field>
             <Field noMargin label={gitFields.pathConfig.label} description={gitFields.pathConfig.description}>
-              <Input {...register('path')} />
+              <Input id="repository-path" {...register('path')} />
             </Field>
           </>
         )}
@@ -336,7 +365,12 @@ export function ConfigForm({ data }: ConfigFormProps) {
                   }}
                 />
               </Field>
-              <Field noMargin label={t('provisioning.config-form.label-interval-seconds', 'Interval (seconds)')}>
+              <Field
+                noMargin
+                label={t('provisioning.config-form.label-interval-seconds', 'Interval (seconds)')}
+                error={errors?.sync?.intervalSeconds?.message}
+                invalid={!!errors?.sync?.intervalSeconds}
+              >
                 <Input
                   {...register('sync.intervalSeconds', { valueAsNumber: true })}
                   type={'number'}
@@ -353,8 +387,18 @@ export function ConfigForm({ data }: ConfigFormProps) {
               ? t('provisioning.config-form.button-saving', 'Saving...')
               : t('provisioning.config-form.button-save', 'Save')}
           </Button>
+          {repositoryName && data && (
+            <DeleteRepositoryButton name={repositoryName} repository={data} redirectTo={PROVISIONING_URL} />
+          )}
         </Stack>
       </Stack>
     </form>
   );
 }
+
+const defaultAlert = () => {
+  getAppEvents().publish({
+    type: AppEvents.alertError.name,
+    payload: [t('provisioning.wizard-content.error-save-repository-setting', 'Failed to save repository setting')],
+  });
+};

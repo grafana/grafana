@@ -23,10 +23,8 @@ import { DEFAULT_LANGUAGE } from '@grafana/i18n';
 import { initializeI18n, loadNamespacedResources } from '@grafana/i18n/internal';
 import {
   locationService,
-  registerEchoBackend,
   setBackendSrv,
   setDataSourceSrv,
-  setEchoSrv,
   setLocationSrv,
   setQueryRunnerFactory,
   setRunRequest,
@@ -39,12 +37,14 @@ import {
   setCurrentUser,
   setChromeHeaderHeightHook,
   setPluginLinksHook,
+  setHelpNavItemHook,
   setFolderPicker,
   setCorrelationsService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
 } from '@grafana/runtime';
 import {
+  initOpenFeature,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
   setPanelDataErrorView,
@@ -61,6 +61,7 @@ import { AppWrapper } from './AppWrapper';
 import appEvents from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { useChromeHeaderHeight } from './core/components/AppChrome/TopBar/useChromeHeaderHeight';
+import { useHelpNode } from './core/components/AppChrome/TopBar/useHelpNode';
 import { LazyFolderPicker } from './core/components/NestedFolderPicker/LazyFolderPicker';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
@@ -79,8 +80,7 @@ import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
 import { contextSrv, RedirectToUrlKey } from './core/services/context_srv';
-import { Echo } from './core/services/echo/Echo';
-import { reportPerformance } from './core/services/echo/EchoSrv';
+import { initEchoSrv } from './core/services/echo/init';
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
@@ -102,6 +102,7 @@ import { usePluginFunctions } from './features/plugins/extensions/usePluginFunct
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { getAppPluginsToAwait, getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
+import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
@@ -132,8 +133,22 @@ export class GrafanaApp {
   async init() {
     try {
       await preInitTasks();
+
       // Let iframe container know grafana has started loading
       window.parent.postMessage('GrafanaAppInit', '*');
+
+      initSystemJSHooks();
+
+      // Currently the OpenFeature API requires a signed in user. This means feature flags cannot be used
+      // on the login page.
+      if (contextSrv.user.isSignedIn) {
+        try {
+          await initOpenFeature();
+        } catch (err) {
+          console.error('Failed to initialize OpenFeature provider', err);
+        }
+      }
+
       const regionalFormat = config.featureToggles.localeFormatPreference
         ? config.regionalFormat
         : contextSrv.user.language;
@@ -250,6 +265,7 @@ export class GrafanaApp {
         await preloadPlugins(appPluginsToAwait);
       }
 
+      setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);
       setPluginComponentHook(usePluginComponent);
       setPluginComponentsHook(usePluginComponents);
@@ -322,125 +338,6 @@ function addExtensionReducers() {
 function initExtensions() {
   if (extensionsExports.length > 0) {
     extensionsExports[0].init();
-  }
-}
-
-async function initEchoSrv() {
-  setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
-
-  window.addEventListener('load', (e) => {
-    const loadMetricName = 'frontend_boot_load_time_seconds';
-    // Metrics below are marked in public/views/index.html
-    const jsLoadMetricName = 'frontend_boot_js_done_time_seconds';
-    const cssLoadMetricName = 'frontend_boot_css_time_seconds';
-
-    if (performance) {
-      performance.mark(loadMetricName);
-      reportMetricPerformanceMark('first-paint', 'frontend_boot_', '_time_seconds');
-      reportMetricPerformanceMark('first-contentful-paint', 'frontend_boot_', '_time_seconds');
-      reportMetricPerformanceMark(loadMetricName);
-      reportMetricPerformanceMark(jsLoadMetricName);
-      reportMetricPerformanceMark(cssLoadMetricName);
-    }
-  });
-
-  if (contextSrv.user.orgRole !== '') {
-    const { PerformanceBackend } = await import('./core/services/echo/backends/PerformanceBackend');
-    registerEchoBackend(new PerformanceBackend({}));
-  }
-
-  if (config.grafanaJavascriptAgent.enabled) {
-    // Ignore Rudderstack URLs
-    const rudderstackUrls = [
-      config.rudderstackConfigUrl,
-      config.rudderstackDataPlaneUrl,
-      config.rudderstackIntegrationsUrl,
-    ]
-      .filter(Boolean)
-      .map((url) => new RegExp(`${url}.*.`));
-
-    const { GrafanaJavascriptAgentBackend } = await import(
-      './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend'
-    );
-
-    registerEchoBackend(
-      new GrafanaJavascriptAgentBackend({
-        ...config.grafanaJavascriptAgent,
-        app: {
-          version: config.buildInfo.version,
-          environment: config.buildInfo.env,
-        },
-        buildInfo: config.buildInfo,
-        user: {
-          id: String(contextSrv.user?.id),
-          email: contextSrv.user?.email,
-        },
-        ignoreUrls: rudderstackUrls,
-      })
-    );
-  }
-
-  if (config.googleAnalyticsId) {
-    const { GAEchoBackend } = await import('./core/services/echo/backends/analytics/GABackend');
-    registerEchoBackend(
-      new GAEchoBackend({
-        googleAnalyticsId: config.googleAnalyticsId,
-      })
-    );
-  }
-
-  if (config.googleAnalytics4Id) {
-    const { GA4EchoBackend } = await import('./core/services/echo/backends/analytics/GA4Backend');
-    registerEchoBackend(
-      new GA4EchoBackend({
-        googleAnalyticsId: config.googleAnalytics4Id,
-        googleAnalytics4SendManualPageViews: config.googleAnalytics4SendManualPageViews,
-      })
-    );
-  }
-
-  if (config.rudderstackWriteKey && config.rudderstackDataPlaneUrl) {
-    const { RudderstackBackend } = await import('./core/services/echo/backends/analytics/RudderstackBackend');
-    registerEchoBackend(
-      new RudderstackBackend({
-        writeKey: config.rudderstackWriteKey,
-        dataPlaneUrl: config.rudderstackDataPlaneUrl,
-        user: contextSrv.user,
-        sdkUrl: config.rudderstackSdkUrl,
-        configUrl: config.rudderstackConfigUrl,
-        integrationsUrl: config.rudderstackIntegrationsUrl,
-        buildInfo: config.buildInfo,
-      })
-    );
-  }
-
-  if (config.applicationInsightsConnectionString) {
-    const { ApplicationInsightsBackend } = await import(
-      './core/services/echo/backends/analytics/ApplicationInsightsBackend'
-    );
-    registerEchoBackend(
-      new ApplicationInsightsBackend({
-        connectionString: config.applicationInsightsConnectionString,
-        endpointUrl: config.applicationInsightsEndpointUrl,
-      })
-    );
-  }
-
-  if (config.analyticsConsoleReporting) {
-    const { BrowserConsoleBackend } = await import('./core/services/echo/backends/analytics/BrowseConsoleBackend');
-    registerEchoBackend(new BrowserConsoleBackend());
-  }
-}
-
-/**
- * Report when a metric of a given name was marked during the document lifecycle. Works for markers with no duration,
- * like PerformanceMark or PerformancePaintTiming (e.g. created with performance.mark, or first-contentful-paint)
- */
-function reportMetricPerformanceMark(metricName: string, prefix = '', suffix = ''): void {
-  const metric = performance.getEntriesByName(metricName).at(0);
-  if (metric) {
-    const metricName = metric.name.replace(/-/g, '_');
-    reportPerformance(`${prefix}${metricName}${suffix}`, Math.round(metric.startTime) / 1000);
   }
 }
 

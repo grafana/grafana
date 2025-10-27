@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
@@ -11,8 +11,13 @@ import { isGitProvider } from '../utils/repositoryTypes';
 import { getGitProviderFields } from './fields';
 import { WizardFormData } from './types';
 
-export function FinishStep() {
-  const { register, watch, setValue } = useFormContext<WizardFormData>();
+export const FinishStep = memo(function FinishStep() {
+  const {
+    register,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useFormContext<WizardFormData>();
   const settings = useGetFrontendSettingsQuery();
 
   const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
@@ -42,6 +47,8 @@ export function FinishStep() {
             'How often to sync changes from the repository'
           )}
           required
+          error={errors?.repository?.sync?.intervalSeconds?.message}
+          invalid={!!errors?.repository?.sync?.intervalSeconds?.message}
         >
           <Input
             {...register('repository.sync.intervalSeconds', {
@@ -115,4 +122,4 @@ export function FinishStep() {
       )}
     </Stack>
   );
-}
+});

@@ -15,6 +15,7 @@ import {
   SplitOpen,
   TimeRange,
   TraceSearchProps,
+  useDataLinksContext,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getTraceToLogsOptions, TraceToMetricsData, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
@@ -29,8 +30,8 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { changePanelState } from '../state/explorePane';
 
 import memoizedTraceCriticalPath from './components/CriticalPath';
-import { TracePageHeader } from './components/TracePageHeader';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
+import { TracePageHeader } from './components/TracePageHeader/TracePageHeader';
 import TraceTimelineViewer from './components/TraceTimelineViewer';
 import { TraceFlameGraphs } from './components/TraceTimelineViewer/SpanDetail';
 import { SpanBarOptionsData } from './components/settings/SpanBarSettings';
@@ -142,6 +143,8 @@ export function TraceView(props: Props) {
   const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
   const spanBarOptions: SpanBarOptionsData | undefined = instanceSettings?.jsonData;
 
+  const dataLinksContext = useDataLinksContext();
+
   const createSpanLink = useMemo(
     () =>
       createSpanLinkFromProps ??
@@ -153,6 +156,7 @@ export function TraceView(props: Props) {
         dataFrame: props.dataFrames[0],
         createFocusSpanLink,
         trace: traceProp,
+        dataLinkPostProcessor: dataLinksContext?.dataLinkPostProcessor,
       }),
     [
       props.splitOpenFn,
@@ -163,6 +167,7 @@ export function TraceView(props: Props) {
       createFocusSpanLink,
       traceProp,
       createSpanLinkFromProps,
+      dataLinksContext?.dataLinkPostProcessor,
     ]
   );
   const timeZone = useSelector((state) => getTimeZone(state.user));

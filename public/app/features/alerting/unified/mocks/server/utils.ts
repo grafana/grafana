@@ -1,5 +1,6 @@
 import { DefaultBodyType, HttpResponse, HttpResponseResolver, PathParams } from 'msw';
 
+import { base64UrlEncode } from '@grafana/alerting';
 import { PromRuleGroupDTO, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 /** Helper method to help generate a kubernetes-style response with a list of items */
@@ -20,7 +21,7 @@ export function paginatedHandlerFor(
 ): HttpResponseResolver<PathParams, DefaultBodyType, PromRulesResponse> {
   const orderedGroupsWithCursor = groups.map((group) => ({
     ...group,
-    id: Buffer.from(`${group.file}-${group.name}`).toString('base64url'),
+    id: base64UrlEncode(`${group.file}-${group.name}`),
   }));
 
   return ({ request }) => {

@@ -33,12 +33,13 @@ func grpcMetaValueIsTrue(vals []string) bool {
 }
 
 type BulkRequestIterator interface {
+	// Next advances the iterator to the next element if one exists.
 	Next() bool
 
-	// The next event we should process
+	// Request returns the current element. Only valid after Next() returns true.
 	Request() *resourcepb.BulkRequest
 
-	// Rollback requested
+	// RollbackRequested returns true if there was an error advancing the iterator. Checked after Next() returns true.
 	RollbackRequested() bool
 }
 
@@ -170,6 +171,18 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		})
 	}
 
+	// Verify all collection request keys are valid
+	for _, k := range settings.Collection {
+		if r := verifyRequestKeyCollection(k); r != nil {
+			return sendAndClose(&resourcepb.BulkResponse{
+				Error: &resourcepb.ErrorResult{
+					Message: fmt.Sprintf("invalid request key: %s", r.Message),
+					Code:    http.StatusBadRequest,
+				},
+			})
+		}
+	}
+
 	if settings.RebuildCollection {
 		for _, k := range settings.Collection {
 			// Can we delete the whole collection
@@ -178,7 +191,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 				Group:     k.Group,
 				Resource:  k.Resource,
 				Verb:      utils.VerbDeleteCollection,
-			})
+			}, "")
 			if err != nil || !rsp.Allowed {
 				return sendAndClose(&resourcepb.BulkResponse{
 					Error: &resourcepb.ErrorResult{
@@ -237,24 +250,6 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		rsp.Error = AsErrorResult(runner.err)
 	}
 
-	if rsp.Error == nil && s.search != nil {
-		// Rebuild any changed indexes
-		for _, summary := range rsp.Summary {
-			_, err := s.search.build(ctx, NamespacedResource{
-				Namespace: summary.Namespace,
-				Group:     summary.Group,
-				Resource:  summary.Resource,
-			}, summary.Count, "rebuildAfterBatchLoad", true)
-			if err != nil {
-				s.log.Warn("error building search index after batch load", "err", err)
-				rsp.Error = &resourcepb.ErrorResult{
-					Code:    http.StatusInternalServerError,
-					Message: "err building search index: " + summary.Resource,
-					Reason:  err.Error(),
-				}
-			}
-		}
-	}
 	return sendAndClose(rsp)
 }
 

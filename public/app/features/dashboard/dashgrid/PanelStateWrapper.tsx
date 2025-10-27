@@ -35,6 +35,7 @@ import {
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { profiler } from 'app/core/profiler';
+import { annotationServer } from 'app/features/annotations/api';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
@@ -43,7 +44,6 @@ import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/ove
 import { dispatch } from 'app/store/store';
 import { RenderEvent } from 'app/types/events';
 
-import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel } from '../state/DashboardModel';
@@ -421,13 +421,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       tags: event.tags,
       text: event.description,
     };
-    await saveAnnotation(anno);
+    await annotationServer().save(anno);
     getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
     this.state.context.eventBus.publish(new AnnotationChangeEvent(anno));
   };
 
   onAnnotationDelete = async (id: string) => {
-    await deleteAnnotation({ id });
+    await annotationServer().delete({ id });
     getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
     this.state.context.eventBus.publish(new AnnotationChangeEvent({ id }));
   };
@@ -444,7 +444,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       tags: event.tags,
       text: event.description,
     };
-    await updateAnnotation(anno);
+    await annotationServer().update(anno);
 
     getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
     this.state.context.eventBus.publish(new AnnotationChangeEvent(anno));
@@ -597,6 +597,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         {(innerWidth, innerHeight) => (
           <>
             <ErrorBoundary
+              boundaryName="panel-state-wrapper"
               dependencies={[data, plugin, panel.getOptions()]}
               onError={this.onPanelError}
               onRecover={this.onPanelErrorRecover}

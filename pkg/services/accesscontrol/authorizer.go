@@ -85,7 +85,7 @@ type LegacyAccessClient struct {
 	opts map[string]ResourceAuthorizerOptions
 }
 
-func (c *LegacyAccessClient) Check(ctx context.Context, id claims.AuthInfo, req claims.CheckRequest) (claims.CheckResponse, error) {
+func (c *LegacyAccessClient) Check(ctx context.Context, id claims.AuthInfo, req claims.CheckRequest, folder string) (claims.CheckResponse, error) {
 	ident, ok := id.(identity.Requester)
 	if !ok {
 		return claims.CheckResponse{}, errors.New("expected identity.Requester for legacy access control")
@@ -139,6 +139,9 @@ func (c *LegacyAccessClient) Check(ctx context.Context, id claims.AuthInfo, req 
 	if err != nil {
 		return claims.CheckResponse{}, err
 	}
+
+	// NOTE: folder is looked up again in the evaluator:
+	// pkg/services/accesscontrol/acimpl/accesscontrol.go#L77
 
 	return claims.CheckResponse{Allowed: allowed}, nil
 }

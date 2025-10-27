@@ -44,15 +44,6 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Text: "Organizations", SubTitle: "Isolated instances of Grafana running on the same server", Id: "global-orgs", Url: s.cfg.AppSubURL + "/admin/orgs", Icon: "building",
 		})
 	}
-	if s.features.IsEnabled(ctx, featuremgmt.FlagFeatureToggleAdminPage) && hasAccess(ac.EvalPermission(ac.ActionFeatureManagementRead)) {
-		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
-			Text:     "Feature toggles",
-			SubTitle: "View and edit feature toggles",
-			Id:       "feature-toggles",
-			Url:      s.cfg.AppSubURL + "/admin/featuretoggles",
-			Icon:     "toggle-on",
-		})
-	}
 	if hasAccess(cloudmigration.MigrationAssistantAccess) && s.features.IsEnabled(ctx, featuremgmt.FlagOnPremToCloudMigrations) {
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Migrate to Grafana Cloud",
@@ -61,6 +52,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		})
 	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if c.HasRole(identity.RoleAdmin) &&
 		(s.cfg.StackID == "" || // show OnPrem even when provisioning is disabled
 			s.features.IsEnabledGlobally(featuremgmt.FlagProvisioning)) {
@@ -76,7 +68,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		Text:     "General",
 		SubTitle: "Manage default preferences and settings across Grafana",
 		Id:       navtree.NavIDCfgGeneral,
-		Url:      "/admin/general",
+		Url:      s.cfg.AppSubURL + "/admin/general",
 		Icon:     "shield",
 		Children: generalNodeLinks,
 	}
@@ -121,7 +113,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		Text:     "Plugins and data",
 		SubTitle: "Install plugins and define the relationships between data",
 		Id:       navtree.NavIDCfgPlugins,
-		Url:      "/admin/plugins",
+		Url:      s.cfg.AppSubURL + "/admin/plugins",
 		Icon:     "shield",
 		Children: pluginsNodeLinks,
 	}
@@ -174,7 +166,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		Text:     "Users and access",
 		SubTitle: "Configure access for individual users, teams, and service accounts",
 		Id:       navtree.NavIDCfgAccess,
-		Url:      "/admin/access",
+		Url:      s.cfg.AppSubURL + "/admin/access",
 		Icon:     "shield",
 		Children: accessNodeLinks,
 	}
@@ -201,7 +193,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		Icon:       "cog",
 		SortWeight: navtree.WeightConfig,
 		Children:   configNodes,
-		Url:        "/admin",
+		Url:        s.cfg.AppSubURL + "/admin",
 	}
 
 	return configNode, nil

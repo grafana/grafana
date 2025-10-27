@@ -8,18 +8,13 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"k8s.io/client-go/rest"
 )
-
-// FolderStore interface for retrieving folder information
-type FolderStore interface {
-	GetFolderParent(ctx context.Context, namespace, uid string) (string, error)
-}
 
 // PermissionStore interface for managing folder permissions
 type PermissionStore interface {
@@ -31,13 +26,11 @@ type PermissionStore interface {
 // ReconcilerConfig represents the app-specific configuration
 type ReconcilerConfig struct {
 	ZanzanaCfg authz.ZanzanaClientConfig
-	KubeConfig *rest.Config
 	Metrics    *ReconcilerMetrics
 }
 
 type FolderReconciler struct {
 	permissionStore PermissionStore
-	folderStore     FolderStore
 	metrics         *ReconcilerMetrics
 }
 
@@ -50,12 +43,10 @@ func NewFolderReconciler(cfg ReconcilerConfig) (operator.Reconciler, error) {
 	}
 
 	// Create dependencies
-	folderStore := NewAPIFolderStore(cfg.KubeConfig)
 	permissionStore := NewZanzanaPermissionStore(zanzanaClient)
 
 	folderReconciler := &FolderReconciler{
 		permissionStore: permissionStore,
-		folderStore:     folderStore,
 		metrics:         cfg.Metrics,
 	}
 
@@ -137,11 +128,11 @@ func (r *FolderReconciler) handleUpdateFolder(ctx context.Context, folder *folde
 	folderUID := folder.Name
 	namespace := folder.Namespace
 
-	parentUID, err := r.folderStore.GetFolderParent(ctx, namespace, folderUID)
+	parentUID, err := getFolderParent(ctx, folder)
 	if err != nil {
 		logger.Error("Error getting folder parent", "error", err)
 		if r.metrics != nil {
-			r.metrics.RecordReconcileFailure(action, "folder_store")
+			r.metrics.RecordReconcileFailure(action, "failure_informer")
 		}
 		return operator.ReconcileResult{}, err
 	}
@@ -216,4 +207,22 @@ func validateFolder(folder *foldersKind.Folder) error {
 		return fmt.Errorf("folder namespace is empty")
 	}
 	return nil
+}
+
+func getFolderParent(ctx context.Context, folder *foldersKind.Folder) (string, error) {
+	tracer := otel.GetTracerProvider().Tracer("iam-folder-reconciler")
+	_, span := tracer.Start(ctx, "get-folder-parent",
+		trace.WithAttributes(
+			attribute.String("folder.uid", folder.Name),
+		),
+	)
+	defer span.End()
+
+	folderMeta, err := utils.MetaAccessor(folder)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to get folder meta accessor")
+		return "", err
+	}
+	return folderMeta.GetFolder(), nil
 }
