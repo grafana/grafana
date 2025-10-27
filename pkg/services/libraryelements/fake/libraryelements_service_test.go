@@ -39,7 +39,7 @@ func TestLibraryElementService(t *testing.T) {
 
 			uid := "uid-1"
 
-			createdElement, err := svc.CreateElement(ctx, user, model.CreateLibraryElementCommand{
+			createdElement, err := svc.CreateLibraryElement(ctx, user, model.CreateLibraryElementCommand{
 				Name:  "ElementName",
 				Model: []byte{},
 				Kind:  int64(model.PanelElement),
@@ -71,11 +71,11 @@ func TestLibraryElementService(t *testing.T) {
 				UID:   "uid-1",
 			}
 
-			createdElement, err := svc.CreateElement(ctx, user, cmd)
+			createdElement, err := svc.CreateLibraryElement(ctx, user, cmd)
 			require.NoError(t, err)
 			require.NotEmpty(t, createdElement)
 
-			createdElement, err = svc.CreateElement(ctx, user, cmd)
+			createdElement, err = svc.CreateLibraryElement(ctx, user, cmd)
 			require.ErrorIs(t, err, model.ErrLibraryElementAlreadyExists)
 			require.Empty(t, createdElement)
 		})
@@ -91,7 +91,7 @@ func TestLibraryElementService(t *testing.T) {
 				Kind:  int64(model.PanelElement),
 			}
 
-			createdElement, err := svc.CreateElement(ctx, user, cmd)
+			createdElement, err := svc.CreateLibraryElement(ctx, user, cmd)
 			require.NoError(t, err)
 			require.NotEmpty(t, createdElement)
 			require.NotEmpty(t, createdElement.UID)
@@ -115,11 +115,11 @@ func TestLibraryElementService(t *testing.T) {
 				Kind:  int64(model.PanelElement),
 			}
 
-			createdElement1, err := svc.CreateElement(ctx, user1, cmd)
+			createdElement1, err := svc.CreateLibraryElement(ctx, user1, cmd)
 			require.NoError(t, err)
 			require.NotEmpty(t, createdElement1)
 
-			createdElement2, err := svc.CreateElement(ctx, user2, cmd)
+			createdElement2, err := svc.CreateLibraryElement(ctx, user2, cmd)
 			require.NoError(t, err)
 			require.NotEmpty(t, createdElement2)
 

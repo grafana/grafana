@@ -103,7 +103,7 @@ func TestIntegrationConnectLibraryPanelsForDashboard(t *testing.T) {
 				Kind:      int64(model.PanelElement),
 				FolderUID: &sc.folder.UID,
 			}
-			outsidePanel, err := sc.elementService.CreateElement(sc.ctx, sc.user, cmd)
+			outsidePanel, err := sc.elementService.CreateLibraryElement(sc.ctx, sc.user, cmd)
 			require.NoError(t, err)
 			dashJSON := map[string]any{
 				"panels": []any{
@@ -228,7 +228,7 @@ func TestIntegrationConnectLibraryPanelsForDashboard(t *testing.T) {
 
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with unused/removed library panels, it should disconnect unused/removed library panels",
 		func(t *testing.T, sc scenarioContext) {
-			unused, err := sc.elementService.CreateElement(sc.ctx, sc.user, model.CreateLibraryElementCommand{
+			unused, err := sc.elementService.CreateLibraryElement(sc.ctx, sc.user, model.CreateLibraryElementCommand{
 				Name: "Unused Libray Panel",
 				Model: []byte(`
 			{
@@ -735,7 +735,7 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 		`),
 			Kind: int64(model.PanelElement),
 		}
-		resp, err := sc.elementService.CreateElement(sc.ctx, sc.user, command)
+		resp, err := sc.elementService.CreateLibraryElement(sc.ctx, sc.user, command)
 		require.NoError(t, err)
 		var model map[string]any
 		err = json.Unmarshal(resp.Model, &model)

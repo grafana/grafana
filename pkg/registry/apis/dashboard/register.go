@@ -25,6 +25,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
@@ -69,6 +70,8 @@ var (
 	_ builder.APIGroupVersionsProvider = (*DashboardsAPIBuilder)(nil)
 	_ builder.OpenAPIPostProcessor     = (*DashboardsAPIBuilder)(nil)
 	_ builder.APIGroupRouteProvider    = (*DashboardsAPIBuilder)(nil)
+	_ builder.APIGroupMutation         = (*DashboardsAPIBuilder)(nil)
+	_ builder.APIGroupValidation       = (*DashboardsAPIBuilder)(nil)
 )
 
 const (
@@ -243,19 +246,25 @@ func (b *DashboardsAPIBuilder) AllowedV0Alpha1Resources() []string {
 func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	op := a.GetOperation()
 
-	// Handle different operations
-	switch op {
-	case admission.Delete:
-		return b.validateDelete(ctx, a)
-	case admission.Create:
-		return b.validateCreate(ctx, a, o)
-	case admission.Update:
-		return b.validateUpdate(ctx, a, o)
-	case admission.Connect:
-		return nil
+	switch a.GetResource().Resource {
+	case dashboardV0.DASHBOARD_RESOURCE:
+		// Handle different operations
+		switch op {
+		case admission.Delete:
+			return b.validateDelete(ctx, a)
+		case admission.Create:
+			return b.validateCreate(ctx, a, o)
+		case admission.Update:
+			return b.validateUpdate(ctx, a, o)
+		case admission.Connect:
+			return nil
+		}
+
+	case dashboardV0.LIBRARY_PANEL_RESOURCE:
+		return nil // OK for now
 	}
 
-	return nil
+	return fmt.Errorf("unsupported validation: %+v", a.GetResource())
 }
 
 // validateDelete checks if a dashboard can be deleted
@@ -652,10 +661,9 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	// Expose read only library panels
 	if libraryPanels != nil {
 		legacyLibraryStore := &LibraryPanelStore{
-			Access:        b.legacy.Access,
-			ResourceInfo:  *libraryPanels,
-			AccessControl: b.accessControl,
-			service:       b.libraryPanels,
+			Access:       b.legacy.Access,
+			ResourceInfo: *libraryPanels,
+			service:      b.libraryPanels,
 		}
 
 		unifiedLibraryStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)

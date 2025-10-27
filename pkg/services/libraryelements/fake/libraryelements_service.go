@@ -29,7 +29,7 @@ func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInU
 
 var _ libraryelements.Service = (*LibraryElementService)(nil)
 
-func (l *LibraryElementService) CreateElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
+func (l *LibraryElementService) CreateLibraryElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
 	l.mx.Lock()
 	defer l.mx.Unlock()
 

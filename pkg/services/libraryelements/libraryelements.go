@@ -39,7 +39,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 
 // Service is a service for operating on library elements.
 type Service interface {
-	CreateElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error)
+	CreateLibraryElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error)
 	PatchLibraryElement(c context.Context, signedInUser identity.Requester, cmd model.PatchLibraryElementCommand, uid string) (model.LibraryElementDTO, error)
 	DeleteLibraryElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error)
 	GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error)
@@ -64,11 +64,6 @@ type LibraryElementService struct {
 }
 
 var _ Service = (*LibraryElementService)(nil)
-
-// CreateElement creates a Library Element.
-func (l *LibraryElementService) CreateElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
-	return l.createLibraryElement(c, signedInUser, cmd)
-}
 
 // GetElement gets an element from a UID.
 func (l *LibraryElementService) GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {

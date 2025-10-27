@@ -87,7 +87,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 		}
 	}
 
-	element, err := l.createLibraryElement(c.Req.Context(), c.SignedInUser, cmd)
+	element, err := l.CreateLibraryElement(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to create library element")
 	}

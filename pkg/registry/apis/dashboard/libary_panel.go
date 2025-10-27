@@ -5,17 +5,15 @@ import (
 	"fmt"
 	"strconv"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 )
@@ -32,10 +30,9 @@ var (
 )
 
 type LibraryPanelStore struct {
-	Access        legacy.DashboardAccess
-	ResourceInfo  utils.ResourceInfo
-	AccessControl accesscontrol.AccessControl
-	service       libraryelements.Service
+	Access       legacy.DashboardAccess
+	ResourceInfo utils.ResourceInfo
+	service      libraryelements.Service
 }
 
 func (s *LibraryPanelStore) New() runtime.Object {
@@ -70,7 +67,8 @@ func (s *LibraryPanelStore) Create(ctx context.Context, obj runtime.Object, crea
 		return nil, err
 	}
 
-	out, err := s.service.CreateElement(ctx, user, *cmd)
+	// NOTE: this includes all access control checks
+	out, err := s.service.CreateLibraryElement(ctx, user, *cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -89,6 +87,8 @@ func (s *LibraryPanelStore) Update(ctx context.Context, name string, objInfo res
 	if err != nil {
 		return nil, false, err
 	}
+
+	// NOTE: this includes all access control checks
 	obj, err := objInfo.UpdatedObject(ctx, old)
 	if err != nil {
 		return nil, false, err
@@ -115,6 +115,8 @@ func (s *LibraryPanelStore) Delete(ctx context.Context, name string, deleteValid
 	if err != nil {
 		return nil, false, err
 	}
+
+	// NOTE: this includes all access control checks
 	_, err = s.service.DeleteLibraryElement(ctx, user, name)
 	if err != nil {
 		return nil, false, err
