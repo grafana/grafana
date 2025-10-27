@@ -25,7 +25,11 @@ Besides the UI, you can use alternative methods to install a plugin depending on
 
 ## Install a plugin using Grafana CLI
 
-The Grafana CLI allows you to install, upgrade, and manage your Grafana plugins using a command line tool. For more information about Grafana CLI plugin commands, refer to [Plugin commands](/docs/grafana/<GRAFANA_VERSION>/cli/#plugins-commands).
+The Grafana CLI allows you to install, upgrade, and manage your Grafana plugins using a command line tool.
+
+On Unix-like systems, when a plugin is installed, its directory inherits ownership from the plugins directory where it's being installed, ensuring proper file permissions.
+
+For more information about Grafana CLI plugin commands, refer to [Plugin commands](/docs/grafana/<GRAFANA_VERSION>/cli/#plugins-commands).
 
 ## Install a plugin from a ZIP file
 
