@@ -55,6 +55,13 @@ The second field is used as the log record title regardless of whether it’s a 
 
 Subsequent fields are collapsed inside of each log record and you can open them by clicking the log line.
 
+When the log line details are open, you have access to the following additional options:
+
+- **Explain log line in Assistant**
+- **Copy to Clipboard**
+- **Anchor to the right**
+- **Close log details**
+
 To limit the number of log lines rendered in the visualization, you can use the **Max data points** setting in the panel **Query options**. If that option isn't set, then the data source typically enforces its own default limit.
 
 ### Example
@@ -93,8 +100,8 @@ Use these settings to refine your visualization:
 | Wrap lines | Turn line wrapping on or off. |
 | Enable logs highlighting | Experimental. Use a predefined coloring scheme to highlight relevant parts of the log lines. Subtle colors are added to the log lines to improve readability and help with identifying important information faster. |
 | Enable log details | Toggle the switch on to see an extendable area with log details including labels and detected fields. Each field or label has a stats icon to display ad-hoc statistics in relation to all displayed logs. The default setting is on. |
-| Log details panel mode |  Choose to display the log details in a sidebar panel or inline, below the log line.  The default mode depends on viewport size: the default mode for smaller viewports is inline, while for larger ones, it's sidebar. You can also change mode dynamically in the panel by clicking the mode control. |
-| Enable infinite scrolling | Request more results by scrolling to the bottom of the logs list.  When you reach the bottom of the list of logs, if you continue scrolling and the displayed logs are within the selected time interval, you can request to load more logs. When the sort order is **Newest first**, you receive older logs, and when the sort order is **Oldest first** you get newer logs. |
+| Log details panel mode | Choose to display the log details in a sidebar panel or inline, below the log line. The default mode depends on viewport size: the default mode for smaller viewports is inline, while for larger ones, it's sidebar. You can also change mode dynamically in the panel by clicking the mode control. |
+| Enable infinite scrolling | Request more results by scrolling to the bottom of the logs list. When you reach the bottom of the list of logs, if you continue scrolling and the displayed logs are within the selected time interval, you can request to load more logs. When the sort order is **Newest first**, you receive older logs, and when the sort order is **Oldest first** you get newer logs. |
 | Show controls | Display controls to jump to the last or first log line, and filter by log level. |
 | Font size | Select between the **Default** font size and **Small** font sizes.|
 | Deduplication | Hide log messages that are duplicates of others shown, according to your selected criteria. Choose from: <ul><li>**Exact** - Ignoring ISO datetimes.</li><li>**Numerical** - Ignoring only those that differ by numbers such as IPs or latencies.</li><li>**Signatures** - Removing successive lines with identical punctuation and white space.</li></ul> |
