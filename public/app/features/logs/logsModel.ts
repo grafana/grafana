@@ -608,7 +608,7 @@ function getLogVolumeFieldConfig(level: LogLevel, oneLevelDetected: boolean) {
       lineColor: color,
       pointColor: color,
       fillColor: color,
-      lineWidth: 1,
+      lineWidth: 0,
       fillOpacity: 100,
       stacking: {
         mode: StackingMode.Normal,

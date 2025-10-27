@@ -499,13 +499,14 @@ func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles feature
 		SQLStore: sqlStore,
 		Logger:   logger,
 	}
-
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
 		logger.Info("Using protobuf-based alert instance store")
 		instanceStore = protoInstanceStore
 		// If FlagAlertingSaveStateCompressed is enabled, ProtoInstanceDBStore is used,
 		// which functions differently from InstanceDBStore. FlagAlertingSaveStatePeriodic is
 		// not applicable to ProtoInstanceDBStore, so a warning is logged if it is set.
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
 			logger.Warn("alertingSaveStatePeriodic is not used when alertingSaveStateCompressed feature flag enabled")
 		}
@@ -520,7 +521,7 @@ func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles feature
 func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.ManagerCfg, featureToggles featuremgmt.FeatureToggles) state.StatePersister {
 	logger := log.New("ngalert.state.manager.persist")
 	var statePersister state.StatePersister
-
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
 		logger.Info("Using rule state persister")
 		statePersister = state.NewSyncRuleStatePersisiter(logger, cfg)

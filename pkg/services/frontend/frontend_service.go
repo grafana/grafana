@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
+	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -50,13 +51,13 @@ type frontendService struct {
 	index *IndexProvider
 }
 
-func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing) (*frontendService, error) {
+func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing, hooksService *hooks.HooksService) (*frontendService, error) {
 	assetsManifest, err := fswebassets.GetWebAssets(cfg, license)
 	if err != nil {
 		return nil, err
 	}
 
-	index, err := NewIndexProvider(cfg, assetsManifest)
+	index, err := NewIndexProvider(cfg, assetsManifest, license, hooksService)
 	if err != nil {
 		return nil, err
 	}
@@ -132,10 +133,10 @@ func (s *frontendService) addMiddlewares(m *web.Mux) {
 	loggermiddleware := loggermw.Provide(s.cfg, s.features)
 
 	m.Use(requestmeta.SetupRequestMetadata())
-	m.UseMiddleware(s.contextMiddleware())
-
 	m.Use(middleware.RequestTracing(s.tracer, middleware.TraceAllPaths))
 	m.Use(middleware.RequestMetrics(s.features, s.cfg, s.promRegister))
+
+	m.UseMiddleware(s.contextMiddleware())
 	m.UseMiddleware(loggermiddleware.Middleware())
 
 	m.UseMiddleware(middleware.Recovery(s.cfg, s.license))

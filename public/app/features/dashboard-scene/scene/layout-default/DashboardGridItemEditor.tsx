@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { sceneGraph, SceneGridLayout } from '@grafana/scenes';
-import { RadioButtonGroup, Select } from '@grafana/ui';
+import { RadioButtonGroup, Select, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -57,10 +57,20 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
 
   const conditionalRenderingCategory = useConditionalRenderingEditor(
     undefined,
-    t(
-      'dashboard.conditional-rendering.editor.not-supported-for-custom-grid',
-      'Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.'
-    )
+    <div>
+      <Trans i18nKey="dashboard.conditional-rendering.editor.not-supported-for-custom-grid">
+        Show/hide rules aren&apos;t supported for panels in the Custom panel layout. Change the panel layout to Auto
+        grid to enable this feature.
+      </Trans>
+      <div>
+        <TextLink
+          href="https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/create-dynamic-dashboard/#configure-showhide-rules"
+          external
+        >
+          <Trans i18nKey="dashboard.conditional-rendering.editor.learn-more">Learn more</Trans>
+        </TextLink>
+      </div>
+    </div>
   );
 
   const options = [repeatCategory];

@@ -54,7 +54,13 @@ func New(
 }
 
 func (c *check) Items(ctx context.Context) ([]any, error) {
-	dss, err := c.DatasourceSvc.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	dss, err := c.DatasourceSvc.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
+		OrgID: requester.GetOrgID(),
+	})
 	if err != nil {
 		return nil, err
 	}

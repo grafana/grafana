@@ -29,31 +29,31 @@ Grafana Enterprise includes integrations with more ways to authenticate your use
 
 ### Team sync
 
-[Team sync](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/) allows you to set up synchronization between teams in Grafana and teams in your auth provider so that your users automatically end up in the right team.
+[Team sync](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/) allows you to set up synchronization between teams in Grafana and teams in your auth provider so that your users automatically end up in the right team.
 
 Supported auth providers:
 
-- [Auth Proxy](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/auth-proxy#team-sync-enterprise-only)
-- [Azure AD OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/azuread/#team-sync-enterprise-only)
-- [GitHub OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/github/#configure-team-synchronization)
-- [Generic OAuth integration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/generic-oauth/#configure-team-synchronization)
-- [GitLab OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/gitlab/#configure-team-synchronization)
-- [Google OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/google/#configure-team-synchronization)
-- [LDAP](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/enhanced-ldap/#ldap-group-synchronization-for-teams)
-- [Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/okta#configure-team-synchronization-enterprise-only)
-- [SAML](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml#configure-team-sync)
+- [Auth Proxy](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/auth-proxy#team-sync-enterprise-only)
+- [Entra ID OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#team-sync-enterprise-only)
+- [GitHub OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/github/#configure-team-synchronization)
+- [Generic OAuth integration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/generic-oauth/#configure-team-synchronization)
+- [GitLab OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/gitlab/#configure-team-synchronization)
+- [Google OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/google/#configure-team-synchronization)
+- [LDAP](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/enhanced-ldap/#ldap-group-synchronization-for-teams)
+- [Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/okta#configure-team-synchronization-enterprise-only)
+- [SAML](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml#configure-team-sync)
 
 ### Enhanced LDAP integration
 
-With [enhanced LDAP integration](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/enhanced-ldap/), you can set up active LDAP synchronization.
+With [enhanced LDAP integration](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/enhanced-ldap/), you can set up active LDAP synchronization.
 
 ### SAML authentication
 
-[SAML authentication](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/) enables users to authenticate with single sign-on services that use Security Assertion Markup Language (SAML).
+[SAML authentication](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/) enables users to authenticate with single sign-on services that use Security Assertion Markup Language (SAML).
 
 ### Protected roles
 
-With [protected roles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/#protected-roles), you can define user roles that are exempt from being converted from one authentication type to another when changing auth providers.
+With [protected roles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/#protected-roles), you can define user roles that are exempt from being converted from one authentication type to another when changing auth providers.
 
 ## Enterprise features
 

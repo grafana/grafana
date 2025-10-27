@@ -2591,7 +2591,7 @@ func schema_pkg_apis_iam_v0alpha1_UserSpec(ref common.ReferenceCallback) common.
 							Format:  "",
 						},
 					},
-					"name": {
+					"title": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
@@ -2613,7 +2613,7 @@ func schema_pkg_apis_iam_v0alpha1_UserSpec(ref common.ReferenceCallback) common.
 						},
 					},
 				},
-				Required: []string{"disabled", "email", "emailVerified", "grafanaAdmin", "login", "name", "provisioned", "role"},
+				Required: []string{"disabled", "email", "emailVerified", "grafanaAdmin", "login", "title", "provisioned", "role"},
 			},
 		},
 	}

@@ -3732,7 +3732,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "Abecedně (A–Z)",
-        "alphabetically-za": "Abecedně (Z–A)"
+        "alphabetically-za": "Abecedně (Z–A)",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -4640,7 +4642,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "Podmíněné vykreslení není pro vlastní rozvržení mřížky podporováno. Chcete-li použít podmíněné vykreslení, přepněte na automatickou mřížku.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -6028,6 +6031,13 @@
       "usage-count_many": "Použito na {{count}} nástěnkách",
       "usage-count_other": "Použito na {{count}} nástěnkách"
     },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
+    },
     "move-provisioned-dashboard-form": {
       "api-error": "Nástěnku se nepodařilo přesunout",
       "cancel-action": "Zrušit",
@@ -7200,9 +7210,6 @@
       "title-failed-sample-query": "Vzorek protokolů pro tento dotaz se nepodařilo načíst",
       "tooltip": "Zobrazit řádky protokolu, které přispěly k vizualizovaným metrikám"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "{{labelName}} se objeví v {{percentage}} % řádků protokolu"
-    },
     "logs-table-empty-fields": {
       "no-fields": "Žádná pole"
     },
@@ -7210,10 +7217,6 @@
       "fields": "Pole",
       "reset": "Resetovat",
       "selected-fields": "Vybraná pole"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "Ikona přetažení",
-      "title-drag-and-drop-to-reorder": "Přetažením změníte pořadí"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Vybrat dotaz podle názvu",
@@ -7682,7 +7685,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Vymazat složky",
     "noOptionsMessage-no-folders-found": "Nebyly nalezeny žádné složky",
     "select-aria-label": "Filtr složky",
     "select-placeholder": "Filtrovat podle složky"
@@ -8050,6 +8052,72 @@
     "select-group": "Vybrat skupinu"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "",
+          "previousFiscalQuarter": "",
+          "previousFiscalYear": "",
+          "previousMonth": "",
+          "previousWeek": "",
+          "previousYear": "",
+          "thisDayLastWeek": "",
+          "thisFiscalQuarter": "",
+          "thisFiscalQuarterSoFar": "",
+          "thisFiscalYear": "",
+          "thisFiscalYearSoFar": "",
+          "thisMonth": "",
+          "thisMonthSoFar": "",
+          "thisWeek": "",
+          "thisWeekSoFar": "",
+          "thisYear": "",
+          "thisYearSoFar": "",
+          "today": "",
+          "todaySoFar": "",
+          "yesterday": ""
+        },
+        "lastNDays_one": "",
+        "lastNDays_few": "",
+        "lastNDays_many": "",
+        "lastNDays_other": "",
+        "lastNHours_one": "",
+        "lastNHours_few": "",
+        "lastNHours_many": "",
+        "lastNHours_other": "",
+        "lastNMinutes_one": "",
+        "lastNMinutes_few": "",
+        "lastNMinutes_many": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_one": "",
+        "lastNMonths_few": "",
+        "lastNMonths_many": "",
+        "lastNMonths_other": "",
+        "lastNYears_one": "",
+        "lastNYears_few": "",
+        "lastNYears_many": "",
+        "lastNYears_other": "",
+        "nextNDays_one": "",
+        "nextNDays_few": "",
+        "nextNDays_many": "",
+        "nextNDays_other": "",
+        "nextNHours_one": "",
+        "nextNHours_few": "",
+        "nextNHours_many": "",
+        "nextNHours_other": "",
+        "nextNMinutes_one": "",
+        "nextNMinutes_few": "",
+        "nextNMinutes_many": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_one": "",
+        "nextNMonths_few": "",
+        "nextNMonths_many": "",
+        "nextNMonths_other": "",
+        "nextNYears_one": "",
+        "nextNYears_few": "",
+        "nextNYears_many": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9595,6 +9663,15 @@
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Zobrazit ovládací prvky pro přechod na poslední nebo první řádek protokolu a filtry podle úrovně protokolu",
     "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
@@ -11840,6 +11917,11 @@
       "next": "Další",
       "previous": "Předchozí"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Dokončený krok",
       "label-current-step": "Aktuální krok",
@@ -12705,6 +12787,7 @@
       "theme-label": "Motiv rozhraní",
       "week-start-label": "Začátek týdne"
     },
+    "save": "",
     "theme": {
       "default-label": "Výchozí",
       "experimental": "Experimentální"
@@ -13108,13 +13191,13 @@
       "placeholder-search-teams": "Hledat týmy"
     },
     "team-settings": {
-      "description-email": "Toto je volitelné a používá se především k nastavení avatara profilu týmu (prostřednictvím služby Gravatar)",
+      "description-email": "",
       "label-email": "E-mail",
       "label-name": "Název",
       "label-numerical-identifier": "Číselný identifikátor",
       "label-role": "Role",
       "label-team-details": "Podrobnosti o týmu",
-      "save": "Uložit"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "Synchronizace týmu usnadňuje správu přístupu uživatelů v Grafaně tím, že okamžitě aktualizuje týmy a oprávnění každého uživatele Grafany na základě členství ve skupině jednotného přihlášení místo jednotlivého přihlášení uživatele"

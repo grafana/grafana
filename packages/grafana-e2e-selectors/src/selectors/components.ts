@@ -516,6 +516,11 @@ export const versionedComponents = {
           },
         },
       },
+      Tooltip: {
+        Wrapper: {
+          '12.3.0': 'data-testid viz-tooltip-wrapper',
+        },
+      },
     },
   },
   VizLegend: {

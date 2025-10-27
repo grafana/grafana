@@ -119,7 +119,12 @@ func NewTarballFromString(ctx context.Context, log *slog.Logger, artifact string
 	if err != nil {
 		return nil, err
 	}
-	return NewTarball(ctx, log, artifact, p.Distribution, p.Enterprise, p.Name, p.Version, p.BuildID, src, yarnCache, goModCache, goBuildCache, static, wireTag, tags, goVersion, viceroyVersion, experiments)
+	cgoDisabled, err := options.Bool(flags.CGODisabled)
+	if err != nil {
+		return nil, err
+	}
+	cgoEnabled := !cgoDisabled
+	return NewTarball(ctx, log, artifact, p.Distribution, p.Enterprise, p.Name, p.Version, p.BuildID, src, yarnCache, goModCache, goBuildCache, static, wireTag, tags, goVersion, viceroyVersion, experiments, cgoEnabled)
 }
 
 // NewTarball returns a properly initialized Tarball artifact.
@@ -143,6 +148,7 @@ func NewTarball(
 	goVersion string,
 	viceroyVersion string,
 	experiments []string,
+	cgoEnabled bool,
 ) (*pipeline.Artifact, error) {
 	backendArtifact, err := NewBackend(ctx, log, artifact, &NewBackendOpts{
 		Name:           name,
@@ -158,6 +164,7 @@ func NewTarball(
 		Enterprise:     enterprise,
 		GoBuildCache:   goBuildCache,
 		GoModCache:     goModCache,
+		CGOEnabled:     cgoEnabled,
 	})
 	if err != nil {
 		return nil, err

@@ -121,3 +121,242 @@ func TestValidateOnCreate(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateOnUpdate(t *testing.T) {
+	tests := []struct {
+		name      string
+		requester *identity.StaticRequester
+		old       *iamv0alpha1.TeamBinding
+		obj       *iamv0alpha1.TeamBinding
+		want      error
+	}{
+		{
+			name: "valid update - permission change",
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			old: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionMember,
+					External:   false,
+				},
+			},
+			obj: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+					External:   false,
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "valid update - no changes",
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			old: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+					External:   false,
+				},
+			},
+			obj: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+					External:   false,
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "invalid update - teamRef change",
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			old: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+					External:   false,
+				},
+			},
+			obj: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team-updated",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+					External:   false,
+				},
+			},
+			want: apierrors.NewBadRequest("teamRef is immutable"),
+		},
+		{
+			name: "invalid update - subject change",
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			old: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+					External:   false,
+				},
+			},
+			obj: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user-updated",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+					External:   false,
+				},
+			},
+			want: apierrors.NewBadRequest("subject is immutable"),
+		},
+		{
+			name: "invalid update - external change",
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			old: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+					External:   false,
+				},
+			},
+			obj: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+					External:   true,
+				},
+			},
+			want: apierrors.NewBadRequest("external is immutable"),
+		},
+		{
+			name: "invalid update - invalid permission",
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			old: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+					External:   false,
+				},
+			},
+			obj: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: "invalid",
+				},
+			},
+			want: apierrors.NewBadRequest("invalid permission"),
+		},
+		{
+			name:      "invalid update - no requester in context",
+			requester: nil,
+			old: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+					External:   false,
+				},
+			},
+			obj: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+					External:   false,
+				},
+			},
+			want: apierrors.NewUnauthorized("no identity found"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := identity.WithRequester(context.Background(), test.requester)
+			err := ValidateOnUpdate(ctx, test.obj, test.old)
+			assert.Equal(t, test.want, err)
+		})
+	}
+}

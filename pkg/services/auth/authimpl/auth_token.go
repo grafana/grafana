@@ -303,7 +303,7 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		log := s.log.FromContext(ctx).New("tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
 
 		// Avoid multiple instances in HA mode rotating at the same time.
-		if s.features.IsEnabled(ctx, featuremgmt.FlagSkipTokenRotationIfRecent) && time.Unix(token.RotatedAt, 0).Add(SkipRotationTime).After(getTime()) {
+		if time.Unix(token.RotatedAt, 0).Add(SkipRotationTime).After(getTime()) {
 			log.Debug("Token was last rotated very recently, skipping rotation")
 			span.SetAttributes(attribute.Bool("skipped", true))
 			return token, nil
@@ -327,16 +327,13 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 	}
 
 	res, err, _ := s.singleflight.Do(cmd.UnHashedToken, func() (any, error) {
-		if s.features.IsEnabled(ctx, featuremgmt.FlagSkipTokenRotationIfRecent) {
-			var token *auth.UserToken
-			err := s.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
-				var err error
-				token, err = rotate(ctx)
-				return err
-			})
-			return token, err
-		}
-		return rotate(ctx)
+		var token *auth.UserToken
+		err := s.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
+			var err error
+			token, err = rotate(ctx)
+			return err
+		})
+		return token, err
 	})
 
 	if err != nil {
@@ -375,11 +372,7 @@ func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.User
 
 	now := getTime()
 	var affected int64
-	withDbSession := s.sqlStore.WithDbSession
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagSkipTokenRotationIfRecent) {
-		withDbSession = s.sqlStore.WithTransactionalDbSession
-	}
-	err = withDbSession(ctx, func(dbSession *db.Session) error {
+	err = s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		res, err := dbSession.Exec(sql, userAgent, clientIPStr, hashedToken, s.sqlStore.GetDialect().BooleanValue(false), now.Unix(), token.Id)
 		if err != nil {
 			return err

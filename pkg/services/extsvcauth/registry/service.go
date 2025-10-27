@@ -40,6 +40,7 @@ type Registry struct {
 }
 
 func ProvideExtSvcRegistry(cfg *setting.Cfg, saSvc *extsvcaccounts.ExtSvcAccountsService, serverLock *serverlock.ServerLockService, features featuremgmt.FeatureToggles) *Registry {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts) && cfg.ManagedServiceAccountsEnabled
 	return &Registry{
 		extSvcProviders: map[string]extsvcauth.AuthProvider{},

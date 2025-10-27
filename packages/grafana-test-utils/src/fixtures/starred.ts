@@ -11,4 +11,4 @@ export const setupMockStarredDashboards = () => {
   });
 };
 
-export const mockStarredDashboardsMap = new Map<string, boolean>();
+export const mockStarredDashboardsMap = new Map<string, boolean>(initialStarredDashboards.map((uid) => [uid, true]));

@@ -16,6 +16,7 @@ import { getAllSuggestions, panelsToCheckFirst } from './getAllSuggestions';
 for (const pluginId of panelsToCheckFirst) {
   config.panels[pluginId] = {
     module: `core:plugin/${pluginId}`,
+    id: pluginId,
   } as PanelPluginMeta;
 }
 

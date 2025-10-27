@@ -407,4 +407,4 @@ When anonymous access has been enabled, any device which accesses Grafana in the
 
 {{< youtube id="B72X3_9e-ds" >}}
 
-[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/grafana/)
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/grafana/)

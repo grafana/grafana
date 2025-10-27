@@ -1181,6 +1181,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	permissions := []accesscontrol.SetResourcePermissionCommand{}
 
 	isNested := obj.GetFolder() != ""
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
 		// Don't set any permissions for nested dashboards
 		return nil

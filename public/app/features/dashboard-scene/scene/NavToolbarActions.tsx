@@ -38,7 +38,7 @@ import { isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
-import ManagedDashboardNavBarBadge from './ManagedDashboardNavBarBadge';
+import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
 import { LeftActions } from './new-toolbar/LeftActions';
 import { RightActions } from './new-toolbar/RightActions';
 import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
@@ -145,7 +145,7 @@ export function ToolbarActions({ dashboard }: Props) {
       group: 'icon-actions',
       condition: true,
       render: () => {
-        return <ManagedDashboardNavBarBadge meta={meta} key="managed-dashboard-badge" />;
+        return <ManagedDashboardNavBarBadge dashboard={dashboard} key="managed-dashboard-badge" />;
       },
     });
   }

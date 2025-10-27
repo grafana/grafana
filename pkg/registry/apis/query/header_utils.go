@@ -19,6 +19,9 @@ import (
 //
 // The usage of strings.ToLower is because the server would convert `FromAlert` to `Fromalert`. So the make matching
 // easier, we just match all headers in lower case.
+//
+// the headers X-Real-IP and X-Forwarded-For are used by the HostedGrafanaACHeaderMiddleware at
+// https://github.com/grafana/grafana/blob/f191acf8114ab79609fc631e0f01fe2b47371188/pkg/services/pluginsintegration/clientmiddleware/grafana_request_id_header_middleware.go#L107
 var expectedHeaders = map[string]string{
 	strings.ToLower(models.FromAlertHeaderName):        models.FromAlertHeaderName,
 	strings.ToLower(models.CacheSkipHeaderName):        models.CacheSkipHeaderName,
@@ -37,6 +40,8 @@ var expectedHeaders = map[string]string{
 	strings.ToLower(queryService.HeaderPanelPluginId):  queryService.HeaderPanelPluginId,
 	strings.ToLower(queryService.HeaderDashboardTitle): queryService.HeaderDashboardTitle,
 	strings.ToLower(queryService.HeaderPanelTitle):     queryService.HeaderPanelTitle,
+	strings.ToLower("X-Real-IP"):                       "X-Real-IP",
+	strings.ToLower("X-Forwarded-For"):                 "X-Forwarded-For",
 }
 
 func ExtractKnownHeaders(header http.Header) map[string]string {

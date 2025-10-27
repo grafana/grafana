@@ -25,7 +25,7 @@ export interface OptionsPaneCategoryProps {
   /**
    * When set will disable category and show tooltip with disabledText on hover
    */
-  disabledText?: string;
+  disabledText?: string | React.ReactElement;
 }
 
 const CATEGORY_PARAM_NAME = 'showCategory' as const;
@@ -113,7 +113,7 @@ export const OptionsPaneCategory = React.memo(
           data-testid={selectors.components.OptionsGroup.group(id)}
           ref={ref}
         >
-          <Tooltip content={disabledText}>
+          <Tooltip interactive={!(typeof disabledText === 'string')} content={disabledText}>
             <div className={headerStyles}>
               <h6 id={`button-${id}`} className={cx(styles.title, styles.titleDisabled)}>
                 {renderTitle(isExpanded)}

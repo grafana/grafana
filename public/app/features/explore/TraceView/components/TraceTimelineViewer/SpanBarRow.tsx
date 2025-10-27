@@ -25,13 +25,14 @@ import { SpanBarOptions } from '../settings/SpanBarSettings';
 import TNil from '../types/TNil';
 import { SpanLinkFunc } from '../types/links';
 import { TraceSpan, CriticalPathSection } from '../types/trace';
+import { formatDuration } from '../utils/date';
 
 import SpanBar from './SpanBar';
 import { SpanLinksMenu } from './SpanLinks';
 import SpanTreeOffset from './SpanTreeOffset';
 import Ticks from './Ticks';
 import TimelineRow from './TimelineRow';
-import { formatDuration, ViewedBoundsFunctionType } from './utils';
+import { ViewedBoundsFunctionType } from './utils';
 
 const spanBarClassName = 'spanBar';
 const spanBarLabelClassName = 'spanBarLabel';

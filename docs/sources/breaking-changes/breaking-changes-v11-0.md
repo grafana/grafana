@@ -81,7 +81,7 @@ Turn off anonymous access, and consider using public dashboards to allow view-on
 
 #### Learn more
 
-[Anonymous access documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/grafana/#anonymous-authentication)
+[Anonymous access documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/grafana/#anonymous-authentication)
 
 ### Legacy alerting is entirely removed
 

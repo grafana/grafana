@@ -32,8 +32,6 @@ import {
   SortOrder,
 } from './richHistoryTypes';
 
-export { type RichHistorySearchFilters, type RichHistorySettings, SortOrder };
-
 /*
  * Add queries to rich history. Save only queries within the retention period, or that are starred.
  * Side-effect: store history in local storage

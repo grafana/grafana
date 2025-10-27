@@ -29,7 +29,7 @@ import {
 } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
-import { importDataSourcePlugin } from './pluginLoader';
+import { pluginImporter } from './importer/pluginImporter';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
@@ -215,7 +215,7 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     try {
-      const dsPlugin = await importDataSourcePlugin(instanceSettings.meta);
+      const dsPlugin = await pluginImporter.importDataSource(instanceSettings.meta);
       // check if its in cache now
       if (this.datasources[key]) {
         return this.datasources[key];

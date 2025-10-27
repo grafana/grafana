@@ -364,7 +364,7 @@ func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error)
 
 // BatchGet retrieves multiple data objects in batches.
 // It returns an iterator that yields DataObj results for the given keys.
-// Keys are processed in batches (default 50) to balance between efficiency and memory usage.
+// Keys are processed in batches (default 50).
 // Non-existent entries will not appear in the result.
 func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[DataObj, error] {
 	return func(yield func(DataObj, error) bool) {

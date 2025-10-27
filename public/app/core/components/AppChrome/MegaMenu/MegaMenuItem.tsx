@@ -175,7 +175,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   menuItem: css({
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(1),
+    gap: theme.spacing(0.5),
     height: theme.spacing(4),
     paddingLeft: theme.spacing(0.5),
     position: 'relative',
@@ -221,6 +221,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   labelWrapperWithIcon: css({
     paddingLeft: theme.spacing(0.5),
+    gap: theme.spacing(0.5),
   }),
   hasActiveChild: css({
     color: theme.colors.text.primary,

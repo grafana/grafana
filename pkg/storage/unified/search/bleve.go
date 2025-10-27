@@ -1542,6 +1542,14 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 			return query.NewMatchAllQuery(), nil
 		}
 
+		// FIXME: special case for login and email to use term query only because those fields are using keyword analyzer
+		// This should be fixed by using the info from the schema
+		if (req.Key == "login" || req.Key == "email") && len(req.Values) == 1 {
+			tq := bleve.NewTermQuery(req.Values[0])
+			tq.SetField(prefix + req.Key)
+			return tq, nil
+		}
+
 		if len(req.Values) == 1 {
 			filter := filterValue(req.Key, req.Values[0])
 			return newQuery(req.Key, filter, prefix), nil

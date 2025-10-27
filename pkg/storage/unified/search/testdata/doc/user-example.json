@@ -1,0 +1,13 @@
+{
+  "apiVersion": "iam.grafana.app/v0alpha1",
+  "kind": "User",
+  "metadata": {
+    "name": "example",
+    "namespace": "default"
+  },
+  "spec": {
+    "login": "example",
+    "email": "example@example.com",
+    "role": "Viewer"
+  }
+}

@@ -6,8 +6,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { Settings, UpdateSettingsQuery } from 'app/types/settings';
 import { ThunkResult } from 'app/types/store';
 
-import { getAuthProviderStatus, getRegisteredAuthProviders, SSOProvider } from '..';
-import { AuthProviderStatus, SettingsError } from '../types';
+import { getAuthProviderStatus, getRegisteredAuthProviders } from '..';
+import { AuthProviderStatus, SettingsError, SSOProvider } from '../types';
 
 import {
   loadingBegin,

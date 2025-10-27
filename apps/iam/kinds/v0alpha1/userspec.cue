@@ -6,7 +6,7 @@ UserSpec: {
     emailVerified: bool
     grafanaAdmin: bool
     login: string
-    name: string
+    title: string
     provisioned: bool
     role: string
 }

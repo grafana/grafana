@@ -1,0 +1,21 @@
+import { createApi } from '@reduxjs/toolkit/query/react';
+
+{{#if isEnterprise}}
+import { getAPIBaseURL } from '@grafana/api-clients';
+import { createBaseQuery } from '@grafana/api-clients/rtkq';
+{{else}}
+import { getAPIBaseURL } from '../../../../utils/utils';
+import { createBaseQuery } from '../../createBaseQuery';
+{{/if}}
+
+export const API_GROUP = '{{group}}' as const;
+export const API_VERSION = '{{version}}' as const;
+export const BASE_URL = getAPIBaseURL(API_GROUP, API_VERSION);
+
+export const api = createApi({
+  reducerPath: '{{reducerPath}}',
+  baseQuery: createBaseQuery({
+    baseURL: BASE_URL,
+  }),
+  endpoints: () => ({}),
+});

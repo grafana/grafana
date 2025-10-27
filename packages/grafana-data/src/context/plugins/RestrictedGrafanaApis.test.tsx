@@ -6,9 +6,15 @@ import {
   useRestrictedGrafanaApis,
 } from './RestrictedGrafanaApis';
 
+// Mock schema for testing
+const mockAlertRuleFormSchema = {
+  parse: jest.fn((data: unknown) => data),
+  safeParse: jest.fn((data: unknown) => ({ success: true, data })),
+};
+
 describe('RestrictedGrafanaApis', () => {
   const apis: RestrictedGrafanaApisContextType = {
-    addPanel: () => {},
+    alertingAlertRuleFormSchema: mockAlertRuleFormSchema,
   };
 
   beforeEach(() => {
@@ -21,16 +27,15 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'grafana-test-app'}
-          apiAllowList={{ addPanel: ['grafana-test-app'] }}
+          apiAllowList={{ alertingAlertRuleFormSchema: ['grafana-test-app'] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
 
-    // @ts-expect-error No APIs are defined yet
-    expect(result.current.addPanel).toEqual(apis.addPanel);
-    expect(Object.keys(result.current)).toEqual(['addPanel']);
+    expect(result.current.alertingAlertRuleFormSchema).toEqual(apis.alertingAlertRuleFormSchema);
+    expect(Object.keys(result.current)).toEqual(['alertingAlertRuleFormSchema']);
   });
 
   it('should share an API if the plugin is allowed using a regexp', () => {
@@ -39,16 +44,15 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'grafana-test-app'}
-          apiAllowList={{ addPanel: [/^grafana-/] }}
+          apiAllowList={{ alertingAlertRuleFormSchema: [/^grafana-/] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
 
-    // @ts-expect-error No APIs are defined yet
-    expect(result.current.addPanel).toEqual(apis.addPanel);
-    expect(Object.keys(result.current)).toEqual(['addPanel']);
+    expect(result.current.alertingAlertRuleFormSchema).toEqual(apis.alertingAlertRuleFormSchema);
+    expect(Object.keys(result.current)).toEqual(['alertingAlertRuleFormSchema']);
   });
 
   it('should not share an API if the plugin is not directly allowed and no allow regexp matches it', () => {
@@ -57,15 +61,14 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'myorg-test-app'}
-          apiAllowList={{ addPanel: [/^grafana-/] }}
+          apiAllowList={{ alertingAlertRuleFormSchema: [/^grafana-/] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
 
-    // @ts-expect-error No APIs are defined yet
-    expect(result.current.addPanel).not.toBeDefined();
+    expect(result.current.alertingAlertRuleFormSchema).not.toBeDefined();
   });
 
   // Ideally the `allowList` and the `blockList` are not used together
@@ -75,17 +78,16 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'grafana-test-app'}
-          apiAllowList={{ addPanel: ['grafana-test-app'] }}
-          apiBlockList={{ addPanel: ['grafana-test-app'] }}
+          apiAllowList={{ alertingAlertRuleFormSchema: ['grafana-test-app'] }}
+          apiBlockList={{ alertingAlertRuleFormSchema: ['grafana-test-app'] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
 
-    // @ts-expect-error No APIs are defined yet
-    expect(result.current.addPanel).toEqual(apis.addPanel);
-    expect(Object.keys(result.current)).toEqual(['addPanel']);
+    expect(result.current.alertingAlertRuleFormSchema).toEqual(apis.alertingAlertRuleFormSchema);
+    expect(Object.keys(result.current)).toEqual(['alertingAlertRuleFormSchema']);
   });
 
   it('should share an API with allowed plugins (testing multiple plugins)', () => {
@@ -97,14 +99,13 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'grafana-test-app'}
-          apiAllowList={{ addPanel: ['grafana-test-app', 'grafana-assistant-app'] }}
+          apiAllowList={{ alertingAlertRuleFormSchema: ['grafana-test-app', 'grafana-assistant-app'] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
-    // @ts-expect-error No APIs are defined yet
-    expect(result.result.current.addPanel).toEqual(apis.addPanel);
+    expect(result.result.current.alertingAlertRuleFormSchema).toEqual(apis.alertingAlertRuleFormSchema);
 
     // 2. Second app
     result = renderHook(() => useRestrictedGrafanaApis(), {
@@ -112,14 +113,13 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'grafana-assistant-app'}
-          apiAllowList={{ addPanel: ['grafana-test-app', 'grafana-assistant-app'] }}
+          apiAllowList={{ alertingAlertRuleFormSchema: ['grafana-test-app', 'grafana-assistant-app'] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
-    // @ts-expect-error No APIs are defined yet
-    expect(result.result.current.addPanel).toEqual(apis.addPanel);
+    expect(result.result.current.alertingAlertRuleFormSchema).toEqual(apis.alertingAlertRuleFormSchema);
   });
 
   it('should not share APIs with plugins that are not allowed', () => {
@@ -128,15 +128,14 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'grafana-restricted-app'}
-          apiAllowList={{ addPanel: ['grafana-authorised-app'] }}
+          apiAllowList={{ alertingAlertRuleFormSchema: ['grafana-authorised-app'] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
 
-    // @ts-expect-error No APIs are defined yet
-    expect(result.current.addPanel).not.toBeDefined();
+    expect(result.current.alertingAlertRuleFormSchema).not.toBeDefined();
   });
 
   it('should not share APIs with anyone if both the allowList and the blockList are empty', () => {
@@ -144,13 +143,16 @@ describe('RestrictedGrafanaApis', () => {
 
     result = renderHook(() => useRestrictedGrafanaApis(), {
       wrapper: ({ children }: { children: React.ReactNode }) => (
-        <RestrictedGrafanaApisContextProvider apis={apis} pluginId={'grafana-test-app'} apiAllowList={{ addPanel: [] }}>
+        <RestrictedGrafanaApisContextProvider
+          apis={apis}
+          pluginId={'grafana-test-app'}
+          apiAllowList={{ alertingAlertRuleFormSchema: [] }}
+        >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
-    // @ts-expect-error No APIs are defined yet
-    expect(result.result.current.addPanel).not.toBeDefined();
+    expect(result.result.current.alertingAlertRuleFormSchema).not.toBeDefined();
 
     result = renderHook(() => useRestrictedGrafanaApis(), {
       wrapper: ({ children }: { children: React.ReactNode }) => (
@@ -159,8 +161,7 @@ describe('RestrictedGrafanaApis', () => {
         </RestrictedGrafanaApisContextProvider>
       ),
     });
-    // @ts-expect-error No APIs are defined yet
-    expect(result.result.current.addPanel).not.toBeDefined();
+    expect(result.result.current.alertingAlertRuleFormSchema).not.toBeDefined();
   });
 
   it('should not share APIs with blocked plugins', () => {
@@ -169,14 +170,13 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'grafana-test-app'}
-          apiBlockList={{ addPanel: ['grafana-test-app'] }}
+          apiBlockList={{ alertingAlertRuleFormSchema: ['grafana-test-app'] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
-    // @ts-expect-error No APIs are defined yet
-    expect(result.current.addPanel).not.toBeDefined();
+    expect(result.current.alertingAlertRuleFormSchema).not.toBeDefined();
   });
 
   it('should not share APIs with plugins that match any block list regexes', () => {
@@ -185,13 +185,12 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'myorg-test-app'}
-          apiBlockList={{ addPanel: [/^myorg-/] }}
+          apiBlockList={{ alertingAlertRuleFormSchema: [/^myorg-/] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
-    // @ts-expect-error No APIs are defined yet
-    expect(result.current.addPanel).not.toBeDefined();
+    expect(result.current.alertingAlertRuleFormSchema).not.toBeDefined();
   });
 });

@@ -48,6 +48,7 @@ func (l *FixedRolesLoader) running(ctx context.Context) error {
 }
 
 func (l *FixedRolesLoader) IsDisabled() bool {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	return !l.features.IsEnabledGlobally(featuremgmt.FlagPluginStoreServiceLoading)
 }
 

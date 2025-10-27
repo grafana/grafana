@@ -92,6 +92,12 @@ func ParseTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
 		return nil, err
 	}
 
+	// Allow overriding service name via configuration
+	serviceName := section.Key("service_name").MustString("")
+	if serviceName != "" {
+		tc.ServiceName = serviceName
+	}
+
 	// if sampler_type is set in tracing.opentelemetry, we ignore the config in tracing.jaeger
 	sampler := section.Key("sampler_type").MustString("")
 	if sampler != "" {

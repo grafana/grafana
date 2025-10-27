@@ -21,7 +21,7 @@ import { Trans } from '@grafana/i18n';
 import { Counter, Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { formatDuration } from '../utils';
+import { formatDuration } from '../../utils/date';
 
 import AccordianKeyValues from './AccordianKeyValues';
 

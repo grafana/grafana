@@ -1,6 +1,8 @@
 import { HttpResponse, http } from 'msw';
 
+import { wellFormedTree } from '../../../fixtures/folders';
 import { mockStarredDashboardsMap } from '../../../fixtures/starred';
+const [_, { dashbdD }] = wellFormedTree();
 
 const getStarsHandler = () =>
   http.get('/api/user/stars', async () => {
@@ -21,6 +23,31 @@ const addDashboardStarHandler = () =>
     return HttpResponse.json({ message: 'Dashboard starred!' });
   });
 
-const handlers = [getStarsHandler(), deleteDashboardStarHandler(), addDashboardStarHandler()];
+const getPreferencesHandler = () =>
+  http.get('/api/user/preferences', async () => {
+    return HttpResponse.json({
+      homeDashboardUID: dashbdD.item.uid,
+      theme: 'light',
+      timezone: 'browser',
+      weekStart: 'monday',
+      queryHistory: {
+        homeTab: '',
+      },
+      language: '',
+    });
+  });
+
+const updatePreferencesHandler = () =>
+  http.put('/api/user/preferences', async () => {
+    return HttpResponse.json({ message: 'Preferences updated' });
+  });
+
+const handlers = [
+  getPreferencesHandler(),
+  updatePreferencesHandler(),
+  getStarsHandler(),
+  deleteDashboardStarHandler(),
+  addDashboardStarHandler(),
+];
 
 export default handlers;

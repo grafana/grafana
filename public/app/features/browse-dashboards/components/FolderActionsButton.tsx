@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
-import { Permissions } from 'app/core/components/AccessControl';
+import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/ui';
+import { Permissions } from 'app/core/components/AccessControl/Permissions';
 import { appEvents } from 'app/core/core';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
@@ -180,7 +180,11 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
       )}
       {showDeleteProvisionedFolderDrawer && (
         <Drawer
-          title={t('browse-dashboards.action.delete-provisioned-folder', 'Delete provisioned folder')}
+          title={
+            <Text variant="h3" element="h2">
+              {t('browse-dashboards.action.delete-provisioned-folder', 'Delete provisioned folder')}
+            </Text>
+          }
           subtitle={folder.title}
           onClose={() => setShowDeleteProvisionedFolderDrawer(false)}
         >
@@ -192,7 +196,11 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
       )}
       {showMoveProvisionedFolderDrawer && (
         <Drawer
-          title={t('browse-dashboards.action.move-provisioned-folder', 'Move provisioned folder')}
+          title={
+            <Text variant="h3" element="h2">
+              {t('browse-dashboards.action.move-provisioned-folder', 'Move provisioned folder')}
+            </Text>
+          }
           subtitle={folder.title}
           onClose={() => setShowMoveProvisionedFolderDrawer(false)}
         >

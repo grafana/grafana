@@ -7,7 +7,6 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePlugin,
-  DataSourcePluginMeta,
   ScopedVars,
 } from '@grafana/data';
 import { RuntimeDataSource, TemplateSrv } from '@grafana/runtime';
@@ -61,9 +60,9 @@ class TestRuntimeDataSource extends RuntimeDataSource {
   }
 }
 
-jest.mock('./pluginLoader', () => ({
-  importDataSourcePlugin: (meta: DataSourcePluginMeta) => {
-    return Promise.resolve(new DataSourcePlugin(TestDataSource as any));
+jest.mock('./importer/pluginImporter', () => ({
+  pluginImporter: {
+    importDataSource: () => Promise.resolve(new DataSourcePlugin(TestDataSource as any)),
   },
 }));
 

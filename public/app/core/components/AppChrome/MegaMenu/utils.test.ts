@@ -1,7 +1,10 @@
+import { cloneDeep } from 'lodash';
+
 import { NavModelItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
-import { enrichHelpItem, getActiveItem, findByUrl } from './utils';
+import { getEnrichedHelpItem, getActiveItem, findByUrl } from './utils';
 
 const starredDashboardUid = 'foo';
 const mockNavTree: NavModelItem[] = [
@@ -67,39 +70,61 @@ jest.mock('../../../app_events', () => ({
 }));
 
 describe('enrichConfigItems', () => {
-  let mockHelpNode: NavModelItem;
+  let mockHelpNode: NavModelItem = {
+    id: 'help',
+    text: 'Help',
+  };
+  let originalBuildInfo = { ...config.buildInfo };
 
-  beforeEach(() => {
-    mockHelpNode = {
-      id: 'help',
-      text: 'Help',
-    };
+  beforeAll(() => {
+    config.buildInfo.versionString = '9.0.0-test';
+  });
+
+  afterAll(() => {
+    config.buildInfo = originalBuildInfo;
   });
 
   it('enhances the help node with extra child links', () => {
     const contextSrv = new ContextSrv();
     setContextSrv(contextSrv);
-    const helpNode = enrichHelpItem(mockHelpNode);
-    expect(helpNode!.children).toContainEqual(
+    const helpNode = getEnrichedHelpItem(mockHelpNode);
+    expect(helpNode.children).toContainEqual(
       expect.objectContaining({
         text: 'Documentation',
       })
     );
-    expect(helpNode!.children).toContainEqual(
+    expect(helpNode.children).toContainEqual(
       expect.objectContaining({
         text: 'Support',
       })
     );
-    expect(helpNode!.children).toContainEqual(
+    expect(helpNode.children).toContainEqual(
       expect.objectContaining({
         text: 'Community',
       })
     );
-    expect(helpNode!.children).toContainEqual(
+    expect(helpNode.children).toContainEqual(
       expect.objectContaining({
         text: 'Keyboard shortcuts',
       })
     );
+  });
+
+  it('adds the version string as subtitle', () => {
+    const helpNode = getEnrichedHelpItem(mockHelpNode);
+    expect(helpNode.subTitle).toBe(config.buildInfo.versionString);
+  });
+
+  it("doesn't mutate the original help node", () => {
+    const originalHelpNode = cloneDeep(mockHelpNode);
+    const newHelpNode = getEnrichedHelpItem(mockHelpNode);
+
+    // The mockHelpNode should remain deeply equal to the clone we made of it
+    expect(mockHelpNode).toEqual(originalHelpNode);
+
+    // The new node should have a different identity than the original
+    expect(newHelpNode).not.toBe(mockHelpNode);
+    expect(newHelpNode.children).not.toBe(mockHelpNode.children);
   });
 });
 

@@ -226,6 +226,7 @@ func newTestCfg(
 	if cfg == nil {
 		cfg = setting.NewCfg()
 	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 	sec, err := cfg.Raw.NewSection("database")

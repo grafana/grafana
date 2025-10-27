@@ -1,4 +1,4 @@
-import { EventBus, FieldType } from '@grafana/data';
+import { createDataFrame, dateTime, DateTimeInput, EventBus, FieldType } from '@grafana/data';
 import { getTheme } from '@grafana/ui';
 
 import { calculateAnnotationLaneSizes, preparePlotConfigBuilder, UPLOT_DEFAULT_AXIS_GAP } from './utils';
@@ -270,6 +270,109 @@ describe('when fill below to option is used', () => {
       //@ts-ignore
       expect(builder.bands.length).toBe(test.expectedResult);
     }
+  });
+});
+
+describe('time axis units', () => {
+  it('should use default time unit formatting if no custom unit provided ', () => {
+    const frame = createDataFrame({
+      fields: [
+        {
+          config: {},
+          values: [1667406900000, 1667407170000, 1667407185000],
+          name: 'Time',
+          type: FieldType.time,
+        },
+        {
+          config: {},
+          values: [1, 2, 3],
+          name: 'Value',
+          type: FieldType.number,
+        },
+        {
+          config: {},
+          values: [4, 5, 6],
+          name: 'Value',
+          type: FieldType.number,
+        },
+      ],
+    });
+    const eventBus = {
+      publish: jest.fn(),
+      getStream: jest.fn(),
+      subscribe: jest.fn(),
+      removeAllListeners: jest.fn(),
+      newScopedBus: jest.fn(),
+    };
+    const builder = preparePlotConfigBuilder({
+      frame,
+      //@ts-ignore
+      theme: getTheme(),
+      timeZones: ['browser'],
+      getTimeRange: jest.fn(),
+      eventBus,
+      sync: jest.fn(),
+      allFrames: [frame],
+      renderers: [],
+    });
+    const config = builder.getConfig();
+    expect(config.axes![0]!.values).toEqual(expect.any(Function));
+    // @ts-ignore
+    expect(config.axes![0]!.values(config, [1667406900000, 1761316576114], 0, 100, 1000)).toEqual([
+      '11:35:00',
+      '09:36:16',
+    ]);
+  });
+
+  it('should use custom time unit if provided ', () => {
+    const frame = createDataFrame({
+      fields: [
+        {
+          config: { unit: 'time: MM-DD' },
+          values: [1667406900000, 1667407170000, 1667407185000],
+          name: 'Time',
+          state: { multipleFrames: true, displayName: 'Time', origin: { fieldIndex: 0, frameIndex: 0 } },
+          type: FieldType.time,
+          display: jest.fn((v) => ({ text: dateTime(v as DateTimeInput).format('MM-DD'), numeric: Number(v) })),
+        },
+        {
+          config: {},
+          values: [1, 2, 3],
+          name: 'Value',
+          state: { multipleFrames: true, displayName: 'Test1', origin: { fieldIndex: 1, frameIndex: 0 } },
+          type: FieldType.number,
+        },
+        {
+          config: {},
+          values: [4, 5, 6],
+          name: 'Value',
+          state: { multipleFrames: true, displayName: 'Test2', origin: { fieldIndex: 1, frameIndex: 1 } },
+          type: FieldType.number,
+        },
+      ],
+    });
+    const eventBus = {
+      publish: jest.fn(),
+      getStream: jest.fn(),
+      subscribe: jest.fn(),
+      removeAllListeners: jest.fn(),
+      newScopedBus: jest.fn(),
+    };
+    const builder = preparePlotConfigBuilder({
+      frame,
+      //@ts-ignore
+      theme: getTheme(),
+      timeZones: ['browser'],
+      getTimeRange: jest.fn(),
+      eventBus,
+      sync: jest.fn(),
+      allFrames: [frame],
+      renderers: [],
+    });
+    const config = builder.getConfig();
+    expect(config.axes![0]!.values).toEqual(expect.any(Function));
+    // @ts-ignore
+    expect(config.axes![0]!.values(config, [1667406900000, 1761316576114], 0, 100, 1000)).toEqual(['11-02', '10-24']);
   });
 });
 

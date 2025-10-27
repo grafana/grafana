@@ -22,6 +22,7 @@ type Service struct {
 }
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts) && cfg.ManagedServiceAccountsEnabled
 	s := &Service{
 		featureEnabled: enabled,

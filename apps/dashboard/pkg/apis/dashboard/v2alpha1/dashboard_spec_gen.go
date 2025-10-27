@@ -1064,9 +1064,11 @@ type DashboardAutoGridLayoutSpec struct {
 // NewDashboardAutoGridLayoutSpec creates a new DashboardAutoGridLayoutSpec object.
 func NewDashboardAutoGridLayoutSpec() *DashboardAutoGridLayoutSpec {
 	return &DashboardAutoGridLayoutSpec{
-		MaxColumnCount: (func(input float64) *float64 { return &input })(3),
-		FillScreen:     (func(input bool) *bool { return &input })(false),
-		Items:          []DashboardAutoGridLayoutItemKind{},
+		MaxColumnCount:  (func(input float64) *float64 { return &input })(3),
+		ColumnWidthMode: DashboardAutoGridLayoutSpecColumnWidthModeStandard,
+		RowHeightMode:   DashboardAutoGridLayoutSpecRowHeightModeStandard,
+		FillScreen:      (func(input bool) *bool { return &input })(false),
+		Items:           []DashboardAutoGridLayoutItemKind{},
 	}
 }
 
