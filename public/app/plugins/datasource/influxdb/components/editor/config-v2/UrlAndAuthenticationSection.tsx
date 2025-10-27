@@ -190,7 +190,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                   <Field
                     label="Product"
                     description={
-                      <div style={{ display: 'flex', alignItems: 'center', height: '18px' }}>
+                      <div className={styles.dropdown}>
                         <Text color="secondary">
                           Use{' '}
                           <TextLink
@@ -220,11 +220,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                 <Box width="100%" minWidth={37}>
                   <Field
                     label="Query language"
-                    description={
-                      <div style={{ display: 'flex', alignItems: 'center', height: '18px' }}>
-                        The query language depends on product selection
-                      </div>
-                    }
+                    description={<div className={styles.dropdown}>The query language depends on product selection</div>}
                     noMargin
                     required
                   >
@@ -259,6 +255,11 @@ export const UrlAndAuthenticationSection = (props: Props) => {
 
 const getStyles = () => {
   return {
+    dropdown: css({
+      display: 'flex',
+      alignItems: 'center',
+      height: '18px',
+    }),
     col: css({
       flex: '1 1 48%',
       minWidth: '320px',
