@@ -281,14 +281,16 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
-    items.push({
-      text: t('panel.header-menu.time-settings', 'Time settings'),
-      iconClassName: 'clock-nine',
-      onClick: (e) => {
-        e.preventDefault();
-        dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
-      },
-    });
+    if (config.featureToggles.panelTimeSettings) {
+      items.push({
+        text: t('panel.header-menu.time-settings', 'Time settings'),
+        iconClassName: 'clock-nine',
+        onClick: (e) => {
+          e.preventDefault();
+          dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
+        },
+      });
+    }
 
     setupGetPluginExtensions();
 

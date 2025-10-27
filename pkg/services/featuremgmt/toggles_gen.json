@@ -2876,6 +2876,18 @@
     },
     {
       "metadata": {
+        "name": "panelTimeSettings",
+        "resourceVersion": "1761555646368",
+        "creationTimestamp": "2025-10-27T09:00:46Z"
+      },
+      "spec": {
+        "description": "Enables a new panel time settings drawer",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "panelTitleSearch",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2022-02-15T18:26:03Z"

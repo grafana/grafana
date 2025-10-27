@@ -1232,4 +1232,8 @@ export interface FeatureToggles {
   * @default true
   */
   onlyStoreActionSets?: boolean;
+  /**
+  * Enables a new panel time settings drawer
+  */
+  panelTimeSettings?: boolean;
 }

@@ -1,8 +1,7 @@
-/* eslint @grafana/i18n/no-untranslated-strings: 0 */
-
-import { t } from '@grafana/i18n';
+import { FeatureState } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
-import { Badge, Box, Button, Combobox, Drawer, Field, Label, Stack, Switch } from '@grafana/ui';
+import { Box, Button, Combobox, Drawer, FeatureBadge, Field, Label, Stack, Switch } from '@grafana/ui';
 
 import { getQuickOptions } from '../../../../../../packages/grafana-ui/src/components/DateTimePickers/options';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
@@ -79,41 +78,63 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
   static Component = ({ model }: SceneComponentProps<PanelTimeRangeDrawer>) => {
     const { timeFrom, timeShift, compareWith, hideTimeOverride } = model.useState();
 
-    const timeOptions = getQuickOptions().map((option, index) => ({ label: option.display, value: option.from }));
-    timeOptions.unshift({ label: 'Disabled', value: '' });
+    const timeOptions = getQuickOptions()
+      .filter((o) => {
+        // Filter out time options that are not relative to now as we do not have persitance support for those yet
+        return o.to === 'now';
+      })
+      .map((option, index) => ({ label: option.display, value: option.from }));
+
+    timeOptions.unshift({ label: t('common.disabled', 'Disabled'), value: '' });
 
     const timeShiftOptions = [
-      { label: 'Disabled', value: '' },
-      { label: '1 hour', value: '1h' },
-      { label: '6 hours', value: '6h' },
-      { label: '12 hours', value: '12h' },
-      { label: '1 day', value: '24h' },
-      { label: '7 days', value: '7d' },
-      { label: '30 days', value: '30d' },
+      { label: t('common.disabled', 'Disabled'), value: '' },
+      { label: t('time-period.1_hour', '1 hour'), value: '1h' },
+      { label: t('time-period.6_hours', '6 hours'), value: '6h' },
+      { label: t('time-period.12_hours', '12 hours'), value: '12h' },
+      { label: t('time-period.1_day', '1 day'), value: '24h' },
+      { label: t('time-period.7_days', '7 days'), value: '7d' },
+      { label: t('time-period.30_days', '30 days'), value: '30d' },
     ];
 
     return (
-      <Drawer title="Panel time range settings" onClose={model.onClose} size="sm">
+      <Drawer
+        title={t('dashboard.panel.time-range-settings.title', 'Panel time range settings')}
+        onClose={model.onClose}
+        size="sm"
+      >
         <Stack direction="column" gap={2}>
           <Field
-            label="Custom panel time range"
+            label={t('dashboard.panel.time-range-settings.time-from', 'Custom panel time range')}
             noMargin
-            description="Override the dashboard time range for this panel"
+            description={t(
+              'dashboard.panel.time-range-settings.time-from-description',
+              'Overrides the dashboard time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h'
+            )}
           >
             <Stack>
               <Combobox
                 options={timeOptions}
                 value={timeFrom ?? ''}
+                createCustomValue={true}
                 onChange={(x) => {
                   model.setState({ timeFrom: x.value });
                 }}
               />
             </Stack>
           </Field>
-          <Field label="Time shift" noMargin description="Add a time shift relative to the dashboard time range">
+          <Field
+            label={t('dashboard.panel.time-range-settings.time-shift', 'Time shift')}
+            noMargin
+            description={t(
+              'dashboard.panel.time-range-settings.time-shift-description',
+              'Add a time shift relative to the dashboard time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h'
+            )}
+          >
             <Combobox
               options={timeShiftOptions}
               value={timeShift ?? ''}
+              createCustomValue={true}
               onChange={(x) => {
                 model.setState({ timeFrom: x.value });
               }}
@@ -139,8 +160,17 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
             noMargin
             label={
               <Stack alignItems={'center'} justifyContent={'space-between'}>
-                <Label description="Query and overlay data from a different time period">Time window comparison</Label>{' '}
-                <Badge color="blue" text="New!" />
+                <Label
+                  description={t(
+                    'dashboard.panel.time-range-settings.time-window-compare-description',
+                    'Query and overlay data from a different time period'
+                  )}
+                >
+                  <Trans i18nKey="dashboard.panel.time-range-settings.time-window-compare">
+                    Time window comparison
+                  </Trans>
+                </Label>
+                <FeatureBadge featureState={FeatureState.new} />
               </Stack>
             }
           >
@@ -154,10 +184,10 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
           <Box paddingTop={3}>
             <Stack>
               <Button variant="secondary" onClick={model.onClose}>
-                Cancel
+                <Trans i18nKey="common.cancel">Cancel</Trans>
               </Button>
               <Button variant="primary" onClick={model.onApply}>
-                Apply
+                <Trans i18nKey="common.apply">Apply</Trans>
               </Button>
             </Stack>
           </Box>

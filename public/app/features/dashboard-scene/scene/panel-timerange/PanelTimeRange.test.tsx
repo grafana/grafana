@@ -10,9 +10,9 @@ import {
   TestVariable,
 } from '@grafana/scenes';
 
-import { activateFullSceneTree } from '../utils/test-utils';
+import { activateFullSceneTree } from '../../utils/test-utils';
 
-import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
+import { PanelTimeRange } from './PanelTimeRange';
 
 describe('PanelTimeRange', () => {
   const fakeCurrentDate = dateTime('2019-02-11T19:00:00.000Z').toDate();
@@ -43,7 +43,7 @@ describe('PanelTimeRange', () => {
 
     expect(panelTime.state.value.from.toISOString()).toBe('2019-02-11T11:00:00.000Z');
     expect(panelTime.state.value.to.toISOString()).toBe('2019-02-11T17:00:00.000Z');
-    expect(panelTime.state.timeInfo).toBe(' timeshift -2h');
+    expect(panelTime.state.timeInfo).toBe('Timeshift -2h');
   });
 
   it('should apply both relative time and time shift', () => {
@@ -52,7 +52,7 @@ describe('PanelTimeRange', () => {
     buildAndActivateSceneFor(panelTime);
 
     expect(panelTime.state.value.from.toISOString()).toBe('2019-02-11T15:00:00.000Z');
-    expect(panelTime.state.timeInfo).toBe('Last 2 hours timeshift -2h');
+    expect(panelTime.state.timeInfo).toBe('Last 2 hours, timeshift -2h');
   });
 
   it('should update timeInfo when timeShift and timeFrom are variable expressions', async () => {
@@ -75,14 +75,14 @@ describe('PanelTimeRange', () => {
     });
     activateFullSceneTree(scene);
 
-    expect(panelTime.state.timeInfo).toBe('Last 10 seconds timeshift -20s');
+    expect(panelTime.state.timeInfo).toBe('Last 10 seconds, timeshift -20s');
 
     customTimeFrom.setState({ value: '15s' });
     customTimeShift.setState({ value: '25s' });
 
     panelTime.forceRender();
 
-    expect(panelTime.state.timeInfo).toBe('Last 15 seconds timeshift -25s');
+    expect(panelTime.state.timeInfo).toBe('Last 15 seconds, timeshift -25s');
   });
 
   it('should update panelTimeRange from/to based on scene timeRange on activate', () => {

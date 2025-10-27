@@ -274,3 +274,4 @@ newGauge,experimental,@grafana/dataviz-squad,false,false,true
 preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
 onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
+panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false

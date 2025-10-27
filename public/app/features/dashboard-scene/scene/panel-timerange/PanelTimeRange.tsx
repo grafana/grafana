@@ -1,17 +1,8 @@
-/* eslint @grafana/i18n/no-untranslated-strings: 0 */
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 
-import {
-  DataQueryRequest,
-  dateMath,
-  dateTime,
-  DateTime,
-  getDefaultTimeRange,
-  GrafanaTheme2,
-  rangeUtil,
-  TimeRange,
-} from '@grafana/data';
+import { DataQueryRequest, dateMath, getDefaultTimeRange, GrafanaTheme2, rangeUtil, TimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   ExtraQueryDescriptor,
   SceneComponentProps,
@@ -23,7 +14,7 @@ import {
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
-import { Icon, PanelChrome, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, PanelChrome, Stack, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
 import { TimeOverrideResult } from 'app/features/dashboard/utils/panel';
 
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -174,21 +165,20 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
     if (compareWith) {
       const option = DEFAULT_COMPARE_OPTIONS.find((x) => x.value === compareWith);
       const text = option ? `compared to ${option.label.toLowerCase()}` : '';
-      const final = infoBlocks.length === 0 ? capitalize(text) : text;
-      infoBlocks.push(final);
+      infoBlocks.push(text);
     }
 
-    newTimeData.timeInfo = infoBlocks.join(', ');
+    newTimeData.timeInfo = capitalize(infoBlocks.join(', '));
     return newTimeData;
   }
 
-  public onOpenSettings() {
+  public onOpenSettings = () => {
     const panel = this.parent;
     const dashboard = getDashboardSceneFor(this);
     if (panel instanceof VizPanel) {
       dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
     }
-  }
+  };
 }
 
 function PanelTimeRangeRenderer({ model }: SceneComponentProps<PanelTimeRange>) {
@@ -199,17 +189,17 @@ function PanelTimeRangeRenderer({ model }: SceneComponentProps<PanelTimeRange>) 
     return null;
   }
 
+  const onClick = config.featureToggles.panelTimeSettings ? model.onOpenSettings : undefined;
+
   return (
-    <>
-      <Tooltip content={'Click to open panel time range settings'}>
-        <PanelChrome.TitleItem className={styles.timeshift} onClick={() => model.onOpenSettings()}>
-          <Stack gap={1} alignItems={'center'}>
-            <Icon name="clock-nine" size="sm" />
-            <div>{timeInfo}</div>
-          </Stack>
-        </PanelChrome.TitleItem>
-      </Tooltip>
-    </>
+    <Tooltip content={<TimePickerTooltip timeRange={model.state.value} timeZone={model.getTimeZone()} />}>
+      <PanelChrome.TitleItem className={styles.timeshift} onClick={onClick}>
+        <Stack gap={1} alignItems={'center'}>
+          <Icon name="clock-nine" size="sm" />
+          <div>{timeInfo}</div>
+        </Stack>
+      </PanelChrome.TitleItem>
+    </Tooltip>
   );
 }
 

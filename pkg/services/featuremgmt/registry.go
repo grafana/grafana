@@ -2133,6 +2133,17 @@ var (
 			Owner:             identityAccessTeam,
 			Expression:        "true",
 		},
+		{
+			Name:              "panelTimeSettings",
+			Description:       "Enables a new panel time settings drawer",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			RequiresRestart:   false,
+			AllowSelfServe:    false,
+			HideFromDocs:      false,
+			HideFromAdminPage: false,
+		},
 	}
 )
 
