@@ -651,270 +651,6 @@ func TestAfterRoleCreate(t *testing.T) {
 	<-b.zTickets
 }
 
-func TestAfterCoreRoleDelete(t *testing.T) {
-	b := &IdentityAccessManagementAPIBuilder{
-		logger:   log.NewNopLogger(),
-		zTickets: make(chan bool, 1),
-	}
-	t.Run("should delete zanzana entries for core role with folder permissions", func(t *testing.T) {
-		coreRole := iamv0.CoreRole{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-role-uid",
-				Namespace: "org-1",
-			},
-			Spec: iamv0.CoreRoleSpec{
-				Title:       "Test Role",
-				Description: "Test role for folders",
-				Permissions: []iamv0.CoreRolespecPermission{
-					{Action: "folders:read", Scope: "folders:uid:folder1"},
-					{Action: "folders:write", Scope: "folders:uid:folder1"},
-				},
-			},
-		}
-
-		testCoreRoleDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
-			require.NotNil(t, req)
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 2)
-			require.Equal(t, "org-1", req.Namespace)
-
-			expectedDeletes := []*v1.TupleKeyWithoutCondition{
-				{User: "role:test-role-uid#assignee", Relation: "get", Object: "folder:folder1"},
-				{User: "role:test-role-uid#assignee", Relation: "update", Object: "folder:folder1"},
-			}
-
-			requireDeleteTuplesMatch(t, req.Deletes.TupleKeys, expectedDeletes)
-			return nil
-		}
-
-		b.zClient = &FakeZanzanaClient{writeCallback: testCoreRoleDeletes}
-		b.AfterRoleDelete(&coreRole, nil)
-	})
-	<-b.zTickets
-
-	t.Run("should delete zanzana entries for core role with dashboard permissions", func(t *testing.T) {
-		coreRole := iamv0.CoreRole{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "dashboard-role-uid",
-				Namespace: "default",
-			},
-			Spec: iamv0.CoreRoleSpec{
-				Title:       "Dashboard Role",
-				Description: "Test role for dashboards",
-				Permissions: []iamv0.CoreRolespecPermission{
-					{Action: "dashboards:read", Scope: "dashboards:uid:dash1"},
-					{Action: "dashboards:write", Scope: "dashboards:uid:dash1"},
-				},
-			},
-		}
-
-		testDashboardRoleDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
-			require.NotNil(t, req)
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 2)
-			require.Equal(t, "default", req.Namespace)
-
-			// Check all deletes have the correct subject
-			for _, tuple := range req.Deletes.TupleKeys {
-				require.Equal(t, "role:dashboard-role-uid#assignee", tuple.User)
-				require.Contains(t, tuple.Object, "resource:")
-			}
-
-			return nil
-		}
-
-		b.zClient = &FakeZanzanaClient{writeCallback: testDashboardRoleDeletes}
-		b.AfterRoleDelete(&coreRole, nil)
-	})
-	<-b.zTickets
-
-	t.Run("should handle wildcard scopes on delete", func(t *testing.T) {
-		coreRole := iamv0.CoreRole{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "wildcard-role-uid",
-				Namespace: "org-2",
-			},
-			Spec: iamv0.CoreRoleSpec{
-				Title: "Wildcard Role",
-				Permissions: []iamv0.CoreRolespecPermission{
-					{Action: "folders:read", Scope: "folders:*"},
-				},
-			},
-		}
-
-		testWildcardDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
-			require.NotNil(t, req)
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 1)
-
-			tuple := req.Deletes.TupleKeys[0]
-			require.Equal(t, "role:wildcard-role-uid#assignee", tuple.User)
-			require.Contains(t, tuple.Object, "group_resource:")
-
-			return nil
-		}
-
-		b.zClient = &FakeZanzanaClient{writeCallback: testWildcardDeletes}
-		b.AfterRoleDelete(&coreRole, nil)
-	})
-	<-b.zTickets
-
-	t.Run("should skip untranslatable permissions on delete", func(t *testing.T) {
-		coreRole := iamv0.CoreRole{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "mixed-role-uid",
-				Namespace: "org-1",
-			},
-			Spec: iamv0.CoreRoleSpec{
-				Title: "Mixed Role",
-				Permissions: []iamv0.CoreRolespecPermission{
-					{Action: "folders:read", Scope: "folders:uid:folder1"},
-					{Action: "unknown:action", Scope: "unknown:scope"}, // This should be skipped
-				},
-			},
-		}
-
-		testMixedDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
-			require.NotNil(t, req)
-			require.NotNil(t, req.Deletes)
-			// Should only delete 1 tuple (the untranslatable one should be skipped)
-			require.Len(t, req.Deletes.TupleKeys, 1)
-
-			tuple := req.Deletes.TupleKeys[0]
-			require.Equal(t, "role:mixed-role-uid#assignee", tuple.User)
-			require.Equal(t, "folder:folder1", tuple.Object)
-
-			return nil
-		}
-
-		b.zClient = &FakeZanzanaClient{writeCallback: testMixedDeletes}
-		b.AfterRoleDelete(&coreRole, nil)
-	})
-	<-b.zTickets
-}
-
-func TestAfterRoleDelete(t *testing.T) {
-	b := &IdentityAccessManagementAPIBuilder{
-		logger:   log.NewNopLogger(),
-		zTickets: make(chan bool, 1),
-	}
-	t.Run("should delete zanzana entries for role with folder permissions", func(t *testing.T) {
-		role := iamv0.Role{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "custom-role-uid",
-				Namespace: "org-3",
-			},
-			Spec: iamv0.RoleSpec{
-				Title:       "Custom Role",
-				Description: "Custom role for folders",
-				Permissions: []iamv0.RolespecPermission{
-					{Action: "folders:read", Scope: "folders:uid:folder2"},
-					{Action: "folders:delete", Scope: "folders:uid:folder2"},
-				},
-			},
-		}
-
-		testRoleDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
-			require.NotNil(t, req)
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 2)
-			require.Equal(t, "org-3", req.Namespace)
-
-			expectedDeletes := []*v1.TupleKeyWithoutCondition{
-				{User: "role:custom-role-uid#assignee", Relation: "get", Object: "folder:folder2"},
-				{User: "role:custom-role-uid#assignee", Relation: "delete", Object: "folder:folder2"},
-			}
-
-			requireDeleteTuplesMatch(t, req.Deletes.TupleKeys, expectedDeletes)
-			return nil
-		}
-
-		b.zClient = &FakeZanzanaClient{writeCallback: testRoleDeletes}
-		b.AfterRoleDelete(&role, nil)
-	})
-	<-b.zTickets
-
-	t.Run("should delete zanzana entries for role with dashboard permissions", func(t *testing.T) {
-		role := iamv0.Role{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "dash-role-uid",
-				Namespace: "default",
-			},
-			Spec: iamv0.RoleSpec{
-				Title:       "Dashboard Custom Role",
-				Description: "Custom role for dashboards",
-				Permissions: []iamv0.RolespecPermission{
-					{Action: "dashboards:read", Scope: "dashboards:uid:mydash"},
-					{Action: "dashboards:delete", Scope: "dashboards:uid:mydash"},
-				},
-			},
-		}
-
-		testDashRoleDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
-			require.NotNil(t, req)
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 2)
-			require.Equal(t, "default", req.Namespace)
-
-			// Check all deletes have the correct subject
-			for _, tuple := range req.Deletes.TupleKeys {
-				require.Equal(t, "role:dash-role-uid#assignee", tuple.User)
-				require.Contains(t, tuple.Object, "resource:")
-			}
-
-			return nil
-		}
-
-		b.zClient = &FakeZanzanaClient{writeCallback: testDashRoleDeletes}
-		b.AfterRoleDelete(&role, nil)
-	})
-
-	<-b.zTickets
-	t.Run("should handle multiple permissions on delete", func(t *testing.T) {
-		role := iamv0.Role{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "multi-role-uid",
-				Namespace: "org-1",
-			},
-			Spec: iamv0.RoleSpec{
-				Title: "Multi Permission Role",
-				Permissions: []iamv0.RolespecPermission{
-					{Action: "folders:read", Scope: "folders:uid:folder1"},
-					{Action: "folders:write", Scope: "folders:uid:folder1"},
-					{Action: "folders:delete", Scope: "folders:uid:folder1"},
-				},
-			},
-		}
-
-		testMultiDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
-			require.NotNil(t, req)
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 3)
-
-			// All should be for the same role and folder
-			for _, tuple := range req.Deletes.TupleKeys {
-				require.Equal(t, "role:multi-role-uid#assignee", tuple.User)
-				require.Equal(t, "folder:folder1", tuple.Object)
-			}
-
-			// Check all expected relations are present
-			relations := make(map[string]bool)
-			for _, tuple := range req.Deletes.TupleKeys {
-				relations[tuple.Relation] = true
-			}
-			require.True(t, relations["get"], "Expected 'get' relation")
-			require.True(t, relations["update"], "Expected 'update' relation")
-			require.True(t, relations["delete"], "Expected 'delete' relation")
-
-			return nil
-		}
-
-		b.zClient = &FakeZanzanaClient{writeCallback: testMultiDeletes}
-		b.AfterRoleDelete(&role, nil)
-	})
-	<-b.zTickets
-}
-
 func TestBeginCoreRoleUpdate(t *testing.T) {
 	b := &IdentityAccessManagementAPIBuilder{
 		logger:   log.NewNopLogger(),
@@ -1284,6 +1020,270 @@ func TestBeginRoleUpdate(t *testing.T) {
 
 		// Call the finish function with success=true to trigger the zanzana write
 		finishFunc(context.Background(), true)
+	})
+	<-b.zTickets
+}
+
+func TestAfterCoreRoleDelete(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{
+		logger:   log.NewNopLogger(),
+		zTickets: make(chan bool, 1),
+	}
+	t.Run("should delete zanzana entries for core role with folder permissions", func(t *testing.T) {
+		coreRole := iamv0.CoreRole{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-role-uid",
+				Namespace: "org-1",
+			},
+			Spec: iamv0.CoreRoleSpec{
+				Title:       "Test Role",
+				Description: "Test role for folders",
+				Permissions: []iamv0.CoreRolespecPermission{
+					{Action: "folders:read", Scope: "folders:uid:folder1"},
+					{Action: "folders:write", Scope: "folders:uid:folder1"},
+				},
+			},
+		}
+
+		testCoreRoleDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
+			require.NotNil(t, req)
+			require.NotNil(t, req.Deletes)
+			require.Len(t, req.Deletes.TupleKeys, 2)
+			require.Equal(t, "org-1", req.Namespace)
+
+			expectedDeletes := []*v1.TupleKeyWithoutCondition{
+				{User: "role:test-role-uid#assignee", Relation: "get", Object: "folder:folder1"},
+				{User: "role:test-role-uid#assignee", Relation: "update", Object: "folder:folder1"},
+			}
+
+			requireDeleteTuplesMatch(t, req.Deletes.TupleKeys, expectedDeletes)
+			return nil
+		}
+
+		b.zClient = &FakeZanzanaClient{writeCallback: testCoreRoleDeletes}
+		b.AfterRoleDelete(&coreRole, nil)
+	})
+	<-b.zTickets
+
+	t.Run("should delete zanzana entries for core role with dashboard permissions", func(t *testing.T) {
+		coreRole := iamv0.CoreRole{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dashboard-role-uid",
+				Namespace: "default",
+			},
+			Spec: iamv0.CoreRoleSpec{
+				Title:       "Dashboard Role",
+				Description: "Test role for dashboards",
+				Permissions: []iamv0.CoreRolespecPermission{
+					{Action: "dashboards:read", Scope: "dashboards:uid:dash1"},
+					{Action: "dashboards:write", Scope: "dashboards:uid:dash1"},
+				},
+			},
+		}
+
+		testDashboardRoleDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
+			require.NotNil(t, req)
+			require.NotNil(t, req.Deletes)
+			require.Len(t, req.Deletes.TupleKeys, 2)
+			require.Equal(t, "default", req.Namespace)
+
+			// Check all deletes have the correct subject
+			for _, tuple := range req.Deletes.TupleKeys {
+				require.Equal(t, "role:dashboard-role-uid#assignee", tuple.User)
+				require.Contains(t, tuple.Object, "resource:")
+			}
+
+			return nil
+		}
+
+		b.zClient = &FakeZanzanaClient{writeCallback: testDashboardRoleDeletes}
+		b.AfterRoleDelete(&coreRole, nil)
+	})
+	<-b.zTickets
+
+	t.Run("should handle wildcard scopes on delete", func(t *testing.T) {
+		coreRole := iamv0.CoreRole{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "wildcard-role-uid",
+				Namespace: "org-2",
+			},
+			Spec: iamv0.CoreRoleSpec{
+				Title: "Wildcard Role",
+				Permissions: []iamv0.CoreRolespecPermission{
+					{Action: "folders:read", Scope: "folders:*"},
+				},
+			},
+		}
+
+		testWildcardDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
+			require.NotNil(t, req)
+			require.NotNil(t, req.Deletes)
+			require.Len(t, req.Deletes.TupleKeys, 1)
+
+			tuple := req.Deletes.TupleKeys[0]
+			require.Equal(t, "role:wildcard-role-uid#assignee", tuple.User)
+			require.Contains(t, tuple.Object, "group_resource:")
+
+			return nil
+		}
+
+		b.zClient = &FakeZanzanaClient{writeCallback: testWildcardDeletes}
+		b.AfterRoleDelete(&coreRole, nil)
+	})
+	<-b.zTickets
+
+	t.Run("should skip untranslatable permissions on delete", func(t *testing.T) {
+		coreRole := iamv0.CoreRole{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "mixed-role-uid",
+				Namespace: "org-1",
+			},
+			Spec: iamv0.CoreRoleSpec{
+				Title: "Mixed Role",
+				Permissions: []iamv0.CoreRolespecPermission{
+					{Action: "folders:read", Scope: "folders:uid:folder1"},
+					{Action: "unknown:action", Scope: "unknown:scope"}, // This should be skipped
+				},
+			},
+		}
+
+		testMixedDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
+			require.NotNil(t, req)
+			require.NotNil(t, req.Deletes)
+			// Should only delete 1 tuple (the untranslatable one should be skipped)
+			require.Len(t, req.Deletes.TupleKeys, 1)
+
+			tuple := req.Deletes.TupleKeys[0]
+			require.Equal(t, "role:mixed-role-uid#assignee", tuple.User)
+			require.Equal(t, "folder:folder1", tuple.Object)
+
+			return nil
+		}
+
+		b.zClient = &FakeZanzanaClient{writeCallback: testMixedDeletes}
+		b.AfterRoleDelete(&coreRole, nil)
+	})
+	<-b.zTickets
+}
+
+func TestAfterRoleDelete(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{
+		logger:   log.NewNopLogger(),
+		zTickets: make(chan bool, 1),
+	}
+	t.Run("should delete zanzana entries for role with folder permissions", func(t *testing.T) {
+		role := iamv0.Role{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "custom-role-uid",
+				Namespace: "org-3",
+			},
+			Spec: iamv0.RoleSpec{
+				Title:       "Custom Role",
+				Description: "Custom role for folders",
+				Permissions: []iamv0.RolespecPermission{
+					{Action: "folders:read", Scope: "folders:uid:folder2"},
+					{Action: "folders:delete", Scope: "folders:uid:folder2"},
+				},
+			},
+		}
+
+		testRoleDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
+			require.NotNil(t, req)
+			require.NotNil(t, req.Deletes)
+			require.Len(t, req.Deletes.TupleKeys, 2)
+			require.Equal(t, "org-3", req.Namespace)
+
+			expectedDeletes := []*v1.TupleKeyWithoutCondition{
+				{User: "role:custom-role-uid#assignee", Relation: "get", Object: "folder:folder2"},
+				{User: "role:custom-role-uid#assignee", Relation: "delete", Object: "folder:folder2"},
+			}
+
+			requireDeleteTuplesMatch(t, req.Deletes.TupleKeys, expectedDeletes)
+			return nil
+		}
+
+		b.zClient = &FakeZanzanaClient{writeCallback: testRoleDeletes}
+		b.AfterRoleDelete(&role, nil)
+	})
+	<-b.zTickets
+
+	t.Run("should delete zanzana entries for role with dashboard permissions", func(t *testing.T) {
+		role := iamv0.Role{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dash-role-uid",
+				Namespace: "default",
+			},
+			Spec: iamv0.RoleSpec{
+				Title:       "Dashboard Custom Role",
+				Description: "Custom role for dashboards",
+				Permissions: []iamv0.RolespecPermission{
+					{Action: "dashboards:read", Scope: "dashboards:uid:mydash"},
+					{Action: "dashboards:delete", Scope: "dashboards:uid:mydash"},
+				},
+			},
+		}
+
+		testDashRoleDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
+			require.NotNil(t, req)
+			require.NotNil(t, req.Deletes)
+			require.Len(t, req.Deletes.TupleKeys, 2)
+			require.Equal(t, "default", req.Namespace)
+
+			// Check all deletes have the correct subject
+			for _, tuple := range req.Deletes.TupleKeys {
+				require.Equal(t, "role:dash-role-uid#assignee", tuple.User)
+				require.Contains(t, tuple.Object, "resource:")
+			}
+
+			return nil
+		}
+
+		b.zClient = &FakeZanzanaClient{writeCallback: testDashRoleDeletes}
+		b.AfterRoleDelete(&role, nil)
+	})
+
+	<-b.zTickets
+	t.Run("should handle multiple permissions on delete", func(t *testing.T) {
+		role := iamv0.Role{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "multi-role-uid",
+				Namespace: "org-1",
+			},
+			Spec: iamv0.RoleSpec{
+				Title: "Multi Permission Role",
+				Permissions: []iamv0.RolespecPermission{
+					{Action: "folders:read", Scope: "folders:uid:folder1"},
+					{Action: "folders:write", Scope: "folders:uid:folder1"},
+					{Action: "folders:delete", Scope: "folders:uid:folder1"},
+				},
+			},
+		}
+
+		testMultiDeletes := func(ctx context.Context, req *v1.WriteRequest) error {
+			require.NotNil(t, req)
+			require.NotNil(t, req.Deletes)
+			require.Len(t, req.Deletes.TupleKeys, 3)
+
+			// All should be for the same role and folder
+			for _, tuple := range req.Deletes.TupleKeys {
+				require.Equal(t, "role:multi-role-uid#assignee", tuple.User)
+				require.Equal(t, "folder:folder1", tuple.Object)
+			}
+
+			// Check all expected relations are present
+			relations := make(map[string]bool)
+			for _, tuple := range req.Deletes.TupleKeys {
+				relations[tuple.Relation] = true
+			}
+			require.True(t, relations["get"], "Expected 'get' relation")
+			require.True(t, relations["update"], "Expected 'update' relation")
+			require.True(t, relations["delete"], "Expected 'delete' relation")
+
+			return nil
+		}
+
+		b.zClient = &FakeZanzanaClient{writeCallback: testMultiDeletes}
+		b.AfterRoleDelete(&role, nil)
 	})
 	<-b.zTickets
 }

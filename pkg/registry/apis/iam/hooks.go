@@ -477,30 +477,27 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleCreate(obj runtime.Object,
 		return
 	}
 
-	// Extract permissions based on the object type
-	var roleUID, namespace string
-	var permissions []iamv0.CoreRolespecPermission
-	var roleType string
+	var rType string
+	var rt *iamv0.CoreRole
 
-	// Try CoreRole first
 	if coreRole, ok := obj.(*iamv0.CoreRole); ok {
-		roleUID = coreRole.Name
-		namespace = coreRole.Namespace
-		// Deep copy permissions to avoid race conditions
-		permissions = make([]iamv0.CoreRolespecPermission, len(coreRole.Spec.Permissions))
-		copy(permissions, coreRole.Spec.Permissions)
-		roleType = "coreRole"
-	} else if role, ok := obj.(*iamv0.Role); ok {
-		// Try Role
-		roleUID = role.Name
-		namespace = role.Namespace
-
-		// Convert and copy permissions to avoid race conditions
-		permissions = make([]iamv0.CoreRolespecPermission, len(role.Spec.Permissions))
-		for i, p := range role.Spec.Permissions {
-			permissions[i] = iamv0.CoreRolespecPermission(p)
+		rt = coreRole.DeepCopy()
+		rType = "coreRole"
+	} else if regRole, ok := obj.(*iamv0.Role); ok {
+		regRolePermissions := make([]iamv0.CoreRolespecPermission, len(regRole.Spec.Permissions))
+		for i, p := range regRole.Spec.Permissions {
+			regRolePermissions[i] = iamv0.CoreRolespecPermission(p)
 		}
-		roleType = "role"
+		rt = &iamv0.CoreRole{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      regRole.Name,
+				Namespace: regRole.Namespace,
+			},
+			Spec: iamv0.CoreRoleSpec{
+				Permissions: regRolePermissions,
+			},
+		}
+		rType = "role"
 	} else {
 		// Not a supported role type
 		return
@@ -510,19 +507,19 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleCreate(obj runtime.Object,
 	b.zTickets <- true
 	hooksWaitHistogram.WithLabelValues("role", "create").Observe(time.Since(wait).Seconds())
 
-	go func() {
+	go func(role *iamv0.CoreRole, roleType string) {
 		defer func() {
 			<-b.zTickets
 		}()
 
-		tuples, err := convertRolePermissionsToTuples(roleUID, permissions)
+		tuples, err := convertRolePermissionsToTuples(role.Name, role.Spec.Permissions)
 		if err != nil {
 			b.logger.Error("failed to convert role permissions to tuples",
-				"namespace", namespace,
-				"roleUID", roleUID,
+				"namespace", role.Namespace,
+				"roleUID", role.Name,
 				"roleType", roleType,
 				"err", err,
-				"permissionsCnt", len(permissions),
+				"permissionsCnt", len(role.Spec.Permissions),
 			)
 			return
 		}
@@ -530,27 +527,27 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleCreate(obj runtime.Object,
 		// Avoid writing if there are no valid tuples
 		if len(tuples) == 0 {
 			b.logger.Debug("no valid tuples to write for role",
-				"namespace", namespace,
-				"roleUID", roleUID,
+				"namespace", role.Namespace,
+				"roleUID", role.Name,
 				"roleType", roleType,
-				"permissionsCnt", len(permissions),
+				"permissionsCnt", len(role.Spec.Permissions),
 			)
 			return
 		}
 
 		b.logger.Debug("writing role permissions to zanzana",
-			"namespace", namespace,
-			"roleUID", roleUID,
+			"namespace", role.Namespace,
+			"roleUID", role.Name,
 			"roleType", roleType,
 			"tuplesCnt", len(tuples),
-			"permissionsCnt", len(permissions),
+			"permissionsCnt", len(role.Spec.Permissions),
 		)
 
 		ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
 		defer cancel()
 
 		err = b.zClient.Write(ctx, &v1.WriteRequest{
-			Namespace: namespace,
+			Namespace: role.Namespace,
 			Writes: &v1.WriteRequestWrites{
 				TupleKeys: tuples,
 			},
@@ -558,13 +555,13 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleCreate(obj runtime.Object,
 		if err != nil {
 			b.logger.Error("failed to write role permissions to zanzana",
 				"err", err,
-				"namespace", namespace,
-				"roleUID", roleUID,
+				"namespace", role.Namespace,
+				"roleUID", role.Name,
 				"roleType", roleType,
 				"tuplesCnt", len(tuples),
 			)
 		}
-	}()
+	}(rt.DeepCopy(), rType)
 }
 
 // AfterRoleDelete is a post-delete hook that removes the role permissions from Zanzana (openFGA)
@@ -574,28 +571,28 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleDelete(obj runtime.Object,
 		return
 	}
 
-	// Extract permissions based on the object type
-	var roleUID, namespace string
-	var permissions []iamv0.CoreRolespecPermission
-	var roleType string
+	var rType string
+	var rt *iamv0.CoreRole
 
 	// Try CoreRole first
 	if coreRole, ok := obj.(*iamv0.CoreRole); ok {
-		roleUID = coreRole.Name
-		namespace = coreRole.Namespace
-		permissions = coreRole.Spec.Permissions
-		roleType = "coreRole"
-	} else if role, ok := obj.(*iamv0.Role); ok {
-		// Try Role
-		roleUID = role.Name
-		namespace = role.Namespace
-
-		// Convert permissions
-		permissions = make([]iamv0.CoreRolespecPermission, len(role.Spec.Permissions))
-		for i, p := range role.Spec.Permissions {
-			permissions[i] = iamv0.CoreRolespecPermission(p)
+		rt = coreRole.DeepCopy()
+		rType = "coreRole"
+	} else if regRole, ok := obj.(*iamv0.Role); ok {
+		regRolePermissions := make([]iamv0.CoreRolespecPermission, len(regRole.Spec.Permissions))
+		for i, p := range regRole.Spec.Permissions {
+			regRolePermissions[i] = iamv0.CoreRolespecPermission(p)
 		}
-		roleType = "role"
+		rt = &iamv0.CoreRole{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      regRole.Name,
+				Namespace: regRole.Namespace,
+			},
+			Spec: iamv0.CoreRoleSpec{
+				Permissions: regRolePermissions,
+			},
+		}
+		rType = "role"
 	} else {
 		// Not a supported role type
 		return
@@ -603,28 +600,28 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleDelete(obj runtime.Object,
 
 	wait := time.Now()
 	b.zTickets <- true
-	hooksWaitHistogram.WithLabelValues(roleType, "delete").Observe(time.Since(wait).Seconds()) // Record wait time
+	hooksWaitHistogram.WithLabelValues("role", "delete").Observe(time.Since(wait).Seconds()) // Record wait time
 
-	go func() {
+	go func(role *iamv0.CoreRole, roleType string) {
 		defer func() {
 			<-b.zTickets
 		}()
 
 		b.logger.Debug("deleting role permissions from zanzana",
-			"namespace", namespace,
-			"roleUID", roleUID,
+			"namespace", role.Namespace,
+			"roleUID", role.Name,
 			"roleType", roleType,
-			"permissionsCnt", len(permissions),
+			"permissionsCnt", len(role.Spec.Permissions),
 		)
 
-		tuples, err := convertRolePermissionsToTuples(roleUID, permissions)
+		tuples, err := convertRolePermissionsToTuples(role.Name, role.Spec.Permissions)
 		if err != nil {
 			b.logger.Error("failed to convert role permissions to tuples for deletion",
-				"namespace", namespace,
-				"roleUID", roleUID,
+				"namespace", role.Namespace,
+				"roleUID", role.Name,
 				"roleType", roleType,
 				"err", err,
-				"permissionsCnt", len(permissions),
+				"permissionsCnt", len(role.Spec.Permissions),
 			)
 			return
 		}
@@ -632,10 +629,10 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleDelete(obj runtime.Object,
 		// Avoid deleting if there are no valid tuples
 		if len(tuples) == 0 {
 			b.logger.Debug("no valid tuples to delete for role",
-				"namespace", namespace,
-				"roleUID", roleUID,
+				"namespace", role.Namespace,
+				"roleUID", role.Name,
 				"roleType", roleType,
-				"permissionsCnt", len(permissions),
+				"permissionsCnt", len(role.Spec.Permissions),
 			)
 			return
 		}
@@ -644,18 +641,18 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleDelete(obj runtime.Object,
 		deleteTuples := toTupleKeysWithoutCondition(tuples)
 
 		b.logger.Debug("deleting role permissions from zanzana",
-			"namespace", namespace,
-			"roleUID", roleUID,
+			"namespace", role.Namespace,
+			"roleUID", role.Name,
 			"roleType", roleType,
 			"tuplesCnt", len(deleteTuples),
-			"permissionsCnt", len(permissions),
+			"permissionsCnt", len(role.Spec.Permissions),
 		)
 
 		ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
 		defer cancel()
 
 		err = b.zClient.Write(ctx, &v1.WriteRequest{
-			Namespace: namespace,
+			Namespace: role.Namespace,
 			Deletes: &v1.WriteRequestDeletes{
 				TupleKeys: deleteTuples,
 			},
@@ -663,13 +660,13 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleDelete(obj runtime.Object,
 		if err != nil {
 			b.logger.Error("failed to delete role permissions from zanzana",
 				"err", err,
-				"namespace", namespace,
-				"roleUID", roleUID,
+				"namespace", role.Namespace,
+				"roleUID", role.Name,
 				"roleType", roleType,
 				"tuplesCnt", len(deleteTuples),
 			)
 		}
-	}()
+	}(rt.DeepCopy(), rType)
 }
 
 // beginRoleUpdate is a pre-update hook that prepares zanzana updates
@@ -679,74 +676,52 @@ func (b *IdentityAccessManagementAPIBuilder) BeginRoleUpdate(ctx context.Context
 	if b.zClient == nil {
 		return nil, nil
 	}
-
-	// Extract permissions based on the object type
-	var roleUID, namespace string
-	var oldPermissions, newPermissions []iamv0.CoreRolespecPermission
+	var oldRole, newRole *iamv0.CoreRole
 	var roleType string
 
-	// Try CoreRole first
-	if oldCoreRole, ok := oldObj.(*iamv0.CoreRole); ok {
+	if oldCoreRole, ok := oldObj.(*iamv0.CoreRole); ok { // Try CoreRole first
+		oldRole = oldCoreRole.DeepCopy()
 		newCoreRole, ok := obj.(*iamv0.CoreRole)
 		if !ok {
 			return nil, nil
 		}
-		roleUID = newCoreRole.Name
-		namespace = newCoreRole.Namespace
-		oldPermissions = oldCoreRole.Spec.Permissions
-		newPermissions = newCoreRole.Spec.Permissions
+		newRole = newCoreRole.DeepCopy()
 		roleType = "coreRole"
-	} else if oldRole, ok := oldObj.(*iamv0.Role); ok {
-		// Try Role
-		newRole, ok := obj.(*iamv0.Role)
+	} else if oldRegRole, ok := oldObj.(*iamv0.Role); ok { // Try Role
+		oldRegRolePermissions := make([]iamv0.CoreRolespecPermission, len(oldRegRole.Spec.Permissions))
+		for i, p := range oldRegRole.Spec.Permissions {
+			oldRegRolePermissions[i] = iamv0.CoreRolespecPermission(p)
+		}
+		oldRole = &iamv0.CoreRole{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      oldRegRole.Name,
+				Namespace: oldRegRole.Namespace,
+			},
+			Spec: iamv0.CoreRoleSpec{
+				Permissions: oldRegRolePermissions,
+			},
+		}
+		newRegRole, ok := obj.(*iamv0.Role)
 		if !ok {
 			return nil, nil
 		}
-		roleUID = newRole.Name
-		namespace = newRole.Namespace
-
-		// Convert old permissions
-		oldPermissions = make([]iamv0.CoreRolespecPermission, len(oldRole.Spec.Permissions))
-		for i, p := range oldRole.Spec.Permissions {
-			oldPermissions[i] = iamv0.CoreRolespecPermission(p)
+		newRegRolePermissions := make([]iamv0.CoreRolespecPermission, len(newRegRole.Spec.Permissions))
+		for i, p := range newRegRole.Spec.Permissions {
+			newRegRolePermissions[i] = iamv0.CoreRolespecPermission(p)
 		}
-
-		// Convert new permissions
-		newPermissions = make([]iamv0.CoreRolespecPermission, len(newRole.Spec.Permissions))
-		for i, p := range newRole.Spec.Permissions {
-			newPermissions[i] = iamv0.CoreRolespecPermission(p)
+		newRole = &iamv0.CoreRole{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      newRegRole.Name,
+				Namespace: newRegRole.Namespace,
+			},
+			Spec: iamv0.CoreRoleSpec{
+				Permissions: newRegRolePermissions,
+			},
 		}
 		roleType = "role"
 	} else {
 		// Not a supported role type
 		return nil, nil
-	}
-
-	// Convert old permissions to tuples for deletion
-	var oldTuples []*v1.TupleKey
-	if len(oldPermissions) > 0 {
-		var err error
-		oldTuples, err = convertRolePermissionsToTuples(roleUID, oldPermissions)
-		if err != nil {
-			b.logger.Error("failed to convert old role permissions to tuples",
-				"namespace", namespace,
-				"roleUID", roleUID,
-				"roleType", roleType,
-				"err", err,
-			)
-		}
-	}
-
-	// Convert new permissions to tuples for writing
-	newTuples, err := convertRolePermissionsToTuples(roleUID, newPermissions)
-	if err != nil {
-		b.logger.Error("failed to convert new role permissions to tuples",
-			"namespace", namespace,
-			"roleUID", roleUID,
-			"roleType", roleType,
-			"err", err,
-		)
-		return nil, err
 	}
 
 	// Return a finish function that performs the zanzana write only on success
@@ -761,10 +736,39 @@ func (b *IdentityAccessManagementAPIBuilder) BeginRoleUpdate(ctx context.Context
 		b.zTickets <- true
 		hooksWaitHistogram.WithLabelValues(roleType, "update").Observe(time.Since(wait).Seconds()) // Record wait time
 
-		go func() {
+		go func(old *iamv0.CoreRole, new *iamv0.CoreRole) {
 			defer func() {
 				<-b.zTickets
 			}()
+			roleUID, namespace := old.Name, old.Namespace
+			oldPermissions, newPermissions := old.Spec.Permissions, new.Spec.Permissions
+
+			// Convert old permissions to tuples for deletion
+			var oldTuples []*v1.TupleKey
+			if len(oldPermissions) > 0 {
+				var err error
+				oldTuples, err = convertRolePermissionsToTuples(roleUID, oldPermissions)
+				if err != nil {
+					b.logger.Error("failed to convert old role permissions to tuples",
+						"namespace", namespace,
+						"roleUID", roleUID,
+						"roleType", roleType,
+						"err", err,
+					)
+				}
+			}
+
+			// Convert new permissions to tuples for writing
+			newTuples, err := convertRolePermissionsToTuples(roleUID, newPermissions)
+			if err != nil {
+				b.logger.Error("failed to convert new role permissions to tuples",
+					"namespace", namespace,
+					"roleUID", roleUID,
+					"roleType", roleType,
+					"err", err,
+				)
+				return
+			}
 
 			b.logger.Debug("updating role permissions in zanzana",
 				"namespace", namespace,
@@ -821,6 +825,6 @@ func (b *IdentityAccessManagementAPIBuilder) BeginRoleUpdate(ctx context.Context
 					)
 				}
 			}
-		}()
+		}(oldRole.DeepCopy(), newRole.DeepCopy())
 	}, nil
 }
