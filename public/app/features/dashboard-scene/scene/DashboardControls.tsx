@@ -14,9 +14,7 @@ import {
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
   CancelActivationHandler,
-  ScopesVariable,
 } from '@grafana/scenes';
-import { SCOPES_VARIABLE_NAME } from '@grafana/scenes/src/variables/constants';
 import { Box, Stack, useStyles2 } from '@grafana/ui';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
