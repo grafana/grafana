@@ -75,7 +75,7 @@ function DashboardControlsMenu({ variables, links, dashboardUID }: DashboardCont
     >
       {/* Variables */}
       {variables.map((variable, index) => (
-        <div className={cx(index > 0 && styles.menuItem)} key={variable.state.key}>
+        <div className={cx({ [styles.variableItem]: index > 0 })} key={variable.state.key}>
           <VariableValueSelectWrapper variable={variable} inMenu />
         </div>
       ))}
@@ -98,10 +98,10 @@ function DashboardControlsMenu({ variables, links, dashboardUID }: DashboardCont
 
 const getStyles = (theme: GrafanaTheme2) => ({
   divider: css({
-    marginTop: theme.spacing(1),
+    marginTop: theme.spacing(2),
     padding: theme.spacing(0, 0.5),
   }),
-  menuItem: css({
+  variableItem: css({
     marginTop: theme.spacing(2),
   }),
 });
