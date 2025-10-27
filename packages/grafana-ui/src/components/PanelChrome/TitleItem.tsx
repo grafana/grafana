@@ -39,7 +39,13 @@ export const TitleItem = forwardRef<TitleItemElement, TitleItemProps>(
       );
     } else if (onClick) {
       return (
-        <Button ref={ref} className={cx(styles.item, className)} variant="secondary" fill="text" onClick={onClick}>
+        <Button
+          ref={ref}
+          className={cx(styles.buttonItem, className)}
+          variant="secondary"
+          fill="text"
+          onClick={onClick}
+        >
           {children}
         </Button>
       );
@@ -66,7 +72,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    cursor: 'pointer',
 
     '&:focus, &:focus-visible': {
       ...getFocusStyles(theme),
@@ -84,5 +89,6 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     item,
     linkItem: cx(item, css({ cursor: 'pointer' })),
+    buttonItem: cx(item, css({ cursor: 'pointer' })),
   };
 };

@@ -24,7 +24,6 @@ import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene, PERSISTED_PROPS } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks } from '../scene/PanelLinks';
-import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -32,6 +31,7 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 
 import { DashboardChangeInfo } from './shared';

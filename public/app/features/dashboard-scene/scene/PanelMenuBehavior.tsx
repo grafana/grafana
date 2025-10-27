@@ -282,7 +282,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
     items.push({
-      text: 'Time settings',
+      text: t('panel.header-menu.time-settings', 'Time settings'),
       iconClassName: 'clock-nine',
       onClick: (e) => {
         e.preventDefault();

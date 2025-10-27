@@ -6,7 +6,6 @@ import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardLevelTimeMacro } from './DashboardLevelTimeMacro';
 import { DashboardScene } from './DashboardScene';
-import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
 import {
@@ -14,6 +13,7 @@ import {
   getAutoRowsTemplate,
   getTemplateColumnsTemplate,
 } from './layout-auto-grid/AutoGridLayoutManager';
+import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
