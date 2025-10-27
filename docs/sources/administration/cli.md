@@ -19,7 +19,7 @@ weight: 4000
 
 # Administer Grafana with the Grafana server CLI
 
-You can administer your Grafana instance with the Grafana server CLI, a small executable bundled with Grafana server. 
+You can administer your Grafana instance with the Grafana server CLI, a small executable bundled with Grafana server.
 
 The Grafana server CLI has `plugins` and `admin` commands, as well as global options. To list them, run:
 
