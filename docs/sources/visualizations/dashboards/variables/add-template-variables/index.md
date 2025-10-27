@@ -300,6 +300,7 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 _Switch_ variables display a toggle switch with two configurable values representing enabled and disabled states. This variable type is useful when you need to toggle between two specific values in your queries, such as enabling or disabling a feature, switching between different modes, or controlling boolean conditions.
 
 Switch variables are particularly effective for:
+
 - Toggling between different query conditions
 - Enabling or disabling specific filters
 - Switching between different visualization modes
