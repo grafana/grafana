@@ -13,11 +13,11 @@
       "label-resource-group": "Resource Group",
       "label-resource-name": "Resource Name",
       "label-resource-number": "Resource {{resourceNum}}",
-      "label-resource-uri": "Resource URI(s) ",
+      "label-resource-uri": "Resource URI(s)",
       "label-subscription": "Subscription",
       "placeholder-resource-name": "name",
       "tooltip-region": "The code region of the resource. Optional for one resource but mandatory when selecting multiple ones.",
-      "tooltip-resource-uri": "Manually edit the <2>resource uri</2>. Supports the use of multiple template variables (ex: /subscriptions/$subId/resourceGroups/$rg)"
+      "tooltip-resource-uri": "Manually edit the <2>resource uri</2> . Supports the use of multiple template variables (ex: /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Aggregate function",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Basic Logs",
-      "description-basic-logs": "Enabling this feature incurs Azure Monitor per-query costs on dashboard panels that query tables configured for <2>Basic Logs</2>.",
+      "description-basic-logs": "Enabling this feature incurs Azure Monitor per-query costs on dashboard panels that query tables configured for <2>Basic Logs</2> .",
       "label-enable-basic-logs": "Enable Basic Logs"
     },
     "config-editor": {

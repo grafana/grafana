@@ -59,7 +59,7 @@
     "codegen": "rtk-query-codegen-openapi ./scripts/codegen.ts",
     "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=testing,unstable node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json && rimraf ./unstable ./testing",
-    "i18n-extract": "i18next --config src/locales/i18next-parser.config.cjs"
+    "i18n-extract": "i18next-cli extract --sync-primary"
   },
   "devDependencies": {
     "@grafana/test-utils": "workspace:*",
@@ -72,6 +72,7 @@
     "@types/react-dom": "18.3.5",
     "@types/tinycolor2": "^1",
     "i18next": "^25.5.2",
+    "i18next-cli": "1.11.12",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-redux": "^9.2.0",
