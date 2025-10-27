@@ -1,4 +1,11 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { test as base, expect } from '@grafana/plugin-e2e';
+
+const test = base.extend({});
+test.use({
+  featureToggles: {
+    dashboardTemplates: true,
+  },
+});
 
 test.describe(
   'Grafana datasource random walk',

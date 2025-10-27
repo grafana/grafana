@@ -493,7 +493,9 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
             />
           </InlineField>
         </InlineFieldRow>
-        {queryType === GrafanaQueryType.RandomWalk && this.renderRandomWalkQuery()}
+        {queryType === GrafanaQueryType.RandomWalk &&
+          config.featureToggles.dashboardTemplates &&
+          this.renderRandomWalkQuery()}
         {queryType === GrafanaQueryType.LiveMeasurements && this.renderMeasurementsQuery()}
         {queryType === GrafanaQueryType.List && this.renderListPublicFiles()}
         {queryType === GrafanaQueryType.Snapshot && this.renderSnapshotQuery()}
