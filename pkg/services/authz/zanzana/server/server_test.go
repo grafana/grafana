@@ -173,7 +173,7 @@ func setupOpenFGADatabase(t *testing.T, srv *Server, tuples []*openfgav1.TupleKe
 	}
 
 	// Try to delete existing tuples (ignore errors if they don't exist)
-	_, err = srv.openfga.Write(context.Background(), &openfgav1.WriteRequest{
+	srv.openfga.Write(context.Background(), &openfgav1.WriteRequest{
 		StoreId:              storeInf.ID,
 		AuthorizationModelId: storeInf.ModelID,
 		Deletes: &openfgav1.WriteRequestDeletes{
