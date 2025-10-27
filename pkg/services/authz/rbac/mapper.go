@@ -191,8 +191,10 @@ func NewMapperRegistry() MapperRegistry {
 			// Users is a special case. We translate user permissions from id to uid based.
 			"users":           newResourceTranslation("users", "uid", false, true),
 			"serviceaccounts": newResourceTranslation("serviceaccounts", "uid", false, true),
-			// Teams is a special case. We translate user permissions from id to uid based.
+			// Teams is a special case. We translate team permissions from id to uid based.
 			"teams": newResourceTranslation("teams", "uid", false, true),
+			// ExternalGroupMappings is a special case. We translate team permissions from id to uid based.
+			"externalgroupmappings": newResourceTranslation("teams", "uid", false, true),
 			// No need to skip scope on create for roles because we translate `permissions:type:delegate` to `roles:*``
 			"coreroles": translation{
 				resource:  "roles",
