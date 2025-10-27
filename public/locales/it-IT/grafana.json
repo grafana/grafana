@@ -4602,7 +4602,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "Il rendering condizionale non è supportato per il layout della griglia personalizzata. Passa alla griglia automatica per utilizzare il rendering condizionale.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5985,6 +5986,13 @@
       "last-edited": "{{timeAgo}} da <person />",
       "usage-count_one": "Utilizzato su {{count}} dashboard",
       "usage-count_other": "Utilizzato su {{count}} dashboard"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "Impossibile spostare la dashboard",
@@ -7631,7 +7639,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Cancella cartelle",
     "noOptionsMessage-no-folders-found": "Nessuna cartella trovata",
     "select-aria-label": "Filtro cartelle",
     "select-placeholder": "Filtra per cartella"
@@ -12672,6 +12679,7 @@
       "theme-label": "Tema dell'interfaccia",
       "week-start-label": "Inizio settimana"
     },
+    "save": "",
     "theme": {
       "default-label": "Predefinito",
       "experimental": "Sperimentale"
@@ -13073,13 +13081,13 @@
       "placeholder-search-teams": "Cerca team"
     },
     "team-settings": {
-      "description-email": "Questo è facoltativo e viene utilizzato principalmente per impostare l'avatar del profilo del team (tramite il servizio gravatar)",
+      "description-email": "",
       "label-email": "E-mail",
       "label-name": "Nome",
       "label-numerical-identifier": "Identificatore numerico",
       "label-role": "Ruolo",
       "label-team-details": "Dettagli team",
-      "save": "Salva"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "La sincronizzazione dei team semplifica la gestione degli accessi degli utenti in Grafana, aggiornando immediatamente i team e le autorizzazioni di ciascun utente in base alla sua appartenenza al gruppo Single Sign-On, anziché al momento dell'accesso"

@@ -4582,7 +4582,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "自定义网格布局不支持条件渲染。请切换到自动网格以使用条件渲染。",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5963,6 +5964,13 @@
     "library-viz-panel-info": {
       "last-edited": "{{timeAgo}}由 <person />",
       "usage-count_other": "用于 {{count}} 个数据面板"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "移动数据面板失败",
@@ -7608,7 +7616,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "清除文件夹",
     "noOptionsMessage-no-folders-found": "未找到文件夹",
     "select-aria-label": "文件夹筛选",
     "select-placeholder": "按文件夹筛选"
@@ -12618,6 +12625,7 @@
       "theme-label": "UI 主题",
       "week-start-label": "每周开始日"
     },
+    "save": "",
     "theme": {
       "default-label": "默认",
       "experimental": "实验性"
@@ -13018,13 +13026,13 @@
       "placeholder-search-teams": "搜索团队"
     },
     "team-settings": {
-      "description-email": "这是可选项，主要用于设置团队资料头像（通过 gravatar 服务）",
+      "description-email": "",
       "label-email": "电子邮箱",
       "label-name": "名称",
       "label-numerical-identifier": "数字标识符",
       "label-role": "角色",
       "label-team-details": "团队详情",
-      "save": "保存"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "团队同步可根据每个用户的单点登录组成员身份立即更新其 Grafana 团队和权限，而不是在用户登录时更新，从而让您更轻松地管理用户在 Grafana 中的访问权限"
