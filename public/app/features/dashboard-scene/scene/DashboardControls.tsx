@@ -14,7 +14,9 @@ import {
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
   CancelActivationHandler,
+  ScopesVariable,
 } from '@grafana/scenes';
+import { SCOPES_VARIABLE_NAME } from '@grafana/scenes/src/variables/constants';
 import { Box, Stack, useStyles2 } from '@grafana/ui';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
@@ -153,6 +155,22 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered
+
+    // Render variables that should be hidden but still require rendering. This is needed for Scopes, in order to get the react context.
+    const renderAsHiddenVariables = sceneGraph
+      .getVariables(dashboard)
+      .useState()
+      .variables.filter((v) => v.UNSAFE_renderAsHidden);
+    if (renderAsHiddenVariables && renderAsHiddenVariables.length > 0) {
+      return (
+        <Box padding={1}>
+          {renderAsHiddenVariables.map((v) => (
+            <v.Component model={v} key={v.state.key} />
+          ))}
+        </Box>
+      );
+    }
+
     return <Box padding={1} />;
   }
 
