@@ -8,7 +8,6 @@ import (
 var DefaultTags = []string{
 	"osusergo",
 	"timetzdata",
-	"gms_pure_go",
 }
 
 const (
