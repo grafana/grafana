@@ -44,7 +44,7 @@ const (
 	statusSubresource = "status"
 )
 
-func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
+func setup(t *testing.T, srv *Server) *Server {
 	// seed tuples
 	tuples := []*openfgav1.TupleKey{
 		common.NewResourceTuple("user:1", common.RelationGet, dashboardGroup, dashboardResource, "", "1"),
@@ -71,7 +71,7 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 		common.NewTypedResourceTuple("user:16", common.RelationGet, common.TypeServiceAccount, serviceAccountGroup, serviceAccountResource, statusSubresource, "1"),
 	}
 
-	return setupOpenFGADatabase(t, testDB, cfg, tuples)
+	return setupOpenFGADatabase(t, srv, tuples)
 }
 
 func TestMain(m *testing.M) {
@@ -94,27 +94,43 @@ func TestIntegrationServer(t *testing.T) {
 		}
 	}
 
-	srv := setup(t, testStore, cfg)
+	srv := setupOpenFGAServer(t, testStore, cfg)
 	t.Run("test check", func(t *testing.T) {
+		setup(t, srv)
 		testCheck(t, srv)
 	})
 
 	t.Run("test list", func(t *testing.T) {
+		setup(t, srv)
 		testList(t, srv)
 	})
 
 	t.Run("test list streaming", func(t *testing.T) {
+		setup(t, srv)
 		srv.cfg.UseStreamedListObjects = true
 		testList(t, srv)
 		srv.cfg.UseStreamedListObjects = false
 	})
 
 	t.Run("test batch check", func(t *testing.T) {
+		setup(t, srv)
 		testBatchCheck(t, srv)
+	})
+
+	t.Run("test mutate", func(t *testing.T) {
+		testMutate(t, srv)
+	})
+
+	t.Run("test mutate folders", func(t *testing.T) {
+		testMutateFolders(t, srv)
+	})
+
+	t.Run("test mutate resource permissions", func(t *testing.T) {
+		testMutateResourcePermissions(t, srv)
 	})
 }
 
-func setupOpenFGADatabase(t *testing.T, testDB db.DB, cfg *setting.Cfg, tuples []*openfgav1.TupleKey) *Server {
+func setupOpenFGAServer(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	t.Helper()
 
 	store, err := store.NewEmbeddedStore(cfg, testDB, log.NewNopLogger())
@@ -125,11 +141,17 @@ func setupOpenFGADatabase(t *testing.T, testDB db.DB, cfg *setting.Cfg, tuples [
 	srv, err := NewServer(cfg.ZanzanaServer, openfga, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry())
 	require.NoError(t, err)
 
+	return srv
+}
+
+func setupOpenFGADatabase(t *testing.T, srv *Server, tuples []*openfgav1.TupleKey) *Server {
+	t.Helper()
+
 	storeInf, err := srv.getStoreInfo(context.Background(), namespace)
 	require.NoError(t, err)
 
 	// Clean up any existing store
-	_, err = openfga.DeleteStore(context.Background(), &openfgav1.DeleteStoreRequest{
+	_, err = srv.openfga.DeleteStore(context.Background(), &openfgav1.DeleteStoreRequest{
 		StoreId: storeInf.ID,
 	})
 	require.NoError(t, err)
@@ -151,7 +173,7 @@ func setupOpenFGADatabase(t *testing.T, testDB db.DB, cfg *setting.Cfg, tuples [
 	}
 
 	// Try to delete existing tuples (ignore errors if they don't exist)
-	_, err = openfga.Write(context.Background(), &openfgav1.WriteRequest{
+	_, err = srv.openfga.Write(context.Background(), &openfgav1.WriteRequest{
 		StoreId:              storeInf.ID,
 		AuthorizationModelId: storeInf.ModelID,
 		Deletes: &openfgav1.WriteRequestDeletes{
@@ -161,7 +183,7 @@ func setupOpenFGADatabase(t *testing.T, testDB db.DB, cfg *setting.Cfg, tuples [
 	})
 
 	// Now write the new tuples
-	_, err = openfga.Write(context.Background(), &openfgav1.WriteRequest{
+	_, err = srv.openfga.Write(context.Background(), &openfgav1.WriteRequest{
 		StoreId:              storeInf.ID,
 		AuthorizationModelId: storeInf.ModelID,
 		Writes:               writes,

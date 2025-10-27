@@ -6,16 +6,11 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func setupMutateFolders(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
+func setupMutateFolders(t *testing.T, srv *Server) *Server {
 	t.Helper()
 
 	// seed tuples
@@ -28,26 +23,11 @@ func setupMutateFolders(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 		common.NewFolderParentTuple("broken", "bar"),
 	}
 
-	return setupOpenFGADatabase(t, testDB, cfg, tuples)
+	return setupOpenFGADatabase(t, srv, tuples)
 }
 
-func TestIntegrationServerMutateFolders(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	// Create a test-specific config to avoid migration conflicts
-	cfg := setting.NewCfg()
-
-	// Use a test-specific database to avoid migration conflicts
-	testStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
-
-	// Hack to skip these tests on mysql 5.7
-	if testStore.GetDialect().DriverName() == migrator.MySQL {
-		if supported, err := testStore.RecursiveQueriesAreSupported(); !supported || err != nil {
-			t.Skip("skipping integration test")
-		}
-	}
-
-	srv := setupMutateFolders(t, testStore, cfg)
+func testMutateFolders(t *testing.T, srv *Server) {
+	setupMutateFolders(t, srv)
 
 	t.Run("should create new folder parent relation", func(t *testing.T) {
 		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
