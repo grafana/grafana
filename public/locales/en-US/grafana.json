@@ -2043,8 +2043,8 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Learn about problems in your systems moments after they occur",
-        "title": "Triage"
+        "subtitle": "See what is currently alerting and explore historical data to investigate current or past issues.",
+        "title": "Alerts"
       }
     },
     "panel-alert-tab-content": {
@@ -9199,7 +9199,6 @@
     "name-line-width": "Line width",
     "name-stacking": "Stacking"
   },
-  "inline-token-warning-badge-tooltip": "The method to save the token is to re-enter it in the repository settings.",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Loading",
@@ -11654,7 +11653,6 @@
       "unsupported-repository-type": "Unsupported repository type: {{repositoryType}}"
     },
     "inline-secure-values-warning": "You need to save your access tokens again due to a system update",
-    "inline-token-warning-badge-text": "Token needs to be saved again",
     "job-status": {
       "label-view-details": "View details",
       "loading-finished-job": "Loading finished job...",
@@ -11830,6 +11828,17 @@
       "label-completed-step": "Completed step",
       "label-current-step": "Current step",
       "label-pending-step": "Pending step"
+    },
+    "status-badge": {
+      "automatic-pulling-disabled": "Automatic pulling disabled",
+      "deleting": "Deleting",
+      "error": "Error",
+      "pending": "Pending",
+      "pulling": "Pulling",
+      "unknown": "Unknown",
+      "up-to-date": "Up-to-date",
+      "waiting-for-health-check": "Waiting for health check to run",
+      "warning": "Warning"
     },
     "success-title-default": "Success",
     "sync-job": {
