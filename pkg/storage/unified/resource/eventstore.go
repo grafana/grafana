@@ -256,13 +256,12 @@ func (n *eventStore) CleanupOldEvents(ctx context.Context, cutoff time.Time) (in
 // batchDelete deletes multiple events in batches.
 // Keys are processed in batches (default 50).
 func (n *eventStore) batchDelete(ctx context.Context, keys []string) error {
-	// Process keys in batches
-	for i := 0; i < len(keys); i += deleteEventBatchSize {
-		end := i + deleteEventBatchSize
-		if end > len(keys) {
-			end = len(keys)
+	for len(keys) > 0 {
+		batch := keys
+		if len(batch) > deleteEventBatchSize {
+			batch = batch[:deleteEventBatchSize]
 		}
-		batch := keys[i:end]
+		keys = keys[len(batch):]
 
 		if err := n.kv.BatchDelete(ctx, eventsSection, batch); err != nil {
 			return err
