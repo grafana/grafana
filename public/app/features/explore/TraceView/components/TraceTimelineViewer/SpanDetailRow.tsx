@@ -168,6 +168,7 @@ export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
               addHoverIndentGuideId={addHoverIndentGuideId}
               removeHoverIndentGuideId={removeHoverIndentGuideId}
               visibleSpanIds={visibleSpanIds}
+              borderBottomColor={`${color}CF`}
             />
           </div>
           <div className={styles.detailWrapper}>

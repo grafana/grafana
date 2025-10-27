@@ -221,8 +221,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       outline: 'none',
       overflowY: 'hidden',
       overflowX: 'auto',
-      paddingLeft: '4px',
-      paddingRight: '0.25em',
+      padding: '4px',
       position: 'relative',
       '-ms-overflow-style': 'none',
       scrollbarWidth: 'none',
@@ -236,9 +235,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
         color: autoColor(theme, '#000'),
       },
       textAlign: 'left',
-      background: 'transparent',
+      background: theme.colors.background.secondary,
       border: 'none',
-      borderBottomWidth: '1px',
+      borderBottomWidth: '1.5px',
       borderBottomStyle: 'solid',
     }),
     nameDetailExpanded: css({
@@ -442,6 +441,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               addHoverIndentGuideId={addHoverIndentGuideId}
               removeHoverIndentGuideId={removeHoverIndentGuideId}
               visibleSpanIds={visibleSpanIds}
+              borderBottomColor={`${color}CF`}
             />
             <button
               type="button"
@@ -450,7 +450,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               title={labelDetail}
               onClick={this._detailToggle}
               role="switch"
-              style={{ background: `${color}10`, borderBottomColor: `${color}CF` }}
+              style={{ borderBottomColor: `${color}CF` }}
               tabIndex={0}
             >
               {showErrorIcon && (
