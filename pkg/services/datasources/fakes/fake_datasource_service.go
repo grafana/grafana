@@ -30,6 +30,15 @@ func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *dataso
 	return nil, datasources.ErrDataSourceNotFound
 }
 
+func (s *FakeDataSourceService) GetDataSourceWithType(ctx context.Context, uid string, orgID int64, dsType string) (*datasources.DataSource, error) {
+	for _, dataSource := range s.DataSources {
+		if uid == dataSource.UID && orgID == dataSource.OrgID && dsType == dataSource.Type {
+			return dataSource, nil
+		}
+	}
+	return nil, datasources.ErrDataSourceNotFound
+}
+
 func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {
 	var dataSources []*datasources.DataSource
 	for _, datasource := range s.DataSources {

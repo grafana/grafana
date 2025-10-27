@@ -92,8 +92,6 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 }
 
 func (ss *SqlStore) GetDataSourceWithType(ctx context.Context, uid string, orgID int64, dsType string) (*datasources.DataSource, error) {
-	metrics.MDBDataSourceQueryByID.Inc()
-
 	var (
 		dataSource *datasources.DataSource
 		err        error
@@ -116,7 +114,7 @@ func (ss *SqlStore) getDataSourceWithType(_ context.Context, uid string, orgID i
 		ss.logger.Error("Failed getting data source", "err", err, "uid", uid, "orgId", orgID, "dsType", dsType)
 		return nil, err
 	} else if !has {
-		ss.logger.Error("Failed getting data source", "err", err, "uid", uid, "orgId", orgID, "dsType", dsType)
+		ss.logger.Debug("Data source not found", "uid", uid, "orgId", orgID, "dsType", dsType)
 		return nil, datasources.ErrDataSourceNotFound
 	}
 

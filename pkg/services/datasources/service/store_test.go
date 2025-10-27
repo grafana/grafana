@@ -410,7 +410,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 	t.Run("GetDataSourceWithType", func(t *testing.T) {
 		t.Run("Only returns datasource of specified type", func(t *testing.T) {
 			db := db.InitTestDB(t)
-			ss := SqlStore{db: db}
+			ss := SqlStore{db: db, logger: log.NewNopLogger()}
 
 			ds, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 				OrgID:    10,
@@ -438,9 +438,9 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, ds.UID, dataSource.UID)
 
-			dataSource2, err := ss.GetDataSourceWithType(context.Background(), ds.UID, ds.OrgID, datasources.DS_ES)
-			require.NoError(t, err)
-			require.Equal(t, dataSource2.UID, "")
+			_, err = ss.GetDataSourceWithType(context.Background(), ds2.UID, ds2.OrgID, datasources.DS_ES)
+			require.Error(t, err)
+			require.IsType(t, datasources.ErrDataSourceNotFound, err)
 		})
 
 	})
