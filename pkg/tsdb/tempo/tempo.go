@@ -127,7 +127,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			}
 
 		default:
-			return nil, fmt.Errorf("unsupported query type: '%s' for query with refID '%s'", q.QueryType, q.RefID)
+			return nil, backend.DownstreamErrorf("unsupported query type: '%s' for query with refID '%s'", q.QueryType, q.RefID)
 		}
 
 		if res != nil {

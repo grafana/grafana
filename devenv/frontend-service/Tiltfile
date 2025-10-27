@@ -44,7 +44,14 @@ local_resource(
 )
 
 # --- Docker Compose
-docker_compose("./docker-compose.yaml")
+# define service overrides needed for running with enterprise
+# this mounts the dev license into the grafana-api service
+base_config = read_yaml('./docker-compose.yaml')
+base_volumes = base_config['services']['grafana-api']['volumes']
+enterprise_overrides = {'services':{'grafana-api': {'volumes': base_volumes + ['../../data/license.jwt:/grafana/data/license.jwt'] }}}
+
+# check if license exists and apply enterprise overrides if so
+docker_compose(["./docker-compose.yaml", encode_yaml(enterprise_overrides)]) if os.path.exists("../../data/license.jwt") else docker_compose("./docker-compose.yaml")
 dc_resource("proxy",
   resource_deps=["grafana-api", "frontend-service"],
   labels=["services"]
@@ -66,7 +73,7 @@ dc_resource("postgres", labels=["misc"])
 dc_resource("tempo-init", labels=["misc"])
 
 # paths in tilt files are confusing....
-# - if tilt is dealing the the path, it is relative to the Tiltfile
+# - if tilt is dealing with the path, it is relative to the Tiltfile
 # - if docker is dealing with the path, it is relative to the context
 docker_build('grafana-fs-dev',
   # Set the docker context to the root of the repo

@@ -3694,7 +3694,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "Alphabetically (A–Z)",
-        "alphabetically-za": "Alphabetically (Z–A)"
+        "alphabetically-za": "Alphabetically (Z–A)",
+        "deleted-newest": "Deleted (newest first)",
+        "deleted-oldest": "Deleted (oldest first)"
       }
     }
   },
@@ -4602,7 +4604,8 @@
       },
       "editor": {
         "info": "Set rules to control {{type}} visibility by matching any or all rules.",
-        "not-supported-for-custom-grid": "Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.",
+        "learn-more": "Learn more",
+        "not-supported-for-custom-grid": "Show/hide rules aren't supported for panels in the Custom panel layout. Change the panel layout to Auto grid to enable this feature.",
         "unsupported-object-type": "Conditional rendering not supported for this item type"
       },
       "overlay": {
@@ -5986,6 +5989,13 @@
       "usage-count_one": "Used on {{count}} dashboards",
       "usage-count_other": "Used on {{count}} dashboards"
     },
+    "managed-badge": {
+      "kubectl": "Managed by: Kubectl",
+      "plugin": "Managed by: Plugin {{id}}",
+      "provisioned": "Provisioned",
+      "repository": "Managed by: Repository {{title}}",
+      "terraform": "Managed by: Terraform"
+    },
     "move-provisioned-dashboard-form": {
       "api-error": "Failed to move dashboard",
       "cancel-action": "Cancel",
@@ -7156,9 +7166,6 @@
       "title-failed-sample-query": "Failed to load logs sample for this query",
       "tooltip": "Show log lines that contributed to visualized metrics"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "{{labelName}} appears in {{percentage}}% of log lines"
-    },
     "logs-table-empty-fields": {
       "no-fields": "No fields"
     },
@@ -7166,10 +7173,6 @@
       "fields": "Fields",
       "reset": "Reset",
       "selected-fields": "Selected fields"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "Drag and drop icon",
-      "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Select query by name",
@@ -7640,7 +7643,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Clear folders",
     "noOptionsMessage-no-folders-found": "No folders found",
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
@@ -8008,6 +8010,52 @@
     "select-group": "Select group"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "Day before yesterday",
+          "previousFiscalQuarter": "Previous fiscal quarter",
+          "previousFiscalYear": "Previous fiscal year",
+          "previousMonth": "Previous month",
+          "previousWeek": "Previous week",
+          "previousYear": "Previous year",
+          "thisDayLastWeek": "This day last week",
+          "thisFiscalQuarter": "This fiscal quarter",
+          "thisFiscalQuarterSoFar": "This fiscal quarter so far",
+          "thisFiscalYear": "This fiscal year",
+          "thisFiscalYearSoFar": "This fiscal year so far",
+          "thisMonth": "This month",
+          "thisMonthSoFar": "This month so far",
+          "thisWeek": "This week",
+          "thisWeekSoFar": "This week so far",
+          "thisYear": "This year",
+          "thisYearSoFar": "This year so far",
+          "today": "Today",
+          "todaySoFar": "Today so far",
+          "yesterday": "Yesterday"
+        },
+        "lastNDays_one": "Last {{count}} day",
+        "lastNDays_other": "Last {{count}} days",
+        "lastNHours_one": "Last {{count}} hour",
+        "lastNHours_other": "Last {{count}} hours",
+        "lastNMinutes_one": "Last {{count}} minute",
+        "lastNMinutes_other": "Last {{count}} minutes",
+        "lastNMonths_one": "Last {{count}} month",
+        "lastNMonths_other": "Last {{count}} months",
+        "lastNYears_one": "Last {{count}} year",
+        "lastNYears_other": "Last {{count}} years",
+        "nextNDays_one": "Next {{count}} day",
+        "nextNDays_other": "Next {{count}} days",
+        "nextNHours_one": "Next {{count}} hour",
+        "nextNHours_other": "Next {{count}} hours",
+        "nextNMinutes_one": "Next {{count}} minute",
+        "nextNMinutes_other": "Next {{count}} minutes",
+        "nextNMonths_one": "Next {{count}} month",
+        "nextNMonths_other": "Next {{count}} months",
+        "nextNYears_one": "Next {{count}} year",
+        "nextNYears_other": "Next {{count}} years"
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9543,6 +9591,15 @@
     "description-enable-logs-highlighting": "Use a predefined coloring scheme to highlight relevant parts of the log lines",
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
     "description-show-log-attributes": "Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "Drag and drop icon",
+      "clear-button": "Clear",
+      "collapse": "Collapse sidebar",
+      "expand": "Expand sidebar",
+      "label-title": "{{fieldName}} appears in {{percentage}}% of log lines",
+      "placeholder-search-fields-by-name": "Search fields by name",
+      "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
+    },
     "fields": {
       "type": {
         "loki": {
@@ -11764,6 +11821,11 @@
       "next": "Next",
       "previous": "Previous"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": "Progress Bar"
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Completed step",
       "label-current-step": "Current step",
@@ -12622,6 +12684,7 @@
       "theme-label": "Interface theme",
       "week-start-label": "Week start"
     },
+    "save": "Save preferences",
     "theme": {
       "default-label": "Default",
       "experimental": "Experimental"
@@ -13023,13 +13086,13 @@
       "placeholder-search-teams": "Search teams"
     },
     "team-settings": {
-      "description-email": "This is optional and is primarily used to set the team profile avatar (via gravatar service)",
+      "description-email": "This is optional and is primarily used to set the team profile avatar (via the Gravatar service)",
       "label-email": "Email",
       "label-name": "Name",
       "label-numerical-identifier": "Numerical identifier",
       "label-role": "Role",
       "label-team-details": "Team details",
-      "save": "Save"
+      "save": "Save team details"
     },
     "team-sync-upgrade-content": {
       "description": "Team Sync makes it easier for you to manage users' access in Grafana, by immediately updating each user's Grafana teams and permissions based on their single sign-on group membership, instead of when users sign in"
