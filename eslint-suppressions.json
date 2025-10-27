@@ -3183,14 +3183,6 @@
       "count": 1
     }
   },
-  "public/app/features/logs/utils.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "no-restricted-syntax": {
-      "count": 6
-    }
-  },
   "public/app/features/manage-dashboards/DashboardImportPage.tsx": {
     "no-restricted-syntax": {
       "count": 2
