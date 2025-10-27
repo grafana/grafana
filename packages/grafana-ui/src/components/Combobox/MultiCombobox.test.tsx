@@ -503,6 +503,7 @@ describe('MultiCombobox', () => {
     });
 
     it('shows loading message', async () => {
+      const loadingMessage = 'Loading options...';
       const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
       render(<MultiCombobox options={asyncOptions} value={['Option 1']} onChange={onChangeHandler} />);
 
@@ -511,11 +512,11 @@ describe('MultiCombobox', () => {
 
       await act(async () => jest.advanceTimersByTime(0));
 
-      expect(await screen.findByText('Loading options...')).toBeInTheDocument();
+      expect(await screen.findByText(loadingMessage)).toBeInTheDocument();
 
       await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
-      expect(screen.queryByText('Loading options...')).not.toBeInTheDocument();
+      expect(screen.queryByText(loadingMessage)).not.toBeInTheDocument();
     });
   });
 });
