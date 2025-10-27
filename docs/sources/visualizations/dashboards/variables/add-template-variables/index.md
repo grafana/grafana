@@ -316,10 +316,9 @@ Switch variables are particularly effective for:
    - **Custom** - Allows you to define custom values for both enabled and disabled states
 
 1. If you selected **Custom** in the previous step, configure the custom values:
-   - **Enabled value** - Enter the value that represents the enabled or "on" state
-   - **Disabled value** - Enter the value that represents the disabled or "off" state
+   - **Enabled value** - Enter the value that represents the enabled state (e.g. "on")
+   - **Disabled value** - Enter the value that represents the disabled state (e.g. "off")
 
-1. In the **Preview of values** section, Grafana displays the current switch state and available values. Review them to ensure they match what you expect.
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 
