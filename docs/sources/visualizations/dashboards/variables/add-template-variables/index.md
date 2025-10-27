@@ -103,6 +103,7 @@ The following table lists the types of variables shipped with Grafana.
 | Constant          | Define a hidden constant. [Add a constant variable](#add-a-constant-variable).                                                                                                          |
 | Data source       | Quickly change the data source for an entire dashboard. [Add a data source variable](#add-a-data-source-variable).                                                                      |
 | Interval          | Interval variables represent time spans. [Add an interval variable](#add-an-interval-variable).                                                                                         |
+| Switch            | Display a toggle switch with two configurable values for enabled and disabled states. [Add a switch variable](#add-a-switch-variable).                                                  |
 | Ad hoc filters    | Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only). [Add ad hoc filters](#add-ad-hoc-filters). |
 | Global variables  | Built-in variables that can be used in expressions in the query editor. Refer to [Global variables](#global-variables).                                                                 |
 | Chained variables | Variable queries can contain other variables. Refer to [Chained variables](#chained-variables).                                                                                         |
@@ -134,6 +135,7 @@ To create a variable, follow these steps:
    - [Constant](#add-a-constant-variable)
    - [Data source](#add-a-data-source-variable)
    - [Interval](#add-an-interval-variable)
+   - [Switch](#add-a-switch-variable)
    - [Ad hoc filters](#add-ad-hoc-filters)
 
 <!-- vale Grafana.Spelling = YES -->
@@ -291,6 +293,53 @@ The following example shows a more complex Graphite example, from the [Graphite 
 
 ```
 groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5), '$interval', 'sum', false), 2, 'sum')
+```
+
+## Add a switch variable
+
+_Switch_ variables display a toggle switch with two configurable values representing enabled and disabled states. This variable type is useful when you need to toggle between two specific values in your queries, such as enabling or disabling a feature, switching between different modes, or controlling boolean conditions.
+
+Switch variables are particularly effective for:
+- Toggling between different query conditions
+- Enabling or disabling specific filters
+- Switching between different visualization modes
+- Controlling boolean parameters in your data sources
+
+1. [Enter general options](#enter-general-options).
+1. Under the **Switch options** section of the page, configure the switch values:
+
+   In the **Value pair type** drop-down list, select one of the following predefined options or choose **Custom** to define your own values:
+   - **True / False** - Uses boolean values `true` and `false`
+   - **1 / 0** - Uses numeric values `1` and `0`
+   - **Yes / No** - Uses string values `yes` and `no`
+   - **Custom** - Allows you to define custom values for both enabled and disabled states
+
+1. If you selected **Custom** in the previous step, configure the custom values:
+   - **Enabled value** - Enter the value that represents the enabled or "on" state
+   - **Disabled value** - Enter the value that represents the disabled or "off" state
+
+1. In the **Preview of values** section, Grafana displays the current switch state and available values. Review them to ensure they match what you expect.
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and **Exit edit**.
+
+### Switch variable examples
+
+The following example shows a switch variable `$debug_mode` used in a Prometheus query to conditionally include debug labels:
+
+```
+up{job="my-service"} and ($debug_mode == "true" or on() vector(0))
+```
+
+The following example shows a switch variable `$show_errors` used to filter log entries:
+
+```
+{job="application"} |= ($show_errors == "1" ? "ERROR" : "")
+```
+
+You can also use switch variables in panel titles and other dashboard elements:
+
+```
+{{#if debug_mode}}Debug Mode: {{/if}}Application Metrics
 ```
 
 <!-- vale Grafana.WordList = NO -->
