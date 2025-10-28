@@ -7,6 +7,7 @@ import { GeomapPanel } from './GeomapPanel';
 import { LayersEditor } from './editor/LayersEditor';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { getLayerEditor } from './editor/layerEditor';
+import { geomapLayerRegistry } from './layers/registry';
 import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
 import { defaultMapViewConfig, Options, TooltipMode, GeomapInstanceState } from './types';
 
@@ -105,6 +106,17 @@ export const plugin = new PanelPlugin<Options>(GeomapPanel)
 
     // The controls section
     category = [t('geomap.category-map-controls', 'Map controls')];
+
+    // Check if any layer requires attribution
+    const requiresAttribution = state?.layers?.some((layerState) => {
+      const layerType = layerState.options.type;
+      if (layerType) {
+        const layerRegistryItem = geomapLayerRegistry.getIfExists(layerType);
+        return layerRegistryItem?.requiresAttribution === true;
+      }
+      return false;
+    });
+
     builder
       .addBooleanSwitch({
         category,
@@ -123,11 +135,15 @@ export const plugin = new PanelPlugin<Options>(GeomapPanel)
       .addBooleanSwitch({
         category,
         path: 'controls.showAttribution',
-        name: t('geomap.name-show-attribution', 'Show attribution'),
-        description: t(
-          'geomap.description-show-attribution',
-          'Show the map source attribution info in the lower right'
-        ),
+        name: requiresAttribution
+          ? t('geomap.name-show-optional-attribution', 'Show optional attribution')
+          : t('geomap.name-show-attribution', 'Show attribution'),
+        description: requiresAttribution
+          ? t(
+              'geomap.description-show-optional-attribution',
+              'Required attributions are always shown. Toggle this to also show attribution from other layers at your discretion.'
+            )
+          : t('geomap.description-show-attribution', 'Show the map source attribution info in the lower right'),
         defaultValue: true,
       })
       .addBooleanSwitch({

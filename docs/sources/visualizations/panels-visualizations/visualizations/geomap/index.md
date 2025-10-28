@@ -473,6 +473,10 @@ A map from a collaborative free geographic world database.
 - **Opacity** from 0 (transparent) to 1 (opaque)
 - **Display tooltip** - allows you to toggle tooltips for the layer.
 
+{{< admonition type="note" >}}
+OpenStreetMap requires attribution by license. When you use this layer, attribution automatically displays in the map controls and cannot be hidden.
+{{< /admonition >}}
+
 [About Open Street Map](https://www.openstreetmap.org/about)
 
 #### CARTO basemap layer
@@ -488,6 +492,10 @@ A CARTO layer is from CARTO Raster basemaps.
 - **Show labels** shows the Country details on top of the map.
 - **Opacity** from 0 (transparent) to 1 (opaque)
 - **Display tooltip** - allows you to toggle tooltips for the layer.
+
+{{< admonition type="note" >}}
+CARTO requires attribution by license. When you use this layer, attribution automatically displays in the map controls and cannot be hidden.
+{{< /admonition >}}
 
 [About CARTO](https://carto.com/about-us/)
 
@@ -653,6 +661,10 @@ Enables the mouse wheel to be used for zooming in or out.
 #### Show attribution
 
 Displays attribution for basemap layers.
+
+{{< admonition type="note" >}}
+Attribution is required by license for certain map layers, including OpenStreetMap and CARTO. When you use these layers, their attribution automatically displays and cannot be hidden. The toggle becomes **Show optional attribution** and controls whether attribution from other layers is also displayed.
+{{< /admonition >}}
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-attribution-9-1-0.png" max-width="400px" alt="Geomap panel attribution" >}}
 

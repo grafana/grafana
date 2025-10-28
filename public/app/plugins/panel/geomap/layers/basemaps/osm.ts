@@ -9,6 +9,7 @@ export const standard: MapLayerRegistryItem = {
   name: 'Open Street Map',
   description: 'Add map from a collaborative free geographic world database',
   isBaseMap: true,
+  requiresAttribution: true,
 
   /**
    * Function that configures transformation and returns a transformer
