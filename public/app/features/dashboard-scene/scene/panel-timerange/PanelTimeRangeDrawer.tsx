@@ -1,5 +1,6 @@
 import { FeatureState } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Box, Button, Combobox, Drawer, FeatureBadge, Field, Label, Stack, Switch } from '@grafana/ui';
 
@@ -156,31 +157,33 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
               />
             </Field>
           )}
-          <Field
-            noMargin
-            label={
-              <Stack alignItems={'center'} justifyContent={'space-between'}>
-                <Label
-                  description={t(
-                    'dashboard.panel.time-range-settings.time-window-compare-description',
-                    'Query and overlay data from a different time period'
-                  )}
-                >
-                  <Trans i18nKey="dashboard.panel.time-range-settings.time-window-compare">
-                    Time window comparison
-                  </Trans>
-                </Label>
-                <FeatureBadge featureState={FeatureState.new} />
-              </Stack>
-            }
-          >
-            <Combobox
-              options={DEFAULT_COMPARE_OPTIONS}
-              value={compareWith ?? ''}
-              onChange={(x) => model.setState({ compareWith: x.value })}
-            />
-          </Field>
-
+          {config.featureToggles.timeComparison && (
+            <Field
+              noMargin
+              label={
+                <Stack alignItems={'center'} justifyContent={'space-between'}>
+                  <Label
+                    description={t(
+                      'dashboard.panel.time-range-settings.time-window-compare-description',
+                      'Query and overlay data from a different time period'
+                    )}
+                  >
+                    <Trans i18nKey="dashboard.panel.time-range-settings.time-window-compare">
+                      Time window comparison
+                    </Trans>
+                  </Label>
+                  <FeatureBadge featureState={FeatureState.new} />
+                </Stack>
+              }
+            >
+              <Combobox
+                options={DEFAULT_COMPARE_OPTIONS}
+                createCustomValue={true}
+                value={compareWith ?? ''}
+                onChange={(x) => model.setState({ compareWith: x.value })}
+              />
+            </Field>
+          )}
           <Box paddingTop={3}>
             <Stack>
               <Button variant="secondary" onClick={model.onClose}>
