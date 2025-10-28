@@ -36,17 +36,17 @@ const jsonGrammar: Grammar = {
 
 export const generateLogGrammar = (log: LogListModel) => {
   const labels = Object.keys(log.labels).concat(log.fields.map((field) => field.keys[0]));
-  const logGrammar: Grammar = {
+  const labelGrammar: Grammar = {
     'log-token-label': new RegExp(`\\b(${labels.join('|')})(?:[=:]{1})\\b`, 'g'),
   };
   if (log.isJSON) {
     return {
-      ...logGrammar,
+      ...labelGrammar,
       ...jsonGrammar,
     };
   }
   return {
-    ...logGrammar,
+    ...labelGrammar,
     ...tokensGrammar,
     ...logsGrammar,
   };
