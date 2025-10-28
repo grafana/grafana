@@ -85,9 +85,9 @@
         "tooltip-classic-query": "Prometheus変数クエリエディターの元の実装。これらのドキュメントに記載されているように、正しいクエリタイプとパラメーターを含む文字列を入力してください。例: {{exampleQuery}}。",
         "tooltip-label": "メトリックが指定されていない限り、すべてのメトリックのラベル名に対するラベル値のリストを返します。",
         "tooltip-metric-regex": "ラベル名のリストを返します。オプションで、指定されたメトリック正規表現でフィルタリングすることも可能です。",
-        "tooltip-query": "クエリのPrometheusクエリ結果のリストを返します。これには、Prometheus関数を含めることもできます。例: {{exampleQuery}}。",
+        "tooltip-query": "",
         "tooltip-query-type": "Prometheusデータソースプラグインは、テンプレート変数に以下のクエリタイプを入力します。",
-        "tooltip-series-query": "ラベル付きメトリック、メトリックのみ、またはラベルのみを入力します。例: {{example1}}、{{example2}}、または{{example3}}。入力されたデータに関連する時系列のリストを返します。"
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "セレクター",
@@ -175,16 +175,16 @@
         "label-scrape-interval": "スクレイプ間隔",
         "label-series-limit": "系列制限",
         "label-use-series-endpoint": "系列エンドポイントを使用",
-        "more-info": "データソースでのPrometheusタイプとバージョンの設定の詳細については、<2>プロビジョニングドキュメント</2>をご覧ください。",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "例: {{example}}",
         "title-interval-behaviour": "間隔の動作",
         "title-other": "その他",
         "title-performance": "パフォーマンス",
         "title-query-editor": "クエリエディター",
         "tooltip-cache-level": "エディタークエリのブラウザーキャッシュレベルを設定します。高カーディナリティデータソースには、より高いキャッシュ設定を推奨します。",
-        "tooltip-custom-query-parameters": "PrometheusクエリURLにカスタムパラメーターを追加します。例: {{example1}}、{{example2}}、{{example3}}、または{{example4}}。複数のパラメーターは{{concatenationChar}}で連結する必要があります。",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "このデータソースのすべてのユーザーにデフォルトエディターオプションを設定します。",
-        "tooltip-disable-metrics-lookup": "このオプションをオンにすると、クエリフィールドのオートコンプリートでメトリック選択とメトリック/ラベルサポートが無効になります。これは、大規模なPrometheusインスタンスをご利用でパフォーマンスの問題がある場合に役立ちます。",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "この機能は記録ルールを無効にします。ダッシュボードのパフォーマンスを向上させるには、この機能をオンにしてください",
         "tooltip-http-method": "PrometheusデータソースをクエリするにはPOSTまたはGET HTTPメソッドのいずれかを使用できます。POSTメソッドだと、より大きなクエリを実行できるため、推奨される方法です。Prometheusのバージョンが2.1より古い場合、またはネットワークでPOSTリクエストが制限されている場合は、これをGETに変更してください。",
         "tooltip-incremental-querying-beta": "この機能は相対クエリのデフォルト動作が変更され、常にPrometheusインスタンスから新しいデータをリクエストする代わりに、クエリ結果をキャッシュして新しいレコードのみをリクエストするようになります。データベースとネットワークの負荷を軽減するには、これをオンにしてください。",
@@ -479,7 +479,7 @@
         "aria-label-selector": "セレクター"
       },
       "results-table": {
-        "content-descriptive-type": "{{descriptiveType}}を作成する際、Prometheusはタイプカウンターで複数の系列を公開します。",
+        "content-descriptive-type": "",
         "description": "説明",
         "message-expand-label-filters": "メトリックが見つかりません。ラベルフィルターを拡張してみてください。",
         "message-expand-search": "メトリックが見つかりません。検索とフィルターを拡張してみてください。",
