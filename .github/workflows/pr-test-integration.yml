@@ -161,7 +161,7 @@ jobs:
           if [ ${#PROFILE_PACKAGES[@]} -gt 0 ]; then
             echo "📊 Starting profiled test runs..."
             mkdir -p test-profiles
-            PARALLEL_RUNS=2  # Reduced to 2 to prevent runner resource exhaustion
+            PARALLEL_RUNS=2
             ANY_FAILED=0
             ALL_TEST_PIDS=()  # Track ALL background test PIDs globally
 
@@ -283,7 +283,9 @@ jobs:
         if: success() || failure()
         id: artifact-name
         run: |
-          echo "shard=${${{ matrix.shard }}//\//-}" >> "$GITHUB_OUTPUT"
+          SHARD_VALUE="${{ matrix.shard }}"
+          SHARD_SAFE="${SHARD_VALUE//\//-}"
+          echo "shard=$SHARD_SAFE" >> "$GITHUB_OUTPUT"
       - name: Output test profiles and traces
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: success() || failure()
