@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -322,6 +321,36 @@ func TestKvStorageBackend_ReadResource_DeletedResource(t *testing.T) {
 	require.Nil(t, response.Error, "ReadResource should succeed for specific version before deletion")
 	require.Equal(t, rv1, response.ResourceVersion)
 	require.Equal(t, objectToJSONBytes(t, testObj), response.Value)
+}
+
+func TestKvStorageBackend_ReadResource_TooHighResourceVersion(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	// First, create a resource
+	_, rv := createAndWriteTestObject(t, backend)
+
+	// Try to read with a resource version that's way too high
+	readReq := &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "test-resource",
+		},
+		ResourceVersion: rv + 1000000000000, // Way in the future
+	}
+
+	response := backend.ReadResource(ctx, readReq)
+	require.NotNil(t, response.Error, "ReadResource should return error for too high resource version")
+	require.Equal(t, int32(504), response.Error.Code) // http.StatusGatewayTimeout
+	require.Equal(t, "Timeout", response.Error.Reason)
+	require.Equal(t, "ResourceVersion is larger than max", response.Error.Message)
+	require.NotNil(t, response.Error.Details)
+	require.Len(t, response.Error.Details.Causes, 1)
+	require.Equal(t, "ResourceVersionTooLarge", response.Error.Details.Causes[0].Reason)
+	require.Contains(t, response.Error.Details.Causes[0].Message, "requested:")
+	require.Contains(t, response.Error.Details.Causes[0].Message, "current")
 }
 
 func TestKvStorageBackend_ListIterator_Success(t *testing.T) {
@@ -734,24 +763,10 @@ func randomStringGenerator() func() string {
 
 // creates 2 hour old snowflake for testing
 func generateOldSnowflake(t *testing.T) int64 {
-	// Generate a current snowflake first
-	node, err := snowflake.NewNode(1)
-	require.NoError(t, err)
-	currentSnowflake := node.Generate().Int64()
-
-	// Extract its timestamp component by shifting right
-	currentTimestamp := currentSnowflake >> 22
-
-	// Subtract 2 hours (in milliseconds) from the timestamp
-	twoHoursMs := int64(2 * time.Hour / time.Millisecond)
-	oldTimestamp := currentTimestamp - twoHoursMs
-
-	// Reconstruct snowflake: [timestamp:41][node:10][sequence:12]
-	// Keep the original node and sequence bits
-	nodeAndSequence := currentSnowflake & 0x3FFFFF // Bottom 22 bits (10 node + 12 sequence)
-	snowflakeID := (oldTimestamp << 22) | nodeAndSequence
-
-	return snowflakeID
+	// Generate a snowflake for 2 hours ago using the snowflakeFromTime utility
+	// which properly handles the epoch
+	twoHoursAgo := time.Now().Add(-2 * time.Hour)
+	return snowflakeFromTime(twoHoursAgo)
 }
 
 // seedBackend seeds the kvstore with data and return the expected result for ListModifiedSince calls

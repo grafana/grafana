@@ -671,11 +671,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/FileDropzone/FileDropzone.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/FormField/FormField.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -1604,11 +1599,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/contact-points/utils.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/create-folder/CreateNewFolder.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -1725,11 +1715,6 @@
   "public/app/features/alerting/unified/components/rule-editor/CloudEvaluationBehavior.tsx": {
     "no-restricted-syntax": {
       "count": 2
-    }
-  },
-  "public/app/features/alerting/unified/components/rule-editor/DashboardPicker.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/ExpressionEditor.tsx": {
@@ -2070,21 +2055,6 @@
   "public/app/features/dashboard-scene/addToDashboard/AddToDashboardForm.tsx": {
     "no-restricted-syntax": {
       "count": 2
-    }
-  },
-  "public/app/features/dashboard-scene/conditional-rendering/conditions/ConditionalRenderingData.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/conditional-rendering/conditions/ConditionalRenderingTimeRangeSize.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/conditional-rendering/conditions/ConditionalRenderingVariable.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/edit-pane/DashboardEditPaneRenderer.tsx": {
@@ -3055,11 +3025,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/utils/DraggableManager/demo/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/utils/sort.ts": {
     "no-restricted-syntax": {
       "count": 1
@@ -3196,14 +3161,6 @@
   "public/app/features/logs/logsFrame.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "public/app/features/logs/utils.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "no-restricted-syntax": {
-      "count": 6
     }
   },
   "public/app/features/manage-dashboards/DashboardImportPage.tsx": {
@@ -3566,11 +3523,6 @@
   "public/app/features/teams/TeamGroupSync.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
-    }
-  },
-  "public/app/features/teams/TeamSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 4
     }
   },
   "public/app/features/teams/state/reducers.ts": {
