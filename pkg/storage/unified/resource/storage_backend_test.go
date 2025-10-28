@@ -324,6 +324,36 @@ func TestKvStorageBackend_ReadResource_DeletedResource(t *testing.T) {
 	require.Equal(t, objectToJSONBytes(t, testObj), response.Value)
 }
 
+func TestKvStorageBackend_ReadResource_TooHighResourceVersion(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	// First, create a resource
+	_, rv := createAndWriteTestObject(t, backend)
+
+	// Try to read with a resource version that's way too high
+	readReq := &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "test-resource",
+		},
+		ResourceVersion: rv + 1000000000000, // Way in the future
+	}
+
+	response := backend.ReadResource(ctx, readReq)
+	require.NotNil(t, response.Error, "ReadResource should return error for too high resource version")
+	require.Equal(t, int32(504), response.Error.Code) // http.StatusGatewayTimeout
+	require.Equal(t, "Timeout", response.Error.Reason)
+	require.Equal(t, "ResourceVersion is larger than max", response.Error.Message)
+	require.NotNil(t, response.Error.Details)
+	require.Len(t, response.Error.Details.Causes, 1)
+	require.Equal(t, "ResourceVersionTooLarge", response.Error.Details.Causes[0].Reason)
+	require.Contains(t, response.Error.Details.Causes[0].Message, "requested:")
+	require.Contains(t, response.Error.Details.Causes[0].Message, "current")
+}
+
 func TestKvStorageBackend_ListIterator_Success(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
