@@ -41,7 +41,7 @@ const nameWrapperMatchingFilterClassName = 'nameWrapperMatchingFilter';
 const viewClassName = 'jaegerView';
 const nameColumnClassName = 'nameColumn';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly: boolean) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly: boolean, serviceColor: string) => {
   const animations = {
     flash: keyframes`
     from {
@@ -60,10 +60,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       lineHeight: '27px',
       overflow: 'hidden',
       display: 'flex',
+
+      [`& > *`]: {
+        background: theme.colors.background.secondary,
+      },
     }),
     nameWrapperMatchingFilter: css({
       label: 'nameWrapperMatchingFilter',
       backgroundColor: backgroundColor,
+
+      [`& > *`]: {
+        background: backgroundColor,
+      },
     }),
     nameColumn: css({
       label: 'nameColumn',
@@ -96,6 +104,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     row: css({
       label: 'row',
       fontSize: '0.9em',
+
       [`&:hover .${spanBarClassName}`]: {
         opacity: 1,
       },
@@ -113,6 +122,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       [`&:hover .${viewClassName}`]: {
         backgroundColor: autoColor(theme, '#f5f5f5'),
         outline: `1px solid ${autoColor(theme, '#ddd')}`,
+      },
+      ['& .icon-wrapper']: {
+        borderBottomColor: `${serviceColor}CF`,
+        borderBottomWidth: '1.5px',
+        borderBottomStyle: 'solid',
       },
     }),
     rowClippingLeft: css({
@@ -168,7 +182,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     }),
     rowMatchingFilter: css({
       label: 'rowMatchingFilter',
-      // background-color: ${autoColor(theme, '#fffbde')};
+
       [`&:hover .${nameWrapperClassName}`]: {
         background: `linear-gradient(
           90deg,
@@ -200,9 +214,22 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       [`& .${spanBarLabelClassName}`]: {
         color: autoColor(theme, '#000'),
       },
-      ['&:hover .${nameWrapperClassName}, :hover .${viewClassName}']: {
-        background: autoColor(theme, '#d5ebff'),
-        boxShadow: `0 1px 0 ${autoColor(theme, '#ddd')}`,
+    }),
+
+    rowError: css({
+      label: 'rowError',
+      backgroundColor: theme.colors.error.transparent,
+
+      [`&:hover .${nameWrapperClassName}`]: {
+        background: theme.colors.error.borderTransparent,
+      },
+      [`&:hover .${viewClassName}`]: {
+        backgroundColor: theme.colors.error.borderTransparent,
+        outline: `1px solid ${theme.colors.error.borderTransparent}`,
+      },
+
+      [`& .${nameWrapperClassName} > *`]: {
+        background: theme.colors.error.transparent,
       },
     }),
 
@@ -235,8 +262,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
         color: autoColor(theme, '#000'),
       },
       textAlign: 'left',
-      background: theme.colors.background.secondary,
       border: 'none',
+      borderBottomColor: `${serviceColor}CF`,
       borderBottomWidth: '1.5px',
       borderBottomStyle: 'solid',
     }),
@@ -259,17 +286,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     }),
     errorIcon: css({
       label: 'errorIcon',
-      // eslint-disable-next-line @grafana/no-border-radius-literal
-      borderRadius: '6.5px',
+      borderRadius: theme.shape.radius.md,
       color: autoColor(theme, '#fff'),
-      fontSize: '0.85em',
+      fontSize: '0.6em',
       marginRight: '0.25rem',
       padding: '1px',
     }),
     rpcColorMarker: css({
       label: 'rpcColorMarker',
-      // eslint-disable-next-line @grafana/no-border-radius-literal
-      borderRadius: '6.5px',
+      borderRadius: theme.shape.radius.md,
       display: 'inline-block',
       fontSize: '0.85em',
       height: '1em',
@@ -398,7 +423,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
     const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
     const viewStart = viewBounds.start;
     const viewEnd = viewBounds.end;
-    const styles = getStyles(theme, showSpanFilterMatchesOnly);
+    const styles = getStyles(theme, showSpanFilterMatchesOnly, color);
 
     const labelDetail = `${serviceName}::${operationName}`;
     let longLabel;
@@ -416,6 +441,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
         className={cx(
           styles.row,
           {
+            [styles.rowError]: showErrorIcon,
             [styles.rowExpanded]: isDetailExpanded,
             [styles.rowMatchingFilter]: isMatchingFilter,
             [styles.rowExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
@@ -441,7 +467,6 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               addHoverIndentGuideId={addHoverIndentGuideId}
               removeHoverIndentGuideId={removeHoverIndentGuideId}
               visibleSpanIds={visibleSpanIds}
-              borderBottomColor={`${color}CF`}
             />
             <button
               type="button"
@@ -450,7 +475,6 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               title={labelDetail}
               onClick={this._detailToggle}
               role="switch"
-              style={{ borderBottomColor: `${color}CF` }}
               tabIndex={0}
             >
               {showErrorIcon && (
@@ -504,7 +528,10 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                       href={links[0].href}
                       // Needs to have target otherwise preventDefault would not work due to angularRouter.
                       target={'_blank'}
-                      style={{ background: `${color}10`, borderBottom: `1px solid ${color}CF`, paddingInline: '4px' }}
+                      style={{
+                        borderBottom: `1px solid ${color}CF`,
+                        paddingInline: '4px',
+                      }}
                       rel="noopener noreferrer"
                       onClick={
                         links[0].onClick
@@ -532,6 +559,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
           className={cx(styles.view, viewClassName, {
             [styles.viewExpanded]: isDetailExpanded,
             [styles.viewExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
+            [styles.rowError]: showErrorIcon,
           })}
           data-testid="span-view"
           style={{ cursor: 'pointer' }}

@@ -65,9 +65,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     position: 'absolute',
     right: 0,
     height: '100%',
-    background: theme.colors.background.secondary,
-    borderBottomWidth: '1.5px',
-    borderBottomStyle: 'solid',
     paddingTop: '1px',
   }),
 }));
@@ -83,8 +80,6 @@ export type TProps = {
   removeHoverIndentGuideId: (spanID: string) => void;
   theme: GrafanaTheme2;
   visibleSpanIds: string[];
-
-  borderBottomColor: string;
 };
 
 export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
@@ -95,7 +90,6 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
   static defaultProps = {
     childrenVisible: false,
     showChildrenIcon: true,
-    borderBottomColor: 'transparent',
   };
 
   constructor(props: TProps) {
@@ -144,7 +138,7 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
   };
 
   render() {
-    const { childrenVisible, onClick, showChildrenIcon, span, theme, visibleSpanIds, borderBottomColor } = this.props;
+    const { childrenVisible, onClick, showChildrenIcon, span, theme, visibleSpanIds } = this.props;
     const { hasChildren, spanID } = span;
     const wrapperProps = hasChildren ? { onClick, role: 'switch', 'aria-checked': childrenVisible } : null;
     const icon =
@@ -175,11 +169,10 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
         ))}
         {icon && (
           <span
-            className={styles.iconWrapper}
+            className={cx(styles.iconWrapper, 'icon-wrapper')}
             onMouseEnter={(event) => this.handleMouseEnter(event, spanID)}
             onMouseLeave={(event) => this.handleMouseLeave(event, spanID)}
             data-testid="icon-wrapper"
-            style={{ borderBottomColor: borderBottomColor }}
           >
             {icon}
           </span>
