@@ -94,7 +94,7 @@ scenario('No series', (ctx) => {
   ctx.setData([]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([SuggestionName.Table, SuggestionName.TextPanel]);
+    expect(ctx.names()).toEqual(['Table', SuggestionName.TextPanel]);
   });
 });
 
@@ -109,7 +109,7 @@ scenario('No rows', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([SuggestionName.Table]);
+    expect(ctx.names()).toEqual(['Table']);
   });
 });
 
@@ -125,19 +125,19 @@ scenario('Single frame with time and number field', (ctx) => {
 
   it('should return correct suggestions', () => {
     expect(ctx.names()).toEqual([
-      SuggestionName.LineChart,
-      SuggestionName.LineChartSmooth,
-      SuggestionName.AreaChart,
-      SuggestionName.LineChartGradientColorScheme,
-      SuggestionName.BarChart,
-      SuggestionName.BarChartGradientColorScheme,
+      'Line chart',
+      'Line chart (smooth)',
+      'Area chart',
+      'Line chart (with gradient color scheme)',
+      'Bar chart',
+      'Bar chart (with gradient color scheme)',
       SuggestionName.Gauge,
       SuggestionName.GaugeNoThresholds,
       SuggestionName.Stat,
       SuggestionName.StatColoredBackground,
       SuggestionName.BarGaugeBasic,
       SuggestionName.BarGaugeLCD,
-      SuggestionName.Table,
+      'Table',
       SuggestionName.StateTimeline,
       SuggestionName.StatusHistory,
     ]);
@@ -169,12 +169,12 @@ scenario('Single frame with time 2 number fields', (ctx) => {
 
   it('should return correct suggestions', () => {
     expect(ctx.names()).toEqual([
-      SuggestionName.LineChart,
-      SuggestionName.LineChartSmooth,
-      SuggestionName.AreaChartStacked,
-      SuggestionName.AreaChartStackedPercent,
-      SuggestionName.BarChartStacked,
-      SuggestionName.BarChartStackedPercent,
+      'Line chart',
+      'Line chart (smooth)',
+      'Area chart (stacked)',
+      'Area chart (100%, stacked)',
+      'Bar chart (stacked)',
+      'Bar chart (100%, stacked)',
       SuggestionName.Gauge,
       SuggestionName.GaugeNoThresholds,
       SuggestionName.Stat,
@@ -183,7 +183,7 @@ scenario('Single frame with time 2 number fields', (ctx) => {
       SuggestionName.PieChartDonut,
       SuggestionName.BarGaugeBasic,
       SuggestionName.BarGaugeLCD,
-      SuggestionName.Table,
+      'Table',
       SuggestionName.StateTimeline,
       SuggestionName.StatusHistory,
     ]);
@@ -271,7 +271,7 @@ scenario('Single frame with string and number field', (ctx) => {
       SuggestionName.PieChartDonut,
       SuggestionName.BarGaugeBasic,
       SuggestionName.BarGaugeLCD,
-      SuggestionName.Table,
+      'Table',
     ]);
   });
 
@@ -311,7 +311,7 @@ scenario('Single frame with string and 2 number field', (ctx) => {
       SuggestionName.PieChartDonut,
       SuggestionName.BarGaugeBasic,
       SuggestionName.BarGaugeLCD,
-      SuggestionName.Table,
+      'Table',
     ]);
   });
 });
@@ -324,7 +324,7 @@ scenario('Single frame with only string field', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([SuggestionName.Stat, SuggestionName.Table]);
+    expect(ctx.names()).toEqual([SuggestionName.Stat, 'Table']);
   });
 
   it('Stat panels have reduceOptions.fields set to show all fields', () => {
@@ -358,7 +358,7 @@ scenario('Given default loki logs data', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([SuggestionName.Logs, SuggestionName.Table]);
+    expect(ctx.names()).toEqual([SuggestionName.Logs, 'Table']);
   });
 });
 
@@ -381,7 +381,7 @@ scenario('Given a preferredVisualisationType', (ctx) => {
   ]);
 
   it('should return the preferred visualization first', () => {
-    expect(ctx.names()[0]).toEqual(SuggestionName.Table);
+    expect(ctx.names()[0]).toEqual('Table');
   });
 });
 

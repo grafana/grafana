@@ -1,6 +1,6 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { GraphDrawStyle, GraphFieldConfig, LegendDisplayMode } from '@grafana/schema';
-import { SuggestionName } from 'app/types/suggestions';
 
 import { Options } from './panelcfg.gen';
 
@@ -14,7 +14,7 @@ export class TrendSuggestionsSupplier {
 
     // Super basic
     const list = builder.getListAppender<Options, GraphFieldConfig>({
-      name: SuggestionName.LineChart,
+      name: t('trend.suggestions.line-chart', 'Trend chart'),
       pluginId: 'trend',
       options: {
         legend: {

@@ -13,6 +13,7 @@ import {
   PanelMigrationHandler,
   PanelTypeChangedHandler,
   PanelPluginDataSupport,
+  VisualizationSuggestionsBuilder,
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
@@ -369,7 +370,6 @@ export class PanelPlugin<
 
   /**
    * Sets function that can return visualization examples and suggestions.
-   * @alpha
    */
   setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier) {
     this.suggestionsSupplier = supplier;
@@ -377,11 +377,36 @@ export class PanelPlugin<
   }
 
   /**
-   * Returns the suggestions supplier
-   * @alpha
+   * Returns true if a suggestions supplier is set on this plugin
    */
-  getSuggestionsSupplier(): VisualizationSuggestionsSupplier | undefined {
-    return this.suggestionsSupplier;
+  hasSuggestionsSupplier(): boolean {
+    return this.suggestionsSupplier != null;
+  }
+
+  /**
+   * wraps the plugin's suggestions
+   */
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder): void {
+    if (!this.suggestionsSupplier) {
+      return;
+    }
+
+    this.suggestionsSupplier.getSuggestionsForData(builder);
+
+    if (builder.dataSummary.fieldCount === 0) {
+      if (!this.meta.skipDataQuery || this.meta.hideFromList) {
+        return;
+      }
+
+      builder.getList().push({
+        name: this.meta.name,
+        pluginId: this.meta.id,
+        description: this.meta.info.description,
+        cardOptions: {
+          imgSrc: this.meta.info.logos.small,
+        },
+      });
+    }
   }
 
   hasPluginId(pluginId: string) {

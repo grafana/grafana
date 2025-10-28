@@ -358,6 +358,20 @@ export class VisualizationSuggestionsBuilder {
   getList() {
     return this.list;
   }
+
+  getSortedList() {
+    return this.list.sort((a, b) => {
+      if (this.dataSummary.preferredVisualisationType) {
+        if (a.pluginId === this.dataSummary.preferredVisualisationType) {
+          return -1;
+        }
+        if (b.pluginId === this.dataSummary.preferredVisualisationType) {
+          return 1;
+        }
+      }
+      return (b.score ?? VisualizationSuggestionScore.OK) - (a.score ?? VisualizationSuggestionScore.OK);
+    });
+  }
 }
 
 /**

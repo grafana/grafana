@@ -13284,6 +13284,19 @@
         "label-threshold": "Threshold"
       }
     },
+    "suggestions": {
+      "area": "Area chart",
+      "area-stacked": "Area chart (stacked)",
+      "area-stacked-percent": "Area chart (100%, stacked)",
+      "bar": "Bar chart",
+      "bar-gradient": "Bar chart (with gradient color scheme)",
+      "bar-stacked-percent": "Bar chart (100%, stacked)",
+      "line": "Line chart",
+      "line-gradient": "Line chart (with gradient color scheme)",
+      "line-smooth": "Line chart (smooth)",
+      "long-to-wide-required": "Long data must be converted to wide",
+      "wide-timeseries": "Transform to wide time series format"
+    },
     "timezones-editor": {
       "tooltip-add-timezone": "Add timezone",
       "tooltip-remove-timezone": "Remove timezone"
@@ -14119,7 +14132,10 @@
     "category-x-axis": "X axis",
     "description-x-field": "An increasing numeric value",
     "name-x-field": "X field",
-    "placeholder-x-field": "First numeric value"
+    "placeholder-x-field": "First numeric value",
+    "suggestions": {
+      "line-chart": "Trend chart"
+    }
   },
   "upgrade-box": {
     "discovery-text": "You’ve discovered a Pro feature!",

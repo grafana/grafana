@@ -1,14 +1,14 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { TableFieldOptions } from '@grafana/schema';
 import icnTablePanelSvg from 'app/plugins/panel/table/img/icn-table-panel.svg';
-import { SuggestionName } from 'app/types/suggestions';
 
 import { Options } from './panelcfg.gen';
 
 export class TableSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const list = builder.getListAppender<Options, TableFieldOptions>({
-      name: SuggestionName.Table,
+      name: t('table.suggestions.name', 'Table'),
       pluginId: 'table',
       options: {},
       fieldConfig: {
