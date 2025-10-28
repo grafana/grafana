@@ -11344,7 +11344,9 @@
       "label-workflow": "Workflow",
       "placeholder-branch": "Select or enter branch name",
       "placeholder-new-branch": "Enter new branch name",
-      "suffix-configured-branch": "Configured branch"
+      "suffix-configured-branch": "Configured branch",
+      "suffix-last-used": "Last branch",
+      "suffix-pr-branch": "Pull request branch"
     }
   },
   "provisioned-resource-preview-banner": {

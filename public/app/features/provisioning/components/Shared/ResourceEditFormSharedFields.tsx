@@ -10,6 +10,8 @@ import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
 import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
 
+import { useLastBranch } from '../../hooks/useLastBranch';
+import { usePRBranch } from '../../hooks/usePRBranch';
 import { generateNewBranchName } from '../utils/newBranchName';
 
 interface DashboardEditFormSharedFieldsProps {
@@ -40,34 +42,70 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       !repository?.name || !isGitProvider(repository.type) ? skipToken : { name: repository.name }
     );
 
+    const { getLastBranch } = useLastBranch();
+    const prBranch = usePRBranch();
+    const lastBranch = getLastBranch(repository?.name);
+
     const branchOptions = useMemo(() => {
       const options: Array<{ label: string; value: string; description?: string }> = [];
+      const addedBranches = new Set<string>();
 
       const configuredBranch = repository?.branch;
-      const prefix = t(
+      const configuredPrefix = t(
         'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-configured-branch',
         'Configured branch'
       );
-      // Show the configured branch first in the list
+      const prPrefix = t(
+        'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-pr-branch',
+        'Pull request branch'
+      );
+      const lastUsedPrefix = t(
+        'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-last-used',
+        'Last branch'
+      );
+
+      // 1. Show the configured branch first in the list
       if (configuredBranch) {
         options.push({
           label: `${configuredBranch}`,
           value: configuredBranch,
-          description: prefix,
+          description: configuredPrefix,
         });
+        addedBranches.add(configuredBranch);
       }
 
-      // Create combobox options
+      // 2. Show the PR branch (from ref query param)
+      if (prBranch && !addedBranches.has(prBranch)) {
+        options.push({
+          label: prBranch,
+          value: prBranch,
+          description: prPrefix,
+        });
+        addedBranches.add(prBranch);
+      }
+
+      // 3. Show the last used branch
+      if (lastBranch && !addedBranches.has(lastBranch)) {
+        options.push({
+          label: lastBranch,
+          value: lastBranch,
+          description: lastUsedPrefix,
+        });
+        addedBranches.add(lastBranch);
+      }
+
+      // 4. Add other branches from the API
       if (branchData?.items) {
         for (const ref of branchData.items) {
-          if (ref.name !== configuredBranch) {
+          if (!addedBranches.has(ref.name)) {
             options.push({ label: ref.name, value: ref.name });
+            addedBranches.add(ref.name);
           }
         }
       }
 
       return options;
-    }, [branchData?.items, repository?.branch]);
+    }, [branchData?.items, repository?.branch, prBranch, lastBranch]);
 
     const newBranchDefaultName = useMemo(() => generateNewBranchName(resourceType), [resourceType]);
 

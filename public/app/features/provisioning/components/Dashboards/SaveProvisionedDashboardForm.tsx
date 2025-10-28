@@ -125,6 +125,8 @@ export function SaveProvisionedDashboardForm({
     request,
     workflow,
     resourceType: 'dashboard',
+    repository,
+    formRef: methods.getValues().ref || repository?.branch,
     handlers: {
       onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
       onWriteSuccess,
