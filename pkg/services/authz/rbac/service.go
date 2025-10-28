@@ -527,21 +527,29 @@ func (s *Service) GetUserIdentifiers(ctx context.Context, ns types.NamespaceInfo
 		return &cached, nil
 	}
 
-	var userIDQuery store.UserIdentifierQuery
-	// Assume that numeric UID is user ID
+	// Look up user by userUID first
+	queries := []store.UserIdentifierQuery{{UserUID: userUID}}
+
+	// Append a look up query using userID if userUID is a number
 	if userID, err := strconv.Atoi(userUID); err == nil {
-		userIDQuery = store.UserIdentifierQuery{UserID: int64(userID)}
-	} else {
-		userIDQuery = store.UserIdentifierQuery{UserUID: userUID}
-	}
-	userIdentifiers, err := s.store.GetUserIdentifiers(ctx, userIDQuery)
-	if err != nil {
-		return nil, fmt.Errorf("could not get user internal id: %w", err)
+		queries = append(queries, store.UserIdentifierQuery{UserID: int64(userID)})
 	}
 
+	var userIdentifiers *store.UserIdentifiers
+	var err error
+	for _, query := range queries {
+		userIdentifiers, err = s.store.GetUserIdentifiers(ctx, query)
+		if err == nil {
+			break // break out of the loop if we found a user
+		}
+	}
+	if err != nil {
+		return nil, fmt.Errorf("could not find user identifiers: %w", err)
+	}
+
+	// cache after successful lookup
 	s.idCache.Set(ctx, uidCacheKey, *userIdentifiers)
 	s.idCache.Set(ctx, idCacheKey, *userIdentifiers)
-
 	return userIdentifiers, nil
 }
 
