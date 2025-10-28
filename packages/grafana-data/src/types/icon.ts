@@ -255,6 +255,7 @@ export const availableIconsIndex = {
   'tag-alt': true,
   'telegram-alt': true,
   'text-fields': true,
+  'thumbs-down': true,
   'thumbs-up': true,
   times: true,
   'times-circle': true,
