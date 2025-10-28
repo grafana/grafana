@@ -359,261 +359,252 @@ export type SpanBarRowProps = {
   criticalPath: CriticalPathSection[];
 };
 
-/**
- * This was originally a stateless function, but changing to a PureComponent
- * reduced the render time of expanding a span row detail by ~50%. This is
- * even true in the case where the stateless function has the same prop types as
- * this class and arrow functions are created in the stateless function as
- * handlers to the onClick props. E.g. for now, the PureComponent is more
- * performance than the stateless function.
- */
-export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
-  static displayName = 'UnthemedSpanBarRow';
-  static defaultProps: Partial<SpanBarRowProps> = {
-    className: '',
-    rpc: null,
-  };
+const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
+  const {
+    className = '',
+    color,
+    spanBarOptions,
+    columnDivision,
+    isChildrenExpanded,
+    isDetailExpanded,
+    isMatchingFilter,
+    showSpanFilterMatchesOnly,
+    isFocused,
+    numTicks,
+    rpc = null,
+    noInstrumentedServer,
+    showErrorIcon,
+    getViewedBounds,
+    traceStartTime,
+    span,
+    hoverIndentGuideIds,
+    addHoverIndentGuideId,
+    removeHoverIndentGuideId,
+    clippingLeft,
+    clippingRight,
+    theme,
+    createSpanLink,
+    datasourceType,
+    showServiceName,
+    visibleSpanIds,
+    criticalPath,
+    onDetailToggled,
+    onChildrenToggled,
+  } = props;
 
-  _detailToggle = () => {
-    this.props.onDetailToggled(this.props.span.spanID);
-  };
+  const {
+    duration,
+    hasChildren: isParent,
+    operationName,
+    process: { serviceName },
+  } = span;
+  const label = formatDuration(duration);
 
-  _childrenToggle = () => {
-    this.props.onChildrenToggled(this.props.span.spanID);
-  };
+  const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
+  const viewStart = viewBounds.start;
+  const viewEnd = viewBounds.end;
+  const styles = getStyles(theme, showSpanFilterMatchesOnly, color);
 
-  render() {
-    const {
-      className,
-      color,
-      spanBarOptions,
-      columnDivision,
-      isChildrenExpanded,
-      isDetailExpanded,
-      isMatchingFilter,
-      showSpanFilterMatchesOnly,
-      isFocused,
-      numTicks,
-      rpc,
-      noInstrumentedServer,
-      showErrorIcon,
-      getViewedBounds,
-      traceStartTime,
-      span,
-      hoverIndentGuideIds,
-      addHoverIndentGuideId,
-      removeHoverIndentGuideId,
-      clippingLeft,
-      clippingRight,
-      theme,
-      createSpanLink,
-      datasourceType,
-      showServiceName,
-      visibleSpanIds,
-      criticalPath,
-    } = this.props;
-    const {
-      duration,
-      hasChildren: isParent,
-      operationName,
-      process: { serviceName },
-    } = span;
-    const label = formatDuration(duration);
-
-    const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
-    const viewStart = viewBounds.start;
-    const viewEnd = viewBounds.end;
-    const styles = getStyles(theme, showSpanFilterMatchesOnly, color);
-
-    const labelDetail = `${serviceName}::${operationName}`;
-    let longLabel;
-    let hintClassName;
-    if (viewStart > 1 - viewEnd) {
-      longLabel = `${labelDetail} | ${label}`;
-      hintClassName = styles.labelLeft;
-    } else {
-      longLabel = `${label} | ${labelDetail}`;
-      hintClassName = styles.labelRight;
-    }
-
-    return (
-      <TimelineRow
-        className={cx(
-          styles.row,
-          {
-            [styles.rowError]: showErrorIcon,
-            [styles.rowExpanded]: isDetailExpanded,
-            [styles.rowMatchingFilter]: isMatchingFilter,
-            [styles.rowExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
-            [styles.rowFocused]: isFocused,
-            [styles.rowClippingLeft]: clippingLeft,
-            [styles.rowClippingRight]: clippingRight,
-          },
-          className
-        )}
-      >
-        <TimelineRow.Cell className={cx(styles.nameColumn, nameColumnClassName)} width={columnDivision}>
-          <div
-            className={cx(styles.nameWrapper, nameWrapperClassName, {
-              [styles.nameWrapperMatchingFilter]: isMatchingFilter,
-              nameWrapperMatchingFilter: isMatchingFilter,
-            })}
-          >
-            <SpanTreeOffset
-              onClick={isParent ? this._childrenToggle : undefined}
-              childrenVisible={isChildrenExpanded}
-              span={span}
-              hoverIndentGuideIds={hoverIndentGuideIds}
-              addHoverIndentGuideId={addHoverIndentGuideId}
-              removeHoverIndentGuideId={removeHoverIndentGuideId}
-              visibleSpanIds={visibleSpanIds}
-            />
-            <button
-              type="button"
-              className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
-              aria-checked={isDetailExpanded}
-              title={labelDetail}
-              onClick={this._detailToggle}
-              role="switch"
-              tabIndex={0}
-            >
-              {showErrorIcon && (
-                <Icon
-                  name={'exclamation-circle'}
-                  style={{
-                    backgroundColor: span.errorIconColor
-                      ? autoColor(theme, span.errorIconColor)
-                      : autoColor(theme, '#db2828'),
-                  }}
-                  className={styles.errorIcon}
-                />
-              )}
-              {showServiceName && (
-                <span
-                  className={cx(styles.svcName, {
-                    [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
-                  })}
-                >
-                  {`${serviceName} `}
-                </span>
-              )}
-              {rpc && (
-                <span>
-                  <Icon name={'arrow-right'} />{' '}
-                  <i className={styles.rpcColorMarker} style={{ background: rpc.color }} />
-                  {rpc.serviceName}
-                </span>
-              )}
-              {noInstrumentedServer && (
-                <span>
-                  <Icon name={'arrow-right'} />{' '}
-                  <i className={styles.rpcColorMarker} style={{ background: noInstrumentedServer.color }} />
-                  {noInstrumentedServer.serviceName}
-                </span>
-              )}
-              <span className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</span>
-              <span className={styles.endpointName}> {this.getSpanBarLabel(span, spanBarOptions, label)}</span>
-            </button>
-            {createSpanLink &&
-              (() => {
-                const links = createSpanLink(span);
-                const count = links?.length || 0;
-                if (links && count === 1) {
-                  if (!links[0]) {
-                    return null;
-                  }
-
-                  return (
-                    <a
-                      href={links[0].href}
-                      // Needs to have target otherwise preventDefault would not work due to angularRouter.
-                      target={'_blank'}
-                      style={{
-                        borderBottom: `2px solid ${color}CF`,
-                        paddingInline: '4px',
-                      }}
-                      rel="noopener noreferrer"
-                      onClick={
-                        links[0].onClick
-                          ? (event) => {
-                              if (!(event.ctrlKey || event.metaKey || event.shiftKey) && links[0].onClick) {
-                                event.preventDefault();
-                                links[0].onClick(event);
-                              }
-                            }
-                          : undefined
-                      }
-                    >
-                      {links[0].content}
-                    </a>
-                  );
-                } else if (links && count > 1) {
-                  return <SpanLinksMenu links={links} datasourceType={datasourceType} color={color} />;
-                } else {
-                  return null;
-                }
-              })()}
-          </div>
-        </TimelineRow.Cell>
-        <TimelineRow.Cell
-          className={cx(styles.view, viewClassName, {
-            [styles.viewExpanded]: isDetailExpanded,
-            [styles.viewExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
-            [styles.rowError]: showErrorIcon,
-          })}
-          data-testid="span-view"
-          style={{ cursor: 'pointer' }}
-          width={1 - columnDivision}
-          onClick={this._detailToggle}
-        >
-          <Ticks numTicks={numTicks} />
-          <SpanBar
-            criticalPath={criticalPath}
-            rpc={rpc}
-            viewStart={viewStart}
-            viewEnd={viewEnd}
-            getViewedBounds={getViewedBounds}
-            color={color}
-            shortLabel={label}
-            longLabel={longLabel}
-            traceStartTime={traceStartTime}
-            span={span}
-            labelClassName={`${spanBarLabelClassName} ${hintClassName}`}
-            className={spanBarClassName}
-          />
-        </TimelineRow.Cell>
-      </TimelineRow>
-    );
+  const labelDetail = `${serviceName}::${operationName}`;
+  let longLabel;
+  let hintClassName;
+  if (viewStart > 1 - viewEnd) {
+    longLabel = `${labelDetail} | ${label}`;
+    hintClassName = styles.labelLeft;
+  } else {
+    longLabel = `${label} | ${labelDetail}`;
+    hintClassName = styles.labelRight;
   }
 
-  getSpanBarLabel = (span: TraceSpan, spanBarOptions: SpanBarOptions | undefined, duration: string) => {
-    const type = spanBarOptions?.type ?? '';
+  const handleDetailToggle = React.useCallback(() => {
+    onDetailToggled(span.spanID);
+  }, [onDetailToggled, span.spanID]);
 
-    if (type === NONE) {
-      return '';
-    } else if (type === '' || type === DURATION) {
-      return `(${duration})`;
-    } else if (type === TAG) {
-      const tagKey = spanBarOptions?.tag?.trim() ?? '';
-      if (tagKey !== '' && span.tags) {
-        const tag = span.tags?.find((tag: TraceKeyValuePair) => {
-          return tag.key === tagKey;
-        });
-        if (tag) {
-          return `(${tag.value})`;
-        }
+  const handleChildrenToggle = React.useCallback(() => {
+    onChildrenToggled(span.spanID);
+  }, [onChildrenToggled, span.spanID]);
 
-        const process = span.process?.tags?.find((process: TraceKeyValuePair) => {
-          return process.key === tagKey;
-        });
-        if (process) {
-          return `(${process.value})`;
+  const getSpanBarLabel = React.useCallback(
+    (span: TraceSpan, spanBarOptions: SpanBarOptions | undefined, duration: string) => {
+      const type = spanBarOptions?.type ?? '';
+
+      if (type === NONE) {
+        return '';
+      } else if (type === '' || type === DURATION) {
+        return `(${duration})`;
+      } else if (type === TAG) {
+        const tagKey = spanBarOptions?.tag?.trim() ?? '';
+        if (tagKey !== '' && span.tags) {
+          const tag = span.tags?.find((tag: TraceKeyValuePair) => {
+            return tag.key === tagKey;
+          });
+          if (tag) {
+            return `(${tag.value})`;
+          }
+
+          const process = span.process?.tags?.find((process: TraceKeyValuePair) => {
+            return process.key === tagKey;
+          });
+          if (process) {
+            return `(${process.value})`;
+          }
         }
       }
-    }
 
-    return '';
-  };
-}
+      return '';
+    },
+    []
+  );
+
+  return (
+    <TimelineRow
+      className={cx(
+        styles.row,
+        {
+          [styles.rowError]: showErrorIcon,
+          [styles.rowExpanded]: isDetailExpanded,
+          [styles.rowMatchingFilter]: isMatchingFilter,
+          [styles.rowExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
+          [styles.rowFocused]: isFocused,
+          [styles.rowClippingLeft]: clippingLeft,
+          [styles.rowClippingRight]: clippingRight,
+        },
+        className
+      )}
+    >
+      <TimelineRow.Cell className={cx(styles.nameColumn, nameColumnClassName)} width={columnDivision}>
+        <div
+          className={cx(styles.nameWrapper, nameWrapperClassName, {
+            [styles.nameWrapperMatchingFilter]: isMatchingFilter,
+            nameWrapperMatchingFilter: isMatchingFilter,
+          })}
+        >
+          <SpanTreeOffset
+            onClick={isParent ? handleChildrenToggle : undefined}
+            childrenVisible={isChildrenExpanded}
+            span={span}
+            hoverIndentGuideIds={hoverIndentGuideIds}
+            addHoverIndentGuideId={addHoverIndentGuideId}
+            removeHoverIndentGuideId={removeHoverIndentGuideId}
+            visibleSpanIds={visibleSpanIds}
+          />
+          <button
+            type="button"
+            className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
+            aria-checked={isDetailExpanded}
+            title={labelDetail}
+            onClick={handleDetailToggle}
+            role="switch"
+            tabIndex={0}
+          >
+            {showErrorIcon && (
+              <Icon
+                name={'exclamation-circle'}
+                style={{
+                  backgroundColor: span.errorIconColor
+                    ? autoColor(theme, span.errorIconColor)
+                    : autoColor(theme, '#db2828'),
+                }}
+                className={styles.errorIcon}
+              />
+            )}
+            {showServiceName && (
+              <span
+                className={cx(styles.svcName, {
+                  [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
+                })}
+              >
+                {`${serviceName} `}
+              </span>
+            )}
+            {rpc && (
+              <span>
+                <Icon name={'arrow-right'} /> <i className={styles.rpcColorMarker} style={{ background: rpc.color }} />
+                {rpc.serviceName}
+              </span>
+            )}
+            {noInstrumentedServer && (
+              <span>
+                <Icon name={'arrow-right'} />{' '}
+                <i className={styles.rpcColorMarker} style={{ background: noInstrumentedServer.color }} />
+                {noInstrumentedServer.serviceName}
+              </span>
+            )}
+            <span className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</span>
+            <span className={styles.endpointName}> {getSpanBarLabel(span, spanBarOptions, label)}</span>
+          </button>
+          {createSpanLink &&
+            (() => {
+              const links = createSpanLink(span);
+              const count = links?.length || 0;
+              if (links && count === 1) {
+                if (!links[0]) {
+                  return null;
+                }
+
+                return (
+                  <a
+                    href={links[0].href}
+                    // Needs to have target otherwise preventDefault would not work due to angularRouter.
+                    target={'_blank'}
+                    style={{
+                      borderBottom: `2px solid ${color}CF`,
+                      paddingInline: '4px',
+                    }}
+                    rel="noopener noreferrer"
+                    onClick={
+                      links[0].onClick
+                        ? (event) => {
+                            if (!(event.ctrlKey || event.metaKey || event.shiftKey) && links[0].onClick) {
+                              event.preventDefault();
+                              links[0].onClick(event);
+                            }
+                          }
+                        : undefined
+                    }
+                  >
+                    {links[0].content}
+                  </a>
+                );
+              } else if (links && count > 1) {
+                return <SpanLinksMenu links={links} datasourceType={datasourceType} color={color} />;
+              } else {
+                return null;
+              }
+            })()}
+        </div>
+      </TimelineRow.Cell>
+      <TimelineRow.Cell
+        className={cx(styles.view, viewClassName, {
+          [styles.viewExpanded]: isDetailExpanded,
+          [styles.viewExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
+          [styles.rowError]: showErrorIcon,
+        })}
+        data-testid="span-view"
+        style={{ cursor: 'pointer' }}
+        width={1 - columnDivision}
+        onClick={handleDetailToggle}
+      >
+        <Ticks numTicks={numTicks} />
+        <SpanBar
+          criticalPath={criticalPath}
+          rpc={rpc}
+          viewStart={viewStart}
+          viewEnd={viewEnd}
+          getViewedBounds={getViewedBounds}
+          color={color}
+          shortLabel={label}
+          longLabel={longLabel}
+          traceStartTime={traceStartTime}
+          span={span}
+          labelClassName={`${spanBarLabelClassName} ${hintClassName}`}
+          className={spanBarClassName}
+        />
+      </TimelineRow.Cell>
+    </TimelineRow>
+  );
+});
+
+UnthemedSpanBarRow.displayName = 'UnthemedSpanBarRow';
 
 export default withTheme2(UnthemedSpanBarRow);
