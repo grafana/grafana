@@ -127,3 +127,7 @@ func goffHTTPClient(m *clientauthmiddleware.TokenExchangeMiddleware) (*http.Clie
 
 	return httpcli, nil
 }
+
+func ProvideOpenFeatureClient() (*openfeature.Client, error) {
+	return openfeature.NewDefaultClient(), nil
+}

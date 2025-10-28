@@ -468,6 +468,7 @@ var wireBasicSet = wire.NewSet(
 	appregistry.WireSet,
 	// Dashboard Kubernetes helpers
 	dashboardclient.ProvideK8sClientWithFallback,
+	featuremgmt.ProvideOpenFeatureClient,
 )
 
 var wireSet = wire.NewSet(
