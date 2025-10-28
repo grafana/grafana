@@ -78,6 +78,7 @@ Grafana enables you to share dashboards and panels with other users within your 
 - Snapshots
 - Embeds
 - PDFs
+- PNG image files
 - JSON files
 - Reports
 - Library panels
@@ -98,6 +99,7 @@ You can share dashboards in the following ways:
 - [As a snapshot](#share-a-snapshot)
 - [As a PDF export](#export-a-dashboard-as-pdf)
 - [As a JSON file export](#export-a-dashboard-as-json)
+- [As an image export](#export-a-dashboard-as-an-image)
 
 When you share a dashboard externally as a link or by email, those dashboards are included in a list of your shared dashboards. To view the list and manage these dashboards, navigate to **Dashboards > Shared dashboards**.
 
@@ -233,6 +235,27 @@ Export a Grafana JSON file that contains everything you need, including layout, 
 
 1. Toggle the **Export the dashboard to use in another instance** switch to generate the JSON with a different data source UID.
 1. Click **Download file** or **Copy to clipboard**.
+1. Click the **X** at the top-right corner to close the share drawer.
+
+### Export a dashboard as an image
+
+{{< admonition type="note">}}
+You must have the Grafana image renderer plugin installed to export a dashboard as an image.
+{{< /admonition >}}
+
+To export a dashboard in its current state as a PNG image file, follow these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Open the dashboard you want to export.
+1. Click the **Export** drop-down list in the top-right corner and select **Export as image**.
+
+   The **Export as image** drawer opens.
+
+1. Click **Generate image**.
+
+   The image preview is displayed.
+
+1. Click **Download image**.
 1. Click the **X** at the top-right corner to close the share drawer.
 
 ## Share panels {#share-a-panel}
