@@ -1,8 +1,8 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Box, Button, Card, Text, TextLink, Toggletip, useStyles2 } from '@grafana/ui';
+import { Badge, Box, Button, Card, Text, TextLink, Toggletip, useStyles2 } from '@grafana/ui';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { GnetDashboard } from './types';
@@ -24,9 +24,21 @@ interface Props {
   onClick: () => void;
   onDetailsClick?: () => void;
   isLogo?: boolean; // Indicates if imageUrl is a small logo vs full screenshot
+  showDatasourceProvidedBadge?: boolean;
+  dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
 }
 
-export function DashboardCard({ title, imageUrl, onClick, onDetailsClick, dashboard, details, isLogo }: Props) {
+export function DashboardCard({
+  title,
+  imageUrl,
+  onClick,
+  onDetailsClick,
+  dashboard,
+  details,
+  isLogo,
+  showDatasourceProvidedBadge,
+  dimThumbnail,
+}: Props) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -37,7 +49,10 @@ export function DashboardCard({ title, imageUrl, onClick, onDetailsClick, dashbo
           <img
             src={imageUrl}
             alt={title}
-            className={isLogo ? styles.logo : styles.thumbnail}
+            className={cx(
+              isLogo ? styles.logo : styles.thumbnail,
+              dimThumbnail && showDatasourceProvidedBadge && styles.dimmedImage
+            )}
             onError={(e) => {
               console.error('Failed to load image for:', title, 'URL:', imageUrl);
               e.currentTarget.style.display = 'none';
@@ -46,6 +61,14 @@ export function DashboardCard({ title, imageUrl, onClick, onDetailsClick, dashbo
         ) : (
           <div className={styles.noImage}>
             <Trans i18nKey="dashboard-template.card.no-preview">No preview available </Trans>
+          </div>
+        )}
+        {showDatasourceProvidedBadge && (
+          <div className={styles.badgeContainer}>
+            <Badge
+              text={t('dashboard-template.card.datasource-provided-badge', 'Data source provided')}
+              color="orange"
+            />
           </div>
         )}
       </div>
@@ -149,6 +172,7 @@ function getStyles(theme: GrafanaTheme2) {
       width: '350px',
       height: '180px',
       backgroundColor: theme.colors.background.canvas,
+      position: 'relative',
     }),
     thumbnail: css({
       width: '350px',
@@ -165,6 +189,7 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
       height: '180px',
       backgroundColor: theme.colors.background.secondary,
+      position: 'relative',
     }),
     logo: css({
       objectFit: 'fill',
@@ -181,6 +206,7 @@ function getStyles(theme: GrafanaTheme2) {
     descriptionWrapper: css({
       gridArea: 'Description',
       cursor: 'help',
+      wordBreak: 'break-word',
     }),
     title: css({
       display: '-webkit-box',
@@ -206,6 +232,15 @@ function getStyles(theme: GrafanaTheme2) {
     detailValue: css({
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
+    }),
+    badgeContainer: css({
+      position: 'absolute',
+      top: theme.spacing(1),
+      right: theme.spacing(1),
+      zIndex: 1,
+    }),
+    dimmedImage: css({
+      opacity: 0.3,
     }),
   };
 }

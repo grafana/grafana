@@ -349,6 +349,8 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
                   imageUrl={getProvisionedImageUrl(item.index)}
                   dashboard={item.dashboard}
                   onClick={() => handleProvisionedClick(item.dashboard)}
+                  showDatasourceProvidedBadge={true}
+                  dimThumbnail={true}
                 />
               );
             } else {
