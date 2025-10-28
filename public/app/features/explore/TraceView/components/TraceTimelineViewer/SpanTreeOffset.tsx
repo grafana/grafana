@@ -82,26 +82,27 @@ export type TProps = {
   visibleSpanIds: string[];
 };
 
-export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
-  static displayName = 'UnthemedSpanTreeOffset';
+const UnthemedSpanTreeOffset = React.memo<TProps>((props) => {
+  const {
+    childrenVisible = false,
+    showChildrenIcon = true,
+    onClick,
+    span,
+    theme,
+    visibleSpanIds,
+    hoverIndentGuideIds,
+    addHoverIndentGuideId,
+    removeHoverIndentGuideId,
+  } = props;
 
-  ancestorIds: string[];
-
-  static defaultProps = {
-    childrenVisible: false,
-    showChildrenIcon: true,
-  };
-
-  constructor(props: TProps) {
-    super(props);
-
-    this.ancestorIds = spanAncestorIds(props.span);
+  const ancestorIds = React.useMemo(() => {
+    const ids = spanAncestorIds(span);
     // Some traces have multiple root-level spans, this connects them all under one guideline and adds the
     // necessary padding for the collapse icon on root-level spans.
-    this.ancestorIds.push('root');
-
-    this.ancestorIds.reverse();
-  }
+    ids.push('root');
+    ids.reverse();
+    return ids;
+  }, [span]);
 
   /**
    * If the mouse leaves to anywhere except another span with the same ancestor id, this span's ancestor id is
@@ -111,14 +112,17 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
    *     the element the user is now hovering.
    * @param {string} ancestorId - The span id that the user was hovering over.
    */
-  handleMouseLeave = (event: React.MouseEvent<HTMLSpanElement>, ancestorId: string) => {
-    if (
-      !(event.relatedTarget instanceof HTMLSpanElement) ||
-      _get(event, 'relatedTarget.dataset.ancestorId') !== ancestorId
-    ) {
-      this.props.removeHoverIndentGuideId(ancestorId);
-    }
-  };
+  const handleMouseLeave = React.useCallback(
+    (event: React.MouseEvent<HTMLSpanElement>, ancestorId: string) => {
+      if (
+        !(event.relatedTarget instanceof HTMLSpanElement) ||
+        _get(event, 'relatedTarget.dataset.ancestorId') !== ancestorId
+      ) {
+        removeHoverIndentGuideId(ancestorId);
+      }
+    },
+    [removeHoverIndentGuideId]
+  );
 
   /**
    * If the mouse entered this span from anywhere except another span with the same ancestor id, this span's
@@ -128,58 +132,60 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
    *     the last element the user was hovering.
    * @param {string} ancestorId - The span id that the user is now hovering over.
    */
-  handleMouseEnter = (event: React.MouseEvent<HTMLSpanElement>, ancestorId: string) => {
-    if (
-      !(event.relatedTarget instanceof HTMLSpanElement) ||
-      _get(event, 'relatedTarget.dataset.ancestorId') !== ancestorId
-    ) {
-      this.props.addHoverIndentGuideId(ancestorId);
-    }
-  };
+  const handleMouseEnter = React.useCallback(
+    (event: React.MouseEvent<HTMLSpanElement>, ancestorId: string) => {
+      if (
+        !(event.relatedTarget instanceof HTMLSpanElement) ||
+        _get(event, 'relatedTarget.dataset.ancestorId') !== ancestorId
+      ) {
+        addHoverIndentGuideId(ancestorId);
+      }
+    },
+    [addHoverIndentGuideId]
+  );
 
-  render() {
-    const { childrenVisible, onClick, showChildrenIcon, span, theme, visibleSpanIds } = this.props;
-    const { hasChildren, spanID } = span;
-    const wrapperProps = hasChildren ? { onClick, role: 'switch', 'aria-checked': childrenVisible } : null;
-    const icon =
-      showChildrenIcon &&
-      hasChildren &&
-      (childrenVisible ? (
-        <Icon name={'angle-down'} data-testid="icon-arrow-down" size={'sm'} />
-      ) : (
-        <Icon name={'angle-right'} data-testid="icon-arrow-right" size={'sm'} />
-      ));
-    const styles = getStyles(theme);
+  const { hasChildren, spanID } = span;
+  const wrapperProps = hasChildren ? { onClick, role: 'switch', 'aria-checked': childrenVisible } : null;
+  const icon =
+    showChildrenIcon &&
+    hasChildren &&
+    (childrenVisible ? (
+      <Icon name={'angle-down'} data-testid="icon-arrow-down" size={'sm'} />
+    ) : (
+      <Icon name={'angle-right'} data-testid="icon-arrow-right" size={'sm'} />
+    ));
+  const styles = getStyles(theme);
 
-    return (
-      <span className={cx(styles.SpanTreeOffset, { [styles.SpanTreeOffsetParent]: hasChildren })} {...wrapperProps}>
-        {this.ancestorIds.map((ancestorId, index) => (
-          <span
-            key={ancestorId}
-            className={cx(styles.indentGuide, {
-              [styles.indentGuideActive]: this.props.hoverIndentGuideIds.has(ancestorId),
-              [styles.indentGuideThin]:
-                index !== this.ancestorIds.length - 1 && ancestorId !== 'root' && !visibleSpanIds.includes(ancestorId),
-            })}
-            data-ancestor-id={ancestorId}
-            data-testid="SpanTreeOffset--indentGuide"
-            onMouseEnter={(event) => this.handleMouseEnter(event, ancestorId)}
-            onMouseLeave={(event) => this.handleMouseLeave(event, ancestorId)}
-          />
-        ))}
-        {icon && (
-          <span
-            className={cx(styles.iconWrapper, 'icon-wrapper')}
-            onMouseEnter={(event) => this.handleMouseEnter(event, spanID)}
-            onMouseLeave={(event) => this.handleMouseLeave(event, spanID)}
-            data-testid="icon-wrapper"
-          >
-            {icon}
-          </span>
-        )}
-      </span>
-    );
-  }
-}
+  return (
+    <span className={cx(styles.SpanTreeOffset, { [styles.SpanTreeOffsetParent]: hasChildren })} {...wrapperProps}>
+      {ancestorIds.map((ancestorId, index) => (
+        <span
+          key={ancestorId}
+          className={cx(styles.indentGuide, {
+            [styles.indentGuideActive]: hoverIndentGuideIds.has(ancestorId),
+            [styles.indentGuideThin]:
+              index !== ancestorIds.length - 1 && ancestorId !== 'root' && !visibleSpanIds.includes(ancestorId),
+          })}
+          data-ancestor-id={ancestorId}
+          data-testid="SpanTreeOffset--indentGuide"
+          onMouseEnter={(event) => handleMouseEnter(event, ancestorId)}
+          onMouseLeave={(event) => handleMouseLeave(event, ancestorId)}
+        />
+      ))}
+      {icon && (
+        <span
+          className={cx(styles.iconWrapper, 'icon-wrapper')}
+          onMouseEnter={(event) => handleMouseEnter(event, spanID)}
+          onMouseLeave={(event) => handleMouseLeave(event, spanID)}
+          data-testid="icon-wrapper"
+        >
+          {icon}
+        </span>
+      )}
+    </span>
+  );
+});
+
+UnthemedSpanTreeOffset.displayName = 'UnthemedSpanTreeOffset';
 
 export default withTheme2(UnthemedSpanTreeOffset);
