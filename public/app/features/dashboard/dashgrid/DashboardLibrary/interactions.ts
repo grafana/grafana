@@ -3,10 +3,15 @@ import { reportInteraction } from '@grafana/runtime';
 const SCHEMA_VERSION = 1;
 
 type ContentKind = 'datasource_dashboard' | 'template_dashboard';
-// in future this could be "template_dashboard" if/when items become templates or "community_dashboard"
+// in future this could be "community_dashboard"
 // | 'community_dashboard';
 
-type SourceEntryPoint = 'datasource_page';
+export type TemplateDashboardSourceEntryPoint =
+  | 'quick_add_button'
+  | 'command_palette'
+  | 'dashboard_list_page_create_new_button';
+
+type SourceEntryPoint = 'datasource_page' | TemplateDashboardSourceEntryPoint | 'unknown';
 // possible future flows onboarding, create-dashboard, empty states
 // | 'create_dashboard' | 'empty_state';
 
@@ -27,6 +32,9 @@ export const DashboardLibraryInteractions = {
     sourceEntryPoint: SourceEntryPoint;
   }) => {
     reportDashboardLibraryInteraction('item_clicked', properties);
+  },
+  entryPointClicked: (properties: { entryPoint: SourceEntryPoint }) => {
+    reportDashboardLibraryInteraction('entry_point_clicked', properties);
   },
 };
 

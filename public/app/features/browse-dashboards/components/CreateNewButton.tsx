@@ -6,6 +6,7 @@ import { config, getDataSourceSrv, locationService, reportInteraction } from '@g
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
 import { NewProvisionedFolderForm } from 'app/features/provisioning/components/Folders/NewProvisionedFolderForm';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
@@ -93,12 +94,9 @@ export default function CreateNewButton({
             <MenuItem
               label={getNewTemplateDashboardPhrase()}
               onClick={() =>
-                reportInteraction('grafana_menu_item_clicked', {
-                  url: buildUrl('/dashboard/new', parentFolder?.uid),
-                  from: location.pathname,
-                })
+                DashboardLibraryInteractions.entryPointClicked({ entryPoint: 'dashboard_list_page_create_new_button' })
               }
-              url={buildUrl('/dashboards?templateDashboards=true', parentFolder?.uid)}
+              url={buildUrl('/dashboards?templateDashboards=true&source=createNewButton', parentFolder?.uid)}
             />
           )}
         </>

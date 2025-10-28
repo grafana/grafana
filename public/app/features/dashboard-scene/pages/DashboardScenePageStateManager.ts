@@ -4,6 +4,7 @@ import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService 
 import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
+import { contextSrv } from 'app/core/core';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
@@ -511,10 +512,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     datasource: string | null,
     pluginId: string | null
   ): Promise<DashboardDTO> {
-    // Extract mappings from URL params
-    const location = locationService.getLocation();
-    const searchParams = new URLSearchParams(location.search);
-
     // Fetch the community dashboard from grafana.com
     const gnetDashboard = await getBackendSrv().get(`/api/gnet/dashboards/${gnetId}`);
 
@@ -523,7 +520,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
     const data = {
       dashboard: dashboardJson,
-      // pluginId: pluginId,
       overwrite: true,
       inputs: [
         {
@@ -545,8 +541,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         id: null,
       },
       meta: {
-        // canSave: contextSrv.hasEditPermissionInFolders,
-        // canEdit: contextSrv.hasEditPermissionInFolders,
+        canSave: contextSrv.hasEditPermissionInFolders,
+        canEdit: contextSrv.hasEditPermissionInFolders,
         canStar: false,
         canShare: false,
         canDelete: false,

@@ -30,21 +30,16 @@ export function DashboardCard({ title, imageUrl, onClick, onDetailsClick, dashbo
   return (
     <Card className={styles.card} noMargin>
       <Card.Heading className={styles.title}>{title}</Card.Heading>
-      <div className={styles.thumbnailContainer}>
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={title}
-            className={styles.thumbnail}
-            // style={{ display: thumbnailUrl ? 'block' : 'none' }}
-          />
-        ) : null}
-      </div>
-      <div title={dashboard.description || ''} className={styles.descriptionWrapper}>
-        {dashboard.description && (
+      {imageUrl ? (
+        <div className={styles.thumbnailContainer}>
+          <img src={imageUrl} alt={title} className={styles.thumbnail} />
+        </div>
+      ) : null}
+      {dashboard.description && (
+        <div title={dashboard.description || ''} className={styles.descriptionWrapper}>
           <Card.Description className={styles.description}>{dashboard.description}</Card.Description>
-        )}
-      </div>
+        </div>
+      )}
       <Card.Actions className={styles.actionsContainer}>
         <Button variant="secondary" onClick={onClick}>
           <Trans i18nKey="dashboard-library.dashboard-card.use-template-button">Use template</Trans>
@@ -111,20 +106,15 @@ function getStyles(theme: GrafanaTheme2) {
           "Thumbnail"
           "Description"
           "Actions"`,
-      gridTemplateRows: 'auto auto auto auto',
-      height: 'auto',
+      gridTemplateRows: 'auto 200px auto 1fr',
+      height: '100%',
       width: '350px',
       background: 'transparent',
       gridGap: theme.spacing(1),
     }),
     thumbnailContainer: css({
       gridArea: 'Thumbnail',
-
       overflow: 'hidden',
-      //   borderRadius: theme.shape.radius.default,
-      //   backgroundColor: theme.colors.background.secondary,
-      //   marginTop: theme.spacing(1),
-      //   marginBottom: theme.spacing(1),
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -133,7 +123,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderWidth: 1,
       borderStyle: 'solid',
       width: '350px',
-      //   height: '200px',
+      height: '200px',
     }),
     thumbnail: css({
       width: '100%',
@@ -142,6 +132,7 @@ function getStyles(theme: GrafanaTheme2) {
     descriptionWrapper: css({
       gridArea: 'Description',
       cursor: 'help',
+      minHeight: '48px',
     }),
     title: css({
       display: '-webkit-box',
@@ -160,13 +151,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     actionsContainer: css({
       marginTop: 0,
-    }),
-    detailsContainer: css({
-      width: '340px',
-    }),
-    detailValue: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.secondary,
     }),
   };
 }
