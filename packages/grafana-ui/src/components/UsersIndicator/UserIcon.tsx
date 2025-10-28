@@ -52,7 +52,7 @@ const getUserInitials = (name?: string) => {
 };
 
 /**
- * UserIcon a component that takes in the UserIconProps interface as a prop. It renders a user icon and displays the user's name or initials along with the user's active status or last viewed date.
+ * UserIcon renders a user icon and displays the user's name or initials along with the user's active status or last viewed date.
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/iconography-usericon--docs
  */

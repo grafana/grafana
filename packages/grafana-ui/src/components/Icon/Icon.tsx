@@ -43,7 +43,7 @@ const getIconStyles = (theme: GrafanaTheme2) => {
 };
 
 /**
- * Grafana's wrapper component over Font Awesome and Unicons icons.
+ * Grafana's icon wrapper component.
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/iconography-icon--docs
  */
