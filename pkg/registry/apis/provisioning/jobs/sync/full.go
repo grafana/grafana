@@ -142,6 +142,7 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 	writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.write_resource_from_file")
 	name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, "")
 	// logger.Info("Writing file started", "file", change.Path, "action", "name", name)
+	fmt.Println("Writing file started", "file", change.Path, "action", "name", name)
 	result := jobs.JobResourceResult{
 		Path:   change.Path,
 		Action: change.Action,
@@ -150,14 +151,17 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 		Kind:   gvk.Kind,
 	}
 	// logger.Info("Writing file ended", "file", change.Path, "action", "name", name)
+	fmt.Println("Writing file ended", "file", change.Path, "action", "name", name)
 	if err != nil {
 		writeSpan.RecordError(err)
 		result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
 	}
 
 	// logger.Info("Recording started", "file", change.Path, "action", "name", name)
+	fmt.Println("Recording started", "file", change.Path, "action", "name", name)
 	progress.Record(writeCtx, result)
 	// logger.Info("Recording ended", "file", change.Path, "action", "name", name)
+	fmt.Println("Recording ended", "file", change.Path, "action", "name", name)
 	writeSpan.End()
 }
 
