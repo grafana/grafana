@@ -300,7 +300,7 @@ describe('Tree', () => {
     await openSelector();
 
     // Verify that Cloud is expanded
-    expect(screen.getByRole('button', { name: 'Collapse Cloud' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cloud' })).toBeInTheDocument();
   });
 
   describe('Keyboard Navigation', () => {
