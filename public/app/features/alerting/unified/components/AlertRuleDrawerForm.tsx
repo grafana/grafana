@@ -12,12 +12,43 @@ import { RuleDefinitionSection } from 'app/features/alerting/unified/components/
 import { isGrafanaGroupUpdatedResponse } from '../api/alertRuleModel';
 import { useAddRuleToRuleGroup } from '../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
-import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { AlertManagerManualRouting, ContactPoint, RuleFormType, RuleFormValues } from '../types/rule-form';
 import { formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
 import { getRuleGroupLocationFromFormValues } from '../utils/rules';
 
 import { RuleConditionSection } from './RuleConditionSection';
 import { RuleNotificationSection } from './RuleNotificationSection';
+
+function normalizeContactPoints(
+  contactPoints: AlertManagerManualRouting | undefined
+): AlertManagerManualRouting | undefined {
+  if (!contactPoints) {
+    return contactPoints;
+  }
+
+  const normalized: AlertManagerManualRouting = {};
+
+  for (const [alertManager, contactPoint] of Object.entries(contactPoints)) {
+    if (contactPoint.selectedContactPoint) {
+      const defaultContactPoint: ContactPoint = {
+        selectedContactPoint: contactPoint.selectedContactPoint,
+        overrideGrouping: contactPoint.overrideGrouping ?? false,
+        groupBy: contactPoint.groupBy ?? [],
+        overrideTimings: contactPoint.overrideTimings ?? false,
+        groupWaitValue: contactPoint.groupWaitValue ?? '',
+        groupIntervalValue: contactPoint.groupIntervalValue ?? '',
+        repeatIntervalValue: contactPoint.repeatIntervalValue ?? '',
+        muteTimeIntervals: contactPoint.muteTimeIntervals ?? [],
+        activeTimeIntervals: contactPoint.activeTimeIntervals ?? [],
+      };
+      normalized[alertManager] = defaultContactPoint;
+    } else {
+      normalized[alertManager] = contactPoint;
+    }
+  }
+
+  return normalized;
+}
 
 export interface AlertRuleDrawerFormProps {
   isOpen: boolean;
@@ -102,7 +133,17 @@ export function AlertRuleDrawerForm({
                 {t('alerting.common.cancel', 'Cancel')}
               </Button>
               {onContinueInAlerting && (
-                <Button variant="secondary" type="button" onClick={() => onContinueInAlerting(methods.getValues())}>
+                <Button
+                  variant="secondary"
+                  type="button"
+                  onClick={() => {
+                    const values = methods.getValues();
+                    onContinueInAlerting({
+                      ...values,
+                      contactPoints: normalizeContactPoints(values.contactPoints),
+                    });
+                  }}
+                >
                   {t('alerting.simplified.continue-in-alerting', 'Continue in Alerting')}
                 </Button>
               )}
