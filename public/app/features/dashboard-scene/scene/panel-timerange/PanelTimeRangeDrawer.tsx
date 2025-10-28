@@ -136,7 +136,7 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
               value={timeShift ?? ''}
               createCustomValue={true}
               onChange={(x) => {
-                model.setState({ timeFrom: x.value });
+                model.setState({ timeShift: x.value });
               }}
             />
           </Field>
