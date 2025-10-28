@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { chain } from 'lodash';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Stack, Toggletip, useStyles2 } from '@grafana/ui';
 
 import { findCommonLabels, isPrivateLabel } from '../../utils/labels';
 
@@ -30,8 +30,10 @@ export const AlertLabels = ({
   const styles = useStyles2(getStyles, size);
   const [showCommonLabels, setShowCommonLabels] = useState(false);
 
-  const computedCommonLabels =
-    displayCommonLabels && Array.isArray(labelSets) && labelSets.length > 1 ? findCommonLabels(labelSets) : {};
+  const computedCommonLabels = useMemo(
+    () => (displayCommonLabels && Array.isArray(labelSets) && labelSets.length > 1 ? findCommonLabels(labelSets) : {}),
+    [displayCommonLabels, labelSets]
+  );
 
   const labelsToShow = chain(labels)
     .toPairs()
@@ -43,14 +45,15 @@ export const AlertLabels = ({
   const hasCommonLabels = commonLabelsCount > 0;
   const tooltip = t('alert-labels.button.show.tooltip', 'Show common labels');
 
-  const commonLabelsTooltip = (
-    <Stack role="list" direction="column" gap={1}>
-      {Object.entries(computedCommonLabels).map(([label, value]) => {
-        return (
+  const commonLabelsTooltip = useMemo(
+    () => (
+      <Stack data-testid="common-labels-tooltip-content" role="list" direction="row" wrap="wrap" gap={1} width={48}>
+        {Object.entries(computedCommonLabels).map(([label, value]) => (
           <AlertLabel key={label + value} size={size} labelKey={label} value={value} colorBy="key" role="listitem" />
-        );
-      })}
-    </Stack>
+        ))}
+      </Stack>
+    ),
+    [computedCommonLabels, size]
   );
 
   return (
@@ -85,13 +88,13 @@ export const AlertLabels = ({
               </Trans>
             </Button>
           ) : (
-            <Tooltip content={commonLabelsTooltip} placement="top">
-              <Button variant="secondary" fill="text" size="sm">
+            <Toggletip content={commonLabelsTooltip} closeButton={false} fitContent={true}>
+              <Button data-testid="common-labels-tooltip-trigger" variant="secondary" fill="text" size="sm">
                 <Trans i18nKey="alerting.alert-labels.common-labels-count" count={commonLabelsCount}>
                   +{'{{count}}'} common labels
                 </Trans>
               </Button>
-            </Tooltip>
+            </Toggletip>
           )}
         </div>
       )}
