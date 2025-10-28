@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/grafana/authlib/types"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -30,9 +31,13 @@ func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *dataso
 	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) GetDataSourceWithType(ctx context.Context, uid string, orgID int64, dsType string) (*datasources.DataSource, error) {
+func (s *FakeDataSourceService) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, err
+	}
 	for _, dataSource := range s.DataSources {
-		if uid == dataSource.UID && orgID == dataSource.OrgID && dsType == dataSource.Type {
+		if name == dataSource.UID && ns.OrgID == dataSource.OrgID && group == dataSource.Type {
 			return dataSource, nil
 		}
 	}

@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
@@ -117,8 +118,8 @@ func (s *Service) Usage(ctx context.Context, scopeParams *quota.ScopeParameters)
 type DataSourceRetriever interface {
 	// GetDataSource gets a datasource.
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
-	// GetDataSourceWithType gets a datasource by UID and orgID of a given datasource type.
-	GetDataSourceWithType(ctx context.Context, uid string, orgID int64, dsType string) (*datasources.DataSource, error)
+	// GetDataSourceInNamespace gets a datasource by namespace, name (datasource uid), and group (datasource type).
+	GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error)
 }
 
 // NewNameScopeResolver provides an ScopeAttributeResolver able to
@@ -178,8 +179,12 @@ func (s *Service) GetDataSource(ctx context.Context, query *datasources.GetDataS
 	return s.SQLStore.GetDataSource(ctx, query)
 }
 
-func (s *Service) GetDataSourceWithType(ctx context.Context, uid string, orgID int64, dsType string) (*datasources.DataSource, error) {
-	return s.SQLStore.GetDataSourceWithType(ctx, uid, orgID, dsType)
+func (s *Service) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, err
+	}
+	return s.SQLStore.GetDataSourceInGroup(ctx, ns.OrgID, name, group)
 }
 
 func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {

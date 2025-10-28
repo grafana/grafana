@@ -15,8 +15,8 @@ type DataSourceService interface {
 	// GetDataSource gets a datasource.
 	GetDataSource(ctx context.Context, query *GetDataSourceQuery) (*DataSource, error)
 
-	// GetDataSourceWithType gets a datasource by UID and orgID of a given datasource type.
-	GetDataSourceWithType(ctx context.Context, uid string, orgID int64, dsType string) (*DataSource, error)
+	// GetDataSourceInNamespace gets a datasource by namespace, name (datasource uid), and group (datasource type).
+	GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*DataSource, error)
 
 	// GetDataSources gets datasources.
 	GetDataSources(ctx context.Context, query *GetDataSourcesQuery) ([]*DataSource, error)

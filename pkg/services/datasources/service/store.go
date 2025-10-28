@@ -24,7 +24,7 @@ import (
 // Store is the interface for the datasource Service's storage.
 type Store interface {
 	GetDataSource(context.Context, *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
-	GetDataSourceWithType(context.Context, string, int64, string) (*datasources.DataSource, error)
+	GetDataSourceInGroup(context.Context, int64, string, string) (*datasources.DataSource, error)
 	GetDataSources(context.Context, *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error)
 	GetDataSourcesByType(context.Context, *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error)
 	DeleteDataSource(context.Context, *datasources.DeleteDataSourceCommand) error
@@ -91,30 +91,30 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 	return datasource, nil
 }
 
-func (ss *SqlStore) GetDataSourceWithType(ctx context.Context, uid string, orgID int64, dsType string) (*datasources.DataSource, error) {
+func (ss *SqlStore) GetDataSourceInGroup(ctx context.Context, orgID int64, name, group string) (*datasources.DataSource, error) {
 	var (
 		dataSource *datasources.DataSource
 		err        error
 	)
 	return dataSource, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		dataSource, err = ss.getDataSourceWithType(ctx, uid, orgID, dsType, sess)
+		dataSource, err = ss.getDataSourceInGroup(ctx, orgID, name, group, sess)
 		return err
 	})
 }
 
-func (ss *SqlStore) getDataSourceWithType(_ context.Context, uid string, orgID int64, dsType string, sess *db.Session) (*datasources.DataSource, error) {
+func (ss *SqlStore) getDataSourceInGroup(_ context.Context, orgID int64, name, group string, sess *db.Session) (*datasources.DataSource, error) {
 	datasource := &datasources.DataSource{
 		OrgID: orgID,
-		Type:  dsType,
-		UID:   uid,
+		Type:  group,
+		UID:   name,
 	}
 	has, err := sess.Get(datasource)
 
 	if err != nil {
-		ss.logger.Error("Failed getting data source", "err", err, "uid", uid, "orgId", orgID, "dsType", dsType)
+		ss.logger.Error("Failed getting data source", "err", err, "name", name, "orgId", orgID, "group", group)
 		return nil, err
 	} else if !has {
-		ss.logger.Debug("Data source not found", "uid", uid, "orgId", orgID, "dsType", dsType)
+		ss.logger.Debug("Data source not found", "name", name, "orgId", orgID, "group", group)
 		return nil, datasources.ErrDataSourceNotFound
 	}
 
