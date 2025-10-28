@@ -240,7 +240,6 @@ require (
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.3.1 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.281.0 // indirect
 	github.com/grafana/grafana/apps/dashboard v0.0.0 // indirect
-	github.com/grafana/grafana/apps/example v0.0.0-20251027162426-edef69fdc82b // indirect
 	github.com/grafana/grafana/apps/plugins v0.0.0 // indirect
 	github.com/grafana/grafana/apps/provisioning v0.0.0 // indirect
 	github.com/grafana/grafana/apps/secret v0.0.0 // indirect
