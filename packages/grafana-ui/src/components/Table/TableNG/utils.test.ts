@@ -49,6 +49,7 @@ import {
   predicateByName,
   parseStyleJson,
   calculateFooterHeight,
+  displayJsonValue,
   prepareSparklineValue,
   buildInspectValue,
 } from './utils';
