@@ -84,6 +84,10 @@ func addLibraryElementsMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("add index library_element org_id-folder_uid-name-kind", migrator.NewAddIndexMigration(libraryElementsV1, &migrator.Index{Cols: []string{"org_id", "folder_uid", "name", "kind"}, Type: migrator.UniqueIndex}))
 
+	mg.AddMigration("drop unique name in folder index (id)",
+		migrator.NewDropIndexMigration(libraryElementsV1,
+			&migrator.Index{Cols: []string{"org_id", "folder_id", "name", "kind"}, Type: migrator.UniqueIndex}))
+
 	mg.AddMigration("drop unique name in folder index",
 		migrator.NewDropIndexMigration(libraryElementsV1,
 			&migrator.Index{Cols: []string{"org_id", "folder_uid", "name", "kind"}, Type: migrator.UniqueIndex}))
