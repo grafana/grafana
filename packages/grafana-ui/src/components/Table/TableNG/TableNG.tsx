@@ -438,7 +438,7 @@ export function TableNG(props: TableNGProps) {
 
         // attach JSONCell custom display function to JSONView cell type
         if (cellType === TableCellDisplayMode.JSONView || field.type === FieldType.other) {
-          field.display = displayJsonValue;
+          field.display = displayJsonValue(field);
         }
 
         // For some cells, "aligning" the cell will mean aligning the inline contents of the cell with
