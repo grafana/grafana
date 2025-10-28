@@ -201,10 +201,14 @@ func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
 func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
+	return k.WriteEventWithRV(ctx, event, k.snowflake.Generate().Int64())
+}
+
+// WriteEventWithRV writes an event with a specified resource version (for testing)
+func (k *kvStorageBackend) WriteEventWithRV(ctx context.Context, event WriteEvent, rv int64) (int64, error) {
 	if err := event.Validate(); err != nil {
 		return 0, fmt.Errorf("invalid event: %w", err)
 	}
-	rv := k.snowflake.Generate().Int64()
 
 	obj := event.Object
 	// Write data.
@@ -241,7 +245,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	}
 
 	// Write the data
-	err := k.dataStore.Save(ctx, DataKey{
+	dataKey := DataKey{
 		Group:           event.Key.Group,
 		Resource:        event.Key.Resource,
 		Namespace:       event.Key.Namespace,
@@ -249,13 +253,37 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		ResourceVersion: rv,
 		Action:          action,
 		Folder:          obj.GetFolder(),
-	}, bytes.NewReader(event.Value))
+	}
+	err := k.dataStore.Save(ctx, dataKey, bytes.NewReader(event.Value))
 	if err != nil {
 		return 0, fmt.Errorf("failed to write data: %w", err)
 	}
 
+	// Optimistic concurrency control: verify our write is the latest version
+	// Only perform this check for MODIFIED and DELETED operations
+	if action == DataActionUpdated || action == DataActionDeleted {
+		latestKey, err := k.dataStore.LastResourceVersion(ctx, ListRequestKey{
+			Group:     event.Key.Group,
+			Resource:  event.Key.Resource,
+			Namespace: event.Key.Namespace,
+			Name:      event.Key.Name,
+		})
+		if err != nil {
+			// If we can't read the latest version, clean up what we wrote
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return 0, fmt.Errorf("failed to check latest version: %w", err)
+		}
+
+		// Check if the RV we just wrote is the latest. If not, a concurrent write with higher RV happened
+		if latestKey.ResourceVersion != rv {
+			// Delete the data we just wrote since it's not the latest
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return 0, GetError(&ErrOptimisticLockingFailed)
+		}
+	}
+
 	// Write event
-	err = k.eventStore.Save(ctx, Event{
+	eventData := Event{
 		Namespace:       event.Key.Namespace,
 		Group:           event.Key.Group,
 		Resource:        event.Key.Resource,
@@ -264,8 +292,11 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		Action:          action,
 		Folder:          obj.GetFolder(),
 		PreviousRV:      event.PreviousRV,
-	})
+	}
+	err = k.eventStore.Save(ctx, eventData)
 	if err != nil {
+		// Clean up the data we wrote since event save failed
+		_ = k.dataStore.Delete(ctx, dataKey)
 		return 0, fmt.Errorf("failed to save event: %w", err)
 	}
 

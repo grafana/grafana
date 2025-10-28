@@ -1584,3 +1584,190 @@ func createAndWriteTestObject(t *testing.T, backend *kvStorageBackend) (*unstruc
 
 	return testObj, rv
 }
+
+// TestKvStorageBackend_ConcurrentUpdate tests that updates with lower RV fail with optimistic locking error
+func TestKvStorageBackend_ConcurrentUpdate(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	// Create initial resource
+	obj, err := createTestObjectWithName("test-concurrent", appsNamespace, "initial")
+	require.NoError(t, err)
+
+	rv1, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
+	require.NoError(t, err)
+	require.Greater(t, rv1, int64(0))
+
+	// Pre-generate two RVs where rv2 < rv3
+	rv2 := backend.snowflake.Generate().Int64()
+	rv3 := backend.snowflake.Generate().Int64()
+	require.Less(t, rv2, rv3, "rv2 should be less than rv3")
+
+	// Write with higher RV (rv3) first - this should succeed
+	metaAccessor, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+
+	obj3, err := createTestObjectWithName("test-concurrent", appsNamespace, "version3")
+	require.NoError(t, err)
+
+	writeEvent3 := WriteEvent{
+		Type: resourcepb.WatchEvent_MODIFIED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: appsNamespace.Namespace,
+			Group:     appsNamespace.Group,
+			Resource:  "resources",
+			Name:      "test-concurrent",
+		},
+		Value:      objectToJSONBytes(t, obj3),
+		Object:     metaAccessor,
+		ObjectOld:  metaAccessor,
+		PreviousRV: rv1,
+	}
+
+	// Manually write with rv3
+	writeEvent3RV, err := backend.WriteEventWithRV(ctx, writeEvent3, rv3)
+	require.NoError(t, err)
+	require.Equal(t, rv3, writeEvent3RV)
+
+	// Now try to write with lower RV (rv2) - this should fail because rv2 < rv3
+	obj2, err := createTestObjectWithName("test-concurrent", appsNamespace, "version2")
+	require.NoError(t, err)
+
+	writeEvent2 := WriteEvent{
+		Type: resourcepb.WatchEvent_MODIFIED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: appsNamespace.Namespace,
+			Group:     appsNamespace.Group,
+			Resource:  "resources",
+			Name:      "test-concurrent",
+		},
+		Value:      objectToJSONBytes(t, obj2),
+		Object:     metaAccessor,
+		ObjectOld:  metaAccessor,
+		PreviousRV: rv1,
+	}
+
+	writeEvent2RV, err := backend.WriteEventWithRV(ctx, writeEvent2, rv2)
+	require.Error(t, err, "write with lower RV should fail")
+	require.Contains(t, err.Error(), "does not match saved RV", "error should be about RV mismatch")
+	require.Equal(t, int64(0), writeEvent2RV, "failed write should return 0 RV")
+
+	// Verify the latest version is rv3, not rv2
+	allKeys := []DataKey{}
+	for dataKey, err := range backend.dataStore.Keys(ctx, ListRequestKey{
+		Namespace: appsNamespace.Namespace,
+		Group:     appsNamespace.Group,
+		Resource:  "resources",
+		Name:      "test-concurrent",
+	}, SortOrderAsc) {
+		require.NoError(t, err)
+		allKeys = append(allKeys, dataKey)
+	}
+
+	// Should have exactly 2 versions: initial and version3 (not version2)
+	require.Equal(t, 2, len(allKeys), "should have exactly 2 versions stored")
+	require.Equal(t, rv3, allKeys[1].ResourceVersion, "latest version should be rv3")
+}
+
+// TestKvStorageBackend_ConcurrentDelete tests that deletes with lower RV fail with optimistic locking error
+func TestKvStorageBackend_ConcurrentDelete(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	// Create initial resource
+	obj, err := createTestObjectWithName("test-concurrent-delete", appsNamespace, "initial")
+	require.NoError(t, err)
+
+	rv1, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
+	require.NoError(t, err)
+	require.Greater(t, rv1, int64(0))
+
+	// Pre-generate two RVs where rv2 < rv3
+	rv2 := backend.snowflake.Generate().Int64()
+	rv3 := backend.snowflake.Generate().Int64()
+	require.Less(t, rv2, rv3, "rv2 should be less than rv3")
+
+	// Delete with higher RV (rv3) first - this should succeed
+	metaAccessor, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+
+	deleteEvent3 := WriteEvent{
+		Type: resourcepb.WatchEvent_DELETED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: appsNamespace.Namespace,
+			Group:     appsNamespace.Group,
+			Resource:  "resources",
+			Name:      "test-concurrent-delete",
+		},
+		Value:      objectToJSONBytes(t, obj),
+		Object:     metaAccessor,
+		ObjectOld:  metaAccessor,
+		PreviousRV: rv1,
+	}
+
+	deleteEvent3RV, err := backend.WriteEventWithRV(ctx, deleteEvent3, rv3)
+	require.NoError(t, err)
+	require.Equal(t, rv3, deleteEvent3RV)
+
+	// Now try to delete with lower RV (rv2) - this should fail because rv2 < rv3
+	deleteEvent2 := WriteEvent{
+		Type: resourcepb.WatchEvent_DELETED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: appsNamespace.Namespace,
+			Group:     appsNamespace.Group,
+			Resource:  "resources",
+			Name:      "test-concurrent-delete",
+		},
+		Value:      objectToJSONBytes(t, obj),
+		Object:     metaAccessor,
+		ObjectOld:  metaAccessor,
+		PreviousRV: rv1,
+	}
+
+	deleteEvent2RV, err := backend.WriteEventWithRV(ctx, deleteEvent2, rv2)
+	require.Error(t, err, "delete with lower RV should fail")
+	require.Contains(t, err.Error(), "does not match saved RV", "error should be about RV mismatch")
+	require.Equal(t, int64(0), deleteEvent2RV, "failed delete should return 0 RV")
+
+	// Verify we have exactly 2 versions: initial and delete with rv3
+	allKeys := []DataKey{}
+	for dataKey, err := range backend.dataStore.Keys(ctx, ListRequestKey{
+		Namespace: appsNamespace.Namespace,
+		Group:     appsNamespace.Group,
+		Resource:  "resources",
+		Name:      "test-concurrent-delete",
+	}, SortOrderAsc) {
+		require.NoError(t, err)
+		allKeys = append(allKeys, dataKey)
+	}
+
+	// Should have exactly 2 versions: initial and delete with rv3 (not delete with rv2)
+	require.Equal(t, 2, len(allKeys), "should have exactly 2 versions stored")
+	require.Equal(t, DataActionDeleted, allKeys[1].Action, "latest version should be deleted")
+	require.Equal(t, rv3, allKeys[1].ResourceVersion, "latest version should be rv3")
+}
+
+// TestKvStorageBackend_SequentialUpdatesSucceed tests that sequential updates work correctly
+func TestKvStorageBackend_SequentialUpdatesSucceed(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+
+	// Create initial resource
+	obj, err := createTestObjectWithName("test-sequential", appsNamespace, "v1")
+	require.NoError(t, err)
+
+	rv1, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
+	require.NoError(t, err)
+
+	// Sequential updates should all succeed
+	rv2, err := writeObject(t, backend, obj, resourcepb.WatchEvent_MODIFIED, rv1)
+	require.NoError(t, err)
+	require.Greater(t, rv2, rv1)
+
+	rv3, err := writeObject(t, backend, obj, resourcepb.WatchEvent_MODIFIED, rv2)
+	require.NoError(t, err)
+	require.Greater(t, rv3, rv2)
+
+	rv4, err := writeObject(t, backend, obj, resourcepb.WatchEvent_MODIFIED, rv3)
+	require.NoError(t, err)
+	require.Greater(t, rv4, rv3)
+}
