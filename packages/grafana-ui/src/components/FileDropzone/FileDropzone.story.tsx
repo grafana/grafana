@@ -1,4 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
+import { useId } from 'react';
+
+import { Field } from '../Forms/Field';
 
 import { FileDropzone } from './FileDropzone';
 import mdx from './FileDropzone.mdx';
@@ -10,12 +13,17 @@ const meta: Meta<typeof FileDropzone> = {
     docs: {
       page: mdx,
     },
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
 };
 
-const Template: StoryFn<typeof FileDropzone> = (args) => <FileDropzone {...args} />;
+const Template: StoryFn<typeof FileDropzone> = (args) => {
+  const inputId = useId();
+  return (
+    <Field label="Test JSON file">
+      <FileDropzone {...args} id={inputId} />
+    </Field>
+  );
+};
 
 export const Basic = Template.bind({});
 
