@@ -58,7 +58,7 @@ To browse for available plugins:
 1. Use the search box to filter based on name, keywords, organization and other metadata.
 1. Click the **Data sources**, **Panels**, or **Applications** buttons to filter by plugin type.
 
-If you're not logged in, you can also access the list of available plugins [here](https://grafana.com/grafana/plugins/).  
+If you're not logged in, you can also access the list of available plugins [here](https://grafana.com/grafana/plugins/).
 
 ## Manage your plugins
 
