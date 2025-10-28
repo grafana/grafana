@@ -6,7 +6,7 @@ import { Controller, FieldErrors, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
@@ -17,6 +17,7 @@ import {
   GrafanaChannelValues,
   ReceiverFormValues,
 } from '../../../types/receiver-form';
+import { getLatestVersions } from '../../../utils/notifier-versions-poc';
 import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
 import { ChannelOptions } from './ChannelOptions';
@@ -164,24 +165,33 @@ export function ChannelSubForm<R extends ChannelValues>({
     setValue(`${settingsFieldPath}.${fieldPath}`, undefined);
   };
 
-  const typeOptions = useMemo(
-    (): SelectableValue[] =>
-      sortBy(notifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<SelectableValue>(
-        ({ dto: { name, type }, meta }) => ({
-          // @ts-expect-error ReactNode is supported
-          label: (
-            <Stack alignItems="center" gap={1}>
-              {name}
-              {meta?.badge}
-            </Stack>
-          ),
-          value: type,
-          description: meta?.description,
-          isDisabled: meta ? !meta.enabled : false,
-        })
-      ),
-    [notifiers]
-  );
+  const typeOptions = useMemo((): SelectableValue[] => {
+    // POC: Group notifiers by name to handle versioning
+    // Only show latest (creatable) versions in the dropdown
+    const notifierDTOs = notifiers.map((n) => n.dto);
+    const latestVersions = getLatestVersions(notifierDTOs);
+
+    // Create a map of latest version types to their notifier objects
+    const latestVersionsMap = new Map(latestVersions.map((dto) => [dto.type, dto]));
+
+    // Filter notifiers to only include latest versions
+    const notifiersToShow = notifiers.filter((notifier) => latestVersionsMap.has(notifier.dto.type));
+
+    return sortBy(notifiersToShow, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<SelectableValue>(
+      ({ dto: { name, type }, meta }) => ({
+        // @ts-expect-error ReactNode is supported
+        label: (
+          <Stack alignItems="center" gap={1}>
+            {name}
+            {meta?.badge}
+          </Stack>
+        ),
+        value: type,
+        description: meta?.description,
+        isDisabled: meta ? !meta.enabled : false,
+      })
+    );
+  }, [notifiers]);
 
   const handleTest = async () => {
     await trigger();
@@ -203,6 +213,15 @@ export function ChannelSubForm<R extends ChannelValues>({
   const mandatoryOptions = notifier?.dto.options.filter((o) => o.required) ?? [];
   const optionalOptions = notifier?.dto.options.filter((o) => !o.required) ?? [];
 
+  // POC: Check if current integration is a legacy/Mimir version
+  // Version naming: v0mimir1, v0mimir2 = Mimir versions; v1 = Grafana version
+  const isLegacyVersion = notifier?.dto.deprecated || notifier?.dto.version?.startsWith('v0');
+  const integrationVersion = notifier?.dto.version;
+
+  // POC: Legacy integrations are read-only (Stage 2: imported/provisioned state)
+  // In Stage 3, after conversion, they might become editable
+  const isLegacyReadOnly = isLegacyVersion && isEditable; // Override editability for legacy
+
   const contactPointTypeInputId = `contact-point-type-${pathPrefix}`;
   return (
     <div className={styles.wrapper} data-testid="item-container">
@@ -213,21 +232,40 @@ export function ChannelSubForm<R extends ChannelValues>({
             htmlFor={contactPointTypeInputId}
             data-testid={`${pathPrefix}type`}
           >
-            <Controller
-              name={typeFieldPath}
-              control={control}
-              defaultValue={defaultValues.type}
-              render={({ field: { ref, onChange, ...field } }) => (
-                <Select
-                  disabled={!isEditable}
-                  inputId={contactPointTypeInputId}
-                  {...field}
-                  width={37}
-                  options={typeOptions}
-                  onChange={(value) => onChange(value?.value)}
+            <Stack direction="column" gap={1}>
+              <Stack direction="row" alignItems="flex-start" gap={1}>
+                <Controller
+                  name={typeFieldPath}
+                  control={control}
+                  defaultValue={defaultValues.type}
+                  render={({ field: { ref, onChange, ...field } }) => (
+                    <Select
+                      disabled={!isEditable}
+                      inputId={contactPointTypeInputId}
+                      {...field}
+                      width={37}
+                      options={typeOptions}
+                      onChange={(value) => onChange(value?.value)}
+                    />
+                  )}
                 />
+              </Stack>
+              {isLegacyVersion && integrationVersion && (
+                <Stack direction="row" gap={0.5}>
+                  <Badge
+                    text="Legacy (Mimir)"
+                    color="orange"
+                    icon="exclamation-triangle"
+                    tooltip="This is a legacy integration imported from Mimir. Settings are read-only but you can change to a different integration type to convert."
+                  />
+                  <Badge
+                    text={integrationVersion.toUpperCase()}
+                    color="orange"
+                    tooltip={`Integration version: ${integrationVersion}`}
+                  />
+                </Stack>
               )}
-            />
+            </Stack>
           </Field>
         </div>
         <div className={styles.buttons}>
@@ -245,9 +283,12 @@ export function ChannelSubForm<R extends ChannelValues>({
           )}
           {isEditable && (
             <>
-              <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
-                <Trans i18nKey="alerting.channel-sub-form.duplicate">Duplicate</Trans>
-              </Button>
+              {/* Don't allow duplicating legacy integrations (they're read-only) */}
+              {!isLegacyReadOnly && (
+                <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
+                  <Trans i18nKey="alerting.channel-sub-form.duplicate">Duplicate</Trans>
+                </Button>
+              )}
               {onDelete && (
                 <Button
                   data-testid={`${pathPrefix}delete-button`}
@@ -266,6 +307,21 @@ export function ChannelSubForm<R extends ChannelValues>({
       </div>
       {notifier && (
         <div className={styles.innerContent}>
+          {isLegacyVersion && (
+            <Alert
+              title={t(
+                'alerting.channel-sub-form.legacy-read-only-title',
+                'Legacy Integration - Read Only'
+              )}
+              severity="info"
+            >
+              <Trans i18nKey="alerting.channel-sub-form.legacy-read-only-body">
+                This integration was imported from Mimir and is currently in read-only mode. To edit or update this
+                integration, you will need to convert it to the latest version first. This is part of the migration
+                to the unified Grafana Alert Manager.
+              </Trans>
+            </Alert>
+          )}
           {showTelegramWarning && (
             <Alert
               title={t(
@@ -288,7 +344,7 @@ export function ChannelSubForm<R extends ChannelValues>({
             onResetSecureField={onResetSecureField}
             onDeleteSubform={onDeleteSubform}
             integrationPrefix={channelFieldPath}
-            readOnly={!isEditable}
+            readOnly={!isEditable || isLegacyReadOnly}
             customValidators={customValidators}
           />
           {!!(mandatoryOptions.length && optionalOptions.length) && (
@@ -309,7 +365,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                 onDeleteSubform={onDeleteSubform}
                 errors={errors}
                 integrationPrefix={channelFieldPath}
-                readOnly={!isEditable}
+                readOnly={!isEditable || isLegacyReadOnly}
                 customValidators={customValidators}
               />
             </CollapsibleSection>
@@ -317,7 +373,7 @@ export function ChannelSubForm<R extends ChannelValues>({
           <CollapsibleSection
             label={t('alerting.channel-sub-form.label-notification-settings', 'Notification settings')}
           >
-            <CommonSettingsComponent pathPrefix={pathPrefix} readOnly={!isEditable} />
+            <CommonSettingsComponent pathPrefix={pathPrefix} readOnly={!isEditable || isLegacyReadOnly} />
           </CollapsibleSection>
         </div>
       )}

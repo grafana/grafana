@@ -257,3 +257,6 @@ public/mockServiceWorker.js
 
 # Ignore grafana/hippocampus local cache folder
 .hippo
+
+# Claude Code session notes
+[Cc]laude.[Mm][Dd]

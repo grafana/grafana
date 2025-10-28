@@ -173,6 +173,43 @@ const grafanaAlertmanagerConfig: AlertManagerCortexConfig = {
           },
         ],
       },
+      // POC: Legacy integration example for versioning demo
+      // Version naming: v0mimir1 (per decision doc)
+      {
+        name: 'Legacy Slack from Mimir',
+        grafana_managed_receiver_configs: [
+          {
+            uid: 'legacy-slack-demo-uid',
+            name: 'Legacy Slack from Mimir',
+            type: 'slack_v0mimir1', // Mimir version v0mimir1 imported from Mimir
+            disableResolveMessage: false,
+            settings: {
+              recipient: '#alerts-legacy',
+              username: 'Mimir Alertmanager',
+            },
+            secureFields: {
+              token: true,
+            },
+          },
+        ],
+      },
+      // POC: Another legacy example with webhook
+      {
+        name: 'Legacy Webhook from Mimir',
+        grafana_managed_receiver_configs: [
+          {
+            uid: 'legacy-webhook-demo-uid',
+            name: 'Legacy Webhook from Mimir',
+            type: 'webhook_v0mimir1', // Mimir webhook version v0mimir1
+            disableResolveMessage: false,
+            settings: {
+              url: 'https://example.com/webhook/mimir-legacy',
+              httpMethod: 'POST',
+            },
+            secureFields: {},
+          },
+        ],
+      },
     ],
     templates: ['slack-template', 'custom-email', 'provisioned-template', 'template with spaces'],
     time_intervals: [

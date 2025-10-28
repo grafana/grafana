@@ -88,6 +88,10 @@ export interface NotifierDTO<T = NotifierType> {
   options: NotificationChannelOption[];
   info?: string;
   secure?: boolean;
+  // Integration versioning support for single alert manager migration
+  version?: string; // e.g., "v0" (legacy/mimir), "v1" (grafana)
+  deprecated?: boolean; // indicates if this is a legacy version
+  canCreate?: boolean; // indicates if new instances can be created
 }
 
 export interface NotificationChannelType {

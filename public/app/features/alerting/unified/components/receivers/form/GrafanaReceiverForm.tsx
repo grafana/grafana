@@ -20,6 +20,7 @@ import { useDispatch } from 'app/types/store';
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { testReceiversAction } from '../../../state/actions';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
+import { enrichNotifiersWithVersionsPOC } from '../../../utils/notifier-versions-poc';
 import {
   formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
@@ -146,7 +147,13 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
     );
   }
 
-  const notifiers: Notifier[] = grafanaNotifiers.map((n) => {
+  // POC: Enrich notifiers with version information for Grafana Alert Manager
+  // This simulates backend support for integration versioning during Single Alert Manager migration
+  // NOTE: This is ONLY for Grafana Alert Manager, NOT for Cloud/External Alert Managers
+  // In production, this data should come from the backend via /api/alert-notifiers
+  const enrichedNotifiers = enrichNotifiersWithVersionsPOC(grafanaNotifiers);
+
+  const notifiers: Notifier[] = enrichedNotifiers.map((n) => {
     if (n.type === ReceiverTypes.OnCall) {
       return {
         dto: extendOnCallNotifierFeatures(n),
