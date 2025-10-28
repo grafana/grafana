@@ -21,12 +21,10 @@ const jsonGrammar: Grammar = {
   'log-token-json-key': {
     pattern: /(^|[^\\])"(?:\\.|[^\\"\r\n])*"(?=\s*:)/,
     lookbehind: true,
-    greedy: true,
   },
   'log-token-string': {
     pattern: /(^|[^\\])"(?:\\.|[^\\"\r\n])*"(?!\s*:)/,
     lookbehind: true,
-    greedy: true,
     inside: {
       ...tokensGrammar,
     },
