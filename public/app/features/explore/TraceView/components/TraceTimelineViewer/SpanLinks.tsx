@@ -18,7 +18,8 @@ const renderMenuItems = (
   closeMenu: () => void,
   datasourceType: string
 ) => {
-  links.sort(function (linkA, linkB) {
+  links.sort((linkA, linkB) => {
+    // eslint-disable-next-line no-restricted-syntax
     return (linkA.title || 'link').toLowerCase().localeCompare((linkB.title || 'link').toLowerCase());
   });
 
