@@ -1,5 +1,6 @@
 import { test as base, expect } from '@grafana/plugin-e2e';
 
+// Note: Random walk configuration UI requires dashboardTemplates feature toggle to be enabled
 const test = base.extend({});
 test.use({
   featureToggles: {
