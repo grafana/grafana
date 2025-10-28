@@ -22,16 +22,6 @@ const (
 	ActionProvisioningHistoricJobsRead = "provisioning.historicjobs:read" // GET + LIST.
 )
 
-var (
-	ScopeProviderProvisioningRepositories = accesscontrol.NewScopeProvider("provisioning.repositories")
-	ScopeProviderProvisioningJobs         = accesscontrol.NewScopeProvider("provisioning.jobs")
-	ScopeProviderProvisioningHistoricJobs = accesscontrol.NewScopeProvider("provisioning.historicjobs")
-
-	ScopeAllRepositories = ScopeProviderProvisioningRepositories.GetResourceAllScope()
-	ScopeAllJobs         = ScopeProviderProvisioningJobs.GetResourceAllScope()
-	ScopeAllHistoricJobs = ScopeProviderProvisioningHistoricJobs.GetResourceAllScope()
-)
-
 func registerAccessControlRoles(service accesscontrol.Service) error {
 	// Repositories
 	repositoriesReader := accesscontrol.RoleRegistration{
@@ -43,7 +33,6 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionProvisioningRepositoriesRead,
-					Scope:  ScopeAllRepositories,
 				},
 			},
 		},
@@ -59,19 +48,15 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionProvisioningRepositoriesCreate,
-					Scope:  ScopeAllRepositories,
 				},
 				{
 					Action: ActionProvisioningRepositoriesRead,
-					Scope:  ScopeAllRepositories,
 				},
 				{
 					Action: ActionProvisioningRepositoriesWrite,
-					Scope:  ScopeAllRepositories,
 				},
 				{
 					Action: ActionProvisioningRepositoriesDelete,
-					Scope:  ScopeAllRepositories,
 				},
 			},
 		},
@@ -88,7 +73,6 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionProvisioningJobsRead,
-					Scope:  ScopeAllJobs,
 				},
 			},
 		},
@@ -104,19 +88,15 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionProvisioningJobsCreate,
-					Scope:  ScopeAllJobs,
 				},
 				{
 					Action: ActionProvisioningJobsRead,
-					Scope:  ScopeAllJobs,
 				},
 				{
 					Action: ActionProvisioningJobsWrite,
-					Scope:  ScopeAllJobs,
 				},
 				{
 					Action: ActionProvisioningJobsDelete,
-					Scope:  ScopeAllJobs,
 				},
 			},
 		},
@@ -133,7 +113,6 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionProvisioningHistoricJobsRead,
-					Scope:  ScopeAllHistoricJobs,
 				},
 			},
 		},

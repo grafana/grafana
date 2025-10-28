@@ -5,20 +5,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // DependencyRegisterer is set to satisfy wire gen and make sure the `RegisterDependencies` is called.
 type DependencyRegisterer struct{}
 
 func RegisterDependencies(
-	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
 	accessControlService accesscontrol.Service,
+	features featuremgmt.FeatureToggles,
 ) (*DependencyRegisterer, error) {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
-		return &DependencyRegisterer{}, nil
-	}
-
 	if err := registerAccessControlRoles(accessControlService); err != nil {
 		return nil, fmt.Errorf("registering access control roles: %w", err)
 	}

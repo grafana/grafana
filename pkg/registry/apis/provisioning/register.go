@@ -285,7 +285,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 			info, ok := authlib.AuthInfoFrom(ctx)
 			// when running as standalone API server, the identity type may not always match TypeAccessPolicy
 			// so we allow it to use the access checker if there is any auth info available
-			if ok && (b.onlyApiServer || authlib.IsIdentityType(info.GetIdentityType(), authlib.TypeAccessPolicy)) {
+			if ok && (authlib.IsIdentityType(info.GetIdentityType(), authlib.TypeAccessPolicy) || b.isAccessCheckerEnforced(ctx)) {
 				res, err := b.access.Check(ctx, info, authlib.CheckRequest{
 					Verb:        a.GetVerb(),
 					Group:       a.GetAPIGroup(),
@@ -293,6 +293,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					Name:        a.GetName(),
 					Namespace:   a.GetNamespace(),
 					Subresource: a.GetSubresource(),
+					Path:        a.GetPath(),
 				}, "")
 				if err != nil {
 					return authorizer.DecisionDeny, "failed to perform authorization", err
@@ -400,6 +401,10 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "unmapped kind defaults to no access", nil
 			}
 		})
+}
+
+func (b *APIBuilder) isAccessCheckerEnforced(ctx context.Context) bool {
+	return b.features.IsEnabled(ctx, featuremgmt.FlagProvisioningUseAggregation)
 }
 
 func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
