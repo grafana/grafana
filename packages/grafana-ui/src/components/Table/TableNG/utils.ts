@@ -19,6 +19,7 @@ import {
   DisplayProcessor,
   isDataFrame,
   FieldSparkline,
+  DecimalCount,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
