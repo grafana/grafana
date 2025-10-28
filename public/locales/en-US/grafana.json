@@ -13354,11 +13354,6 @@
       "tooltip-remove-timezone": "Remove timezone"
     }
   },
-  "trace": {
-    "suggestions": {
-      "name": "Trace"
-    }
-  },
   "traces": {
     "category-span-filters": "Span filters",
     "name-critical-path-only": "Show critical path only",
@@ -13371,6 +13366,9 @@
     "name-span-name": "Span name",
     "name-span-name-operator": "Span name operator",
     "name-tags": "Tags",
+    "suggestions": {
+      "name": "Trace"
+    },
     "traces-panel": {
       "no-data-found-in-response": "No data found in response"
     }

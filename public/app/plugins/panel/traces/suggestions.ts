@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 export class TracesSuggestionsSupplier {
   getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
     return builder.getListAppender<{}, {}>({
-      name: t('trace.suggestions.name', 'Trace'),
+      name: t('traces.suggestions.name', 'Trace'),
       pluginId: 'traces',
     });
   }
