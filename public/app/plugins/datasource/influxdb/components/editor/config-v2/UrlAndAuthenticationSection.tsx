@@ -1,4 +1,8 @@
+import { css } from '@emotion/css';
+import { firstValueFrom } from 'rxjs';
+
 import { onUpdateDatasourceJsonDataOptionSelect, onUpdateDatasourceOption } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 import {
   Box,
   CollapsableSection,
@@ -11,6 +15,7 @@ import {
   Text,
   ComboboxOption,
   Alert,
+  useStyles2,
 } from '@grafana/ui';
 
 import { InfluxVersion } from '../../../types';
@@ -33,6 +38,7 @@ const getQueryLanguageOptions = (productName: string): Array<{ value: string }> 
 
 export const UrlAndAuthenticationSection = (props: Props) => {
   const { options, onOptionsChange } = props;
+  const styles = useStyles2(getStyles);
 
   const isInfluxVersion = (v: string): v is InfluxVersion =>
     typeof v === 'string' && (v === InfluxVersion.Flux || v === InfluxVersion.InfluxQL || v === InfluxVersion.SQL);
@@ -68,13 +74,30 @@ export const UrlAndAuthenticationSection = (props: Props) => {
   };
 
   const pingInfluxForProductDetection = async (urlValue: string) => {
-    const base = urlValue.replace(/\/$/, '');
+    const dsId = options.id;
+    if (!dsId) {
+      return;
+    }
 
     try {
-      const res = await fetch(`${base}/ping`);
+      const res = await firstValueFrom(
+        getBackendSrv().fetch({
+          method: 'GET',
+          url: `/api/datasources/proxy/${dsId}/ping`,
+          headers: { Accept: 'application/json' },
+          responseType: 'text',
+          showErrorAlert: false,
+          showSuccessAlert: false,
+        })
+      );
       if (res.ok) {
-        const product = res.headers.get('x-influxdb-build') ?? undefined;
-        const version = res.headers.get('x-influxdb-version') ?? undefined;
+        let product: string | undefined;
+        let version: string | undefined;
+
+        if (res.headers && typeof res.headers.get === 'function') {
+          product = res.headers.get('x-influxdb-build') ?? undefined;
+          version = res.headers.get('x-influxdb-version') ?? undefined;
+        }
 
         if (product || version) {
           return { product, version };
@@ -136,21 +159,19 @@ export const UrlAndAuthenticationSection = (props: Props) => {
       borderStyle="solid"
       borderColor="weak"
       padding={2}
-      marginBottom={4}
       id={`${CONFIG_SECTION_HEADERS[0].id}`}
       minWidth={CONTAINER_MIN_WIDTH}
     >
       <CollapsableSection
-        label={<Text element="h3">1. {CONFIG_SECTION_HEADERS[0].label}</Text>}
+        label={<Text element="h3">{CONFIG_SECTION_HEADERS[0].label}</Text>}
         isOpen={CONFIG_SECTION_HEADERS[0].isOpen}
       >
         <Text color="secondary">
           Enter the URL of your InfluxDB instance, then select your product and query language. This will determine the
           available settings and authentication methods in the next steps.
         </Text>
-
-        <Box direction="column" gap={2} marginTop={3}>
-          <Field label={<div style={{ marginBottom: '5px' }}>URL *</div>} noMargin required>
+        <Box direction="column" marginTop={3}>
+          <Field label="URL" noMargin required>
             <Input
               data-testid="influxdb-v2-config-url-input"
               placeholder="example: http://localhost:8086/"
@@ -162,34 +183,59 @@ export const UrlAndAuthenticationSection = (props: Props) => {
               }}
             />
           </Field>
-
           <Box marginTop={2}>
-            <Stack direction="row" gap={2}>
-              <Box flex={1}>
-                <Field label={<div style={{ marginBottom: '5px' }}>Product *</div>} noMargin required>
-                  <Combobox
-                    data-testid="influxdb-v2-config-product-select"
-                    value={options.jsonData.product}
-                    options={INFLUXDB_VERSION_MAP.map(({ name }) => ({ value: name }))}
-                    onChange={onProductChange}
-                  />
-                </Field>
-              </Box>
-              <Box flex={1}>
-                <Field label={<div style={{ marginBottom: '5px' }}>Query language *</div>} noMargin>
-                  <Combobox
-                    data-testid="influxdb-v2-config-query-language-select"
-                    value={options.jsonData.product !== '' ? options.jsonData.version : ''}
-                    options={getQueryLanguageOptions(options.jsonData.product || '')}
-                    onChange={onQueryLanguageChange}
-                  />
-                </Field>
-              </Box>
+            <Stack direction="row" wrap="wrap" justifyContent="space-between">
+              <div className={styles.col}>
+                <Box width="100%" minWidth={37}>
+                  <Field
+                    label="Product"
+                    description={
+                      <div className={styles.dropdown}>
+                        <Text color="secondary">
+                          Use{' '}
+                          <TextLink
+                            href="https://docs.influxdata.com/influxdb3/enterprise/visualize-data/grafana/?section=influxdb3%252Fenterprise%252Fvisualize-data&detection_method=url_analysis"
+                            variant="bodySmall"
+                            external
+                          >
+                            InfluxDB detection
+                          </TextLink>{' '}
+                          to identify the product
+                        </Text>
+                      </div>
+                    }
+                    noMargin
+                    required
+                  >
+                    <Combobox
+                      data-testid="influxdb-v2-config-product-select"
+                      value={options.jsonData.product}
+                      options={INFLUXDB_VERSION_MAP.map(({ name }) => ({ value: name }))}
+                      onChange={onProductChange}
+                    />
+                  </Field>
+                </Box>
+              </div>
+              <div className={styles.col}>
+                <Box width="100%" minWidth={37}>
+                  <Field
+                    label="Query language"
+                    description={<div className={styles.dropdown}>The query language depends on product selection</div>}
+                    noMargin
+                    required
+                  >
+                    <Combobox
+                      data-testid="influxdb-v2-config-query-language-select"
+                      value={options.jsonData.product !== '' ? options.jsonData.version : ''}
+                      options={getQueryLanguageOptions(options.jsonData.product || '')}
+                      onChange={onQueryLanguageChange}
+                    />
+                  </Field>
+                </Box>
+              </div>
             </Stack>
           </Box>
-
           <Space v={2} />
-
           {requiresDbrpMapping && (
             <Alert severity="warning" title="InfluxQL requires DBRP mapping">
               {`${options.jsonData.product} requires a Database + Retention Policy (DBRP) mapping via the CLI or
@@ -199,11 +245,27 @@ export const UrlAndAuthenticationSection = (props: Props) => {
               </TextLink>
             </Alert>
           )}
-
           <AdvancedHttpSettings options={options} onOptionsChange={onOptionsChange} />
           <AuthSettings options={options} onOptionsChange={onOptionsChange} />
         </Box>
       </CollapsableSection>
     </Box>
   );
+};
+
+const getStyles = () => {
+  return {
+    dropdown: css({
+      display: 'flex',
+      alignItems: 'center',
+      height: '18px',
+    }),
+    col: css({
+      flex: '1 1 48%',
+      minWidth: '320px',
+    }),
+    '@media (max-width: 768px)': {
+      flexBasis: '100%',
+    },
+  };
 };
