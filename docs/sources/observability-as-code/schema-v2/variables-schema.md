@@ -372,7 +372,7 @@ The following table explains the usage of the switch variable JSON fields:
 | Name           | Usage                                                                                                                            |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | name           | string. Name of the variable.                                                                                                    |
-| current        | string. Current value of the switch variable (either enabledValue or disabledValue).                                            |
+| current        | string. Current value of the switch variable (either `enabledValue` or `disabledValue`).                                            |
 | enabledValue   | string. Value when the switch is in the enabled state.                                                                       |
 | disabledValue  | string. Value when the switch is in the disabled state.                                                                     |
 | label?         | string                                                                                                                           |

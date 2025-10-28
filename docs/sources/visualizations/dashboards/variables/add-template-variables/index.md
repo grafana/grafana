@@ -103,8 +103,8 @@ The following table lists the types of variables shipped with Grafana.
 | Constant          | Define a hidden constant. [Add a constant variable](#add-a-constant-variable).                                                                                                          |
 | Data source       | Quickly change the data source for an entire dashboard. [Add a data source variable](#add-a-data-source-variable).                                                                      |
 | Interval          | Interval variables represent time spans. [Add an interval variable](#add-an-interval-variable).                                                                                         |
-| Switch            | Display a toggle switch with two configurable values for enabled and disabled states. [Add a switch variable](#add-a-switch-variable).                                                  |
 | Ad hoc filters    | Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only). [Add ad hoc filters](#add-ad-hoc-filters). |
+| Switch            | Display a switch that allows you to toggle between two configurable values for enabled and disabled states. [Add a switch variable](#add-a-switch-variable).                                                  |
 | Global variables  | Built-in variables that can be used in expressions in the query editor. Refer to [Global variables](#global-variables).                                                                 |
 | Chained variables | Variable queries can contain other variables. Refer to [Chained variables](#chained-variables).                                                                                         |
 
@@ -135,8 +135,8 @@ To create a variable, follow these steps:
    - [Constant](#add-a-constant-variable)
    - [Data source](#add-a-data-source-variable)
    - [Interval](#add-an-interval-variable)
-   - [Switch](#add-a-switch-variable)
    - [Ad hoc filters](#add-ad-hoc-filters)
+   - [Switch](#add-a-switch-variable)
 
 <!-- vale Grafana.Spelling = YES -->
 
@@ -297,14 +297,12 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 
 ## Add a switch variable
 
-_Switch_ variables display a toggle switch with two configurable values representing enabled and disabled states. This variable type is useful when you need to toggle between two specific values in your queries, such as enabling or disabling a feature, switching between different modes, or controlling boolean conditions.
+_Switch_ variables display a switch with two configurable values representing enabled and disabled states. This variable type is useful when you need to:
 
-Switch variables are particularly effective for:
-
-- Toggling between different query conditions
-- Enabling or disabling specific filters
-- Switching between different visualization modes
-- Controlling boolean parameters in your data sources
+- Toggle between different query conditions
+- Enable or disable specific filters
+- Switch between different visualization modes
+- Control boolean parameters in your data sources
 
 1. [Enter general options](#enter-general-options).
 1. Under the **Switch options** section of the page, configure the switch values:
@@ -316,8 +314,8 @@ Switch variables are particularly effective for:
    - **Custom** - Allows you to define custom values for both enabled and disabled states
 
 1. If you selected **Custom** in the previous step, configure the custom values:
-   - **Enabled value** - Enter the value that represents the enabled state (e.g. "on")
-   - **Disabled value** - Enter the value that represents the disabled state (e.g. "off")
+   - **Enabled value** - Enter the value that represents the enabled state (for example, "on")
+   - **Disabled value** - Enter the value that represents the disabled state (for example, "off")
 
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
