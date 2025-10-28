@@ -14,7 +14,7 @@ import { NodesMap, SelectedScope, TreeNode } from './types';
 interface RadioButtonDotProps {
   scopeNodeId: string;
   selected: boolean;
-  onClick: () => void;
+  onChange: () => void;
   children?: React.ReactNode;
   'aria-labelledby'?: string;
 }
@@ -22,7 +22,7 @@ interface RadioButtonDotProps {
 function ScopeRadioButtonDot({
   scopeNodeId,
   selected,
-  onClick,
+  onChange,
   children,
   'aria-labelledby': ariaLabelledby,
 }: RadioButtonDotProps) {
@@ -33,7 +33,7 @@ function ScopeRadioButtonDot({
       checked={selected}
       label={children ?? undefined}
       data-testid={`scopes-tree-${scopeNodeId}-radio`}
-      onClick={onClick}
+      onChange={onChange}
       aria-labelledby={ariaLabelledby ?? undefined}
     />
   );
@@ -140,7 +140,7 @@ function ScopeExpandButton({
         <ScopeRadioButtonDot
           scopeNodeId={scopeNodeId}
           selected={selected}
-          onClick={onSelect}
+          onChange={onSelect}
           aria-labelledby={buttonId}
         />
       );
@@ -159,6 +159,7 @@ function ScopeExpandButton({
     <>
       <SelectComponent />
       <button
+        id={buttonId}
         className={styles.expand}
         data-testid={`scopes-tree-${scopeNodeId}-expand`}
         onClick={onClick}
