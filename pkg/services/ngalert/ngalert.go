@@ -668,6 +668,8 @@ func configureHistorianBackend(
 		if err != nil {
 			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
 		}
+		// Use external labels from state history config
+		lcfg.ExternalLabels = cfg.ExternalLabels
 		req := lokiclient.NewRequester()
 		logCtx := log.WithContextualAttributes(ctx, []any{"backend", "loki"})
 		lokiBackendLogger := log.New("ngalert.state.historian").FromContext(logCtx)
