@@ -2,14 +2,12 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
-import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService, logInfo } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
-import { LogMessages } from 'app/features/alerting/unified/Analytics';
 import { AlertRuleDrawerForm } from 'app/features/alerting/unified/components/AlertRuleDrawerForm';
-import type { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
+import { createPanelAlertRuleNavigation } from 'app/features/alerting/unified/utils/navigation';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 
 interface ScenesNewRuleFromPanelButtonProps {
@@ -46,26 +44,10 @@ export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRule
     );
   }
 
-  const navigateToAlerting = async (currentValues?: RuleFormValues) => {
-    logInfo(LogMessages.alertRuleFromPanel);
-
-    const updateToDateFormValues = currentValues ?? (await scenesPanelToRuleFormValues(panel));
-
-    const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
-      defaults: JSON.stringify(updateToDateFormValues),
-      returnTo: location.pathname + location.search,
-    });
-
-    locationService.push(ruleFormUrl);
-  };
-
-  const onContinueInAlertingFromDrawer = (values: RuleFormValues) => {
-    void navigateToAlerting(values);
-  };
-
-  const onButtonClick = () => {
-    void navigateToAlerting(undefined);
-  };
+  const { onContinueInAlertingFromDrawer, onButtonClick } = createPanelAlertRuleNavigation(
+    () => scenesPanelToRuleFormValues(panel),
+    location
+  );
 
   const shouldUseDrawer = config.featureToggles.createAlertRuleFromPanel;
 
