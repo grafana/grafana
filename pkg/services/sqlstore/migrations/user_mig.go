@@ -173,6 +173,16 @@ func addUserMigrations(mg *Migrator) {
 	// This migration removes the duplicate org_id from the login.
 	mg.AddMigration(usermig.DedupOrgInLogin, &usermig.ServiceAccountsDeduplicateOrgInLogin{})
 
+	// Add external_id column for SCIM externalID storage
+	mg.AddMigration("Add column external_id to user table", NewAddColumnMigration(userV2, &Column{
+		Name: "external_id", Type: DB_NVarchar, Length: 190, Nullable: true,
+	}))
+
+	// Add index on external_id for fast SCIM lookups
+	mg.AddMigration("Add index on user.external_id", NewAddIndexMigration(userV2, &Index{
+		Cols: []string{"external_id"}, Type: IndexType,
+	}))
+
 	// Users login and email should be in lower case
 	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail, &usermig.UsersLowerCaseLoginAndEmail{})
 	// Users login and email should be in lower case - 2, fix for creating users not lowering login and email

@@ -23,6 +23,7 @@ type store interface {
 	ListByIdOrUID(ctx context.Context, uids []string, ids []int64) ([]*user.User, error)
 	GetByLogin(context.Context, *user.GetUserByLoginQuery) (*user.User, error)
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
+	GetByExternalID(context.Context, *user.GetUserByExternalIDQuery) (*user.User, error)
 	Delete(context.Context, int64) error
 	LoginConflict(ctx context.Context, login, email string) error
 	Update(context.Context, *user.UpdateUserCommand) error
@@ -199,6 +200,29 @@ func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQu
 
 		where := "email=?"
 		has, err := sess.Where(ss.notServiceAccountFilter()).Where(where, query.Email).Get(usr)
+
+		if err != nil {
+			return err
+		} else if !has {
+			return user.ErrUserNotFound
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return usr, nil
+}
+
+func (ss *sqlStore) GetByExternalID(ctx context.Context, query *user.GetUserByExternalIDQuery) (*user.User, error) {
+	usr := &user.User{}
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		if query.ExternalID == "" {
+			return user.ErrUserNotFound
+		}
+
+		where := "external_id=?"
+		has, err := sess.Where(ss.notServiceAccountFilter()).Where(where, query.ExternalID).Get(usr)
 
 		if err != nil {
 			return err

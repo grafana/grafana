@@ -30,6 +30,7 @@ const (
 type User struct {
 	ID            int64  `xorm:"pk autoincr 'id'"`
 	UID           string `json:"uid" xorm:"uid"`
+	ExternalID    string `xorm:"external_id"`
 	Version       int
 	Email         string
 	Name          string
@@ -56,6 +57,7 @@ type User struct {
 
 type CreateUserCommand struct {
 	UID              string
+	ExternalID       string
 	Email            string
 	Login            string
 	Name             string
@@ -78,6 +80,10 @@ type GetUserByLoginQuery struct {
 
 type GetUserByEmailQuery struct {
 	Email string
+}
+
+type GetUserByExternalIDQuery struct {
+	ExternalID string
 }
 
 type UpdateUserCommand struct {
