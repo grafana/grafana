@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -24,7 +25,7 @@ import (
 // Store is the interface for the datasource Service's storage.
 type Store interface {
 	GetDataSource(context.Context, *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
-	GetDataSourceInGroup(context.Context, int64, string, string) (*datasources.DataSource, error)
+	GetDataSourceInNamespace(context.Context, string, string, string) (*datasources.DataSource, error)
 	GetDataSources(context.Context, *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error)
 	GetDataSourcesByType(context.Context, *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error)
 	DeleteDataSource(context.Context, *datasources.DeleteDataSourceCommand) error
@@ -91,13 +92,18 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 	return datasource, nil
 }
 
-func (ss *SqlStore) GetDataSourceInGroup(ctx context.Context, orgID int64, name, group string) (*datasources.DataSource, error) {
+func (ss *SqlStore) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
 	var (
 		dataSource *datasources.DataSource
 		err        error
 	)
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	return dataSource, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		dataSource, err = ss.getDataSourceInGroup(ctx, orgID, name, group, sess)
+		dataSource, err = ss.getDataSourceInGroup(ctx, ns.OrgID, name, group, sess)
 		return err
 	})
 }

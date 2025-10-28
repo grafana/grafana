@@ -434,11 +434,11 @@ func TestIntegrationDataAccess(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			dataSource, err := ss.GetDataSourceInGroup(context.Background(), ds.OrgID, ds.UID, datasources.DS_ES)
+			dataSource, err := ss.GetDataSourceInNamespace(context.Background(), "org-10", ds.UID, datasources.DS_ES)
 			require.NoError(t, err)
 			require.Equal(t, ds.UID, dataSource.UID)
 
-			_, err = ss.GetDataSourceInGroup(context.Background(), ds2.OrgID, ds2.UID, datasources.DS_ES)
+			_, err = ss.GetDataSourceInNamespace(context.Background(), "org-10", ds2.UID, datasources.DS_ES)
 			require.Error(t, err)
 			require.IsType(t, datasources.ErrDataSourceNotFound, err)
 		})

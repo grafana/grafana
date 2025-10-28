@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
@@ -180,11 +179,7 @@ func (s *Service) GetDataSource(ctx context.Context, query *datasources.GetDataS
 }
 
 func (s *Service) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
-	ns, err := types.ParseNamespace(namespace)
-	if err != nil {
-		return nil, err
-	}
-	return s.SQLStore.GetDataSourceInGroup(ctx, ns.OrgID, name, group)
+	return s.SQLStore.GetDataSourceInNamespace(ctx, namespace, name, group)
 }
 
 func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {
