@@ -1,5 +1,7 @@
 import { Property } from 'csstype';
 import memoize from 'micro-memoize';
+import WKT from 'ol/format/WKT';
+import Geometry from 'ol/geom/Geometry';
 import { CSSProperties } from 'react';
 import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
@@ -27,10 +29,11 @@ import {
 } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
+import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellOptions } from '../types';
 
 import { inferPills } from './Cells/PillCell';
-import { AutoCellRenderer, getCellRenderer } from './Cells/renderers';
+import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
 import {
   TableRow,
@@ -1020,20 +1023,49 @@ export function prepareSparklineValue(value: unknown, field: Field): FieldSparkl
   return;
 }
 
-export function buildSparklineInspect(fieldSparkline?: FieldSparkline): string {
-  let result = '[';
-  if (fieldSparkline != null) {
-    // if an x value exists, render as a tuple [x,y], otherwise just y
-    const buildValString: (idx: number) => string =
-      fieldSparkline.x != null
-        ? (idx) => `[${fieldSparkline.x!.values[idx] ?? 'null'}, ${fieldSparkline.y.values[idx] ?? 'null'}]`
-        : (idx) => `${fieldSparkline.y.values[idx] ?? 'null'}`;
-    for (let i = 0; i < fieldSparkline.y.values.length; i++) {
-      result += `\n  ${buildValString(i)}${i === fieldSparkline.y.values.length - 1 ? '\n' : ','}`;
+function isPlainObject(value: unknown): value is object {
+  return typeof value === 'object' && value != null && !Array.isArray(value);
+}
+
+export function buildInspectValue(value: unknown, field: Field): [string, TableCellInspectorMode] {
+  const cellOptions = getCellOptions(field);
+
+  let inspectValue: string;
+  let mode = TableCellInspectorMode.text;
+
+  if (field.type === FieldType.geo && value instanceof Geometry) {
+    inspectValue = new WKT().writeGeometry(value, {
+      featureProjection: 'EPSG:3857',
+      dataProjection: 'EPSG:4326',
+    });
+    mode = TableCellInspectorMode.code;
+  } else if (
+    cellOptions.type === TableCellDisplayMode.Sparkline ||
+    getAutoRendererDisplayMode(field) === TableCellDisplayMode.Sparkline
+  ) {
+    // rather than JSON.stringify this, manually format it to make the coordinate tuples more legible to the user.
+    const fieldSparkline = prepareSparklineValue(value, field);
+    inspectValue = '[';
+    if (fieldSparkline != null) {
+      // if an x value exists, render as a tuple [x,y], otherwise just y
+      const buildValString: (idx: number) => string =
+        fieldSparkline.x != null
+          ? (idx) => `[${fieldSparkline.x!.values[idx] ?? 'null'}, ${fieldSparkline.y.values[idx] ?? 'null'}]`
+          : (idx) => `${fieldSparkline.y.values[idx] ?? 'null'}`;
+      for (let i = 0; i < fieldSparkline.y.values.length; i++) {
+        inspectValue += `\n  ${buildValString(i)}${i === fieldSparkline.y.values.length - 1 ? '\n' : ','}`;
+      }
     }
+    inspectValue += ']';
+    mode = TableCellInspectorMode.code;
+  } else if (cellOptions.type === TableCellDisplayMode.JSONView || Array.isArray(value) || isPlainObject(value)) {
+    inspectValue = JSON.stringify(value, null, '  ');
+    mode = TableCellInspectorMode.code;
+  } else {
+    inspectValue = String(value ?? '');
   }
-  result += ']';
-  return result;
+
+  return [inspectValue, mode];
 }
 
 export function getSummaryCellTextAlign(textAlign: TextAlign, cellType: TableCellDisplayMode): TextAlign {

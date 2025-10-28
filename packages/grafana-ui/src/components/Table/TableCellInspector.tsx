@@ -17,35 +17,14 @@ export enum TableCellInspectorMode {
 
 interface TableCellInspectorProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value: any;
+  value: string;
   onDismiss: () => void;
   mode: TableCellInspectorMode;
-  preformatted?: boolean;
 }
 
-export function TableCellInspector({ value, onDismiss, mode, preformatted }: TableCellInspectorProps) {
-  let displayValue = value;
+export function TableCellInspector({ value, onDismiss, mode }: TableCellInspectorProps) {
   const [currentMode, setMode] = useState(mode);
-
-  if (isString(value)) {
-    const trimmedValue = value.trim();
-    // Exclude numeric strings like '123' from being displayed in code/JSON mode
-    if (!preformatted && (trimmedValue[0] === '{' || trimmedValue[0] === '[' || mode === 'code')) {
-      try {
-        value = JSON.parse(value);
-        displayValue = JSON.stringify(value, null, '  ');
-      } catch (error: any) {
-        // Display helpful error to help folks diagnose json errors
-        console.log(
-          'Failed to parse JSON in Table cell inspector (this will cause JSON to not print nicely): ',
-          error.message
-        );
-      }
-    }
-  } else {
-    displayValue = JSON.stringify(value);
-  }
-  let text = displayValue;
+  const text = value.trim();
 
   const tabs = [
     {
@@ -82,7 +61,7 @@ export function TableCellInspector({ value, onDismiss, mode, preformatted }: Tab
             height={500}
             language="json"
             showLineNumbers={true}
-            showMiniMap={(text && text.length) > 100}
+            showMiniMap={(text ? text.length : 0) > 100}
             value={text}
             readOnly={true}
             wordWrap={true}

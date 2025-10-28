@@ -1,3 +1,5 @@
+import { Point } from 'ol/geom';
+import Geometry from 'ol/geom/Geometry';
 import { SortColumn } from 'react-data-grid';
 
 import {
@@ -49,7 +51,7 @@ import {
   parseStyleJson,
   calculateFooterHeight,
   prepareSparklineValue,
-  buildSparklineInspect,
+  buildInspectValue,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -1569,41 +1571,81 @@ describe('TableNG utils', () => {
     });
   });
 
-  describe('buildSparklineInspect', () => {
-    it('should build inspect info for sparkline values with x and y values', () => {
-      expect(
-        buildSparklineInspect({
-          x: {
-            name: 'x',
-            type: FieldType.time,
-            values: [0, 1000, 2000, 3000, 4000],
-            config: {},
-          },
-          y: {
-            name: 'y',
-            type: FieldType.number,
-            values: [10, 20, 30, 40, 50],
-            config: {},
-          },
-        })
-      ).toMatchSnapshot();
-    });
-
-    it('should build inspect info for sparkline values with y values (no x values)', () => {
-      expect(
-        buildSparklineInspect({
-          y: {
-            name: 'y',
-            type: FieldType.number,
-            values: [10, 20, 30, 40, 50],
-            config: {},
-          },
-        })
-      ).toMatchSnapshot();
-    });
-
-    it('should render an empty array if the SparklineField is undefined', () => {
-      expect(buildSparklineInspect()).toEqual('[]');
+  describe('buildInspectValue', () => {
+    const numberFieldWithNulls: Field = {
+      name: 'numbers-with-nulls',
+      type: FieldType.number,
+      values: [0, 1, 2, null, NaN],
+      config: {},
+    };
+    const stringField: Field = {
+      name: 'string',
+      type: FieldType.string,
+      values: ['foo', 'bar', 'baz', null],
+      config: {},
+    };
+    const jsonStringField: Field = {
+      ...stringField,
+      config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
+    };
+    const booleanField: Field = {
+      name: 'boolean-field',
+      type: FieldType.boolean,
+      values: [true, false, true],
+      config: {},
+    };
+    const sparklineField: Field = {
+      name: 'sparkline-field',
+      type: FieldType.frame,
+      values: [
+        createDataFrame({
+          fields: [
+            { name: 'x', type: FieldType.time, values: [0, 1000, 2000] },
+            { name: 'y', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+      ],
+      config: {},
+    };
+    const arrayField: Field = {
+      name: 'array-field',
+      type: FieldType.other,
+      values: [
+        ['foo', 'bar', 'baz'],
+        ['one', 'two', 'three'],
+      ],
+      config: {},
+    };
+    const objectField: Field = {
+      name: 'array-field',
+      type: FieldType.other,
+      values: [
+        { foo: true, b: 'baz' },
+        { foo: false, b: 'qux' },
+      ],
+      config: {},
+    };
+    const geoField: Field = {
+      name: 'geo-field',
+      type: FieldType.geo,
+      values: [new Point([0, -74.1])],
+      config: {},
+    };
+    it.each([
+      { name: 'numbers', input: { valueIdx: 0, field: numberFieldWithNulls } },
+      { name: 'string', input: { valueIdx: 0, field: stringField } },
+      { name: 'string w/ JSON', input: { valueIdx: 2, field: jsonStringField } },
+      { name: 'boolean', input: { valueIdx: 0, field: booleanField } },
+      { name: 'NaN', input: { valueIdx: 4, field: numberFieldWithNulls } },
+      { name: 'null', input: { valueIdx: 3, field: numberFieldWithNulls } },
+      { name: 'null w/ JSON', input: { valueIdx: 3, field: jsonStringField } },
+      { name: 'undefined', input: { valueIdx: 6, field: numberFieldWithNulls } },
+      { name: 'sparkline', input: { valueIdx: 0, field: sparklineField } },
+      { name: 'array', input: { valueIdx: 0, field: arrayField } },
+      { name: 'object', input: { valueIdx: 0, field: objectField } },
+      { name: 'geo', input: { valueIdx: 0, field: geoField } },
+    ])('should handle $name', ({ input: { field, valueIdx = 0 } }) => {
+      expect(buildInspectValue(field.values[valueIdx], field)).toMatchSnapshot();
     });
   });
 });

@@ -563,7 +563,6 @@ export function TableNG(props: TableNGProps) {
                 <TableCellActions
                   field={field}
                   value={value}
-                  cellOptions={cellOptions}
                   displayName={displayName}
                   cellInspect={cellInspect}
                   showFilters={showFilters}
