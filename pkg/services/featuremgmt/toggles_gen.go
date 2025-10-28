@@ -1105,4 +1105,8 @@ const (
 	// FlagOnlyStoreActionSets
 	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
 	FlagOnlyStoreActionSets = "onlyStoreActionSets"
+
+	// FlagDashboardTemplates
+	// Enable template dashboards
+	FlagDashboardTemplates = "dashboardTemplates"
 )

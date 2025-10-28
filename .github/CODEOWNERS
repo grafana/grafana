@@ -505,6 +505,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/frontend-sandbox-app.spec.ts @grafana/plugins-platform-frontend
 /e2e-playwright/various-suite/frontend-sandbox-datasource.spec.ts @grafana/plugins-platform-frontend
 /e2e-playwright/various-suite/gauge.spec.ts @grafana/dataviz-squad
+/e2e-playwright/various-suite/grafana-datasource-random-walk.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/graph-auto-migrate.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/inspect-drawer.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/keybinds.spec.ts @grafana/grafana-frontend-platform

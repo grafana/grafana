@@ -2133,6 +2133,13 @@ var (
 			Owner:             identityAccessTeam,
 			Expression:        "true",
 		},
+		{
+			Name:         "dashboardTemplates",
+			Description:  "Enable template dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+		},
 	}
 )
 
