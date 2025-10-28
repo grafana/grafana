@@ -454,10 +454,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/DashboardVersionMeta"
-              },
-              "type": "array"
+              "$ref": "#/components/schemas/DashboardVersionResponseMeta"
             }
           }
         },
@@ -4802,6 +4799,20 @@
           "version": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "DashboardVersionResponseMeta": {
+        "properties": {
+          "continueToken": {
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardVersionMeta"
+            },
+            "type": "array"
           }
         },
         "type": "object"

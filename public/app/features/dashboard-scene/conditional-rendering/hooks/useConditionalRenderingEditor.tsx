@@ -17,7 +17,7 @@ function getPlaceholderConditionalRendering(): ConditionalRenderingGroup {
 
 export function useConditionalRenderingEditor(
   conditionalRendering?: ConditionalRenderingGroup,
-  disabledText?: string
+  disabledText?: string | React.ReactElement
 ): OptionsPaneCategoryDescriptor {
   const title = t('dashboard.conditional-rendering.root.title', 'Show / hide rules');
 

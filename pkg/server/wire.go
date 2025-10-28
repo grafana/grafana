@@ -124,6 +124,7 @@ import (
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	pluginDashboards "github.com/grafana/grafana/pkg/services/pluginsintegration/dashboards"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	promTypeMigration "github.com/grafana/grafana/pkg/services/promtypemigration"
@@ -251,6 +252,7 @@ var wireBasicSet = wire.NewSet(
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
 	serverlock.ProvideService,
+	wire.Bind(new(installsync.ServerLock), new(*serverlock.ServerLockService)),
 	annotationsimpl.ProvideCleanupService,
 	wire.Bind(new(annotations.Cleaner), new(*annotationsimpl.CleanupServiceImpl)),
 	cleanup.ProvideService,
@@ -402,6 +404,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(pluginaccesscontrol.ActionSetRegistry), new(resourcepermissions.ActionSetService)),
 	permreg.ProvidePermissionRegistry,
 	acimpl.ProvideAccessControl,
+	accesscontrol.ProvideFixedRolesLoader,
 	dualwrite.ProvideZanzanaReconciler,
 	navtreeimpl.ProvideService,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),

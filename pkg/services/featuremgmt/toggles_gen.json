@@ -1445,7 +1445,8 @@
       "metadata": {
         "name": "enablePluginImporter",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-16T04:42:28Z"
+        "creationTimestamp": "2025-07-16T04:42:28Z",
+        "deletionTimestamp": "2025-10-20T05:42:33Z"
       },
       "spec": {
         "description": "Set this to true to use the new PluginImporter functionality",
@@ -2983,6 +2984,19 @@
     },
     {
       "metadata": {
+        "name": "pluginInstallAPISync",
+        "resourceVersion": "1760543624249",
+        "creationTimestamp": "2025-10-15T15:53:44Z"
+      },
+      "spec": {
+        "description": "Enable syncing plugin installations to the installs API",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginProxyPreserveTrailingSlash",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-06-05T11:36:14Z"
@@ -2997,11 +3011,14 @@
     {
       "metadata": {
         "name": "pluginStoreServiceLoading",
-        "resourceVersion": "1760712768362",
-        "creationTimestamp": "2025-10-17T14:52:48Z"
+        "resourceVersion": "1761144346944",
+        "creationTimestamp": "2025-10-17T14:52:48Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-22 14:45:46.944669 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Load plugins during store service startup instead of wire provider",
+        "description": "Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "expression": "false"
@@ -3597,7 +3614,8 @@
       "metadata": {
         "name": "skipTokenRotationIfRecent",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-06-03T06:59:40Z"
+        "creationTimestamp": "2025-06-03T06:59:40Z",
+        "deletionTimestamp": "2025-10-22T10:29:12Z"
       },
       "spec": {
         "description": "Skip token rotation if it was already rotated less than 5 seconds ago",
@@ -4056,7 +4074,8 @@
       "metadata": {
         "name": "unifiedStorageUseFullNgram",
         "resourceVersion": "1758820248165",
-        "creationTimestamp": "2025-09-25T17:10:48Z"
+        "creationTimestamp": "2025-09-25T17:10:48Z",
+        "deletionTimestamp": "2025-10-22T12:24:39Z"
       },
       "spec": {
         "description": "Use full n-gram indexing instead of edge n-gram for unified storage search",
