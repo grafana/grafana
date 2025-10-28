@@ -1,10 +1,30 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
-import { FieldColorModeId } from '@grafana/schema/dist/esm/index.gen';
-import { SuggestionName } from 'app/types/suggestions';
+import { t } from '@grafana/i18n';
+import { FieldColorModeId } from '@grafana/schema';
 
 import { Options } from './panelcfg.gen';
 
 export class GaugeSuggestionsSupplier {
+  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options, {}>({
+      name: t('gauge.suggestions.name', 'Gauge'),
+      pluginId: 'radialbar', // TODO: change this to gauge when we consolidate
+      options: {
+        reduceOptions: {
+          values: false,
+          calcs: ['lastNotNull'],
+        },
+      },
+      cardOptions: {
+        previewModifier: (s) => {
+          if (s.options!.reduceOptions.values) {
+            s.options!.reduceOptions.limit = 2;
+          }
+        },
+      },
+    });
+  }
+
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const { dataSummary } = builder;
 
@@ -17,84 +37,30 @@ export class GaugeSuggestionsSupplier {
       return;
     }
 
-    const list = builder.getListAppender<Options, {}>({
-      name: SuggestionName.Gauge,
-      pluginId: 'gauge',
-      options: {},
+    const list = this.getListWithDefaults(builder);
+
+    let optionsOverride: Partial<Options> = {};
+    if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
+      optionsOverride.reduceOptions = {
+        values: true,
+        calcs: [],
+      };
+    }
+
+    list.append({ options: optionsOverride });
+    list.append({
+      name: t('gauge.suggestions.gauge-circular', 'Gauge (circular)'),
+      options: {
+        shape: 'circle',
+        showThresholdMarkers: false,
+        ...optionsOverride,
+      },
       fieldConfig: {
-        defaults: {},
+        defaults: {
+          color: { mode: FieldColorModeId.PaletteClassic },
+        },
         overrides: [],
       },
-      cardOptions: {
-        previewModifier: (s) => {
-          if (s.options!.reduceOptions.values) {
-            s.options!.reduceOptions.limit = 2;
-          }
-        },
-      },
     });
-
-    if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
-      list.append({
-        name: SuggestionName.Gauge,
-        options: {
-          reduceOptions: {
-            values: true,
-            calcs: [],
-          },
-        },
-      });
-      list.append({
-        name: SuggestionName.GaugeCircular,
-        options: {
-          shape: 'circle',
-          showThresholdMarkers: false,
-          reduceOptions: {
-            values: true,
-            calcs: [],
-          },
-        },
-        fieldConfig: {
-          defaults: {
-            color: { mode: FieldColorModeId.PaletteClassic },
-          },
-          overrides: [],
-        },
-      });
-    } else {
-      list.append({
-        name: SuggestionName.Gauge,
-        options: {
-          reduceOptions: {
-            values: false,
-            calcs: ['lastNotNull'],
-          },
-        },
-      });
-      list.append({
-        name: SuggestionName.GaugeCircular,
-        options: {
-          shape: 'circle',
-          showThresholdMarkers: false,
-          barWidthFactor: 0.3,
-          effects: {
-            rounded: true,
-            barGlow: true,
-            centerGlow: true,
-            spotlight: true,
-          },
-          reduceOptions: {
-            values: false,
-            calcs: ['lastNotNull'],
-          },
-        },
-        fieldConfig: {
-          defaults: {
-            color: { mode: FieldColorModeId.PaletteClassic },
-          },
-          overrides: [],
-        },
-      });
-    }
   }
 }

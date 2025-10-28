@@ -1,10 +1,10 @@
 import { VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '@grafana/data';
-import { SuggestionName } from 'app/types/suggestions';
+import { t } from '@grafana/i18n';
 
 export class TracesSuggestionsSupplier {
   getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
     return builder.getListAppender<{}, {}>({
-      name: SuggestionName.Trace,
+      name: t('trace.suggestions.name', 'Trace'),
       pluginId: 'traces',
     });
   }
@@ -21,7 +21,6 @@ export class TracesSuggestionsSupplier {
 
     if (builder.data.series[0].meta?.preferredVisualisationType === 'trace') {
       this.getListWithDefaults(builder).append({
-        name: SuggestionName.Trace,
         score: VisualizationSuggestionScore.Best,
       });
     }

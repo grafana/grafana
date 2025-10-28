@@ -1,9 +1,16 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
-import { SuggestionName } from 'app/types/suggestions';
+import { t } from '@grafana/i18n';
 
 import { FieldConfig, Options } from './panelcfg.gen';
 
 export class StatTimelineSuggestionsSupplier {
+  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options, FieldConfig>({
+      name: t('state-timeline.suggestions.name', 'State timeline'),
+      pluginId: 'state-timeline',
+    });
+  }
+
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const { dataSummary: ds } = builder;
 
@@ -26,18 +33,6 @@ export class StatTimelineSuggestionsSupplier {
       return;
     }
 
-    const list = builder.getListAppender<Options, FieldConfig>({
-      name: '',
-      pluginId: 'state-timeline',
-      options: {},
-      fieldConfig: {
-        defaults: {
-          custom: {},
-        },
-        overrides: [],
-      },
-    });
-
-    list.append({ name: SuggestionName.StateTimeline });
+    this.getListWithDefaults(builder).append({});
   }
 }

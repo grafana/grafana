@@ -3,12 +3,10 @@ import {
   VisualizationSuggestion,
   VisualizationSuggestionsBuilder,
   PanelModel,
-  VisualizationSuggestionScore,
   PanelPlugin,
 } from '@grafana/data';
+import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
-
-import { getAllPanelPluginMeta } from './util';
 
 let cachedPlugins: PanelPlugin[] | null = null;
 async function getPluginsWithSuggestions(): Promise<NonNullable<typeof cachedPlugins>> {

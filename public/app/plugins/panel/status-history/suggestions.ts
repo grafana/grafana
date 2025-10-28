@@ -1,9 +1,31 @@
 import { FieldColorModeId, VisualizationSuggestionsBuilder } from '@grafana/data';
-import { SuggestionName } from 'app/types/suggestions';
+import { t } from '@grafana/i18n';
 
 import { Options, FieldConfig } from './panelcfg.gen';
 
 export class StatusHistorySuggestionsSupplier {
+  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options, FieldConfig>({
+      name: t('status-history.suggestions.name', 'Status history'),
+      pluginId: 'status-history',
+      options: {},
+      fieldConfig: {
+        defaults: {
+          color: {
+            mode: FieldColorModeId.ContinuousGrYlRd,
+          },
+          custom: {},
+        },
+        overrides: [],
+      },
+      cardOptions: {
+        previewModifier: (s) => {
+          s.options!.colWidth = 0.7;
+        },
+      },
+    });
+  }
+
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const { dataSummary: ds } = builder;
 
@@ -31,26 +53,6 @@ export class StatusHistorySuggestionsSupplier {
       return;
     }
 
-    const list = builder.getListAppender<Options, FieldConfig>({
-      name: '',
-      pluginId: 'status-history',
-      options: {},
-      fieldConfig: {
-        defaults: {
-          color: {
-            mode: FieldColorModeId.ContinuousGrYlRd,
-          },
-          custom: {},
-        },
-        overrides: [],
-      },
-      cardOptions: {
-        previewModifier: (s) => {
-          s.options!.colWidth = 0.7;
-        },
-      },
-    });
-
-    list.append({ name: SuggestionName.StatusHistory });
+    this.getListWithDefaults(builder).append({});
   }
 }

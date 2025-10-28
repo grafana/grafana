@@ -384,29 +384,10 @@ export class PanelPlugin<
   }
 
   /**
-   * wraps the plugin's suggestions
+   * Invokes the plugin's suggestions supplier
    */
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder): void {
-    if (!this.suggestionsSupplier) {
-      return;
-    }
-
-    this.suggestionsSupplier.getSuggestionsForData(builder);
-
-    if (builder.dataSummary.fieldCount === 0) {
-      if (!this.meta.skipDataQuery || this.meta.hideFromList) {
-        return;
-      }
-
-      builder.getList().push({
-        name: this.meta.name,
-        pluginId: this.meta.id,
-        description: this.meta.info.description,
-        cardOptions: {
-          imgSrc: this.meta.info.logos.small,
-        },
-      });
-    }
+    this.suggestionsSupplier?.getSuggestionsForData(builder);
   }
 
   hasPluginId(pluginId: string) {

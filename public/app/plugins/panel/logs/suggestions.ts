@@ -1,22 +1,17 @@
 import { VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '@grafana/data';
-import { SuggestionName } from 'app/types/suggestions';
+import { t } from '@grafana/i18n';
 
 import { Options } from './panelcfg.gen';
 
 export class LogsPanelSuggestionsSupplier {
-  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const list = builder.getListAppender<Options, {}>({
-      name: '',
+  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options, {}>({
+      name: t('logs.suggestions.name', 'Logs'),
       pluginId: 'logs',
-      options: {},
-      fieldConfig: {
-        defaults: {
-          custom: {},
-        },
-        overrides: [],
-      },
     });
+  }
 
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const { dataSummary: ds } = builder;
 
     // Require a string & time field
@@ -24,10 +19,10 @@ export class LogsPanelSuggestionsSupplier {
       return;
     }
 
-    if (ds.preferredVisualisationType === 'logs') {
-      list.append({ name: SuggestionName.Logs, score: VisualizationSuggestionScore.Best });
-    } else {
-      list.append({ name: SuggestionName.Logs });
-    }
+    this.getListWithDefaults(builder).append({
+      name: t('logs.suggestions.logs', 'Logs'),
+      score:
+        ds.preferredVisualisationType === 'logs' ? VisualizationSuggestionScore.Best : VisualizationSuggestionScore.OK,
+    });
   }
 }

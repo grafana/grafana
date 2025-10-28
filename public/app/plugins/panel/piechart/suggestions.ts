@@ -1,13 +1,13 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { LegendDisplayMode } from '@grafana/schema';
-import { SuggestionName } from 'app/types/suggestions';
 
 import { PieChartLabels, Options, PieChartType } from './panelcfg.gen';
 
 export class PieChartSuggestionsSupplier {
-  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const list = builder.getListAppender<Options, {}>({
-      name: SuggestionName.PieChart,
+  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options, {}>({
+      name: t('piechart.suggestions.name', 'Pie chart'),
       pluginId: 'piechart',
       options: {
         reduceOptions: {
@@ -24,6 +24,10 @@ export class PieChartSuggestionsSupplier {
         },
       },
     });
+  }
+
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
+    const list = this.getListWithDefaults(builder);
 
     const { dataSummary } = builder;
 
@@ -31,47 +35,27 @@ export class PieChartSuggestionsSupplier {
       return;
     }
 
+    // if many values this or single value PieChart is not a good option
+    if (dataSummary.numberFieldCount > 30 || (!dataSummary.hasStringField && dataSummary.numberFieldCount < 2)) {
+      return;
+    }
+
+    let optionsOverrides = {};
+
     if (dataSummary.hasStringField && dataSummary.frameCount === 1) {
-      // if many values this or single value PieChart is not a good option
-      if (dataSummary.rowCountTotal > 30 || dataSummary.rowCountTotal < 2) {
-        return;
-      }
-
-      list.append({
-        name: SuggestionName.PieChart,
-        options: {
-          reduceOptions: {
-            values: true,
-            calcs: [],
-          },
+      optionsOverrides = {
+        reduceOptions: {
+          values: true,
+          calcs: [],
         },
-      });
-
-      list.append({
-        name: SuggestionName.PieChartDonut,
-        options: {
-          reduceOptions: {
-            values: true,
-            calcs: [],
-          },
-          pieType: PieChartType.Donut,
-        },
-      });
-
-      return;
+      };
     }
 
-    if (dataSummary.numberFieldCount > 30 || dataSummary.numberFieldCount < 2) {
-      return;
-    }
-
+    list.append({ options: optionsOverrides });
     list.append({
-      name: SuggestionName.PieChart,
-    });
-
-    list.append({
-      name: SuggestionName.PieChartDonut,
+      name: t('piechart.suggestions.donut', 'Pie chart (donut)'),
       options: {
+        ...optionsOverrides,
         pieType: PieChartType.Donut,
       },
     });

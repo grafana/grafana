@@ -18,15 +18,9 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { Options } from './panelcfg.gen';
 
 export class TimeSeriesSuggestionsSupplier {
-  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const { dataSummary } = builder;
-
-    if (!dataSummary.hasTimeField || !dataSummary.hasNumberField || dataSummary.rowCountTotal < 2) {
-      return;
-    }
-
-    const list = builder.getListAppender<Options, GraphFieldConfig>({
-      name: t('timeseries.suggestions.line', 'Line chart'),
+  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options, GraphFieldConfig>({
+      name: t('timeseries.suggestions.name', 'Line chart'),
       pluginId: 'timeseries',
       options: {
         legend: {
@@ -36,12 +30,6 @@ export class TimeSeriesSuggestionsSupplier {
           showLegend: false,
         },
       },
-      fieldConfig: {
-        defaults: {
-          custom: {},
-        },
-        overrides: [],
-      },
       cardOptions: {
         previewModifier: (s) => {
           if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
@@ -50,12 +38,20 @@ export class TimeSeriesSuggestionsSupplier {
         },
       },
     });
+  }
+
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
+    const { dataSummary } = builder;
+
+    if (!dataSummary.hasTimeField || !dataSummary.hasNumberField || dataSummary.rowCountTotal < 2) {
+      return;
+    }
+
+    const list = this.getListWithDefaults(builder);
 
     const maxBarsCount = 100;
 
-    list.append({
-      name: t('timeseries.suggestions.line', 'Line chart'),
-    });
+    list.append({});
 
     if (dataSummary.rowCountMax < 200) {
       list.append({

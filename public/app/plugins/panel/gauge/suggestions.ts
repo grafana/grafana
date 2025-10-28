@@ -1,25 +1,19 @@
 import { ThresholdsMode, VisualizationSuggestionsBuilder } from '@grafana/data';
-import { SuggestionName } from 'app/types/suggestions';
+import { t } from '@grafana/i18n';
 
 import { Options } from './panelcfg.gen';
 
 export class GaugeSuggestionsSupplier {
-  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const { dataSummary } = builder;
-
-    if (!dataSummary.hasData || !dataSummary.hasNumberField) {
-      return;
-    }
-
-    // for many fields / series this is probably not a good fit
-    if (dataSummary.numberFieldCount >= 50) {
-      return;
-    }
-
-    const list = builder.getListAppender<Options, {}>({
-      name: SuggestionName.Gauge,
+  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options, {}>({
+      name: t('gauge.suggestions.name', 'Gauge'),
       pluginId: 'gauge',
-      options: {},
+      options: {
+        reduceOptions: {
+          values: false,
+          calcs: ['lastNotNull'],
+        },
+      },
       fieldConfig: {
         defaults: {
           thresholds: {
@@ -42,47 +36,38 @@ export class GaugeSuggestionsSupplier {
         },
       },
     });
+  }
 
-    if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
-      list.append({
-        name: SuggestionName.Gauge,
-        options: {
-          reduceOptions: {
-            values: true,
-            calcs: [],
-          },
-        },
-      });
-      list.append({
-        name: SuggestionName.GaugeNoThresholds,
-        options: {
-          reduceOptions: {
-            values: true,
-            calcs: [],
-          },
-          showThresholdMarkers: false,
-        },
-      });
-    } else {
-      list.append({
-        name: SuggestionName.Gauge,
-        options: {
-          reduceOptions: {
-            values: false,
-            calcs: ['lastNotNull'],
-          },
-        },
-      });
-      list.append({
-        name: SuggestionName.GaugeNoThresholds,
-        options: {
-          reduceOptions: {
-            values: false,
-            calcs: ['lastNotNull'],
-          },
-          showThresholdMarkers: false,
-        },
-      });
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
+    const { dataSummary } = builder;
+
+    if (!dataSummary.hasData || !dataSummary.hasNumberField) {
+      return;
     }
+
+    // for many fields / series this is probably not a good fit
+    if (dataSummary.numberFieldCount >= 50) {
+      return;
+    }
+
+    const list = this.getListWithDefaults(builder);
+
+    // To use show individual row values we also need a string field to give each value a name
+    let optionsOverride: Partial<Options> = {};
+    if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
+      optionsOverride.reduceOptions = {
+        values: true,
+        calcs: [],
+      };
+    }
+
+    list.append({ options: optionsOverride });
+    list.append({
+      name: t('gauge.suggestions.gauge-no-thresholds', 'Gauge (no thresholds)'),
+      options: {
+        showThresholdMarkers: false,
+        ...optionsOverride,
+      },
+    });
   }
 }

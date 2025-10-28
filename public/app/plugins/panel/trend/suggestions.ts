@@ -5,16 +5,9 @@ import { GraphDrawStyle, GraphFieldConfig, LegendDisplayMode } from '@grafana/sc
 import { Options } from './panelcfg.gen';
 
 export class TrendSuggestionsSupplier {
-  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const { dataSummary } = builder;
-
-    if (dataSummary.numberFieldCount < 2 || dataSummary.rowCountTotal < 2 || dataSummary.rowCountTotal < 2) {
-      return;
-    }
-
-    // Super basic
-    const list = builder.getListAppender<Options, GraphFieldConfig>({
-      name: t('trend.suggestions.line-chart', 'Trend chart'),
+  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options, GraphFieldConfig>({
+      name: t('trend.suggestions.name', 'Trend chart'),
       pluginId: 'trend',
       options: {
         legend: {
@@ -38,6 +31,19 @@ export class TrendSuggestionsSupplier {
         },
       },
     });
-    return list;
+  }
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
+    const { dataSummary } = builder;
+
+    if (
+      dataSummary.numberFieldCount < 2 ||
+      dataSummary.rowCountTotal < 2 ||
+      dataSummary.rowCountTotal < 2 ||
+      dataSummary.hasTimeField
+    ) {
+      return;
+    }
+
+    this.getListWithDefaults(builder).append({});
   }
 }

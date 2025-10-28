@@ -1,10 +1,33 @@
 import { VisualizationSuggestionsBuilder, VizOrientation } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { BarGaugeDisplayMode } from '@grafana/ui';
-import { SuggestionName } from 'app/types/suggestions';
 
 import { Options } from './panelcfg.gen';
 
 export class BarGaugeSuggestionsSupplier {
+  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options, {}>({
+      name: t('bargauge.suggestions.name', 'Bar gauge'),
+      pluginId: 'bargauge',
+      options: {
+        reduceOptions: {
+          values: true,
+          calcs: [],
+        },
+        displayMode: BarGaugeDisplayMode.Basic,
+        orientation: VizOrientation.Horizontal,
+      },
+      fieldConfig: {
+        defaults: {
+          color: {
+            mode: 'continuous-GrYlRd',
+          },
+        },
+        overrides: [],
+      },
+    });
+  }
+
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const { dataSummary } = builder;
 
@@ -12,17 +35,7 @@ export class BarGaugeSuggestionsSupplier {
       return;
     }
 
-    const list = builder.getListAppender<Options, {}>({
-      name: '',
-      pluginId: 'bargauge',
-      options: {},
-      fieldConfig: {
-        defaults: {
-          custom: {},
-        },
-        overrides: [],
-      },
-    });
+    const list = this.getListWithDefaults(builder);
 
     // This is probably not a good option for many numeric fields
     if (dataSummary.numberFieldCount > 50) {
@@ -32,7 +45,6 @@ export class BarGaugeSuggestionsSupplier {
     // To use show individual row values we also need a string field to give each value a name
     if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 30) {
       list.append({
-        name: SuggestionName.BarGaugeBasic,
         options: {
           reduceOptions: {
             values: true,
@@ -52,7 +64,7 @@ export class BarGaugeSuggestionsSupplier {
       });
 
       list.append({
-        name: SuggestionName.BarGaugeLCD,
+        name: t('bargauge.suggestions.bar-lcd', 'Bar gauge (LCD)'),
         options: {
           reduceOptions: {
             values: true,
@@ -72,7 +84,6 @@ export class BarGaugeSuggestionsSupplier {
       });
     } else {
       list.append({
-        name: SuggestionName.BarGaugeBasic,
         options: {
           displayMode: BarGaugeDisplayMode.Basic,
           orientation: VizOrientation.Horizontal,
@@ -92,7 +103,7 @@ export class BarGaugeSuggestionsSupplier {
       });
 
       list.append({
-        name: SuggestionName.BarGaugeLCD,
+        name: t('bargauge.suggestions.bar-lcd', 'Bar gauge (LCD)'),
         options: {
           displayMode: BarGaugeDisplayMode.Lcd,
           orientation: VizOrientation.Horizontal,
