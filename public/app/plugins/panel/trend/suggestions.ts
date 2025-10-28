@@ -35,12 +35,7 @@ export class TrendSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
     const { dataSummary } = builder;
 
-    if (
-      dataSummary.numberFieldCount < 2 ||
-      dataSummary.rowCountTotal < 2 ||
-      dataSummary.rowCountTotal < 2 ||
-      dataSummary.hasTimeField
-    ) {
+    if (dataSummary.numberFieldCount < 2 || dataSummary.rowCountTotal < 2 || dataSummary.hasTimeField) {
       return;
     }
 
