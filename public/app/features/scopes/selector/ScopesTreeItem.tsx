@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { Checkbox, Icon, RadioButtonDot, useStyles2, Text } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';

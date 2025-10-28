@@ -12264,8 +12264,6 @@
       "title": "Select scopes"
     },
     "tree": {
-      "collapse": "Collapse {{title}}",
-      "expand": "Expand {{title}}",
       "headline": {
         "noResults": "No results found for your query",
         "recommended": "Recommended",
