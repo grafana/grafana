@@ -92,7 +92,7 @@ const FlameGraphHeader = ({
           <div className={styles.buttonSpacing}>
             <OpenAssistantButton
               origin="grafana/flame-graph"
-              prompt="Query the profile I am currently looking at by taking the query parameters from the current page's URL and analyze the resulting flame graph."
+              prompt="Analyze this flamegraph by querying the current datasource"
               context={assistantContext}
             />
           </div>
