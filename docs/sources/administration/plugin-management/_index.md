@@ -42,7 +42,7 @@ Read more in [Types of plugins](plugin-types).
 
 ## Plugin catalog
 
-The Grafana plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and Organization administrators can access and use the plugin catalog. For more information about Grafana roles and permissions, refer to [Roles and permissions](../roles-and-permissions/).
+The Grafana plugin catalog allows you to install and manage plugins from within Grafana. Only Grafana server administrators and Organization administrators can access and use the plugin catalog. For more information about Grafana roles and permissions, refer to [Roles and permissions](../roles-and-permissions/).
 
 The following access rules apply depending on the user role:
 
@@ -57,6 +57,8 @@ To browse for available plugins:
 1. While logged into Grafana as an administrator, click **Administration > Plugins and data > Plugins** in the side menu to view installed and available plugins.
 1. Use the search box to filter based on name, keywords, organization and other metadata.
 1. Click the **Data sources**, **Panels**, or **Applications** buttons to filter by plugin type.
+
+If you're not logged in, you can also access the list of available pluguins [here](https://grafana.com/grafana/plugins/).  
 
 ## Manage your plugins
 
