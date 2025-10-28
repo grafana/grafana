@@ -511,7 +511,7 @@ Select one of the following options: **Auto**, **Top**, **Right**, **Bottom**, a
 The content of the tooltip is determined by the values of the source field and can't be directly edited.
 However, you can affect the display of the value using overrides like value mappings, as shown in the [Example: Tooltip from field with value mappings](#example-tooltip-from-field-with-value-mappings) section.
 
-While you can turn on this option under **Cell options**, and have it applied to all cells in the table, it's typically used as an override on a sub-set of cells instead.
+While you can turn on this option under **Cell options** and have it applied to all cells in the table, it's typically used as an override on a sub-set of cells instead.
 This is demonstrated in the example in the following section.
 
 ##### Example: Tooltip from field using overrides
@@ -552,9 +552,11 @@ For example, the **Table > Column width** or **Cell options > Cell type** overri
 Toggle on the **Styling from field** switch to apply the styling from another field (or column).
 The referenced field must contain CSS properties formatted in JSON object syntax. For example:
 
-`{"name":"John"}`
+```JSON
+{"name":"John"}
+```
 
-While you can turn on this option under **Cell options**, and have it applied to all cells in the table, it's typically used as an override on a sub-set of cells instead.
+While you can turn on this option under **Cell options** and have it applied to all cells in the table, it's typically used as an override on a sub-set of cells instead.
 This is demonstrated in the following example.
 
 The following table has six visible fields (columns) as well as a hidden field called "Style":
@@ -563,7 +565,7 @@ The following table has six visible fields (columns) as well as a hidden field c
 
 - The "Style" field has JSON objects with CSS properties. (Note that they are formatted for use in CSV format in this example.)
 - The "Style" field is hidden using the **Table > Hide in table** override property.
-- The "Info" field is using the **Cell options > Styling from field** override property with the "Style" field being the source.
+- The "Info" field is using the **Cell options > Styling from field** override property with the "Style" field as the source.
 
 The following image shows the "Info" field with the styling from the "Style" field applied:
 
