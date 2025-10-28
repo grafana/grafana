@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Stack, Text, Select, Button, Alert, useStyles2, Field, Input } from '@grafana/ui';
+import { Stack, Text, Button, Alert, useStyles2, Field, Input } from '@grafana/ui';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { DashboardInput, DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 
 import { InputMapping, mapConstantInputs } from './utils/autoMapDatasources';
@@ -27,7 +28,7 @@ export const CommunityDashboardMappingForm = ({
   onPreview,
 }: Props) => {
   const styles = useStyles2(getStyles);
-  const [userDatasourceMappings, setUserDatasourceMappings] = useState<Record<string, string>>({});
+  const [userDatasourceMappings, setUserDatasourceMappings] = useState<Record<string, DataSourceInstanceSettings>>({});
   const [constantValues, setConstantValues] = useState<Record<string, string>>(() => {
     // Initialize with default values from constantInputs
     const initial: Record<string, string> = {};
@@ -37,10 +38,10 @@ export const CommunityDashboardMappingForm = ({
     return initial;
   });
 
-  const handleDatasourceSelect = (inputName: string, datasourceUid: string) => {
+  const handleDatasourceSelect = (inputName: string, datasource: DataSourceInstanceSettings) => {
     setUserDatasourceMappings((prev) => ({
       ...prev,
-      [inputName]: datasourceUid,
+      [inputName]: datasource,
     }));
   };
 
@@ -61,7 +62,7 @@ export const CommunityDashboardMappingForm = ({
       name: input.name,
       type: 'datasource',
       pluginId: input.pluginId,
-      value: userDatasourceMappings[input.name],
+      value: userDatasourceMappings[input.name]?.uid || '',
     }));
 
     const constantMappings = mapConstantInputs(constantInputs, constantValues);
@@ -120,44 +121,24 @@ export const CommunityDashboardMappingForm = ({
             <Trans i18nKey="dashboard.library.community-mapping-form.datasources-title">Datasource Configuration</Trans>
           </Text>
           {unmappedInputs.map((input) => {
-            const compatibleDs = getDataSourceSrv()
-              .getList({ type: input.pluginId })
-              .filter((ds) => ds.uid)
-              .map((ds) => ({
-                label: ds.name,
-                value: ds.uid!,
-              }));
-
-            const hasOptions = compatibleDs.length > 0;
+            const selectedDatasource = userDatasourceMappings[input.name];
 
             return (
               <Field
                 key={input.name}
                 label={input.label || input.name}
                 description={input.description}
-                invalid={!hasOptions}
-                error={
-                  !hasOptions ? (
-                    <Trans
-                      i18nKey="dashboard.library.community-mapping-form.no-datasources"
-                      values={{ pluginId: input.pluginId }}
-                    >
-                      No compatible datasources found for type: {{ pluginId: input.pluginId }}
-                    </Trans>
-                  ) : undefined
-                }
+                invalid={false}
                 noMargin
               >
-                <Select
-                  options={compatibleDs}
-                  value={userDatasourceMappings[input.name]}
-                  onChange={(option) => handleDatasourceSelect(input.name, option.value!)}
+                <DataSourcePicker
+                  onChange={(ds) => handleDatasourceSelect(input.name, ds)}
+                  current={selectedDatasource?.uid}
+                  noDefault={true}
                   placeholder={
-                    hasOptions
-                      ? t('dashboard.library.community-mapping-select-datasource', 'Select a datasource')
-                      : t('dashboard.library.community-mapping-no-options', 'No options available')
+                    input.info || t('dashboard.library.community-mapping-select-datasource', 'Select a datasource')
                   }
-                  disabled={!hasOptions}
+                  pluginId={input.pluginId}
                 />
               </Field>
             );
