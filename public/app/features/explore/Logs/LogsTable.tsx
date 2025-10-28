@@ -55,15 +55,18 @@ interface Props {
   logRows?: LogRowModel[];
 }
 
+const DEFAULT_COLUMN_WIDTH = 200;
+const FIRST_COLUMN_WIDTH = 40;
+
 const getStyles = (theme: GrafanaTheme2) => ({
   firstColumnHeader: css({
     display: 'flex',
     label: 'wrapper',
-    marginLeft: '56px',
+    marginLeft: theme.spacing(7),
     width: '100%',
   }),
   firstColumnCell: css({
-    paddingLeft: '56px',
+    paddingLeft: theme.spacing(7),
   }),
 });
 
@@ -169,8 +172,8 @@ export function LogsTable(props: Props) {
             filterable: true,
             width: isBodyField
               ? undefined
-              : (columnWidthMap[field.name] ?? getInitialFieldWidth(field) ?? 200) + (isFirstField ? 40 : 0), // Use stored width if available, otherwise use initial width
-            minWidth: isFirstField ? 240 : undefined, // Set minWidth for first field to prevent header wrapping
+              : (columnWidthMap[field.name] ?? getInitialFieldWidth(field) ?? DEFAULT_COLUMN_WIDTH) +
+                (isFirstField ? FIRST_COLUMN_WIDTH : 0), // Use stored width if available, otherwise use initial width
             cellOptions: isFirstField
               ? {
                   type: TableCellDisplayMode.Custom,
@@ -382,7 +385,7 @@ function getLabelFiltersTransform(labelFilters: Record<string, number>) {
 
 function getInitialFieldWidth(field: Field): number | undefined {
   if (field.type === FieldType.time || field.name === DETECTED_LEVEL || field.name === LEVEL) {
-    return 200;
+    return DEFAULT_COLUMN_WIDTH;
   }
 
   return undefined;
