@@ -2871,10 +2871,7 @@
         },
         "title": "Notification"
       },
-      "rule-definition": "Rule Definition",
-      "step-number-one": "1",
-      "step-number-three": "3",
-      "step-number-two": "2"
+      "rule-definition": "Rule Definition"
     },
     "smart-alert-type-detector": {
       "data-source-managed": "Data source-managed",

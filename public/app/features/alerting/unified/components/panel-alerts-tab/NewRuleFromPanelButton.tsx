@@ -4,15 +4,14 @@ import { useAsync } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService, logInfo } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Alert, Button, LinkButton } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { useSelector } from 'app/types/store';
 
-import { LogMessages } from '../../Analytics';
 import { AlertRuleDrawerForm } from '../../components/AlertRuleDrawerForm';
-import type { RuleFormValues } from '../../types/rule-form';
+import { createPanelAlertRuleNavigation } from '../../utils/navigation';
 import { panelToRuleFormValues } from '../../utils/rule-form';
 
 interface Props {
@@ -59,24 +58,10 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
     );
   }
 
-  const navigateToAlerting = async (currentValues?: RuleFormValues) => {
-    logInfo(LogMessages.alertRuleFromPanel);
-    // Prefer current drawer values if provided; otherwise refresh from panel state
-    const updateToDateFormValues = currentValues ?? (await panelToRuleFormValues(panel, dashboard));
-    const ruleFormUrl = urlUtil.renderUrl('alerting/new', {
-      defaults: JSON.stringify(updateToDateFormValues),
-      returnTo: location.pathname + location.search,
-    });
-    locationService.push(ruleFormUrl);
-  };
-
-  const onContinueInAlertingFromDrawer = (values: RuleFormValues) => {
-    void navigateToAlerting(values);
-  };
-
-  const onContinueInAlertingButton = () => {
-    void navigateToAlerting(undefined);
-  };
+  const { onContinueInAlertingFromDrawer, onButtonClick: onContinueInAlertingButton } = createPanelAlertRuleNavigation(
+    () => panelToRuleFormValues(panel, dashboard),
+    location
+  );
 
   const shouldUseDrawer = config.featureToggles.createAlertRuleFromPanel;
 
