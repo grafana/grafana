@@ -18,7 +18,7 @@ labels:
     - enterprise
     - oss
 title: Grafana Enterprise license
-weight: 500
+weight: 5500
 ---
 
 # Grafana Enterprise license
