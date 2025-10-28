@@ -55,11 +55,7 @@ func (p *PluginsAppInstaller) InstallAPIs(
 	server appsdkapiserver.GenericAPIServer,
 	restOptsGetter generic.RESTOptionsGetter,
 ) error {
-	pluginMetaGVR := schema.GroupVersionResource{
-		Group:    pluginsv0alpha1.GroupVersion.Group,
-		Version:  pluginsv0alpha1.GroupVersion.Version,
-		Resource: pluginsv0alpha1.PluginMetaKind().Plural(),
-	}
+	pluginMetaGVR := pluginsv0alpha1.PluginMetaKind().GroupVersionResource()
 	replacedStorage := map[schema.GroupVersionResource]rest.Storage{
 		pluginMetaGVR: pluginsapp.NewPluginMetaStorage(request.GetNamespaceMapper(p.cfg)),
 	}

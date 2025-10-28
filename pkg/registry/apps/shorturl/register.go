@@ -55,11 +55,7 @@ func RegisterAppInstaller(
 }
 
 func (s *ShortURLAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
-	gvr := schema.GroupVersionResource{
-		Group:    shorturl.ShortURLKind().Group(),
-		Version:  shorturl.ShortURLKind().Version(),
-		Resource: shorturl.ShortURLKind().Plural(),
-	}
+	gvr := shorturl.ShortURLKind().GroupVersionResource()
 	if requested.String() != gvr.String() {
 		return nil
 	}
