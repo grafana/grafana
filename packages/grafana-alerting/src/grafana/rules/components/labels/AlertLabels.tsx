@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { findCommonLabels, isPrivateLabel } from '../../utils/labels';
 
@@ -16,9 +16,17 @@ export interface AlertLabelsProps {
   labelSets?: Array<Record<string, string>>;
   size?: LabelSize;
   onClick?: ([value, key]: [string | undefined, string | undefined]) => void;
+  commonLabelsMode?: 'expand' | 'tooltip';
 }
 
-export const AlertLabels = ({ labels, displayCommonLabels, labelSets, size, onClick }: AlertLabelsProps) => {
+export const AlertLabels = ({
+  labels,
+  displayCommonLabels,
+  labelSets,
+  size,
+  onClick,
+  commonLabelsMode = 'expand',
+}: AlertLabelsProps) => {
   const styles = useStyles2(getStyles, size);
   const [showCommonLabels, setShowCommonLabels] = useState(false);
 
@@ -34,6 +42,16 @@ export const AlertLabels = ({ labels, displayCommonLabels, labelSets, size, onCl
   const commonLabelsCount = Object.keys(computedCommonLabels).length;
   const hasCommonLabels = commonLabelsCount > 0;
   const tooltip = t('alert-labels.button.show.tooltip', 'Show common labels');
+
+  const commonLabelsTooltip = (
+    <Stack role="list" direction="column" gap={1}>
+      {Object.entries(computedCommonLabels).map(([label, value]) => {
+        return (
+          <AlertLabel key={label + value} size={size} labelKey={label} value={value} colorBy="key" role="listitem" />
+        );
+      })}
+    </Stack>
+  );
 
   return (
     <div className={styles.wrapper} role="list" aria-label={t('alerting.alert-labels.aria-label-labels', 'Labels')}>
@@ -53,18 +71,28 @@ export const AlertLabels = ({ labels, displayCommonLabels, labelSets, size, onCl
 
       {!showCommonLabels && hasCommonLabels && (
         <div role="listitem">
-          <Button
-            variant="secondary"
-            fill="text"
-            onClick={() => setShowCommonLabels(true)}
-            tooltip={tooltip}
-            tooltipPlacement="top"
-            size="sm"
-          >
-            <Trans i18nKey="alerting.alert-labels.common-labels-count" count={commonLabelsCount}>
-              +{'{{count}}'} common labels
-            </Trans>
-          </Button>
+          {commonLabelsMode === 'expand' ? (
+            <Button
+              variant="secondary"
+              fill="text"
+              onClick={() => setShowCommonLabels(true)}
+              tooltip={tooltip}
+              tooltipPlacement="top"
+              size="sm"
+            >
+              <Trans i18nKey="alerting.alert-labels.common-labels-count" count={commonLabelsCount}>
+                +{'{{count}}'} common labels
+              </Trans>
+            </Button>
+          ) : (
+            <Tooltip content={commonLabelsTooltip} placement="top">
+              <Button variant="secondary" fill="text" size="sm">
+                <Trans i18nKey="alerting.alert-labels.common-labels-count" count={commonLabelsCount}>
+                  +{'{{count}}'} common labels
+                </Trans>
+              </Button>
+            </Tooltip>
+          )}
         </div>
       )}
       {showCommonLabels && hasCommonLabels && (
