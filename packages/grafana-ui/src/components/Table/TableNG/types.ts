@@ -173,7 +173,6 @@ export type InspectCellProps = {
 export interface TableCellActionsProps {
   field: Field;
   value: TableCellValue;
-  cellOptions: TableCellOptions;
   displayName: string;
   cellInspect: boolean;
   showFilters: boolean;
