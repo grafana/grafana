@@ -685,7 +685,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 		},
 		{
 			name:        "operation timeout after 15 seconds",
-			description: "Should abandon operation and record timeout error when operation takes longer than 15 seconds",
+			description: "Should record timeout error when operation takes longer than 15 seconds",
 			changes: []ResourceFileChange{
 				{
 					Action: repository.FileActionCreated,
@@ -695,21 +695,31 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 
-				// Mock WriteResourceFromFile to block for 20 seconds (longer than 15s timeout)
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/slow.json", "").
 					Run(func(args mock.Arguments) {
-						// More than 15 seconds to trigger the timeout
-						time.Sleep(20 * time.Second)
+						ctx := args.Get(0).(context.Context)
+						select {
+						case <-ctx.Done():
+							return
+						case <-time.After(20 * time.Second):
+							return
+						}
 					}).
-					Return("slow-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("", schema.GroupVersionKind{}, context.DeadlineExceeded)
 
-				// Expect a timeout error to be recorded
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action == repository.FileActionCreated &&
+						result.Path == "dashboards/slow.json" &&
+						result.Error != nil &&
+						result.Error.Error() == "writing resource from file dashboards/slow.json: context deadline exceeded"
+				})).Return().Once()
+
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action == repository.FileActionCreated &&
 						result.Path == "dashboards/slow.json" &&
 						result.Error != nil &&
 						result.Error.Error() == "operation timed out after 15 seconds"
-				})).Return()
+				})).Return().Once()
 			},
 		},
 	}

@@ -70,7 +70,6 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 	if ctx.Err() != nil {
 		return
 	}
-	// logger := logging.FromContext(ctx)
 
 	if change.Action == repository.FileActionDeleted {
 		deleteCtx, deleteSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.delete")
@@ -141,8 +140,6 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 
 	writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.write_resource_from_file")
 	name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, "")
-	// logger.Info("Writing file started", "file", change.Path, "action", "name", name)
-	fmt.Println("Writing file started", "file", change.Path, "action", "name", name)
 	result := jobs.JobResourceResult{
 		Path:   change.Path,
 		Action: change.Action,
@@ -150,18 +147,12 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 		Group:  gvk.Group,
 		Kind:   gvk.Kind,
 	}
-	// logger.Info("Writing file ended", "file", change.Path, "action", "name", name)
-	fmt.Println("Writing file ended", "file", change.Path, "action", "name", name)
 	if err != nil {
 		writeSpan.RecordError(err)
 		result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
 	}
 
-	// logger.Info("Recording started", "file", change.Path, "action", "name", name)
-	fmt.Println("Recording started", "file", change.Path, "action", "name", name)
 	progress.Record(writeCtx, result)
-	// logger.Info("Recording ended", "file", change.Path, "action", "name", name)
-	fmt.Println("Recording ended", "file", change.Path, "action", "name", name)
 	writeSpan.End()
 }
 
@@ -209,7 +200,6 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 		attribute.Int("file_creations", len(fileCreations)),
 	)
 
-	// TODO: Give a Time limited context per operation, to avoid hanging
 	if len(fileDeletions) > 0 {
 		if err := applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers); err != nil {
 			return err
@@ -237,29 +227,32 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 
 func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error {
 	logger := logging.FromContext(ctx)
-	folderCtx, folderCancel := context.WithCancel(ctx)
-	defer folderCancel()
 
 	for _, folder := range folders {
-		if folderCtx.Err() != nil {
-			return folderCtx.Err()
+		if ctx.Err() != nil {
+			return ctx.Err()
 		}
 
 		if err := progress.TooManyErrors(); err != nil {
 			return err
 		}
 
-		folderChangeCtx, cancel := context.WithTimeout(folderCtx, 15*time.Second)
-		applyChange(folderChangeCtx, folder, clients, repositoryResources, progress, tracer)
-		if folderChangeCtx.Err() == context.DeadlineExceeded {
+		folderCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+
+		applyChange(folderCtx, folder, clients, repositoryResources, progress, tracer)
+
+		if folderCtx.Err() == context.DeadlineExceeded {
 			logger.Error("operation timed out after 15 seconds", "path", folder.Path, "action", folder.Action)
-			result := jobs.JobResourceResult{
+
+			recordCtx, recordCancel := context.WithTimeout(context.Background(), 15*time.Second)
+			progress.Record(recordCtx, jobs.JobResourceResult{
 				Path:   folder.Path,
 				Action: folder.Action,
 				Error:  fmt.Errorf("operation timed out after 15 seconds"),
-			}
-			progress.Record(folderChangeCtx, result)
+			})
+			recordCancel()
 		}
+
 		cancel()
 	}
 
@@ -279,12 +272,9 @@ func applyResourcesInParallel(ctx context.Context, resources []ResourceFileChang
 
 loop:
 	for _, change := range resources {
-		// Check for early termination conditions
-		// Test is actually progress.TooManyErrors is hanging in large repos
-		// SO THIS IS ACTUALLY HANGING!
-		// if err := progress.TooManyErrors(); err != nil {
-		// 	break
-		// }
+		if err := progress.TooManyErrors(); err != nil {
+			break
+		}
 		if ctx.Err() != nil {
 			break
 		}
@@ -299,7 +289,7 @@ loop:
 		wg.Add(1)
 		go func(change ResourceFileChange) {
 			defer wg.Done()
-			defer func() { <-sem }() // Release semaphore slot
+			defer func() { <-sem }()
 
 			applyChangeWithTimeout(ctx, change, clients, repositoryResources, progress, tracer, logger)
 		}(change)
@@ -314,38 +304,21 @@ loop:
 	return ctx.Err()
 }
 
-// applyChangeWithTimeout wraps applyChange with a 15-second timeout.
-// If applyChange doesn't complete within 15 seconds, we abandon the goroutine
-// and record a timeout error. The abandoned goroutine will eventually complete
-// or remain hung, but we don't wait for it.
 func applyChangeWithTimeout(ctx context.Context, change ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, logger logging.Logger) {
 	changeCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
-	done := make(chan struct{})
-	go func() {
-		applyChange(changeCtx, change, clients, repositoryResources, progress, tracer)
-		close(done)
-	}()
+	applyChange(changeCtx, change, clients, repositoryResources, progress, tracer)
 
-	select {
-	case <-done:
-		// Operation completed within timeout
-	case <-changeCtx.Done():
-		if changeCtx.Err() == context.DeadlineExceeded {
-			logger.Error("operation timed out after 15 seconds", "path", change.Path, "action", change.Action)
-			// Also this received the full 20m ctx, we should also use a timeout for this operation!
-			// Test is actually progress.Record is hanging in testing!
-			// progress.Record(ctx, jobs.JobResourceResult{
-			// 	Path:   change.Path,
-			// 	Action: change.Action,
-			// 	Error:  fmt.Errorf("operation timed out after 15 seconds"),
-			// })
-			// Note to self :
-			// The goroutine running applyChange is abandoned here.
-			// It will eventually complete or hang, but we move on.
-			// Will this create a leak? Need to investigate
-			//
-		}
+	if changeCtx.Err() == context.DeadlineExceeded {
+		logger.Error("operation timed out after 15 seconds", "path", change.Path, "action", change.Action)
+
+		recordCtx, recordCancel := context.WithTimeout(context.Background(), 15*time.Second)
+		progress.Record(recordCtx, jobs.JobResourceResult{
+			Path:   change.Path,
+			Action: change.Action,
+			Error:  fmt.Errorf("operation timed out after 15 seconds"),
+		})
+		recordCancel()
 	}
 }
