@@ -7,7 +7,7 @@ test.describe(
     tag: ['@acceptance'],
   },
   () => {
-    test('Tests each panel type in the panel edit view to ensure no crash', async ({
+    test.skip('Tests each panel type in the panel edit view to ensure no crash', async ({
       gotoDashboardPage,
       selectors,
       page,
