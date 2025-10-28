@@ -1072,7 +1072,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 
 			pageBytes += len(item.Value)
 			rsp.Items = append(rsp.Items, item)
-			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= maxPageBytes {
+			if len(rsp.Items) >= int(req.Limit) || pageBytes >= maxPageBytes {
 				t := iter.ContinueToken()
 				if iter.Next() {
 					rsp.NextPageToken = t
