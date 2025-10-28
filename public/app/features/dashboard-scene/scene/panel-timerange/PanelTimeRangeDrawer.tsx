@@ -142,21 +142,6 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
             />
           </Field>
 
-          {(timeFrom || timeShift || compareWith) && (
-            <Field
-              noMargin
-              label={t('dashboard.panel.time-range-settings.hide-time-info', 'Hidden time info')}
-              description={t(
-                'dashboard.panel.time-range-settings.hide-time-info-description',
-                'Do not show the custom time range in the panel header'
-              )}
-            >
-              <Switch
-                value={hideTimeOverride}
-                onChange={(x) => model.setState({ hideTimeOverride: x.currentTarget.checked })}
-              />
-            </Field>
-          )}
           {config.featureToggles.timeComparison && (
             <Field
               noMargin
@@ -184,6 +169,21 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
               />
             </Field>
           )}
+
+          <Field
+            noMargin
+            label={t('dashboard.panel.time-range-settings.hide-time-info', 'Hidden time info')}
+            description={t(
+              'dashboard.panel.time-range-settings.hide-time-info-description',
+              'Do not show the custom time range in the panel header'
+            )}
+          >
+            <Switch
+              value={hideTimeOverride}
+              onChange={(x) => model.setState({ hideTimeOverride: x.currentTarget.checked })}
+            />
+          </Field>
+
           <Box paddingTop={3}>
             <Stack>
               <Button variant="secondary" onClick={model.onClose}>
