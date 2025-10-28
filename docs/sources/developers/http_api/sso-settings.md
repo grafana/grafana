@@ -25,7 +25,7 @@ title: SSO Settings API
 The API can be used to create, update, delete, get, and list SSO Settings for OAuth2 and SAML.
 
 The settings managed by this API are stored in the database and override
-[settings from other sources](../../../setup-grafana/configure-security/configure-authentication/)
+[settings from other sources](../../../setup-grafana/configure-access/configure-authentication/)
 (arguments, environment variables, settings file, etc).
 Therefore, every time settings for a specific provider are removed or reset to the default settings at runtime,
 the settings are inherited from the other sources in the reverse order of precedence

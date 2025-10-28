@@ -169,10 +169,21 @@
       // Wrap in an IIFE to avoid polluting the global scope. Intentionally global-scope properties
       // are explicitly assigned to the `window` object.
       (() => {
-        window.__grafana_load_failed = function(...args) {
-          console.error('Failed to load Grafana', ...args);
+        window.__grafana_load_failed = function(err) {
+          console.error('Failed to load Grafana', err);
           document.querySelector('.fs-variant-loader').classList.add('fs-hidden');
           document.querySelector('.fs-variant-error').classList.remove('fs-hidden');
+
+          // not a secure random value, but collisions are highly unlikely and 1/1000_000_000 lost requests
+          // doesn't make a difference.
+          fetch(`/-/fe-boot-error?ts=${Date.now()}${Math.random()}`, {
+            // This "should" be a POST request, but we must use GET to interact with the correct service.
+            // no-store and ?ts=_ are used to ensure the request isn't cached.
+            method: 'GET',
+            cache: "no-store",
+          }).catch(err => {
+            console.error('Failed to report boot error to backend: ', err);
+          });
         };
 
         window.onload = function() {
@@ -199,7 +210,16 @@
          * Will return a rejected promise on unrecoverable errors.
          **/
         async function fetchBootData() {
-          const resp = await fetch("/bootdata");
+          const queryParams = new URLSearchParams(window.location.search);
+
+          // pass the search params through to the bootdata request
+          // this allows for overriding the theme/language etc
+          const bootDataUrl = new URL('/bootdata', window.location.origin);
+          for (const [key, value] of queryParams.entries()) {
+            bootDataUrl.searchParams.append(key, value);
+          }
+
+          const resp = await fetch(bootDataUrl);
           const textResponse = await resp.text();
 
           let rawBootData;

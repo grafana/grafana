@@ -2,11 +2,13 @@ package frontend
 
 import (
 	"context"
+	"io"
 	"net"
 	"net/http"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -18,12 +20,21 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
+	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/frontend")
+
+// Initialize metrics
+var bootErrorMetric = promauto.NewCounter(prometheus.CounterOpts{
+	Namespace: "grafana",
+	Subsystem: "frontend",
+	Name:      "boot_errors_total",
+	Help:      "Total number of frontend boot errors",
+})
 
 type frontendService struct {
 	*services.BasicService
@@ -40,13 +51,13 @@ type frontendService struct {
 	index *IndexProvider
 }
 
-func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing) (*frontendService, error) {
+func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing, hooksService *hooks.HooksService) (*frontendService, error) {
 	assetsManifest, err := fswebassets.GetWebAssets(cfg, license)
 	if err != nil {
 		return nil, err
 	}
 
-	index, err := NewIndexProvider(cfg, assetsManifest)
+	index, err := NewIndexProvider(cfg, assetsManifest, license, hooksService)
 	if err != nil {
 		return nil, err
 	}
@@ -122,10 +133,10 @@ func (s *frontendService) addMiddlewares(m *web.Mux) {
 	loggermiddleware := loggermw.Provide(s.cfg, s.features)
 
 	m.Use(requestmeta.SetupRequestMetadata())
-	m.UseMiddleware(s.contextMiddleware())
-
 	m.Use(middleware.RequestTracing(s.tracer, middleware.TraceAllPaths))
 	m.Use(middleware.RequestMetrics(s.features, s.cfg, s.promRegister))
+
+	m.UseMiddleware(s.contextMiddleware())
 	m.UseMiddleware(loggermiddleware.Middleware())
 
 	m.UseMiddleware(middleware.Recovery(s.cfg, s.license))
@@ -148,6 +159,40 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 		}
 	})
 
+	// Frontend boot error reporting endpoint
+	// GET because all POST requests are passed to the backend, even though POST is more correct. The frontend
+	// uses cache busting to ensure requests aren't cached.
+	s.routeGet(m, "/-/fe-boot-error", s.handleBootError)
+
 	// All other requests return index.html
 	s.routeGet(m, "/*", s.index.HandleRequest)
+}
+
+// handleBootError handles frontend boot error reports
+func (s *frontendService) handleBootError(w http.ResponseWriter, r *http.Request) {
+	// Read the request body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		s.log.Error("failed to read boot error request body", "error", err)
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	defer func() {
+		if err := r.Body.Close(); err != nil {
+			s.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
+
+	// Increment the Prometheus counter
+	bootErrorMetric.Inc()
+
+	// Log the error details
+	s.log.Error("frontend boot error reported", "error", body)
+
+	// Return success response
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte("OK")); err != nil {
+		s.log.Error("failed to write boot error response", "error", err)
+	}
 }

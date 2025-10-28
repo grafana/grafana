@@ -11,9 +11,11 @@ use (
 	./apps/alerting/rules
 	./apps/correlations
 	./apps/dashboard
+	./apps/example
 	./apps/folder
 	./apps/iam
 	./apps/investigations
+	./apps/logsdrilldown
 	./apps/playlist
 	./apps/plugins
 	./apps/preferences

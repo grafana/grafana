@@ -27,7 +27,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
   return (
     <Stack wrap="wrap">
       {isReadOnlyRepo && <Badge color="darkgrey" text={t('folder-repo.read-only-badge', 'Read only')} />}
-      <StatusBadge repo={repository} />
+      <StatusBadge repo={repository} displayOnly />
       {repoHref && (
         <Button variant="secondary" icon={providerIcon} onClick={() => window.open(repoHref, '_blank')}>
           <Trans i18nKey="provisioning.repository-actions.source-code">Source code</Trans>

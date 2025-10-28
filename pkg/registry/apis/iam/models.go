@@ -13,7 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
@@ -53,9 +55,15 @@ type IdentityAccessManagementAPIBuilder struct {
 	// - permissions
 	// - assignments
 	zClient zanzana.Client
+	// Buffered channel to limit the amount of concurrent writes to Zanzana
+	zTickets chan bool
 
 	reg    prometheus.Registerer
 	logger log.Logger
+
+	dual             dualwrite.Service
+	unified          resource.ResourceClient
+	userSearchClient resourcepb.ResourceIndexClient
 
 	// non-k8s api route
 	display *user.LegacyDisplayREST
