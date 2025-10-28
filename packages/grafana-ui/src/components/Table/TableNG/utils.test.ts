@@ -1,5 +1,4 @@
 import { Point } from 'ol/geom';
-import Geometry from 'ol/geom/Geometry';
 import { SortColumn } from 'react-data-grid';
 
 import {
