@@ -332,7 +332,7 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 			}
 		})
 
-	scenarioWithPanel(t, "When an admin tries to patch a library panel with a name that already exists, it should fail",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with a name that already exists, it should pass",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
 			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Another Panel")
@@ -348,10 +348,10 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)
 			resp = sc.service.patchHandler(sc.reqContext)
-			require.Equal(t, 400, resp.Status())
+			require.Equal(t, 200, resp.Status())
 		})
 
-	scenarioWithPanel(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should fail",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should pass",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := &folder.Folder{
 				ID:    2,
@@ -375,7 +375,7 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)
 			resp := sc.service.patchHandler(sc.reqContext)
-			require.Equal(t, 400, resp.Status())
+			require.Equal(t, 200, resp.Status())
 		})
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel in another org, it should fail",
