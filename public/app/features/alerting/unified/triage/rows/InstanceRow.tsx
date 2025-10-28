@@ -112,6 +112,7 @@ export function InstanceRow({
               displayCommonLabels={true}
               labelSets={[instance.labels, commonLabels]}
               size="xs"
+              commonLabelsMode="tooltip"
             />
           )
         }
