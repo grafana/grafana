@@ -36,8 +36,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -95,13 +94,12 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "max": 100,
           "min": 1,
@@ -117,8 +115,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -176,13 +173,12 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "max": 100,
           "min": 1,
@@ -198,8 +194,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -257,13 +252,12 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "max": 100,
           "min": 1,
@@ -279,8 +273,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -338,13 +331,12 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "max": 100,
           "min": 1,
@@ -360,8 +352,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -419,13 +410,12 @@
         "showThresholdMarkers": false,
         "sparkline": true
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "max": 100,
           "min": 1,
@@ -441,8 +431,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -500,13 +489,12 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "max": 100,
           "min": 1,
@@ -522,8 +510,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -581,13 +568,12 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "max": 100,
           "min": 1,
@@ -616,8 +602,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -675,13 +660,12 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "max": 100,
           "min": 1,
@@ -697,8 +681,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -756,13 +739,12 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "max": 100,
           "min": 1,
@@ -778,8 +760,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -837,13 +818,12 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "max": 100,
           "min": 1,
@@ -859,8 +839,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -918,13 +897,12 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "max": 100,
           "min": 1,
@@ -953,8 +931,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1016,13 +993,12 @@
         "showThresholdMarkers": true,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1034,8 +1010,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1097,13 +1072,12 @@
         "showThresholdMarkers": true,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1115,8 +1089,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1178,13 +1151,12 @@
         "showThresholdMarkers": true,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1196,8 +1168,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1259,13 +1230,12 @@
         "showThresholdMarkers": true,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1277,8 +1247,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1340,13 +1309,12 @@
         "showThresholdMarkers": true,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1371,8 +1339,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1438,13 +1405,12 @@
         "showThresholdMarkers": true,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1456,8 +1422,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1523,13 +1488,12 @@
         "showThresholdMarkers": false,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1541,8 +1505,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1608,13 +1571,12 @@
         "showThresholdMarkers": true,
         "sparkline": false
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "alias": "1",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1639,8 +1601,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -1704,12 +1665,11 @@
         "sparkline": false,
         "spotlight": true
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "max": 98,
@@ -1727,8 +1687,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -1792,12 +1751,11 @@
         "sparkline": true,
         "spotlight": true
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "max": 98,
@@ -1828,8 +1786,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -1894,12 +1851,11 @@
         "sparkline": false,
         "spotlight": true
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "max": 8,
@@ -1917,8 +1873,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -1984,12 +1939,11 @@
         "sparkline": false,
         "spotlight": true
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "max": 12,
@@ -2007,8 +1961,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -2072,12 +2025,11 @@
         "sparkline": false,
         "spotlight": true
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "max": 100,
@@ -2095,8 +2047,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -2160,12 +2111,11 @@
         "sparkline": false,
         "spotlight": true
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "13.0.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "max": 100,
