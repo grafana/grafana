@@ -9,7 +9,7 @@ import {
   MutableDataFrame,
 } from '@grafana/data';
 
-import { regionVariable } from '../mocks/CloudWatchDataSource';
+import { logGroupNamesVariable, regionVariable } from '../mocks/CloudWatchDataSource';
 import { setupMockedLogsQueryRunner } from '../mocks/LogsQueryRunner';
 import { LogsRequestMock } from '../mocks/Request';
 import { validLogsQuery } from '../mocks/queries';
@@ -20,6 +20,63 @@ import { LOGSTREAM_IDENTIFIER_INTERNAL, LOG_IDENTIFIER_INTERNAL } from './CloudW
 describe('CloudWatchLogsQueryRunner', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('interpolateLogsQueryVariables', () => {
+    it('returns logGroups with arn and name values sourced from the log group template variable', () => {
+      const { runner } = setupMockedLogsQueryRunner({ variables: [logGroupNamesVariable] });
+
+      const query: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        logGroups: [{ arn: '$groups', name: '$groups' }],
+      };
+
+      const { logGroups } = runner.interpolateLogsQueryVariables(query, {});
+
+      expect(logGroups).toEqual([
+        { arn: 'templatedGroup-arn-1', name: 'templatedGroup-1' },
+        { arn: 'templatedGroup-arn-2', name: 'templatedGroup-2' },
+      ]);
+    });
+
+    it('filters out duplicate log group arns when query already includes an expanded value', () => {
+      const { runner } = setupMockedLogsQueryRunner({ variables: [logGroupNamesVariable] });
+
+      const query: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        logGroups: [
+          { arn: 'templatedGroup-arn-1', name: 'existing-group-name' },
+          { arn: '$groups', name: '$groups' },
+        ],
+      };
+
+      const { logGroups } = runner.interpolateLogsQueryVariables(query, {});
+
+      expect(logGroups).toEqual([
+        { arn: 'templatedGroup-arn-1', name: 'existing-group-name' },
+        { arn: 'templatedGroup-arn-2', name: 'templatedGroup-2' },
+      ]);
+    });
+
+    it('keeps log groups with duplicate names as long as arns are unique', () => {
+      const { runner } = setupMockedLogsQueryRunner({ variables: [logGroupNamesVariable] });
+
+      const query: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        logGroups: [
+          { arn: 'arn-1', name: 'templatedGroup-1' },
+          { arn: '$groups', name: '$groups' },
+        ],
+      };
+
+      const { logGroups } = runner.interpolateLogsQueryVariables(query, {});
+
+      expect(logGroups).toEqual([
+        { arn: 'arn-1', name: 'templatedGroup-1' },
+        { arn: 'templatedGroup-arn-1', name: 'templatedGroup-1' },
+        { arn: 'templatedGroup-arn-2', name: 'templatedGroup-2' },
+      ]);
+    });
   });
 
   describe('getLogRowContext', () => {
