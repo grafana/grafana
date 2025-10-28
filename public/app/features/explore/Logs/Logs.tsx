@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
 import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import * as React from 'react';
-import { useUnmount } from 'react-use';
+import { usePrevious, useUnmount } from 'react-use';
 
 import {
   SplitOpen,
@@ -217,6 +217,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
   const logsContainerRef = useRef<HTMLDivElement | null>(null);
   const dispatch = useDispatch();
+  const previousLoading = usePrevious(loading);
 
   const logsVolumeEventBus = eventBus.newScopedBus('logsvolume', { onlyLocal: false });
   const { register, unregister, outlineItems, updateItem } = useContentOutlineContext() ?? {};
@@ -261,6 +262,19 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       setPinLineButtonTooltipTitle(PINNED_LOGS_MESSAGE);
     }
   }, [outlineItems, getPinnedLogsCount]);
+
+  useEffect(() => {
+    if (loading && !previousLoading && panelState?.logs?.id) {
+      // loading stopped, so we need to remove any permalinked log lines
+      delete panelState.logs.id;
+
+      dispatch(
+        changePanelState(exploreId, 'logs', {
+          ...panelState,
+        })
+      );
+    }
+  }, [dispatch, exploreId, loading, panelState, previousLoading]);
 
   useEffect(() => {
     const visualisationType = panelState?.logs?.visualisationType ?? getDefaultVisualisationType();
@@ -360,13 +374,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       }
     }
   }, [displayedFields, panelState?.logs?.displayedFields, visualisationType, panelState?.logs, updatePanelState]);
-
-  // Clear permalink id from panelState after loading completes
-  useEffect(() => {
-    if (!loading && panelState?.logs?.id) {
-      dispatch(changePanelState(exploreId, 'logs', { logs: {} }));
-    }
-  }, [loading, panelState?.logs?.id, exploreId, dispatch]);
 
   // actions
   const onLogRowHover = useCallback(
