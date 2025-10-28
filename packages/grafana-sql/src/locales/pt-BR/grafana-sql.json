@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Inatividade máxima automática",
-        "content-auto-max-idle": "Se ativado, define automaticamente o número <1>Máximo de conexões ociosas</1> para o mesmo valor que o<3> Máximo de conexões abertas</3>. Se o número máximo de conexões abertas não estiver definido, ele será definido de acordo com o padrão ({{defaultMaxIdle}}).",
-        "content-max-idle": "O número máximo de conexões no grupo de conexões ociosas. Se o <1>Máximo de conexões abertas</1> for maior que 0, mas menor que o <3>Máximo de conexões ociosas</3>, o <5>Máximo de conexões ociosas</5> será reduzido para corresponder ao limite do <8>Máximo de conexões abertas</8>. Se estiver definido como 0, nenhuma conexão ociosa será mantida.",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
         "content-max-lifetime": "A quantidade máxima de tempo em segundos que uma conexão pode ser reutilizada. Se estiver definido como 0, as conexões serão reutilizadas indefinidamente.",
-        "content-max-open": "O número máximo de conexões abertas com o banco de dados. Se o <1>Máximo de conexões ociosas</1> for maior que 0 e o <3>Máximo de conexões abertas</3> for menor que o <5>Máximo de conexões ociosas</5>, o <7>Máximo de conexões ociosas</7> será reduzido para corresponder ao limite do <9>Máximo de conexões abertas</9>. Se estiver definido como 0, não haverá limite para o número de conexões abertas.",
+        "content-max-open": "",
         "max-idle": "Máximo de ociosidade",
         "max-lifetime": "Tempo de vida máximo",
         "max-open": "Máximo de aberturas",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "Sua consulta é inválida. Confira abaixo para saber mais. <1></1>No entanto, você ainda pode executar esta consulta.",
+        "content-invalid-query": "",
         "editor-modes": {
           "label-builder": "Construtor",
           "label-code": "Código"
@@ -76,7 +76,7 @@
         "tooltip-format-query": "Formatar consulta"
       },
       "query-validator": {
-        "query-will-process": "<0></0> Esta consulta processará <2>{{bytes}}</2> ao ser executada.",
+        "query-will-process": "",
         "validating-query": "Validando consulta…"
       },
       "raw-editor": {

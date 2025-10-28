@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "자동 최대 유휴",
-        "content-auto-max-idle": "활성화하면, <1>유휴 연결 수 최대 한도</1>를 <3>열린 연결 수 최대 한도</3>와 동일한 값으로 자동 설정합니다. 열린 연결 수 최대 한도를 설정하지 않으면, 기본값({{defaultMaxIdle}})으로 설정됩니다.",
-        "content-max-idle": "유휴 연결 풀의 연결 최대 한도입니다. <1>열린 연결 최대 한도</1>가 0보다 크지만 <3>유휴 연결 최대 한도</3>보다 작으면, <5>유휴 연결 최대 한도</5>가 <8>열린 연결 최대 한도</8>에 맞춰 감소합니다. 0으로 설정된 경우, 유휴 연결이 유지되지 않습니다.",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
         "content-max-lifetime": "연결을 재사용할 수 있는 최대 시간(초)입니다. 0으로 설정하면, 연결이 영구적으로 재사용됩니다.",
-        "content-max-open": "데이터베이스에 대한 열린 연결 최대 한도입니다. <1>유휴 연결 최대 한도</1>가 0보다 크고 <3>열린 연결 최대 한도</3>가 <5>유휴 연결 최대 한도</5>보다 작으면, <7>유휴 연결 최대 한도</7>가 <9>열린 연결 최대 한도</9>와 일치하도록 감소합니다. 0으로 설정하면, 열린 연결 수에 제한이 없습니다.",
+        "content-max-open": "",
         "max-idle": "유휴 최대 한도",
         "max-lifetime": "최대 수명 기간",
         "max-open": "열 한도",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "쿼리가 유효하지 않습니다. 자세한 내용은 아래에서 확인하세요. <1></1>하지만 이 쿼리는 계속 실행할 수 있습니다.",
+        "content-invalid-query": "",
         "editor-modes": {
           "label-builder": "빌더",
           "label-code": "코드"
@@ -76,7 +76,7 @@
         "tooltip-format-query": "형식 쿼리"
       },
       "query-validator": {
-        "query-will-process": "<0></0> 이 쿼리는 실행 시 <2>{{bytes}}</2>를 처리합니다.",
+        "query-will-process": "",
         "validating-query": "쿼리 유효성 검사 중..."
       },
       "raw-editor": {

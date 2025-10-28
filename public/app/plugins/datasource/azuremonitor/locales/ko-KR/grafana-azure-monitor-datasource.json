@@ -13,11 +13,11 @@
       "label-resource-group": "리소스 그룹",
       "label-resource-name": "리소스 이름",
       "label-resource-number": "리소스 {{resourceNum}}개",
-      "label-resource-uri": "리소스 URI ",
+      "label-resource-uri": "",
       "label-subscription": "구독",
       "placeholder-resource-name": "이름",
       "tooltip-region": "리소스의 코드 리전입니다. 하나의 리소스에 대해서는 선택 사항이지만 여러 리소스를 선택할 때는 필수입니다.",
-      "tooltip-resource-uri": "<2>리소스 URI</2>를 수동으로 편집합니다. 여러 템플릿 변수 사용 지원(예: /subscriptions/$subId/resourceGroups/$rg)"
+      "tooltip-resource-uri": ""
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "집계 함수",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "기본 로그",
-      "description-basic-logs": "이 기능을 활성화하면 <2>기본 로그</2>에 구성된 테이블을 쿼리하는 대시보드 패널에서 Azure Monitor 쿼리당 비용이 발생합니다.",
+      "description-basic-logs": "",
       "label-enable-basic-logs": "기본 로그 활성화"
     },
     "config-editor": {

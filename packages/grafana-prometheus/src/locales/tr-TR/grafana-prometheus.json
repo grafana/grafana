@@ -85,9 +85,9 @@
         "tooltip-classic-query": "Prometheus değişken sorgu düzenleyicisinin orijinal uygulaması. Bu belgelerde açıklanan doğru sorgu türü ve parametrelerle bir dize girin. Örneğin {{exampleQuery}}.",
         "tooltip-label": "Bir metrik belirtilmedikçe tüm metriklerdeki etiket adı için etiket değerlerinin bir listesini döndürür.",
         "tooltip-metric-regex": "Belirtilen metrik düzenli ifadesine göre isteğe bağlı filtreleme yaparak etiket adlarının bir listesini döndürür.",
-        "tooltip-query": "Sorgu için Prometheus sorgu sonuçlarının bir listesini döndürür. Bu sorgular Prometheus işlevlerini içerebilir, örneğin {{exampleQuery}}.",
+        "tooltip-query": "",
         "tooltip-query-type": "Prometheus veri kaynağı eklentisi, şablon değişkenleri için aşağıdaki sorgu türlerini sağlar.",
-        "tooltip-series-query": "Bir metrik ve etiketlerle, yalnızca metrik ya da yalnızca etiketlerle birlikte bir değer girin. Örneğin {{example1}}, {{example2}} veya {{example3}}. Girilen verilerle ilişkili zaman serilerinin bir listesini döndürür."
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "seçici",
@@ -175,16 +175,16 @@
         "label-scrape-interval": "Kazıma aralığı",
         "label-series-limit": "Seri sınırı",
         "label-use-series-endpoint": "Seri uç noktasını kullan",
-        "more-info": "Prometheus türü ve sürümünü veri kaynaklarında yapılandırma hakkında daha fazla bilgi için <2>sağlama belgelerine</2> bakın.",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "Örnek: {{example}}",
         "title-interval-behaviour": "Aralık davranışı",
         "title-other": "Diğer",
         "title-performance": "Performans",
         "title-query-editor": "Sorgu düzenleyicisi",
         "tooltip-cache-level": "Düzenleyici sorguları için tarayıcı önbelleğe alma düzeyini ayarlar. Yüksek ayırt ediciliğe sahip veri kaynakları için daha yüksek önbellek ayarları önerilir.",
-        "tooltip-custom-query-parameters": "Prometheus sorgu URL'sine özel parametreler ekleyin. Örneğin {{example1}}, {{example2}}, {{example3}} veya {{example4}}. Birden fazla parametre, {{concatenationChar}} karakteri ile birleştirilmelidir.",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "Bu veri kaynağının tüm kullanıcıları için varsayılan düzenleyici seçeneğini ayarlayın.",
-        "tooltip-disable-metrics-lookup": "Bu seçeneği işaretlemek, metrik seçicisini ve sorgu alanındaki metrik/etiket desteğini otomatik tamamlama özelliğinde devre dışı bırakır. Bu, büyük Prometheus örneklerinde yaşanan performans sorunlarına yardımcı olabilir. ",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "Bu özellik, kayıt kurallarını devre dışı bırakacaktır. Pano performansını artırmak için bu seçeneği etkinleştirin",
         "tooltip-http-method": "Prometheus veri kaynağınızı sorgulamak için POST veya GET HTTP yöntemini kullanabilirsiniz. POST, daha büyük sorgulara izin verdiği için önerilen yöntemdir. Prometheus sürümünüz 2.1'den eskiyse ya da ağınızda POST istekleri kısıtlıysa bunu GET olarak değiştirin.",
         "tooltip-incremental-querying-beta": "Bu özellik, göreli sorguların varsayılan davranışını değiştirerek Prometheus örneğinden her zaman güncel veri istenmesini sağlar. Bunun yerine, sorgu sonuçları önbelleğe alınır ve yalnızca yeni kayıtlar istenir. Veri tabanı ve ağ yükünü azaltmak için bu özelliği etkinleştirin.",
@@ -479,7 +479,7 @@
         "aria-label-selector": "seçici"
       },
       "results-table": {
-        "content-descriptive-type": "Bir {{descriptiveType}} oluşturulduğunda, Prometheus sayaç türünde birden fazla seri sunar. ",
+        "content-descriptive-type": "",
         "description": "Açıklama",
         "message-expand-label-filters": "Metrik bulunamadı. Etiket filtrelerinizi genişletmeyi deneyin.",
         "message-expand-search": "Metrik bulunamadı. Aramanızı ve filtrelerinizi genişletmeyi deneyin.",

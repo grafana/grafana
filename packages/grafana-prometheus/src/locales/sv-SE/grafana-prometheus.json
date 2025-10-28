@@ -85,9 +85,9 @@
         "tooltip-classic-query": "Den ursprungliga implementeringen av Prometheus variabla frågeredigerare. Ange en sträng med rätt frågetyp och parametrar enligt beskrivningen i dessa dokument. Till exempel, {{exampleQuery}}.",
         "tooltip-label": "Returnerar en lista över etikettvärden för etikettnamnet för alla mätvärden om inte mätvärdet är angivet.",
         "tooltip-metric-regex": "Returnerar en lista över etikettnamn, eventuellt filtrering efter angiven måttregex.",
-        "tooltip-query": "Returnerar en lista över Prometheus frågeresultat för frågan. Detta kan inkludera Prometheus-funktioner, d.v.s. {{exampleQuery}}.",
+        "tooltip-query": "",
         "tooltip-query-type": "Prometheus-datakällans tillägg tillhandahåller följande frågetyper för mallvariabler.",
-        "tooltip-series-query": "Ange ett mätvärde med etiketter, endast ett mätvärde eller endast etiketter d.v.s. {{example1}}, {{example2}} eller {{example3}}. Returnerar en lista över tidsserier som är associerade med angivna data."
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "väljare",
@@ -175,16 +175,16 @@
         "label-scrape-interval": "Skrapningsintervall",
         "label-series-limit": "Seriegräns",
         "label-use-series-endpoint": "Använd serieändpunkt",
-        "more-info": "För mer information om hur du konfigurerar prometheustyp och -version i datakällor, se <2>provisioneringsdokumentationen</2>.",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "Exempel: {{example}}",
         "title-interval-behaviour": "Intervallbeteende",
         "title-other": "Annat",
         "title-performance": "Performance",
         "title-query-editor": "Frågeredigerare",
         "tooltip-cache-level": "Anger webbläsarens cachelagringsnivå för redigeringsfrågor. Högre cacheinställningar rekommenderas för datakällor med hög kardinalitet.",
-        "tooltip-custom-query-parameters": "Lägg till anpassade parametrar i Prometheus fråge-URL. Till exempel {{example1}}, {{example2}}, {{example3}} eller {{example4}}. Flera parametrar ska sammanfogas med {{concatenationChar}}.",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "Ange standardalternativ för redigerare för alla användare av den här datakällan.",
-        "tooltip-disable-metrics-lookup": "Om du markerar det här alternativet inaktiveras metrikväljaren och stödet för automatisk komplettering av metrik/etikett i sökfältet. Detta hjälper om du har prestandaproblem med större Prometheus-instanser. ",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "Denna funktion kommer att inaktivera inspelningsregler. Aktivera detta för att förbättra instrumentpanelens prestanda",
         "tooltip-http-method": "Du kan använda antingen HTTP-metoden POST eller GET för att fråga din Prometheus-datakälla. POST är den rekommenderade metoden eftersom den tillåter större frågor. Ändra detta till GET om du har en Prometheus-version som är äldre än 2.1 eller om POST-förfrågningar är begränsade i ditt nätverk.",
         "tooltip-incremental-querying-beta": "Denna funktion kommer att ändra standardbeteendet för relativa frågor till att alltid begära nya data från prometheus-instansen, istället kommer frågeresultat att cachelagras och endast nya poster begärs. Aktivera detta för att minska databas- och nätverksbelastningen.",
@@ -479,7 +479,7 @@
         "aria-label-selector": "väljare"
       },
       "results-table": {
-        "content-descriptive-type": "När du skapar en {{descriptiveType}} visar Prometheus flera dataserier av typen räknare. ",
+        "content-descriptive-type": "",
         "description": "Beskrivning",
         "message-expand-label-filters": "Inga mätvärden hittades. Försök att utöka dina etikettfilter.",
         "message-expand-search": "Inga mätvärden hittades. Försök att utöka din sökning och dina filter.",

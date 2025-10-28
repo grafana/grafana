@@ -13,11 +13,11 @@
       "label-resource-group": "資源群組",
       "label-resource-name": "資源名稱",
       "label-resource-number": "資源 {{resourceNum}}",
-      "label-resource-uri": "資源 URI",
+      "label-resource-uri": "",
       "label-subscription": "訂閱",
       "placeholder-resource-name": "名稱",
       "tooltip-region": "資源的代碼區域。對於單一資源為選填，但選取多個資源時為必填。",
-      "tooltip-resource-uri": "手動編輯<2>資源 URI</2>。支援使用多個範本變數（例如：/subscriptions/$subId/resourceGroups/$rg）"
+      "tooltip-resource-uri": ""
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "彙總函式",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "基本紀錄",
-      "description-basic-logs": "啟用此功能會導致 Azure Monitor 在查詢為<2>基本記錄</2>設定的表格之儀表板面板上，產生每次查詢成本。",
+      "description-basic-logs": "",
       "label-enable-basic-logs": "啟用基本紀錄"
     },
     "config-editor": {

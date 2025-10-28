@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Inattività massima automatica",
-        "content-auto-max-idle": "Se abilitato, imposta automaticamente il numero di <1>Connessioni inattive massime</1> sullo stesso valore di <3> Connessioni aperte massime</3>. Se il numero massimo di connessioni aperte non è impostato, verrà impostato sul valore predefinito ({{defaultMaxIdle}}).",
-        "content-max-idle": "Il numero massimo di connessioni nel pool di connessioni inattive. Se <1>Connessioni aperte massine</1> è maggiore di 0 ma inferiore a <3>Connessioni inattive massime</3>, le <5>Connessioni inattive massime</5> verranno ridotte per corrispondere al limite di <8>Connessioni aperte massime</8>. Se impostato su 0, non viene mantenuta alcuna connessione inattiva.",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
         "content-max-lifetime": "La quantità massima di tempo in secondi in cui una connessione può essere riutilizzata. Se impostato su 0, le connessioni vengono riutilizzate per sempre.",
-        "content-max-open": "Il numero massimo di connessioni aperte al database. Se <1>Connessioni inattive massime</1> è maggiore di 0 e <3>Connessioni aperte massime</3> è inferiore a <5>Connessioni inattive massime</5>, <7>Connessioni inattive massime</7> verrà ridotto affinché corrisponda al limite di <9>Connessioni aperte massime</9>. Se impostato su 0, non vi è alcun limite al numero di connessioni aperte.",
+        "content-max-open": "",
         "max-idle": "Inattive massime",
         "max-lifetime": "Durata massima",
         "max-open": "Aperte massime",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "Query non valida. Controlla qui sotto per i dettagli. <1></1>Tuttavia, puoi comunque eseguire questa query.",
+        "content-invalid-query": "",
         "editor-modes": {
           "label-builder": "Builder",
           "label-code": "Codice"
@@ -76,7 +76,7 @@
         "tooltip-format-query": "Formato query"
       },
       "query-validator": {
-        "query-will-process": "<0></0> Questa query elabora <2>{{bytes}}</2> quando viene eseguita.",
+        "query-will-process": "",
         "validating-query": "Convalida della query in corso..."
       },
       "raw-editor": {

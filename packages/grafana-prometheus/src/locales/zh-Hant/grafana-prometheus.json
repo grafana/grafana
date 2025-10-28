@@ -85,9 +85,9 @@
         "tooltip-classic-query": "Prometheus 變數查詢編輯器的原始實作。輸入一個字串，其中包含如這些文件中所述正確的查詢類型和參數。例如：{{exampleQuery}}。",
         "tooltip-label": "除非有指定指標，否則會回傳所有指標中該標籤名稱的標籤值清單。",
         "tooltip-metric-regex": "回傳標籤名稱清單，選擇性地依據指定指標正規表達式篩選。",
-        "tooltip-query": "回傳此查詢的 Prometheus 查詢結果清單。這可能包括 Prometheus 功能，即{{exampleQuery}}。",
+        "tooltip-query": "",
         "tooltip-query-type": "Prometheus 資料來源外掛程式為範本變數提供以下查詢類型。",
-        "tooltip-series-query": "輸入帶有標籤的指標、僅有指標或僅標籤，即 {{example1}}、{{example2}} 或 {{example3}}。回傳與輸入資料相關的時間序列清單。"
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "選擇器",
@@ -175,16 +175,16 @@
         "label-scrape-interval": "抓取間隔",
         "label-series-limit": "序列限制",
         "label-use-series-endpoint": "使用序列端點",
-        "more-info": "如需更多在資料來源中設定 Prometheus 類型與版本的相關資訊，請參閱<2>佈建文件</2>。",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "範例：{{example}}",
         "title-interval-behaviour": "間隔行為",
         "title-other": "其他",
         "title-performance": "成效",
         "title-query-editor": "查詢編輯器",
         "tooltip-cache-level": "設定編輯器查詢的瀏覽器快取層級。針對高基數資料來源，建議使用較高層級的快取設定。",
-        "tooltip-custom-query-parameters": "將自訂參數新增至 Prometheus 查詢網址。例如 {{example1}}、{{example2}}、{{example3}} 或 {{example4}}。多個參數應與{{concatenationChar}}串接在一起。",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "為此資料來源的所有使用者設定預設編輯器選項。",
-        "tooltip-disable-metrics-lookup": "勾選此選項將停用查詢欄位自動完成中的指標選擇器和指標／標籤支援。如果您在較大的 Prometheus 實例上遇到效能問題，這會有所幫助。",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "此功能將停用錄製規則。開啟此功能以改善儀表板效能",
         "tooltip-http-method": "您可以使用 POST 或 GET HTTP 方法，來查詢您的 Prometheus 資料來源。POST 是建議的方法，因為它可以處理更大規模的查詢。如果您的 Prometheus 版本早於 2.1，或您的網路中限制了 POST 請求，請將此更改為 GET。",
         "tooltip-incremental-querying-beta": "此功能將變更相對時間查詢的預設行為，以便隨時從 Prometheus 實例要求新資料，而不會快取查詢結果，並且只會請求新紀錄。開啟此功能以減少資料庫和網路負載。",
@@ -479,7 +479,7 @@
         "aria-label-selector": "選擇器"
       },
       "results-table": {
-        "content-descriptive-type": "建立{{descriptiveType}}時，Prometheus 會透過類型計數器顯示多個序列。",
+        "content-descriptive-type": "",
         "description": "說明",
         "message-expand-label-filters": "未找到指標。請嘗試展開標籤篩選條件。",
         "message-expand-search": "未找到指標。請嘗試擴大搜尋範圍和篩選條件。",
