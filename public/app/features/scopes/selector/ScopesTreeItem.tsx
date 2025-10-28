@@ -216,8 +216,8 @@ export function ScopesTreeItem({
     return null;
   }
 
-  //const parentNode = scopeNode.spec.parentName ? scopeNodes[scopeNode.spec.parentName] : undefined;
-  const disableMultiSelect = true; //parentNode?.spec.disableMultiSelect ?? false;
+  const parentNode = scopeNode.spec.parentName ? scopeNodes[scopeNode.spec.parentName] : undefined;
+  const disableMultiSelect = parentNode?.spec.disableMultiSelect ?? false;
 
   const isSelectable = isNodeSelectable(scopeNode);
   const isExpandable = isNodeExpandable(scopeNode);
