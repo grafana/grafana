@@ -29,6 +29,7 @@ The available variable types described in the following sections:
 - [DatasourceVariableKind](#datasourcevariablekind)
 - [IntervalVariableKind](#intervalvariablekind)
 - [CustomVariableKind](#customvariablekind)
+- [SwitchVariableKind](#switchvariablekind)
 - [GroupByVariableKind](#groupbyvariablekind)
 - [AdhocVariableKind](#adhocvariablekind)
 
@@ -336,6 +337,50 @@ The following table explains the usage of the custom variable JSON fields:
 | hide         | `VariableHide`. Options are: `dontHide`, `hideLabel`, and `hideVariable`.                                                        |
 | skipUrlSync  | bool. Default is `false`.                                                                                                        |
 | description? | string                                                                                                                           |
+
+## `SwitchVariableKind`
+
+Following is the JSON for a default switch variable:
+
+```json
+  "variables": [
+    {
+      "kind": "SwitchVariable",
+      "spec": {
+        "current": "false",
+        "enabledValue": "true",
+        "disabledValue": "false",
+        "hide": "dontHide",
+        "name": "",
+        "skipUrlSync": false
+      }
+    }
+  ]
+```
+
+`SwitchVariableKind` consists of:
+
+- kind: "SwitchVariable"
+- spec: [SwitchVariableSpec](#switchvariablespec)
+
+### `SwitchVariableSpec`
+
+The following table explains the usage of the switch variable JSON fields:
+
+<!-- prettier-ignore-start -->
+
+| Name           | Usage                                                                                                                            |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| name           | string. Name of the variable.                                                                                                    |
+| current        | string. Current value of the switch variable (either `enabledValue` or `disabledValue`).                                            |
+| enabledValue   | string. Value when the switch is in the enabled state.                                                                       |
+| disabledValue  | string. Value when the switch is in the disabled state.                                                                     |
+| label?         | string                                                                                                                           |
+| hide           | `VariableHide`. Options are: `dontHide`, `hideLabel`, and `hideVariable`.                                                        |
+| skipUrlSync    | bool. Default is `false`.                                                                                                        |
+| description?   | string                                                                                                                           |
+
+<!-- prettier-ignore-end -->
 
 ## `GroupByVariableKind`
 
