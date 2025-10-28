@@ -125,7 +125,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       },
       ['& .icon-wrapper']: {
         borderBottomColor: `${serviceColor}CF`,
-        borderBottomWidth: '1.5px',
+        borderBottomWidth: '2px',
         borderBottomStyle: 'solid',
       },
     }),
@@ -264,7 +264,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       textAlign: 'left',
       border: 'none',
       borderBottomColor: `${serviceColor}CF`,
-      borderBottomWidth: '1.5px',
+      borderBottomWidth: '2px',
       borderBottomStyle: 'solid',
     }),
     nameDetailExpanded: css({
@@ -529,7 +529,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                       // Needs to have target otherwise preventDefault would not work due to angularRouter.
                       target={'_blank'}
                       style={{
-                        borderBottom: `1px solid ${color}CF`,
+                        borderBottom: `2px solid ${color}CF`,
                         paddingInline: '4px',
                       }}
                       rel="noopener noreferrer"
