@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	zClient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -84,7 +85,7 @@ func ProvideAuthZClient(
 	case clientModeCloud:
 		rbacClient, err := newRemoteRBACClient(authCfg, tracer, reg)
 		if zanzanaEnabled {
-			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
+			return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
 		}
 		return rbacClient, err
 	default:
@@ -131,7 +132,7 @@ func ProvideAuthZClient(
 		)
 
 		if zanzanaEnabled {
-			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
+			return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
 		}
 
 		return rbacClient, nil
