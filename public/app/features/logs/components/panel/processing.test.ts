@@ -388,6 +388,57 @@ describe('preProcessLogs', () => {
     );
   });
 
+  test('Highlights search strings within JSON logs', () => {
+    const jsonLogWithSearch = createLogRow({
+      labels: { kind: 'Event', stage: 'ResponseComplete' },
+      entry: `{"kind":"Event","key":"value"}`,
+      logLevel: LogLevel.error,
+      // Search words
+      searchWords: ['ven'],
+    });
+    const jsonLogWithoutSearch = createLogRow({
+      labels: { kind: 'Event', stage: 'ResponseComplete' },
+      entry: `{"kind":"Event","key":"value"}`,
+    });
+
+    const [processedLogWithSearch, processedLogWithoutSearch] = preProcessLogs(
+      [jsonLogWithSearch, jsonLogWithoutSearch],
+      {
+        escape: false,
+        order: LogsSortOrder.Descending,
+        timeZone: 'browser',
+        wrapLogMessage: true,
+      }
+    );
+
+    // Current search
+    processedLogWithSearch.setCurrentSearch('alu');
+
+    // Search matches
+    expect(processedLogWithSearch.highlightedBodyTokens).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ content: '"kind"' }),
+        // Search words
+        expect.objectContaining({ content: 'ven' }),
+        expect.objectContaining({ content: '"key"' }),
+        // Current search
+        expect.objectContaining({ content: 'alu' }),
+      ])
+    );
+
+    // Original JSON highlight
+    expect(processedLogWithoutSearch.highlightedBodyTokens).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ content: '"kind"' }),
+        // Search words
+        expect.objectContaining({ content: ['"Event"'] }),
+        expect.objectContaining({ content: '"key"' }),
+        // Current search
+        expect.objectContaining({ content: ['"value"'] }),
+      ])
+    );
+  });
+
   test('Returns displayed field values', () => {
     expect(processedLogs[0].getDisplayedFieldValue('logger')).toBe('interceptor');
     expect(processedLogs[1].getDisplayedFieldValue('method')).toBe('POST');
