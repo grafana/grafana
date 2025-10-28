@@ -1606,6 +1606,14 @@ describe('TableNG utils', () => {
       ],
       config: {},
     };
+    const sparklineFieldNoX: Field = {
+      name: 'sparkline-field-no-x',
+      type: FieldType.other,
+      values: [[2, 4, 6, 8, 10]],
+      config: {
+        custom: { cellOptions: { type: TableCellDisplayMode.Sparkline } },
+      },
+    };
     const arrayField: Field = {
       name: 'array-field',
       type: FieldType.other,
@@ -1640,6 +1648,7 @@ describe('TableNG utils', () => {
       { name: 'null w/ JSON', input: { valueIdx: 3, field: jsonStringField } },
       { name: 'undefined', input: { valueIdx: 6, field: numberFieldWithNulls } },
       { name: 'sparkline', input: { valueIdx: 0, field: sparklineField } },
+      { name: 'sparkline (no x)', input: { valueIdx: 0, field: sparklineFieldNoX } },
       { name: 'array', input: { valueIdx: 0, field: arrayField } },
       { name: 'object', input: { valueIdx: 0, field: objectField } },
       { name: 'geo', input: { valueIdx: 0, field: geoField } },

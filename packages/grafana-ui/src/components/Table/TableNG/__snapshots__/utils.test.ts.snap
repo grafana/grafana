@@ -63,6 +63,19 @@ exports[`TableNG utils buildInspectValue should handle object 1`] = `
 ]
 `;
 
+exports[`TableNG utils buildInspectValue should handle sparkline (no x) 1`] = `
+[
+  "[
+  2,
+  4,
+  6,
+  8,
+  10
+]",
+  "code",
+]
+`;
+
 exports[`TableNG utils buildInspectValue should handle sparkline 1`] = `
 [
   "[
