@@ -30,6 +30,12 @@ export class TimeSeriesSuggestionsSupplier {
           showLegend: false,
         },
       },
+      fieldConfig: {
+        defaults: {
+          custom: {},
+        },
+        overrides: [],
+      },
       cardOptions: {
         previewModifier: (s) => {
           if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
