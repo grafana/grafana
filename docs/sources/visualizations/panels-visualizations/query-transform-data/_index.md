@@ -150,8 +150,6 @@ In the **Saved queries** drawer, you can:
 - Edit a query title, description, tags, or the availability of the query to other users in your organization. By default, saved queries are locked for editing.
 - When you access the **Saved queries** drawer from Explore, you can use the **Edit in Explore** option to edit the body of a query.
 
-Access the duplicate, lock, unlock, and delete query options through the menu in the top-right corner of the query form next to the **Edit** button.
-
 To access your saved queries, click **+ Add from saved queries** in the query editor:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-add-from-saved-2-v12.2.png" max-width="750px" alt="Add a saved query" >}}
