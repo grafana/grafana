@@ -192,7 +192,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       mergeMap((dataQueryResponse) => {
         return from(
           (async () => {
-            converTrendHistogramToSparkline(dataQueryResponse);
+            convertTrendHistogramToSparkline(dataQueryResponse);
             return dataQueryResponse;
           })()
         );

@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	cloudwatchLogsTypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
-	cloudwatchlogstypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
@@ -30,7 +29,7 @@ func Test_executeLogAnomaliesQuery(t *testing.T) {
 		testcases := []struct {
 			name                    string
 			suppressionStateInQuery string
-			result                  cloudwatchlogstypes.SuppressionState
+			result                  cloudwatchLogsTypes.SuppressionState
 		}{
 			{
 				"suppressed state",
@@ -56,7 +55,7 @@ func Test_executeLogAnomaliesQuery(t *testing.T) {
 
 		for _, tc := range testcases {
 			t.Run(tc.name, func(t *testing.T) {
-				cli = fakeCWLogsClient{anomalies: []cloudwatchlogstypes.Anomaly{}}
+				cli = fakeCWLogsClient{anomalies: []cloudwatchLogsTypes.Anomaly{}}
 				ds := newTestDatasource()
 
 				_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
@@ -74,7 +73,6 @@ func Test_executeLogAnomaliesQuery(t *testing.T) {
 						},
 					},
 				})
-
 				assert.NoError(t, err)
 				assert.Equal(t, tc.result, cli.calls.listAnomalies[0].SuppressionState)
 			})
@@ -93,7 +91,7 @@ func Test_executeLogAnomaliesQuery_returns_data_frames(t *testing.T) {
 		return &cli
 	}
 	t.Run("returns log anomalies data frames", func(t *testing.T) {
-		cli = fakeCWLogsClient{anomalies: []cloudwatchlogstypes.Anomaly{
+		cli = fakeCWLogsClient{anomalies: []cloudwatchLogsTypes.Anomaly{
 			{
 				AnomalyId:          aws.String("anomaly-1"),
 				AnomalyDetectorArn: aws.String("arn:aws:logs:us-east-1:123456789012:anomaly-detector:anomaly-detector-1"),
@@ -137,11 +135,11 @@ func Test_executeLogAnomaliesQuery_returns_data_frames(t *testing.T) {
 				{
 					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
 					JSON: json.RawMessage(`{
-				"queryMode":    "Logs",
-				"logsMode": "Anomalies",
-				"suppressionState": "all",
-				"region": "us-east-1"
-				}`),
+							"queryMode":    "Logs",
+							"logsMode": "Anomalies",
+							"suppressionState": "all",
+							"region": "us-east-1"
+							}`),
 				},
 			},
 		})
@@ -152,7 +150,7 @@ func Test_executeLogAnomaliesQuery_returns_data_frames(t *testing.T) {
 			assert.Len(t, r.Frames, 1)
 			frame := r.Frames[0]
 			assert.Equal(t, "CloudwatchLogsAnomalies", frame.Name)
-			assert.Len(t, frame.Fields, 9)
+			assert.Len(t, frame.Fields, 10)
 
 			stateField := frame.Fields[0]
 			assert.Equal(t, "state", stateField.Name)
@@ -209,8 +207,6 @@ func Test_executeLogAnomaliesQuery_returns_data_frames(t *testing.T) {
 			assert.Equal(t, "anomalyArn", anomalyDetectorArnField.Name)
 			assert.Equal(t, "arn:aws:logs:us-east-1:123456789012:anomaly-detector:anomaly-detector-1", anomalyDetectorArnField.At(0))
 			assert.Equal(t, "arn:aws:logs:us-east-1:123456789012:anomaly-detector:anomaly-detector-2", anomalyDetectorArnField.At(1))
-
 		}
 	})
-
 }
