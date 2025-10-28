@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/open-feature/go-sdk/openfeature"
 	"net/http"
 	"strings"
 
@@ -64,6 +65,11 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			settings.GoogleAnalytics4Id = ""
 			settings.GoogleAnalyticsId = ""
 		}
+	}
+
+	ctx := c.Req.Context()
+	if hs.OpenFeature.Boolean(ctx, featuremgmt.FlagIndividualCookiePreferences, true, openfeature.EvaluationContext{}) {
+		hs.log.FromContext(ctx).Info(featuremgmt.FlagIndividualCookiePreferences, "enabled")
 	}
 
 	// Locale is used for some number and date/time formatting, whereas language is used just for
