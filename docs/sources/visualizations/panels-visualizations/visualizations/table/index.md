@@ -328,7 +328,7 @@ The colored background cell type has the following options:
 | Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). The referenced field must contain CSS properties formatted in JSON object syntax (for example, `{"name":"John"}`). For more information, refer to the [Styling from field](#styling-from-field). |
 <!-- prettier-ignore-end -->
 
-<!-- The cell value inspect and tooltip from field descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
+<!-- The cell value inspect, tooltip from field, and styling from field descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
 
 #### Data links
 
@@ -546,6 +546,28 @@ Now, when you hover the cursor over the chip in the "Short text" cell, the mappe
 
 You can use all field overrides to affect the display of the tooltip.
 For example, the **Table > Column width** or **Cell options > Cell type** overrides can change the cell width or visual display of the data.
+
+#### Styling from field
+
+Toggle on the **Styling from field** switch to apply the styling from another field (or column).
+The referenced field must contain CSS properties formatted in JSON object syntax. For example:
+
+`{"name":"John"}`
+
+While you can turn on this option under **Cell options**, and have it applied to all cells in the table, it's typically used as an override on a sub-set of cells instead.
+This is demonstrated in the following example.
+
+The following table has six visible fields (columns) as well as a hidden field called "Style":
+
+{{< figure src="screenshot-style-from-field-config-v12.3.png" max-width="750px" alt="Table that includes a hidden column" >}}
+
+- The "Style" field has JSON objects with CSS properties. (Note that they are formatted for use in CSV format in this example.)
+- The "Style" field is hidden using the **Table > Hide in table** override property.
+- The "Info" field is using the **Cell options > Styling from field** override property with the "Style" field being the source.
+
+The following image shows the "Info" field with the styling from the "Style" field applied:
+
+{{< figure src="screenshot-style-from-field-v12.3.png" max-width="750px" alt="Info field value in the tooltip of the Short text cell upon hover" >}}
 
 ### Standard options
 
