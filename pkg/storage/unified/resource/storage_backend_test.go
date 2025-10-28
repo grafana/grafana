@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -764,24 +763,10 @@ func randomStringGenerator() func() string {
 
 // creates 2 hour old snowflake for testing
 func generateOldSnowflake(t *testing.T) int64 {
-	// Generate a current snowflake first
-	node, err := snowflake.NewNode(1)
-	require.NoError(t, err)
-	currentSnowflake := node.Generate().Int64()
-
-	// Extract its timestamp component by shifting right
-	currentTimestamp := currentSnowflake >> 22
-
-	// Subtract 2 hours (in milliseconds) from the timestamp
-	twoHoursMs := int64(2 * time.Hour / time.Millisecond)
-	oldTimestamp := currentTimestamp - twoHoursMs
-
-	// Reconstruct snowflake: [timestamp:41][node:10][sequence:12]
-	// Keep the original node and sequence bits
-	nodeAndSequence := currentSnowflake & 0x3FFFFF // Bottom 22 bits (10 node + 12 sequence)
-	snowflakeID := (oldTimestamp << 22) | nodeAndSequence
-
-	return snowflakeID
+	// Generate a snowflake for 2 hours ago using the snowflakeFromTime utility
+	// which properly handles the epoch
+	twoHoursAgo := time.Now().Add(-2 * time.Hour)
+	return snowflakeFromTime(twoHoursAgo)
 }
 
 // seedBackend seeds the kvstore with data and return the expected result for ListModifiedSince calls

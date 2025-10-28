@@ -183,10 +183,8 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 // ListSince returns a sequence of events since the given resource version.
 func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64) iter.Seq2[string, error] {
 	opts := ListOptions{
-		Sort: SortOrderAsc,
-		StartKey: EventKey{
-			ResourceVersion: sinceRV,
-		}.String(),
+		Sort:     SortOrderAsc,
+		StartKey: fmt.Sprintf("%d", sinceRV),
 	}
 	return func(yield func(string, error) bool) {
 		for evtKey, err := range n.kv.Keys(ctx, eventsSection, opts) {
@@ -274,4 +272,17 @@ func (n *eventStore) batchDelete(ctx context.Context, keys []string) error {
 // snowflake id with last two sections set to 0 (machine id and sequence)
 func snowflakeFromTime(t time.Time) int64 {
 	return (t.UnixMilli() - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)
+}
+
+// subtractDurationFromSnowflake subtracts a duration from a snowflake ID by
+// converting it to time, subtracting the duration, and converting back to a snowflake ID
+func subtractDurationFromSnowflake(snowflakeID int64, duration time.Duration) int64 {
+	// Extract timestamp from snowflake (returns milliseconds since epoch)
+	timestamp := snowflake.ID(snowflakeID).Time()
+	// Convert to time.Time
+	t := time.Unix(0, timestamp*int64(time.Millisecond))
+	// Subtract duration
+	newTime := t.Add(-duration)
+	// Convert back to snowflake
+	return snowflakeFromTime(newTime)
 }

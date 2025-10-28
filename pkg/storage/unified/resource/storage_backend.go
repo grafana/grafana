@@ -746,7 +746,7 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 	return func(yield func(*ModifiedResource, error) bool) {
 		// store all events ordered by RV for the given tenant here
 		eventKeys := make([]EventKey, 0)
-		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, sinceRv-defaultLookbackPeriod.Nanoseconds()) {
+		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, subtractDurationFromSnowflake(sinceRv, defaultLookbackPeriod)) {
 			if err != nil {
 				yield(&ModifiedResource{}, err)
 				return
