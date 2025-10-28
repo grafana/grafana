@@ -878,7 +878,7 @@
   },
   "packages/grafana-ui/src/components/Select/resetSelectStyles.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 4
+      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Select/types.ts": {
