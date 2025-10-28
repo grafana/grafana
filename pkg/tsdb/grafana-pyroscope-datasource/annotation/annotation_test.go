@@ -42,7 +42,7 @@ func TestConvertAnnotation(t *testing.T) {
 		processed, err := convertAnnotation(timedAnnotation)
 		require.NoError(t, err)
 		require.NotNil(t, processed)
-		require.Contains(t, processed.text, "Profile volume reduced by 90.00% for this service.")
+		require.Contains(t, processed.text, "Profile volume reduced by 90.00% for this service by Adaptive Profiles.")
 		require.Equal(t, int64(1609455600000), processed.time)
 		require.Equal(t, int64(1609455600000), processed.timeEnd)
 	})
