@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/open-feature/go-sdk/openfeature"
 	"net"
 	"os"
 	"path/filepath"
@@ -49,9 +48,8 @@ func NewModule(opts Options,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
 	hooksService *hooks.HooksService,
-	openfeature *openfeature.Client,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService, openfeature)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +73,6 @@ func newModuleServer(opts Options,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend,
 	hooksService *hooks.HooksService,
-	openfeature *openfeature.Client,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
@@ -100,7 +97,6 @@ func newModuleServer(opts Options,
 		moduleRegisterer: moduleRegisterer,
 		storageBackend:   storageBackend,
 		hooksService:     hooksService,
-		openfeature:      openfeature,
 	}
 
 	return s, nil
@@ -126,7 +122,6 @@ type ModuleServer struct {
 	storageMetrics   *resource.StorageMetrics
 	indexMetrics     *resource.BleveIndexMetrics
 	license          licensing.Licensing
-	openfeature      *openfeature.Client
 
 	pidFile     string
 	version     string

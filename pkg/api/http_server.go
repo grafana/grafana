@@ -12,6 +12,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"github.com/open-feature/go-sdk/openfeature"
 	stdlog "log"
 	"math/big"
 	"net"
@@ -130,6 +131,7 @@ type HTTPServer struct {
 	RenderService                rendering.Service
 	Cfg                          *setting.Cfg
 	Features                     featuremgmt.FeatureToggles
+	OpenFeature                  *openfeature.Client
 	SettingsProvider             setting.Provider
 	HooksService                 *hooks.HooksService
 	navTreeService               navtree.Service
@@ -272,7 +274,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
 	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
-	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall,
+	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall, openFeature *openfeature.Client,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -377,6 +379,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,
+		OpenFeature:                  openFeature,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
