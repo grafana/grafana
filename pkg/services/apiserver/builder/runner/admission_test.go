@@ -5,11 +5,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
+
+	"github.com/grafana/grafana-app-sdk/app"
 
 	examplev1 "github.com/grafana/grafana/pkg/services/apiserver/builder/runner/testdata/app/pkg/apis/example/v1"
 )
@@ -20,12 +20,8 @@ func TestBuilderAdmission_Validate(t *testing.T) {
 			A: "test",
 		},
 	}
-	gvk := schema.GroupVersionKind{
-		Group:   examplev1.ExampleKind().Group(),
-		Version: examplev1.ExampleKind().Version(),
-		Kind:    examplev1.ExampleKind().Kind(),
-	}
-	gvr := gvk.GroupVersion().WithResource(examplev1.ExampleKind().Plural())
+	gvk := examplev1.ExampleKind().GroupVersionKind()
+	gvr := examplev1.ExampleKind().GroupVersionResource()
 	defaultAttributes := admission.NewAttributesRecord(exampleObj, nil, gvk, "default", "foo", gvr, "", admission.Create, nil, false, &user.DefaultInfo{})
 
 	tests := []struct {
@@ -73,12 +69,8 @@ func TestBuilderAdmission_Validate(t *testing.T) {
 }
 
 func TestBuilderAdmission_Mutate(t *testing.T) {
-	gvk := schema.GroupVersionKind{
-		Group:   examplev1.ExampleKind().Group(),
-		Version: examplev1.ExampleKind().Version(),
-		Kind:    examplev1.ExampleKind().Kind(),
-	}
-	gvr := gvk.GroupVersion().WithResource(examplev1.ExampleKind().Plural())
+	gvk := examplev1.ExampleKind().GroupVersionKind()
+	gvr := examplev1.ExampleKind().GroupVersionResource()
 	getAttributes := func() admission.Attributes {
 		exampleObj := &examplev1.Example{
 			Spec: examplev1.ExampleSpec{
