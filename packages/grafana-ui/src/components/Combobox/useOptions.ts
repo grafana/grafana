@@ -16,6 +16,8 @@ type AsyncOptions<T extends string | number> =
 
 const asyncNoop = () => Promise.resolve([]);
 
+export const DEBOUNCE_TIME_MS = 200;
+
 /**
  * Abstracts away sync/async options for combobox components.
  * It also filters options based on the user's input.
@@ -49,7 +51,7 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
               }
             }
           });
-      }, 200),
+      }, DEBOUNCE_TIME_MS),
     [loadOptions]
   );
 
