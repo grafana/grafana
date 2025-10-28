@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -53,9 +54,10 @@ type DataSource struct {
 	ProxyOpts         *proxy.Options
 	AWSConfigProvider awsauth.ConfigProvider
 
-	logger          log.Logger
-	tagValueCache   *cache.Cache
-	resourceHandler backend.CallResourceHandler
+	logger                 log.Logger
+	tagValueCache          *cache.Cache
+	resourceHandler        backend.CallResourceHandler
+	monitoringAccountCache sync.Map
 }
 
 func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Config, error) {
@@ -260,6 +262,33 @@ func (ds *DataSource) getRGTAClient(ctx context.Context, region string) (resourc
 	}
 
 	return NewRGTAClient(cfg), nil
+}
+
+func (ds *DataSource) isMonitoringAccount(ctx context.Context, region string) (bool, error) {
+	if value, ok := ds.monitoringAccountCache.Load(region); ok {
+		cached := value.(bool)
+		return cached, nil
+	}
+
+	client, err := ds.GetAccountsService(ctx, region)
+	if err != nil {
+		return false, err
+	}
+
+	accounts, err := client.GetAccountsForCurrentUserOrRole(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	for _, account := range accounts {
+		if account.Value.IsMonitoringAccount {
+			ds.monitoringAccountCache.Store(region, true)
+			return true, nil
+		}
+	}
+
+	ds.monitoringAccountCache.Store(region, false)
+	return false, nil
 }
 
 var terminatedStates = []cloudwatchlogstypes.QueryStatus{
