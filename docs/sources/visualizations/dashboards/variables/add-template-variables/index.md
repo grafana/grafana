@@ -405,8 +405,8 @@ _Switch_ variables display a switch with two configurable values representing en
    - **Custom** - Allows you to define custom values for both enabled and disabled states
 
 1. If you selected **Custom** in the previous step, configure the custom values:
-   - **Enabled value** - Enter the value that represents the enabled state (for example, "on")
-   - **Disabled value** - Enter the value that represents the disabled state (for example, "off")
+   - **Enabled value** - Enter the value that represents the enabled state (for example, "on").
+   - **Disabled value** - Enter the value that represents the disabled state (for example, "off").
 
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
