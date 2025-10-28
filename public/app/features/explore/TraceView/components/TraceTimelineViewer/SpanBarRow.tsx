@@ -276,12 +276,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     svcName: css({
       label: 'svcName',
       fontSize: '0.9em',
-      fontWeight: 'bold',
+      fontWeight: '500',
       marginRight: '0.25rem',
     }),
     svcNameChildrenCollapsed: css({
       label: 'svcNameChildrenCollapsed',
-      fontWeight: 'bold',
+      fontWeight: '500',
       fontStyle: 'italic',
     }),
     errorIcon: css({
