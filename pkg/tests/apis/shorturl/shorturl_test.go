@@ -79,29 +79,31 @@ func TestIntegrationShortURL(t *testing.T) {
 		doLegacyOnlyTests(t, helper)
 	})
 
-	for _, mode := range []grafanarest.DualWriterMode{
-		grafanarest.Mode1,
-		grafanarest.Mode2,
-		grafanarest.Mode3,
-		grafanarest.Mode4,
-	} {
-		t.Run(fmt.Sprintf("with dual write (unified storage, mode %d)", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    false,
-				DisableAnonymous:     true,
-				APIServerStorageType: options.StorageTypeUnified,
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagKubernetesShortURLs,
-				},
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					RESOURCEGROUP: {
-						DualWriterMode: mode,
+	t.Run("modes", func(t *testing.T) {
+		for _, mode := range []grafanarest.DualWriterMode{
+			grafanarest.Mode1,
+			grafanarest.Mode2,
+			grafanarest.Mode3,
+			grafanarest.Mode4,
+		} {
+			t.Run(fmt.Sprintf("dual write (unified storage, mode %d)", mode), func(t *testing.T) {
+				helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+					AppModeProduction:    false,
+					DisableAnonymous:     true,
+					APIServerStorageType: options.StorageTypeUnified,
+					EnableFeatureToggles: []string{
+						featuremgmt.FlagKubernetesShortURLs,
 					},
-				},
+					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+						RESOURCEGROUP: {
+							DualWriterMode: mode,
+						},
+					},
+				})
+				doDualWriteTests(t, helper, mode)
 			})
-			doDualWriteTests(t, helper, mode)
-		})
-	}
+		}
+	})
 
 	t.Run("with dual write (unified storage, mode 5)", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -174,7 +176,7 @@ func doLegacyOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 			User:   client.Args.User,
 			Method: http.MethodGet,
 			Path:   "/goto/" + uid + "?orgId=default",
-		}, (*interface{})(nil))
+		}, (*any)(nil))
 		assert.Equal(t, 302, redirectResponse.Response.StatusCode)
 	})
 }
@@ -279,17 +281,15 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 			User:   client.Args.User,
 			Method: http.MethodGet,
 			Path:   "/goto/" + uid + "?orgId=default",
-		}, (*interface{})(nil))
+		}, (*any)(nil))
 		assert.Equal(t, 302, redirectResponse.Response.StatusCode)
 
 		time.Sleep(100 * time.Microsecond)
 
 		// Verify lastSeenAt was updated (should be > 0 now)
 		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+		lastSeenAt, exists, err := unstructured.NestedInt64(found.Object, "status", "lastSeenAt")
 		require.NoError(t, err)
-		status, exists := found.Object["status"].(map[string]interface{})
-		assert.True(t, exists)
-		lastSeenAt, exists := status["lastSeenAt"].(int64)
 		assert.True(t, exists)
 
 		assert.Greater(t, lastSeenAt, int64(0))
@@ -461,7 +461,7 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 			User:   client.Args.User,
 			Method: http.MethodGet,
 			Path:   "/goto/" + uid + "?orgId=default",
-		}, (*interface{})(nil))
+		}, (*any)(nil))
 		assert.Equal(t, 302, redirectResponse.Response.StatusCode)
 
 		// Clean up
@@ -508,9 +508,9 @@ func getFromBothAPIs(t *testing.T,
 
 	if legacyShortURL != nil {
 		// If legacy API returns data, verify consistency
-		spec, ok := k8sResource.Object["spec"].(map[string]interface{})
+		spec, ok := k8sResource.Object["spec"].(map[string]any)
 		require.True(t, ok)
-		status, ok := k8sResource.Object["status"].(map[string]interface{})
+		status, ok := k8sResource.Object["status"].(map[string]any)
 		require.True(t, ok)
 		assert.Equal(t, legacyShortURL.Uid, k8sResource.GetName())
 		assert.Equal(t, legacyShortURL.Path, spec["path"].(string))
