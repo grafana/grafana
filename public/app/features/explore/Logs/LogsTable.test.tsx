@@ -358,16 +358,13 @@ describe('LogsTable', () => {
 
       setup({ logsFrame }, testFrame);
 
-      await waitFor(
-        () => {
-          expect(replaceSpy).toHaveBeenCalled();
-          // Verify that the new URL doesn't contain selectedLine parameter
-          const callArgs = replaceSpy.mock.calls[0];
-          const newUrl = callArgs[2] as string;
-          expect(newUrl).not.toContain('selectedLine');
-        },
-        { timeout: 3000 }
-      );
+      await waitFor(() => {
+        expect(replaceSpy).toHaveBeenCalled();
+        // Verify that the new URL doesn't contain selectedLine parameter
+        const callArgs = replaceSpy.mock.calls[0];
+        const newUrl = callArgs[2] as string;
+        expect(newUrl).not.toContain('selectedLine');
+      });
     });
   });
 
