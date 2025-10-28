@@ -179,7 +179,7 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
             )}
           >
             <Switch
-              value={hideTimeOverride}
+              value={Boolean(hideTimeOverride)}
               onChange={(x) => model.setState({ hideTimeOverride: x.currentTarget.checked })}
             />
           </Field>
