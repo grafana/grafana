@@ -625,7 +625,7 @@ func TestStitchReceivers(t *testing.T) {
 		initial            *definitions.PostableUserConfig
 		new                *definitions.PostableGrafanaReceiver
 		expCfg             definitions.PostableApiAlertingConfig
-		expOldReceiver     string
+		expOldReceiver     *string
 		expCreatedReceiver bool
 		expFullRemoval     bool
 	}
@@ -636,7 +636,7 @@ func TestStitchReceivers(t *testing.T) {
 			new: &definitions.PostableGrafanaReceiver{
 				UID: "does not exist",
 			},
-			expOldReceiver: "",
+			expOldReceiver: nil,
 			expCfg:         createTestConfigWithReceivers().AlertmanagerConfig,
 		},
 		{
@@ -646,7 +646,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-2",
 				Type: "teams",
 			},
-			expOldReceiver: "receiver-2",
+			expOldReceiver: util.Pointer("receiver-2"),
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -707,7 +707,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "new-receiver",
 				Type: "slack",
 			},
-			expOldReceiver:     "receiver-1",
+			expOldReceiver:     util.Pointer("receiver-1"),
 			expCreatedReceiver: true,
 			expFullRemoval:     true,
 			expCfg: definitions.PostableApiAlertingConfig{
@@ -770,7 +770,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-1",
 				Type: "slack",
 			},
-			expOldReceiver:     "receiver-2",
+			expOldReceiver:     util.Pointer("receiver-2"),
 			expCreatedReceiver: false,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -891,7 +891,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-2",
 				Type: "slack",
 			},
-			expOldReceiver:     "receiver-1",
+			expOldReceiver:     util.Pointer("receiver-1"),
 			expCreatedReceiver: false,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -1035,7 +1035,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-4",
 				Type: "slack",
 			},
-			expOldReceiver:     "receiver-1",
+			expOldReceiver:     util.Pointer("receiver-1"),
 			expCreatedReceiver: false,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -1120,7 +1120,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "brand-new-group",
 				Type: "opsgenie",
 			},
-			expOldReceiver:     "receiver-2",
+			expOldReceiver:     util.Pointer("receiver-2"),
 			expCreatedReceiver: true,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -1192,7 +1192,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "brand-new-group",
 				Type: "opsgenie",
 			},
-			expOldReceiver:     "receiver-2", // Not the inconsistent receiver-3?
+			expOldReceiver:     util.Pointer("receiver-2"), // Not the inconsistent receiver-3?
 			expCreatedReceiver: true,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -1315,7 +1315,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-1",
 				Type: "slack",
 			},
-			expOldReceiver:     "receiver-2",
+			expOldReceiver:     util.Pointer("receiver-2"),
 			expCreatedReceiver: false,
 			expFullRemoval:     true,
 			expCfg: definitions.PostableApiAlertingConfig{
@@ -1370,8 +1370,7 @@ func TestStitchReceivers(t *testing.T) {
 			}
 
 			renamedReceiver, fullRemoval, createdReceiver := stitchReceiver(cfg, c.new)
-			require.NotNil(t, renamedReceiver)
-			assert.Equalf(t, c.expOldReceiver, *renamedReceiver, "expected old receiver to be %s, got %s", c.expOldReceiver, renamedReceiver)
+			assert.EqualValuesf(t, c.expOldReceiver, renamedReceiver, "expected old receiver to be %v, got %v", c.expOldReceiver, renamedReceiver)
 			assert.Equalf(t, c.expFullRemoval, fullRemoval, "expected full removal to be %t, got %t", c.expFullRemoval, fullRemoval)
 			assert.Equalf(t, c.expCreatedReceiver, createdReceiver, "expected created receiver to be %t, got %t", c.expCreatedReceiver, createdReceiver)
 			require.Equal(t, c.expCfg, cfg.AlertmanagerConfig)
