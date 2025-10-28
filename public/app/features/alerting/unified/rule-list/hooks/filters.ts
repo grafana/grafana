@@ -11,6 +11,7 @@ import { getDatasourceAPIUid } from '../../utils/datasource';
 import { fuzzyMatches } from '../../utils/fuzzySearch';
 import { parseMatcher } from '../../utils/matchers';
 import { isPluginProvidedRule, prometheusRuleType } from '../../utils/rules';
+import { normalizeHealth } from '../components/util';
 
 /**
  * @returns True if the group matches the filter, false otherwise. Keeps rules intact
@@ -79,7 +80,7 @@ export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
     }
   }
 
-  if (filterState.ruleHealth && health !== filterState.ruleHealth) {
+  if (filterState.ruleHealth && normalizeHealth(health) !== filterState.ruleHealth) {
     return false;
   }
 

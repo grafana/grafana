@@ -138,9 +138,26 @@ describe('ruleFilter', () => {
       health: RuleHealth.Error,
     });
 
+    const prometheusErrorRule = mockPromAlertingRule({
+      name: 'Error Rule',
+      health: 'err',
+    });
+
     expect(ruleFilter(healthyRule, getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(true);
     expect(ruleFilter(healthyRule, getFilter({ ruleHealth: RuleHealth.Error }))).toBe(false);
     expect(ruleFilter(errorRule, getFilter({ ruleHealth: RuleHealth.Error }))).toBe(true);
+    expect(ruleFilter(prometheusErrorRule, getFilter({ ruleHealth: RuleHealth.Error }))).toBe(true);
+  });
+
+  it('should normalize health values when filtering', () => {
+    // Legacy Prometheus health value 'err' should be normalized to 'error'
+    const legacyErrorRule = mockPromAlertingRule({
+      name: 'Legacy Error Rule',
+      health: 'err',
+    });
+
+    // When filtering for 'error', it should match rules with health 'err' (legacy) or 'error'
+    expect(ruleFilter(legacyErrorRule, getFilter({ ruleHealth: RuleHealth.Error }))).toBe(true);
   });
 
   it('should filter by dashboard UID', () => {
