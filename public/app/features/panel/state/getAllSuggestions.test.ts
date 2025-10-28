@@ -11,9 +11,35 @@ import {
 import { config } from 'app/core/config';
 import { SuggestionName } from 'app/types/suggestions';
 
-import { getAllSuggestions, panelsToCheckFirst } from './getAllSuggestions';
+import { getAllSuggestions } from './getAllSuggestions';
+import { getAllPanelPluginMeta } from './util';
 
-for (const pluginId of panelsToCheckFirst) {
+jest.mock('./util', () => {
+  const originalModule = jest.requireActual('./util');
+  return {
+    ...originalModule,
+    getAllPanelPluginMeta: jest.fn(() => {
+      return [
+        'timeseries',
+        'barchart',
+        'gauge',
+        'stat',
+        'piechart',
+        'bargauge',
+        'table',
+        'state-timeline',
+        'status-history',
+        'logs',
+        'candlestick',
+        'flamegraph',
+        'traces',
+        'nodeGraph',
+      ].map((id) => ({ id }) as PanelPluginMeta);
+    }),
+  };
+});
+
+for (const pluginId of getAllPanelPluginMeta().map((p) => p.id)) {
   config.panels[pluginId] = {
     module: `core:plugin/${pluginId}`,
     id: pluginId,

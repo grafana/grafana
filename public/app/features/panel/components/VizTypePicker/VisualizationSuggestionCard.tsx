@@ -98,6 +98,9 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:hover': {
         background: theme.colors.background.secondary,
+        '& *': {
+          cursor: 'pointer',
+        },
       },
     }),
     imgBox: css({

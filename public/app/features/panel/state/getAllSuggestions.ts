@@ -4,53 +4,46 @@ import {
   VisualizationSuggestionsBuilder,
   PanelModel,
   VisualizationSuggestionScore,
+  PanelPlugin,
+  PanelPluginMeta,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
-export const panelsToCheckFirst = [
-  'timeseries',
-  'barchart',
-  'gauge',
-  'stat',
-  'piechart',
-  'bargauge',
-  'table',
-  'state-timeline',
-  'status-history',
-  'logs',
-  'candlestick',
-  'flamegraph',
-  'traces',
-  'nodeGraph',
-];
+import { getAllPanelPluginMeta } from './util';
+
+let cachedPlugins: Array<[PanelPlugin, PanelPluginMeta]> | null = null;
+async function getPluginsWithSuggestions(): Promise<NonNullable<typeof cachedPlugins>> {
+  if (cachedPlugins == null) {
+    cachedPlugins = [];
+    for (const pluginMeta of getAllPanelPluginMeta()) {
+      const plugin = await importPanelPlugin(pluginMeta.id);
+      const supplier = plugin.getSuggestionsSupplier();
+      if (supplier) {
+        cachedPlugins.push([plugin, pluginMeta]);
+      }
+    }
+  }
+  return cachedPlugins;
+}
 
 export async function getAllSuggestions(data?: PanelData, panel?: PanelModel): Promise<VisualizationSuggestion[]> {
   const builder = new VisualizationSuggestionsBuilder(data, panel);
-
-  for (const pluginId of panelsToCheckFirst) {
-    const plugin = await importPanelPlugin(pluginId);
-    const supplier = plugin.getSuggestionsSupplier();
-
-    if (supplier) {
-      supplier.getSuggestionsForData(builder);
-    }
-  }
-
   const list = builder.getList();
 
-  if (builder.dataSummary.fieldCount === 0) {
-    for (const plugin of Object.values(config.panels)) {
-      if (!plugin.skipDataQuery || plugin.hideFromList) {
+  for (const [plugin, pluginMeta] of await getPluginsWithSuggestions()) {
+    plugin.getSuggestionsSupplier()?.getSuggestionsForData(builder);
+
+    if (builder.dataSummary.fieldCount === 0) {
+      if (!pluginMeta.skipDataQuery || pluginMeta.hideFromList) {
         continue;
       }
 
       list.push({
-        name: plugin.name,
-        pluginId: plugin.id,
-        description: plugin.info.description,
+        name: pluginMeta.name,
+        pluginId: pluginMeta.id,
+        description: pluginMeta.info.description,
         cardOptions: {
-          imgSrc: plugin.info.logos.small,
+          imgSrc: pluginMeta.info.logos.small,
         },
       });
     }
