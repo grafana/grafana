@@ -213,17 +213,50 @@ func (ds *DataSource) executeStartQuery(ctx context.Context, logsClient models.C
 
 	// log group identifiers can be left out if the query is an SQL query
 	if *logsQuery.QueryLanguage != dataquery.LogsQueryLanguageSQL {
-		if len(logsQuery.LogGroups) > 0 && features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying) {
-			var logGroupIdentifiers []string
-			for _, lg := range logsQuery.LogGroups {
-				arn := lg.Arn
-				// due to a bug in the startQuery api, we remove * from the arn, otherwise it throws an error
-				logGroupIdentifiers = append(logGroupIdentifiers, strings.TrimSuffix(arn, "*"))
+		useLogGroupIdentifiers := false
+		logGroupsFromQuery := len(logsQuery.LogGroups) > 0
+		if logGroupsFromQuery && features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying) {
+			region := logsQuery.Region
+			if region == "" || region == defaultRegion {
+				region = ds.Settings.Region
 			}
-			startQueryInput.LogGroupIdentifiers = logGroupIdentifiers
-		} else {
-			// even though log group names are being phased out, we still need to support them for backwards compatibility and alert queries
-			startQueryInput.LogGroupNames = logsQuery.LogGroupNames
+			if region != "" {
+				isMonitoringAccount, err := ds.isMonitoringAccount(ctx, region)
+				if err != nil {
+					ds.logger.FromContext(ctx).Debug("failed to determine monitoring account status", "err", err)
+				} else if isMonitoringAccount {
+					// monitoring accounts require querying by log group identifiers because log group names are not unique across accounts.
+					var logGroupIdentifiers []string
+					for _, lg := range logsQuery.LogGroups {
+						// due to a bug in the startQuery api, we remove * from the arn, otherwise it throws an error
+						arn := strings.TrimSuffix(lg.Arn, "*")
+						logGroupIdentifiers = append(logGroupIdentifiers, arn)
+					}
+					if len(logGroupIdentifiers) > 0 {
+						startQueryInput.LogGroupIdentifiers = logGroupIdentifiers
+						useLogGroupIdentifiers = true
+					}
+				}
+			}
+		}
+
+		if !useLogGroupIdentifiers {
+			// even though logsQuery.LogGroupNames is deprecated, we still need to support it for backwards compatibility and alert queries
+			startQueryInput.LogGroupNames = append([]string(nil), logsQuery.LogGroupNames...)
+			if len(startQueryInput.LogGroupNames) == 0 && logGroupsFromQuery {
+				// deduplicate log group names because we only deduplicate log groups by their ARNs instead of their names when the query is created
+				seenLogGroupNames := make(map[string]struct{}, len(logsQuery.LogGroups))
+				for _, lg := range logsQuery.LogGroups {
+					if lg.Name == "" {
+						continue
+					}
+					if _, exists := seenLogGroupNames[lg.Name]; exists {
+						continue
+					}
+					seenLogGroupNames[lg.Name] = struct{}{}
+					startQueryInput.LogGroupNames = append(startQueryInput.LogGroupNames, lg.Name)
+				}
+			}
 		}
 	}
 
