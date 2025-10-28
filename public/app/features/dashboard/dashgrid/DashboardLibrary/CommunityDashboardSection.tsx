@@ -308,12 +308,23 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                 return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
               };
 
+              // Create slug from dashboard name for Grafana.com URL
+              const createSlug = (name: string) => {
+                return name
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, '-')
+                  .replace(/^-+|-+$/g, '');
+              };
+
+              const grafanaComUrl = `https://grafana.com/grafana/dashboards/${dashboard.id}-${createSlug(dashboard.name)}/`;
+
               const details = {
                 id: String(dashboard.id),
                 datasource: dashboard.datasource || 'N/A',
                 dependencies: dashboard.datasource ? [dashboard.datasource] : [],
                 publishedBy: dashboard.orgName || dashboard.userName || 'Grafana Community',
                 lastUpdate: formatDate(dashboard.updatedAt || dashboard.publishedAt),
+                grafanaComUrl,
               };
 
               return (

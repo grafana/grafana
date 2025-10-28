@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Box, Button, Card, Text, Toggletip, useStyles2 } from '@grafana/ui';
+import { Box, Button, Card, Text, TextLink, Toggletip, useStyles2 } from '@grafana/ui';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { GnetDashboard } from './types';
@@ -13,6 +13,7 @@ interface Details {
   dependencies: string[];
   publishedBy: string;
   lastUpdate: string;
+  grafanaComUrl?: string;
 }
 
 interface Props {
@@ -106,6 +107,16 @@ function DetailsToggletipContent({ details }: { details: Details }) {
           label={t('dashboard-library.dashboard-card.details.last-update', 'Last Update')}
           value={details.lastUpdate}
         />
+        {details.grafanaComUrl && (
+          <Box display="flex" direction="column" gap={1}>
+            <Text element="p">
+              {t('dashboard-library.dashboard-card.details.view-on-grafana-com', 'View on Grafana.com')}
+            </Text>
+            <TextLink href={details.grafanaComUrl} external>
+              {details.grafanaComUrl}
+            </TextLink>
+          </Box>
+        )}
       </Box>
     </Box>
   );

@@ -82,7 +82,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
 
           // Filter by datasource type
           if (ds.type) {
-            params.append('filter', ds.type);
+            params.append('dataSourceSlugIn', ds.type);
           }
 
           const result = await getBackendSrv()
@@ -364,12 +364,23 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
                 return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
               };
 
+              // Create slug from dashboard name for Grafana.com URL
+              const createSlug = (name: string) => {
+                return name
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, '-')
+                  .replace(/^-+|-+$/g, '');
+              };
+
+              const grafanaComUrl = `https://grafana.com/grafana/dashboards/${item.dashboard.id}-${createSlug(item.dashboard.name)}/`;
+
               const details = {
                 id: String(item.dashboard.id),
                 datasource: item.dashboard.datasource || 'N/A',
                 dependencies: item.dashboard.datasource ? [item.dashboard.datasource] : [],
                 publishedBy: item.dashboard.orgName || item.dashboard.userName || 'Grafana Community',
                 lastUpdate: formatDate(item.dashboard.updatedAt || item.dashboard.publishedAt),
+                grafanaComUrl,
               };
 
               return (
