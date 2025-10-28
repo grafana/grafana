@@ -110,7 +110,7 @@ func (l *LibraryElementService) GetLibraryElement(c context.Context, signedInUse
 }
 
 // createLibraryElement adds a library element.
-func (l *LibraryElementService) CreateLibraryElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
+func (l *LibraryElementService) CreateElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return model.LibraryElementDTO{}, err
 	}

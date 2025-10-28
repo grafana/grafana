@@ -150,7 +150,7 @@ func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
 			newFolder := createFolder(t, sc, "NewFolder", sc.folderSvc)
 			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
 			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersDelete] = []string{dashboards.ScopeFoldersAll}
-			_, err = sc.service.CreateLibraryElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, model.CreateLibraryElementCommand{
+			_, err = sc.service.CreateElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, model.CreateLibraryElementCommand{
 				FolderID:  newFolder.ID, // nolint:staticcheck
 				FolderUID: &newFolder.UID,
 				Name:      "Testing Library Panel With Deleted Folder",

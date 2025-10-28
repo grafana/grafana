@@ -175,7 +175,7 @@ func importLibraryPanelsRecursively(c context.Context, service libraryelements.S
 				Kind:      int64(model.PanelElement),
 				UID:       UID,
 			}
-			_, err = service.CreateLibraryElement(c, signedInUser, cmd)
+			_, err = service.CreateElement(c, signedInUser, cmd)
 			if err != nil {
 				return err
 			}

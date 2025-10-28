@@ -68,7 +68,7 @@ func (s *LibraryPanelStore) Create(ctx context.Context, obj runtime.Object, crea
 	}
 
 	// NOTE: this includes all access control checks
-	out, err := s.service.CreateLibraryElement(ctx, user, *cmd)
+	out, err := s.service.CreateElement(ctx, user, *cmd)
 	if err != nil {
 		return nil, err
 	}
