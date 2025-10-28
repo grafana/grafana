@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { FeatureBadge, useStyles2 } from '@grafana/ui';
 
 import { useAlertRule } from '../../components/rule-viewer/RuleContext';
+import { EnrichmentAction, useEnrichmentAbility } from '../../hooks/useAbilities';
 import { rulerRuleType } from '../../utils/rules';
 
 type SetActiveTab = (tab: string) => void;
@@ -17,14 +18,16 @@ type RuleViewTabBuilderArgs = {
 type RuleViewTabBuilder = (args: RuleViewTabBuilderArgs) => NavModelItem;
 type RuleViewTabBuilderConfig = {
   filterOnlyGrafanaAlertRules: boolean;
+  requiresEnrichmentReadPermission?: boolean;
   ruleViewTabBuilder: RuleViewTabBuilder;
 };
 
 const ruleViewTabBuilders: RuleViewTabBuilderConfig[] = [];
 
-function registerRuleViewTab(builder: RuleViewTabBuilder) {
+function registerRuleViewTab(builder: RuleViewTabBuilder, requiresEnrichmentReadPermission: boolean = false) {
   ruleViewTabBuilders.push({
     filterOnlyGrafanaAlertRules: true,
+    requiresEnrichmentReadPermission,
     ruleViewTabBuilder: builder,
   });
 }
@@ -32,10 +35,17 @@ function registerRuleViewTab(builder: RuleViewTabBuilder) {
 export function useRuleViewExtensionTabs(args: RuleViewTabBuilderArgs): NavModelItem[] {
   const { rule } = useAlertRule();
   const isGrafanaAlertRule = rulerRuleType.grafana.alertingRule(rule.rulerRule);
+  const [, canReadEnrichments] = useEnrichmentAbility(EnrichmentAction.Read);
+
   return ruleViewTabBuilders
     .filter((config) => {
-      if (config.filterOnlyGrafanaAlertRules) {
-        return isGrafanaAlertRule;
+      // Check if rule type matches requirement
+      if (config.filterOnlyGrafanaAlertRules && !isGrafanaAlertRule) {
+        return false;
+      }
+      // Check if enrichment read permission is required and granted
+      if (config.requiresEnrichmentReadPermission && !canReadEnrichments) {
+        return false;
       }
       return true;
     })
@@ -43,15 +53,18 @@ export function useRuleViewExtensionTabs(args: RuleViewTabBuilderArgs): NavModel
 }
 
 export function addEnrichmentSection() {
-  registerRuleViewTab(({ activeTab, setActiveTab }) => {
-    const tabId = 'enrichment';
-    return {
-      text: t('alerting.use-page-nav.page-nav.text.enrichment', 'Alert enrichment'),
-      active: activeTab === tabId,
-      onClick: () => setActiveTab(tabId),
-      tabSuffix: () => <EnrichmentTabSuffix />,
-    };
-  });
+  registerRuleViewTab(
+    ({ activeTab, setActiveTab }) => {
+      const tabId = 'enrichment';
+      return {
+        text: t('alerting.use-page-nav.page-nav.text.enrichment', 'Alert enrichment'),
+        active: activeTab === tabId,
+        onClick: () => setActiveTab(tabId),
+        tabSuffix: () => <EnrichmentTabSuffix />,
+      };
+    },
+    true // Requires enrichment read permission
+  );
 }
 
 // ONLY FOR TESTS: resets the registered tabs between tests
@@ -60,11 +73,20 @@ export function __clearRuleViewTabsForTests() {
 }
 
 // ONLY FOR TESTS: non-hook version for testing
-export function getRuleViewExtensionTabs(args: RuleViewTabBuilderArgs, isGrafanaAlertRule: boolean): NavModelItem[] {
+export function getRuleViewExtensionTabs(
+  args: RuleViewTabBuilderArgs,
+  isGrafanaAlertRule: boolean,
+  canReadEnrichments: boolean = true
+): NavModelItem[] {
   return ruleViewTabBuilders
     .filter((config) => {
-      if (config.filterOnlyGrafanaAlertRules) {
-        return isGrafanaAlertRule;
+      // Check if rule type matches requirement
+      if (config.filterOnlyGrafanaAlertRules && !isGrafanaAlertRule) {
+        return false;
+      }
+      // Check if enrichment read permission is required and granted
+      if (config.requiresEnrichmentReadPermission && !canReadEnrichments) {
+        return false;
       }
       return true;
     })

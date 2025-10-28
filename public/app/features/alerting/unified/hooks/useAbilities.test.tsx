@@ -10,16 +10,20 @@ import { CombinedRule } from 'app/types/unified-alerting';
 
 import { getCloudRule, getGrafanaRule, grantUserPermissions, mockDataSource } from '../mocks';
 import { AlertmanagerProvider } from '../state/AlertmanagerContext';
+import { grantPermissionsHelper } from '../test/test-utils';
 import { setupDataSources } from '../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import {
   AlertRuleAction,
   AlertmanagerAction,
+  EnrichmentAction,
   useAlertmanagerAbilities,
   useAlertmanagerAbility,
   useAllAlertRuleAbilities,
   useAllAlertmanagerAbilities,
+  useEnrichmentAbilities,
+  useEnrichmentAbility,
 } from './useAbilities';
 
 /**
@@ -210,6 +214,100 @@ describe('AlertRule abilities', () => {
     });
 
     expect(result.current).toMatchSnapshot();
+  });
+});
+
+describe('enrichment abilities', () => {
+  setupMswServer();
+
+  it('should grant read and write permissions to admin users', () => {
+    grantPermissionsHelper([]);
+    jest.spyOn(require('../utils/misc'), 'isAdmin').mockReturnValue(true);
+
+    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
+
+    const [readSupported, readAllowed] = result.current[EnrichmentAction.Read];
+    const [writeSupported, writeAllowed] = result.current[EnrichmentAction.Write];
+
+    expect(readSupported).toBe(true);
+    expect(readAllowed).toBe(true);
+    expect(writeSupported).toBe(true);
+    expect(writeAllowed).toBe(true);
+  });
+
+  it('should grant read permission when user has enrichments:read permission', () => {
+    jest.spyOn(require('../utils/misc'), 'isAdmin').mockReturnValue(false);
+    grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead]);
+
+    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
+
+    const [readSupported, readAllowed] = result.current[EnrichmentAction.Read];
+    const [writeSupported, writeAllowed] = result.current[EnrichmentAction.Write];
+
+    expect(readSupported).toBe(true);
+    expect(readAllowed).toBe(true);
+    expect(writeSupported).toBe(true);
+    expect(writeAllowed).toBe(false);
+  });
+
+  it('should grant write permission when user has enrichments:write permission', () => {
+    jest.spyOn(require('../utils/misc'), 'isAdmin').mockReturnValue(false);
+    grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsWrite]);
+
+    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
+
+    const [readSupported, readAllowed] = result.current[EnrichmentAction.Read];
+    const [writeSupported, writeAllowed] = result.current[EnrichmentAction.Write];
+
+    expect(readSupported).toBe(true);
+    expect(readAllowed).toBe(false);
+    expect(writeSupported).toBe(true);
+    expect(writeAllowed).toBe(true);
+  });
+
+  it('should grant both read and write permissions when user has both permissions', () => {
+    jest.spyOn(require('../utils/misc'), 'isAdmin').mockReturnValue(false);
+    grantPermissionsHelper([
+      AccessControlAction.AlertingEnrichmentsRead,
+      AccessControlAction.AlertingEnrichmentsWrite,
+    ]);
+
+    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
+
+    const [readSupported, readAllowed] = result.current[EnrichmentAction.Read];
+    const [writeSupported, writeAllowed] = result.current[EnrichmentAction.Write];
+
+    expect(readSupported).toBe(true);
+    expect(readAllowed).toBe(true);
+    expect(writeSupported).toBe(true);
+    expect(writeAllowed).toBe(true);
+  });
+
+  it('should deny all permissions when user is not admin and has no permissions', () => {
+    jest.spyOn(require('../utils/misc'), 'isAdmin').mockReturnValue(false);
+    grantPermissionsHelper([]);
+
+    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
+
+    const [readSupported, readAllowed] = result.current[EnrichmentAction.Read];
+    const [writeSupported, writeAllowed] = result.current[EnrichmentAction.Write];
+
+    expect(readSupported).toBe(true);
+    expect(readAllowed).toBe(false);
+    expect(writeSupported).toBe(true);
+    expect(writeAllowed).toBe(false);
+  });
+
+  it('should return correct ability for specific action using useEnrichmentAbility', () => {
+    jest.spyOn(require('../utils/misc'), 'isAdmin').mockReturnValue(false);
+    grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead]);
+
+    const { result } = renderHook(() => useEnrichmentAbility(EnrichmentAction.Read), { wrapper: wrapper() });
+
+    const [supported, allowed] = result.current;
+
+    expect(supported).toBe(true);
+    expect(allowed).toBe(true);
   });
 });
 

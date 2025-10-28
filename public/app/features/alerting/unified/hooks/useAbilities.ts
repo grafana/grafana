@@ -11,6 +11,10 @@ import {
   PERMISSIONS_NOTIFICATION_POLICIES_READ,
 } from 'app/features/alerting/unified/components/notification-policies/permissions';
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
+import {
+  PERMISSIONS_ENRICHMENTS_READ,
+  PERMISSIONS_ENRICHMENTS_WRITE,
+} from 'app/features/alerting/unified/enterprise-components/enrichments/permissions';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { CombinedRule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
@@ -96,6 +100,12 @@ export enum AlertRuleAction {
   DeletePermanently = 'delete-alert-rule-permanently',
 }
 
+// this enum lists all of the available actions we can perform with enrichments
+export enum EnrichmentAction {
+  Read = 'read-enrichment',
+  Write = 'write-enrichment',
+}
+
 // this enum list all of the bulk actions we can perform on a folder
 export enum FolderBulkAction {
   Pause = 'pause-folder', // unpause permissions are the same as pause
@@ -124,7 +134,7 @@ export enum AlertingAction {
 const AlwaysSupported = true;
 const NotSupported = false;
 
-export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction | FolderBulkAction;
+export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction | FolderBulkAction | EnrichmentAction;
 export type Ability = [actionSupported: boolean, actionAllowed: boolean];
 export type Abilities<T extends Action> = Record<T, Ability>;
 
@@ -170,6 +180,28 @@ export const useAlertingAbilities = (): Abilities<AlertingAction> => {
 
 export const useAlertingAbility = (action: AlertingAction): Ability => {
   const allAbilities = useAlertingAbilities();
+  return allAbilities[action];
+};
+
+/**
+ * This one will check for enrichment abilities
+ */
+export const useEnrichmentAbilities = (): Abilities<EnrichmentAction> => {
+  const userIsAdmin = isAdmin();
+  const hasReadPermission = PERMISSIONS_ENRICHMENTS_READ.some((action) => ctx.hasPermission(action));
+  const hasWritePermission = PERMISSIONS_ENRICHMENTS_WRITE.some((action) => ctx.hasPermission(action));
+
+  // TODO: Remove this temporary bypass once backend permissions are implemented
+  // For now, allow all users to test the UI
+  // const TEMP_BYPASS_FOR_TESTING = true;
+
+  return {    [EnrichmentAction.Read]: [AlwaysSupported, userIsAdmin || hasReadPermission],
+    [EnrichmentAction.Write]: [AlwaysSupported, userIsAdmin || hasWritePermission],
+  };
+};
+
+export const useEnrichmentAbility = (action: EnrichmentAction): Ability => {
+  const allAbilities = useEnrichmentAbilities();
   return allAbilities[action];
 };
 
