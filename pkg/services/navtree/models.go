@@ -157,69 +157,6 @@ func Sort(nodes []*NavLink) {
 	}
 }
 
-func (root *NavTreeRoot) ApplyCostManagementIA() {
-	orgAdminNode := root.FindById(NavIDCfg)
-	var costManagementApp *NavLink
-	var adaptiveMetricsApp *NavLink
-	var adaptiveLogsApp *NavLink
-	var adaptiveTracesApp *NavLink
-	var attributionsApp *NavLink
-	var logVolumeExplorerApp *NavLink
-
-	if orgAdminNode != nil {
-		adminNodeLinks := []*NavLink{}
-		for _, element := range orgAdminNode.Children {
-			switch navId := element.Id; navId {
-			case "plugin-page-grafana-costmanagementui-app":
-				costManagementApp = element
-			case "plugin-page-grafana-adaptive-metrics-app":
-				adaptiveMetricsApp = element
-			case "plugin-page-grafana-adaptivelogs-app":
-				adaptiveLogsApp = element
-			case "plugin-page-grafana-adaptivetraces-app":
-				adaptiveTracesApp = element
-			case "plugin-page-grafana-attributions-app":
-				attributionsApp = element
-			case "plugin-page-grafana-logvolumeexplorer-app":
-				logVolumeExplorerApp = element
-			default:
-				adminNodeLinks = append(adminNodeLinks, element)
-			}
-		}
-
-		if costManagementApp != nil {
-			costManagementMetricsNode := FindByURL(costManagementApp.Children, "/a/grafana-costmanagementui-app/metrics")
-			if costManagementMetricsNode != nil {
-				if adaptiveMetricsApp != nil {
-					costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, adaptiveMetricsApp)
-				}
-				if attributionsApp != nil {
-					costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, attributionsApp)
-				}
-			}
-
-			costManagementLogsNode := FindByURL(costManagementApp.Children, "/a/grafana-costmanagementui-app/logs")
-			if costManagementLogsNode != nil {
-				if adaptiveLogsApp != nil {
-					costManagementLogsNode.Children = append(costManagementLogsNode.Children, adaptiveLogsApp)
-				}
-				if logVolumeExplorerApp != nil {
-					costManagementLogsNode.Children = append(costManagementLogsNode.Children, logVolumeExplorerApp)
-				}
-			}
-
-			costManagementTracesNode := FindByURL(costManagementApp.Children, "/a/grafana-costmanagementui-app/traces")
-			if costManagementTracesNode != nil {
-				if adaptiveTracesApp != nil {
-					costManagementTracesNode.Children = append(costManagementTracesNode.Children, adaptiveTracesApp)
-				}
-			}
-			adminNodeLinks = append(adminNodeLinks, costManagementApp)
-		}
-		orgAdminNode.Children = adminNodeLinks
-	}
-}
-
 func AppendIfNotNil(children []*NavLink, newChild *NavLink) []*NavLink {
 	if newChild != nil {
 		return append(children, newChild)
