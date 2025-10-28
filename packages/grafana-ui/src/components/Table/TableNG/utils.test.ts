@@ -1,3 +1,4 @@
+import { Point } from 'ol/geom';
 import { SortColumn } from 'react-data-grid';
 
 import {
@@ -49,6 +50,8 @@ import {
   parseStyleJson,
   calculateFooterHeight,
   displayJsonValue,
+  prepareSparklineValue,
+  buildInspectValue,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -1529,6 +1532,154 @@ describe('TableNG utils', () => {
 
     it('returns an object with invalid style properties, because we do not validate the style properties', () => {
       expect(parseStyleJson('{"notARealStyle": "someValue"}')).toEqual({ notARealStyle: 'someValue' });
+    });
+  });
+
+  describe('prepareSparklineValue', () => {
+    it('should return an array of numbers when given an array of numbers', () => {
+      expect(
+        prepareSparklineValue([1, 2, 3, 4, 5], {
+          name: 'test',
+          type: FieldType.number,
+          values: [1, 2, 3, 4, 5],
+          config: {},
+        })
+      ).toEqual({
+        y: {
+          name: `test-sparkline`,
+          type: FieldType.number,
+          values: [1, 2, 3, 4, 5],
+          config: {},
+        },
+      });
+    });
+
+    it('should parse the x and y values from a dataframe', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'x', type: FieldType.time, values: [0, 1000, 2000, 3000, 4000] },
+          { name: 'y', type: FieldType.number, values: [10, 20, 30, 40, 50] },
+        ],
+      });
+      expect(
+        prepareSparklineValue(frame, {
+          name: 'test',
+          type: FieldType.frame,
+          values: [frame],
+          config: {},
+        })
+      ).toEqual({
+        x: {
+          name: 'x',
+          type: FieldType.time,
+          values: [0, 1000, 2000, 3000, 4000],
+          config: {},
+        },
+        y: {
+          name: 'y',
+          type: FieldType.number,
+          values: [10, 20, 30, 40, 50],
+          config: {},
+        },
+      });
+    });
+
+    it('should return undefined for non-array and non-dataframe values', () => {
+      expect(
+        prepareSparklineValue('not an array or dataframe', {
+          name: 'test',
+          type: FieldType.string,
+          values: ['a', 'b', 'c'],
+          config: {},
+        })
+      ).toBeUndefined();
+    });
+  });
+
+  describe('buildInspectValue', () => {
+    const numberFieldWithNulls: Field = {
+      name: 'numbers-with-nulls',
+      type: FieldType.number,
+      values: [0, 1, 2, null, NaN],
+      config: {},
+    };
+    const stringField: Field = {
+      name: 'string',
+      type: FieldType.string,
+      values: ['foo', 'bar', 'baz', null],
+      config: {},
+    };
+    const jsonStringField: Field = {
+      ...stringField,
+      config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
+    };
+    const booleanField: Field = {
+      name: 'boolean-field',
+      type: FieldType.boolean,
+      values: [true, false, true],
+      config: {},
+    };
+    const sparklineField: Field = {
+      name: 'sparkline-field',
+      type: FieldType.frame,
+      values: [
+        createDataFrame({
+          fields: [
+            { name: 'x', type: FieldType.time, values: [0, 1000, 2000] },
+            { name: 'y', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+      ],
+      config: {},
+    };
+    const sparklineFieldNoX: Field = {
+      name: 'sparkline-field-no-x',
+      type: FieldType.other,
+      values: [[2, 4, 6, 8, 10]],
+      config: {
+        custom: { cellOptions: { type: TableCellDisplayMode.Sparkline } },
+      },
+    };
+    const arrayField: Field = {
+      name: 'array-field',
+      type: FieldType.other,
+      values: [
+        ['foo', 'bar', 'baz'],
+        ['one', 'two', 'three'],
+      ],
+      config: {},
+    };
+    const objectField: Field = {
+      name: 'array-field',
+      type: FieldType.other,
+      values: [
+        { foo: true, b: 'baz' },
+        { foo: false, b: 'qux' },
+      ],
+      config: {},
+    };
+    const geoField: Field = {
+      name: 'geo-field',
+      type: FieldType.geo,
+      values: [new Point([0, -74.1])],
+      config: {},
+    };
+    it.each([
+      { name: 'numbers', input: { valueIdx: 0, field: numberFieldWithNulls } },
+      { name: 'string', input: { valueIdx: 0, field: stringField } },
+      { name: 'string w/ JSON', input: { valueIdx: 2, field: jsonStringField } },
+      { name: 'boolean', input: { valueIdx: 0, field: booleanField } },
+      { name: 'NaN', input: { valueIdx: 4, field: numberFieldWithNulls } },
+      { name: 'null', input: { valueIdx: 3, field: numberFieldWithNulls } },
+      { name: 'null w/ JSON', input: { valueIdx: 3, field: jsonStringField } },
+      { name: 'undefined', input: { valueIdx: 6, field: numberFieldWithNulls } },
+      { name: 'sparkline', input: { valueIdx: 0, field: sparklineField } },
+      { name: 'sparkline (no x)', input: { valueIdx: 0, field: sparklineFieldNoX } },
+      { name: 'array', input: { valueIdx: 0, field: arrayField } },
+      { name: 'object', input: { valueIdx: 0, field: objectField } },
+      { name: 'geo', input: { valueIdx: 0, field: geoField } },
+    ])('should handle $name', ({ input: { field, valueIdx = 0 } }) => {
+      expect(buildInspectValue(field.values[valueIdx], field)).toMatchSnapshot();
     });
   });
 });
