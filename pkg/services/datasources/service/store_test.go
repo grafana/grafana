@@ -442,7 +442,6 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.Error(t, err)
 			require.IsType(t, datasources.ErrDataSourceNotFound, err)
 		})
-
 	})
 
 	t.Run("GetDataSourcesByType", func(t *testing.T) {
