@@ -546,10 +546,10 @@ For example, the **Table > Column width** or **Cell options > Cell type** overri
 #### Styling from field
 
 Toggle on the **Styling from field** switch to apply the styling from another field (or column).
-The referenced field must contain CSS properties formatted in JSON object syntax. For example:
+The referenced field must contain [CSS properties](https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleProperties) formatted in JSON object syntax. For example:
 
 ```JSON
-{"name":"John"}
+{"marginLeft":12, "text-decoration": "underline"}
 ```
 
 While you can turn on this option under **Cell options** and have it applied to all cells in the table, it's typically used as an override on a sub-set of cells instead.
