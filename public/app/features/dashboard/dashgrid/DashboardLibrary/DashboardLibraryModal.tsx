@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { Modal, TabsBar, Tab, TabContent, useStyles2, Text } from '@grafana/ui';
 import { DashboardInput, DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
@@ -15,6 +17,7 @@ import { InputMapping } from './utils/autoMapDatasources';
 interface DashboardLibraryModalProps {
   isOpen: boolean;
   onDismiss: () => void;
+  initialMappingContext?: MappingContext | null;
 }
 
 type ModalView = 'datasource' | 'community' | 'mapping';
@@ -28,10 +31,37 @@ export interface MappingContext {
   onInterpolateAndNavigate: (mappings: InputMapping[]) => void;
 }
 
-export const DashboardLibraryModal = ({ isOpen, onDismiss }: DashboardLibraryModalProps) => {
-  const [activeView, setActiveView] = useState<ModalView>('datasource');
-  const [mappingContext, setMappingContext] = useState<MappingContext | null>(null);
+export const DashboardLibraryModal = ({ isOpen, onDismiss, initialMappingContext }: DashboardLibraryModalProps) => {
+  const [searchParams] = useSearchParams();
+  const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
+
+  const [activeView, setActiveView] = useState<ModalView>(initialMappingContext ? 'mapping' : 'datasource');
+  const [mappingContext, setMappingContext] = useState<MappingContext | null>(initialMappingContext || null);
   const styles = useStyles2(getStyles);
+
+  // Get datasource info for modal title and search
+  const datasourceInfo = useMemo(() => {
+    if (!datasourceUid) {
+      return { name: '', type: '' };
+    }
+    const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
+    return {
+      name: ds?.name || '',
+      type: ds?.type || '',
+    };
+  }, [datasourceUid]);
+
+  // Update state when initialMappingContext changes
+  useEffect(() => {
+    if (initialMappingContext) {
+      setMappingContext(initialMappingContext);
+      setActiveView('mapping');
+    } else if (!isOpen) {
+      // Reset when modal closes
+      setMappingContext(null);
+      setActiveView('datasource');
+    }
+  }, [initialMappingContext, isOpen]);
 
   const handleShowMapping = (context: MappingContext) => {
     setMappingContext(context);
@@ -46,61 +76,66 @@ export const DashboardLibraryModal = ({ isOpen, onDismiss }: DashboardLibraryMod
   return (
     <Modal
       title={
-        activeView === 'mapping' ? (
-          <Trans i18nKey="dashboard.library-modal.title-mapping">Configure datasources</Trans>
-        ) : (
-          <Trans i18nKey="dashboard.library-modal.title">Suggested dashboards</Trans>
-        )
+        activeView === 'mapping'
+          ? t('dashboard.library-modal.title-mapping', 'Configure datasources')
+          : datasourceInfo.name
+            ? t(
+                'dashboard.library-modal.title-with-datasource',
+                'Suggested dashboards for your {{datasourceName}} datasource',
+                { datasourceName: datasourceInfo.name }
+              )
+            : t('dashboard.library-modal.title', 'Suggested dashboards')
       }
       isOpen={isOpen}
       onDismiss={onDismiss}
       closeOnBackdropClick={false}
       className={styles.modal}
+      contentClassName={styles.modalContent}
     >
-      <div className={styles.content}>
-        {activeView !== 'mapping' && (
-          <>
-            <Text element="p" textAlignment="center">
-              <Trans i18nKey="dashboard.library-modal.description">
-                Browse and select from data-source provided or community dashboards
-              </Trans>
-            </Text>
+      {activeView !== 'mapping' && (
+        <div className={styles.stickyHeader}>
+          <Text element="p">
+            <Trans i18nKey="dashboard.library-modal.description">
+              Browse and select from data-source provided or community dashboards
+            </Trans>
+          </Text>
 
-            <TabsBar>
-              <Tab
-                label={t('dashboard.library-modal.tab-datasource', 'Data-source provided')}
-                icon="apps"
-                active={activeView === 'datasource'}
-                onChangeTab={() => setActiveView('datasource')}
-              />
-              <Tab
-                label={t('dashboard.library-modal.tab-community', 'Community')}
-                icon="users-alt"
-                active={activeView === 'community'}
-                onChangeTab={() => setActiveView('community')}
-              />
-            </TabsBar>
-          </>
-        )}
-
-        <TabContent className={styles.tabContent}>
-          {activeView === 'datasource' && <DashboardLibrarySection />}
-          {activeView === 'community' && <CommunityDashboardSection onShowMapping={handleShowMapping} />}
-          {activeView === 'mapping' && mappingContext && (
-            <CommunityDashboardMappingForm
-              dashboardName={mappingContext.dashboardName}
-              unmappedInputs={mappingContext.unmappedInputs}
-              constantInputs={mappingContext.constantInputs}
-              existingMappings={mappingContext.existingMappings}
-              onBack={handleBackToDashboards}
-              onPreview={(allMappings) => {
-                mappingContext.onInterpolateAndNavigate(allMappings);
-                onDismiss();
-              }}
+          <TabsBar>
+            <Tab
+              label={t('dashboard.library-modal.tab-datasource', 'Data-source provided')}
+              icon="apps"
+              active={activeView === 'datasource'}
+              onChangeTab={() => setActiveView('datasource')}
             />
-          )}
-        </TabContent>
-      </div>
+            <Tab
+              label={t('dashboard.library-modal.tab-community', 'Community')}
+              icon="users-alt"
+              active={activeView === 'community'}
+              onChangeTab={() => setActiveView('community')}
+            />
+          </TabsBar>
+        </div>
+      )}
+
+      <TabContent className={styles.tabContent}>
+        {activeView === 'datasource' && <DashboardLibrarySection />}
+        {activeView === 'community' && (
+          <CommunityDashboardSection onShowMapping={handleShowMapping} datasourceType={datasourceInfo.type} />
+        )}
+        {activeView === 'mapping' && mappingContext && (
+          <CommunityDashboardMappingForm
+            dashboardName={mappingContext.dashboardName}
+            unmappedInputs={mappingContext.unmappedInputs}
+            constantInputs={mappingContext.constantInputs}
+            existingMappings={mappingContext.existingMappings}
+            onBack={handleBackToDashboards}
+            onPreview={(allMappings) => {
+              mappingContext.onInterpolateAndNavigate(allMappings);
+              onDismiss();
+            }}
+          />
+        )}
+      </TabContent>
     </Modal>
   );
 };
@@ -110,14 +145,37 @@ function getStyles(theme: GrafanaTheme2) {
     modal: css({
       width: '90%',
       maxWidth: '1200px',
-    }),
-    content: css({
+      height: '80vh',
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(3),
+    }),
+    modalContent: css({
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+      padding: 0,
+      marginBottom: 0,
+      height: '100%',
+    }),
+    stickyHeader: css({
+      position: 'sticky',
+      top: 0,
+      zIndex: 2,
+      backgroundColor: theme.colors.background.primary,
+      paddingTop: theme.spacing(3),
+      paddingLeft: theme.spacing(3),
+      paddingRight: theme.spacing(3),
+      paddingBottom: theme.spacing(2),
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(2),
     }),
     tabContent: css({
-      minHeight: '900px',
+      flex: 1,
+      overflow: 'auto',
+      paddingLeft: theme.spacing(3),
+      paddingRight: theme.spacing(3),
+      paddingBottom: theme.spacing(3),
     }),
   };
 }

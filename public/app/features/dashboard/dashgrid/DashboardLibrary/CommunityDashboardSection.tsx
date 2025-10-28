@@ -1,31 +1,20 @@
 import { css } from '@emotion/css';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync, useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
-import {
-  Button,
-  useStyles2,
-  Stack,
-  Grid,
-  EmptyState,
-  Alert,
-  LoadingPlaceholder,
-  Pagination,
-  FilterInput,
-  Card,
-  Tooltip,
-} from '@grafana/ui';
+import { Button, useStyles2, Stack, Grid, EmptyState, Alert, Pagination, FilterInput } from '@grafana/ui';
 import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
+import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './DashboardLibraryModal';
 import { DashboardLibraryInteractions } from './interactions';
+import { GnetDashboard, Link } from './types';
 import {
   tryAutoMapDatasources,
   parseConstantInputs,
@@ -33,43 +22,12 @@ import {
   isDataSourceInput,
 } from './utils/autoMapDatasources';
 
-interface Link {
-  rel: string;
-  href: string;
-}
-
-interface Screenshot {
-  links: Link[];
-}
-
-interface LogoImage {
-  content: string;
-  filename: string;
-  type: string;
-}
-
-interface Logo {
-  small?: LogoImage;
-  large?: LogoImage;
-}
-
-interface GnetDashboard {
-  id: number;
-  uid: string;
-  name: string;
-  description: string;
-  downloads: number;
-  datasource: string;
-  screenshots?: Screenshot[];
-  logos?: Logo;
-  json?: DashboardJson; // Full dashboard JSON from detail API
-}
-
 interface Props {
   onShowMapping: (context: MappingContext) => void;
+  datasourceType?: string;
 }
 
-export const CommunityDashboardSection = ({ onShowMapping }: Props) => {
+export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Props) => {
   const [searchParams] = useSearchParams();
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
   const [currentPage, setCurrentPage] = useState(1);
@@ -108,7 +66,7 @@ export const CommunityDashboardSection = ({ onShowMapping }: Props) => {
         orderBy: 'downloads',
         direction: 'desc',
         page: String(currentPage),
-        pageSize: '10',
+        pageSize: '9',
         includeLogo: '1',
         includeScreenshots: 'true',
       });
@@ -164,7 +122,7 @@ export const CommunityDashboardSection = ({ onShowMapping }: Props) => {
 
   // Determine what to show in results area
   const dashboards = Array.isArray(response?.dashboards) ? response.dashboards : [];
-  const hasMore = dashboards.length >= 10;
+  const hasMore = dashboards.length >= 9;
   const estimatedTotalPages = hasMore ? currentPage + 4 : currentPage;
   const showEmptyState = !loading && (!response?.dashboards || response.dashboards.length === 0);
   const showError = !loading && error;
@@ -241,16 +199,33 @@ export const CommunityDashboardSection = ({ onShowMapping }: Props) => {
   return (
     <Stack direction="column" gap={2}>
       <FilterInput
-        placeholder={t('dashboard.library.community-search-placeholder', 'Search community dashboards...')}
+        placeholder={
+          datasourceType
+            ? t(
+                'dashboard.library.community-search-placeholder-with-datasource',
+                'Search {{datasourceType}} community dashboards...',
+                { datasourceType }
+              )
+            : t('dashboard.library.community-search-placeholder', 'Search community dashboards...')
+        }
         value={searchQuery}
         onChange={setSearchQuery}
       />
 
       <div className={styles.resultsContainer}>
-        {loading && currentPage === 1 && !response ? (
-          <div className={styles.loadingOverlay}>
-            <LoadingPlaceholder text={t('dashboard.library.community-loading', 'Loading community dashboards...')} />
-          </div>
+        {loading ? (
+          <Grid
+            gap={4}
+            columns={{
+              xs: 1,
+              sm: 2,
+              lg: 3,
+            }}
+          >
+            {Array.from({ length: 9 }).map((_, i) => (
+              <div key={i} className={styles.skeleton} />
+            ))}
+          </Grid>
         ) : showError ? (
           <Stack direction="column" alignItems="center" gap={2}>
             <Alert
@@ -268,7 +243,15 @@ export const CommunityDashboardSection = ({ onShowMapping }: Props) => {
         ) : showEmptyState ? (
           <EmptyState
             variant="call-to-action"
-            message={t('dashboard.library.community-empty-title', 'No community dashboards found')}
+            message={
+              datasourceType
+                ? t(
+                    'dashboard.library.community-empty-title-with-datasource',
+                    'No {{datasourceType}} community dashboards found',
+                    { datasourceType }
+                  )
+                : t('dashboard.library.community-empty-title', 'No community dashboards found')
+            }
             button={
               <Button
                 variant="secondary"
@@ -278,13 +261,13 @@ export const CommunityDashboardSection = ({ onShowMapping }: Props) => {
               </Button>
             }
           >
-            {searchQuery ? (
+            {searchQuery && !datasourceType ? (
               <Trans i18nKey="dashboard.library.no-community-dashboards-search">
-                No community dashboards found for your search. You can browse more dashboards on Grafana.com.
+                Try a different search term or browse more dashboards on Grafana.com.
               </Trans>
             ) : (
               <Trans i18nKey="dashboard.library.no-community-dashboards-datasource">
-                No community dashboards found for this datasource. You can browse more dashboards on Grafana.com.
+                Try a different search term or browse dashboards for different datasource types on Grafana.com.
               </Trans>
             )}
           </EmptyState>
@@ -297,9 +280,54 @@ export const CommunityDashboardSection = ({ onShowMapping }: Props) => {
               lg: dashboards.length >= 3 ? 3 : dashboards.length >= 2 ? 2 : 1,
             }}
           >
-            {dashboards.map((dashboard) => (
-              <CommunityDashboardCard key={dashboard.id} dashboard={dashboard} onUseDashboard={onUseDashboard} />
-            ))}
+            {dashboards.map((dashboard) => {
+              const getThumbnailUrl = () => {
+                const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
+                return thumbnail ? `/api/gnet${thumbnail}` : '';
+              };
+
+              const getLogoUrl = () => {
+                const logo = dashboard.logos?.large || dashboard.logos?.small;
+                if (logo?.content && logo?.type) {
+                  return `data:${logo.type};base64,${logo.content}`;
+                }
+                return '';
+              };
+
+              const thumbnailUrl = getThumbnailUrl();
+              const logoUrl = getLogoUrl();
+              const imageUrl = thumbnailUrl || logoUrl;
+              const isLogo = !thumbnailUrl;
+
+              // Format details for community dashboard
+              const formatDate = (dateString?: string) => {
+                if (!dateString) {
+                  return 'N/A';
+                }
+                const date = new Date(dateString);
+                return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+              };
+
+              const details = {
+                id: String(dashboard.id),
+                datasource: dashboard.datasource || 'N/A',
+                dependencies: dashboard.datasource ? [dashboard.datasource] : [],
+                publishedBy: dashboard.orgName || dashboard.userName || 'Grafana Community',
+                lastUpdate: formatDate(dashboard.updatedAt || dashboard.publishedAt),
+              };
+
+              return (
+                <DashboardCard
+                  key={dashboard.id}
+                  title={dashboard.name}
+                  imageUrl={imageUrl}
+                  dashboard={dashboard}
+                  onClick={() => onUseDashboard(dashboard)}
+                  isLogo={isLogo}
+                  details={details}
+                />
+              );
+            })}
           </Grid>
         )}
       </div>
@@ -315,75 +343,6 @@ export const CommunityDashboardSection = ({ onShowMapping }: Props) => {
   );
 };
 
-const CommunityDashboardCard = ({
-  dashboard,
-  onUseDashboard,
-}: {
-  dashboard: GnetDashboard;
-  onUseDashboard: (d: GnetDashboard) => void;
-}) => {
-  const styles = useStyles2(getStyles);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-
-  const getThumbnailUrl = () => {
-    const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
-    return thumbnail ? `/api/gnet${thumbnail}` : '';
-  };
-
-  const getLogoUrl = () => {
-    const logo = dashboard.logos?.large || dashboard.logos?.small;
-    if (logo?.content && logo?.type) {
-      return `data:${logo.type};base64,${logo.content}`;
-    }
-    return '';
-  };
-
-  const thumbnailUrl = getThumbnailUrl();
-  const logoUrl = getLogoUrl();
-  const imageUrl = thumbnailUrl || logoUrl;
-  const hasScreenshot = !!thumbnailUrl;
-
-  return (
-    <Card onClick={() => onUseDashboard(dashboard)} className={styles.card} noMargin>
-      <Card.Heading>{dashboard.name}</Card.Heading>
-      <div className={hasScreenshot ? styles.thumbnailContainer : styles.logoContainer}>
-        {imageUrl && !imageError ? (
-          <>
-            {!imageLoaded && <LoadingPlaceholder text="" />}
-            <img
-              src={imageUrl}
-              alt={dashboard.name}
-              className={hasScreenshot ? styles.thumbnail : styles.logo}
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageError(true)}
-              style={{ display: imageLoaded ? 'block' : 'none' }}
-            />
-          </>
-        ) : null}
-      </div>
-      <div title={dashboard.description || ''} className={styles.descriptionWrapper}>
-        {dashboard.description && (
-          <Card.Description className={styles.description}>{dashboard.description}</Card.Description>
-        )}
-      </div>
-
-      <Card.Actions>
-        <Button
-          variant="secondary"
-          onClick={(e) => {
-            e.stopPropagation();
-            onUseDashboard(dashboard);
-          }}
-          size="sm"
-        >
-          <Trans i18nKey="dashboard.empty.use-template-button">Use this dashboard</Trans>
-        </Button>
-      </Card.Actions>
-    </Card>
-  );
-};
-
 function getStyles(theme: GrafanaTheme2) {
   return {
     resultsContainer: css({
@@ -391,77 +350,31 @@ function getStyles(theme: GrafanaTheme2) {
       minHeight: '600px',
       position: 'relative',
     }),
-    loadingOverlay: css({
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: theme.colors.background.canvas,
-      zIndex: 1,
-    }),
-    card: css({
-      gridTemplateAreas: `
-        "Heading"
-        "Thumbnail"
-        "Description"
-        "Actions"`,
-      gridTemplateRows: 'auto 200px auto auto',
-      height: '320px',
-    }),
-    thumbnailContainer: css({
-      gridArea: 'Thumbnail',
-      width: '100%',
-      height: '100%',
-      overflow: 'hidden',
-      borderRadius: theme.shape.radius.default,
+    skeleton: css({
+      height: '300px',
       backgroundColor: theme.colors.background.secondary,
-      marginTop: theme.spacing(1),
-      marginBottom: theme.spacing(1),
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }),
-    thumbnail: css({
-      width: '100%',
-      height: '100%',
-      objectFit: 'contain',
-    }),
-    logoContainer: css({
-      gridArea: 'Thumbnail',
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
       borderRadius: theme.shape.radius.default,
-      backgroundColor: theme.colors.background.secondary,
-      marginTop: theme.spacing(1),
-      marginBottom: theme.spacing(1),
-    }),
-    logo: css({
-      maxWidth: '100px',
-      maxHeight: '100px',
-      objectFit: 'contain',
-    }),
-    descriptionWrapper: css({
-      gridArea: 'Description',
-      cursor: 'help',
-    }),
-    description: css({
-      display: '-webkit-box',
-      WebkitLineClamp: 2,
-      WebkitBoxOrient: 'vertical',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      margin: 0,
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      },
+      '@keyframes pulse': {
+        '0%, 100%': {
+          opacity: 1,
+        },
+        '50%': {
+          opacity: 0.5,
+        },
+      },
     }),
     pagination: css({
+      position: 'sticky',
+      bottom: 0,
+      backgroundColor: theme.colors.background.primary,
+      paddingTop: theme.spacing(2),
+      paddingBottom: theme.spacing(1),
       marginTop: theme.spacing(2),
       alignItems: 'center',
+      zIndex: 2,
     }),
   };
 }

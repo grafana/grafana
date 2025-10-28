@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,7 +10,8 @@ import { Button, useStyles2, Text, Box, Stack, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { DashboardLibraryModal } from '../DashboardLibrary/DashboardLibraryModal';
+import { DashboardLibraryModal, MappingContext } from '../DashboardLibrary/DashboardLibraryModal';
+import { SuggestedDashboards } from '../DashboardLibrary/SuggestedDashboards';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
@@ -29,29 +30,40 @@ interface InternalProps {
 const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImportDashboard }: InternalProps) => {
   const styles = useStyles2(getStyles);
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const dashboardLibraryDatasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
   const [showLibraryModal, setShowLibraryModal] = useState(false);
-
-  // Auto-open modal when coming from "build dashboard" flow
-  useEffect(() => {
-    if (config.featureToggles.dashboardLibrary && dashboardLibraryDatasourceUid) {
-      setShowLibraryModal(true);
-    }
-  }, [dashboardLibraryDatasourceUid]);
+  const [mappingContext, setMappingContext] = useState<MappingContext | null>(null);
 
   const handleModalDismiss = () => {
     setShowLibraryModal(false);
-    // Clear the URL parameter
-    searchParams.delete('dashboardLibraryDatasourceUid');
-    setSearchParams(searchParams);
+    setMappingContext(null);
+    // Keep the URL parameter so suggested dashboards remain visible
+  };
+
+  const handleShowMapping = (context: MappingContext) => {
+    setMappingContext(context);
+    setShowLibraryModal(true);
   };
 
   return (
     <>
       <Stack alignItems="center" justifyContent="center">
-        <div className={cx(styles.wrapper, styles.wrapperMaxWidth)}>
+        <div
+          className={cx(styles.wrapper, {
+            [styles.wrapperMaxWidth]: !config.featureToggles.dashboardLibrary || !dashboardLibraryDatasourceUid,
+          })}
+        >
           <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
+            {/* Suggested Dashboards Section */}
+            {config.featureToggles.dashboardLibrary && dashboardLibraryDatasourceUid && (
+              <SuggestedDashboards
+                datasourceUid={dashboardLibraryDatasourceUid}
+                onOpenModal={() => setShowLibraryModal(true)}
+                onShowMapping={handleShowMapping}
+              />
+            )}
+
             <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={4}>
               <Stack direction="column" alignItems="center" gap={2}>
                 <Text element="h1" textAlignment="center" weight="medium">
@@ -136,7 +148,11 @@ const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImpor
 
       {/* Dashboard Library Modal */}
       {config.featureToggles.dashboardLibrary && dashboardLibraryDatasourceUid && (
-        <DashboardLibraryModal isOpen={showLibraryModal} onDismiss={handleModalDismiss} />
+        <DashboardLibraryModal
+          isOpen={showLibraryModal}
+          onDismiss={handleModalDismiss}
+          initialMappingContext={mappingContext}
+        />
       )}
     </>
   );

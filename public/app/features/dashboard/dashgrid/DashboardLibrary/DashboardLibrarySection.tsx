@@ -4,9 +4,8 @@ import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { Button, useStyles2, Stack, Grid, Card } from '@grafana/ui';
+import { useStyles2, Stack, Grid, Pagination } from '@grafana/ui';
 import { PluginDashboard } from 'app/types/plugins';
 import dashboardLibrary1 from 'img/dashboard-library/dashboard_library_1.jpg';
 import dashboardLibrary2 from 'img/dashboard-library/dashboard_library_2.jpg';
@@ -17,15 +16,17 @@ import dashboardLibrary6 from 'img/dashboard-library/dashboard_library_6.jpg';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
+import { DashboardCard } from './DashboardCard';
 import { DashboardLibraryInteractions } from './interactions';
 
 export const DashboardLibrarySection = () => {
   const [searchParams] = useSearchParams();
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
 
-  const [showAll, setShowAll] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 9;
 
-  const { value: templateDashboards } = useAsync(async (): Promise<PluginDashboard[]> => {
+  const { value: templateDashboards, loading } = useAsync(async (): Promise<PluginDashboard[]> => {
     if (!datasourceUid) {
       return [];
     }
@@ -55,10 +56,14 @@ export const DashboardLibrarySection = () => {
     }
   }, [datasourceUid]);
 
-  const hasMoreThanThree = templateDashboards && templateDashboards.length > 3;
-  const dashboardsToShow = showAll ? templateDashboards : templateDashboards?.slice(0, 3);
+  // Calculate pagination
+  const totalDashboards = templateDashboards?.length || 0;
+  const totalPages = Math.ceil(totalDashboards / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const dashboardsToShow = templateDashboards?.slice(startIndex, endIndex);
 
-  const styles = useStyles2(getStyles, dashboardsToShow?.length);
+  const styles = useStyles2(getStyles);
 
   const onImportDashboardClick = async (dashboard: PluginDashboard) => {
     DashboardLibraryInteractions.itemClicked({
@@ -84,7 +89,7 @@ export const DashboardLibrarySection = () => {
     locationService.push(templateUrl);
   };
 
-  if (!templateDashboards?.length) {
+  if (!loading && !templateDashboards?.length) {
     return null;
   }
 
@@ -94,115 +99,78 @@ export const DashboardLibrarySection = () => {
         gap={4}
         columns={{
           xs: 1,
-          sm: (dashboardsToShow?.length || 1) >= 2 ? 2 : 1,
-          lg: (dashboardsToShow?.length || 1) >= 3 ? 3 : (dashboardsToShow?.length || 1) >= 2 ? 2 : 1,
+          sm: loading ? 2 : (dashboardsToShow?.length || 1) >= 2 ? 2 : 1,
+          lg: loading ? 3 : (dashboardsToShow?.length || 1) >= 3 ? 3 : (dashboardsToShow?.length || 1) >= 2 ? 2 : 1,
         }}
       >
-        {dashboardsToShow?.map((dashboard, index) => (
-          <TemplateDashboardBox
-            key={dashboard.uid}
-            index={index}
-            dashboard={dashboard}
-            onImportClick={onImportDashboardClick}
-          />
-        )) || []}
+        {loading && !templateDashboards
+          ? Array.from({ length: 9 }).map((_, i) => <div key={i} className={styles.skeleton} />)
+          : dashboardsToShow?.map((dashboard, index) => {
+              const dashboardLibraryImages = [
+                dashboardLibrary1,
+                dashboardLibrary2,
+                dashboardLibrary3,
+                dashboardLibrary4,
+                dashboardLibrary5,
+                dashboardLibrary6,
+              ];
+              // Use global index for consistent image assignment
+              const globalIndex = startIndex + index;
+              const imageUrl =
+                globalIndex <= 5
+                  ? dashboardLibraryImages[globalIndex]
+                  : dashboardLibraryImages[globalIndex % dashboardLibraryImages.length];
+
+              return (
+                <DashboardCard
+                  key={dashboard.uid}
+                  title={dashboard.title}
+                  imageUrl={imageUrl}
+                  dashboard={dashboard}
+                  onClick={() => onImportDashboardClick(dashboard)}
+                />
+              );
+            }) || []}
       </Grid>
-      {hasMoreThanThree && (
-        <Button
-          variant="secondary"
-          fill="outline"
-          size="sm"
-          onClick={() => setShowAll((prev) => !prev)}
-          className={styles.showMoreButton}
-        >
-          {showAll ? (
-            <Trans i18nKey="dashboard.empty.show-less-dashboards">Show less</Trans>
-          ) : (
-            <Trans i18nKey="dashboard.empty.show-more-dashboards">Show more</Trans>
-          )}
-        </Button>
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          numberOfPages={totalPages}
+          onNavigate={(page) => setCurrentPage(page)}
+          className={styles.pagination}
+        />
       )}
     </Stack>
   );
 };
 
-const TemplateDashboardBox = ({
-  dashboard,
-  onImportClick,
-  index,
-}: {
-  dashboard: PluginDashboard;
-  onImportClick: (d: PluginDashboard) => void;
-  index: number;
-}) => {
-  const dashboardLibraryImages = [
-    dashboardLibrary1,
-    dashboardLibrary2,
-    dashboardLibrary3,
-    dashboardLibrary4,
-    dashboardLibrary5,
-    dashboardLibrary6,
-  ];
-
-  const styles = useStyles2(getStyles);
-  return (
-    <Card onClick={() => onImportClick(dashboard)} className={styles.card} noMargin>
-      <Card.Heading>{dashboard.title}</Card.Heading>
-      <div className={styles.thumbnailContainer}>
-        <img
-          src={
-            index <= 5 ? dashboardLibraryImages[index] : dashboardLibraryImages[index % dashboardLibraryImages.length]
-          }
-          alt={dashboard.title}
-          className={styles.thumbnail}
-        />
-      </div>
-      <Card.Actions>
-        <Button
-          variant="secondary"
-          onClick={(e) => {
-            e.stopPropagation();
-            onImportClick(dashboard);
-          }}
-          size="sm"
-        >
-          <Trans i18nKey="dashboard.empty.use-template-button">Use this dashboard</Trans>
-        </Button>
-      </Card.Actions>
-    </Card>
-  );
-};
-
-function getStyles(theme: GrafanaTheme2, dashboardsLength?: number) {
+function getStyles(theme: GrafanaTheme2) {
   return {
-    card: css({
-      gridTemplateAreas: `
-        "Heading"
-        "Thumbnail"
-        "Actions"`,
-      gridTemplateRows: 'auto 200px auto',
-      minHeight: '320px',
-    }),
-    thumbnailContainer: css({
-      gridArea: 'Thumbnail',
-      width: '100%',
-      height: '100%',
-      overflow: 'hidden',
-      borderRadius: theme.shape.radius.default,
+    skeleton: css({
+      height: '300px',
       backgroundColor: theme.colors.background.secondary,
-      marginTop: theme.spacing(1),
-      marginBottom: theme.spacing(1),
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      borderRadius: theme.shape.radius.default,
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      },
+      '@keyframes pulse': {
+        '0%, 100%': {
+          opacity: 1,
+        },
+        '50%': {
+          opacity: 0.5,
+        },
+      },
     }),
-    thumbnail: css({
-      width: '100%',
-      height: '100%',
-      objectFit: 'contain',
-    }),
-    showMoreButton: css({
+    pagination: css({
+      position: 'sticky',
+      bottom: 0,
+      backgroundColor: theme.colors.background.primary,
+      paddingTop: theme.spacing(2),
+      paddingBottom: theme.spacing(1),
       marginTop: theme.spacing(2),
+      alignItems: 'center',
+      zIndex: 2,
     }),
   };
 }
