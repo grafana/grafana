@@ -32,6 +32,9 @@ type LegacyStorageGetterFunc func(schema.GroupVersionResource) grafanarest.Stora
 type LegacyStorageProvider interface {
 	GetLegacyStorage(schema.GroupVersionResource) grafanarest.Storage
 }
+
+// In the rare case that that legacy needs to support the status subresource
+// this hook allows providing a Storage instance to support dual writing
 type LegacyStatusProvider interface {
 	GetLegacyStatus(schema.GroupVersionResource, *apiserver.StatusREST) rest.Storage
 }
