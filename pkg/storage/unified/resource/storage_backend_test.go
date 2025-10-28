@@ -871,65 +871,53 @@ func TestKvStorageBackend_ListModifiedSince_WithFolder(t *testing.T) {
 	rv2, err := backend.WriteEvent(ctx, writeEvent2)
 	require.NoError(t, err)
 
-	t.Run("via event store (recent RV < 1 hour)", func(t *testing.T) {
-		// Use recent RV to trigger event store path
-		recentRV := rv1 - 1
+	tests := []struct {
+		name     string
+		sinceRV  func() int64
+		codePath string
+	}{
+		{
+			name:     "via event store (recent RV < 1 hour)",
+			sinceRV:  func() int64 { return rv1 - 1 },
+			codePath: "listModifiedSinceEventStore",
+		},
+		{
+			name:     "via data store (old RV > 1 hour)",
+			sinceRV:  func() int64 { return generateOldSnowflake(t) },
+			codePath: "listModifiedSinceDataStore",
+		},
+	}
 
-		// List resources via event store
-		rv, seq := backend.ListModifiedSince(ctx, ns, recentRV)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sinceRV := tt.sinceRV()
 
-		changes := make(map[string]*ModifiedResource)
-		for mr, err := range seq {
-			require.NoError(t, err, "Should not get error when Folder field is included")
-			require.Equal(t, ns.Group, mr.Key.Group)
-			require.Equal(t, ns.Namespace, mr.Key.Namespace)
-			require.Equal(t, ns.Resource, mr.Key.Resource)
-			changes[mr.Key.Name] = mr
-		}
+			// List resources
+			rv, seq := backend.ListModifiedSince(ctx, ns, sinceRV)
 
-		require.Greater(t, rv, recentRV)
-		require.Len(t, changes, 2, "Should return 2 resources")
+			changes := make(map[string]*ModifiedResource)
+			for mr, err := range seq {
+				require.NoError(t, err, "Should not get error when Folder field is included")
+				require.Equal(t, ns.Group, mr.Key.Group)
+				require.Equal(t, ns.Namespace, mr.Key.Namespace)
+				require.Equal(t, ns.Resource, mr.Key.Resource)
+				changes[mr.Key.Name] = mr
+			}
 
-		// Verify dashboard-1
-		require.Contains(t, changes, "dashboard-1")
-		require.Equal(t, rv1, changes["dashboard-1"].ResourceVersion)
-		require.Equal(t, objectToJSONBytes(t, testObj1), changes["dashboard-1"].Value)
+			require.Greater(t, rv, sinceRV)
+			require.Len(t, changes, 2, "Should return 2 resources")
 
-		// Verify dashboard-2
-		require.Contains(t, changes, "dashboard-2")
-		require.Equal(t, rv2, changes["dashboard-2"].ResourceVersion)
-		require.Equal(t, objectToJSONBytes(t, testObj2), changes["dashboard-2"].Value)
-	})
+			// Verify dashboard-1
+			require.Contains(t, changes, "dashboard-1")
+			require.Equal(t, rv1, changes["dashboard-1"].ResourceVersion)
+			require.Equal(t, objectToJSONBytes(t, testObj1), changes["dashboard-1"].Value)
 
-	t.Run("via data store (old RV > 1 hour)", func(t *testing.T) {
-		// Use old RV (2 hours) to trigger data store path
-		oldRV := generateOldSnowflake(t)
-
-		// List resources via data store
-		rv, seq := backend.ListModifiedSince(ctx, ns, oldRV)
-
-		changes := make(map[string]*ModifiedResource)
-		for mr, err := range seq {
-			require.NoError(t, err, "Should not get error when Folder field is included")
-			require.Equal(t, ns.Group, mr.Key.Group)
-			require.Equal(t, ns.Namespace, mr.Key.Namespace)
-			require.Equal(t, ns.Resource, mr.Key.Resource)
-			changes[mr.Key.Name] = mr
-		}
-
-		require.Greater(t, rv, oldRV)
-		require.GreaterOrEqual(t, len(changes), 2, "Should return at least 2 resources")
-
-		// Verify dashboard-1
-		require.Contains(t, changes, "dashboard-1")
-		require.Equal(t, rv1, changes["dashboard-1"].ResourceVersion)
-		require.Equal(t, objectToJSONBytes(t, testObj1), changes["dashboard-1"].Value)
-
-		// Verify dashboard-2
-		require.Contains(t, changes, "dashboard-2")
-		require.Equal(t, rv2, changes["dashboard-2"].ResourceVersion)
-		require.Equal(t, objectToJSONBytes(t, testObj2), changes["dashboard-2"].Value)
-	})
+			// Verify dashboard-2
+			require.Contains(t, changes, "dashboard-2")
+			require.Equal(t, rv2, changes["dashboard-2"].ResourceVersion)
+			require.Equal(t, objectToJSONBytes(t, testObj2), changes["dashboard-2"].Value)
+		})
+	}
 }
 
 func createAndSaveTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Context, ns NamespacedResource, uniqueStringGen func() string, updates int, deleted bool) *ModifiedResource {
