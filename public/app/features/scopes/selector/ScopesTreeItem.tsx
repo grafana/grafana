@@ -107,7 +107,6 @@ function TitleContent({ shouldHighlight, titleText, searchWords }: TitleContentP
 interface ExpandButtonProps {
   scopeNodeId: string;
   expanded: boolean;
-  titleText: string;
   onClick: () => void;
   children: React.ReactNode;
   controlsId: string;
@@ -120,7 +119,6 @@ interface ExpandButtonProps {
 function ScopeExpandButton({
   scopeNodeId,
   expanded,
-  titleText,
   onClick,
   children,
   controlsId,
@@ -134,7 +132,7 @@ function ScopeExpandButton({
   const buttonId = getTreeItemElementId(scopeNodeId) + '-button';
 
   const SelectComponent = () => {
-    if (!isSelectable) {
+    if (!isSelectable || expanded) {
       return null;
     }
     if (disableMultiSelect) {
@@ -279,7 +277,6 @@ export function ScopesTreeItem({
           <ScopeExpandButton
             scopeNodeId={treeNode.scopeNodeId}
             expanded={treeNode.expanded}
-            titleText={titleText}
             controlsId={childrenId}
             onClick={() => toggleExpandedNode(treeNode.scopeNodeId)}
             onSelect={() => (selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId))}

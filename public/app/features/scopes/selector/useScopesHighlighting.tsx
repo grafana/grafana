@@ -61,10 +61,6 @@ export function useScopesHighlighting({
         ? scopeNodes[scopeNodes[nodeId]?.spec.parentName]
         : undefined;
 
-      if (parentNode) {
-        parentNode.spec.disableMultiSelect = true;
-      }
-
       if (parentNode?.spec.disableMultiSelect && changeScopes && scopeNodes[nodeId]?.spec.linkId) {
         changeScopes([scopeNodes[nodeId].spec.linkId], parentNode.metadata.name);
         return;
