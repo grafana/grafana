@@ -3,13 +3,11 @@
 package apistore
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"time"
 
-	"gocloud.dev/blob/fileblob"
-	"gocloud.dev/blob/memblob"
+	badger "github.com/dgraph-io/badger/v4"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -53,18 +51,29 @@ func NewRESTOptionsGetterForClient(
 }
 
 func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, secrets secret.InlineSecureValueSupport) (*RESTOptionsGetter, error) {
-	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
-		Bucket: memblob.OpenBucket(&memblob.Options{}),
+	// Create BadgerDB with in-memory mode
+	db, err := badger.Open(badger.DefaultOptions("").
+		WithInMemory(true).
+		WithLogger(nil))
+	if err != nil {
+		return nil, err
+	}
+
+	kv := resource.NewBadgerKV(db)
+	backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
+		KvStore: kv,
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: backend,
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	return NewRESTOptionsGetterForClient(
 		resource.NewLocalResourceClient(server),
 		secrets,
@@ -83,25 +92,27 @@ func NewRESTOptionsGetterForFileXX(path string,
 		path = filepath.Join(os.TempDir(), "grafana-apiserver")
 	}
 
-	bucket, err := fileblob.OpenBucket(filepath.Join(path, "resource"), &fileblob.Options{
-		CreateDir: true,
-		Metadata:  fileblob.MetadataDontWrite, // skip
+	db, err := badger.Open(badger.DefaultOptions(filepath.Join(path, "badger")).
+		WithLogger(nil))
+	if err != nil {
+		return nil, err
+	}
+
+	kv := resource.NewBadgerKV(db)
+	backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
+		KvStore: kv,
 	})
 	if err != nil {
 		return nil, err
 	}
-	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
-		Bucket: bucket,
-	})
-	if err != nil {
-		return nil, err
-	}
+
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: backend,
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	return NewRESTOptionsGetterForClient(
 		resource.NewLocalResourceClient(server),
 		nil, // secrets

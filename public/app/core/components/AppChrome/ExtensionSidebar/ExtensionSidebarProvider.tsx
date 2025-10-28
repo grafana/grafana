@@ -14,7 +14,7 @@ const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-investigations-app',
   'grafana-assistant-app',
   'grafana-dash-app',
-  // The docs plugin ID is going to transition from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
+  // The docs plugin ID is transitioning from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
   // Support both until that migration is complete.
   'grafana-grafanadocsplugin-app',
   'grafana-pathfinder-app',
@@ -268,10 +268,10 @@ export function getComponentMetaFromComponentId(
   }
 }
 
-// The docs plugin ID is going to transition from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
+// The interactive learning plugin ID is transitioning from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
 // Support both until that migration is complete.
 // Prioritize the new plugin ID (grafana-pathfinder-app).
-export function getPathfinderPluginId(availableComponents: ExtensionPointPluginMeta): string | undefined {
+export function getInteractiveLearningPluginId(availableComponents: ExtensionPointPluginMeta): string | undefined {
   if (availableComponents.has('grafana-pathfinder-app')) {
     return 'grafana-pathfinder-app';
   }
