@@ -131,7 +131,7 @@ It also helps you avoid having several users build the same queries for the same
 
 You can see a list of these queries in the **Saved queries** drawer:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-queries-v12.2png.png" max-width="550px" alt="List of saved queries and the edit query form" caption="The Saved queries drawer accessed from Dashboards" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-v12.3.png" max-width="550px" alt="List of saved queries and the edit query form" caption="The Saved queries drawer accessed from Dashboards" >}}
 
 When you first open the drawer, the list of queries in the **All** tab is filtered by the data source of the panel.
 However, you can clear that filter to display all saved queries.
