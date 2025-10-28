@@ -950,15 +950,6 @@ export function getApplyToRowBgFn(
 }
 
 /** @internal */
-export function withDataLinksActionsTooltip(field: Field, cellType: TableCellDisplayMode) {
-  return (
-    cellType !== TableCellDisplayMode.DataLinks &&
-    cellType !== TableCellDisplayMode.Actions &&
-    (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0) > 1
-  );
-}
-
-/** @internal */
 export function canFieldBeColorized(
   cellType: TableCellDisplayMode,
   applyToRowBgFn?: (rowIndex: number) => CSSProperties
