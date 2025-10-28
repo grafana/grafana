@@ -242,6 +242,10 @@ func (m *mockZanzanaClient) Compile(ctx context.Context, id authlib.AuthInfo, re
 	return args.Get(0).(authlib.ItemChecker), args.Get(1).(authlib.Zookie), args.Error(2)
 }
 
+func (m *mockZanzanaClient) Mutate(ctx context.Context, req *authzextv1.MutateRequest) error {
+	return nil
+}
+
 func TestIntegrationTeamMembershipCollector(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
