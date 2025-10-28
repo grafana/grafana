@@ -557,7 +557,7 @@ This is demonstrated in the following example.
 
 The following table has six visible fields (columns) as well as a hidden field called "Style":
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-style-from-field-config-v12.3.png" max-width="750px" alt="Table that includes a hidden column" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-style-from-field-config-v12.3.png" max-width="750px" alt="Configuration of a table including the styling from field option" >}}
 
 - The "Style" field has JSON objects with CSS properties. (Note that they are formatted for use in CSV format in this example.)
 - The "Style" field is hidden using the **Table > Hide in table** override property.
@@ -565,7 +565,7 @@ The following table has six visible fields (columns) as well as a hidden field c
 
 The following image shows the "Info" field with the styling from the "Style" field applied:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-style-from-field-v12.3.png" max-width="750px" alt="Info field value in the tooltip of the Short text cell upon hover" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-style-from-field-v12.3.png" max-width="750px" alt="Info field with styling from Style field applied" >}}
 
 ### Standard options
 
