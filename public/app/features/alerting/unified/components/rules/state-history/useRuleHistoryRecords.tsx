@@ -16,26 +16,13 @@ import { useTheme2 } from '@grafana/ui';
 import { labelsMatchMatchers } from '../../../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 
-import { Line, LogRecord, extractCommonLabels, omitLabels } from './common';
+import { LogRecord, extractCommonLabels, historyDataFrameToLogRecords, omitLabels } from './common';
 
 export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filter?: string) {
   const theme = useTheme2();
 
   return useMemo(() => {
-    // merge timestamp with "line"
-    const tsValues = stateHistory?.data?.values[0] ?? [];
-    const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
-    const lines = stateHistory?.data?.values[1] ?? [];
-
-    const logRecords = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
-      const line = lines[index];
-      // values property can be undefined for some instance states (e.g. NoData)
-      if (isLine(line)) {
-        acc.push({ timestamp, line });
-      }
-
-      return acc;
-    }, []);
+    const logRecords = historyDataFrameToLogRecords(stateHistory);
 
     // group all records by alert instance (unique set of labels)
     const logRecordsByInstance = groupBy(logRecords, (record: LogRecord) => {
@@ -68,14 +55,6 @@ export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filter?: str
       totalRecordsCount: logRecords.length,
     };
   }, [stateHistory, filter, theme]);
-}
-
-export function isNumbers(value: unknown[]): value is number[] {
-  return value.every((v) => typeof v === 'number');
-}
-
-export function isLine(value: unknown): value is Line {
-  return typeof value === 'object' && value !== null && 'current' in value && 'previous' in value;
 }
 
 // Each alert instance is represented by a data frame

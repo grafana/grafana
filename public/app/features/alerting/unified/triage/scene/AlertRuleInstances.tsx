@@ -72,7 +72,7 @@ export function AlertRuleInstances({ ruleUID, depth = 0 }: AlertRuleInstancesPro
         depth={depth}
       >
         <div>
-          <Trans i18nKey="alerting.triage.no-instances-found">No alert instances found for rule: {ruleUID}</Trans>
+          <Trans i18nKey="alerting.triage.no-instances-found">No alert instances found for rule: {{ ruleUID }}</Trans>
         </div>
       </GenericRow>
     );
@@ -90,6 +90,7 @@ export function AlertRuleInstances({ ruleUID, depth = 0 }: AlertRuleInstancesPro
           commonLabels={commonLabels}
           leftColumnWidth={leftColumnWidth}
           timeRange={timeRange}
+          ruleUID={ruleUID}
           depth={depth}
         />
       ))}

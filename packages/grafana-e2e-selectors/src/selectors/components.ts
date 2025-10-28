@@ -33,6 +33,9 @@ export const versionedComponents = {
     ungroup: {
       '12.1.0': 'data-testid CanvasGridAddActions ungroup',
     },
+    ungroupRows: {
+      '12.1.0': 'data-testid CanvasGridAddActions ungroup-rows',
+    },
     addRow: {
       '12.1.0': 'data-testid CanvasGridAddActions add-row',
     },
@@ -511,6 +514,11 @@ export const versionedComponents = {
           Value: {
             '12.2.0': 'data-testid tableng footer value',
           },
+        },
+      },
+      Tooltip: {
+        Wrapper: {
+          '12.3.0': 'data-testid viz-tooltip-wrapper',
         },
       },
     },

@@ -47,6 +47,11 @@ export interface FileDropzoneProps {
    */
   fileListRenderer?: (file: DropzoneFile, removeFile: (file: DropzoneFile) => void) => ReactNode;
   onFileRemove?: (file: DropzoneFile) => void;
+  /**
+   * Optional id attribute for the underlying input element
+   * Use to link a label to the input for accessibility
+   */
+  id?: string;
 }
 
 export interface DropzoneFile {
@@ -58,7 +63,15 @@ export interface DropzoneFile {
   retryUpload?: () => void;
 }
 
-export function FileDropzone({ options, children, readAs, onLoad, fileListRenderer, onFileRemove }: FileDropzoneProps) {
+export function FileDropzone({
+  options,
+  children,
+  readAs,
+  onLoad,
+  fileListRenderer,
+  onFileRemove,
+  id,
+}: FileDropzoneProps) {
   const [files, setFiles] = useState<DropzoneFile[]>([]);
   const [fileErrors, setErrorMessages] = useState<FileError[]>([]);
 
@@ -218,7 +231,7 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
   return (
     <div className={styles.container}>
       <div data-testid="dropzone" {...getRootProps({ className: styles.dropzone })}>
-        <input {...getInputProps()} />
+        <input {...getInputProps()} id={id} />
         {children ?? <FileDropzoneDefaultChildren primaryText={getPrimaryText(files, options)} />}
       </div>
       {fileErrors.length > 0 && renderErrorMessages(fileErrors)}

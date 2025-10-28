@@ -206,6 +206,7 @@ func TestEventStore_Save_Get(t *testing.T) {
 		Name:            event.Name,
 		ResourceVersion: event.ResourceVersion,
 		Action:          event.Action,
+		Folder:          event.Folder,
 	}
 
 	retrievedEvent, err := store.Get(ctx, eventKey)
@@ -518,6 +519,7 @@ func TestEventStore_CleanupOldEvents(t *testing.T) {
 		Name:            oldEvent.Name,
 		ResourceVersion: oldEvent.ResourceVersion,
 		Action:          oldEvent.Action,
+		Folder:          oldEvent.Folder,
 	})
 	require.NoError(t, err)
 
@@ -528,6 +530,7 @@ func TestEventStore_CleanupOldEvents(t *testing.T) {
 		Name:            recentEvent.Name,
 		ResourceVersion: recentEvent.ResourceVersion,
 		Action:          recentEvent.Action,
+		Folder:          recentEvent.Folder,
 	})
 	require.NoError(t, err)
 
@@ -555,6 +558,7 @@ func TestEventStore_CleanupOldEvents(t *testing.T) {
 		Name:            recentEvent.Name,
 		ResourceVersion: recentEvent.ResourceVersion,
 		Action:          recentEvent.Action,
+		Folder:          recentEvent.Folder,
 	})
 	require.NoError(t, err, "Recent event should still exist")
 }
@@ -592,6 +596,7 @@ func TestEventStore_CleanupOldEvents_NoOldEvents(t *testing.T) {
 		Name:            event.Name,
 		ResourceVersion: event.ResourceVersion,
 		Action:          event.Action,
+		Folder:          event.Folder,
 	})
 	require.NoError(t, err, "Recent event should still exist")
 }
@@ -604,4 +609,54 @@ func TestEventStore_CleanupOldEvents_EmptyStore(t *testing.T) {
 	deletedCount, err := store.CleanupOldEvents(ctx, time.Now().Add(-24*time.Hour))
 	require.NoError(t, err)
 	assert.Equal(t, 0, deletedCount, "Should not have deleted any events from empty store")
+}
+
+func TestEventStore_BatchDelete(t *testing.T) {
+	ctx := context.Background()
+	store := setupTestEventStore(t)
+
+	// Create multiple events (more than batch size to test batching)
+	eventKeys := make([]string, 75)
+	for i := 0; i < 75; i++ {
+		event := Event{
+			Namespace:       "default",
+			Group:           "apps",
+			Resource:        "deployments",
+			Name:            "test-deployment",
+			ResourceVersion: int64(1000 + i),
+			Action:          DataActionCreated,
+			Folder:          "test-folder",
+			PreviousRV:      int64(999 + i),
+		}
+		err := store.Save(ctx, event)
+		require.NoError(t, err)
+
+		eventKeys[i] = EventKey{
+			Namespace:       event.Namespace,
+			Group:           event.Group,
+			Resource:        event.Resource,
+			Name:            event.Name,
+			ResourceVersion: event.ResourceVersion,
+			Action:          event.Action,
+			Folder:          event.Folder,
+		}.String()
+	}
+
+	// Batch delete all events
+	err := store.batchDelete(ctx, eventKeys)
+	require.NoError(t, err)
+
+	// Verify all events were deleted
+	for i := 0; i < 75; i++ {
+		_, err := store.Get(ctx, EventKey{
+			Namespace:       "default",
+			Group:           "apps",
+			Resource:        "deployments",
+			Name:            "test-deployment",
+			ResourceVersion: int64(1000 + i),
+			Action:          DataActionCreated,
+			Folder:          "test-folder",
+		})
+		require.Error(t, err, "Event should have been deleted")
+	}
 }

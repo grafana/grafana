@@ -37,6 +37,7 @@ import {
   setCurrentUser,
   setChromeHeaderHeightHook,
   setPluginLinksHook,
+  setHelpNavItemHook,
   setFolderPicker,
   setCorrelationsService,
   setPluginFunctionsHook,
@@ -60,6 +61,7 @@ import { AppWrapper } from './AppWrapper';
 import appEvents from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { useChromeHeaderHeight } from './core/components/AppChrome/TopBar/useChromeHeaderHeight';
+import { useHelpNode } from './core/components/AppChrome/TopBar/useHelpNode';
 import { LazyFolderPicker } from './core/components/NestedFolderPicker/LazyFolderPicker';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
@@ -100,6 +102,7 @@ import { usePluginFunctions } from './features/plugins/extensions/usePluginFunct
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { getAppPluginsToAwait, getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
+import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
@@ -133,6 +136,8 @@ export class GrafanaApp {
 
       // Let iframe container know grafana has started loading
       window.parent.postMessage('GrafanaAppInit', '*');
+
+      initSystemJSHooks();
 
       // Currently the OpenFeature API requires a signed in user. This means feature flags cannot be used
       // on the login page.
@@ -260,6 +265,7 @@ export class GrafanaApp {
         await preloadPlugins(appPluginsToAwait);
       }
 
+      setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);
       setPluginComponentHook(usePluginComponent);
       setPluginComponentsHook(usePluginComponents);

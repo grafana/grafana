@@ -1,4 +1,4 @@
-import { each, find, findIndex, flattenDeep, isArray, isBoolean, isString, map, max, some } from 'lodash';
+import { each, find, findIndex, flattenDeep, isArray, isString, map, max, some } from 'lodash';
 
 import {
   AnnotationQuery,
@@ -119,82 +119,20 @@ export class DashboardMigrator {
         }
       }
 
-      panelUpgrades.push((panel: any) => {
-        // rename panel type
-        if (panel.type === 'graphite') {
-          panel.type = 'graph';
-        }
-
-        if (panel.type !== 'graph') {
-          return panel;
-        }
-
-        if (isBoolean(panel.legend)) {
-          panel.legend = { show: panel.legend };
-        }
-
-        if (panel.grid) {
-          if (panel.grid.min) {
-            panel.grid.leftMin = panel.grid.min;
-            delete panel.grid.min;
-          }
-
-          if (panel.grid.max) {
-            panel.grid.leftMax = panel.grid.max;
-            delete panel.grid.max;
-          }
-        }
-
-        if (panel.y_format) {
-          if (!panel.y_formats) {
-            panel.y_formats = [];
-          }
-          panel.y_formats[0] = panel.y_format;
-          delete panel.y_format;
-        }
-
-        if (panel.y2_format) {
-          if (!panel.y_formats) {
-            panel.y_formats = [];
-          }
-          panel.y_formats[1] = panel.y2_format;
-          delete panel.y2_format;
-        }
-
-        return panel;
-      });
+      // we used to have graphite panel type migration logic here
+      // but this is handled by auto migration, see public/app/features/dashboard/state/getPanelPluginToMigrateTo.ts
     }
 
     // schema version 3 changes
     if (oldVersion < 3 && finalTargetVersion >= 3) {
-      // ensure panel IDs
-      let maxId = this.dashboard.getNextPanelId();
-      panelUpgrades.push((panel: PanelModel) => {
-        if (!panel.id) {
-          panel.id = maxId;
-          maxId += 1;
-        }
-
-        return panel;
-      });
+      // Panel ID assignment is now handled by ensurePanelsHaveUniqueIds() in DashboardModel
+      // and the grid layout migration properly handles panels without IDs in rows
     }
 
     // schema version 4 changes
     if (oldVersion < 4 && finalTargetVersion >= 4) {
-      // move aliasYAxis changes
-      panelUpgrades.push((panel: any) => {
-        if (panel.type !== 'graph') {
-          return panel;
-        }
-
-        each(panel.aliasYAxis, (value, key) => {
-          panel.seriesOverrides = [{ alias: key, yaxis: value }];
-        });
-
-        delete panel.aliasYAxis;
-
-        return panel;
-      });
+      // graph migration is handled through the auto migration
+      // see autoMigrateAngular map in public/app/features/dashboard/state/PanelModel.ts
     }
 
     if (oldVersion < 6 && finalTargetVersion >= 6) {
@@ -229,17 +167,6 @@ export class DashboardMigrator {
       if (old.nav && old.nav.length) {
         this.dashboard.timepicker = old.nav[0];
       }
-
-      // ensure query refIds
-      panelUpgrades.push((panel: any) => {
-        each(panel.targets, (target) => {
-          if (!target.refId) {
-            target.refId = panel.getNextQueryLetter && panel.getNextQueryLetter();
-          }
-        });
-
-        return panel;
-      });
     }
 
     if (oldVersion < 8 && finalTargetVersion >= 8) {
@@ -289,23 +216,8 @@ export class DashboardMigrator {
 
     // schema version 9 changes
     if (oldVersion < 9 && finalTargetVersion >= 9) {
-      // move aliasYAxis changes
-      panelUpgrades.push((panel: PanelModel) => {
-        if (panel.type !== 'singlestat' && panel.thresholds !== '') {
-          return panel;
-        }
-
-        if (panel.thresholds) {
-          const k = panel.thresholds.split(',');
-
-          if (k.length >= 3) {
-            k.shift();
-            panel.thresholds = k.join(',');
-          }
-        }
-
-        return panel;
-      });
+      // singlestat panel is automigrated to stat panel
+      // see autoMigrateAngular map in public/app/features/dashboard/state/PanelModel.ts
     }
 
     // schema version 10 changes
@@ -903,13 +815,14 @@ export class DashboardMigrator {
     let yPos = 0;
     const widthFactor = GRID_COLUMN_COUNT / 12;
 
-    const maxPanelId = max(
-      flattenDeep(
-        map(old.rows, (row) => {
-          return map(row.panels, 'id');
-        })
-      )
-    );
+    const maxPanelId =
+      max(
+        flattenDeep(
+          map(old.rows, (row) => {
+            return map(row.panels, 'id');
+          })
+        ).filter((id) => id != null)
+      ) || 0;
     let nextRowId = maxPanelId + 1;
 
     if (!old.rows) {

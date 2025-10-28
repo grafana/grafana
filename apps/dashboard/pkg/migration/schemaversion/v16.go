@@ -271,19 +271,30 @@ func (r *rowArea) getPanelPosition(panelHeight int, panelWidth int) map[string]i
 
 func getMaxPanelID(rows []interface{}) int {
 	maxID := 0
+	hasValidID := false
+
 	for _, rowInterface := range rows {
 		if row, ok := rowInterface.(map[string]interface{}); ok {
 			if panels, ok := row["panels"].([]interface{}); ok {
 				for _, panelInterface := range panels {
 					if panel, ok := panelInterface.(map[string]interface{}); ok {
-						if id := GetIntValue(panel, "id", 0); id > maxID {
-							maxID = id
+						if id := GetIntValue(panel, "id", 0); id > 0 {
+							hasValidID = true
+							if id > maxID {
+								maxID = id
+							}
 						}
 					}
 				}
 			}
 		}
 	}
+
+	// If no valid IDs found, return 0 (matches frontend behavior)
+	if !hasValidID {
+		return 0
+	}
+
 	return maxID
 }
 
@@ -327,7 +338,9 @@ func calculatePanelDimensionsFromSpan(span float64, panel map[string]interface{}
 		}
 	}
 
-	panelWidth := int(math.Floor(span * widthFactor))
+	// Match frontend logic: Math.floor(panel.span) * widthFactor (line 914 in DashboardMigrator.ts)
+	// Frontend floors the span FIRST, then multiplies by widthFactor
+	panelWidth := int(math.Floor(span)) * int(widthFactor)
 	panelHeight := defaultHeight
 
 	if panelHeightValue, hasHeight := panel["height"]; hasHeight {
