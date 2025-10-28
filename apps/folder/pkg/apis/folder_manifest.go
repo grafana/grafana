@@ -13,13 +13,15 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 )
 
 var appManifestData = app.ManifestData{
-	AppName: "folder",
-	Group:   "folder.grafana.app",
+	AppName:          "folder",
+	Group:            "folder.grafana.app",
+	PreferredVersion: "v1beta1",
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v1beta1",
@@ -35,6 +37,7 @@ var appManifestData = app.ManifestData{
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{},
 				Cluster:    map[string]spec3.PathProps{},
+				Schemas:    map[string]spec.Schema{},
 			},
 		},
 	},

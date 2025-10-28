@@ -41,7 +41,7 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 		response.Error = fmt.Errorf("error unmarshaling backend query model: %v", err)
 		span.RecordError(response.Error)
 		span.SetStatus(codes.Error, response.Error.Error())
-		return err
+		return backend.DownstreamErrorf("error unmarshaling backend query model: %v", err)
 	}
 
 	var sr *tempopb.SearchRequest
@@ -50,11 +50,11 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 		response.Error = fmt.Errorf("error unmarshaling Tempo query model: %v", err)
 		span.RecordError(response.Error)
 		span.SetStatus(codes.Error, response.Error.Error())
-		return err
+		return backend.DownstreamErrorf("failed to unmarshall Tempo query model: %w", err)
 	}
 
 	if sr.GetQuery() == "" {
-		return fmt.Errorf("query is empty")
+		return backend.DownstreamErrorf("tempo search query cannot be empty")
 	}
 
 	sr.Start = uint32(backendQuery.TimeRange.From.Unix())
@@ -65,6 +65,9 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		s.logger.Error("Error Search()", "err", err)
+		if backend.IsDownstreamHTTPError(err) {
+			return backend.DownstreamError(err)
+		}
 		return err
 	}
 

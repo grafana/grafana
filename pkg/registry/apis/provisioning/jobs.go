@@ -20,16 +20,23 @@ type JobQueueGetter interface {
 }
 
 type jobsConnector struct {
-	repoGetter RepoGetter
-	jobs       JobQueueGetter
-	historic   jobs.HistoryReader
+	repoGetter            RepoGetter
+	statusPatcherProvider StatusPatcherProvider
+	jobs                  JobQueueGetter
+	historic              jobs.HistoryReader
 }
 
-func NewJobsConnector(repoGetter RepoGetter, jobs JobQueueGetter, historic jobs.HistoryReader) *jobsConnector {
+func NewJobsConnector(
+	repoGetter RepoGetter,
+	statusPatcherProvider StatusPatcherProvider,
+	jobs JobQueueGetter,
+	historic jobs.HistoryReader,
+) *jobsConnector {
 	return &jobsConnector{
-		repoGetter: repoGetter,
-		jobs:       jobs,
-		historic:   historic,
+		repoGetter:            repoGetter,
+		statusPatcherProvider: statusPatcherProvider,
+		jobs:                  jobs,
+		historic:              historic,
 	}
 }
 
@@ -101,7 +108,17 @@ func (c *jobsConnector) Connect(
 			responder.Error(err)
 			return
 		}
+
 		cfg := repo.Config()
+
+		if cfg.DeletionTimestamp != nil && !cfg.DeletionTimestamp.IsZero() {
+			responder.Error(apierrors.NewConflict(
+				provisioning.RepositoryResourceInfo.GroupResource(),
+				"cannot create jobs for a repository marked for deletion",
+				fmt.Errorf("cannot create jobs for a repository marked for deletion"),
+			))
+			return
+		}
 
 		if idx > 0 {
 			responder.Error(apierrors.NewBadRequest("can not post to a job UID"))
@@ -114,6 +131,23 @@ func (c *jobsConnector) Connect(
 			return
 		}
 		spec.Repository = name
+
+		// If a sync job is being created, we should update its status to pending.
+		if spec.Pull != nil {
+			err = c.statusPatcherProvider.GetStatusPatcher().Patch(ctx, cfg, map[string]interface{}{
+				"op":   "replace",
+				"path": "/status/sync",
+				"value": &provisioning.SyncStatus{
+					State:   provisioning.JobStatePending,
+					LastRef: cfg.Status.Sync.LastRef,
+					Started: time.Now().UnixMilli(),
+				},
+			})
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+		}
 
 		job, err := c.jobs.GetJobQueue().Insert(ctx, cfg.Namespace, spec)
 		if err != nil {

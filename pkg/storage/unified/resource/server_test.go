@@ -3,24 +3,23 @@ package resource
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"log/slog"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	badger "github.com/dgraph-io/badger/v4"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gocloud.dev/blob/fileblob"
-	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -39,20 +38,19 @@ func TestSimpleServer(t *testing.T) {
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), testUserA)
 
-	bucket := memblob.OpenBucket(nil)
-	if false {
-		tmp, err := os.MkdirTemp("", "xxx-*")
+	// Create in-memory BadgerDB for testing
+	db, err := badger.Open(badger.DefaultOptions("").
+		WithInMemory(true).
+		WithLogger(nil))
+	require.NoError(t, err)
+	defer func() {
+		err := db.Close()
 		require.NoError(t, err)
+	}()
 
-		bucket, err = fileblob.OpenBucket(tmp, &fileblob.Options{
-			CreateDir: true,
-			Metadata:  fileblob.MetadataDontWrite, // skip
-		})
-		require.NoError(t, err)
-		fmt.Printf("ROOT: %s\n\n", tmp)
-	}
-	store, err := NewCDKBackend(ctx, CDKBackendOptions{
-		Bucket: bucket,
+	kv := NewBadgerKV(db)
+	store, err := NewKVStorageBackend(KVBackendOptions{
+		KvStore: kv,
 	})
 	require.NoError(t, err)
 
@@ -365,7 +363,7 @@ func TestSimpleServer(t *testing.T) {
 
 		invalidQualifiedNames := []string{
 			"",                                     // empty
-			strings.Repeat("1", MaxNameLength+1),   // too long
+			strings.Repeat("1", 260),               // too long
 			"    ",                                 // only spaces
 			"f8cc010c.ee72.4681;89d2+d46e1bd47d33", // invalid chars
 		}
@@ -477,11 +475,12 @@ func TestSimpleServer(t *testing.T) {
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
 
-		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
+		rsp, _ := server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
-		require.ErrorIs(t, err, ErrOptimisticLockingFailed)
+		require.Equal(t, rsp.Error.Code, ErrOptimisticLockingFailed.Code)
+		require.Equal(t, rsp.Error.Message, ErrOptimisticLockingFailed.Message)
 	})
 }
 
@@ -585,4 +584,31 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 		log: slog.Default(),
 	}
 	return s, q
+}
+
+func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
+	s := &server{artificialSuccessfulWriteDelay: 1 * time.Millisecond}
+
+	check := func(t *testing.T, expectedSleep bool, res responseWithErrorResult, err error) {
+		slept := s.sleepAfterSuccessfulWriteOperation(res, err)
+		require.Equal(t, expectedSleep, slept)
+	}
+
+	// Successful responses should sleep
+	check(t, true, nil, nil)
+
+	check(t, true, (responseWithErrorResult)((*resourcepb.CreateResponse)(nil)), nil)
+	check(t, true, &resourcepb.CreateResponse{}, nil)
+
+	check(t, true, (responseWithErrorResult)((*resourcepb.UpdateResponse)(nil)), nil)
+	check(t, true, &resourcepb.UpdateResponse{}, nil)
+
+	check(t, true, (responseWithErrorResult)((*resourcepb.DeleteResponse)(nil)), nil)
+	check(t, true, &resourcepb.DeleteResponse{}, nil)
+
+	// Failed responses should return without sleeping
+	check(t, false, nil, errors.New("some error"))
+	check(t, false, &resourcepb.CreateResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
+	check(t, false, &resourcepb.UpdateResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
+	check(t, false, &resourcepb.DeleteResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
 }

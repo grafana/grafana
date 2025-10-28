@@ -15,6 +15,7 @@ import (
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -26,14 +27,19 @@ func TestIntegrationStars(t *testing.T) {
 
 	for _, mode := range []grafanarest.DualWriterMode{
 		grafanarest.Mode0,
-		grafanarest.Mode2, // anything past 2 will fail
+		grafanarest.Mode2,
+		grafanarest.Mode3,
+		grafanarest.Mode5,
 	} {
+		flags := []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs}
+		if mode > grafanarest.Mode2 {
+			flags = append(flags, featuremgmt.FlagKubernetesStars)
+		}
+
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction: false, // required for experimental APIs
-			DisableAnonymous:  true,
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-			},
+			AppModeProduction:    false, // required for experimental APIs
+			DisableAnonymous:     true,
+			EnableFeatureToggles: flags,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: mode,
@@ -64,6 +70,17 @@ func TestIntegrationStars(t *testing.T) {
 				User: helper.Org1.Admin,
 				GVR:  dashboardV1.DashboardResourceInfo.GroupVersionResource(),
 			})
+
+			history := &queryhistory.QueryHistoryResponse{}
+			legacyHistoryResponse := apis.DoRequest(helper, apis.RequestParams{
+				User:   starsClient.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/query-history",
+				Body:   []byte(`{"dataSourceUid":"eez1ebbdn3pq8b","queries":[{"scenarioId":"random_walk","seriesCount":1,"refId":"A","datasource":{"type":"grafana-testdata-datasource","uid":"eez1ebbdn3pq8b","apiVersion":"v0alpha1"}}]}`),
+			}, &history)
+			require.Equal(t, http.StatusOK, legacyHistoryResponse.Response.StatusCode, "add query history")
+			queryHistoryStarUID := history.Result.UID
+			require.NotEmpty(t, queryHistoryStarUID, "expect a query history UID")
 
 			// Create 5 dashboards
 			for i := range 5 {
@@ -140,7 +157,7 @@ func TestIntegrationStars(t *testing.T) {
 
 			// Change stars via k8s update
 			rspObj, err = starsClient.Resource.Update(ctx, &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"metadata": map[string]any{
 						"name":      "user-" + starsClient.Args.User.Identity.GetIdentifier(),
 						"namespace": "default",
@@ -164,8 +181,44 @@ func TestIntegrationStars(t *testing.T) {
 			require.Equal(t, "dashboard.grafana.app", resources[0].Group)
 			require.Equal(t, "Dashboard", resources[0].Kind)
 			require.ElementsMatch(t,
-				[]string{"test-2", "aaa", "bbb"}, // NOTE 2 stays, 3 removed, added aaa+bbb
+				[]string{"aaa", "bbb", "test-2"}, // NOTE 2 stays, 3 removed, added aaa+bbb (and sorted!)
 				resources[0].Names)
+
+			// Query history stars
+			legacyHistoryResponse = apis.DoRequest(helper, apis.RequestParams{
+				User:   starsClient.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/query-history/star/" + queryHistoryStarUID,
+			}, &history)
+			require.Equal(t, http.StatusOK, legacyHistoryResponse.Response.StatusCode, "add query history")
+			require.True(t, history.Result.Starred, "expect the value to be starred")
+
+			rspObj, err = starsClient.Resource.Get(ctx, "user-"+starsClient.Args.User.Identity.GetIdentifier(), metav1.GetOptions{})
+			require.NoError(t, err)
+
+			after = typed(t, rspObj, &preferences.Stars{})
+			jj, err := json.MarshalIndent(after.Spec, "", "  ")
+			require.NoError(t, err)
+			require.JSONEq(t, `{
+					"resource": [
+						{
+							"group": "dashboard.grafana.app",
+							"kind": "Dashboard",
+							"names": [
+								"aaa",
+								"bbb",
+								"test-2"
+							]
+						},
+						{
+							"group": "history.grafana.app",
+							"kind": "Query",
+							"names": [
+								"`+queryHistoryStarUID+`"
+							]
+						}
+					]
+				}`, string(jj))
 
 			// Viewer does not have any stars
 			rsp, err = starsClientViewer.Resource.List(ctx, metav1.ListOptions{})

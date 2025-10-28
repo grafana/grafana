@@ -14,6 +14,6 @@ type NoopAlwaysAllowedAuthorizer struct{}
 
 var _ contracts.DecryptAuthorizer = &NoopAlwaysAllowedAuthorizer{}
 
-func (a *NoopAlwaysAllowedAuthorizer) Authorize(context.Context, xkube.Namespace, string, []string, []metav1.OwnerReference) (string, bool) {
-	return "", true
+func (a *NoopAlwaysAllowedAuthorizer) Authorize(context.Context, xkube.Namespace, string, []string, []metav1.OwnerReference) (string, bool, string) {
+	return "", true, ""
 }

@@ -6,14 +6,15 @@ import (
 	"path/filepath"
 	"time"
 
+	badger "github.com/dgraph-io/badger/v4"
 	otgrpc "github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"gocloud.dev/blob/fileblob"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/flagext"
@@ -59,12 +60,13 @@ func ProvideUnifiedStorageClient(opts *Options,
 	// See: apiserver.applyAPIServerConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
-		StorageType:         options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
-		DataPath:            apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
-		Address:             apiserverCfg.Key("address").MustString(""),
-		SearchServerAddress: apiserverCfg.Key("search_server_address").MustString(""),
-		BlobStoreURL:        apiserverCfg.Key("blob_url").MustString(""),
-		BlobThresholdBytes:  apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
+		StorageType:             options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
+		DataPath:                apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
+		Address:                 apiserverCfg.Key("address").MustString(""),
+		SearchServerAddress:     apiserverCfg.Key("search_server_address").MustString(""),
+		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
+		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
+		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
 	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues)
 	if err == nil {
 		// Decide whether to disable SQL fallback stats per resource in Mode 5.
@@ -109,19 +111,22 @@ func newClient(opts options.StorageOptions,
 		if opts.DataPath == "" {
 			opts.DataPath = filepath.Join(cfg.DataPath, "grafana-apiserver")
 		}
-		bucket, err := fileblob.OpenBucket(filepath.Join(opts.DataPath, "resource"), &fileblob.Options{
-			CreateDir: true,
-			Metadata:  fileblob.MetadataDontWrite, // skip
+
+		// Create BadgerDB instance
+		db, err := badger.Open(badger.DefaultOptions(filepath.Join(opts.DataPath, "badger")).
+			WithLogger(nil))
+		if err != nil {
+			return nil, err
+		}
+
+		kv := resource.NewBadgerKV(db)
+		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
+			KvStore: kv,
 		})
 		if err != nil {
 			return nil, err
 		}
-		backend, err := resource.NewCDKBackend(ctx, resource.CDKBackendOptions{
-			Bucket: bucket,
-		})
-		if err != nil {
-			return nil, err
-		}
+
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 			Backend: backend,
 			Blob: resource.BlobConfig{
@@ -145,13 +150,13 @@ func newClient(opts options.StorageOptions,
 			metrics   = newClientMetrics(reg)
 		)
 
-		conn, err = newGrpcConn(opts.Address, metrics, features)
+		conn, err = newGrpcConn(opts.Address, metrics, features, opts.GrpcClientKeepaliveTime)
 		if err != nil {
 			return nil, err
 		}
 
 		if opts.SearchServerAddress != "" {
-			indexConn, err = newGrpcConn(opts.SearchServerAddress, metrics, features)
+			indexConn, err = newGrpcConn(opts.SearchServerAddress, metrics, features, opts.GrpcClientKeepaliveTime)
 
 			if err != nil {
 				return nil, err
@@ -219,17 +224,18 @@ func newClient(opts options.StorageOptions,
 	}
 }
 
-func newGrpcConn(address string, metrics *clientMetrics, features featuremgmt.FeatureToggles) (grpc.ClientConnInterface, error) {
+func newGrpcConn(address string, metrics *clientMetrics, features featuremgmt.FeatureToggles, clientKeepaliveTime time.Duration) (grpc.ClientConnInterface, error) {
 	// Create either a connection pool or a single connection.
 	// The connection pool __can__ be useful when connection to
 	// server side load balancers like kube-proxy.
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageGrpcConnectionPool) {
 		conn, err := newPooledConn(&poolOpts{
 			initialCapacity: 3,
 			maxCapacity:     6,
 			idleTimeout:     time.Minute,
 			factory: func() (*grpc.ClientConn, error) {
-				return grpcConn(address, metrics)
+				return grpcConn(address, metrics, clientKeepaliveTime)
 			},
 		})
 		if err != nil {
@@ -239,7 +245,7 @@ func newGrpcConn(address string, metrics *clientMetrics, features featuremgmt.Fe
 		return conn, nil
 	}
 
-	conn, err := grpcConn(address, metrics)
+	conn, err := grpcConn(address, metrics, clientKeepaliveTime)
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +254,7 @@ func newGrpcConn(address string, metrics *clientMetrics, features featuremgmt.Fe
 }
 
 // grpcConn creates a new gRPC connection to the provided address.
-func grpcConn(address string, metrics *clientMetrics) (*grpc.ClientConn, error) {
+func grpcConn(address string, metrics *clientMetrics, clientKeepaliveTime time.Duration) (*grpc.ClientConn, error) {
 	// Report gRPC status code errors as labels.
 	unary, stream := instrument(metrics.requestDuration, middleware.ReportGRPCStatusOption)
 
@@ -281,14 +287,22 @@ func grpcConn(address string, metrics *clientMetrics) (*grpc.ClientConn, error) 
 	// This reduces the number of requests made to the DNS servers.
 	opts = append(opts, grpc.WithDisableServiceConfig())
 
+	if clientKeepaliveTime > 0 {
+		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:                clientKeepaliveTime,
+			Timeout:             10 * time.Second,
+			PermitWithoutStream: true,
+		}))
+	}
 	// Create a connection to the gRPC server
 	return grpc.NewClient(address, opts...)
 }
 
 // GrpcConn is the public constructor that can be used for testing.
+// TODO: also use grpc_client_keepalive_time here.
 func GrpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, error) {
 	metrics := newClientMetrics(reg)
-	return grpcConn(address, metrics)
+	return grpcConn(address, metrics, 0)
 }
 
 // instrument is the same as grpcclient.Instrument but without the middleware.ClientUserHeaderInterceptor

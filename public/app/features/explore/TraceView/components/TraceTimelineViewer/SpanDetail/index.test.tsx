@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-jest.mock('../utils');
+jest.mock('../../utils/date');
 
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -25,7 +25,7 @@ import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import traceGenerator from '../../demo/trace-generators';
 import transformTraceData from '../../model/transform-trace-data';
 import { TraceSpanReference } from '../../types/trace';
-import { formatDuration } from '../utils';
+import { formatDuration } from '../../utils/date';
 
 import DetailState from './DetailState';
 
@@ -253,6 +253,7 @@ describe('<SpanDetail>', () => {
   it('renders deep link URL', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     expect(screen.getByTestId('share-span-button')).toBeInTheDocument();
+    expect(screen.getByText('test-spanID')).toBeInTheDocument();
   });
 
   it('renders the flame graph', async () => {

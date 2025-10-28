@@ -5,11 +5,15 @@ import (
 	"errors"
 	"net/http"
 
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	clientrest "k8s.io/client-go/rest"
+
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
 type RestConfigProvider interface {
+	// GetRestConfig returns a k8s client configuration that is used to provide connection info and auth for the loopback transport.
+	// context is only available for tracing in this immediate function and is not to be confused with the context seen by any client verb actions that are invoked with the retrieved rest config.
+	// - those client verb actions have the ability to specify their own context.
 	GetRestConfig(context.Context) (*clientrest.Config, error)
 }
 
@@ -49,6 +53,7 @@ var (
 // eventualRestConfigProvider is a RestConfigProvider that will not return a rest config until the ready channel is closed.
 // This exists to alleviate a circular dependency between the apiserver.server's dependencies and their dependencies wanting a rest config.
 // Importantly, this is handled by wire as opposed to a mutable global.
+// NOTE: this implementation's GetRestConfig can't be used in (wire-based) Provide functions, or a function called by Provide functions. TODO: determine why that is. @charandas: in one such attempt, the GetRestConfig waits forever and Grafana doesn't start.
 type eventualRestConfigProvider struct {
 	// When this channel is closed, we can start returning the rest config.
 	ready chan struct{}

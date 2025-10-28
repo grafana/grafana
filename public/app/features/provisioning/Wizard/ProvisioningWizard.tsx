@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getAppEvents, isFetchError } from '@grafana/runtime';
+import { getAppEvents, isFetchError, reportInteraction } from '@grafana/runtime';
 import { Box, Button, ConfirmModal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RepositoryViewList, useDeleteRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
@@ -14,7 +14,7 @@ import { getDefaultValues } from '../Config/defaults';
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
-import { dataToSpec } from '../utils/data';
+import { dataToSpec, getWorkflows } from '../utils/data';
 import { getFormErrors } from '../utils/getFormErrors';
 
 import { BootstrapStep } from './BootstrapStep';
@@ -176,6 +176,11 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
       if (previousStepIndex >= 0) {
         const previousStep = steps[previousStepIndex];
+        reportInteraction('grafana_provisioning_wizard_previous_clicked', {
+          fromStep: activeStep,
+          toStep: previousStep.id,
+          repositoryType: repoType,
+        });
         setActiveStep(previousStep.id);
         // Remove current step from completed steps when going back
         setCompletedSteps((prev) => prev.filter((step) => step !== activeStep));
@@ -209,6 +214,10 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
   const handleConfirmCancel = () => {
     setShowCancelConfirmation(false);
+    reportInteraction('grafana_provisioning_wizard_cancelled', {
+      cancelledAtStep: activeStep,
+      repositoryType: repoType,
+    });
     handleRepositoryDeletion(repoName);
   };
 
@@ -254,6 +263,12 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
     // Only navigate to provisioning URL if we're on the actual last step
     if (isLastStep) {
+      const formData = getValues();
+      reportInteraction('grafana_provisioning_repository_created', {
+        repositoryType: repoType,
+        target: syncTarget,
+        workflowsEnabled: getWorkflows(formData.repository),
+      });
       navigate(PROVISIONING_URL);
     } else {
       let nextStepIndex = currentStepIndex + 1;
@@ -273,6 +288,12 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
         navigate(PROVISIONING_URL);
         return;
       }
+
+      reportInteraction('grafana_provisioning_wizard_step_completed', {
+        step: activeStep,
+        repositoryType: repoType,
+        target: syncTarget,
+      });
 
       setActiveStep(steps[nextStepIndex].id);
       setCompletedSteps((prev) => [...new Set([...prev, activeStep])]);
