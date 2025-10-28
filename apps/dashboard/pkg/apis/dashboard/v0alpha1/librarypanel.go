@@ -69,7 +69,7 @@ type LibraryPanelSpec struct {
 	Links []common.Unstructured `json:"links,omitempty"`
 
 	// The datasource queries
-	// +listType=set
+	// +listType=atomic
 	Targets []data.DataQuery `json:"targets,omitempty"`
 }
 
