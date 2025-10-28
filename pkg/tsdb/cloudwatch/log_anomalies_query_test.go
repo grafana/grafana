@@ -103,8 +103,13 @@ func Test_executeLogAnomaliesQuery_returns_data_frames(t *testing.T) {
 				Description:        aws.String("Description 1"),
 				State:              cloudwatchLogsTypes.StateActive,
 				Priority:           aws.String("high"),
-				PatternString:          aws.String(`{"ClusterName":"PetSite","Namespace":"default","Service":"service-petsite",,"instance":"instance"-5:Token-6,"job":"kubernetes-service-endpoints","pod_name":"pod_name"-9,"prom_metric_type":"counter"}`),
+				PatternString:      aws.String(`{"ClusterName":"PetSite","Namespace":"default","Service":"service-petsite",,"instance":"instance"-5:Token-6,"job":"kubernetes-service-endpoints","pod_name":"pod_name"-9,"prom_metric_type":"counter"}`),
 				Suppressed:         aws.Bool(false),
+				Histogram: map[string]int64{
+					"1622505600000": 5,
+					"1622519200000": 10,
+					"1622532800000": 7,
+				},
 			},
 			{
 				AnomalyId:          aws.String("anomaly-2"),
@@ -115,8 +120,11 @@ func Test_executeLogAnomaliesQuery_returns_data_frames(t *testing.T) {
 				Description:        aws.String("Description 2"),
 				State:              cloudwatchLogsTypes.StateSuppressed,
 				Priority:           aws.String("low"),
-				PatternString:          aws.String(`{"ClusterName":"PetSite","Namespace":"default","Service":"service-petsite","dotnet_collection_count_total":"dotnet_collection_count_total"-3}`),
+				PatternString:      aws.String(`{"ClusterName":"PetSite","Namespace":"default","Service":"service-petsite","dotnet_collection_count_total":"dotnet_collection_count_total"-3}`),
 				Suppressed:         aws.Bool(true),
+				Histogram: map[string]int64{
+					"1622592000000": 3,
+				},
 			},
 		}}
 
@@ -161,33 +169,43 @@ func Test_executeLogAnomaliesQuery_returns_data_frames(t *testing.T) {
 			assert.Equal(t, "high", priorityField.At(0))
 			assert.Equal(t, "low", priorityField.At(1))
 
-			patternIdField := frame.Fields[3]
-			assert.Equal(t, "patternString", patternIdField.Name)
-			assert.Equal(t, `{"ClusterName":"PetSite","Namespace":"default","Service":"service-petsite",,"instance":"instance"-5:Token-6,"job":"kubernetes-service-endpoints","pod_name":"pod_name"-9,"prom_metric_type":"counter"}`, patternIdField.At(0))
-			assert.Equal(t, `{"ClusterName":"PetSite","Namespace":"default","Service":"service-petsite","dotnet_collection_count_total":"dotnet_collection_count_total"-3}`, patternIdField.At(1))
+			patternStringField := frame.Fields[3]
+			assert.Equal(t, "patternString", patternStringField.Name)
+			assert.Equal(t, `{"ClusterName":"PetSite","Namespace":"default","Service":"service-petsite",,"instance":"instance"-5:Token-6,"job":"kubernetes-service-endpoints","pod_name":"pod_name"-9,"prom_metric_type":"counter"}`, patternStringField.At(0))
+			assert.Equal(t, `{"ClusterName":"PetSite","Namespace":"default","Service":"service-petsite","dotnet_collection_count_total":"dotnet_collection_count_total"-3}`, patternStringField.At(1))
 
+			histogramField := frame.Fields[4]
+			assert.Equal(t, "logTrend", histogramField.Name)
 
-			firstSeenField := frame.Fields[4]
+			histogram0 := histogramField.At(0).(*json.RawMessage)
+			var histData0 map[string]int64
+			err = json.Unmarshal(*histogram0, &histData0)
+			assert.NoError(t, err)
+			assert.Equal(t, int64(5), histData0["1622505600000"])
+			assert.Equal(t, int64(10), histData0["1622519200000"])
+			assert.Equal(t, int64(7), histData0["1622532800000"])
+
+			firstSeenField := frame.Fields[5]
 			assert.Equal(t, "firstSeen", firstSeenField.Name)
 			assert.Equal(t, time.Unix(1622505600, 0), firstSeenField.At(0))
 			assert.Equal(t, time.Unix(1622592000, 0), firstSeenField.At(1))
 
-			lastSeenField := frame.Fields[5]
+			lastSeenField := frame.Fields[6]
 			assert.Equal(t, "lastSeen", lastSeenField.Name)
 			assert.Equal(t, time.Unix(1622592000, 0), lastSeenField.At(0))
 			assert.Equal(t, time.Unix(1622678400, 0), lastSeenField.At(1))
 
-			suppressedField := frame.Fields[6]
+			suppressedField := frame.Fields[7]
 			assert.Equal(t, "suppressed", suppressedField.Name)
 			assert.Equal(t, false, suppressedField.At(0))
 			assert.Equal(t, true, suppressedField.At(1))
 
-			logGroupArnListField := frame.Fields[7]
+			logGroupArnListField := frame.Fields[8]
 			assert.Equal(t, "logGroupArnList", logGroupArnListField.Name)
 			assert.Equal(t, "arn:aws:logs:us-east-1:1234567:log-group-1:id-1,arn:aws:logs:us-east-1:1234567:log-group-2:id-2", logGroupArnListField.At(0))
 			assert.Equal(t, "arn:aws:logs:us-east-1:1234567:log-group-1:id-3,arn:aws:logs:us-east-1:1234567:log-group-2:id-4", logGroupArnListField.At(1))
 
-			anomalyDetectorArnField := frame.Fields[8]
+			anomalyDetectorArnField := frame.Fields[9]
 			assert.Equal(t, "anomalyArn", anomalyDetectorArnField.Name)
 			assert.Equal(t, "arn:aws:logs:us-east-1:123456789012:anomaly-detector:anomaly-detector-1", anomalyDetectorArnField.At(0))
 			assert.Equal(t, "arn:aws:logs:us-east-1:123456789012:anomaly-detector:anomaly-detector-2", anomalyDetectorArnField.At(1))

@@ -23,6 +23,8 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
+  Field,
+  FieldType,
   LoadingState,
   LogRowContextOptions,
   LogRowContextQueryDirection,
@@ -33,6 +35,8 @@ import {
 } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 import { type CustomFormatterVariable } from '@grafana/scenes';
+import { GraphDrawStyle } from '@grafana/schema/dist/esm/index';
+import { TableCellDisplayMode } from '@grafana/ui';
 
 import {
   CloudWatchJsonData,
@@ -184,7 +188,16 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       })),
     };
 
-    return queryFn(requestParams);
+    return queryFn(requestParams).pipe(
+      mergeMap((dataQueryResponse) => {
+        return from(
+          (async () => {
+            converTrendHistogramToSparkline(dataQueryResponse);
+            return dataQueryResponse;
+          })()
+        );
+      })
+    );
   };
 
   /**
@@ -502,10 +515,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const hasMissingQueryString = !query.expression?.length;
 
     // log groups are not mandatory if language is SQL and LogsMode is not Insights
-    const isInvalidCWLIQuery =
-      query.queryLanguage !== 'SQL' &&
-      hasMissingLogGroups &&
-      hasMissingLegacyLogGroupNames;
+    const isInvalidCWLIQuery = query.queryLanguage !== 'SQL' && hasMissingLogGroups && hasMissingLegacyLogGroupNames;
     if (isInvalidCWLIQuery || hasMissingQueryString) {
       return false;
     }
@@ -532,4 +542,75 @@ function withTeardown<T = DataQueryResponse>(observable: Observable<T>, onUnsubs
 function parseLogGroupName(logIdentifier: string): string {
   const colonIndex = logIdentifier.lastIndexOf(':');
   return logIdentifier.slice(colonIndex + 1);
+}
+
+const logTrendFieldName = 'logTrend';
+
+/**
+ * Takes DataQueryResponse and converts any "log trend" fields (that are in JSON.rawMessage form)
+ * into data frame fields that the table vis will be able to display
+ */
+export function convertTrendHistogramToSparkline(dataQueryResponse: DataQueryResponse): void {
+  dataQueryResponse.data.forEach((frame) => {
+    let fieldIndexToReplace = null;
+    // log trend histogram field from CW API is of shape Record<timestamp as string, value>
+    const sparklineRawData: Field<Record<string, number>> = frame.fields.find((field: Field, index: number) => {
+      if (field.name === logTrendFieldName && field.type === FieldType.other) {
+        fieldIndexToReplace = index;
+        return true;
+      }
+      return false;
+    });
+
+    if (sparklineRawData) {
+      const sparklineField: Field = {
+        name: 'Log trend',
+        type: FieldType.frame,
+        config: {
+          custom: {
+            drawStyle: GraphDrawStyle.Bars,
+            cellOptions: {
+              type: TableCellDisplayMode.Sparkline,
+              // hiding the value here as it's not useful or clear on what it represents for log trend
+              hideValue: true,
+            },
+          },
+        },
+        values: [],
+      };
+
+      sparklineRawData.values.forEach((sparklineValue, rowIndex) => {
+        const timestamps: number[] = Object.keys(sparklineValue).map((t) => {
+          let n = Number(t);
+          if (isNaN(n)) {
+            dataQueryResponse.errors = [
+              {
+                message: `Error: Unable to parse log trend timestamp value '${t}' as number.`,
+                refId: frame.refId,
+              },
+            ];
+            n = Date.now();
+          }
+          return n;
+        });
+        const values = Object.values(sparklineValue);
+
+        const sparklineFieldFrame: DataFrame = {
+          name: `Trend_row_${rowIndex}`,
+          length: timestamps.length,
+          fields: [
+            { name: 'time', type: FieldType.time, values: timestamps, config: {} },
+            { name: 'value', type: FieldType.number, values, config: {} },
+          ],
+        };
+
+        sparklineField.values.push(sparklineFieldFrame);
+      });
+
+      if (fieldIndexToReplace) {
+        // Make sure sparkline field is placed in the same order as coming from BE
+        frame.fields[fieldIndexToReplace] = sparklineField;
+      }
+    }
+  });
 }

@@ -2,11 +2,14 @@ import { lastValueFrom, of } from 'rxjs';
 
 import {
   DataQueryRequest,
+  DataQueryResponse,
+  Field,
   FieldType,
   LogLevel,
   LogRowContextQueryDirection,
   LogRowModel,
 } from '@grafana/data';
+import { DataQuery } from '@grafana/schema/dist/esm/index';
 
 import { regionVariable } from '../mocks/CloudWatchDataSource';
 import { setupMockedLogsQueryRunner } from '../mocks/LogsQueryRunner';
@@ -15,7 +18,11 @@ import { validLogsQuery } from '../mocks/queries';
 import { TimeRangeMock } from '../mocks/timeRange';
 import { CloudWatchLogsAnomaliesQuery, CloudWatchLogsQuery, LogsMode } from '../types'; // Add this import statement
 
-import { LOGSTREAM_IDENTIFIER_INTERNAL, LOG_IDENTIFIER_INTERNAL } from './CloudWatchLogsQueryRunner';
+import {
+  LOGSTREAM_IDENTIFIER_INTERNAL,
+  LOG_IDENTIFIER_INTERNAL,
+  convertTrendHistogramToSparkline,
+} from './CloudWatchLogsQueryRunner';
 
 describe('CloudWatchLogsQueryRunner', () => {
   beforeEach(() => {
@@ -482,59 +489,125 @@ describe('CloudWatchLogsQueryRunner', () => {
       });
     });
   });
-
-  describe('handleLogAnomaliesQueries', () => {
-    it('appends -anomalies to the requestId', async () => {
-      const { runner, queryMock } = setupMockedLogsQueryRunner();
-      const logsAnomaliesRequestMock: DataQueryRequest<CloudWatchLogsAnomaliesQuery> = {
-        requestId: 'mockId',
-        range: TimeRangeMock,
-        rangeRaw: { from: TimeRangeMock.from, to: TimeRangeMock.to },
-        targets: [
-          {
-            id: '1',
-            logsMode: LogsMode.Anomalies,
-            queryMode: 'Logs',
-            refId: 'A',
-            region: 'us-east-1',
-          },
-        ],
-        interval: '',
-        intervalMs: 0,
-        scopedVars: { __interval: { value: '20s' } },
-        timezone: '',
-        app: '',
-        startTime: 0,
-      };
-      await expect(
-        runner.handleLogAnomaliesQueries(LogsRequestMock.targets, logsAnomaliesRequestMock, queryMock)
-      ).toEmitValuesWith(() => {
-        expect(queryMock.mock.calls[0][0].requestId).toEqual('mockId-logsAnomalies');
-      });
-    });
-  });
 });
 
-const rawLogQueriesStub: CloudWatchLogsQuery[] = [
-  {
-    refId: 'A',
-    id: '',
-    region: 'us-east-2',
-    logGroups: [
-      {
-        accountId: 'accountId',
-        arn: 'somearn',
-        name: 'nameOfLogGroup',
+describe('handleLogAnomaliesQueries', () => {
+  it('appends -anomalies to the requestId', async () => {
+    const { runner, queryMock } = setupMockedLogsQueryRunner();
+    const logsAnomaliesRequestMock: DataQueryRequest<CloudWatchLogsAnomaliesQuery> = {
+      requestId: 'mockId',
+      range: TimeRangeMock,
+      rangeRaw: { from: TimeRangeMock.from, to: TimeRangeMock.to },
+      targets: [
+        {
+          id: '1',
+          logsMode: LogsMode.Anomalies,
+          queryMode: 'Logs',
+          refId: 'A',
+          region: 'us-east-1',
+        },
+      ],
+      interval: '',
+      intervalMs: 0,
+      scopedVars: { __interval: { value: '20s' } },
+      timezone: '',
+      app: '',
+      startTime: 0,
+    };
+    await expect(
+      runner.handleLogAnomaliesQueries(LogsRequestMock.targets, logsAnomaliesRequestMock, queryMock)
+    ).toEmitValuesWith(() => {
+      expect(queryMock.mock.calls[0][0].requestId).toEqual('mockId-logsAnomalies');
+    });
+  });
+
+  it('processes log trend histogram data correctly', async () => {
+    const response = anomaliesQueryResponse;
+
+    convertTrendHistogramToSparkline(response);
+
+    expect(response.data[0].fields.find((field: Field) => field.name === 'logTrend')).toEqual({
+      name: 'Log trend',
+      type: 'frame',
+      config: {
+        custom: {
+          drawStyle: 'bars',
+          cellOptions: {
+            type: 'sparkline',
+            hideValue: true,
+          },
+        },
       },
-    ],
-    queryMode: 'Logs',
-    expression: 'fields @timestamp, @message |\n sort @timestamp desc |\n limit 20',
-    datasource: {
-      type: 'cloudwatch',
-      uid: 'ff87aa43-7618-42ee-ae9c-4a405378728b',
-    },
-  },
-];
+      values: [
+        {
+          name: 'Trend_row_0',
+          length: 8,
+          fields: [
+            {
+              name: 'time',
+              type: 'time',
+              values: [
+                1760454000000, 1760544000000, 1760724000000, 1761282000000, 1761300000000, 1761354000000, 1761372000000,
+                1761390000000,
+              ],
+              config: {},
+            },
+            {
+              name: 'value',
+              type: 'number',
+              values: [81, 35, 35, 36, 36, 36, 72, 36],
+              config: {},
+            },
+          ],
+        },
+        {
+          name: 'Trend_row_1',
+          length: 2,
+          fields: [
+            {
+              name: 'time',
+              type: 'time',
+              values: [1760687665000, 1760687670000],
+              config: {},
+            },
+            {
+              name: 'value',
+              type: 'number',
+              values: [3, 3],
+              config: {},
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('replaces log trend histogram field at the same inde in the frame', () => {
+    const response = anomaliesQueryResponse;
+
+    convertTrendHistogramToSparkline(response);
+
+    expect(response.data[0].fields[4].name).toEqual('Log trend');
+  });
+
+  it('return an error response if timestamps are not valid', () => {
+    const response = anomaliesQueryResponse;
+
+    response.data[0].fields[4].values[1] = {
+      invalidTimestamp: 3,
+      '1760687670000': 3,
+    };
+
+    convertTrendHistogramToSparkline(response);
+
+    expect(response.errors).toEqual([
+      {
+        message: `Error: Unable to parse log trend timestamp value 'invalidTimestamp' as number.`,
+        refId: 'A',
+      },
+    ]);
+  });
+});
 
 const startQuerySuccessResponseStub = {
   data: [
@@ -672,4 +745,168 @@ const getQueryErrorResponseStub = {
 
 const stopQueryResponseStub = {
   state: 'Done',
+};
+
+const anomaliesQueryResponse: DataQueryResponse = {
+  data: [
+    {
+      name: 'CloudwatchLogsAnomalies',
+      refId: 'A',
+      meta: {
+        typeVersion: [0, 0],
+        preferredVisualisationType: 'table',
+      },
+      fields: [
+        {
+          name: 'state',
+          type: 'string',
+          typeInfo: {
+            frame: 'string',
+          },
+          config: {
+            displayName: 'State',
+          },
+          values: ['Active', 'Active'],
+          entities: {},
+        },
+        {
+          name: 'description',
+          type: 'string',
+          typeInfo: {
+            frame: 'string',
+          },
+          config: {
+            displayName: 'Anomaly',
+          },
+          values: [
+            '50.0% increase in count of value "405" for "code"-3',
+            '151.3% increase in count of value 1 for "dotnet_collection_count_total"-3',
+          ],
+          entities: {},
+        },
+        {
+          name: 'priority',
+          type: 'string',
+          typeInfo: {
+            frame: 'string',
+          },
+          config: {
+            displayName: 'Priority',
+          },
+          values: ['MEDIUM', 'MEDIUM'],
+          entities: {},
+        },
+        {
+          name: 'patternString',
+          type: 'string',
+          typeInfo: {
+            frame: 'string',
+          },
+          config: {
+            displayName: 'Log Pattern',
+          },
+          values: [
+            '{"ClusterName":"PetSite","Namespace":"default","Service":"service-petsite","Timestamp":<*>,"Version":<*>,"code":<*>,"container_name":"petsite","http_requests_received_total":<*>,"instance":<*>:<*>,"job":"kubernetes-service-endpoints","kubernetes_node":<*>,"method":<*>,"pod_name":<*>,"prom_metric_type":"counter"}',
+            '{"ClusterName":"PetSite","Namespace":"default","Service":"service-petsite","Timestamp":<*>,"Version":<*>,"container_name":"petsite","dotnet_collection_count_total":<*>,"generation":<*>,"instance":<*>:<*>,"job":"kubernetes-service-endpoints","kubernetes_node":<*>,"pod_name":<*>,"prom_metric_type":"counter"}',
+          ],
+          entities: {},
+        },
+        {
+          name: 'logTrend',
+          type: 'other',
+          typeInfo: {
+            frame: 'json.RawMessage',
+            nullable: true,
+          },
+          config: {
+            displayName: 'Log Trend',
+          },
+          values: [
+            {
+              '1760454000000': 81,
+              '1760544000000': 35,
+              '1760724000000': 35,
+              '1761282000000': 36,
+              '1761300000000': 36,
+              '1761354000000': 36,
+              '1761372000000': 72,
+              '1761390000000': 36,
+            },
+            {
+              '1760687665000': 3,
+              '1760687670000': 3,
+            },
+          ],
+          entities: {},
+        },
+        {
+          name: 'firstSeen',
+          type: 'time',
+          typeInfo: {
+            frame: 'time.Time',
+          },
+          config: {
+            displayName: 'First seen',
+          },
+          values: [1760462460000, 1760687640000],
+          entities: {},
+        },
+        {
+          name: 'lastSeen',
+          type: 'time',
+          typeInfo: {
+            frame: 'time.Time',
+          },
+          config: {
+            displayName: 'Last seen',
+          },
+          values: [1761393660000, 1760687940000],
+          entities: {},
+        },
+        {
+          name: 'suppressed',
+          type: 'boolean',
+          typeInfo: {
+            frame: 'bool',
+          },
+          config: {
+            displayName: 'Suppressed?',
+          },
+          values: [false, false],
+          entities: {},
+        },
+        {
+          name: 'logGroupArnList',
+          type: 'string',
+          typeInfo: {
+            frame: 'string',
+          },
+          config: {
+            displayName: 'Log Groups',
+          },
+          values: [
+            'arn:aws:logs:us-east-2:569069006612:log-group:/aws/containerinsights/PetSite/prometheus',
+            'arn:aws:logs:us-east-2:569069006612:log-group:/aws/containerinsights/PetSite/prometheus',
+          ],
+          entities: {},
+        },
+        {
+          name: 'anomalyArn',
+          type: 'string',
+          typeInfo: {
+            frame: 'string',
+          },
+          config: {
+            displayName: 'Anomaly Arn',
+          },
+          values: [
+            'arn:aws:logs:us-east-2:569069006612:anomaly-detector:dca8b129-d09d-4167-86e9-7bf62ede2f95',
+            'arn:aws:logs:us-east-2:569069006612:anomaly-detector:dca8b129-d09d-4167-86e9-7bf62ede2f95',
+          ],
+          entities: {},
+        },
+      ],
+      length: 2,
+    },
+  ],
 };
