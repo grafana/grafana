@@ -16,18 +16,26 @@ interface RadioButtonDotProps {
   scopeNodeId: string;
   selected: boolean;
   onClick: () => void;
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  'aria-labelledby'?: string;
 }
 
-function ScopeRadioButtonDot({ scopeNodeId, selected, onClick, children }: RadioButtonDotProps) {
+function ScopeRadioButtonDot({
+  scopeNodeId,
+  selected,
+  onClick,
+  children,
+  'aria-labelledby': ariaLabelledby,
+}: RadioButtonDotProps) {
   return (
     <RadioButtonDot
       id={scopeNodeId}
       name={scopeNodeId}
       checked={selected}
-      label={children}
+      label={children ?? undefined}
       data-testid={`scopes-tree-${scopeNodeId}-radio`}
       onClick={onClick}
+      aria-labelledby={ariaLabelledby ?? undefined}
     />
   );
 }
@@ -53,9 +61,17 @@ interface CheckboxWithLabelProps {
   showLabel: boolean;
   onChange: () => void;
   children?: React.ReactNode;
+  'aria-labelledby'?: string;
 }
 
-function ScopeCheckboxWithLabel({ scopeNodeId, selected, showLabel, onChange, children }: CheckboxWithLabelProps) {
+function ScopeCheckboxWithLabel({
+  scopeNodeId,
+  selected,
+  showLabel,
+  onChange,
+  children,
+  'aria-labelledby': ariaLabelledby,
+}: CheckboxWithLabelProps) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.checkboxWithLabel}>
@@ -65,6 +81,7 @@ function ScopeCheckboxWithLabel({ scopeNodeId, selected, showLabel, onChange, ch
         data-testid={`scopes-tree-${scopeNodeId}-checkbox`}
         label=""
         onChange={onChange}
+        aria-labelledby={ariaLabelledby ?? undefined}
       />
       {showLabel && (
         <label htmlFor={scopeNodeId} className={styles.checkboxLabel}>
@@ -94,24 +111,67 @@ interface ExpandButtonProps {
   titleText: string;
   onClick: () => void;
   children: React.ReactNode;
+  controlsId: string;
+  isSelectable: boolean;
+  disableMultiSelect: boolean;
+  selected: boolean;
+  onSelect: () => void;
 }
 
-function ScopeExpandButton({ scopeNodeId, expanded, titleText, onClick, children }: ExpandButtonProps) {
+function ScopeExpandButton({
+  scopeNodeId,
+  expanded,
+  titleText,
+  onClick,
+  children,
+  controlsId,
+  isSelectable,
+  disableMultiSelect,
+  selected,
+  onSelect,
+}: ExpandButtonProps) {
   const styles = useStyles2(getStyles);
+
+  const buttonId = getTreeItemElementId(scopeNodeId) + '-button';
+
+  const SelectComponent = () => {
+    if (!isSelectable) {
+      return null;
+    }
+    if (disableMultiSelect) {
+      return (
+        <ScopeRadioButtonDot
+          scopeNodeId={scopeNodeId}
+          selected={selected}
+          onClick={onSelect}
+          aria-labelledby={buttonId}
+        />
+      );
+    }
+    return (
+      <ScopeCheckboxWithLabel
+        scopeNodeId={scopeNodeId}
+        selected={selected}
+        showLabel={false}
+        onChange={onSelect}
+        aria-labelledby={buttonId}
+      />
+    );
+  };
   return (
-    <button
-      className={styles.expand}
-      data-testid={`scopes-tree-${scopeNodeId}-expand`}
-      aria-label={
-        expanded
-          ? t('scopes.tree.collapse', 'Collapse {{title}}', { title: titleText })
-          : t('scopes.tree.expand', 'Expand {{title}}', { title: titleText })
-      }
-      onClick={onClick}
-    >
-      <Icon name={!expanded ? 'angle-right' : 'angle-down'} />
-      {children}
-    </button>
+    <>
+      <SelectComponent />
+      <button
+        className={styles.expand}
+        data-testid={`scopes-tree-${scopeNodeId}-expand`}
+        onClick={onClick}
+        aria-expanded={expanded}
+        aria-controls={controlsId}
+      >
+        <Icon name={!expanded ? 'angle-right' : 'angle-down'} />
+        {children}
+      </button>
+    </>
   );
 }
 
@@ -156,8 +216,8 @@ export function ScopesTreeItem({
     return null;
   }
 
-  const parentNode = scopeNode.spec.parentName ? scopeNodes[scopeNode.spec.parentName] : undefined;
-  const disableMultiSelect = parentNode?.spec.disableMultiSelect ?? false;
+  //const parentNode = scopeNode.spec.parentName ? scopeNodes[scopeNode.spec.parentName] : undefined;
+  const disableMultiSelect = true; //parentNode?.spec.disableMultiSelect ?? false;
 
   const isSelectable = isNodeSelectable(scopeNode);
   const isExpandable = isNodeExpandable(scopeNode);
@@ -167,6 +227,8 @@ export function ScopesTreeItem({
   const titleText = scopeNode.spec.title;
   const shouldHighlight = Boolean(treeNode.query && !treeNode.expanded);
   const searchWords = shouldHighlight ? getSearchWordsFromQuery(treeNode.query) : [];
+
+  const childrenId = getTreeItemElementId(treeNode.scopeNodeId) + '-children';
 
   return (
     <div
@@ -186,25 +248,9 @@ export function ScopesTreeItem({
         )}
         data-testid={`scopes-tree-${treeNode.scopeNodeId}`}
       >
-        {isSelectable && !treeNode.expanded && (
+        {isSelectable && !isExpandable && !treeNode.expanded && (
           <>
-            {disableMultiSelect && isExpandable && (
-              <ScopeRadioButtonDot
-                scopeNodeId={treeNode.scopeNodeId}
-                selected={selected}
-                onClick={() => {
-                  selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId);
-                }}
-              >
-                {isExpandable ? (
-                  // Let the expand button handle the text
-                  ''
-                ) : (
-                  <TitleContent shouldHighlight={shouldHighlight} titleText={titleText} searchWords={searchWords} />
-                )}
-              </ScopeRadioButtonDot>
-            )}
-            {disableMultiSelect && !isExpandable && (
+            {disableMultiSelect && (
               <ScopeLinkLikeButton
                 scopeNodeId={treeNode.scopeNodeId}
                 onClick={() => {
@@ -235,9 +281,12 @@ export function ScopesTreeItem({
             scopeNodeId={treeNode.scopeNodeId}
             expanded={treeNode.expanded}
             titleText={titleText}
-            onClick={() => {
-              toggleExpandedNode(treeNode.scopeNodeId);
-            }}
+            controlsId={childrenId}
+            onClick={() => toggleExpandedNode(treeNode.scopeNodeId)}
+            onSelect={() => (selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId))}
+            isSelectable={isSelectable}
+            disableMultiSelect={disableMultiSelect}
+            selected={selected}
           >
             <TitleContent shouldHighlight={shouldHighlight} titleText={titleText} searchWords={searchWords} />
           </ScopeExpandButton>
@@ -250,7 +299,7 @@ export function ScopesTreeItem({
         )}
       </div>
 
-      <div className={styles.children}>
+      <div id={childrenId} className={styles.children}>
         {treeNode.expanded && (
           <ScopesTree
             tree={treeNode}
