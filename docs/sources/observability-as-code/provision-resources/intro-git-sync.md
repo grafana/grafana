@@ -86,13 +86,19 @@ A resource can be:
 | **Supported**    | The resource can be managed with Git Sync.                                 | The resource is supported but has compatibility issues. It **cannot** be managed with Git Sync. |
 | **Unsupported**  | The resource is **not** supported and **cannot** be managed with Git Sync. | Not applicable.                                                                                 |
 
-### Instance states
+### Git Sync instance states
 
-An instance can be in one of the following states:
+An instance can be in one of the following Git Sync states:
 
 - **Unprovisioned**: None of the instance's resources are being managed by Git Sync.
 - **Partially provisioned**: Some of the resources are controlled by Git Sync.
 - **Fully provisioned**: All supported resource types are managed by Git Sync. Note that unsupported resources are not managed.
+
+### Full instance sync
+
+Full-instance sync is not available in Grafana Cloud.
+
+In Grafana OSS/Enterprise, full instance sync doesn't support alerts and library panels. If you try to perform a full instance sync, Git Sync will block the connection. In the event blocking fails, you'll have to delete the synced repository and connect again with folder sync if you want to create library panels or alerts.
 
 ## Common use cases
 
