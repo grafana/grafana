@@ -146,7 +146,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 	adminClient := test_common.NewReceiverClient(t, admin)
 
 	writeACMetadata := []string{"canWrite", "canDelete"}
-	allACMetadata := []string{"canWrite", "canDelete", "canReadSecrets", "canAdmin"}
+	allACMetadata := []string{"canWrite", "canDelete", "canReadSecrets", "canAdmin", "canModifyProtected"}
 
 	mustID := func(user apis.User) int64 {
 		id, err := user.Identity.GetInternalID()
@@ -407,13 +407,14 @@ func TestIntegrationAccessControl(t *testing.T) {
 	org1 := helper.Org1
 
 	type testCase struct {
-		user           apis.User
-		canRead        bool
-		canUpdate      bool
-		canCreate      bool
-		canDelete      bool
-		canReadSecrets bool
-		canAdmin       bool
+		user               apis.User
+		canRead            bool
+		canUpdate          bool
+		canUpdateProtected bool
+		canCreate          bool
+		canDelete          bool
+		canReadSecrets     bool
+		canAdmin           bool
 	}
 	// region users
 	unauthorized := helper.CreateUser("unauthorized", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{})
@@ -476,20 +477,22 @@ func TestIntegrationAccessControl(t *testing.T) {
 
 	testCases := []testCase{
 		{
-			user:      unauthorized,
-			canRead:   false,
-			canUpdate: false,
-			canCreate: false,
-			canDelete: false,
+			user:               unauthorized,
+			canRead:            false,
+			canUpdate:          false,
+			canUpdateProtected: false,
+			canCreate:          false,
+			canDelete:          false,
 		},
 		{
-			user:           org1.Admin,
-			canRead:        true,
-			canCreate:      true,
-			canUpdate:      true,
-			canDelete:      true,
-			canAdmin:       true,
-			canReadSecrets: true,
+			user:               org1.Admin,
+			canRead:            true,
+			canCreate:          true,
+			canUpdate:          true,
+			canUpdateProtected: true,
+			canDelete:          true,
+			canAdmin:           true,
+			canReadSecrets:     true,
 		},
 		{
 			user:      org1.Editor,
@@ -538,22 +541,24 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canDelete: true,
 		},
 		{
-			user:           adminLikeUser,
-			canRead:        true,
-			canCreate:      true,
-			canUpdate:      true,
-			canDelete:      true,
-			canAdmin:       true,
-			canReadSecrets: true,
+			user:               adminLikeUser,
+			canRead:            true,
+			canCreate:          true,
+			canUpdate:          true,
+			canUpdateProtected: true,
+			canDelete:          true,
+			canAdmin:           true,
+			canReadSecrets:     true,
 		},
 		{
-			user:           adminLikeUserLongName,
-			canRead:        true,
-			canCreate:      true,
-			canUpdate:      true,
-			canDelete:      true,
-			canAdmin:       true,
-			canReadSecrets: true,
+			user:               adminLikeUserLongName,
+			canRead:            true,
+			canCreate:          true,
+			canUpdate:          true,
+			canUpdateProtected: true,
+			canDelete:          true,
+			canAdmin:           true,
+			canReadSecrets:     true,
 		},
 	}
 
@@ -610,6 +615,9 @@ func TestIntegrationAccessControl(t *testing.T) {
 				expectedWithMetadata.SetInUse(0, nil)
 				if tc.canUpdate {
 					expectedWithMetadata.SetAccessControl("canWrite")
+				}
+				if tc.canUpdateProtected {
+					expectedWithMetadata.SetAccessControl("canModifyProtected")
 				}
 				if tc.canDelete {
 					expectedWithMetadata.SetAccessControl("canDelete")
@@ -674,6 +682,32 @@ func TestIntegrationAccessControl(t *testing.T) {
 						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
 					})
 				})
+
+				updatedExpected = expected.Copy().(*v0alpha1.Receiver)
+				updatedExpected.Spec.Integrations = []v0alpha1.ReceiverIntegration{
+					createIntegration(t, "webhook"),
+				}
+
+				expected, err = adminClient.Update(ctx, updatedExpected, v1.UpdateOptions{})
+				require.NoErrorf(t, err, "Payload %s", string(d))
+				require.NotNil(t, expected)
+
+				updatedProtected := expected.Copy().(*v0alpha1.Receiver)
+				updatedProtected.Spec.Integrations[0].Settings["url"] = "http://localhost:8080/webhook"
+
+				if tc.canUpdateProtected {
+					t.Run("should be able to update protected fields of the receiver", func(t *testing.T) {
+						updated, err := client.Update(ctx, updatedProtected, v1.UpdateOptions{})
+						require.NoErrorf(t, err, "Payload %s", string(d))
+						require.NotNil(t, updated)
+						expected = updated
+					})
+				} else {
+					t.Run("should be forbidden to edit protected fields of the receiver", func(t *testing.T) {
+						_, err := client.Update(ctx, updatedProtected, v1.UpdateOptions{})
+						require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+					})
+				}
 			} else {
 				t.Run("should be forbidden to update receiver", func(t *testing.T) {
 					_, err := client.Update(ctx, updatedExpected, v1.UpdateOptions{})
@@ -686,6 +720,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 						require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 					})
 				})
+				require.Falsef(t, tc.canUpdateProtected, "Invalid combination of assertions. CanUpdateProtected should be false")
 			}
 
 			deleteOptions := v1.DeleteOptions{Preconditions: &v1.Preconditions{ResourceVersion: util.Pointer(expected.ResourceVersion)}}
@@ -1293,6 +1328,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		receiver.SetAccessControl("canDelete")
 		receiver.SetAccessControl("canReadSecrets")
 		receiver.SetAccessControl("canAdmin")
+		receiver.SetAccessControl("canModifyProtected")
 		receiver.SetInUse(0, nil)
 
 		// Use export endpoint because it's the only way to get decrypted secrets fast.

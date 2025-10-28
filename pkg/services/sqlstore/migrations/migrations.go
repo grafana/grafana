@@ -155,4 +155,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.DropTitleUniqueIndexMigration(mg)
 
 	ualert.AddStateFiredAtColumn(mg)
+
+	accesscontrol.AddReceiverProtectedFieldsEditor(mg)
 }

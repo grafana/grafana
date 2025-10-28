@@ -42,6 +42,7 @@ interface Props<R extends ChannelValues> {
   showDefaultRouteWarning?: boolean;
   contactPointId?: string;
   canManagePermissions?: boolean;
+  canEditProtectedFields: boolean;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -58,6 +59,7 @@ export function ReceiverForm<R extends ChannelValues>({
   showDefaultRouteWarning,
   contactPointId,
   canManagePermissions,
+  canEditProtectedFields,
 }: Props<R>) {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
@@ -66,15 +68,16 @@ export function ReceiverForm<R extends ChannelValues>({
   // normalize deprecated and new config values
   const normalizedConfig = normalizeFormValues(initialValues);
 
-  const defaultValues = normalizedConfig ?? {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const defaultValues = (normalizedConfig ?? {
     name: '',
     items: [
       {
         ...defaultItem,
         __id: String(Math.random()),
-      } as any,
+      },
     ],
-  };
+  }) as ReceiverFormValues<R>;
 
   const formAPI = useForm<ReceiverFormValues<R>>({
     // making a copy here beacuse react-hook-form will mutate these, and break if the object is frozen. for real.
@@ -148,6 +151,7 @@ export function ReceiverForm<R extends ChannelValues>({
           invalid={!!errors.name}
           error={errors.name && errors.name.message}
           required
+          noMargin
         >
           <Input
             readOnly={!isEditable}
@@ -190,10 +194,12 @@ export function ReceiverForm<R extends ChannelValues>({
               onDelete={() => remove(index)}
               pathPrefix={pathPrefix}
               notifiers={notifiers}
-              errors={errors?.items?.[index] as FieldErrors<R>}
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              errors={errors?.items?.[index] as FieldErrors<R> | undefined}
               commonSettingsComponent={commonSettingsComponent}
               isEditable={isEditable}
               isTestable={isTestable}
+              canEditProtectedFields={canEditProtectedFields}
               customValidators={customValidators ? customValidators[field.type] : undefined}
             />
           );

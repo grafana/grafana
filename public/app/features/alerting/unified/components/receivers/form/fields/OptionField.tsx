@@ -3,15 +3,19 @@ import { FC, useEffect } from 'react';
 import { Controller, DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   Checkbox,
   Field,
+  Icon,
   Input,
   RadioButtonList,
   SecretInput,
   SecretTextArea,
   Select,
+  Stack,
   TextArea,
+  Tooltip,
   useStyles2,
 } from '@grafana/ui';
 import {
@@ -64,6 +68,7 @@ export const OptionField: FC<Props> = ({
         errors={error}
         pathPrefix={pathPrefix}
         onDelete={onDeleteSubform}
+        getOptionMeta={getOptionMeta}
       />
     );
   }
@@ -76,13 +81,32 @@ export const OptionField: FC<Props> = ({
         option={option}
         pathPrefix={pathPrefix}
         errors={error as Array<DeepMap<any, FieldError>> | undefined}
+        getOptionMeta={getOptionMeta}
       />
     );
   }
 
+  const shouldShowProtectedIndicator = option.protected && getOptionMeta?.(option).readOnly;
+
+  const labelText = option.element !== 'checkbox' && option.element !== 'radio' ? option.label : undefined;
+
+  const label = shouldShowProtectedIndicator ? (
+    <Stack direction="row" alignItems="center" gap={0.5}>
+      <Tooltip
+        content={t(
+          'alerting.receivers.protected.field.description',
+          'This field is protected and can only be edited by users with elevated permissions'
+        )}
+      >
+        <Icon size="sm" name="lock" data-testid="lock-icon" />
+      </Tooltip>
+      {labelText}
+    </Stack>
+  ) : labelText;
+  
   return (
     <Field
-      label={option.element !== 'checkbox' && option.element !== 'radio' ? option.label : undefined}
+      label={label}
       description={option.description || undefined}
       invalid={!!error}
       error={error?.message}

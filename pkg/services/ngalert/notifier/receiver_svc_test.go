@@ -543,8 +543,9 @@ func TestReceiverService_Update(t *testing.T) {
 
 	writer := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
-			accesscontrol.ActionAlertingNotificationsWrite: nil,
-			accesscontrol.ActionAlertingNotificationsRead:  nil,
+			accesscontrol.ActionAlertingNotificationsWrite:       nil,
+			accesscontrol.ActionAlertingNotificationsRead:        nil,
+			accesscontrol.ActionAlertingReceiversUpdateProtected: {ac.ScopeReceiversAll},
 		},
 	}}
 	decryptUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -1134,7 +1135,7 @@ func TestReceiverServiceAC_Update(t *testing.T) {
 		},
 	}}
 
-	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))
+	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("webhook"))
 	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))
 	recv1 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver1"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
 	recv2 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver2"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
@@ -1146,8 +1147,8 @@ func TestReceiverServiceAC_Update(t *testing.T) {
 		name        string
 		permissions map[string][]string
 		existing    []models.Receiver
-
-		hasAccess []models.Receiver
+		incoming    []models.Receiver
+		hasAccess   []models.Receiver
 	}{
 		{
 			name:      "not authorized without permissions",
@@ -1235,6 +1236,43 @@ func TestReceiverServiceAC_Update(t *testing.T) {
 			existing:  allReceivers(),
 			hasAccess: []models.Receiver{recv1, recv3},
 		},
+		{
+			name: "protected fields modified without permission",
+			permissions: map[string][]string{
+				accesscontrol.ActionAlertingReceiversUpdate: {ac.ScopeReceiversAll},
+				accesscontrol.ActionAlertingReceiversRead:   {ac.ScopeReceiversAll},
+			},
+			existing: []models.Receiver{
+				recv1,
+			},
+			incoming: []models.Receiver{
+				func() models.Receiver {
+					f := recv1.Clone()
+					f.Integrations[0].Settings["url"] = "https://example.com/new"
+					return f
+				}(),
+			},
+			hasAccess: nil,
+		},
+		{
+			name: "protected fields modified with permission",
+			permissions: map[string][]string{
+				accesscontrol.ActionAlertingReceiversUpdate:          {ac.ScopeReceiversAll},
+				accesscontrol.ActionAlertingReceiversRead:            {ac.ScopeReceiversAll},
+				accesscontrol.ActionAlertingReceiversUpdateProtected: {ac.ScopeReceiversAll},
+			},
+			existing: []models.Receiver{
+				recv1,
+			},
+			incoming: []models.Receiver{
+				func() models.Receiver {
+					f := recv1.Clone()
+					f.Integrations[0].Settings["url"] = "https://example.com/new"
+					return f
+				}(),
+			},
+			hasAccess: []models.Receiver{recv1},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1260,7 +1298,11 @@ func TestReceiverServiceAC_Update(t *testing.T) {
 				}
 				return false
 			}
-			for _, recv := range allReceivers() {
+			incoming := allReceivers()
+			if tc.incoming != nil {
+				incoming = tc.incoming
+			}
+			for _, recv := range incoming {
 				clone := recv.Clone()
 				clone.Version = versions[recv.UID]
 				response, err := sut.UpdateReceiver(context.Background(), &clone, nil, orgId, usr)
