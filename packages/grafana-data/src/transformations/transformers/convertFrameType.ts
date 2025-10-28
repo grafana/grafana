@@ -42,11 +42,22 @@ export const convertFrameTypeTransformer: DataTransformerInfo<ConvertFrameTypeTr
     ),
 };
 
-function convertFrameType(options: ConvertFrameTypeTransformerOptions, frames: DataFrame[]): DataFrame[] {
+/**
+ * Convert frame data topics for dataframe(s)
+ * @param options - frame type conversion options
+ * @param frames - dataframe(s) to convert
+ * @returns dataframe(s) with converted frame types
+ */
+export function convertFrameTypes(options: ConvertFrameTypeTransformerOptions, frames: DataFrame[]): DataFrame[] {
   const { targetType } = options;
   return targetType === FrameType.Exemplar ? frames.map(convertSeriesToExemplar) : frames;
 }
 
+/**
+ * Convert a series DataFrame to annotations format suitable for exemplars
+ * @param frame - series DataFrame to convert
+ * @returns DataFrame formatted as annotations/exemplars
+ */
 function convertSeriesToExemplar(frame: DataFrame): DataFrame {
   // TODO: ensure time field
   // TODO: ensure value field
