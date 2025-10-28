@@ -3466,6 +3466,14 @@
         "label-negative-y": "Negative Y"
       }
     },
+    "suggestions": {
+      "bar-horizontal": "Bar chart (horizontal)",
+      "bar-horizontal-stacked": "Bar chart (horizontal, stacked)",
+      "bar-horizontal-stacked-percent": "Bar chart (100%, horizontal, stacked)",
+      "bar-stacked": "Bar chart (stacked)",
+      "bar-stacked-percent": "Bar chart (100%, stacked)",
+      "name": "Bar chart"
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Require space from the right side",
       "gaps-options": {
@@ -3510,6 +3518,10 @@
     },
     "name-show-unfilled-area": "Show unfilled area",
     "name-value-display": "Value display",
+    "suggestions": {
+      "bar-lcd": "Bar gauge (LCD)",
+      "name": "Bar gauge"
+    },
     "value-display-options": {
       "label-hidden": "Hidden",
       "label-text-color": "Text color",
@@ -3735,7 +3747,10 @@
     "name-mode": "Mode",
     "name-open": "Open",
     "name-up-color": "Up color",
-    "name-volume": "Volume"
+    "name-volume": "Volume",
+    "suggestions": {
+      "name": "Candlestick chart"
+    }
   },
   "canvas": {
     "apieditor": {
@@ -7643,6 +7658,11 @@
       "label-input": "Input"
     }
   },
+  "flamegraph": {
+    "suggestions": {
+      "name": "Flame graph"
+    }
+  },
   "folder-filter": {
     "noOptionsMessage-no-folders-found": "No folders found",
     "select-aria-label": "Folder filter",
@@ -7710,6 +7730,11 @@
     "name-show-threshold-labels": "Show threshold labels",
     "name-show-threshold-markers": "Show threshold markers",
     "placeholder-neutral": "auto",
+    "suggestions": {
+      "gauge-circular": "Gauge (circular)",
+      "gauge-no-thresholds": "Gauge (no thresholds)",
+      "name": "Gauge"
+    },
     "threshold": "Threshold {{value}}"
   },
   "gen-ai": {
@@ -9897,6 +9922,10 @@
       "line-contains-not": "Add as line does not contain filter"
     },
     "show-log-attributes": "Display log attributes for OTel logs",
+    "suggestions": {
+      "logs": "Logs",
+      "name": "Logs"
+    },
     "timestamp-format": "Timestamp resolution",
     "un-themed-log-details": {
       "aria-label-data-links": "Data links",
@@ -10690,6 +10719,9 @@
       "label-subtitle": "Subtitle",
       "label-title": "Title"
     },
+    "suggestions": {
+      "name": "Node graph"
+    },
     "view-controls": {
       "hide-config": "Hide config",
       "show-config": "Show config",
@@ -10938,6 +10970,10 @@
     "pie-chart-type-options": {
       "label-donut": "Donut",
       "label-pie": "Pie"
+    },
+    "suggestions": {
+      "donut": "Pie chart (donut)",
+      "name": "Pie chart"
     }
   },
   "playlist": {
@@ -12853,6 +12889,10 @@
       "label-same-as-value": "Same as Value",
       "label-standard": "Standard"
     },
+    "suggestions": {
+      "name": "Stat",
+      "stat-colored": "Stat (colored background)"
+    },
     "text-alignment-options": {
       "label-auto": "Auto",
       "label-center": "Center"
@@ -12889,6 +12929,9 @@
       "label-always": "Always",
       "label-auto": "Auto",
       "label-never": "Never"
+    },
+    "suggestions": {
+      "name": "State timeline"
     }
   },
   "status-history": {
@@ -12907,6 +12950,9 @@
     "status-history-panel": {
       "too-many-points_one": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} points received)",
       "too-many-points_other": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} points received)"
+    },
+    "suggestions": {
+      "name": "Status history"
     }
   },
   "support-bundles": {
@@ -13018,6 +13064,9 @@
     "name-wrap-text": "Wrap text",
     "placeholder-column-width": "auto",
     "placeholder-max-height": "none",
+    "suggestions": {
+      "name": "Table"
+    },
     "tooltip-placement-options": {
       "label-auto": "Auto",
       "label-bottom": "Bottom",
@@ -13119,7 +13168,10 @@
     "name-language": "Language",
     "name-mode": "Mode",
     "name-show-line-numbers": "Show line numbers",
-    "name-show-mini-map": "Show mini map"
+    "name-show-mini-map": "Show mini map",
+    "suggestions": {
+      "name": "Text"
+    }
   },
   "theme-playground": {
     "label-base-theme": "Base theme",
@@ -13291,15 +13343,20 @@
       "bar": "Bar chart",
       "bar-gradient": "Bar chart (with gradient color scheme)",
       "bar-stacked-percent": "Bar chart (100%, stacked)",
-      "line": "Line chart",
       "line-gradient": "Line chart (with gradient color scheme)",
       "line-smooth": "Line chart (smooth)",
       "long-to-wide-required": "Long data must be converted to wide",
+      "name": "Line chart",
       "wide-timeseries": "Transform to wide time series format"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Add timezone",
       "tooltip-remove-timezone": "Remove timezone"
+    }
+  },
+  "trace": {
+    "suggestions": {
+      "name": "Trace"
     }
   },
   "traces": {
@@ -14134,7 +14191,7 @@
     "name-x-field": "X field",
     "placeholder-x-field": "First numeric value",
     "suggestions": {
-      "line-chart": "Trend chart"
+      "name": "Trend chart"
     }
   },
   "upgrade-box": {
