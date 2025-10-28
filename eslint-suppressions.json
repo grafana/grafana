@@ -787,7 +787,7 @@
   },
   "packages/grafana-ui/src/components/Modal/ModalsContext.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 4
+      "count": 2
     },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
