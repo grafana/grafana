@@ -137,10 +137,10 @@ export function AlertRuleDrawerForm({
                   variant="secondary"
                   type="button"
                   onClick={() => {
-                    const values = methods.getValues();
+                    const currentValues = methods.getValues();
                     onContinueInAlerting({
-                      ...values,
-                      contactPoints: normalizeContactPoints(values.contactPoints),
+                      ...currentValues,
+                      contactPoints: normalizeContactPoints(currentValues.contactPoints),
                     });
                   }}
                 >

@@ -30,6 +30,21 @@ export function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
   // expression queries only
   const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
 
+  // If we have data queries but no expressions (e.g., coming from dashboard panel),
+  // default to simplified mode so the form can create appropriate expressions
+  const hasDataQueries = dataQueries.length > 0;
+  const hasExpressions = expressionQueries.length > 0;
+
+  if (hasDataQueries && !hasExpressions) {
+    return {
+      ...values,
+      editorSettings: {
+        simplifiedQueryEditor: true,
+        simplifiedNotificationEditor: true,
+      },
+    };
+  }
+
   const queryParamsAreTransformable = areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries);
   return {
     ...values,
