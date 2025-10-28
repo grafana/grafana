@@ -10,7 +10,6 @@ import (
 	"k8s.io/apiserver/pkg/authentication/user"
 
 	"github.com/grafana/grafana-app-sdk/app"
-
 	examplev1 "github.com/grafana/grafana/pkg/services/apiserver/builder/runner/testdata/app/pkg/apis/example/v1"
 )
 
