@@ -32,14 +32,12 @@ export function RuleDefinitionSection({ type }: { type: RuleFormType }) {
   return (
     <div className={styles.section}>
       <div className={styles.sectionHeaderRow}>
-        <span className={styles.stepBadge}>
-          <Trans i18nKey="alerting.simplified.step-number-one">1</Trans>
-        </span>
         <div className={styles.sectionHeader}>
+          {`1. `}
           <Trans i18nKey="alerting.simplified.rule-definition">Rule Definition</Trans>
         </div>
       </div>
-      <div className={styles.contentIndented}>
+      <div>
         <Stack direction="column" gap={2}>
           <Field
             noMargin
@@ -115,23 +113,10 @@ function getStyles(theme: GrafanaTheme2) {
       marginBottom: theme.spacing(1),
     }),
     sectionHeader: css({
-      fontWeight: 600,
+      fontWeight: theme.typography.fontWeightRegular,
       fontSize: theme.typography.h4.fontSize,
       lineHeight: theme.typography.h4.lineHeight,
     }),
-    stepBadge: css({
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: 20,
-      width: 20,
-      borderRadius: theme.shape.radius.circle,
-      background: theme.colors.primary.main,
-      color: theme.colors.text.maxContrast,
-      fontSize: theme.typography.bodySmall.fontSize,
-      fontWeight: 600,
-    }),
-    contentIndented: css({ marginLeft: `calc(20px + ${theme.spacing(1)})` }),
     nameLabel: css({
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: 500,

@@ -82,47 +82,52 @@ export function AlertRuleDrawerForm({
       title={title ?? t('alerting.new-rule-from-panel-button.new-alert-rule', 'New alert rule')}
       onClose={onClose}
     >
-      <FormProvider {...methods}>
-        <RuleDefinitionSection type={RuleFormType.grafana} />
-        <div className={styles.divider} aria-hidden="true" />
-        <RuleConditionSection type={RuleFormType.grafana} />
-        <div className={styles.divider} aria-hidden="true" />
-        <RuleNotificationSection />
-        <div className={styles.footer}>
-          <Stack direction="row" gap={1} alignItems="center" justifyContent="flex-end">
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={() => {
-                methods.reset(getDefaultFormValues(RuleFormType.grafana));
-                onClose();
-              }}
-            >
-              {t('alerting.common.cancel', 'Cancel')}
-            </Button>
-            {onContinueInAlerting && (
-              <Button variant="secondary" type="button" onClick={() => onContinueInAlerting(methods.getValues())}>
-                {t('alerting.simplified.continue-in-alerting', 'Continue in Alerting')}
+      <div className={styles.outer}>
+        <FormProvider {...methods}>
+          <RuleDefinitionSection type={RuleFormType.grafana} />
+          <div className={styles.divider} aria-hidden="true" />
+          <RuleConditionSection type={RuleFormType.grafana} />
+          <div className={styles.divider} aria-hidden="true" />
+          <RuleNotificationSection />
+          <div className={styles.footer}>
+            <Stack direction="row" gap={1} alignItems="center" justifyContent="flex-end">
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={() => {
+                  methods.reset(getDefaultFormValues(RuleFormType.grafana));
+                  onClose();
+                }}
+              >
+                {t('alerting.common.cancel', 'Cancel')}
               </Button>
-            )}
-            <Button
-              variant="primary"
-              type="button"
-              onClick={methods.handleSubmit((values) => submit(values), onInvalid)}
-              disabled={methods.formState.isSubmitting}
-              icon={methods.formState.isSubmitting ? 'spinner' : undefined}
-            >
-              {t('alerting.simplified.create', 'Create')}
-            </Button>
-          </Stack>
-        </div>
-      </FormProvider>
+              {onContinueInAlerting && (
+                <Button variant="secondary" type="button" onClick={() => onContinueInAlerting(methods.getValues())}>
+                  {t('alerting.simplified.continue-in-alerting', 'Continue in Alerting')}
+                </Button>
+              )}
+              <Button
+                variant="primary"
+                type="button"
+                onClick={methods.handleSubmit((values) => submit(values), onInvalid)}
+                disabled={methods.formState.isSubmitting}
+                icon={methods.formState.isSubmitting ? 'spinner' : undefined}
+              >
+                {t('alerting.simplified.create', 'Create')}
+              </Button>
+            </Stack>
+          </div>
+        </FormProvider>
+      </div>
     </Drawer>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    outer: css({
+      paddingLeft: theme.spacing(1),
+    }),
     divider: css({
       borderTop: `1px solid ${theme.colors.border.weak}`,
       margin: `${theme.spacing(3)} 0`,
