@@ -227,10 +227,13 @@ func (*MutateOperation_CreatePermission) isMutateOperation_Operation() {}
 func (*MutateOperation_DeletePermission) isMutateOperation_Operation() {}
 
 type SetFolderParentOperation struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Folder         string                 `protobuf:"bytes,1,opt,name=folder,proto3" json:"folder,omitempty"`
-	Parent         string                 `protobuf:"bytes,2,opt,name=parent,proto3" json:"parent,omitempty"`
-	DeleteExisting bool                   `protobuf:"varint,3,opt,name=delete_existing,json=deleteExisting,proto3" json:"delete_existing,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// UID of the folder
+	Folder string `protobuf:"bytes,1,opt,name=folder,proto3" json:"folder,omitempty"`
+	// UID of the parent folder
+	Parent string `protobuf:"bytes,2,opt,name=parent,proto3" json:"parent,omitempty"`
+	// If true, delete all existing parent relations associated with the folder
+	DeleteExisting bool `protobuf:"varint,3,opt,name=delete_existing,json=deleteExisting,proto3" json:"delete_existing,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -287,10 +290,13 @@ func (x *SetFolderParentOperation) GetDeleteExisting() bool {
 }
 
 type DeleteFolderOperation struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Folder         string                 `protobuf:"bytes,1,opt,name=folder,proto3" json:"folder,omitempty"`
-	Parent         string                 `protobuf:"bytes,2,opt,name=parent,proto3" json:"parent,omitempty"`
-	DeleteExisting bool                   `protobuf:"varint,3,opt,name=delete_existing,json=deleteExisting,proto3" json:"delete_existing,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// UID of the folder to delete
+	Folder string `protobuf:"bytes,1,opt,name=folder,proto3" json:"folder,omitempty"`
+	// UID of the parent folder
+	Parent string `protobuf:"bytes,2,opt,name=parent,proto3" json:"parent,omitempty"`
+	// If true, delete all existing parent relations associated with the folder
+	DeleteExisting bool `protobuf:"varint,3,opt,name=delete_existing,json=deleteExisting,proto3" json:"delete_existing,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }

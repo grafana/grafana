@@ -34,14 +34,20 @@ message MutateOperation {
 }
 
 message SetFolderParentOperation {
+  // UID of the folder
   string folder = 1;
+  // UID of the parent folder
   string parent = 2;
+  // If true, delete all existing parent relations associated with the folder
   bool delete_existing = 3;
 }
 
 message DeleteFolderOperation {
+  // UID of the folder to delete
   string folder = 1;
+  // UID of the parent folder
   string parent = 2;
+  // If true, delete all existing parent relations associated with the folder
   bool delete_existing = 3;
 }
 
