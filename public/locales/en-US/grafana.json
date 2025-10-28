@@ -4127,6 +4127,7 @@
     "action": {
       "change-theme": "Change theme",
       "dark-theme": "Dark",
+      "dashboard-from-template": "Dashboard from template",
       "light-theme": "Light",
       "scopes": "Scopes"
     },
@@ -5371,9 +5372,6 @@
         "title-not-unique": "This title is not unique"
       }
     },
-    "template-dashboard-modal": {
-      "title": "Start a dashboard from a template"
-    },
     "title": {
       "action": "Change dashboard title"
     },
@@ -5648,6 +5646,24 @@
     "json-field": {
       "label": "Import via dashboard JSON model",
       "validation-required": "Need a dashboard JSON model"
+    }
+  },
+  "dashboard-library": {
+    "dashboard-card": {
+      "details": {
+        "datasource-label": "Datasource",
+        "dependencies-label": "Dependencies",
+        "id": "ID",
+        "last-update-label": "Last Update",
+        "published-by-label": "Published By"
+      },
+      "details-button": "Details",
+      "details-title": "Details",
+      "use-template-button": "Use template"
+    },
+    "template-dashboard-modal": {
+      "description": "Browse and select from a template made by Grafana",
+      "title": "Start a dashboard from a template"
     }
   },
   "dashboard-links": {
@@ -6475,13 +6491,6 @@
     },
     "versions": {
       "title": "Versions"
-    }
-  },
-  "dashboard-template": {
-    "card": {
-      "details-button": "Details",
-      "details-title": "Details",
-      "use-template-button": "Use template"
     }
   },
   "dashboards": {
