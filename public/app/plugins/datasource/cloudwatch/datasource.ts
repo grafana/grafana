@@ -120,7 +120,7 @@ export class CloudWatchDatasource
         logsAnomaliesQueries.push(query);
       } else if (isCloudWatchLogsQuery(query)) {
         logQueries.push(query);
-      }  else {
+      } else {
         metricsQueries.push(query);
       }
     });

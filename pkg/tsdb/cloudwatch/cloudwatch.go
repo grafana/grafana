@@ -45,7 +45,7 @@ const (
 
 type DataQueryJson struct {
 	dataquery.CloudWatchAnnotationQuery
-	Type string `json:"type,omitempty"`
+	Type     string             `json:"type,omitempty"`
 	LogsMode dataquery.LogsMode `json:"logsMode,omitempty"`
 }
 
@@ -148,13 +148,13 @@ func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 	if model.QueryMode != "" {
 		queryMode = string(model.QueryMode)
 	}
-	
+
 	fromPublicDashboard := model.Type == ""
-	
+
 	isLogInsightsQuery := queryMode == queryModeLogs && (model.LogsMode == "" || model.LogsMode == dataquery.LogsModeInsights)
-	
+
 	isSyncLogQuery := isLogInsightsQuery && ((fromAlert || fromExpression) || fromPublicDashboard)
-	
+
 	if isSyncLogQuery {
 		return executeSyncLogQuery(ctx, ds, req)
 	}

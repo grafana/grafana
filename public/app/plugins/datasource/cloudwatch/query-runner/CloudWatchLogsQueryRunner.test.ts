@@ -9,7 +9,6 @@ import {
   LogRowContextQueryDirection,
   LogRowModel,
 } from '@grafana/data';
-import { DataQuery } from '@grafana/schema/dist/esm/index';
 
 import { regionVariable } from '../mocks/CloudWatchDataSource';
 import { setupMockedLogsQueryRunner } from '../mocks/LogsQueryRunner';
@@ -526,7 +525,7 @@ describe('handleLogAnomaliesQueries', () => {
 
     convertTrendHistogramToSparkline(response);
 
-    expect(response.data[0].fields.find((field: Field) => field.name === 'logTrend')).toEqual({
+    expect(response.data[0].fields.find((field: Field) => field.name === 'Log trend')).toEqual({
       name: 'Log trend',
       type: 'frame',
       config: {
@@ -582,7 +581,7 @@ describe('handleLogAnomaliesQueries', () => {
     });
   });
 
-  it('replaces log trend histogram field at the same inde in the frame', () => {
+  it('replaces log trend histogram field at the same index in the frame', () => {
     const response = anomaliesQueryResponse;
 
     convertTrendHistogramToSparkline(response);
@@ -608,6 +607,27 @@ describe('handleLogAnomaliesQueries', () => {
     ]);
   });
 });
+
+const rawLogQueriesStub: CloudWatchLogsQuery[] = [
+  {
+    refId: 'A',
+    id: '',
+    region: 'us-east-2',
+    logGroups: [
+      {
+        accountId: 'accountId',
+        arn: 'somearn',
+        name: 'nameOfLogGroup',
+      },
+    ],
+    queryMode: 'Logs',
+    expression: 'fields @timestamp, @message |\n sort @timestamp desc |\n limit 20',
+    datasource: {
+      type: 'cloudwatch',
+      uid: 'ff87aa43-7618-42ee-ae9c-4a405378728b',
+    },
+  },
+];
 
 const startQuerySuccessResponseStub = {
   data: [

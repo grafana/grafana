@@ -12,7 +12,9 @@ import {
 export const isCloudWatchLogsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchLogsQuery =>
   cloudwatchQuery.queryMode === 'Logs';
 
-export const isLogsAnomaliesQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchLogsAnomaliesQuery => {
+export const isLogsAnomaliesQuery = (
+  cloudwatchQuery: CloudWatchQuery
+): cloudwatchQuery is CloudWatchLogsAnomaliesQuery => {
   if (isCloudWatchLogsQuery(cloudwatchQuery)) {
     return cloudwatchQuery.logsMode === LogsMode.Anomalies;
   }

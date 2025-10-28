@@ -37,7 +37,7 @@ type logsQueryCalls struct {
 	startQuery        []*cloudwatchlogs.StartQueryInput
 	getEvents         []*cloudwatchlogs.GetLogEventsInput
 	describeLogGroups []*cloudwatchlogs.DescribeLogGroupsInput
-	listAnomalies   []*cloudwatchlogs.ListAnomaliesInput
+	listAnomalies     []*cloudwatchlogs.ListAnomaliesInput
 }
 
 func (m *fakeCWLogsClient) GetQueryResults(_ context.Context, _ *cloudwatchlogs.GetQueryResultsInput, _ ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.GetQueryResultsOutput, error) {
@@ -60,7 +60,7 @@ func (m *fakeCWLogsClient) StopQuery(_ context.Context, _ *cloudwatchlogs.StopQu
 
 func (m *fakeCWLogsClient) ListAnomalies(_ context.Context, input *cloudwatchlogs.ListAnomaliesInput, _ ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.ListAnomaliesOutput, error) {
 	m.calls.listAnomalies = append(m.calls.listAnomalies, input)
-	
+
 	return &cloudwatchlogs.ListAnomaliesOutput{
 		Anomalies: m.anomalies,
 	}, nil
