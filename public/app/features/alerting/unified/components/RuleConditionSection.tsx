@@ -68,15 +68,13 @@ export function RuleConditionSection({ type }: { type: RuleFormType }) {
   return (
     <div className={base.section}>
       <div className={base.sectionHeaderRow}>
-        <span className={base.stepBadge}>
-          <Trans i18nKey="alerting.simplified.step-number-two">2</Trans>
-        </span>
         <div className={base.sectionHeader}>
+          {`2. `}
           <Trans i18nKey="alerting.simplified.condition.title">Condition</Trans>
         </div>
       </div>
 
-      <div className={base.contentIndented}>
+      <div>
         <Stack direction="column" gap={2}>
           <InlineFieldRow>
             {simpleCondition.whenField && (
@@ -157,23 +155,10 @@ function getStyles(theme: GrafanaTheme2) {
       marginBottom: theme.spacing(1),
     }),
     sectionHeader: css({
-      fontWeight: 600,
+      fontWeight: theme.typography.fontWeightRegular,
       fontSize: theme.typography.h4.fontSize,
       lineHeight: theme.typography.h4.lineHeight,
     }),
-    stepBadge: css({
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: 20,
-      width: 20,
-      borderRadius: theme.shape.radius.circle,
-      background: theme.colors.primary.main,
-      color: theme.colors.text.maxContrast,
-      fontSize: theme.typography.bodySmall.fontSize,
-      fontWeight: 600,
-    }),
-    contentIndented: css({ marginLeft: `calc(20px + ${theme.spacing(1)})` }),
     paragraphRow: css({ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: theme.spacing(1) }),
     inlineField: css({ display: 'inline-flex' }),
   };
