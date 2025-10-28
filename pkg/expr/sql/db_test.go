@@ -278,6 +278,18 @@ func TestNaNBecomesNull(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestErrorsFromGoMySQLServerAreFlagged(t *testing.T) {
+	const GmsNotImplemented = "TRUNCATE" // not implemented in go-mysql-server as of 2025-04-11
+
+	db := DB{}
+
+	query := `SELECT ` + GmsNotImplemented + `(123.456, 2);`
+
+	_, err := db.QueryFrames(context.Background(), &testTracer{}, "sqlExpressionRefId", query, nil)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "error from the sql expression engine")
+}
+
 func TestFrameToSQLAndBack_JSONRoundtrip(t *testing.T) {
 	expectedFrame := &data.Frame{
 		RefID: "json_test",
