@@ -671,11 +671,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/FileDropzone/FileDropzone.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/FormField/FormField.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -2057,21 +2052,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/conditional-rendering/conditions/ConditionalRenderingData.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/conditional-rendering/conditions/ConditionalRenderingTimeRangeSize.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/conditional-rendering/conditions/ConditionalRenderingVariable.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/edit-pane/DashboardEditPaneRenderer.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -3176,14 +3156,6 @@
   "public/app/features/logs/logsFrame.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "public/app/features/logs/utils.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "no-restricted-syntax": {
-      "count": 6
     }
   },
   "public/app/features/manage-dashboards/DashboardImportPage.tsx": {

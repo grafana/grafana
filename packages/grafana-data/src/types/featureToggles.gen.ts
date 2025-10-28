@@ -1232,4 +1232,8 @@ export interface FeatureToggles {
   * @default true
   */
   onlyStoreActionSets?: boolean;
+  /**
+  * Enable template dashboards
+  */
+  dashboardTemplates?: boolean;
 }

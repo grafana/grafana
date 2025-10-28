@@ -17,16 +17,16 @@ export const AUTH_RADIO_BUTTON_OPTIONS = [
 ];
 
 export const CONFIG_SECTION_HEADERS = [
-  { label: 'URL and authentication', id: 'url', isOpen: true },
-  { label: 'Database settings', id: 'tls', isOpen: true },
-  { label: 'Save & test', id: `${selectors.pages.DataSource.saveAndTest}`, isOpen: true },
+  { label: 'URL and authentication', id: 'url', isOpen: true, isOptional: false },
+  { label: 'Database settings', id: 'db', isOpen: true, isOptional: false },
+  { label: 'Save & test', id: `${selectors.pages.DataSource.saveAndTest}`, isOpen: true, isOptional: null },
 ];
 
 export const CONFIG_SECTION_HEADERS_WITH_PDC = [
-  { label: 'URL and authentication', id: 'url', isOpen: true },
-  { label: 'Database settings', id: 'tls', isOpen: true },
-  { label: 'Private data source connect', id: 'pdc', isOpen: true },
-  { label: 'Save & test', id: `${selectors.pages.DataSource.saveAndTest}`, isOpen: true },
+  { label: 'URL and authentication', id: 'url', isOpen: true, isOptional: false },
+  { label: 'Database settings', id: 'db', isOpen: true, isOptional: false },
+  { label: 'Private data source connect', id: 'pdc', isOpen: false, isOptional: true },
+  { label: 'Save & test', id: `${selectors.pages.DataSource.saveAndTest}`, isOpen: true, isOptional: null },
 ];
 
 export const HTTP_MODES: ComboboxOption[] = [
@@ -34,7 +34,7 @@ export const HTTP_MODES: ComboboxOption[] = [
   { label: 'GET', value: 'GET' },
 ];
 
-export const getInlineLabelStyles = (theme: GrafanaTheme2, transparent = false, width?: number | 'auto') => {
+export const getInlineLabelStyles = (theme: GrafanaTheme2, transparent = false) => {
   return {
     label: css({
       display: 'flex',
@@ -56,5 +56,5 @@ export const getInlineLabelStyles = (theme: GrafanaTheme2, transparent = false, 
   };
 };
 
-export const DB_SETTINGS_LABEL_WIDTH = 18;
 export const CONTAINER_MIN_WIDTH = '450px';
+export const DB_SETTINGS_LABEL_WIDTH = 22;
