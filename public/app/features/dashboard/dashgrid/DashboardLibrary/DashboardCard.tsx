@@ -25,6 +25,7 @@ interface Props {
   isLogo?: boolean; // Indicates if imageUrl is a small logo vs full screenshot
   showDatasourceProvidedBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
+  showDescriptionPlaceholder?: boolean; // Show placeholder when no description exists
 }
 
 export function DashboardCard({
@@ -36,6 +37,7 @@ export function DashboardCard({
   isLogo,
   showDatasourceProvidedBadge,
   dimThumbnail,
+  showDescriptionPlaceholder,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -71,9 +73,13 @@ export function DashboardCard({
         )}
       </div>
       <div title={dashboard.description || ''} className={styles.descriptionWrapper}>
-        {dashboard.description && (
+        {dashboard.description ? (
           <Card.Description className={styles.description}>{dashboard.description}</Card.Description>
-        )}
+        ) : showDescriptionPlaceholder ? (
+          <Card.Description className={cx(styles.description, styles.placeholderText)}>
+            <Trans i18nKey="dashboard-template.card.no-description">No description available</Trans>
+          </Card.Description>
+        ) : null}
       </div>
       <Card.Actions className={styles.actionsContainer}>
         <Button variant="secondary" onClick={onClick}>
@@ -201,7 +207,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     descriptionWrapper: css({
       gridArea: 'Description',
-      cursor: 'help',
       wordBreak: 'break-word',
     }),
     title: css({
@@ -213,11 +218,12 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     description: css({
       display: '-webkit-box',
-      WebkitLineClamp: 2,
+      WebkitLineClamp: 1,
       WebkitBoxOrient: 'vertical',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       margin: 0,
+      height: `calc(${theme.typography.body.lineHeight} * 1em)`, // Fixed height for 1 line
     }),
     actionsContainer: css({
       marginTop: 0,
@@ -238,6 +244,10 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     dimmedImage: css({
       opacity: 0.3,
+    }),
+    placeholderText: css({
+      color: theme.colors.text.disabled,
+      fontStyle: 'italic',
     }),
   };
 }

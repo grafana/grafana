@@ -286,6 +286,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
                   onClick={() => onUseProvisionedDashboard(item.dashboard)}
                   showDatasourceProvidedBadge={true}
                   dimThumbnail={true}
+                  showDescriptionPlaceholder={true}
                 />
               );
             } else {
@@ -303,6 +304,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
                   onClick={() => onUseCommunityDashboard(item.dashboard)}
                   isLogo={isLogo}
                   details={details}
+                  showDescriptionPlaceholder={true}
                 />
               );
             }
