@@ -4836,10 +4836,10 @@
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2> .",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
-      "show-less-dashboards": "Show less",
-      "show-more-dashboards": "Show more",
-      "start-with-suggested-dashboards": "Start with a pre-made dashboard from your data source",
-      "use-template-button": "Use this dashboard"
+      "suggested-dashboards-subtitle": "Browse and select from data-source provided or community dashboards",
+      "suggested-dashboards-title": "Build a dashboard using suggested options for your selected data source",
+      "suggested-dashboards-title-with-datasource": "Build a dashboard using suggested options for your {{datasourceName}} data source",
+      "view-all": "View all"
     },
     "errors": {
       "failed-to-load": "Failed to load dashboard"
@@ -5073,6 +5073,40 @@
           "dashboard-not-found": "Dashboard not found"
         }
       }
+    },
+    "library": {
+      "browse-grafana-com": "Browse Grafana.com",
+      "browse-plugins": "Browse plugins",
+      "community-empty-title": "No community dashboards found",
+      "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
+      "community-error": "Failed to load community dashboards. Please try again.",
+      "community-error-title": "Error loading community dashboards",
+      "community-mapping-form": {
+        "auto-mapped_one": "{{count}} datasources were automatically configured:",
+        "auto-mapped_other": "{{count}} datasources were automatically configured:",
+        "back": "Back to dashboards",
+        "constants-title": "Dashboard Variables",
+        "datasources-title": "Datasource Configuration",
+        "description": "This dashboard requires datasource configuration. Select datasources for each input below.",
+        "preview": "Preview dashboard"
+      },
+      "community-mapping-select-datasource": "Select a datasource",
+      "community-search-placeholder": "Search community dashboards...",
+      "community-search-placeholder-with-datasource": "Search {{datasourceType}} community dashboards...",
+      "no-community-dashboards-datasource": "Try a different search term or browse dashboards for different datasource types on Grafana.com.",
+      "no-community-dashboards-search": "Try a different search term or browse more dashboards on Grafana.com.",
+      "no-provisioned-dashboards": "Provisioned dashboards are provided by data source plugins. You can find more plugins on Grafana.com.",
+      "provisioned-empty-title": "No provisioned dashboards found",
+      "provisioned-empty-title-with-datasource": "No {{datasourceType}} provisioned dashboards found",
+      "retry": "Retry"
+    },
+    "library-modal": {
+      "description": "Browse and select from data-source provided or community dashboards",
+      "tab-community": "Community",
+      "tab-datasource": "Data-source provided",
+      "title": "Suggested dashboards",
+      "title-mapping": "Configure datasources",
+      "title-with-datasource": "Suggested dashboards for your {{datasourceName}} datasource"
     },
     "make-editable": {
       "dashboard-not-editable": "Dashboard not editable",
@@ -5645,6 +5679,18 @@
     "json-field": {
       "label": "Import via dashboard JSON model",
       "validation-required": "Need a dashboard JSON model"
+    }
+  },
+  "dashboard-library": {
+    "dashboard-card": {
+      "details": {
+        "datasource": "Datasource",
+        "dependencies": "Dependencies",
+        "id": "ID",
+        "last-update": "Last Update",
+        "published-by": "Published By",
+        "view-on-grafana-com": "View on Grafana.com"
+      }
     }
   },
   "dashboard-links": {
@@ -6472,6 +6518,16 @@
     },
     "versions": {
       "title": "Versions"
+    }
+  },
+  "dashboard-template": {
+    "card": {
+      "datasource-provided-badge": "Data source provided",
+      "details-tooltip": "Details",
+      "no-description": "No description available",
+      "no-preview": "No preview available",
+      "use-dashboard-button": "Use dashboard",
+      "use-template-button": "Use template"
     }
   },
   "dashboards": {
