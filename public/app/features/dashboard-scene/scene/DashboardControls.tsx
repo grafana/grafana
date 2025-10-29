@@ -202,7 +202,7 @@ function DataLayerControls({ dashboard }: { dashboard: DashboardScene }) {
 }
 
 function renderHiddenVariables(dashboard: DashboardScene) {
-  const { variables } = sceneGraph.getVariables(dashboard)!.useState();
+  const { variables } = sceneGraph.getVariables(dashboard).useState();
   const renderAsHiddenVariables = variables.filter((v) => v.UNSAFE_renderAsHidden);
   if (renderAsHiddenVariables && renderAsHiddenVariables.length > 0) {
     return (
