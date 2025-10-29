@@ -5,27 +5,35 @@ import { useAsync, useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { Button, useStyles2, Stack, Grid, EmptyState, Alert, Pagination, FilterInput } from '@grafana/ui';
 import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
-
-import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './DashboardLibraryModal';
 import { DashboardLibraryInteractions } from './interactions';
-import { GnetDashboard, Link } from './types';
+import { GnetDashboard } from './types';
+import { tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './utils/autoMapDatasources';
 import {
-  tryAutoMapDatasources,
-  parseConstantInputs,
-  InputMapping,
-  isDataSourceInput,
-} from './utils/autoMapDatasources';
+  getThumbnailUrl,
+  getLogoUrl,
+  buildDashboardDetails,
+  navigateToTemplate,
+} from './utils/communityDashboardHelpers';
 
 interface Props {
   onShowMapping: (context: MappingContext) => void;
   datasourceType?: string;
 }
+
+// Constants for community dashboard pagination and API params
+const COMMUNITY_PAGE_SIZE = 9;
+const COMMUNITY_PAGINATION_OFFSET = 4;
+const SEARCH_DEBOUNCE_MS = 500;
+const DEFAULT_SORT_ORDER = 'downloads';
+const DEFAULT_SORT_DIRECTION = 'desc';
+const INCLUDE_LOGO = '1';
+const INCLUDE_SCREENSHOTS = 'true';
 
 export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Props) => {
   const [searchParams] = useSearchParams();
@@ -38,7 +46,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
     () => {
       setDebouncedSearchQuery(searchQuery);
     },
-    500,
+    SEARCH_DEBOUNCE_MS,
     [searchQuery]
   );
 
@@ -63,12 +71,12 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
 
     try {
       const params = new URLSearchParams({
-        orderBy: 'downloads',
-        direction: 'desc',
+        orderBy: DEFAULT_SORT_ORDER,
+        direction: DEFAULT_SORT_DIRECTION,
         page: String(currentPage),
-        pageSize: '9',
-        includeLogo: '1',
-        includeScreenshots: 'true',
+        pageSize: String(COMMUNITY_PAGE_SIZE),
+        includeLogo: INCLUDE_LOGO,
+        includeScreenshots: INCLUDE_SCREENSHOTS,
       });
 
       // Filter by datasource type using dataSourceSlugIn
@@ -122,29 +130,10 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
 
   // Determine what to show in results area
   const dashboards = Array.isArray(response?.dashboards) ? response.dashboards : [];
-  const hasMore = dashboards.length >= 9;
-  const estimatedTotalPages = hasMore ? currentPage + 4 : currentPage;
+  const hasMore = dashboards.length >= COMMUNITY_PAGE_SIZE;
+  const estimatedTotalPages = hasMore ? currentPage + COMMUNITY_PAGINATION_OFFSET : currentPage;
   const showEmptyState = !loading && (!response?.dashboards || response.dashboards.length === 0);
   const showError = !loading && error;
-
-  const navigateToTemplate = (dashboardTitle: string, gnetId: number, mappings: InputMapping[]) => {
-    // Navigate to template route with mappings in URL
-    // Backend will fetch from Grafana.com and interpolate server-side
-    const searchParams = new URLSearchParams({
-      datasource: datasourceUid || '',
-      title: dashboardTitle,
-      gnetId: String(gnetId),
-      sourceEntryPoint: 'datasource_page',
-      creationOrigin: 'dashboard_library_community_dashboard',
-      // Encode mappings as JSON in URL
-      mappings: JSON.stringify(mappings),
-    });
-
-    locationService.push({
-      pathname: DASHBOARD_LIBRARY_ROUTES.Template,
-      search: searchParams.toString(),
-    });
-  };
 
   const onUseDashboard = async (dashboard: GnetDashboard) => {
     if (response) {
@@ -178,7 +167,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
 
       if (!needsMapping) {
         // No mapping needed - all datasources auto-mapped, no constants
-        navigateToTemplate(dashboard.name, dashboard.id, mappingResult.mappings);
+        navigateToTemplate(dashboard.name, dashboard.id, datasourceUid || '', mappingResult.mappings);
       } else {
         // Show mapping form for unmapped datasources and/or constants
         onShowMapping({
@@ -187,7 +176,8 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
           unmappedInputs: mappingResult.unmappedInputs,
           constantInputs,
           existingMappings: mappingResult.mappings,
-          onInterpolateAndNavigate: (mappings) => navigateToTemplate(dashboard.name, dashboard.id, mappings),
+          onInterpolateAndNavigate: (mappings) =>
+            navigateToTemplate(dashboard.name, dashboard.id, datasourceUid || '', mappings),
         });
       }
     } catch (err) {
@@ -222,7 +212,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
               lg: 3,
             }}
           >
-            {Array.from({ length: 9 }).map((_, i) => (
+            {Array.from({ length: COMMUNITY_PAGE_SIZE }).map((_, i) => (
               <div key={i} className={styles.skeleton} />
             ))}
           </Grid>
@@ -281,51 +271,11 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
             }}
           >
             {dashboards.map((dashboard) => {
-              const getThumbnailUrl = () => {
-                const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
-                return thumbnail ? `/api/gnet${thumbnail}` : '';
-              };
-
-              const getLogoUrl = () => {
-                const logo = dashboard.logos?.large || dashboard.logos?.small;
-                if (logo?.content && logo?.type) {
-                  return `data:${logo.type};base64,${logo.content}`;
-                }
-                return '';
-              };
-
-              const thumbnailUrl = getThumbnailUrl();
-              const logoUrl = getLogoUrl();
+              const thumbnailUrl = getThumbnailUrl(dashboard);
+              const logoUrl = getLogoUrl(dashboard);
               const imageUrl = thumbnailUrl || logoUrl;
               const isLogo = !thumbnailUrl;
-
-              // Format details for community dashboard
-              const formatDate = (dateString?: string) => {
-                if (!dateString) {
-                  return 'N/A';
-                }
-                const date = new Date(dateString);
-                return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-              };
-
-              // Create slug from dashboard name for Grafana.com URL
-              const createSlug = (name: string) => {
-                return name
-                  .toLowerCase()
-                  .replace(/[^a-z0-9]+/g, '-')
-                  .replace(/^-+|-+$/g, '');
-              };
-
-              const grafanaComUrl = `https://grafana.com/grafana/dashboards/${dashboard.id}-${createSlug(dashboard.name)}/`;
-
-              const details = {
-                id: String(dashboard.id),
-                datasource: dashboard.datasource || 'N/A',
-                dependencies: dashboard.datasource ? [dashboard.datasource] : [],
-                publishedBy: dashboard.orgName || dashboard.userName || 'Grafana Community',
-                lastUpdate: formatDate(dashboard.updatedAt || dashboard.publishedAt),
-                grafanaComUrl,
-              };
+              const details = buildDashboardDetails(dashboard);
 
               return (
                 <DashboardCard

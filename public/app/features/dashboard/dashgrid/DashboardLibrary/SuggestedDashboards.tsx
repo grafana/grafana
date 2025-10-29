@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { Button, useStyles2, Grid } from '@grafana/ui';
 import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 import { PluginDashboard } from 'app/types/plugins';
@@ -15,18 +15,17 @@ import dashboardLibrary4 from 'img/dashboard-library/dashboard_library_4.jpg';
 import dashboardLibrary5 from 'img/dashboard-library/dashboard_library_5.jpg';
 import dashboardLibrary6 from 'img/dashboard-library/dashboard_library_6.jpg';
 
-import { DASHBOARD_LIBRARY_ROUTES } from '../types';
-
 import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './DashboardLibraryModal';
 import { DashboardLibraryInteractions } from './interactions';
-import { GnetDashboard, Link } from './types';
+import { GnetDashboard } from './types';
+import { tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './utils/autoMapDatasources';
 import {
-  tryAutoMapDatasources,
-  parseConstantInputs,
-  InputMapping,
-  isDataSourceInput,
-} from './utils/autoMapDatasources';
+  getThumbnailUrl,
+  getLogoUrl,
+  buildDashboardDetails,
+  navigateToTemplate,
+} from './utils/communityDashboardHelpers';
 
 interface Props {
   datasourceUid?: string;
@@ -37,6 +36,12 @@ interface Props {
 type MixedDashboard =
   | { type: 'provisioned'; dashboard: PluginDashboard; index: number }
   | { type: 'community'; dashboard: GnetDashboard };
+
+// Constants for suggested dashboards API params
+const SUGGESTED_COMMUNITY_PAGE_SIZE = 2;
+const DEFAULT_SORT_ORDER = 'downloads';
+const DEFAULT_SORT_DIRECTION = 'desc';
+const INCLUDE_SCREENSHOTS = 'true';
 
 export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping }: Props) => {
   const styles = useStyles2(getStyles);
@@ -73,11 +78,11 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
         // Fetch community dashboards
         (async () => {
           const params = new URLSearchParams({
-            orderBy: 'downloads',
-            direction: 'desc',
+            orderBy: DEFAULT_SORT_ORDER,
+            direction: DEFAULT_SORT_DIRECTION,
             page: '1',
-            pageSize: '2',
-            includeScreenshots: 'true',
+            pageSize: String(SUGGESTED_COMMUNITY_PAGE_SIZE),
+            includeScreenshots: INCLUDE_SCREENSHOTS,
           });
 
           // Filter by datasource type
@@ -184,25 +189,6 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
     window.location.href = `/dashboard/template?${params.toString()}`;
   };
 
-  const navigateToTemplate = (dashboardTitle: string, gnetId: number, mappings: InputMapping[]) => {
-    // Navigate to template route with mappings in URL
-    // Backend will fetch from Grafana.com and interpolate server-side
-    const searchParams = new URLSearchParams({
-      datasource: datasourceUid || '',
-      title: dashboardTitle,
-      gnetId: String(gnetId),
-      sourceEntryPoint: 'datasource_page',
-      creationOrigin: 'dashboard_library_community_dashboard',
-      // Encode mappings as JSON in URL
-      mappings: JSON.stringify(mappings),
-    });
-
-    locationService.push({
-      pathname: DASHBOARD_LIBRARY_ROUTES.Template,
-      search: searchParams.toString(),
-    });
-  };
-
   const handleCommunityClick = async (dashboard: GnetDashboard) => {
     if (!datasourceUid) {
       return;
@@ -241,7 +227,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
 
       if (!needsMapping) {
         // No mapping needed - all datasources auto-mapped, no constants
-        navigateToTemplate(dashboard.name, dashboard.id, mappingResult.mappings);
+        navigateToTemplate(dashboard.name, dashboard.id, datasourceUid || '', mappingResult.mappings);
       } else {
         // Show mapping form for unmapped datasources and/or constants
         onShowMapping({
@@ -250,34 +236,14 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
           unmappedInputs: mappingResult.unmappedInputs,
           constantInputs,
           existingMappings: mappingResult.mappings,
-          onInterpolateAndNavigate: (mappings) => navigateToTemplate(dashboard.name, dashboard.id, mappings),
+          onInterpolateAndNavigate: (mappings) =>
+            navigateToTemplate(dashboard.name, dashboard.id, datasourceUid || '', mappings),
         });
       }
     } catch (err) {
       console.error('Error loading community dashboard:', err);
       // TODO: Show error notification
     }
-  };
-
-  const getThumbnailUrl = (dashboard: GnetDashboard) => {
-    const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
-    return thumbnail ? `/api/gnet${thumbnail}` : '';
-  };
-
-  const getLogoUrl = (dashboard: GnetDashboard) => {
-    const logo = dashboard.logos?.large || dashboard.logos?.small;
-    if (logo?.content && logo?.type) {
-      return `data:${logo.type};base64,${logo.content}`;
-    }
-    return '';
-  };
-
-  const getCommunityImageUrl = (dashboard: GnetDashboard) => {
-    return getThumbnailUrl(dashboard) || getLogoUrl(dashboard);
-  };
-
-  const hasScreenshot = (dashboard: GnetDashboard) => {
-    return !!getThumbnailUrl(dashboard);
   };
 
   const getProvisionedImageUrl = (index: number) => {
@@ -328,8 +294,8 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
         gap={4}
         columns={{
           xs: 1,
-          sm: suggestedDashboards && suggestedDashboards.length >= 2 ? 2 : 1,
-          lg: suggestedDashboards && suggestedDashboards.length >= 3 ? 3 : suggestedDashboards?.length >= 2 ? 2 : 1,
+          sm: (suggestedDashboards?.length ?? 0) >= 2 ? 2 : 1,
+          lg: (suggestedDashboards?.length ?? 0) >= 3 ? 3 : (suggestedDashboards?.length ?? 0) >= 2 ? 2 : 1,
         }}
       >
         {loading ? (
@@ -340,7 +306,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
             <div className={styles.skeleton} />
           </>
         ) : (
-          (suggestedDashboards?.map((item, idx) => {
+          suggestedDashboards?.map((item, idx) => {
             if (item.type === 'provisioned') {
               return (
                 <DashboardCard
@@ -354,36 +320,10 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
                 />
               );
             } else {
-              const imageUrl = getCommunityImageUrl(item.dashboard);
-              const isLogo = !hasScreenshot(item.dashboard);
-
-              // Format details for community dashboard
-              const formatDate = (dateString?: string) => {
-                if (!dateString) {
-                  return 'N/A';
-                }
-                const date = new Date(dateString);
-                return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-              };
-
-              // Create slug from dashboard name for Grafana.com URL
-              const createSlug = (name: string) => {
-                return name
-                  .toLowerCase()
-                  .replace(/[^a-z0-9]+/g, '-')
-                  .replace(/^-+|-+$/g, '');
-              };
-
-              const grafanaComUrl = `https://grafana.com/grafana/dashboards/${item.dashboard.id}-${createSlug(item.dashboard.name)}/`;
-
-              const details = {
-                id: String(item.dashboard.id),
-                datasource: item.dashboard.datasource || 'N/A',
-                dependencies: item.dashboard.datasource ? [item.dashboard.datasource] : [],
-                publishedBy: item.dashboard.orgName || item.dashboard.userName || 'Grafana Community',
-                lastUpdate: formatDate(item.dashboard.updatedAt || item.dashboard.publishedAt),
-                grafanaComUrl,
-              };
+              const thumbnailUrl = getThumbnailUrl(item.dashboard);
+              const imageUrl = thumbnailUrl || getLogoUrl(item.dashboard);
+              const isLogo = !thumbnailUrl;
+              const details = buildDashboardDetails(item.dashboard);
 
               return (
                 <DashboardCard
@@ -397,7 +337,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
                 />
               );
             }
-          }) ?? null)
+          }) || []
         )}
       </Grid>
     </div>

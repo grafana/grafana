@@ -19,12 +19,14 @@ import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 import { DashboardCard } from './DashboardCard';
 import { DashboardLibraryInteractions } from './interactions';
 
+// Constants for datasource-provided dashboards pagination
+const PAGE_SIZE = 9;
+
 export const DashboardLibrarySection = () => {
   const [searchParams] = useSearchParams();
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
 
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 9;
 
   const { value: templateDashboards, loading } = useAsync(async (): Promise<PluginDashboard[]> => {
     if (!datasourceUid) {
@@ -58,9 +60,9 @@ export const DashboardLibrarySection = () => {
 
   // Calculate pagination
   const totalDashboards = templateDashboards?.length || 0;
-  const totalPages = Math.ceil(totalDashboards / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
+  const totalPages = Math.ceil(totalDashboards / PAGE_SIZE);
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const endIndex = startIndex + PAGE_SIZE;
   const dashboardsToShow = templateDashboards?.slice(startIndex, endIndex);
 
   const styles = useStyles2(getStyles);
