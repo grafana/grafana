@@ -7658,7 +7658,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "No folders found",
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
