@@ -76,6 +76,7 @@ type CWLogsClient interface {
 
 	cloudwatchlogs.GetLogEventsAPIClient
 	cloudwatchlogs.DescribeLogGroupsAPIClient
+	cloudwatchlogs.ListAnomaliesAPIClient
 }
 
 type CWClient interface {
