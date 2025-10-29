@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/structured-merge-diff/v6/fieldpath"
 
 	"github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"github.com/grafana/grafana-app-sdk/logging"
 	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/shorturls"
@@ -65,7 +66,10 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 		return nil, false, err
 	}
 
-	_, _, _ = s.status.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	_, _, err = s.status.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	if err != nil {
+		logging.FromContext(ctx).Info("Failed to update shorturl status in unified storage", "error", err)
+	}
 	obj, err := s.legacy.Get(ctx, name, &v1.GetOptions{})
 	return obj, false, err
 }

@@ -13,7 +13,6 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 
-	"github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -80,7 +79,7 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 					if err != nil {
 						return err
 					}
-				} else if statusRest, ok := storage.(*apiserver.StatusREST); ok {
+				} else if statusRest, ok := storage.(*appsdkapiserver.StatusREST); ok {
 					// In the exceptional case where legacy resources have status, the dual writing must be handled explicitly
 					if statusProvider, ok := s.installer.(LegacyStatusProvider); ok {
 						parentPath := strings.TrimSuffix(storagePath, "/status")

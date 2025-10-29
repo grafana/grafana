@@ -288,6 +288,8 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 
 		// Verify lastSeenAt was updated (should be > 0 now)
 		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+		require.NoError(t, err)
+
 		lastSeenAt, exists, err := unstructured.NestedInt64(found.Object, "status", "lastSeenAt")
 		require.NoError(t, err)
 		assert.True(t, exists)

@@ -9,7 +9,6 @@ import (
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis"
@@ -89,7 +88,7 @@ func (s *ShortURLAppInstaller) GetLegacyStorage(requested schema.GroupVersionRes
 	return legacyStore
 }
 
-func (s *ShortURLAppInstaller) GetLegacyStatus(requested schema.GroupVersionResource, unified *apiserver.StatusREST) rest.Storage {
+func (s *ShortURLAppInstaller) GetLegacyStatus(requested schema.GroupVersionResource, unified *appsdkapiserver.StatusREST) rest.Storage {
 	gvr := shorturl.ShortURLKind().GroupVersionResource()
 	if requested.String() != gvr.String() {
 		return nil
