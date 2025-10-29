@@ -19,6 +19,8 @@ test.describe(
       // Open dashboard global variables and interpolation
       await gotoDashboardPage({ uid: DASHBOARD_UID });
 
+      const example = `Example: from=now-6h&to=now&timezone=browser`;
+
       const expectedItems: string[] = [
         '__dashboard = Templating - Global variables and interpolation',
         '__dashboard.name = Templating - Global variables and interpolation',
@@ -45,6 +47,7 @@ test.describe(
         `Server:text = All`,
         `Server:queryparam = var-Server=$__all`,
         `1 < 2`,
+        example,
       ];
 
       // Get all list items from the markdown content
@@ -60,6 +63,9 @@ test.describe(
       for (let i = 0; i < expectedItems.length; i++) {
         expect(actualItems[i]).toBe(expectedItems[i]);
       }
+
+      const exampleLink = page.locator(`a:has-text("${example}")`);
+      await expect(exampleLink).toHaveAttribute('href', `https://example.com/?from=now-6h&to=now&timezone=browser`);
     });
   }
 );
