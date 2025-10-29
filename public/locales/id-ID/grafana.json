@@ -4100,6 +4100,7 @@
       "description": "Gunakan nilai kustom"
     },
     "options": {
+      "loading": "",
       "no-found": "Opsi tidak ditemukan."
     }
   },
