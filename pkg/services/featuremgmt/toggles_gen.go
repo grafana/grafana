@@ -954,10 +954,6 @@ const (
 	// Enables restore deleted dashboards feature
 	FlagRestoreDashboards = "restoreDashboards"
 
-	// FlagSkipTokenRotationIfRecent
-	// Skip token rotation if it was already rotated less than 5 seconds ago
-	FlagSkipTokenRotationIfRecent = "skipTokenRotationIfRecent"
-
 	// FlagAlertEnrichment
 	// Enable configuration of alert enrichments in Grafana Cloud.
 	FlagAlertEnrichment = "alertEnrichment"
@@ -1005,10 +1001,6 @@ const (
 	// FlagFoldersAppPlatformAPI
 	// Enables use of app platform API for folders
 	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
-
-	// FlagEnablePluginImporter
-	// Set this to true to use the new PluginImporter functionality
-	FlagEnablePluginImporter = "enablePluginImporter"
 
 	// FlagOtelLogsFormatting
 	// Applies OTel formatting templates to displayed logs
@@ -1094,6 +1086,10 @@ const (
 	// Enable loading plugins via declarative URLs
 	FlagCdnPluginsUrls = "cdnPluginsUrls"
 
+	// FlagPluginInstallAPISync
+	// Enable syncing plugin installations to the installs API
+	FlagPluginInstallAPISync = "pluginInstallAPISync"
+
 	// FlagNewGauge
 	// Enable new gauge visualization
 	FlagNewGauge = "newGauge"
@@ -1113,4 +1109,12 @@ const (
 	// FlagOnlyStoreActionSets
 	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
 	FlagOnlyStoreActionSets = "onlyStoreActionSets"
+
+	// FlagPanelTimeSettings
+	// Enables a new panel time settings drawer
+	FlagPanelTimeSettings = "panelTimeSettings"
+
+	// FlagDashboardTemplates
+	// Enable template dashboards
+	FlagDashboardTemplates = "dashboardTemplates"
 )

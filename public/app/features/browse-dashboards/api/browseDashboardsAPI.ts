@@ -1,13 +1,14 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
+import { handleRequestError } from '@grafana/api-clients';
+import { createBaseQuery } from '@grafana/api-clients/rtkq';
+import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/user';
 import { AppEvents, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
-import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
-import { legacyUserAPI } from 'app/api/legacy/user/api';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { setStarred } from 'app/core/reducers/navBarTree';

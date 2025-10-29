@@ -13,6 +13,70 @@ service AuthzExtentionService {
 
   rpc Read(ReadRequest) returns (ReadResponse);
   rpc Write(WriteRequest) returns (WriteResponse);
+
+  rpc Mutate(MutateRequest) returns (MutateResponse);
+}
+
+message MutateRequest {
+  string namespace = 1;
+  repeated MutateOperation operations = 2;
+}
+
+message MutateResponse {}
+
+message MutateOperation {
+  oneof operation {
+    SetFolderParentOperation set_folder_parent = 1;
+    DeleteFolderOperation delete_folder = 2;
+    CreatePermissionOperation create_permission = 3;
+    DeletePermissionOperation delete_permission = 4;
+  }
+}
+
+message SetFolderParentOperation {
+  // UID of the folder
+  string folder = 1;
+  // UID of the parent folder
+  string parent = 2;
+  // If true, delete all existing parent relations associated with the folder
+  bool delete_existing = 3;
+}
+
+message DeleteFolderOperation {
+  // UID of the folder to delete
+  string folder = 1;
+  // UID of the parent folder
+  string parent = 2;
+  // If true, delete all existing parent relations associated with the folder
+  bool delete_existing = 3;
+}
+
+message CreatePermissionOperation {
+  Resource resource = 1;
+  Permission permission = 2;
+}
+
+message DeletePermissionOperation {
+  Resource resource = 1;
+  Permission permission = 2;
+}
+
+message Resource {
+  // group of the resource (e.g: "dashboard.grafana.app")
+  string group = 1;
+  // kind of the resource (e.g: "dashboards")
+  string resource = 2;
+  // uid of the resource
+  string name = 3;
+}
+
+message Permission {
+  // kind of the identity getting the permission (e.g: "user", "team", "serviceaccount")
+  string kind = 1;
+  // uid of the identity getting the permission
+  string name = 2;
+  // action set granted to the user (e.g. "admin" or "edit", "view")
+  string verb = 3;
 }
 
 message TupleKey {
