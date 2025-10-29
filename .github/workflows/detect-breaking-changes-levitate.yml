@@ -141,12 +141,12 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: Get built packages from pr
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: buildPr
 
       - name: Get built packages from base
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: buildBase
 
@@ -225,7 +225,7 @@ jobs:
           persist-credentials: false
 
       - name: 'Download artifact'
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: levitate
 
