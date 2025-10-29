@@ -9,8 +9,7 @@
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
       "env": {},
       "cwd": "${workspaceFolder}",
-      "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev", "cfg:app_mode=development"],
-      "buildFlags": ["-tags", "enterprise"]
+      "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev", "cfg:app_mode=development"]
     },
     {
       "name": "Attach to Go Process",
