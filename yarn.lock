@@ -3917,7 +3917,7 @@ __metadata:
     "@storybook/preview-api": "npm:^8.6.2"
     "@storybook/react": "npm:^8.6.2"
     "@storybook/react-webpack5": "npm:^8.6.2"
-    "@storybook/test-runner": "npm:^0.24.0"
+    "@storybook/test-runner": "npm:0.24.1"
     "@storybook/theming": "npm:^8.6.2"
     "@tanstack/react-virtual": "npm:^3.5.1"
     "@testing-library/dom": "npm:10.4.1"
@@ -6920,14 +6920,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@playwright/test@npm:1.54.1":
-  version: 1.54.1
-  resolution: "@playwright/test@npm:1.54.1"
+"@playwright/test@npm:1.55.1":
+  version: 1.55.1
+  resolution: "@playwright/test@npm:1.55.1"
   dependencies:
-    playwright: "npm:1.54.1"
+    playwright: "npm:1.55.1"
   bin:
     playwright: cli.js
-  checksum: 10/75ea34818f57f11bd8a1e6e3ac202c752c520c98467607be67c0eccfe41ea8ff6ae6824e91cb5ecacbee403aef4e1e6210500ee3cc82dd9317a8ee7136af18d3
+  checksum: 10/c67a46353c58aaeac551bce2654cdef0e9a0ad76b1667514832d34acd4b26ec72f35ea7595cd3fad4c4e1e039d5bb876b8d62c89af4525d455285f6fff9f0642
   languageName: node
   linkType: hard
 
@@ -8657,7 +8657,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/test-runner@npm:^0.24.0":
+"@storybook/test-runner@npm:0.24.1":
   version: 0.24.1
   resolution: "@storybook/test-runner@npm:0.24.1"
   dependencies:
@@ -19623,7 +19623,7 @@ __metadata:
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.37.0"
-    "@playwright/test": "npm:1.54.1"
+    "@playwright/test": "npm:1.55.1"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.6.1"
     "@popperjs/core": "npm:2.11.8"
     "@react-aria/dialog": "npm:3.5.31"
@@ -27573,12 +27573,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright-core@npm:1.54.1":
-  version: 1.54.1
-  resolution: "playwright-core@npm:1.54.1"
+"playwright-core@npm:1.55.1":
+  version: 1.55.1
+  resolution: "playwright-core@npm:1.55.1"
   bin:
     playwright-core: cli.js
-  checksum: 10/c0acfb7ecb48e9fb6c22f71298b966244bd4f8659093a798cc7f9a509deee22109560e44f2d507124e7718779640e0b4cb05a05c068b034405418d8740ec31ff
+  checksum: 10/953a43039dbcca04513bd3138a9dee249a136d5377da00d49402ffcd24d33ca84dc1dc04636d1b76e9f8c9fd28a302b89cda1ae544d72b5d829c28e623bfcb0b
   languageName: node
   linkType: hard
 
@@ -27591,18 +27591,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright@npm:1.54.1":
-  version: 1.54.1
-  resolution: "playwright@npm:1.54.1"
+"playwright@npm:1.55.1":
+  version: 1.55.1
+  resolution: "playwright@npm:1.55.1"
   dependencies:
     fsevents: "npm:2.3.2"
-    playwright-core: "npm:1.54.1"
+    playwright-core: "npm:1.55.1"
   dependenciesMeta:
     fsevents:
       optional: true
   bin:
     playwright: cli.js
-  checksum: 10/ebad2924b589a4cfedf48288e67b4afc81047222e607321c9452a37610025e6e249bdfeff010c1c70cf9a9d35c0b9e5cb7934a58986f67928dd469d9fde1a035
+  checksum: 10/5dcf9ce564cacf6c06ebc864bb2b1f709c641792560d49889ed4c98e230be54a963ec8aaafff11269735d8d22da4900bd2d4ef9f1748d132326ffda8fb1f3f20
   languageName: node
   linkType: hard
 
