@@ -25,6 +25,11 @@ export interface Props {
   unmountContentWhenClosed?: boolean;
 }
 
+/**
+ * A simple container for enabling collapsing/expanding of content.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-collapsablesection--docs
+ */
 export const CollapsableSection = ({
   label,
   isOpen,

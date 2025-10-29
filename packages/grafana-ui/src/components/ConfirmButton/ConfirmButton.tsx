@@ -31,6 +31,11 @@ export interface Props {
   onCancel?(): void;
 }
 
+/**
+ * The ConfirmButton is an interactive component that adds a double-confirm option to a clickable action. When clicked, the action is replaced by an inline confirmation with the option to cancel. In Grafana, this is used, for example, for editing values in settings tables.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-confirmbutton--docs
+ */
 export const ConfirmButton = ({
   children,
   className,
