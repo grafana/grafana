@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { FieldType, TimeRange } from '@grafana/data';
+import { FieldType, TimeRange, usePluginContext } from '@grafana/data';
 import { SortOrder } from '@grafana/schema/dist/esm/common/common.gen';
 import { TooltipDisplayMode } from '@grafana/ui';
 import {
@@ -36,6 +36,7 @@ export const StateTimelineTooltip = ({
   replaceVariables,
   dataLinks,
 }: StateTimelineTooltipProps) => {
+  const pluginContext = usePluginContext();
   const xField = series.fields[0];
 
   const dataIdx = seriesIdx != null ? dataIdxs[seriesIdx] : dataIdxs.find((idx) => idx != null);
@@ -52,8 +53,8 @@ export const StateTimelineTooltip = ({
     const field = series.fields[seriesIdx!];
     const nextStateIdx = findNextStateIndex(field, dataIdx!);
     let nextStateTs;
-    if (nextStateIdx) {
-      nextStateTs = xField.values[nextStateIdx!];
+    if (nextStateIdx != null) {
+      nextStateTs = xField.values[nextStateIdx];
     }
 
     const stateTs = xField.values[dataIdx!];
@@ -78,8 +79,9 @@ export const StateTimelineTooltip = ({
     const hasOneClickLink = dataLinks.some((dataLink) => dataLink.oneClick === true);
 
     if (isPinned || hasOneClickLink) {
+      const visualizationType = pluginContext?.meta?.id ?? 'state-timeline';
       const dataIdx = dataIdxs[seriesIdx]!;
-      const actions = getFieldActions(series, field, replaceVariables!, dataIdx);
+      const actions = getFieldActions(series, field, replaceVariables!, dataIdx, visualizationType);
 
       footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} />;
     }
