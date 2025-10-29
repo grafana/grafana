@@ -65,7 +65,7 @@ exports[`PanelAlertTabContent Will render alerts belonging to panel and a button
         "refId": "B",
         "type": "reduce",
       },
-      "queryType": "",
+      "queryType": "expression",
       "refId": "B",
     },
     {
@@ -100,7 +100,7 @@ exports[`PanelAlertTabContent Will render alerts belonging to panel and a button
         "refId": "C",
         "type": "threshold",
       },
-      "queryType": "",
+      "queryType": "expression",
       "refId": "C",
     },
   ],

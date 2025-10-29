@@ -6,6 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
+import { LogMessages, logInfo } from 'app/features/alerting/unified/Analytics';
 import { AlertRuleDrawerForm } from 'app/features/alerting/unified/components/AlertRuleDrawerForm';
 import { createPanelAlertRuleNavigation } from 'app/features/alerting/unified/utils/navigation';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
@@ -59,6 +60,7 @@ export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRule
           className={className}
           data-testid="create-alert-rule-button-drawer"
           onClick={() => {
+            logInfo(LogMessages.alertRuleFromPanel);
             setIsOpen(true);
           }}
         >

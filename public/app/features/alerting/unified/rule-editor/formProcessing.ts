@@ -27,17 +27,28 @@ export function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
   // data queries only
   const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
 
-  // expression queries only
-  const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
+  // expression queries only - but filter out invalid ones that don't have a type field
+  const expressionQueries = values.queries.filter((query): query is AlertQuery<ExpressionQuery> => {
+    if (!isExpressionQueryInAlert(query)) {
+      return false;
+    }
+    // Check if the expression has a valid type field
+    // React Hook Form might strip the type field, so we need to check it exists
+    return 'type' in query.model && query.model.type !== undefined;
+  });
 
-  // If we have data queries but no expressions (e.g., coming from dashboard panel),
-  // default to simplified mode so the form can create appropriate expressions
+  // If we have data queries but no VALID expressions (e.g., coming from dashboard panel with malformed expressions),
+  // remove the invalid expressions and set condition to empty so simplified mode can regenerate them
   const hasDataQueries = dataQueries.length > 0;
-  const hasExpressions = expressionQueries.length > 0;
+  const hasValidExpressions = expressionQueries.length > 0;
+  const totalExpressions = values.queries.filter((query) => isExpressionQueryInAlert(query)).length;
+  const hasInvalidExpressions = totalExpressions > expressionQueries.length;
 
-  if (hasDataQueries && !hasExpressions) {
+  if (hasDataQueries && (!hasValidExpressions || hasInvalidExpressions)) {
     return {
       ...values,
+      queries: dataQueries, // Only keep data queries, remove invalid expressions
+      condition: '', // Clear condition so simplified editor can set it
       editorSettings: {
         simplifiedQueryEditor: true,
         simplifiedNotificationEditor: true,

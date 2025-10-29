@@ -81,7 +81,9 @@ exports[`RuleEditor grafana managed rules can create new grafana managed alert 1
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "B",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -99,7 +101,7 @@ exports[`RuleEditor grafana managed rules can create new grafana managed alert 1
                   "refId": "B",
                   "type": "reduce",
                 },
-                "queryType": "",
+                "queryType": "expression",
                 "refId": "B",
               },
               {
@@ -117,7 +119,9 @@ exports[`RuleEditor grafana managed rules can create new grafana managed alert 1
                         "type": "and",
                       },
                       "query": {
-                        "params": [],
+                        "params": [
+                          "C",
+                        ],
                       },
                       "reducer": {
                         "params": [],
@@ -134,7 +138,7 @@ exports[`RuleEditor grafana managed rules can create new grafana managed alert 1
                   "refId": "C",
                   "type": "threshold",
                 },
-                "queryType": "",
+                "queryType": "expression",
                 "refId": "C",
               },
             ],
