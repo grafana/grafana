@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Button, useStyles2, Grid } from '@grafana/ui';
+import { Button, useStyles2, Stack } from '@grafana/ui';
 import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 import { PluginDashboard } from 'app/types/plugins';
 
@@ -266,14 +266,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
         </Button>
       </div>
 
-      <Grid
-        gap={4}
-        columns={{
-          xs: 1,
-          sm: (suggestedDashboards?.length ?? 0) >= 2 ? 2 : 1,
-          lg: (suggestedDashboards?.length ?? 0) >= 3 ? 3 : (suggestedDashboards?.length ?? 0) >= 2 ? 2 : 1,
-        }}
-      >
+      <Stack direction="row" wrap={true} gap={4} alignItems="flex-start">
         {loading ? (
           // Show 3 skeleton cards while loading
           <>
@@ -315,7 +308,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
             }
           }) || []
         )}
-      </Grid>
+      </Stack>
     </div>
   );
 };

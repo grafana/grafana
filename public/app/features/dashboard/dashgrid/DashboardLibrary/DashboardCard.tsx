@@ -79,18 +79,16 @@ export function DashboardCard({
         <Button variant="secondary" onClick={onClick}>
           <Trans i18nKey="dashboard-template.card.use-template-button">Use template</Trans>
         </Button>
-      </Card.Actions>
-      {details && (
-        <Card.SecondaryActions>
+        {details && (
           <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
             <IconButton
               name="info-circle"
-              size="md"
+              size="xl"
               aria-label={t('dashboard-template.card.details-tooltip', 'Details')}
             />
           </Tooltip>
-        </Card.SecondaryActions>
-      )}
+        )}
+      </Card.Actions>
     </Card>
   );
 }
@@ -223,6 +221,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     actionsContainer: css({
       marginTop: 0,
+      alignItems: 'stretch',
     }),
     detailsContainer: css({
       width: '340px',
