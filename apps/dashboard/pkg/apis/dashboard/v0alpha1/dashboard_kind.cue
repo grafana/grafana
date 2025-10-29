@@ -672,7 +672,7 @@ lineage: schemas: [{
 
 			// Compare the current time range with a previous period
 			// For example "1d" to compare current period but shifted back 1 day
-	        timeCompare?: string
+			timeCompare?: string
 
 			// Dynamically load the panel
 			libraryPanel?: #LibraryPanelRef
