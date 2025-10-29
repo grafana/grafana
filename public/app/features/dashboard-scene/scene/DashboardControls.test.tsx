@@ -1,7 +1,8 @@
 import { render } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneVariableSet, TextBoxVariable } from '@grafana/scenes';
+import { SceneVariableSet, ScopesVariable, TextBoxVariable } from '@grafana/scenes';
+import { defaultScopesServices, ScopesContextProvider } from 'app/features/scopes/ScopesContextProvider';
 
 import { DashboardControls, DashboardControlsState } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
@@ -96,6 +97,52 @@ describe('DashboardControls', () => {
       const renderer = render(<scene.Component model={scene} />);
 
       expect(renderer.queryByTestId(selectors.pages.Dashboard.Controls)).not.toBeInTheDocument();
+    });
+
+    it('should render ScopesVariable Component even when hidden', () => {
+      const scopeVariable = new ScopesVariable({
+        enable: true,
+      });
+
+      const dashboard = new DashboardScene({
+        uid: 'test-dashboard',
+        $variables: new SceneVariableSet({
+          variables: [scopeVariable],
+        }),
+        controls: new DashboardControls({
+          hideTimeControls: true,
+          hideVariableControls: true,
+          hideLinksControls: true,
+          hideDashboardControls: true,
+        }),
+      });
+
+      dashboard.activate();
+
+      const controls = dashboard.state.controls as DashboardControls;
+      const services = defaultScopesServices();
+
+      // Mock the Component getter - use 'as any' to bypass TypeScript's getter checking
+      // Return a component function (not JSX directly) that renders our test element
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      jest.spyOn(scopeVariable as any, 'Component', 'get').mockReturnValue(() => {
+        return <div>Mocked Component</div>;
+      });
+
+      const renderer = render(
+        <ScopesContextProvider services={services}>
+          <controls.Component model={controls} />
+        </ScopesContextProvider>
+      );
+
+      // Verify UNSAFE_renderAsHidden is set (required for renderHiddenVariables to include it)
+      expect(scopeVariable.UNSAFE_renderAsHidden).toBe(true);
+
+      // Check that the mocked component is rendered - this proves renderHiddenVariables
+      // accessed the Component getter and rendered it
+      expect(renderer.getByText('Mocked Component')).toBeInTheDocument();
+
+      jest.restoreAllMocks();
     });
   });
 
