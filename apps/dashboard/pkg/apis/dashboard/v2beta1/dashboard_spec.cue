@@ -456,7 +456,7 @@ QueryOptionsSpec: {
 	interval?:         string
 	cacheTimeout?:     string
 	hideTimeOverride?: bool
-    timeCompare?:      string
+	timeCompare?:      string
 }
 
 DataQueryKind: {
