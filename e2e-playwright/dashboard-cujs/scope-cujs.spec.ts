@@ -9,7 +9,6 @@ import {
   openScopesSelector,
   searchScopes,
   selectScope,
-  TestScope,
 } from '../utils/scope-helpers';
 import { testScopes } from '../utils/scopes';
 

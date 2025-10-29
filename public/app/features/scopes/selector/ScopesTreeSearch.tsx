@@ -79,7 +79,12 @@ export function ScopesTreeSearch({
         setInputState({ value, dirty: true });
       }}
       onFocus={onFocus}
-      onBlur={onBlur}
+      onBlur={() => {
+        // TODO:Handle weird race condition where the blur event interupts selection of a radio button. This is because disableHighlighting is called, which forces a re-render of the tree. This re-render causes the radio button to lose focus, and the selection to be interrupted.
+        setTimeout(() => {
+          onBlur();
+        }, 0);
+      }}
     />
   );
 }
