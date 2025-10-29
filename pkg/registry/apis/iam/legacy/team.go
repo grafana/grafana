@@ -2,6 +2,7 @@ package legacy
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -129,18 +130,18 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	sql, err := s.sql(ctx)
+	sqldb, err := s.sql(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	req := newListTeams(sql, &query)
+	req := newListTeams(sqldb, &query)
 	q, err := sqltemplate.Execute(sqlQueryTeamsTemplate, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamsTemplate.Name(), err)
 	}
 
-	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	rows, err := sqldb.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	defer func() {
 		if rows != nil {
 			_ = rows.Close()
@@ -155,10 +156,12 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	var lastID int64
 	for rows.Next() {
 		t := team.Team{}
-		err = rows.Scan(&t.ID, &t.UID, &t.Name, &t.Email, &t.ExternalUID, &t.IsProvisioned, &t.Created, &t.Updated)
+		externalUID := sql.NullString{}
+		err = rows.Scan(&t.ID, &t.UID, &t.Name, &t.Email, &externalUID, &t.IsProvisioned, &t.Created, &t.Updated)
 		if err != nil {
 			return res, err
 		}
+		t.ExternalUID = externalUID.String
 
 		lastID = t.ID
 		res.Teams = append(res.Teams, t)
@@ -170,7 +173,7 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	}
 
 	if query.UID == "" {
-		res.RV, err = sql.GetResourceVersion(ctx, "team", "updated")
+		res.RV, err = sqldb.GetResourceVersion(ctx, "team", "updated")
 	}
 
 	return res, err
