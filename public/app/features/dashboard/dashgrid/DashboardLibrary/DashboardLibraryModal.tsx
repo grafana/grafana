@@ -18,6 +18,7 @@ interface DashboardLibraryModalProps {
   isOpen: boolean;
   onDismiss: () => void;
   initialMappingContext?: MappingContext | null;
+  defaultTab?: 'datasource' | 'community';
 }
 
 type ModalView = 'datasource' | 'community' | 'mapping';
@@ -31,11 +32,16 @@ export interface MappingContext {
   onInterpolateAndNavigate: (mappings: InputMapping[]) => void;
 }
 
-export const DashboardLibraryModal = ({ isOpen, onDismiss, initialMappingContext }: DashboardLibraryModalProps) => {
+export const DashboardLibraryModal = ({
+  isOpen,
+  onDismiss,
+  initialMappingContext,
+  defaultTab = 'datasource',
+}: DashboardLibraryModalProps) => {
   const [searchParams] = useSearchParams();
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
 
-  const [activeView, setActiveView] = useState<ModalView>(initialMappingContext ? 'mapping' : 'datasource');
+  const [activeView, setActiveView] = useState<ModalView>(initialMappingContext ? 'mapping' : defaultTab);
   const [mappingContext, setMappingContext] = useState<MappingContext | null>(initialMappingContext || null);
   const styles = useStyles2(getStyles);
 
@@ -51,17 +57,19 @@ export const DashboardLibraryModal = ({ isOpen, onDismiss, initialMappingContext
     };
   }, [datasourceUid]);
 
-  // Update state when initialMappingContext changes
+  // Update state when initialMappingContext changes or modal opens/closes
   useEffect(() => {
     if (initialMappingContext) {
       setMappingContext(initialMappingContext);
       setActiveView('mapping');
-    } else if (!isOpen) {
+    } else if (isOpen) {
+      // When modal opens, set to defaultTab
+      setActiveView(defaultTab);
+    } else {
       // Reset when modal closes
       setMappingContext(null);
-      setActiveView('datasource');
     }
-  }, [initialMappingContext, isOpen]);
+  }, [initialMappingContext, isOpen, defaultTab]);
 
   const handleShowMapping = (context: MappingContext) => {
     setMappingContext(context);

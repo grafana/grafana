@@ -29,7 +29,7 @@ import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHel
 
 interface Props {
   datasourceUid?: string;
-  onOpenModal: () => void;
+  onOpenModal: (defaultTab: 'datasource' | 'community') => void;
   onShowMapping: (context: MappingContext) => void;
 }
 
@@ -132,6 +132,18 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
       return [];
     }
   }, [datasourceUid]);
+
+  // Determine default tab based on what data is available
+  const defaultTab = useMemo((): 'datasource' | 'community' => {
+    if (!suggestedDashboards || loading) {
+      return 'datasource'; // Default while loading
+    }
+
+    const hasProvisioned = suggestedDashboards.some((d) => d.type === 'provisioned');
+
+    // Prefer datasource tab if it has data, otherwise community
+    return hasProvisioned ? 'datasource' : 'community';
+  }, [suggestedDashboards, loading]);
 
   const onUseProvisionedDashboard = (dashboard: PluginDashboard) => {
     if (!datasourceUid) {
@@ -249,7 +261,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
             </Trans>
           </p>
         </div>
-        <Button variant="secondary" fill="outline" onClick={onOpenModal} size="sm">
+        <Button variant="secondary" fill="outline" onClick={() => onOpenModal(defaultTab)} size="sm">
           <Trans i18nKey="dashboard.empty.view-all">View all</Trans>
         </Button>
       </div>

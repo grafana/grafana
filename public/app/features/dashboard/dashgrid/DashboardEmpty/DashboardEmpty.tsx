@@ -34,6 +34,7 @@ const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImpor
   const dashboardLibraryDatasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
   const [showLibraryModal, setShowLibraryModal] = useState(false);
   const [mappingContext, setMappingContext] = useState<MappingContext | null>(null);
+  const [defaultTab, setDefaultTab] = useState<'datasource' | 'community'>('datasource');
 
   const handleModalDismiss = () => {
     setShowLibraryModal(false);
@@ -59,7 +60,10 @@ const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImpor
             {config.featureToggles.dashboardLibrary && dashboardLibraryDatasourceUid && (
               <SuggestedDashboards
                 datasourceUid={dashboardLibraryDatasourceUid}
-                onOpenModal={() => setShowLibraryModal(true)}
+                onOpenModal={(tab) => {
+                  setDefaultTab(tab);
+                  setShowLibraryModal(true);
+                }}
                 onShowMapping={handleShowMapping}
               />
             )}
@@ -152,6 +156,7 @@ const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImpor
           isOpen={showLibraryModal}
           onDismiss={handleModalDismiss}
           initialMappingContext={mappingContext}
+          defaultTab={defaultTab}
         />
       )}
     </>
