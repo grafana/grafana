@@ -239,7 +239,7 @@ func (d *jobDriver) leaseRenewalLoop(ctx context.Context, logger logging.Logger,
 		case <-ticker.C:
 			d.mu.Lock()
 			if d.currentJob == nil {
-			d.mu.Unlock()
+				d.mu.Unlock()
 				return
 			}
 
@@ -300,14 +300,14 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		return nil
 	}
 
-	// TODO: should we copy?
-	job := *d.currentJob
+	// Here it's save to copy as only job spec is used for processing
+	job := d.currentJob.DeepCopy()
 	repoName := d.currentJob.Spec.Repository
 	namespace := d.currentJob.Namespace
 	d.mu.Unlock()
 
 	for _, worker := range d.workers {
-		if !worker.IsSupported(ctx, job) {
+		if !worker.IsSupported(ctx, *job) {
 			continue
 		}
 
@@ -326,7 +326,7 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 			return nil
 		}
 
-		return worker.Process(ctx, repo, job, recorder)
+		return worker.Process(ctx, repo, *job, recorder)
 	}
 
 	return apifmt.Errorf("no workers were registered to handle the job")
