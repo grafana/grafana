@@ -218,7 +218,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
           }}
         />
       )}
-      {conditions.map((currentCondition) => currentCondition.render())}
+      {conditions.map((currentCondition) => currentCondition.renderCmp())}
       <ConditionalRenderingGroupAdd
         objectType={objectType}
         hasVariables={variables.length > 0}

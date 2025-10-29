@@ -27,6 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -314,6 +316,11 @@ func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr stri
 	cfg.IndexPath = t.TempDir() + cfg.InstanceID
 	cfg.IndexFileThreshold = testIndexFileThreshold
 	cfg.Target = []string{modules.StorageServer}
+	// make sure the resource server has enough time to join the ring
+	// before the tests start sending traffic
+	// otherwise the tests will be flaky,
+	// also, tests are going to timeout after 300 seconds anyway
+	cfg.ResourceServerJoinRingTimeout = 300 * time.Second
 
 	return initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
 }
@@ -325,8 +332,10 @@ func initModuleServerForTest(
 	apiOpts api.ServerOptions,
 ) testModuleServer {
 	tracer := tracing.InitializeTracerForTest()
+	hooksService := hooks.ProvideService()
+	license := &licensing.OSSLicensingService{}
 
-	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, nil, ProvideNoopModuleRegisterer())
+	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, hooksService)
 	require.NoError(t, err)
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,

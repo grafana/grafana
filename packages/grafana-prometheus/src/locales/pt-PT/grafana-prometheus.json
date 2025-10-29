@@ -85,9 +85,9 @@
         "tooltip-classic-query": "A implementação original do editor de consultas de variáveis Prometheus. Introduzir uma cadeia de carateres com o tipo de consulta e parâmetros corretos, conforme descrito nestes documentos. Por exemplo, {{exampleQuery}}.",
         "tooltip-label": "Devolve uma lista de valores de etiqueta para o nome da etiqueta em todas as métricas, a menos que a métrica seja especificada.",
         "tooltip-metric-regex": "Devolve uma lista de nomes de etiquetas, filtrando opcionalmente por regex métrico especificado.",
-        "tooltip-query": "Devolve uma lista de resultados de consulta Prometheus para a consulta. Isto pode incluir funções Prometheus, ou seja,{{exampleQuery}}.",
+        "tooltip-query": "",
         "tooltip-query-type": "O plugin de origem de dados do Prometheus fornece os seguintes tipos de consulta para variáveis de modelo.",
-        "tooltip-series-query": "Introduza uma métrica com etiquetas, apenas uma métrica ou apenas etiquetas, ou seja, {{example1}}, {{example2}}, ou {{example3}}. Devolve uma lista de séries temporais associadas aos dados inseridos."
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "seletor",
@@ -175,16 +175,16 @@
         "label-scrape-interval": "Intervalo de raspagem",
         "label-series-limit": "Limite de série",
         "label-use-series-endpoint": "Utilizar ponto final da série",
-        "more-info": "Para obter mais informações sobre como configurar o tipo e a versão do Prometheus em origens de dados, consulte a <2>documentação de aprovisionamento</2>.",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "Exemplo: {{example}}",
         "title-interval-behaviour": "Comportamento de intervalo",
         "title-other": "Outro",
         "title-performance": "Desempenho",
         "title-query-editor": "Editor de consultas",
         "tooltip-cache-level": "Definir o nível de cache do navegador para consultas do editor. São recomendadas definições de cache mais elevadas para origens de dados de elevada cardinalidade.",
-        "tooltip-custom-query-parameters": "Adicionar parâmetros personalizados ao URL de consulta do Prometheus. Por exemplo, {{example1}}, {{example2}}, {{example3}} ou {{example4}}. Os parâmetros múltiplos devem ser concatenados com {{concatenationChar}}.",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "Definir a opção de editor predefinida para todos os utilizadores desta origem de dados.",
-        "tooltip-disable-metrics-lookup": "Ao selecionar esta opção desativará o seletor de métricas e o suporte de métrica/etiqueta no preenchimento automático do campo de consulta. Isto ajuda se tiver problemas de desempenho com instâncias maiores do Prometheus. ",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "Esta funcionalidade desativará as regras de gravação. Ative isto para melhorar o desempenho do painel de controlo",
         "tooltip-http-method": "Pode utilizar o método HTTP POST ou GET para consultar a sua origem de dados Prometheus. POST é o método recomendado, pois permite consultas maiores. Altere esta opção para GET se tiver uma versão do Prometheus anterior à 2.1 ou se os pedidos POST forem restritos na sua rede.",
         "tooltip-incremental-querying-beta": "Esta funcionalidade irá alterar o comportamento predefinido das consultas relativas para solicitar sempre dados novos da instância do Prometheus. Em vez disso, os resultados da consulta serão armazenados em cache e apenas serão solicitados novos registos. Ativar isto para diminuir a carga da base de dados e da rede.",
@@ -479,18 +479,13 @@
         "aria-label-selector": "seletor"
       },
       "results-table": {
-        "content-descriptive-type": "Ao criar um {{descriptiveType}}, o Prometheus expõe várias séries com o contador de tipos. ",
+        "content-descriptive-type": "",
         "description": "Descrição",
         "message-expand-label-filters": "Não foram encontradas métricas. Tente expandir os seus filtros de etiquetas.",
         "message-expand-search": "Não foram encontradas métricas. Tente expandir a sua pesquisa e filtros.",
         "message-no-metrics-found": "Não foram encontradas métricas na origem de dados.",
         "name": "Nome",
         "type": "Tipo"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "A análise da consulta é ambígua."
-        }
       }
     }
   }

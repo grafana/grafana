@@ -42,7 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -92,7 +92,6 @@ type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
 	features         featuremgmt.FeatureToggles
 
-	authorizer                   authorizer.Authorizer
 	accessControl                accesscontrol.AccessControl
 	accessClient                 authlib.AccessClient
 	legacy                       *DashboardStorage
@@ -143,7 +142,6 @@ func RegisterAPIService(
 	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
 
 	builder := &DashboardsAPIBuilder{
-		authorizer:                   newLegacyAuthorizer(accessControl),
 		dashboardService:             dashboardService,
 		dashboardPermissions:         dashboardPermissions,
 		dashboardPermissionsSvc:      dashboardPermissionsSvc,
@@ -179,7 +177,6 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     "10s",
 		accessClient:           ac,
-		authorizer:             authsvc.NewResourceAuthorizer(ac),
 		features:               features,
 		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider:   folderClientProvider,
@@ -506,6 +503,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// Split dashboards when they are large
 	var largeObjects apistore.LargeObjectSupport
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
 		largeObjects = NewDashboardLargeObjectSupport(opts.Scheme, opts.StorageOpts.BlobThresholdBytes)
 		storageOpts.LargeObjectSupport = largeObjects
@@ -764,8 +762,9 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 	return b.search.GetAPIRoutes(defs)
 }
 
+// The default authorizer is fine because authorization happens in storage where we know the parent folder
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return b.authorizer
+	return grafanaauthorizer.NewServiceAuthorizer()
 }
 
 func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderIds ...string) error {

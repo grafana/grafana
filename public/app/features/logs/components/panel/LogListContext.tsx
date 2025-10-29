@@ -28,6 +28,7 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
+import { getSidebarState } from '../fieldSelector/FieldSelector';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { LogLineTimestampResolution } from './LogLine';
@@ -265,7 +266,7 @@ export const LogListContextProvider = ({
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(
     detailsModeProp ?? getDefaultDetailsMode(containerElement)
   );
-  const [isAssistantAvailable, openAssistant] = useAssistant();
+  const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
   const [prettifyJSON, setPrettifyJSONState] = useState(prettifyJSONProp);
   const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
 
@@ -277,6 +278,7 @@ export const LogListContextProvider = ({
       dedupStrategy,
       fontSize,
       forceEscape: logListState.forceEscape,
+      fieldSelectorOpen: getSidebarState(logOptionsStorageKey),
       showTime,
       showUniqueLabels,
       syntaxHighlighting,
@@ -557,9 +559,9 @@ export const LogListContextProvider = ({
         logListState.filterLevels.length === 0
           ? logs
           : logs.filter((log) => logListState.filterLevels.includes(log.logLevel));
-      download(format, filteredLogs, logsMeta);
+      download(format, filteredLogs, logsMeta, displayedFields);
     },
-    [logListState.filterLevels, logs, logsMeta]
+    [displayedFields, logListState.filterLevels, logs, logsMeta]
   );
 
   const closeDetails = useCallback(() => {

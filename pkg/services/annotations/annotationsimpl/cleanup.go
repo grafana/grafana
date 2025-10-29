@@ -15,7 +15,7 @@ type CleanupServiceImpl struct {
 
 func ProvideCleanupService(db db.DB, cfg *setting.Cfg) *CleanupServiceImpl {
 	return &CleanupServiceImpl{
-		store: NewXormStore(cfg, log.New("annotations"), db, nil),
+		store: NewXormStore(cfg, log.New("annotations"), db, nil, nil),
 	}
 }
 

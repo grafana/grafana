@@ -51,8 +51,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
       top: 0,
       height: '250%',
       position: 'absolute',
-      animation: 'loader 2s cubic-bezier(0.17, 0.67, 0.83, 0.67) 500ms',
-      animationIterationCount: 100,
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: 'loader 2s cubic-bezier(0.17, 0.67, 0.83, 0.67) 500ms',
+        animationIterationCount: 100,
+      },
+      [theme.transitions.handleMotion('reduce')]: {
+        animationDuration: '10s',
+        animationIterationCount: 20,
+      },
       left: '-25%',
       background: theme.colors.primary.main,
     },
@@ -122,6 +128,11 @@ export const ControlledCollapse = ({ isOpen, onToggle, ...otherProps }: React.Pr
   );
 };
 
+/**
+ * A content area, which can be horizontally collapsed and expanded. Can be used to hide extra information on the page.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-collapse--docs
+ */
 export const Collapse = ({
   isOpen,
   label,
