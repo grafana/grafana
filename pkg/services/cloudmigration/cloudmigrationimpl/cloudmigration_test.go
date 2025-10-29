@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -790,7 +791,15 @@ func TestGetPlugins(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	user := &user.SignedInUser{OrgID: 1}
+	user := &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {
+				pluginaccesscontrol.ActionInstall: {pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
+				pluginaccesscontrol.ActionWrite:   {pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
+			},
+		},
+	}
 
 	s.pluginStore = pluginstore.NewFakePluginStore([]pluginstore.Plugin{
 		{
@@ -1001,7 +1010,7 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 		mockFolder,
 		&pluginstore.FakePluginStore{},
 		&pluginsettings.FakePluginSettings{},
-		actest.FakeAccessControl{ExpectedEvaluate: true},
+		accessControl,
 		fakeAccessControlService,
 		kvstore.ProvideService(sqlStore),
 		&libraryelementsfake.LibraryElementService{},
