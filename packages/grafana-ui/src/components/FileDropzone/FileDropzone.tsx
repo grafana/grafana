@@ -63,6 +63,11 @@ export interface DropzoneFile {
   retryUpload?: () => void;
 }
 
+/**
+ * A dropzone component to use for file uploads.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-filedropzone--docs
+ */
 export function FileDropzone({
   options,
   children,
