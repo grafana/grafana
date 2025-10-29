@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -202,10 +204,9 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				callCount := 0
+				var callCount int64 = 0
 				progress.On("TooManyErrors").Return(func() error {
-					callCount++
-					if callCount > 1 {
+					if atomic.AddInt64(&callCount, 1) > 1 {
 						return fmt.Errorf("too many errors")
 					}
 					return nil
@@ -680,6 +681,45 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 						result.Error != nil &&
 						result.Error.Error() == "deleting resource folders/Folder test-folder: delete failed"
 				})).Return()
+			},
+		},
+		{
+			name:        "operation timeout after 15 seconds",
+			description: "Should record timeout error when operation takes longer than 15 seconds",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionCreated,
+					Path:   "dashboards/slow.json",
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("TooManyErrors").Return(nil)
+
+				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/slow.json", "").
+					Run(func(args mock.Arguments) {
+						ctx := args.Get(0).(context.Context)
+						select {
+						case <-ctx.Done():
+							return
+						case <-time.After(20 * time.Second):
+							return
+						}
+					}).
+					Return("", schema.GroupVersionKind{}, context.DeadlineExceeded)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action == repository.FileActionCreated &&
+						result.Path == "dashboards/slow.json" &&
+						result.Error != nil &&
+						result.Error.Error() == "writing resource from file dashboards/slow.json: context deadline exceeded"
+				})).Return().Once()
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action == repository.FileActionCreated &&
+						result.Path == "dashboards/slow.json" &&
+						result.Error != nil &&
+						result.Error.Error() == "operation timed out after 15 seconds"
+				})).Return().Once()
 			},
 		},
 	}
