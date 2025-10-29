@@ -12,6 +12,7 @@ labels:
   products:
     - enterprise
     - oss
+    - cloud
 title: Observability as Code
 weight: 100
 cards:
