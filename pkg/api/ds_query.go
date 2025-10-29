@@ -76,6 +76,8 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 
 	var resp *backend.QueryDataResponse
 	var err error
+
+	hs.log.Debug("QueryMetricsV2: request received", "time_in_query", handleTimeInQuery)
 	if handleTimeInQuery {
 		resp, err = hs.queryDataService.QueryDataNew(c.Req.Context(), c.SignedInUser, c.SkipDSCache, reqDTO)
 	} else {
