@@ -310,6 +310,39 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 
 	namespace := convertEmptyToClusterNamespace(req.Key.Namespace, k.withExperimentalClusterScope)
 
+	// If a specific resource version is requested, validate that it's not too high
+	if req.ResourceVersion > 0 {
+		// Fetch the latest RV
+		latestRV := k.snowflake.Generate().Int64()
+		if lastEventKey, err := k.eventStore.LastEventKey(ctx); err == nil {
+			latestRV = lastEventKey.ResourceVersion
+		} else if !errors.Is(err, ErrNotFound) {
+			return &BackendReadResponse{Error: &resourcepb.ErrorResult{
+				Code:    http.StatusInternalServerError,
+				Message: fmt.Sprintf("failed to fetch latest resource version: %v", err),
+			}}
+		}
+
+		// Check if the requested RV is higher than the latest available RV
+		if req.ResourceVersion > latestRV {
+			return &BackendReadResponse{
+				Error: &resourcepb.ErrorResult{
+					Code:    http.StatusGatewayTimeout,
+					Reason:  string(metav1.StatusReasonTimeout), // match etcd behavior
+					Message: "ResourceVersion is larger than max",
+					Details: &resourcepb.ErrorDetails{
+						Causes: []*resourcepb.ErrorCause{
+							{
+								Reason:  string(metav1.CauseTypeResourceVersionTooLarge),
+								Message: fmt.Sprintf("requested: %d, current %d", req.ResourceVersion, latestRV),
+							},
+						},
+					},
+				},
+			}
+		}
+	}
+
 	meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
@@ -365,8 +398,15 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		resourceVersion = token.ResourceVersion
 	}
 
-	// We set the listRV to the current time.
+	// We set the listRV to the last event resource version.
+	// If no events exist yet, we generate a new snowflake.
 	listRV := k.snowflake.Generate().Int64()
+	if lastEventKey, err := k.eventStore.LastEventKey(ctx); err == nil {
+		listRV = lastEventKey.ResourceVersion
+	} else if !errors.Is(err, ErrNotFound) {
+		return 0, fmt.Errorf("failed to fetch last event: %w", err)
+	}
+
 	if resourceVersion > 0 {
 		listRV = resourceVersion
 	}
@@ -390,7 +430,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		}
 		keys = append(keys, dataKey)
 		// Only fetch the first limit items + 1 to get the next token.
-		if len(keys) >= int(req.Limit+1) {
+		if req.Limit > 0 && len(keys) >= int(req.Limit+1) {
 			break
 		}
 	}
