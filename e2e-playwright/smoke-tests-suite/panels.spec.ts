@@ -7,13 +7,13 @@ test.describe(
     tag: ['@acceptance'],
   },
   () => {
-    test.skip('Tests each panel type in the panel edit view to ensure no crash', async ({
+    test('Tests each panel type in the panel edit view to ensure no crash', async ({
       gotoDashboardPage,
       selectors,
       page,
     }) => {
       // this test can absolutely take longer than the default 30s timeout
-      test.setTimeout(60000);
+      test.setTimeout(120000);
 
       // Create new dashboard
       const dashboardPage = await gotoDashboardPage({});
@@ -29,22 +29,32 @@ test.describe(
         return win.grafanaBootData?.settings?.panels ?? {};
       });
 
+      const vizPicker = dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker);
+
       // Loop through every panel type and ensure no crash
       for (const [_, panel] of Object.entries(panelTypes)) {
         if (panel.hideFromList || panel.state === 'deprecated') {
           continue; // Skip hidden and deprecated panels
         }
 
-        // Select the panel type in the viz picker
-        const vizPicker = dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker);
-        await vizPicker.click();
-        await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item(panel.name)).click();
+        try {
+          // Select the panel type in the viz picker
+          await page.waitForTimeout(500);
+          await vizPicker.click({ force: true });
 
-        // Verify panel type is selected
-        await expect(vizPicker).toHaveText(panel.name);
+          await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item(panel.name)).click();
 
-        // Ensure no unexpected error occurred
-        await expect(page.getByText('An unexpected error happened')).toBeHidden();
+          // Verify panel type is selected
+          await expect(vizPicker).toHaveText(panel.name, { timeout: 10000 });
+
+          // Wait for panel to finish rendering
+          await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+
+          // Ensure no unexpected error occurred
+          await expect(page.getByText('An unexpected error happened')).toBeHidden();
+        } catch (error) {
+          throw new Error(`Panel '${panel.name}' failed: ${error}`);
+        }
       }
     });
   }
