@@ -4120,6 +4120,7 @@
       "description": "Benutzerdefinierten Wert verwenden"
     },
     "options": {
+      "loading": "",
       "no-found": "Keine Optionen gefunden."
     }
   },

@@ -4120,6 +4120,7 @@
       "description": "Använd eget värde"
     },
     "options": {
+      "loading": "",
       "no-found": "Inga alternativ hittades."
     }
   },

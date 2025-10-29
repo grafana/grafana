@@ -4120,6 +4120,7 @@
       "description": "Utiliser une valeur personnalisée"
     },
     "options": {
+      "loading": "",
       "no-found": "Aucune option trouvée."
     }
   },

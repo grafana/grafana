@@ -4100,6 +4100,7 @@
       "description": "カスタム値の利用"
     },
     "options": {
+      "loading": "",
       "no-found": "オプションが見つかりません"
     }
   },

@@ -4120,6 +4120,7 @@
       "description": "Egyéni érték használata"
     },
     "options": {
+      "loading": "",
       "no-found": "Nem találhatók opciók."
     }
   },
