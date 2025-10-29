@@ -161,19 +161,10 @@ Query expressions are different for each data source. For more information, refe
 
 1. [Enter general options](#enter-general-options).
 1. Under the **Query options** section of the page, select a target data source in the **Data source** drop-down list.
-
    You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
    For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
 
-1. In the **Query type** drop-down list, select one of the following options:
-   - **Label names**
-   - **Label values**
-   - **Metrics**
-   - **Query result**
-   - **Series query**
-   - **Classic query**
-
-1. In the **Query** field, enter a query.
+1. In the **Query type** drop-down list, select an option and fill in the query fields accordingly.
    - The query field varies according to your data source. Some data sources have custom query editors.
    - Each data source defines how the variable values are extracted. The typical implementation uses every string value returned from the data source response as a variable value. Make sure to double-check the documentation for the data source.
    - Some data sources let you provide custom "display names" for the values. For instance, the PostgreSQL, MySQL, and Microsoft SQL Server plugins handle this by looking for fields named `__text` and `__value` in the result. Other data sources may look for `text` and `value` or use a different approach. Always remember to double-check the documentation for the data source.
@@ -185,9 +176,15 @@ Query expressions are different for each data source. For more information, refe
    - **On dashboard load** - Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
    - **On time range change** - Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
 
+1. (Optional) In the **Static options** section of the page, toggle on the **Use static options** switch to add custom options in addition to the query results:
+   - Make entries in the **Value** and **Display text** fields.
+   - Click **+ Add new option** to add another static option.
+   - Repeat these steps as many times as needed.
+
 1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
    - **Multi-value** - Enables multiple values to be selected at the same time.
-   - **Include All option** - Enables an option to include all variables.
+   - **Allow custom values** - Enables users to add custom values to the list.
+   - **Include All option** - Enables an option to include all variables. Enter a value in the **Custom all value** field to set your own "all" option.
 
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save dashboard**.
