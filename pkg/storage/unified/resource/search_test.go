@@ -9,8 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"log/slog"
-
 	"github.com/Masterminds/semver"
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/mock"
@@ -18,7 +16,6 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -31,7 +28,7 @@ type MockResourceIndex struct {
 	updateIndexError error
 
 	updateIndexMu    sync.Mutex
-	updateIndexCalls []string
+	updateIndexCalls int
 
 	buildInfo IndexBuildInfo
 }
@@ -65,11 +62,11 @@ func (m *MockResourceIndex) ListManagedObjects(ctx context.Context, req *resourc
 	return args.Get(0).(*resourcepb.ListManagedObjectsResponse), args.Error(1)
 }
 
-func (m *MockResourceIndex) UpdateIndex(ctx context.Context, reason string) (int64, error) {
+func (m *MockResourceIndex) UpdateIndex(_ context.Context) (int64, error) {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
 
-	m.updateIndexCalls = append(m.updateIndexCalls, reason)
+	m.updateIndexCalls++
 	return 0, m.updateIndexError
 }
 
@@ -129,6 +126,12 @@ func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key Namespac
 	}
 }
 
+func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
+	return func(yield func(ResourceLastImportTime, error) bool) {
+		yield(ResourceLastImportTime{}, errors.New("not implemented"))
+	}
+}
+
 // mockSearchBackend implements SearchBackend for testing with tracking capabilities
 type mockSearchBackend struct {
 	openIndexes []NamespacedResource
@@ -144,10 +147,10 @@ type buildIndexCall struct {
 	fields SearchableDocumentFields
 }
 
-func (m *mockSearchBackend) GetIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
+func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return m.cache[key], nil
+	return m.cache[key]
 }
 
 func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool) (ResourceIndex, error) {
@@ -271,24 +274,24 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 	idx, err := support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "initial call")
 	require.NoError(t, err)
 	require.NotNil(t, idx)
-	checkMockIndexUpdateCalls(t, idx, []string{"initial call"})
+	checkMockIndexUpdateCalls(t, idx, 1)
 
 	idx, err = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "second call")
 	require.NoError(t, err)
 	require.NotNil(t, idx)
-	checkMockIndexUpdateCalls(t, idx, []string{"initial call", "second call"})
+	checkMockIndexUpdateCalls(t, idx, 2)
 
 	idx, err = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "bad"}, "call to bad index")
 	require.ErrorIs(t, err, failedErr)
 	require.Nil(t, idx)
 }
 
-func checkMockIndexUpdateCalls(t *testing.T, idx ResourceIndex, strings []string) {
+func checkMockIndexUpdateCalls(t *testing.T, idx ResourceIndex, calls int) {
 	mi, ok := idx.(*MockResourceIndex)
 	require.True(t, ok)
 	mi.updateIndexMu.Lock()
 	defer mi.updateIndexMu.Unlock()
-	require.Equal(t, strings, mi.updateIndexCalls)
+	require.Equal(t, calls, mi.updateIndexCalls)
 }
 
 func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
@@ -333,8 +336,8 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 
 	// Wait until new index is put into cache.
 	require.Eventually(t, func() bool {
-		idx, err := support.search.GetIndex(ctx, key)
-		return err == nil && idx != nil
+		idx := support.search.GetIndex(key)
+		return idx != nil
 	}, 1*time.Second, 100*time.Millisecond, "Indexing finishes despite context cancellation")
 
 	// Second call to getOrCreateIndex returns index immediately, even if context is canceled, as the index is now ready and cached.
@@ -347,10 +350,10 @@ type slowSearchBackendWithCache struct {
 	wg sync.WaitGroup
 }
 
-func (m *slowSearchBackendWithCache) GetIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
+func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIndex {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return m.cache[key], nil
+	return m.cache[key]
 }
 
 func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool) (ResourceIndex, error) {
@@ -436,6 +439,7 @@ func TestShouldRebuildIndex(t *testing.T) {
 	type testcase struct {
 		buildInfo       IndexBuildInfo
 		minTime         time.Time
+		lastImportTime  time.Time
 		minBuildVersion *semver.Version
 
 		expected bool
@@ -453,6 +457,11 @@ func TestShouldRebuildIndex(t *testing.T) {
 			minTime:   now,
 			expected:  true,
 		},
+		"empty build info, with lastImportTime": {
+			buildInfo:      IndexBuildInfo{},
+			lastImportTime: now,
+			expected:       true,
+		},
 		"empty build info, with minVersion": {
 			buildInfo:       IndexBuildInfo{},
 			minBuildVersion: semver.MustParse("10.15.20"),
@@ -468,6 +477,16 @@ func TestShouldRebuildIndex(t *testing.T) {
 			minTime:   now,
 			expected:  false,
 		},
+		"build time before last import time": {
+			buildInfo:      IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
+			lastImportTime: now,
+			expected:       true,
+		},
+		"build time after last import time": {
+			buildInfo:      IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
+			lastImportTime: now,
+			expected:       false,
+		},
 		"build version before min version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("10.15.19")},
 			minBuildVersion: semver.MustParse("10.15.20"),
@@ -480,7 +499,7 @@ func TestShouldRebuildIndex(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			res := shouldRebuildIndex(tc.minBuildVersion, tc.buildInfo, tc.minTime, slog.New(&logtest.NopHandler{}))
+			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.minTime, tc.lastImportTime, nil)
 			require.Equal(t, tc.expected, res)
 		})
 	}
@@ -493,7 +512,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		},
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 
 	search := &mockSearchBackend{
 		openIndexes: []NamespacedResource{
@@ -505,6 +524,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 			{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
 			{Namespace: "resource-2h-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
 			{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
+			{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
 
 			// We report this index as open, but it's really not. This can happen if index expires between the call
 			// to GetOpenIndexes and the call to GetIndex.
@@ -551,6 +571,11 @@ func TestFindIndexesForRebuild(t *testing.T) {
 			{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{
 				buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour), BuildVersion: semver.MustParse("6.0.0")},
 			},
+
+			// Built recently, to be rebuilt because of last import time
+			{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-30 * time.Minute), BuildVersion: semver.MustParse("6.0.0")},
+			},
 		},
 	}
 
@@ -573,15 +598,23 @@ func TestFindIndexesForRebuild(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
-	support.findIndexesToRebuild(context.Background(), now)
-	require.Equal(t, 6, support.rebuildQueue.Len())
+	lastImportTime := now.Add(-10 * time.Minute)
+	importTimes := map[NamespacedResource]time.Time{
+		{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: lastImportTime,
+
+		// This index was "just" built, and should not be rebuilt.
+		{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: lastImportTime,
+	}
+
+	support.findIndexesToRebuild(importTimes, now)
+	require.Equal(t, 7, support.rebuildQueue.Len())
 
 	now5m := now.Add(5 * time.Minute)
 
 	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing
 	// ones should be "combined" with new ones (this will "bump" minBuildTime)
-	support.findIndexesToRebuild(context.Background(), now5m)
-	require.Equal(t, 6, support.rebuildQueue.Len())
+	support.findIndexesToRebuild(importTimes, now5m)
+	require.Equal(t, 7, support.rebuildQueue.Len())
 
 	// Values that we expect to find in rebuild requests.
 	minBuildVersion := semver.MustParse("5.5.5")
@@ -597,6 +630,8 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		{NamespacedResource: NamespacedResource{Namespace: "resource-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
 		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
 		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
+
+		{NamespacedResource: NamespacedResource{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard, lastImportTime: lastImportTime},
 	})
 }
 
@@ -692,8 +727,7 @@ func TestRebuildIndexes(t *testing.T) {
 func checkRebuildIndex(t *testing.T, support *searchSupport, req rebuildRequest, indexExists, expectedRebuild bool) {
 	ctx := context.Background()
 
-	idxBefore, err := support.search.GetIndex(ctx, req.NamespacedResource)
-	require.NoError(t, err)
+	idxBefore := support.search.GetIndex(req.NamespacedResource)
 	if indexExists {
 		require.NotNil(t, idxBefore, "index should exist before rebuildIndex")
 	} else {
@@ -702,8 +736,7 @@ func checkRebuildIndex(t *testing.T, support *searchSupport, req rebuildRequest,
 
 	support.rebuildIndex(ctx, req)
 
-	idxAfter, err := support.search.GetIndex(ctx, req.NamespacedResource)
-	require.NoError(t, err)
+	idxAfter := support.search.GetIndex(req.NamespacedResource)
 
 	if indexExists {
 		require.NotNil(t, idxAfter, "index should exist after rebuildIndex")

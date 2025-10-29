@@ -22,6 +22,7 @@ import (
 var (
 	UserResource              = iam.UserResourceInfo.GroupVersionResource()
 	FolderResource            = folders.FolderResourceInfo.GroupVersionResource()
+	FolderKind                = folders.FolderResourceInfo.GroupVersionKind()
 	DashboardResource         = dashboardV1.DashboardResourceInfo.GroupVersionResource()
 	DashboardResourceV2alpha1 = dashboardV2alpha1.DashboardResourceInfo.GroupVersionResource()
 	DashboardResourceV2beta1  = dashboardV2beta1.DashboardResourceInfo.GroupVersionResource()

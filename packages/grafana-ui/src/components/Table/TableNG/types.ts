@@ -167,12 +167,12 @@ export type InspectCellProps = {
   rowIdx?: number;
   value: string;
   mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
+  preformatted?: boolean;
 };
 
 export interface TableCellActionsProps {
   field: Field;
   value: TableCellValue;
-  cellOptions: TableCellOptions;
   displayName: string;
   cellInspect: boolean;
   showFilters: boolean;

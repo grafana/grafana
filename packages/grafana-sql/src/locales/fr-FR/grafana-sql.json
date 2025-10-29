@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Inactivité maximale automatique",
-        "content-auto-max-idle": "Si cette option est activée, le nombre de <1>connexions inactives maximales</1> est automatiquement défini sur la même valeur que<3> Connexions ouvertes maximales</3>. Si le nombre maximal de connexions ouvertes n’est pas défini, il sera défini sur la valeur par défaut ({{defaultMaxIdle}}).",
-        "content-max-idle": "Le nombre maximal de connexions dans le pool de connexions inactives. Si <1>Connexions ouvertes maximales</1> est supérieur à 0, mais inférieur à <3>Connexions inactives maximales</3>, alors <5>Connexions inactives maximales</5> sera réduit pour correspondre à la limite de <8>Connexions ouvertes maximales</8>. Si la valeur est 0, aucune connexion inactive n’est conservée.",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
         "content-max-lifetime": "La durée maximale en secondes pendant laquelle une connexion peut être réutilisée. Si la valeur est 0, les connexions sont réutilisées pour toujours.",
-        "content-max-open": "Le nombre maximal de connexions ouvertes à la base de données. Si <1>Connexions inactives maximales</1> est supérieur à 0 et que <3>Connexions ouvertes maximales</3> est inférieur à <5>Connexions inactives maximales</5>, alors <7>Connexions inactives maximales</7> sera réduit pour correspondre à la limite de <9>Connexions ouvertes maximales</9>. Si la valeur est 0, il n’y a pas de limite quant au nombre de connexions ouvertes.",
+        "content-max-open": "",
         "max-idle": "Inactivité maximale",
         "max-lifetime": "Durée de vie maximale",
         "max-open": "Ouverture maximale",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "Votre requête n’est pas valide. Vérifiez ci-dessous pour en savoir plus. <1></1>Cependant, vous pouvez toujours exécuter cette requête.",
+        "content-invalid-query": "",
         "editor-modes": {
           "label-builder": "Builder",
           "label-code": "Code"
@@ -76,7 +76,7 @@
         "tooltip-format-query": "Requête de format"
       },
       "query-validator": {
-        "query-will-process": "<0></0> Cette requête traitera <2>{{bytes}}</2> lors de son exécution.",
+        "query-will-process": "",
         "validating-query": "Validation de la requête..."
       },
       "raw-editor": {

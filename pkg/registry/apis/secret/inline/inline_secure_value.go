@@ -142,7 +142,7 @@ func (s *LocalInlineSecureValueService) canIdentityReadSecureValue(ctx context.C
 		Resource:  secretv1beta1.SecureValuesResourceInfo.GroupResource().Resource,
 		Namespace: namespace.String(),
 		Name:      name,
-	})
+	}, "")
 	if err != nil {
 		return fmt.Errorf("checking access for secure value %s: %w", name, err)
 	}

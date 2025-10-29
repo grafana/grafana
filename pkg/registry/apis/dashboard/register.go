@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
@@ -41,7 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -91,7 +92,6 @@ type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
 	features         featuremgmt.FeatureToggles
 
-	authorizer                   authorizer.Authorizer
 	accessControl                accesscontrol.AccessControl
 	accessClient                 authlib.AccessClient
 	legacy                       *DashboardStorage
@@ -142,7 +142,6 @@ func RegisterAPIService(
 	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
 
 	builder := &DashboardsAPIBuilder{
-		authorizer:                   newLegacyAuthorizer(accessControl),
 		dashboardService:             dashboardService,
 		dashboardPermissions:         dashboardPermissions,
 		dashboardPermissionsSvc:      dashboardPermissionsSvc,
@@ -178,7 +177,6 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     "10s",
 		accessClient:           ac,
-		authorizer:             authsvc.NewResourceAuthorizer(ac),
 		features:               features,
 		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider:   folderClientProvider,
@@ -329,8 +327,13 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 
 	// Validate folder existence if specified
 	if !a.IsDryRun() && accessor.GetFolder() != "" {
-		if err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
+		folder, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID())
+		if err != nil {
 			return err
+		}
+
+		if err := b.validateFolderManagedBySameManager(folder, accessor); err != nil {
+			return apierrors.NewBadRequest(err.Error())
 		}
 	}
 
@@ -398,8 +401,13 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 			return err
 		}
 
-		if err := b.validateFolderExists(ctx, newAccessor.GetFolder(), nsInfo.OrgID); err != nil {
+		folder, err := b.validateFolderExists(ctx, newAccessor.GetFolder(), nsInfo.OrgID)
+		if err != nil {
 			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), newAccessor.GetFolder())
+		}
+
+		if err := b.validateFolderManagedBySameManager(folder, newAccessor); err != nil {
+			return err
 		}
 	}
 
@@ -412,21 +420,43 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 }
 
 // validateFolderExists checks if a folder exists
-func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderUID string, orgID int64) error {
+func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderUID string, orgID int64) (*unstructured.Unstructured, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, false)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	folderClient := b.folderClientProvider.GetOrCreateHandler(ns.Value)
-	_, err = folderClient.Get(ctx, folderUID, orgID, metav1.GetOptions{})
+	folder, err := folderClient.Get(ctx, folderUID, orgID, metav1.GetOptions{})
 	// Check if the error is a context deadline exceeded error
 	if err != nil {
 		// historically, we returned a more verbose error with folder name when its not found, below just keeps that behavior
 		if apierrors.IsNotFound(err) {
-			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), folderUID)
+			return nil, apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), folderUID)
 		}
 
-		return err
+		return nil, err
+	}
+
+	return folder, nil
+}
+
+// validation should fail if:
+// 1. The parent folder is managed but this dashboard is not
+// 2. The parent folder is managed by a different repository than this dashboard
+func (b *DashboardsAPIBuilder) validateFolderManagedBySameManager(folder *unstructured.Unstructured, dashboardAccessor utils.GrafanaMetaAccessor) error {
+	folderAccessor, err := utils.MetaAccessor(folder)
+	if err != nil {
+		return fmt.Errorf("error getting meta accessor: %w", err)
+	}
+
+	if folderManager, ok := folderAccessor.GetManagerProperties(); ok && folderManager.Kind == utils.ManagerKindRepo {
+		manager, ok := dashboardAccessor.GetManagerProperties()
+		if !ok {
+			return fmt.Errorf("folder is managed by a repository, but the dashboard is not managed")
+		}
+		if manager.Kind != utils.ManagerKindRepo || manager.Identity != folderManager.Identity {
+			return fmt.Errorf("folder is managed by a repository, but the dashboard is not managed by the same manager")
+		}
 	}
 
 	return nil
@@ -473,6 +503,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// Split dashboards when they are large
 	var largeObjects apistore.LargeObjectSupport
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
 		largeObjects = NewDashboardLargeObjectSupport(opts.Scheme, opts.StorageOpts.BlobThresholdBytes)
 		storageOpts.LargeObjectSupport = largeObjects
@@ -651,7 +682,7 @@ func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteO
 	client := (*b.resourcePermissionsSvc).Namespace(meta.GetNamespace())
 	name := fmt.Sprintf("%s-%s-%s", dashv1.DashboardResourceInfo.GroupVersionResource().Group, dashv1.DashboardResourceInfo.GroupVersionResource().Resource, meta.GetName())
 	err = client.Delete(ctx, name, metav1.DeleteOptions{})
-	if err != nil {
+	if err != nil && !apierrors.IsNotFound(err) {
 		log.Error("failed to delete dashboard permissions", "error", err)
 	}
 }
@@ -731,8 +762,9 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 	return b.search.GetAPIRoutes(defs)
 }
 
+// The default authorizer is fine because authorization happens in storage where we know the parent folder
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return b.authorizer
+	return grafanaauthorizer.NewServiceAuthorizer()
 }
 
 func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderIds ...string) error {

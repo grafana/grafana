@@ -40,7 +40,9 @@ export interface Options {
   setDisplayedFields?: unknown;
   showCommonLabels: boolean;
   showControls?: boolean;
+  showFieldSelector?: boolean;
   showLabels: boolean;
+  showLogAttributes?: boolean;
   showLogContextToggle: boolean;
   showTime: boolean;
   sortOrder: common.LogsSortOrder;

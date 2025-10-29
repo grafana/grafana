@@ -53,6 +53,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 		DBProvider:              eDB,
 		IsHA:                    isHA,
 		SimulatedNetworkLatency: simulatedNetworkLatency,
+		LastImportTimeMaxAge:    24 * time.Hour,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, backend)
@@ -69,6 +70,7 @@ func TestMain(m *testing.M) {
 
 func TestIntegrationStorageServer(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
 
 	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
 		return newTestBackend(t, true, 0)
@@ -78,6 +80,7 @@ func TestIntegrationStorageServer(t *testing.T) {
 // TestStorageBackend is a test for the StorageBackend interface.
 func TestIntegrationSQLStorageBackend(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
@@ -128,7 +131,7 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{})
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil)
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 

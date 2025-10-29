@@ -23,6 +23,8 @@ import { ConfirmModal, Icon, PopoverContent, useStyles2, useTheme2 } from '@graf
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
+import { LogListFieldSelector } from '../fieldSelector/FieldSelector';
+
 import { InfiniteScrollMode, InfiniteScroll, LoadMoreLogsType } from './InfiniteScroll';
 import { getGridTemplateColumns, LogLineTimestampResolution } from './LogLine';
 import { LogLineDetails, LogLineDetailsMode } from './LogLineDetails';
@@ -40,6 +42,7 @@ export interface Props {
   app: CoreApp;
   containerElement: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
+  dataFrames?: DataFrame[];
   detailsMode?: LogLineDetailsMode;
   displayedFields: string[];
   enableLogDetails: boolean;
@@ -66,7 +69,7 @@ export interface Props {
   onClickFilterOutString?: (value: string, refId?: string) => void;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  onLogOptionsChange?: (option: LogListControlOptions, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
@@ -78,6 +81,12 @@ export interface Props {
   prettifyJSON?: boolean;
   setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
+  showFieldSelector?: boolean;
+  /**
+   * Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata
+   * @alpha
+   */
+  showLogAttributes?: boolean;
   showTime: boolean;
   showUniqueLabels?: boolean;
   sortOrder: LogsSortOrder;
@@ -90,7 +99,7 @@ export interface Props {
 
 export type LogListFontSize = 'default' | 'small';
 
-export type LogListControlOptions = keyof LogListState | 'wrapLogMessage' | 'prettifyLogMessage';
+export type LogListOptions = keyof LogListState | 'wrapLogMessage' | 'prettifyLogMessage' | 'defaultDisplayedFields';
 
 type LogListComponentProps = Omit<
   Props,
@@ -109,6 +118,7 @@ type LogListComponentProps = Omit<
 export const LogList = ({
   app,
   displayedFields,
+  dataFrames,
   containerElement,
   logOptionsStorageKey,
   detailsMode,
@@ -148,6 +158,8 @@ export const LogList = ({
   prettifyJSON = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.prettifyLogMessage`, true) : true,
   setDisplayedFields,
   showControls,
+  showFieldSelector,
+  showLogAttributes,
   showTime,
   showUniqueLabels,
   sortOrder,
@@ -193,6 +205,7 @@ export const LogList = ({
       prettifyJSON={prettifyJSON}
       setDisplayedFields={setDisplayedFields}
       showControls={showControls}
+      showLogAttributes={showLogAttributes}
       showTime={showTime}
       showUniqueLabels={showUniqueLabels}
       sortOrder={sortOrder}
@@ -203,6 +216,7 @@ export const LogList = ({
       <LogListSearchContextProvider>
         <LogListComponent
           containerElement={containerElement}
+          dataFrames={dataFrames}
           eventBus={eventBus}
           getFieldLinks={getFieldLinks}
           grammar={grammar}
@@ -212,6 +226,7 @@ export const LogList = ({
           loadMore={loadMore}
           logs={logs}
           showControls={showControls}
+          showFieldSelector={showFieldSelector}
           timeRange={timeRange}
           timeZone={timeZone}
         />
@@ -222,6 +237,7 @@ export const LogList = ({
 
 const LogListComponent = ({
   containerElement,
+  dataFrames,
   eventBus = new EventBusSrv(),
   getFieldLinks,
   grammar,
@@ -231,6 +247,7 @@ const LogListComponent = ({
   loadMore,
   logs,
   showControls,
+  showFieldSelector,
   timeRange,
   timeZone,
 }: LogListComponentProps) => {
@@ -517,6 +534,9 @@ const LogListComponent = ({
           )}
         </InfiniteScroll>
       </div>
+      {showFieldSelector && processedLogs.length > 0 && dataFrames && (
+        <LogListFieldSelector containerElement={containerElement} dataFrames={dataFrames} logs={processedLogs} />
+      )}
     </div>
   );
 };

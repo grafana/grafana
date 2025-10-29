@@ -14,6 +14,9 @@ export interface ErrorBoundaryApi {
 }
 
 interface Props {
+  /** Name of the error boundary. Used when reporting errors in Faro. */
+  boundaryName?: string;
+
   children: (r: ErrorBoundaryApi) => ReactNode;
   /** Will re-render children after error if recover values changes */
   dependencies?: unknown[];
@@ -30,6 +33,11 @@ interface State {
   errorInfo: ErrorInfo | null;
 }
 
+/**
+ * A React component that catches errors in child components. Useful for logging or displaying a fallback UI in case of errors. More information about error boundaries is available at [React documentation website](https://reactjs.org/docs/error-boundaries.html).
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/utilities-errorboundary--docs
+ */
 export class ErrorBoundary extends PureComponent<Props, State> {
   readonly state: State = {
     error: null,
@@ -37,10 +45,15 @@ export class ErrorBoundary extends PureComponent<Props, State> {
   };
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    const logger = this.props.errorLogger ?? faro?.api?.pushError;
-
-    if (logger) {
-      logger(error);
+    if (this.props.errorLogger) {
+      this.props.errorLogger(error);
+    } else {
+      faro?.api?.pushError(error, {
+        context: {
+          type: 'boundary',
+          source: this.props.boundaryName ?? 'unknown',
+        },
+      });
     }
 
     this.setState({ error, errorInfo });
@@ -85,6 +98,9 @@ export class ErrorBoundary extends PureComponent<Props, State> {
  * @public
  */
 export interface ErrorBoundaryAlertProps {
+  /** Name of the error boundary. Used when reporting errors in Faro. */
+  boundaryName?: string;
+
   /** Title for the error boundary alert */
   title?: string;
 
@@ -107,10 +123,10 @@ export class ErrorBoundaryAlert extends PureComponent<ErrorBoundaryAlertProps> {
   };
 
   render() {
-    const { title, children, style, dependencies, errorLogger } = this.props;
+    const { title, children, style, dependencies, errorLogger, boundaryName } = this.props;
 
     return (
-      <ErrorBoundary dependencies={dependencies} errorLogger={errorLogger}>
+      <ErrorBoundary dependencies={dependencies} errorLogger={errorLogger} boundaryName={boundaryName}>
         {({ error, errorInfo }) => {
           if (!errorInfo) {
             return children;

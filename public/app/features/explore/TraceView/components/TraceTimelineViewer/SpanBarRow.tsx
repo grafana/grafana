@@ -25,13 +25,14 @@ import { SpanBarOptions } from '../settings/SpanBarSettings';
 import TNil from '../types/TNil';
 import { SpanLinkFunc } from '../types/links';
 import { TraceSpan, CriticalPathSection } from '../types/trace';
+import { formatDuration } from '../utils/date';
 
 import SpanBar from './SpanBar';
 import { SpanLinksMenu } from './SpanLinks';
 import SpanTreeOffset from './SpanTreeOffset';
 import Ticks from './Ticks';
 import TimelineRow from './TimelineRow';
-import { formatDuration, ViewedBoundsFunctionType } from './utils';
+import { ViewedBoundsFunctionType } from './utils';
 
 const spanBarClassName = 'spanBar';
 const spanBarLabelClassName = 'spanBarLabel';
@@ -189,7 +190,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       },
       [`& .${nameWrapperClassName}, .${viewClassName}, .${nameWrapperMatchingFilterClassName}`]: {
         backgroundColor: autoColor(theme, '#cbe7ff'),
-        animation: `${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0)`,
+        [theme.transitions.handleMotion('no-preference')]: {
+          animation: `${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0)`,
+        },
       },
       [`& .${spanBarClassName}`]: {
         opacity: 1,

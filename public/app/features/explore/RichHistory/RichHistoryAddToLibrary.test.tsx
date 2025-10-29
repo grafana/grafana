@@ -1,7 +1,6 @@
 import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { OrgRole } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
 
 import { QueryLibraryContextProviderMock } from '../QueryLibrary/mocks';
@@ -10,6 +9,7 @@ import { RichHistoryAddToLibrary } from './RichHistoryAddToLibrary';
 
 describe('RichHistoryAddToLibrary', () => {
   it('should render button when save query is enabled', () => {
+    contextSrv.isEditor = true;
     render(
       <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
         <RichHistoryAddToLibrary query={{ refId: 'A' }} />
@@ -28,7 +28,7 @@ describe('RichHistoryAddToLibrary', () => {
     expect(screen.queryByRole('button', { name: /Save query/i })).not.toBeInTheDocument();
   });
   it('should not render button when user has Viewer role', () => {
-    contextSrv.user.orgRole = OrgRole.Viewer;
+    contextSrv.isEditor = false;
     render(
       <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
         <RichHistoryAddToLibrary query={{ refId: 'A' }} />

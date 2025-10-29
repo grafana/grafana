@@ -3,17 +3,20 @@ package client
 import (
 	"context"
 
-	authzlib "github.com/grafana/authlib/authz"
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
 
+	authzlib "github.com/grafana/authlib/authz"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
 var _ authlib.AccessClient = (*Client)(nil)
+var _ zanzana.Client = (*Client)(nil)
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/client")
 
@@ -36,11 +39,11 @@ func New(cc grpc.ClientConnInterface) (*Client, error) {
 	return c, nil
 }
 
-func (c *Client) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error) {
+func (c *Client) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Check")
 	defer span.End()
 
-	return c.authzlibclient.Check(ctx, id, req)
+	return c.authzlibclient.Check(ctx, id, req, folder)
 }
 
 func (c *Client) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
@@ -70,4 +73,20 @@ func (c *Client) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckReque
 	defer span.End()
 
 	return c.authzext.BatchCheck(ctx, req)
+}
+
+func (c *Client) WriteNew(ctx context.Context, req *authzextv1.WriteRequest) error {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Write")
+	defer span.End()
+
+	_, err := c.authzext.Write(ctx, req)
+	return err
+}
+
+func (c *Client) Mutate(ctx context.Context, req *authzextv1.MutateRequest) error {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Mutate")
+	defer span.End()
+
+	_, err := c.authzext.Mutate(ctx, req)
+	return err
 }

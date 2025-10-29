@@ -3,8 +3,9 @@ package client
 import (
 	"context"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
+
+	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -19,17 +20,17 @@ type ShadowClient struct {
 }
 
 // WithShadowClient returns a new access client that runs zanzana checks in the background.
-func WithShadowClient(accessClient authlib.AccessClient, zanzanaClient authlib.AccessClient, reg prometheus.Registerer) authlib.AccessClient {
+func WithShadowClient(accessClient authlib.AccessClient, zanzanaClient authlib.AccessClient, reg prometheus.Registerer) (authlib.AccessClient, error) {
 	client := &ShadowClient{
 		logger:        log.New("zanzana-shadow-client"),
 		accessClient:  accessClient,
 		zanzanaClient: zanzanaClient,
 		metrics:       newShadowClientMetrics(reg),
 	}
-	return client
+	return client, nil
 }
 
-func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error) {
+func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 	acResChan := make(chan authlib.CheckResponse, 1)
 	acErrChan := make(chan error, 1)
 
@@ -42,7 +43,7 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 		defer timer.ObserveDuration()
 
 		zanzanaCtx := context.WithoutCancel(ctx)
-		res, err := c.zanzanaClient.Check(zanzanaCtx, id, req)
+		res, err := c.zanzanaClient.Check(zanzanaCtx, id, req, folder)
 		if err != nil {
 			c.logger.Error("Failed to run zanzana check", "error", err)
 		}
@@ -61,7 +62,7 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 	}()
 
 	timer := prometheus.NewTimer(c.metrics.evaluationsSeconds.WithLabelValues("rbac"))
-	res, err := c.accessClient.Check(ctx, id, req)
+	res, err := c.accessClient.Check(ctx, id, req, folder)
 	timer.ObserveDuration()
 	acResChan <- res
 	acErrChan <- err
