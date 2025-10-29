@@ -140,7 +140,7 @@ if [[ ${#PACKAGES[@]} -eq 0 ]]; then
 fi
 
 # Find which profile packages are in this shard (maintain index alignment)
-profile_packages_ABS=()
+profile_packages_abs=()
 for i in "${!profile_packages[@]}"; do
   profile_pkg="${profile_packages[$i]}"
   MATCHED=""
@@ -150,7 +150,7 @@ for i in "${!profile_packages[@]}"; do
       break
     fi
   done
-  profile_packages_ABS+=("$MATCHED")
+  profile_packages_abs+=("$MATCHED")
   if [ -n "$MATCHED" ]; then
     echo "🔍 Found '$profile_pkg' in this shard: $MATCHED"
   fi
@@ -181,12 +181,14 @@ PROFILE_FAILED=0
 if [ ${#profile_packages[@]} -gt 0 ]; then
   # Check if any packages are actually in this shard
   HAS_PROFILED_PACKAGES=false
-  for abs_pkg in "${profile_packages_ABS[@]}"; do
-    if [ -n "$abs_pkg" ]; then
-      HAS_PROFILED_PACKAGES=true
-      break
-    fi
-  done
+  if [ ${#profile_packages_abs[@]} -gt 0 ]; then
+    for abs_pkg in "${profile_packages_abs[@]}"; do
+      if [ -n "$abs_pkg" ]; then
+        HAS_PROFILED_PACKAGES=true
+        break
+      fi
+    done
+  fi
 
   if [ "$HAS_PROFILED_PACKAGES" = true ]; then
     echo ""
@@ -198,8 +200,8 @@ if [ ${#profile_packages[@]} -gt 0 ]; then
       profile_pkg="${profile_packages[$i]}"
       PARALLEL_RUNS="${profile_parallel_runs[$i]}"
 
-      if [ -n "${profile_packages_ABS[$i]:-}" ]; then
-        MATCHED_PKG="${profile_packages_ABS[$i]}"
+      if [ -n "${profile_packages_abs[$i]:-}" ]; then
+        MATCHED_PKG="${profile_packages_abs[$i]}"
         PKG_NAME=$(echo "$profile_pkg" | tr '/' '_' | tr '.' '_')
 
         echo "  📦 $profile_pkg: ${PARALLEL_RUNS} parallel run(s)"
@@ -223,8 +225,12 @@ if [ ${#profile_packages[@]} -gt 0 ]; then
     done
 
     if [ ${#PROFILE_PIDS[@]} -gt 0 ]; then
-      echo "  Started ${#PROFILE_PIDS[@]} profiled test process(es): ${PROFILE_PIDS[*]}"
+      echo "📊 All profiled tests launched in background (PIDs: ${PROFILE_PIDS[*]})"
+    else
+      echo "⚠️  No profiled test processes were started"
     fi
+  else
+    echo "⏭️  No profiled packages in this shard"
   fi
 fi
 
@@ -285,7 +291,7 @@ if [ ${#PROFILE_PIDS[@]} -gt 0 ]; then
     profile_pkg="${profile_packages[$i]}"
     PARALLEL_RUNS="${profile_parallel_runs[$i]}"
 
-    if [ -n "${profile_packages_ABS[$i]:-}" ]; then
+    if [ -n "${profile_packages_abs[$i]:-}" ]; then
       PKG_NAME=$(echo "$profile_pkg" | tr '/' '_' | tr '.' '_')
       for run in $(seq 1 "$PARALLEL_RUNS"); do
         if [ -f "$PROFILE_OUTPUT_DIR/exit_${PKG_NAME}_run${run}.code" ]; then
