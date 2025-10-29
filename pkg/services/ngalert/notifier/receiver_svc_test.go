@@ -476,6 +476,12 @@ func TestReceiverService_Create(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:        "receiver with empty name fails",
+			user:        writer,
+			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithName("")),
+			expectedErr: legacy_storage.ErrReceiverInvalid,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			sut := createReceiverServiceSut(t, &secretsService)
@@ -900,6 +906,16 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		assert.Equal(t, newReceiverName, ruleStore.Calls[0].Args[3])
 		assert.NotNil(t, ruleStore.Calls[0].Args[4])
 		assert.Falsef(t, ruleStore.Calls[0].Args[5].(bool), "dryrun expected to be false")
+	})
+
+	t.Run("returns ErrReceiverInvalid if empty name", func(t *testing.T) {
+		ruleStore := &fakeAlertRuleNotificationStore{}
+		sut := createReceiverServiceSut(t, &secretsService)
+		sut.ruleNotificationsStore = ruleStore
+		baseReceiver.Name = ""
+
+		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		require.ErrorIs(t, err, legacy_storage.ErrReceiverInvalid)
 	})
 }
 
