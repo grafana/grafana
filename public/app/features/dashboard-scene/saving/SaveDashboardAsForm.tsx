@@ -1,5 +1,4 @@
-import debounce from 'debounce-promise';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -41,19 +40,48 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     },
   });
 
-  const { errors, isValid, defaultValues, validatingFields } = formState;
+  const { errors, isValid, defaultValues } = formState;
   const formValues = watch();
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
 
   const [contentSent, setContentSent] = useState<{ title?: string; folderUid?: string }>({});
 
+  const validationTimeoutRef = useRef<NodeJS.Timeout>();
+
   // Validate title on form mount to catch invalid default values
   useEffect(() => {
     trigger('title');
   }, [trigger]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      clearTimeout(validationTimeoutRef.current);
+    };
+  }, []);
+
+  const handleTitleChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setValue('title', e.target.value, { shouldDirty: true });
+      clearTimeout(validationTimeoutRef.current);
+      validationTimeoutRef.current = setTimeout(() => {
+        trigger('title');
+      }, 400);
+    },
+    [setValue, trigger]
+  );
+
   const onSave = async (overwrite: boolean) => {
+    clearTimeout(validationTimeoutRef.current);
+
+    const isTitleValid = await trigger('title');
+
+    // This prevents the race between the new input and old validation state
+    if (!isTitleValid) {
+      return;
+    }
+
     const data = getValues();
 
     const result = await onSaveDashboard(dashboard, {
@@ -86,15 +114,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   );
 
   const saveButton = (overwrite: boolean) => {
-    const isTitleValidating = !!validatingFields.title;
-    return (
-      <SaveButton
-        isValid={isValid && !isTitleValidating}
-        isLoading={state.loading}
-        onSave={onSave}
-        overwrite={overwrite}
-      />
-    );
+    return <SaveButton isValid={isValid} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />;
   };
   function renderFooter(error?: Error) {
     const formValuesMatchContentSent =
@@ -121,12 +141,9 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     <form onSubmit={handleSubmit(() => onSave(false))}>
       <Field label={<TitleFieldLabel onChange={setValue} />} invalid={!!errors.title} error={errors.title?.message}>
         <Input
-          {...register('title', { required: 'Required', validate: validateDashboardName })}
+          {...register('title', { required: 'Required', validate: validateDashboardName, onChange: handleTitleChange })}
           aria-label="Save dashboard title field"
           data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput}
-          onChange={debounce(async (e: ChangeEvent<HTMLInputElement>) => {
-            setValue('title', e.target.value, { shouldValidate: true });
-          }, 400)}
         />
       </Field>
       <Field
