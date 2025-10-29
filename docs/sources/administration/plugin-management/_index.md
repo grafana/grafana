@@ -20,7 +20,7 @@ Plugins enhance your Grafana experience with new ways to connect to and visualiz
 
 Read on for an overview on how to get started with plugins:
 
-- Plugins are available in the [plugin catalog](#plugin-catalog). They can be built by Grafana Labs, commercial partners, our community, or you can [build a plugin yourself](/developers/plugin-tools).
+- Plugins are available in the [plugin catalog](#access-the-plugin-catalog). They can be built by Grafana Labs, commercial partners, our community, or you can [build a plugin yourself](/developers/plugin-tools).
 - There are three [types of plugins](#types-of-plugins): panel, data source, and app plugins.
 - Learn [how to install](#install-a-plugin), [update](#update-a-plugin) and [verify](#verify-your-plugins) your plugins.
 
@@ -40,15 +40,15 @@ Grafana supports three types of plugins:
 
 Read more in [Types of plugins](plugin-types).
 
-## Plugin catalog
+## Access the Plugin catalog
 
-You can install and manage plugins from within Grafana. The following access rules apply depending on the user role:
+You can install and manage plugins from within Grafana. You need to have a Grafana Server administrator or Organization administrator role to access and use the plugin catalog. For more information about Grafana roles and permissions, refer to [Roles and permissions](../roles-and-permissions/).
+
+For app plugins, the following access rules apply:
 
 - If you are an **Org Admin**, you can configure app plugins, but you can't install, uninstall, or update them.
 - If you are a **Server Admin**, you can't configure app plugins, but you can install, uninstall, or update them.
 - If you are both **Org Admin** and **Server Admin**, you can configure app plugins and also install, uninstall, or update them.
-
-For more information about Grafana roles and permissions, refer to [Roles and permissions](../roles-and-permissions/).
 
 ### Browse plugins
 
