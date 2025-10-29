@@ -3,23 +3,12 @@ import { setupListeners } from '@reduxjs/toolkit/query';
 import { Middleware } from 'redux';
 
 import { notificationsAPIv0alpha1, rulesAPIv0alpha1 } from '@grafana/alerting/unstable';
-import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
-import { preferencesAPIv1alpha1 } from 'app/api/clients/preferences/v1alpha1';
-import { shortURLAPIv1alpha1 } from 'app/api/clients/shorturl/v1alpha1';
-import { legacyUserAPI } from 'app/api/legacy/user/api';
+import { allMiddleware as allApiClientMiddleware } from '@grafana/api-clients/rtkq';
+import { legacyAPI } from 'app/api/clients/legacy';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
-import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
-import { userPreferencesAPI } from 'app/features/preferences/api';
 import { StoreState } from 'app/types/store';
 
-import { advisorAPIv0alpha1 } from '../api/clients/advisor/v0alpha1';
-import { folderAPIv1beta1 } from '../api/clients/folder/v1beta1';
-import { iamAPIv0alpha1 } from '../api/clients/iam/v0alpha1';
-import { playlistAPIv0alpha1 } from '../api/clients/playlist/v0alpha1';
-import { provisioningAPIv0alpha1 } from '../api/clients/provisioning/v0alpha1';
-// Used by the API client generator
-// PLOP_INJECT_IMPORT
 import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { alertingApi } from '../features/alerting/unified/api/alertingApi';
@@ -54,19 +43,8 @@ export function configureStore(initialState?: Partial<StoreState>) {
         // other Grafana core APIs
         publicDashboardApi.middleware,
         browseDashboardsAPI.middleware,
-        legacyUserAPI.middleware,
-        cloudMigrationAPI.middleware,
-        userPreferencesAPI.middleware,
-        iamAPIv0alpha1.middleware,
-        playlistAPIv0alpha1.middleware,
-        provisioningAPIv0alpha1.middleware,
-        folderAPIv1beta1.middleware,
-        advisorAPIv0alpha1.middleware,
-        dashboardAPIv0alpha1.middleware,
-        shortURLAPIv1alpha1.middleware,
-        preferencesAPIv1alpha1.middleware,
-        // PLOP_INJECT_MIDDLEWARE
-        // Used by the API client generator
+        legacyAPI.middleware,
+        ...allApiClientMiddleware,
         ...extraMiddleware
       ),
     devTools: process.env.NODE_ENV !== 'production',

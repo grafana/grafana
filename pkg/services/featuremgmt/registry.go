@@ -1820,15 +1820,6 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:              "skipTokenRotationIfRecent",
-			Description:       "Skip token rotation if it was already rotated less than 5 seconds ago",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             identityAccessTeam,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			Expression:        "true", // enabled by default
-		},
-		{
 			Name:              "alertEnrichment",
 			Description:       "Enable configuration of alert enrichments in Grafana Cloud.",
 			Stage:             FeatureStageExperimental,
@@ -1928,16 +1919,6 @@ var (
 			Description:       "Enables use of app platform API for folders",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaFrontendSearchNavOrganise,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			FrontendOnly:      true,
-			Expression:        "false",
-		},
-		{
-			Name:              "enablePluginImporter",
-			Description:       "Set this to true to use the new PluginImporter functionality",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaPluginsPlatformSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			FrontendOnly:      true,
@@ -2111,6 +2092,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "pluginInstallAPISync",
+			Description:  "Enable syncing plugin installations to the installs API",
+			FrontendOnly: false,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "newGauge",
 			Description:  "Enable new gauge visualization",
 			Stage:        FeatureStageExperimental,
@@ -2149,6 +2138,24 @@ var (
 			HideFromAdminPage: true, // this should not be a user facing change
 			Owner:             identityAccessTeam,
 			Expression:        "true",
+		},
+		{
+			Name:              "panelTimeSettings",
+			Description:       "Enables a new panel time settings drawer",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			RequiresRestart:   false,
+			AllowSelfServe:    false,
+			HideFromDocs:      false,
+			HideFromAdminPage: false,
+		},
+		{
+			Name:         "dashboardTemplates",
+			Description:  "Enable template dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
 		},
 	}
 )

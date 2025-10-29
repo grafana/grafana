@@ -72,6 +72,9 @@ export type RadialGradientMode = 'none' | 'auto';
 export type RadialTextMode = 'auto' | 'value_and_name' | 'value' | 'name' | 'none';
 export type RadialShape = 'circle' | 'gauge';
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-radialgauge--docs
+ */
 export function RadialGauge(props: RadialGaugeProps) {
   const {
     width = 256,
@@ -293,10 +296,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      // Adds subtle shadow in light themes to help bar stand out
-      '.radial-arc-path': {
-        filter: theme.isLight ? `drop-shadow(0px 0px 1px #888);` : '',
-      },
     }),
     clearButton: css({
       background: 'transparent',

@@ -61,6 +61,7 @@ var (
 
 	sqlResourceLastImportTimeInsert = mustTemplate("resource_last_import_time_insert.sql")
 	sqlResourceLastImportTimeQuery  = mustTemplate("resource_last_import_time_query.sql")
+	sqlResourceLastImportTimeDelete = mustTemplate("resource_last_import_time_delete.sql")
 )
 
 // TxOptions.
@@ -487,5 +488,14 @@ type sqlResourceLastImportTimeQueryRequest struct {
 }
 
 func (r *sqlResourceLastImportTimeQueryRequest) Validate() error {
+	return nil
+}
+
+type sqlResourceLastImportTimeDeleteRequest struct {
+	sqltemplate.SQLTemplate
+	Threshold time.Time
+}
+
+func (r *sqlResourceLastImportTimeDeleteRequest) Validate() error {
 	return nil
 }

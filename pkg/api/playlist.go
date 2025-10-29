@@ -144,13 +144,8 @@ type playlistK8sHandler struct {
 //-----------------------------------------------------------------------------------------
 
 func newPlaylistK8sHandler(hs *HTTPServer) *playlistK8sHandler {
-	gvr := schema.GroupVersionResource{
-		Group:    v0alpha1.PlaylistKind().Group(),
-		Version:  v0alpha1.PlaylistKind().Version(),
-		Resource: v0alpha1.PlaylistKind().Plural(),
-	}
 	return &playlistK8sHandler{
-		gvr:                  gvr,
+		gvr:                  v0alpha1.PlaylistKind().GroupVersionResource(),
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
 	}

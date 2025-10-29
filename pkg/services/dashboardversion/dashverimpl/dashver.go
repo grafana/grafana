@@ -169,7 +169,7 @@ func (s *Service) RestoreVersion(ctx context.Context, cmd *dashver.RestoreVersio
 		}
 		cmd.DashboardUID = u
 	}
-
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) ||
 		s.features.IsEnabledGlobally(featuremgmt.FlagDashboardNewLayouts) {
 		s.log.Debug("restoring dashboard version through k8s")
