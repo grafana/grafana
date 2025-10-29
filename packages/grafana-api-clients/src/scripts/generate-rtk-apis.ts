@@ -40,6 +40,14 @@ const config: ConfigFile = {
   exportName: 'generatedAPI',
 
   outputFiles: {
+    // OpenAPI3 client with all endpoints
+    '../clients/rtkq/legacy/endpoints.gen.ts': {
+      schemaFile: path.join(basePath, 'public/openapi3.json'),
+      hooks: true,
+      tag: true,
+      apiFile: '../clients/rtkq/legacy/baseAPI.ts',
+      filterEndpoints: (_name, operation) => !operation.operation.deprecated,
+    },
     '../clients/rtkq/migrate-to-cloud/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
       apiFile: '../clients/rtkq/migrate-to-cloud/baseAPI.ts',
