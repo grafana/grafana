@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
 
 import { CoreApp, GrafanaTheme2, PanelDataSummary, VisualizationSuggestion, getPanelDataSummary } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

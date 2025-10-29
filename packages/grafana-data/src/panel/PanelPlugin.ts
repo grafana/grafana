@@ -3,17 +3,16 @@ import { ComponentClass, ComponentType } from 'react';
 
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
+import { VisualizationSuggestionsSupplier, VisualizationSuggestionsBuilder } from '../suggestions';
 import { PanelModel } from '../types/dashboard';
 import { FieldConfigProperty, FieldConfigSource } from '../types/fieldOverrides';
 import {
   PanelPluginMeta,
-  VisualizationSuggestionsSupplier,
   PanelProps,
   PanelEditorProps,
   PanelMigrationHandler,
   PanelTypeChangedHandler,
   PanelPluginDataSupport,
-  VisualizationSuggestionsBuilder,
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
