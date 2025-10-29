@@ -25,6 +25,8 @@ export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
 
 /**
  * @deprecated Use Combobox or Dropdown instead
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-deprecated-buttonselect--docs
  */
 const ButtonSelectComponent = <T,>(props: Props<T>) => {
   const { className, options, value, onChange, narrow, variant, root, ...restProps } = props;

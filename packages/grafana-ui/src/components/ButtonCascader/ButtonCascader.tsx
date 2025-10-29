@@ -28,6 +28,9 @@ export interface ButtonCascaderProps {
   hideDownIcon?: boolean;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-buttoncascader--docs
+ */
 export const ButtonCascader = (props: ButtonCascaderProps) => {
   const { onChange, className, loadData, icon, buttonProps, hideDownIcon, variant, disabled, ...rest } = props;
   const styles = useStyles2(getStyles);
