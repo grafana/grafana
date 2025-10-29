@@ -386,6 +386,13 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 			}
 
 			if currentRow != nil {
+				// If currentRow is a hidden-header row (panels before first explicit row),
+				// set its collapse to match the first explicit row's collapsed value
+				// This matches frontend behavior: collapse: panel.collapsed
+				if currentRow.Spec.HideHeader != nil && *currentRow.Spec.HideHeader {
+					rowCollapsed := getBoolField(panelMap, "collapsed", false)
+					currentRow.Spec.Collapse = &rowCollapsed
+				}
 				// Flush current row to layout
 				rows = append(rows, *currentRow)
 			}
