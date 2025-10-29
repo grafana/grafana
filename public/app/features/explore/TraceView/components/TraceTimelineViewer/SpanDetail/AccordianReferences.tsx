@@ -37,16 +37,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   AccordianReferences: css({
     label: 'AccordianReferences',
     position: 'relative',
-    marginBottom: '0.25rem',
   }),
   AccordianReferencesHeader: css({
     label: 'AccordianReferencesHeader',
     color: 'inherit',
     display: 'block',
     padding: '0.25rem 0',
-    '&:hover': {
-      background: autoColor(theme, '#dadada'),
-    },
   }),
   AccordianReferencesContent: css({
     label: 'AccordianReferencesContent',

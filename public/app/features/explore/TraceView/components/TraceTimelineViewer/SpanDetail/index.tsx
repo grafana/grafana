@@ -14,7 +14,7 @@
 
 import { css, cx } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 
 import {
   CoreApp,
@@ -114,6 +114,17 @@ const useResourceAttributesExtensionLinks = ({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    card: css({
+      ':not(:empty)': {
+        border: '1px solid ' + theme.colors.border.weak,
+        '&:hover': {
+          background: autoColor(theme, '#ffe7ba'),
+        },
+      },
+      borderRadius: theme.shape.radius.md,
+      margin: '6px',
+      padding: '5px',
+    }),
     header: css({
       label: 'SpanDetailHeader',
       display: 'flex',
@@ -122,19 +133,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: '0 1rem',
       marginBottom: '0.25rem',
       flexDirection: 'column',
-      [theme.breakpoints.up('lg')]: {
-        width: '50%',
-        padding: '10px',
-        margin: '10px',
-        border: '1px solid ' + theme.colors.border.weak,
-      },
     }),
     content: css({
       label: 'SpanDetailContent',
       fontSize: theme.typography.bodySmall.fontSize,
-      [theme.breakpoints.up('lg')]: {
-        width: '50%',
-      },
     }),
     listWrapper: css({
       label: 'SpanDetailListWrapper',
@@ -150,9 +152,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'SpanDetailComponent',
       display: 'flex',
       flexDirection: 'column', // On bigger screens display attributes below service name
-      [theme.breakpoints.up('lg')]: {
-        flexDirection: 'row', // Switch to 2-column layout on smaller screens
-      },
     }),
     serviceNameAndLinks: css({
       label: 'ServiceNameAndLinks',
@@ -180,9 +179,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'AccordianWarningsHeader',
       background: autoColor(theme, '#fff7e6'),
       padding: '0.25rem 0.5rem',
-      '&:hover': {
-        background: autoColor(theme, '#ffe7ba'),
-      },
     }),
     AccordianWarningsHeaderOpen: css({
       label: 'AccordianWarningsHeaderOpen',
@@ -208,6 +204,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       letterSpacing: '0.25px',
       margin: '0.5em 0 -0.75em',
       textAlign: 'right',
+      clear: 'both',
     }),
     debugLabel: css({
       label: 'debugLabel',
@@ -342,6 +339,8 @@ export default function SpanDetail(props: SpanDetailProps) {
       : []),
   ];
 
+  const mainContainerRef = useRef<HTMLDivElement>(null);
+
   const styles = useStyles2(getStyles);
   if (span.kind) {
     overviewItems.push({
@@ -405,8 +404,110 @@ export default function SpanDetail(props: SpanDetailProps) {
     shareButton: <ShareSpanButton focusSpanLink={focusSpanLink} />,
   });
 
+  const listOfContentCards = [];
+
+  listOfContentCards.push(
+    <AccordianKeyValues
+      data={tags}
+      label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
+      isOpen={isTagsOpen}
+      linksGetter={resourceLinksGetter}
+      onToggle={() => tagsToggle(spanID)}
+    />
+  );
+
+  if (process.tags) {
+    listOfContentCards.push(
+      <AccordianKeyValues
+        data={process.tags}
+        label={t('explore.span-detail.label-resource-attributes', 'Resource attributes')}
+        linksGetter={resourceLinksGetter}
+        isOpen={isProcessOpen}
+        onToggle={() => processToggle(spanID)}
+      />
+    );
+  }
+
+  if (logs && logs.length > 0) {
+    listOfContentCards.push(
+      <AccordianLogs
+        logs={logs}
+        isOpen={logsState.isOpen}
+        openedItems={logsState.openedItems}
+        onToggle={() => logsToggle(spanID)}
+        onItemToggle={(logItem) => logItemToggle(spanID, logItem)}
+        timestamp={traceStartTime}
+      />
+    );
+  }
+
+  if (warnings && warnings.length > 0) {
+    listOfContentCards.push(
+      <AccordianKeyValues
+        data={warnings.map((warning) => ({
+          key: '',
+          value: warning,
+          type: 'warning',
+        }))}
+        onlyValues={true}
+        showSummary={false}
+        showCountBadge={true}
+        isOpen={isWarningsOpen}
+        onToggle={() => warningsToggle(spanID)}
+        label={t('explore.span-detail.label-warnings', 'Warnings')}
+      />
+    );
+  }
+
+  if (stackTraces?.length) {
+    listOfContentCards.push(
+      <AccordianKeyValues
+        data={stackTraces.map((stackTrace) => ({
+          key: '',
+          value: stackTrace,
+          type: 'code',
+        }))}
+        onlyValues={true}
+        showSummary={false}
+        showCountBadge={true}
+        isOpen={isStackTracesOpen}
+        onToggle={() => stackTracesToggle(spanID)}
+        label={t('explore.span-detail.label-stack-trace', 'Stack trace')}
+      />
+    );
+  }
+
+  if (references && references.length > 0 && (references.length > 1 || references[0].refType !== 'CHILD_OF')) {
+    listOfContentCards.push(
+      <AccordianReferences
+        data={references}
+        isOpen={referencesState.isOpen}
+        openedItems={referencesState.openedItems}
+        onToggle={() => referencesToggle(spanID)}
+        onItemToggle={(reference) => referenceItemToggle(spanID, reference)}
+        createFocusSpanLink={createFocusSpanLink}
+      />
+    );
+  }
+
+  // make sure it's the last for nw...
+  if (span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey)) {
+    listOfContentCards.push(
+      <SpanFlameGraph
+        span={span}
+        timeZone={timeZone}
+        traceFlameGraphs={traceFlameGraphs}
+        setTraceFlameGraphs={setTraceFlameGraphs}
+        traceToProfilesOptions={traceToProfilesOptions}
+        setRedrawListView={setRedrawListView}
+        traceDuration={traceDuration}
+        traceName={traceName}
+      />
+    );
+  }
+
   return (
-    <div data-testid="span-detail-component" className={styles.spanDetailComponent}>
+    <div data-testid="span-detail-component" ref={mainContainerRef} className={styles.spanDetailComponent}>
       <div className={styles.header}>
         <div className={styles.serviceNameAndLinks}>
           <h6 className={styles.operationName} title={operationName}>
@@ -419,89 +520,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         </div>
       </div>
       <div className={styles.content}>
-        <div>
-          <AccordianKeyValues
-            data={tags}
-            label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
-            isOpen={isTagsOpen}
-            linksGetter={resourceLinksGetter}
-            onToggle={() => tagsToggle(spanID)}
-          />
-          {process.tags && (
-            <AccordianKeyValues
-              data={process.tags}
-              label={t('explore.span-detail.label-resource-attributes', 'Resource attributes')}
-              linksGetter={resourceLinksGetter}
-              isOpen={isProcessOpen}
-              onToggle={() => processToggle(spanID)}
-            />
-          )}
-        </div>
-        {logs && logs.length > 0 && (
-          <AccordianLogs
-            logs={logs}
-            isOpen={logsState.isOpen}
-            openedItems={logsState.openedItems}
-            onToggle={() => logsToggle(spanID)}
-            onItemToggle={(logItem) => logItemToggle(spanID, logItem)}
-            timestamp={traceStartTime}
-          />
-        )}
-
-        {warnings && warnings.length > 0 && (
-          <AccordianKeyValues
-            data={warnings.map((warning) => ({
-              key: '',
-              value: warning,
-              type: 'text',
-            }))}
-            showSummary={false}
-            showCountBadge={true}
-            isOpen={isWarningsOpen}
-            onlyValues={true}
-            onToggle={() => warningsToggle(spanID)}
-            label={t('explore.span-detail.warnings', 'Warnings')}
-          />
-        )}
-
-        {stackTraces?.length ? (
-          <AccordianKeyValues
-            data={stackTraces.map((stackTrace) => ({
-              key: '',
-              value: stackTrace,
-              type: 'code',
-            }))}
-            onlyValues={true}
-            showSummary={false}
-            showCountBadge={true}
-            isOpen={isStackTracesOpen}
-            onToggle={() => stackTracesToggle(spanID)}
-            label={t('explore.span-detail.label-stack-trace', 'Stack trace')}
-          />
-        ) : null}
-
-        {references && references.length > 0 && (references.length > 1 || references[0].refType !== 'CHILD_OF') && (
-          <AccordianReferences
-            data={references}
-            isOpen={referencesState.isOpen}
-            openedItems={referencesState.openedItems}
-            onToggle={() => referencesToggle(spanID)}
-            onItemToggle={(reference) => referenceItemToggle(spanID, reference)}
-            createFocusSpanLink={createFocusSpanLink}
-          />
-        )}
-        {span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey) && (
-          <SpanFlameGraph
-            span={span}
-            timeZone={timeZone}
-            traceFlameGraphs={traceFlameGraphs}
-            setTraceFlameGraphs={setTraceFlameGraphs}
-            traceToProfilesOptions={traceToProfilesOptions}
-            setRedrawListView={setRedrawListView}
-            traceDuration={traceDuration}
-            traceName={traceName}
-          />
-        )}
+        <CardsContainer listOfContentCards={listOfContentCards} mainContainerRef={mainContainerRef} />
 
         <small className={styles.debugInfo}>
           {/* TODO: fix keyboard a11y */}
@@ -536,4 +555,53 @@ export const getAbsoluteTime = (startTime: number, timeZone: TimeZone) => {
   const match = dateStr.split(' ');
   const absoluteTime = match[1] ? match[1] : dateStr;
   return ` (${absoluteTime})`;
+};
+
+const CardsContainer = ({
+  listOfContentCards,
+  mainContainerRef,
+}: {
+  listOfContentCards: React.ReactNode[];
+  mainContainerRef?: React.RefObject<HTMLDivElement>;
+}) => {
+  const styles = useStyles2(getStyles);
+
+  const useTwoColumns =
+    mainContainerRef && mainContainerRef.current && mainContainerRef.current.getBoundingClientRect().right > 1000;
+
+  if (useTwoColumns) {
+    return (
+      <>
+        <div className={css({ float: 'left', width: '50%' })}>
+          {listOfContentCards.map((card, index) =>
+            index % 2 === 0 ? (
+              <div className={styles.card} key={index}>
+                {card}
+              </div>
+            ) : null
+          )}
+        </div>
+
+        <div className={css({ float: 'right', width: '50%' })}>
+          {listOfContentCards.map((card, index) =>
+            index % 2 === 1 ? (
+              <div className={styles.card} key={index}>
+                {card}
+              </div>
+            ) : null
+          )}
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <div className={css({ clear: 'both', width: '100%' })}>
+      {listOfContentCards.map((card, index) => (
+        <div className={styles.card} key={index}>
+          {card}
+        </div>
+      ))}
+    </div>
+  );
 };
