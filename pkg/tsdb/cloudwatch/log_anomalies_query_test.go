@@ -149,7 +149,7 @@ func Test_executeLogAnomaliesQuery_returns_data_frames(t *testing.T) {
 		for _, r := range resp.Responses {
 			assert.Len(t, r.Frames, 1)
 			frame := r.Frames[0]
-			assert.Equal(t, "Logs anomalies", frame.Name)
+			assert.Equal(t, "Log anomalies", frame.Name)
 			assert.Len(t, frame.Fields, 10)
 
 			stateField := frame.Fields[0]
