@@ -15,6 +15,8 @@ import { RangeSliderProps } from './types';
  * @public
  *
  * RichHistoryQueriesTab uses this Range Component
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-rangeslider--docs
  */
 export const RangeSlider = ({
   min,

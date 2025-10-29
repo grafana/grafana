@@ -43,6 +43,11 @@ interface BasePropsWithAriaLabel extends BaseProps {
 
 export type Props = BasePropsWithTooltip | BasePropsWithAriaLabel;
 
+/**
+ * This component looks just like an icon but behaves like a button.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-iconbutton--docs
+ */
 export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref) => {
   const { size = 'md', variant = 'secondary' } = props;
   let limitedIconSize: LimitedIconSize;

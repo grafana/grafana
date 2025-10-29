@@ -20,6 +20,9 @@ export interface SegmentSyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLDi
   inputMinWidth?: number;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-segment--docs
+ */
 export function Segment<T>({
   options,
   value,

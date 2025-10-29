@@ -48,6 +48,11 @@ export interface ConfirmModalProps {
   disabled?: boolean;
 }
 
+/**
+ * Used to request user for action confirmation, e.g. deleting items. Triggers provided `onConfirm` callback.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-confirmmodal--docs
+ */
 export const ConfirmModal = ({
   isOpen,
   title,

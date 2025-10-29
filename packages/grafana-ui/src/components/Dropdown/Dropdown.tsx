@@ -31,6 +31,11 @@ export interface Props {
   onVisibleChange?: (state: boolean) => void;
 }
 
+/**
+ * Hook up a menu or other overlay to any trigger.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-dropdown--docs
+ */
 export const Dropdown = React.memo(({ children, overlay, placement, offset, root, onVisibleChange }: Props) => {
   const [show, setShow] = useState(false);
   const transitionRef = useRef(null);

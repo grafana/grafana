@@ -82,6 +82,11 @@ export interface Props extends Themeable2 {
   disableWideLayout?: boolean;
 }
 
+/**
+ * Component for showing a value based on a [DisplayValue](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/displayValue.ts#L5).
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-bigvalue--docs
+ */
 export const BigValue = memo<Props>((props) => {
   const { onClick, className, hasLinks, theme, justifyMode = BigValueJustifyMode.Auto } = props;
 

@@ -24,6 +24,8 @@ export interface Props extends InputHTMLAttributes<HTMLInputElement> {
  *
  * For inline fields, use {@link InlineField}, {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-inlinefield--basic See Storybook}.
  * @deprecated Please use the {@link Field} component, {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-field--simple See Storybook}.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-deprecated-formfield--docs
  */
 export const FormField = ({
   label,

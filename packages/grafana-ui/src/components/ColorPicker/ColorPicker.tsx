@@ -84,6 +84,9 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
   };
 };
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/pickers-colorpicker--docs
+ */
 export const ColorPicker = withTheme2(colorPickerFactory(ColorPickerPopover, 'ColorPicker'));
 export const SeriesColorPicker = withTheme2(colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker'));
 

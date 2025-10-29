@@ -116,6 +116,10 @@ interface HoverHeader {
 export type PanelPadding = 'none' | 'md';
 
 /**
+ * Component used for rendering content wrapped in the same style as grafana panels.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-panelchrome--docs
+ *
  * @internal
  */
 export function PanelChrome({

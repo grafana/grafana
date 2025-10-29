@@ -14,6 +14,11 @@ export type Props = React.ComponentProps<typeof Input> & {
 export const CONFIGURED_TEXT = 'configured';
 export const RESET_BUTTON_TEXT = 'Reset';
 
+/**
+ * Used for secret/password input.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-secretinput--docs
+ */
 export const SecretInput = ({ isConfigured, onReset, ...props }: Props) => (
   <Stack>
     {!isConfigured && <Input {...props} type="password" />}

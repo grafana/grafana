@@ -13,6 +13,8 @@ import { SliderProps } from './types';
 
 /**
  * @public
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-slider--docs
  */
 export const Slider = ({
   min,

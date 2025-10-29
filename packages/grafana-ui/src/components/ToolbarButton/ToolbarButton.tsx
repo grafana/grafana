@@ -41,6 +41,11 @@ export type ToolbarButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonEl
 
 export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active' | 'canvas';
 
+/**
+ * Multiple buttons that form a toolbar. Each button can contain an icon, image and text. There are three variants of the ToolbarButton: default, primary and destructive.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-toolbarbutton--docs
+ */
 export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
   (
     {

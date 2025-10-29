@@ -48,6 +48,11 @@ export interface ToggletipProps {
   onOpen?: () => void;
 }
 
+/**
+ * Toggletips, similar to Tooltips, provide contextual support for users when needed. They are hidden by default, a UI trigger or text link are clicked to set them to their visible state. Toggletips, unlike tooltips, are persistent until a user takes action to dismiss them by clicking on the required “X” (close) trigger. Toggletips are capable of containing varying types of complex content including interactive components, buttons, and dropdowns.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-toggletip--docs
+ */
 export const Toggletip = memo(
   ({
     children,

@@ -42,6 +42,11 @@ const getIconStyles = (theme: GrafanaTheme2) => {
   };
 };
 
+/**
+ * Grafana's icon wrapper component.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/iconography-icon--docs
+ */
 export const Icon = React.memo(
   React.forwardRef<SVGElement, IconProps>(
     ({ size = 'md', type = 'default', name, className, style, title = '', ...rest }, ref) => {

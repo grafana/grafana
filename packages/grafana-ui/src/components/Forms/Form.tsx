@@ -18,6 +18,8 @@ interface FormProps<T extends FieldValues> extends Omit<HTMLProps<HTMLFormElemen
 
 /**
  * @deprecated use the `useForm` hook from react-hook-form instead
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-form--docs
  */
 export function Form<T extends FieldValues>({
   defaultValues,

@@ -21,6 +21,11 @@ export type Props = ButtonProps & {
 
 const SHOW_SUCCESS_DURATION = 2 * 1000;
 
+/**
+ * A control for allowing the user to copy text to their clipboard. Uses native APIs on modern browsers, falling back to the old `document.execCommand('copy')` API on other browsers. The text to be copied should be provided via `getText` prop.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-clipboardbutton--docs
+ */
 export function ClipboardButton({
   onClipboardCopy,
   onClipboardError,

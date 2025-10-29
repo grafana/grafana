@@ -72,6 +72,9 @@ export type RadialGradientMode = 'none' | 'auto';
 export type RadialTextMode = 'auto' | 'value_and_name' | 'value' | 'name' | 'none';
 export type RadialShape = 'circle' | 'gauge';
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-radialgauge--docs
+ */
 export function RadialGauge(props: RadialGaugeProps) {
   const {
     width = 256,

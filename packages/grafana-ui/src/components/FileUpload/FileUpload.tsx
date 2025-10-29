@@ -27,6 +27,11 @@ export interface Props {
   showFileName?: boolean;
 }
 
+/**
+ * A button-styled input that triggers file upload popup. Button text and accepted file extensions can be customized via `label` and `accepted` props respectively.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-fileupload--docs
+ */
 export const FileUpload = ({
   onFileUpload,
   className,

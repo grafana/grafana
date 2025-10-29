@@ -62,6 +62,11 @@ const drawerSizes = {
   lg: { width: '75vw', minWidth: 744 },
 };
 
+/**
+ * Drawer is a slide in overlay that can be used to display additional information without hiding the main page content. It can be anchored to the left or right edge of the screen.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-drawer--docs
+ */
 export function Drawer({
   children,
   onClose,

@@ -119,8 +119,10 @@ const noop = () => {};
 export const VIRTUAL_OVERSCAN_ITEMS = 4;
 
 /**
- * A performant Select replacement.
+ * A performant and accessible combobox component that supports both synchronous and asynchronous options loading. It provides type-ahead filtering, keyboard navigation, and virtual scrolling for handling large datasets efficiently.
+ * Replaces the Select component, and has better performance.
  *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-combobox--docs
  * @alpha
  */
 export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => {

@@ -36,6 +36,11 @@ export interface TimeRangeInputProps {
 
 const noop = () => {};
 
+/**
+ * A variant of TimeRangePicker for use in forms.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-timerangeinput--docs
+ */
 export const TimeRangeInput = ({
   value,
   onChange,

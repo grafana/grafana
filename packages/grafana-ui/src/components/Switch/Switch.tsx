@@ -14,6 +14,11 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   invalid?: boolean;
 }
 
+/**
+ * Switch is a representation of an on-off state – like a light switch. So you can use Switch to toggle binary states.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-switch--docs
+ */
 export const Switch = forwardRef<HTMLInputElement, Props>(
   ({ value, checked, onChange, id, label, disabled, invalid = false, ...inputProps }, ref) => {
     if (checked) {

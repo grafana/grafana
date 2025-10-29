@@ -29,6 +29,11 @@ export interface TextProps extends Omit<React.HTMLAttributes<HTMLElement>, 'clas
   children: NonNullable<React.ReactNode>;
 }
 
+/**
+ * The Text component can be used to apply typography styles in a simple way, without the need of extra css.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/foundations-text--docs
+ */
 export const Text = React.forwardRef<HTMLElement, TextProps>(
   (
     { element = 'span', variant, weight, color, truncate, italic, textAlignment, children, tabular, ...restProps },

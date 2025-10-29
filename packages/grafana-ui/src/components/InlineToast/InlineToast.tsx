@@ -24,6 +24,11 @@ export interface InlineToastProps {
   alternativePlacement?: Side;
 }
 
+/**
+ * Used to indicate temporal status near fields/components, such as a *Saved* indicator next to a field, or a little *Copied!* indicator above a button.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-inlinetoast--docs
+ */
 export function InlineToast({ referenceElement, children, suffixIcon, placement }: InlineToastProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();

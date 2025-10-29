@@ -26,6 +26,11 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   topSpacing?: number;
 }
 
+/**
+ * An alert displays an important message in a way that attracts the user's attention without interrupting the user's task.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-alert--docs
+ */
 export const Alert = React.forwardRef<HTMLDivElement, Props>(
   (
     {
