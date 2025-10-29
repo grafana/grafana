@@ -100,17 +100,17 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
 
     return (
       <Drawer
-        title={t('dashboard.panel.time-range-settings.title', 'Panel time range settings')}
+        title={t('dashboard.panel.time-range-settings.title', 'Panel time settings')}
         onClose={model.onClose}
         size="sm"
       >
         <Stack direction="column" gap={2}>
           <Field
-            label={t('dashboard.panel.time-range-settings.time-from', 'Custom panel time range')}
+            label={t('dashboard.panel.time-range-settings.time-from', 'Panel time range')}
             noMargin
             description={t(
               'dashboard.panel.time-range-settings.time-from-description',
-              'Overrides the dashboard time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h'
+              'Overrides the dashboard time range. To enter a value not in the list, type a custom time, for example 5m or 2h'
             )}
           >
             <Stack>
@@ -129,7 +129,7 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
             noMargin
             description={t(
               'dashboard.panel.time-range-settings.time-shift-description',
-              'Adds a time shift relative to the dashboard or panel time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h'
+              'Adds a time shift relative to the dashboard or panel time range. To enter a value not in the list, type a custom time, for example 5m or 2h'
             )}
           >
             <Combobox
@@ -175,7 +175,7 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
             label={t('dashboard.panel.time-range-settings.hide-time-info', 'Hidden time info')}
             description={t(
               'dashboard.panel.time-range-settings.hide-time-info-description',
-              'Do not show the custom time range in the panel header'
+              'Do not show the panel time range in the panel header'
             )}
           >
             <Switch

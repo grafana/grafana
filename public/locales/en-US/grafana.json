@@ -5137,14 +5137,14 @@
     "panel": {
       "time-range-settings": {
         "hide-time-info": "Hidden time info",
-        "hide-time-info-description": "Do not show the custom time range in the panel header",
-        "time-from": "Custom panel time range",
-        "time-from-description": "Overrides the dashboard time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
+        "hide-time-info-description": "Do not show the panel time range in the panel header",
+        "time-from": "Panel time range",
+        "time-from-description": "Overrides the dashboard time range. To enter a value not in the list, type a custom time, for example 5m or 2h",
         "time-shift": "Time shift",
-        "time-shift-description": "Adds a time shift relative to the dashboard or panel time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
+        "time-shift-description": "Adds a time shift relative to the dashboard or panel time range. To enter a value not in the list, type a custom time, for example 5m or 2h",
         "time-window-compare": "Time window comparison",
         "time-window-compare-description": "Query and overlay data from a different time period",
-        "title": "Panel time range settings"
+        "title": "Panel time settings"
       }
     },
     "panel-edit": {
