@@ -678,7 +678,7 @@ replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
 
 // Use our fork of dolthub/go-mysql-server which makes non-cgo the default
 // since using a build tag is not sufficient for some use cases (e.g. developers tests in IDE).
-replace github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.1-0.20251027172658-317a8d46ffa4
+replace github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.1-grafana1
 
 // v1.* versions were retracted, we need to stick with v0.*. This should work
 // without the exclude, but this otherwise gets pulled in as a transitive
