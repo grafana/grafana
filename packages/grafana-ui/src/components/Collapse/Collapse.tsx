@@ -3,7 +3,6 @@ import { useId, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconButton } from '../IconButton/IconButton';
@@ -126,6 +125,7 @@ export const ControlledCollapse = ({ isOpen, onToggle, ...otherProps }: React.Pr
 export const Collapse = ({ isOpen, label, loading, onToggle, className, children }: React.PropsWithChildren<Props>) => {
   const style = useStyles2(getStyles);
   const labelId = useId();
+  const contentId = useId();
 
   const onClickToggle = () => {
     if (onToggle) {
@@ -142,12 +142,10 @@ export const Collapse = ({ isOpen, label, loading, onToggle, className, children
       <div className={style.header} onClick={onClickToggle}>
         <IconButton
           aria-describedby={labelId}
+          aria-expanded={isOpen}
+          aria-controls={contentId}
           className={style.button}
-          aria-label={
-            isOpen
-              ? t('grafana-ui.collapse.aria-label-collapse', 'Collapse panel')
-              : t('grafana-ui.collapse.aria-label-expand', 'Expand panel')
-          }
+          aria-labelledby={labelId}
           name={isOpen ? 'angle-down' : 'angle-right'}
         />
         <div id={labelId} className={style.headerLabel}>
@@ -155,7 +153,7 @@ export const Collapse = ({ isOpen, label, loading, onToggle, className, children
         </div>
       </div>
       {isOpen && (
-        <div className={style.collapseBody}>
+        <div className={style.collapseBody} id={contentId}>
           <div className={loaderClass} />
           <div className={style.bodyContentWrapper}>{children}</div>
         </div>
