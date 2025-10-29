@@ -29,7 +29,7 @@ interface RequestHandlers<T> {
     info: ProvisionedOperationInfo,
     resource: Resource<T>
   ) => void;
-  onWriteSuccess?: (info: ProvisionedOperationInfo, resource: Resource<T>) => void;
+  onWriteSuccess?: (resource: Resource<T>) => void;
   onError?: (error: unknown, info: ProvisionedOperationInfo) => void;
   onDismiss?: () => void;
 }
@@ -116,7 +116,7 @@ export function useProvisionedRequestHandler<T>({
           // refetch folder items after success if folderUID is passed in
           dispatch(refetchChildren({ parentUID: folderUID || repository?.name, pageSize: PAGE_SIZE }));
         }
-        handlers.onWriteSuccess(info, resourceData);
+        handlers.onWriteSuccess(resourceData);
       }
 
       handlers.onDismiss?.();
