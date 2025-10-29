@@ -48,7 +48,7 @@ export const TemplateDashboardModal = () => {
     });
 
     const params = new URLSearchParams({
-      datasource: testDataSource?.type || '',
+      datasource: testDataSource?.uid || '',
       title: dashboard.name,
       pluginId: String(testDataSource?.uid) || '',
       gnetId: String(dashboard.id),
