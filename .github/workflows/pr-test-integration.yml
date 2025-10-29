@@ -111,7 +111,7 @@ jobs:
             ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | \
             ./scripts/ci/backend-tests/run-go-tests-with-profiling.sh -t sqlite -r '^TestIntegration' -P -
       - name: Check if profiles exist
-        if: always()
+        if: failure()
         id: check-profiles
         run: |
           if [ -d "profiles" ] && [ "$(ls -A profiles 2>/dev/null)" ]; then
