@@ -1,10 +1,11 @@
-import { FieldColorModeId, VisualizationSuggestionsBuilder } from '@grafana/data';
+import { VisualizationSuggestionsBuilder, VisualizationSuggestionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { FieldColorModeId } from '@grafana/schema';
 
 import { Options, FieldConfig } from './panelcfg.gen';
 
-export class StatusHistorySuggestionsSupplier {
-  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
+export class StatusHistorySuggestionsSupplier implements VisualizationSuggestionsSupplier<Options, FieldConfig> {
+  getListAppender(builder: VisualizationSuggestionsBuilder) {
     return builder.getListAppender<Options, FieldConfig>({
       name: t('status-history.suggestions.name', 'Status history'),
       pluginId: 'status-history',
@@ -53,6 +54,6 @@ export class StatusHistorySuggestionsSupplier {
       return;
     }
 
-    this.getListWithDefaults(builder).append({});
+    this.getListAppender(builder).append({});
   }
 }

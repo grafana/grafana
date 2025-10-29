@@ -1,13 +1,17 @@
-import { VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '@grafana/data';
+import {
+  VisualizationSuggestionsBuilder,
+  VisualizationSuggestionScore,
+  VisualizationSuggestionsSupplier,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 
 import { prepareCandlestickFields } from './fields';
-import { defaultOptions, Options } from './types';
+import { defaultOptions, Options, FieldConfig } from './types';
 
-export class CandlestickSuggestionsSupplier {
-  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
-    return builder.getListAppender<Options, {}>({
+export class CandlestickSuggestionsSupplier implements VisualizationSuggestionsSupplier<Options, FieldConfig> {
+  getListAppender(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options, FieldConfig>({
       name: t('candlestick.suggestions.name', 'Candlestick chart'),
       pluginId: 'candlestick',
     });
@@ -36,7 +40,7 @@ export class CandlestickSuggestionsSupplier {
       return;
     }
 
-    this.getListWithDefaults(builder).append({
+    this.getListAppender(builder).append({
       options: defaultOptions,
       score: info.autoOpenClose ? VisualizationSuggestionScore.Good : VisualizationSuggestionScore.Best,
     });

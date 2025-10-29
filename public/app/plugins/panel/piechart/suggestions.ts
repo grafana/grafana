@@ -1,12 +1,12 @@
-import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { VisualizationSuggestionsBuilder, VisualizationSuggestionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { LegendDisplayMode } from '@grafana/schema';
 
-import { PieChartLabels, Options, PieChartType } from './panelcfg.gen';
+import { PieChartLabels, Options, PieChartType, FieldConfig } from './panelcfg.gen';
 
-export class PieChartSuggestionsSupplier {
-  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
-    return builder.getListAppender<Options, {}>({
+export class PieChartSuggestionsSupplier implements VisualizationSuggestionsSupplier<Options, FieldConfig> {
+  getListAppender(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options, FieldConfig>({
       name: t('piechart.suggestions.name', 'Pie chart'),
       pluginId: 'piechart',
       options: {
@@ -27,7 +27,7 @@ export class PieChartSuggestionsSupplier {
   }
 
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const list = this.getListWithDefaults(builder);
+    const list = this.getListAppender(builder);
 
     const { dataSummary } = builder;
 

@@ -1,9 +1,17 @@
-import { DataFrame, FieldType, VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '@grafana/data';
+import {
+  DataFrame,
+  FieldType,
+  VisualizationSuggestionsBuilder,
+  VisualizationSuggestionScore,
+  VisualizationSuggestionsSupplier,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-export class NodeGraphSuggestionsSupplier {
-  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
-    return builder.getListAppender<{}, {}>({
+import { Options } from './panelcfg.gen';
+
+export class NodeGraphSuggestionsSupplier implements VisualizationSuggestionsSupplier<Options> {
+  getListAppender(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options>({
       name: t('nodeGraph.suggestions.name', 'Node graph'),
       pluginId: 'nodeGraph',
     });
@@ -62,7 +70,7 @@ export class NodeGraphSuggestionsSupplier {
     );
 
     if (hasCorrectFields || nodeGraphFrames.length === 2) {
-      this.getListWithDefaults(builder).append({
+      this.getListAppender(builder).append({
         score: VisualizationSuggestionScore.Best,
       });
     }

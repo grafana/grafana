@@ -1,11 +1,15 @@
-import { VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '@grafana/data';
+import {
+  VisualizationSuggestionsBuilder,
+  VisualizationSuggestionScore,
+  VisualizationSuggestionsSupplier,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { Options } from './panelcfg.gen';
 
-export class LogsPanelSuggestionsSupplier {
-  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
-    return builder.getListAppender<Options, {}>({
+export class LogsPanelSuggestionsSupplier implements VisualizationSuggestionsSupplier<Options> {
+  getListAppender(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options>({
       name: t('logs.suggestions.name', 'Logs'),
       pluginId: 'logs',
     });
@@ -19,7 +23,7 @@ export class LogsPanelSuggestionsSupplier {
       return;
     }
 
-    this.getListWithDefaults(builder).append({
+    this.getListAppender(builder).append({
       name: t('logs.suggestions.logs', 'Logs'),
       score:
         ds.preferredVisualisationType === 'logs' ? VisualizationSuggestionScore.Best : VisualizationSuggestionScore.OK,

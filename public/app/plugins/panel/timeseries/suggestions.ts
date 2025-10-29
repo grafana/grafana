@@ -1,13 +1,13 @@
 import {
-  FieldColorModeId,
   VisualizationSuggestionsBuilder,
   VisualizationSuggestion,
   DataTransformerID,
+  VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
+  FieldColorModeId,
   GraphDrawStyle,
-  GraphFieldConfig,
   GraphGradientMode,
   LegendDisplayMode,
   LineInterpolation,
@@ -15,11 +15,11 @@ import {
 } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
-import { Options } from './panelcfg.gen';
+import { Options, FieldConfig } from './panelcfg.gen';
 
-export class TimeSeriesSuggestionsSupplier {
-  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
-    return builder.getListAppender<Options, GraphFieldConfig>({
+export class TimeSeriesSuggestionsSupplier implements VisualizationSuggestionsSupplier<Options, FieldConfig> {
+  getListAppender(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options, FieldConfig>({
       name: t('timeseries.suggestions.name', 'Line chart'),
       pluginId: 'timeseries',
       options: {
@@ -53,7 +53,7 @@ export class TimeSeriesSuggestionsSupplier {
       return;
     }
 
-    const list = this.getListWithDefaults(builder);
+    const list = this.getListAppender(builder);
 
     const maxBarsCount = 100;
 

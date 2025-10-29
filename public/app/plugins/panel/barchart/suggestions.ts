@@ -1,11 +1,11 @@
-import { VisualizationSuggestionsBuilder, VizOrientation } from '@grafana/data';
+import { VisualizationSuggestionsBuilder, VisualizationSuggestionsSupplier, VizOrientation } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { LegendDisplayMode, StackingMode, VisibilityMode } from '@grafana/schema';
 
 import { FieldConfig, Options } from './panelcfg.gen';
 
-export class BarChartSuggestionsSupplier {
-  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
+export class BarChartSuggestionsSupplier implements VisualizationSuggestionsSupplier<Options, FieldConfig> {
+  getListAppender(builder: VisualizationSuggestionsBuilder) {
     return builder.getListAppender<Options, FieldConfig>({
       name: t('barchart.suggestions.name', 'Bar chart'),
       pluginId: 'barchart',
@@ -34,7 +34,7 @@ export class BarChartSuggestionsSupplier {
   }
 
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const list = this.getListWithDefaults(builder);
+    const list = this.getListAppender(builder);
     const { dataSummary } = builder;
 
     if (dataSummary.frameCount !== 1) {

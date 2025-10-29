@@ -459,6 +459,17 @@ export { usePluginContext } from './context/plugins/usePluginContext';
 export { isDataSourcePluginContext } from './context/plugins/guards';
 export { getLinksSupplier } from './field/fieldOverrides';
 
+// suggestions
+export {
+  getPanelDataSummary,
+  type PanelDataSummary,
+  type VisualizationSuggestion,
+  type VisualizationSuggestionsSupplier,
+  VisualizationSuggestionScore,
+  VisualizationSuggestionsBuilder,
+  VisualizationSuggestionsListAppender,
+} from './suggestions';
+
 // Types
 export { isUnsignedPluginSignature } from './types/pluginSignature';
 export type {
@@ -650,13 +661,7 @@ export {
   type PanelMenuItem,
   type AngularPanelMenuItem,
   type PanelPluginDataSupport,
-  type VisualizationSuggestion,
-  type PanelDataSummary,
-  type VisualizationSuggestionsSupplier,
   VizOrientation,
-  VisualizationSuggestionScore,
-  VisualizationSuggestionsBuilder,
-  VisualizationSuggestionsListAppender,
 } from './types/panel';
 export {
   type DataSourcePluginOptionsEditorProps,

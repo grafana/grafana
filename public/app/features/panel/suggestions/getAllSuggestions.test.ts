@@ -55,7 +55,8 @@ async function setupConfig() {
 
 class ScenarioContext {
   data: DataFrame[] = [];
-  suggestions: VisualizationSuggestion[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  suggestions: Array<VisualizationSuggestion<any>> = [];
 
   setData(scenarioData: DataFrame[]) {
     this.data = scenarioData;

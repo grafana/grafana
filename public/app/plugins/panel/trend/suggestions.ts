@@ -1,11 +1,12 @@
-import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { VisualizationSuggestionsBuilder, VisualizationSuggestionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { GraphDrawStyle, GraphFieldConfig, LegendDisplayMode } from '@grafana/schema';
 
 import { Options } from './panelcfg.gen';
+import { validateSeries } from './utils';
 
-export class TrendSuggestionsSupplier {
-  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
+export class TrendSuggestionsSupplier implements VisualizationSuggestionsSupplier<Options, GraphFieldConfig> {
+  getListAppender(builder: VisualizationSuggestionsBuilder) {
     return builder.getListAppender<Options, GraphFieldConfig>({
       name: t('trend.suggestions.name', 'Trend chart'),
       pluginId: 'trend',
@@ -39,6 +40,10 @@ export class TrendSuggestionsSupplier {
       return;
     }
 
-    this.getListWithDefaults(builder).append({});
+    if (validateSeries(builder.data?.series ?? []).warning) {
+      return;
+    }
+
+    this.getListAppender(builder).append({});
   }
 }

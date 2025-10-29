@@ -1,12 +1,12 @@
-import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { VisualizationSuggestionsBuilder, VisualizationSuggestionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TableFieldOptions } from '@grafana/schema';
 import icnTextPanelSvg from 'app/plugins/panel/text/img/icn-text-panel.svg';
 
 import { Options } from './panelcfg.gen';
 
-export class TextSuggestionsSupplier {
-  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
+export class TextSuggestionsSupplier implements VisualizationSuggestionsSupplier<Options, TableFieldOptions> {
+  getListAppender(builder: VisualizationSuggestionsBuilder) {
     return builder.getListAppender<Options, TableFieldOptions>({
       name: t('text.suggestions.name', 'Text'),
       pluginId: 'text',
@@ -22,6 +22,6 @@ export class TextSuggestionsSupplier {
       return;
     }
 
-    this.getListWithDefaults(builder).append({});
+    this.getListAppender(builder).append({});
   }
 }

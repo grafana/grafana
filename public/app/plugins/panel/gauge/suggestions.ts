@@ -1,11 +1,11 @@
-import { ThresholdsMode, VisualizationSuggestionsBuilder } from '@grafana/data';
+import { ThresholdsMode, VisualizationSuggestionsBuilder, VisualizationSuggestionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { Options } from './panelcfg.gen';
 
-export class GaugeSuggestionsSupplier {
-  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
-    return builder.getListAppender<Options, {}>({
+export class GaugeSuggestionsSupplier implements VisualizationSuggestionsSupplier<Options> {
+  getListAppender(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options>({
       name: t('gauge.suggestions.name', 'Gauge'),
       pluginId: 'gauge',
       options: {
@@ -30,8 +30,8 @@ export class GaugeSuggestionsSupplier {
       },
       cardOptions: {
         previewModifier: (s) => {
-          if (s.options!.reduceOptions.values) {
-            s.options!.reduceOptions.limit = 2;
+          if (s.options?.reduceOptions?.values) {
+            s.options.reduceOptions.limit = 2;
           }
         },
       },
@@ -50,7 +50,7 @@ export class GaugeSuggestionsSupplier {
       return;
     }
 
-    const list = this.getListWithDefaults(builder);
+    const list = this.getListAppender(builder);
 
     // To use show individual row values we also need a string field to give each value a name
     let optionsOverride: Partial<Options> = {};

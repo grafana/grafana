@@ -1,12 +1,13 @@
-import { VisualizationSuggestionsBuilder, VizOrientation } from '@grafana/data';
+import { VisualizationSuggestionsBuilder, VisualizationSuggestionsSupplier, VizOrientation } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { FieldColorModeId } from '@grafana/schema';
 import { BarGaugeDisplayMode } from '@grafana/ui';
 
 import { Options } from './panelcfg.gen';
 
-export class BarGaugeSuggestionsSupplier {
-  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
-    return builder.getListAppender<Options, {}>({
+export class BarGaugeSuggestionsSupplier implements VisualizationSuggestionsSupplier<Options> {
+  getListAppender(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options>({
       name: t('bargauge.suggestions.name', 'Bar gauge'),
       pluginId: 'bargauge',
       options: {
@@ -20,7 +21,7 @@ export class BarGaugeSuggestionsSupplier {
       fieldConfig: {
         defaults: {
           color: {
-            mode: 'continuous-GrYlRd',
+            mode: FieldColorModeId.ContinuousGrYlRd,
           },
         },
         overrides: [],
@@ -35,7 +36,7 @@ export class BarGaugeSuggestionsSupplier {
       return;
     }
 
-    const list = this.getListWithDefaults(builder);
+    const list = this.getListAppender(builder);
 
     // This is probably not a good option for many numeric fields
     if (dataSummary.numberFieldCount > 50) {
@@ -56,7 +57,7 @@ export class BarGaugeSuggestionsSupplier {
         fieldConfig: {
           defaults: {
             color: {
-              mode: 'continuous-GrYlRd',
+              mode: FieldColorModeId.ContinuousGrYlRd,
             },
           },
           overrides: [],
@@ -76,7 +77,7 @@ export class BarGaugeSuggestionsSupplier {
         fieldConfig: {
           defaults: {
             color: {
-              mode: 'continuous-GrYlRd',
+              mode: FieldColorModeId.ContinuousGrYlRd,
             },
           },
           overrides: [],
@@ -95,7 +96,7 @@ export class BarGaugeSuggestionsSupplier {
         fieldConfig: {
           defaults: {
             color: {
-              mode: 'continuous-GrYlRd',
+              mode: FieldColorModeId.ContinuousGrYlRd,
             },
           },
           overrides: [],
@@ -115,7 +116,7 @@ export class BarGaugeSuggestionsSupplier {
         fieldConfig: {
           defaults: {
             color: {
-              mode: 'continuous-GrYlRd',
+              mode: FieldColorModeId.ContinuousGrYlRd,
             },
           },
           overrides: [],

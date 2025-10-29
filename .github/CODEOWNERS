@@ -558,6 +558,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/panel/ @grafana/dashboards-squad
 /packages/grafana-data/src/query/ @grafana/grafana-datasources-core-services
 /packages/grafana-data/src/rbac/ @grafana/access-squad
+/packages/grafana-data/src/suggestions/ @grafana/dataviz-squad
 /packages/grafana-data/src/table/ @grafana/dataviz-squad
 /packages/grafana-data/src/text/ @grafana/dataviz-squad
 /packages/grafana-data/src/themes/ @grafana/grafana-frontend-platform

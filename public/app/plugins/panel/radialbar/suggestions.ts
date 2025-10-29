@@ -1,12 +1,12 @@
-import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { VisualizationSuggestionsBuilder, VisualizationSuggestionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { FieldColorModeId } from '@grafana/schema';
+import { FieldColorModeId, GraphFieldConfig } from '@grafana/schema';
 
 import { Options } from './panelcfg.gen';
 
-export class GaugeSuggestionsSupplier {
-  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
-    return builder.getListAppender<Options, {}>({
+export class GaugeSuggestionsSupplier implements VisualizationSuggestionsSupplier<Options, GraphFieldConfig> {
+  getListAppender(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options, GraphFieldConfig>({
       name: t('gauge.suggestions.name', 'Gauge'),
       pluginId: 'radialbar', // TODO: change this to gauge when we consolidate
       options: {
@@ -17,8 +17,8 @@ export class GaugeSuggestionsSupplier {
       },
       cardOptions: {
         previewModifier: (s) => {
-          if (s.options!.reduceOptions.values) {
-            s.options!.reduceOptions.limit = 2;
+          if (s.options?.reduceOptions?.values) {
+            s.options.reduceOptions.limit = 2;
           }
         },
       },
@@ -37,7 +37,7 @@ export class GaugeSuggestionsSupplier {
       return;
     }
 
-    const list = this.getListWithDefaults(builder);
+    const list = this.getListAppender(builder);
 
     let optionsOverride: Partial<Options> = {};
     if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {

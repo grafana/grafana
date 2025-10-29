@@ -1,26 +1,27 @@
-import { VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '@grafana/data';
+import {
+  VisualizationSuggestionsBuilder,
+  VisualizationSuggestionScore,
+  VisualizationSuggestionsSupplier,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-export class TracesSuggestionsSupplier {
-  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
-    return builder.getListAppender<{}, {}>({
+import { Options } from './types';
+
+export class TracesSuggestionsSupplier implements VisualizationSuggestionsSupplier<Options> {
+  getListAppender(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options>({
       name: t('traces.suggestions.name', 'Trace'),
       pluginId: 'traces',
     });
   }
 
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    if (!builder.data) {
-      return;
-    }
-
-    const dataFrame = builder.data.series[0];
-    if (!dataFrame) {
+    if (!builder.data || builder.dataSummary.frameCount === 0) {
       return;
     }
 
     if (builder.data.series[0].meta?.preferredVisualisationType === 'trace') {
-      this.getListWithDefaults(builder).append({
+      this.getListAppender(builder).append({
         score: VisualizationSuggestionScore.Best,
       });
     }

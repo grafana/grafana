@@ -7912,6 +7912,9 @@
       "placeholder-numeric-value": "Numeric value",
       "placeholder-value": "value"
     },
+    "suggestions": {
+      "name": "Geomap"
+    },
     "tooltip-options": {
       "description-details": "Show popup on hover",
       "description-none": "Show contents on click, not hover",
@@ -14190,6 +14193,12 @@
     "placeholder-x-field": "First numeric value",
     "suggestions": {
       "name": "Trend chart"
+    },
+    "warning": {
+      "multiple-frames": "Only one frame is supported, consider adding a join transformation",
+      "no-numeric-fields": "No numeric fields found for X axis",
+      "xField-not-found": "Unable to find field: {{ xField }}",
+      "xField-values-ascending-order": ""
     }
   },
   "upgrade-box": {
