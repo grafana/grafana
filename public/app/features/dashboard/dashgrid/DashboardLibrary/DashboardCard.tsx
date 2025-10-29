@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Box, Button, Card, Text, TextLink, Toggletip, useStyles2 } from '@grafana/ui';
+import { Badge, Box, Button, Card, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { GnetDashboard } from './types';
@@ -22,7 +22,6 @@ interface Props {
   dashboard: PluginDashboard | GnetDashboard;
   details?: Details;
   onClick: () => void;
-  onDetailsClick?: () => void;
   isLogo?: boolean; // Indicates if imageUrl is a small logo vs full screenshot
   showDatasourceProvidedBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
@@ -32,7 +31,6 @@ export function DashboardCard({
   title,
   imageUrl,
   onClick,
-  onDetailsClick,
   dashboard,
   details,
   isLogo,
@@ -81,24 +79,23 @@ export function DashboardCard({
         <Button variant="secondary" onClick={onClick}>
           <Trans i18nKey="dashboard-template.card.use-template-button">Use template</Trans>
         </Button>
-        {details && (
-          <Toggletip
-            title={t('dashboard-template.card.details-title', 'Details')}
-            content={<DetailsToggletipContent details={details} />}
-            closeButton={true}
-            placement="right"
-          >
-            <Button variant="secondary" fill="outline" onClick={onDetailsClick}>
-              <Trans i18nKey="dashboard-template.card.details-button">Details</Trans>
-            </Button>
-          </Toggletip>
-        )}
       </Card.Actions>
+      {details && (
+        <Card.SecondaryActions>
+          <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
+            <IconButton
+              name="info-circle"
+              size="md"
+              aria-label={t('dashboard-template.card.details-tooltip', 'Details')}
+            />
+          </Tooltip>
+        </Card.SecondaryActions>
+      )}
     </Card>
   );
 }
 
-function DetailsToggletipContent({ details }: { details: Details }) {
+function DetailsTooltipContent({ details }: { details: Details }) {
   const Section = ({ label, value }: { label: string; value: string }) => {
     return (
       <Box display="flex" direction="column" gap={1}>
@@ -149,11 +146,12 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     card: css({
       gridTemplateAreas: `
-          "Heading"
-          "Thumbnail"
-          "Description"
-          "Actions"`,
+          "Heading Heading"
+          "Thumbnail Thumbnail"
+          "Description Description"
+          "Actions Secondary"`,
       gridTemplateRows: 'auto auto auto auto',
+      gridTemplateColumns: '1fr auto',
       height: 'auto',
       width: '350px',
       background: 'transparent',
