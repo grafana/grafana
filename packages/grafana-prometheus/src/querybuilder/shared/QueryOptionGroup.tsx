@@ -19,7 +19,6 @@ export function QueryOptionGroup({ title, children, collapsedInfo }: Props) {
   return (
     <div className={styles.wrapper}>
       <Collapse
-        ariaLabel={title}
         className={styles.collapse}
         isOpen={isOpen}
         onToggle={toggleOpen}

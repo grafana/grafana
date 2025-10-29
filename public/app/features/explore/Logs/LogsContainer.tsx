@@ -308,7 +308,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
 
     return (
       <>
-        <LogsCrossFadeTransition visible={isLive}>
+        <LogsCrossFadeTransition visible={!isLive}>
           <PanelChrome title={t('explore.logs-container.label-logs', 'Logs')}>
             <LiveTailControls exploreId={exploreId}>
               {(controls) => (
@@ -326,7 +326,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             </LiveTailControls>
           </PanelChrome>
         </LogsCrossFadeTransition>
-        <LogsCrossFadeTransition visible={!isLive}>
+        <LogsCrossFadeTransition visible={isLive}>
           <Logs
             exploreId={exploreId}
             datasourceType={this.props.datasourceInstance?.type}

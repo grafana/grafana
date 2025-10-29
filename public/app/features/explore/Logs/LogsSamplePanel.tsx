@@ -145,7 +145,6 @@ export function LogsSamplePanel(props: Props) {
 
   return queryResponse?.state !== LoadingState.NotStarted ? (
     <Collapse
-      ariaLabel={t('explore.logs-sample-panel.label', 'Logs sample')}
       label={
         <div>
           <Trans i18nKey="explore.logs-sample-panel.label">Logs sample</Trans>

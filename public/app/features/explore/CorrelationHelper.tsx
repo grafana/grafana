@@ -171,7 +171,6 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
           })}
         </pre>
         <Collapse
-          ariaLabel={t('explore.correlation-helper.label-description-header', 'Label / Description')}
           isOpen={isLabelDescOpen}
           onToggle={() => {
             setIsLabelDescOpen(!isLabelDescOpen);
@@ -201,7 +200,6 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
           </Field>
         </Collapse>
         <Collapse
-          ariaLabel={t('explore.correlation-helper.transformations', 'Transformations')}
           isOpen={isTransformOpen}
           onToggle={() => {
             setIsTransformOpen(!isTransformOpen);
