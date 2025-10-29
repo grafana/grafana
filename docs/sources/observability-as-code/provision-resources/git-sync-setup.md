@@ -128,13 +128,23 @@ To connect your GitHub repository, follow these steps:
 
 ### Choose what to synchronize
 
-{{< admonition type="caution" >}}
-
-Git Sync only works with specific folders for the moment. Full-instance sync is not currently supported. Refer to [Supported resources](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#supported-resources) for more details about which resources you can sync.
-
-{{< /admonition >}}
-
 In this step you can decide which elements to synchronize. Keep in mind the available options depend on the status of your GitHub repository. The first time you connect Grafana with a GitHub repository, you need to synchronize with external storage. If you are syncing with a new or empty repository, you won't have an option to migrate dashboards.
+
+#### Synchronization limitations
+
+Git Sync only supports dashboards and folders. Alerts, panels, and other resources are not supported yet. Refer to [Supported resources](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#supported-resources) for details about which resources you can sync.
+
+Full instance sync is not available in Grafana Cloud.
+
+In Grafana OSS/Enterprise: 
+
+- If you try to perform a full instance sync with resources that contain alerts or panels, Git Sync will block the connection. 
+- You won't be able to create new alerts or library panels after the setup is completed.
+- If you opted for full instance sync and want to use alerts and library panels, you'll have to delete the synced repository and connect again with folder sync.
+
+#### Set up synchronization
+
+To set up synchronization:
 
 1. Choose to either sync your entire organization resources with external storage, or to sync certain resources to a new Grafana folder (with up to 10 connections).
 
@@ -143,19 +153,8 @@ In this step you can decide which elements to synchronize. Keep in mind the avai
 - Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
 
 1. Enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
+
 1. Click **Synchronize** to continue.
-
-<!-- ### Synchronize with external storage
-
-{{< admonition type="note">}}
-During the synchronization process, your dashboards will be temporarily unavailable.
-No data or configuration will be lost.
-However, no one will be able to create, edit, or delete resources during this process.
-In the last step, the resources will disappear and will reappear and be managed through external storage.
-{{< /admonition >}}
-
-1. Select **History** to include commits for each historical value in the synchronized data.
-1. Select **Begin synchronization** to continue. -->
 
 ### Choose additional settings
 
@@ -179,48 +178,38 @@ You can extend Git Sync by getting instant updates and pull requests using webho
 
 ### Set up webhooks for realtime notification and pull request integration
 
-When connecting to a GitHub repository, Git Sync use webhooks to enable real-time updates from GitHub public repositories or enable the pull request integration.
-Without webhooks, the polling interval is set in the final configuration screen (default is 60 seconds).
-Your Grafana instance must be exposed to the public internet.
-You can do this via port forwarding and DNS, a tool such as `ngrok`, or any other method you prefer.
+When connecting to a GitHub repository, Git Sync uses webhooks to enable real-time updates from GitHub public repositories or enable pull request integrations. Without webhooks, the polling interval is set in the final configuration screen, and the default is 60 seconds. If you use local storage, then Git Sync only provides periodic pulling.
 
-The permissions set in your GitHub access token provide the authorization for this communication.
+Follow these steps to set up webhooks:
 
-If you use local storage, then Git Sync only provides periodic pulling.
+1. Expose your Grafana instance to the public Internet. 
+  - You can do this via port forwarding and DNS, a tool such as `ngrok`, or any other method you prefer.
+  - The permissions set in your GitHub access token provide the authorization for this communication.
 
-<!-- Grafana Cloud support not available yet
-{{< admonition type="note" >}}
-Webhooks are automatically available for Grafana Cloud users.
-{{< /admonition >}}
--->
+1. Set up webhooks with whichever service or tooling you prefer. You can use Cloudflare Tunnels with a Cloudflare-managed domain, port-forwarding and DNS options, or a tool such as `ngrok`.
 
-Set up webhooks with whichever service or tooling you prefer.
-For example, you can use Cloudflare Tunnels with a Cloudflare-managed domain, port-forwarding and DNS options, or a tool such as `ngrok`.
-
-After you have the public URL, you can add it to your Grafana configuration file:
+1. After you have the public URL, you can add it to your Grafana configuration file:
 
 ```yaml
 [server]
 root_url = https://PUBLIC_DOMAIN.HERE
 ```
+1. To check the configured webhooks, go to **Administration** > **Provisioning** and click the **View** link for your GitHub repository.
 
-You can check the configured webhooks in the **View** link for your GitHub repository from **Administration** > **Provisioning**.
+#### Expose necessary paths only
+ 
+If your security setup does not permit publicly exposing the Grafana instance, you can either choose to `allowlist` the GitHub IP addresses, or expose only the necessary paths.
 
-#### Necessary paths
-
-If your security setup does not permit publicly exposing the Grafana instance, you can either choose to allowlist the GitHub IP addresses, or expose only the necessary paths.
-
-The necessary paths required to be exposed are (RegExp):
+The necessary paths required to be exposed are, in RegExp:
 
 - `/apis/provisioning\.grafana\.app/v0(alpha1)?/namespaces/[^/]+/repositories/[^/]+/(webhook|render/.*)$`
 <!-- TODO: Path for the blob storage for image rendering? @ryantxu would know this best. -->
 
 ### Set up image rendering for dashboard previews
 
-By setting up image rendering, you can add visual previews of dashboard updates directly in pull requests.
-Image rendering also requires webhooks.
+Set up image rendering to add visual previews of dashboard updates directly in pull requests. Image rendering also requires webhooks.
 
-You can enable this capability by installing the Grafana Image Renderer in your Grafana instance. For more information and installation instructions, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
+To enable this capability, install the Grafana Image Renderer in your Grafana instance. For more information and installation instructions, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
 
 ## Modify configurations after set up is complete
 

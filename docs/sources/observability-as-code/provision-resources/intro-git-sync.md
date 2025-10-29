@@ -67,6 +67,7 @@ Git Sync is under development and the following limitations apply:
 
 - You can only sync dashboards and folders. Refer to [Supported resources](#supported-resources) for more information.
   - If you're using Git Sync in Grafana OSS and Grafana Enterprise, some resources might be in an incompatible data format and can't be synced.
+- Full-instance sync is not available in Grafana Cloud and has limitations in Grafana OSS and Grafana Enterprise. Refer to [Choose what to synchronize](./git-sync-setup.md#synchronization-limitations) for more details.
 - You can only authenticate in GitHub using your Personal Access Token token.
 - Support for native Git, Git app, and other providers, such as GitLab or Bitbucket, is on the roadmap.
 - Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
@@ -93,12 +94,6 @@ An instance can be in one of the following Git Sync states:
 - **Unprovisioned**: None of the instance's resources are being managed by Git Sync.
 - **Partially provisioned**: Some of the resources are controlled by Git Sync.
 - **Fully provisioned**: All supported resource types are managed by Git Sync. Note that unsupported resources are not managed.
-
-### Full instance sync
-
-Full-instance sync is not available in Grafana Cloud.
-
-In Grafana OSS/Enterprise, full instance sync doesn't support alerts and library panels. If you try to perform a full instance sync, Git Sync will block the connection. In the event blocking fails, you'll have to delete the synced repository and connect again with folder sync if you want to create library panels or alerts.
 
 ## Common use cases
 
