@@ -41,6 +41,7 @@ type provisioningControllerConfig struct {
 	clients             resources.ClientFactory
 	tokenExchangeClient *authn.TokenExchangeClient
 	tlsConfig           rest.TLSClientConfig
+	maxSyncWorkers      int
 }
 
 // expects:
@@ -201,6 +202,7 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 		resyncInterval:      operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		tokenExchangeClient: tokenExchangeClient,
 		tlsConfig:           tlsConfig,
+		maxSyncWorkers:      operatorSec.Key("max_sync_workers").MustInt(10),
 	}, nil
 }
 

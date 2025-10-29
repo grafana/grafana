@@ -84,6 +84,7 @@ func NewRepositoryController(
 	statusPatcher StatusPatcher,
 	registry prometheus.Registerer,
 	tracer tracing.Tracer,
+	maxSyncWorkers int,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 
@@ -104,6 +105,7 @@ func NewRepositoryController(
 			lister:        resourceLister,
 			clientFactory: clients,
 			metrics:       &finalizerMetrics,
+			maxWorkers:    maxSyncWorkers,
 		},
 		jobs:      jobs,
 		logger:    logging.DefaultLogger.With("logger", loggerName),
