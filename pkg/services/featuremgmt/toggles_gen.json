@@ -1163,6 +1163,18 @@
     },
     {
       "metadata": {
+        "name": "dashboardTemplates",
+        "resourceVersion": "1761575312733",
+        "creationTimestamp": "2025-10-27T14:28:32Z"
+      },
+      "spec": {
+        "description": "Enable template dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardUndoRedo",
         "resourceVersion": "1757940426210",
         "creationTimestamp": "2025-09-15T12:47:06Z"
@@ -1445,7 +1457,8 @@
       "metadata": {
         "name": "enablePluginImporter",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-16T04:42:28Z"
+        "creationTimestamp": "2025-07-16T04:42:28Z",
+        "deletionTimestamp": "2025-10-20T05:42:33Z"
       },
       "spec": {
         "description": "Set this to true to use the new PluginImporter functionality",
@@ -1824,6 +1837,7 @@
         "name": "grafanaPathfinder",
         "resourceVersion": "1760434668782",
         "creationTimestamp": "2025-08-20T12:30:29Z",
+        "deletionTimestamp": "2025-10-21T16:10:16Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-10-14 09:37:48.782577 +0000 UTC"
         }
@@ -2006,6 +2020,18 @@
         "description": "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
         "stage": "experimental",
         "codeowner": "@grafana/partner-datasources"
+      }
+    },
+    {
+      "metadata": {
+        "name": "interactiveLearning",
+        "resourceVersion": "1761063016739",
+        "creationTimestamp": "2025-10-21T16:10:16Z"
+      },
+      "spec": {
+        "description": "Enables the interactive learning app",
+        "stage": "preview",
+        "codeowner": "@grafana/pathfinder"
       }
     },
     {
@@ -2276,6 +2302,19 @@
         "description": "Adds support for Kubernetes logs drilldown",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesQueryCaching",
+        "resourceVersion": "1760972620939",
+        "creationTimestamp": "2025-10-20T15:03:40Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes querycaching",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "requiresRestart": true
       }
     },
@@ -2683,6 +2722,20 @@
     },
     {
       "metadata": {
+        "name": "newGauge",
+        "resourceVersion": "1760700645318",
+        "creationTimestamp": "2025-10-17T11:30:45Z"
+      },
+      "spec": {
+        "description": "Enable new gauge visualization",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "newInfluxDSConfigPageDesign",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-06-25T16:39:54Z"
@@ -2776,6 +2829,24 @@
     },
     {
       "metadata": {
+        "name": "onlyStoreActionSets",
+        "resourceVersion": "1759844046154",
+        "creationTimestamp": "2025-10-07T13:24:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-07 13:34:06.15476 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission",
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "otelLogsFormatting",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-07-16T15:42:14Z"
@@ -2813,6 +2884,18 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "panelTimeSettings",
+        "resourceVersion": "1761555646368",
+        "creationTimestamp": "2025-10-27T09:00:46Z"
+      },
+      "spec": {
+        "description": "Enables a new panel time settings drawer",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
       }
     },
     {
@@ -2925,6 +3008,19 @@
     },
     {
       "metadata": {
+        "name": "pluginInstallAPISync",
+        "resourceVersion": "1760543624249",
+        "creationTimestamp": "2025-10-15T15:53:44Z"
+      },
+      "spec": {
+        "description": "Enable syncing plugin installations to the installs API",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginProxyPreserveTrailingSlash",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-06-05T11:36:14Z"
@@ -2932,6 +3028,22 @@
       "spec": {
         "description": "Preserve plugin proxy trailing slash.",
         "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "pluginStoreServiceLoading",
+        "resourceVersion": "1761144346944",
+        "creationTimestamp": "2025-10-17T14:52:48Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-22 14:45:46.944669 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded",
+        "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "expression": "false"
       }
@@ -3526,7 +3638,8 @@
       "metadata": {
         "name": "skipTokenRotationIfRecent",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-06-03T06:59:40Z"
+        "creationTimestamp": "2025-06-03T06:59:40Z",
+        "deletionTimestamp": "2025-10-22T10:29:12Z"
       },
       "spec": {
         "description": "Skip token rotation if it was already rotated less than 5 seconds ago",
@@ -3985,7 +4098,8 @@
       "metadata": {
         "name": "unifiedStorageUseFullNgram",
         "resourceVersion": "1758820248165",
-        "creationTimestamp": "2025-09-25T17:10:48Z"
+        "creationTimestamp": "2025-09-25T17:10:48Z",
+        "deletionTimestamp": "2025-10-22T12:24:39Z"
       },
       "spec": {
         "description": "Use full n-gram indexing instead of edge n-gram for unified storage search",
@@ -4110,6 +4224,23 @@
       },
       "spec": {
         "description": "Use openFGA as authorization engine.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "zanzanaNoLegacyClient",
+        "resourceVersion": "1761063016739",
+        "creationTimestamp": "2025-10-20T09:52:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-21 16:10:16.739546 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use openFGA as main authorization engine and disable legacy RBAC clietn.",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromAdminPage": true,

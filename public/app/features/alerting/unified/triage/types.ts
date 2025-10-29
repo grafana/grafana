@@ -18,7 +18,10 @@ export interface GenericGroupedRow {
   type: 'group';
   metadata: {
     label: string;
-    value: string;
+    value: LabelValue;
   };
   rows: WorkbenchRow[];
 }
+
+export type LabelValue = string | typeof EmptyLabelValue;
+export const EmptyLabelValue = Symbol('empty label value');

@@ -23,7 +23,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DatasourceAPIVersions } from 'app/features/apiserver/client';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { importDataSourcePlugin } from 'app/features/plugins/pluginLoader';
+import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { AccessControlAction } from 'app/types/accessControl';
 import { DataSourcePluginCategory } from 'app/types/datasources';
@@ -60,7 +60,7 @@ export interface InitDataSourceSettingDependencies {
   loadDataSourceMeta: typeof loadDataSourceMeta;
   getDataSource: typeof getDataSource;
   getDataSourceMeta: typeof getDataSourceMeta;
-  importDataSourcePlugin: typeof importDataSourcePlugin;
+  importDataSourcePlugin: typeof pluginImporter.importDataSource;
 }
 
 export interface TestDataSourceDependencies {
@@ -103,7 +103,7 @@ export const initDataSourceSettings = (
     loadDataSourceMeta,
     getDataSource,
     getDataSourceMeta,
-    importDataSourcePlugin,
+    importDataSourcePlugin: pluginImporter.importDataSource,
   }
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
@@ -225,7 +225,7 @@ export function loadDataSource(uid: string): ThunkResult<Promise<DataSourceSetti
 export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<void> {
   return async (dispatch) => {
     const pluginInfo: DataSourcePluginMeta = await getPluginSettings(dataSource.type);
-    const plugin = await importDataSourcePlugin(pluginInfo);
+    const plugin = await pluginImporter.importDataSource(pluginInfo);
     const isBackend = plugin.DataSourceClass.prototype instanceof DataSourceWithBackend;
     const meta = {
       ...pluginInfo,

@@ -43,6 +43,11 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   noMargin?: boolean;
 }
 
+/**
+ * Field is the basic component for rendering form elements together with labels and description.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-field--docs
+ */
 export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
   (
     {

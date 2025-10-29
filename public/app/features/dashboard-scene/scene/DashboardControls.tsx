@@ -153,7 +153,8 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered
-    return <Box padding={1} />;
+
+    return <Box padding={1}>{renderHiddenVariables(dashboard)}</Box>;
   }
 
   return (
@@ -198,6 +199,21 @@ function DataLayerControls({ dashboard }: { dashboard: DashboardScene }) {
       ))}
     </>
   );
+}
+
+function renderHiddenVariables(dashboard: DashboardScene) {
+  const { variables } = sceneGraph.getVariables(dashboard).useState();
+  const renderAsHiddenVariables = variables.filter((v) => v.UNSAFE_renderAsHidden);
+  if (renderAsHiddenVariables && renderAsHiddenVariables.length > 0) {
+    return (
+      <>
+        {renderAsHiddenVariables.map((v) => (
+          <v.Component model={v} key={v.state.key} />
+        ))}
+      </>
+    );
+  }
+  return null;
 }
 
 function getStyles(theme: GrafanaTheme2) {

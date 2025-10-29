@@ -11,7 +11,8 @@ labels:
     - enterprise
     - oss
 title: Provision Grafana
-weight: 600
+menuTitle: Provision Grafana
+weight: 4100
 ---
 
 # Provision Grafana
@@ -603,14 +604,6 @@ Grafana encrypts secure settings in the database.
 | ------------- | -------------- |
 | `singleEmail` |                |
 | `addresses`   |                |
-
-#### Alert notification `hipchat`
-
-| Name     | Secure setting |
-| -------- | -------------- |
-| `url`    |                |
-| `apikey` |                |
-| `roomid` |                |
 
 #### Alert notification `opsgenie`
 

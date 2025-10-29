@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { isNumber } from 'lodash';
 import { useId } from 'react';
 
@@ -64,12 +64,17 @@ export interface RadialGaugeProps {
   /** Specify which text should be visible  */
   textMode?: RadialTextMode;
   showScaleLabels?: boolean;
+  /** For data links */
+  onClick?: React.MouseEventHandler<HTMLElement>;
 }
 
 export type RadialGradientMode = 'none' | 'auto';
 export type RadialTextMode = 'auto' | 'value_and_name' | 'value' | 'name' | 'none';
 export type RadialShape = 'circle' | 'gauge';
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-radialgauge--docs
+ */
 export function RadialGauge(props: RadialGaugeProps) {
   const {
     width = 256,
@@ -87,6 +92,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     roundedBars = true,
     thresholdsBar = false,
     showScaleLabels = false,
+    onClick,
     values,
   } = props;
   const theme = useTheme2();
@@ -247,13 +253,27 @@ export function RadialGauge(props: RadialGaugeProps) {
     }
   }
 
-  return (
-    <div className={styles.vizWrapper} style={{ width, height }}>
+  const body = (
+    <>
       <svg width={width} height={height} role="img" aria-label={t('gauge.category-gauge', 'Gauge')}>
         <defs>{defs}</defs>
         {graphics}
       </svg>
       {sparklineElement}
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button onClick={onClick} className={cx(styles.clearButton, styles.vizWrapper)} style={{ width, height }}>
+        {body}
+      </button>
+    );
+  }
+
+  return (
+    <div className={styles.vizWrapper} style={{ width, height }}>
+      {body}
     </div>
   );
 }
@@ -276,10 +296,13 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      // Adds subtle shadow in light themes to help bar stand out
-      '.radial-arc-path': {
-        filter: theme.isLight ? `drop-shadow(0px 0px 1px #888);` : '',
-      },
+    }),
+    clearButton: css({
+      background: 'transparent',
+      color: theme.colors.text.primary,
+      border: 'none',
+      padding: 0,
+      cursor: 'context-menu',
     }),
   };
 }
