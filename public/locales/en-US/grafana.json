@@ -4157,6 +4157,7 @@
     "cancel": "Cancel",
     "clear": "Clear",
     "collapse": "Collapse",
+    "disabled": "Disabled",
     "edit": "Edit",
     "help": "Help",
     "loading": "Loading...",
@@ -5132,6 +5133,19 @@
     "override-category-title": {
       "aria-label-remove-override": "Remove override",
       "tooltip-remove-override": "Remove override"
+    },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "Hidden time info",
+        "hide-time-info-description": "Do not show the custom time range in the panel header",
+        "time-from": "Custom panel time range",
+        "time-from-description": "Overrides the dashboard time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
+        "time-shift": "Time shift",
+        "time-shift-description": "Adds a time shift relative to the dashboard or panel time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
+        "time-window-compare": "Time window comparison",
+        "time-window-compare-description": "Query and overlay data from a different time period",
+        "title": "Panel time range settings"
+      }
     },
     "panel-edit": {
       "alerting-tab": {
@@ -10872,6 +10886,7 @@
       "replace-library-panel": "Replace library panel",
       "share": "Share",
       "show-legend": "Show legend",
+      "time-settings": "Time settings",
       "unlink-library-panel": "Unlink library panel",
       "view": "View"
     },
@@ -13134,6 +13149,14 @@
       "form-label": "Form label",
       "title": "Panel"
     }
+  },
+  "time-period": {
+    "1_day": "1 day",
+    "1_hour": "1 hour",
+    "12_hours": "12 hours",
+    "30_days": "30 days",
+    "6_hours": "6 hours",
+    "7_days": "7 days"
   },
   "time-picker": {
     "absolute": {
