@@ -488,121 +488,119 @@ describe('CloudWatchLogsQueryRunner', () => {
       });
     });
   });
-});
 
-describe('handleLogAnomaliesQueries', () => {
-  it('appends -anomalies to the requestId', async () => {
-    const { runner, queryMock } = setupMockedLogsQueryRunner();
-    const logsAnomaliesRequestMock: DataQueryRequest<CloudWatchLogsAnomaliesQuery> = {
-      requestId: 'mockId',
-      range: TimeRangeMock,
-      rangeRaw: { from: TimeRangeMock.from, to: TimeRangeMock.to },
-      targets: [
-        {
-          id: '1',
-          logsMode: LogsMode.Anomalies,
-          queryMode: 'Logs',
-          refId: 'A',
-          region: 'us-east-1',
-        },
-      ],
-      interval: '',
-      intervalMs: 0,
-      scopedVars: { __interval: { value: '20s' } },
-      timezone: '',
-      app: '',
-      startTime: 0,
-    };
-    await expect(
-      runner.handleLogAnomaliesQueries(LogsRequestMock.targets, logsAnomaliesRequestMock, queryMock)
-    ).toEmitValuesWith(() => {
-      expect(queryMock.mock.calls[0][0].requestId).toEqual('mockId-logsAnomalies');
+  describe('handleLogAnomaliesQueries', () => {
+    it('appends -anomalies to the requestId', async () => {
+      const { runner, queryMock } = setupMockedLogsQueryRunner();
+      const logsAnomaliesRequestMock: DataQueryRequest<CloudWatchLogsAnomaliesQuery> = {
+        requestId: 'mockId',
+        range: TimeRangeMock,
+        rangeRaw: { from: TimeRangeMock.from, to: TimeRangeMock.to },
+        targets: [
+          {
+            id: '1',
+            logsMode: LogsMode.Anomalies,
+            queryMode: 'Logs',
+            refId: 'A',
+            region: 'us-east-1',
+          },
+        ],
+        interval: '',
+        intervalMs: 0,
+        scopedVars: { __interval: { value: '20s' } },
+        timezone: '',
+        app: '',
+        startTime: 0,
+      };
+      await expect(
+        runner.handleLogAnomaliesQueries(LogsRequestMock.targets, logsAnomaliesRequestMock, queryMock)
+      ).toEmitValuesWith(() => {
+        expect(queryMock.mock.calls[0][0].requestId).toEqual('mockId-logsAnomalies');
+      });
     });
-  });
 
-  it('processes log trend histogram data correctly', async () => {
-    const response = anomaliesQueryResponse;
+    it('processes log trend histogram data correctly', async () => {
+      const response = structuredClone(anomaliesQueryResponse);
 
-    convertTrendHistogramToSparkline(response);
+      convertTrendHistogramToSparkline(response);
 
-    expect(response.data[0].fields.find((field: Field) => field.name === 'Log trend')).toEqual({
-      name: 'Log trend',
-      type: 'frame',
-      config: {
-        custom: {
-          drawStyle: 'bars',
-          cellOptions: {
-            type: 'sparkline',
-            hideValue: true,
+      expect(response.data[0].fields.find((field: Field) => field.name === 'Log trend')).toEqual({
+        name: 'Log trend',
+        type: 'frame',
+        config: {
+          custom: {
+            drawStyle: 'bars',
+            cellOptions: {
+              type: 'sparkline',
+              hideValue: true,
+            },
           },
         },
-      },
-      values: [
-        {
-          name: 'Trend_row_0',
-          length: 8,
-          fields: [
-            {
-              name: 'time',
-              type: 'time',
-              values: [
-                1760454000000, 1760544000000, 1760724000000, 1761282000000, 1761300000000, 1761354000000, 1761372000000,
-                1761390000000,
-              ],
-              config: {},
-            },
-            {
-              name: 'value',
-              type: 'number',
-              values: [81, 35, 35, 36, 36, 36, 72, 36],
-              config: {},
-            },
-          ],
-        },
-        {
-          name: 'Trend_row_1',
-          length: 2,
-          fields: [
-            {
-              name: 'time',
-              type: 'time',
-              values: [1760687665000, 1760687670000],
-              config: {},
-            },
-            {
-              name: 'value',
-              type: 'number',
-              values: [3, 3],
-              config: {},
-            },
-          ],
-        },
-      ],
+        values: [
+          {
+            name: 'Trend_row_0',
+            length: 8,
+            fields: [
+              {
+                name: 'time',
+                type: 'time',
+                values: [
+                  1760454000000, 1760544000000, 1760724000000, 1761282000000, 1761300000000, 1761354000000,
+                  1761372000000, 1761390000000,
+                ],
+                config: {},
+              },
+              {
+                name: 'value',
+                type: 'number',
+                values: [81, 35, 35, 36, 36, 36, 72, 36],
+                config: {},
+              },
+            ],
+          },
+          {
+            name: 'Trend_row_1',
+            length: 2,
+            fields: [
+              {
+                name: 'time',
+                type: 'time',
+                values: [1760687665000, 1760687670000],
+                config: {},
+              },
+              {
+                name: 'value',
+                type: 'number',
+                values: [3, 3],
+                config: {},
+              },
+            ],
+          },
+        ],
+      });
     });
-  });
 
-  it('replaces log trend histogram field at the same index in the frame', () => {
-    const response = anomaliesQueryResponse;
+    it('replaces log trend histogram field at the same index in the frame', () => {
+      const response = structuredClone(anomaliesQueryResponse);
+      convertTrendHistogramToSparkline(response);
+      expect(response.data[0].fields[4].name).toEqual('Log trend');
+    });
 
-    convertTrendHistogramToSparkline(response);
+    it('ignore invalid timestamps in log trend histogram', () => {
+      const response = structuredClone(anomaliesQueryResponse);
 
-    expect(response.data[0].fields[4].name).toEqual('Log trend');
-  });
+      response.data[0].fields[4].values[1] = {
+        invalidTimestamp: 3,
+        '1760687670000': 3,
+        anotherInvalidTimestamp: 2,
+        '1760687670010': 3,
+      };
 
-  it('ignore invalid timestamps in log trend histogram', () => {
-    const response = anomaliesQueryResponse;
+      convertTrendHistogramToSparkline(response);
 
-    response.data[0].fields[4].values[1] = {
-      invalidTimestamp: 3,
-      '1760687670000': 3,
-      anotherInvalidTimestamp: 2,
-      '1760687670010': 3,
-    };
-
-    convertTrendHistogramToSparkline(response);
-
-    expect(response.data[0].fields[4].values[1].fields[0].values.length).toEqual(2);
-    expect(response.data[0].fields[4].values[1].fields[1].values.length).toEqual(2);
+      expect(response.data[0].fields[4].values[1].fields[0].values.length).toEqual(2);
+      expect(response.data[0].fields[4].values[1].fields[1].values.length).toEqual(2);
+    });
   });
 });
 
@@ -768,10 +766,9 @@ const stopQueryResponseStub = {
 const anomaliesQueryResponse: DataQueryResponse = {
   data: [
     {
-      name: 'CloudwatchLogsAnomalies',
+      name: 'Logs anomalies',
       refId: 'A',
       meta: {
-        typeVersion: [0, 0],
         preferredVisualisationType: 'table',
       },
       fields: [
