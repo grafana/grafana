@@ -365,6 +365,36 @@ func (_m *FakeDashboardStore) GetProvisionedDashboardsByName(ctx context.Context
 	return r0, r1
 }
 
+// GetAllProvisionedDashboards provides a mock function with given fields: ctx, orgID
+func (_m *FakeDashboardStore) GetAllProvisionedDashboards(ctx context.Context, orgID int64) ([]*DashboardProvisioningSearchResults, error) {
+	ret := _m.Called(ctx, orgID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAllProvisionedDashboards")
+	}
+
+	var r0 []*DashboardProvisioningSearchResults
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) ([]*DashboardProvisioningSearchResults, error)); ok {
+		return rf(ctx, orgID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64) []*DashboardProvisioningSearchResults); ok {
+		r0 = rf(ctx, orgID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*DashboardProvisioningSearchResults)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, orgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetProvisionedDataByDashboardID provides a mock function with given fields: ctx, dashboardID
 func (_m *FakeDashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioningSearchResults, error) {
 	ret := _m.Called(ctx, dashboardID)

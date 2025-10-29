@@ -644,6 +644,20 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			// nolint:staticcheck
+			return req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && len(req.Options.Fields) == 1
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results:   &resourcepb.ResourceTable{},
+			TotalHits: 0,
+		}, nil).Once()
+		k8sCliMock.On("Search", mock.Anything, int64(2), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			// nolint:staticcheck
+			return req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && len(req.Options.Fields) == 1
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results:   &resourcepb.ResourceTable{},
+			TotalHits: 0,
+		}, nil).Once()
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			// nolint:staticcheck
 			return req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "test" && req.Options.Fields[1].Operator == "notin"
 		})).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
@@ -793,6 +807,13 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			log:                    log.NewNopLogger(),
 		}
 		ctx, k8sCliMock := setupK8sDashboardTests(singleOrgService)
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			// nolint:staticcheck
+			return req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && len(req.Options.Fields) == 1
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results:   &resourcepb.ResourceTable{},
+			TotalHits: 0,
+		}, nil).Once()
 		// Call to searchProvisionedDashboardsThroughK8s()
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
@@ -886,7 +907,13 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			log:                    log.NewNopLogger(),
 		}
 		ctx, k8sCliMock := setupK8sDashboardTests(singleOrgService)
-
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			// nolint:staticcheck
+			return req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && len(req.Options.Fields) == 1
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results:   &resourcepb.ResourceTable{},
+			TotalHits: 0,
+		}, nil).Once()
 		// Call to searchProvisionedDashboardsThroughK8s()
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
@@ -901,6 +928,184 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		err := singleOrgService.DeleteOrphanedProvisionedDashboards(ctx, &dashboards.DeleteOrphanedProvisionedDashboardsCommand{
 			ReaderNames: []string{"test"},
 		})
+		require.NoError(t, err)
+		k8sCliMock.AssertExpectations(t)
+	})
+}
+
+func TestDeleteDuplicateProvisionedDashboards(t *testing.T) {
+	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	t.Run("Should delete duplicate provisioned dashboards with same name and external_id", func(t *testing.T) {
+		service := &DashboardServiceImpl{
+			cfg: setting.NewCfg(),
+			orgService: &orgtest.FakeOrgService{
+				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
+			},
+			publicDashboardService: fakePublicDashboardService,
+			log:                    log.NewNopLogger(),
+		}
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) // nolint:staticcheck
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{
+						Name: "title",
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_PATH,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_TIME,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "uid1",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("Dashboard 1"),
+							[]byte("folder 1"),
+							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+							[]byte("provisioner"),
+							[]byte("path/to/file"),
+							[]byte("hash"),
+							[]byte("1234567"),
+						},
+					},
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "uid2",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("Dashboard 1"),
+							[]byte("folder 1"),
+							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+							[]byte("provisioner"),                      // name and external_id are the same
+							[]byte("path/to/file"),
+							[]byte("hash"),
+							[]byte("1234567"),
+						},
+					},
+				},
+			},
+			TotalHits: 2,
+		}, nil)
+
+		k8sCliMock.On("Delete", mock.Anything, "uid2", int64(1), mock.Anything).Return(nil).Once()
+
+		err := service.DeleteDuplicateProvisionedDashboards(ctx)
+		require.NoError(t, err)
+		k8sCliMock.AssertExpectations(t)
+	})
+
+	t.Run("Should not delete anything when no duplicates exist", func(t *testing.T) {
+		service := &DashboardServiceImpl{
+			cfg: setting.NewCfg(),
+			orgService: &orgtest.FakeOrgService{
+				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
+			},
+			publicDashboardService: fakePublicDashboardService,
+			log:                    log.NewNopLogger(),
+		}
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{
+						Name: "title",
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_PATH,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_TIME,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "uid1",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("Dashboard 1"),
+							[]byte("folder 1"),
+							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+							[]byte("provisioner"),
+							[]byte("path/to/file1"),
+							[]byte("hash"),
+							[]byte("1234567"),
+						},
+					},
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "uid2",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("Dashboard 2"),
+							[]byte("folder 1"),
+							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+							[]byte("provisioner"),
+							[]byte("path/to/file2"),
+							[]byte("hash"),
+							[]byte("1234567"),
+						},
+					},
+				},
+			},
+			TotalHits: 2,
+		}, nil)
+
+		// No delete calls should be made
+
+		err := service.DeleteDuplicateProvisionedDashboards(ctx)
 		require.NoError(t, err)
 		k8sCliMock.AssertExpectations(t)
 	})

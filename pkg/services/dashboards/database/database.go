@@ -284,6 +284,24 @@ func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, nam
 	return dashes, nil
 }
 
+func (d *dashboardStore) GetAllProvisionedDashboards(ctx context.Context, orgID int64) ([]*dashboards.DashboardProvisioningSearchResults, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetAllProvisionedDashboards")
+	defer span.End()
+
+	dashes := []*dashboards.DashboardProvisioningSearchResults{}
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(`dashboard`).
+			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
+			Where(`dashboard.org_id = ?`, orgID).
+			Select("dashboard.*, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
+			Find(&dashes)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dashes, nil
+}
+
 func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string, orgID int64) ([]*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetOrphanedProvisionedDashboards")
 	defer span.End()

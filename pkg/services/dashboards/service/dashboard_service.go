@@ -873,6 +873,11 @@ func (dr *DashboardServiceImpl) waitForSearchQuery(ctx context.Context, query *d
 }
 
 func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
+	// cleanup duplicate provisioned dashboards first (this will have the same name and external_id)
+	if err := dr.DeleteDuplicateProvisionedDashboards(ctx); err != nil {
+		dr.log.Error("Failed to delete duplicate provisioned dashboards", "error", err)
+	}
+
 	// check each org for orphaned provisioned dashboards
 	orgs, err := dr.orgService.Search(ctx, &org.SearchOrgsQuery{})
 	if err != nil {
@@ -908,6 +913,44 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 			}
 		}
 	}
+	return nil
+}
+
+func (dr *DashboardServiceImpl) DeleteDuplicateProvisionedDashboards(ctx context.Context) error {
+	orgs, err := dr.orgService.Search(ctx, &org.SearchOrgsQuery{})
+	if err != nil {
+		return err
+	}
+
+	for _, org := range orgs {
+		ctx, _ := identity.WithServiceIdentity(ctx, org.ID)
+		allDashs, err := dr.searchProvisionedDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
+			ManagedBy: utils.ManagerKindClassicFP, //nolint:staticcheck
+			OrgId:     org.ID,
+		})
+		if err != nil {
+			return err
+		}
+
+		type provisioningKey struct {
+			name       string
+			externalID string
+		}
+		groups := make(map[provisioningKey]bool)
+		for _, dash := range allDashs {
+			key := provisioningKey{
+				name:       dash.Name,
+				externalID: dash.ExternalID,
+			}
+			if _, exists := groups[key]; exists {
+				if err = dr.deleteDashboard(ctx, dash.DashboardID, dash.DashboardUID, org.ID, false); err != nil {
+					dr.log.Error("Failed to delete duplicate provisioned dashboard", "error", err, "dashboardUID", dash.DashboardUID, "dashboardID", dash.DashboardID)
+				}
+			}
+			groups[key] = true
+		}
+	}
+
 	return nil
 }
 
