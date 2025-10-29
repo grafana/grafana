@@ -49,7 +49,6 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
   const [contentSent, setContentSent] = useState<{ title?: string; folderUid?: string }>({});
 
-  // Create a debounced validation function with useRef
   const validationTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Validate title on form mount to catch invalid default values
