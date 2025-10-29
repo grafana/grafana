@@ -1,4 +1,4 @@
-package clientmiddleware
+package caching
 
 import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
