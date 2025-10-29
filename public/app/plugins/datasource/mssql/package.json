@@ -24,7 +24,7 @@
     "@testing-library/user-event": "14.6.1",
     "@types/jest": "29.5.14",
     "@types/lodash": "4.17.20",
-    "@types/node": "24.9.1",
+    "@types/node": "24.9.2",
     "@types/react": "18.3.18",
     "i18next-cli": "1.11.12",
     "ts-node": "10.9.2",
