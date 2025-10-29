@@ -14,8 +14,8 @@ import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/
 
 import { dashboardEditActions } from '../edit-pane/shared';
 import { VizPanelLinks } from '../scene/PanelLinks';
-import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { useEditPaneInputAutoFocus } from '../scene/layouts-shared/utils';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';

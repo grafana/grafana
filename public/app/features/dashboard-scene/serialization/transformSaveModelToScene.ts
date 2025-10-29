@@ -33,7 +33,6 @@ import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
-import { CustomTimeRangeCompare } from '../scene/CustomTimeRangeCompare';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -44,7 +43,6 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
-import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
@@ -52,6 +50,7 @@ import { RowActions } from '../scene/layout-default/row-actions/RowActions';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getIsLazy } from '../scene/layouts-shared/utils';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
@@ -428,9 +427,6 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
-    headerActions: config.featureToggles.timeComparison
-      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
-      : undefined,
   };
 
   if (panel.libraryPanel) {

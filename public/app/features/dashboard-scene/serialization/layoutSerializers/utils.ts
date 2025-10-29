@@ -24,16 +24,15 @@ import {
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
-import { CustomTimeRangeCompare } from '../../scene/CustomTimeRangeCompare';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
-import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
+import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -72,10 +71,6 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     titleItems,
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
-    // _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel), //FIXME: Angular Migration
-    headerActions: config.featureToggles.timeComparison
-      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
-      : undefined,
   };
 
   if (!config.publicDashboardAccessToken) {

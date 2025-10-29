@@ -29,11 +29,11 @@ import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
-import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { NEW_LINK } from '../settings/links/utils';
 import { getQueryRunnerFor } from '../utils/utils';
 
@@ -809,41 +809,6 @@ describe('transformSaveModelToScene', () => {
       expect((libPanelBehavior as LibraryPanelBehavior).state.uid).toEqual(panel.libraryPanel.uid);
       expect((libPanelBehavior as LibraryPanelBehavior).state.name).toEqual(panel.libraryPanel.name);
       expect(gridItem.state.body.state.title).toEqual(panel.title);
-    });
-
-    describe('header actions', () => {
-      beforeEach(() => {
-        jest.clearAllMocks();
-      });
-
-      it('should include headerActions when timeComparison feature toggle is enabled', () => {
-        config.featureToggles.timeComparison = true;
-
-        const panel = {
-          title: 'Test Panel',
-          type: 'timeseries',
-          gridPos: { x: 0, y: 0, w: 12, h: 8 },
-        };
-
-        const { vizPanel } = buildGridItemForTest(panel);
-
-        expect(vizPanel.state.headerActions).toBeDefined();
-        expect(vizPanel.state.headerActions).toHaveLength(1);
-      });
-
-      it('should not include headerActions when timeComparison feature toggle is disabled', () => {
-        config.featureToggles.timeComparison = false;
-
-        const panel = {
-          title: 'Test Panel',
-          type: 'timeseries',
-          gridPos: { x: 0, y: 0, w: 12, h: 8 },
-        };
-
-        const { vizPanel } = buildGridItemForTest(panel);
-
-        expect(vizPanel.state.headerActions).toBeUndefined();
-      });
     });
   });
 

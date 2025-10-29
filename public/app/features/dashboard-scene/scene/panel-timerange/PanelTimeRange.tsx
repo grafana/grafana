@@ -1,22 +1,35 @@
 import { css } from '@emotion/css';
+import { capitalize } from 'lodash';
 
-import { dateMath, getDefaultTimeRange, GrafanaTheme2, rangeUtil, TimeRange } from '@grafana/data';
+import { DataQueryRequest, dateMath, getDefaultTimeRange, GrafanaTheme2, rangeUtil, TimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
+  ExtraQueryDescriptor,
   SceneComponentProps,
+  SceneDataQuery,
   sceneGraph,
   SceneTimeRangeLike,
   SceneTimeRangeState,
   SceneTimeRangeTransformerBase,
   VariableDependencyConfig,
+  VizPanel,
 } from '@grafana/scenes';
-import { Icon, PanelChrome, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, PanelChrome, Stack, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
 import { TimeOverrideResult } from 'app/features/dashboard/utils/panel';
 
+import { getDashboardSceneFor } from '../../utils/utils';
+
+import { DEFAULT_COMPARE_OPTIONS, PanelTimeRangeDrawer, PanelTimeRangeZoomBehavior } from './PanelTimeRangeDrawer';
+import { getCompareTimeRange, timeShiftAlignmentProcessor } from './utils';
+
 export interface PanelTimeRangeState extends SceneTimeRangeState {
+  enabled?: boolean;
   timeFrom?: string;
+  zoomBehavior?: PanelTimeRangeZoomBehavior;
   timeShift?: string;
   hideTimeOverride?: boolean;
   timeInfo?: string;
+  compareWith?: string;
 }
 
 export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRangeState> implements SceneTimeRangeLike {
@@ -61,13 +74,48 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
       to: timeRange.raw.to.toString(),
     });
   }
+
   protected ancestorTimeRangeChanged(timeRange: SceneTimeRangeState): void {
+    if (this.state.timeFrom && this.state.zoomBehavior === 'dashboard') {
+      return;
+    }
+
     const overrideResult = this.getTimeOverride(timeRange.value);
     this.setState({ value: overrideResult.timeRange, timeInfo: overrideResult.timeInfo });
   }
 
+  // Get a time shifted request to compare with the primary request.
+  public getExtraQueries(request: DataQueryRequest): ExtraQueryDescriptor[] {
+    const extraQueries: ExtraQueryDescriptor[] = [];
+    const compareRange = getCompareTimeRange(request.range, this.state.compareWith);
+    if (!compareRange) {
+      return extraQueries;
+    }
+
+    const targets = request.targets.filter((query: SceneDataQuery) => query.timeRangeCompare !== false);
+    if (targets.length) {
+      extraQueries.push({
+        req: {
+          ...request,
+          targets,
+          range: compareRange,
+        },
+        processor: timeShiftAlignmentProcessor,
+      });
+    }
+    return extraQueries;
+  }
+
+  // The query runner should rerun the comparison query if the compareWith value has changed and there are queries that haven't opted out of TWC
+  public shouldRerun(prev: PanelTimeRangeState, next: PanelTimeRangeState, queries: SceneDataQuery[]): boolean {
+    return (
+      prev.compareWith !== next.compareWith && queries.find((query) => query.timeRangeCompare !== false) !== undefined
+    );
+  }
+
   private getTimeOverride(parentTimeRange: TimeRange): TimeOverrideResult {
-    const { timeFrom, timeShift } = this.state;
+    const { timeFrom, timeShift, compareWith } = this.state;
+    const infoBlocks = [];
     const newTimeData = { timeInfo: '', timeRange: parentTimeRange };
 
     if (timeFrom) {
@@ -82,12 +130,12 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
       // Only evaluate if the timeFrom if parent time is relative
       if (rangeUtil.isRelativeTimeRange(parentTimeRange.raw)) {
         const timeZone = this.getTimeZone();
-        newTimeData.timeInfo = timeFromInfo.display;
         newTimeData.timeRange = {
           from: dateMath.parse(timeFromInfo.from, undefined, timeZone)!,
           to: dateMath.parse(timeFromInfo.to, undefined, timeZone)!,
           raw: { from: timeFromInfo.from, to: timeFromInfo.to },
         };
+        infoBlocks.push(timeFromInfo.display);
       }
     }
 
@@ -101,7 +149,8 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
       }
 
       const timeShift = '-' + timeShiftInterpolated;
-      newTimeData.timeInfo += ' timeshift ' + timeShift;
+      infoBlocks.push('timeshift ' + timeShift);
+
       const from = dateMath.parseDateMath(timeShift, newTimeData.timeRange.from, false)!;
       const to = dateMath.parseDateMath(timeShift, newTimeData.timeRange.to, true)!;
 
@@ -113,8 +162,23 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
       newTimeData.timeRange = { from, to, raw: { from, to } };
     }
 
+    if (compareWith) {
+      const option = DEFAULT_COMPARE_OPTIONS.find((x) => x.value === compareWith);
+      const text = option ? `compared to ${option.label.toLowerCase()}` : '';
+      infoBlocks.push(text);
+    }
+
+    newTimeData.timeInfo = capitalize(infoBlocks.join(' + '));
     return newTimeData;
   }
+
+  public onOpenSettings = () => {
+    const panel = this.parent;
+    const dashboard = getDashboardSceneFor(this);
+    if (panel instanceof VizPanel) {
+      dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
+    }
+  };
 }
 
 function PanelTimeRangeRenderer({ model }: SceneComponentProps<PanelTimeRange>) {
@@ -125,10 +189,15 @@ function PanelTimeRangeRenderer({ model }: SceneComponentProps<PanelTimeRange>) 
     return null;
   }
 
+  const onClick = config.featureToggles.panelTimeSettings ? model.onOpenSettings : undefined;
+
   return (
     <Tooltip content={<TimePickerTooltip timeRange={model.state.value} timeZone={model.getTimeZone()} />}>
-      <PanelChrome.TitleItem className={styles.timeshift}>
-        <Icon name="clock-nine" size="sm" /> {timeInfo}
+      <PanelChrome.TitleItem className={styles.timeshift} onClick={onClick}>
+        <Stack gap={1} alignItems={'center'}>
+          <Icon name="clock-nine" size="sm" />
+          <div>{timeInfo}</div>
+        </Stack>
       </PanelChrome.TitleItem>
     </Tooltip>
   );

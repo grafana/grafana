@@ -43,6 +43,7 @@ import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibra
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
+import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
 
 let getPluginExtensions: GetPluginExtensions;
 
@@ -279,6 +280,17 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     }
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
+
+    if (config.featureToggles.panelTimeSettings) {
+      items.push({
+        text: t('panel.header-menu.time-settings', 'Time settings'),
+        iconClassName: 'clock-nine',
+        onClick: (e) => {
+          e.preventDefault();
+          dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
+        },
+      });
+    }
 
     setupGetPluginExtensions();
 
