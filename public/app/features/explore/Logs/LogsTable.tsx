@@ -113,9 +113,10 @@ export function LogsTable(props: Props) {
   useEffect(() => {
     if (initialRowIndex !== undefined && tableFrame) {
       // Remove selectedLine from URL after initial render
-      const currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.delete('selectedLine');
-      window.history.replaceState({}, '', currentUrl.toString());
+      const params = urlUtil.getUrlSearchParams();
+      delete params.selectedLine;
+      const newUrl = urlUtil.renderUrl(window.location.pathname, params);
+      window.history.replaceState({}, '', newUrl);
     }
   }, [initialRowIndex, tableFrame]);
 
