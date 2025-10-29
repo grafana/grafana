@@ -26,6 +26,7 @@ interface Props {
   showDatasourceProvidedBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
   showDescriptionPlaceholder?: boolean; // Show placeholder when no description exists
+  buttonText?: React.ReactNode; // Optional custom button text, defaults to "Use template"
 }
 
 export function DashboardCard({
@@ -38,6 +39,7 @@ export function DashboardCard({
   showDatasourceProvidedBadge,
   dimThumbnail,
   showDescriptionPlaceholder,
+  buttonText,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -83,7 +85,7 @@ export function DashboardCard({
       </div>
       <Card.Actions className={styles.actionsContainer}>
         <Button variant="secondary" onClick={onClick}>
-          <Trans i18nKey="dashboard-template.card.use-template-button">Use template</Trans>
+          {buttonText || <Trans i18nKey="dashboard-template.card.use-template-button">Use template</Trans>}
         </Button>
         {details && (
           <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">

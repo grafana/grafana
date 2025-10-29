@@ -262,6 +262,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                   onClick={() => onUseCommunityDashboard(dashboard)}
                   isLogo={isLogo}
                   details={details}
+                  buttonText={<Trans i18nKey="dashboard-template.card.use-dashboard-button">Use dashboard</Trans>}
                 />
               );
             })}

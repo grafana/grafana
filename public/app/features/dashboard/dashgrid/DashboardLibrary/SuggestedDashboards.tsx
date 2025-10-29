@@ -287,6 +287,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
                   showDatasourceProvidedBadge={true}
                   dimThumbnail={true}
                   showDescriptionPlaceholder={true}
+                  buttonText={<Trans i18nKey="dashboard-template.card.use-dashboard-button">Use dashboard</Trans>}
                 />
               );
             } else {
@@ -305,6 +306,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
                   isLogo={isLogo}
                   details={details}
                   showDescriptionPlaceholder={true}
+                  buttonText={<Trans i18nKey="dashboard-template.card.use-dashboard-button">Use dashboard</Trans>}
                 />
               );
             }
