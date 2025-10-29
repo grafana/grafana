@@ -97,9 +97,6 @@ export function LogsTableWrap(props: Props) {
             fieldNames[key].index = index;
           }
         });
-
-        // Reorder to ensure special fields come first
-        fieldNames = reorderColumnsToEnsureSpecialFieldsFirst(fieldNames);
       }
       return fieldNames;
     },
@@ -109,6 +106,22 @@ export function LogsTableWrap(props: Props) {
   const getColumnsFromDisplayedFields = useCallback(
     (fieldNames: FieldNameMetaStore, columnIndex: number) => {
       const previouslySelected = props.panelState?.displayedFields;
+      const existingColumns = props.panelState?.columns;
+
+      if (!previouslySelected) {
+        return fieldNames;
+      }
+
+      // Check if displayedFields are already in columns
+      // If they are, don't re-sync (user is already using table view)
+      const allFieldsAlreadyInColumns = previouslySelected.every(
+        (field) => existingColumns && Object.values(existingColumns).includes(field)
+      );
+
+      if (allFieldsAlreadyInColumns) {
+        // Already synced, don't reorder
+        return fieldNames;
+      }
       if (previouslySelected) {
         Object.values(previouslySelected).forEach((key) => {
           columnIndex++;
@@ -117,13 +130,10 @@ export function LogsTableWrap(props: Props) {
             fieldNames[key].index = columnIndex;
           }
         });
-
-        // Reorder to ensure special fields come first
-        fieldNames = reorderColumnsToEnsureSpecialFieldsFirst(fieldNames);
       }
       return fieldNames;
     },
-    [props.panelState?.displayedFields]
+    [props.panelState?.displayedFields, props.panelState?.columns]
   );
 
   const logsFrame = useMemo(() => parseLogsFrame(currentDataFrame), [currentDataFrame]);
@@ -492,7 +502,6 @@ export function LogsTableWrap(props: Props) {
 
     let pendingLabelState: FieldNameMetaStore;
     if (isActive) {
-      // Activating a column - set temporary index and let reorder function handle proper placement
       pendingLabelState = {
         ...columnsWithMeta,
         [columnName]: {
@@ -501,9 +510,6 @@ export function LogsTableWrap(props: Props) {
           index: length,
         },
       };
-
-      // Reorder to ensure special fields come first
-      pendingLabelState = reorderColumnsToEnsureSpecialFieldsFirst(pendingLabelState);
     } else {
       // Deactivating a column
       pendingLabelState = {
@@ -514,9 +520,6 @@ export function LogsTableWrap(props: Props) {
           index: undefined,
         },
       };
-
-      // Reorder to ensure proper sequential indices
-      pendingLabelState = reorderColumnsToEnsureSpecialFieldsFirst(pendingLabelState);
     }
 
     // Analytics
@@ -539,9 +542,6 @@ export function LogsTableWrap(props: Props) {
             index: length,
           },
         };
-
-        // Reorder to ensure special fields come first
-        pendingFilteredLabelState = reorderColumnsToEnsureSpecialFieldsFirst(pendingFilteredLabelState);
       } else {
         pendingFilteredLabelState = {
           ...filteredColumnsWithMeta,
@@ -551,9 +551,6 @@ export function LogsTableWrap(props: Props) {
             index: undefined,
           },
         };
-
-        // Reorder to ensure proper sequential indices
-        pendingFilteredLabelState = reorderColumnsToEnsureSpecialFieldsFirst(pendingFilteredLabelState);
       }
 
       setFilteredColumnsWithMeta(pendingFilteredLabelState);
