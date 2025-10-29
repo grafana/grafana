@@ -57,7 +57,7 @@ export const DashboardLibrarySection = () => {
 
   const styles = useStyles2(getStyles);
 
-  const onImportDashboardClick = async (dashboard: PluginDashboard) => {
+  const onUseProvisionedDashboard = async (dashboard: PluginDashboard) => {
     DashboardLibraryInteractions.itemClicked({
       contentKind: 'datasource_dashboard',
       datasourceTypes: [dashboard.pluginId],
@@ -108,7 +108,7 @@ export const DashboardLibrarySection = () => {
                   title={dashboard.title}
                   imageUrl={imageUrl}
                   dashboard={dashboard}
-                  onClick={() => onImportDashboardClick(dashboard)}
+                  onClick={() => onUseProvisionedDashboard(dashboard)}
                 />
               );
             }) || []}

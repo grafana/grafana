@@ -111,7 +111,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   const showEmptyState = !loading && (!response?.dashboards || response.dashboards.length === 0);
   const showError = !loading && error;
 
-  const onUseDashboard = async (dashboard: GnetDashboard) => {
+  const onUseCommunityDashboard = async (dashboard: GnetDashboard) => {
     if (response) {
       DashboardLibraryInteractions.itemClicked({
         contentKind: 'community_dashboard',
@@ -259,7 +259,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                   title={dashboard.name}
                   imageUrl={imageUrl}
                   dashboard={dashboard}
-                  onClick={() => onUseDashboard(dashboard)}
+                  onClick={() => onUseCommunityDashboard(dashboard)}
                   isLogo={isLogo}
                   details={details}
                 />

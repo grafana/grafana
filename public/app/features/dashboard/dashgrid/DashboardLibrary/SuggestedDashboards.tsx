@@ -133,7 +133,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
     }
   }, [datasourceUid]);
 
-  const handleProvisionedClick = (dashboard: PluginDashboard) => {
+  const onUseProvisionedDashboard = (dashboard: PluginDashboard) => {
     if (!datasourceUid) {
       return;
     }
@@ -165,7 +165,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
     window.location.href = `/dashboard/template?${params.toString()}`;
   };
 
-  const handleCommunityClick = async (dashboard: GnetDashboard) => {
+  const onUseCommunityDashboard = async (dashboard: GnetDashboard) => {
     if (!datasourceUid) {
       return;
     }
@@ -278,7 +278,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
                   title={item.dashboard.title}
                   imageUrl={getProvisionedDashboardImageUrl(item.index)}
                   dashboard={item.dashboard}
-                  onClick={() => handleProvisionedClick(item.dashboard)}
+                  onClick={() => onUseProvisionedDashboard(item.dashboard)}
                   showDatasourceProvidedBadge={true}
                   dimThumbnail={true}
                 />
@@ -295,7 +295,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
                   title={item.dashboard.name}
                   imageUrl={imageUrl}
                   dashboard={item.dashboard}
-                  onClick={() => handleCommunityClick(item.dashboard)}
+                  onClick={() => onUseCommunityDashboard(item.dashboard)}
                   isLogo={isLogo}
                   details={details}
                 />
