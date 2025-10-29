@@ -40,7 +40,7 @@
             },
             "spec": {}
           },
-          "enable": true,
+          "enable": false,
           "hide": false,
           "iconColor": "",
           "name": "Default Annotation - Tests default datasource migration"
@@ -58,7 +58,7 @@
             },
             "spec": {}
           },
-          "enable": true,
+          "enable": false,
           "hide": false,
           "iconColor": "",
           "name": "Named Datasource Annotation - Tests migration by datasource name"
@@ -76,7 +76,7 @@
             },
             "spec": {}
           },
-          "enable": true,
+          "enable": false,
           "hide": false,
           "iconColor": "",
           "name": "UID Datasource Annotation - Tests migration by datasource UID"
@@ -94,7 +94,7 @@
             },
             "spec": {}
           },
-          "enable": true,
+          "enable": false,
           "hide": false,
           "iconColor": "",
           "name": "Null Datasource Annotation - Tests null datasource fallback to default"
@@ -112,7 +112,7 @@
             },
             "spec": {}
           },
-          "enable": true,
+          "enable": false,
           "hide": false,
           "iconColor": "",
           "name": "Unknown Datasource Annotation - Tests unknown datasource preserved as UID"
@@ -947,7 +947,7 @@
             "value": ""
           },
           "hide": "dontHide",
-          "refresh": "onDashboardLoad",
+          "refresh": "never",
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
@@ -975,7 +975,7 @@
             "value": ""
           },
           "hide": "dontHide",
-          "refresh": "onDashboardLoad",
+          "refresh": "never",
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
@@ -1003,7 +1003,7 @@
             "value": ""
           },
           "hide": "dontHide",
-          "refresh": "onDashboardLoad",
+          "refresh": "never",
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
@@ -1031,7 +1031,7 @@
             "value": ""
           },
           "hide": "dontHide",
-          "refresh": "onDashboardLoad",
+          "refresh": "never",
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
@@ -1056,8 +1056,8 @@
           "name": "non_query_var",
           "query": "",
           "current": {
-            "text": "",
-            "value": ""
+            "text": "undefined",
+            "value": null
           },
           "hide": "dontHide",
           "skipUrlSync": false

@@ -326,7 +326,7 @@
             "kind": "RowsLayoutRow",
             "spec": {
               "title": "",
-              "collapse": false,
+              "collapse": true,
               "hideHeader": true,
               "layout": {
                 "kind": "GridLayout",

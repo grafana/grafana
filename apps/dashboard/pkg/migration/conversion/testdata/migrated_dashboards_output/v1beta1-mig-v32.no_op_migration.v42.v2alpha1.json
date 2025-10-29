@@ -229,7 +229,7 @@
             "value": ""
           },
           "hide": "dontHide",
-          "refresh": "onDashboardLoad",
+          "refresh": "never",
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",

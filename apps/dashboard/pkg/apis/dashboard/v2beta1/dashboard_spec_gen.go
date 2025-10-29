@@ -1607,7 +1607,7 @@ type DashboardIntervalVariableSpec struct {
 	Auto        bool                      `json:"auto"`
 	AutoMin     string                    `json:"auto_min"`
 	AutoCount   int64                     `json:"auto_count"`
-	Refresh     DashboardVariableRefresh  `json:"refresh"`
+	Refresh     string                    `json:"refresh"`
 	Label       *string                   `json:"label,omitempty"`
 	Hide        DashboardVariableHide     `json:"hide"`
 	SkipUrlSync bool                      `json:"skipUrlSync"`
@@ -1631,7 +1631,7 @@ func NewDashboardIntervalVariableSpec() *DashboardIntervalVariableSpec {
 		Auto:        false,
 		AutoMin:     "",
 		AutoCount:   0,
-		Refresh:     DashboardVariableRefreshNever,
+		Refresh:     "onTimeRangeChanged",
 		Hide:        DashboardVariableHideDontHide,
 		SkipUrlSync: false,
 	}

@@ -38,7 +38,7 @@
             "kind": "DataQuery",
             "spec": {}
           },
-          "enable": true,
+          "enable": false,
           "hide": false,
           "iconColor": "",
           "name": "Default Annotation - Tests default datasource migration"
@@ -55,7 +55,7 @@
             "kind": "DataQuery",
             "spec": {}
           },
-          "enable": true,
+          "enable": false,
           "hide": false,
           "iconColor": "",
           "name": "Named Datasource Annotation - Tests migration by datasource name"
@@ -72,7 +72,7 @@
             "kind": "DataQuery",
             "spec": {}
           },
-          "enable": true,
+          "enable": false,
           "hide": false,
           "iconColor": "",
           "name": "UID Datasource Annotation - Tests migration by datasource UID"
@@ -89,7 +89,7 @@
             "kind": "DataQuery",
             "spec": {}
           },
-          "enable": true,
+          "enable": false,
           "hide": false,
           "iconColor": "",
           "name": "Null Datasource Annotation - Tests null datasource fallback to default"
@@ -106,7 +106,7 @@
             "kind": "DataQuery",
             "spec": {}
           },
-          "enable": true,
+          "enable": false,
           "hide": false,
           "iconColor": "",
           "name": "Unknown Datasource Annotation - Tests unknown datasource preserved as UID"
@@ -716,7 +716,7 @@
             "value": ""
           },
           "hide": "dontHide",
-          "refresh": "onDashboardLoad",
+          "refresh": "never",
           "skipUrlSync": false,
           "datasource": {
             "type": "prometheus",
@@ -743,7 +743,7 @@
             "value": ""
           },
           "hide": "dontHide",
-          "refresh": "onDashboardLoad",
+          "refresh": "never",
           "skipUrlSync": false,
           "datasource": {
             "type": "elasticsearch",
@@ -770,7 +770,7 @@
             "value": ""
           },
           "hide": "dontHide",
-          "refresh": "onDashboardLoad",
+          "refresh": "never",
           "skipUrlSync": false,
           "datasource": {
             "type": "elasticsearch",
@@ -797,7 +797,7 @@
             "value": ""
           },
           "hide": "dontHide",
-          "refresh": "onDashboardLoad",
+          "refresh": "never",
           "skipUrlSync": false,
           "datasource": {
             "type": "prometheus",
@@ -821,8 +821,8 @@
           "name": "non_query_var",
           "query": "",
           "current": {
-            "text": "",
-            "value": ""
+            "text": "undefined",
+            "value": null
           },
           "hide": "dontHide",
           "skipUrlSync": false

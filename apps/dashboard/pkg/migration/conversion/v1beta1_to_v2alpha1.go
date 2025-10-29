@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/conversion"
 
@@ -1203,6 +1204,32 @@ func buildConstantVariable(varMap map[string]interface{}, commonProps CommonVari
 
 // Interval Variable
 func buildIntervalVariable(varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
+	query := schemaversion.GetStringValue(varMap, "query")
+
+	// If query is missing/empty but options exist, generate query from options (matches frontend behavior)
+	if query == "" {
+		if options, ok := varMap["options"].([]interface{}); ok && len(options) > 0 {
+			queryValues := make([]string, 0, len(options))
+			for _, opt := range options {
+				if optMap, ok := opt.(map[string]interface{}); ok {
+					if value, exists := optMap["value"]; exists {
+						if valueStr, ok := value.(string); ok && valueStr != "" {
+							queryValues = append(queryValues, valueStr)
+						}
+					} else if text, exists := optMap["text"]; exists {
+						if textStr, ok := text.(string); ok && textStr != "" {
+							queryValues = append(queryValues, textStr)
+						}
+					}
+				}
+			}
+			if len(queryValues) > 0 {
+				// Join interval values with comma, matching frontend getIntervalsQueryFromNewIntervalModel
+				query = strings.Join(queryValues, ",")
+			}
+		}
+	}
+
 	intervalVar := &dashv2alpha1.DashboardIntervalVariableKind{
 		Kind: "IntervalVariable",
 		Spec: dashv2alpha1.DashboardIntervalVariableSpec{
@@ -1211,7 +1238,7 @@ func buildIntervalVariable(varMap map[string]interface{}, commonProps CommonVari
 			Description: commonProps.Description,
 			Hide:        commonProps.Hide,
 			SkipUrlSync: commonProps.SkipUrlSync,
-			Query:       schemaversion.GetStringValue(varMap, "query"),
+			Query:       query,
 			Current:     buildVariableCurrent(varMap["current"]),
 			Refresh:     dashv2alpha1.DashboardVariableRefreshOnTimeRangeChanged, // Always onTimeRangeChanged for interval
 			Auto:        getBoolField(varMap, "auto", false),

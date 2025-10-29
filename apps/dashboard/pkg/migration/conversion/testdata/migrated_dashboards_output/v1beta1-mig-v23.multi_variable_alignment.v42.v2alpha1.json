@@ -320,7 +320,7 @@
         "spec": {
           "name": "datasource_variable",
           "pluginId": "default-ds-uid",
-          "refresh": "onDashboardLoad",
+          "refresh": "never",
           "regex": "",
           "current": {
             "text": [

@@ -91,7 +91,17 @@ export function createSnapshotVariable(variable: TypedVariableModel): SceneVaria
   let snapshotVariable: SnapshotVariable;
   let current: { value: string | string[]; text: string | string[] };
   if (variable.type === 'interval') {
-    const intervals = getIntervalsFromQueryString(variable.query);
+    // If query is missing, extract intervals from options instead of using defaults
+    let intervals: string[];
+    if (variable.query) {
+      intervals = getIntervalsFromQueryString(variable.query);
+    } else if (variable.options && variable.options.length > 0) {
+      // Extract intervals from options when query is missing
+      intervals = variable.options.map((opt) => String(opt.value || opt.text)).filter(Boolean);
+    } else {
+      // Fallback to default intervals only if both query and options are missing
+      intervals = getIntervalsFromQueryString('');
+    }
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     snapshotVariable = new SnapshotVariable({
       name: variable.name,
@@ -217,7 +227,17 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     });
     // Interval variable
   } else if (variable.type === 'interval') {
-    const intervals = getIntervalsFromQueryString(variable.query);
+    // If query is missing, extract intervals from options instead of using defaults
+    let intervals: string[];
+    if (variable.query) {
+      intervals = getIntervalsFromQueryString(variable.query);
+    } else if (variable.options && variable.options.length > 0) {
+      // Extract intervals from options when query is missing (matches backend behavior)
+      intervals = variable.options.map((opt) => String(opt.value || opt.text)).filter(Boolean);
+    } else {
+      // Fallback to default intervals only if both query and options are missing
+      intervals = getIntervalsFromQueryString('');
+    }
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     return new IntervalVariable({
       ...commonProperties,

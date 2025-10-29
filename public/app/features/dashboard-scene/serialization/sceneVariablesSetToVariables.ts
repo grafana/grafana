@@ -29,6 +29,7 @@ import {
   defaultDataQueryKind,
   AdHocFilterWithLabels,
   SwitchVariableKind,
+  defaultIntervalVariableSpec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 
@@ -454,15 +455,15 @@ export function sceneVariablesSetToSchemaV2Variables(
             text: variable.state.value,
           },
           query: intervals,
-          refresh: 'onTimeRangeChanged',
+          refresh: defaultIntervalVariableSpec().refresh,
           options: variable.state.intervals.map((interval) => ({
             value: interval,
             text: interval,
             selected: interval === variable.state.value,
           })),
-          auto: variable.state.autoEnabled,
-          auto_min: variable.state.autoMinInterval,
-          auto_count: variable.state.autoStepCount,
+          auto: variable.state.autoEnabled ?? defaultIntervalVariableSpec().auto,
+          auto_min: variable.state.autoMinInterval ?? defaultIntervalVariableSpec().auto_min,
+          auto_count: variable.state.autoStepCount ?? defaultIntervalVariableSpec().auto_count,
         },
       };
       variables.push(intervalVariable);

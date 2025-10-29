@@ -870,7 +870,7 @@ IntervalVariableSpec: {
 	auto:         bool | *false
 	auto_min:     string | *""
 	auto_count:   int | *0
-	refresh:      VariableRefresh
+	refresh:      "onTimeRangeChanged"
 	label?:       string
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
