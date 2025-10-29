@@ -62,14 +62,15 @@ export function trackDashboardSceneCreatedOrSaved(
 
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
 
-  const dashboardLibraryProperties = config.featureToggles.dashboardLibrary
-    ? {
-        datasourceTypes: [pluginId],
-        sourceEntryPoint,
-        libraryItemId,
-        creationOrigin,
-      }
-    : {};
+  const dashboardLibraryProperties =
+    config.featureToggles.dashboardLibrary || config.featureToggles.dashboardTemplates
+      ? {
+          datasourceTypes: [pluginId],
+          sourceEntryPoint,
+          libraryItemId,
+          creationOrigin,
+        }
+      : {};
 
   DashboardInteractions.dashboardCreatedOrSaved(isNew, {
     ...initialProperties,

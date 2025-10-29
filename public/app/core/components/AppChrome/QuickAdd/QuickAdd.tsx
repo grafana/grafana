@@ -20,7 +20,7 @@ export const QuickAdd = ({}: Props) => {
     const createActions = findCreateActions(navBarTree);
 
     const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
-    const renderPreBuiltDashboardAction = testDataSources.length > 0 && config.featureToggles.dashboardLibrary;
+    const renderPreBuiltDashboardAction = testDataSources.length > 0 && config.featureToggles.dashboardTemplates;
     if (renderPreBuiltDashboardAction) {
       createActions.splice(1, 0, {
         id: 'browse-template-dashboard',

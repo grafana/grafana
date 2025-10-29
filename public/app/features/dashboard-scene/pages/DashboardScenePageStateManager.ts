@@ -417,7 +417,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       const scene = transformSaveModelToScene(rsp);
 
       // Special handling for Template route - set up edit mode and dirty state
-      if (config.featureToggles.dashboardLibrary && options.route === DashboardRoutes.Template) {
+      if (
+        (config.featureToggles.dashboardLibrary || config.featureToggles.dashboardTemplates) &&
+        options.route === DashboardRoutes.Template
+      ) {
         scene.setInitialSaveModel(rsp.dashboard, rsp.meta);
         scene.onEnterEditMode();
         scene.setState({ isDirty: true });

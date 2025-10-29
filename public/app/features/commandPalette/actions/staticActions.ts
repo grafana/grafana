@@ -145,7 +145,7 @@ export function useStaticActions(): CommandPaletteAction[] {
     const navBarActions = navTreeToActions(navBarTree);
 
     const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
-    const renderPreBuiltDashboardAction = testDataSources.length > 0 && config.featureToggles.dashboardLibrary;
+    const renderPreBuiltDashboardAction = testDataSources.length > 0 && config.featureToggles.dashboardTemplates;
     if (renderPreBuiltDashboardAction) {
       navBarActions.splice(1, 0, {
         id: 'browse-template-dashboard',
