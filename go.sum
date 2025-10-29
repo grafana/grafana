@@ -1612,7 +1612,7 @@ github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 h1:jSojuc7njleS3UOz2
 github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4/go.mod h1:VahT+GtfQIM+o8ht2StR6J9g+Ef+C2Vokh5uuSmOD/4=
 github.com/grafana/e2e v0.1.1 h1:/b6xcv5BtoBnx8cZnCiey9DbjEc8z7gXHO5edoeRYxc=
 github.com/grafana/e2e v0.1.1/go.mod h1:RpNLgae5VT+BUHvPE+/zSypmOXKwEu4t+tnEMS1ATaE=
-github.com/grafana/go-mysql-server v0.20.1-0.20251027172658-317a8d46ffa4 h1:UrmJ5qDwjOab/ol1eI2x6RAO92QIKJACiRG55Px3jBE=
+github.com/grafana/go-mysql-server v0.20.1-grafana1 h1:yA4Mzt+tTdIlQutBUaiPnepULPQ7CS4hMu2GOpHqT6s=
 github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f h1:5xkjl5Y/j2QefJKOtTfyD1wXlVsQ2yEXmd0u82h5obs=
 github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f/go.mod h1:+O5QxOwwgP10jedZHapzXY+IPKTnzHBtIs5UUb9G+kI=
 github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d h1:oXRJlb9UjVsl6LhqBdbyAQ9YFhExwsj4bjh5vwMNRZY=
