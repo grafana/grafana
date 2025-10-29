@@ -25,7 +25,6 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
-	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
@@ -247,7 +246,7 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 	op := a.GetOperation()
 
 	switch a.GetResource().Resource {
-	case dashboardV0.DASHBOARD_RESOURCE:
+	case dashv0.DASHBOARD_RESOURCE:
 		// Handle different operations
 		switch op {
 		case admission.Delete:
@@ -260,7 +259,7 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 			return nil
 		}
 
-	case dashboardV0.LIBRARY_PANEL_RESOURCE:
+	case dashv0.LIBRARY_PANEL_RESOURCE:
 		return nil // OK for now
 	}
 
@@ -658,8 +657,9 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		return err
 	}
 
-	// Expose read only library panels
-	if libraryPanels != nil {
+	// Expose read library panels
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if libraryPanels != nil && b.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		legacyLibraryStore := &LibraryPanelStore{
 			Access:       b.legacy.Access,
 			ResourceInfo: *libraryPanels,
