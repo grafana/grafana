@@ -509,3 +509,13 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
+export const {
+  useGetApiResourcesQuery,
+  useListCorrelationQuery,
+  useCreateCorrelationMutation,
+  useDeletecollectionCorrelationMutation,
+  useGetCorrelationQuery,
+  useReplaceCorrelationMutation,
+  useDeleteCorrelationMutation,
+  useUpdateCorrelationMutation,
+} = injectedRtkApi;
