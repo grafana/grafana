@@ -1496,21 +1496,14 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 		}
 	}
 
-	// Only include iconColor if it exists in the input (matching frontend behavior)
-	var iconColor string
-	if iconColorVal, ok := annotationMap["iconColor"]; ok {
-		if iconColorStr, ok := iconColorVal.(string); ok {
-			iconColor = iconColorStr
-		}
-	}
-
+	defaultAnnotationQuerySpec := dashv2alpha1.NewDashboardAnnotationQuerySpec()
 	spec := dashv2alpha1.DashboardAnnotationQuerySpec{
 		Name:       schemaversion.GetStringValue(annotationMap, "name"),
 		Datasource: datasourceRef,
 		Query:      query,
-		Enable:     getBoolField(annotationMap, "enable", true),
-		Hide:       getBoolField(annotationMap, "hide", false),
-		IconColor:  iconColor,
+		Enable:     getBoolField(annotationMap, "enable", defaultAnnotationQuerySpec.Enable), // Default to false to match frontend: Boolean(annotation.enable) || Boolean(override?.enable)
+		Hide:       getBoolField(annotationMap, "hide", defaultAnnotationQuerySpec.Hide),
+		IconColor:  schemaversion.GetStringValue(annotationMap, "iconColor", defaultAnnotationQuerySpec.IconColor),
 		BuiltIn:    builtInPtr,
 		Filter:     filter,
 	}
