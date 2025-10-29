@@ -49,10 +49,15 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 	maxPanelID := getMaxPanelID(rows)
 	nextRowID := maxPanelID + 1
 
-	// Get existing panels
-	var finalPanels []interface{}
-	if existingPanels, ok := dashboard["panels"].([]interface{}); ok {
-		finalPanels = existingPanels
+	// Match frontend: dashboard.panels already exists with top-level panels
+	// The frontend's this.dashboard.panels is initialized in the constructor with existing panels
+	// Then upgradeToGridLayout adds more panels to it
+
+	// Initialize panels array - make a copy to avoid modifying the original
+	panels := []interface{}{}
+	if existingPanels, ok := dashboard["panels"].([]interface{}); ok && len(existingPanels) > 0 {
+		// Copy existing panels to preserve order
+		panels = append(panels, existingPanels...)
 	}
 
 	// Add special "row" panels if even one row is collapsed, repeated or has visible title (line 1028 in TS)
@@ -72,7 +77,14 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 
 		height := getRowHeight(row)
 		rowGridHeight := getGridHeight(height)
-		isCollapsed := GetBoolValue(row, "collapse")
+		// Check if collapse property exists and get its value
+		collapseValue, hasCollapseProperty := row["collapse"]
+		isCollapsed := false
+		if hasCollapseProperty {
+			if b, ok := collapseValue.(bool); ok {
+				isCollapsed = b
+			}
+		}
 
 		var rowPanel map[string]interface{}
 
@@ -110,9 +122,9 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 				},
 			}
 
-			// Set collapsed property only if the original row had a collapse property
-			// This matches the frontend behavior: rowPanel.collapsed = row.collapse
-			if _, hasCollapse := row["collapse"]; hasCollapse {
+			// Match frontend behavior: rowPanel.collapsed = row.collapse (line 1065 in TS)
+			// Only set collapsed property if the original row had a collapse property
+			if hasCollapseProperty {
 				rowPanel["collapsed"] = isCollapsed
 			}
 			nextRowID++
@@ -128,19 +140,13 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 				continue
 			}
 
-			// Check if panel already has gridPos but no valid span
-			// If span is missing or zero, and gridPos exists, preserve gridPos dimensions
-			var panelWidth, panelHeight int
+			// Match frontend logic: panel.span = panel.span || DEFAULT_PANEL_SPAN (line 1082 in TS)
 			span := GetFloatValue(panel, "span", 0)
-			existingGridPos, hasGridPos := panel["gridPos"].(map[string]interface{})
-
-			if hasGridPos && span == 0 {
-				// Panel already has gridPos but no valid span - preserve its dimensions
-				panelWidth = GetIntValue(existingGridPos, "w", int(defaultPanelSpan*widthFactor))
-				panelHeight = GetIntValue(existingGridPos, "h", rowGridHeight)
-			} else {
-				panelWidth, panelHeight = calculatePanelDimensionsFromSpan(span, panel, widthFactor, rowGridHeight)
+			if span == 0 {
+				span = defaultPanelSpan
 			}
+
+			panelWidth, panelHeight := calculatePanelDimensionsFromSpan(span, panel, widthFactor, rowGridHeight)
 
 			panelPos := rowArea.getPanelPosition(panelHeight, panelWidth)
 			yPos = rowArea.yPos
@@ -157,21 +163,21 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 			// Remove span (line 1080 in TS)
 			delete(panel, "span")
 
-			// Exact logic from lines 1082-1086 in TS
+			// Match frontend logic: lines 1101-1105 in TS
 			if rowPanel != nil && isCollapsed {
-				// Add to collapsed row's nested panels
+				// Add to collapsed row's nested panels (line 1102)
 				if rowPanelPanels, ok := rowPanel["panels"].([]interface{}); ok {
 					rowPanel["panels"] = append(rowPanelPanels, panel)
 				}
 			} else {
-				// Add directly to dashboard panels
-				finalPanels = append(finalPanels, panel)
+				// Add directly to panels array like frontend (line 1104)
+				panels = append(panels, panel)
 			}
 		}
 
-		// Add row panel after processing all panels (lines 1089-1091 in TS)
+		// Add row panel after regular panels from this row (lines 1108-1110 in TS)
 		if rowPanel != nil {
-			finalPanels = append(finalPanels, rowPanel)
+			panels = append(panels, rowPanel)
 		}
 
 		// Update yPos (lines 1093-1095 in TS)
@@ -181,7 +187,7 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 	}
 
 	// Update the dashboard
-	dashboard["panels"] = finalPanels
+	dashboard["panels"] = panels
 	delete(dashboard, "rows")
 }
 
@@ -265,19 +271,30 @@ func (r *rowArea) getPanelPosition(panelHeight int, panelWidth int) map[string]i
 
 func getMaxPanelID(rows []interface{}) int {
 	maxID := 0
+	hasValidID := false
+
 	for _, rowInterface := range rows {
 		if row, ok := rowInterface.(map[string]interface{}); ok {
 			if panels, ok := row["panels"].([]interface{}); ok {
 				for _, panelInterface := range panels {
 					if panel, ok := panelInterface.(map[string]interface{}); ok {
-						if id := GetIntValue(panel, "id", 0); id > maxID {
-							maxID = id
+						if id := GetIntValue(panel, "id", 0); id > 0 {
+							hasValidID = true
+							if id > maxID {
+								maxID = id
+							}
 						}
 					}
 				}
 			}
 		}
 	}
+
+	// If no valid IDs found, return 0 (matches frontend behavior)
+	if !hasValidID {
+		return 0
+	}
+
 	return maxID
 }
 
@@ -313,10 +330,7 @@ func getGridHeight(height float64) int {
 }
 
 func calculatePanelDimensionsFromSpan(span float64, panel map[string]interface{}, widthFactor float64, defaultHeight int) (int, int) {
-	// Set default span if still 0
-	if span == 0 {
-		span = defaultPanelSpan
-	}
+	// span should already be normalized by caller (line 1082 in DashboardMigrator.ts)
 
 	if minSpan, hasMinSpan := panel["minSpan"]; hasMinSpan {
 		if minSpanFloat, ok := ConvertToFloat(minSpan); ok && minSpanFloat > 0 {
@@ -324,7 +338,9 @@ func calculatePanelDimensionsFromSpan(span float64, panel map[string]interface{}
 		}
 	}
 
-	panelWidth := int(math.Floor(span * widthFactor))
+	// Match frontend logic: Math.floor(panel.span) * widthFactor (line 914 in DashboardMigrator.ts)
+	// Frontend floors the span FIRST, then multiplies by widthFactor
+	panelWidth := int(math.Floor(span)) * int(widthFactor)
 	panelHeight := defaultHeight
 
 	if panelHeightValue, hasHeight := panel["height"]; hasHeight {

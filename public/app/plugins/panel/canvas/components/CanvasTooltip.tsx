@@ -127,7 +127,8 @@ export const CanvasTooltip = ({ scene }: Props) => {
       scopedVars,
       scene.panel.props.replaceVariables!,
       element.options.actions ?? [],
-      config
+      config,
+      'canvas'
     );
 
     actionsModel.forEach((action) => {

@@ -303,6 +303,14 @@ export interface FeatureToggles {
   */
   kubernetesHistory?: boolean;
   /**
+  * Adds support for Kubernetes logs drilldown
+  */
+  kubernetesLogsDrilldown?: boolean;
+  /**
+  * Adds support for Kubernetes querycaching
+  */
+  kubernetesQueryCaching?: boolean;
+  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
@@ -326,6 +334,10 @@ export interface FeatureToggles {
   * Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
   */
   queryService?: boolean;
+  /**
+  * Adds datasource connections to the query service
+  */
+  queryServiceWithConnections?: boolean;
   /**
   * Rewrite requests targeting /ds/query to the query service
   */
@@ -395,6 +407,10 @@ export interface FeatureToggles {
   * Enables undo/redo in dynamic dashboards
   */
   dashboardUndoRedo?: boolean;
+  /**
+  * Enables unlimited dashboard panel grouping
+  */
+  unlimitedLayoutsNesting?: boolean;
   /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
@@ -487,11 +503,6 @@ export interface FeatureToggles {
   * @default false
   */
   useMultipleScopeNodesEndpoint?: boolean;
-  /**
-  * In-development feature that will allow injection of labels into prometheus queries.
-  * @default true
-  */
-  promQLScope?: boolean;
   /**
   * In-development feature that will allow injection of labels into loki queries.
   * @default false
@@ -614,6 +625,10 @@ export interface FeatureToggles {
   */
   zanzana?: boolean;
   /**
+  * Use openFGA as main authorization engine and disable legacy RBAC clietn.
+  */
+  zanzanaNoLegacyClient?: boolean;
+  /**
   * Enables reload of dashboards on scopes, time range and variables changes
   */
   reloadDashboardsOnParamsChange?: boolean;
@@ -700,10 +715,6 @@ export interface FeatureToggles {
   * Enable sprinkles on unified storage search
   */
   unifiedStorageSearchSprinkles?: boolean;
-  /**
-  * Use full n-gram indexing instead of edge n-gram for unified storage search
-  */
-  unifiedStorageUseFullNgram?: boolean;
   /**
   * Pick the dual write mode from database configs
   */
@@ -974,10 +985,6 @@ export interface FeatureToggles {
   */
   multiTenantTempCredentials?: boolean;
   /**
-  * Enables localization for plugins
-  */
-  localizationForPlugins?: boolean;
-  /**
   * Enables unified navbars
   * @default false
   */
@@ -1035,6 +1042,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzResourcePermissionApis?: boolean;
   /**
+  * Enable sync of Zanzana authorization store on AuthZ CRD mutations
+  */
+  kubernetesAuthzZanzanaSync?: boolean;
+  /**
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
   kubernetesAuthnMutation?: boolean;
@@ -1043,11 +1054,6 @@ export interface FeatureToggles {
   * @default false
   */
   restoreDashboards?: boolean;
-  /**
-  * Skip token rotation if it was already rotated less than 5 seconds ago
-  * @default true
-  */
-  skipTokenRotationIfRecent?: boolean;
   /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
@@ -1098,15 +1104,15 @@ export interface FeatureToggles {
   */
   enableAppChromeExtensions?: boolean;
   /**
+  * Set this to true to enable all dashboard empty state extensions registered by plugins.
+  * @default false
+  */
+  enableDashboardEmptyExtensions?: boolean;
+  /**
   * Enables use of app platform API for folders
   * @default false
   */
   foldersAppPlatformAPI?: boolean;
-  /**
-  * Set this to true to use the new PluginImporter functionality
-  * @default false
-  */
-  enablePluginImporter?: boolean;
   /**
   * Applies OTel formatting templates to displayed logs
   */
@@ -1116,11 +1122,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistory?: boolean;
-  /**
-  * Allows decoupled core plugins to load from the Grafana CDN
-  * @default false
-  */
-  pluginAssetProvider?: boolean;
   /**
   * Enable dual reader for unified storage search
   */
@@ -1167,6 +1168,10 @@ export interface FeatureToggles {
   */
   teamFolders?: boolean;
   /**
+  * Enables the interactive learning app
+  */
+  interactiveLearning?: boolean;
+  /**
   * Enables the alerting triage feature
   * @default false
   */
@@ -1197,11 +1202,6 @@ export interface FeatureToggles {
   */
   tempoSearchBackendMigration?: boolean;
   /**
-  * Filter out bots from collecting data for Frontend Observability
-  * @default false
-  */
-  filterOutBotsFromFrontendLogs?: boolean;
-  /**
   * Prioritize loading plugins from the CDN before other sources
   * @default false
   */
@@ -1211,4 +1211,37 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsUrls?: boolean;
+  /**
+  * Enable syncing plugin installations to the installs API
+  * @default false
+  */
+  pluginInstallAPISync?: boolean;
+  /**
+  * Enable new gauge visualization
+  * @default false
+  */
+  newGauge?: boolean;
+  /**
+  * Restrict PanelChrome contents with overflow: hidden;
+  * @default true
+  */
+  preventPanelChromeOverflow?: boolean;
+  /**
+  * Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
+  * @default false
+  */
+  pluginStoreServiceLoading?: boolean;
+  /**
+  * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
+  * @default true
+  */
+  onlyStoreActionSets?: boolean;
+  /**
+  * Enables a new panel time settings drawer
+  */
+  panelTimeSettings?: boolean;
+  /**
+  * Enable template dashboards
+  */
+  dashboardTemplates?: boolean;
 }

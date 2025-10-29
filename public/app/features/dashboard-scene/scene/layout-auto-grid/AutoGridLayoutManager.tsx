@@ -16,6 +16,7 @@ import {
 } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
+import { DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -38,10 +39,7 @@ export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
 export const AUTO_GRID_DEFAULT_COLUMN_WIDTH = 'standard';
 export const AUTO_GRID_DEFAULT_ROW_HEIGHT = 'standard';
 
-export class AutoGridLayoutManager
-  extends SceneObjectBase<AutoGridLayoutManagerState>
-  implements DashboardLayoutManager
-{
+export class AutoGridLayoutManager extends SceneObjectBase<AutoGridLayoutManagerState> implements DashboardLayoutGrid {
   public static Component = AutoGridLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;
@@ -198,6 +196,21 @@ export class AutoGridLayoutManager
         children: clonedChildren,
       }),
     });
+  }
+
+  public mergeGrid(other: DashboardLayoutGrid) {
+    const sourceLayout =
+      other instanceof AutoGridLayoutManager
+        ? other.state.layout
+        : AutoGridLayoutManager.createFromLayout(other).state.layout;
+    const movedChildren = [...sourceLayout.state.children];
+
+    // Remove from source and append to destination
+    sourceLayout.setState({ children: [] });
+    movedChildren.forEach((child) => {
+      child.clearParent();
+    });
+    this.state.layout.setState({ children: [...this.state.layout.state.children, ...movedChildren] });
   }
 
   public duplicatePanel(panel: VizPanel) {

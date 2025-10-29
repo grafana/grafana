@@ -85,9 +85,9 @@
         "tooltip-classic-query": "A implementação original do editor de consultas variáveis do Prometheus. Insira uma string com o tipo de consulta e os parâmetros corretos, conforme descrito nesta documentação. Por exemplo, {{exampleQuery}}.",
         "tooltip-label": "Retorna uma lista de valores de rótulo para o nome do rótulo em todas as métricas, a menos que a métrica seja especificada.",
         "tooltip-metric-regex": "Retorna uma lista de nomes de rótulos, havendo a opção de filtrar por métrica regex especificada.",
-        "tooltip-query": "Retorna uma lista de resultados de consulta do Prometheus para a consulta. Isso pode incluir funções do Prometheus, como {{exampleQuery}}.",
+        "tooltip-query": "",
         "tooltip-query-type": "O plug-in de fonte de dados do Prometheus fornece os seguintes tipos de consulta para variáveis de modelo.",
-        "tooltip-series-query": "Insira uma métrica com rótulos, apenas uma métrica ou apenas rótulos, como {{example1}}, {{example2}} ou {{example3}}. Retorna uma lista de séries temporais associadas aos dados inseridos."
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "seletor",
@@ -175,16 +175,16 @@
         "label-scrape-interval": "Intervalo de coleta",
         "label-series-limit": "Limite de série",
         "label-use-series-endpoint": "Usar endpoint da série",
-        "more-info": "Para mais informações sobre como configurar o tipo e a versão do Prometheus em fontes de dados, consulte a <2>documentação de provisionamento</2>.",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "Exemplo: {{example}}",
         "title-interval-behaviour": "Comportamento de intervalo",
         "title-other": "Outro",
         "title-performance": "Desempenho",
         "title-query-editor": "Editor de consultas",
         "tooltip-cache-level": "Define o nível de cache do navegador para consultas do editor. Recomenda-se usar configurações de cache mais elevadas para fontes de dados de alta cardinalidade.",
-        "tooltip-custom-query-parameters": "Adicione parâmetros personalizados ao URL de consulta do Prometheus. Por exemplo, {{example1}}, {{example2}}, {{example3}} ou{{example4}}. Vários parâmetros devem ser concatenados com {{concatenationChar}}.",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "Defina a opção de editor padrão para todos os usuários desta fonte de dados.",
-        "tooltip-disable-metrics-lookup": "Marcar esta opção desativará o seletor de métricas e a compatibilidade com métricas/rótulos no preenchimento automático do campo de consulta. Isso é útil se você tiver problemas de desempenho com instâncias maiores do Prometheus. ",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "Este recurso desativará as regras de registro. Ative o recurso para aprimorar o desempenho do painel",
         "tooltip-http-method": "Você pode usar o método HTTP POST ou GET para consultar sua fonte de dados do Prometheus. POST é o método recomendado por permitir consultas maiores. Altere para GET se sua versão do Prometheus for anterior à versão 2.1 ou se as solicitações POST estiverem restritas na sua rede.",
         "tooltip-incremental-querying-beta": "Este recurso alterará o comportamento padrão das consultas relativas: os dados recentes deixam de ser sempre solicitados da instância do Prometheus e passam a utilizar dados em cache e a solicitar apenas novos registros. Ative o recurso para diminuir a carga do banco de dados e da rede.",
@@ -479,18 +479,13 @@
         "aria-label-selector": "seletor"
       },
       "results-table": {
-        "content-descriptive-type": "Ao criar um {{descriptiveType}}, o Prometheus expõe várias séries com o contador de tipos. ",
+        "content-descriptive-type": "",
         "description": "Descrição",
         "message-expand-label-filters": "Não há métricas encontradas. Tente expandir seus filtros de rótulo.",
         "message-expand-search": "Não há métricas encontradas. Tente expandir sua busca e filtros.",
         "message-no-metrics-found": "Não há métricas encontradas na fonte de dados.",
         "name": "Nome",
         "type": "Tipo"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "A análise da consulta é ambígua."
-        }
       }
     }
   }

@@ -26,7 +26,6 @@ const (
 	WeightCloudServiceProviders
 	WeightInfrastructure
 	WeightApplication
-	WeightFrontend
 	WeightAsserts
 	WeightDataConnections
 	WeightApps
@@ -154,14 +153,6 @@ func Sort(nodes []*NavLink) {
 
 	for _, child := range nodes {
 		child.Sort()
-	}
-}
-
-func (root *NavTreeRoot) ApplyHelpVersion(version string) {
-	helpNode := root.FindById("help")
-
-	if helpNode != nil {
-		helpNode.SubTitle = version
 	}
 }
 

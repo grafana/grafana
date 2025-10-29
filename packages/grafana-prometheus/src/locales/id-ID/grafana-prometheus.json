@@ -85,9 +85,9 @@
         "tooltip-classic-query": "Implementasi awal dari editor kueri variabel Prometheus. Masukkan string dengan jenis kueri dan parameter yang benar seperti yang dijelaskan dalam dokumen ini. Misalnya, {{exampleQuery}}.",
         "tooltip-label": "Mengembalikan daftar nilai label untuk nama label di semua metrik kecuali metrik tersebut ditentukan.",
         "tooltip-metric-regex": "Mengembalikan daftar nama label, secara opsional menyaring berdasarkan regex metrik yang ditentukan.",
-        "tooltip-query": "Mengembalikan daftar hasil kueri Prometheus untuk kueri tersebut. Ini dapat mencakup fungsi Prometheus, yaitu {{exampleQuery}}.",
+        "tooltip-query": "",
         "tooltip-query-type": "Plugin sumber data Prometheus menyediakan jenis kueri berikut untuk variabel templat.",
-        "tooltip-series-query": "Masukkan metrik dengan label, hanya metrik atau hanya label, yaitu {{example1}}, {{example2}}, atau {{example3}}. Mengembalikan daftar deret waktu yang terkait dengan data yang dimasukkan."
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "selektor",
@@ -175,16 +175,16 @@
         "label-scrape-interval": "Interval scrape",
         "label-series-limit": "Batas data seri",
         "label-use-series-endpoint": "Gunakan titik akhir data seri",
-        "more-info": "Untuk informasi lengkap tentang mengonfigurasi jenis dan versi prometheus dalam sumber data, lihat <2>dokumentasi penyediaan</2>.",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "Contoh: {{example}}",
         "title-interval-behaviour": "Perilaku interval",
         "title-other": "Lainnya",
         "title-performance": "Kinerja",
         "title-query-editor": "Editor kueri",
         "tooltip-cache-level": "Mengatur level cache peramban untuk kueri editor. Pengaturan cache yang lebih tinggi disarankan untuk sumber data dengan kardinalitas tinggi.",
-        "tooltip-custom-query-parameters": "Tambahkan parameter kustom ke URL kueri Prometheus. Misalnya {{example1}}, {{example2}}, {{example3}}, atau {{example4}}. Beberapa parameter harus digabungkan bersama dengan {{concatenationChar}}.",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "Atur opsi editor default untuk semua pengguna sumber data ini.",
-        "tooltip-disable-metrics-lookup": "Memeriksa opsi ini akan menonaktifkan pemilih metrik dan dukungan metrik/label dalam pelengkapan otomatis bidang kueri. Ini membantu jika Anda memiliki masalah kinerja dengan instans Prometheus yang lebih besar. ",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "Fitur ini akan menonaktifkan aturan perekaman. Aktifkan ini untuk meningkatkan kinerja dasbor",
         "tooltip-http-method": "Anda dapat menggunakan metode HTTP POST atau GET untuk melakukan kueri sumber data Prometheus Anda. POST adalah metode yang disarankan karena memungkinkan kueri yang lebih besar. Ubah ini menjadi GET jika Anda memiliki versi Prometheus yang lebih lama dari 2.1 atau jika permintaan POST dibatasi di jaringan Anda.",
         "tooltip-incremental-querying-beta": "Fitur ini akan mengubah perilaku default kueri relatif: alih-alih selalu meminta data terbaru dari instans Prometheus, hasil kueri akan disimpan sementara, dan hanya data baru yang akan diminta. Aktifkan ini untuk mengurangi beban basis data dan jaringan.",
@@ -479,18 +479,13 @@
         "aria-label-selector": "selektor"
       },
       "results-table": {
-        "content-descriptive-type": "Saat membuat {{descriptiveType}}, Prometheus mengekspos beberapa data seri dengan penghitung jenis. ",
+        "content-descriptive-type": "",
         "description": "Deskripsi",
         "message-expand-label-filters": "Tidak ada metrik yang ditemukan. Coba perluas filter label Anda.",
         "message-expand-search": "Tidak ada metrik yang ditemukan. Coba perluas pencarian dan filter Anda.",
         "message-no-metrics-found": "Tidak ada metrik yang ditemukan di sumber data.",
         "name": "Nama",
         "type": "Jenis"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Penguraian kueri mengalami masalah ketidakjelasan."
-        }
       }
     }
   }

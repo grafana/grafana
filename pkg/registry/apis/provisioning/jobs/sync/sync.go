@@ -12,7 +12,7 @@ import (
 )
 
 //go:generate mockery --name FullSyncFn --structname MockFullSyncFn --inpackage --filename full_sync_fn_mock.go --with-expecter
-type FullSyncFn func(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error
+type FullSyncFn func(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int) error
 
 //go:generate mockery --name CompareFn --structname MockCompareFn --inpackage --filename compare_fn_mock.go --with-expecter
 type CompareFn func(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string) ([]ResourceFileChange, error)
@@ -30,14 +30,16 @@ type syncer struct {
 	fullSync        FullSyncFn
 	incrementalSync IncrementalSyncFn
 	tracer          tracing.Tracer
+	maxSyncWorkers  int
 }
 
-func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync IncrementalSyncFn, tracer tracing.Tracer) Syncer {
+func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync IncrementalSyncFn, tracer tracing.Tracer, maxSyncWorkers int) Syncer {
 	return &syncer{
 		compare:         compare,
 		fullSync:        fullSync,
 		incrementalSync: incrementalSync,
 		tracer:          tracer,
+		maxSyncWorkers:  maxSyncWorkers,
 	}
 }
 
@@ -61,5 +63,5 @@ func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options
 
 	progress.SetMessage(ctx, "full sync")
 
-	return currentRef, r.fullSync(ctx, repo, r.compare, clients, currentRef, repositoryResources, progress, r.tracer)
+	return currentRef, r.fullSync(ctx, repo, r.compare, clients, currentRef, repositoryResources, progress, r.tracer, r.maxSyncWorkers)
 }

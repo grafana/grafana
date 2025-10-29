@@ -131,19 +131,22 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 		searchstore.OrgFilter{OrgId: query.OrgID},
 	}
 
+	var dashboardUIDs []string
 	if query.DashboardUID != "" {
+		dashboardUIDs = append(dashboardUIDs, query.DashboardUID)
 		filters = append(filters, searchstore.DashboardFilter{
 			UIDs: []string{query.DashboardUID},
 		})
 	}
 
 	dashs, err := authz.dashSvc.SearchDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
-		OrgId:        query.SignedInUser.GetOrgID(),
-		Filters:      filters,
-		SignedInUser: query.SignedInUser,
-		Page:         query.Page,
-		Type:         filterType,
-		Limit:        authz.searchDashboardsPageLimit,
+		DashboardUIDs: dashboardUIDs,
+		OrgId:         query.SignedInUser.GetOrgID(),
+		Filters:       filters,
+		SignedInUser:  query.SignedInUser,
+		Page:          query.Page,
+		Type:          filterType,
+		Limit:         authz.searchDashboardsPageLimit,
 	})
 	if err != nil {
 		return nil, err
