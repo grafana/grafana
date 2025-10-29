@@ -110,7 +110,7 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
             noMargin
             description={t(
               'dashboard.panel.time-range-settings.time-from-description',
-              'Overrides the dashboard time range. To enter a value not in the list, type a custom time, for example 5m or 2h'
+              'Overrides the dashboard time range. Use one of the preset values or enter a custom value like 5m or 2h.'
             )}
           >
             <Stack>
@@ -129,7 +129,7 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
             noMargin
             description={t(
               'dashboard.panel.time-range-settings.time-shift-description',
-              'Adds a time shift relative to the dashboard or panel time range. To enter a value not in the list, type a custom time, for example 5m or 2h'
+              'Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like 5m or 2h.'
             )}
           >
             <Combobox
@@ -150,12 +150,10 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
                   <Label
                     description={t(
                       'dashboard.panel.time-range-settings.time-window-compare-description',
-                      'Query and overlay data from a different time period'
+                      'Compare data between two time ranges'
                     )}
                   >
-                    <Trans i18nKey="dashboard.panel.time-range-settings.time-window-compare">
-                      Time window comparison
-                    </Trans>
+                    <Trans i18nKey="dashboard.panel.time-range-settings.time-window-compare">Time comparison</Trans>
                   </Label>
                   <FeatureBadge featureState={FeatureState.new} />
                 </Stack>
@@ -172,7 +170,7 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
 
           <Field
             noMargin
-            label={t('dashboard.panel.time-range-settings.hide-time-info', 'Hidden time info')}
+            label={t('dashboard.panel.time-range-settings.hide-time-info', 'Hide panel time range')}
             description={t(
               'dashboard.panel.time-range-settings.hide-time-info-description',
               'Do not show the panel time range in the panel header'
