@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
@@ -89,10 +88,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	dto, err := s.service.GetShortURLByUID(ctx, requester, name)
 	if err != nil || dto == nil {
 		if errors.Is(err, shorturls.ErrShortURLNotFound) || err == nil {
-			err = k8serrors.NewNotFound(schema.GroupResource{
-				Group:    shorturl.ShortURLKind().Group(),
-				Resource: shorturl.ShortURLKind().Plural(),
-			}, name)
+			err = k8serrors.NewNotFound(shorturl.ShortURLKind().GroupVersionResource().GroupResource(), name)
 		}
 		return nil, err
 	}
@@ -147,10 +143,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 	shortURL, err := s.service.GetShortURLByUID(ctx, requester, name)
 	if err != nil || shortURL == nil {
 		if errors.Is(err, shorturls.ErrShortURLNotFound) || err == nil {
-			err = k8serrors.NewNotFound(schema.GroupResource{
-				Group:    shorturl.ShortURLKind().Group(),
-				Resource: shorturl.ShortURLKind().Plural(),
-			}, name)
+			err = k8serrors.NewNotFound(shorturl.ShortURLKind().GroupVersionResource().GroupResource(), name)
 		}
 		return nil, false, err
 	}
