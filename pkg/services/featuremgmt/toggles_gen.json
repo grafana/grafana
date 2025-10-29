@@ -1144,6 +1144,19 @@
     },
     {
       "metadata": {
+        "name": "createAlertRuleFromPanel",
+        "resourceVersion": "1761731526576",
+        "creationTimestamp": "2025-10-29T09:52:06Z"
+      },
+      "spec": {
+        "description": "Enables creating alert rules from a panel using a drawer UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-04-11T16:52:46Z",
