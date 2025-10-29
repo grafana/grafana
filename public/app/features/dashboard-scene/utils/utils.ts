@@ -468,3 +468,11 @@ export function useInterpolatedTitle<T extends SceneObjectState & { title?: stri
 export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrchestrator | undefined {
   return getDashboardSceneFor(scene).state.layoutOrchestrator;
 }
+
+/**
+ * Checks if there are save changes but not counting time range, refresh rate and default variable value change
+ */
+export function hasActualSaveChanges(dashboard: DashboardScene) {
+  const changes = dashboard.getDashboardChanges();
+  return !!changes.diffCount;
+}

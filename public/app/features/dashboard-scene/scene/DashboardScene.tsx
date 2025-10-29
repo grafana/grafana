@@ -65,6 +65,7 @@ import {
   getDefaultVizPanel,
   getLayoutManagerFor,
   getPanelIdForVizPanel,
+  hasActualSaveChanges,
 } from '../utils/utils';
 import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
@@ -322,7 +323,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    if (!this.state.isDirty || skipConfirm) {
+    if (!this.state.isDirty || skipConfirm || !hasActualSaveChanges(this)) {
       this.exitEditModeConfirmed(restoreInitialState || this.state.isDirty);
       this.state.scopesBridge?.setReadOnly(false);
       return;
