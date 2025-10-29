@@ -98,194 +98,38 @@ jobs:
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
+          CGO_ENABLED: 0
+          PROFILE_PACKAGES: |-
+            pkg/tests/apis/folder
+            pkg/tests/apis/datasource
+          PROFILE_PARALLEL_RUNS: |-
+            1
+            2
         run: |
           set -euo pipefail
-          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-
-          # List of packages to profile (flaky tests that need detailed profiling)
-          PROFILE_PACKAGES=(
-            "pkg/tests/apis/folder"
-            "pkg/tests/apis/datasource"
-          )
-
-          # Number of parallel runs for each package (must match PROFILE_PACKAGES indices)
-          PROFILE_PARALLEL_RUNS=(
-            1  # pkg/tests/apis/folder - 1 parallel run (resource intensive)
-            2  # pkg/tests/apis/datasource - 2 parallel runs
-          )
-
-          # Validate arrays have same length
-          if [ ${#PROFILE_PACKAGES[@]} -ne ${#PROFILE_PARALLEL_RUNS[@]} ]; then
-            echo "❌ ERROR: PROFILE_PACKAGES and PROFILE_PARALLEL_RUNS must have the same number of elements"
-            echo "   PROFILE_PACKAGES: ${#PROFILE_PACKAGES[@]} elements"
-            echo "   PROFILE_PARALLEL_RUNS: ${#PROFILE_PARALLEL_RUNS[@]} elements"
-            exit 1
-          fi
-
-          # Get correct path of packages that will be profiled
-          PROFILE_PACKAGES_ABS=()
-          for i in "${!PROFILE_PACKAGES[@]}"; do
-            profile_pkg="${PROFILE_PACKAGES[$i]}"
-            MATCHED=""
-            for pkg in "${PACKAGES[@]}"; do
-              if [[ "$pkg" == *"$profile_pkg"* ]]; then
-                MATCHED="$pkg"
-                break
-              fi
-            done
-            PROFILE_PACKAGES_ABS+=("$MATCHED")
-            if [ -n "$MATCHED" ]; then
-              echo "🔍 Found '$profile_pkg' in this shard: $MATCHED"
-            fi
-          done
-
-          # Setup trap to kill background processes on script exit/cancellation
-          PROFILE_PIDS=()
-          cleanup_tests() {
-            if [ ${#PROFILE_PIDS[@]} -gt 0 ]; then
-              echo "🛑 Caught signal, killing background test processes: ${PROFILE_PIDS[*]}"
-              for pid in "${PROFILE_PIDS[@]}"; do
-                kill -TERM "$pid" 2>/dev/null || true
-              done
-              sleep 2
-              for pid in "${PROFILE_PIDS[@]}"; do
-                kill -KILL "$pid" 2>/dev/null || true
-              done
-            fi
-            exit 143
-          }
-          trap cleanup_tests SIGTERM SIGINT EXIT
-
-          # Start profiled tests in background
-          PROFILE_FAILED=0
-          if [ ${#PROFILE_PACKAGES[@]} -gt 0 ]; then
-            echo "📊 Starting profiled test runs in BACKGROUND..."
-            mkdir -p test-profiles
-
-            # Iterate through matched packages
-            for i in "${!PROFILE_PACKAGES[@]}"; do
-              profile_pkg="${PROFILE_PACKAGES[$i]}"
-              PARALLEL_RUNS="${PROFILE_PARALLEL_RUNS[$i]}"
-
-              if [ -n "${PROFILE_PACKAGES_ABS[$i]:-}" ]; then
-                MATCHED_PKG="${PROFILE_PACKAGES_ABS[$i]}"
-                PKG_NAME=$(echo "$profile_pkg" | tr '/' '_' | tr '.' '_')
-                # Start multiple runs in parallel (background processes)
-                for run in $(seq 1 $PARALLEL_RUNS); do
-                  (
-                    echo "Starting profiled package test run $run for $profile_pkg starting (PID: $$)"
-                    CGO_ENABLED=0 ionice -c2 -n7 go test -tags=sqlite -timeout=8m -run '^TestIntegration' \
-                      -outputdir=test-profiles \
-                      -cpuprofile="cpu_${PKG_NAME}_run${run}.prof" \
-                      -memprofile="mem_${PKG_NAME}_run${run}.prof" \
-                      -trace="trace_${PKG_NAME}_run${run}.out" \
-                      "$MATCHED_PKG" 2>&1 | tee "test-profiles/test_${PKG_NAME}_run${run}.log"
-                    echo $? > "test-profiles/exit_${PKG_NAME}_run${run}.code"
-                    echo "Run $run for $profile_pkg completed"
-                  ) &
-                  pid=$!
-                  PROFILE_PIDS+=($pid)
-                done
-              fi
-            done
-            echo "📊 All profiled tests launched in background (PIDs: ${PROFILE_PIDS[*]})"
-          fi
-
-          MAIN_FAILED=0
-          if [ ${#PACKAGES[@]} -gt 0 ]; then
-            # ionice since tests are IO intensive
-            if CGO_ENABLED=0 ionice -c2 -n7 go test -p=4 -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"; then
-              echo "✅ Main tests passed"
-            else
-              echo "❌ Main tests failed"
-              MAIN_FAILED=$?
-            fi
-          fi
-
-          # Wait for profiled tests to complete
-          if [ ${#PROFILE_PIDS[@]} -gt 0 ]; then
-            echo "⏳ Waiting for profiled tests to complete (PIDs: ${PROFILE_PIDS[*]})..."
-
-            WAIT_COUNT=0
-            MAX_WAIT=20  # 20 * 30s = 10 minutes
-            while [ ${#PROFILE_PIDS[@]} -gt 0 ] && [ $WAIT_COUNT -lt $MAX_WAIT ]; do
-              sleep 30
-              WAIT_COUNT=$((WAIT_COUNT + 1))
-
-              # Check which PIDs are still running
-              REMAINING_PIDS=()
-              for pid in "${PROFILE_PIDS[@]}"; do
-                if kill -0 "$pid" 2>/dev/null; then
-                  REMAINING_PIDS+=($pid)
-                fi
-              done
-              PROFILE_PIDS=("${REMAINING_PIDS[@]}")
-
-              if [ ${#PROFILE_PIDS[@]} -eq 0 ]; then
-                echo "  ✅ All profiled tests completed"
-                break
-              fi
-              echo "  ⏳ Still waiting for ${#PROFILE_PIDS[@]} profiled test processes (check ${WAIT_COUNT}/${MAX_WAIT})"
-            done
-
-            # Kill any hung profiled tests
-            if [ ${#PROFILE_PIDS[@]} -gt 0 ]; then
-              echo "  ⚠️  Killing hung profiled tests after 10min: ${PROFILE_PIDS[*]}"
-              for pid in "${PROFILE_PIDS[@]}"; do
-                kill -KILL "$pid" 2>/dev/null || true
-              done
-              PROFILE_FAILED=1
-            fi
-
-            # Check profiled test results
-            echo "📊 Profiled test results:"
-            for i in "${!PROFILE_PACKAGES[@]}"; do
-              profile_pkg="${PROFILE_PACKAGES[$i]}"
-              PARALLEL_RUNS="${PROFILE_PARALLEL_RUNS[$i]}"  # Get parallel runs for this specific package
-
-              if [ -n "${PROFILE_PACKAGES_ABS[$i]:-}" ]; then
-                PKG_NAME=$(echo "$profile_pkg" | tr '/' '_' | tr '.' '_')
-                for run in $(seq 1 $PARALLEL_RUNS); do
-                  if [ -f "test-profiles/exit_${PKG_NAME}_run${run}.code" ]; then
-                    EXIT_CODE=$(cat "test-profiles/exit_${PKG_NAME}_run${run}.code")
-                    if [ "$EXIT_CODE" -ne 0 ]; then
-                      echo "  ❌ Profiled run $run/$PARALLEL_RUNS of $profile_pkg failed (exit $EXIT_CODE)"
-                      PROFILE_FAILED=1
-                    else
-                      echo "  ✅ Profiled run $run/$PARALLEL_RUNS of $profile_pkg passed"
-                    fi
-                  else
-                    echo "  ⚠️ Profiled run $run/$PARALLEL_RUNS of $profile_pkg: No exit code"
-                    PROFILE_FAILED=1
-                  fi
-                done
-              fi
-            done
-          fi
-
-          # Remove trap
-          trap - SIGTERM SIGINT EXIT
-
-          # Fail if either main or profiled tests failed
-          if [ $MAIN_FAILED -ne 0 ] || [ $PROFILE_FAILED -ne 0 ]; then
-            echo "❌ Test failures detected:"
-            [ $MAIN_FAILED -ne 0 ] && echo "  - Main tests failed"
-            [ $PROFILE_FAILED -ne 0 ] && echo "  - Profiled tests failed"
-            exit 1
-          fi
-      - name: Prepare artifact name
-        if: failure()
-        id: artifact-name
+          ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | \
+            ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | \
+            ./scripts/ci/backend-tests/run-go-tests-with-profiling.sh -t sqlite -r '^TestIntegration' -P -
+      - name: Check if profiles exist
+        if: always()
+        id: check-profiles
         run: |
-          SHARD_VALUE="${{ matrix.shard }}"
-          SHARD_SAFE="${SHARD_VALUE//\//-}"
-          echo "shard=$SHARD_SAFE" >> "$GITHUB_OUTPUT"
+          if [ -d "profiles" ] && [ "$(ls -A profiles 2>/dev/null)" ]; then
+            SHARD_VALUE="${{ matrix.shard }}"
+            SHARD_SAFE="${SHARD_VALUE//\//-}"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "shard=$SHARD_SAFE" >> "$GITHUB_OUTPUT"
+            echo "✅ Profiling data found"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "⏭️  No profiling data"
+          fi
       - name: Output test profiles and traces
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: failure()
+        if: steps.check-profiles.outputs.exists == 'true'
         with:
-          name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}-shard-${{ steps.artifact-name.outputs.shard }}
-          path: test-profiles/
+          name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}-shard-${{ steps.check-profiles.outputs.shard }}
+          path: profiles/
           retention-days: 1
           if-no-files-found: ignore
   mysql:
