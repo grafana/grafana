@@ -321,7 +321,13 @@ export function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSR
   return queries;
 }
 
-export function getDataQueryKind(query: SceneDataQuery | string, queryRunner?: SceneQueryRunner): string {
+export function getDataQueryKind(query: SceneDataQuery | string | undefined, queryRunner?: SceneQueryRunner): string {
+  // Handle undefined query - return default data source type
+  if (query === undefined || query === null) {
+    const defaultDS = getDefaultDataSourceRef();
+    return defaultDS?.type || '';
+  }
+
   // Query is a string - get default data source type
   if (typeof query === 'string') {
     const defaultDS = getDefaultDataSourceRef();
@@ -341,19 +347,6 @@ export function getDataQueryKind(query: SceneDataQuery | string, queryRunner?: S
   // Fall back to default datasource
   const defaultDS = getDefaultDataSourceRef();
   return defaultDS?.type || '';
-}
-
-export function getDataQuerySpec(query: SceneDataQuery): DataQueryKind['spec'] {
-  // Add refId if it exists in the query to ensure round-trip consistency
-  if ('refId' in query && query.refId) {
-    return query;
-  }
-  // For queries without refId (like those in variables), add default refId to match
-  // the behavior in transformSaveModelSchemaV2ToScene.getDataQueryForVariable
-  return {
-    ...query,
-    refId: query.refId ?? 'A',
-  };
 }
 
 function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {

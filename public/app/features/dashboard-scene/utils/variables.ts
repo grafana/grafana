@@ -179,7 +179,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
 
-      query: variable.query,
+      query: variable.query ?? {},
       datasource: variable.datasource,
       sort: variable.sort,
       refresh: variable.refresh,

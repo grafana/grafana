@@ -949,18 +949,38 @@ func buildDataQueryKind(query interface{}, datasourceType string) dashv2alpha1.D
 
 	switch q := query.(type) {
 	case string:
-		// Handle legacy string queries
-		querySpec = map[string]interface{}{
-			LEGACY_STRING_VALUE_KEY: q,
+		// Only include LEGACY_STRING_VALUE_KEY if query is a non-empty string
+		querySpec = make(map[string]interface{})
+		if q != "" {
+			querySpec[LEGACY_STRING_VALUE_KEY] = q
 		}
 	case map[string]interface{}:
-		// Remove refId to match frontend behavior
+		// Use query directly to match frontend behavior
+		querySpec = q
+	default:
 		querySpec = make(map[string]interface{})
-		for key, value := range q {
-			if key != "refId" { // Remove refId like frontend does
-				querySpec[key] = value
-			}
+	}
+
+	return dashv2alpha1.DashboardDataQueryKind{
+		Kind: "DataQuery",
+		Spec: querySpec,
+	}
+}
+
+// Helper function to build DataQuery kind for variables (filters out refId)
+func buildDataQueryKindForVariable(query interface{}, datasourceType string) dashv2alpha1.DashboardDataQueryKind {
+	var querySpec map[string]interface{}
+
+	switch q := query.(type) {
+	case string:
+		// Only include LEGACY_STRING_VALUE_KEY if query is a non-empty string
+		querySpec = make(map[string]interface{})
+		if q != "" {
+			querySpec[LEGACY_STRING_VALUE_KEY] = q
 		}
+	case map[string]interface{}:
+		// Filter out refId for variables (refId should only be in panel queries)
+		querySpec = q
 	default:
 		querySpec = make(map[string]interface{})
 	}
@@ -1005,7 +1025,7 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 			Refresh:          transformVariableRefreshToEnum(varMap["refresh"]),
 			Sort:             transformVariableSortToEnum(varMap["sort"]),
 			Regex:            schemaversion.GetStringValue(varMap, "regex"),
-			Query:            buildDataQueryKind(varMap["query"], datasourceType),
+			Query:            buildDataQueryKindForVariable(varMap["query"], datasourceType),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
 		},
 	}
@@ -1609,7 +1629,7 @@ func isDefaultQuery(target interface{}) bool {
 }
 
 func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *dashv2alpha1.DashboardDataSourceRef) dashv2alpha1.DashboardPanelQueryKind {
-	refId := schemaversion.GetStringValue(targetMap, "refId", "A")
+	refId := schemaversion.GetStringValue(targetMap, "refId")
 	hidden := getBoolField(targetMap, "hide", false)
 
 	// Extract datasource from query or use panel datasource

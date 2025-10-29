@@ -1,3 +1,5 @@
+import { omit } from 'lodash';
+
 import { config } from '@grafana/runtime';
 import {
   AdHocFilterWithLabels as SceneAdHocFilterWithLabels,
@@ -34,7 +36,7 @@ import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
 import { DSReferencesMapping } from './DashboardSceneSerializer';
 import { getDataSourceForQuery } from './layoutSerializers/utils';
-import { getDataQueryKind, getDataQuerySpec, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
+import { getDataQueryKind, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
 import {
   transformVariableRefreshToEnum,
   transformVariableHideToEnum,
@@ -337,9 +339,14 @@ export function sceneVariablesSetToSchemaV2Variables(
               name: datasource.uid,
             },
           }),
-          spec: getDataQuerySpec(query),
+          spec: query,
         };
       } else {
+        // Only include LEGACY_STRING_VALUE_KEY if query is a non-empty string
+        const spec: Record<string, string> = {};
+        if (query) {
+          spec[LEGACY_STRING_VALUE_KEY] = query;
+        }
         dataQuery = {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
@@ -349,9 +356,7 @@ export function sceneVariablesSetToSchemaV2Variables(
               name: datasource.uid,
             },
           }),
-          spec: {
-            [LEGACY_STRING_VALUE_KEY]: query,
-          },
+          spec,
         };
       }
       const queryVariable: QueryVariableKind = {
