@@ -670,6 +670,10 @@ lineage: schemas: [{
 			// Controls if the timeFrom or timeShift overrides are shown in the panel header
 			hideTimeOverride?: bool
 
+			// Compare the current time range with a previous period
+			// For example "1d" to compare current period but shifted back 1 day
+	        timeCompare?: string
+
 			// Dynamically load the panel
 			libraryPanel?: #LibraryPanelRef
 

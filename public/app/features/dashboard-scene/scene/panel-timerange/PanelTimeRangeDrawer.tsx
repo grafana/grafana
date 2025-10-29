@@ -178,9 +178,11 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
               'Do not show the custom time range in the panel header'
             )}
           >
-            <Switch
-              value={Boolean(hideTimeOverride)}
-              onChange={(x) => model.setState({ hideTimeOverride: x.currentTarget.checked })}
+            <Combobox
+              options={DEFAULT_COMPARE_OPTIONS}
+              createCustomValue={true}
+              value={compareWith ?? ''}
+              onChange={(x) => model.setState({ compareWith: x.value })}
             />
           </Field>
 
