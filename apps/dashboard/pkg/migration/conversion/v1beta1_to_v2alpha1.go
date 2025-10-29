@@ -1136,6 +1136,53 @@ func buildCustomVariable(varMap map[string]interface{}, commonProps CommonVariab
 
 // Constant Variable
 func buildConstantVariable(varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
+	// Get query value - if missing, it should be undefined (not empty string)
+	// Frontend uses variable.query for value, so if query is missing, value is undefined
+	var queryValue interface{}
+	if query, exists := varMap["query"]; exists {
+		if queryStr, ok := query.(string); ok {
+			queryValue = queryStr
+		} else {
+			queryValue = query
+		}
+	}
+
+	// Build current from query value (matching frontend: value: variable.query, text: String(variable.state.value))
+	// If query is undefined, frontend produces: text: "undefined", value: undefined (removed), query: undefined (removed)
+	var current dashv2alpha1.DashboardVariableOption
+	if currentVal, exists := varMap["current"]; exists && currentVal != nil {
+		// Use provided current if it exists
+		current = buildVariableCurrent(currentVal)
+	} else if queryValue != nil {
+		// Build current from query value (matching frontend behavior)
+		queryStr := ""
+		if str, ok := queryValue.(string); ok {
+			queryStr = str
+		}
+		current = dashv2alpha1.DashboardVariableOption{
+			Text:  dashv2alpha1.DashboardStringOrArrayOfString{String: &queryStr},
+			Value: dashv2alpha1.DashboardStringOrArrayOfString{String: &queryStr},
+		}
+	} else {
+		// query is undefined - match frontend: value ? String(value) : '' (defaults to empty string, not "undefined")
+		emptyStr := ""
+		current = dashv2alpha1.DashboardVariableOption{
+			Text:  dashv2alpha1.DashboardStringOrArrayOfString{String: &emptyStr},
+			Value: dashv2alpha1.DashboardStringOrArrayOfString{String: &emptyStr},
+		}
+	}
+
+	// Get query value - frontend sets query: variable.state.value which can be undefined
+	// Since Query is a required string field, we must set it, but when query is missing from v1,
+	// we set it to empty string (frontend would have undefined which gets removed by sortedDeepCloneWithoutNulls)
+	var query string
+	if queryValue != nil {
+		if queryStr, ok := queryValue.(string); ok {
+			query = queryStr
+		}
+	}
+	// If queryValue is nil, query remains empty string ""
+
 	constantVar := &dashv2alpha1.DashboardConstantVariableKind{
 		Kind: "ConstantVariable",
 		Spec: dashv2alpha1.DashboardConstantVariableSpec{
@@ -1144,8 +1191,8 @@ func buildConstantVariable(varMap map[string]interface{}, commonProps CommonVari
 			Description: commonProps.Description,
 			Hide:        commonProps.Hide,
 			SkipUrlSync: commonProps.SkipUrlSync,
-			Query:       schemaversion.GetStringValue(varMap, "query"),
-			Current:     buildVariableCurrent(varMap["current"]),
+			Query:       query,
+			Current:     current,
 		},
 	}
 

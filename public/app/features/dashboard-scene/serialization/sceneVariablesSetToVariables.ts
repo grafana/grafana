@@ -427,17 +427,16 @@ export function sceneVariablesSetToSchemaV2Variables(
 
       // Constant variable
     } else if (sceneUtils.isConstantVariable(variable)) {
+      const value = variable.state.value ? String(variable.state.value) : '';
       const constantVariable: ConstantVariableKind = {
         kind: 'ConstantVariable',
         spec: {
           ...commonProperties,
           current: {
-            ...currentVariableOption,
-            // Constant variable doesn't use text state
-            text: String(variable.state.value),
+            text: value,
+            value: value,
           },
-          // @ts-expect-error
-          query: variable.state.value,
+          query: value,
         },
       };
       variables.push(constantVariable);
