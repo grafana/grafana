@@ -135,14 +135,14 @@ i18n-extract-enterprise:
 	@echo "Skipping i18n extract for Enterprise: not enabled"
 else
 i18n-extract-enterprise:
-	@echo "Extracting i18n strings for Enterprise"
-	yarn run i18next --config public/locales/i18next-parser-enterprise.config.cjs
+	@echo "Extracting i18n strings for Enterprise"	
+	cd public/locales/enterprise && yarn run i18next-cli extract --sync-primary
 endif
 
 .PHONY: i18n-extract
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
-	yarn run i18next --config public/locales/i18next-parser.config.cjs
+	yarn run i18next-cli extract --sync-primary
 	@echo "Extracting i18n strings for packages"
 	yarn run packages:i18n-extract
 	@echo "Extracting i18n strings for plugins"

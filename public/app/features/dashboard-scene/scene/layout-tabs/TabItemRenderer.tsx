@@ -114,12 +114,15 @@ interface TabItemLayoutRendererProps {
 }
 
 export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererProps) {
-  const { layout } = tab.useState();
+  const { layout, key } = tab.useState();
   const styles = useStyles2(getStyles);
   const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(tab);
 
   return (
-    <TabContent className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}>
+    <TabContent
+      className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
+      data-dashboard-drop-target-key={key}
+    >
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}
     </TabContent>

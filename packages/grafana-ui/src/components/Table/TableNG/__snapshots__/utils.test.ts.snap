@@ -1,0 +1,109 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TableNG utils buildInspectValue should handle NaN 1`] = `
+[
+  "NaN",
+  "text",
+]
+`;
+
+exports[`TableNG utils buildInspectValue should handle array 1`] = `
+[
+  "[
+  "foo",
+  "bar",
+  "baz"
+]",
+  "code",
+]
+`;
+
+exports[`TableNG utils buildInspectValue should handle boolean 1`] = `
+[
+  "true",
+  "text",
+]
+`;
+
+exports[`TableNG utils buildInspectValue should handle geo 1`] = `
+[
+  "POINT(0 -0.0006656516255105771)",
+  "code",
+]
+`;
+
+exports[`TableNG utils buildInspectValue should handle null 1`] = `
+[
+  "",
+  "text",
+]
+`;
+
+exports[`TableNG utils buildInspectValue should handle null w/ JSON 1`] = `
+[
+  "null",
+  "code",
+]
+`;
+
+exports[`TableNG utils buildInspectValue should handle numbers 1`] = `
+[
+  "0",
+  "text",
+]
+`;
+
+exports[`TableNG utils buildInspectValue should handle object 1`] = `
+[
+  "{
+  "foo": true,
+  "b": "baz"
+}",
+  "code",
+]
+`;
+
+exports[`TableNG utils buildInspectValue should handle sparkline (no x) 1`] = `
+[
+  "[
+  2,
+  4,
+  6,
+  8,
+  10
+]",
+  "code",
+]
+`;
+
+exports[`TableNG utils buildInspectValue should handle sparkline 1`] = `
+[
+  "[
+  [0, 10],
+  [1000, 20],
+  [2000, 30]
+]",
+  "code",
+]
+`;
+
+exports[`TableNG utils buildInspectValue should handle string 1`] = `
+[
+  "foo",
+  "text",
+]
+`;
+
+exports[`TableNG utils buildInspectValue should handle string w/ JSON 1`] = `
+[
+  ""baz"",
+  "code",
+]
+`;
+
+exports[`TableNG utils buildInspectValue should handle undefined 1`] = `
+[
+  "",
+  "text",
+]
+`;

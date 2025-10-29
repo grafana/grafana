@@ -73,11 +73,86 @@ func (l *LegacyBindingStore) ConvertToTable(ctx context.Context, object runtime.
 }
 
 func (l *LegacyBindingStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return nil, false, apierrors.NewMethodNotSupported(bindingResource.GroupResource(), "update")
+	if !l.enableAuthnMutation {
+		return nil, false, apierrors.NewMethodNotSupported(bindingResource.GroupResource(), "update")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	oldObj, err := l.Get(ctx, name, nil)
+	if err != nil {
+		return oldObj, false, err
+	}
+
+	obj, err := objInfo.UpdatedObject(ctx, oldObj)
+	if err != nil {
+		return oldObj, false, err
+	}
+
+	teamBindingObj, ok := obj.(*iamv0alpha1.TeamBinding)
+	if !ok {
+		return nil, false, fmt.Errorf("expected TeamBinding object, got %T", obj)
+	}
+
+	if updateValidation != nil {
+		if err := updateValidation(ctx, obj, oldObj); err != nil {
+			return oldObj, false, err
+		}
+	}
+
+	var permission team.PermissionType
+	switch teamBindingObj.Spec.Permission {
+	case iamv0alpha1.TeamBindingTeamPermissionAdmin:
+		permission = team.PermissionTypeAdmin
+	case iamv0alpha1.TeamBindingTeamPermissionMember:
+		permission = team.PermissionTypeMember
+	}
+
+	updateCmd := legacy.UpdateTeamMemberCommand{
+		UID:        teamBindingObj.Name,
+		Permission: permission,
+	}
+
+	_, err = l.store.UpdateTeamMember(ctx, ns, updateCmd)
+	if err != nil {
+		return oldObj, false, err
+	}
+
+	return teamBindingObj, false, nil
 }
 
 func (l *LegacyBindingStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, apierrors.NewMethodNotSupported(bindingResource.GroupResource(), "delete")
+	if !l.enableAuthnMutation {
+		return nil, false, apierrors.NewMethodNotSupported(bindingResource.GroupResource(), "delete")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Check if the team binding exists
+	_, err = l.Get(ctx, name, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	err = l.store.DeleteTeamMember(ctx, ns, legacy.DeleteTeamMemberCommand{
+		UID: name,
+	})
+	if err != nil {
+		return nil, false, err
+	}
+
+	return &iamv0alpha1.TeamBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns.Value,
+		},
+	}, true, nil
 }
 
 func (l *LegacyBindingStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
