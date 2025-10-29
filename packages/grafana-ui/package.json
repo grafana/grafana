@@ -152,7 +152,7 @@
     "@storybook/preview-api": "^8.6.2",
     "@storybook/react": "^8.6.2",
     "@storybook/react-webpack5": "^8.6.2",
-    "@storybook/test-runner": "0.24.1",
+    "@storybook/test-runner": "^0.23.0",
     "@storybook/theming": "^8.6.2",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "6.6.4",
