@@ -17,7 +17,6 @@ import (
 	serverstore "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/kube-openapi/pkg/common"
 
-	"github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -34,9 +33,9 @@ type LegacyStorageProvider interface {
 }
 
 // In the rare case that that legacy needs to support the status subresource
-// this hook allows providing a Storage instance to support dual writing
+// Unlike resource storage, dual writing must be managed explicitly
 type LegacyStatusProvider interface {
-	GetLegacyStatus(schema.GroupVersionResource, *apiserver.StatusREST) rest.Storage
+	GetLegacyStatus(schema.GroupVersionResource, *appsdkapiserver.StatusREST) rest.Storage
 }
 
 type AuthorizerProvider interface {

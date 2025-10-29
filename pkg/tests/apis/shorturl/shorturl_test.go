@@ -284,7 +284,7 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 		}, (*any)(nil))
 		assert.Equal(t, 302, redirectResponse.Response.StatusCode)
 
-		time.Sleep(100 * time.Microsecond)
+		time.Sleep(150 * time.Millisecond) // wait a bit for async status update
 
 		// Verify lastSeenAt was updated (should be > 0 now)
 		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
