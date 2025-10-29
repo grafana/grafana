@@ -634,6 +634,11 @@ Lists all dashboards in the given organization. You can control the maximum numb
 
 - namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
 
+**Query parameters**:
+
+- **`limit`** (optional): Maximum number of dashboards to return
+- **`continue`** (optional): Continue token from a previous response to fetch the next page
+
 **Required permissions**
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
@@ -666,7 +671,7 @@ Content-Length: 644
   "apiVersion": "dashboard.grafana.app/v1alpha1",
   "metadata": {
     "resourceVersion": "1741315830000",
-    "continue": "org:1/start:1158/folder:"
+    "continue": "eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ=="
   },
   "items": [
     {
@@ -696,6 +701,57 @@ Content-Length: 644
   ]
 }
 ```
+
+The `metadata.continue` field contains a token to fetch the next page.
+
+**Example subsequent request using continue token**:
+
+```http
+GET /apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards?limit=1&continue=eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ== HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example subsequent response**:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+  "kind": "DashboardList",
+  "apiVersion": "dashboard.grafana.app/v1alpha1",
+  "items": [
+    {
+      "kind": "Dashboard",
+      "apiVersion": "dashboard.grafana.app/v1alpha1",
+      "metadata": {
+        "name": "hpqcmg",
+        "namespace": "default",
+        "uid": "WQyL7pNTpfGPNlPM6HRJSePrBg5dXmxr4iPQL7txLtwY",
+        "resourceVersion": "1",
+        "generation": 1,
+        "creationTimestamp": "2025-03-06T19:51:31Z",
+        "annotations": {
+          "grafana.app/createdBy": "service-account:cef2t2rfm73lsb",
+          "grafana.app/updatedBy": "service-account:cef2t2rfm73lsb",
+          "grafana.app/updatedTimestamp": "2025-03-06T19:51:31Z"
+        }
+      },
+      "spec": {
+        "schemaVersion": 41,
+        "title": "Another dashboard",
+        "uid": "hpqcmg",
+        "version": 1,
+        ...
+      }
+    }
+  ]
+}
+```
+
+Continue making requests with the updated `continue` token until you receive a response without a `continue` field in the metadata, indicating you've reached the last page.
 
 Status Codes:
 
