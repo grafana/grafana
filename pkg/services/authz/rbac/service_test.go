@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strconv"
 	"testing"
 	"time"
 
@@ -1827,6 +1828,96 @@ func TestService_CacheList(t *testing.T) {
 		require.ElementsMatch(t, resp.Items, []string{"dash1", "dash2"})
 		require.ElementsMatch(t, resp.Folders, []string{"fold1"})
 	})
+}
+
+func TestService_GetUserIdentifiers(t *testing.T) {
+	testCases := []struct {
+		name                    string
+		identifier              *store.UserIdentifiers
+		useUserID               bool
+		setupCache              func(s *Service, ctx context.Context, userID *store.UserIdentifiers, namespace string)
+		setupStore              func(s *Service, ctx context.Context)
+		expectedUserIdentifiers *store.UserIdentifiers
+		expectedError           error
+	}{
+		{
+			name:       "it should return user identifiers from cache with string UID",
+			identifier: &store.UserIdentifiers{UID: "test-uid", ID: 1},
+			setupCache: func(s *Service, ctx context.Context, userID *store.UserIdentifiers, namespace string) {
+				s.idCache.Set(ctx, userIdentifierCacheKey(namespace, userID.UID), *userID)
+			},
+			expectedUserIdentifiers: &store.UserIdentifiers{UID: "test-uid", ID: 1},
+		},
+		{
+			name:       "it should return user identifiers from cache with numerical UID",
+			identifier: &store.UserIdentifiers{UID: "123456", ID: 1},
+			setupCache: func(s *Service, ctx context.Context, userID *store.UserIdentifiers, namespace string) {
+				s.idCache.Set(ctx, userIdentifierCacheKey(namespace, userID.UID), *userID)
+			},
+			expectedUserIdentifiers: &store.UserIdentifiers{UID: "123456", ID: 1},
+		},
+		{
+			name:       "it should return user indentifiers from cache with numerical ID",
+			identifier: &store.UserIdentifiers{UID: "test-uid", ID: 123456},
+			setupCache: func(s *Service, ctx context.Context, userID *store.UserIdentifiers, namespace string) {
+				s.idCache.Set(ctx, userIdentifierCacheKeyById(namespace, strconv.Itoa(int(userID.ID))), *userID)
+			},
+			useUserID:               true,
+			expectedUserIdentifiers: &store.UserIdentifiers{UID: "test-uid", ID: 123456},
+		},
+		{
+			name:          "it should return error if the user identifiers are not found",
+			identifier:    &store.UserIdentifiers{UID: "test-uid", ID: 123456},
+			expectedError: fmt.Errorf("could not find user identifiers: %w", fmt.Errorf("namespace not found")),
+		},
+		{
+			name:                    "it should return user identifiers after a successful lookup with user UID query",
+			identifier:              &store.UserIdentifiers{UID: "test-uid", ID: 123456},
+			expectedUserIdentifiers: &store.UserIdentifiers{UID: "test-uid", ID: 123456},
+			setupStore: func(s *Service, ctx context.Context) {
+				s.store = &fakeStore{
+					disableNsCheck: true,
+					userID:         &store.UserIdentifiers{UID: "test-uid", ID: 123456},
+				}
+			},
+		},
+		{
+			name:                    "it should return user identifiers after a successful lookup with user ID query",
+			identifier:              &store.UserIdentifiers{UID: "12345", ID: 123456},
+			expectedUserIdentifiers: &store.UserIdentifiers{UID: "12345", ID: 123456},
+			setupStore: func(s *Service, ctx context.Context) {
+				s.store = &fakeStore{
+					disableNsCheck: true,
+					userID:         &store.UserIdentifiers{UID: "12345", ID: 123456},
+				}
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
+			s := setupService()
+			s.identityStore = &fakeIdentityStore{}
+
+			if tc.setupCache != nil {
+				tc.setupCache(s, ctx, tc.identifier, ns.Value)
+			}
+
+			if tc.setupStore != nil {
+				tc.setupStore(s, ctx)
+			}
+
+			lookupID := tc.identifier.UID
+			if tc.useUserID {
+				lookupID = strconv.Itoa(int(tc.identifier.ID))
+			}
+
+			userIdentifiers, err := s.GetUserIdentifiers(ctx, ns, lookupID)
+			require.Equal(t, tc.expectedUserIdentifiers, userIdentifiers)
+			require.Equal(t, tc.expectedError, err)
+		})
+	}
 }
 
 func setupService() *Service {
