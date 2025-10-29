@@ -168,7 +168,7 @@ export function LogsTable(props: Props) {
           ...field.config,
           custom: {
             ...field.config.custom,
-            inspect: false,
+            inspect: true,
             filterable: true,
             width: isBodyField
               ? undefined
@@ -178,7 +178,7 @@ export function LogsTable(props: Props) {
               ? {
                   type: TableCellDisplayMode.Custom,
                   cellComponent: (cellProps: CustomCellRendererProps) => (
-                    <div>
+                    <>
                       <LogsTableActionButtons
                         {...cellProps}
                         fieldIndex={0}
@@ -194,7 +194,7 @@ export function LogsTable(props: Props) {
                       <span className={styles.firstColumnCell}>
                         {cellProps.field.display?.(cellProps.value).text ?? String(cellProps.value)}
                       </span>
-                    </div>
+                    </>
                   ),
                 }
               : field.config.custom?.cellOptions,
@@ -204,6 +204,8 @@ export function LogsTable(props: Props) {
                 )
               : field.config.custom?.headerComponent,
           },
+          // This sets the individual field value as filterable
+          filterable: isFieldFilterable(field, logsFrame?.bodyField.name ?? '', logsFrame?.timeField.name ?? ''),
         };
 
         // If it's a string, then try to guess for a better type for numeric support in viz
@@ -319,6 +321,23 @@ export function LogsTable(props: Props) {
     />
   );
 }
+
+const isFieldFilterable = (field: Field, bodyName: string, timeName: string) => {
+  if (!bodyName || !timeName) {
+    return false;
+  }
+  if (bodyName === field.name) {
+    return false;
+  }
+  if (timeName === field.name) {
+    return false;
+  }
+  if (field.config.links?.length) {
+    return false;
+  }
+
+  return true;
+};
 
 // TODO: explore if `logsFrame.ts` can help us with getting the right fields
 // TODO Why is typeInfo not defined on the Field interface?
