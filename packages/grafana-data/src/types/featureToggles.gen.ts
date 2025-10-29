@@ -1233,6 +1233,10 @@ export interface FeatureToggles {
   */
   onlyStoreActionSets?: boolean;
   /**
+  * Enables a new panel time settings drawer
+  */
+  panelTimeSettings?: boolean;
+  /**
   * Enable template dashboards
   */
   dashboardTemplates?: boolean;
