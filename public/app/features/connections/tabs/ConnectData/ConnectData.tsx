@@ -17,9 +17,9 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { ROUTES } from '../../constants';
 
-import { CardGrid, type CardGridItem } from './CardGrid';
-import { CategoryHeader } from './CategoryHeader';
-import { NoAccessModal } from './NoAccessModal';
+import { CardGrid, type CardGridItem } from './CardGrid/CardGrid';
+import { CategoryHeader } from './CategoryHeader/CategoryHeader';
+import { NoAccessModal } from './NoAccessModal/NoAccessModal';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   searchContainer: css({

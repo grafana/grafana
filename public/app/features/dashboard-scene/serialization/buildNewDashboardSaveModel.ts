@@ -136,7 +136,7 @@ export async function buildNewDashboardSaveModelV2(
     metadata: {
       name: '',
       resourceVersion: '0',
-      creationTimestamp: '0',
+      creationTimestamp: new Date().toISOString(),
       annotations: {
         [AnnoKeyFolder]: '',
       },

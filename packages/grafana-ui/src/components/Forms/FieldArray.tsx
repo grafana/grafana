@@ -9,6 +9,8 @@ export interface FieldArrayProps extends UseFieldArrayProps {
 
 /**
  * @deprecated use the `useFieldArray` hook from react-hook-form instead
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-fieldarray--docs
  */
 export const FieldArray: FC<FieldArrayProps> = ({ name, control, children, ...rest }) => {
   const { fields, append, prepend, remove, swap, move, insert } = useFieldArray({
