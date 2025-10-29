@@ -147,7 +147,7 @@ func TestFinalizer_process(t *testing.T) {
 				resourceLister := resources.NewMockResourceLister(t)
 
 				resourceLister.
-					On("List", context.Background(), "default", "my-repo").
+					On("List", mock.Anything, "default", "my-repo").
 					Once().
 					Return(&provisioning.ResourceList{
 						Items: []provisioning.ResourceListItem{
@@ -171,12 +171,12 @@ func TestFinalizer_process(t *testing.T) {
 				}
 
 				clientFactory.
-					On("Clients", context.Background(), "default").
+					On("Clients", mock.Anything, "default").
 					Once().
 					Return(clients, nil)
 
 				clients.
-					On("ForResource", context.Background(), schema.GroupVersionResource{
+					On("ForResource", mock.Anything, schema.GroupVersionResource{
 						Group:    "dashboard.grafana.app",
 						Resource: "dashboards",
 					}).
@@ -203,7 +203,7 @@ func TestFinalizer_process(t *testing.T) {
 				resourceLister := resources.NewMockResourceLister(t)
 
 				resourceLister.
-					On("List", context.Background(), "default", "my-repo").
+					On("List", mock.Anything, "default", "my-repo").
 					Once().
 					Return(&provisioning.ResourceList{
 						Items: []provisioning.ResourceListItem{
@@ -227,12 +227,12 @@ func TestFinalizer_process(t *testing.T) {
 				}
 
 				clientFactory.
-					On("Clients", context.Background(), "default").
+					On("Clients", mock.Anything, "default").
 					Once().
 					Return(clients, nil)
 
 				clients.
-					On("ForResource", context.Background(), schema.GroupVersionResource{
+					On("ForResource", mock.Anything, schema.GroupVersionResource{
 						Group:    "dashboard.grafana.app",
 						Resource: "dashboards",
 					}).
@@ -260,7 +260,7 @@ func TestFinalizer_process(t *testing.T) {
 				clientFactory := resources.NewMockClientFactory(t)
 
 				clientFactory.
-					On("Clients", context.Background(), "default").
+					On("Clients", mock.Anything, "default").
 					Once().
 					Return(nil, assert.AnError)
 
@@ -282,7 +282,7 @@ func TestFinalizer_process(t *testing.T) {
 				resourceLister := resources.NewMockResourceLister(t)
 
 				resourceLister.
-					On("List", context.Background(), "default", "my-repo").
+					On("List", mock.Anything, "default", "my-repo").
 					Once().
 					Return(nil, assert.AnError)
 
@@ -293,7 +293,7 @@ func TestFinalizer_process(t *testing.T) {
 				clients := resources.NewMockResourceClients(t)
 
 				clientFactory.
-					On("Clients", context.Background(), "default").
+					On("Clients", mock.Anything, "default").
 					Once().
 					Return(clients, nil)
 
@@ -315,7 +315,7 @@ func TestFinalizer_process(t *testing.T) {
 				resourceLister := resources.NewMockResourceLister(t)
 
 				resourceLister.
-					On("List", context.Background(), "default", "my-repo").
+					On("List", mock.Anything, "default", "my-repo").
 					Once().
 					Return(&provisioning.ResourceList{
 						Items: []provisioning.ResourceListItem{
@@ -334,12 +334,12 @@ func TestFinalizer_process(t *testing.T) {
 				clients := resources.NewMockResourceClients(t)
 
 				clientFactory.
-					On("Clients", context.Background(), "default").
+					On("Clients", mock.Anything, "default").
 					Once().
 					Return(clients, nil)
 
 				clients.
-					On("ForResource", context.Background(), schema.GroupVersionResource{
+					On("ForResource", mock.Anything, schema.GroupVersionResource{
 						Group:    "dashboard.grafana.app",
 						Resource: "dashboards",
 					}).
@@ -364,7 +364,7 @@ func TestFinalizer_process(t *testing.T) {
 				resourceLister := resources.NewMockResourceLister(t)
 
 				resourceLister.
-					On("List", context.Background(), "default", "my-repo").
+					On("List", mock.Anything, "default", "my-repo").
 					Once().
 					Return(&provisioning.ResourceList{
 						Items: []provisioning.ResourceListItem{
@@ -388,12 +388,12 @@ func TestFinalizer_process(t *testing.T) {
 				}
 
 				clientFactory.
-					On("Clients", context.Background(), "default").
+					On("Clients", mock.Anything, "default").
 					Once().
 					Return(clients, nil)
 
 				clients.
-					On("ForResource", context.Background(), schema.GroupVersionResource{
+					On("ForResource", mock.Anything, schema.GroupVersionResource{
 						Group:    "dashboard.grafana.app",
 						Resource: "dashboards",
 					}).
@@ -421,7 +421,7 @@ func TestFinalizer_process(t *testing.T) {
 				resourceLister := resources.NewMockResourceLister(t)
 
 				resourceLister.
-					On("List", context.Background(), "default", "my-repo").
+					On("List", mock.Anything, "default", "my-repo").
 					Once().
 					Return(&provisioning.ResourceList{
 						Items: []provisioning.ResourceListItem{
@@ -445,12 +445,12 @@ func TestFinalizer_process(t *testing.T) {
 				}
 
 				clientFactory.
-					On("Clients", context.Background(), "default").
+					On("Clients", mock.Anything, "default").
 					Once().
 					Return(clients, nil)
 
 				clients.
-					On("ForResource", context.Background(), schema.GroupVersionResource{
+					On("ForResource", mock.Anything, schema.GroupVersionResource{
 						Group:    "dashboard.grafana.app",
 						Resource: "dashboards",
 					}).
