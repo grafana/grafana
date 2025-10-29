@@ -436,7 +436,7 @@
         "kind": "IntervalVariable",
         "spec": {
           "name": "interval_variable",
-          "query": "",
+          "query": "1m",
           "current": {
             "text": "",
             "value": ""

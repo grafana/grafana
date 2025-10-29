@@ -116,13 +116,21 @@
                   },
                   {
                     "matcher": {
-                      "id": "__systemRef",
-                      "options": "hiddenSeries"
+                      "id": "byNames",
+                      "options": {
+                        "mode": "exclude",
+                        "names": [
+                          "foo"
+                        ],
+                        "prefix": "All except:",
+                        "readOnly": true
+                      }
                     },
                     "properties": [
                       {
                         "id": "custom.hideFrom",
                         "value": {
+                          "legend": false,
                           "tooltip": true,
                           "viz": true
                         }

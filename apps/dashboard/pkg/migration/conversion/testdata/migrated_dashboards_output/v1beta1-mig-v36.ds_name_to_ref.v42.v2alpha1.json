@@ -821,8 +821,8 @@
           "name": "non_query_var",
           "query": "",
           "current": {
-            "text": "undefined",
-            "value": null
+            "text": "",
+            "value": ""
           },
           "hide": "dontHide",
           "skipUrlSync": false
