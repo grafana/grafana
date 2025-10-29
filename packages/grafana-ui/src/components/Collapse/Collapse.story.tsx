@@ -70,7 +70,7 @@ export const WithCustomLabel: StoryFn<typeof Collapse> = (args) => {
       }}
       label={
         <Stack flex={1} alignItems="center" justifyContent="space-between">
-          Collapse panel
+          My title
           <Stack alignItems="center">
             <IconButton
               onClick={(event) => {
@@ -83,6 +83,7 @@ export const WithCustomLabel: StoryFn<typeof Collapse> = (args) => {
           </Stack>
         </Stack>
       }
+      ariaLabel="My title"
     >
       <p>{args.children}</p>
     </Collapse>

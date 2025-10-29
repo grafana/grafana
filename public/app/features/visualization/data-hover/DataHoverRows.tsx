@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { isString } from 'lodash';
 import { FeatureLike } from 'ol/Feature';
 import { useState } from 'react';
-import * as React from 'react';
 
 import { DataFrame, FieldType, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
 import { GeomapLayerHover } from 'app/plugins/panel/geomap/event';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
@@ -37,6 +37,9 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
 
                   return shouldDisplayCollapse ? (
                     <Collapse
+                      ariaLabel={t('visualization.data-hover-rows.aria-label-collapse', 'Match: {{number}}', {
+                        number: idx + 1,
+                      })}
                       key={key}
                       label={generateLabel(feature, idx)}
                       isOpen={rowMap.get(key)}
@@ -59,7 +62,7 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
   );
 };
 
-export const generateLabel = (feature: FeatureLike, idx: number): string | React.ReactNode => {
+export const generateLabel = (feature: FeatureLike, idx: number) => {
   const names = ['Name', 'name', 'Title', 'ID', 'id'];
   let props = feature.getProperties();
   let first = '';

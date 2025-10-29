@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useId, useState } from 'react';
-import * as React from 'react';
+import { type PropsWithChildren, useId, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -92,11 +91,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export interface Props {
+interface BaseProps {
   /** Expand or collapse te content */
   isOpen?: boolean;
-  /** Element or text for the Collapse header */
-  label: React.ReactNode;
   /** Indicates loading state of the content */
   loading?: boolean;
   /** Callback for the toggle functionality */
@@ -107,7 +104,20 @@ export interface Props {
   collapsible?: boolean;
 }
 
-export const ControlledCollapse = ({ isOpen, onToggle, ...otherProps }: React.PropsWithChildren<Props>) => {
+interface PropsWithStringLabel extends BaseProps {
+  label: string;
+  ariaLabel?: never;
+}
+
+interface PropsWithCustomLabel extends BaseProps {
+  label: JSX.Element;
+  /** aria-label for the Collapse header. Required if passing a custom element as the label */
+  ariaLabel: string;
+}
+
+export type Props = PropsWithStringLabel | PropsWithCustomLabel;
+
+export const ControlledCollapse = ({ isOpen, onToggle, ...otherProps }: PropsWithChildren<Props>) => {
   const [open, setOpen] = useState(isOpen);
   return (
     <Collapse
@@ -123,9 +133,19 @@ export const ControlledCollapse = ({ isOpen, onToggle, ...otherProps }: React.Pr
   );
 };
 
-export const Collapse = ({ isOpen, label, loading, onToggle, className, children }: React.PropsWithChildren<Props>) => {
+export const Collapse = ({
+  ariaLabel,
+  isOpen,
+  label,
+  loading,
+  onToggle,
+  className,
+  children,
+}: PropsWithChildren<Props>) => {
   const style = useStyles2(getStyles);
-  const labelId = useId();
+  const contentId = useId();
+  const buttonLabel =
+    ariaLabel ?? (typeof label === 'string' ? label : t('grafana-ui.collapse.aria-label-default', 'Toggle collapse'));
 
   const onClickToggle = () => {
     if (onToggle) {
@@ -141,21 +161,16 @@ export const Collapse = ({ isOpen, label, loading, onToggle, className, children
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div className={style.header} onClick={onClickToggle}>
         <IconButton
-          aria-describedby={labelId}
+          aria-expanded={isOpen}
+          aria-controls={contentId}
           className={style.button}
-          aria-label={
-            isOpen
-              ? t('grafana-ui.collapse.aria-label-collapse', 'Collapse panel')
-              : t('grafana-ui.collapse.aria-label-expand', 'Expand panel')
-          }
+          aria-label={buttonLabel}
           name={isOpen ? 'angle-down' : 'angle-right'}
         />
-        <div id={labelId} className={style.headerLabel}>
-          {label}
-        </div>
+        <div className={style.headerLabel}>{label}</div>
       </div>
       {isOpen && (
-        <div className={style.collapseBody}>
+        <div className={style.collapseBody} id={contentId}>
           <div className={loaderClass} />
           <div className={style.bodyContentWrapper}>{children}</div>
         </div>

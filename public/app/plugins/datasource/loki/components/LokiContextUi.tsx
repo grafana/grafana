@@ -296,6 +296,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
       </div>
 
       <Collapse
+        ariaLabel={queryExpr}
         isOpen={isOpen}
         onToggle={() => {
           window.localStorage.setItem(IS_LOKI_LOG_CONTEXT_UI_OPEN, (!isOpen).toString());

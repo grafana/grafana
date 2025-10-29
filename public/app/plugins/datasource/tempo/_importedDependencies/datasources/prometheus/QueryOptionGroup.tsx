@@ -24,6 +24,7 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats, o
   return (
     <div className={styles.wrapper}>
       <Collapse
+        ariaLabel={title}
         className={styles.collapse}
         isOpen={propsIsOpen ?? isOpen}
         onToggle={onToggle ?? toggleOpen}
