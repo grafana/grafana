@@ -680,8 +680,8 @@ const reorderColumnsToEnsureSpecialFieldsFirst = (fieldNames: FieldNameMetaStore
   const activeColumns = Object.keys(fieldNames)
     .filter((key) => fieldNames[key].active && fieldNames[key].index !== undefined)
     .sort((a, b) => {
-      const indexA = fieldNames[a].index!;
-      const indexB = fieldNames[b].index!;
+      const indexA = fieldNames[a].index ?? 0;
+      const indexB = fieldNames[b].index ?? 0;
       return indexA - indexB;
     });
 
