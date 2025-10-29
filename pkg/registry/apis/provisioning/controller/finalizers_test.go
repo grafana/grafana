@@ -2,10 +2,15 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
+	mock "github.com/stretchr/testify/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -14,6 +19,8 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana-app-sdk/logging"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -557,6 +564,145 @@ func TestSortResourceListForDeletion(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			sortResourceListForDeletion(&tc.input)
 			assert.Equal(t, tc.expected, tc.input)
+		})
+	}
+}
+
+func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
+	testCases := []struct {
+		name                string
+		dashboardCount      int
+		folderCount         int
+		maxWorkers          int
+		expectedConcurrency bool
+	}{
+		{
+			name:                "Multiple dashboards processed concurrently",
+			dashboardCount:      10,
+			folderCount:         0,
+			maxWorkers:          5,
+			expectedConcurrency: true,
+		},
+		{
+			name:                "Single worker processes dashboards sequentially",
+			dashboardCount:      5,
+			folderCount:         0,
+			maxWorkers:          1,
+			expectedConcurrency: false,
+		},
+		{
+			name:                "Folders processed sequentially regardless of maxWorkers",
+			dashboardCount:      0,
+			folderCount:         5,
+			maxWorkers:          10,
+			expectedConcurrency: false,
+		},
+		{
+			name:                "Mixed dashboards and folders - dashboards concurrent, folders sequential",
+			dashboardCount:      10,
+			folderCount:         3,
+			maxWorkers:          5,
+			expectedConcurrency: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Will be used to track concurrent executions
+			var (
+				concurrentCount int64
+				maxConcurrent   int64
+				mu              sync.Mutex
+			)
+
+			items := provisioning.ResourceList{Items: []provisioning.ResourceListItem{}}
+
+			for i := 0; i < tc.dashboardCount; i++ {
+				items.Items = append(items.Items, provisioning.ResourceListItem{
+					Group:    "dashboard.grafana.app",
+					Resource: "dashboards",
+					Name:     fmt.Sprintf("dashboard-%d", i),
+				})
+			}
+
+			for i := 0; i < tc.folderCount; i++ {
+				items.Items = append(items.Items, provisioning.ResourceListItem{
+					Group:    folders.GroupVersion.Group,
+					Resource: "folders",
+					Name:     fmt.Sprintf("folder-%d", i),
+				})
+			}
+
+			resourceLister := resources.NewMockResourceLister(t)
+			resourceLister.
+				On("List", mock.Anything, "default", "my-repo").
+				Return(&items, nil)
+
+			clientFactory := resources.NewMockClientFactory(t)
+			clients := resources.NewMockResourceClients(t)
+
+			client := &mockDynamicClient{
+				deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
+					// Track concurrent executions
+					current := atomic.AddInt64(&concurrentCount, 1)
+					defer atomic.AddInt64(&concurrentCount, -1)
+
+					mu.Lock()
+					if current > maxConcurrent {
+						maxConcurrent = current
+					}
+					mu.Unlock()
+
+					// Simulate slow client to allow concurrency to build up
+					time.Sleep(1 * time.Second)
+
+					return nil
+				},
+			}
+
+			clientFactory.
+				On("Clients", mock.Anything, "default").
+				Return(clients, nil)
+
+			clients.
+				On("ForResource", mock.Anything, mock.Anything).
+				Return(client, schema.GroupVersionKind{}, nil)
+
+			metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+			f := &finalizer{
+				lister:        resourceLister,
+				clientFactory: clientFactory,
+				metrics:       &metrics,
+				maxWorkers:    tc.maxWorkers,
+			}
+
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-repo",
+					Namespace: "default",
+				},
+			}
+
+			count, err := f.processExistingItems(
+				context.Background(),
+				repo,
+				f.removeResources(context.Background(), logging.DefaultLogger),
+			)
+
+			assert.NoError(t, err)
+			assert.Equal(t, tc.dashboardCount+tc.folderCount, count)
+
+			if tc.expectedConcurrency {
+				// When concurrent, max concurrent should be > 1
+				assert.Greater(t, maxConcurrent, int64(1),
+					"Expected concurrent execution but maxConcurrent was %d", maxConcurrent)
+				// Should not exceed maxWorkers
+				assert.LessOrEqual(t, maxConcurrent, int64(tc.maxWorkers))
+			} else {
+				// When sequential, max concurrent should be 1
+				assert.Equal(t, int64(1), maxConcurrent,
+					"Expected sequential execution but maxConcurrent was %d", maxConcurrent)
+			}
 		})
 	}
 }

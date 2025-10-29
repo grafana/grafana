@@ -90,7 +90,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		statusPatcher,
 		deps.Registerer,
 		tracer,
-		controllerCfg.maxSyncWorkers,
+		controllerCfg.parallelOperations,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)
@@ -108,10 +108,10 @@ func RunRepoController(deps server.OperatorDependencies) error {
 type repoControllerConfig struct {
 	provisioningControllerConfig
 	workerCount         int
+	parallelOperations  int
 	allowedTargets      []string
 	allowImageRendering bool
 	minSyncInterval     time.Duration
-	maxSyncWorkers      int
 }
 
 func getRepoControllerConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*repoControllerConfig, error) {
@@ -130,8 +130,8 @@ func getRepoControllerConfig(cfg *setting.Cfg, registry prometheus.Registerer) (
 		provisioningControllerConfig: *controllerCfg,
 		allowedTargets:               allowedTargets,
 		workerCount:                  cfg.SectionWithEnvOverrides("operator").Key("worker_count").MustInt(1),
+		parallelOperations:           cfg.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),
 		allowImageRendering:          cfg.SectionWithEnvOverrides("provisioning").Key("allow_image_rendering").MustBool(false),
 		minSyncInterval:              cfg.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(1 * time.Minute),
-		maxSyncWorkers:               controllerCfg.maxSyncWorkers,
 	}, nil
 }
