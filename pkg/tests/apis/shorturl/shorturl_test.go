@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	shorturlV1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -29,11 +29,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-var gvr = schema.GroupVersionResource{
-	Group:    "shorturl.grafana.app",
-	Version:  "v1alpha1",
-	Resource: "shorturls",
-}
+var gvr = shorturlV1.ShortURLKind().GroupVersionResource()
 
 var RESOURCEGROUP = gvr.GroupResource().String()
 
@@ -284,20 +280,20 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 		}, (*any)(nil))
 		assert.Equal(t, 302, redirectResponse.Response.StatusCode)
 
-		time.Sleep(150 * time.Millisecond) // wait a bit for async status update
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			// Verify lastSeenAt was updated (should be > 0 now)
+			found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+			require.NoError(t, err)
 
-		// Verify lastSeenAt was updated (should be > 0 now)
-		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
-		require.NoError(t, err)
+			lastSeenAt, exists, err := unstructured.NestedInt64(found.Object, "status", "lastSeenAt")
+			require.NoError(t, err)
+			assert.True(t, exists)
 
-		lastSeenAt, exists, err := unstructured.NestedInt64(found.Object, "status", "lastSeenAt")
-		require.NoError(t, err)
-		assert.True(t, exists)
-
-		assert.Greater(t, lastSeenAt, int64(0))
+			assert.Greater(t, lastSeenAt, int64(0))
+		}, time.Second*5, time.Millisecond*75, "lastSeenAt should be updated after redirect")
 
 		// Clean up
-		err = client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
+		err := client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 }
