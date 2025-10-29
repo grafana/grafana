@@ -4,13 +4,18 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, useStyles2, Grid } from '@grafana/ui';
 import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './DashboardLibraryModal';
+import {
+  fetchCommunityDashboard,
+  fetchCommunityDashboards,
+  fetchProvisionedDashboards,
+} from './api/dashboardLibraryApi';
 import { DashboardLibraryInteractions } from './interactions';
 import { GnetDashboard } from './types';
 import { tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './utils/autoMapDatasources';
@@ -36,7 +41,8 @@ type MixedDashboard =
 const SUGGESTED_COMMUNITY_PAGE_SIZE = 2;
 const DEFAULT_SORT_ORDER = 'downloads';
 const DEFAULT_SORT_DIRECTION = 'desc';
-const INCLUDE_SCREENSHOTS = 'true';
+const INCLUDE_SCREENSHOTS = true;
+const INCLUDE_LOGO = true;
 
 export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping }: Props) => {
   const styles = useStyles2(getStyles);
@@ -62,46 +68,21 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
 
     try {
       // Fetch both provisioned and community dashboards in parallel
-      const [provisionedResult, communityResult] = await Promise.all([
+      const [provisioned, community] = await Promise.all([
         // Fetch provisioned dashboards
-        getBackendSrv()
-          .get(`api/plugins/${ds.type}/dashboards`, undefined, undefined, {
-            showErrorAlert: false,
-          })
-          .catch((): PluginDashboard[] => []),
+        fetchProvisionedDashboards(ds.type),
 
         // Fetch community dashboards
-        (async () => {
-          const params = new URLSearchParams({
-            orderBy: DEFAULT_SORT_ORDER,
-            direction: DEFAULT_SORT_DIRECTION,
-            page: '1',
-            pageSize: String(SUGGESTED_COMMUNITY_PAGE_SIZE),
-            includeScreenshots: INCLUDE_SCREENSHOTS,
-          });
-
-          // Filter by datasource type
-          if (ds.type) {
-            params.append('dataSourceSlugIn', ds.type);
-          }
-
-          const result = await getBackendSrv()
-            .get(`/api/gnet/dashboards?${params}`, undefined, undefined, {
-              showErrorAlert: false,
-            })
-            .catch((error) => {
-              console.error('Error fetching community dashboards:', error);
-              return { dashboards: [] };
-            });
-
-          // Handle different response structures - API returns {items: [...], total, pages, ...}
-          const dashboards = Array.isArray(result) ? result : result.items || result.dashboards || [];
-          return dashboards;
-        })(),
+        fetchCommunityDashboards({
+          orderBy: DEFAULT_SORT_ORDER,
+          direction: DEFAULT_SORT_DIRECTION,
+          page: 1,
+          pageSize: SUGGESTED_COMMUNITY_PAGE_SIZE,
+          includeScreenshots: INCLUDE_SCREENSHOTS,
+          dataSourceSlugIn: ds.type,
+          includeLogo: INCLUDE_LOGO,
+        }),
       ]);
-
-      const provisioned: PluginDashboard[] = Array.isArray(provisionedResult) ? provisionedResult : [];
-      let community: GnetDashboard[] = Array.isArray(communityResult) ? communityResult : [];
 
       // Mix: 1 provisioned + 2 community
       const mixed: MixedDashboard[] = [];
@@ -204,7 +185,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
 
     try {
       // Fetch full dashboard from Gcom, this is the JSON with __inputs
-      const fullDashboard = await getBackendSrv().get(`/api/gnet/dashboards/${dashboard.id}`);
+      const fullDashboard = await fetchCommunityDashboard(dashboard.id);
       const dashboardJson = fullDashboard.json;
 
       // Parse datasource requirements from __inputs

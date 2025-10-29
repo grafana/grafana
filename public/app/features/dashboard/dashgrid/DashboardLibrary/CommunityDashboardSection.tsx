@@ -5,12 +5,13 @@ import { useAsync, useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, useStyles2, Stack, Grid, EmptyState, Alert, Pagination, FilterInput } from '@grafana/ui';
 import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 
 import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './DashboardLibraryModal';
+import { fetchCommunityDashboard, fetchCommunityDashboards } from './api/dashboardLibraryApi';
 import { DashboardLibraryInteractions } from './interactions';
 import { GnetDashboard } from './types';
 import { tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './utils/autoMapDatasources';
@@ -32,8 +33,8 @@ const COMMUNITY_PAGINATION_OFFSET = 4;
 const SEARCH_DEBOUNCE_MS = 500;
 const DEFAULT_SORT_ORDER = 'downloads';
 const DEFAULT_SORT_DIRECTION = 'desc';
-const INCLUDE_LOGO = '1';
-const INCLUDE_SCREENSHOTS = 'true';
+const INCLUDE_LOGO = true;
+const INCLUDE_SCREENSHOTS = true;
 
 export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Props) => {
   const [searchParams] = useSearchParams();
@@ -70,41 +71,16 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
     }
 
     try {
-      const params = new URLSearchParams({
+      const dashboards = await fetchCommunityDashboards({
         orderBy: DEFAULT_SORT_ORDER,
         direction: DEFAULT_SORT_DIRECTION,
-        page: String(currentPage),
-        pageSize: String(COMMUNITY_PAGE_SIZE),
+        page: currentPage,
+        pageSize: COMMUNITY_PAGE_SIZE,
         includeLogo: INCLUDE_LOGO,
         includeScreenshots: INCLUDE_SCREENSHOTS,
+        dataSourceSlugIn: ds.type,
+        filter: debouncedSearchQuery.trim() || undefined,
       });
-
-      // Filter by datasource type using dataSourceSlugIn
-      if (ds.type) {
-        params.append('dataSourceSlugIn', ds.type);
-      }
-
-      // Add search query using filter parameter
-      if (debouncedSearchQuery.trim()) {
-        params.append('filter', debouncedSearchQuery.trim());
-      }
-
-      const result = await getBackendSrv().get(`/api/gnet/dashboards?${params}`, undefined, undefined, {
-        showErrorAlert: false,
-      });
-
-      // The API response might have different structures - handle both
-      let dashboards: GnetDashboard[];
-      if (Array.isArray(result)) {
-        dashboards = result;
-      } else if (result && Array.isArray(result.dashboards)) {
-        dashboards = result.dashboards;
-      } else if (result && Array.isArray(result.items)) {
-        dashboards = result.items;
-      } else {
-        console.warn('Unexpected API response format:', result);
-        dashboards = [];
-      }
 
       // Track analytics on first load
       if (currentPage === 1 && dashboards.length > 0) {
@@ -148,7 +124,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
 
     try {
       // Fetch full dashboard from Gcom, this is the JSON with __inputs
-      const fullDashboard = await getBackendSrv().get(`/api/gnet/dashboards/${dashboard.id}`);
+      const fullDashboard = await fetchCommunityDashboard(dashboard.id);
       const dashboardJson = fullDashboard.json;
 
       // Parse datasource requirements from __inputs

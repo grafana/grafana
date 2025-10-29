@@ -4,13 +4,14 @@ import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { useStyles2, Stack, Grid, Pagination } from '@grafana/ui';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { DashboardCard } from './DashboardCard';
+import { fetchProvisionedDashboards } from './api/dashboardLibraryApi';
 import { DashboardLibraryInteractions } from './interactions';
 import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
 
@@ -33,24 +34,18 @@ export const DashboardLibrarySection = () => {
       return [];
     }
 
-    try {
-      const dashboards = await getBackendSrv().get(`api/plugins/${ds.type}/dashboards`, undefined, undefined, {
-        showErrorAlert: false,
-      });
+    const dashboards = await fetchProvisionedDashboards(ds.type);
 
-      if (dashboards.length > 0) {
-        DashboardLibraryInteractions.loaded({
-          numberOfItems: dashboards.length,
-          contentKinds: ['datasource_dashboard'],
-          datasourceTypes: [ds.type],
-          sourceEntryPoint: 'datasource_page',
-        });
-      }
-      return dashboards;
-    } catch (error) {
-      console.error('Error loading template dashboards', error);
-      return [];
+    if (dashboards.length > 0) {
+      DashboardLibraryInteractions.loaded({
+        numberOfItems: dashboards.length,
+        contentKinds: ['datasource_dashboard'],
+        datasourceTypes: [ds.type],
+        sourceEntryPoint: 'datasource_page',
+      });
     }
+
+    return dashboards;
   }, [datasourceUid]);
 
   // Calculate pagination
