@@ -35,8 +35,9 @@ var executeLogAnomaliesQuery = func(ctx context.Context, ds *DataSource, req *ba
 			return nil, err
 		}
 
-		listAnomaliesInput := &cloudwatchlogs.ListAnomaliesInput{
-			SuppressionState: getSuppressionState(*anomaliesQuery.SuppressionState),
+		listAnomaliesInput := &cloudwatchlogs.ListAnomaliesInput{}
+		if anomaliesQuery.SuppressionState != nil {
+			listAnomaliesInput.SuppressionState = getSuppressionState(*anomaliesQuery.SuppressionState)
 		}
 
 		if anomaliesQuery.AnomalyDetectionARN == nil || *anomaliesQuery.AnomalyDetectionARN != "" {
