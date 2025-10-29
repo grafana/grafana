@@ -179,9 +179,6 @@ const (
 	// Next generation provisioning... and git
 	FlagProvisioning = "provisioning"
 
-	// FlagProvisioningUseAggregation
-	FlagProvisioningUseAggregation = "aggregation.provisioning-grafana-app.enabled"
-
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
