@@ -18,11 +18,12 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { PROVISIONING_URL } from '../constants';
 import { useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
+import { usePRBranch } from '../hooks/usePRBranch';
 
 export default function FileStatusPage() {
   const params = useParams();
   const [queryParams] = useQueryParams();
-  const ref = (queryParams['ref'] as string) ?? undefined;
+  const ref = usePRBranch();
   const tab = (queryParams['tab'] as TabSelection) ?? TabSelection.File;
   const name = params['name'] ?? '';
   const path = params['*'] ?? '';
