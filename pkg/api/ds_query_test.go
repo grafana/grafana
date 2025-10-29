@@ -254,6 +254,7 @@ func TestDataSourceQueryError(t *testing.T) {
 				err := r.Add(context.Background(), p)
 				require.NoError(t, err)
 				ds := &fakeDatasources.FakeDataSourceService{}
+				hs.log = log.New("test-logger")
 				hs.queryDataService = query.ProvideService(
 					cfg,
 					&fakeDatasources.FakeCacheService{},
