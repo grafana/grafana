@@ -2,7 +2,6 @@ import { render } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneVariableSet, ScopesVariable, TextBoxVariable } from '@grafana/scenes';
-import { defaultScopesServices, ScopesContextProvider } from 'app/features/scopes/ScopesContextProvider';
 
 import { DashboardControls, DashboardControlsState } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
@@ -120,7 +119,6 @@ describe('DashboardControls', () => {
       dashboard.activate();
 
       const controls = dashboard.state.controls as DashboardControls;
-      const services = defaultScopesServices();
 
       // Mock the Component getter - use 'as any' to bypass TypeScript's getter checking
       // Return a component function (not JSX directly) that renders our test element
@@ -129,11 +127,7 @@ describe('DashboardControls', () => {
         return <div>Mocked Component</div>;
       });
 
-      const renderer = render(
-        <ScopesContextProvider services={services}>
-          <controls.Component model={controls} />
-        </ScopesContextProvider>
-      );
+      const renderer = render(<controls.Component model={controls} />);
 
       // Verify UNSAFE_renderAsHidden is set (required for renderHiddenVariables to include it)
       expect(scopeVariable.UNSAFE_renderAsHidden).toBe(true);
