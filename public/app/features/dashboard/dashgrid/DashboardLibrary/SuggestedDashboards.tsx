@@ -240,7 +240,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
   }
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-testid="suggested-dashboards">
       <div className={styles.header}>
         <div className={styles.headerText}>
           <h1 className={styles.title}>
