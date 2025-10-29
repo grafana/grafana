@@ -167,7 +167,7 @@ export function DeleteProvisionedDashboardForm({
     workflow,
     resourceType: 'dashboard',
     repository,
-    formRef: ref || loadedFromRef || repository?.branch,
+    selectedBranch: ref || loadedFromRef,
     successMessage: t(
       'dashboard-scene.delete-provisioned-dashboard-form.success-message',
       'Dashboard deleted successfully'

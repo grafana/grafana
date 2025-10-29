@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import { t } from '@grafana/i18n';
 import { GetRepositoryRefsApiResponse, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -26,64 +24,58 @@ export const useBranchDropdownOptions = ({
   lastBranch,
   branchData,
 }: UseBranchDropdownOptionsParams): BranchOption[] => {
-  return useMemo(() => {
-    const options: BranchOption[] = [];
-    const addedBranches = new Set<string>();
+  const options: BranchOption[] = [];
+  const addedBranches = new Set<string>();
 
-    const configuredBranch = repository?.branch;
-    const configuredPrefix = t(
-      'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-configured-branch',
-      'Configured branch'
-    );
-    const prPrefix = t(
-      'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-pr-branch',
-      'Pull request branch'
-    );
-    const lastUsedPrefix = t(
-      'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-last-used',
-      'Last branch'
-    );
+  const configuredBranch = repository?.branch;
+  const configuredPrefix = t(
+    'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-configured-branch',
+    'Configured branch'
+  );
+  const prPrefix = t(
+    'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-pr-branch',
+    'Pull request branch'
+  );
+  const lastUsedPrefix = t(
+    'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-last-used',
+    'Last branch'
+  );
 
-    // 1. Show the configured branch first in the list
-    if (configuredBranch) {
-      options.push({
-        label: `${configuredBranch}`,
-        value: configuredBranch,
-        description: configuredPrefix,
-      });
-      addedBranches.add(configuredBranch);
-    }
+  if (configuredBranch) {
+    options.push({
+      label: `${configuredBranch}`,
+      value: configuredBranch,
+      description: configuredPrefix,
+    });
+    addedBranches.add(configuredBranch);
+  }
 
-    // 2. Show the PR branch (from ref query param)
-    if (prBranch && !addedBranches.has(prBranch)) {
-      options.push({
-        label: prBranch,
-        value: prBranch,
-        description: prPrefix,
-      });
-      addedBranches.add(prBranch);
-    }
+  if (prBranch && !addedBranches.has(prBranch)) {
+    options.push({
+      label: prBranch,
+      value: prBranch,
+      description: prPrefix,
+    });
+    addedBranches.add(prBranch);
+  }
 
-    // 3. Show the last used branch
-    if (lastBranch && !addedBranches.has(lastBranch)) {
-      options.push({
-        label: lastBranch,
-        value: lastBranch,
-        description: lastUsedPrefix,
-      });
-      addedBranches.add(lastBranch);
-    }
+  if (lastBranch && !addedBranches.has(lastBranch)) {
+    options.push({
+      label: lastBranch,
+      value: lastBranch,
+      description: lastUsedPrefix,
+    });
+    addedBranches.add(lastBranch);
+  }
 
-    // 4. Add other branches from the API
-    if (branchData?.items) {
-      for (const ref of branchData.items) {
-        if (!addedBranches.has(ref.name)) {
-          options.push({ label: ref.name, value: ref.name });
-          addedBranches.add(ref.name);
-        }
+  if (branchData?.items) {
+    for (const ref of branchData.items) {
+      if (!addedBranches.has(ref.name)) {
+        options.push({ label: ref.name, value: ref.name });
+        addedBranches.add(ref.name);
       }
     }
+  }
 
-    return options;
-  }, [repository?.branch, prBranch, lastBranch, branchData?.items]);
+  return options;
 };

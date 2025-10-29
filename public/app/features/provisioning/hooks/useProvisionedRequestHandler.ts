@@ -58,7 +58,7 @@ interface Props<T> {
   successMessage?: string;
   repository?: RepositoryView;
   resourceType?: ResourceType;
-  formRef?: string; // The ref from the form that the user selected
+  selectedBranch?: string; // The branch selected by the user in the form
 }
 
 /**
@@ -75,7 +75,7 @@ export function useProvisionedRequestHandler<T>({
   successMessage,
   repository,
   resourceType,
-  formRef,
+  selectedBranch,
 }: Props<T>) {
   const dispatch = useDispatch();
   const { setLastBranch } = useLastBranch();
@@ -103,8 +103,8 @@ export function useProvisionedRequestHandler<T>({
         // For branch workflow, save the ref from the response
         setLastBranch(repository?.name, ref);
       } else if (workflow === 'write') {
-        // For write workflow, save the formRef or fall back to repository branch
-        setLastBranch(repository?.name, formRef || repository?.branch);
+        // For write workflow, save the selectedBranch or fall back to repository branch
+        setLastBranch(repository?.name, selectedBranch || repository?.branch);
       }
 
       // Success message
@@ -140,7 +140,7 @@ export function useProvisionedRequestHandler<T>({
     resourceType,
     folderUID,
     dispatch,
-    formRef,
+    selectedBranch,
     setLastBranch,
   ]);
 }

@@ -89,7 +89,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
     workflow,
     repository,
     resourceType: 'folder',
-    formRef: methods.getValues().ref || repository?.branch,
+    selectedBranch: methods.getValues().ref,
     handlers: {
       onDismiss,
       onBranchSuccess,

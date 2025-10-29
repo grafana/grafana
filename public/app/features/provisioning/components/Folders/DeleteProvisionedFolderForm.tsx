@@ -144,7 +144,7 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
     workflow,
     resourceType: 'folder',
     repository,
-    formRef: ref || repository?.branch,
+    selectedBranch: ref,
     successMessage: t(
       'browse-dashboards.delete-provisioned-folder-form.success-message',
       'Folder deleted successfully'
