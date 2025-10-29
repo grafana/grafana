@@ -92,7 +92,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
     handlers: {
       onDismiss,
       onBranchSuccess,
-      onWriteSuccess: (_, resource) => onWriteSuccess(resource),
+      onWriteSuccess,
       onError,
     },
   });

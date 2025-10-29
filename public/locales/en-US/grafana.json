@@ -4120,6 +4120,7 @@
       "description": "Use custom value"
     },
     "options": {
+      "loading": "Loading options...",
       "no-found": "No options found."
     }
   },
@@ -4157,6 +4158,7 @@
     "cancel": "Cancel",
     "clear": "Clear",
     "collapse": "Collapse",
+    "disabled": "Disabled",
     "edit": "Edit",
     "help": "Help",
     "loading": "Loading...",
@@ -5133,6 +5135,19 @@
       "aria-label-remove-override": "Remove override",
       "tooltip-remove-override": "Remove override"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "Hidden time info",
+        "hide-time-info-description": "Do not show the custom time range in the panel header",
+        "time-from": "Custom panel time range",
+        "time-from-description": "Overrides the dashboard time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
+        "time-shift": "Time shift",
+        "time-shift-description": "Adds a time shift relative to the dashboard or panel time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
+        "time-window-compare": "Time window comparison",
+        "time-window-compare-description": "Query and overlay data from a different time period",
+        "title": "Panel time range settings"
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
@@ -5705,6 +5720,11 @@
       "open-dashboard": "Open dashboard",
       "open-in-new-tab": "Open in new tab",
       "title-error-adding-the-panel": "Error adding the panel"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": "New panel"
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Back to list",
@@ -7662,7 +7682,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "No folders found",
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
@@ -10890,6 +10909,7 @@
       "replace-library-panel": "Replace library panel",
       "share": "Share",
       "show-legend": "Show legend",
+      "time-settings": "Time settings",
       "unlink-library-panel": "Unlink library panel",
       "view": "View"
     },
@@ -12308,8 +12328,6 @@
       "title": "Select scopes"
     },
     "tree": {
-      "collapse": "Collapse {{title}}",
-      "expand": "Expand {{title}}",
       "headline": {
         "noResults": "No results found for your query",
         "recommended": "Recommended",
@@ -13153,6 +13171,14 @@
       "form-label": "Form label",
       "title": "Panel"
     }
+  },
+  "time-period": {
+    "1_day": "1 day",
+    "1_hour": "1 hour",
+    "12_hours": "12 hours",
+    "30_days": "30 days",
+    "6_hours": "6 hours",
+    "7_days": "7 days"
   },
   "time-picker": {
     "absolute": {
