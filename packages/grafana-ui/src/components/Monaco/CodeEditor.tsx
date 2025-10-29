@@ -196,6 +196,11 @@ class UnthemedCodeEditor extends PureComponent<Props> {
   }
 }
 
+/**
+ * Monaco Code editor.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-codeeditor--docs
+ */
 export const CodeEditor = withTheme2(UnthemedCodeEditor);
 
 const getStyles = (theme: GrafanaTheme2) => {
