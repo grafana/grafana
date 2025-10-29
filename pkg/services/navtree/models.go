@@ -22,6 +22,7 @@ const (
 	WeightAlertsAndIncidents
 	WeightAIAndML
 	WeightAdaptiveTelemetry
+	WeightCMAB
 	WeightTestingAndSynthetics
 	WeightObservability
 	WeightCloudServiceProviders
