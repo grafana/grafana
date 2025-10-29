@@ -42,13 +42,13 @@ Read more in [Types of plugins](plugin-types).
 
 ## Plugin catalog
 
-The Grafana plugin catalog allows you to install and manage plugins from within Grafana. Only Grafana server administrators and Organization administrators can access and use the plugin catalog. For more information about Grafana roles and permissions, refer to [Roles and permissions](../roles-and-permissions/).
-
-The following access rules apply depending on the user role:
+You can install and manage plugins from within Grafana. The following access rules apply depending on the user role:
 
 - If you are an **Org Admin**, you can configure app plugins, but you can't install, uninstall, or update them.
 - If you are a **Server Admin**, you can't configure app plugins, but you can install, uninstall, or update them.
 - If you are both **Org Admin** and **Server Admin**, you can configure app plugins and also install, uninstall, or update them.
+
+For more information about Grafana roles and permissions, refer to [Roles and permissions](../roles-and-permissions/).
 
 ### Browse plugins
 
@@ -58,7 +58,7 @@ To browse for available plugins:
 1. Use the search box to filter based on name, keywords, organization and other metadata.
 1. Click the **Data sources**, **Panels**, or **Applications** buttons to filter by plugin type.
 
-If you're not logged in, you can also access the list of available plugins [here](https://grafana.com/grafana/plugins/).
+If you're not logged in, you can also access the list of available plugins in the [Plugin catalog](https://grafana.com/grafana/plugins/).
 
 ## Manage your plugins
 
