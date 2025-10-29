@@ -21,12 +21,12 @@ const (
 	WeightAlerting
 	WeightAlertsAndIncidents
 	WeightAIAndML
+	WeightAdaptiveTelemetry
 	WeightTestingAndSynthetics
 	WeightObservability
 	WeightCloudServiceProviders
 	WeightInfrastructure
 	WeightApplication
-	WeightFrontend
 	WeightAsserts
 	WeightDataConnections
 	WeightApps
@@ -48,7 +48,6 @@ const (
 	NavIDAlerting             = "alerting"
 	NavIDObservability        = "observability"
 	NavIDInfrastructure       = "infrastructure"
-	NavIDFrontend             = "frontend"
 	NavIDReporting            = "reports"
 	NavIDApps                 = "apps"
 	NavIDCfgGeneral           = "cfg/general"

@@ -34,6 +34,11 @@ interface State {
   errorInfo: ErrorInfo | null;
 }
 
+/**
+ * A React component that catches errors in child components. Useful for logging or displaying a fallback UI in case of errors. More information about error boundaries is available at [React documentation website](https://reactjs.org/docs/error-boundaries.html).
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/utilities-errorboundary--docs
+ */
 export class ErrorBoundary extends PureComponent<Props, State> {
   readonly state: State = {
     error: null,

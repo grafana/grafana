@@ -4100,6 +4100,7 @@
       "description": "使用自訂值"
     },
     "options": {
+      "loading": "",
       "no-found": "沒有找到選項。"
     }
   },

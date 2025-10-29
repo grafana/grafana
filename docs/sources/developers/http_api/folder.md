@@ -41,6 +41,11 @@ Returns all folders that the authenticated user has permission to view within th
 
 - namespace: to read more about the namespace to use, see the [API overview](ref:apis).
 
+**Query parameters**:
+
+- **`limit`** (optional): Maximum number of folders to return
+- **`continue`** (optional): Continue token from a previous response to fetch the next page
+
 **Required permissions**
 
 See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
@@ -67,7 +72,7 @@ Content-Type: application/json
   "kind": "FolderList",
   "apiVersion": "folder.grafana.app/v1beta1",
   "metadata": {
-    "continue": "org:1/start:1158/folder:"
+    "continue": "eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ=="
   },
   "items": [
     {
@@ -92,6 +97,51 @@ Content-Type: application/json
   ]
 }
 ```
+
+The `metadata.continue` field contains a token to fetch the next page.
+
+**Example subsequent request using continue token**:
+
+```http
+GET /apis/folder.grafana.app/v1beta1/namespaces/default/folders?limit=1&continue=eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ== HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example subsequent response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+{
+  "kind": "FolderList",
+  "apiVersion": "folder.grafana.app/v1beta1",
+  "items": [
+    {
+      "kind": "Folder",
+      "apiVersion": "folder.grafana.app/v1beta1",
+      "metadata": {
+        "name": "bef30vrzxs3y8e",
+        "namespace": "default",
+        "uid": "YCtv1FXDsJmTYQoTgcPnfuwZhDZge3uMpXOefaOHjb5Y",
+        "resourceVersion": "1741343687000",
+        "creationTimestamp": "2025-03-07T10:35:47Z",
+        "annotations": {
+          "grafana.app/createdBy": "service-account:cef2t2rfm73lsb",
+          "grafana.app/updatedBy": "service-account:cef2t2rfm73lsb",
+          "grafana.app/updatedTimestamp": "2025-03-07T10:35:47Z"
+        }
+      },
+      "spec": {
+        "title": "another folder"
+      }
+    }
+  ]
+}
+```
+
+Continue making requests with the updated `continue` token until you receive a response without a `continue` field in the metadata, indicating you've reached the last page.
 
 Status Codes:
 

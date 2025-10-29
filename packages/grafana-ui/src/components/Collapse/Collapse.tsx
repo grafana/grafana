@@ -128,6 +128,11 @@ export const ControlledCollapse = ({ isOpen, onToggle, ...otherProps }: React.Pr
   );
 };
 
+/**
+ * A content area, which can be horizontally collapsed and expanded. Can be used to hide extra information on the page.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-collapse--docs
+ */
 export const Collapse = ({
   isOpen,
   label,
