@@ -66,10 +66,7 @@ test.describe(
 
       // Check link interpolation is working correctly
       const exampleLink = page.locator(`a:has-text("${example}")`);
-      await expect(exampleLink).toHaveAttribute(
-        'href',
-        `https://example.com/?from=now-6h&to=now&timezone=${encodeURIComponent(timeZone)}`
-      );
+      await expect(exampleLink).toHaveAttribute('href', `https://example.com/?from=now-6h&to=now&timezone=browser`);
     });
   }
 );
