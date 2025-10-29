@@ -7,17 +7,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { useStyles2, Stack, Grid, Pagination } from '@grafana/ui';
 import { PluginDashboard } from 'app/types/plugins';
-import dashboardLibrary1 from 'img/dashboard-library/dashboard_library_1.jpg';
-import dashboardLibrary2 from 'img/dashboard-library/dashboard_library_2.jpg';
-import dashboardLibrary3 from 'img/dashboard-library/dashboard_library_3.jpg';
-import dashboardLibrary4 from 'img/dashboard-library/dashboard_library_4.jpg';
-import dashboardLibrary5 from 'img/dashboard-library/dashboard_library_5.jpg';
-import dashboardLibrary6 from 'img/dashboard-library/dashboard_library_6.jpg';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { DashboardCard } from './DashboardCard';
 import { DashboardLibraryInteractions } from './interactions';
+import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
 
 // Constants for datasource-provided dashboards pagination
 const PAGE_SIZE = 9;
@@ -108,20 +103,9 @@ export const DashboardLibrarySection = () => {
         {loading && !templateDashboards
           ? Array.from({ length: 9 }).map((_, i) => <div key={i} className={styles.skeleton} />)
           : dashboardsToShow?.map((dashboard, index) => {
-              const dashboardLibraryImages = [
-                dashboardLibrary1,
-                dashboardLibrary2,
-                dashboardLibrary3,
-                dashboardLibrary4,
-                dashboardLibrary5,
-                dashboardLibrary6,
-              ];
-              // Use global index for consistent image assignment
+              // Use global index for consistent image assignment across pages
               const globalIndex = startIndex + index;
-              const imageUrl =
-                globalIndex <= 5
-                  ? dashboardLibraryImages[globalIndex]
-                  : dashboardLibraryImages[globalIndex % dashboardLibraryImages.length];
+              const imageUrl = getProvisionedDashboardImageUrl(globalIndex);
 
               return (
                 <DashboardCard

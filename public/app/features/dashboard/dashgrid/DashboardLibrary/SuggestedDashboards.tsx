@@ -8,12 +8,6 @@ import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { Button, useStyles2, Grid } from '@grafana/ui';
 import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 import { PluginDashboard } from 'app/types/plugins';
-import dashboardLibrary1 from 'img/dashboard-library/dashboard_library_1.jpg';
-import dashboardLibrary2 from 'img/dashboard-library/dashboard_library_2.jpg';
-import dashboardLibrary3 from 'img/dashboard-library/dashboard_library_3.jpg';
-import dashboardLibrary4 from 'img/dashboard-library/dashboard_library_4.jpg';
-import dashboardLibrary5 from 'img/dashboard-library/dashboard_library_5.jpg';
-import dashboardLibrary6 from 'img/dashboard-library/dashboard_library_6.jpg';
 
 import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './DashboardLibraryModal';
@@ -26,6 +20,7 @@ import {
   buildDashboardDetails,
   navigateToTemplate,
 } from './utils/communityDashboardHelpers';
+import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
 
 interface Props {
   datasourceUid?: string;
@@ -246,18 +241,6 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
     }
   };
 
-  const getProvisionedImageUrl = (index: number) => {
-    const images = [
-      dashboardLibrary1,
-      dashboardLibrary2,
-      dashboardLibrary3,
-      dashboardLibrary4,
-      dashboardLibrary5,
-      dashboardLibrary6,
-    ];
-    return images[index % images.length];
-  };
-
   // Don't render if no dashboards or still loading
   if (!loading && (!suggestedDashboards || suggestedDashboards.length === 0)) {
     return null;
@@ -312,7 +295,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
                 <DashboardCard
                   key={`provisioned-${item.dashboard.uid}-${idx}`}
                   title={item.dashboard.title}
-                  imageUrl={getProvisionedImageUrl(item.index)}
+                  imageUrl={getProvisionedDashboardImageUrl(item.index)}
                   dashboard={item.dashboard}
                   onClick={() => handleProvisionedClick(item.dashboard)}
                   showDatasourceProvidedBadge={true}
