@@ -84,7 +84,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
     <Drawer
       title={t('alerting.instance-details-drawer.title-instance-details', 'Instance Details')}
       onClose={onClose}
-      size="lg"
+      size="md"
     >
       <Stack direction="column" gap={3}>
         <Stack justifyContent="flex-end">
