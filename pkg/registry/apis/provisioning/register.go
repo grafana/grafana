@@ -88,7 +88,8 @@ type APIBuilder struct {
 	// HACK:This will be removed once we have proper wire providers for the controllers.
 	// TODO: Set this up in the standalone API server
 	onlyApiServer bool
-
+	useExclusivelyAccessCheckerForAuthz bool
+	
 	allowedTargets      []provisioning.SyncTargetType
 	allowImageRendering bool
 
@@ -147,6 +148,7 @@ func NewAPIBuilder(
 	minSyncInterval time.Duration,
 	registry prometheus.Registerer,
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
+	useExclusivelyAccessCheckerForAuthz bool,
 ) *APIBuilder {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -267,6 +269,7 @@ func RegisterAPIService(
 		cfg.ProvisioningMinSyncInterval,
 		reg,
 		nil,
+		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
@@ -285,7 +288,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 			info, ok := authlib.AuthInfoFrom(ctx)
 			// when running as standalone API server, the identity type may not always match TypeAccessPolicy
 			// so we allow it to use the access checker if there is any auth info available
-			if ok && (authlib.IsIdentityType(info.GetIdentityType(), authlib.TypeAccessPolicy) || b.isAccessCheckerEnforced(ctx)) {
+			if ok && (authlib.IsIdentityType(info.GetIdentityType(), authlib.TypeAccessPolicy) || b.useExclusivelyAccessCheckerForAuthz) {
 				res, err := b.access.Check(ctx, info, authlib.CheckRequest{
 					Verb:        a.GetVerb(),
 					Group:       a.GetAPIGroup(),
@@ -401,10 +404,6 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "unmapped kind defaults to no access", nil
 			}
 		})
-}
-
-func (b *APIBuilder) isAccessCheckerEnforced(ctx context.Context) bool {
-	return b.features.IsEnabled(ctx, featuremgmt.FlagProvisioningUseAggregation)
 }
 
 func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
