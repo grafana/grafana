@@ -712,7 +712,7 @@ func transformVariableRefreshToEnum(refresh interface{}) dashv2alpha1.DashboardV
 			return dashv2alpha1.DashboardVariableRefreshNever
 		}
 	default:
-		return dashv2alpha1.DashboardVariableRefreshOnDashboardLoad
+		return dashv2alpha1.DashboardVariableRefreshNever
 	}
 }
 
