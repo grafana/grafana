@@ -136,9 +136,9 @@ Git Sync only supports dashboards and folders. Alerts, panels, and other resourc
 
 Full instance sync is not available in Grafana Cloud.
 
-In Grafana OSS/Enterprise: 
+In Grafana OSS/Enterprise:
 
-- If you try to perform a full instance sync with resources that contain alerts or panels, Git Sync will block the connection. 
+- If you try to perform a full instance sync with resources that contain alerts or panels, Git Sync will block the connection.
 - You won't be able to create new alerts or library panels after the setup is completed.
 - If you opted for full instance sync and want to use alerts and library panels, you'll have to delete the synced repository and connect again with folder sync.
 
@@ -182,9 +182,10 @@ When connecting to a GitHub repository, Git Sync uses webhooks to enable real-ti
 
 Follow these steps to set up webhooks:
 
-1. Expose your Grafana instance to the public Internet. 
-  - You can do this via port forwarding and DNS, a tool such as `ngrok`, or any other method you prefer.
-  - The permissions set in your GitHub access token provide the authorization for this communication.
+1. Expose your Grafana instance to the public Internet.
+
+- You can do this via port forwarding and DNS, a tool such as `ngrok`, or any other method you prefer.
+- The permissions set in your GitHub access token provide the authorization for this communication.
 
 1. Set up webhooks with whichever service or tooling you prefer. You can use Cloudflare Tunnels with a Cloudflare-managed domain, port-forwarding and DNS options, or a tool such as `ngrok`.
 
@@ -194,10 +195,11 @@ Follow these steps to set up webhooks:
 [server]
 root_url = https://PUBLIC_DOMAIN.HERE
 ```
+
 1. To check the configured webhooks, go to **Administration** > **Provisioning** and click the **View** link for your GitHub repository.
 
 #### Expose necessary paths only
- 
+
 If your security setup does not permit publicly exposing the Grafana instance, you can either choose to `allowlist` the GitHub IP addresses, or expose only the necessary paths.
 
 The necessary paths required to be exposed are, in RegExp:

@@ -128,9 +128,9 @@ The set up process verifies the path and provides an error message if a problem 
 
 Full instance sync is not available in Grafana Cloud.
 
-In Grafana OSS/Enterprise: 
+In Grafana OSS/Enterprise:
 
-- If you try to perform a full instance sync with resources that contain alerts or panels, the connection will be blocked. 
+- If you try to perform a full instance sync with resources that contain alerts or panels, the connection will be blocked.
 - You won't be able to create new alerts or library panels after the setup is completed.
 - If you opted for full instance sync and want to use alerts and library panels, you'll have to delete the synced repository and connect again with folder sync.
 
