@@ -1,5 +1,9 @@
 import { AnnotationQuery } from '@grafana/data';
-import { AnnotationQueryKind, defaultDataQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import {
+  AnnotationQueryKind,
+  defaultAnnotationQuerySpec,
+  defaultDataQueryKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { getRuntimePanelDataSource } from './layoutSerializers/utils';
 
@@ -34,10 +38,10 @@ export function transformV1ToV2AnnotationQuery(
     kind: 'AnnotationQuery',
     spec: {
       builtIn: Boolean(annotation.builtIn),
-      name: annotation.name,
+      name: annotation.name ?? defaultAnnotationQuerySpec().name,
       enable: Boolean(override?.enable) || Boolean(annotation.enable),
       hide: Boolean(override?.hide) || Boolean(annotation.hide),
-      iconColor: annotation.iconColor,
+      iconColor: annotation.iconColor ?? defaultAnnotationQuerySpec().iconColor,
 
       query: {
         kind: 'DataQuery',
