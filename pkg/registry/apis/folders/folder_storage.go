@@ -156,7 +156,7 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
 	if parentUID == "" {
-		return fmt.Errorf("expecting folder with name")
+		return fmt.Errorf("folders require a parent folder UID annotation")
 	}
 	isNested := !folder.IsRootFolder(parentUID)
 
