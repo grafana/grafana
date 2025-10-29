@@ -10,6 +10,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { useSelector } from 'app/types/store';
 
+import { LogMessages, logInfo } from '../../Analytics';
 import { AlertRuleDrawerForm } from '../../components/AlertRuleDrawerForm';
 import { createPanelAlertRuleNavigation } from '../../utils/navigation';
 import { panelToRuleFormValues } from '../../utils/rule-form';
@@ -72,7 +73,10 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
           icon="bell"
           className={className}
           data-testid="create-alert-rule-button-drawer"
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+            logInfo(LogMessages.alertRuleFromPanel);
+            setIsOpen(true);
+          }}
         >
           <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
         </Button>
