@@ -20,11 +20,22 @@ import { PROVISIONING_URL } from '../constants';
 import { useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
 import { usePRBranch } from '../hooks/usePRBranch';
 
+enum TabSelection {
+  File = 'file',
+  Existing = 'existing',
+  DryRun = 'dryRun',
+}
+
+function isTabSelection(value: unknown): value is TabSelection {
+  return value === TabSelection.File || value === TabSelection.Existing || value === TabSelection.DryRun;
+}
+
 export default function FileStatusPage() {
   const params = useParams();
   const [queryParams] = useQueryParams();
   const ref = usePRBranch();
-  const tab = (queryParams['tab'] as TabSelection) ?? TabSelection.File;
+  const tabParam = queryParams['tab'];
+  const tab = isTabSelection(tabParam) ? tabParam : TabSelection.File;
   const name = params['name'] ?? '';
   const path = params['*'] ?? '';
   const file = useGetRepositoryFilesWithPathQuery({ name, path, ref });
@@ -51,12 +62,6 @@ export default function FileStatusPage() {
       </Page.Contents>
     </Page>
   );
-}
-
-enum TabSelection {
-  File = 'file',
-  Existing = 'existing',
-  DryRun = 'dryRun',
 }
 
 interface Props {
