@@ -408,6 +408,8 @@ func (ng *AlertNG) init() error {
 		ng.Log,
 		ng.ResourcePermissions,
 		ng.tracer,
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 	)
 	provisioningReceiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
@@ -419,6 +421,7 @@ func (ng *AlertNG) init() error {
 		ng.Log,
 		ng.ResourcePermissions,
 		ng.tracer,
+		false, // imported resources are not exposed via provisioning APIs
 	)
 
 	// Provisioning
