@@ -48,7 +48,7 @@ var executeLogAnomaliesQuery = func(ctx context.Context, ds *DataSource, req *ba
 
 		if err != nil {
 			result := backend.NewQueryDataResponse()
-			result.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(fmt.Errorf("%v: %w", "failed to call cloudwatch:DescribeAlarms", err)))
+			result.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(fmt.Errorf("%v: %w", "failed to call cloudwatch:ListAnomalies", err)))
 			return result, nil
 		}
 
@@ -67,7 +67,6 @@ var executeLogAnomaliesQuery = func(ctx context.Context, ds *DataSource, req *ba
 }
 
 func logsAnomaliesResultsToDataframes(response *cloudwatchlogs.ListAnomaliesOutput) (*data.Frame, error) {
-	backend.Logger.Debug("%s response anomalies", response)
 	frame := data.NewFrame("Log anomalies")
 
 	if len(response.Anomalies) == 0 {
@@ -102,8 +101,8 @@ func logsAnomaliesResultsToDataframes(response *cloudwatchlogs.ListAnomaliesOutp
 
 		lastSeens[i] = time.UnixMilli(anomaly.LastSeen)
 
-		// will be built on the FE for the sparkline table cell
-		// b we keep it as JSOn.RawMessage ecause data.Frame returned from the backend cannot contain nested data.Frames
+		// data.Frame returned from the backend cannot contain fields of type data.Frames
+		// so histogram is kept as json.RawMessageto be built as sparkline table cell on the FE
 		histogramField := anomaly.Histogram
 		histogramJSON, err := json.Marshal(histogramField)
 		if err != nil {
@@ -120,6 +119,7 @@ func logsAnomaliesResultsToDataframes(response *cloudwatchlogs.ListAnomaliesOutp
 	newFields = append(newFields, data.NewField("description", nil, descriptions).SetConfig(&data.FieldConfig{DisplayName: "Anomaly"}))
 	newFields = append(newFields, data.NewField("priority", nil, priorities).SetConfig(&data.FieldConfig{DisplayName: "Priority"}))
 	newFields = append(newFields, data.NewField("patternString", nil, patterns).SetConfig(&data.FieldConfig{DisplayName: "Log Pattern"}))
+	// FE expects the field name to be logTrend in order to identify histogram field for sparkline rendering
 	newFields = append(newFields, data.NewField("logTrend", nil, logTrends).SetConfig(&data.FieldConfig{DisplayName: "Log Trend"}))
 	newFields = append(newFields, data.NewField("firstSeen", nil, firstSeens).SetConfig(&data.FieldConfig{DisplayName: "First seen"}))
 	newFields = append(newFields, data.NewField("lastSeen", nil, lastSeens).SetConfig(&data.FieldConfig{DisplayName: "Last seen"}))
@@ -127,7 +127,7 @@ func logsAnomaliesResultsToDataframes(response *cloudwatchlogs.ListAnomaliesOutp
 	newFields = append(newFields, data.NewField("logGroupArnList", nil, logGroupArnLists).SetConfig(&data.FieldConfig{DisplayName: "Log Groups"}))
 	newFields = append(newFields, data.NewField("anomalyArn", nil, anomalyArns).SetConfig(&data.FieldConfig{DisplayName: "Anomaly Arn"}))
 
-	frame = data.NewFrame("CloudwatchLogsAnomalies", newFields...)
+	frame.Fields = newFields
 	setPreferredVisType(frame, data.VisTypeTable)
 	return frame, nil
 }

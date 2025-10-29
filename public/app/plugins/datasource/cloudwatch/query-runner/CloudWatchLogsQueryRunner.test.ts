@@ -589,22 +589,20 @@ describe('handleLogAnomaliesQueries', () => {
     expect(response.data[0].fields[4].name).toEqual('Log trend');
   });
 
-  it('return an error response if timestamps are not valid', () => {
+  it('ignore invalid timestamps in log trend histogram', () => {
     const response = anomaliesQueryResponse;
 
     response.data[0].fields[4].values[1] = {
       invalidTimestamp: 3,
       '1760687670000': 3,
+      anotherInvalidTimestamp: 2,
+      '1760687670010': 3,
     };
 
     convertTrendHistogramToSparkline(response);
 
-    expect(response.errors).toEqual([
-      {
-        message: `Error: Unable to parse log trend timestamp value 'invalidTimestamp' as number.`,
-        refId: 'A',
-      },
-    ]);
+    expect(response.data[0].fields[4].values[1].fields[0].values.length).toEqual(2);
+    expect(response.data[0].fields[4].values[1].fields[1].values.length).toEqual(2);
   });
 });
 

@@ -544,7 +544,7 @@ function parseLogGroupName(logIdentifier: string): string {
   return logIdentifier.slice(colonIndex + 1);
 }
 
-const logTrendFieldName = 'logTrend';
+const LOG_TREND_FIELD_NAME = 'logTrend';
 
 /**
  * Takes DataQueryResponse and converts any "log trend" fields (that are in JSON.rawMessage form)
@@ -555,7 +555,7 @@ export function convertTrendHistogramToSparkline(dataQueryResponse: DataQueryRes
     let fieldIndexToReplace = null;
     // log trend histogram field from CW API is of shape Record<timestamp as string, value>
     const sparklineRawData: Field<Record<string, number>> = frame.fields.find((field: Field, index: number) => {
-      if (field.name === logTrendFieldName && field.type === FieldType.other) {
+      if (field.name === LOG_TREND_FIELD_NAME && field.type === FieldType.other) {
         fieldIndexToReplace = index;
         return true;
       }
@@ -580,20 +580,15 @@ export function convertTrendHistogramToSparkline(dataQueryResponse: DataQueryRes
       };
 
       sparklineRawData.values.forEach((sparklineValue, rowIndex) => {
-        const timestamps: number[] = Object.keys(sparklineValue).map((t) => {
+        const timestamps: number[] = [];
+        const values: number[] = [];
+        Object.keys(sparklineValue).map((t, i) => {
           let n = Number(t);
-          if (isNaN(n)) {
-            dataQueryResponse.errors = [
-              {
-                message: `Error: Unable to parse log trend timestamp value '${t}' as number.`,
-                refId: frame.refId,
-              },
-            ];
-            n = Date.now();
+          if (!isNaN(n)) {
+            timestamps.push(n);
+            values.push(sparklineValue[t]);
           }
-          return n;
         });
-        const values = Object.values(sparklineValue);
 
         const sparklineFieldFrame: DataFrame = {
           name: `Trend_row_${rowIndex}`,
