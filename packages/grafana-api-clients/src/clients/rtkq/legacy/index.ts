@@ -1,4 +1,4 @@
-import { generatedAPI as rawAPI, SearchTeamsApiArg } from './endpoints.gen';
+import { generatedAPI as rawAPI } from './endpoints.gen';
 
 export const legacyAPI = rawAPI.enhanceEndpoints({});
 
