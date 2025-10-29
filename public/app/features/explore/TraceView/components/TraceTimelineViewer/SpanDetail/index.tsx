@@ -490,7 +490,6 @@ export default function SpanDetail(props: SpanDetailProps) {
     );
   }
 
-  // make sure it's the last for nw...
   if (span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey)) {
     listOfContentCards.push(
       <SpanFlameGraph
