@@ -35,6 +35,11 @@ func NewPatternListInspector(detectorsProvider angulardetector.DetectorsProvider
 }
 
 func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) (isAngular bool, err error) {
+	// CDN plugins are ignored because they should not be using Angular
+	if p.Class == plugins.ClassCDN {
+		return false, nil
+	}
+
 	f, err := p.FS.Open("module.js")
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
