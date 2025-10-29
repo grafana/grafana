@@ -11,18 +11,18 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
-// PluginInstallJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
-type PluginInstallJSONCodec struct{}
+// PluginJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
+type PluginJSONCodec struct{}
 
 // Read reads JSON-encoded bytes from `reader` and unmarshals them into `into`
-func (*PluginInstallJSONCodec) Read(reader io.Reader, into resource.Object) error {
+func (*PluginJSONCodec) Read(reader io.Reader, into resource.Object) error {
 	return json.NewDecoder(reader).Decode(into)
 }
 
 // Write writes JSON-encoded bytes into `writer` marshaled from `from`
-func (*PluginInstallJSONCodec) Write(writer io.Writer, from resource.Object) error {
+func (*PluginJSONCodec) Write(writer io.Writer, from resource.Object) error {
 	return json.NewEncoder(writer).Encode(from)
 }
 
 // Interface compliance checks
-var _ resource.Codec = &PluginInstallJSONCodec{}
+var _ resource.Codec = &PluginJSONCodec{}
