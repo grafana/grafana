@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -57,6 +58,19 @@ func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *data
 		uidMatch := query.UID != "" && query.UID == dataSource.UID
 		nameMatch := query.Name != "" && query.Name == dataSource.Name // nolint:staticcheck
 		if idMatch || nameMatch || uidMatch {
+			return dataSource, nil
+		}
+	}
+	return nil, datasources.ErrDataSourceNotFound
+}
+
+func (d *dataSourceMockRetriever) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, err
+	}
+	for _, dataSource := range d.res {
+		if name == dataSource.UID && ns.OrgID == dataSource.OrgID && group == dataSource.Type {
 			return dataSource, nil
 		}
 	}

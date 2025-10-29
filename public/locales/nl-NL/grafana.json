@@ -4120,6 +4120,7 @@
       "description": "Aangepaste waarde gebruiken"
     },
     "options": {
+      "loading": "",
       "no-found": "Geen opties gevonden."
     }
   },
