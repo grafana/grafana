@@ -323,7 +323,8 @@ export class Explore extends PureComponent<Props, ExploreState> {
        * More data source may struggle with this setting: https://github.com/grafana/grafana/issues/112075
        * We're making it enabled for tempo only and will try to make it optional for other data sources in the future.
        */
-      if (options?.queries?.every((q) => q.datasource?.type === 'tempo')) {
+      const dsType = getDataSourceSrv().getInstanceSettings({ uid: options?.datasourceUid })?.type;
+      if (dsType === 'tempo' || options?.queries?.every((q) => q.datasource?.type === 'tempo')) {
         compact = true;
       }
 
