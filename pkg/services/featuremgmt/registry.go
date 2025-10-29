@@ -2144,6 +2144,13 @@ var (
 			HideFromDocs:      false,
 			HideFromAdminPage: false,
 		},
+		{
+			Name:         "dashboardTemplates",
+			Description:  "Enable template dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+		},
 	}
 )
 

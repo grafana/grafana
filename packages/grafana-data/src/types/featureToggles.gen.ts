@@ -1236,4 +1236,8 @@ export interface FeatureToggles {
   * Enables a new panel time settings drawer
   */
   panelTimeSettings?: boolean;
+  /**
+  * Enable template dashboards
+  */
+  dashboardTemplates?: boolean;
 }

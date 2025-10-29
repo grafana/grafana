@@ -275,3 +275,4 @@ preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,fals
 pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
 onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
 panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
+dashboardTemplates,experimental,@grafana/sharing-squad,false,false,false

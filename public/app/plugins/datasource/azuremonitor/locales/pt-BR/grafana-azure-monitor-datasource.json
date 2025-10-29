@@ -13,11 +13,11 @@
       "label-resource-group": "Grupo de recursos",
       "label-resource-name": "Nome do recurso",
       "label-resource-number": "Recurso {{resourceNum}}",
-      "label-resource-uri": "URI(s) de recurso ",
+      "label-resource-uri": "",
       "label-subscription": "Assinatura",
       "placeholder-resource-name": "nome",
       "tooltip-region": "A região de código do recurso. Opcional para um recurso, mas obrigatório ao selecionar vários.",
-      "tooltip-resource-uri": "Edite o <2>URI do recurso</2> manualmente. Compatível com o uso de múltiplas variáveis de modelo (por exemplo: /subscriptions/$subId/resourceGroups/$rg)"
+      "tooltip-resource-uri": ""
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Função de agregação",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Logs básicos",
-      "description-basic-logs": "A ativação deste recurso incorre em custos por consulta do Azure Monitor em painéis que consultam tabelas configuradas para <2>logs básicos</2>.",
+      "description-basic-logs": "",
       "label-enable-basic-logs": "Ativar logs básicos"
     },
     "config-editor": {
