@@ -162,7 +162,7 @@ func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) (*data.Frame
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		err := backend.DownstreamError(fmt.Errorf("request failed: %s", resp.Status))
+		err := fmt.Errorf("request failed: %s", resp.Status)
 		if backend.ErrorSourceFromHTTPStatus(resp.StatusCode) == backend.ErrorSourceDownstream {
 			return nil, backend.DownstreamError(err)
 		}
@@ -232,7 +232,7 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 	}()
 
 	if res != nil && res.StatusCode/100 != 2 {
-		err := backend.DownstreamError(fmt.Errorf("request failed: %s", res.Status))
+		err := fmt.Errorf("request failed: %s", res.Status)
 		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
 			return nil, backend.DownstreamError(err)
 		}
@@ -291,7 +291,7 @@ func (j *JaegerClient) Dependencies(ctx context.Context, start, end int64) (type
 	}()
 
 	if res != nil && res.StatusCode/100 != 2 {
-		err := backend.DownstreamError(fmt.Errorf("request failed: %s", res.Status))
+		err := fmt.Errorf("request failed: %s", res.Status)
 		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
 			return dependencies, backend.DownstreamError(err)
 		}
