@@ -10,6 +10,7 @@ import {
   FieldType,
   DataLinksContext,
   EventBus,
+  EventBusSrv,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv, PanelRenderer } from '@grafana/runtime';
@@ -36,7 +37,8 @@ interface TableContainerProps extends Themeable2 {
   timeZone: TimeZone;
   onCellFilterAdded?: (filter: AdHocFilterItem) => void;
   splitOpenFn: SplitOpen;
-  eventBus: EventBus;
+  eventBus?: EventBus;
+  ariaLabel?: string;
 }
 
 function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
@@ -163,7 +165,11 @@ export class TableContainer extends PureComponent<Props, State> {
                 {(innerWidth, innerHeight) => (
                   <DataLinksContext.Provider value={{ dataLinkPostProcessor }}>
                     <PanelContextProvider
-                      value={{ eventsScope: 'explore', eventBus, onAddAdHocFilter: onCellFilterAdded }}
+                      value={{
+                        eventsScope: 'explore',
+                        eventBus: eventBus ?? new EventBusSrv(),
+                        onAddAdHocFilter: onCellFilterAdded,
+                      }}
                     >
                       <PanelRenderer
                         data={{
@@ -171,7 +177,7 @@ export class TableContainer extends PureComponent<Props, State> {
                           state: loading ? LoadingState.Loading : LoadingState.Done,
                           timeRange: range,
                         }}
-                        pluginId={'core:plugin/table'}
+                        pluginId={'table'}
                         title=""
                         width={innerWidth}
                         height={innerHeight}
