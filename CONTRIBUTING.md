@@ -4,7 +4,7 @@ Thank you for your interest in contributing to Grafana! We welcome all people wh
 
 This document is a guide to help you through the process of contributing to Grafana. Be sure to check out the [Grafana Champions program](https://grafana.com/community/champions/?src=github&camp=community-cross-platform-engagement) as you start to contribute. It's designed to recognize and empower individuals who are actively contributing to the growth and success of the Grafana ecosystem.
 
->**Help us improve!** We'd love to hear about your contributor experience. Take a moment to share your feedback in our [Open Source Contributor Experience Survey](https://gra.fan/ome). Your input helps us make contributing to Grafana better for everyone.
+> **Help us improve!** We'd love to hear about your contributor experience. Take a moment to share your feedback in our [Open Source Contributor Experience Survey](https://gra.fan/ome). Your input helps us make contributing to Grafana better for everyone.
 
 Whether you're a new contributor or a seasoned veteran, we hope these resources help you connect with the community.
 
