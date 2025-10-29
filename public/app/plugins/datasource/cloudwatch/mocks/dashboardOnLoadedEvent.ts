@@ -779,6 +779,22 @@ export const CloudWatchDashboardLoadedEvent = new DashboardLoadedEvent({
         sqlExpression: '',
         statistic: '',
       },
+      {
+        refId: 'A',
+        region: 'default',
+        queryMode: 'Logs',
+        logsMode: 'Anomalies',
+        anomalyDetectionARN: '',
+        suppressionState: 'suppressed',
+      },
+      {
+        refId: 'A',
+        region: 'default',
+        queryMode: 'Logs',
+        logsMode: 'Anomalies',
+        anomalyDetectionARN: '',
+        suppressionState: 'all',
+      },
     ] as CloudWatchQuery[],
   },
 });
