@@ -278,8 +278,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		return 0, fmt.Errorf("failed to write data: %w", err)
 	}
 
-	// Optimistic concurrency control: verify our write is the latest version
-	// Only perform this check for MODIFIED and DELETED operations
+	// Optimistic concurrency control to verify our write is the latest version
 	if event.PreviousRV != 0 {
 		latestKey, err := k.dataStore.LastResourceVersion(ctx, ListRequestKey{
 			Group:     event.Key.Group,
