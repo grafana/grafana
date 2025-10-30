@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -510,6 +511,10 @@ func (pd *PublicDashboardServiceImpl) logIsEnabledChanged(existingPubdash *Publi
 		}
 		pd.log.Info("Public dashboard "+verb, "publicDashboardUid", newPubdash.Uid, "dashboardUid", newPubdash.DashboardUid, "user", u.Login)
 	}
+}
+
+func (pd *PublicDashboardServiceImpl) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (expr.SQLSchemas, error) {
+	return nil, fmt.Errorf("sql schema endpoint not supported with public dashboards")
 }
 
 // Checks to see if PublicDashboard.ExistsEnabledByDashboardUid is true on create or changed on update

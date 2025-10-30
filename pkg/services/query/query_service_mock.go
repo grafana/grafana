@@ -4,10 +4,12 @@ package query
 
 import (
 	context "context"
+	"fmt"
 
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	dtos "github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/expr"
 
 	identity "github.com/grafana/grafana/pkg/apimachinery/identity"
 
@@ -95,6 +97,10 @@ func (_m *FakeQueryService) Run(ctx context.Context) error {
 	}
 
 	return r0
+}
+
+func (_m *FakeQueryService) GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (expr.SQLSchemas, error) {
+	return nil, fmt.Errorf("sql schema endpoint not supported with public dashboards")
 }
 
 // NewFakeQueryService creates a new instance of FakeQueryService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

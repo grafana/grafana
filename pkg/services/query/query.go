@@ -73,6 +73,8 @@ type Service interface {
 
 	// this is more "forward compatible", for example supports per-query time ranges
 	QueryDataNew(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
+
+	GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (expr.SQLSchemas, error)
 }
 
 // Gives us compile time error if the service does not adhere to the contract of the interface
