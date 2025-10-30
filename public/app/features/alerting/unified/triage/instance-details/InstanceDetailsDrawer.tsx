@@ -84,7 +84,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
     <Drawer
       title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} rule={rule.grafana_alert} />}
       onClose={onClose}
-      size="lg"
+      size="md"
     >
       <Stack direction="column" gap={3}>
         <Stack justifyContent="flex-end">
