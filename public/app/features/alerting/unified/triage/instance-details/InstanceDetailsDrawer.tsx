@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { orderBy } from 'lodash';
 import { Fragment, useMemo } from 'react';
-import { useMeasure } from 'react-use';
+import { useMeasure, useWindowSize } from 'react-use';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -20,6 +20,7 @@ import { LogRecord, historyDataFrameToLogRecords } from '../../components/rules/
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { stringifyErrorLike } from '../../utils/misc';
 import { useWorkbenchContext } from '../WorkbenchContext';
+import { COLUMN_BORDER_WIDTH, COLUMN_CONTENT_PADDING, GRID_GAP_SPACING } from '../rows/GenericRow';
 
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
 import { QueryVisualization } from './QueryVisualization';
@@ -28,12 +29,36 @@ import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
 const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
 
-function calculateDrawerWidth(leftColumnWidth: number, megaMenuDocked: boolean, megaMenuOpen: boolean): string {
+function calculateDrawerWidth(
+  leftColumnWidth: number,
+  megaMenuDocked: boolean,
+  megaMenuOpen: boolean,
+  screenWidth: number
+): string {
   // Calculate the drawer width to align with the right column (chart area)
   // The drawer opens from the right, so we use calc to get: 100% - leftColumnWidth - gap
   // If the mega menu is docked and open, we also subtract its width
+  // We also clamp to a max width to prevent the drawer from being too wide on ultra-wide monitors
   const megaMenuOffset = megaMenuDocked && megaMenuOpen ? MENU_WIDTH : '0px';
-  return `calc(100% - ${leftColumnWidth}px - 16px - ${megaMenuOffset})`; // 16px is the gap (theme.spacing(2))
+  const gap = GRID_GAP_SPACING * 8; // theme.spacing(2) = 16px (8px per spacing unit)
+
+  // Account for all the visual space the left column takes:
+  // - Both column borders (left and right)
+  // - Right padding of the left column content
+  // - Left padding of the right column content (to fully clear the separator area)
+  const borders = COLUMN_BORDER_WIDTH * 2; // Border on each column
+  const leftColumnPadding = COLUMN_CONTENT_PADDING * 2; // Left column has padding on both sides
+  const calculatedWidth = `calc(100% - ${leftColumnWidth}px - ${gap + borders + leftColumnPadding}px - ${megaMenuOffset})`;
+
+  // Calculate max width based on screen size:
+  // - On smaller screens (< 1920px): no max width, always align with left column separator (with larger buffer)
+  // - On larger screens (ultra-wide): cap at 1400px to prevent drawer from being too wide
+  if (screenWidth < 1920) {
+    return calculatedWidth; // No max width constraint, use calculated width based on separator
+  }
+
+  const maxWidth = '1400px';
+  return `min(${calculatedWidth}, ${maxWidth})`;
 }
 
 interface InstanceDetailsDrawerProps {
@@ -48,8 +73,14 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
   const { leftColumnWidth } = useWorkbenchContext();
   const { chrome } = useGrafana();
   const chromeState = chrome.useState();
+  const { width: screenWidth } = useWindowSize();
 
-  const drawerWidth = calculateDrawerWidth(leftColumnWidth, chromeState.megaMenuDocked, chromeState.megaMenuOpen);
+  const drawerWidth = calculateDrawerWidth(
+    leftColumnWidth,
+    chromeState.megaMenuDocked,
+    chromeState.megaMenuOpen,
+    screenWidth
+  );
 
   const { data: rule, isLoading: loading, error } = useGetAlertRuleQuery({ uid: ruleUID });
 
