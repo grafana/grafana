@@ -235,9 +235,23 @@ fix-cue:
 	$(cue) fix kinds/**/*.cue
 	$(cue) fix public/app/plugins/**/**/*.cue
 
+
 .PHONY: gen-jsonnet
-gen-jsonnet:
+gen-jsonnet: do-gen-jsonnet
+	@if [ -n "$$CODEGEN_VERIFY" ]; then \
+		echo "Verifying generated code is up to date..."; \
+		if ! git diff --quiet; then \
+			echo "Error: Generated jsonnet files are not up to date. Please run 'make gen-jsonnet' to regenerate."; \
+			git diff --name-only; \
+			exit 1; \
+		fi; \
+		echo "Generated jsonnet files are up to date."; \
+	fi
+
+.PHONY: do-gen-jsonnet
+do-gen-jsonnet:
 	go generate ./devenv/jsonnet
+
 
 .PHONY: update-workspace
 update-workspace: gen-go
