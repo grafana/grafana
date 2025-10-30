@@ -1322,10 +1322,7 @@ function createContextTimeRange(rowTimeEpochMs: number, direction: string, inter
 }
 
 // Attach log level as label. This is used to determine the log level in future operations.
-function attachLogLevelLabelsToDataFrames(
-  dataFrames: DataFrame[]
-): DataFrame[] {
-
+function attachLogLevelLabelsToDataFrames(dataFrames: DataFrame[]): DataFrame[] {
   return dataFrames.map((frame) => {
     // Log level is returned properly in the frame.name.
     const level = frame.name;
