@@ -2,14 +2,15 @@ import { defaultsDeep } from 'lodash';
 
 import { EventBus } from '../events/types';
 import { StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
+import { PanelDataSummary, getPanelDataSummary } from '../panel/getPanelDataSummary';
 import { Registry } from '../utils/Registry';
 
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { ScopedVars } from './ScopedVars';
 import { AlertStateInfo } from './alerts';
 import { PanelModel } from './dashboard';
-import { LoadingState, PreferredVisualisationType } from './data';
-import { DataFrame, FieldType } from './dataFrame';
+import { LoadingState } from './data';
+import { DataFrame } from './dataFrame';
 import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
 import { FieldConfigSource } from './fieldOverrides';
 import { IconName } from './icon';
@@ -261,35 +262,6 @@ export enum VisualizationSuggestionScore {
 /**
  * @alpha
  */
-export interface PanelDataSummary {
-  hasData?: boolean;
-  rowCountTotal: number;
-  rowCountMax: number;
-  frameCount: number;
-  fieldCount: number;
-  fieldCountByType: (type: FieldType) => number;
-  hasFieldType: (type: FieldType) => boolean;
-  /** The first frame that set's this value */
-  preferredVisualisationType?: PreferredVisualisationType;
-
-  /* --- DEPRECATED FIELDS BELOW --- */
-  /** @deprecated use PanelDataSummary.fieldCountByType(FieldType.number) */
-  numberFieldCount: number;
-  /** @deprecated use PanelDataSummary.fieldCountByType(FieldType.time) */
-  timeFieldCount: number;
-  /** @deprecated use PanelDataSummary.fieldCountByType(FieldType.string) */
-  stringFieldCount: number;
-  /** @deprecated use PanelDataSummary.hasFieldType(FieldType.number) */
-  hasNumberField?: boolean;
-  /** @deprecated use PanelDataSummary.hasFieldType(FieldType.time) */
-  hasTimeField?: boolean;
-  /** @deprecated use PanelDataSummary.hasFieldType(FieldType.string) */
-  hasStringField?: boolean;
-}
-
-/**
- * @alpha
- */
 export class VisualizationSuggestionsBuilder {
   /** Current data */
   data?: PanelData;
@@ -303,7 +275,7 @@ export class VisualizationSuggestionsBuilder {
   constructor(data?: PanelData, panel?: PanelModel) {
     this.data = data;
     this.panel = panel;
-    this.dataSummary = getPanelDataSummary(this.data);
+    this.dataSummary = getPanelDataSummary(this.data?.series);
   }
 
   getListAppender<TOptions, TFieldConfig>(defaults: VisualizationSuggestion<TOptions, TFieldConfig>) {

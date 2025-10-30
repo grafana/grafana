@@ -1,8 +1,37 @@
 import { PreferredVisualisationType } from '../types/data';
 import { DataFrame, FieldType } from '../types/dataFrame';
-import { PanelDataSummary } from '../types/panel';
 
 /**
+ * @alpha
+ */
+export interface PanelDataSummary {
+  hasData?: boolean;
+  rowCountTotal: number;
+  rowCountMax: number;
+  frameCount: number;
+  fieldCount: number;
+  fieldCountByType: (type: FieldType) => number;
+  hasFieldType: (type: FieldType) => boolean;
+  /** The first frame that set's this value */
+  preferredVisualisationType?: PreferredVisualisationType;
+
+  /* --- DEPRECATED FIELDS BELOW --- */
+  /** @deprecated use PanelDataSummary.fieldCountByType(FieldType.number) */
+  numberFieldCount: number;
+  /** @deprecated use PanelDataSummary.fieldCountByType(FieldType.time) */
+  timeFieldCount: number;
+  /** @deprecated use PanelDataSummary.fieldCountByType(FieldType.string) */
+  stringFieldCount: number;
+  /** @deprecated use PanelDataSummary.hasFieldType(FieldType.number) */
+  hasNumberField?: boolean;
+  /** @deprecated use PanelDataSummary.hasFieldType(FieldType.time) */
+  hasTimeField?: boolean;
+  /** @deprecated use PanelDataSummary.hasFieldType(FieldType.string) */
+  hasStringField?: boolean;
+}
+
+/**
+ * @alpha
  * given a list of dataframes, summarize attributes of those frames for features like suggestions.
  * @param frames - dataframes to summarize
  * @returns summary of the dataframes
