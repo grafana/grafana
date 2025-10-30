@@ -435,6 +435,7 @@ export {
   isStandardFieldProp,
   type OptionDefaults,
 } from './panel/getPanelOptionsWithDefaults';
+export { getPanelDataSummary } from './panel/getPanelDataSummary';
 export { createFieldConfigRegistry } from './panel/registryFactories';
 export { type QueryRunner, type QueryRunnerOptions } from './types/queryRunner';
 export { type GroupingToMatrixTransformerOptions } from './transformations/transformers/groupingToMatrix';
