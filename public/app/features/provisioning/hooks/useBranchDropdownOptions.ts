@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { t } from '@grafana/i18n';
 import { GetRepositoryRefsApiResponse, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -14,6 +16,17 @@ interface BranchOption {
   description?: string;
 }
 
+function getBranchDescriptions() {
+  return {
+    configured: t(
+      'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-configured-branch',
+      'Configured branch'
+    ),
+    pr: t('provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-pr-branch', 'Pull request branch'),
+    lastUsed: t('provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-last-used', 'Last branch'),
+  };
+}
+
 /**
  * Hook to generate branch dropdown options with proper ordering and deduplication.
  * Order: Configured branch → PR branch → Last used branch → Other branches
@@ -24,28 +37,18 @@ export const useBranchDropdownOptions = ({
   lastBranch,
   branchData,
 }: UseBranchDropdownOptionsParams): BranchOption[] => {
+  const descriptions = useMemo(() => getBranchDescriptions(), []);
+
   const options: BranchOption[] = [];
   const addedBranches = new Set<string>();
 
   const configuredBranch = repository?.branch;
-  const configuredPrefix = t(
-    'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-configured-branch',
-    'Configured branch'
-  );
-  const prPrefix = t(
-    'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-pr-branch',
-    'Pull request branch'
-  );
-  const lastUsedPrefix = t(
-    'provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-last-used',
-    'Last branch'
-  );
 
   if (configuredBranch) {
     options.push({
       label: `${configuredBranch}`,
       value: configuredBranch,
-      description: configuredPrefix,
+      description: descriptions.configured,
     });
     addedBranches.add(configuredBranch);
   }
@@ -54,7 +57,7 @@ export const useBranchDropdownOptions = ({
     options.push({
       label: prBranch,
       value: prBranch,
-      description: prPrefix,
+      description: descriptions.pr,
     });
     addedBranches.add(prBranch);
   }
@@ -63,7 +66,7 @@ export const useBranchDropdownOptions = ({
     options.push({
       label: lastBranch,
       value: lastBranch,
-      description: lastUsedPrefix,
+      description: descriptions.lastUsed,
     });
     addedBranches.add(lastBranch);
   }
