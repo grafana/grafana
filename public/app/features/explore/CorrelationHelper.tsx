@@ -171,7 +171,6 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
           })}
         </pre>
         <Collapse
-          collapsible
           isOpen={isLabelDescOpen}
           onToggle={() => {
             setIsLabelDescOpen(!isLabelDescOpen);
@@ -201,7 +200,6 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
           </Field>
         </Collapse>
         <Collapse
-          collapsible
           isOpen={isTransformOpen}
           onToggle={() => {
             setIsTransformOpen(!isTransformOpen);

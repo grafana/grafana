@@ -25,7 +25,6 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats, o
     <div className={styles.wrapper}>
       <Collapse
         className={styles.collapse}
-        collapsible
         isOpen={propsIsOpen ?? isOpen}
         onToggle={onToggle ?? toggleOpen}
         label={
