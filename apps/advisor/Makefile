@@ -14,4 +14,4 @@ generate: install-app-sdk update-app-sdk
 
 .PHONY: run
 run:
-	@go run ./pkg/standalone/standalone.go --etcd-servers=http://127.0.0.1:22379 --secure-port 7445
+	@go run ./pkg/standalone/server.go --etcd-servers=http://127.0.0.1:22379 --secure-port 7445
