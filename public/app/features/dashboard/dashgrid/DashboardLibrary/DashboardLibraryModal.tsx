@@ -48,11 +48,10 @@ export const DashboardLibraryModal = ({
   // Get datasource info for modal title and search
   const datasourceInfo = useMemo(() => {
     if (!datasourceUid) {
-      return { name: '', type: '' };
+      return { type: '' };
     }
     const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
     return {
-      name: ds?.name || '',
       type: ds?.type || '',
     };
   }, [datasourceUid]);
@@ -86,11 +85,11 @@ export const DashboardLibraryModal = ({
       title={
         activeView === 'mapping'
           ? t('dashboard.library-modal.title-mapping', 'Configure datasources')
-          : datasourceInfo.name
+          : datasourceInfo.type
             ? t(
                 'dashboard.library-modal.title-with-datasource',
-                'Suggested dashboards for your {{datasourceName}} datasource',
-                { datasourceName: datasourceInfo.name }
+                'Suggested dashboards for your {{datasourceType}} datasource',
+                { datasourceType: datasourceInfo.type }
               )
             : t('dashboard.library-modal.title', 'Suggested dashboards')
       }

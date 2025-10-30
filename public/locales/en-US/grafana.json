@@ -4840,7 +4840,7 @@
       "import-dashboard-button": "Import dashboard",
       "suggested-dashboards-subtitle": "Browse and select from data-source provided or community dashboards",
       "suggested-dashboards-title": "Build a dashboard using suggested options for your selected data source",
-      "suggested-dashboards-title-with-datasource": "Build a dashboard using suggested options for your {{datasourceName}} data source",
+      "suggested-dashboards-title-with-datasource": "Build a dashboard using suggested options for your {{datasourceType}} data source",
       "view-all": "View all"
     },
     "errors": {
@@ -5108,7 +5108,7 @@
       "tab-datasource": "Data-source provided",
       "title": "Suggested dashboards",
       "title-mapping": "Configure datasources",
-      "title-with-datasource": "Suggested dashboards for your {{datasourceName}} datasource"
+      "title-with-datasource": "Suggested dashboards for your {{datasourceType}} datasource"
     },
     "make-editable": {
       "dashboard-not-editable": "Dashboard not editable",
@@ -6544,7 +6544,6 @@
     "card": {
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
-      "no-description": "No description available",
       "no-preview": "No preview available",
       "use-dashboard-button": "Use dashboard",
       "use-template-button": "Use template"

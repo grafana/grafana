@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { config, locationService, reportInteraction } from '@grafana/runtime';

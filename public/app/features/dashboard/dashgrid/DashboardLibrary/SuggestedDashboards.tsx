@@ -52,14 +52,16 @@ const INCLUDE_LOGO = true;
 export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping }: Props) => {
   const styles = useStyles2(getStyles);
 
-  // Get datasource name for dynamic title
-  const datasourceName = useMemo(() => {
+  // Get datasource type for dynamic title
+  const datasourceType = useMemo(() => {
     if (!datasourceUid) {
       return '';
     }
     const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
-    return ds?.name || '';
+    return ds?.type || '';
   }, [datasourceUid]);
+
+  console.log(datasourceType);
 
   const { value: result, loading } = useAsync(async (): Promise<SuggestedDashboardsResult> => {
     if (!datasourceUid) {
@@ -256,11 +258,11 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
       <div className={styles.header}>
         <div className={styles.headerText}>
           <h1 className={styles.title}>
-            {datasourceName
+            {datasourceType
               ? t(
                   'dashboard.empty.suggested-dashboards-title-with-datasource',
-                  'Build a dashboard using suggested options for your {{datasourceName}} data source',
-                  { datasourceName }
+                  'Build a dashboard using suggested options for your {{datasourceType}} data source',
+                  { datasourceType }
                 )
               : t(
                   'dashboard.empty.suggested-dashboards-title',
