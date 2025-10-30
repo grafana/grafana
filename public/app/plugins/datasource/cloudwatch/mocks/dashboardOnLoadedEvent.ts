@@ -19,7 +19,10 @@ const baseLegacyLogsQuery = {
 
 const baseLogsQuery = {
   ...baseLegacyLogsQuery,
-  logGroups: [{arn: 'arn:test', name: 'log-group-1'}, {arn: 'arn:test2', name: 'log-group-2'}],
+  logGroups: [
+    { arn: 'arn:test', name: 'log-group-1' },
+    { arn: 'arn:test2', name: 'log-group-2' },
+  ],
   logGroupNames: undefined,
 };
 
