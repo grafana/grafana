@@ -116,6 +116,10 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       const dataTransformer = sourcePanelQueryRunner.parent;
 
       if (dataTransformer instanceof SceneDataTransformer && dataTransformer.state.transformations.length) {
+        // In mixed DS scenario we complete the observable and merge data, so on a variable change
+        // the data transformer will emit but there will be no subscription and thus no visual update
+        // on the panel. Similar thing happens when going to edit mode and back, where we unsubscribe and
+        // since we never re-run the query, only reprocess the transformations, the panel will not update.
         const transformerSub = dataTransformer.subscribeToState((newState, oldState) => {
           if (newState.data !== oldState.data) {
             queryRunner.runQueries();
