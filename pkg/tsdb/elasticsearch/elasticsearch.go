@@ -142,9 +142,9 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			maxConcurrentShardRequests = defaultMaxConcurrentShardRequests
 		}
 
-		if maxConcurrentShardRequests <= 0 {
-			maxConcurrentShardRequests = defaultMaxConcurrentShardRequests
-		}
+		// if maxConcurrentShardRequests <= 0 {
+		// 	maxConcurrentShardRequests = defaultMaxConcurrentShardRequests
+		// }
 
 		includeFrozen, ok := jsonData["includeFrozen"].(bool)
 		if !ok {
