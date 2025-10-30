@@ -426,6 +426,10 @@ export function isPluginUpdatable(plugin: CatalogPlugin) {
     return false;
   }
 
+  if (!plugin.isPublished) {
+    return false;
+  }
+
   // If there is no update available, the plugin cannot be updated
   if (!plugin.hasUpdate) {
     return false;

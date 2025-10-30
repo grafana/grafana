@@ -85,6 +85,13 @@ describe('PluginListItemBadges', () => {
     expect(screen.queryByText(/update available/i)).toBeNull();
   });
 
+  it('does not render an upgrade badge (when plugin has an available update and is not published)', () => {
+    render(
+      <PluginListItemBadges plugin={{ ...plugin, hasUpdate: true, installedVersion: '0.0.9', isPublished: false }} />
+    );
+    expect(screen.queryByText(/update available/i)).toBeNull();
+  });
+
   it('does not render an upgrade badge (when plugin is preinstalled with a version)', () => {
     render(
       <PluginListItemBadges
