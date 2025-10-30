@@ -10554,7 +10554,12 @@
       }
     },
     "help": {
-      "aria-label": "ヘルプ"
+      "aria-label": "ヘルプ",
+      "interactive-learning": {
+        "close-tooltip": "インタラクティブ学習、ヘルプ、ドキュメントを閉じる",
+        "open-tooltip": "インタラクティブ学習、ヘルプ、ドキュメントを開く"
+      },
+      "tooltip": "ヘルプと便利なリンクを取得"
     },
     "invite-user": {
       "invite-button": "招待",

@@ -10597,7 +10597,12 @@
       }
     },
     "help": {
-      "aria-label": "Hjälp"
+      "aria-label": "Hjälp",
+      "interactive-learning": {
+        "close-tooltip": "Stäng interaktiv inlärning, hjälp och dokumentation",
+        "open-tooltip": "Öppna interaktiv inlärning, hjälp och dokumentation"
+      },
+      "tooltip": "Få hjälp och användbara länkar"
     },
     "invite-user": {
       "invite-button": "Bjud in",

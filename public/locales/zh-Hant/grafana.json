@@ -10554,7 +10554,12 @@
       }
     },
     "help": {
-      "aria-label": "說明"
+      "aria-label": "說明",
+      "interactive-learning": {
+        "close-tooltip": "關閉互動式學習、說明和文件",
+        "open-tooltip": "開啟互動式學習、說明和文件"
+      },
+      "tooltip": "取得說明和實用連結"
     },
     "invite-user": {
       "invite-button": "邀請",

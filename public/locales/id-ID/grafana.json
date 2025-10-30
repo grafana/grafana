@@ -10554,7 +10554,12 @@
       }
     },
     "help": {
-      "aria-label": "Bantuan"
+      "aria-label": "Bantuan",
+      "interactive-learning": {
+        "close-tooltip": "Tutup pembelajaran interaktif, bantuan dan dokumentasi",
+        "open-tooltip": "Buka pembelajaran interaktif, bantuan dan dokumentasi"
+      },
+      "tooltip": "Dapatkan bantuan dan tautan berguna"
     },
     "invite-user": {
       "invite-button": "Undang",

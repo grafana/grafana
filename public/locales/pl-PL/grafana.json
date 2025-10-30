@@ -10683,7 +10683,12 @@
       }
     },
     "help": {
-      "aria-label": "Pomoc"
+      "aria-label": "Pomoc",
+      "interactive-learning": {
+        "close-tooltip": "Zamknij interaktywną naukę, pomoc i dokumentację",
+        "open-tooltip": "Otwórz interaktywną naukę, pomoc i dokumentację"
+      },
+      "tooltip": "Uzyskaj pomoc i przydatne linki"
     },
     "invite-user": {
       "invite-button": "Zaproś",

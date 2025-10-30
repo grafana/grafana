@@ -10554,7 +10554,12 @@
       }
     },
     "help": {
-      "aria-label": "도움말"
+      "aria-label": "도움말",
+      "interactive-learning": {
+        "close-tooltip": "대화형 학습, 도움말 및 설명서 닫기",
+        "open-tooltip": "대화형 학습, 도움말 및 설명서 열기"
+      },
+      "tooltip": "도움말 및 유용한 링크 받기"
     },
     "invite-user": {
       "invite-button": "초대",

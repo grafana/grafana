@@ -10683,7 +10683,12 @@
       }
     },
     "help": {
-      "aria-label": "Nápověda"
+      "aria-label": "Nápověda",
+      "interactive-learning": {
+        "close-tooltip": "Zavřít interaktivní učení, nápovědu a dokumentaci",
+        "open-tooltip": "Otevřít interaktivní učení, nápovědu a dokumentaci"
+      },
+      "tooltip": "Získat nápovědu a užitečné odkazy"
     },
     "invite-user": {
       "invite-button": "Pozvat",

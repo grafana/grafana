@@ -10597,7 +10597,12 @@
       }
     },
     "help": {
-      "aria-label": "Yardım"
+      "aria-label": "Yardım",
+      "interactive-learning": {
+        "close-tooltip": "Etkileşimli öğrenme, yardım ve dokümantasyonu kapat",
+        "open-tooltip": "Etkileşimli öğrenme, yardım ve dokümantasyonu aç"
+      },
+      "tooltip": "Yardım ve faydalı bağlantılar alın"
     },
     "invite-user": {
       "invite-button": "Davet et",

@@ -10597,7 +10597,12 @@
       }
     },
     "help": {
-      "aria-label": "Ajuda"
+      "aria-label": "Ajuda",
+      "interactive-learning": {
+        "close-tooltip": "Fechar aprendizagem interativa, ajuda e documentação",
+        "open-tooltip": "Abrir aprendizagem interativa, ajuda e documentação"
+      },
+      "tooltip": "Obter ajuda e ligações úteis"
     },
     "invite-user": {
       "invite-button": "Convidar",
