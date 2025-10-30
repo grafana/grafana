@@ -42,7 +42,9 @@ When the log line details are open, you have access to the following additional 
 - Anchor to the right
 - Close log details
 
-You can access these options from the log line details or from the log line menu:
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-logs-options-v12.3.png" max-width="750px" alt="Log icons" >}}
+
+You can access the first three options from the log line details or from the log line menu:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-log-line-menu-v12.3.png" max-width="300px" alt="The log line menu" >}}
 
