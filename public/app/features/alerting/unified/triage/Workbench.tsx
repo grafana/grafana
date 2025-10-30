@@ -23,7 +23,7 @@ import { Domain, Filter, WorkbenchRow } from './types';
 type WorkbenchProps = {
   domain: Domain;
   data: WorkbenchRow[];
-  groupBy?: string[]; // @TODO proper type
+  groupBy?: string[];
   filterBy?: Filter[];
   queryRunner: SceneQueryRunner;
 };
@@ -36,13 +36,30 @@ function renderWorkbenchRow(
   leftColumnWidth: number,
   domain: Domain,
   key: React.Key,
+  groupBy: string[] | undefined,
   depth = 0
 ): React.ReactElement {
   if (row.type === 'alertRule') {
-    return <AlertRuleRow key={key} row={row} leftColumnWidth={leftColumnWidth} rowKey={key} depth={depth} />;
+    return (
+      <AlertRuleRow
+        key={key}
+        row={row}
+        leftColumnWidth={leftColumnWidth}
+        rowKey={key}
+        depth={depth}
+        groupBy={groupBy}
+      />
+    );
   } else {
     const children = row.rows.map((childRow, childIndex) =>
-      renderWorkbenchRow(childRow, leftColumnWidth, domain, `${key}-${generateRowKey(childRow, childIndex)}`, depth + 1)
+      renderWorkbenchRow(
+        childRow,
+        leftColumnWidth,
+        domain,
+        `${key}-${generateRowKey(childRow, childIndex)}`,
+        groupBy,
+        depth + 1
+      )
     );
 
     // Check if this is a grafana_folder group and use FolderGroupRow
@@ -99,7 +116,7 @@ function renderWorkbenchRow(
  │                         │ │                                   │
  └─────────────────────────┘ └───────────────────────────────────┘
  */
-export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
+export function Workbench({ domain, data, queryRunner, groupBy }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
 
   const isLoading = !queryRunner.isDataReadyToDisplay();
@@ -151,7 +168,7 @@ export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
               ) : (
                 dataSlice.map((row, index) => {
                   const rowKey = generateRowKey(row, index);
-                  return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey);
+                  return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey, groupBy);
                 })
               )}
               {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}
