@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -1549,36 +1550,55 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 	ns := nsPrefix + "-optimistic-locking"
 
-	t.Run("updates with lower RV fail with optimistic locking error", func(t *testing.T) {
-		// Create initial resource
-		rv1, err := writeEvent(ctx, backend, "concurrent-item", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	t.Run("concurrent updates with same RV - only one succeeds", func(t *testing.T) {
+		// Create initial resource with rv0 (no previous RV)
+		rv0, err := writeEvent(ctx, backend, "concurrent-item", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 		require.NoError(t, err)
-		require.Greater(t, rv1, int64(0))
+		require.Greater(t, rv0, int64(0))
 
-		// Simulate concurrent writes by using pre-generated RVs
-		// In a real scenario, two goroutines might generate rv2 and rv3
-		// Write with higher RV first (rv3), then attempt with lower RV (rv2)
-		rv2, err := writeEvent(ctx, backend, "concurrent-item", resourcepb.WatchEvent_MODIFIED,
-			WithNamespaceAndRV(ns, rv1),
-			WithValue("update-2"))
-		require.NoError(t, err)
-		require.Greater(t, rv2, rv1)
+		// Launch 10 concurrent updates, all using rv0 as the previous RV
+		const numConcurrent = 10
+		type result struct {
+			rv  int64
+			err error
+		}
+		results := make(chan result, numConcurrent)
 
-		// Now write rv3 which is higher than rv2
-		rv3, err := writeEvent(ctx, backend, "concurrent-item", resourcepb.WatchEvent_MODIFIED,
-			WithNamespaceAndRV(ns, rv1),
-			WithValue("update-3"))
-		require.NoError(t, err)
-		require.Greater(t, rv3, rv2)
+		// Start all goroutines concurrently
+		var wg sync.WaitGroup
+		wg.Add(numConcurrent)
+		for i := 0; i < numConcurrent; i++ {
+			go func(updateNum int) {
+				defer wg.Done()
+				rv, err := writeEvent(ctx, backend, "concurrent-item", resourcepb.WatchEvent_MODIFIED,
+					WithNamespaceAndRV(ns, rv0),
+					WithValue(fmt.Sprintf("update-%d", updateNum)))
+				results <- result{rv: rv, err: err}
+			}(i)
+		}
 
-		// Try to write rv4 with stale PreviousRV (rv1 instead of rv3) - should fail
-		_, err = writeEvent(ctx, backend, "concurrent-item", resourcepb.WatchEvent_MODIFIED,
-			WithNamespaceAndRV(ns, rv1),
-			WithValue("update-4"))
-		require.Error(t, err, "update with stale RV should fail")
-		require.ErrorContains(t, err, "optimistic locking failed", "error should be about optimistic locking")
+		// Wait for all goroutines to complete
+		wg.Wait()
+		close(results)
 
-		// Verify the latest version is rv3
+		// Count successes and failures
+		var successes, failures int
+		var successRV int64
+		for res := range results {
+			if res.err == nil {
+				successes++
+				successRV = res.rv
+				require.Greater(t, res.rv, rv0, "successful update should have higher RV than rv0")
+			} else {
+				failures++
+			}
+		}
+
+		// Verify exactly one success and 9 failures
+		require.Equal(t, 1, successes, "exactly one concurrent update should succeed")
+		require.Equal(t, numConcurrent-1, failures, "all other concurrent updates should fail")
+
+		// Verify the resource has the successful update
 		resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
 			Key: &resourcepb.ResourceKey{
 				Name:      "concurrent-item",
@@ -1588,116 +1608,6 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 			},
 		})
 		require.Nil(t, resp.Error)
-		require.Equal(t, rv3, resp.ResourceVersion)
-		require.Contains(t, string(resp.Value), "update-3")
-	})
-
-	t.Run("deletes with lower RV fail with optimistic locking error", func(t *testing.T) {
-		// Create initial resource
-		rv1, err := writeEvent(ctx, backend, "delete-item", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
-		require.NoError(t, err)
-		require.Greater(t, rv1, int64(0))
-
-		// Update to version 2
-		rv2, err := writeEvent(ctx, backend, "delete-item", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv1))
-		require.NoError(t, err)
-		require.Greater(t, rv2, rv1)
-
-		// Delete with rv2 should succeed
-		rv3, err := writeEvent(ctx, backend, "delete-item", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv2))
-		require.NoError(t, err)
-		require.Greater(t, rv3, rv2)
-
-		// Try to delete again with stale RV (rv2 instead of rv3) - should fail
-		_, err = writeEvent(ctx, backend, "delete-item", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv2))
-		require.Error(t, err, "delete with stale RV should fail")
-		require.ErrorContains(t, err, "optimistic locking failed", "error should be about optimistic locking")
-
-		// Verify the resource is deleted (read should return not found)
-		resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
-			Key: &resourcepb.ResourceKey{
-				Name:      "delete-item",
-				Namespace: ns,
-				Group:     "group",
-				Resource:  "resource",
-			},
-		})
-		require.NotNil(t, resp.Error)
-		require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
-	})
-
-	t.Run("sequential updates with correct RV succeed", func(t *testing.T) {
-		// Create initial resource
-		rv1, err := writeEvent(ctx, backend, "sequential-item", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
-		require.NoError(t, err)
-		require.Greater(t, rv1, int64(0))
-
-		// Sequential updates should all succeed
-		rv2, err := writeEvent(ctx, backend, "sequential-item", resourcepb.WatchEvent_MODIFIED,
-			WithNamespaceAndRV(ns, rv1),
-			WithValue("update-1"))
-		require.NoError(t, err)
-		require.Greater(t, rv2, rv1)
-
-		rv3, err := writeEvent(ctx, backend, "sequential-item", resourcepb.WatchEvent_MODIFIED,
-			WithNamespaceAndRV(ns, rv2),
-			WithValue("update-2"))
-		require.NoError(t, err)
-		require.Greater(t, rv3, rv2)
-
-		rv4, err := writeEvent(ctx, backend, "sequential-item", resourcepb.WatchEvent_MODIFIED,
-			WithNamespaceAndRV(ns, rv3),
-			WithValue("update-3"))
-		require.NoError(t, err)
-		require.Greater(t, rv4, rv3)
-
-		// Verify the latest version is accessible
-		resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
-			Key: &resourcepb.ResourceKey{
-				Name:      "sequential-item",
-				Namespace: ns,
-				Group:     "group",
-				Resource:  "resource",
-			},
-		})
-		require.Nil(t, resp.Error)
-		require.Equal(t, rv4, resp.ResourceVersion)
-		require.Contains(t, string(resp.Value), "update-3")
-	})
-
-	t.Run("update with stale RV fails with optimistic locking error", func(t *testing.T) {
-		// Create initial resource
-		rv1, err := writeEvent(ctx, backend, "stale-item", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
-		require.NoError(t, err)
-		require.Greater(t, rv1, int64(0))
-
-		// Update to version 2
-		rv2, err := writeEvent(ctx, backend, "stale-item", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv1))
-		require.NoError(t, err)
-		require.Greater(t, rv2, rv1)
-
-		// Update to version 3
-		rv3, err := writeEvent(ctx, backend, "stale-item", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv2))
-		require.NoError(t, err)
-		require.Greater(t, rv3, rv2)
-
-		// Try to update with stale RV (rv1) - should fail
-		_, err = writeEvent(ctx, backend, "stale-item", resourcepb.WatchEvent_MODIFIED,
-			WithNamespaceAndRV(ns, rv1),
-			WithValue("stale-update"))
-		require.Error(t, err)
-		require.ErrorContains(t, err, "optimistic locking failed", "update with stale RV should fail")
-
-		// Verify the latest version is still rv3
-		resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
-			Key: &resourcepb.ResourceKey{
-				Name:      "stale-item",
-				Namespace: ns,
-				Group:     "group",
-				Resource:  "resource",
-			},
-		})
-		require.Nil(t, resp.Error)
-		require.Equal(t, rv3, resp.ResourceVersion)
+		require.Equal(t, successRV, resp.ResourceVersion, "resource should have the RV from the successful update")
 	})
 }

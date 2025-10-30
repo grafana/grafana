@@ -201,13 +201,32 @@ func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
 func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
-	return k.WriteEventWithRV(ctx, event, k.snowflake.Generate().Int64())
-}
-
-// WriteEventWithRV writes an event with a specified resource version (for testing)
-func (k *kvStorageBackend) WriteEventWithRV(ctx context.Context, event WriteEvent, rv int64) (int64, error) {
 	if err := event.Validate(); err != nil {
 		return 0, fmt.Errorf("invalid event: %w", err)
+	}
+
+	rv := k.snowflake.Generate().Int64()
+
+	// When PreviousRV is not 0, fetch the latest resource and verify that the RV matches the PreviousRV
+	if event.PreviousRV != 0 {
+		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
+			Group:     event.Key.Group,
+			Resource:  event.Key.Resource,
+			Namespace: event.Key.Namespace,
+			Name:      event.Key.Name,
+		})
+		if err != nil {
+			if errors.Is(err, ErrNotFound) {
+				// Resource doesn't exist, but PreviousRV was provided
+				return 0, fmt.Errorf("optimistic locking failed: resource not found")
+			}
+			return 0, fmt.Errorf("failed to fetch latest resource: %w", err)
+		}
+
+		// Verify the current RV matches the PreviousRV
+		if latestKey.ResourceVersion != event.PreviousRV {
+			return 0, fmt.Errorf("optimistic locking failed: requested RV %d does not match saved RV %d", event.PreviousRV, latestKey.ResourceVersion)
+		}
 	}
 
 	obj := event.Object
@@ -261,7 +280,7 @@ func (k *kvStorageBackend) WriteEventWithRV(ctx context.Context, event WriteEven
 
 	// Optimistic concurrency control: verify our write is the latest version
 	// Only perform this check for MODIFIED and DELETED operations
-	if action == DataActionUpdated || action == DataActionDeleted {
+	if event.PreviousRV != 0 {
 		latestKey, err := k.dataStore.LastResourceVersion(ctx, ListRequestKey{
 			Group:     event.Key.Group,
 			Resource:  event.Key.Resource,
@@ -278,7 +297,7 @@ func (k *kvStorageBackend) WriteEventWithRV(ctx context.Context, event WriteEven
 		if latestKey.ResourceVersion != rv {
 			// Delete the data we just wrote since it's not the latest
 			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, GetError(&ErrOptimisticLockingFailed)
+			return 0, fmt.Errorf("optimistic locking failed: concurrent modification detected")
 		}
 	}
 

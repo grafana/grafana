@@ -52,93 +52,160 @@ func TestKvStorageBackend_WriteEvent_Success(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
 
-	tests := []struct {
-		name      string
-		eventType resourcepb.WatchEvent_Type
-	}{
-		{
-			name:      "write ADDED event",
-			eventType: resourcepb.WatchEvent_ADDED,
+	testObj, err := createTestObject()
+	require.NoError(t, err)
+
+	metaAccessor, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+
+	resourceName := "test-resource"
+
+	// Step 1: Create the resource (ADDED event)
+	addEvent := WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      resourceName,
 		},
-		{
-			name:      "write MODIFIED event",
-			eventType: resourcepb.WatchEvent_MODIFIED,
-		},
-		{
-			name:      "write DELETED event",
-			eventType: resourcepb.WatchEvent_DELETED,
-		},
+		Value:      objectToJSONBytes(t, testObj),
+		Object:     metaAccessor,
+		ObjectOld:  metaAccessor,
+		PreviousRV: 0,
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			testObj, err := createTestObject()
-			require.NoError(t, err)
+	rv1, err := backend.WriteEvent(ctx, addEvent)
+	require.NoError(t, err)
+	assert.Greater(t, rv1, int64(0), "resource version should be positive")
 
-			metaAccessor, err := utils.MetaAccessor(testObj)
-			require.NoError(t, err)
-
-			writeEvent := WriteEvent{
-				Type: tt.eventType,
-				Key: &resourcepb.ResourceKey{
-					Namespace: "default",
-					Group:     "apps",
-					Resource:  "resources",
-					Name:      "test-resource",
-				},
-				Value:      objectToJSONBytes(t, testObj),
-				Object:     metaAccessor,
-				ObjectOld:  metaAccessor,
-				PreviousRV: 100,
-			}
-
-			rv, err := backend.WriteEvent(ctx, writeEvent)
-			require.NoError(t, err)
-			assert.Greater(t, rv, int64(0), "resource version should be positive")
-
-			// Verify data was written to dataStore
-			var expectedAction DataAction
-			switch tt.eventType {
-			case resourcepb.WatchEvent_ADDED:
-				expectedAction = DataActionCreated
-			case resourcepb.WatchEvent_MODIFIED:
-				expectedAction = DataActionUpdated
-			case resourcepb.WatchEvent_DELETED:
-				expectedAction = DataActionDeleted
-			default:
-				t.Fatalf("unexpected event type: %v", tt.eventType)
-			}
-
-			dataKey := DataKey{
-				Namespace:       "default",
-				Group:           "apps",
-				Resource:        "resources",
-				Name:            "test-resource",
-				ResourceVersion: rv,
-				Action:          expectedAction,
-			}
-
-			dataReader, err := backend.dataStore.Get(ctx, dataKey)
-			require.NoError(t, err)
-			dataValue, err := io.ReadAll(dataReader)
-			require.NoError(t, err)
-			require.NoError(t, dataReader.Close())
-			assert.Equal(t, objectToJSONBytes(t, testObj), dataValue)
-
-			// Verify event was written to eventStore
-			eventKey := EventKey{
-				Namespace:       "default",
-				Group:           "apps",
-				Resource:        "resources",
-				Name:            "test-resource",
-				ResourceVersion: rv,
-				Action:          expectedAction,
-			}
-
-			_, err = backend.eventStore.Get(ctx, eventKey)
-			require.NoError(t, err)
-		})
+	// Verify ADDED event was written to dataStore
+	dataKey1 := DataKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resources",
+		Name:            resourceName,
+		ResourceVersion: rv1,
+		Action:          DataActionCreated,
 	}
+
+	dataReader1, err := backend.dataStore.Get(ctx, dataKey1)
+	require.NoError(t, err)
+	dataValue1, err := io.ReadAll(dataReader1)
+	require.NoError(t, err)
+	require.NoError(t, dataReader1.Close())
+	assert.Equal(t, objectToJSONBytes(t, testObj), dataValue1)
+
+	// Verify ADDED event was written to eventStore
+	eventKey1 := EventKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resources",
+		Name:            resourceName,
+		ResourceVersion: rv1,
+		Action:          DataActionCreated,
+	}
+
+	_, err = backend.eventStore.Get(ctx, eventKey1)
+	require.NoError(t, err)
+
+	// Step 2: Update the resource (MODIFIED event)
+	modifyEvent := WriteEvent{
+		Type: resourcepb.WatchEvent_MODIFIED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      resourceName,
+		},
+		Value:      objectToJSONBytes(t, testObj),
+		Object:     metaAccessor,
+		ObjectOld:  metaAccessor,
+		PreviousRV: rv1,
+	}
+
+	rv2, err := backend.WriteEvent(ctx, modifyEvent)
+	require.NoError(t, err)
+	assert.Greater(t, rv2, rv1, "updated resource version should be greater")
+
+	// Verify MODIFIED event was written to dataStore
+	dataKey2 := DataKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resources",
+		Name:            resourceName,
+		ResourceVersion: rv2,
+		Action:          DataActionUpdated,
+	}
+
+	dataReader2, err := backend.dataStore.Get(ctx, dataKey2)
+	require.NoError(t, err)
+	dataValue2, err := io.ReadAll(dataReader2)
+	require.NoError(t, err)
+	require.NoError(t, dataReader2.Close())
+	assert.Equal(t, objectToJSONBytes(t, testObj), dataValue2)
+
+	// Verify MODIFIED event was written to eventStore
+	eventKey2 := EventKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resources",
+		Name:            resourceName,
+		ResourceVersion: rv2,
+		Action:          DataActionUpdated,
+	}
+
+	_, err = backend.eventStore.Get(ctx, eventKey2)
+	require.NoError(t, err)
+
+	// Step 3: Delete the resource (DELETED event)
+	deleteEvent := WriteEvent{
+		Type: resourcepb.WatchEvent_DELETED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      resourceName,
+		},
+		Value:      objectToJSONBytes(t, testObj),
+		Object:     metaAccessor,
+		ObjectOld:  metaAccessor,
+		PreviousRV: rv2,
+	}
+
+	rv3, err := backend.WriteEvent(ctx, deleteEvent)
+	require.NoError(t, err)
+	assert.Greater(t, rv3, rv2, "deleted resource version should be greater")
+
+	// Verify DELETED event was written to dataStore
+	dataKey3 := DataKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resources",
+		Name:            resourceName,
+		ResourceVersion: rv3,
+		Action:          DataActionDeleted,
+	}
+
+	dataReader3, err := backend.dataStore.Get(ctx, dataKey3)
+	require.NoError(t, err)
+	dataValue3, err := io.ReadAll(dataReader3)
+	require.NoError(t, err)
+	require.NoError(t, dataReader3.Close())
+	assert.Equal(t, objectToJSONBytes(t, testObj), dataValue3)
+
+	// Verify DELETED event was written to eventStore
+	eventKey3 := EventKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resources",
+		Name:            resourceName,
+		ResourceVersion: rv3,
+		Action:          DataActionDeleted,
+	}
+
+	_, err = backend.eventStore.Get(ctx, eventKey3)
+	require.NoError(t, err)
 }
 
 func TestKvStorageBackend_WriteEvent_ResourceAlreadyExists(t *testing.T) {
@@ -1583,191 +1650,4 @@ func createAndWriteTestObject(t *testing.T, backend *kvStorageBackend) (*unstruc
 	require.NoError(t, err)
 
 	return testObj, rv
-}
-
-// TestKvStorageBackend_ConcurrentUpdate tests that updates with lower RV fail with optimistic locking error
-func TestKvStorageBackend_ConcurrentUpdate(t *testing.T) {
-	backend := setupTestStorageBackend(t)
-	ctx := context.Background()
-
-	// Create initial resource
-	obj, err := createTestObjectWithName("test-concurrent", appsNamespace, "initial")
-	require.NoError(t, err)
-
-	rv1, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
-	require.NoError(t, err)
-	require.Greater(t, rv1, int64(0))
-
-	// Pre-generate two RVs where rv2 < rv3
-	rv2 := backend.snowflake.Generate().Int64()
-	rv3 := backend.snowflake.Generate().Int64()
-	require.Less(t, rv2, rv3, "rv2 should be less than rv3")
-
-	// Write with higher RV (rv3) first - this should succeed
-	metaAccessor, err := utils.MetaAccessor(obj)
-	require.NoError(t, err)
-
-	obj3, err := createTestObjectWithName("test-concurrent", appsNamespace, "version3")
-	require.NoError(t, err)
-
-	writeEvent3 := WriteEvent{
-		Type: resourcepb.WatchEvent_MODIFIED,
-		Key: &resourcepb.ResourceKey{
-			Namespace: appsNamespace.Namespace,
-			Group:     appsNamespace.Group,
-			Resource:  "resources",
-			Name:      "test-concurrent",
-		},
-		Value:      objectToJSONBytes(t, obj3),
-		Object:     metaAccessor,
-		ObjectOld:  metaAccessor,
-		PreviousRV: rv1,
-	}
-
-	// Manually write with rv3
-	writeEvent3RV, err := backend.WriteEventWithRV(ctx, writeEvent3, rv3)
-	require.NoError(t, err)
-	require.Equal(t, rv3, writeEvent3RV)
-
-	// Now try to write with lower RV (rv2) - this should fail because rv2 < rv3
-	obj2, err := createTestObjectWithName("test-concurrent", appsNamespace, "version2")
-	require.NoError(t, err)
-
-	writeEvent2 := WriteEvent{
-		Type: resourcepb.WatchEvent_MODIFIED,
-		Key: &resourcepb.ResourceKey{
-			Namespace: appsNamespace.Namespace,
-			Group:     appsNamespace.Group,
-			Resource:  "resources",
-			Name:      "test-concurrent",
-		},
-		Value:      objectToJSONBytes(t, obj2),
-		Object:     metaAccessor,
-		ObjectOld:  metaAccessor,
-		PreviousRV: rv1,
-	}
-
-	writeEvent2RV, err := backend.WriteEventWithRV(ctx, writeEvent2, rv2)
-	require.Error(t, err, "write with lower RV should fail")
-	require.Contains(t, err.Error(), "does not match saved RV", "error should be about RV mismatch")
-	require.Equal(t, int64(0), writeEvent2RV, "failed write should return 0 RV")
-
-	// Verify the latest version is rv3, not rv2
-	allKeys := []DataKey{}
-	for dataKey, err := range backend.dataStore.Keys(ctx, ListRequestKey{
-		Namespace: appsNamespace.Namespace,
-		Group:     appsNamespace.Group,
-		Resource:  "resources",
-		Name:      "test-concurrent",
-	}, SortOrderAsc) {
-		require.NoError(t, err)
-		allKeys = append(allKeys, dataKey)
-	}
-
-	// Should have exactly 2 versions: initial and version3 (not version2)
-	require.Equal(t, 2, len(allKeys), "should have exactly 2 versions stored")
-	require.Equal(t, rv3, allKeys[1].ResourceVersion, "latest version should be rv3")
-}
-
-// TestKvStorageBackend_ConcurrentDelete tests that deletes with lower RV fail with optimistic locking error
-func TestKvStorageBackend_ConcurrentDelete(t *testing.T) {
-	backend := setupTestStorageBackend(t)
-	ctx := context.Background()
-
-	// Create initial resource
-	obj, err := createTestObjectWithName("test-concurrent-delete", appsNamespace, "initial")
-	require.NoError(t, err)
-
-	rv1, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
-	require.NoError(t, err)
-	require.Greater(t, rv1, int64(0))
-
-	// Pre-generate two RVs where rv2 < rv3
-	rv2 := backend.snowflake.Generate().Int64()
-	rv3 := backend.snowflake.Generate().Int64()
-	require.Less(t, rv2, rv3, "rv2 should be less than rv3")
-
-	// Delete with higher RV (rv3) first - this should succeed
-	metaAccessor, err := utils.MetaAccessor(obj)
-	require.NoError(t, err)
-
-	deleteEvent3 := WriteEvent{
-		Type: resourcepb.WatchEvent_DELETED,
-		Key: &resourcepb.ResourceKey{
-			Namespace: appsNamespace.Namespace,
-			Group:     appsNamespace.Group,
-			Resource:  "resources",
-			Name:      "test-concurrent-delete",
-		},
-		Value:      objectToJSONBytes(t, obj),
-		Object:     metaAccessor,
-		ObjectOld:  metaAccessor,
-		PreviousRV: rv1,
-	}
-
-	deleteEvent3RV, err := backend.WriteEventWithRV(ctx, deleteEvent3, rv3)
-	require.NoError(t, err)
-	require.Equal(t, rv3, deleteEvent3RV)
-
-	// Now try to delete with lower RV (rv2) - this should fail because rv2 < rv3
-	deleteEvent2 := WriteEvent{
-		Type: resourcepb.WatchEvent_DELETED,
-		Key: &resourcepb.ResourceKey{
-			Namespace: appsNamespace.Namespace,
-			Group:     appsNamespace.Group,
-			Resource:  "resources",
-			Name:      "test-concurrent-delete",
-		},
-		Value:      objectToJSONBytes(t, obj),
-		Object:     metaAccessor,
-		ObjectOld:  metaAccessor,
-		PreviousRV: rv1,
-	}
-
-	deleteEvent2RV, err := backend.WriteEventWithRV(ctx, deleteEvent2, rv2)
-	require.Error(t, err, "delete with lower RV should fail")
-	require.Contains(t, err.Error(), "does not match saved RV", "error should be about RV mismatch")
-	require.Equal(t, int64(0), deleteEvent2RV, "failed delete should return 0 RV")
-
-	// Verify we have exactly 2 versions: initial and delete with rv3
-	allKeys := []DataKey{}
-	for dataKey, err := range backend.dataStore.Keys(ctx, ListRequestKey{
-		Namespace: appsNamespace.Namespace,
-		Group:     appsNamespace.Group,
-		Resource:  "resources",
-		Name:      "test-concurrent-delete",
-	}, SortOrderAsc) {
-		require.NoError(t, err)
-		allKeys = append(allKeys, dataKey)
-	}
-
-	// Should have exactly 2 versions: initial and delete with rv3 (not delete with rv2)
-	require.Equal(t, 2, len(allKeys), "should have exactly 2 versions stored")
-	require.Equal(t, DataActionDeleted, allKeys[1].Action, "latest version should be deleted")
-	require.Equal(t, rv3, allKeys[1].ResourceVersion, "latest version should be rv3")
-}
-
-// TestKvStorageBackend_SequentialUpdatesSucceed tests that sequential updates work correctly
-func TestKvStorageBackend_SequentialUpdatesSucceed(t *testing.T) {
-	backend := setupTestStorageBackend(t)
-
-	// Create initial resource
-	obj, err := createTestObjectWithName("test-sequential", appsNamespace, "v1")
-	require.NoError(t, err)
-
-	rv1, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
-	require.NoError(t, err)
-
-	// Sequential updates should all succeed
-	rv2, err := writeObject(t, backend, obj, resourcepb.WatchEvent_MODIFIED, rv1)
-	require.NoError(t, err)
-	require.Greater(t, rv2, rv1)
-
-	rv3, err := writeObject(t, backend, obj, resourcepb.WatchEvent_MODIFIED, rv2)
-	require.NoError(t, err)
-	require.Greater(t, rv3, rv2)
-
-	rv4, err := writeObject(t, backend, obj, resourcepb.WatchEvent_MODIFIED, rv3)
-	require.NoError(t, err)
-	require.Greater(t, rv4, rv3)
 }

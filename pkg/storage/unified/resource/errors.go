@@ -32,15 +32,6 @@ var (
 		},
 	}
 
-	ErrOptimisticLockingFailedError error = &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Reason:  metav1.StatusReasonConflict,
-			Message: "optimistic locking failed: concurrent modification detected",
-			Code:    http.StatusConflict,
-		},
-	}
-
 	ErrOptimisticLockingFailed = resourcepb.ErrorResult{
 		Code:    http.StatusConflict,
 		Reason:  "optimistic locking failed",
