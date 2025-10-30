@@ -209,13 +209,18 @@ if [ ${#profile_packages[@]} -gt 0 ]; then
         # Start multiple runs in parallel
         for run in $(seq 1 "$PARALLEL_RUNS"); do
           (
+            # Disable pipefail in subshell so we can capture go test exit code
+            set +o pipefail
             go test -tags="$TEST_TAGS" -timeout="$GO_TEST_TIMEOUT" -run "$RUN_PATTERN" \
               -outputdir="$PROFILE_OUTPUT_DIR" \
               -cpuprofile="cpu_${PKG_NAME}_run${run}.prof" \
               -memprofile="mem_${PKG_NAME}_run${run}.prof" \
               -trace="trace_${PKG_NAME}_run${run}.out" \
               "$MATCHED_PKG" 2>&1 | tee "$PROFILE_OUTPUT_DIR/test_${PKG_NAME}_run${run}.log"
-            echo $? > "$PROFILE_OUTPUT_DIR/exit_${PKG_NAME}_run${run}.code"
+            # Capture exit code of go test (first command in pipeline), not tee
+            EXIT_CODE=${PIPESTATUS[0]}
+            echo "$EXIT_CODE" > "$PROFILE_OUTPUT_DIR/exit_${PKG_NAME}_run${run}.code"
+            echo "    ✓ Run $run/$PARALLEL_RUNS completed with exit code: $EXIT_CODE"
           ) &
           pid=$!
           echo "    🏃 Run $run/$PARALLEL_RUNS started (PID: $pid)"
@@ -293,8 +298,9 @@ if [ ${#PROFILE_PIDS[@]} -gt 0 ]; then
     if [ -n "${profile_packages_abs[$i]:-}" ]; then
       PKG_NAME=$(echo "$profile_pkg" | tr '/' '_' | tr '.' '_')
       for run in $(seq 1 "$PARALLEL_RUNS"); do
-        if [ -f "$PROFILE_OUTPUT_DIR/exit_${PKG_NAME}_run${run}.code" ]; then
-          EXIT_CODE=$(cat "$PROFILE_OUTPUT_DIR/exit_${PKG_NAME}_run${run}.code")
+        EXIT_CODE_FILE="$PROFILE_OUTPUT_DIR/exit_${PKG_NAME}_run${run}.code"
+        if [ -f "$EXIT_CODE_FILE" ]; then
+          EXIT_CODE=$(cat "$EXIT_CODE_FILE")
           if [ "$EXIT_CODE" -ne 0 ]; then
             echo "  ❌ Run $run/$PARALLEL_RUNS of $profile_pkg failed (exit $EXIT_CODE)"
             PROFILE_FAILED=1
