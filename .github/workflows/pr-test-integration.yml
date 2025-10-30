@@ -147,7 +147,7 @@ jobs:
           echo "📤 Will upload profiles (profiled tests failed)"
       - name: Output test profiles and traces
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: steps.check-profiles.outputs.upload_artifact == 'true'
+        if: always() && steps.check-profiles.outputs.upload_artifact == 'true'
         with:
           name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}-shard-${{ steps.check-profiles.outputs.shard }}
           path: profiles/
