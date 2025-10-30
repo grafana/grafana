@@ -3,6 +3,7 @@ package shorturl
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,25 +54,49 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 	shortURL, err := s.legacy.service.GetShortURLByUID(ctx, requester, name)
 	if err != nil || shortURL == nil {
 		if errors.Is(err, shorturls.ErrShortURLNotFound) || err == nil {
-			err = k8serrors.NewNotFound(schema.GroupResource{
-				Group:    shorturl.ShortURLKind().Group(),
-				Resource: shorturl.ShortURLKind().Plural(),
-			}, name)
+			err = k8serrors.NewNotFound(shorturl.ShortURLKind().GroupVersionResource().GroupResource(), name)
 		}
 		return nil, false, err
 	}
 
+	// This ignores the incoming and updates it directly
 	err = s.legacy.service.UpdateLastSeenAt(ctx, shortURL)
 	if err != nil {
 		return nil, false, err
 	}
 
-	_, _, err = s.status.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	if err != nil {
-		logging.FromContext(ctx).Info("Failed to update shorturl status in unified storage", "error", err)
+	getter := func(getter rest.Getter) (*shorturl.ShortURL, error) {
+		obj, err := getter.Get(ctx, name, &v1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+		val, ok := obj.(*shorturl.ShortURL)
+		if !ok {
+			return nil, fmt.Errorf("expected ShortURL but got %T", obj)
+		}
+		return val, nil
 	}
-	obj, err := s.legacy.Get(ctx, name, &v1.GetOptions{})
-	return obj, false, err
+
+	legacy, err := getter(s.legacy)
+	if err != nil {
+		return nil, false, err // unable to get legacy object
+	}
+
+	unified, err := getter(s.status)
+	if err != nil {
+		logging.FromContext(ctx).Warn("unable to read unified status", "error", err)
+		return legacy, false, nil
+	}
+
+	// Use the same status from legacy in unified
+	unified.Status = legacy.Status
+
+	_, _, err = s.status.Update(ctx, name, rest.DefaultUpdatedObjectInfo(unified), createValidation, updateValidation, false, options)
+	if err != nil {
+		logging.FromContext(ctx).Warn("error updating unified status", "error", err)
+	}
+
+	return legacy, false, err
 }
 
 // GetResetFields implements rest.ResetFieldsStrategy

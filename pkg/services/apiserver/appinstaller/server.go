@@ -80,17 +80,19 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 						return err
 					}
 				} else if statusRest, ok := storage.(*appsdkapiserver.StatusREST); ok {
-					// In the exceptional case where legacy resources have status, the dual writing must be handled explicitly
-					if statusProvider, ok := s.installer.(LegacyStatusProvider); ok {
-						parentPath := strings.TrimSuffix(storagePath, "/status")
-						parentStore, ok := apiGroupInfo.VersionedResourcesStorageMap[v][parentPath]
-						if ok {
-							if _, isMode4or5 := parentStore.(*genericregistry.Store); !isMode4or5 {
+					parentPath := strings.TrimSuffix(storagePath, "/status")
+					parentStore, ok := apiGroupInfo.VersionedResourcesStorageMap[v][parentPath]
+					if ok {
+						if _, isMode4or5 := parentStore.(*genericregistry.Store); !isMode4or5 {
+							// When legacy resources have status, the dual writing must be handled explicitly
+							if statusProvider, ok := s.installer.(LegacyStatusProvider); ok {
 								storage = statusProvider.GetLegacyStatus(gr.WithVersion(v), statusRest)
+							} else {
+								log.Warn("skipped registering status sub-resource that does not support dual writing",
+									"resource", gr.String(), "version", v, "storagePath", storagePath)
+								continue
 							}
 						}
-					} else {
-						log.Warn("status sub-resource does not support dual writing", "resource", gr.String(), "version", v, "storagePath", storagePath)
 					}
 				}
 			}
