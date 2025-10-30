@@ -96,6 +96,7 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Run tests
+        id: run-tests
         env:
           SHARD: ${{ matrix.shard }}
           CGO_ENABLED: 0
@@ -110,17 +111,14 @@ jobs:
           ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | \
             ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | \
             ./scripts/ci/backend-tests/run-go-tests-with-profiling.sh -o profiles -t sqlite -r '^TestIntegration' -T 8m -P -
-      - name: Check if profile artifacts exist
-        if: always()
-        id: check-profiles
-        run: |
-          set -euo pipefail
+
+          # Check if profile artifacts exist and sets output variables subsequent steps
           ./scripts/ci/backend-tests/check-profile-artifacts.sh
       - name: Output test profiles and traces
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: always() && steps.check-profiles.outputs.upload_artifact == 'true'
+        if: always() && steps.run-tests.outputs.upload_artifact == 'true'
         with:
-          name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}-shard-${{ steps.check-profiles.outputs.shard }}
+          name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}-shard-${{ steps.run-tests.outputs.shard }}
           path: profiles/
           retention-days: 1
           if-no-files-found: ignore
