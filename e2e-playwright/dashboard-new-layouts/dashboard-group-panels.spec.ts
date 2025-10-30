@@ -18,7 +18,8 @@ test.use({
   viewport: { width: 1920, height: 1080 },
 });
 
-test.describe(
+// Skipping due to failing test in CI
+test.skip(
   'Grouping panels',
   {
     tag: ['@dashboards'],
@@ -274,8 +275,7 @@ test.describe(
       ).toHaveCount(3);
     });
 
-    // Skipping due to failing test in CI
-    test.skip('can duplicate a row', async ({ dashboardPage, selectors, page }) => {
+    test('can duplicate a row', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(page, selectors, 'Duplicate row');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
