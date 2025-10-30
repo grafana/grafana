@@ -129,11 +129,8 @@ function DetailsTooltipContent({ details }: { details: Details }) {
         />
         {details.grafanaComUrl && (
           <Box display="flex" direction="column" gap={1}>
-            <Text element="p">
-              {t('dashboard-library.dashboard-card.details.view-on-grafana-com', 'View on Grafana.com')}
-            </Text>
             <TextLink href={details.grafanaComUrl} external>
-              {details.grafanaComUrl}
+              {t('dashboard-library.dashboard-card.details.view-on-grafana-com', 'View on Grafana.com')}
             </TextLink>
           </Box>
         )}
