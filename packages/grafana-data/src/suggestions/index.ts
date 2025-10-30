@@ -3,6 +3,8 @@ export {
   type VisualizationSuggestion,
   VisualizationSuggestionScore,
   type VisualizationSuggestionsSupplier,
+  type VisualizationSuggestionsAppendFn,
+  VisualizationSuggestionsSupplierForPlugin,
 } from './types';
 export {
   VisualizationSuggestionsBuilder,

@@ -465,6 +465,7 @@ export {
   type PanelDataSummary,
   type VisualizationSuggestion,
   type VisualizationSuggestionsSupplier,
+  type VisualizationSuggestionsAppendFn,
   VisualizationSuggestionScore,
   VisualizationSuggestionsBuilder,
   VisualizationSuggestionsListAppender,

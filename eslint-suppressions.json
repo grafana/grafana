@@ -106,7 +106,7 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 5
+      "count": 4
     }
   },
   "packages/grafana-data/src/panel/registryFactories.ts": {

@@ -3,7 +3,13 @@ import { ComponentClass, ComponentType } from 'react';
 
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
-import { VisualizationSuggestionsSupplier, VisualizationSuggestionsBuilder } from '../suggestions';
+import {
+  VisualizationSuggestionsSupplier,
+  VisualizationSuggestionsBuilder,
+  VisualizationSuggestionsAppendFn,
+  VisualizationSuggestion,
+  VisualizationSuggestionsSupplierForPlugin,
+} from '../suggestions';
 import { PanelModel } from '../types/dashboard';
 import { FieldConfigProperty, FieldConfigSource } from '../types/fieldOverrides';
 import {
@@ -94,7 +100,7 @@ export type PanelOptionsSupplier<TOptions> = (
 ) => void;
 
 export class PanelPlugin<
-  TOptions = any,
+  TOptions extends object = {},
   TFieldConfigOptions extends object = {},
 > extends GrafanaPlugin<PanelPluginMeta> {
   private _defaults?: TOptions;
@@ -109,7 +115,7 @@ export class PanelPlugin<
   };
 
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
-  private suggestionsSupplier?: VisualizationSuggestionsSupplier;
+  private suggestionsSupplier?: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -368,10 +374,31 @@ export class PanelPlugin<
   }
 
   /**
+   * deprecated us
+   */
+  setSuggestionsSupplier(
+    appendSuggestions: VisualizationSuggestionsAppendFn<TOptions, TFieldConfigOptions>,
+    defaults: Partial<VisualizationSuggestion<TOptions, TFieldConfigOptions>>
+  ): this;
+  setSuggestionsSupplier(appendSuggestions: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>): this;
+  /**
    * Sets function that can return visualization examples and suggestions.
    */
-  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier) {
-    this.suggestionsSupplier = supplier;
+  setSuggestionsSupplier(
+    supplierOrAppendSuggestions:
+      | VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>
+      | VisualizationSuggestionsAppendFn<TOptions, TFieldConfigOptions>,
+    defaults?: Partial<VisualizationSuggestion<TOptions, TFieldConfigOptions>>
+  ) {
+    if (typeof supplierOrAppendSuggestions === 'function') {
+      this.suggestionsSupplier = new VisualizationSuggestionsSupplierForPlugin<TOptions, TFieldConfigOptions>(
+        supplierOrAppendSuggestions,
+        this,
+        defaults
+      );
+    } else {
+      this.suggestionsSupplier = supplierOrAppendSuggestions;
+    }
     return this;
   }
 

@@ -3,6 +3,8 @@ import { DataTransformerConfig } from '@grafana/schema';
 import { PreferredVisualisationType } from '../types/data';
 import { FieldType } from '../types/dataFrame';
 import { FieldConfigSource } from '../types/fieldOverrides';
+import { PanelPluginMeta } from '../types/panel';
+import { GrafanaPlugin } from '../types/plugin';
 
 import {
   VisualizationSuggestionsBuilder,
@@ -105,4 +107,33 @@ export interface VisualizationSuggestionsSupplier<TOptions extends {}, TFieldCon
    * Adds good suitable suggestions for the current data
    */
   getSuggestionsForData: (builder: VisualizationSuggestionsBuilder) => void;
+}
+
+export type VisualizationSuggestionsAppendFn<TOptions extends {}, TFieldConfig extends {} = {}> = (
+  appender: VisualizationSuggestionsListAppender<TOptions, TFieldConfig>,
+  builder: VisualizationSuggestionsBuilder
+) => void;
+
+export class VisualizationSuggestionsSupplierForPlugin<TOptions extends {}, TFieldConfig extends {} = {}>
+  implements VisualizationSuggestionsSupplier<TOptions, TFieldConfig>
+{
+  constructor(
+    private appendSuggestions: VisualizationSuggestionsAppendFn<TOptions, TFieldConfig>,
+    private plugin: GrafanaPlugin<PanelPluginMeta>,
+    private defaults?: Partial<VisualizationSuggestion<TOptions, TFieldConfig>>
+  ) {}
+
+  getListAppender(
+    builder: VisualizationSuggestionsBuilder
+  ): VisualizationSuggestionsListAppender<TOptions, TFieldConfig> {
+    return builder.getListAppender<TOptions, TFieldConfig>({
+      pluginId: this.plugin.meta.id,
+      name: this.plugin.meta.name,
+      ...this.defaults,
+    });
+  }
+
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder): void {
+    this.appendSuggestions(this.getListAppender(builder), builder);
+  }
 }
