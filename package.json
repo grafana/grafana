@@ -96,7 +96,7 @@
     "@grafana/test-utils": "workspace:*",
     "@manypkg/get-packages": "^3.0.0",
     "@npmcli/package-json": "^6.0.0",
-    "@playwright/test": "1.55.1",
+    "@playwright/test": "1.56.1",
     "@pmmmwh/react-refresh-webpack-plugin": "0.6.1",
     "@react-types/button": "3.13.0",
     "@react-types/menu": "3.10.3",
