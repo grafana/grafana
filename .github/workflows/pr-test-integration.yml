@@ -109,42 +109,11 @@ jobs:
           set -euo pipefail
           ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | \
             ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | \
-            ./scripts/ci/backend-tests/run-go-tests-with-profiling.sh -o profiles -t sqlite -r '^TestIntegration' -P -
+            ./scripts/ci/backend-tests/run-go-tests-with-profiling.sh -o profiles -t sqlite -r '^TestIntegration' -T 8m -P -
       - name: Check if profiles exist
         if: always()
         id: check-profiles
-        run: |
-          # Early exit if no profiles directory or empty
-          if [ ! -d "profiles" ] || [ -z "$(ls -A profiles 2>/dev/null)" ]; then
-            echo "upload_artifact=false" >> "$GITHUB_OUTPUT"
-            echo "⏭️  No profiling data"
-            exit 0
-          fi
-          echo "✅ Profiling data found"
-          # Check if any profiled test failed by examining exit code files
-          HAS_FAILURES=false
-          for exit_file in profiles/exit_*.code; do
-            if [ -f "$exit_file" ]; then
-              EXIT_CODE=$(cat "$exit_file")
-              if [ "$EXIT_CODE" -ne 0 ]; then
-                echo "  Found failure in $(basename "$exit_file"): exit code $EXIT_CODE"
-                HAS_FAILURES=true
-              fi
-            fi
-          done
-          # Early exit if no failures found
-          if [ "$HAS_FAILURES" = false ]; then
-            echo "upload_artifact=false" >> "$GITHUB_OUTPUT"
-            echo "⏭️  Skipping upload (all profiled tests passed)"
-            exit 0
-          fi
-
-          # Upload profiles when failures found
-          SHARD_VALUE="${{ matrix.shard }}"
-          SHARD_SAFE="${SHARD_VALUE//\//-}"
-          echo "shard=$SHARD_SAFE" >> "$GITHUB_OUTPUT"
-          echo "upload_artifact=true" >> "$GITHUB_OUTPUT"
-          echo "📤 Will upload profiles (profiled tests failed)"
+        run: ./scripts/ci/backend-tests/check-profile-artifacts.sh
       - name: Output test profiles and traces
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always() && steps.check-profiles.outputs.upload_artifact == 'true'

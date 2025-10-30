@@ -1,6 +1,71 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+usage() {
+    {
+        echo "run-go-tests-with-profiling.sh: Run tests with optional profiling for flaky packages."
+        echo "usage: $0 [-h] -t <tags> [-r <run-pattern>] [-p <parallel>] [-o <output-dir>] [-T <timeout>] [-P <packages>]"
+        echo
+        echo "Options:"
+        echo "  -h: Show this help message."
+        echo "  -t: Go tags (e.g., sqlite, mysql, postgres). Required."
+        echo "  -r: Test run pattern (e.g., '^TestIntegration'). Default: '^TestIntegration'"
+        echo "  -p: Parallelism for main tests. Default: 4"
+        echo "  -o: Output directory for profiling data. Default: profiles"
+        echo "  -T: Timeout for tests. Default: 8m"
+        echo "  -P Package paths to test."
+        echo "      Can be repeated to specify multiple packages."
+        echo "      Can be - to read from stdin (one package per line)."
+        echo "      Default: none (all packages with tests)"
+        echo
+        echo "Environment Variables:"
+        echo "  PROFILE_PACKAGES: Newline-separated list of packages to profile."
+        echo "                    These packages will run in background with profiling enabled."
+        echo "  PROFILE_PARALLEL_RUNS: Newline-separated list of parallel run counts."
+        echo "                         Must have same number of entries as PROFILE_PACKAGES."
+        echo "  MAX_WAIT_MINUTES: Maximum time to wait for profiled tests after main tests (in minutes)."
+        echo "                    Default: 10 minutes"
+        echo
+        echo "Examples:"
+        echo "  # Single package with profiling:"
+        echo "  export PROFILE_PACKAGES=\"pkg/tests/apis/folder\""
+        echo "  export PROFILE_PARALLEL_RUNS=\"3\""
+        echo "  echo \"./pkg/tests/apis/folder\" | $0 -t sqlite -r '^TestIntegration' -P -"
+        echo
+        echo "  # Multiple packages with profiling:"
+        echo "  export PROFILE_PACKAGES=\"pkg/tests/apis/folder"
+        echo "  pkg/tests/apis/dashboard\""
+        echo "  export PROFILE_PARALLEL_RUNS=\"1"
+        echo "  2\""
+        echo "  echo \"./pkg/tests/apis/folder ./pkg/tests/apis/dashboard\" | $0 -t sqlite -r '^TestIntegration' -P -"
+        echo
+        echo "Analyzing Downloaded Artifacts:"
+        echo "  When profiled tests fail, artifacts are generated containing:"
+        echo "    - CPU profiles (cpu_*.prof)"
+        echo "    - Memory profiles (mem_*.prof)"
+        echo "    - Execution traces (trace_*.out)"
+        echo "    - Test logs (test_*.log)"
+        echo "    - Exit codes (exit_*.code)"
+        echo
+        echo "  # Analyze profiles and traces:"
+        echo "  go tool pprof cpu_pkg_tests_apis_dashboard_run1.prof"
+        echo "  go tool pprof -alloc_space mem_pkg_tests_apis_datasource_run1.prof"
+        echo "  go tool trace trace_pkg_tests_apis_datasource_run1.out"
+        echo
+        echo "  For more information:"
+        echo "    - CPU/Memory profiling: https://go.dev/blog/pprof"
+        echo "    - Execution traces: https://pkg.go.dev/cmd/trace https://go.dev/blog/execution-traces-2024"
+    } >&2
+}
+
+is_int() {
+    if [[ "$1" =~ ^[0-9]+$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 # Array of packages to profile (flaky tests that need detailed profiling)
 profile_packages=()
 # Number of parallel runs for each package (must match profile_packages indices)
@@ -13,32 +78,6 @@ fi
 if [[ -n "${PROFILE_PARALLEL_RUNS:-}" ]]; then
   readarray -t profile_parallel_runs <<<"${PROFILE_PARALLEL_RUNS}"
 fi
-
-usage() {
-    {
-        echo "run-go-tests-with-profiling.sh: Run tests with optional profiling for flaky packages."
-        echo "usage: $0 [-h] -t <tags> [-r <run-pattern>] [-p <parallel>] [-o <output-dir>] [-T <timeout>] [-P <packages>]"
-        echo
-        echo "  -h: Show this help message."
-        echo "  -t: Go tags (e.g., sqlite, mysql, postgres). Required."
-        echo "  -r: Test run pattern (e.g., '^TestIntegration'). Default: '^TestIntegration'"
-        echo "  -p: Parallelism for main tests. Default: 4"
-        echo "  -o: Output directory for profiling data. Default: profiles"
-        echo "  -T: Timeout for tests. Default: 8m"
-        echo "  -P Package paths to test."
-        echo "      Can be repeated to specify multiple packages."
-        echo "      Can be - to read from stdin (one package per line)."
-        echo "      Default: none (all packages with tests)"
-    } >&2
-}
-
-is_int() {
-    if [[ "$1" =~ ^[0-9]+$ ]]; then
-        return 0
-    else
-        return 1
-    fi
-}
 
 if [ ${#profile_packages[@]} -ne ${#profile_parallel_runs[@]} ]; then
     echo "❌ ERROR: profile_packages and profile_parallel_runs must have the same number of elements"
@@ -172,7 +211,7 @@ cleanup_tests() {
       kill -KILL "$pid" 2>/dev/null || true
     done
   fi
-  exit "$exit_code"
+  return "$exit_code"
 }
 trap cleanup_tests SIGTERM SIGINT EXIT
 
@@ -209,16 +248,17 @@ if [ ${#profile_packages[@]} -gt 0 ]; then
         # Start multiple runs in parallel
         for run in $(seq 1 "$PARALLEL_RUNS"); do
           (
-            # Disable pipefail in subshell so we can capture go test exit code
-            set +o pipefail
-            go test -tags="$TEST_TAGS" -timeout="$GO_TEST_TIMEOUT" -run "$RUN_PATTERN" \
+            EXIT_CODE=0
+            if ! go test -tags="$TEST_TAGS" -timeout="$GO_TEST_TIMEOUT" -run "$RUN_PATTERN" \
               -outputdir="$PROFILE_OUTPUT_DIR" \
               -cpuprofile="cpu_${PKG_NAME}_run${run}.prof" \
               -memprofile="mem_${PKG_NAME}_run${run}.prof" \
               -trace="trace_${PKG_NAME}_run${run}.out" \
-              "$MATCHED_PKG" 2>&1 | tee "$PROFILE_OUTPUT_DIR/test_${PKG_NAME}_run${run}.log"
-            # Capture exit code of go test (first command in pipeline), not tee
-            EXIT_CODE=${PIPESTATUS[0]}
+              "$MATCHED_PKG" 2>&1 | tee "$PROFILE_OUTPUT_DIR/test_${PKG_NAME}_run${run}.log"; then
+                EXIT_CODE=$?
+            else
+                EXIT_CODE=0
+            fi
             echo "$EXIT_CODE" > "$PROFILE_OUTPUT_DIR/exit_${PKG_NAME}_run${run}.code"
             echo "    ✓ Run $profile_pkg $run/$PARALLEL_RUNS completed with exit code: $EXIT_CODE"
           ) &
@@ -258,8 +298,12 @@ fi
 if [ ${#PROFILE_PIDS[@]} -gt 0 ]; then
   echo "⏳ Waiting for profiled tests to complete (PIDs: ${PROFILE_PIDS[*]})..."
 
+  # Configurable max wait time (in minutes)
+  MAX_WAIT_MINUTES=${MAX_WAIT_MINUTES:-10}  # Default: 10 minutes
+  MAX_WAIT=$((MAX_WAIT_MINUTES * 6))  # Convert to 10-second intervals
+  echo "  Timeout configured: ${MAX_WAIT_MINUTES} minutes"
+
   WAIT_COUNT=0
-  MAX_WAIT=60  # 60 * 10 = 10 minutes
   while [ ${#PROFILE_PIDS[@]} -gt 0 ] && [ $WAIT_COUNT -lt $MAX_WAIT ]; do
     sleep 10
     WAIT_COUNT=$((WAIT_COUNT + 1))
@@ -282,7 +326,7 @@ if [ ${#PROFILE_PIDS[@]} -gt 0 ]; then
 
   # Kill any hung profiled tests
   if [ ${#PROFILE_PIDS[@]} -gt 0 ]; then
-    echo "  ⚠️  Killing hung profiled tests after 10min: ${PROFILE_PIDS[*]}"
+    echo "  ⚠️  Killing hung profiled tests after ${MAX_WAIT_MINUTES}min: ${PROFILE_PIDS[*]}"
     for pid in "${PROFILE_PIDS[@]}"; do
       kill -KILL "$pid" 2>/dev/null || true
     done
