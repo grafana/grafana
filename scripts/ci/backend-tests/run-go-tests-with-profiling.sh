@@ -184,7 +184,7 @@ for i in "${!profile_packages[@]}"; do
   profile_pkg="${profile_packages[$i]}"
   MATCHED=""
   for pkg in "${PACKAGES[@]}"; do
-    if [[ "$pkg" == *"$profile_pkg"* ]]; then
+    if [[ "$pkg" == */"$profile_pkg" ]]; then
       MATCHED="$pkg"
       break
     fi
