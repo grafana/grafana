@@ -24,7 +24,7 @@ import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
 
 const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
-const FIXED_DRAWER_WIDTH = 1500;
+const FIXED_DRAWER_WIDTH = '45%';
 
 interface InstanceDetailsDrawerProps {
   ruleUID: string;
