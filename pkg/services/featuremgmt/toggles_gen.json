@@ -1163,6 +1163,18 @@
     },
     {
       "metadata": {
+        "name": "dashboardTemplates",
+        "resourceVersion": "1761575312733",
+        "creationTimestamp": "2025-10-27T14:28:32Z"
+      },
+      "spec": {
+        "description": "Enable template dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardUndoRedo",
         "resourceVersion": "1757940426210",
         "creationTimestamp": "2025-09-15T12:47:06Z"
@@ -2872,6 +2884,18 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "panelTimeSettings",
+        "resourceVersion": "1761555646368",
+        "creationTimestamp": "2025-10-27T09:00:46Z"
+      },
+      "spec": {
+        "description": "Enables a new panel time settings drawer",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
       }
     },
     {

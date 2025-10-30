@@ -323,36 +323,6 @@ func TestKvStorageBackend_ReadResource_DeletedResource(t *testing.T) {
 	require.Equal(t, objectToJSONBytes(t, testObj), response.Value)
 }
 
-func TestKvStorageBackend_ReadResource_TooHighResourceVersion(t *testing.T) {
-	backend := setupTestStorageBackend(t)
-	ctx := context.Background()
-
-	// First, create a resource
-	_, rv := createAndWriteTestObject(t, backend)
-
-	// Try to read with a resource version that's way too high
-	readReq := &resourcepb.ReadRequest{
-		Key: &resourcepb.ResourceKey{
-			Namespace: "default",
-			Group:     "apps",
-			Resource:  "resources",
-			Name:      "test-resource",
-		},
-		ResourceVersion: rv + 1000000000000, // Way in the future
-	}
-
-	response := backend.ReadResource(ctx, readReq)
-	require.NotNil(t, response.Error, "ReadResource should return error for too high resource version")
-	require.Equal(t, int32(504), response.Error.Code) // http.StatusGatewayTimeout
-	require.Equal(t, "Timeout", response.Error.Reason)
-	require.Equal(t, "ResourceVersion is larger than max", response.Error.Message)
-	require.NotNil(t, response.Error.Details)
-	require.Len(t, response.Error.Details.Causes, 1)
-	require.Equal(t, "ResourceVersionTooLarge", response.Error.Details.Causes[0].Reason)
-	require.Contains(t, response.Error.Details.Causes[0].Message, "requested:")
-	require.Contains(t, response.Error.Details.Causes[0].Message, "current")
-}
-
 func TestKvStorageBackend_ListIterator_Success(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
@@ -813,6 +783,111 @@ func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, n
 	})
 
 	return expectations
+}
+
+func TestKvStorageBackend_ListModifiedSince_WithFolder(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	// Use a unique resource type to avoid conflicts with other tests
+	ns := NamespacedResource{
+		Namespace: "test-folder-ns",
+		Group:     "test.folder.app",
+		Resource:  "test-resources",
+	}
+
+	// Create test objects with folder field set
+	testObj1, err := createTestObjectWithName("dashboard-1", ns, "data-1")
+	require.NoError(t, err)
+	metaAccessor1, err := utils.MetaAccessor(testObj1)
+	require.NoError(t, err)
+	metaAccessor1.SetFolder("folder-abc")
+
+	testObj2, err := createTestObjectWithName("dashboard-2", ns, "data-2")
+	require.NoError(t, err)
+	metaAccessor2, err := utils.MetaAccessor(testObj2)
+	require.NoError(t, err)
+	metaAccessor2.SetFolder("folder-xyz")
+
+	// Write first dashboard
+	writeEvent1 := WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: ns.Namespace,
+			Group:     ns.Group,
+			Resource:  ns.Resource,
+			Name:      "dashboard-1",
+		},
+		Value:      objectToJSONBytes(t, testObj1),
+		Object:     metaAccessor1,
+		PreviousRV: 0,
+	}
+	rv1, err := backend.WriteEvent(ctx, writeEvent1)
+	require.NoError(t, err)
+
+	// Write second dashboard
+	writeEvent2 := WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: ns.Namespace,
+			Group:     ns.Group,
+			Resource:  ns.Resource,
+			Name:      "dashboard-2",
+		},
+		Value:      objectToJSONBytes(t, testObj2),
+		Object:     metaAccessor2,
+		PreviousRV: 0,
+	}
+	rv2, err := backend.WriteEvent(ctx, writeEvent2)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name     string
+		sinceRV  func() int64
+		codePath string
+	}{
+		{
+			name:     "via event store (recent RV < 1 hour)",
+			sinceRV:  func() int64 { return rv1 - 1 },
+			codePath: "listModifiedSinceEventStore",
+		},
+		{
+			name:     "via data store (old RV > 1 hour)",
+			sinceRV:  func() int64 { return generateOldSnowflake(t) },
+			codePath: "listModifiedSinceDataStore",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sinceRV := tt.sinceRV()
+
+			// List resources
+			rv, seq := backend.ListModifiedSince(ctx, ns, sinceRV)
+
+			changes := make(map[string]*ModifiedResource)
+			for mr, err := range seq {
+				require.NoError(t, err, "Should not get error when Folder field is included")
+				require.Equal(t, ns.Group, mr.Key.Group)
+				require.Equal(t, ns.Namespace, mr.Key.Namespace)
+				require.Equal(t, ns.Resource, mr.Key.Resource)
+				changes[mr.Key.Name] = mr
+			}
+
+			require.Greater(t, rv, sinceRV)
+			require.Len(t, changes, 2, "Should return 2 resources")
+
+			// Verify dashboard-1
+			require.Contains(t, changes, "dashboard-1")
+			require.Equal(t, rv1, changes["dashboard-1"].ResourceVersion)
+			require.Equal(t, objectToJSONBytes(t, testObj1), changes["dashboard-1"].Value)
+
+			// Verify dashboard-2
+			require.Contains(t, changes, "dashboard-2")
+			require.Equal(t, rv2, changes["dashboard-2"].ResourceVersion)
+			require.Equal(t, objectToJSONBytes(t, testObj2), changes["dashboard-2"].Value)
+		})
+	}
 }
 
 func createAndSaveTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Context, ns NamespacedResource, uniqueStringGen func() string, updates int, deleted bool) *ModifiedResource {

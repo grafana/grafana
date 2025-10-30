@@ -86,7 +86,7 @@ export function SaveProvisionedDashboardForm({
   );
 
   const navigateToPreview = useCallback(
-    (ref: string, path: string, repoType: string) => {
+    (ref: string, path: string, repoType?: string) => {
       const url = buildResourceBranchRedirectUrl({
         baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
         paramName: 'ref',
@@ -110,7 +110,7 @@ export function SaveProvisionedDashboardForm({
   }, [dashboard, defaultValues.folder?.uid, drawer, panelEditor, request?.data?.resource]);
 
   const onWriteSuccess = useCallback(
-    ({ repoType }: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
+    (upsert: Resource<Dashboard>) => {
       handleDismiss();
       if (isNew && upsert?.metadata.name) {
         handleNewDashboard(upsert);
@@ -118,7 +118,7 @@ export function SaveProvisionedDashboardForm({
 
       // if pushed to an existing but non-configured branch, navigate to preview page
       if (ref !== repository?.branch && ref) {
-        navigateToPreview(ref, path, repoType);
+        navigateToPreview(ref, path, repository?.type);
         return;
       }
 
@@ -127,7 +127,7 @@ export function SaveProvisionedDashboardForm({
         editPanel: null,
       });
     },
-    [isNew, path, ref, repository?.branch, handleDismiss, handleNewDashboard, navigateToPreview]
+    [isNew, path, ref, repository?.branch, repository?.type, handleDismiss, handleNewDashboard, navigateToPreview]
   );
 
   const onBranchSuccess = useCallback(
@@ -147,6 +147,8 @@ export function SaveProvisionedDashboardForm({
     request,
     workflow,
     resourceType: 'dashboard',
+    repository,
+    selectedBranch: methods.getValues().ref,
     handlers: {
       onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
       onWriteSuccess,
@@ -155,15 +157,7 @@ export function SaveProvisionedDashboardForm({
   });
 
   // Submit handler for saving the form data
-  const handleFormSubmit = async ({
-    title,
-    description,
-    repo,
-    path,
-    comment,
-    ref,
-    folder,
-  }: ProvisionedDashboardFormData) => {
+  const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
     // Validate required fields
     if (!repo || !path) {
       console.error('Missing required fields for saving:', { repo, path });

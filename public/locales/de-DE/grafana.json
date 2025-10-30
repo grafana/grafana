@@ -4120,6 +4120,7 @@
       "description": "Benutzerdefinierten Wert verwenden"
     },
     "options": {
+      "loading": "",
       "no-found": "Keine Optionen gefunden."
     }
   },
@@ -4156,6 +4157,7 @@
     "cancel": "Abbrechen",
     "clear": "Löschen",
     "collapse": "Einklappen",
+    "disabled": "",
     "edit": "Bearbeiten",
     "help": "Hilfe",
     "loading": "Wird geladen ...",
@@ -5132,6 +5134,19 @@
       "aria-label-remove-override": "Überschreibung entfernen",
       "tooltip-remove-override": "Überschreibung entfernen"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Das Dashboard muss gespeichert werden, bevor Warnungen hinzugefügt werden können.",
@@ -5686,6 +5701,11 @@
       "open-dashboard": "Dashboard öffnen",
       "open-in-new-tab": "In neuem Tab öffnen",
       "title-error-adding-the-panel": "Fehler beim Hinzufügen des Panels"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Zurück zur Liste",
@@ -7643,7 +7663,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "Keine Ordner gefunden",
     "select-aria-label": "Ordnerfilter",
     "select-placeholder": "Nach Ordner filtern"
   },
@@ -10871,6 +10890,7 @@
       "replace-library-panel": "Bibliotheks-Panel ersetzen",
       "share": "Teilen",
       "show-legend": "Legende anzeigen",
+      "time-settings": "",
       "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben",
       "view": "Anzeigen"
     },
@@ -12289,8 +12309,6 @@
       "title": "Bereiche auswählen"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "Keine Ergebnisse für deine Abfrage gefunden",
         "recommended": "Empfohlen",
@@ -13133,6 +13151,14 @@
       "form-label": "Formular-Label",
       "title": "Panel"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {

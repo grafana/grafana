@@ -4120,6 +4120,7 @@
       "description": "Egyéni érték használata"
     },
     "options": {
+      "loading": "",
       "no-found": "Nem találhatók opciók."
     }
   },
@@ -4156,6 +4157,7 @@
     "cancel": "Mégse",
     "clear": "Törlés",
     "collapse": "Összecsukás",
+    "disabled": "",
     "edit": "Szerkesztés",
     "help": "Súgó",
     "loading": "Betöltés...",
@@ -5132,6 +5134,19 @@
       "aria-label-remove-override": "Felülbírálás eltávolítása",
       "tooltip-remove-override": "Felülbírálás eltávolítása"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Riasztások hozzáadása előtt menteni kell az irányítópultot.",
@@ -5686,6 +5701,11 @@
       "open-dashboard": "Irányítópult megnyitása",
       "open-in-new-tab": "Megnyitás új lapon",
       "title-error-adding-the-panel": "Hiba történt a panel hozzáadásakor"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Vissza a listához",
@@ -7643,7 +7663,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "Nem található mappa",
     "select-aria-label": "Mappaszűrő",
     "select-placeholder": "Szűrés mappa alapján"
   },
@@ -10871,6 +10890,7 @@
       "replace-library-panel": "Könyvtárpanel cseréje",
       "share": "Megosztás",
       "show-legend": "Jelmagyarázat megjelenítése",
+      "time-settings": "",
       "unlink-library-panel": "Könyvtárpanel leválasztása",
       "view": "Nézet"
     },
@@ -12289,8 +12309,6 @@
       "title": "Hatókörök kijelölése"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "Nincs találat a lekérdezésre",
         "recommended": "Ajánlott",
@@ -13133,6 +13151,14 @@
       "form-label": "Űrlapcímke",
       "title": "Panel"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {
