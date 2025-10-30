@@ -6269,6 +6269,7 @@
       "enabled-value": "Enabled value",
       "enabled-value-description": "Value when switch is enabled",
       "enabled-value-placeholder": "e.g. On, Enabled, Active",
+      "same-values-error": "Enabled and disabled values cannot be the same",
       "switch-options": "Switch options",
       "value-pair-type": "Value pair type",
       "value-pair-type-description": "Choose the type of values for the switch states"
