@@ -35,8 +35,6 @@ type SecretsManagerSettings struct {
 	GCWorkerPollInterval time.Duration
 	// How long to wait for the process to clean up a secure value to complete.
 	GCWorkerPerSecureValueCleanupTimeout time.Duration
-	// Whether the secrets management is running in developer mode.
-	IsDeveloperMode bool // TODO: Is this needed now with the below flags?
 
 	// Whether to register the MT CRUD API
 	RegisterAPIServer bool
@@ -67,8 +65,6 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.RegisterAPIServer = secretsMgmt.Key("register_api_server").MustBool(true)
 	cfg.SecretsManagement.RunSecretsDBMigrations = secretsMgmt.Key("run_secrets_db_migrations").MustBool(true)
 	cfg.SecretsManagement.RunDataKeyMigration = secretsMgmt.Key("run_data_key_migration").MustBool(true)
-
-	cfg.SecretsManagement.IsDeveloperMode = secretsMgmt.Key("developer_mode").MustBool(false)
 
 	// Extract available KMS providers from configuration sections
 	providers := make(map[string]map[string]string)
