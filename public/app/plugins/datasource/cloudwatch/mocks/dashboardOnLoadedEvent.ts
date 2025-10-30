@@ -2,7 +2,7 @@ import { DashboardLoadedEvent } from '@grafana/data';
 
 import { CloudWatchQuery } from '../types';
 
-const baseLogsQuery = {
+const baseLegacyLogsQuery = {
   datasource: {
     type: 'cloudwatch',
     uid: 'P7DC3E4760CFAC4AP',
@@ -15,6 +15,15 @@ const baseLogsQuery = {
   refId: 'A',
   region: 'default',
   statsGroups: [],
+};
+
+const baseLogsQuery = {
+  ...baseLegacyLogsQuery,
+  logGroups: [
+    { arn: 'arn:test', name: 'log-group-1' },
+    { arn: 'arn:test2', name: 'log-group-2' },
+  ],
+  logGroupNames: undefined,
 };
 
 export const CloudWatchDashboardLoadedEvent = new DashboardLoadedEvent({
@@ -475,6 +484,9 @@ export const CloudWatchDashboardLoadedEvent = new DashboardLoadedEvent({
         statistic: 'Average',
       },
       {
+        ...baseLegacyLogsQuery,
+      },
+      {
         ...baseLogsQuery,
       },
       {
@@ -778,6 +790,22 @@ export const CloudWatchDashboardLoadedEvent = new DashboardLoadedEvent({
         region: 'default',
         sqlExpression: '',
         statistic: '',
+      },
+      {
+        refId: 'A',
+        region: 'default',
+        queryMode: 'Logs',
+        logsMode: 'Anomalies',
+        anomalyDetectionARN: '',
+        suppressionState: 'suppressed',
+      },
+      {
+        refId: 'A',
+        region: 'default',
+        queryMode: 'Logs',
+        logsMode: 'Anomalies',
+        anomalyDetectionARN: '',
+        suppressionState: 'all',
       },
     ] as CloudWatchQuery[],
   },
