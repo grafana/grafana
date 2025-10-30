@@ -10,6 +10,7 @@ import {
   PluginExtensionAddedComponentConfig,
   PluginExtensionAddedLinkConfig,
   PluginExtensionAddedFunctionConfig,
+  PluginExtensionCommandPaletteDynamicConfig,
 } from './pluginExtensions';
 
 /**
@@ -62,6 +63,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   private _addedComponentConfigs: PluginExtensionAddedComponentConfig[] = [];
   private _addedLinkConfigs: PluginExtensionAddedLinkConfig[] = [];
   private _addedFunctionConfigs: PluginExtensionAddedFunctionConfig[] = [];
+  private _commandPaletteDynamicConfigs: PluginExtensionCommandPaletteDynamicConfig[] = [];
 
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
@@ -117,6 +119,10 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this._addedFunctionConfigs;
   }
 
+  get commandPaletteDynamicConfigs() {
+    return this._commandPaletteDynamicConfigs;
+  }
+
   addLink<Context extends object>(linkConfig: PluginExtensionAddedLinkConfig<Context>) {
     this._addedLinkConfigs.push(linkConfig as PluginExtensionAddedLinkConfig);
 
@@ -138,6 +144,40 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   exposeComponent<Props = {}>(componentConfig: PluginExtensionExposedComponentConfig<Props>) {
     this._exposedComponentConfigs.push(componentConfig as PluginExtensionExposedComponentConfig);
 
+    return this;
+  }
+
+  /**
+   * Register a dynamic command palette search provider
+   *
+   * Allows plugins to add dynamic, search-based results to the command palette.
+   * Results are fetched asynchronously based on user input.
+   *
+   * @example
+   * ```typescript
+   * plugin.addCommandPaletteDynamicProvider({
+   *   title: 'Search Issues',
+   *   category: 'My Plugin',
+   *   searchProvider: async ({ searchQuery, signal }) => {
+   *     const response = await fetch(`/api/issues?q=${searchQuery}`, { signal });
+   *     const issues = await response.json();
+   *     return issues.slice(0, 5).map(issue => ({
+   *       id: issue.id,
+   *       title: issue.title,
+   *       description: `#${issue.number}`,
+   *     }));
+   *   },
+   *   onSelect: (result, helpers) => {
+   *     helpers.openModal({
+   *       title: result.title,
+   *       body: IssueDetailsModal,
+   *     });
+   *   },
+   * });
+   * ```
+   */
+  addCommandPaletteDynamicProvider(config: PluginExtensionCommandPaletteDynamicConfig) {
+    this._commandPaletteDynamicConfigs.push(config);
     return this;
   }
 }

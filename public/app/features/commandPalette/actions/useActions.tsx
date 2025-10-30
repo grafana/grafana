@@ -5,6 +5,7 @@ import { CommandPaletteAction } from '../types';
 
 import { getRecentDashboardActions } from './dashboardActions';
 import { useStaticActions } from './staticActions';
+import { useDynamicExtensionActions } from './useDynamicExtensionActions';
 import useExtensionActions from './useExtensionActions';
 
 /**
@@ -32,4 +33,16 @@ export function useRegisterRecentDashboardsActions() {
   }, []);
 
   useRegisterActions(recentDashboardActions, [recentDashboardActions]);
+}
+
+/**
+ * Register dynamic actions based on search query
+ * These are fetched from plugins that registered dynamic search providers
+ */
+export function useRegisterDynamicActions(searchQuery: string) {
+  const { actions: dynamicActions, isLoading } = useDynamicExtensionActions(searchQuery);
+
+  useRegisterActions(dynamicActions, [dynamicActions]);
+
+  return { isLoading };
 }

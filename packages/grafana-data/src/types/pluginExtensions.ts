@@ -280,7 +280,12 @@ export type PluginExtensionDataSourceConfigContext<
   setSecureJsonData: (secureJsonData: SecureJsonData) => void;
 };
 
-export type PluginExtensionCommandPaletteContext = {};
+export type PluginExtensionCommandPaletteContext = {
+  /** The current search query entered by the user */
+  searchQuery?: string;
+  /** Signal for request cancellation */
+  signal?: AbortSignal;
+};
 
 export type PluginExtensionResourceAttributesContext = {
   // Key-value pairs of resource attributes, attribute name is the key
@@ -334,4 +339,85 @@ type Dashboard = {
   uid: string;
   title: string;
   tags: string[];
+};
+
+// Dynamic Command Palette Types
+// --------------------------------------------------------
+
+/**
+ * A single dynamic result item returned by a command palette search provider
+ */
+export type CommandPaletteDynamicResult = {
+  /** Unique identifier for this result (scoped to plugin) */
+  id: string;
+  /** Display title */
+  title: string;
+  /** Optional subtitle or description */
+  description?: string;
+  /** Optional URL to navigate to (alternative to onSelect) */
+  path?: string;
+  /** Optional keywords for better search matching */
+  keywords?: string[];
+  /** Optional section/category override (defaults to plugin category) */
+  section?: string;
+  /** Optional custom data to pass through to the action handler */
+  data?: Record<string, unknown>;
+};
+
+/**
+ * Action handler for when a dynamic result is selected
+ */
+export type CommandPaletteDynamicResultAction = (
+  result: CommandPaletteDynamicResult,
+  helpers: PluginExtensionEventHelpers<PluginExtensionCommandPaletteContext>
+) => void | Promise<void>;
+
+/**
+ * Search provider function that fetches dynamic results
+ */
+export type CommandPaletteDynamicSearchProvider = (
+  context: PluginExtensionCommandPaletteContext
+) => Promise<CommandPaletteDynamicResult[]>;
+
+/**
+ * Configuration for registering a dynamic command palette provider
+ */
+export type PluginExtensionCommandPaletteDynamicConfig = {
+  /** Display name for this search provider */
+  title: string;
+
+  /**
+   * Category/section name for grouping results
+   * @default Plugin ID
+   */
+  category?: string;
+
+  /**
+   * Minimum query length before search is triggered
+   * @default 2
+   */
+  minQueryLength?: number;
+
+  /**
+   * Debounce delay in milliseconds
+   * @default 300
+   */
+  debounceMs?: number;
+
+  /**
+   * Search provider function that returns results
+   */
+  searchProvider: CommandPaletteDynamicSearchProvider;
+
+  /**
+   * Action handler when a result is selected
+   * If not provided, will use result.path for navigation
+   */
+  onSelect?: CommandPaletteDynamicResultAction;
+
+  /**
+   * Optional filter to determine when this provider should be active
+   * Return false to disable this provider for the current context
+   */
+  isActive?: (context: PluginExtensionCommandPaletteContext) => boolean;
 };

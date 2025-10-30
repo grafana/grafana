@@ -596,6 +596,10 @@ export {
   type PluginExtensionAddedFunctionConfig,
   type PluginExtensionResourceAttributesContext,
   type CentralAlertHistorySceneV1Props,
+  type PluginExtensionCommandPaletteDynamicConfig,
+  type CommandPaletteDynamicResult,
+  type CommandPaletteDynamicSearchProvider,
+  type CommandPaletteDynamicResultAction,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
