@@ -140,13 +140,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           </div>
         </Grid>
 
-        {/* job status is not ready for Cloud yet */}
-        {(config.buildInfo.edition === GrafanaEdition.OpenSource ||
-          config.buildInfo.edition === GrafanaEdition.Enterprise) && (
-          <div className={styles.cardContainer}>
-            <RecentJobs repo={repo} />
-          </div>
-        )}
+        <div className={styles.cardContainer}>
+          <RecentJobs repo={repo} />
+        </div>
       </Stack>
     </Box>
   );
