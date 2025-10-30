@@ -2,7 +2,7 @@ import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
@@ -165,7 +165,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
       if (dash.metadata.annotations?.[AnnoKeyFolder]) {
         try {
-          const folder = await backendSrv.getFolderByUid(dash.metadata.annotations[AnnoKeyFolder]);
+          const folder = await getFolderByUidFacade(dash.metadata.annotations[AnnoKeyFolder]);
           result.meta.folderTitle = folder.title;
           result.meta.folderUrl = folder.url;
           result.meta.folderUid = folder.uid;
