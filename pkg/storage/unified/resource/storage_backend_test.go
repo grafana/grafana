@@ -1514,7 +1514,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		metaAccessor, err := utils.MetaAccessor(testObj)
 		require.NoError(t, err)
 		writeEvent := WriteEvent{
-			Type: resourcepb.WatchEvent_DELETED,
+			Type: resourcepb.WatchEvent_ADDED,
 			Key: &resourcepb.ResourceKey{
 				Namespace: "default",
 				Group:     "apps",
@@ -1523,23 +1523,39 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			},
 			Value:      objectToJSONBytes(t, testObj),
 			Object:     metaAccessor,
-			ObjectOld:  metaAccessor,
 			PreviousRV: 0,
 		}
 		rv1, err := backend.WriteEvent(ctx, writeEvent)
 		require.NoError(t, err)
 
-		// Add prunerMaxEvents+1 deleted events
+		// Create prunerMaxEvents deleted events by repeatedly deleting and recreating the resource
+		// This will create: 1 initial ADDED + prunerMaxEvents cycles of (DELETE + ADDED)
+		// = 1 + 20 + 20 = 41 total events (21 ADDED + 20 DELETED)
 		// Multiple deleted events for a resource shouldn't happen - this is just to ensure the pruner won't remove deleted events
 		previousRV := rv1
 		for i := 0; i < prunerMaxEvents; i++ {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("delete-%d", i)
+			metaAccessor, err := utils.MetaAccessor(testObj)
+			require.NoError(t, err)
+
+			// Delete the resource
 			writeEvent.Type = resourcepb.WatchEvent_DELETED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
+			writeEvent.Object = metaAccessor
+			writeEvent.ObjectOld = metaAccessor
 			writeEvent.PreviousRV = previousRV
-			newRv, err := backend.WriteEvent(ctx, writeEvent)
+			_, err = backend.WriteEvent(ctx, writeEvent)
 			require.NoError(t, err)
-			previousRV = newRv
+
+			// Recreate the resource
+			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("recreate-%d", i)
+			writeEvent.Type = resourcepb.WatchEvent_ADDED
+			writeEvent.Value = objectToJSONBytes(t, testObj)
+			writeEvent.Object, err = utils.MetaAccessor(testObj)
+			require.NoError(t, err)
+			writeEvent.PreviousRV = 0
+			previousRV, err = backend.WriteEvent(ctx, writeEvent)
+			require.NoError(t, err)
 		}
 
 		pruningKey := PruningKey{
@@ -1552,18 +1568,25 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		err = backend.pruneEvents(ctx, pruningKey)
 		require.NoError(t, err)
 
-		// assert all deleted events exist
+		// Assert all deleted events exist (20) + the most recent 20 non-deleted events
+		// Pruner should keep: all 20 DELETED + 20 most recent non-deleted = 40 total
+		// The oldest non-deleted event (initial ADDED) should be pruned
 		counter := 0
-		for _, err := range backend.dataStore.Keys(ctx, ListRequestKey{
+		deletedCount := 0
+		for datakey, err := range backend.dataStore.Keys(ctx, ListRequestKey{
 			Namespace: "default",
 			Group:     "apps",
 			Resource:  "resources",
 			Name:      "test-resource",
 		}, SortOrderDesc) {
 			require.NoError(t, err)
+			if datakey.Action == DataActionDeleted {
+				deletedCount++
+			}
 			counter++
 		}
-		require.Equal(t, prunerMaxEvents+1, counter)
+		require.Equal(t, prunerMaxEvents, deletedCount, "All deleted events should be kept")
+		require.Equal(t, prunerMaxEvents*2, counter, "Should have 20 deleted + 20 non-deleted events")
 	})
 }
 
