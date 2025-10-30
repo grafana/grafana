@@ -195,9 +195,14 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "group_concat":
 		return
-	case "row_number", "rank", "dense_rank", "lead", "lag":
+	
+	
+	// Window Functions
+	case "row_number", "rank", "dense_rank", "percent_rank":
 		return
-	case "first_value", "last_value":
+	case "first_value", "last_value", "ntile":
+		return
+	case "lead", "lag":
 		return
 
 	// Mathematical functions
