@@ -44,7 +44,7 @@ When the log line details are open, you have access to the following additional 
 
 You can access these options from the log line details or from the log line menu:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-log-line-menu-v12.3.png" max-width="400px" alt="The log line menu" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-log-line-menu-v12.3.png" max-width="300px" alt="The log line menu" >}}
 
 {{< docs/play title="Logs Panel" url="https://play.grafana.org/d/6NmftOxZz/" >}}
 
