@@ -31,6 +31,7 @@ export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
 	iconColor: "",
 	name: "",
 	builtIn: false,
+	placement: AnnotationQueryPlacement,
 });
 
 export interface DataQueryKind {

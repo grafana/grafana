@@ -31,7 +31,7 @@ type DashboardAnnotationQuerySpec struct {
 	BuiltIn   *bool                           `json:"builtIn,omitempty"`
 	Filter    *DashboardAnnotationPanelFilter `json:"filter,omitempty"`
 	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
-	Placement string `json:"placement,omitempty"`
+	Placement *string `json:"placement,omitempty"`
 	// Catch-all field for datasource-specific properties. Should not be available in as code tooling.
 	LegacyOptions map[string]interface{} `json:"legacyOptions,omitempty"`
 }
@@ -41,7 +41,7 @@ func NewDashboardAnnotationQuerySpec() *DashboardAnnotationQuerySpec {
 	return &DashboardAnnotationQuerySpec{
 		Query:     *NewDashboardDataQueryKind(),
 		BuiltIn:   (func(input bool) *bool { return &input })(false),
-		Placement: DashboardAnnotationQueryPlacement,
+		Placement: (func(input string) *string { return &input })(DashboardAnnotationQueryPlacement),
 	}
 }
 
