@@ -38,7 +38,7 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
           iconOnly
           icon="question-circle"
           aria-label={t('navigation.help.aria-label', 'Help')}
-          tooltip={t('navigation.help.tooltip', 'Help and documentation')}
+          tooltip={t('navigation.help.tooltip', 'Get help and useful links')}
         />
       </Dropdown>
     );
