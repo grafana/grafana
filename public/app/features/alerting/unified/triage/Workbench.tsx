@@ -4,15 +4,12 @@ import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { SceneQueryRunner } from '@grafana/scenes';
 import { ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
-import { EditorColumnHeader } from '../components/EditorColumnHeader';
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';
 
-import { TimelineHeader } from './Timeline';
 import { WorkbenchProvider } from './WorkbenchContext';
 import { AlertRuleRow } from './rows/AlertRuleRow';
 import { FolderGroupRow } from './rows/FolderGroupRow';
@@ -140,12 +137,6 @@ export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
         <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
           <SummaryStatsReact />
           <SummaryChartReact />
-        </div>
-        <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.headerContainer)}>
-          <EditorColumnHeader label={t('alerting.left-column.label-instances', 'Instances')} />
-          <EditorColumnHeader>
-            <TimelineHeader domain={domain} />
-          </EditorColumnHeader>
         </div>
         {/* Render actual data */}
         <div className={styles.virtualizedContainer}>

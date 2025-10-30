@@ -41,7 +41,6 @@ export const triageScene = new EmbeddedSceneWithContext({
         },
         allowCustomValue: true,
         applyMode: 'manual',
-        value: 'grafana_folder',
       }),
       new AdHocFiltersVariable({
         name: 'filters',
