@@ -16,7 +16,11 @@ import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
 import { useRegisterRecentScopesActions, useRegisterScopesActions } from './actions/scopeActions';
-import { useRegisterDynamicActions, useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
+import {
+  useRegisterDynamicActions,
+  useRegisterRecentDashboardsActions,
+  useRegisterStaticActions,
+} from './actions/useActions';
 import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 

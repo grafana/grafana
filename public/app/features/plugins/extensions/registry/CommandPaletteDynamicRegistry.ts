@@ -81,9 +81,7 @@ export class CommandPaletteDynamicRegistry extends Registry<
   /**
    * Execute a search across all registered providers
    */
-  async search(
-    context: PluginExtensionCommandPaletteContext
-  ): Promise<Map<string, CommandPaletteDynamicSearchResult>> {
+  async search(context: PluginExtensionCommandPaletteContext): Promise<Map<string, CommandPaletteDynamicSearchResult>> {
     const registry = await this.getState();
     const results = new Map<string, CommandPaletteDynamicSearchResult>();
     const searchQuery = context.searchQuery ?? '';
@@ -146,4 +144,3 @@ export class CommandPaletteDynamicRegistry extends Registry<
     return results;
   }
 }
-
