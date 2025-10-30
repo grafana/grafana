@@ -61,8 +61,6 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
     return ds?.type || '';
   }, [datasourceUid]);
 
-  console.log(datasourceType);
-
   const { value: result, loading } = useAsync(async (): Promise<SuggestedDashboardsResult> => {
     if (!datasourceUid) {
       return { dashboards: [], hasMoreDashboards: false };
