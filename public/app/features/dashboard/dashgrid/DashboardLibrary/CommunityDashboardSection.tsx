@@ -89,6 +89,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
           contentKinds: ['community_dashboard'],
           datasourceTypes: [ds.type],
           sourceEntryPoint: 'datasource_page',
+          eventLocation: 'suggested_dashboards_modal_community_tab',
         });
       }
 
@@ -119,6 +120,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         libraryItemId: String(dashboard.id),
         libraryItemTitle: dashboard.name,
         sourceEntryPoint: 'datasource_page',
+        eventLocation: 'suggested_dashboards_modal_community_tab',
       });
     }
 

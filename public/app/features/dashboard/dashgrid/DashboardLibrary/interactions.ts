@@ -10,12 +10,18 @@ type SourceEntryPoint = 'datasource_page';
 // possible future flows onboarding, create-dashboard, empty states
 // | 'create_dashboard' | 'empty_state';
 
+type EventLocation =
+  | 'empty_dashboard'
+  | 'suggested_dashboards_modal_provisioned_tab'
+  | 'suggested_dashboards_modal_community_tab';
+
 export const DashboardLibraryInteractions = {
   loaded: (properties: {
     numberOfItems: number;
     contentKinds: ContentKind[];
     datasourceTypes: string[];
     sourceEntryPoint: SourceEntryPoint;
+    eventLocation: EventLocation;
   }) => {
     reportDashboardLibraryInteraction('loaded', properties);
   },
@@ -25,6 +31,7 @@ export const DashboardLibraryInteractions = {
     libraryItemId: string;
     libraryItemTitle: string;
     sourceEntryPoint: SourceEntryPoint;
+    eventLocation: EventLocation;
   }) => {
     reportDashboardLibraryInteraction('item_clicked', properties);
   },

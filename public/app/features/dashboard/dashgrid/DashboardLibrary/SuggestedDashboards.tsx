@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Button, useStyles2, Stack } from '@grafana/ui';
+import { Button, useStyles2, Grid } from '@grafana/ui';
 import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 import { PluginDashboard } from 'app/types/plugins';
 
@@ -37,6 +37,11 @@ type MixedDashboard =
   | { type: 'provisioned'; dashboard: PluginDashboard; index: number }
   | { type: 'community'; dashboard: GnetDashboard };
 
+type SuggestedDashboardsResult = {
+  dashboards: MixedDashboard[];
+  hasMoreDashboards: boolean;
+};
+
 // Constants for suggested dashboards API params
 const SUGGESTED_COMMUNITY_PAGE_SIZE = 2;
 const DEFAULT_SORT_ORDER = 'downloads';
@@ -56,14 +61,14 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
     return ds?.name || '';
   }, [datasourceUid]);
 
-  const { value: suggestedDashboards, loading } = useAsync(async (): Promise<MixedDashboard[]> => {
+  const { value: result, loading } = useAsync(async (): Promise<SuggestedDashboardsResult> => {
     if (!datasourceUid) {
-      return [];
+      return { dashboards: [], hasMoreDashboards: false };
     }
 
     const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
     if (!ds) {
-      return [];
+      return { dashboards: [], hasMoreDashboards: false };
     }
 
     try {
@@ -123,27 +128,32 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
           contentKinds,
           datasourceTypes: [ds.type],
           sourceEntryPoint: 'datasource_page',
+          eventLocation: 'empty_dashboard',
         });
       }
 
-      return mixed;
+      // Determine if there are more dashboards available beyond what we're showing
+      // Show "View all" if: more than 1 provisioned exists OR we got the full page size of community dashboards
+      const hasMoreDashboards = provisioned.length > 1 || community.length >= SUGGESTED_COMMUNITY_PAGE_SIZE;
+
+      return { dashboards: mixed, hasMoreDashboards };
     } catch (error) {
       console.error('Error loading suggested dashboards', error);
-      return [];
+      return { dashboards: [], hasMoreDashboards: false };
     }
   }, [datasourceUid]);
 
   // Determine default tab based on what data is available
   const defaultTab = useMemo((): 'datasource' | 'community' => {
-    if (!suggestedDashboards || loading) {
+    if (!result || loading) {
       return 'datasource'; // Default while loading
     }
 
-    const hasProvisioned = suggestedDashboards.some((d) => d.type === 'provisioned');
+    const hasProvisioned = result.dashboards.some((d) => d.type === 'provisioned');
 
     // Prefer datasource tab if it has data, otherwise community
     return hasProvisioned ? 'datasource' : 'community';
-  }, [suggestedDashboards, loading]);
+  }, [result, loading]);
 
   const onUseProvisionedDashboard = (dashboard: PluginDashboard) => {
     if (!datasourceUid) {
@@ -161,6 +171,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
       libraryItemId: dashboard.uid,
       libraryItemTitle: dashboard.title,
       sourceEntryPoint: 'datasource_page',
+      eventLocation: 'empty_dashboard',
     });
 
     // Navigate to template route (existing flow)
@@ -193,6 +204,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
       libraryItemId: String(dashboard.id),
       libraryItemTitle: dashboard.name,
       sourceEntryPoint: 'datasource_page',
+      eventLocation: 'empty_dashboard',
     });
 
     try {
@@ -235,7 +247,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
   };
 
   // Don't render if no dashboards or still loading
-  if (!loading && (!suggestedDashboards || suggestedDashboards.length === 0)) {
+  if (!loading && (!result || result.dashboards.length === 0)) {
     return null;
   }
 
@@ -261,58 +273,58 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
             </Trans>
           </p>
         </div>
-        <Button variant="secondary" fill="outline" onClick={() => onOpenModal(defaultTab)} size="sm">
-          <Trans i18nKey="dashboard.empty.view-all">View all</Trans>
-        </Button>
+        {result?.hasMoreDashboards && (
+          <Button variant="secondary" fill="outline" onClick={() => onOpenModal(defaultTab)} size="sm">
+            <Trans i18nKey="dashboard.empty.view-all">View all</Trans>
+          </Button>
+        )}
       </div>
 
-      <Stack direction="row" wrap={true} gap={4} alignItems="flex-start">
-        {loading ? (
-          // Show 3 skeleton cards while loading
-          <>
-            <div className={styles.skeleton} />
-            <div className={styles.skeleton} />
-            <div className={styles.skeleton} />
-          </>
-        ) : (
-          suggestedDashboards?.map((item, idx) => {
-            if (item.type === 'provisioned') {
-              return (
-                <DashboardCard
-                  key={`provisioned-${item.dashboard.uid}-${idx}`}
-                  title={item.dashboard.title}
-                  imageUrl={getProvisionedDashboardImageUrl(item.index)}
-                  dashboard={item.dashboard}
-                  onClick={() => onUseProvisionedDashboard(item.dashboard)}
-                  showDatasourceProvidedBadge={true}
-                  dimThumbnail={true}
-                  showDescriptionPlaceholder={true}
-                  buttonText={<Trans i18nKey="dashboard-template.card.use-dashboard-button">Use dashboard</Trans>}
-                />
-              );
-            } else {
-              const thumbnailUrl = getThumbnailUrl(item.dashboard);
-              const imageUrl = thumbnailUrl || getLogoUrl(item.dashboard);
-              const isLogo = !thumbnailUrl;
-              const details = buildDashboardDetails(item.dashboard);
+      <Grid
+        gap={4}
+        columns={{
+          xs: 1,
+          sm: 2,
+          lg: 3,
+        }}
+      >
+        {loading
+          ? Array.from({ length: 3 }).map((_, i) => <div key={i} className={styles.skeleton} />)
+          : result?.dashboards.map((item, idx) => {
+              if (item.type === 'provisioned') {
+                return (
+                  <DashboardCard
+                    key={`provisioned-${item.dashboard.uid}-${idx}`}
+                    title={item.dashboard.title}
+                    imageUrl={getProvisionedDashboardImageUrl(item.index)}
+                    dashboard={item.dashboard}
+                    onClick={() => onUseProvisionedDashboard(item.dashboard)}
+                    showDatasourceProvidedBadge={true}
+                    dimThumbnail={true}
+                    buttonText={<Trans i18nKey="dashboard-template.card.use-dashboard-button">Use dashboard</Trans>}
+                  />
+                );
+              } else {
+                const thumbnailUrl = getThumbnailUrl(item.dashboard);
+                const imageUrl = thumbnailUrl || getLogoUrl(item.dashboard);
+                const isLogo = !thumbnailUrl;
+                const details = buildDashboardDetails(item.dashboard);
 
-              return (
-                <DashboardCard
-                  key={`community-${item.dashboard.id}-${idx}`}
-                  title={item.dashboard.name}
-                  imageUrl={imageUrl}
-                  dashboard={item.dashboard}
-                  onClick={() => onUseCommunityDashboard(item.dashboard)}
-                  isLogo={isLogo}
-                  details={details}
-                  showDescriptionPlaceholder={true}
-                  buttonText={<Trans i18nKey="dashboard-template.card.use-dashboard-button">Use dashboard</Trans>}
-                />
-              );
-            }
-          }) || []
-        )}
-      </Stack>
+                return (
+                  <DashboardCard
+                    key={`community-${item.dashboard.id}-${idx}`}
+                    title={item.dashboard.name}
+                    imageUrl={imageUrl}
+                    dashboard={item.dashboard}
+                    onClick={() => onUseCommunityDashboard(item.dashboard)}
+                    isLogo={isLogo}
+                    details={details}
+                    buttonText={<Trans i18nKey="dashboard-template.card.use-dashboard-button">Use dashboard</Trans>}
+                  />
+                );
+              }
+            }) || []}
+      </Grid>
     </div>
   );
 };
@@ -352,7 +364,9 @@ function getStyles(theme: GrafanaTheme2) {
       lineHeight: theme.typography.body.lineHeight,
     }),
     skeleton: css({
-      height: '400px',
+      width: '350px',
+      height: '200px',
+      padding: theme.spacing(4),
       backgroundColor: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.default,
       [theme.transitions.handleMotion('no-preference')]: {

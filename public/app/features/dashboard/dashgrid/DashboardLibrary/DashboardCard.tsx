@@ -25,7 +25,6 @@ interface Props {
   isLogo?: boolean; // Indicates if imageUrl is a small logo vs full screenshot
   showDatasourceProvidedBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
-  showDescriptionPlaceholder?: boolean; // Show placeholder when no description exists
   buttonText?: React.ReactNode; // Optional custom button text, defaults to "Use template"
 }
 
@@ -38,7 +37,6 @@ export function DashboardCard({
   isLogo,
   showDatasourceProvidedBadge,
   dimThumbnail,
-  showDescriptionPlaceholder,
   buttonText,
 }: Props) {
   const styles = useStyles2(getStyles);
@@ -75,13 +73,9 @@ export function DashboardCard({
         )}
       </div>
       <div title={dashboard.description || ''} className={styles.descriptionWrapper}>
-        {dashboard.description ? (
+        {dashboard.description && (
           <Card.Description className={styles.description}>{dashboard.description}</Card.Description>
-        ) : showDescriptionPlaceholder ? (
-          <Card.Description className={cx(styles.description, styles.placeholderText)}>
-            <Trans i18nKey="dashboard-template.card.no-description">No description available</Trans>
-          </Card.Description>
-        ) : null}
+        )}
       </div>
       <Card.Actions className={styles.actionsContainer}>
         <Button variant="secondary" onClick={onClick}>
@@ -159,7 +153,8 @@ function getStyles(theme: GrafanaTheme2) {
       gridTemplateRows: 'auto auto auto auto',
       gridTemplateColumns: '1fr auto',
       height: 'auto',
-      width: '350px',
+      maxWidth: '350px',
+      width: '100%',
       background: 'transparent',
       gridGap: theme.spacing(1),
     }),
@@ -173,13 +168,14 @@ function getStyles(theme: GrafanaTheme2) {
       borderColor: theme.colors.border.strong,
       borderWidth: 1,
       borderStyle: 'solid',
-      width: '350px',
+      width: '100%',
+      maxWidth: '350px',
       height: '180px',
       backgroundColor: theme.colors.background.canvas,
       position: 'relative',
     }),
     thumbnail: css({
-      width: '350px',
+      width: '100%',
       height: '100%',
       objectFit: 'cover',
     }),
@@ -210,6 +206,7 @@ function getStyles(theme: GrafanaTheme2) {
     descriptionWrapper: css({
       gridArea: 'Description',
       wordBreak: 'break-word',
+      minHeight: `calc(${theme.typography.body.lineHeight} * 1em)`, // Preserve space even when empty
     }),
     title: css({
       display: '-webkit-box',

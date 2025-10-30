@@ -52,6 +52,7 @@ export const DashboardLibrarySection = () => {
         contentKinds: ['datasource_dashboard'],
         datasourceTypes: [ds.type],
         sourceEntryPoint: 'datasource_page',
+        eventLocation: 'suggested_dashboards_modal_provisioned_tab',
       });
     }
 
@@ -77,6 +78,7 @@ export const DashboardLibrarySection = () => {
       libraryItemId: dashboard.uid,
       libraryItemTitle: dashboard.title,
       sourceEntryPoint: 'datasource_page',
+      eventLocation: 'suggested_dashboards_modal_provisioned_tab',
     });
 
     const params = new URLSearchParams({
