@@ -18,7 +18,6 @@ import { LibraryPanelBehaviorState } from './LibraryPanelBehavior';
 interface DashboardDatasourceBehaviourState extends SceneObjectState {}
 
 export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatasourceBehaviourState> {
-  private prevRequestId: string | undefined;
   private prevRequestIds: Map<number, string> = new Map();
   public constructor(state: DashboardDatasourceBehaviourState) {
     super(state);
@@ -58,94 +57,14 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       return;
     }
 
-    // Single query: use original logic with prevRequestId tracking
-    if (dashboardDsQueries.length === 1) {
-      return this._handleSingleQuery(dashboardDsQueries[0], queryRunner, dashboard);
-    }
-
-    // Multiple queries: use new logic to track all library panels (bug fix for mixed datasource)
-    return this._handleMultipleQueries(dashboardDsQueries, queryRunner, dashboard);
+    return this._handleQueries(dashboardDsQueries, queryRunner, dashboard);
   }
 
   /**
-   * Original logic for handling a single dashboard datasource query.
-   * Preserves prevRequestId tracking for efficiency.
+   * Handles dashboard datasource queries by tracking all referenced panels.
+   * Supports single or multiple queries with library panels and transformers.
    */
-  private _handleSingleQuery(
-    dashboardQuery: { panelId?: number; [key: string]: unknown },
-    queryRunner: SceneQueryRunner,
-    dashboard: DashboardScene
-  ): (() => void) | undefined {
-    let libraryPanelSub: Unsubscribable;
-    let transformerSub: Unsubscribable;
-
-    const panelId = dashboardQuery.panelId;
-    if (panelId === undefined) {
-      return;
-    }
-
-    const vizKey = getVizPanelKeyForPanelId(panelId);
-    const sourcePanel = findVizPanelByKey(dashboard, vizKey);
-
-    if (!(sourcePanel instanceof VizPanel)) {
-      return;
-    }
-
-    //check if the source panel is a library panel and wait for it to load
-    const libraryPanelBehaviour = getLibraryPanelBehavior(sourcePanel);
-    if (libraryPanelBehaviour && !libraryPanelBehaviour.state.isLoaded) {
-      libraryPanelSub = libraryPanelBehaviour.subscribeToState((newLibPanel) => {
-        this.handleLibPanelStateUpdates(newLibPanel, queryRunner, sourcePanel);
-      });
-      return () => {
-        if (libraryPanelSub) {
-          libraryPanelSub.unsubscribe();
-        }
-      };
-    }
-
-    const sourcePanelQueryRunner = getQueryRunnerFor(sourcePanel);
-
-    if (!sourcePanelQueryRunner) {
-      throw new Error('Could not find SceneQueryRunner for panel');
-    }
-
-    const dataTransformer = sourcePanelQueryRunner.parent;
-
-    if (dataTransformer instanceof SceneDataTransformer && dataTransformer.state.transformations.length) {
-      // in mixed DS scenario we complete the observable and merge data, so on a variable change
-      // the data transformer will emit but there will be no subscription and thus not visual update
-      // on the panel. Similar thing happens when going to edit mode and back, where we unsubscribe and
-      // since we never re-run the query, only reprocess the transformations, the panel will not update.
-      transformerSub = dataTransformer.subscribeToState((newState, oldState) => {
-        if (newState.data !== oldState.data) {
-          queryRunner.runQueries();
-        }
-      });
-    }
-
-    if (this.prevRequestId && this.prevRequestId !== sourcePanelQueryRunner.state.data?.request?.requestId) {
-      queryRunner.runQueries();
-    }
-
-    return () => {
-      this.prevRequestId = sourcePanelQueryRunner?.state.data?.request?.requestId;
-      if (libraryPanelSub) {
-        libraryPanelSub.unsubscribe();
-      }
-
-      if (transformerSub) {
-        transformerSub.unsubscribe();
-      }
-    };
-  }
-
-  /**
-   * New logic for handling multiple dashboard datasource queries.
-   * This fixes the bug where only the first panel was tracked when using mixed datasource missing queries that could
-   * contain library panels.
-   */
-  private _handleMultipleQueries(
+  private _handleQueries(
     dashboardQueries: Array<{ panelId?: number; [key: string]: unknown }>,
     queryRunner: SceneQueryRunner,
     dashboard: DashboardScene
