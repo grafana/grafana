@@ -147,64 +147,66 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
   return (
     <form onSubmit={handleSubmit(() => onSave(false))}>
-      <Field
-        noMargin
-        label={<TitleFieldLabel onChange={setValue} />}
-        invalid={!!errors.title}
-        error={errors.title?.message}
-      >
-        <Input
-          {...register('title', {
-            required: t('dashboard-scene.save-dashboard-as-form.required', 'Required'),
-            validate: validateDashboardName,
-            onChange: handleTitleChange,
-          })}
-          aria-label={t(
-            'dashboard-scene.save-dashboard-as-form.aria-label-save-dashboard-title-field',
-            'Save dashboard title field'
-          )}
-          data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput}
-        />
-      </Field>
-      <Field
-        noMargin
-        label={<DescriptionLabel onChange={setValue} />}
-        invalid={!!errors.description}
-        error={errors.description?.message}
-      >
-        <TextArea
-          {...register('description', { required: false })}
-          aria-label={t(
-            'dashboard-scene.save-dashboard-as-form.aria-label-save-dashboard-description-field',
-            'Save dashboard description field'
-          )}
-          autoFocus
-        />
-      </Field>
-
-      <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-folder', 'Folder')}>
-        <FolderPicker
-          onChange={async (uid: string | undefined, title: string | undefined) => {
-            setValue('folder', { uid, title });
-            const meta = await getProvisionedMeta(uid);
-            dashboard.setState({
-              meta: {
-                ...meta,
-                folderUid: uid,
-              },
-            });
-            // Re-validate title when folder changes to check for duplicates in new folder
-            trigger('title');
-          }}
-          value={formValues.folder?.uid}
-        />
-      </Field>
-      {!changeInfo.isNew && (
-        <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>
-          <Switch {...register('copyTags')} />
+      <Stack direction="column" gap={2}>
+        <Field
+          noMargin
+          label={<TitleFieldLabel onChange={setValue} />}
+          invalid={!!errors.title}
+          error={errors.title?.message}
+        >
+          <Input
+            {...register('title', {
+              required: t('dashboard-scene.save-dashboard-as-form.required', 'Required'),
+              validate: validateDashboardName,
+              onChange: handleTitleChange,
+            })}
+            aria-label={t(
+              'dashboard-scene.save-dashboard-as-form.aria-label-save-dashboard-title-field',
+              'Save dashboard title field'
+            )}
+            data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput}
+          />
         </Field>
-      )}
-      <Box paddingTop={2}>{renderFooter(state.error)}</Box>
+        <Field
+          noMargin
+          label={<DescriptionLabel onChange={setValue} />}
+          invalid={!!errors.description}
+          error={errors.description?.message}
+        >
+          <TextArea
+            {...register('description', { required: false })}
+            aria-label={t(
+              'dashboard-scene.save-dashboard-as-form.aria-label-save-dashboard-description-field',
+              'Save dashboard description field'
+            )}
+            autoFocus
+          />
+        </Field>
+
+        <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-folder', 'Folder')}>
+          <FolderPicker
+            onChange={async (uid: string | undefined, title: string | undefined) => {
+              setValue('folder', { uid, title });
+              const meta = await getProvisionedMeta(uid);
+              dashboard.setState({
+                meta: {
+                  ...meta,
+                  folderUid: uid,
+                },
+              });
+              // Re-validate title when folder changes to check for duplicates in new folder
+              trigger('title');
+            }}
+            value={formValues.folder?.uid}
+          />
+        </Field>
+        {!changeInfo.isNew && (
+          <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>
+            <Switch {...register('copyTags')} />
+          </Field>
+        )}
+        <Box paddingTop={2}>{renderFooter(state.error)}</Box>
+      </Stack>
     </form>
   );
 }
