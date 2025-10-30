@@ -8,6 +8,7 @@ import {
   toDataFrame,
   VisualizationSuggestion,
 } from '@grafana/data';
+import { GraphFieldConfig, ReduceDataOptions } from '@grafana/schema';
 import { config } from 'app/core/config';
 import { SuggestionName } from 'app/types/suggestions';
 
@@ -32,7 +33,7 @@ config.panels['text'] = {
 
 class ScenarioContext {
   data: DataFrame[] = [];
-  suggestions: VisualizationSuggestion[] = [];
+  suggestions: Array<VisualizationSuggestion<{ reduceOptions?: ReduceDataOptions }, GraphFieldConfig>> = [];
 
   setData(scenarioData: DataFrame[]) {
     this.data = scenarioData;

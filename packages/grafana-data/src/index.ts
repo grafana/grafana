@@ -651,12 +651,7 @@ export {
   type PanelMenuItem,
   type AngularPanelMenuItem,
   type PanelPluginDataSupport,
-  type VisualizationSuggestion,
-  type VisualizationSuggestionsSupplier,
   VizOrientation,
-  VisualizationSuggestionScore,
-  VisualizationSuggestionsBuilder,
-  VisualizationSuggestionsListAppender,
 } from './types/panel';
 export {
   type DataSourcePluginOptionsEditorProps,
@@ -717,6 +712,13 @@ export {
   type ApplyFieldOverrideOptions,
   FieldConfigProperty,
 } from './types/fieldOverrides';
+export {
+  type VisualizationSuggestion,
+  type VisualizationSuggestionsSupplier,
+  VisualizationSuggestionScore,
+  VisualizationSuggestionsBuilder,
+  VisualizationSuggestionsListAppender,
+} from './types/suggestions';
 export {
   type MatcherConfig,
   type DataTransformContext,
