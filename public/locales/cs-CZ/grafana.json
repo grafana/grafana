@@ -4197,6 +4197,7 @@
     "cancel": "Zrušit",
     "clear": "Vymazat",
     "collapse": "Sbalit",
+    "disabled": "",
     "edit": "Upravit",
     "help": "Nápověda",
     "loading": "Načítání…",
@@ -5175,6 +5176,19 @@
       "aria-label-remove-override": "Odebrat přepsání",
       "tooltip-remove-override": "Odebrat přepsání"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Před přidáním výstrahy musí být nástěnka uložena.",
@@ -5729,6 +5743,11 @@
       "open-dashboard": "Otevřít nástěnku",
       "open-in-new-tab": "Otevřít v nové záložce",
       "title-error-adding-the-panel": "Chyba při přidávání panelu"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Zpět na seznam",
@@ -7694,7 +7713,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "Nebyly nalezeny žádné složky",
     "select-aria-label": "Filtr složky",
     "select-placeholder": "Filtrovat podle složky"
   },
@@ -10964,6 +10982,7 @@
       "replace-library-panel": "Vyměnit panel knihovny",
       "share": "Sdílet",
       "show-legend": "Zobrazit legendu",
+      "time-settings": "",
       "unlink-library-panel": "Odpojit panel knihovny",
       "view": "Zobrazit"
     },
@@ -12400,8 +12419,6 @@
       "title": "Vyberte rozsahy"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "Nebyly nalezeny žádné výsledky pro váš dotaz",
         "recommended": "Doporučeno",
@@ -13248,6 +13265,14 @@
       "form-label": "Štítek formuláře",
       "title": "Panel"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {
