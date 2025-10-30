@@ -55,8 +55,8 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
       className={isOpen ? styles.helpButtonActive : undefined}
       tooltip={
         isOpen
-          ? t('navigation.help.interactive-learning.close-tooltip', 'Close interactive learning')
-          : t('navigation.help.interactive-learning.open-tooltip', 'Interactive learning, help and documentation')
+          ? t('navigation.help.interactive-learning.close-tooltip', 'Close interactive learning, help and documentation')
+          : t('navigation.help.interactive-learning.open-tooltip', 'Open interactive learning, help and documentation')
       }
       onClick={() => {
         if (isOpen) {
