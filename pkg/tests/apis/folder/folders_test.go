@@ -54,9 +54,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		t.Skip("test only on sqlite for now")
 	}
 
-	// test upload on profiled test failure
-	t.FailNow()
-
 	t.Run("Check discovery client", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
