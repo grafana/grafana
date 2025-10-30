@@ -2,13 +2,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
 import { locationService, logMeasurement } from '@grafana/runtime';
-import {
-  AlertManagerCortexConfig,
-  AlertmanagerGroup,
-  Matcher,
-  Receiver,
-  TestReceiversAlert,
-} from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig, AlertmanagerGroup, Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { ThunkResult } from 'app/types/store';
 import { RuleIdentifier, RuleNamespace, StateHistoryItem } from 'app/types/unified-alerting';
 import { RulerRuleDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';

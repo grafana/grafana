@@ -2885,6 +2885,8 @@
       "notification-message": "Notification message",
       "predefined-notification-message": "You will send a test notification that uses a predefined alert. If you have defined a custom template or message, for better results switch to <strong>custom</strong> notification message, from above.",
       "send-test-notification": "Send test notification",
+      "test-failed": "Test notification failed",
+      "test-successful": "Test notification sent successfully",
       "title-test-contact-point": "Test contact point"
     },
     "threshold": {

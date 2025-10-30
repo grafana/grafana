@@ -1,6 +1,4 @@
 import { css } from '@emotion/css';
-import { SerializedError } from '@reduxjs/toolkit';
-import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
@@ -49,7 +47,7 @@ export const TestContactPointModal = ({ isOpen, onDismiss, alertManagerSourceNam
   const [notificationType, setNotificationType] = useState<NotificationType>(NotificationType.predefined);
   const styles = useStyles2(getStyles);
   const formMethods = useForm<FormFields>({ defaultValues, mode: 'onBlur' });
-  const [testIntegration, { isLoading, error }] = useTestIntegrationMutation();
+  const [testIntegration, { isLoading, error, isSuccess }] = useTestIntegrationMutation();
 
   const onSubmit = async (data: FormFields) => {
     let alert: TestReceiversAlert | undefined;
@@ -86,6 +84,13 @@ export const TestContactPointModal = ({ isOpen, onDismiss, alertManagerSourceNam
         <Alert title={t('alerting.test-contact-point-modal.test-failed', 'Test notification failed')} severity="error">
           {stringifyErrorLike(error)}
         </Alert>
+      )}
+
+      {isSuccess && (
+        <Alert
+          title={t('alerting.test-contact-point-modal.test-successful', 'Test notification sent successfully')}
+          severity="success"
+        />
       )}
 
       <div className={styles.section}>
