@@ -202,6 +202,9 @@ func TestIntegrationNestedFolders(t *testing.T) {
 		EnableQuota:      true,
 	})
 
+	// test no upload on non-profiled test
+	t.FailNow()
+
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")

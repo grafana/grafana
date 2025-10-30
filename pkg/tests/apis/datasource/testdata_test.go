@@ -35,6 +35,9 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		},
 	})
 
+	// test upload on multiple shard failures
+	t.FailNow()
+
 	// Create a single datasource
 	ds := helper.CreateDS(&datasources.AddDataSourceCommand{
 		Name:  "test",
