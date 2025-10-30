@@ -109,24 +109,41 @@ jobs:
           set -euo pipefail
           ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | \
             ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | \
-            ./scripts/ci/backend-tests/run-go-tests-with-profiling.sh -t sqlite -r '^TestIntegration' -P -
+            ./scripts/ci/backend-tests/run-go-tests-with-profiling.sh -o profiles -t sqlite -r '^TestIntegration' -P -
       - name: Check if profiles exist
-        if: failure()
+        if: always()
         id: check-profiles
         run: |
-          if [ -d "profiles" ] && [ "$(ls -A profiles 2>/dev/null)" ]; then
-            SHARD_VALUE="${{ matrix.shard }}"
-            SHARD_SAFE="${SHARD_VALUE//\//-}"
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "shard=$SHARD_SAFE" >> "$GITHUB_OUTPUT"
-            echo "✅ Profiling data found"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
+          # Early exit if no profiles directory or empty
+          if [ ! -d "profiles" ] || [ -z "$(ls -A profiles 2>/dev/null)" ]; then
+            echo "upload_artifact=false" >> "$GITHUB_OUTPUT"
             echo "⏭️  No profiling data"
+            exit 0
           fi
+          echo "✅ Profiling data found"
+          # Check if any profiled test failed by examining exit code files
+          HAS_FAILURES=false
+          for exit_file in profiles/exit_*.code; do
+            if [ -f "$exit_file" ]; then
+              EXIT_CODE=$(cat "$exit_file")
+              if [ "$EXIT_CODE" -ne 0 ]; then
+                echo "  Found failure in $(basename "$exit_file"): exit code $EXIT_CODE"
+                HAS_FAILURES=true
+                # Upload profiles only when failures found
+                SHARD_VALUE="${{ matrix.shard }}"
+                SHARD_SAFE="${SHARD_VALUE//\//-}"
+                echo "shard=$SHARD_SAFE" >> "$GITHUB_OUTPUT"
+                echo "upload_artifact=true" >> "$GITHUB_OUTPUT"
+                echo "📤 Will upload profiles (profiled tests failed)"
+                exit 0
+              fi
+            fi
+          done
+          echo "⏭️  Skipping upload (all profiled tests passed)"
+          echo "upload_artifact=false" >> "$GITHUB_OUTPUT"
       - name: Output test profiles and traces
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: steps.check-profiles.outputs.exists == 'true'
+        if: steps.check-profiles.outputs.upload_artifact == 'true'
         with:
           name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}-shard-${{ steps.check-profiles.outputs.shard }}
           path: profiles/

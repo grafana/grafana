@@ -220,7 +220,7 @@ if [ ${#profile_packages[@]} -gt 0 ]; then
             # Capture exit code of go test (first command in pipeline), not tee
             EXIT_CODE=${PIPESTATUS[0]}
             echo "$EXIT_CODE" > "$PROFILE_OUTPUT_DIR/exit_${PKG_NAME}_run${run}.code"
-            echo "    ✓ Run $run/$PARALLEL_RUNS completed with exit code: $EXIT_CODE"
+            echo "    ✓ Run $profile_pkg $run/$PARALLEL_RUNS completed with exit code: $EXIT_CODE"
           ) &
           pid=$!
           echo "    🏃 Run $run/$PARALLEL_RUNS started (PID: $pid)"
