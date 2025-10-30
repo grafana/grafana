@@ -55,15 +55,17 @@ func FullSync(
 	}
 	ensureFolderSpan.End()
 
-	compareStart := time.Now()
 	compareCtx, compareSpan := tracer.Start(ctx, "provisioning.sync.full.compare")
-	changes, err := compare(compareCtx, repo, repositoryResources, currentRef)
+	var changes []ResourceFileChange
+	err := instrumentedFullSyncPhase(jobs.FullSyncPhaseCompare, func() (err error) {
+		changes, err = compare(compareCtx, repo, repositoryResources, currentRef)
+		return
+	}, metrics)
+	compareSpan.End()
+
 	if err != nil {
-		compareSpan.End()
 		return tracing.Error(span, fmt.Errorf("compare changes: %w", err))
 	}
-	compareSpan.End()
-	metrics.RecordFullSyncPhase(jobs.FullSyncPhaseCompare, time.Since(compareStart))
 
 	if len(changes) == 0 {
 		progress.SetFinalMessage(ctx, "no changes to sync")
@@ -163,6 +165,14 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 	writeSpan.End()
 }
 
+// instrument a function with a phase and metrics
+func instrumentedFullSyncPhase(phase jobs.FullSyncPhase, fn func() error, metrics jobs.JobMetrics) error {
+	phaseStart := time.Now()
+	err := fn()
+	metrics.RecordFullSyncPhase(phase, time.Since(phaseStart))
+	return err
+}
+
 func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics) error {
 	progress.SetTotal(ctx, len(changes))
 
@@ -207,42 +217,34 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 		attribute.Int("file_creations", len(fileCreations)),
 	)
 
-	// instrument a function with a phase and metrics
-	instrumented := func(phase jobs.FullSyncPhase, fn func() error) error {
-		phaseStart := time.Now()
-		err := fn()
-		metrics.RecordFullSyncPhase(phase, time.Since(phaseStart))
-		return err
-	}
-
 	if len(fileDeletions) > 0 {
-		if err := instrumented(jobs.FullSyncPhaseFileDeletions, func() error {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileDeletions, func() error {
 			return applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers)
-		}); err != nil {
+		}, metrics); err != nil {
 			return err
 		}
 	}
 
 	if len(folderDeletions) > 0 {
-		if err := instrumented(jobs.FullSyncPhaseFolderDeletions, func() error {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderDeletions, func() error {
 			return applyFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer)
-		}); err != nil {
+		}, metrics); err != nil {
 			return err
 		}
 	}
 
 	if len(folderCreations) > 0 {
-		if err := instrumented(jobs.FullSyncPhaseFolderCreations, func() error {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
 			return applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer)
-		}); err != nil {
+		}, metrics); err != nil {
 			return err
 		}
 	}
 
 	if len(fileCreations) > 0 {
-		if err := instrumented(jobs.FullSyncPhaseFileCreations, func() error {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileCreations, func() error {
 			return applyResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer, maxSyncWorkers)
-		}); err != nil {
+		}, metrics); err != nil {
 			return err
 		}
 	}
