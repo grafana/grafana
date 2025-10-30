@@ -1594,7 +1594,20 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 			}
 		}
 
-		// Verify at most one success, the rest should fail
+		// TODO: This test uses relaxed assertions instead of strict equality checks due to
+		// batch processing behavior in the SQL backend. When multiple concurrent updates
+		// with the same PreviousRV are batched together in a single transaction, only the
+		// first update in the batch can match the WHERE clause (resource_version = PreviousRV).
+		// Subsequent updates in the same batch fail to match (0 rows affected), causing
+		// checkConflict() to return an error, which rolls back the entire transaction.
+		// This results in all operations failing instead of the expected 1 success + 9 failures.
+		//
+		// Ideally, the ResourceVersionManager should either:
+		// 1. Detect conflicting PreviousRV values and prevent batching them together, OR
+		// 2. Handle the first operation's success separately before attempting remaining operations
+		//
+		// Until fixed, we verify "at most one success" instead of "exactly one success".
+
 		require.LessOrEqual(t, successes, 1, "at most one update should succeed")
 		require.GreaterOrEqual(t, failures, numConcurrent-1, "most concurrent updates should fail")
 
