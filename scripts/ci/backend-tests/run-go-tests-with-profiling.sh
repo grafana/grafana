@@ -239,12 +239,11 @@ MAIN_FAILED=0
 if [ ${#PACKAGES[@]} -gt 0 ]; then
   echo ""
   echo "▶️  Running ${#PACKAGES[@]} test packages in parallel with profiled tests..."
-  go test -p="$GO_TEST_PARALLEL" -tags="$TEST_TAGS" -timeout="$GO_TEST_TIMEOUT" -run "$RUN_PATTERN" "${PACKAGES[@]}"
-  MAIN_FAILED=$?
+  go test -p="$GO_TEST_PARALLEL" -tags="$TEST_TAGS" -timeout="$GO_TEST_TIMEOUT" -run "$RUN_PATTERN" "${PACKAGES[@]}" || MAIN_FAILED=$?
   if [ $MAIN_FAILED -eq 0 ]; then
     echo "✅ Main tests passed"
   else
-    echo "❌ Main tests failed"
+    echo "❌ Main tests failed (exit code: $MAIN_FAILED)"
   fi
 else
   echo "⏭️  No main packages to test"
