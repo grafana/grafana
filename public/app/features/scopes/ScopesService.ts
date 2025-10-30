@@ -71,7 +71,7 @@ export class ScopesService implements ScopesContextValue {
     // Init from the URL when we first load
     const queryParams = new URLSearchParams(locationService.getLocation().search);
     const scopeNodeId = queryParams.get('scope_node');
-    // scope_parent is for backward compatibility only
+    // TODO: figure out when to remove this. scope_parent is for backward compatibility only
     const parentNodeId = queryParams.get('scope_parent');
 
     this.changeScopes(queryParams.getAll('scopes'), parentNodeId ?? undefined, scopeNodeId ?? undefined);
