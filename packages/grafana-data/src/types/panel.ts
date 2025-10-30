@@ -249,6 +249,18 @@ export interface VisualizationSuggestion<TOptions = any, TFieldConfig = any> {
 /**
  * @alpha
  */
+export enum VisualizationSuggestionScore {
+  /** We are pretty sure this is the best possible option */
+  Best = 100,
+  /** Should be a really good option */
+  Good = 70,
+  /** Can be visualized but there are likely better options. If no score is set this score is assumed */
+  OK = 50,
+}
+
+/**
+ * @alpha
+ */
 export interface PanelDataSummary {
   hasData?: boolean;
   rowCountTotal: number;
@@ -273,18 +285,6 @@ export interface PanelDataSummary {
   hasTimeField?: boolean;
   /** @deprecated use PanelDataSummary.hasFieldType(FieldType.string) */
   hasStringField?: boolean;
-}
-
-/**
- * @alpha
- */
-export enum VisualizationSuggestionScore {
-  /** We are pretty sure this is the best possible option */
-  Best = 100,
-  /** Should be a really good option */
-  Good = 70,
-  /** Can be visualized but there are likely better options. If no score is set this score is assumed */
-  OK = 50,
 }
 
 /**
