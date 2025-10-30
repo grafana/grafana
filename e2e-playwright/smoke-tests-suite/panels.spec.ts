@@ -39,7 +39,7 @@ test.describe(
 
         try {
           // Select the panel type in the viz picker
-          await page.waitForTimeout(500);
+          await expect(vizPicker).toBeVisible();
           await vizPicker.click({ force: true });
 
           await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item(panel.name)).click();
