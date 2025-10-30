@@ -16,10 +16,16 @@ interface AlertRuleRowProps {
   leftColumnWidth: number;
   rowKey: React.Key;
   depth?: number;
-  groupBy?: string[];
+  enableFolderMeta?: boolean;
 }
 
-export const AlertRuleRow = ({ row, leftColumnWidth, rowKey, depth = 0, groupBy = [] }: AlertRuleRowProps) => {
+export const AlertRuleRow = ({
+  row,
+  leftColumnWidth,
+  rowKey,
+  depth = 0,
+  enableFolderMeta = true,
+}: AlertRuleRowProps) => {
   const { ruleUID, folder, title } = row.metadata;
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -30,9 +36,6 @@ export const AlertRuleRow = ({ row, leftColumnWidth, rowKey, depth = 0, groupBy 
   const handleDrawerClose = () => {
     setIsDrawerOpen(false);
   };
-
-  // Hide folder metadata if grafana_folder is in the groupBy array
-  const shouldShowFolderMetadata = !groupBy.includes('grafana_folder');
 
   return (
     <>
@@ -49,7 +52,7 @@ export const AlertRuleRow = ({ row, leftColumnWidth, rowKey, depth = 0, groupBy 
           />
         }
         metadata={
-          shouldShowFolderMetadata ? (
+          enableFolderMeta ? (
             <Stack direction="row" gap={0.5} alignItems="center">
               <MetaText icon="folder" />
               <Text variant="bodySmall" color="secondary">

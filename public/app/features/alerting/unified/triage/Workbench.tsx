@@ -36,7 +36,7 @@ function renderWorkbenchRow(
   leftColumnWidth: number,
   domain: Domain,
   key: React.Key,
-  groupBy: string[] | undefined,
+  enableFolderMeta: boolean,
   depth = 0
 ): React.ReactElement {
   if (row.type === 'alertRule') {
@@ -47,7 +47,7 @@ function renderWorkbenchRow(
         leftColumnWidth={leftColumnWidth}
         rowKey={key}
         depth={depth}
-        groupBy={groupBy}
+        enableFolderMeta={enableFolderMeta}
       />
     );
   } else {
@@ -57,7 +57,7 @@ function renderWorkbenchRow(
         leftColumnWidth,
         domain,
         `${key}-${generateRowKey(childRow, childIndex)}`,
-        groupBy,
+        enableFolderMeta,
         depth + 1
       )
     );
@@ -121,6 +121,9 @@ export function Workbench({ domain, data, queryRunner, groupBy }: WorkbenchProps
 
   const isLoading = !queryRunner.isDataReadyToDisplay();
   const [pageIndex, setPageIndex] = useState<number>(1);
+
+  // Calculate once: show folder metadata only if not grouping by grafana_folder
+  const enableFolderMeta = !groupBy?.includes('grafana_folder');
   // splitter for template and payload editor
   const splitter = useSplitter({
     direction: 'row',
@@ -168,7 +171,7 @@ export function Workbench({ domain, data, queryRunner, groupBy }: WorkbenchProps
               ) : (
                 dataSlice.map((row, index) => {
                   const rowKey = generateRowKey(row, index);
-                  return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey, groupBy);
+                  return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey, enableFolderMeta);
                 })
               )}
               {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}
