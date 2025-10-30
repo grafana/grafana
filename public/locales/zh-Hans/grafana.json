@@ -10554,12 +10554,7 @@
       }
     },
     "help": {
-      "aria-label": "帮助",
-      "interactive-learning": {
-        "close-tooltip": "关闭交互式学习、帮助和文档",
-        "open-tooltip": "打开交互式学习、帮助和文档"
-      },
-      "tooltip": "获取帮助和有用的链接"
+      "aria-label": "帮助"
     },
     "invite-user": {
       "invite-button": "邀请",

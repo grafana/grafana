@@ -10597,12 +10597,7 @@
       }
     },
     "help": {
-      "aria-label": "Súgó",
-      "interactive-learning": {
-        "close-tooltip": "Interaktív tanulás, súgó és dokumentáció bezárása",
-        "open-tooltip": "Interaktív tanulás, súgó és dokumentáció megnyitása"
-      },
-      "tooltip": "Súgó és hasznos linkek beszerzése"
+      "aria-label": "Súgó"
     },
     "invite-user": {
       "invite-button": "Meghívás",

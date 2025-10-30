@@ -10597,12 +10597,7 @@
       }
     },
     "help": {
-      "aria-label": "Help",
-      "interactive-learning": {
-        "close-tooltip": "Sluit interactief leren, help en documentatie",
-        "open-tooltip": "Open interactief leren, help en documentatie"
-      },
-      "tooltip": "Krijg help en nuttige links"
+      "aria-label": "Help"
     },
     "invite-user": {
       "invite-button": "Uitnodigen",
