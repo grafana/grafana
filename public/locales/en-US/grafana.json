@@ -1723,9 +1723,6 @@
       "placeholder-key": "key",
       "placeholder-value": "value"
     },
-    "left-column": {
-      "label-instances": "Instances"
-    },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "View or create contact points",
       "view-or-create-contact-points": "View or create contact points"
