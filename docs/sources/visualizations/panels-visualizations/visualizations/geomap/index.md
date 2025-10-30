@@ -218,18 +218,14 @@ There are eight map layer types to choose from in a geomap.
 - [Heatmap](#heatmap-layer) visualizes a heatmap of the data.
 - [GeoJSON](#geojson-layer) renders static data from a GeoJSON file.
 - [Night / Day](#night--day-layer) renders a night / day region.
-- [Route (Beta)](#route-layer-beta) render data points as a route.
-- [Photos (Beta)](#photos-layer-beta) renders a photo at each data point.
-- [Network (Beta)](#network-layer-beta) visualizes a network graph from the data.
+- [Route](#route-layer) render data points as a route.
+- [Photos](#photos-layer) renders a photo at each data point.
+- [Network](#network-layer) visualizes a network graph from the data.
 - [Open Street Map](#open-street-map-layer) adds a map from a collaborative free geographic world database.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
 - [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
-
-{{< admonition type="note" >}}
-Beta is equivalent to the [public preview](/docs/release-life-cycle/) release stage.
-{{< /admonition >}}
 
 There are also two experimental (or alpha) layer types.
 
@@ -362,11 +358,7 @@ The Night / Day layer displays night and day regions based on the current time r
 
 [Extensions for OpenLayers - DayNight](https://viglino.github.io/ol-ext/examples/layer/map.daynight.html)
 
-#### Route layer (Beta)
-
-{{< admonition type="caution" >}}
-The Route layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-{{< /admonition >}}
+#### Route layer
 
 The Route layer renders data points as a route.
 
@@ -391,11 +383,7 @@ The layer can also render a route with arrows.
 
 [Extensions for OpenLayers - Flow Line Style](http://viglino.github.io/ol-ext/examples/style/map.style.gpxline.html)
 
-#### Photos layer (Beta)
-
-{{< admonition type="caution" >}}
-The Photos layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-{{< /admonition >}}
+#### Photos layer
 
 The Photos layer renders a photo at each data point.
 
@@ -418,11 +406,7 @@ The Photos layer renders a photo at each data point.
 
 [Extensions for OpenLayers - Image Photo Style](http://viglino.github.io/ol-ext/examples/style/map.style.photo.html)
 
-#### Network layer (Beta)
-
-{{< admonition type="caution" >}}
-The Network layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-{{< /admonition >}}
+#### Network layer
 
 The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization](ref:data-format) with the addition of [geospatial data](#location-mode) included in the nodes data. The geospatial data is used to locate and render the nodes on the map.
 
@@ -729,7 +713,7 @@ Displays debug information in the upper right corner. This can be useful for deb
 
 #### Tooltip
 
-Tooltips are supported for the **Markers**, **Heatmap**, **Photos** (beta) layers.
+Tooltips are supported for the **Markers**, **Heatmap**, **Photos** layers.
 For these layer types, choose from the following tooltip options:
 
 - **None** displays tooltips only when a data point is clicked.
