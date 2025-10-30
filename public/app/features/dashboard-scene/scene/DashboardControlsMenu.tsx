@@ -6,8 +6,7 @@ import { SceneDataLayerProvider, sceneGraph, SceneVariable } from '@grafana/scen
 import { DashboardLink, VariableHide } from '@grafana/schema';
 import { Box, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-
+import { isDashboardDataLayerSetState } from './DashboardDataLayerSet';
 import { DashboardLinkRenderer } from './DashboardLinkRenderer';
 import { DashboardScene } from './DashboardScene';
 import { DataLayerControl } from './DataLayerControls';
@@ -27,7 +26,8 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
     .getVariables(dashboard)!
     .useState()
     .variables.filter((v) => v.state.hide === VariableHide.inControlsMenu);
-  const { annotationLayers } = dashboardSceneGraph.getDataLayers(dashboard).useState();
+  const dataState = sceneGraph.getData(dashboard).useState();
+  const annotationLayers = isDashboardDataLayerSetState(dataState) ? dataState.annotationLayers : [];
   const filteredAnnotationLayers = annotationLayers.filter((layer) => layer.state.placement === 'inControlsMenu');
 
   if ((variables.length === 0 && filteredLinks.length === 0 && filteredAnnotationLayers.length === 0) || !uid) {
@@ -96,7 +96,7 @@ function DashboardControlsMenu({ variables, links, annotationLayers, dashboardUI
       {/* Annotation layers */}
       {annotationLayers.length > 0 &&
         annotationLayers.map((layer, index) => (
-          <div className={cx(index > 0 && styles.menuItem)} key={layer.state.key}>
+          <div className={cx(index > 0 && styles.variableItem)} key={layer.state.key}>
             <DataLayerControl layer={layer} inMenu />
           </div>
         ))}

@@ -1,27 +1,31 @@
 import { css } from '@emotion/css';
 
 import { LoadingState, GrafanaTheme2 } from '@grafana/data';
-import { ControlsLabel, SceneDataLayerProvider } from '@grafana/scenes';
+import { ControlsLabel, SceneDataLayerProvider, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-
+import { isDashboardDataLayerSetState } from './DashboardDataLayerSet';
 import { DashboardScene } from './DashboardScene';
 
 export function DataLayerControls({ dashboard }: { dashboard: DashboardScene }) {
   // Currently we are only rendering the annotation data layers
-  const { annotationLayers } = dashboardSceneGraph.getDataLayers(dashboard).useState();
+  const state = sceneGraph.getData(dashboard).useState();
   // It is possible to render the controls for the annotation data layers in separate places using the `placement` property.
   // In case it's not specified, we are rendering the controls here (default).
   const isDefaultPlacement = (layer: SceneDataLayerProvider) => layer.state.placement === undefined;
 
-  return (
-    <>
-      {annotationLayers.filter(isDefaultPlacement).map((layer) => (
-        <DataLayerControl layer={layer} key={layer.state.key} />
-      ))}
-    </>
-  );
+  // Use the type guard
+  if (isDashboardDataLayerSetState(state)) {
+    return (
+      <>
+        {state.annotationLayers.filter(isDefaultPlacement).map((layer) => (
+          <DataLayerControl layer={layer} key={layer.state.key} />
+        ))}
+      </>
+    );
+  }
+
+  return null;
 }
 
 // Renders the controls for a single data layer
