@@ -18,19 +18,9 @@ const baseLegacyLogsQuery = {
 };
 
 const baseLogsQuery = {
-  datasource: {
-    type: 'cloudwatch',
-    uid: 'P7DC3E4760CFAC4AP',
-  },
-  expression: 'fields @timestamp, @message | sort @timestamp desc | limit 300     ',
-  id: '',
+  ...baseLegacyLogsQuery,
   logGroups: [{arn: 'arn:test', name: 'log-group-1'}, {arn: 'arn:test2', name: 'log-group-2'}],
   logGroupNames: undefined,
-  namespace: '',
-  queryMode: 'Logs',
-  refId: 'A',
-  region: 'default',
-  statsGroups: [],
 };
 
 export const CloudWatchDashboardLoadedEvent = new DashboardLoadedEvent({
