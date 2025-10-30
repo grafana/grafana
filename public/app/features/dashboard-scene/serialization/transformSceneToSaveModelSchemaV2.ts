@@ -48,7 +48,7 @@ import {
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
-import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
@@ -387,6 +387,7 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
     queryOptions.timeFrom = panelTime.state.timeFrom;
     queryOptions.timeShift = panelTime.state.timeShift;
     queryOptions.hideTimeOverride = panelTime.state.hideTimeOverride;
+    queryOptions.timeCompare = panelTime.state.compareWith;
   }
   return queryOptions;
 }
