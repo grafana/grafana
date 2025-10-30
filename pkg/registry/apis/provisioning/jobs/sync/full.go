@@ -29,11 +29,16 @@ func FullSync(
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
 	maxSyncWorkers int,
+	metrics jobs.JobMetrics,
 ) error {
+	syncStart := time.Now()
 	cfg := repo.Config()
 
 	ctx, span := tracer.Start(ctx, "provisioning.sync.full")
 	defer span.End()
+	defer func() {
+		metrics.RecordSyncDuration(jobs.SyncTypeFull, time.Since(syncStart))
+	}()
 
 	ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.full.ensure_folder_exists")
 	// Ensure the configured folder exists and is managed by the repository
@@ -50,6 +55,7 @@ func FullSync(
 	}
 	ensureFolderSpan.End()
 
+	compareStart := time.Now()
 	compareCtx, compareSpan := tracer.Start(ctx, "provisioning.sync.full.compare")
 	changes, err := compare(compareCtx, repo, repositoryResources, currentRef)
 	if err != nil {
@@ -57,13 +63,14 @@ func FullSync(
 		return tracing.Error(span, fmt.Errorf("compare changes: %w", err))
 	}
 	compareSpan.End()
+	metrics.RecordFullSyncPhase(jobs.FullSyncPhaseCompare, time.Since(compareStart))
 
 	if len(changes) == 0 {
 		progress.SetFinalMessage(ctx, "no changes to sync")
 		return nil
 	}
 
-	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers)
+	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers, metrics)
 }
 
 func applyChange(ctx context.Context, change ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) {
@@ -156,7 +163,7 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 	writeSpan.End()
 }
 
-func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int) error {
+func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics) error {
 	progress.SetTotal(ctx, len(changes))
 
 	_, applyChangesSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes",
@@ -200,26 +207,44 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 		attribute.Int("file_creations", len(fileCreations)),
 	)
 
+	// instrument a function with a phase and metrics
+	instrumented := func(phase jobs.FullSyncPhase, fn func() error) error {
+		phaseStart := time.Now()
+		err := fn()
+		metrics.RecordFullSyncPhase(phase, time.Since(phaseStart))
+		return err
+	}
+
 	if len(fileDeletions) > 0 {
-		if err := applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers); err != nil {
+		if err := instrumented(jobs.FullSyncPhaseFileDeletions, func() error {
+			return applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers)
+		}); err != nil {
 			return err
 		}
 	}
 
 	if len(folderDeletions) > 0 {
-		if err := applyFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer); err != nil {
+		if err := instrumented(jobs.FullSyncPhaseFolderDeletions, func() error {
+			return applyFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer)
+		}); err != nil {
 			return err
 		}
 	}
 
 	if len(folderCreations) > 0 {
-		if err := applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer); err != nil {
+		if err := instrumented(jobs.FullSyncPhaseFolderCreations, func() error {
+			return applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer)
+		}); err != nil {
 			return err
 		}
 	}
 
 	if len(fileCreations) > 0 {
-		return applyResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer, maxSyncWorkers)
+		if err := instrumented(jobs.FullSyncPhaseFileCreations, func() error {
+			return applyResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer, maxSyncWorkers)
+		}); err != nil {
+			return err
+		}
 	}
 
 	return nil
