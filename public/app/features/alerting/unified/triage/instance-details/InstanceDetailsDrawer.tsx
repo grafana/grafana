@@ -67,7 +67,11 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
 
   if (error) {
     return (
-      <Drawer title={t('alerting.triage.instance-details', 'Instance Details')} onClose={onClose} width={FIXED_DRAWER_WIDTH}>
+      <Drawer
+        title={t('alerting.triage.instance-details', 'Instance Details')}
+        onClose={onClose}
+        width={FIXED_DRAWER_WIDTH}
+      >
         <ErrorContent error={error} />
       </Drawer>
     );
@@ -75,7 +79,11 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
 
   if (loading || !rule) {
     return (
-      <Drawer title={t('alerting.triage.instance-details', 'Instance Details')} onClose={onClose} width={FIXED_DRAWER_WIDTH}>
+      <Drawer
+        title={t('alerting.triage.instance-details', 'Instance Details')}
+        onClose={onClose}
+        width={FIXED_DRAWER_WIDTH}
+      >
         <div>{t('alerting.common.loading', 'Loading...')}</div>
       </Drawer>
     );
