@@ -34,7 +34,7 @@ import {
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
-import { ExpressionDatasourceUID, ExpressionQuery } from '../../expressions/types';
+import { ExpressionDatasourceUID } from '../../expressions/types';
 
 import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
@@ -235,12 +235,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     // Track expression query removal
     const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
-    if (isExpressionQuery && 'type' in query) {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const expressionQuery = query as ExpressionQuery;
+    if (isExpressionQuery && 'type' in query && query.type) {
       reportInteraction('dashboards_expression_interaction', {
         action: 'remove_expression',
-        expression_type: expressionQuery.type,
+        expression_type: query.type,
         context: 'panel_query_section',
       });
     }
