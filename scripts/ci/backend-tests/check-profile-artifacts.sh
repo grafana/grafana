@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
-set -euo pipefail
+
+# This script checks if profiling artifacts exist and if any profiled tests failed.
+# It sets GitHub Actions output variables for use in subsequent steps.
+#
+# Outputs:
+#   upload_artifact: 'true' if profiles exist and any profiled test failed, 'false' otherwise
+#   shard: The shard identifier with '/' replaced by '-' for artifact naming
 
 # Early exit if no profiles directory or empty
 if [ ! -d "profiles" ] || [ -z "$(ls -A profiles 2>/dev/null)" ]; then

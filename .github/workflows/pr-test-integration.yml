@@ -110,10 +110,12 @@ jobs:
           ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | \
             ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | \
             ./scripts/ci/backend-tests/run-go-tests-with-profiling.sh -o profiles -t sqlite -r '^TestIntegration' -T 8m -P -
-      - name: Check if profiles exist
+      - name: Check if profile artifacts exist
         if: always()
         id: check-profiles
-        run: ./scripts/ci/backend-tests/check-profile-artifacts.sh
+        run: |
+          set -euo pipefail
+          ./scripts/ci/backend-tests/check-profile-artifacts.sh
       - name: Output test profiles and traces
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always() && steps.check-profiles.outputs.upload_artifact == 'true'
