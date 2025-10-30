@@ -35,6 +35,11 @@ interface MultiComboboxBaseProps<T extends string | number>
 
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
+/**
+ * The behavior of the MultiCombobox is similar to that of the Combobox, but it allows you to select multiple options. For all non-multi behaviors, see the Combobox documentation.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-multicombobox--docs
+ */
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
   const {
     placeholder,
@@ -51,6 +56,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     'aria-labelledby': ariaLabelledBy,
     'data-testid': dataTestId,
     portalContainer,
+    prefixIcon,
   } = props;
 
   const styles = useStyles2(getComboboxStyles);
@@ -267,6 +273,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   return (
     <div className={multiStyles.container} ref={containerRef}>
       <div className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })} ref={measureRef}>
+        {prefixIcon && (
+          <Box marginLeft={0.5}>
+            <Text color="secondary">
+              <Icon name={prefixIcon} />
+            </Text>
+          </Box>
+        )}
         <span className={multiStyles.pillWrapper}>
           {visibleItems.map((item, index) => (
             <ValuePill
@@ -347,6 +360,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
         >
           {isOpen && (
             <ComboboxList
+              loading={loading}
               options={options}
               highlightedIndex={highlightedIndex}
               selectedItems={selectedItems}

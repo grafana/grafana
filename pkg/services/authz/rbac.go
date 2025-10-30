@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/authlib/cache"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/middleware"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -32,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	zClient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -53,18 +55,28 @@ func ProvideAuthZClient(
 	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
 ) (authlib.AccessClient, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
+
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
 		return nil, err
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && authCfg.mode == clientModeCloud {
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient) {
+		return zanzanaClient, nil
 	}
 
 	// Provisioning uses mode 4 (read+write only to unified storage)
 	// For G12 launch, we can disable caching for this and find a more scalable solution soon
 	// most likely this would involve passing the RV (timestamp!) in each check method
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		authCfg.cacheTTL = 0
 	}
@@ -72,8 +84,8 @@ func ProvideAuthZClient(
 	switch authCfg.mode {
 	case clientModeCloud:
 		rbacClient, err := newRemoteRBACClient(authCfg, tracer, reg)
-		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
+		if zanzanaEnabled {
+			return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
 		}
 		return rbacClient, err
 	default:
@@ -119,8 +131,8 @@ func ProvideAuthZClient(
 			authzlib.WithTracerClientOption(tracer),
 		)
 
-		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
+		if zanzanaEnabled {
+			return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
 		}
 
 		return rbacClient, nil
@@ -132,6 +144,7 @@ func ProvideAuthZClient(
 func ProvideStandaloneAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer, reg prometheus.Registerer,
 ) (authlib.AccessClient, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
 	}

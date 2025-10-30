@@ -17,7 +17,7 @@ ARG JS_SRC=js-builder
 FROM alpine:3.22.2 AS alpine-base
 FROM ubuntu:22.04 AS ubuntu-base
 FROM golang:1.25.3-alpine AS go-builder-base
-FROM --platform=${JS_PLATFORM} node:22-alpine AS js-builder-base
+FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
 ARG JS_NODE_ENV=production
@@ -114,6 +114,7 @@ COPY apps/alerting/notifications apps/alerting/notifications
 COPY apps/alerting/rules apps/alerting/rules
 COPY pkg/codegen pkg/codegen
 COPY pkg/plugins/codegen pkg/plugins/codegen
+COPY apps/example apps/example
 
 RUN go mod download
 

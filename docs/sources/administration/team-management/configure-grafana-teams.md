@@ -32,7 +32,7 @@ Before you begin creating and working with Grafana Teams:
     Recommended for `isolated` teams.
   - Viewer role - by default can view all resources. Recommended for `collaborative` teams.
 - Ensure team sync is turned on if you plan to manage team members through team sync.
-Refer to [Configure Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/) for a list of providers and instructions on how to turn on team sync for each provider.
+Refer to [Configure Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/) for a list of providers and instructions on how to turn on team sync for each provider.
 <!-- - Turn on nested folders.  __This is a new feature, add when it goes live.__ -->
 
 {{< admonition type="note" >}}

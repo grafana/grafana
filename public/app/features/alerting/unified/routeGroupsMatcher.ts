@@ -1,4 +1,4 @@
-import { InstanceMatchResult, matchInstancesToRoute } from '@grafana/alerting/unstable';
+import { InstanceMatchResult, matchInstancesToRoute } from '@grafana/alerting';
 
 import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../types/unified-alerting-dto';

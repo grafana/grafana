@@ -69,7 +69,7 @@ export const DashboardInteractions = {
 
   // dashboards_add_variable_button_clicked
   // when a user clicks on ‘Add Variable’ or ‘New Variable’
-  addVariableButtonClicked: (properties: { source: 'edit_pane' | 'settings_pane' }) => {
+  addVariableButtonClicked: (properties: { source: 'edit_pane' | 'settings_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_variable_button_clicked', properties);
   },
 

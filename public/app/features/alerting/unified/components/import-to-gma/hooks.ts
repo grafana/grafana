@@ -1,9 +1,8 @@
 import { isEmpty } from 'lodash';
 import { useEffect, useState } from 'react';
-import { lastValueFrom } from 'rxjs';
 
-import { getBackendSrv } from '@grafana/runtime';
-import { FolderDTO } from 'app/types/folders';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { DashboardQueryResult } from 'app/features/search/service/types';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -11,26 +10,20 @@ import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { Folder } from '../../types/rule-form';
 import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
-async function getNestedFoldersIn(uid: string) {
-  const response = await lastValueFrom(
-    getBackendSrv().fetch<FolderDTO[]>({
-      url: `/api/folders`,
-      params: { parentUid: uid },
-      method: 'GET',
-      showErrorAlert: false,
-      showSuccessAlert: false,
-    })
-  );
-
-  return response?.data;
-}
-
-export function useGetNestedFolders(folderUID: string, skip = false) {
-  const [nestedFolders, setNestedFolders] = useState<FolderDTO[]>([]);
+function useGetNestedFolders(folderUID: string, skip = false) {
+  const [nestedFolders, setNestedFolders] = useState<DashboardQueryResult[]>([]);
 
   useEffect(() => {
     (async () => {
-      const nestedFoldersIn = skip ? [] : await getNestedFoldersIn(folderUID);
+      const searcher = getGrafanaSearcher();
+      const nestedFoldersIn = skip
+        ? []
+        : (
+            await searcher.search({
+              kind: ['folder'],
+              location: folderUID,
+            })
+          ).view.toArray();
       setNestedFolders(nestedFoldersIn);
     })();
   }, [folderUID, skip]);
@@ -64,7 +57,7 @@ export function useGetRulesToBeImported(skip: boolean, selectedDatasourceName: s
 }
 
 function useFilterRulesThatMightBeOverwritten(
-  targetNestedFolders: FolderDTO[],
+  targetNestedFolders: DashboardQueryResult[],
   rulesToBeImported: RulerRulesConfigDTO,
   skip = true
 ): RulerRulesConfigDTO {
@@ -78,7 +71,7 @@ function useFilterRulesThatMightBeOverwritten(
     }
     // filter targetNestedFolders to only include folders that are in the rulesToBeImported
     const targetNestedFoldersFiltered = targetNestedFolders.filter((folder) => {
-      return Object.keys(rulesToBeImported).includes(folder.title);
+      return Object.keys(rulesToBeImported).includes(folder.name);
     });
     const fetchRules = async () => {
       const results: RulerRulesConfigDTO = {};

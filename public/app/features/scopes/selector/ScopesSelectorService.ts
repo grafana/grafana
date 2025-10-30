@@ -1,6 +1,6 @@
 import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { SceneRenderProfiler } from '@grafana/scenes';
+import { performanceUtils } from '@grafana/scenes';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 
 import { ScopesApiClient } from '../ScopesApiClient';
@@ -54,7 +54,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     private apiClient: ScopesApiClient,
     private dashboardsService: ScopesDashboardsService,
     private store = storeImpl,
-    private interactionProfiler: SceneRenderProfiler | undefined = config.dashboardPerformanceMetrics.length
+    private interactionProfiler: performanceUtils.SceneRenderProfiler | undefined = config.dashboardPerformanceMetrics
+      .length
       ? getDashboardSceneProfiler()
       : undefined
   ) {
@@ -363,29 +364,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // Fetches both dashboards and scope navigations
     // We call this even if we have 0 scope because in that case it also closes the dashboard drawer.
     this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId)).then(() => {
-      // Redirect to first scopeNavigation if current URL isn't a scopeNavigation
-      const currentPath = locationService.getLocation().pathname;
-      const activeScopeNavigation = this.dashboardsService.state.scopeNavigations.find((s) => {
-        if (!('url' in s.spec) || typeof s.spec.url !== 'string') {
-          return false;
-        }
-        return isCurrentPath(currentPath, s.spec.url);
-      });
-
-      if (!activeScopeNavigation && this.dashboardsService.state.scopeNavigations.length > 0) {
-        // Redirect to the first available scopeNavigation
-        const firstScopeNavigation = this.dashboardsService.state.scopeNavigations[0];
-
-        if (
-          firstScopeNavigation &&
-          'url' in firstScopeNavigation.spec &&
-          typeof firstScopeNavigation.spec.url === 'string' &&
-          // Only redirect to dashboards TODO: Remove this once Logs Drilldown has Scopes support
-          firstScopeNavigation.spec.url.includes('/d/')
-        ) {
-          locationService.push(firstScopeNavigation.spec.url);
-        }
-      }
+      const selectedScopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
+      this.redirectAfterApply(selectedScopeNode);
     });
 
     if (scopes.length > 0) {
@@ -405,6 +385,39 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
       this.addRecentScopes(fetchedScopes, parentNode);
       this.updateState({ scopes: newScopesState, loading: false });
+    }
+  };
+
+  // Redirect to the scope node's redirect URL if it exists, otherwise redirect to the first scope navigation.
+  private redirectAfterApply = (scopeNode: ScopeNode | undefined) => {
+    // Check if the selected scope has a redirect path
+    if (scopeNode && scopeNode.spec.redirectPath && typeof scopeNode.spec.redirectPath === 'string') {
+      locationService.push(scopeNode.spec.redirectPath);
+      return;
+    }
+
+    // Redirect to first scopeNavigation if current URL isn't a scopeNavigation
+    const currentPath = locationService.getLocation().pathname;
+    const activeScopeNavigation = this.dashboardsService.state.scopeNavigations.find((s) => {
+      if (!('url' in s.spec) || typeof s.spec.url !== 'string') {
+        return false;
+      }
+      return isCurrentPath(currentPath, s.spec.url);
+    });
+
+    if (!activeScopeNavigation && this.dashboardsService.state.scopeNavigations.length > 0) {
+      // Redirect to the first available scopeNavigation
+      const firstScopeNavigation = this.dashboardsService.state.scopeNavigations[0];
+
+      if (
+        firstScopeNavigation &&
+        'url' in firstScopeNavigation.spec &&
+        typeof firstScopeNavigation.spec.url === 'string' &&
+        // Only redirect to dashboards TODO: Remove this once Logs Drilldown has Scopes support
+        firstScopeNavigation.spec.url.includes('/d/')
+      ) {
+        locationService.push(firstScopeNavigation.spec.url);
+      }
     }
   };
 

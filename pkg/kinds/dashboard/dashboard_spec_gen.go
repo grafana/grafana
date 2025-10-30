@@ -191,6 +191,9 @@ type Panel struct {
 	TimeShift *string `json:"timeShift,omitempty"`
 	// Controls if the timeFrom or timeShift overrides are shown in the panel header
 	HideTimeOverride *bool `json:"hideTimeOverride,omitempty"`
+	// Compare the current time range with a previous period
+	// For example "1d" to compare current period but shifted back 1 day
+	TimeCompare *string `json:"timeCompare,omitempty"`
 	// Dynamically load the panel
 	LibraryPanel *LibraryPanelRef `json:"libraryPanel,omitempty"`
 	// Sets panel queries cache timeout.
@@ -206,7 +209,8 @@ type Panel struct {
 // NewPanel creates a new Panel object.
 func NewPanel() *Panel {
 	return &Panel{
-		Transparent: (func(input bool) *bool { return &input })(false),
+		Transparent:     (func(input bool) *bool { return &input })(false),
+		RepeatDirection: (func(input PanelRepeatDirection) *PanelRepeatDirection { return &input })(PanelRepeatDirectionH),
 	}
 }
 
