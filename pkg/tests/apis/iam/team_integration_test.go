@@ -222,6 +222,24 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 
 		require.Equal(t, createdUID, fetched.GetName())
 		require.Equal(t, "default", fetched.GetNamespace())
+
+		// Cleanup
+		err = teamClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
+
+	t.Run("should list teams correctly", func(t *testing.T) {
+		ctx := context.Background()
+
+		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		list, err := teamClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, list)
 	})
 }
 
