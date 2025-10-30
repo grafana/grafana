@@ -744,9 +744,9 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				},
 			})
 
-		progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
-		err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-		if tt.expectedError != "" {
+			progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
+			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError, tt.description)
 			} else {
 				require.NoError(t, err, tt.description)

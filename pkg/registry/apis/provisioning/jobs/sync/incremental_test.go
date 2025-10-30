@@ -387,9 +387,9 @@ func TestIncrementalSync(t *testing.T) {
 			repoResources := resources.NewMockRepositoryResources(t)
 			progress := jobs.NewMockJobProgressRecorder(t)
 
-		tt.setupMocks(repo, repoResources, progress)
+			tt.setupMocks(repo, repoResources, progress)
 
-		err := IncrementalSync(context.Background(), repo, tt.previousRef, tt.currentRef, repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+			err := IncrementalSync(context.Background(), repo, tt.previousRef, tt.currentRef, repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)
@@ -510,9 +510,9 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 			repoResources := resources.NewMockRepositoryResources(t)
 			progress := jobs.NewMockJobProgressRecorder(t)
 
-		tt.setupMocks(repo, repoResources, progress)
+			tt.setupMocks(repo, repoResources, progress)
 
-		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+			err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)
