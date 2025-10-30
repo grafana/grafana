@@ -1,21 +1,26 @@
 import { css } from '@emotion/css';
+import { SerializedError } from '@reduxjs/toolkit';
+import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Label, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { TestReceiversAlert } from 'app/plugins/datasource/alertmanager/types';
+import { Alert, Button, Label, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Receiver, TestReceiversAlert } from 'app/plugins/datasource/alertmanager/types';
 import { Annotations, Labels } from 'app/types/unified-alerting-dto';
 
+import { useTestIntegrationMutation } from '../../../api/receiversApi';
 import { defaultAnnotations } from '../../../utils/constants';
+import { stringifyErrorLike } from '../../../utils/misc';
 import AnnotationsStep from '../../rule-editor/AnnotationsStep';
 import LabelsField from '../../rule-editor/labels/LabelsField';
 
 interface Props {
   isOpen: boolean;
   onDismiss: () => void;
-  onTest: (alert?: TestReceiversAlert) => void;
+  alertManagerSourceName: string;
+  receivers: Receiver[];
 }
 
 type AnnoField = {
@@ -40,14 +45,17 @@ const defaultValues: FormFields = {
   labels: [{ key: '', value: '' }],
 };
 
-export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
+export const TestContactPointModal = ({ isOpen, onDismiss, alertManagerSourceName, receivers }: Props) => {
   const [notificationType, setNotificationType] = useState<NotificationType>(NotificationType.predefined);
   const styles = useStyles2(getStyles);
   const formMethods = useForm<FormFields>({ defaultValues, mode: 'onBlur' });
+  const [testIntegration, { isLoading, error }] = useTestIntegrationMutation();
 
-  const onSubmit = (data: FormFields) => {
+  const onSubmit = async (data: FormFields) => {
+    let alert: TestReceiversAlert | undefined;
+
     if (notificationType === NotificationType.custom) {
-      const alert = {
+      alert = {
         annotations: data.annotations
           .filter(({ key, value }) => !!key && !!value)
           .reduce<Annotations>((acc, { key, value }) => {
@@ -59,10 +67,13 @@ export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
             return { ...acc, [key]: value };
           }, {}),
       };
-      onTest(alert);
-    } else {
-      onTest();
     }
+
+    await testIntegration({
+      alertManagerSourceName,
+      receivers,
+      alert,
+    }).unwrap();
   };
 
   return (
@@ -71,6 +82,12 @@ export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
       isOpen={isOpen}
       title={t('alerting.test-contact-point-modal.title-test-contact-point', 'Test contact point')}
     >
+      {Boolean(error) && (
+        <Alert title={t('alerting.test-contact-point-modal.test-failed', 'Test notification failed')} severity="error">
+          {stringifyErrorLike(error)}
+        </Alert>
+      )}
+
       <div className={styles.section}>
         <Label>
           <Trans i18nKey="alerting.test-contact-point-modal.notification-message">Notification message</Trans>
@@ -110,7 +127,7 @@ export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
           )}
 
           <Modal.ButtonRow>
-            <Button type="submit">
+            <Button type="submit" disabled={isLoading}>
               <Trans i18nKey="alerting.test-contact-point-modal.send-test-notification">Send test notification</Trans>
             </Button>
           </Modal.ButtonRow>
