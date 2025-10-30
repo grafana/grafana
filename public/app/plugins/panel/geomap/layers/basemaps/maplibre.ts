@@ -126,8 +126,8 @@ export const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
         })
         .addTextInput({
           path: 'config.accessToken',
-          name: 'Public Access Token',
-          description: 'Public Access Token for mapbox:// urls',
+          name: 'Public access token',
+          description: 'Public access token for mapbox:// urls',
           settings: {
             placeholder: '',
           },
