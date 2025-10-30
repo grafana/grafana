@@ -32,7 +32,9 @@ Go to the [Grafana developer portal](/developers) to access the following docume
 
 Learn about the following Grafana APIs:
 
-- [HTTP API](./http_api/)
+- [HTTP API](./api/http_api/)
+- [Cloud API](./api/cloud-api.md)
+- [Tracing API](./api/tracing-api.md)
 
 ## Other resources
 
