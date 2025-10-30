@@ -10,6 +10,7 @@ import { t } from '@grafana/i18n';
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
+import { getFeatureToggle } from '../../utils/featureToggle';
 import { usePointerDistance } from '../../utils/usePointerDistance';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
@@ -115,6 +116,10 @@ interface HoverHeader {
 export type PanelPadding = 'none' | 'md';
 
 /**
+ * Component used for rendering content wrapped in the same style as grafana panels.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-panelchrome--docs
+ *
  * @internal
  */
 export function PanelChrome({
@@ -484,6 +489,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
+      overflow: getFeatureToggle('preventPanelChromeOverflow') ? 'hidden' : 'initial',
 
       '.always-show': {
         background: 'none',

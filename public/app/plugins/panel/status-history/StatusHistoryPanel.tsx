@@ -19,8 +19,9 @@ import {
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
 
-import { StateTimelineTooltip2 } from '../state-timeline/StateTimelineTooltip2';
-import { containerStyles, usePagination } from '../state-timeline/utils';
+import { StateTimelineTooltip } from '../state-timeline/StateTimelineTooltip';
+import { usePagination } from '../state-timeline/hooks';
+import { containerStyles } from '../state-timeline/styles';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getAnnotationFrames } from '../timeseries/plugins/utils';
@@ -92,7 +93,7 @@ export const StatusHistoryPanel = ({
   }
 
   return (
-    <div className={containerStyles.container}>
+    <div className={containerStyles}>
       <TimelineChart
         theme={theme}
         frames={paginatedFrames}
@@ -143,7 +144,7 @@ export const StatusHistoryPanel = ({
                     };
 
                     return (
-                      <StateTimelineTooltip2
+                      <StateTimelineTooltip
                         series={alignedFrame}
                         dataIdxs={dataIdxs}
                         seriesIdx={seriesIdx}
@@ -165,6 +166,7 @@ export const StatusHistoryPanel = ({
               )}
               {alignedFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
                 <AnnotationsPlugin2
+                  replaceVariables={replaceVariables}
                   annotationsConfig={options.annotations}
                   annotations={data.annotations ?? []}
                   config={builder}

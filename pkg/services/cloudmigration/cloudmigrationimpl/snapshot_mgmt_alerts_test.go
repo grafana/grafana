@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"testing"
 	"time"
 
@@ -13,14 +12,12 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -99,7 +96,7 @@ func TestGetContactPoints(t *testing.T) {
 			Permissions: map[int64]map[string][]string{
 				1: {
 					accesscontrol.ActionAlertingNotificationsRead:    nil,
-					accesscontrol.ActionAlertingReceiversReadSecrets: {ac.ScopeReceiversAll},
+					accesscontrol.ActionAlertingReceiversReadSecrets: {models.ScopeReceiversAll},
 				},
 			},
 		}
@@ -128,10 +125,7 @@ func TestGetContactPoints(t *testing.T) {
 
 		contactPoints, err := s.getContactPoints(ctx, user)
 		require.Nil(t, contactPoints)
-
-		gfErr := errutil.Error{}
-		require.ErrorAs(t, err, &gfErr)
-		require.Equal(t, http.StatusForbidden, gfErr.Reason.Status().HTTPStatus())
+		require.Contains(t, err.Error(), "alert.notifications.receivers.secrets:read")
 	})
 }
 

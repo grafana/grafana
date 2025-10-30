@@ -1179,30 +1179,25 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 		return err
 	}
 	permissions := []accesscontrol.SetResourcePermissionCommand{}
+
+	isNested := obj.GetFolder() != ""
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
+		// Don't set any permissions for nested dashboards
+		return nil
+	}
 	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 			UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 		})
 	}
-	isNested := obj.GetFolder() != ""
-	if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) {
-		// legacy behavior
-		if !isNested {
-			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
-				{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
-			}...)
-		}
-	} else {
-		// Don't set any permissions for nested dashboards
-		if isNested {
-			return nil
-		}
+	if !isNested {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 		}...)
 	}
+
 	svc := dr.getPermissionsService(key.Resource == "folders")
 	if _, err := svc.SetPermissions(ctx, ns.OrgID, obj.GetName(), permissions...); err != nil {
 		logger.Error("Could not set default permissions", "error", err)
@@ -1643,12 +1638,14 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	defer span.End()
 
 	// We need a list of dashboard uids inside the folder to delete related public dashboards
-	dashes, err := dr.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
+	dashes, err := dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
 		SignedInUser: u,
-		FolderUIDs:   folderUIDs,
-		OrgId:        orgID,
 		Type:         searchstore.TypeDashboard,
+		Limit:        100000,
+		OrgId:        orgID,
+		FolderUIDs:   folderUIDs,
 	})
+
 	if err != nil {
 		return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
 	}
@@ -1663,7 +1660,14 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 		return err
 	}
 
-	return dr.dashboardStore.DeleteDashboardsInFolders(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUIDs: folderUIDs, OrgID: orgID})
+	for _, dash := range dashes {
+		errDel := dr.DeleteDashboard(ctx, dash.ID, dash.UID, orgID)
+		if errDel != nil {
+			dr.log.Error("failed to delete dashboard inside folder", "dashboardUID", dash.UID, "folderUIDs", folderUIDs, "error", errDel)
+		}
+	}
+
+	return err
 }
 
 func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }
@@ -1943,7 +1947,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	if len(query.Tags) > 0 {
 		req := []*resourcepb.Requirement{{
 			Key:      resource.SEARCH_FIELD_TAGS,
-			Operator: string(selection.In),
+			Operator: "=",
 			Values:   query.Tags,
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)

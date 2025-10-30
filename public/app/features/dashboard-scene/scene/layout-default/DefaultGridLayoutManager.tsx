@@ -20,7 +20,7 @@ import {
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
-import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
+import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 
 import {
   dashboardEditActions,
@@ -48,6 +48,7 @@ import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { getIsLazy } from '../layouts-shared/utils';
+import { DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -62,7 +63,7 @@ interface DefaultGridLayoutManagerState extends SceneObjectState {
 
 export class DefaultGridLayoutManager
   extends SceneObjectBase<DefaultGridLayoutManagerState>
-  implements DashboardLayoutManager
+  implements DashboardLayoutGrid
 {
   public static Component = DefaultGridLayoutManagerRenderer;
 
@@ -91,6 +92,34 @@ export class DefaultGridLayoutManager
     super(state);
 
     this.addActivationHandler(() => this._activationHandler());
+  }
+
+  public mergeGrid(other: DashboardLayoutGrid) {
+    let offset = 0;
+    for (const child of this.state.grid.state.children) {
+      const newOffset = (child.state.y ?? 0) + (child.state.height ?? 0);
+      if (newOffset > offset) {
+        offset = newOffset;
+      }
+    }
+
+    const sourceGrid =
+      other instanceof DefaultGridLayoutManager
+        ? other.state.grid
+        : DefaultGridLayoutManager.createFromLayout(other).state.grid;
+    const movedChildren = [...sourceGrid.state.children];
+
+    for (const child of movedChildren) {
+      const currentY = child.state.y ?? 0;
+      child.setState({ y: currentY + offset });
+    }
+
+    // Remove from source and append to destination
+    sourceGrid.setState({ children: [] });
+    for (const child of movedChildren) {
+      child.clearParent();
+    }
+    this.state.grid.setState({ children: [...this.state.grid.state.children, ...movedChildren] });
   }
 
   private _activationHandler() {

@@ -167,7 +167,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     range: coreConfig.yRange,
   });
 
-  const xAxisHidden = frame.fields[0].config.custom.axisPlacement === AxisPlacement.Hidden;
+  const xField = frame.fields[0];
+  const xAxisHidden = xField.config.custom.axisPlacement === AxisPlacement.Hidden;
 
   builder.addAxis({
     show: !xAxisHidden,
@@ -177,6 +178,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     placement: AxisPlacement.Bottom,
     timeZone: timeZones[0],
     theme,
+    formatValue: xField.config.unit?.startsWith('time:')
+      ? (v, decimals) => xField.display!(v, decimals).text
+      : undefined,
     ...xAxisConfig,
   });
 

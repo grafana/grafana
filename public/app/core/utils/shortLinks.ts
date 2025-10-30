@@ -4,6 +4,7 @@ import { AbsoluteTimeRange, LogRowModel, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
 import { sceneGraph, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
+import { shortURLAPIv1alpha1 } from 'app/api/clients/shorturl/v1alpha1';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -11,7 +12,6 @@ import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboard
 import { dispatch } from 'app/store/store';
 
 import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1alpha1/shorturl_object_gen';
-import { generatedAPI } from '../../api/clients/shorturl/v1alpha1/endpoints.gen';
 import { extractErrorMessage } from '../../api/utils';
 import { ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
 
@@ -46,10 +46,10 @@ export const createShortLink = async function (path: string) {
     if (config.featureToggles.useKubernetesShortURLsAPI) {
       // Use RTK API - it handles caching/failures/retries automatically
       const result = await dispatch(
-        generatedAPI.endpoints.createShortUrl.initiate({
+        shortURLAPIv1alpha1.endpoints.createShortUrl.initiate({
           shortUrl: {
             apiVersion: 'shorturl.grafana.app/v1alpha1',
-            kind: 'Playlist',
+            kind: 'ShortURL',
             metadata: {},
             spec: {
               path: getRelativeURLPath(path),

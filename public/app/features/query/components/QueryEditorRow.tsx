@@ -393,7 +393,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       <>
         {!isEditingQueryLibrary && !isUnifiedAlerting && !isExpressionQuery && (
           <SavedQueryButtons
-            query={query}
+            query={{
+              ...query,
+              datasource: datasource ? { uid: datasource.uid, type: datasource.type } : query.datasource,
+            }}
             app={app}
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
             onSelectQuery={this.onSelectQueryFromLibrary}
@@ -502,7 +505,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         onOpen={onQueryOpenChanged}
       >
         <div className={rowClasses} id={this.id}>
-          <ErrorBoundaryAlert>
+          <ErrorBoundaryAlert boundaryName="query-editor-operation-row">
             {showingHelp && DatasourceCheatsheet && (
               <OperationRowHelp>
                 <DatasourceCheatsheet

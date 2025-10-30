@@ -1,14 +1,17 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
+import { handleRequestError } from '@grafana/api-clients';
+import { createBaseQuery } from '@grafana/api-clients/rtkq';
+import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/user';
 import { AppEvents, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
-import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
+import { setStarred } from 'app/core/reducers/navBarTree';
 import { AnnoKeyFolder, Resource, ResourceList } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
@@ -168,6 +171,7 @@ export const browseDashboardsAPI = createApi({
 
     // delete an *individual* folder. used in the folder actions menu.
     deleteFolder: builder.mutation<void, FolderDTO>({
+      invalidatesTags: ['getFolder'],
       query: ({ uid }) => ({
         url: `/folders/${uid}`,
         method: 'DELETE',
@@ -339,7 +343,7 @@ export const browseDashboardsAPI = createApi({
     // delete *multiple* dashboards. used in the delete modal.
     deleteDashboards: builder.mutation<void, DeleteDashboardsArgs>({
       invalidatesTags: ['getFolder'],
-      queryFn: async ({ dashboardUIDs }, _api, _extraOptions, baseQuery) => {
+      queryFn: async ({ dashboardUIDs }) => {
         const pageStateManager = getDashboardScenePageStateManager();
         // Delete all the dashboards sequentially
         // TODO error handling here
@@ -375,9 +379,21 @@ export const browseDashboardsAPI = createApi({
         }
         return { data: undefined };
       },
-      onQueryStarted: ({ dashboardUIDs }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: ({ dashboardUIDs }, { queryFulfilled, getState }) => {
         queryFulfilled.then(() => {
           dispatch(refreshParents(dashboardUIDs));
+          dispatch(legacyUserAPI.util.invalidateTags(['dashboardStars']));
+          for (const uid of dashboardUIDs) {
+            dispatch(
+              setStarred({
+                id: uid,
+                // We don't need to send the title or url as we're removing the starred items here
+                title: '',
+                url: '',
+                isStarred: false,
+              })
+            );
+          }
         });
       },
     }),

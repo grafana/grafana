@@ -17,6 +17,11 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   alignment?: 'left' | 'right';
 }
 
+/**
+ * A container for multiple ToolbarButtons. Provides automatic overflow behaviour when the buttons no longer fit in the container.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-toolbarbuttonrow--docs
+ */
 export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
   ({ alignment = 'left', className, children, ...rest }, ref) => {
     // null/undefined are valid react children so we need to filter them out to prevent unnecessary padding

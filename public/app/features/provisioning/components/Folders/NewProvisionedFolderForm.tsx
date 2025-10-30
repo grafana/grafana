@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
 import { Folder } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
@@ -89,10 +89,11 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
     workflow,
     repository,
     resourceType: 'folder',
+    selectedBranch: methods.getValues().ref,
     handlers: {
       onDismiss,
       onBranchSuccess,
-      onWriteSuccess: (_, resource) => onWriteSuccess(resource),
+      onWriteSuccess,
       onError,
     },
   });
@@ -114,6 +115,12 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
     if (workflow === 'write') {
       ref = undefined;
     }
+
+    reportInteraction('grafana_provisioning_folder_create_submitted', {
+      workflow,
+      repositoryName: repoName,
+      repositoryType: repository?.type ?? 'unknown',
+    });
 
     create({
       ref,

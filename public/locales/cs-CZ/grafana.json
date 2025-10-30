@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Přidat oprávnění",
+      "loading": "",
       "no-permissions": "Nejsou k dispozici žádná oprávnění",
       "permissions-change-warning": "Tímto změníte oprávnění pro tuto složku a všechny následné složky. Celkově to ovlivní:",
       "role": "Role",
       "serviceaccount": "Účet služby",
       "team": "Tým",
-      "title": "Oprávnění",
       "user": "Uživatel"
     }
   },
@@ -108,7 +108,7 @@
       "dismiss": "Zamítnout",
       "heading": "Ověření Enterprise",
       "learn-more-link": "Další informace",
-      "text": "Spravujte uživatele, týmy a oprávnění automaticky pomocí <1>SAML</1>, <3>SCIM</3>, <6>LDAP</6> a <8>RBAC</8> – dostupné v Grafana Cloud a Enterprise."
+      "text": ""
     },
     "feature-listing": {
       "title-auditing": "Provádění auditu",
@@ -209,7 +209,7 @@
       "title-delete": "Odstranit"
     },
     "orgs": {
-      "delete-body": "Opravdu chcete odstranit organizaci „{{deleteOrgName}}“?<3></3> <5>Tímto odeberete všechny nástěnky pro tuto organizaci.</5>",
+      "delete-body": "",
       "id-header": "ID",
       "name-header": "Název",
       "new-org-button": "Nová organizace"
@@ -725,6 +725,7 @@
         "title-annotations": "Vysvětlivky"
       },
       "link-dashboard-and-panel": "Propojit nástěnku a panel",
+      "placeholder-value-input": "",
       "placeholder-value-input-default": "Zadejte obsah vlastní vysvětlivky…"
     },
     "bulk-actions": {
@@ -1154,7 +1155,7 @@
       "title-something-wrong-trying-fetch-group-details": "Při pokusu o načtení podrobností o skupině se něco pokazilo"
     },
     "evaluation-interval-limit-exceeded": {
-      "body-minimum-interval": "Minimální interval hodnocení <1>{{minInterval}}</1> byl nakonfigurován v Grafaně.<3></3>Chcete-li nakonfigurovat nižší interval, obraťte se na správce.",
+      "body-minimum-interval": "",
       "title-global-evaluation-interval-limit-exceeded": "Byl překročen limit globálního intervalu hodnocení"
     },
     "existing-rule-editor": {
@@ -1302,7 +1303,7 @@
           "resolved": "Vyřešeno"
         }
       },
-      "review-alert-payload": " Zkontrolujte data výstrahy a přidejte je k datovému obsahu:",
+      "review-alert-payload": "",
       "title-add-custom-alerts": "Přidejte vlastní výstrahy"
     },
     "get-alert-suggestions": {
@@ -1426,7 +1427,7 @@
       "title-add-folder-and-labels": "Přidat složku a štítky"
     },
     "grafana-managed-rule-type": {
-      "description": "Podporuje více zdrojů dat jakéhokoli druhu.<1></1>Transformujte data pomocí výrazů."
+      "description": ""
     },
     "grafana-modify-export": {
       "body-invalid-rule-id": "Pravidlo UID v adrese URL stránky je neplatné. Zkontrolujte adresu URL a zkuste to znovu.",
@@ -1545,6 +1546,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "Probíhá odstranění skupiny"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "Odebrat výraz „{{refId}}“"
     },
@@ -1662,6 +1666,15 @@
     "inspector-yaml-tab": {
       "apply": "Použít"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1719,6 +1732,9 @@
       },
       "placeholder-key": "klíč",
       "placeholder-value": "hodnota"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Zobrazit nebo vytvořit kontaktní body",
@@ -1850,7 +1866,7 @@
       "aria-label-new": "nové"
     },
     "mimir-flavored-type": {
-      "description": "Použijte zdroj dat Mimir, Loki nebo Cortex.<1></1>Výrazy nejsou podporovány."
+      "description": ""
     },
     "min-interval-option": {
       "label-interval": "Interval",
@@ -2037,6 +2053,12 @@
       "body-selected-alertmanager-not-found": "Vybraný správce výstrah již neexistuje nebo nemáte potřebná oprávnění. Vyberte jiného správce výstrah z rozevíracího seznamu.",
       "title-selected-alertmanager-not-found": "Vybraný správce výstrah nebyl nalezen."
     },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
+    },
     "panel-alert-tab-content": {
       "alert": {
         "title-errors-loading-rules": "Chyby při načítání pravidel"
@@ -2073,7 +2095,7 @@
         "warning-1": "Odstraněním těchto zásad oznamování dojde k jejich trvalému odebrání.",
         "warning-2": "Určitě chcete zásady odstranit?"
       },
-      "filter-description": "Filtrujte zásady oznamování pomocí seznamu odpovídajících osob oddělených čárkami, např.:<1>závažnost = kritická, region = EMEA</1>",
+      "filter-description": "",
       "generated-policies": "Automaticky generované zásady",
       "matchers": "Srovnávače",
       "metadata": {
@@ -2119,7 +2141,8 @@
         "conflict": "Strom zásad oznamování byl aktualizován jiným uživatelem.",
         "error-code": "Chybová zpráva: „{{error}}“",
         "routes": {
-          "conflictingMatchers": "Nelze přidat nebo aktualizovat směrování: při sloučení matcherů {{-matchers}} dojde ke konfliktu s externím směrovacím stromem. To by způsobilo nedosažitelnost směrování."
+          "conflictingMatchers": "Nelze přidat nebo aktualizovat směrování: při sloučení matcherů {{-matchers}} dojde ke konfliktu s externím směrovacím stromem. To by způsobilo nedosažitelnost směrování.",
+          "unknownMatchers": ""
         },
         "suffix": "Aktualizujte stránku a zkuste to znovu.",
         "title": "Nepodařilo se přidat nebo aktualizovat zásadu oznamování"
@@ -2239,7 +2262,7 @@
       "error-no-query-editor": "Nelze načíst editor dotazů, důvod: {{errorMessage}}"
     },
     "recording-rule-type": {
-      "description": "Předpočítat výrazy.<1></1>Mělo by být kombinováno v pravidle výstrahy."
+      "description": ""
     },
     "recording-rules": {
       "description-target-data-source": "Zdroj dat Prometheus, do kterého se uloží pravidla záznamu",
@@ -2252,7 +2275,7 @@
     },
     "redirect-to-clone-rule": {
       "body-evaluation-group": "Pro zkopírované pravidlo budete muset nastavit novou hodnotící skupinu, protože původní skupina byla zajištěna a nelze ji použít pro pravidla vytvořená v uživatelském rozhraní.",
-      "body-not-provisioned": "Nové pravidlo <1>nebude</1> označeno jako zajištěné pravidlo.",
+      "body-not-provisioned": "",
       "confirmText-copy": "Kopírovat",
       "title-copy-provisioned-alert-rule": "Kopírovat zajištěné pravidlo výstrahy"
     },
@@ -2287,13 +2310,13 @@
     "routing-settings": {
       "aria-label-group-by": "Seřadit podle",
       "description-group-by": "Kombinujte více výstrah do jednoho oznámení jejich seskupením podle stejných hodnot štítku. Pokud není vyplněno, načte se z výchozí zásady oznamování.",
-      "group-interval": "Interval skupiny: <1>{{groupIntervalValue}}</1>",
-      "group-wait": "Interval skupiny: <1>{{groupWaitValue}}</1>",
-      "grouping": "Seskupení: <1>{{fields}}</1>",
+      "group-interval": "",
+      "group-wait": "",
+      "grouping": "",
       "label-group-by": "Seřadit podle",
       "label-override-grouping": "Přepsat seskupení",
       "label-override-timings": "Přepsat časování",
-      "repeat-interval": "Interval opakování: <1>{{repeatIntervalValue}}</1>"
+      "repeat-interval": ""
     },
     "rule-actions-buttons": {
       "title-edit": "Upravit",
@@ -2317,6 +2340,9 @@
     },
     "rule-details-data-sources": {
       "label-data-source": "Zdroj dat"
+    },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
     },
     "rule-details-expression": {
       "label-expression": "Výraz"
@@ -2554,7 +2580,7 @@
       "relative-with-to": ""
     },
     "rule-type-picker": {
-      "grafana-managed": "Pokud nemáte zdroj dat Mimir, Loki nebo Cortex s povoleným rozhraním API pravidla, vyberte možnost „Spravováno Grafanou“."
+      "grafana-managed": ""
     },
     "rule-view": {
       "query": {
@@ -2571,6 +2597,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Pravidlo výstrahy bylo přidáno nebo aktualizováno. Může trvat až minutu, než se změny projeví v zobrazení seznamu pravidel výstrah.",
         "alert-title": "Probíhá aktualizace"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Při vyhodnocování tohoto pravidla výstrahy se něco pokazilo"
     },
@@ -2883,7 +2913,7 @@
     "test-contact-point-modal": {
       "custom-notification-message": "Odešlete zkušební oznámení, které používá níže definované vysvětlivky. Tato možnost je ideální, pokud používáte vlastní šablony a zprávy.",
       "notification-message": "Oznamovací zpráva",
-      "predefined-notification-message": "Odešlete zkušební oznámení, které používá předdefinovanou výstrahu. Pokud jste definovali vlastní šablonu nebo zprávu, pro lepší výsledky přepněte na <1>vlastní</1> oznámení.",
+      "predefined-notification-message": "",
       "send-test-notification": "Odeslat testovací oznámení",
       "title-test-contact-point": "Otestovat kontaktní bod"
     },
@@ -2892,7 +2922,7 @@
     },
     "threshold-expression-viewer": {
       "input": "Vstup",
-      "stop-alerting-when": "Zastavit upozorňování (nebo čekající stav), když "
+      "stop-alerting-when": ""
     },
     "time-interval": {
       "add-time-interval": "Přidat časový interval",
@@ -2938,6 +2968,25 @@
         "body": "Cílová složka není prázdná, některá pravidla mohou být přepsána nebo odstraněna. Opravdu chcete importovat tato pravidla výstrah do pravidel spravovaných Grafanou?",
         "summary": "Budou importována následující pravidla výstrahy:",
         "title-warning": "Varování"
+      }
+    },
+    "triage": {
+      "alert-instances": "",
+      "error-loading-rule": "",
+      "firing-instances-count": "",
+      "instance-details": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
       }
     },
     "type-selector-button": {
@@ -3061,7 +3110,7 @@
       "title-notification-policies": "Zásady oznamování"
     },
     "yaml-content-info": {
-      "body": "Obsah YAML v editoru zahrnuje pouze konfiguraci pravidla výstrahy <1></1>Chcete-li nakonfigurovat Prometheus, musíte poskytnout zbytek <4>obsahu konfiguračního souboru.</4>"
+      "body": ""
     }
   },
   "alertlist": {
@@ -3137,7 +3186,7 @@
       "no-annotations-found": "Nebyly nalezeny žádné vysvětlivky"
     },
     "annotation-list-item": {
-      "tooltip-created-by": "Autor:<1></1> {{email}}"
+      "tooltip-created-by": ""
     },
     "category-annotation-query": "Dotaz na vysvětlivky",
     "category-display": "Zobrazit",
@@ -3175,7 +3224,7 @@
     },
     "empty-state": {
       "button-title": "Přidat dotaz na vysvětlivky",
-      "info-box-content": "<0>Vysvětlivky umožňují integraci údajů o události do vašich grafů. Jsou vizualizovány jako svislé čáry a ikony na všech panelech grafu. Po najetí kurzorem myši na ikonu vysvětlivek získáte text a tagy události. Události vysvětlivek můžete přidat přímo z Grafany podržením CTRL nebo CMD + kliknutím na graf (nebo přetažením oblasti). Ty budou uloženy v anotační databázi Grafany.</0>",
+      "info-box-content": "",
       "info-box-content-2": "Další informace najdete v <2> dokumentaci k vysvětlivkám</2>.",
       "title": "Nejsou k dispozici žádné vlastní dotazy s vysvětlivkami"
     },
@@ -3213,7 +3262,7 @@
       "auth-settings": "Nastavení ověření"
     },
     "auth-drawer-unconneced": {
-      "subtitle": "Konfigurovat nastavení ověření. Další informace najdete v naší <2>dokumentaci</2>."
+      "subtitle": ""
     },
     "auth-drawer-unconnected": {
       "advanced-auth": "Pokročilé ověření",
@@ -3247,7 +3296,7 @@
       "allowed-organizations-description": "Seznam organizací oddělených čárkou nebo mezerou. Uživatel musí být členem alespoň\njedné organizace, aby se mohl přihlásit.",
       "allowed-organizations-label": "Povolené organizace",
       "allowed-organizations-placeholder": "Zadejte organizace (my-team, myteam…) a stiskněte klávesu Enter pro přidání",
-      "api-url-description": "Koncový bod uživatelských informací vašeho poskytovatele OAuth2. Informace vrácené tímto koncovým bodem musí být kompatibilní s <2>OpenID UserInfo</2>.",
+      "api-url-description": "",
       "api-url-required": "Toto pole musí být platná adresa URL, pokud je nastavena.",
       "auth-style-description": "Určuje způsob odesílání „{{ clientIDLabel }}“ a „{{ clientSecretLabel }}“ poskytovateli Oauth2. Výchozí hodnota je AutoDetect.",
       "auth-style-label": "Styl autorizace",
@@ -3392,7 +3441,7 @@
     }
   },
   "auth-config-auth-config-page-unconnected": {
-    "subtitle": "Spravujte nastavení ověření a konfigurujte jednotné přihlašování. Další informace najdete v naší <2>dokumentaci</2>."
+    "subtitle": ""
   },
   "bar-chart": {
     "warn": {
@@ -3509,7 +3558,7 @@
       "delete-button": "Odstranit",
       "delete-modal-invalid-text": "Jedna nebo více složek obsahuje panely knihovny nebo pravidla výstrah. Chcete-li pokračovat, nejprve je odstraňte.",
       "delete-modal-invalid-title": "Složku nelze odstranit",
-      "delete-modal-restore-dashboards-text": "Tato akce okamžitě odstraní vybrané složky, ale vybrané nástěnky budou označeny k odstranění za 30 dnů. Správce organizace může obnovit nástěnky kdykoli před uplynutím 30 dnů. Složky nelze obnovit.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Tato akce odstraní následující obsah:",
       "delete-modal-title": "Odstranit",
       "delete-provisioned-folder": "Odstranit poskytnutou složku",
@@ -3685,7 +3734,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "Abecedně (A–Z)",
-        "alphabetically-za": "Abecedně (Z–A)"
+        "alphabetically-za": "Abecedně (Z–A)",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -4109,6 +4160,7 @@
       "description": "Použít vlastní hodnotu"
     },
     "options": {
+      "loading": "",
       "no-found": "Nebyly nalezeny žádné možnosti."
     }
   },
@@ -4124,7 +4176,7 @@
     },
     "scopes": {
       "apply-selected-scopes": "Použít",
-      "selected-scopes-label": "Rozsahy: "
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "Hledat nebo přejít na…"
@@ -4145,6 +4197,7 @@
     "cancel": "Zrušit",
     "clear": "Vymazat",
     "collapse": "Sbalit",
+    "disabled": "",
     "edit": "Upravit",
     "help": "Nápověda",
     "loading": "Načítání…",
@@ -4266,7 +4319,7 @@
       "okay": "Ok"
     },
     "not-found-datasource": {
-      "body": "Možná jste zadali nesprávnou adresu URL nebo plugin s ID <1></1> není k dispozici.<3></3>Chcete-li zobrazit seznam dostupných zdrojů dat, <5>klikněte sem</5>."
+      "body": ""
     },
     "oss": {
       "connections-home-page": {
@@ -4309,8 +4362,8 @@
     "versionHistory": {
       "comparison": {
         "header": {
-          "hide-json-diff": "Skrýt JSON diff ",
-          "show-json-diff": "Zobrazit JSON diff ",
+          "hide-json-diff": "",
+          "show-json-diff": "",
           "text": "Verze {{version}} byla aktualizována uživatelem {{createdBy}} ({{ageString}}) {{message}}"
         },
         "select": "Vyberte dvě verze a začněte porovnávat"
@@ -4337,7 +4390,7 @@
       "label-label": "Štítek",
       "label-placeholder": "např. stopy Tempo",
       "label-required": "Toto pole je povinné.",
-      "sub-text": "<0>Definujte text, který bude popisovat korelaci.</0>",
+      "sub-text": "",
       "title": "Definujte štítek korelace (krok 1 ze 3)"
     },
     "configure-correlation-target-form": {
@@ -4381,7 +4434,7 @@
     },
     "source-form": {
       "control-required": "Toto pole je povinné.",
-      "description": "Datový bod musí poskytnout hodnoty všem proměnným jako pole nebo jako výstup transformací, aby se tlačítko korelace zobrazilo ve vizualizaci.<1></1>Poznámka: Ne každá proměnná musí být výslovně definována níže. Transformace, jako je <4>logfmt</4>, vytvoří proměnné pro každý pár klíče/hodnoty.",
+      "description": "",
       "description-external-pre": "V cílové adrese URL jste použili následující proměnné:",
       "description-query-pre": "V cílovém dotazu jste použili následující proměnné:",
       "external-title": "Nakonfigurujte zdroj dat, který bude používat adresu URL (krok 3 ze 3)",
@@ -4393,12 +4446,12 @@
       "results-required": "Toto pole je povinné.",
       "source-description": "Výsledky z vybraného zdroje dat mají odkazy zobrazené na panelu",
       "source-label": "Zdroj",
-      "sub-text": "<0>Definujte, jaký zdroj dat bude zobrazovat korelaci a jaká data nahradí dříve definované proměnné.</0>"
+      "sub-text": ""
     },
     "sub-title": "Definujte, jak spolu souvisí data uložená v různých zdrojích dat. Další informace najdete v <2>dokumentaci</2>",
     "target-form": {
       "control-rules": "Toto pole je povinné.",
-      "sub-text": "<0>Definujte, na co bude korelace odkazovat. S typem dotazu se dotaz spustí po kliknutí na korelaci. U externího typu se kliknutím na korelaci otevře adresa URL.</0>",
+      "sub-text": "",
       "target-description-external": "Zadejte adresu URL, která se otevře po kliknutí na odkaz",
       "target-description-query": "Uveďte, na který zdroj dat se po kliknutí na odkaz má dotazovat",
       "target-label": "Cíl",
@@ -4517,6 +4570,8 @@
     },
     "canvas-actions": {
       "add-panel": "Přidat panel",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Seskupit do řádku",
       "group-into-tab": "Seskupit do záložky",
       "group-panels": "Panely skupin",
@@ -4525,7 +4580,9 @@
       "paste-panel": "Vložit panel",
       "paste-row": "Vložit řádek",
       "paste-tab": "Vložit záložku",
-      "un-group-panels": "Zrušit seskupení"
+      "un-group-panels": "Zrušit seskupení",
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4589,18 +4646,19 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "Podmíněné vykreslení není pro vlastní rozvržení mřížky podporováno. Chcete-li použít podmíněné vykreslení, přepněte na automatickou mřížku.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "Prvek je skrytý kvůli podmíněnému vykreslení."
+        "tooltip": ""
       },
       "root": {
         "title": "Zobrazit/skrýt pravidla"
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "Aktualizací pluginu přijdete o změny.<1></1><2>Použijte <1>Uložit jako</1> pro vytvoření vlastní verze.</2>",
+      "body-plugin-dashboard": "",
       "cancel": "Zrušit",
       "overwrite": "Přepsat",
       "title-plugin-dashboard": "Plugin nástěnky"
@@ -4625,7 +4683,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "Nástěnka {{dashboardName}}"
+      "aria-label-dashboard-name": "Nástěnka {{dashboardName}}",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Zrušit načítání nástěnky"
@@ -4767,8 +4826,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Hodnoty oddělené čárkou",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped, value"
+          "close": "",
+          "modal-title": "",
+          "values": "Hodnoty oddělené čárkou"
         },
         "datasource-options": {
           "name-filter": "Filtr názvu",
@@ -4815,9 +4875,13 @@
       "add-visualization-body": "Vyberte zdroj dat a poté se dotazujte a vizualizujte data pomocí grafů, statistik a tabulek nebo vytvářejte seznamy, přehledy a další widgety.",
       "add-visualization-button": "Přidat vizualizaci",
       "add-visualization-header": "Začněte novou nástěnku přidáním vizualizace",
-      "import-a-dashboard-body": "Importujte nástěnky ze souborů nebo z <2>grafana.com</2>.",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importovat nástěnku",
-      "import-dashboard-button": "Importovat nástěnku"
+      "import-dashboard-button": "Importovat nástěnku",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Nástěnku se nepodařilo načíst"
@@ -5030,6 +5094,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "Kopírovat",
         "copy-or-duplicate": "Kopírovat nebo duplikovat",
@@ -5039,7 +5104,10 @@
         "group-layout-disabled": "Na této úrovni neexistují žádné skupiny",
         "panel-layout": "Rozvržení panelu",
         "panel-layout-disabled": "Vyberte řádek nebo záložku pro změnu možností rozvržení panelu"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5107,6 +5175,19 @@
     "override-category-title": {
       "aria-label-remove-override": "Odebrat přepsání",
       "tooltip-remove-override": "Odebrat přepsání"
+    },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
     },
     "panel-edit": {
       "alerting-tab": {
@@ -5190,10 +5271,15 @@
       "title-row-options": "Možnosti řádku"
     },
     "rows-layout": {
+      "cancel": "",
+      "convert-to": "",
       "delete-row-text": "Odstraněním tohoto řádku dojde také k odebrání všech panelů. Opravdu chcete pokračovat?",
       "delete-row-title": "Odstranit řádek?",
       "delete-row-yes": "Odstranit",
       "description": "Sbalitelné skupiny panelů s nadpisy",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Záhlaví řádku viditelné pouze v režimu úprav",
       "name": "Řádky",
       "row": {
@@ -5223,7 +5309,9 @@
       },
       "row-warning": {
         "title-not-unique": "Tento název není jedinečný"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Nástěnka byla uložena"
@@ -5260,8 +5348,8 @@
       "title-provisioned": "Zajištěná nástěnka"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "Ve vybrané složce už existuje nástěnka se stejným názvem.<1></1><2>Chcete přesto tuto nástěnku uložit?</2>",
-      "body-version-mismatch": "Tuto nástěnku aktualizoval jiný uživatel<1></1><2>Chcete přesto tuto nástěnku uložit?</2>",
+      "body-name-exists": "",
+      "body-version-mismatch": "",
       "confirmText-save-and-overwrite": "Uložit a přepsat",
       "title-name-exists": "Konflikt",
       "title-version-mismatch": "Konflikt"
@@ -5279,7 +5367,7 @@
       "cancel": "Zrušit",
       "cannot-be-saved": "Tuto nástěnku nelze uložit z uživatelského rozhraní Grafana, protože byla zajištěna z jiného zdroje. Zkopírujte JSON nebo ho uložte do souboru níže a následně aktualizujte nástěnku ve zdroji zajištění.",
       "copy-json-to-clipboard": "Kopírovat JSON do schránky",
-      "file-path": "<0>Cesta k souboru:</0> {{filePath}}",
+      "file-path": "",
       "save-json-to-file": "Uložit JSON do souboru",
       "see-docs": "Další informace o zajištění najdete v <2>dokumentaci</2>."
     },
@@ -5313,6 +5401,9 @@
       "delete-tab-title": "Odstranit záložku?",
       "delete-tab-yes": "Odstranit",
       "description": "Uspořádat panely do vodorovných karet",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "Karty",
       "tab": {
         "new": "Nová karta",
@@ -5475,7 +5566,7 @@
     "transformation-picker": {
       "info": "Transformace umožňují spojit, vypočítat, skrýt, přejmenovat a změnit pořadí výsledků dotazu před jejich vizualizací.",
       "info-graph-not-suitable": "Mnoho transformací není vhodných pro vizualizaci grafu, protože v současné době podporuje pouze data časových řad.",
-      "info-switch-to-table": "V takovém případě přepněte na vizualizaci tabulky. ",
+      "info-switch-to-table": "",
       "placeholder-search-for-transformation": "Hledat transformaci",
       "read-more": "Zjistěte víc",
       "title-transformations": "Transformace"
@@ -5541,8 +5632,8 @@
     "version-history-comparison": {
       "button-restore": "Obnovit na verzi {{version}}",
       "label-view-json-diff": "Zobrazit rozdíl JSON",
-      "new-updated-by": "<0>Verzi {{version}}</0> aktualizoval uživatel {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Verzi {{version}}</0> aktualizoval uživatel {{editor}} {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Přepnout výběr verze {{version}}",
@@ -5652,6 +5743,11 @@
       "open-dashboard": "Otevřít nástěnku",
       "open-in-new-tab": "Otevřít v nové záložce",
       "title-error-adding-the-panel": "Chyba při přidávání panelu"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Zpět na seznam",
@@ -5842,6 +5938,7 @@
         "dynamically-switch-source-multiple-panels": "Dynamicky přepínat zdroj dat pro více panelů",
         "group": "Přidat klíče do skupiny za chodu",
         "hidden-constant-variable": "Skrytá konstantní proměnná, užitečná pro metrické předpony na nástěnkách, které chcete sdílet",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "Uživatelé mohou do textového pole zadat libovolné řetězce znaků",
         "values-are-static-and-defined-manually": "Hodnoty jsou statické a definované ručně",
         "values-fetched-source-query": "Hodnoty jsou načteny z dotazu na zdroj dat",
@@ -5855,6 +5952,7 @@
         "group-by": "Seskupit podle",
         "interval": "Interval",
         "query": "Dotaz",
+        "switch": "",
         "textbox": "Textové pole"
       }
     },
@@ -5940,7 +6038,7 @@
         "cancel": "Zrušit"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "Aktualizací pluginu přijdete o změny. Použijte <1>Uložit jako</1> pro vytvoření vlastní verze.",
+        "body-plugin-dashboard": "",
         "title-failed-to-save-dashboard": "Nástěnku se nepodařilo uložit",
         "title-plugin-dashboard": "Plugin nástěnky",
         "title-someone-else-has-updated-this-dashboard": "Tuto nástěnku aktualizoval jiný uživatel",
@@ -5949,11 +6047,18 @@
       "save-and-overwrite": "Uložit a přepsat"
     },
     "library-viz-panel-info": {
-      "last-edited": "{{timeAgo}} uživatelem <person />",
+      "last-edited": "",
       "usage-count_one": "Použito na {{count}} nástěnkách",
       "usage-count_few": "Použito na {{count}} nástěnkách",
       "usage-count_many": "Použito na {{count}} nástěnkách",
       "usage-count_other": "Použito na {{count}} nástěnkách"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "Nástěnku se nepodařilo přesunout",
@@ -6005,7 +6110,7 @@
     },
     "panel-data-queries-tab-rendered": {
       "add-query": "Přidat dotaz",
-      "expression": "Výraz "
+      "expression": ""
     },
     "panel-data-transformations-tab": {
       "tab-label": "Transformace"
@@ -6063,7 +6168,7 @@
       "query": "Dotaz"
     },
     "query-variable-editor-form": {
-      "description-examples": "Pojmenované skupiny zachycení lze použít k oddělení zobrazovaného textu a hodnoty (<1>viz příklady</1>).",
+      "description-examples": "",
       "description-optional": "Volitelné, pokud chcete extrahovat část názvu řady nebo segmentu uzlu metriky.",
       "label-data-source": "Zdroj dat",
       "label-static-options-sort": "Statické možnosti třídění",
@@ -6124,7 +6229,7 @@
       "label-message": "Zpráva",
       "placeholder-describe-changes-optional": "Přidat poznámku k popisu změn (nepovinné).",
       "render-footer": {
-        "body-plugin-dashboard": "Aktualizací pluginu přijdete o změny. Použijte <1>Uložit jako</1> pro vytvoření vlastní verze.",
+        "body-plugin-dashboard": "",
         "no-changes-to-save": "Žádné změny k uložení",
         "title-failed-to-save-dashboard": "Nástěnku se nepodařilo uložit",
         "title-plugin-dashboard": "Plugin nástěnky",
@@ -6162,7 +6267,7 @@
       "cancel": "Zrušit",
       "cannot-be-saved": "Tuto nástěnku nelze uložit z uživatelského rozhraní Grafana, protože byla zajištěna z jiného zdroje. Zkopírujte JSON nebo ho uložte do souboru níže a následně aktualizujte nástěnku ve zdroji zajištění.",
       "copy-json-to-clipboard": "Kopírovat JSON do schránky",
-      "file-path": "<0>Cesta k souboru:</0> {{filePath}}",
+      "file-path": "",
       "label-description": "Popis",
       "label-target-folder": "Cílová složka",
       "label-title": "Název",
@@ -6202,6 +6307,17 @@
       "title": {
         "copy-to-clipboard-failed": "Kopírování do schránky se nezdařilo"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Výchozí hodnota"
@@ -6255,6 +6371,9 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Na tuto proměnnou odkazují jiné proměnné nebo nástěnka.",
       "content-variable-not-referenced-other-variables-dashboard": "Na tuto proměnnou neodkazují jiné proměnné nebo nástěnka.",
       "content-variable-referenced-other-variables-dashboard": "Na tuto proměnnou odkazují jiné proměnné nebo nástěnka."
+    },
+    "variable-controls": {
+      "add-variable": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulář editoru proměnné",
@@ -6317,8 +6436,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "Zobrazit rozdíl JSON",
-      "new-version-updated": "<0>Verzi {{version}}</0> aktualizoval uživatel {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Verzi {{version}}</0> aktualizoval uživatel {{editor}} {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "Porovnání {{baseVersion}} <3></3> {{newVersion}}",
@@ -6396,7 +6515,7 @@
     "provisioned-delete-modal": {
       "confirm-button": "OK",
       "text-1": "Tuto nástěnka spravuje zajištění Grafana a nelze ji odstranit. Odebráním nástěnky z konfiguračního souboru ji odstraníte.",
-      "text-2": "Další informace o zajištění najdete v dokumentaci Grafany. ",
+      "text-2": "",
       "text-3": "Cesta k souboru: {{provisionedId}}",
       "text-link": "Přejít na stránku dokumentů",
       "title": "Zajištěnou nástěnku nelze odstranit"
@@ -6474,7 +6593,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klikněte <2>tady</2> a zjistěte víc o této chybě.",
-    "success-more-details-links": "Následně můžete začít vizualizovat data <2>vytvořením nástěnky</2> nebo dotazováním na data v <5>Prozkoumat zobrazení</5>."
+    "success-more-details-links": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6570,7 +6689,7 @@
       "test": "Test"
     },
     "cloud-info-box": {
-      "body-alert": "Nebo si to zjednodušte a získejte {{mainDS}} (a {{extraDS}}) – plně spravované, škálovatelné a hostované zdroje dat od Grafana Labs s <6>celoživotním bezplatným plánem Grafana Cloud</6>.",
+      "body-alert": "",
       "title-alert": "Nakonfigurujte zdroje dat {{mainDS}} níže"
     },
     "dashboards-table": {
@@ -6651,6 +6770,7 @@
         "service-now-integration-and-data-source": "Integrace a zdroj dat ServiceNow",
         "signal-fx-integration-and-datasource": "Integrace a zdroj dat SignalFx",
         "snowflake-integration-and-data-source": "Integrace a zdroj dat Snowflake",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "Integrace a zdroj dat SumoLogic",
         "visualize-and-explore-dynatrace-data": "Vizualizace a prozkoumání dat Dynatrace",
         "visualize-and-explore-oracle-sql": "Vizualizace a prozkoumání Oracle SQL",
@@ -6697,18 +6817,18 @@
       "no-events-yet": "Dosud žádné události"
     },
     "render-info-viewer": {
-      "data-counter": "Data: {{numDataChanges}} ",
+      "data-counter": "",
       "elapsed-time": "Čas: {{elapsed}} ms",
       "field": "Pole",
       "last": "Poslední",
-      "render-counter": "Vykreslení: {{numRenders}} ",
-      "schema-counter": "Schéma: {{numSchemaChanges}} ",
+      "render-counter": "",
+      "schema-counter": "",
       "title-reset-counters": "Obnovit počítadla",
       "tooltip-step-back": "Krok zpět",
       "type": "Typ"
     },
     "state-view": {
-      "current-value": "Aktuální hodnota: {{currentValue}} ",
+      "current-value": "",
       "label-state-name": "Název stavu"
     }
   },
@@ -7112,9 +7232,6 @@
       "title-failed-sample-query": "Vzorek protokolů pro tento dotaz se nepodařilo načíst",
       "tooltip": "Zobrazit řádky protokolu, které přispěly k vizualizovaným metrikám"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "{{labelName}} se objeví v {{percentage}} % řádků protokolu"
-    },
     "logs-table-empty-fields": {
       "no-fields": "Žádná pole"
     },
@@ -7122,10 +7239,6 @@
       "fields": "Pole",
       "reset": "Resetovat",
       "selected-fields": "Vybraná pole"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "Ikona přetažení",
-      "title-drag-and-drop-to-reorder": "Přetažením změníte pořadí"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Vybrat dotaz podle názvu",
@@ -7162,7 +7275,7 @@
       },
       "footer": {
         "learn-more": "Zjistěte víc",
-        "pro-tip-define-sources-through-configuration-files": " Pro tip: Zdroje dat můžete definovat také prostřednictvím konfiguračních souborů. "
+        "pro-tip-define-sources-through-configuration-files": ""
       }
     },
     "pane": {
@@ -7224,8 +7337,6 @@
       "query-deleted": "Dotaz odstraněn"
     },
     "rich-history-queries-tab": {
-      "displaying-partial-queries": "Zobrazování {{ count }} dotazů",
-      "displaying-queries": "Dotazy: {{ count }}",
       "filter-aria-label": "Filtrovat dotazy pro zdroje dat",
       "filter-history": "Filtrovat historii",
       "filter-placeholder": "Filtrovat dotazy pro zdroje dat",
@@ -7235,7 +7346,15 @@
       "search-placeholder": "Hledané dotazy",
       "showing-queries": "Zobrazuje se {{ shown }} z {{ total }} <0>Načíst další</0>",
       "sort-aria-label": "Seřadit dotazy",
-      "sort-placeholder": "Seřadit dotazy podle"
+      "sort-placeholder": "Seřadit dotazy podle",
+      "displaying-partial-queries_one": "",
+      "displaying-partial-queries_few": "",
+      "displaying-partial-queries_many": "",
+      "displaying-partial-queries_other": "",
+      "displaying-queries_one": "",
+      "displaying-queries_few": "",
+      "displaying-queries_many": "",
+      "displaying-queries_other": ""
     },
     "rich-history-settings-tab": {
       "alert-info": "Grafana bude uchovávat záznamy až do {{optionLabel}}.Záznamy označené hvězdičkou nebudou odstraněny.",
@@ -7427,7 +7546,7 @@
       "copy-shortened-link-menu": "Otevřít možnosti kopírování odkazu",
       "refresh-picker-cancel": "Zrušit",
       "refresh-picker-run": "Spustit dotaz",
-      "split-close": " Zavřít ",
+      "split-close": "",
       "split-close-tooltip": "Zavřít rozdělené podokno",
       "split-narrow": "Úzké podokno",
       "split-title": "Rozdělit",
@@ -7557,8 +7676,8 @@
     },
     "math": {
       "available-math-functions": "Dostupné matematické funkce",
-      "run-math-operations": "Spustit matematické operace pro jeden nebo více dotazů. Odkazujete na dotaz podle {{refExample}}, např. {{ref1}}, {{ref2}}, {{ref3}} atd.<10></10>Příklad: <12>{{example}}</12>",
-      "tooltip-footer": "Podívejte se na naši další dokumentaci o <2>matematických výrazech</2>.",
+      "run-math-operations": "",
+      "tooltip-footer": "",
       "tooltip-title": "Matematický operátor",
       "tooltip-trigger": "Výraz"
     },
@@ -7594,8 +7713,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Vymazat složky",
-    "noOptionsMessage-no-folders-found": "Nebyly nalezeny žádné složky",
     "select-aria-label": "Filtr složky",
     "select-placeholder": "Filtrovat podle složky"
   },
@@ -7644,6 +7761,7 @@
   },
   "gauge": {
     "category-gauge": "Měřidlo",
+    "category-radial-bar": "",
     "description-min-height": "Minimální výška řádku (vodorovná orientace)",
     "description-min-width": "Minimální šířka sloupce (svislá orientace)",
     "description-neutral": "Ponechte prázdné pro použití Min. jako neutrálního bodu",
@@ -7659,7 +7777,8 @@
     "name-neutral": "Neutrální",
     "name-show-threshold-labels": "Zobrazit štítky prahových hodnot",
     "name-show-threshold-markers": "Zobrazit značky prahových hodnot",
-    "placeholder-neutral": "auto."
+    "placeholder-neutral": "auto.",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Použít",
@@ -7960,6 +8079,72 @@
     "select-group": "Vybrat skupinu"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "",
+          "previousFiscalQuarter": "",
+          "previousFiscalYear": "",
+          "previousMonth": "",
+          "previousWeek": "",
+          "previousYear": "",
+          "thisDayLastWeek": "",
+          "thisFiscalQuarter": "",
+          "thisFiscalQuarterSoFar": "",
+          "thisFiscalYear": "",
+          "thisFiscalYearSoFar": "",
+          "thisMonth": "",
+          "thisMonthSoFar": "",
+          "thisWeek": "",
+          "thisWeekSoFar": "",
+          "thisYear": "",
+          "thisYearSoFar": "",
+          "today": "",
+          "todaySoFar": "",
+          "yesterday": ""
+        },
+        "lastNDays_one": "",
+        "lastNDays_few": "",
+        "lastNDays_many": "",
+        "lastNDays_other": "",
+        "lastNHours_one": "",
+        "lastNHours_few": "",
+        "lastNHours_many": "",
+        "lastNHours_other": "",
+        "lastNMinutes_one": "",
+        "lastNMinutes_few": "",
+        "lastNMinutes_many": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_one": "",
+        "lastNMonths_few": "",
+        "lastNMonths_many": "",
+        "lastNMonths_other": "",
+        "lastNYears_one": "",
+        "lastNYears_few": "",
+        "lastNYears_many": "",
+        "lastNYears_other": "",
+        "nextNDays_one": "",
+        "nextNDays_few": "",
+        "nextNDays_many": "",
+        "nextNDays_other": "",
+        "nextNHours_one": "",
+        "nextNHours_few": "",
+        "nextNHours_many": "",
+        "nextNHours_other": "",
+        "nextNMinutes_one": "",
+        "nextNMinutes_few": "",
+        "nextNMinutes_many": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_one": "",
+        "nextNMonths_few": "",
+        "nextNMonths_many": "",
+        "nextNMonths_other": "",
+        "nextNYears_one": "",
+        "nextNYears_few": "",
+        "nextNYears_many": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -8550,7 +8735,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Nápověda <1></1>",
-      "access-help-details": "Režim přístupu řídí, jak budou zpracovány požadavky na zdroj dat.<1> <1>Server</1></1> by měl být preferovaným způsobem, pokud není uvedeno nic jiného.",
+      "access-help-details": "",
       "access-help-title": "Otevřít nápovědu",
       "access-label": "Otevřít",
       "allowed-cookies": "Povolené soubory cookie",
@@ -8818,7 +9003,7 @@
       "cell-inspect": "Zkontrolovat hodnotu",
       "cell-inspect-tooltip": "Zkontrolovat hodnotu",
       "copy": "Kopírovat do schránky",
-      "csv-counts": "Řádky:{{rows}}, sloupce:{{columns}}  <5></5>",
+      "csv-counts": "",
       "csv-placeholder": "Zadej CSV tady…",
       "filter-placeholder": "Filtrovat hodnoty",
       "filter-popup-apply": "Ok",
@@ -9063,6 +9248,8 @@
       "make-time-range-permanent": "Nastavit absolutní/trvalý časový rozsah",
       "move-time-range-back": "Přesunout časový rozsah dozadu",
       "move-time-range-forward": "Přesunout časový rozsah dopředu",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "Otevřít vyhledávání",
       "open-share-embed-drawer": "Sdílet vložení panelu",
       "open-share-link-drawer": "Sdílet odkaz na panel",
@@ -9101,7 +9288,6 @@
     "name-line-width": "Šířka řádku",
     "name-stacking": "Stohování"
   },
-  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Načítání",
@@ -9269,7 +9455,7 @@
       "error-fetching": "Chyba při načítání nastavení LDAP",
       "error-saving": "Chyba při ukládání nastavení LDAP",
       "error-validate-form": "Chyba při ověřování nastavení LDAP",
-      "feature-flag-disabled": "Tato stránka je přístupná pouze po povolení příznaku funkce <1>ssoSettingsLDAP</1>.",
+      "feature-flag-disabled": "",
       "saved": "Nastavení LDAP bylo uloženo"
     },
     "bind-dn": {
@@ -9310,7 +9496,7 @@
       "label": "Zásada vyhledávání DNS",
       "placeholder": "příklad: dc = grafana, dc = organizace"
     },
-    "subtitle": "Integrace LDAP v Grafaně umožňuje uživatelům Grafany přihlásit se pomocí svých přihlašovacích údajů LDAP. Další informace najdete v naší <2><0>dokumentaci</0></2>.",
+    "subtitle": "",
     "title": "Základní nastavení"
   },
   "library-panel": {
@@ -9354,7 +9540,7 @@
       "dashboard-name": "Název nástěnky"
     },
     "library-panel-info": {
-      "last-edited": "Naposledy upraveno {{timeAgo}} uživatelem <person />",
+      "last-edited": "",
       "usage-count_one": "Použito na {{count}} nástěnkách",
       "usage-count_few": "Použito na {{count}} nástěnkách",
       "usage-count_many": "Použito na {{count}} nástěnkách",
@@ -9502,6 +9688,16 @@
     "description-enable-infinite-scrolling": "Experimentální. Požádejte o další výsledky posunutím do dolní části seznamu protokolů.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Zobrazit ovládací prvky pro přechod na poslední nebo první řádek protokolu a filtry podle úrovně protokolu",
+    "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
@@ -9558,9 +9754,6 @@
       "collapse": "Sbalit štítky",
       "expand": "Rozbalit štítky"
     },
-    "log-labels-list": {
-      "log-line": "řádek protokolu"
-    },
     "log-line": {
       "has-error": "Obsahuje chyby",
       "is-sampled": "Je vzorkováno",
@@ -9600,6 +9793,7 @@
       "inline-mode": "Zobrazit v řádku",
       "link-value-tooltip": "",
       "links-section": "Odkazy",
+      "log-attributes-field": "",
       "log-line-field": "Řádek protokolu",
       "log-line-section": "Řádek protokolu",
       "move-displayed-field-down": "Přesunout dolů",
@@ -9663,7 +9857,7 @@
       "tooltip-unpin-line": "Odepnout řádek"
     },
     "log-row-message": {
-      "ellipsis": "… ",
+      "ellipsis": "",
       "more": "další",
       "see-details": "Zobrazit podrobnosti protokolu",
       "tooltip-error": "Chyba: {{errorMessage}}"
@@ -9806,6 +10000,7 @@
       "line-contains": "Přidat jako řádek obsahuje filtr",
       "line-contains-not": "Přidat jako řádek neobsahuje filtr"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Rozlišení časového razítka",
     "un-themed-log-details": {
       "aria-label-data-links": "Propojení dat",
@@ -10058,7 +10253,7 @@
     },
     "resource-table": {
       "dashboard-load-error": "Nástěnku nelze načíst",
-      "error-library-element-sub": "Prvek knihovny {uid}",
+      "error-library-element-sub": "",
       "error-library-element-title": "Prvek knihovny nelze načíst",
       "unknown-datasource-title": "Zdroj dat {{datasourceUID}}",
       "unknown-datasource-type": "Neznámý zdroj dat"
@@ -10397,7 +10592,7 @@
       "title": "Profily"
     },
     "recently-deleted": {
-      "subtitle": "Všechny tady uvedené položky po dobu delší než 30 dnů budou automaticky odstraněny.",
+      "subtitle": "",
       "title": "Nedávno odstraněné"
     },
     "recorded-queries": {
@@ -10712,10 +10907,10 @@
       "placeholder-optional": "(volitelné)",
       "role": "Role",
       "submit": "Odeslat",
-      "tooltip": "Teď můžete vybrat možnost „Žádná základní role“ a přidat oprávnění k vlastním potřebám. Více informací najdete v <1>naší dokumentaci</1>."
+      "tooltip": ""
     },
     "user-invite-page": {
-      "sub-title": "Pošlete pozvánku nebo přidejte stávajícího uživatele Grafany do organizace.<1> {{orgName}}</1>",
+      "sub-title": "",
       "text": {
         "invite-user": "Pozvat uživatele"
       }
@@ -10733,11 +10928,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -10789,6 +10982,7 @@
       "replace-library-panel": "Vyměnit panel knihovny",
       "share": "Sdílet",
       "show-legend": "Zobrazit legendu",
+      "time-settings": "",
       "unlink-library-panel": "Odpojit panel knihovny",
       "view": "Zobrazit"
     },
@@ -10806,7 +11000,7 @@
       "switch-to-table": "Přepnout na tabulku"
     },
     "panel-plugin-error": {
-      "text-load-error": "Další informace najdete ve spouštěcích protokolech serveru. <1></1>Pokud byl tento plugin načten z Gitu, ujistěte se, že byl zkompilován.",
+      "text-load-error": "",
       "title-load-error": "Chyba při načítání: {{panelId}}",
       "title-not-found": "Plugin panelu nebyl nalezen: {{id}}"
     },
@@ -11000,7 +11194,7 @@
     },
     "details": {
       "connections-tab": {
-        "description": "V současné době máte nakonfigurovány následující zdroje dat pro {{pluginName}}. Kliknutím na dlaždici zobrazíte podrobnosti konfigurace. Všechna připojení ke zdrojům dat najdete v <4><0>Připojení</0> > <3> Zdroje dat. </3></4>"
+        "description": ""
       },
       "disabled-error": {
         "angular-deprecation-link": "Zjistěte víc o úhlovém odepisování",
@@ -11017,7 +11211,7 @@
       },
       "labels": {
         "contactGrafanaLabs": "Kontaktovat Grafana Labs",
-        "customLinks": "Vlastní odkazy ",
+        "customLinks": "",
         "customLinksTooltip": "Tyto odkazy poskytuje vývojář pluginu, aby nabídl další zdroje a informace specifické pro vývojáře",
         "dependencies": "Závislosti",
         "documentation": "Dokumentace",
@@ -11028,7 +11222,7 @@
         "latestVersion": "Poslední verze",
         "license": "Licence",
         "raiseAnIssue": "Nahlásit problém",
-        "reportAbuse": "Nahlásit problém ",
+        "reportAbuse": "",
         "reportAbuseTooltip": "Nahlaste problémy související se škodlivými pluginy přímo společnosti Grafana Labs.",
         "repository": "Úložiště",
         "signature": "Podpis",
@@ -11038,8 +11232,8 @@
       "modal": {
         "cancel": "Zrušit",
         "copyEmail": "Kopírovat e-mailovou adresu",
-        "description": "Tato funkce slouží k nahlášení škodlivého chování v rámci pluginů. Pokud máte obavy ohledně pluginů, pošlete nám e-mail na adresu: ",
-        "node": "Poznámka: V případě obecných problémů s pluginem, jako jsou chyby nebo požadavky na funkce, kontaktujte autora pluginu pomocí poskytnutých odkazů. ",
+        "description": "",
+        "node": "",
         "title": "Nahlásit problém s pluginem"
       }
     },
@@ -11107,7 +11301,7 @@
       "message": "Všechny pluginy jsou aktuální"
     },
     "not-found-plugin": {
-      "body-plugin-not-found": "Tento plugin nebyl nalezen. Zkontrolujte správnost adresy URL nebo <1></1>přejděte do <3>katalogu pluginů</3>.",
+      "body-plugin-not-found": "",
       "title-plugin-not-found": "Plugin nebyl nalezen"
     },
     "plugin-actions": {
@@ -11583,7 +11777,6 @@
       "unsupported-repository-type": ""
     },
     "inline-secure-values-warning": "",
-    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "Zobrazit podrobnosti",
       "loading-finished-job": "Načítání dokončené úlohy…",
@@ -11631,6 +11824,7 @@
       "active-jobs": "aktivní práce",
       "column-action": "Akce",
       "column-duration": "Doba trvání",
+      "column-job-id": "",
       "column-message": "Zpráva",
       "column-started": "Zahájeno",
       "column-status": "Stav",
@@ -11649,12 +11843,6 @@
       "settings": "Nastavení",
       "view": "Zobrazit"
     },
-    "repository-health": {
-      "details": "Podrobnosti:",
-      "no-errors-found": "Nebyly nalezeny žádné chyby",
-      "title-repository-is-healthy": "Úložiště je zdravé",
-      "title-repository-is-unhealthy": "Úložiště je nezdravé"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Porovnat větev",
@@ -11669,7 +11857,7 @@
     },
     "repository-overview": {
       "checked": "Zkontrolováno:",
-      "finished": "Dokončeno:",
+      "finished": "",
       "health": "Kondice",
       "healthy": "Zdravý",
       "job-id": "ID úkolu:",
@@ -11678,7 +11866,6 @@
       "not-available": "Nelze aplikovat",
       "pull-status": "Stav stažení",
       "resources": "Zdroje",
-      "started": "Zahájeno:",
       "status": "Stav:",
       "unhealthy": "Nezdravý",
       "view-folder": "Zobrazit složku",
@@ -11756,10 +11943,26 @@
       "next": "Další",
       "previous": "Předchozí"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Dokončený krok",
       "label-current-step": "Aktuální krok",
       "label-pending-step": "Nevyřízený krok"
+    },
+    "status-badge": {
+      "automatic-pulling-disabled": "",
+      "deleting": "",
+      "error": "",
+      "pending": "",
+      "pulling": "",
+      "unknown": "",
+      "up-to-date": "",
+      "waiting-for-health-check": "",
+      "warning": ""
     },
     "success-title-default": "Úspěch",
     "sync-job": {
@@ -11831,7 +12034,8 @@
       "button-cancelling": "Probíhá zrušení…",
       "button-previous": "Předchozí",
       "button-submitting": "Odesílání…",
-      "error-instance-repository-exists": "Instance úložiště už existuje"
+      "error-instance-repository-exists": "Instance úložiště už existuje",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -11937,7 +12141,7 @@
       "annotations-show-text": "Vysvětlivky = zobrazit",
       "time-range-picker-disabled-text": "Volič časového rozsahu = zakázán",
       "time-range-picker-enabled-text": "Volič časového rozsahu = povolen",
-      "time-range-text": "Časový rozsah = "
+      "time-range-text": ""
     },
     "share": {
       "success-delete": "Vaši nástěnka už nejde sdílet"
@@ -11976,7 +12180,7 @@
       "revoke-user-access-modal-desc-line1": "Opravdu chcete odvolat přístup pro {{email}}?"
     },
     "delete-user-shared-dashboards-modal": {
-      "revoke-user-access-modal-desc-line2": "Tato akce okamžitě odvolá přístup pro {{email}} ke všem sdíleným nástěnkám."
+      "revoke-user-access-modal-desc-line2": ""
     },
     "modal": {
       "shared-dashboard-modal-title": "Sdílené nástěnky"
@@ -12057,6 +12261,28 @@
     },
     "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů"
   },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
+  },
   "recently-deleted": {
     "buttons": {
       "restore": "Obnovit"
@@ -12129,7 +12355,7 @@
     },
     "menu": {
       "clear-button": "Vymazat vše",
-      "tooltip": "Teď můžete vybrat možnost „Žádná základní role“ a přidat oprávnění k vlastním potřebám. Více informací najdete v <1>naší dokumentaci</1>."
+      "tooltip": ""
     },
     "menu-aria-label": "Nabídka voliče role",
     "menu-group-option-aria-label": "Možnost voliče role",
@@ -12139,7 +12365,7 @@
     },
     "sub-menu-aria-label": "Podnabídka volič role",
     "title": {
-      "description": "Přiřaďte role uživatelům, abyste zajistili podrobnou kontrolu nad přístupem k funkcím a zdrojům Grafana. Další informace najdete v naší <2>dokumentaci</2>."
+      "description": ""
     }
   },
   "role-picker-drawer": {
@@ -12193,8 +12419,6 @@
       "title": "Vyberte rozsahy"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "Nebyly nalezeny žádné výsledky pro váš dotaz",
         "recommended": "Doporučeno",
@@ -12262,7 +12486,7 @@
   },
   "select": {
     "select-menu": {
-      "selected-count": "Vybrané "
+      "selected-count": ""
     }
   },
   "service-account-create-page": {
@@ -12344,9 +12568,6 @@
       "tokens": "Tokeny",
       "tooltip-managed-service-account-cannot-modified": "Toto je spravovaný účet služby a nelze ho upravit"
     },
-    "service-account-permissions": {
-      "title-permissions": "Oprávnění"
-    },
     "service-account-profile": {
       "information": "Informace",
       "label-creation-date": "Datum vytvoření",
@@ -12364,6 +12585,7 @@
       "aria-label-role": "Role"
     },
     "service-account-tokens-table": {
+      "aria-label-delete-button": "",
       "created": "Vytvořeno",
       "expires": "Vyprší",
       "last-used-at": "Naposledy použito v",
@@ -12453,7 +12675,7 @@
       "info-text": "Vytvořte přímý odkaz na tuto nástěnku nebo panel přizpůsobený možnostmi dole.",
       "link-url": "Odkaz adresy URL",
       "render-alert": "Plugin pro renderování obrázků není nainstalován",
-      "render-instructions": "Chcete-li vyrenderovat obrázek, musíte si nainstalovat <2>plugin Grafana pro renderování obrázků</2>. Chcete-li nainstalovat plugin, obraťte se na správce Grafany.",
+      "render-instructions": "",
       "rendered-image": "Přímý odkaz na vyrenderovaný obrázek",
       "save-alert": "Nástěnka není uložena",
       "save-dashboard": "Chcete-li vyrenderovat obrázek panelu, musíte nejprve uložit nástěnku.",
@@ -12477,7 +12699,7 @@
       "info-text-1": "Snímek je okamžitý způsob, jak veřejně sdílet interaktivní nástěnku. Po vytvoření odstraníme citlivá data, jako jsou dotazy (metriky, šablony a vysvětlivky) a odkazy na panely, takže na nástěnce zůstanou pouze viditelné metriky dat a názvy sérií.",
       "info-text-2": "Upozorňujeme, že váš snímek <1>si může prohlédnout kdokoli</1>, kdo má odkaz a má přístup k adrese URL. Před sdílením se prosím zamyslete.",
       "local-button": "Zveřejnit snímek",
-      "mistake-message": "Udělali jste chybu? ",
+      "mistake-message": "",
       "name": "Název snímku",
       "timeout": "Časový limit (sekundy)",
       "timeout-description": "Pokud načítání metrik nástěnky trvá dlouho, možná budete muset nakonfigurovat hodnotu časového limitu.",
@@ -12601,6 +12823,7 @@
       "theme-label": "Motiv rozhraní",
       "week-start-label": "Začátek týdne"
     },
+    "save": "",
     "theme": {
       "default-label": "Výchozí",
       "experimental": "Experimentální"
@@ -12696,6 +12919,10 @@
     "sql-suggestion-history": "Historie návrhů SQL",
     "suggestions": "Návrhy",
     "view-explanation": "Zobrazit vysvětlení"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {
@@ -13000,13 +13227,13 @@
       "placeholder-search-teams": "Hledat týmy"
     },
     "team-settings": {
-      "description-email": "Toto je volitelné a používá se především k nastavení avatara profilu týmu (prostřednictvím služby Gravatar)",
+      "description-email": "",
       "label-email": "E-mail",
       "label-name": "Název",
       "label-numerical-identifier": "Číselný identifikátor",
       "label-role": "Role",
       "label-team-details": "Podrobnosti o týmu",
-      "save": "Uložit"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "Synchronizace týmu usnadňuje správu přístupu uživatelů v Grafaně tím, že okamžitě aktualizuje týmy a oprávnění každého uživatele Grafany na základě členství ve skupině jednotného přihlášení místo jednotlivého přihlášení uživatele"
@@ -13025,6 +13252,10 @@
     "name-show-line-numbers": "Zobrazovat čísla řádek",
     "name-show-mini-map": "Zobrazit mini mapu"
   },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
+  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "Nástěnky",
@@ -13034,6 +13265,14 @@
       "form-label": "Štítek formuláře",
       "title": "Panel"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {
@@ -13082,7 +13321,7 @@
       "forwards-time-aria-label": "Přesunout časový rozsah dopředu",
       "to": "do",
       "zoom-out-button": "Oddálit časový rozsah",
-      "zoom-out-tooltip": "Oddálení časového rozsahu <1></1> CTRL+Z"
+      "zoom-out-tooltip": ""
     },
     "time-range": {
       "apply": "Použít časový rozsah",
@@ -13207,7 +13446,7 @@
   },
   "transformations": {
     "empty": {
-      "add-transformation-body": "Transformace umožňují měnit data různými způsoby před zobrazením vaší vizualizace.<1></1>To zahrnuje spojování dat, přejmenování polí, provádění výpočtů, formátování dat pro zobrazení a další.",
+      "add-transformation-body": "",
       "add-transformation-header": "Spustit transformaci dat"
     }
   },
@@ -13474,7 +13713,7 @@
       "label-format": "Formát",
       "label-set-timezone": "Nastavit časové pásmo",
       "label-time-field": "Pole času",
-      "tooltip-format": "Výstupní formát pro pole zadané jako <2>řetězec formátu Moment.js</2>.",
+      "tooltip-format": "",
       "tooltip-timezone-manually": "Nastavit časové pásmo data manuálně"
     },
     "format-time-transformer-editor": {
@@ -14069,8 +14308,8 @@
       "message": "Nebyli nalezeni žádní uživatelé"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Token relace byl automaticky zrušen, protože jste dosáhli <2>maximálního počtu {{numSessions}} souběžných relací</2> pro svůj účet.",
-      "resume-message": "<0>Chcete-li pokračovat v relaci, přihlaste se znovu.</0>Pokud jste opakovaně automaticky odhlášeni, obraťte se na správce nebo navštivte licenční stránku a zkontrolujte kvótu.",
+      "auto-revoked": "",
+      "resume-message": "",
       "sign-in": "Přihlášení",
       "title-you-have-been-automatically-signed-out": "Byli jste automaticky odhlášeni"
     },
@@ -14188,14 +14427,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Přidat možnost",
-      "description": "Přidat vlastní možnosti k výsledkům dotazu",
-      "label-placeholder": "zobrazit štítek",
-      "remove-option-button-label": "Odebrat možnost",
-      "value-placeholder": "hodnota, výchozí prázdný řetězec"
+      "description": "Přidat vlastní možnosti k výsledkům dotazu"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Jak třídit statické možnosti s výsledky dotazu"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Výchozí hodnota",

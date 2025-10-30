@@ -45,7 +45,7 @@ jest.mock('../services/PreferencesService', () => ({
 }));
 
 // FIXME: Tests break unless plugin loader is mocked. This is likely due to a circular dependency
-jest.mock('app/features/plugins/pluginLoader', () => ({}));
+jest.mock('app/features/plugins/importer/pluginImporter', () => ({}));
 
 describe('RichHistoryRemoteStorage', () => {
   let storage: RichHistoryRemoteStorage;

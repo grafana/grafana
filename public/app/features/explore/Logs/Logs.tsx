@@ -786,6 +786,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           logOptionsStorageKey={SETTING_KEY_ROOT}
           timeZone={timeZone}
           displayedFields={displayedFields}
+          onPermalinkClick={onPermalinkClick}
           onClickShowField={showField}
           onClickHideField={hideField}
         />
@@ -994,7 +995,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
                 panelState={panelState?.logs}
-                theme={theme}
                 updatePanelState={updatePanelState}
                 datasourceType={props.datasourceType}
               />
@@ -1003,7 +1003,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           {(!config.featureToggles.newLogsPanel || visualisationType === 'table') &&
             config.featureToggles.logsPanelControls &&
             hasData && (
-              <div className={styles.logRowsWrapper} data-testid="logRows">
+              <div className={styles.controlledLogRowsWrapper} data-testid="logRows">
                 <ControlledLogRows
                   ref={logsContainerRef}
                   logsTableFrames={props.logsFrames}
@@ -1133,6 +1133,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   app={CoreApp.Explore}
                   containerElement={logsContainerRef.current}
                   enableLogDetails={true}
+                  dataFrames={props.logsFrames ?? []}
                   dedupStrategy={dedupStrategy}
                   displayedFields={displayedFields}
                   filterLevels={filterLevels}
@@ -1162,6 +1163,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   pinnedLogs={pinnedLogs}
                   setDisplayedFields={setDisplayedFields}
                   showControls
+                  showFieldSelector
                   showTime={showTime}
                   sortOrder={logsSortOrder}
                   timeRange={props.range}
@@ -1256,6 +1258,10 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       overflowX: `${wrapLogMessage ? 'unset' : 'scroll'}`,
       overflowY: 'visible',
       width: '100%',
+    }),
+    controlledLogRowsWrapper: css({
+      width: '100%',
+      maxHeight: '80vh',
     }),
     logRowsWrapper: css({
       width: '100%',

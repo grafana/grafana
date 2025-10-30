@@ -5,9 +5,16 @@ import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic } from '@grafana/data';
+import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic, InterpolateFunction } from '@grafana/data';
 import { TimeZone, VizAnnotations } from '@grafana/schema';
-import { DEFAULT_ANNOTATION_COLOR, getPortalContainer, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
+import {
+  DEFAULT_ANNOTATION_COLOR,
+  getPortalContainer,
+  UPlotConfigBuilder,
+  usePanelContext,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
 import { ANNOTATION_LANE_SIZE, getAnnotationFrames } from './utils';
@@ -25,6 +32,7 @@ interface AnnotationsPluginProps {
   newRange: TimeRange2 | null;
   setNewRange: (newRage: TimeRange2 | null) => void;
   canvasRegionRendering?: boolean;
+  replaceVariables: InterpolateFunction;
   annotationsConfig?: VizAnnotations;
 }
 
@@ -65,6 +73,7 @@ export const AnnotationsPlugin2 = ({
   config,
   newRange,
   setNewRange,
+  replaceVariables,
   canvasRegionRendering = true,
 }: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
@@ -75,6 +84,9 @@ export const AnnotationsPlugin2 = ({
   const getColorByName = useTheme2().visualization.getColorByName;
 
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
+
+  const { canExecuteActions } = usePanelContext();
+  const userCanExecuteActions = canExecuteActions?.() ?? false;
 
   const annos = useMemo(() => {
     let annos = getAnnotationFrames(annotations);
@@ -134,7 +146,6 @@ export const AnnotationsPlugin2 = ({
       ctx.clip();
 
       // Multi-lane annotations do not support vertical lines or shaded regions
-
       annos.forEach((frame) => {
         let vals = getVals(frame);
 
@@ -258,6 +269,7 @@ export const AnnotationsPlugin2 = ({
 
           markers.push(
             <AnnotationMarker2
+              frame={frame}
               annoIdx={i}
               annoVals={vals}
               className={className}
@@ -266,6 +278,8 @@ export const AnnotationsPlugin2 = ({
               key={`${frameIdx}:${i}`}
               exitWipEdit={isWip ? exitWipEdit : null}
               portalRoot={portalRoot}
+              canExecuteActions={userCanExecuteActions}
+              replaceVariables={replaceVariables}
             />
           );
         }

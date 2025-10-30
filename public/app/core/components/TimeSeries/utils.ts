@@ -165,6 +165,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
         theme,
         grid: { show: i === 0 && xField.config.custom?.axisGridShow },
         filter: filterTicks,
+        formatValue: xField.config.unit?.startsWith('time:')
+          ? (v, decimals) => xField.display!(v, decimals).text
+          : undefined,
         ...xAxisConfig,
       });
     }

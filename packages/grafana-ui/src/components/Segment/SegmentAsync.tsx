@@ -29,6 +29,9 @@ export interface SegmentAsyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLD
   inputMinWidth?: number;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-segmentasync--docs
+ */
 export function SegmentAsync<T>({
   value,
   onChange,

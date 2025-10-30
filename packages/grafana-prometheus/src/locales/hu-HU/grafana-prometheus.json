@@ -85,9 +85,9 @@
         "tooltip-classic-query": "A Prometheus változólekérdezés-szerkesztő eredeti implementációja. Adjon meg egy karakterláncot a megfelelő lekérdezéstípussal és paraméterekkel, a jelen dokumentumokban leírtak szerint. Például: {{exampleQuery}}.",
         "tooltip-label": "A címke nevéhez tartozó címkeértékek listáját adja vissza az összes metrikában, kivéve, ha a metrika meg van adva.",
         "tooltip-metric-regex": "A címkenevek listáját adja vissza, opcionálisan a megadott metrikai reguláris kifejezés szerint szűrve.",
-        "tooltip-query": "A lekérdezéshez a Prometheus-lekérdezési eredmények listáját adja vissza. Ez magában foglalhatja a Prometheus-funkciókat, azaz {{exampleQuery}}.",
+        "tooltip-query": "",
         "tooltip-query-type": "A Prometheus adatforrás-beépülőmodul a következő lekérdezéstípusokat biztosítja a sablonváltozókhoz.",
-        "tooltip-series-query": "Adjon meg egy metrikát címkékkel, csak egy metrikát vagy csak címkéket: {{example1}}, {{example2}} vagy {{example3}}. A bevitt adatokhoz társított idősorok listáját adja vissza."
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "választó",
@@ -175,16 +175,16 @@
         "label-scrape-interval": "Adatgyűjtési intervallum",
         "label-series-limit": "Sorozatkorlát",
         "label-use-series-endpoint": "Sorozat végpontjának használata",
-        "more-info": "A Prometheus-típus és -verzió adatforrásokban történő konfigurálásával kapcsolatos további információkért tekintse meg a <2>kiépítési dokumentációt</2>.",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "Példa: {{example}}",
         "title-interval-behaviour": "Intervallum viselkedése",
         "title-other": "Egyéb",
         "title-performance": "Teljesítmény",
         "title-query-editor": "Lekérdezésszerkesztő",
         "tooltip-cache-level": "Beállítja a böngésző gyorsítótárának szintjét a szerkesztői lekérdezésekhez. A magasabb számossági adatforrásokhoz magasabb gyorsítótár-beállítások ajánlottak.",
-        "tooltip-custom-query-parameters": "Egyéni paraméterek hozzáadása a Prometheus lekérdezési URL-jéhez. Például: {{example1}}, {{example2}}, {{example3}} vagy {{example4}}. Több paramétert a következővel kell összefűzni: {{concatenationChar}}.",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "Beállítja az alapértelmezett szerkesztőopciót az adatforrás minden felhasználója számára.",
-        "tooltip-disable-metrics-lookup": "Ennek az opciónak a bejelölése letiltja a metrikaválasztót és a metrika-/címketámogatást a lekérdezési mező automatikus kitöltésében. Ez segít, ha a nagyobb Prometheus-példányokkal teljesítményproblémái vannak. ",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "Ez a funkció letiltja a felvételkészítési szabályokat. Kapcsolja be az irányítópult teljesítményének javítása érdekében",
         "tooltip-http-method": "A Prometheus-adatforrás lekérdezéséhez használhatja a POST- vagy a GET HTTP-metódust. A POST az ajánlott metódus, mivel nagyobb lekérdezéseket tesz lehetővé. Módosítsa ezt GET-re, ha a Prometheus-verziója régebbi, mint a 2.1-es, vagy ha a POST-kérések korlátozva vannak a hálózatában.",
         "tooltip-incremental-querying-beta": "Ez a funkció megváltoztatja a relatív lekérdezések azon alapértelmezett viselkedését, hogy mindig friss adatokat kérjenek le a Prometheus-példányból, ehelyett a lekérdezési eredményeket a rendszer gyorsítótárazza, és csak új rekordok lesznek lekérve. Kapcsolja be az adatbázis és a hálózat terhelésének csökkentése érdekében.",
@@ -479,18 +479,13 @@
         "aria-label-selector": "választó"
       },
       "results-table": {
-        "content-descriptive-type": "{{descriptiveType}} létrehozásakor a Prometheus több, számláló típusú sorozatot jelenít meg. ",
+        "content-descriptive-type": "",
         "description": "Leírás",
         "message-expand-label-filters": "Nem található metrika. Próbálja meg kibővíteni a címkeszűrőket.",
         "message-expand-search": "Nem található metrika. Próbálja meg kibővíteni a keresést és a szűrőket.",
         "message-no-metrics-found": "Nem található metrika az adatforrásban.",
         "name": "Név",
         "type": "Típus"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "A lekérdezés elemzése nem egyértelmű."
-        }
       }
     }
   }
