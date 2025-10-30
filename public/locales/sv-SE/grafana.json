@@ -4157,6 +4157,7 @@
     "cancel": "Avbryt",
     "clear": "Rensa",
     "collapse": "Minimera",
+    "disabled": "",
     "edit": "Redigera",
     "help": "Hjälp",
     "loading": "Laddar …",
@@ -5133,6 +5134,19 @@
       "aria-label-remove-override": "Ta bort åsidosättning",
       "tooltip-remove-override": "Ta bort åsidosättning"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Instrumentpanelen måste sparas innan varningar kan läggas till.",
@@ -5687,6 +5701,11 @@
       "open-dashboard": "Öppna instrumentpanel",
       "open-in-new-tab": "Öppna i ny flik",
       "title-error-adding-the-panel": "Fel vid tillägg av panelen"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Tillbaka till listan",
@@ -7644,7 +7663,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "Inga mappar hittades",
     "select-aria-label": "Mappfilter",
     "select-placeholder": "Filtrera efter mapp"
   },
@@ -10872,6 +10890,7 @@
       "replace-library-panel": "Byt ut bibliotekspanel",
       "share": "Dela",
       "show-legend": "Visa förklaring",
+      "time-settings": "",
       "unlink-library-panel": "Ta bort länk till bibliotekspanel",
       "view": "Visa"
     },
@@ -12290,8 +12309,6 @@
       "title": "Välj omfattningar"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "Inga resultat hittades för din fråga",
         "recommended": "Rekommenderas",
@@ -13134,6 +13151,14 @@
       "form-label": "Formuläretikett",
       "title": "Panel"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {
