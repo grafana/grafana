@@ -3017,9 +3017,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/assistant@npm:0.1.0":
-  version: 0.1.0
-  resolution: "@grafana/assistant@npm:0.1.0"
+"@grafana/assistant@npm:0.1.3":
+  version: 0.1.3
+  resolution: "@grafana/assistant@npm:0.1.3"
   peerDependencies:
     "@grafana/data": ">=12.1.0"
     "@grafana/runtime": ">=12.1.0"
@@ -3027,7 +3027,7 @@ __metadata:
     "@grafana/ui": ">=12.1.0"
     react: ">=18.0.0"
     rxjs: ">=7.0.0"
-  checksum: 10/90cfee9860bc128190ec1357e554685892b3ddd080d914457da311f1d45294dfcc15a427be36c381463eefe39268b5abbc39e6b541ad402e78264cc6d038c23f
+  checksum: 10/6424830f1c2f54a4654f2cf222e2632c7dc42a37740c398cbdb6db55f1ae26b464f213c69d12ade801797a642d6819f216a51030137d9cdd9c914d8f5515fba9
   languageName: node
   linkType: hard
 
@@ -18811,7 +18811,7 @@ __metadata:
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
     "@grafana/api-clients": "workspace:*"
-    "@grafana/assistant": "npm:0.1.0"
+    "@grafana/assistant": "npm:0.1.3"
     "@grafana/aws-sdk": "npm:0.7.1"
     "@grafana/azure-sdk": "npm:0.0.8"
     "@grafana/data": "workspace:*"
