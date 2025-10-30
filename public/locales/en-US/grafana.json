@@ -5702,6 +5702,11 @@
       "open-in-new-tab": "Open in new tab",
       "title-error-adding-the-panel": "Error adding the panel"
     },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": "New panel"
+      }
+    },
     "annotation-settings-edit": {
       "back-to-list": "Back to list",
       "delete": "Delete",
@@ -7658,7 +7663,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "No folders found",
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
@@ -12305,8 +12309,6 @@
       "title": "Select scopes"
     },
     "tree": {
-      "collapse": "Collapse {{title}}",
-      "expand": "Expand {{title}}",
       "headline": {
         "noResults": "No results found for your query",
         "recommended": "Recommended",

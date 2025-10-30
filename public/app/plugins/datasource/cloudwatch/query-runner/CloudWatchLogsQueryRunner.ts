@@ -23,6 +23,8 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
+  Field,
+  FieldType,
   LoadingState,
   LogRowContextOptions,
   LogRowContextQueryDirection,
@@ -33,15 +35,19 @@ import {
 } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 import { type CustomFormatterVariable } from '@grafana/scenes';
+import { GraphDrawStyle } from '@grafana/schema/dist/esm/index';
+import { TableCellDisplayMode } from '@grafana/ui';
 
 import {
   CloudWatchJsonData,
+  CloudWatchLogsAnomaliesQuery,
   CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
   CloudWatchLogsRequest,
   CloudWatchQuery,
   GetLogEventsRequest,
   LogAction,
+  LogsMode,
   LogsQueryLanguage,
   QueryParam,
   StartQueryRequest,
@@ -101,6 +107,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
         logGroups,
         logGroupNames,
         queryLanguage: target.queryLanguage,
+        logsMode: target.logsMode ?? LogsMode.Insights,
       };
     });
 
@@ -129,6 +136,63 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
               this.tracingDataSourceUid
             );
 
+            return dataQueryResponse;
+          })()
+        );
+      })
+    );
+  };
+
+  public handleLogAnomaliesQueries = (
+    logAnomaliesQueries: CloudWatchLogsAnomaliesQuery[],
+    options: DataQueryRequest<CloudWatchQuery>,
+    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
+  ): Observable<DataQueryResponse> => {
+    const logAnomalyTargets: StartQueryRequest[] = logAnomaliesQueries.map((target: CloudWatchLogsAnomaliesQuery) => {
+      return {
+        refId: target.refId,
+        region: this.templateSrv.replace(this.getActualRegion(target.region)),
+        queryString: '',
+        logGroups: [],
+        logsMode: LogsMode.Anomalies,
+        suppressionState: target.suppressionState || 'all',
+        anomalyDetectionARN: target.anomalyDetectionARN || '',
+      };
+    });
+
+    const range = options?.range || getDefaultTimeRange();
+    // append -logsAnomalies to prevent requestId from matching metric or logs queries from the same panel
+    const requestId = options?.requestId ? `${options?.requestId}-logsAnomalies` : '';
+
+    const requestParams: DataQueryRequest<CloudWatchLogsAnomaliesQuery> = {
+      ...options,
+      range,
+      skipQueryCache: true,
+      requestId,
+      interval: options?.interval || '', // dummy
+      intervalMs: options?.intervalMs || 1, // dummy
+      scopedVars: options?.scopedVars || {}, // dummy
+      timezone: options?.timezone || '', // dummy
+      app: options?.app || '', // dummy
+      startTime: options?.startTime || 0, // dummy
+      targets: logAnomalyTargets.map((t) => ({
+        ...t,
+        id: '',
+        queryMode: 'Logs',
+        refId: t.refId || 'A',
+        intervalMs: 1, // dummy
+        maxDataPoints: 1, // dummy
+        datasource: this.ref,
+        type: 'logAction',
+        logsMode: LogsMode.Anomalies,
+      })),
+    };
+
+    return queryFn(requestParams).pipe(
+      mergeMap((dataQueryResponse) => {
+        return from(
+          (async () => {
+            convertTrendHistogramToSparkline(dataQueryResponse);
             return dataQueryResponse;
           })()
         );
@@ -450,7 +514,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const hasMissingLogGroups = !query.logGroups?.length;
     const hasMissingQueryString = !query.expression?.length;
 
-    // log groups are not mandatory if language is SQL
+    // log groups are not mandatory if language is SQL and LogsMode is not Insights
     const isInvalidCWLIQuery = query.queryLanguage !== 'SQL' && hasMissingLogGroups && hasMissingLegacyLogGroupNames;
     if (isInvalidCWLIQuery || hasMissingQueryString) {
       return false;
@@ -478,4 +542,70 @@ function withTeardown<T = DataQueryResponse>(observable: Observable<T>, onUnsubs
 function parseLogGroupName(logIdentifier: string): string {
   const colonIndex = logIdentifier.lastIndexOf(':');
   return logIdentifier.slice(colonIndex + 1);
+}
+
+const LOG_TREND_FIELD_NAME = 'logTrend';
+
+/**
+ * Takes DataQueryResponse and converts any "log trend" fields (that are in JSON.rawMessage form)
+ * into data frame fields that the table vis will be able to display
+ */
+export function convertTrendHistogramToSparkline(dataQueryResponse: DataQueryResponse): void {
+  dataQueryResponse.data.forEach((frame) => {
+    let fieldIndexToReplace = null;
+    // log trend histogram field from CW API is of shape Record<timestamp as string, value>
+    const sparklineRawData: Field<Record<string, number>> = frame.fields.find((field: Field, index: number) => {
+      if (field.name === LOG_TREND_FIELD_NAME && field.type === FieldType.other) {
+        fieldIndexToReplace = index;
+        return true;
+      }
+      return false;
+    });
+
+    if (sparklineRawData) {
+      const sparklineField: Field = {
+        name: 'Log trend',
+        type: FieldType.frame,
+        config: {
+          custom: {
+            drawStyle: GraphDrawStyle.Bars,
+            cellOptions: {
+              type: TableCellDisplayMode.Sparkline,
+              // hiding the value here as it's not useful or clear on what it represents for log trend
+              hideValue: true,
+            },
+          },
+        },
+        values: [],
+      };
+
+      sparklineRawData.values.forEach((sparklineValue, rowIndex) => {
+        const timestamps: number[] = [];
+        const values: number[] = [];
+        Object.keys(sparklineValue).map((t, i) => {
+          let n = Number(t);
+          if (!isNaN(n)) {
+            timestamps.push(n);
+            values.push(sparklineValue[t]);
+          }
+        });
+
+        const sparklineFieldFrame: DataFrame = {
+          name: `Trend_row_${rowIndex}`,
+          length: timestamps.length,
+          fields: [
+            { name: 'time', type: FieldType.time, values: timestamps, config: {} },
+            { name: 'value', type: FieldType.number, values, config: {} },
+          ],
+        };
+
+        sparklineField.values.push(sparklineFieldFrame);
+      });
+
+      if (fieldIndexToReplace) {
+        // Make sure sparkline field is placed in the same order as coming from BE
+        frame.fields[fieldIndexToReplace] = sparklineField;
+      }
+    }
+  });
 }
