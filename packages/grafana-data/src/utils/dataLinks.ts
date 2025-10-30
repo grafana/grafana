@@ -44,9 +44,9 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
       : internalLink.query;
 
   // datasource ref is optional in a query object, but Explore relies on it being defined for some
-  // functionalites, e.g., changing query filters directly from visualizations, so we need to put
+  // functionalities, e.g., changing query filters directly from visualizations, so we need to put
   // it here if it's missing. See also #112945
-  if (!query.datasource && internalLink.datasourceUid) {
+  if (query && typeof query === 'object' && !query.datasource && internalLink.datasourceUid) {
     query.datasource = { uid: internalLink.datasourceUid };
   }
 
