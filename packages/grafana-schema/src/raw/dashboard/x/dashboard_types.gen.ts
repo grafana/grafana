@@ -886,6 +886,11 @@ export interface Panel {
    */
   targets?: Array<Record<string, unknown>>;
   /**
+   * Compare the current time range with a previous period
+   * For example "1d" to compare current period but shifted back 1 day
+   */
+  timeCompare?: string;
+  /**
    * Overrides the relative time range for individual panels,
    * which causes them to be different than what is selected in
    * the dashboard time picker in the top-right corner of the dashboard. You can use this to show metrics from different

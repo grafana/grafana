@@ -4137,6 +4137,7 @@
     "cancel": "取消",
     "clear": "清除",
     "collapse": "收起",
+    "disabled": "",
     "edit": "编辑",
     "help": "帮助",
     "loading": "加载中...",
@@ -5112,6 +5113,19 @@
       "aria-label-remove-override": "移除覆盖",
       "tooltip-remove-override": "移除覆盖"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "必须先保存数据面板，然后才能添加提醒。",
@@ -5666,6 +5680,11 @@
       "open-dashboard": "打开数据面板",
       "open-in-new-tab": "在新标签页中打开",
       "title-error-adding-the-panel": "添加面板时出错"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "回到列表",
@@ -7619,7 +7638,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "未找到文件夹",
     "select-aria-label": "文件夹筛选",
     "select-placeholder": "按文件夹筛选"
   },
@@ -10826,6 +10844,7 @@
       "replace-library-panel": "替换库面板",
       "share": "分享",
       "show-legend": "显示图例",
+      "time-settings": "",
       "unlink-library-panel": "取消链接库面板",
       "view": "查看"
     },
@@ -12235,8 +12254,6 @@
       "title": "选择范围"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "未找到与您的查询相关的结果",
         "recommended": "推荐",
@@ -13077,6 +13094,14 @@
       "form-label": "表单标签",
       "title": "面板"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {
