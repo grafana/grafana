@@ -6,8 +6,15 @@ import {
   CommandPaletteDynamicResultAction,
   PluginExtensionCommandPaletteContext,
 } from '@grafana/data';
+import appEvents from 'app/core/app_events';
+import {
+  CloseExtensionSidebarEvent,
+  OpenExtensionSidebarEvent,
+  ToggleExtensionSidebarEvent,
+} from 'app/types/events';
 
 import { commandPaletteDynamicRegistry } from '../../plugins/extensions/registry/setup';
+import { createOpenModalFunction } from '../../plugins/extensions/utils';
 import { CommandPaletteAction } from '../types';
 import { EXTENSIONS_PRIORITY } from '../values';
 
@@ -107,17 +114,39 @@ export function useDynamicExtensionActions(searchQuery: string): {
       keywords: result.keywords?.join(' '),
       perform: () => {
         if (result.onSelect) {
+          const extensionPointId = 'grafana/commandpalette/action';
           result.onSelect(result, {
             context: { searchQuery: debouncedSearchQuery },
-            extensionPointId: 'grafana/commandpalette/action',
-            openModal: () => {
-              console.warn('openModal: Full implementation requires createOpenModalFunction from extensions/utils');
+            extensionPointId,
+            openModal: createOpenModalFunction({
+              pluginId: result.pluginId,
+              title: result.title,
+              description: result.description,
+              extensionPointId,
+              path: result.path,
+              category: result.section,
+            }),
+            openSidebar: (componentTitle, context) => {
+              appEvents.publish(
+                new OpenExtensionSidebarEvent({
+                  props: context,
+                  pluginId: result.pluginId,
+                  componentTitle,
+                })
+              );
             },
-            openSidebar: () => {
-              console.warn('openSidebar: Available but marked as internal API');
+            closeSidebar: () => {
+              appEvents.publish(new CloseExtensionSidebarEvent());
             },
-            closeSidebar: () => {},
-            toggleSidebar: () => {},
+            toggleSidebar: (componentTitle, context) => {
+              appEvents.publish(
+                new ToggleExtensionSidebarEvent({
+                  props: context,
+                  pluginId: result.pluginId,
+                  componentTitle,
+                })
+              );
+            },
           });
         }
       },
