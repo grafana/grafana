@@ -3,12 +3,11 @@ import { orderBy } from 'lodash';
 import { Fragment, useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
-import { AlertLabels } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, Labels } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
-import { Alert, Box, Drawer, Icon, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Drawer, Icon, LoadingBar, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { AlertQuery, GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -16,10 +15,10 @@ import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
 import { LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
-import { stringifyFolder, useFolder } from '../../hooks/useFolder';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { stringifyErrorLike } from '../../utils/misc';
 
+import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
 import { QueryVisualization } from './QueryVisualization';
 import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
 
@@ -37,7 +36,6 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
   const [timeRange] = useTimeRange();
 
   const { data: rule, isLoading: loading, error } = useGetAlertRuleQuery({ uid: ruleUID });
-  const { folder } = useFolder(rule?.grafana_alert.namespace_uid);
 
   const { dataQueries, thresholds } = useMemo(() => {
     if (rule) {
@@ -68,7 +66,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
 
   if (error) {
     return (
-      <Drawer title={<AlertLabels labels={instanceLabels} />} onClose={onClose} size="md">
+      <Drawer title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} />} onClose={onClose} size="md">
         <ErrorContent error={error} />
       </Drawer>
     );
@@ -76,38 +74,15 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
 
   if (loading || !rule) {
     return (
-      <Drawer title={<AlertLabels labels={instanceLabels} />} onClose={onClose} size="md">
-        <div>{t('alerting.common.loading', 'Loading...')}</div>
+      <Drawer title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} />} onClose={onClose} size="md">
+        <LoadingPlaceholder text={t('alerting.common.loading', 'Loading...')} />
       </Drawer>
     );
   }
 
   return (
     <Drawer
-      title={
-        <Stack direction="column" gap={2}>
-          <Text variant="h3" element="h3" truncate>
-            <Trans i18nKey="alerting.triage.instance-details-drawer.instance-details">Instance details</Trans>
-          </Text>
-          <Stack direction="row" gap={2}>
-            <Box flex={3}>
-              {Object.keys(instanceLabels).length > 0 ? (
-                <AlertLabels labels={instanceLabels} />
-              ) : (
-                <Text color="secondary">{t('alerting.triage.no-labels', 'No labels')}</Text>
-              )}
-            </Box>
-            <Box flex={1} />
-          </Stack>
-          {folder && (
-            <InstanceLocation
-              folderTitle={stringifyFolder(folder)}
-              groupName={rule.grafana_alert.rule_group}
-              ruleName={rule.grafana_alert.title}
-            />
-          )}
-        </Stack>
-      }
+      title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} rule={rule.grafana_alert} />}
       onClose={onClose}
       size="lg"
     >
@@ -160,13 +135,13 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
   );
 }
 
-interface InstanceLocationProps {
+export interface InstanceLocationProps {
   folderTitle: string;
   groupName: string;
   ruleName: string;
 }
 
-function InstanceLocation({ folderTitle, groupName, ruleName }: InstanceLocationProps) {
+export function InstanceLocation({ folderTitle, groupName, ruleName }: InstanceLocationProps) {
   return (
     <Stack direction="row" alignItems="center" gap={1}>
       <Icon size="xs" name="folder" />
