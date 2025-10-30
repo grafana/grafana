@@ -4157,6 +4157,7 @@
     "cancel": "Annulla",
     "clear": "Cancella",
     "collapse": "Riduci",
+    "disabled": "",
     "edit": "Modifica",
     "help": "Guida",
     "loading": "Caricamento in corso...",
@@ -5133,6 +5134,19 @@
       "aria-label-remove-override": "Rimuovi sovrascrittura",
       "tooltip-remove-override": "Rimuovi sovrascrittura"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Il dashboard deve essere salvato prima di poter aggiungere avvisi.",
@@ -5687,6 +5701,11 @@
       "open-dashboard": "Apri dashboard",
       "open-in-new-tab": "Apri in una nuova scheda",
       "title-error-adding-the-panel": "Errore durante l'aggiunta del pannello"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Torna all'elenco",
@@ -7644,7 +7663,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "Nessuna cartella trovata",
     "select-aria-label": "Filtro cartelle",
     "select-placeholder": "Filtra per cartella"
   },
@@ -10872,6 +10890,7 @@
       "replace-library-panel": "Sostituisci il pannello della libreria",
       "share": "Condividi",
       "show-legend": "Mostra leggenda",
+      "time-settings": "",
       "unlink-library-panel": "Scollega pannello della libreria",
       "view": "Visualizza"
     },
@@ -12290,8 +12309,6 @@
       "title": "Seleziona gli ambiti"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "Nessun risultato trovato per la ricerca",
         "recommended": "Consigliato",
@@ -13134,6 +13151,14 @@
       "form-label": "Etichetta modulo",
       "title": "Pannello"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {
