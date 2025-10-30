@@ -927,11 +927,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/Table/TableCellInspector.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Table/TableNG/TableNG.test.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -2113,11 +2108,6 @@
   "public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.tsx": {
     "no-restricted-syntax": {
       "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/saving/SaveDashboardAsForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 4
     }
   },
   "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx": {
@@ -3381,11 +3371,6 @@
   },
   "public/app/features/provisioning/Config/ConfigFormGithubCollapse.tsx": {
     "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/features/provisioning/File/FileStatusPage.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
       "count": 2
     }
   },
