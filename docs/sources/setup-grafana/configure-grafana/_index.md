@@ -2567,7 +2567,7 @@ Available to Grafana administrators only, enables installing, uninstalling, and 
 Set to `true` by default.
 Setting it to `false` hides the controls.
 
-For more information, refer to [Plugin catalog](../../administration/plugin-management/#plugin-catalog).
+For more information, refer to [Plugin catalog](../../administration/plugin-management/#access-the-plugin-catalog).
 
 #### `plugin_admin_external_manage_enabled`
 
