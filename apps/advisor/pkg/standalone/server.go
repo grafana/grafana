@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/apis"
 	advisorapp "github.com/grafana/grafana/apps/advisor/pkg/app"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
-	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry/mock"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry/mockchecks"
 )
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 		KubeConfig:   rest.Config{}, // this will be replaced by the apiserver loopback config
 		ManifestData: *apis.LocalManifest().ManifestData,
 		SpecificConfig: checkregistry.AdvisorAppConfig{
-			CheckRegistry: &mock.MockCheckRegistry{},
+			CheckRegistry: &mockchecks.CheckRegistry{},
 			PluginConfig:  map[string]string{},
 			StackID:       "1", // Numeric stack ID for standalone mode
 			OrgService:    nil, // Not needed when StackID is set
