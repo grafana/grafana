@@ -249,16 +249,15 @@ if [ ${#profile_packages[@]} -gt 0 ]; then
         for run in $(seq 1 "$PARALLEL_RUNS"); do
           (
             EXIT_CODE=0
-            if ! go test -tags="$TEST_TAGS" -timeout="$GO_TEST_TIMEOUT" -run "$RUN_PATTERN" \
+            set +e # disable exit on error for capturing exit code
+            go test -tags="$TEST_TAGS" -timeout="$GO_TEST_TIMEOUT" -run "$RUN_PATTERN" \
               -outputdir="$PROFILE_OUTPUT_DIR" \
               -cpuprofile="cpu_${PKG_NAME}_run${run}.prof" \
               -memprofile="mem_${PKG_NAME}_run${run}.prof" \
               -trace="trace_${PKG_NAME}_run${run}.out" \
-              "$MATCHED_PKG" 2>&1 | tee "$PROFILE_OUTPUT_DIR/test_${PKG_NAME}_run${run}.log"; then
-                EXIT_CODE=$?
-            else
-                EXIT_CODE=0
-            fi
+              "$MATCHED_PKG" 2>&1 | tee "$PROFILE_OUTPUT_DIR/test_${PKG_NAME}_run${run}.log"
+            EXIT_CODE=${PIPESTATUS[0]}
+            set -e
             echo "$EXIT_CODE" > "$PROFILE_OUTPUT_DIR/exit_${PKG_NAME}_run${run}.code"
             echo "    ✓ Run $profile_pkg $run/$PARALLEL_RUNS completed with exit code: $EXIT_CODE"
           ) &
