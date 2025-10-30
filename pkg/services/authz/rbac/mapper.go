@@ -178,6 +178,26 @@ func newFolderTranslation() translation {
 	return folderTranslation
 }
 
+func newExternalGroupMappingTranslation() translation {
+	return translation{
+		resource:  "teams.permissions",
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:            "teams.permissions:read",
+			utils.VerbList:           "teams.permissions:read",
+			utils.VerbWatch:          "teams.permissions:read",
+			utils.VerbCreate:         "teams.permissions:write",
+			utils.VerbUpdate:         "teams.permissions:write",
+			utils.VerbPatch:          "teams.permissions:write",
+			utils.VerbDelete:         "teams.permissions:write",
+			utils.VerbGetPermissions: "teams.permissions:write",
+			utils.VerbSetPermissions: "teams.permissions:write",
+		},
+		folderSupport:     false,
+		skipScopeOnCreate: false,
+	}
+}
+
 func NewMapperRegistry() MapperRegistry {
 	mapper := mapper(map[string]map[string]translation{
 		"dashboard.grafana.app": {
@@ -194,7 +214,7 @@ func NewMapperRegistry() MapperRegistry {
 			// Teams is a special case. We translate team permissions from id to uid based.
 			"teams": newResourceTranslation("teams", "uid", false, true),
 			// ExternalGroupMappings is a special case. We translate team permissions from id to uid based.
-			"externalgroupmappings": newResourceTranslation("teams", "uid", false, true),
+			"externalgroupmappings": newExternalGroupMappingTranslation(),
 			// No need to skip scope on create for roles because we translate `permissions:type:delegate` to `roles:*``
 			"coreroles": translation{
 				resource:  "roles",
