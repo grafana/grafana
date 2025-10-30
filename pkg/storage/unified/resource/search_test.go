@@ -9,8 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"log/slog"
-
 	"github.com/Masterminds/semver"
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/mock"
@@ -18,7 +16,6 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -442,6 +439,7 @@ func TestShouldRebuildIndex(t *testing.T) {
 	type testcase struct {
 		buildInfo       IndexBuildInfo
 		minTime         time.Time
+		lastImportTime  time.Time
 		minBuildVersion *semver.Version
 
 		expected bool
@@ -459,6 +457,11 @@ func TestShouldRebuildIndex(t *testing.T) {
 			minTime:   now,
 			expected:  true,
 		},
+		"empty build info, with lastImportTime": {
+			buildInfo:      IndexBuildInfo{},
+			lastImportTime: now,
+			expected:       true,
+		},
 		"empty build info, with minVersion": {
 			buildInfo:       IndexBuildInfo{},
 			minBuildVersion: semver.MustParse("10.15.20"),
@@ -474,6 +477,16 @@ func TestShouldRebuildIndex(t *testing.T) {
 			minTime:   now,
 			expected:  false,
 		},
+		"build time before last import time": {
+			buildInfo:      IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
+			lastImportTime: now,
+			expected:       true,
+		},
+		"build time after last import time": {
+			buildInfo:      IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
+			lastImportTime: now,
+			expected:       false,
+		},
 		"build version before min version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("10.15.19")},
 			minBuildVersion: semver.MustParse("10.15.20"),
@@ -486,7 +499,7 @@ func TestShouldRebuildIndex(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			res := shouldRebuildIndex(tc.minBuildVersion, tc.buildInfo, tc.minTime, slog.New(&logtest.NopHandler{}))
+			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.minTime, tc.lastImportTime, nil)
 			require.Equal(t, tc.expected, res)
 		})
 	}
@@ -499,7 +512,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		},
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 
 	search := &mockSearchBackend{
 		openIndexes: []NamespacedResource{
@@ -511,6 +524,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 			{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
 			{Namespace: "resource-2h-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
 			{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
+			{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
 
 			// We report this index as open, but it's really not. This can happen if index expires between the call
 			// to GetOpenIndexes and the call to GetIndex.
@@ -557,6 +571,11 @@ func TestFindIndexesForRebuild(t *testing.T) {
 			{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{
 				buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour), BuildVersion: semver.MustParse("6.0.0")},
 			},
+
+			// Built recently, to be rebuilt because of last import time
+			{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-30 * time.Minute), BuildVersion: semver.MustParse("6.0.0")},
+			},
 		},
 	}
 
@@ -579,15 +598,23 @@ func TestFindIndexesForRebuild(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
-	support.findIndexesToRebuild(now)
-	require.Equal(t, 6, support.rebuildQueue.Len())
+	lastImportTime := now.Add(-10 * time.Minute)
+	importTimes := map[NamespacedResource]time.Time{
+		{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: lastImportTime,
+
+		// This index was "just" built, and should not be rebuilt.
+		{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: lastImportTime,
+	}
+
+	support.findIndexesToRebuild(importTimes, now)
+	require.Equal(t, 7, support.rebuildQueue.Len())
 
 	now5m := now.Add(5 * time.Minute)
 
 	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing
 	// ones should be "combined" with new ones (this will "bump" minBuildTime)
-	support.findIndexesToRebuild(now5m)
-	require.Equal(t, 6, support.rebuildQueue.Len())
+	support.findIndexesToRebuild(importTimes, now5m)
+	require.Equal(t, 7, support.rebuildQueue.Len())
 
 	// Values that we expect to find in rebuild requests.
 	minBuildVersion := semver.MustParse("5.5.5")
@@ -603,6 +630,8 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		{NamespacedResource: NamespacedResource{Namespace: "resource-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
 		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
 		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
+
+		{NamespacedResource: NamespacedResource{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard, lastImportTime: lastImportTime},
 	})
 }
 

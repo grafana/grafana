@@ -198,8 +198,43 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
 
     let uniqueMaxs = [...new Set(yMaxField.values)].sort((a, b) => a - b);
     let uniqueMins = [...new Set(yMinField.values)].sort((a, b) => a - b);
+
+    // useLogScale is assumed for native histograms, we get the multiplier from first bucket's min/max bounds
+    let bucketFactor = uniqueMaxs[0] / uniqueMins[0];
+
+    // NOTES:
+    // native histograms default bucket growth factor is 8th root of 2 (schema 3) -> (2 ** (2 ** -3)) = 1.0905077326652577
+    // the by-division inference from data results in 1.090507732665258
+
+    // densify the buckets using 0 counts (consumers of this fn assume a dense structure)
+    let denseMins: number[] = [];
+    let denseMaxs: number[] = [];
+
+    for (let i = 0; i < uniqueMaxs.length; i++) {
+      let curMax = uniqueMaxs[i];
+      let curMin = uniqueMins[i];
+
+      denseMaxs.push(curMax);
+      denseMins.push(curMin);
+
+      let nextMax = uniqueMaxs[i + 1];
+
+      if (nextMax != null) {
+        curMax = curMax * bucketFactor;
+        curMin = curMin * bucketFactor;
+
+        while (curMax < nextMax * 0.999999) {
+          denseMaxs.push(curMax);
+          denseMins.push(curMin);
+
+          curMax = curMax * bucketFactor;
+          curMin = curMin * bucketFactor;
+        }
+      }
+    }
+
     let countsByMax = new Map<number, number>();
-    uniqueMaxs.forEach((max) => countsByMax.set(max, 0));
+    denseMaxs.forEach((max) => countsByMax.set(max, 0));
 
     for (let i = 0; i < yMaxField.values.length; i++) {
       let max = yMaxField.values[i];
@@ -210,12 +245,12 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
       xMin: {
         ...yMinField,
         name: 'xMin',
-        values: uniqueMins,
+        values: denseMins,
       },
       xMax: {
         ...yMaxField,
         name: 'xMax',
-        values: uniqueMaxs,
+        values: denseMaxs,
       },
       counts: [
         {

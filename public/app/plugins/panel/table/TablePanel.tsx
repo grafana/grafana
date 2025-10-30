@@ -180,7 +180,8 @@ const getCellActions = (
       field.state!.scopedVars!,
       replaceVariables ?? replaceVars,
       field.config.actions ?? [],
-      { valueRowIndex: rowIndex }
+      { valueRowIndex: rowIndex },
+      'table'
     );
 
     if (actions.length === 1) {

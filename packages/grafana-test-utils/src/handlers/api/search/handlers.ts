@@ -2,7 +2,7 @@ import { Chance } from 'chance';
 import { HttpResponse, http } from 'msw';
 
 import { wellFormedTree } from '../../../fixtures/folders';
-import { mockStarredDashboards } from '../user/handlers';
+import { mockStarredDashboardsMap } from '../../../fixtures/starred';
 
 import { SORT_OPTIONS } from './constants';
 
@@ -17,13 +17,19 @@ const slugify = (str: string) => {
     .replace(/ +/g, '-');
 };
 
+const typeFilterMap: Record<string, string> = {
+  'dash-db': 'dashboard',
+  'dash-folder': 'folder',
+};
+
 const getLegacySearchHandler = () =>
   http.get('/api/search', ({ request }) => {
     const folderFilter = new URL(request.url).searchParams.get('folderUIDs') || null;
     const typeFilter = new URL(request.url).searchParams.get('type') || null;
     // Workaround for the fixture kind being 'dashboard' instead of 'dash-db'
-    const mappedTypeFilter = typeFilter === 'dash-db' ? 'dashboard' : typeFilter;
+    const mappedTypeFilter = typeFilter ? typeFilterMap[typeFilter] || typeFilter : null;
     const starredFilter = new URL(request.url).searchParams.get('starred') || null;
+    const tagFilter = new URL(request.url).searchParams.getAll('tag') || null;
 
     const response = mockTree
       .filter((filterItem) => {
@@ -32,8 +38,16 @@ const getLegacySearchHandler = () =>
           ({ item }) => item.kind !== 'ui',
         ];
 
+        if (tagFilter && tagFilter.length > 0) {
+          filters.push(({ item }) =>
+            Boolean(
+              (item.kind === 'folder' || item.kind === 'dashboard') && item.tags?.some((tag) => tagFilter.includes(tag))
+            )
+          );
+        }
+
         if (starredFilter) {
-          filters.push(({ item }) => mockStarredDashboards.includes(item.uid));
+          filters.push(({ item }) => mockStarredDashboardsMap.has(item.uid));
         }
 
         if (folderFilter && folderFilter !== 'general') {

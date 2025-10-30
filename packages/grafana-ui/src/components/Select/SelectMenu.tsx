@@ -245,8 +245,8 @@ const ToggleAllOption = ({
         innerProps: {},
         children: (
           <>
-            <Trans i18nKey="select.select-menu.selected-count">Selected </Trans>
-            {`(${selectedCount ?? 0})`}
+            <Trans i18nKey="select.select-menu.selected-count">Selected</Trans>
+            {` (${selectedCount ?? 0})`}
           </>
         ),
       })}

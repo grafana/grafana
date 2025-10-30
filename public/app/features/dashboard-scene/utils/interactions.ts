@@ -4,6 +4,13 @@ import { DashboardTrackingInfo, DynamicDashboardsTrackingInformation } from '../
 
 let isScenesContextSet = false;
 
+type DashboardLibraryTrackingInfo = {
+  pluginId?: string;
+  sourceEntryPoint?: string;
+  libraryItemId?: string;
+  creationOrigin?: string;
+};
+
 export const DashboardInteractions = {
   // Dashboard interactions:
   dashboardInitialized: (
@@ -21,8 +28,8 @@ export const DashboardInteractions = {
   dashboardCreatedOrSaved: (
     isNew: boolean | undefined,
     properties:
-      | { name: string; url: string }
-      | {
+      | ({ name: string; url: string } & DashboardLibraryTrackingInfo)
+      | ({
           name: string;
           url: string;
           numPanels: number;
@@ -31,7 +38,7 @@ export const DashboardInteractions = {
           autoLayoutCount: number;
           customGridLayoutCount: number;
           panelsByDatasourceType: Record<string, number>;
-        }
+        } & DashboardLibraryTrackingInfo)
   ) => {
     reportDashboardInteraction(isNew ? 'created' : 'saved', properties, 'grafana_dashboard');
   },
@@ -62,7 +69,7 @@ export const DashboardInteractions = {
 
   // dashboards_add_variable_button_clicked
   // when a user clicks on ‘Add Variable’ or ‘New Variable’
-  addVariableButtonClicked: (properties: { source: 'edit_pane' | 'settings_pane' }) => {
+  addVariableButtonClicked: (properties: { source: 'edit_pane' | 'settings_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_variable_button_clicked', properties);
   },
 

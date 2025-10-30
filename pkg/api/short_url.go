@@ -30,6 +30,8 @@ import (
 
 func (hs *HTTPServer) registerShortURLAPI(apiRoute routing.RouteRegister) {
 	reqSignedIn := middleware.ReqSignedIn
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
 		handler := newShortURLK8sHandler(hs)
 		apiRoute.Post("/api/short-urls", reqSignedIn, handler.createKubernetesShortURLsHandler)
@@ -117,13 +119,8 @@ type shortURLK8sHandler struct {
 }
 
 func newShortURLK8sHandler(hs *HTTPServer) *shortURLK8sHandler {
-	gvr := schema.GroupVersionResource{
-		Group:    v1alpha1.ShortURLKind().Group(),
-		Version:  v1alpha1.ShortURLKind().Version(),
-		Resource: v1alpha1.ShortURLKind().Plural(),
-	}
 	return &shortURLK8sHandler{
-		gvr:                  gvr,
+		gvr:                  v1alpha1.ShortURLKind().GroupVersionResource(),
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
 		cfg:                  hs.Cfg,

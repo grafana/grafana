@@ -24,7 +24,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const mySlug = model.getSlug();
   const urlKey = parentLayout.getUrlKey();
   const isActive = mySlug === currentTabSlug;
-  const myIndex = parentLayout.state.tabs.findIndex((tab) => tab === model);
+  const myIndex = parentLayout.getTabsIncludingRepeats().findIndex((tab) => tab === model);
   const location = useLocation();
   const href = textUtil.sanitize(locationUtil.getUrlForPartial(location, { [urlKey]: mySlug }));
   const styles = useStyles2(getStyles);
@@ -114,12 +114,15 @@ interface TabItemLayoutRendererProps {
 }
 
 export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererProps) {
-  const { layout } = tab.useState();
+  const { layout, key } = tab.useState();
   const styles = useStyles2(getStyles);
   const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(tab);
 
   return (
-    <TabContent className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}>
+    <TabContent
+      className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
+      data-dashboard-drop-target-key={key}
+    >
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}
     </TabContent>

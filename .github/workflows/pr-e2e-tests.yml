@@ -65,7 +65,7 @@ jobs:
       # If no cache hit, build Grafana
       - name: Build Grafana
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
@@ -122,7 +122,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5.5.0
+        uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
           cache: ${{ !github.event.pull_request.head.repo.fork }}
@@ -159,7 +159,7 @@ jobs:
         with:
           registry: 'us-docker.pkg.dev'
           environment: 'dev'
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: grafana-docker-tar-gz
           path: .
@@ -221,16 +221,16 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: grafana-tar-gz
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: ${{ needs.build-e2e-runner.outputs.artifact }}
       - name: chmod +x
         run: chmod +x ./e2e-runner
       - name: Run E2E tests
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
@@ -267,7 +267,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
 
@@ -298,11 +298,11 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: grafana-tar-gz
       - name: Run E2E tests
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
@@ -360,12 +360,12 @@ jobs:
         run: |
           docker cp cpp-e2e-deploy:/outputs.json /tmp/outputs.json
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: grafana-tar-gz
 
       - name: Run E2E tests
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
@@ -395,12 +395,12 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
 
       - name: Download blob reports from GitHub Actions Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           path: blobs
           pattern: playwright-blob-*
@@ -479,19 +479,19 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: grafana-tar-gz
       - name: Run PR a11y test
         if: github.event_name == 'pull_request'
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
           args: go run ./pkg/build/a11y --package=grafana.tar.gz
       - name: Run non-PR a11y test
         if: github.event_name != 'pull_request'
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
@@ -525,13 +525,13 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
       - name: Install dependencies
         run: yarn install --immutable
       - name: Get pa11y results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: pa11y-ci-results
       - name: Extract and publish metrics

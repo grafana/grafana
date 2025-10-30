@@ -4,6 +4,7 @@ import (
 	"path"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -268,6 +269,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 		// keep current sorting if the pages, but above all the other apps
 		for _, child := range sectionChildren {
 			child.SortWeight = -100 + child.SortWeight
+			child.Id = "standalone-plugin-page-" + strings.ReplaceAll(strings.ToLower(child.Text), " ", "-")
 		}
 	}
 
@@ -288,7 +290,6 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Url:        s.cfg.AppSubURL + "/apps",
 			})
 		case navtree.NavIDObservability:
-
 			treeRoot.AddSection(&navtree.NavLink{
 				Text:       "Observability",
 				Id:         navtree.NavIDObservability,
@@ -343,8 +344,8 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Id:         navtree.NavIDAdaptiveTelemetry,
 				SubTitle:   "Reduce noise, cut costs, and accelerate troubleshooting by intelligently ingesting only the telemetry data that matters most.",
 				Icon:       "adaptive-telemetry",
-				SortWeight: navtree.WeightAIAndML + 1, // Place under "AI & Machine Learning"
-				Children:   []*navtree.NavLink{appLink},
+				SortWeight: navtree.WeightAdaptiveTelemetry,
+				Children:   sectionChildren,
 				Url:        "adaptive-telemetry",
 				// Use the icon URL from the first "Adaptive Telemetry" plugin in the list (they will all be the same)
 				Img:   s.cfg.AppSubURL + plugin.Info.Logos.Large,
@@ -402,6 +403,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Performance"},
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
 		s.navigationAppConfig["grafana-advisor-app"] = NavigationAppConfig{
 			SectionID: navtree.NavIDCfg,
