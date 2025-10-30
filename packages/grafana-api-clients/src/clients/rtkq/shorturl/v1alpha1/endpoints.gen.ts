@@ -599,15 +599,20 @@ export type GetGoto = {
 };
 export const {
   useGetApiResourcesQuery,
+  useLazyGetApiResourcesQuery,
   useListShortUrlQuery,
+  useLazyListShortUrlQuery,
   useCreateShortUrlMutation,
   useDeletecollectionShortUrlMutation,
   useGetShortUrlQuery,
+  useLazyGetShortUrlQuery,
   useReplaceShortUrlMutation,
   useDeleteShortUrlMutation,
   useUpdateShortUrlMutation,
   useGetShortUrlGotoQuery,
+  useLazyGetShortUrlGotoQuery,
   useGetShortUrlStatusQuery,
+  useLazyGetShortUrlStatusQuery,
   useReplaceShortUrlStatusMutation,
   useUpdateShortUrlStatusMutation,
 } = injectedRtkApi;
