@@ -4137,6 +4137,7 @@
     "cancel": "キャンセル",
     "clear": "消去",
     "collapse": "折りたたみ表示",
+    "disabled": "",
     "edit": "編集",
     "help": "ヘルプ",
     "loading": "読み込み中...",
@@ -5112,6 +5113,19 @@
       "aria-label-remove-override": "オーバーライドを削除",
       "tooltip-remove-override": "オーバーライドを削除"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "アラートを追加する前に、ダッシュボードを保存する必要があります。",
@@ -5666,6 +5680,11 @@
       "open-dashboard": "ダッシュボードを開く",
       "open-in-new-tab": "新しいタブで開く",
       "title-error-adding-the-panel": "パネル追加時のエラー"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "一覧に戻る",
@@ -7619,7 +7638,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "フォルダが見つかりません",
     "select-aria-label": "フォルダフィルター",
     "select-placeholder": "フォルダでフィルタリング"
   },
@@ -10826,6 +10844,7 @@
       "replace-library-panel": "ライブラリパネルを置き換える",
       "share": "共有",
       "show-legend": "凡例を表示",
+      "time-settings": "",
       "unlink-library-panel": "ライブラリパネルのリンクを解除",
       "view": "表示"
     },
@@ -12235,8 +12254,6 @@
       "title": "スコープを選択"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "クエリに一致する結果が見つかりませんでした。",
         "recommended": "おすすめ",
@@ -13077,6 +13094,14 @@
       "form-label": "フォームラベル",
       "title": "パネル"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {

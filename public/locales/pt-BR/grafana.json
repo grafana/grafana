@@ -4157,6 +4157,7 @@
     "cancel": "Cancelar",
     "clear": "Limpar",
     "collapse": "Recolher",
+    "disabled": "",
     "edit": "Editar",
     "help": "Ajuda",
     "loading": "Carregando...",
@@ -5133,6 +5134,19 @@
       "aria-label-remove-override": "Remover substituição",
       "tooltip-remove-override": "Remover substituição"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "O painel de controle deve ser salvo para que os alertas possam ser adicionados.",
@@ -5687,6 +5701,11 @@
       "open-dashboard": "Abrir o painel",
       "open-in-new-tab": "Abrir em nova aba",
       "title-error-adding-the-panel": "Erro ao adicionar o painel"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Voltar para a lista",
@@ -7644,7 +7663,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "Nenhuma pasta encontrada",
     "select-aria-label": "Filtro de pasta",
     "select-placeholder": "Filtrar por pasta"
   },
@@ -10872,6 +10890,7 @@
       "replace-library-panel": "Substituir painel da biblioteca",
       "share": "Compartilhar",
       "show-legend": "Mostrar legenda",
+      "time-settings": "",
       "unlink-library-panel": "Desvincular painel de biblioteca",
       "view": "Visualizar"
     },
@@ -12290,8 +12309,6 @@
       "title": "Selecionar escopos"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "Nenhum resultado encontrado para sua consulta",
         "recommended": "Recomendado",
@@ -13134,6 +13151,14 @@
       "form-label": "Etiqueta do formulário",
       "title": "Painel"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {

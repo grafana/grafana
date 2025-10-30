@@ -4197,6 +4197,7 @@
     "cancel": "Anuluj",
     "clear": "Wyczyść",
     "collapse": "Zwiń",
+    "disabled": "",
     "edit": "Edytuj",
     "help": "Pomoc",
     "loading": "Ładowanie…",
@@ -5175,6 +5176,19 @@
       "aria-label-remove-override": "Usuń zastąpienie",
       "tooltip-remove-override": "Usuń zastąpienie"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Przed dodaniem alertów należy zapisać pulpit.",
@@ -5729,6 +5743,11 @@
       "open-dashboard": "Otwórz pulpit",
       "open-in-new-tab": "Otwórz w nowej karcie",
       "title-error-adding-the-panel": "Błąd dodawania panelu"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Powrót do listy",
@@ -7694,7 +7713,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "Nie znaleziono folderów",
     "select-aria-label": "Filtr folderów",
     "select-placeholder": "Filtruj wg folderu"
   },
@@ -10964,6 +10982,7 @@
       "replace-library-panel": "Zastąp panel biblioteki",
       "share": "Udostępnij",
       "show-legend": "Pokaż legendę",
+      "time-settings": "",
       "unlink-library-panel": "Rozłącz panel biblioteki",
       "view": "Widok"
     },
@@ -12400,8 +12419,6 @@
       "title": "Wybierz zakresy"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "Nie znaleziono wyników dla tego zapytania",
         "recommended": "Zalecane",
@@ -13248,6 +13265,14 @@
       "form-label": "Etykieta formularza",
       "title": "Panel"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {

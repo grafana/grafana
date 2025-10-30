@@ -4137,6 +4137,7 @@
     "cancel": "取消",
     "clear": "清除",
     "collapse": "收闔",
+    "disabled": "",
     "edit": "編輯",
     "help": "說明",
     "loading": "正在載入…",
@@ -5112,6 +5113,19 @@
       "aria-label-remove-override": "移除覆寫",
       "tooltip-remove-override": "移除覆寫"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "必須先儲存儀表板，然後才能新增警報。",
@@ -5666,6 +5680,11 @@
       "open-dashboard": "打開儀表板",
       "open-in-new-tab": "在新的分頁中開啟",
       "title-error-adding-the-panel": "新增面板時發生錯誤"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "返回清單",
@@ -7619,7 +7638,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "未找到資料夾",
     "select-aria-label": "資料夾篩選條件",
     "select-placeholder": "按資料夾篩選"
   },
@@ -10826,6 +10844,7 @@
       "replace-library-panel": "取代資料庫面板",
       "share": "分享",
       "show-legend": "顯示圖例",
+      "time-settings": "",
       "unlink-library-panel": "取消連結資料庫面板",
       "view": "檢視"
     },
@@ -12235,8 +12254,6 @@
       "title": "選取範圍"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "未找到您的查詢結果",
         "recommended": "建議",
@@ -13077,6 +13094,14 @@
       "form-label": "表單標籤",
       "title": "面板"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {

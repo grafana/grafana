@@ -4197,6 +4197,7 @@
     "cancel": "Отмена",
     "clear": "Очистить",
     "collapse": "Свернуть",
+    "disabled": "",
     "edit": "Редактировать",
     "help": "Справка",
     "loading": "Загрузка…",
@@ -5175,6 +5176,19 @@
       "aria-label-remove-override": "Удалить переопределение",
       "tooltip-remove-override": "Удалить переопределение"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Перед добавлением оповещений необходимо сохранить дашборд.",
@@ -5729,6 +5743,11 @@
       "open-dashboard": "Открыть дашборд",
       "open-in-new-tab": "Открыть в новой вкладке",
       "title-error-adding-the-panel": "Ошибка при добавлении панели"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Назад к списку",
@@ -7694,7 +7713,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "Папки не найдены",
     "select-aria-label": "Фильтр папок",
     "select-placeholder": "Фильтровать по папкам"
   },
@@ -10964,6 +10982,7 @@
       "replace-library-panel": "Заменить панель библиотеки",
       "share": "Общий доступ",
       "show-legend": "Показать условные обозначения",
+      "time-settings": "",
       "unlink-library-panel": "Отсоединить панель библиотеки",
       "view": "Просмотр"
     },
@@ -12400,8 +12419,6 @@
       "title": "Выбор областей"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "По вашему запросу ничего не найдено",
         "recommended": "Рекомендуемые",
@@ -13248,6 +13265,14 @@
       "form-label": "Метка формы",
       "title": "Панель"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {
