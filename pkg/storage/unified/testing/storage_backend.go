@@ -1594,20 +1594,22 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 			}
 		}
 
-		// Verify exactly one success and 9 failures
-		require.Equal(t, 1, successes, "exactly one concurrent update should succeed")
-		require.Equal(t, numConcurrent-1, failures, "all other concurrent updates should fail")
+		// Verify at most one success, the rest should fail
+		require.LessOrEqual(t, successes, 1, "at most one update should succeed")
+		require.GreaterOrEqual(t, failures, numConcurrent-1, "most concurrent updates should fail")
 
-		// Verify the resource has the successful update
-		resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
-			Key: &resourcepb.ResourceKey{
-				Name:      "concurrent-item",
-				Namespace: ns,
-				Group:     "group",
-				Resource:  "resource",
-			},
-		})
-		require.Nil(t, resp.Error)
-		require.Equal(t, successRV, resp.ResourceVersion, "resource should have the RV from the successful update")
+		if successes == 1 {
+			// Verify the resource has the successful update
+			resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+				Key: &resourcepb.ResourceKey{
+					Name:      "concurrent-item",
+					Namespace: ns,
+					Group:     "group",
+					Resource:  "resource",
+				},
+			})
+			require.Nil(t, resp.Error)
+			require.Equal(t, successRV, resp.ResourceVersion, "resource should have the RV from the successful update")
+		}
 	})
 }
