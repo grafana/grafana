@@ -4,7 +4,7 @@ import { LocationService } from '@grafana/runtime';
 
 import { ScopesService } from './ScopesService';
 import { ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
-import { ScopesSelectorService, ScopesSelectorServiceState } from './selector/ScopesSelectorService';
+import { ScopesSelectorService } from './selector/ScopesSelectorService';
 
 jest.mock('./selector/ScopesSelectorService');
 jest.mock('./dashboards/ScopesDashboardsService');
