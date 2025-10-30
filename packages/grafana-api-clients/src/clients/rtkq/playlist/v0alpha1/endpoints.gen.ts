@@ -598,14 +598,18 @@ export type Status = {
 export type Patch = object;
 export const {
   useGetApiResourcesQuery,
+  useLazyGetApiResourcesQuery,
   useListPlaylistQuery,
+  useLazyListPlaylistQuery,
   useCreatePlaylistMutation,
   useDeletecollectionPlaylistMutation,
   useGetPlaylistQuery,
+  useLazyGetPlaylistQuery,
   useReplacePlaylistMutation,
   useDeletePlaylistMutation,
   useUpdatePlaylistMutation,
   useGetPlaylistStatusQuery,
+  useLazyGetPlaylistStatusQuery,
   useReplacePlaylistStatusMutation,
   useUpdatePlaylistStatusMutation,
 } = injectedRtkApi;
