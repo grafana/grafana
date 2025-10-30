@@ -8,7 +8,7 @@ import { guessFieldTypeForField } from './processDataFrame';
  *
  * @deprecated use arrayToDataFrame
  */
-export class ArrayDataFrame<T = any> implements DataFrame {
+export class ArrayDataFrame<T = Array<Record<string, unknown>> | unknown[]> implements DataFrame {
   fields: Field[] = [];
   length = 0;
   name?: string;
