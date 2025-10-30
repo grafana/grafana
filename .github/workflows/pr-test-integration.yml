@@ -101,7 +101,7 @@ jobs:
           CGO_ENABLED: 0
           PROFILE_PACKAGES: |-
             pkg/tests/apis/folder
-            pkg/tests/apis/datasource
+            pkg/tests/apis/dashboard
           PROFILE_PARALLEL_RUNS: |-
             1
             2
