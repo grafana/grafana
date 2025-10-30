@@ -57,7 +57,10 @@ function CommandPaletteContents() {
   // Normally we register actions with kbar, and it knows not to show actions which are under a different parent than is
   // the currentRootActionId. Because these search results are manually added to the list later, they would show every
   // time.
-  const { searchResults, isFetchingSearchResults } = useSearchResults({ searchQuery: trimmedSearchQuery, show: !currentRootActionId });
+  const { searchResults, isFetchingSearchResults } = useSearchResults({
+    searchQuery: trimmedSearchQuery,
+    show: !currentRootActionId,
+  });
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
