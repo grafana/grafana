@@ -1637,13 +1637,13 @@ describe('dataFrame links', () => {
     expect(links![0].type).toBe(SpanLinkType.Unknown);
     expect(links![1].href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"loki1_uid","queries":[{"message":"SELECT * FROM superhero WHERE name=host"}]}'
+        '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"loki1_uid","queries":[{"message":"SELECT * FROM superhero WHERE name=host","datasource":{"uid":"loki1_uid"}}]}'
       )}`
     );
     expect(links![1].type).toBe(SpanLinkType.Unknown);
     expect(links![2].href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"loki1_uid","queries":[{"expr":"go_memstats_heap_inuse_bytes{job=\'host\'}"}]}'
+        '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"loki1_uid","queries":[{"expr":"go_memstats_heap_inuse_bytes{job=\'host\'}","datasource":{"uid":"loki1_uid"}}]}'
       )}`
     );
     expect(links![2].type).toBe(SpanLinkType.Unknown);
