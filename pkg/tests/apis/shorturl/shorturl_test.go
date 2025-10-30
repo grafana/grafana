@@ -280,16 +280,16 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 		}, (*any)(nil))
 		assert.Equal(t, 302, redirectResponse.Response.StatusCode)
 
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		require.EventuallyWithT(t, func(t *assert.CollectT) {
 			// Verify lastSeenAt was updated (should be > 0 now)
 			found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
 			require.NoError(t, err)
 
 			lastSeenAt, exists, err := unstructured.NestedInt64(found.Object, "status", "lastSeenAt")
 			require.NoError(t, err)
-			assert.True(t, exists)
+			require.True(t, exists)
 
-			assert.Greater(t, lastSeenAt, int64(0))
+			require.Greater(t, lastSeenAt, int64(1), "lastSeenAt should be greater than 1 after redirect")
 		}, time.Second*5, time.Millisecond*75, "lastSeenAt should be updated after redirect")
 
 		// Clean up
