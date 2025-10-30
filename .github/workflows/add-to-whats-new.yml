@@ -5,7 +5,7 @@ on:
 
 jobs:
   add-comment:
-    if: ${{ ! github.event.pull_request.head.repo.fork && (contains(github.event.pull_request.labels.*.name, 'What''s New') || contains(github.event.pull_request.labels.*.name, 'breaking change') || contains(github.event.pull_request.labels.*.name, 'levitate breaking change')) }}
+    if: ${{ ! github.event.pull_request.head.repo.fork && (contains(github.event.pull_request.labels.*.name, 'add to what''s new') || contains(github.event.pull_request.labels.*.name, 'breaking change') || contains(github.event.pull_request.labels.*.name, 'levitate breaking change')) }}
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
