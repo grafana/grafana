@@ -8782,6 +8782,9 @@
     "drawer": {
       "close": "Close"
     },
+    "error-boundary": {
+      "title": "An unexpected error happened"
+    },
     "feature-badge": {
       "experimental": "Experimental",
       "new": "New!",
