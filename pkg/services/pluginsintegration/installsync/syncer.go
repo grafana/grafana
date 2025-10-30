@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/apps/plugins/pkg/app/install"
@@ -87,6 +88,11 @@ func ProvideSyncer(
 
 func (s *syncer) Sync(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error {
 	if !s.featureToggles.IsEnabled(ctx, featuremgmt.FlagPluginInstallAPISync) {
+		return nil
+	}
+
+	if !s.featureToggles.IsEnabled(ctx, featuremgmt.FlagPluginStoreServiceLoading) {
+		logging.DefaultLogger.Warn("pluginInstallAPISync is enabled, but pluginStoreServiceLoading is disabled. skipping plugin sync.")
 		return nil
 	}
 

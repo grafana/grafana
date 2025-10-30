@@ -19,6 +19,7 @@ describe('Dashboard reload', () => {
   let dashboardReloadSpy: jest.SpyInstance;
   beforeEach(() => {
     jest.spyOn(console, 'log').mockImplementation();
+    jest.spyOn(console, 'warn').mockImplementation();
   });
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;

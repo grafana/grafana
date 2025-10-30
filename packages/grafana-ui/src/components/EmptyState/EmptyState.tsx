@@ -38,6 +38,11 @@ interface Props {
   role?: AriaRole;
 }
 
+/**
+ * The EmptyState component consists of a message and optionally an image, button, and additional information.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-emptystate--docs
+ */
 export const EmptyState = ({
   button,
   children,

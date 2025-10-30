@@ -4157,6 +4157,7 @@
     "cancel": "Annuleren",
     "clear": "Wissen",
     "collapse": "Samenvouwen",
+    "disabled": "",
     "edit": "Bewerken",
     "help": "Help",
     "loading": "Bezig met laden ...",
@@ -5133,6 +5134,19 @@
       "aria-label-remove-override": "Overschrijving verwijderen",
       "tooltip-remove-override": "Overschrijving verwijderen"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard moet worden opgeslagen voordat waarschuwingen kunnen worden toegevoegd.",
@@ -5687,6 +5701,11 @@
       "open-dashboard": "Dashboard openen",
       "open-in-new-tab": "In een nieuw tabblad openen",
       "title-error-adding-the-panel": "Er is een fout opgetreden bij het toevoegen van het paneel"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Terug naar lijst",
@@ -7644,7 +7663,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "Geen mappen gevonden",
     "select-aria-label": "Mapfilter",
     "select-placeholder": "Filteren op map"
   },
@@ -10872,6 +10890,7 @@
       "replace-library-panel": "Bibliotheekpaneel vervangen",
       "share": "Delen",
       "show-legend": "Legenda tonen",
+      "time-settings": "",
       "unlink-library-panel": "Bibliotheekpaneel ontkoppelen",
       "view": "Weergave"
     },
@@ -12290,8 +12309,6 @@
       "title": "Scopes selecteren"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "Geen resultaten gevonden voor je zoekopdracht",
         "recommended": "Aanbevolen",
@@ -13134,6 +13151,14 @@
       "form-label": "Labelformulier",
       "title": "Paneel"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {

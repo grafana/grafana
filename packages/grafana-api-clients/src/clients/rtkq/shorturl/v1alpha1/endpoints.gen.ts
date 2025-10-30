@@ -597,3 +597,17 @@ export type Patch = object;
 export type GetGoto = {
   url: string;
 };
+export const {
+  useGetApiResourcesQuery,
+  useListShortUrlQuery,
+  useCreateShortUrlMutation,
+  useDeletecollectionShortUrlMutation,
+  useGetShortUrlQuery,
+  useReplaceShortUrlMutation,
+  useDeleteShortUrlMutation,
+  useUpdateShortUrlMutation,
+  useGetShortUrlGotoQuery,
+  useGetShortUrlStatusQuery,
+  useReplaceShortUrlStatusMutation,
+  useUpdateShortUrlStatusMutation,
+} = injectedRtkApi;
