@@ -3,7 +3,6 @@ package pyroscope
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"slices"
@@ -88,8 +87,6 @@ func (d *PyroscopeDatasource) CallResource(ctx context.Context, req *backend.Cal
 }
 
 func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	ctxLogger := logger.FromContext(ctx)
-
 	u, err := url.Parse(req.URL)
 	if err != nil {
 		return backend.DownstreamErrorf("URL could not be parsed: %w", err)
@@ -100,12 +97,12 @@ func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.Cal
 	if query.Has("start") && query.Has("end") {
 		start, err = strconv.ParseInt(query.Get("start"), 10, 64)
 		if err != nil {
-			return backend.DownstreamError(fmt.Errorf("failed to parse start as int: %w", err))
+			return backend.DownstreamErrorf("failed to parse start as int: %w", err)
 		}
 
 		end, err = strconv.ParseInt(query.Get("end"), 10, 64)
 		if err != nil {
-			return backend.DownstreamError(fmt.Errorf("failed to parse end as int: %w", err))
+			return backend.DownstreamErrorf("failed to parse end as int: %w", err)
 		}
 	} else {
 		// Make sure to pass a valid time range to the client as v2 will not work without it.
@@ -115,28 +112,23 @@ func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.Cal
 
 	types, err := d.client.ProfileTypes(ctx, start, end)
 	if err != nil {
-		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
-		return err
+		return backend.DownstreamErrorf("received error from client: %w", err)
 	}
 	bodyData, err := json.Marshal(types)
 	if err != nil {
-		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
-		return err
+		return backend.DownstreamErrorf("failed to marshal response: %w", err)
 	}
 	err = sender.Send(&backend.CallResourceResponse{Body: bodyData, Status: 200})
 	if err != nil {
-		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
-		return err
+		return backend.DownstreamErrorf("failed to send response: %w", err)
 	}
 	return nil
 }
 
 func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	ctxLogger := logger.FromContext(ctx)
-
 	u, err := url.Parse(req.URL)
 	if err != nil {
-		return backend.DownstreamError(fmt.Errorf("URL could not be parsed: %w", err))
+		return backend.DownstreamErrorf("URL could not be parsed: %w", err)
 	}
 	query := u.Query()
 
@@ -145,12 +137,12 @@ func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallR
 	labelSelector := query.Get("query")
 	matchers, err := parser.ParseMetricSelector(labelSelector)
 	if err != nil {
-		return backend.DownstreamError(fmt.Errorf("failed parsing label selector: %v", err))
+		return backend.DownstreamErrorf("failed parsing label selector: %v", err)
 	}
 
 	labelNames, err := d.client.LabelNames(ctx, labelSelector, start, end)
 	if err != nil {
-		return backend.DownstreamError(fmt.Errorf("error calling LabelNames: %v", err))
+		return backend.DownstreamErrorf("error calling LabelNames: %v", err)
 	}
 
 	finalLabels := make([]string, 0)
@@ -165,13 +157,11 @@ func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallR
 
 	jsonResponse, err := json.Marshal(finalLabels)
 	if err != nil {
-		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
-		return err
+		return backend.DownstreamErrorf("failed to marshal response: %w", err)
 	}
 	err = sender.Send(&backend.CallResourceResponse{Body: jsonResponse, Status: 200})
 	if err != nil {
-		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
-		return err
+		return backend.DownstreamErrorf("failed to send response: %w", err)
 	}
 	return nil
 }
@@ -184,10 +174,9 @@ type LabelValuesPayload struct {
 }
 
 func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	ctxLogger := logger.FromContext(ctx)
 	u, err := url.Parse(req.URL)
 	if err != nil {
-		return backend.DownstreamError(fmt.Errorf("URL could not be parsed: %w", err))
+		return backend.DownstreamErrorf("URL could not be parsed: %w", err)
 	}
 	query := u.Query()
 
@@ -197,7 +186,7 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 
 	res, err := d.client.LabelValues(ctx, label, query.Get("query"), start, end)
 	if err != nil {
-		return backend.DownstreamError(fmt.Errorf("error calling LabelValues: %v", err))
+		return backend.DownstreamErrorf("error calling LabelValues: %v", err)
 	}
 
 	data, err := json.Marshal(res)
@@ -207,8 +196,7 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 
 	err = sender.Send(&backend.CallResourceResponse{Body: data, Status: 200})
 	if err != nil {
-		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
-		return err
+		return backend.DownstreamErrorf("failed to send response: %w", err)
 	}
 
 	return nil
