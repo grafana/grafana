@@ -3,10 +3,17 @@ package ngalert
 import (
 	"bytes"
 	"context"
+	"io"
 	"math/rand"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/gogo/protobuf/proto"
+	"github.com/golang/snappy"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/loki/pkg/push"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -20,9 +27,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/setting"
@@ -149,6 +158,80 @@ func TestConfigureHistorianBackend(t *testing.T) {
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
+	})
+
+	t.Run("Loki backend sends external labels in Record calls", func(t *testing.T) {
+		var receivedRequest *http.Request
+		var receivedBody []byte
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			receivedRequest = r
+			body, _ := io.ReadAll(r.Body)
+			receivedBody = body
+			w.WriteHeader(http.StatusNoContent)
+		}))
+		defer server.Close()
+
+		met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
+		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
+		cfg := setting.UnifiedAlertingStateHistorySettings{
+			Enabled: true,
+			Backend: "loki",
+			LokiSettings: setting.UnifiedAlertingLokiSettings{
+				LokiReadURL:  server.URL,
+				LokiWriteURL: server.URL,
+			},
+			ExternalLabels: map[string]string{
+				"test_label": "test_value",
+				"cluster":    "prod",
+			},
+		}
+		ac := &acfakes.FakeRuleService{}
+
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, h)
+
+		rule := history_model.RuleMeta{
+			OrgID:        1,
+			UID:          "test-rule-uid",
+			Group:        "test-group",
+			NamespaceUID: "test-namespace",
+			Title:        "Test Rule",
+		}
+		states := []state.StateTransition{
+			{
+				PreviousState: eval.Normal,
+				State: &state.State{
+					State:              eval.Alerting,
+					Labels:             data.Labels{"instance": "test-instance"},
+					LastEvaluationTime: time.Now(),
+				},
+			},
+		}
+
+		errCh := h.Record(context.Background(), rule, states)
+		err = <-errCh
+		require.NoError(t, err)
+
+		require.NotNil(t, receivedRequest, "Expected HTTP request to be sent to Loki")
+		require.Contains(t, receivedRequest.URL.Path, "/loki/api/v1/push")
+
+		// Loki uses snappy-compressed protobuf encoding
+		decompressed, err := snappy.Decode(nil, receivedBody)
+		require.NoError(t, err)
+
+		var req push.PushRequest
+		err = proto.Unmarshal(decompressed, &req)
+		require.NoError(t, err)
+
+		require.Len(t, req.Streams, 1, "Expected exactly one stream")
+		stream := req.Streams[0]
+
+		require.Contains(t, stream.Labels, `test_label="test_value"`)
+		require.Contains(t, stream.Labels, `cluster="prod"`)
+		require.Contains(t, stream.Labels, `from="state-history"`)
+		require.Contains(t, stream.Labels, `orgID="1"`)
 	})
 
 	t.Run("fail initialization if prometheus backend missing datasource UID", func(t *testing.T) {

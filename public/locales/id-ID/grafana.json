@@ -4100,6 +4100,7 @@
       "description": "Gunakan nilai kustom"
     },
     "options": {
+      "loading": "",
       "no-found": "Opsi tidak ditemukan."
     }
   },
@@ -4136,6 +4137,7 @@
     "cancel": "Batalkan",
     "clear": "Hapus",
     "collapse": "Ciutkan",
+    "disabled": "",
     "edit": "Edit",
     "help": "Bantuan",
     "loading": "Memuat...",
@@ -5111,6 +5113,19 @@
       "aria-label-remove-override": "Hapus penimpaan",
       "tooltip-remove-override": "Hapus penimpaan"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dasbor harus disimpan sebelum peringatan dapat ditambahkan.",
@@ -5665,6 +5680,11 @@
       "open-dashboard": "Buka dasbor",
       "open-in-new-tab": "Buka di tab baru",
       "title-error-adding-the-panel": "Kesalahan saat menambahkan panel"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Kembali ke daftar",
@@ -7618,7 +7638,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "Folder tidak ditemukan",
     "select-aria-label": "Filter folder",
     "select-placeholder": "Filter berdasarkan folder"
   },
@@ -10825,6 +10844,7 @@
       "replace-library-panel": "Ganti panel pustaka",
       "share": "Bagikan",
       "show-legend": "Tampilkan keterangan",
+      "time-settings": "",
       "unlink-library-panel": "Putuskan tautan panel pustaka",
       "view": "Lihat"
     },
@@ -12234,8 +12254,6 @@
       "title": "Pilih cakupan"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "Hasil untuk kueri Anda tidak ditemukan",
         "recommended": "Disarankan",
@@ -13076,6 +13094,14 @@
       "form-label": "Label formulir",
       "title": "Panel"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {

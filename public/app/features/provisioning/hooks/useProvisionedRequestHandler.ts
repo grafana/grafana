@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -31,7 +31,7 @@ interface RequestHandlers<T> {
     info: ProvisionedOperationInfo,
     resource: Resource<T>
   ) => void;
-  onWriteSuccess?: (info: ProvisionedOperationInfo, resource: Resource<T>) => void;
+  onWriteSuccess?: (resource: Resource<T>) => void;
   onError?: (error: unknown, info: ProvisionedOperationInfo) => void;
   onDismiss?: () => void;
 }
@@ -78,6 +78,8 @@ export function useProvisionedRequestHandler<T>({
   selectedBranch,
 }: Props<T>) {
   const dispatch = useDispatch();
+  // useRef to ensure handlers are only called once per request
+  const hasHandled = useRef(false);
   const { setLastBranch } = useLastBranch();
 
   useEffect(() => {
@@ -89,11 +91,13 @@ export function useProvisionedRequestHandler<T>({
     };
 
     if (request.isError) {
+      hasHandled.current = true;
       handlers.onError?.(request.error, info);
       return;
     }
 
-    if (request.isSuccess && request.data) {
+    if (request.isSuccess && request.data && !hasHandled.current) {
+      hasHandled.current = true;
       const { ref, path, urls, resource } = request.data;
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const resourceData = resource.upsert as Resource<T>;
@@ -126,7 +130,7 @@ export function useProvisionedRequestHandler<T>({
           // refetch folder items after success if folderUID is passed in
           dispatch(refetchChildren({ parentUID: folderUID || repository?.name, pageSize: PAGE_SIZE }));
         }
-        handlers.onWriteSuccess(info, resourceData);
+        handlers.onWriteSuccess(resourceData);
       }
 
       handlers.onDismiss?.();

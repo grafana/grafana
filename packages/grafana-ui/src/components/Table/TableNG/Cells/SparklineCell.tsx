@@ -1,15 +1,7 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import {
-  FieldType,
-  FieldConfig,
-  getMinMaxAndDelta,
-  FieldSparkline,
-  isDataFrame,
-  Field,
-  isDataFrameWithValue,
-} from '@grafana/data';
+import { FieldConfig, getMinMaxAndDelta, Field, isDataFrameWithValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   BarAlignment,
@@ -26,7 +18,7 @@ import { measureText } from '../../../../utils/measureText';
 import { FormattedValueDisplay } from '../../../FormattedValueDisplay/FormattedValueDisplay';
 import { Sparkline } from '../../../Sparkline/Sparkline';
 import { SparklineCellProps, TableCellStyles } from '../types';
-import { getAlignmentFactor, getCellOptions } from '../utils';
+import { getAlignmentFactor, getCellOptions, prepareSparklineValue } from '../utils';
 
 export const defaultSparklineCellConfig: TableSparklineCellOptions = {
   type: TableCellDisplayMode.Sparkline,
@@ -43,7 +35,7 @@ export const defaultSparklineCellConfig: TableSparklineCellOptions = {
 
 export const SparklineCell = (props: SparklineCellProps) => {
   const { field, value, theme, timeRange, rowIdx, width } = props;
-  const sparkline = getSparkline(value, field);
+  const sparkline = prepareSparklineValue(value, field);
 
   if (!sparkline) {
     return <>{field.config.noValue || t('grafana-ui.table.sparkline.no-data', 'no data')}</>;
@@ -101,30 +93,6 @@ export const SparklineCell = (props: SparklineCellProps) => {
     </>
   );
 };
-
-function getSparkline(value: unknown, field: Field): FieldSparkline | undefined {
-  if (Array.isArray(value)) {
-    return {
-      y: {
-        name: `${field.name}-sparkline`,
-        type: FieldType.number,
-        values: value,
-        config: {},
-      },
-    };
-  }
-
-  if (isDataFrame(value)) {
-    const timeField = value.fields.find((x) => x.type === FieldType.time);
-    const numberField = value.fields.find((x) => x.type === FieldType.number);
-
-    if (timeField && numberField) {
-      return { x: timeField, y: numberField };
-    }
-  }
-
-  return;
-}
 
 function getTableSparklineCellOptions(field: Field): TableSparklineCellOptions {
   let options = getCellOptions(field);

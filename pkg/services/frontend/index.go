@@ -153,6 +153,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	p.runIndexDataHooks(reqCtx, &data)
 
 	writer.Header().Set("Content-Type", "text/html; charset=UTF-8")
+	writer.Header().Set("Cache-Control", "no-store")
 	writer.WriteHeader(200)
 	if err := p.index.Execute(writer, &data); err != nil {
 		if errors.Is(err, syscall.EPIPE) { // Client has stopped listening.
