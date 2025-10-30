@@ -3,12 +3,11 @@ import { orderBy } from 'lodash';
 import { Fragment, useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
-import { AlertLabels } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
-import { Alert, Box, Drawer, Icon, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Drawer, Icon, LoadingBar, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { AlertQuery, GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -19,6 +18,7 @@ import { LogRecord, historyDataFrameToLogRecords } from '../../components/rules/
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { stringifyErrorLike } from '../../utils/misc';
 
+import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
 import { QueryVisualization } from './QueryVisualization';
 import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
 
@@ -66,7 +66,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
 
   if (error) {
     return (
-      <Drawer title={t('alerting.triage.instance-details', 'Instance Details')} onClose={onClose} size="md">
+      <Drawer title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} />} onClose={onClose} size="md">
         <ErrorContent error={error} />
       </Drawer>
     );
@@ -74,17 +74,17 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
 
   if (loading || !rule) {
     return (
-      <Drawer title={t('alerting.triage.instance-details', 'Instance Details')} onClose={onClose} size="md">
-        <div>{t('alerting.common.loading', 'Loading...')}</div>
+      <Drawer title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} />} onClose={onClose} size="md">
+        <LoadingPlaceholder text={t('alerting.common.loading', 'Loading...')} />
       </Drawer>
     );
   }
 
   return (
     <Drawer
-      title={t('alerting.instance-details-drawer.title-instance-details', 'Instance Details')}
+      title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} rule={rule.grafana_alert} />}
       onClose={onClose}
-      size="lg"
+      size="md"
     >
       <Stack direction="column" gap={3}>
         <Stack justifyContent="flex-end">
@@ -105,10 +105,6 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
             </Stack>
           </Box>
         )}
-
-        <Box>
-          <AlertLabels labels={instanceLabels} />
-        </Box>
 
         <Box ref={ref}>
           <Text variant="h5">{t('alerting.instance-details.state-history', 'Recent State Changes')}</Text>
@@ -136,6 +132,27 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
         </Box>
       </Stack>
     </Drawer>
+  );
+}
+
+export interface InstanceLocationProps {
+  folderTitle: string;
+  groupName: string;
+  ruleName: string;
+}
+
+export function InstanceLocation({ folderTitle, groupName, ruleName }: InstanceLocationProps) {
+  return (
+    <Stack direction="row" alignItems="center" gap={1}>
+      <Icon size="xs" name="folder" />
+      <Stack direction="row" alignItems="center" gap={0.5}>
+        <Text variant="bodySmall">{folderTitle}</Text>
+        <Icon size="sm" name="angle-right" />
+        <Text variant="bodySmall">{groupName}</Text>
+        <Icon size="sm" name="angle-right" />
+        <Text variant="bodySmall">{ruleName}</Text>
+      </Stack>
+    </Stack>
   );
 }
 
