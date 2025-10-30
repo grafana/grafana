@@ -3,13 +3,13 @@ package shorturlimpl
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/shorturls"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type store interface {
-	Get(ctx context.Context, user *user.SignedInUser, uid string) (*shorturls.ShortUrl, error)
+	Get(ctx context.Context, user identity.Requester, uid string) (*shorturls.ShortUrl, error)
 	Update(ctx context.Context, shortURL *shorturls.ShortUrl) error
 	Insert(ctx context.Context, shortURL *shorturls.ShortUrl) error
 	Delete(ctx context.Context, cmd *shorturls.DeleteShortUrlCommand) error
@@ -20,10 +20,10 @@ type sqlStore struct {
 	db db.DB
 }
 
-func (s sqlStore) Get(ctx context.Context, user *user.SignedInUser, uid string) (*shorturls.ShortUrl, error) {
+func (s sqlStore) Get(ctx context.Context, user identity.Requester, uid string) (*shorturls.ShortUrl, error) {
 	var shortURL shorturls.ShortUrl
 	err := s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
-		exists, err := dbSession.Where("org_id=? AND uid=?", user.OrgID, uid).Get(&shortURL)
+		exists, err := dbSession.Where("org_id=? AND uid=?", user.GetOrgID(), uid).Get(&shortURL)
 		if err != nil {
 			return err
 		}

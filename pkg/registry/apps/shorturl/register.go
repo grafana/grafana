@@ -5,6 +5,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -85,4 +86,19 @@ func (s *ShortURLAppInstaller) GetLegacyStorage(requested schema.GroupVersionRes
 		},
 	)
 	return legacyStore
+}
+
+func (s *ShortURLAppInstaller) GetLegacyStatus(requested schema.GroupVersionResource, unified *appsdkapiserver.StatusREST) rest.Storage {
+	gvr := shorturl.ShortURLKind().GroupVersionResource()
+	if requested.String() != gvr.String() {
+		return nil
+	}
+	return &statusDualWriter{
+		gv:     gvr.GroupVersion(),
+		status: unified,
+		legacy: &legacyStorage{
+			service:    s.service,
+			namespacer: s.namespacer,
+		},
+	}
 }
