@@ -131,7 +131,7 @@ It also helps you avoid having several users build the same queries for the same
 
 You can see a list of these queries in the **Saved queries** drawer:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-queries-v12.2png.png" max-width="550px" alt="List of saved queries and the edit query form" caption="The Saved queries drawer accessed from Dashboards" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-v12.3.png" max-width="550px" alt="List of saved queries and the edit query form" caption="The Saved queries drawer accessed from Dashboards" >}}
 
 When you first open the drawer, the list of queries in the **All** tab is filtered by the data source of the panel.
 However, you can clear that filter to display all saved queries.
@@ -149,8 +149,6 @@ In the **Saved queries** drawer, you can:
 - Duplicate, lock and unlock a query for editing, or delete a saved query.
 - Edit a query title, description, tags, or the availability of the query to other users in your organization. By default, saved queries are locked for editing.
 - When you access the **Saved queries** drawer from Explore, you can use the **Edit in Explore** option to edit the body of a query.
-
-Access the duplicate, lock, unlock, and delete query options through the menu in the top-right corner of the query form next to the **Edit** button.
 
 To access your saved queries, click **+ Add from saved queries** in the query editor:
 
