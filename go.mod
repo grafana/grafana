@@ -655,7 +655,7 @@ require (
 // newer versions aren't compatible with the current version of docker/docker
 require github.com/testcontainers/testcontainers-go v0.36.0
 
-require github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec
+require github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/observability-traces-and-profiling
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
