@@ -232,6 +232,7 @@ export function vizPanelToPanel(
     panel.timeFrom = panelTime.state.timeFrom;
     panel.timeShift = panelTime.state.timeShift;
     panel.hideTimeOverride = panelTime.state.hideTimeOverride;
+    panel.timeCompare = panelTime.state.compareWith;
   }
 
   if (gridItem instanceof DashboardGridItem) {

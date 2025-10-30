@@ -3426,6 +3426,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardQueryOptionsSpec(ref common.Refe
 							Format: "",
 						},
 					},
+					"timeCompare": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 			},
 		},

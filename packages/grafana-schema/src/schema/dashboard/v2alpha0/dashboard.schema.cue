@@ -409,6 +409,7 @@ QueryOptionsSpec: {
   interval?: string
   cacheTimeout?: string
   hideTimeOverride?: bool
+  timeCompare?: string
 }
 
 DataQueryKind: {

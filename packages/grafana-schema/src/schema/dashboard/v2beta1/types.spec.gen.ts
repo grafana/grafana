@@ -219,6 +219,7 @@ export interface QueryOptionsSpec {
 	interval?: string;
 	cacheTimeout?: string;
 	hideTimeOverride?: boolean;
+	timeCompare?: string;
 }
 
 export const defaultQueryOptionsSpec = (): QueryOptionsSpec => ({
