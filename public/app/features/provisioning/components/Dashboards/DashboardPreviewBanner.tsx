@@ -6,7 +6,8 @@ import { DashboardPageRouteSearchParams } from 'app/features/dashboard/container
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { DashboardRoutes } from 'app/types/dashboard';
 
-import { PreviewBannerViewPR } from '../Shared/PreviewBannerViewPR';
+import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
+import { PreviewBranchInfo, PreviewBannerViewPR } from '../Shared/PreviewBannerViewPR';
 
 export interface CommonBannerProps {
   queryParams: DashboardPageRouteSearchParams;
@@ -28,6 +29,15 @@ export const commonAlertProps = {
 function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPreviewBannerContentProps) {
   const { prURL } = usePullRequestParam();
   const file = useGetRepositoryFilesWithPathQuery({ name: slug, path, ref: queryParams.ref });
+  const { repository } = useGetResourceRepositoryView({ name: slug });
+  const targetRef = file.data?.ref;
+  const repoBaseUrl = file.data?.urls?.repositoryURL;
+
+  const branchInfo: PreviewBranchInfo = {
+    targetBranch: targetRef,
+    configuredBranch: repository?.branch,
+    repoBaseUrl,
+  };
 
   if (file.data?.errors) {
     return (
@@ -45,13 +55,13 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
 
   // This page was loaded with a `pull_request_url` in the URL
   if (prURL?.length) {
-    return <PreviewBannerViewPR prParam={prURL} isNewPr />;
+    return <PreviewBannerViewPR prParam={prURL} branchInfo={branchInfo} />;
   }
 
-  // Check if this is a repo link
-  const repoUrl = file.data?.urls?.newPullRequestURL ?? file.data?.urls?.compareURL;
-  if (repoUrl) {
-    return <PreviewBannerViewPR prParam={repoUrl} />;
+  // Check if pull request URLs are available from the repository file data
+  const prOrCompareUrl = file.data?.urls?.newPullRequestURL ?? file.data?.urls?.compareURL;
+  if (prOrCompareUrl) {
+    return <PreviewBannerViewPR prParam={prOrCompareUrl} isNewPr branchInfo={branchInfo} />;
   }
 
   return (
