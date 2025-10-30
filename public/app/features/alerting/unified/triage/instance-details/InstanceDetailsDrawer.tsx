@@ -8,6 +8,8 @@ import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
 import { Alert, Box, Drawer, Icon, LoadingBar, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { MENU_WIDTH } from 'app/core/components/AppChrome/MegaMenu/MegaMenu';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { AlertQuery, GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -17,6 +19,7 @@ import { EventState } from '../../components/rules/central-state-history/EventLi
 import { LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { stringifyErrorLike } from '../../utils/misc';
+import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
 import { QueryVisualization } from './QueryVisualization';
@@ -24,7 +27,14 @@ import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
 
 const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
-const FIXED_DRAWER_WIDTH = '45%';
+
+function calculateDrawerWidth(leftColumnWidth: number, megaMenuDocked: boolean, megaMenuOpen: boolean): string {
+  // Calculate the drawer width to align with the right column (chart area)
+  // The drawer opens from the right, so we use calc to get: 100% - leftColumnWidth - gap
+  // If the mega menu is docked and open, we also subtract its width
+  const megaMenuOffset = megaMenuDocked && megaMenuOpen ? MENU_WIDTH : '0px';
+  return `calc(100% - ${leftColumnWidth}px - 16px - ${megaMenuOffset})`; // 16px is the gap (theme.spacing(2))
+}
 
 interface InstanceDetailsDrawerProps {
   ruleUID: string;
@@ -35,6 +45,11 @@ interface InstanceDetailsDrawerProps {
 export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: InstanceDetailsDrawerProps) {
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
   const [timeRange] = useTimeRange();
+  const { leftColumnWidth } = useWorkbenchContext();
+  const { chrome } = useGrafana();
+  const chromeState = chrome.useState();
+
+  const drawerWidth = calculateDrawerWidth(leftColumnWidth, chromeState.megaMenuDocked, chromeState.megaMenuOpen);
 
   const { data: rule, isLoading: loading, error } = useGetAlertRuleQuery({ uid: ruleUID });
 
@@ -70,7 +85,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
       <Drawer
         title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} />}
         onClose={onClose}
-        width={FIXED_DRAWER_WIDTH}
+        width={drawerWidth}
       >
         <ErrorContent error={error} />
       </Drawer>
@@ -82,7 +97,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
       <Drawer
         title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} />}
         onClose={onClose}
-        width={FIXED_DRAWER_WIDTH}
+        width={drawerWidth}
       >
         <LoadingPlaceholder text={t('alerting.common.loading', 'Loading...')} />
       </Drawer>
@@ -93,7 +108,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
     <Drawer
       title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} rule={rule.grafana_alert} />}
       onClose={onClose}
-      width={FIXED_DRAWER_WIDTH}
+      width={drawerWidth}
     >
       <Stack direction="column" gap={3}>
         <Stack justifyContent="flex-end">
