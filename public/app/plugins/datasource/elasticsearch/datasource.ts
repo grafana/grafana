@@ -690,7 +690,6 @@ export class ElasticDatasource
         response.data.forEach((dataFrame) => {
           enhanceDataFrameWithDataLinks(dataFrame, this.dataLinks);
         });
-
         return response;
       })
     );
