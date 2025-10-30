@@ -49,7 +49,7 @@ composableKinds: PanelCfg: {
 				Options: {
 					common.OptionsWithLegend
 					common.OptionsWithTooltip
-					annotations?: common.VizAnnotations
+					common.OptionsWithAnnotations
 
 					// Sets which dimensions are used for the visualization
 					mode: VizDisplayMode & (*"candles+volume" | _)

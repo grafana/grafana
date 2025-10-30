@@ -28,7 +28,7 @@ composableKinds: PanelCfg: {
 					ui.OptionsWithLegend
 					ui.OptionsWithTooltip
 					ui.OptionsWithTimezones
-					annotations?: ui.VizAnnotations
+					ui.OptionsWithAnnotations
 
 					//Set the height of the rows
 					rowHeight: float32 & >=0 & <=1 | *0.9
