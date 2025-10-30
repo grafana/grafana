@@ -34,9 +34,9 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
   if (isSmallScreen || !enrichedHelpNode.hideFromTabs || interactiveLearningPluginId === undefined) {
     return (
       <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
-        <ToolbarButton 
-          iconOnly 
-          icon="question-circle" 
+        <ToolbarButton
+          iconOnly
+          icon="question-circle"
           aria-label={t('navigation.help.aria-label', 'Help')}
           tooltip={t('navigation.help.tooltip', 'Help and documentation')}
         />
