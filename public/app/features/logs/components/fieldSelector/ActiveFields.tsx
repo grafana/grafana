@@ -53,7 +53,7 @@ export const ActiveFields = ({ activeFields, clear, fields, reorder, suggestedFi
     [activeFields, suggestedFields]
   );
 
-  if (active.length) {
+  if (active.length || suggested.length) {
     return (
       <>
         <div className={styles.columnHeader}>
