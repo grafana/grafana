@@ -94,7 +94,6 @@ import {
   predicateByName,
   shouldTextOverflow,
   shouldTextWrap,
-  withDataLinksActionsTooltip,
   getSummaryCellTextAlign,
   parseStyleJson,
   IS_SAFARI_26,
@@ -406,7 +405,6 @@ export function TableNG(props: TableNGProps) {
       const result: FromFieldsResult = {
         columns: [],
         cellRootRenderers: {},
-        colsWithTooltip: {},
       };
 
       let lastRowIdx = -1;
@@ -464,7 +462,6 @@ export function TableNG(props: TableNGProps) {
         const shouldOverflow =
           !IS_SAFARI_26 && rowHeight !== 'auto' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
         const textWrap = rowHeight === 'auto' || shouldTextWrap(field);
-        const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
         const cellStyleOptions: TableCellStyleOptions = {
           textAlign,
@@ -472,8 +469,6 @@ export function TableNG(props: TableNGProps) {
           shouldOverflow,
           maxHeight: maxRowHeight,
         };
-
-        result.colsWithTooltip[displayName] = withTooltip;
 
         const defaultCellStyles = getDefaultCellStyles(theme, cellStyleOptions);
         const cellSpecificStyles = getCellSpecificStyles(cellType, field, theme, cellStyleOptions);
@@ -737,7 +732,7 @@ export function TableNG(props: TableNGProps) {
   );
   const [nestedFieldWidths] = useColWidths(firstRowNestedData?.fields ?? [], availableWidth);
 
-  const { columns, cellRootRenderers, colsWithTooltip } = useMemo(() => {
+  const { columns, cellRootRenderers } = useMemo(() => {
     const result = fromFields(visibleFields, widths);
 
     // if nested frames are present, augment the columns to include the nested table expander column.
@@ -805,7 +800,6 @@ export function TableNG(props: TableNGProps) {
           const field = columns[column.idx].field;
 
           if (
-            colsWithTooltip[getDisplayName(field)] &&
             target instanceof HTMLElement &&
             // this walks up the tree to find either a faux link wrapper or the cell root
             // it then only proceeds if we matched the faux link wrapper

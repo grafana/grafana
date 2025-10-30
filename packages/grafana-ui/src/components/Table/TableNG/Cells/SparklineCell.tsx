@@ -17,6 +17,7 @@ import {
 import { measureText } from '../../../../utils/measureText';
 import { FormattedValueDisplay } from '../../../FormattedValueDisplay/FormattedValueDisplay';
 import { Sparkline } from '../../../Sparkline/Sparkline';
+import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { SparklineCellProps, TableCellStyles } from '../types';
 import { getAlignmentFactor, getCellOptions, prepareSparklineValue } from '../utils';
 
@@ -38,7 +39,11 @@ export const SparklineCell = (props: SparklineCellProps) => {
   const sparkline = prepareSparklineValue(value, field);
 
   if (!sparkline) {
-    return <>{field.config.noValue || t('grafana-ui.table.sparkline.no-data', 'no data')}</>;
+    return (
+      <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
+        {field.config.noValue || t('grafana-ui.table.sparkline.no-data', 'no data')}
+      </MaybeWrapWithLink>
+    );
   }
 
   // Get the step from the first two values to null-fill the x-axis based on timerange
@@ -87,10 +92,10 @@ export const SparklineCell = (props: SparklineCellProps) => {
   }
 
   return (
-    <>
+    <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
       {valueElement}
       <Sparkline width={width - valueWidth} height={25} sparkline={sparkline} config={config} theme={theme} />
-    </>
+    </MaybeWrapWithLink>
   );
 };
 
@@ -107,8 +112,12 @@ function getTableSparklineCellOptions(field: Field): TableSparklineCellOptions {
 
 export const getStyles: TableCellStyles = (theme, { textAlign }) =>
   css({
-    width: '100%',
-    gap: theme.spacing(1),
-    justifyContent: 'space-between',
-    ...(textAlign === 'right' && { flexDirection: 'row-reverse' }),
+    '&, & > a': {
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(1),
+      ...(textAlign === 'right' && { flexDirection: 'row-reverse' }),
+    },
   });
