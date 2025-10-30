@@ -148,6 +148,7 @@ export function SaveProvisionedDashboardForm({
     workflow,
     resourceType: 'dashboard',
     repository,
+    selectedBranch: methods.getValues().ref,
     handlers: {
       onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
       onWriteSuccess,
@@ -156,15 +157,7 @@ export function SaveProvisionedDashboardForm({
   });
 
   // Submit handler for saving the form data
-  const handleFormSubmit = async ({
-    title,
-    description,
-    repo,
-    path,
-    comment,
-    ref,
-    folder,
-  }: ProvisionedDashboardFormData) => {
+  const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
     // Validate required fields
     if (!repo || !path) {
       console.error('Missing required fields for saving:', { repo, path });

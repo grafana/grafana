@@ -225,6 +225,8 @@ export function MoveProvisionedDashboardForm({
     request: moveRequest,
     workflow,
     resourceType: 'dashboard',
+    repository,
+    selectedBranch: ref || loadedFromRef,
     successMessage: t(
       'dashboard-scene.move-provisioned-dashboard-form.success-message',
       'Dashboard moved successfully'
