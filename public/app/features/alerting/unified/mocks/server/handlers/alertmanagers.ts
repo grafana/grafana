@@ -160,9 +160,24 @@ const getReceiversHandler = () =>
   });
 
 const testReceiversHandler = () =>
-  http.post('/api/alertmanager/grafana/config/api/v1/receivers/test', () => {
-    // TODO: scaffold out response as needed by tests
-    return HttpResponse.json({});
+  http.post('/api/alertmanager/grafana/config/api/v1/receivers/test', async ({ request }) => {
+    const body = await request.clone().json();
+    const { receivers = [] } = body;
+
+    // Build response with successful test results for each receiver
+    const testResults = receivers.map((receiver: any) => ({
+      name: receiver.name,
+      grafana_managed_receiver_configs: (receiver.grafana_managed_receiver_configs || []).map((config: any) => ({
+        name: config.name || config.type,
+        uid: config.uid,
+        status: 'ok' as const,
+      })),
+    }));
+
+    return HttpResponse.json({
+      notified_at: new Date().toISOString(),
+      receivers: testResults,
+    });
   });
 
 const getGroupsHandler = () =>
