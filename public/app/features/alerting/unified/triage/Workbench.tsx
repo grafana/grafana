@@ -23,7 +23,7 @@ import { Domain, Filter, WorkbenchRow } from './types';
 type WorkbenchProps = {
   domain: Domain;
   data: WorkbenchRow[];
-  groupBy?: string[]; // @TODO proper type
+  groupBy?: string[];
   filterBy?: Filter[];
   queryRunner: SceneQueryRunner;
 };
@@ -36,13 +36,30 @@ function renderWorkbenchRow(
   leftColumnWidth: number,
   domain: Domain,
   key: React.Key,
+  enableFolderMeta: boolean,
   depth = 0
 ): React.ReactElement {
   if (row.type === 'alertRule') {
-    return <AlertRuleRow key={key} row={row} leftColumnWidth={leftColumnWidth} rowKey={key} depth={depth} />;
+    return (
+      <AlertRuleRow
+        key={key}
+        row={row}
+        leftColumnWidth={leftColumnWidth}
+        rowKey={key}
+        depth={depth}
+        enableFolderMeta={enableFolderMeta}
+      />
+    );
   } else {
     const children = row.rows.map((childRow, childIndex) =>
-      renderWorkbenchRow(childRow, leftColumnWidth, domain, `${key}-${generateRowKey(childRow, childIndex)}`, depth + 1)
+      renderWorkbenchRow(
+        childRow,
+        leftColumnWidth,
+        domain,
+        `${key}-${generateRowKey(childRow, childIndex)}`,
+        enableFolderMeta,
+        depth + 1
+      )
     );
 
     // Check if this is a grafana_folder group and use FolderGroupRow
@@ -99,11 +116,14 @@ function renderWorkbenchRow(
  │                         │ │                                   │
  └─────────────────────────┘ └───────────────────────────────────┘
  */
-export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
+export function Workbench({ domain, data, queryRunner, groupBy }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
 
   const isLoading = !queryRunner.isDataReadyToDisplay();
   const [pageIndex, setPageIndex] = useState<number>(1);
+
+  // Calculate once: show folder metadata only if not grouping by grafana_folder
+  const enableFolderMeta = !groupBy?.includes('grafana_folder');
   // splitter for template and payload editor
   const splitter = useSplitter({
     direction: 'row',
@@ -151,7 +171,7 @@ export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
               ) : (
                 dataSlice.map((row, index) => {
                   const rowKey = generateRowKey(row, index);
-                  return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey);
+                  return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey, enableFolderMeta);
                 })
               )}
               {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}
