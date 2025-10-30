@@ -264,6 +264,38 @@ func BuildOptsStaticS390X(distro Distribution, experiments []string, tags []stri
 	}
 }
 
+// BuildOptsStaticRiscv64 builds Grafana statically for the riscv64 arch
+func BuildOptsStaticRiscv64(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
+	var (
+		os, _ = OSAndArch(distro)
+	)
+
+	return &GoBuildOpts{
+		CC:                "/toolchain/riscv64-linux-musl-cross/bin/riscv64-linux-musl-gcc",
+		CXX:               "/toolchain/riscv64-linux-musl-cross/bin/riscv64-linux-musl-cpp",
+		ExperimentalFlags: experiments,
+		OS:                os,
+		Arch:              "riscv64",
+		CGOEnabled:        true,
+	}
+}
+
+// BuildOptsStaticWindows builds Grafana statically for Windows on amd64
+func BuildOptsStaticWindows(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
+	var (
+		os, _ = OSAndArch(distro)
+	)
+
+	return &GoBuildOpts{
+		CC:                "/toolchain/x86_64-w64-mingw32-cross/bin/x86_64-w64-mingw32-gcc",
+		CXX:               "/toolchain/x86_64-w64-mingw32-cross/bin/x86_64-w64-mingw32-cpp",
+		ExperimentalFlags: experiments,
+		OS:                os,
+		Arch:              "amd64",
+		CGOEnabled:        true,
+	}
+}
+
 func StdZigBuildOpts(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
 	var (
 		os, arch = OSAndArch(distro)
@@ -306,6 +338,19 @@ func ViceroyBuildOpts(distro Distribution, experiments []string, tags []string) 
 	}
 }
 
+func BuildOptsNoCGO(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
+	var (
+		os, arch = OSAndArch(distro)
+	)
+
+	return &GoBuildOpts{
+		ExperimentalFlags: experiments,
+		OS:                os,
+		Arch:              arch,
+		CGOEnabled:        false,
+	}
+}
+
 var ZigTargets = map[Distribution]string{
 	DistLinuxAMD64:            "x86_64-linux-musl",
 	DistLinuxAMD64Dynamic:     "x86_64-linux-gnu",
@@ -331,11 +376,11 @@ var DistributionGoOpts = map[Distribution]DistroBuildOptsFunc{
 	DistLinuxAMD64:        StdZigBuildOpts,
 	DistLinuxAMD64Dynamic: StdZigBuildOpts,
 	DistPlan9AMD64:        StdZigBuildOpts,
-	DistLinuxRISCV64:      StdZigBuildOpts,
+	DistLinuxRISCV64:      BuildOptsStaticRiscv64,
 
 	// Non-Linux distros can have whatever they want in CC and CXX; it'll get overridden
 	// but it's probably not best to rely on that.
-	DistWindowsAMD64: ViceroyBuildOpts,
+	DistWindowsAMD64: BuildOptsStaticWindows,
 	DistWindowsARM64: StdZigBuildOpts,
 	DistDarwinAMD64:  ViceroyBuildOpts,
 	DistDarwinARM64:  ViceroyBuildOpts,
