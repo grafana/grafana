@@ -278,6 +278,7 @@ type DashboardQueryOptionsSpec struct {
 	Interval         *string `json:"interval,omitempty"`
 	CacheTimeout     *string `json:"cacheTimeout,omitempty"`
 	HideTimeOverride *bool   `json:"hideTimeOverride,omitempty"`
+	TimeCompare      *string `json:"timeCompare,omitempty"`
 }
 
 // NewDashboardQueryOptionsSpec creates a new DashboardQueryOptionsSpec object.

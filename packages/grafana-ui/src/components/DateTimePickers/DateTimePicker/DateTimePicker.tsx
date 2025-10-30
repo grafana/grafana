@@ -60,6 +60,11 @@ export interface Props {
   timeZone?: TimeZone;
 }
 
+/**
+ * A component for selecting a date *and* time.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-datetimepicker--docs
+ */
 export const DateTimePicker = ({
   date,
   maxDate,

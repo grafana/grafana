@@ -167,12 +167,12 @@ export type InspectCellProps = {
   rowIdx?: number;
   value: string;
   mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
+  preformatted?: boolean;
 };
 
 export interface TableCellActionsProps {
   field: Field;
   value: TableCellValue;
-  cellOptions: TableCellOptions;
   displayName: string;
   cellInspect: boolean;
   showFilters: boolean;
@@ -308,7 +308,6 @@ export type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRo
 export interface FromFieldsResult {
   columns: TableColumn[];
   cellRootRenderers: Record<string, CellRootRenderer>;
-  colsWithTooltip: Record<string, boolean>;
 }
 
 export interface FooterFieldState extends FieldState {
