@@ -691,9 +691,6 @@ export class ElasticDatasource
           enhanceDataFrameWithDataLinks(dataFrame, this.dataLinks);
         });
 
-        if (request.targets.some((t) => t.refId?.startsWith(REF_ID_STARTER_LOG_VOLUME))) {
-          response.data = attachLogLevelLabelsToDataFrames(response.data);
-        }
         return response;
       })
     );
@@ -1319,21 +1316,4 @@ function createContextTimeRange(rowTimeEpochMs: number, direction: string, inter
       };
     }
   }
-}
-
-// Attach log level as label. This is used to determine the log level in future operations.
-function attachLogLevelLabelsToDataFrames(dataFrames: DataFrame[]): DataFrame[] {
-  return dataFrames.map((frame) => {
-    // Log level is returned properly in the frame.name.
-    const level = frame.name;
-
-    // Add the label to the numeric value field
-    const valueField = frame.fields.find((f) => f.type === 'number');
-    if (valueField) {
-      valueField.labels = valueField.labels || {};
-      valueField.labels['level'] = String(level);
-    }
-
-    return frame;
-  });
 }
