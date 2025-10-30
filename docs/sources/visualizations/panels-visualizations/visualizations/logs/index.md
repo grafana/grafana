@@ -78,7 +78,7 @@ To limit the number of log lines rendered in the visualization, you can use the 
 | 2023-02-01 11:30:00 | title=Log1 lvl=error | 1        | server2  | 2023-02-01 11:00:00 |
 | 2023-02-01 11:00:00 | title=Log1 lvl=trace | 1        | server2  | 2023-02-01 11:00:00 |
 
-![Logs Example](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.1-logs-example.png 'Logs Example')
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-logs-example2-v12.3.png" max-width="750px" alt="Logs example" >}}
 
 ## Log level
 
