@@ -23,20 +23,22 @@ import {
 import { isWeekStart } from '@grafana/ui';
 import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
 import {
+  getDashboardSceneProfilerWithMetadata,
+  enablePanelProfilingForDashboard,
   getDashboardComponentInteractionCallback,
-  getDashboardInteractionCallback,
-  getDashboardSceneProfiler,
 } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
+import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
+// DashboardPanelProfilingBehavior removed - now using composed SceneRenderProfiler
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -296,22 +298,24 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         }
       : undefined;
 
+  // Create profiler once and reuse to avoid duplicate metadata setting
+  const dashboardProfiler = getDashboardSceneProfilerWithMetadata(oldModel.uid, oldModel.title);
+
+  const enableProfiling =
+    config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1;
   const queryController = new behaviors.SceneQueryController(
     {
-      enableProfiling:
-        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
-      onProfileComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
+      enableProfiling,
     },
-    getDashboardSceneProfiler()
+    dashboardProfiler
   );
 
   const interactionTracker = new behaviors.SceneInteractionTracker(
     {
-      enableInteractionTracking:
-        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
+      enableInteractionTracking: enableProfiling,
       onInteractionComplete: getDashboardComponentInteractionCallback(oldModel.uid, oldModel.title),
     },
-    getDashboardSceneProfiler()
+    dashboardProfiler
   );
 
   const behaviorList: SceneObjectState['$behaviors'] = [
@@ -329,6 +333,12 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       uid,
     }),
   ];
+
+  if (enableProfiling) {
+    // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
+    behaviorList.push(dashboardAnalyticsInitializer);
+  }
+  // Will be enabled in the dashboard creation below
 
   let body: DashboardLayoutManager;
 
@@ -384,6 +394,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     },
     serializerVersion
   );
+
+  // Enable panel profiling for this dashboard using the composed SceneRenderProfiler
+  enablePanelProfilingForDashboard(dashboardScene, uid);
 
   return dashboardScene;
 }
