@@ -2,7 +2,7 @@ import { DashboardLoadedEvent } from '@grafana/data';
 
 import { CloudWatchQuery } from '../types';
 
-const baseLogsQuery = {
+const baseLegacyLogsQuery = {
   datasource: {
     type: 'cloudwatch',
     uid: 'P7DC3E4760CFAC4AP',
@@ -10,6 +10,22 @@ const baseLogsQuery = {
   expression: 'fields @timestamp, @message | sort @timestamp desc | limit 300     ',
   id: '',
   logGroupNames: ['/aws/lambda/hello-world', '/aws/sagemaker/Endpoints/test', '/aws/sagemaker/test'],
+  namespace: '',
+  queryMode: 'Logs',
+  refId: 'A',
+  region: 'default',
+  statsGroups: [],
+};
+
+const baseLogsQuery = {
+  datasource: {
+    type: 'cloudwatch',
+    uid: 'P7DC3E4760CFAC4AP',
+  },
+  expression: 'fields @timestamp, @message | sort @timestamp desc | limit 300     ',
+  id: '',
+  logGroups: [{arn: 'arn:test', name: 'log-group-1'}, {arn: 'arn:test2', name: 'log-group-2'}],
+  logGroupNames: undefined,
   namespace: '',
   queryMode: 'Logs',
   refId: 'A',
@@ -473,6 +489,9 @@ export const CloudWatchDashboardLoadedEvent = new DashboardLoadedEvent({
         region: 'default',
         sqlExpression: '',
         statistic: 'Average',
+      },
+      {
+        ...baseLegacyLogsQuery,
       },
       {
         ...baseLogsQuery,

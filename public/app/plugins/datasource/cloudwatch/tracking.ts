@@ -93,7 +93,7 @@ export const onDashboardLoadedHandler = ({
 
       const isLogsInsightsQuery = isCloudWatchLogsQuery(query) && (!query.logsMode || query.logsMode === LogsMode.Insights)
       if (isLogsInsightsQuery) {
-        query.logGroupNames?.length && logsInsightsQueries.push(query);
+        (query.logGroupNames?.length || query.logGroups?.length) && logsInsightsQueries.push(query);
       } else if (isLogsAnomaliesQuery(query)) {
         logAnomaliesQueries.push(query);
       } else if (isCloudWatchMetricsQuery(query)) {
