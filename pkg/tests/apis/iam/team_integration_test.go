@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -237,9 +238,21 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 			GVR:       gvrTeams,
 		})
 
+		// For ensuring that it is able to list a team which has external_uid = null and is_provisioned = null
+		// only matters when legacy storage is involved
+		env := helper.GetEnv()
+		res, err := env.SQLStore.GetSqlxSession().Exec(ctx, "INSERT INTO team (org_id, uid, name, email, is_provisioned, external_uid, created, updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+			helper.Org1.Admin.Identity.GetOrgID(), "t000000001", "List Team 1", "list-team-1@example.com", nil, nil, time.Now(), time.Now())
+		require.NoError(t, err)
+		require.NotNil(t, res)
+
 		list, err := teamClient.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, list)
+
+		// Cleanup
+		_, err = env.SQLStore.GetSqlxSession().Exec(ctx, "DELETE FROM team WHERE uid = ?", "t000000001")
+		require.NoError(t, err)
 	})
 }
 

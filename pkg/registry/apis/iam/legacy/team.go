@@ -157,13 +157,18 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	for rows.Next() {
 		t := team.Team{}
 		var externalUID sql.NullString
-		err = rows.Scan(&t.ID, &t.UID, &t.Name, &t.Email, &externalUID, &t.IsProvisioned, &t.Created, &t.Updated)
+		var isProvisioned sql.NullBool
+		err = rows.Scan(&t.ID, &t.UID, &t.Name, &t.Email, &externalUID, &isProvisioned, &t.Created, &t.Updated)
 		if err != nil {
 			return res, err
 		}
 
 		if externalUID.Valid {
 			t.ExternalUID = externalUID.String
+		}
+
+		if isProvisioned.Valid {
+			t.IsProvisioned = isProvisioned.Bool
 		}
 
 		lastID = t.ID
