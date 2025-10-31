@@ -156,15 +156,20 @@ const UnthemedSpanTreeOffset = React.memo<TProps>((props) => {
     ));
   const styles = getStyles(theme);
 
+  // If span has no children, don't show the last indent guide
+  const displayedAncestorIds = hasChildren ? ancestorIds : ancestorIds.slice(0, -1);
+
   return (
     <span className={cx(styles.SpanTreeOffset, { [styles.SpanTreeOffsetParent]: hasChildren })} {...wrapperProps}>
-      {ancestorIds.map((ancestorId, index) => (
+      {displayedAncestorIds.map((ancestorId, index) => (
         <span
           key={ancestorId}
           className={cx(styles.indentGuide, {
             [styles.indentGuideActive]: hoverIndentGuideIds.has(ancestorId),
             [styles.indentGuideThin]:
-              index !== ancestorIds.length - 1 && ancestorId !== 'root' && !visibleSpanIds.includes(ancestorId),
+              index !== displayedAncestorIds.length - 1 &&
+              ancestorId !== 'root' &&
+              !visibleSpanIds.includes(ancestorId),
           })}
           data-ancestor-id={ancestorId}
           data-testid="SpanTreeOffset--indentGuide"
