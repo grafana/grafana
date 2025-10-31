@@ -306,6 +306,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(s.codecs)
+	// serverConfig.GoawayChance = 0.001
 	if err := o.ApplyTo(serverConfig); err != nil {
 		return err
 	}
