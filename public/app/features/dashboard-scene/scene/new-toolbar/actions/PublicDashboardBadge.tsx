@@ -2,13 +2,14 @@ import { css } from '@emotion/css';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Badge, useStyles2 } from '@grafana/ui';
 import { useGetPublicDashboardQuery } from 'app/features/dashboard/api/publicDashboardApi';
 
 import { ToolbarActionProps } from '../types';
 
 export const PublicDashboardBadge = ({ dashboard }: ToolbarActionProps) => {
-  if (!dashboard.state.uid) {
+  if (!dashboard.state.uid || !config.publicDashboardsEnabled) {
     return null;
   }
 
