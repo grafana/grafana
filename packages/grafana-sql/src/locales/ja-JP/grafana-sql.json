@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "自動最大アイドル",
-        "content-auto-max-idle": "有効にすると、<1>最大アイドル接続数</1>が<3>最大オープン接続数</3>と同じ値に自動設定されます。最大オープン接続数が設定されていない場合、デフォルト（{{defaultMaxIdle}}）に設定されます。",
-        "content-max-idle": "アイドル接続プールの最大接続数。<1>最大オープン接続数</1>が0より大きく<3>最大アイドル接続数</3>より小さい場合、<5>最大アイドル接続数</5>は<8>最大オープン接続数</8>の制限に合わせて削減されます。0に設定すると、アイドル接続は保持されません。",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
         "content-max-lifetime": "接続を再利用できる最大時間（秒）。0に設定すると、接続は永続的に再利用されます。",
-        "content-max-open": "データベースへの最大オープン接続数。<1>最大アイドル接続数</1>が0より大きく<3>最大オープン接続数</3>が<5>最大アイドル接続数</5>より小さい場合、<7>最大アイドル接続数</7>は<9>最大オープン接続数</9>の制限に合わせて削減されます。0に設定すると、オープン接続数に制限はありません。",
+        "content-max-open": "",
         "max-idle": "最大アイドル",
         "max-lifetime": "最大有効期間",
         "max-open": "最大オープン",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "クエリが無効です。詳細は下記をご確認ください。<1></1>ただし、このクエリは引き続き実行できます。",
+        "content-invalid-query": "",
         "editor-modes": {
           "label-builder": "ビルダー",
           "label-code": "コード"
@@ -76,7 +76,7 @@
         "tooltip-format-query": "クエリをフォーマット"
       },
       "query-validator": {
-        "query-will-process": "<0></0>このクエリは実行時に<2>{{bytes}}</2>を処理します。",
+        "query-will-process": "",
         "validating-query": "クエリを検証中..."
       },
       "raw-editor": {

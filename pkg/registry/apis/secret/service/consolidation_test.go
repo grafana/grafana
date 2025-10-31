@@ -97,7 +97,7 @@ func TestConsolidation(t *testing.T) {
 			require.NoError(t, err)
 			originalDecryptedValues = append(originalDecryptedValues, decryptedValue.DangerouslyExposeAndConsumeValue())
 
-			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, tc.namespace, tc.name, 1)
+			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, 1)
 			require.NoError(t, err)
 			require.NotNil(t, encryptedValue)
 			originalEncryptedData = append(originalEncryptedData, encryptedValue.EncryptedData)
@@ -115,7 +115,7 @@ func TestConsolidation(t *testing.T) {
 			require.Equal(t, originalDecryptedValues[i], decryptedValue.DangerouslyExposeAndConsumeValue())
 
 			// Verify that the encrypted data has changed (indicating re-encryption)
-			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, tc.namespace, tc.name, 1)
+			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, 1)
 			require.NoError(t, err)
 			require.NotEqual(t, originalEncryptedData[i], encryptedValue.EncryptedData)
 		}
@@ -174,7 +174,7 @@ func TestConsolidation(t *testing.T) {
 			require.NoError(t, err)
 			initialDecryptedValues = append(initialDecryptedValues, decryptedValue.DangerouslyExposeAndConsumeValue())
 
-			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, tc.namespace, tc.name, 1)
+			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, 1)
 			require.NoError(t, err)
 			initialEncryptedData = append(initialEncryptedData, encryptedValue.EncryptedData)
 		}
@@ -223,7 +223,7 @@ func TestConsolidation(t *testing.T) {
 					require.NoError(t, err)
 					newSecretDecryptedValues = append(newSecretDecryptedValues, decryptedValue.DangerouslyExposeAndConsumeValue())
 
-					encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, tc.namespace, tc.name, 1)
+					encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, 1)
 					require.NoError(t, err)
 					newSecretEncryptedData = append(newSecretEncryptedData, encryptedValue.EncryptedData)
 				}
@@ -252,7 +252,7 @@ func TestConsolidation(t *testing.T) {
 			require.Equal(t, initialDecryptedValues[i], decryptedValue.DangerouslyExposeAndConsumeValue())
 
 			// Verify that the encrypted data has changed (indicating re-encryption)
-			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, tc.namespace, tc.name, 1)
+			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, 1)
 			require.NoError(t, err)
 			require.NotEqual(t, initialEncryptedData[i], encryptedValue.EncryptedData)
 		}
@@ -275,7 +275,7 @@ func TestConsolidation(t *testing.T) {
 
 			// Verify that the encrypted data has changed from what it was when first created
 			// (indicating it was re-encrypted during consolidation)
-			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, tc.namespace, tc.name, 1)
+			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, 1)
 			require.NoError(t, err)
 			require.NotEqual(t, newSecretEncryptedData[i], encryptedValue.EncryptedData)
 		}

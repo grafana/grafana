@@ -117,12 +117,14 @@ describe('RowsLayoutManager', () => {
       expect(manager.state.rows).toContain(row2);
     });
 
-    it('should call ungroupLayout when removing the last row', () => {
+    it('should not call ungroupLayout when removing the last row', () => {
       const manager = new RowsLayoutManager({ rows: [] });
       const row = manager.addNewRow(new RowItem({ title: 'Only Row' }));
       expect(manager.state.rows).toHaveLength(1);
       manager.removeRow(row);
-      expect(ungroupLayoutCalled).toBe(true);
+      // This behavior was changed in the PR https://github.com/grafana/grafana/pull/112575
+      // The delete row button should have one consistent behavior, no matter if it's the last row or not.
+      expect(ungroupLayoutCalled).toBe(false);
     });
   });
 });

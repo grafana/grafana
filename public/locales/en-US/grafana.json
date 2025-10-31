@@ -1662,9 +1662,6 @@
       "no-history": "No recent state changes",
       "state-history": "Recent State Changes"
     },
-    "instance-details-drawer": {
-      "title-instance-details": "Instance Details"
-    },
     "instance-match": {
       "non-matching-labels": "Non-matching labels",
       "notification-policy": "View route"
@@ -1722,9 +1719,6 @@
       },
       "placeholder-key": "key",
       "placeholder-value": "value"
-    },
-    "left-column": {
-      "label-instances": "Instances"
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "View or create contact points",
@@ -2950,7 +2944,9 @@
       "alert-instances": "Alert instances",
       "error-loading-rule": "Error loading rule",
       "firing-instances-count": "{{firingCount}} firing instances",
-      "instance-details": "Instance Details",
+      "instance-details-drawer": {
+        "instance-details": "Instance details"
+      },
       "no-instances-found": "No alert instances found for rule: {{ruleUID}}",
       "no-labels": "No labels",
       "open-in-sidebar": "Open in sidebar",
@@ -4120,6 +4116,7 @@
       "description": "Use custom value"
     },
     "options": {
+      "loading": "Loading options...",
       "no-found": "No options found."
     }
   },
@@ -4156,6 +4153,7 @@
     "cancel": "Cancel",
     "clear": "Clear",
     "collapse": "Collapse",
+    "disabled": "Disabled",
     "edit": "Edit",
     "help": "Help",
     "loading": "Loading...",
@@ -5132,6 +5130,19 @@
       "aria-label-remove-override": "Remove override",
       "tooltip-remove-override": "Remove override"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "Hide panel time range",
+        "hide-time-info-description": "Do not show the panel time range in the panel header",
+        "time-from": "Panel time range",
+        "time-from-description": "Overrides the dashboard time range. Use one of the preset values or enter a custom value like 5m or 2h.",
+        "time-shift": "Time shift",
+        "time-shift-description": "Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like 5m or 2h.",
+        "time-window-compare": "Time comparison",
+        "time-window-compare-description": "Compare data between two time ranges",
+        "title": "Panel time settings"
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
@@ -5686,6 +5697,11 @@
       "open-dashboard": "Open dashboard",
       "open-in-new-tab": "Open in new tab",
       "title-error-adding-the-panel": "Error adding the panel"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": "New panel"
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Back to list",
@@ -6249,6 +6265,7 @@
       "enabled-value": "Enabled value",
       "enabled-value-description": "Value when switch is enabled",
       "enabled-value-placeholder": "e.g. On, Enabled, Active",
+      "same-values-error": "Enabled and disabled values cannot be the same",
       "switch-options": "Switch options",
       "value-pair-type": "Value pair type",
       "value-pair-type-description": "Choose the type of values for the switch states"
@@ -7172,7 +7189,8 @@
     "logs-table-multi-select": {
       "fields": "Fields",
       "reset": "Reset",
-      "selected-fields": "Selected fields"
+      "selected-fields": "Selected fields",
+      "suggested-fields": "Suggested"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Select query by name",
@@ -7643,7 +7661,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "No folders found",
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
@@ -8761,6 +8778,9 @@
     },
     "drawer": {
       "close": "Close"
+    },
+    "error-boundary": {
+      "title": "An unexpected error happened"
     },
     "feature-badge": {
       "experimental": "Experimental",
@@ -10578,7 +10598,12 @@
       }
     },
     "help": {
-      "aria-label": "Help"
+      "aria-label": "Help",
+      "interactive-learning": {
+        "close-tooltip": "Close interactive learning, help, and documentation",
+        "open-tooltip": "Open interactive learning, help, and documentation"
+      },
+      "tooltip": "Get help and useful links"
     },
     "invite-user": {
       "invite-button": "Invite",
@@ -10871,6 +10896,7 @@
       "replace-library-panel": "Replace library panel",
       "share": "Share",
       "show-legend": "Show legend",
+      "time-settings": "Time settings",
       "unlink-library-panel": "Unlink library panel",
       "view": "View"
     },
@@ -11344,12 +11370,15 @@
       "label-workflow": "Workflow",
       "placeholder-branch": "Select or enter branch name",
       "placeholder-new-branch": "Enter new branch name",
-      "suffix-configured-branch": "Configured branch"
+      "suffix-configured-branch": "Configured branch",
+      "suffix-last-used": "Last branch",
+      "suffix-pr-branch": "Pull request branch"
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "This resource is behind the branch in {{repoType}}.",
+      "branch-text": "branch:",
       "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
       "open-in-repo-button": "Open in {{repoType}}",
       "open-pull-request-in-repo": "Open pull request in {{repoType}}",
@@ -12289,8 +12318,6 @@
       "title": "Select scopes"
     },
     "tree": {
-      "collapse": "Collapse {{title}}",
-      "expand": "Expand {{title}}",
       "headline": {
         "noResults": "No results found for your query",
         "recommended": "Recommended",
@@ -13133,6 +13160,14 @@
       "form-label": "Form label",
       "title": "Panel"
     }
+  },
+  "time-period": {
+    "1_day": "1 day",
+    "1_hour": "1 hour",
+    "12_hours": "12 hours",
+    "30_days": "30 days",
+    "6_hours": "6 hours",
+    "7_days": "7 days"
   },
   "time-picker": {
     "absolute": {

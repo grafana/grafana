@@ -51,6 +51,9 @@ type CommonProps = BasePropsWithChildren | NoChildrenTooltip | NoChildrenAriaLab
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-button--docs
+ */
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {

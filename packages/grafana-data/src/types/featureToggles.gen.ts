@@ -1077,6 +1077,7 @@ export interface FeatureToggles {
   alertingImportAlertmanagerUI?: boolean;
   /**
   * Enables image sharing functionality for dashboards
+  * @default true
   */
   sharingDashboardImage?: boolean;
   /**
@@ -1232,4 +1233,12 @@ export interface FeatureToggles {
   * @default true
   */
   onlyStoreActionSets?: boolean;
+  /**
+  * Enables a new panel time settings drawer
+  */
+  panelTimeSettings?: boolean;
+  /**
+  * Enable template dashboards
+  */
+  dashboardTemplates?: boolean;
 }
