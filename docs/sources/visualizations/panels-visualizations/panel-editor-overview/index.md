@@ -89,7 +89,7 @@ The data section contains tabs where you enter queries, transform your data, and
 - **Queries**
   - Select your data source. You can also set or update the data source in existing dashboards using the drop-down menu in the **Queries** tab.
   - **Save query** - To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
-  - **Replace with saved query** - Reuse a saved query.  
+  - **Replace with saved query** - Reuse a saved query.
   - **+ Add query** - Add an additional query.
   - **+ Add from saved queries** - Add an additional query by reusing a saved query.
 
