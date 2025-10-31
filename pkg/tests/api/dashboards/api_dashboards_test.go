@@ -1274,5 +1274,33 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 			err = resp.Body.Close()
 			require.NoError(t, err)
 		})
+
+		t.Run("user with no permissions on dashboard or parent folder should not be able to edit the dashboard", func(t *testing.T) {
+			testFolder := createFolder(t, grafanaListedAddr, "restricted folder")
+			testDash := createDashboard(t, grafanaListedAddr, "dashboard with specific permissions", testFolder.ID, testFolder.UID) // nolint:staticcheck
+
+			// user cannot access the folder
+			u := fmt.Sprintf("http://restricteduser:restricteduser@%s/api/folders/%s", grafanaListedAddr, testFolder.UID)
+			resp, err := http.Get(u) // nolint:gosec
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusForbidden, resp.StatusCode, "User should not have access to the folder")
+			err = resp.Body.Close()
+			require.NoError(t, err)
+
+			// and cannot edit the dashboard
+			dashboardPayload := map[string]interface{}{
+				"dashboard": map[string]interface{}{
+					"uid":   testDash.UID,
+					"title": "Updated title by restricted user",
+				},
+				"folderUid": testFolder.UID,
+				"overwrite": true,
+			}
+			resp, err = postDashboard(t, grafanaListedAddr, "restricteduser", "restricteduser", dashboardPayload)
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusForbidden, resp.StatusCode, "User should not be able to edit dashboard without any permissions")
+			err = resp.Body.Close()
+			require.NoError(t, err)
+		})
 	})
 }
