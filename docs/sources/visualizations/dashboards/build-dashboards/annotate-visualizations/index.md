@@ -159,6 +159,7 @@ To add a new annotation query to a dashboard, follow these steps:
    [Saved queries](ref:saved-queries) is in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Cloud only.
    {{< /admonition >}}
 
+1. (Optional) Click **Test annotation query** to ensure that the query is working properly.
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 
