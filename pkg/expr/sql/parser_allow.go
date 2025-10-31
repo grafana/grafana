@@ -247,7 +247,7 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "from_base64", "format":
 		return
-	case "regexp_substr", "regex_replace", "regexp_instr", "regexp_like":
+	case "regexp_substr", "regexp_replace", "regexp_instr", "regexp_like":
 		return
 
 	// Date functions
@@ -301,7 +301,7 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "json_overlaps":
 		return
-	case "json_pretty", "json_table", "json_value":
+	case "json_pretty", "json_value":
 		return
 
 	default:
