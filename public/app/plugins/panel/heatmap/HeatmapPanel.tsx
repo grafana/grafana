@@ -15,7 +15,7 @@ import {
   VizLayout,
   EventBusPlugin,
 } from '@grafana/ui';
-import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { FacetedData, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
@@ -23,39 +23,20 @@ import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 
 import { HeatmapTooltip } from './HeatmapTooltip';
-import { prepareHeatmapData } from './fields';
+import { HeatmapData, prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
 import { Options } from './types';
 import { prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<Options> {}
 
-export const HeatmapPanel = ({
-  data,
-  id,
-  timeRange,
-  timeZone,
-  width,
-  height,
-  options,
-  fieldConfig,
-  eventBus,
-  onChangeTimeRange,
-  replaceVariables,
-}: HeatmapPanelProps) => {
+type HeatmapDataForViz = Required<Pick<HeatmapData, 'heatmap'>> & Omit<HeatmapData, 'warning' | 'heatmap'>;
+
+const shouldRenderViz = (info: HeatmapData): info is HeatmapDataForViz => !(info.warning || !info.heatmap);
+
+export const HeatmapPanel = (props: HeatmapPanelProps) => {
+  const { data, id, timeRange, options, fieldConfig, replaceVariables } = props;
   const theme = useTheme2();
-  const styles = useStyles2(getStyles);
-  const { sync, eventsScope, canAddAnnotations, onSelectRange, canExecuteActions } = usePanelContext();
-  const cursorSync = sync?.() ?? DashboardCursorSync.Off;
-
-  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
-
-  // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
-  const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
-
-  // ugh
-  let timeRangeRef = useRef<TimeRange>(timeRange);
-  timeRangeRef.current = timeRange;
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
@@ -75,7 +56,49 @@ export const HeatmapPanel = ({
     }
   }, [data.series, data.annotations, options, palette, theme, replaceVariables, timeRange]);
 
-  const facets = useMemo(() => {
+  if (!shouldRenderViz(info)) {
+    return (
+      <PanelDataErrorView
+        panelId={id}
+        fieldConfig={fieldConfig}
+        data={data}
+        needsNumberField={true}
+        message={info.warning}
+      />
+    );
+  }
+
+  return <HeatmapPanelViz {...props} info={info} palette={palette} />;
+};
+
+const HeatmapPanelViz = ({
+  data,
+  timeRange,
+  timeZone,
+  width,
+  height,
+  options,
+  eventBus,
+  onChangeTimeRange,
+  replaceVariables,
+  info,
+  palette,
+}: HeatmapPanelProps & { info: HeatmapDataForViz; palette: string[] }) => {
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
+  const { sync, eventsScope, canAddAnnotations, onSelectRange, canExecuteActions } = usePanelContext();
+  const cursorSync = sync?.() ?? DashboardCursorSync.Off;
+
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
+
+  // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
+  const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
+
+  // ugh
+  let timeRangeRef = useRef<TimeRange>(timeRange);
+  timeRangeRef.current = timeRange;
+
+  const facets = useMemo((): FacetedData => {
     let exemplarsXFacet: number[] | undefined = []; // "Time" field
     let exemplarsYFacet: Array<number | undefined> = [];
 
@@ -102,7 +125,7 @@ export const HeatmapPanel = ({
       }
     }
 
-    return [null, info.heatmap?.fields.map((f) => f.values), [exemplarsXFacet, exemplarsYFacet]];
+    return [null, info.heatmap.fields.map((f) => f.values), [exemplarsXFacet, exemplarsYFacet]];
   }, [info.heatmap, info.exemplars]);
 
   // ugh
@@ -130,7 +153,7 @@ export const HeatmapPanel = ({
   }, [options, timeZone, data.structureRev, cursorSync]);
 
   const renderLegend = () => {
-    if (!info.heatmap || !options.legend.show) {
+    if (!options.legend.show) {
       return null;
     }
 
@@ -161,25 +184,13 @@ export const HeatmapPanel = ({
     );
   };
 
-  if (info.warning || !info.heatmap) {
-    return (
-      <PanelDataErrorView
-        panelId={id}
-        fieldConfig={fieldConfig}
-        data={data}
-        needsNumberField={true}
-        message={info.warning}
-      />
-    );
-  }
-
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   return (
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart key={builder.uid} config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
+          <UPlotChart key={builder.uid} config={builder} data={facets} width={vizWidth} height={vizHeight}>
             {cursorSync !== DashboardCursorSync.Off && (
               <EventBusPlugin config={builder} eventBus={eventBus} frame={info.series ?? info.heatmap} />
             )}

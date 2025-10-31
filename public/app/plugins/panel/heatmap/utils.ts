@@ -423,11 +423,15 @@ export function prepConfig(opts: PrepConfigOpts) {
           : dataRef.current?.xLayout === HeatmapCellLayout.ge
             ? 1
             : 0,
-      yAlign: ((dataRef.current?.yLayout === HeatmapCellLayout.le
-        ? -1
-        : dataRef.current?.yLayout === HeatmapCellLayout.ge
-          ? 1
-          : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
+      yAlign: (() => {
+        const yAlign =
+          dataRef.current?.yLayout === HeatmapCellLayout.le
+            ? -1
+            : dataRef.current?.yLayout === HeatmapCellLayout.ge
+              ? 1
+              : 0;
+        return yAxisReverse ? (yAlign === -1 ? 1 : yAlign === 1 ? -1 : 0) : yAlign;
+      })(),
       ySizeDivisor,
       disp: {
         fill: {
