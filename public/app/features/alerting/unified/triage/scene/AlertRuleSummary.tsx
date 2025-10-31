@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react';
+
 import { VizConfigBuilders } from '@grafana/scenes';
 import { VizPanel, useDataTransformer } from '@grafana/scenes-react';
 import {
@@ -41,8 +43,12 @@ export const alertRuleSummaryVizConfig = VizConfigBuilders.timeseries()
   )
   .build();
 
-export function AlertRuleSummary({ ruleUID }: { ruleUID: string }) {
-  // Use WorkbenchContext to access the parent query runner and reuse its data
+/**
+ * Component that contains the expensive hooks (queryRunner and data transformer).
+ * This component only renders when AlertRuleSummary determines the viewport is approaching,
+ * avoiding expensive CPU operations until necessary.
+ */
+function AlertRuleSummaryViz({ ruleUID }: { ruleUID: string }) {
   const { queryRunner } = useWorkbenchContext();
 
   // Transform parent data to filter by this specific rule and partition by alert state
@@ -89,5 +95,59 @@ export function AlertRuleSummary({ ruleUID }: { ruleUID: string }) {
       displayMode="transparent"
       collapsible={false}
     />
+  );
+}
+
+/**
+ * Lazy-loaded component that uses Intersection Observer to only render the Viz component
+ * when the row is approaching the viewport. This prevents expensive CPU operations
+ * (queryRunner and data transformer) from running until necessary.
+ */
+export function AlertRuleSummary({ ruleUID }: { ruleUID: string }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+
+    // Check if Intersection Observer is supported
+    if (!window.IntersectionObserver) {
+      // Fallback: render immediately if Intersection Observer is not supported
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Process only the last entry (most recent state)
+        const entry = entries.at(-1);
+        if (entry) {
+          setIsVisible(entry.isIntersecting);
+        }
+      },
+      {
+        rootMargin: '100px', // Start loading when element is 100px away from viewport
+      }
+    );
+
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [ruleUID]);
+
+  return (
+    <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
+      {isVisible ? (
+        <AlertRuleSummaryViz ruleUID={ruleUID} />
+      ) : (
+        // Placeholder while not visible - maintains layout space
+        <div style={{ width: '100%', height: '100%' }} />
+      )}
+    </div>
   );
 }
