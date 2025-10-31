@@ -7189,7 +7189,8 @@
     "logs-table-multi-select": {
       "fields": "Fields",
       "reset": "Reset",
-      "selected-fields": "Selected fields"
+      "selected-fields": "Selected fields",
+      "suggested-fields": "Suggested"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Select query by name",
