@@ -77,7 +77,7 @@ Refer to [Requirements](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/obser
 - If you're using Git Sync in Grafana OSS and Grafana Enterprise, some resources might be in an incompatible data format and won't be synced.
 - Full-instance sync is not available in Grafana Cloud and has limitations in Grafana OSS and Grafana Enterprise. Refer to [Choose what to synchronize](../git-sync-setup.md#choose-what-to-synchronize) for more details.
 - During the synchronization process, your resources will be temporarily unavailable. No one will be able to create, edit, or delete resources during this process.
-- If you want to manage resources using Git Sync, you need to save them as JSON files and commit them to the synced repository. Open a PR to import, copy, move, or save a dashboard or folder.
+- If you want to manage an existing resource we Git Sync, you need to save it as JSON files and commit it to the synced repository. Open a PR to import, copy, move, or save a dashboard. 
 - Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
 
 **Authentication**
