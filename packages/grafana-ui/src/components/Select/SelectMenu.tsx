@@ -50,7 +50,14 @@ export const SelectMenu = ({
     <div
       {...innerProps}
       data-testid={selectors.components.Select.menu}
-      className={styles.menu}
+      className={cx(
+                  styles.option,
+                  isFocused && styles.optionFocused,
+                  isSelected && styles.optionSelected,
+                  data.isDisabled && styles.optionDisabled,
+                  isSelected && forcedColorsSelected
+                )}
+
       style={{ maxHeight }}
       aria-label={t('grafana-ui.select.menu-label', 'Select options menu')}
     >
@@ -270,10 +277,19 @@ export const SelectMenuOptions = ({
   // list to re-render everytime the user hovers over an option. This is a performance issue.
   // See https://github.com/JedWatson/react-select/issues/3128#issuecomment-451936743
   const { onMouseMove, onMouseOver, ...rest } = innerProps;
+  const forcedColorsSelected = css({
+    '@media (forced-colors: active)': {
+      backgroundColor: 'Highlight !important',
+      color: 'HighlightText !important',
+      outline: '1px solid Highlight !important',
+    },
+  });
 
   return (
     <div
       ref={innerRef}
+      role="option"
+      aria-selected={isSelected}
       className={cx(
         styles.option,
         isFocused && styles.optionFocused,
@@ -283,6 +299,16 @@ export const SelectMenuOptions = ({
       {...rest}
       data-testid={selectors.components.Select.option}
       title={data.title}
+      style={
+        // Ensure visibility in Windows High Contrast modes
+        isSelected
+          ? {
+              backgroundColor: 'Highlight',
+              color: 'HighlightText',
+              outline: '1px solid Highlight',
+            }
+          : undefined
+      }
     >
       {icon && <Icon name={icon} className={styles.optionIcon} />}
       {data.imgUrl && <img className={styles.optionImage} src={data.imgUrl} alt={data.label || String(data.value)} />}
@@ -293,6 +319,6 @@ export const SelectMenuOptions = ({
       </div>
     </div>
   );
-};
+
 
 SelectMenuOptions.displayName = 'SelectMenuOptions';
