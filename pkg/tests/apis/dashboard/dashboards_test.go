@@ -134,6 +134,7 @@ func TestIntegrationDashboardsAppV0Alpha1(t *testing.T) {
 		Resource: "dashboards",
 	}
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.FailNow()
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("v0alpha1 with dual writer mode %d", mode), func(t *testing.T) {
