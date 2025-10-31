@@ -87,7 +87,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 		}
 	}
 
-	element, err := l.createLibraryElement(c.Req.Context(), c.SignedInUser, cmd)
+	element, err := l.CreateElement(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to create library element")
 	}
@@ -124,7 +124,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) response.Response {
-	id, err := l.deleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
+	id, err := l.DeleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to delete library element")
 	}
@@ -252,7 +252,7 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 		}
 	}
 
-	element, err := l.patchLibraryElement(c.Req.Context(), c.SignedInUser, cmd, web.Params(c.Req)[":uid"])
+	element, err := l.PatchLibraryElement(c.Req.Context(), c.SignedInUser, cmd, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to update library element")
 	}

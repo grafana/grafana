@@ -1,0 +1,101 @@
+{
+  "kind": "LibraryPanel",
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
+  "metadata": {
+    "generateName": "x"
+  },
+  "spec": {
+    "type": "timeseries",
+    "pluginVersion": "12.3.0-pre",
+    "title": "example library panel",
+    "panelTitle": "simple",
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "hideZeros": false,
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisBorderShow": false,
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "barWidthFactor": 0.6,
+          "drawStyle": "line",
+          "fillOpacity": 0,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "insertNulls": false,
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "showValues": false,
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            },
+            {
+              "color": "red",
+              "value": 80
+            }
+          ]
+        }
+      },
+      "overrides": []
+    },
+    "datasource": {
+      "type": "grafana-testdata-datasource",
+      "uid": "cejobd88i85j4d"
+    },
+    "gridPos": {
+      "w": 12,
+      "h": 8,
+      "x": 0,
+      "y": 0
+    },
+    "targets": [
+      {
+        "refId": "A",
+        "datasource": {
+          "type": "grafana-testdata-datasource",
+          "uid": "cejobd88i85j4d"
+        }
+      }
+    ]
+  }
+}
