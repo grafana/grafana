@@ -7,7 +7,6 @@ import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, 
 import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
-import { isOnPrem } from '../utils/isOnPrem';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
@@ -139,12 +138,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           </div>
         </Grid>
 
-        {/* job status is not ready for Cloud yet */}
-        {isOnPrem() && (
-          <div className={styles.cardContainer}>
-            <RecentJobs repo={repo} />
-          </div>
-        )}
+        <div className={styles.cardContainer}>
+          <RecentJobs repo={repo} />
+        </div>
       </Stack>
     </Box>
   );
