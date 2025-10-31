@@ -4751,14 +4751,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/heatmap/HeatmapPanel.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/heatmap/migrations.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -4782,7 +4774,7 @@
   },
   "public/app/plugins/panel/heatmap/utils.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 17
+      "count": 16
     }
   },
   "public/app/plugins/panel/histogram/Histogram.tsx": {
