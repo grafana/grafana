@@ -63,6 +63,12 @@ With Git Sync, you can make changes to the files in the provisioned folder in Gi
 
 ## Known limitations
 
+{{< admonition type="caution" >}}
+
+Refer to [Requirements](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/git-sync-setup#requirements/) to learn what you need to use Git Sync.
+
+{{< /admonition >}}
+
 **Git Sync is under development and the following limitations apply.**
 
 **Synced resources**

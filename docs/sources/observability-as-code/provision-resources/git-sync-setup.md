@@ -61,6 +61,8 @@ Refer to [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/
 
 {{< /admonition >}}
 
+### Requirements
+
 To set up Git Sync, you need:
 
 - Administration rights in your Grafana organization.
@@ -132,7 +134,13 @@ In this step you can decide which elements to synchronize. Keep in mind the avai
 
 #### Synchronization limitations
 
-Git Sync only supports dashboards and folders. Alerts, panels, and other resources are not supported yet. Refer to [Supported resources](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#supported-resources) for details about which resources you can sync.
+Git Sync only supports dashboards and folders. Alerts, panels, and other resources are not supported yet. 
+
+{{< admonition type="caution" >}}
+
+Refer to [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#known-limitations/) before using Git Sync. Refer to [Supported resources](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#supported-resources) for details about which resources you can sync.
+
+{{< /admonition >}}
 
 Full instance sync is not available in Grafana Cloud.
 
