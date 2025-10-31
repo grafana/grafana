@@ -260,6 +260,7 @@ To export a dashboard in its current state as a PNG image file, follow these ste
 
 The generated image reflects how the dashboard appears in your browser.
 To change it, make changes to the dashboard or browser, like zooming in or out or resizing.
+
 ## Share panels {#share-a-panel}
 
 You can share a panels in the following ways:
