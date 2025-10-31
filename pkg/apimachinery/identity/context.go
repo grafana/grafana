@@ -125,6 +125,10 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"datasources:query",
 	"datasources:read",
 	"datasources:delete",
+	"library.panels:create", // ActionLibraryPanelsCreate
+	"library.panels:read",   // ActionLibraryPanelsRead
+	"library.panels:write",  // ActionLibraryPanelsWrite
+	"library.panels:delete", // ActionLibraryPanelsDelete
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
 	"users:read",           // accesscontrol.ActionUsersRead,

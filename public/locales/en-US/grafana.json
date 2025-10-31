@@ -1662,9 +1662,6 @@
       "no-history": "No recent state changes",
       "state-history": "Recent State Changes"
     },
-    "instance-details-drawer": {
-      "title-instance-details": "Instance Details"
-    },
     "instance-match": {
       "non-matching-labels": "Non-matching labels",
       "notification-policy": "View route"
@@ -1722,9 +1719,6 @@
       },
       "placeholder-key": "key",
       "placeholder-value": "value"
-    },
-    "left-column": {
-      "label-instances": "Instances"
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "View or create contact points",
@@ -2950,7 +2944,9 @@
       "alert-instances": "Alert instances",
       "error-loading-rule": "Error loading rule",
       "firing-instances-count": "{{firingCount}} firing instances",
-      "instance-details": "Instance Details",
+      "instance-details-drawer": {
+        "instance-details": "Instance details"
+      },
       "no-instances-found": "No alert instances found for rule: {{ruleUID}}",
       "no-labels": "No labels",
       "open-in-sidebar": "Open in sidebar",
@@ -5136,15 +5132,15 @@
     },
     "panel": {
       "time-range-settings": {
-        "hide-time-info": "Hidden time info",
-        "hide-time-info-description": "Do not show the custom time range in the panel header",
-        "time-from": "Custom panel time range",
-        "time-from-description": "Overrides the dashboard time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
+        "hide-time-info": "Hide panel time range",
+        "hide-time-info-description": "Do not show the panel time range in the panel header",
+        "time-from": "Panel time range",
+        "time-from-description": "Overrides the dashboard time range. Use one of the preset values or enter a custom value like 5m or 2h.",
         "time-shift": "Time shift",
-        "time-shift-description": "Adds a time shift relative to the dashboard or panel time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
-        "time-window-compare": "Time window comparison",
-        "time-window-compare-description": "Query and overlay data from a different time period",
-        "title": "Panel time range settings"
+        "time-shift-description": "Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like 5m or 2h.",
+        "time-window-compare": "Time comparison",
+        "time-window-compare-description": "Compare data between two time ranges",
+        "title": "Panel time settings"
       }
     },
     "panel-edit": {
@@ -6269,6 +6265,7 @@
       "enabled-value": "Enabled value",
       "enabled-value-description": "Value when switch is enabled",
       "enabled-value-placeholder": "e.g. On, Enabled, Active",
+      "same-values-error": "Enabled and disabled values cannot be the same",
       "switch-options": "Switch options",
       "value-pair-type": "Value pair type",
       "value-pair-type-description": "Choose the type of values for the switch states"
@@ -8781,6 +8778,9 @@
     "drawer": {
       "close": "Close"
     },
+    "error-boundary": {
+      "title": "An unexpected error happened"
+    },
     "feature-badge": {
       "experimental": "Experimental",
       "new": "New!",
@@ -10597,7 +10597,12 @@
       }
     },
     "help": {
-      "aria-label": "Help"
+      "aria-label": "Help",
+      "interactive-learning": {
+        "close-tooltip": "Close interactive learning, help, and documentation",
+        "open-tooltip": "Open interactive learning, help, and documentation"
+      },
+      "tooltip": "Get help and useful links"
     },
     "invite-user": {
       "invite-button": "Invite",
