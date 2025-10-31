@@ -32,6 +32,8 @@ interface HeatmapPanelProps extends PanelProps<Options> {}
 
 type HeatmapDataForViz = Required<Pick<HeatmapData, 'heatmap'>> & Omit<HeatmapData, 'warning' | 'heatmap'>;
 
+const shouldRenderViz = (info: HeatmapData): info is HeatmapDataForViz => !(info.warning || !info.heatmap);
+
 export const HeatmapPanel = (props: HeatmapPanelProps) => {
   const { data, id, timeRange, options, fieldConfig, replaceVariables } = props;
   const theme = useTheme2();
@@ -54,7 +56,6 @@ export const HeatmapPanel = (props: HeatmapPanelProps) => {
     }
   }, [data.series, data.annotations, options, palette, theme, replaceVariables, timeRange]);
 
-  const shouldRenderViz = (info: HeatmapData): info is HeatmapDataForViz => !(info.warning || !info.heatmap);
   if (!shouldRenderViz(info)) {
     return (
       <PanelDataErrorView
@@ -124,7 +125,7 @@ const HeatmapPanelViz = ({
       }
     }
 
-    return [null, info.heatmap.fields.map((f) => f.values) ?? [], [exemplarsXFacet, exemplarsYFacet]];
+    return [null, info.heatmap.fields.map((f) => f.values), [exemplarsXFacet, exemplarsYFacet]];
   }, [info.heatmap, info.exemplars]);
 
   // ugh
