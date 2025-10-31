@@ -267,10 +267,7 @@ describe('enrichment abilities', () => {
 
   it('should grant both read and write permissions when user has both permissions', () => {
     jest.spyOn(require('../utils/misc'), 'isAdmin').mockReturnValue(false);
-    grantPermissionsHelper([
-      AccessControlAction.AlertingEnrichmentsRead,
-      AccessControlAction.AlertingEnrichmentsWrite,
-    ]);
+    grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead, AccessControlAction.AlertingEnrichmentsWrite]);
 
     const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
 

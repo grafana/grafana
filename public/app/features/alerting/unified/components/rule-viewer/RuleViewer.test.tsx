@@ -486,10 +486,7 @@ describe('RuleViewer', () => {
     });
 
     it('should show enrichment tab when user has enrichments:read permission', async () => {
-      grantPermissionsHelper([
-        AccessControlAction.AlertingRuleRead,
-        AccessControlAction.AlertingEnrichmentsRead,
-      ]);
+      grantPermissionsHelper([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingEnrichmentsRead]);
 
       await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Query);
 
