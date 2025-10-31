@@ -9,7 +9,6 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 
-import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import {
   ChannelValues,
   CloudChannelValues,
@@ -66,7 +65,6 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   const selectedType = watch(typeFieldPath) ?? defaultValues.type;
   const parse_mode = watch(`${settingsFieldPath}.parse_mode`);
-  const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
 
   // TODO I don't like integration specific code here but other ways require a bigger refactoring
   const onCallIntegrationType = watch(`${settingsFieldPath}.integration_type`);
@@ -232,14 +230,7 @@ export function ChannelSubForm<R extends ChannelValues>({
         </div>
         <div className={styles.buttons}>
           {isTestable && onTest && isTestAvailable && (
-            <Button
-              disabled={testingReceiver}
-              size="xs"
-              variant="secondary"
-              type="button"
-              onClick={() => handleTest()}
-              icon={testingReceiver ? 'spinner' : 'message'}
-            >
+            <Button size="xs" variant="secondary" type="button" onClick={() => handleTest()} icon="message">
               <Trans i18nKey="alerting.channel-sub-form.test">Test</Trans>
             </Button>
           )}
