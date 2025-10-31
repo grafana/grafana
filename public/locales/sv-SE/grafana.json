@@ -7189,7 +7189,8 @@
     "logs-table-multi-select": {
       "fields": "Fält",
       "reset": "Återställ",
-      "selected-fields": "Markerade fält"
+      "selected-fields": "Markerade fält",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Välj fråga efter namn",
@@ -8029,26 +8030,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "I förrgår",
+          "previousFiscalQuarter": "Föregående räkenskapskvartal",
+          "previousFiscalYear": "Föregående räkenskapsår",
+          "previousMonth": "Föregående månad",
+          "previousWeek": "Föregående vecka",
+          "previousYear": "Föregående år",
+          "thisDayLastWeek": "Den här dagen förra veckan",
+          "thisFiscalQuarter": "Detta räkenskapskvartal",
+          "thisFiscalQuarterSoFar": "Hittills detta räkenskapskvartal",
+          "thisFiscalYear": "Detta räkenskapsår",
+          "thisFiscalYearSoFar": "Detta räkenskapsår hittills",
+          "thisMonth": "Denna månad",
+          "thisMonthSoFar": "Denna månad hittills",
+          "thisWeek": "Denna vecka",
+          "thisWeekSoFar": "Denna vecka hittills",
+          "thisYear": "Det här året",
+          "thisYearSoFar": "Detta år hittills",
+          "today": "Idag",
+          "todaySoFar": "Hittills idag",
+          "yesterday": "Igår"
         },
         "lastNDays_one": "",
         "lastNDays_other": "",

@@ -7189,7 +7189,8 @@
     "logs-table-multi-select": {
       "fields": "Campos",
       "reset": "Restablecer",
-      "selected-fields": "Campos seleccionados"
+      "selected-fields": "Campos seleccionados",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Seleccionar consulta por nombre",
@@ -8029,26 +8030,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "Anteayer",
+          "previousFiscalQuarter": "Trimestre fiscal anterior",
+          "previousFiscalYear": "Año fiscal anterior",
+          "previousMonth": "Mes anterior",
+          "previousWeek": "Semana anterior",
+          "previousYear": "Año anterior",
+          "thisDayLastWeek": "Este día de la semana pasada",
+          "thisFiscalQuarter": "Este trimestre fiscal",
+          "thisFiscalQuarterSoFar": "Este trimestre fiscal hasta ahora",
+          "thisFiscalYear": "Este año fiscal",
+          "thisFiscalYearSoFar": "Este año fiscal hasta ahora",
+          "thisMonth": "Este mes",
+          "thisMonthSoFar": "Este mes hasta ahora",
+          "thisWeek": "Esta semana",
+          "thisWeekSoFar": "Esta semana hasta ahora",
+          "thisYear": "Este año",
+          "thisYearSoFar": "Este año hasta ahora",
+          "today": "Hoy",
+          "todaySoFar": "Hoy hasta ahora",
+          "yesterday": "Ayer"
         },
         "lastNDays_one": "",
         "lastNDays_other": "",
