@@ -8,7 +8,7 @@ export type ScopesMap = Record<string, Scope>;
 export interface SelectedScope {
   scopeId: string;
   scopeNodeId?: string;
-  // Used to display title next to selected scope
+  // @deprecated Used to display title next to selected scope. scopeNodeId is used to resolve this anyways. Remove if we can confirm it doesn't break anything.
   parentNodeId?: string;
 }
 
@@ -47,6 +47,7 @@ export const ScopeSchema = z.object({
 export const ScopeNodeSpecSchema = z.object({
   nodeType: z.enum(['container', 'leaf']),
   title: z.string(),
+  subTitle: z.string().optional(),
   description: z.string().optional(),
   disableMultiSelect: z.boolean().optional(),
   linkId: z.string().optional(),

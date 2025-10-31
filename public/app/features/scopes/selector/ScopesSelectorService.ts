@@ -341,8 +341,15 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     return this.collapseNode(scopeNodeId);
   };
 
-  changeScopes = (scopeNames: string[], parentNodeId?: string) => {
-    return this.applyScopes(scopeNames.map((id) => ({ scopeId: id, parentNodeId })));
+  changeScopes = (scopeNames: string[], parentNodeId?: string, scopeNodeId?: string) => {
+    return this.applyScopes(
+      scopeNames.map((id, index) => ({
+        scopeId: id,
+        // Only the first scope gets the scopeNodeId
+        scopeNodeId: index === 0 ? scopeNodeId : undefined,
+        parentNodeId,
+      }))
+    );
   };
 
   /**
