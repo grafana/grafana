@@ -87,10 +87,13 @@ The data section contains tabs where you enter queries, transform your data, and
 
 - **Queries**
   - Select your data source. You can also set or update the data source in existing dashboards using the drop-down menu in the **Queries** tab.
-  - [Add queries](ref:add-a-query). Write or construct a query in the query language of your data source or click **+ Add from saved queries** to add a previously saved query. If you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead. To [save the query](ref:save-query) for reuse, click the **Save query** icon.
+  - **Save query** - To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
+  - **Replace with saved query** - Reuse a saved query.
+  - **+ Add query** - Add an additional query.
+  - **+ Add from saved queries** - Add an additional query by reusing a saved query.
 
   {{< admonition type="note" >}}
-  [Saved queries](ref:saved-queries) is in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Cloud only.
+  [Saved queries](ref:saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
   {{< /admonition >}}
 
 - **Transformations** - Apply data transformations. For more information, refer to [Transform data](ref:transform-data).
