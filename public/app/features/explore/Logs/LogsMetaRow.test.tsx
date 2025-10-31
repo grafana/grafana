@@ -28,9 +28,10 @@ const defaultProps: LogsMetaRowProps = {
   logRows: [],
   clearDisplayedFields: jest.fn(),
   defaultDisplayedFields: [],
+  visualisationType: 'logs',
 };
 
-const setup = (propOverrides?: object, disableDownload = false) => {
+const setup = (propOverrides?: Partial<LogsMetaRowProps>, disableDownload = false) => {
   const props = {
     ...defaultProps,
     ...propOverrides,
@@ -53,6 +54,15 @@ describe('LogsMetaRow', () => {
         name: 'Show original line',
       })
     ).toBeInTheDocument();
+  });
+
+  it('does not render the show original line button if the current viz is the table', () => {
+    setup({ displayedFields: ['test'], visualisationType: 'table' });
+    expect(
+      screen.queryByRole('button', {
+        name: 'Show original line',
+      })
+    ).not.toBeInTheDocument();
   });
 
   it('renders the displayed fields', async () => {
