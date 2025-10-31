@@ -14,6 +14,7 @@ describe('PillCell', () => {
     type: FieldType.string,
     values: values,
     config: {},
+    display: (value: unknown) => ({ text: String(value), color: '#FF780A', numeric: NaN }),
   });
 
   const ser = new XMLSerializer();
@@ -116,6 +117,29 @@ describe('PillCell', () => {
         <span style="background-color: rgb(252, 226, 222); color: rgb(32, 34, 38);">100</span>
         <span style="background-color: rgb(222, 218, 247); color: rgb(32, 34, 38);">200</span>
         <span style="background-color: rgb(249, 217, 249); color: rgb(32, 34, 38);">300</span>
+        `
+      );
+    });
+
+    it('custom display text', () => {
+      const mockField = fieldWithValues(['value1,value2,value3']);
+      const field = {
+        ...mockField,
+        display: (value: unknown) => ({
+          text: `${value} lbs`,
+          color: '#FF780A',
+          numeric: 0,
+        }),
+      } satisfies Field;
+
+      expectHTML(
+        render(
+          <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
+        ),
+        `
+        <span style=\"background-color: rgb(207, 250, 255); color: rgb(32, 34, 38);\">value1 lbs</span>
+        <span style=\"background-color: rgb(229, 172, 14); color: rgb(247, 248, 250);\">value2 lbs</span>
+        <span style=\"background-color: rgb(63, 104, 51); color: rgb(247, 248, 250);\">value3 lbs</span>
         `
       );
     });
