@@ -1174,12 +1174,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	if err != nil {
 		return err
 	}
-	uid, err := user.GetInternalID()
-	if err != nil {
-		return err
-	}
 	permissions := []accesscontrol.SetResourcePermissionCommand{}
-
 	isNested := obj.GetFolder() != ""
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
@@ -1187,6 +1182,10 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 		return nil
 	}
 	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		uid, err := user.GetInternalID()
+		if err != nil {
+			return err
+		}
 		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 			UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 		})
