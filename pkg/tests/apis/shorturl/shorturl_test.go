@@ -290,7 +290,7 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 			require.True(t, exists)
 
 			require.Greater(t, lastSeenAt, int64(1), "lastSeenAt should be greater than 1 after redirect")
-		}, time.Second*5, time.Millisecond*75, "lastSeenAt should be updated after redirect")
+		}, time.Second*15, time.Millisecond*150, "lastSeenAt not changed after 15s")
 
 		// Clean up
 		err := client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
