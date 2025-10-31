@@ -11,5 +11,9 @@ import (
 
 // TODO: Implement for 32-bit arm
 func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
-	return data.FieldTypeString, errors.New("arm not implemented")
+	return data.FieldTypeUnknown, errors.New("arm not implemented")
+}
+
+func SchemaFromFrame(frame *data.Frame) mysql.Schema {
+	return mysql.Schema{}
 }
