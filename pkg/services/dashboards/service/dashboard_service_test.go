@@ -2127,6 +2127,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 			name                        string
 			rootFolder                  bool
 			featureKubernetesDashboards bool
+			User                        *user.SignedInUser
 			expectedPermission          []accesscontrol.SetResourcePermissionCommand
 		}{
 			{
@@ -2145,6 +2146,19 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				featureKubernetesDashboards: true,
 				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
 					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+				},
+			},
+			{
+				name:                        "with kubernetesDashboards feature in root folder and user is anonymous",
+				rootFolder:                  true,
+				featureKubernetesDashboards: true,
+				User: &user.SignedInUser{
+					IsAnonymous: true,
+					UserID:      0,
+				},
+				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
 					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 				},
@@ -2171,6 +2185,9 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 					OrgID:   1,
 					OrgRole: "Admin",
 					UserID:  1,
+				}
+				if tc.User != nil {
+					user = tc.User
 				}
 				ctx := request.WithNamespace(context.Background(), "default")
 				ctx = identity.WithRequester(ctx, user)
