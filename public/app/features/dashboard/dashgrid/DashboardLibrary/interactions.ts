@@ -24,7 +24,7 @@ export const DashboardLibraryInteractions = {
     contentKinds: ContentKind[];
     datasourceTypes: string[];
     sourceEntryPoint: SourceEntryPoint;
-    eventLocation: EventLocation;
+    eventLocation?: EventLocation;
   }) => {
     reportDashboardLibraryInteraction('loaded', properties);
   },
@@ -34,7 +34,7 @@ export const DashboardLibraryInteractions = {
     libraryItemId: string;
     libraryItemTitle: string;
     sourceEntryPoint: SourceEntryPoint;
-    eventLocation: EventLocation;
+    eventLocation?: EventLocation;
   }) => {
     reportDashboardLibraryInteraction('item_clicked', properties);
   },
