@@ -24,7 +24,7 @@ type RuleViewTabBuilderConfig = {
 
 const ruleViewTabBuilders: RuleViewTabBuilderConfig[] = [];
 
-function registerRuleViewTab(builder: RuleViewTabBuilder, requiresEnrichmentReadPermission: boolean = false) {
+function registerRuleViewTab(builder: RuleViewTabBuilder, requiresEnrichmentReadPermission = false) {
   ruleViewTabBuilders.push({
     filterOnlyGrafanaAlertRules: true,
     requiresEnrichmentReadPermission,
@@ -76,7 +76,7 @@ export function __clearRuleViewTabsForTests() {
 export function getRuleViewExtensionTabs(
   args: RuleViewTabBuilderArgs,
   isGrafanaAlertRule: boolean,
-  canReadEnrichments: boolean = true
+  canReadEnrichments = true
 ): NavModelItem[] {
   return ruleViewTabBuilders
     .filter((config) => {

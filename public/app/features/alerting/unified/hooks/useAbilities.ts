@@ -10,11 +10,11 @@ import {
   PERMISSIONS_NOTIFICATION_POLICIES_MODIFY,
   PERMISSIONS_NOTIFICATION_POLICIES_READ,
 } from 'app/features/alerting/unified/components/notification-policies/permissions';
-import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import {
   PERMISSIONS_ENRICHMENTS_READ,
   PERMISSIONS_ENRICHMENTS_WRITE,
 } from 'app/features/alerting/unified/enterprise-components/enrichments/permissions';
+import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { CombinedRule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
@@ -195,7 +195,8 @@ export const useEnrichmentAbilities = (): Abilities<EnrichmentAction> => {
   // For now, allow all users to test the UI
   // const TEMP_BYPASS_FOR_TESTING = true;
 
-  return {    [EnrichmentAction.Read]: [AlwaysSupported, userIsAdmin || hasReadPermission],
+  return {
+    [EnrichmentAction.Read]: [AlwaysSupported, userIsAdmin || hasReadPermission],
     [EnrichmentAction.Write]: [AlwaysSupported, userIsAdmin || hasWritePermission],
   };
 };
