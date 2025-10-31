@@ -165,6 +165,7 @@ export function PanelChrome({
   const panelTitleId = useId().replace(/:/g, '_');
   const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
   const pointerDistance = usePointerDistance();
+  const [subHeaderRef, { height: measuredSubHeaderHeight }] = useMeasure<HTMLDivElement>();
 
   const hasHeader = !hoverHeader;
 
@@ -185,7 +186,7 @@ export function PanelChrome({
   const isPanelTransparent = displayMode === 'transparent';
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
-  const subHeaderHeight = !collapsed && subHeaderContent ? headerHeight : 0;
+  const subHeaderHeight = Math.min(measuredSubHeaderHeight, headerHeight);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(
     padding,
     theme,
@@ -421,7 +422,11 @@ export function PanelChrome({
               />
             )}
           </div>
-          {!collapsed && subHeaderContent && <div className={styles.subHeader}>{subHeaderContent}</div>}
+          {!collapsed && subHeaderContent && (
+            <div className={styles.subHeader} ref={subHeaderRef}>
+              {subHeaderContent}
+            </div>
+          )}
         </>
       )}
 

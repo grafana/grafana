@@ -1,8 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AdHocVariableFilter, GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import {
   AdHocFiltersVariable,
   GroupByVariable,
@@ -10,15 +9,13 @@ import {
   SceneObjectBase,
   SceneQueryRunner,
   VizPanel,
-  getNonApplicablePillStyles,
   sceneGraph,
 } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { Tooltip, useStyles2 } from '@grafana/ui';
 
-const CHAR_WIDTH_ESTIMATE = 7;
-const PILL_PADDING = 24;
+const CHAR_WIDTH_ESTIMATE = 6;
+const PILL_PADDING = 8;
 const GAP_SIZE = 8;
-const OVERFLOW_PILL_WIDTH = 100;
 
 export class PanelNonApplicableFiltersSubHeader extends SceneObjectBase {
   static Component = PanelNonApplicableFiltersSubHeaderRenderer;
@@ -59,7 +56,6 @@ function PanelNonApplicableFiltersSubHeaderRenderer({
   const data = dataObject.useState();
   const filtersVariable = model.getAdHocFiltersVariable();
   const groupByVariable = model.getGroupByVariable();
-  const nonApplicablePillStyles = useStyles2(getNonApplicablePillStyles);
   const localStyles = useStyles2(getLocalStyles);
   const containerRef = useRef<HTMLDivElement>(null);
   const [nonApplicables, setNonApplicables] = useState<string[]>([]);
@@ -68,36 +64,36 @@ function PanelNonApplicableFiltersSubHeaderRenderer({
   const filtersState = filtersVariable?.useState();
   const groupByState = groupByVariable?.useState();
 
-  useEffect(() => {
+  const fetchApplicability = useCallback(async () => {
     const queries = data.$data instanceof SceneQueryRunner ? data.$data.state.queries : [];
     const filters = filtersState?.filters ?? [];
     const originFilters = filtersState?.originFilters ?? [];
     const groupByValue = groupByState?.value ?? [];
     const allFilters = [...filters, ...originFilters];
 
-    const fetchApplicability = async () => {
-      const nonApplicables: string[] = [];
+    const nonApplicables: string[] = [];
 
-      if (filtersVariable && allFilters.length > 0) {
-        const applicability = await filtersVariable.getFiltersApplicabilityForQueries(allFilters, queries);
-        const nonApplicableFilters = allFilters.filter((filter) => {
-          const result = applicability?.find((r) => r.key === filter.key && r.origin === filter.origin);
-          return !result?.applicable;
-        });
-        nonApplicables.push(...nonApplicableFilters.map(formatFilterLabel));
-      }
+    if (filtersVariable && allFilters.length > 0) {
+      const applicability = await filtersVariable.getFiltersApplicabilityForQueries(allFilters, queries);
+      const nonApplicableFilters = allFilters.filter((filter) => {
+        const result = applicability?.find((r) => r.key === filter.key && r.origin === filter.origin);
+        return !result?.applicable;
+      });
+      nonApplicables.push(...nonApplicableFilters.map(formatFilterLabel));
+    }
 
-      if (groupByVariable) {
-        const applicability = await groupByVariable.getGroupByApplicabilityForQueries(groupByValue, queries);
-        const nonApplicableKeys = applicability?.filter((r) => !r.applicable).map((r) => r.key) ?? [];
-        nonApplicables.push(...nonApplicableKeys);
-      }
+    if (groupByVariable) {
+      const applicability = await groupByVariable.getGroupByApplicabilityForQueries(groupByValue, queries);
+      const nonApplicableKeys = applicability?.filter((r) => !r.applicable).map((r) => r.key) ?? [];
+      nonApplicables.push(...nonApplicableKeys);
+    }
 
-      setNonApplicables(nonApplicables);
-    };
+    setNonApplicables(nonApplicables);
+  }, [data, filtersState, groupByState, filtersVariable, groupByVariable]);
 
+  useEffect(() => {
     fetchApplicability();
-  }, [filtersVariable, filtersState, groupByVariable, groupByState, data]);
+  }, [fetchApplicability]);
 
   // calculates how many pills fit in the available width
   useEffect(() => {
@@ -116,7 +112,14 @@ function PanelNonApplicableFiltersSubHeaderRenderer({
         const neededWidth = totalWidth + pillWidth + gapWidth;
 
         const isLastPill = i === nonApplicables.length - 1;
-        const availableWidth = isLastPill ? containerWidth : containerWidth - OVERFLOW_PILL_WIDTH - GAP_SIZE;
+
+        // Calculate available width: if not last pill, reserve space for overflow pill
+        let availableWidth = containerWidth;
+        if (!isLastPill) {
+          const remainingAfterThis = nonApplicables.length - (i + 1);
+          const overflowPillWidth = estimatePillWidth(`+${remainingAfterThis}`);
+          availableWidth = containerWidth - overflowPillWidth - GAP_SIZE;
+        }
 
         if (neededWidth > availableWidth) {
           break;
@@ -146,24 +149,19 @@ function PanelNonApplicableFiltersSubHeaderRenderer({
   const visibleFilters = nonApplicables.slice(0, visibleCount);
   const remainingCount = nonApplicables.length - visibleCount;
   const hasOverflow = remainingCount > 0;
+  const remainingFilters = nonApplicables.slice(visibleCount);
 
   return (
     <div ref={containerRef} className={localStyles.container}>
       {visibleFilters.map((filter, index) => (
-        <div
-          key={index}
-          className={cx(nonApplicablePillStyles.disabledPill, nonApplicablePillStyles.strikethrough, localStyles.pill)}
-        >
+        <div key={index} className={cx(localStyles.disabledPill, localStyles.strikethrough, localStyles.pill)}>
           {filter}
         </div>
       ))}
       {hasOverflow && (
-        <div className={cx(nonApplicablePillStyles.disabledPill, localStyles.pill, localStyles.overflowPill)}>
-          + {remainingCount}{' '}
-          {remainingCount === 1
-            ? t('panel.sub-header.non-applicables.count.filter', 'filter')
-            : t('panel.sub-header.non-applicables.count.filters', 'filters')}
-        </div>
+        <Tooltip content={remainingFilters.join(', ')}>
+          <div className={cx(localStyles.disabledPill, localStyles.pill)}>+{remainingCount}</div>
+        </Tooltip>
       )}
     </div>
   );
@@ -179,13 +177,22 @@ function getLocalStyles(theme: GrafanaTheme2) {
       overflow: 'hidden',
     }),
     pill: css({
-      padding: theme.spacing(0.25, 0.75),
+      padding: theme.spacing(0.2, 0.4),
       borderRadius: theme.shape.radius.default,
       whiteSpace: 'nowrap',
       flexShrink: 0,
+      fontSize: theme.typography.bodySmall.fontSize,
     }),
-    overflowPill: css({
-      fontWeight: theme.typography.fontWeightMedium,
+    disabledPill: css({
+      background: theme.colors.action.selected,
+      color: theme.colors.text.disabled,
+      border: 0,
+      '&:hover': {
+        background: theme.colors.action.selected,
+      },
+    }),
+    strikethrough: css({
+      textDecoration: 'line-through',
     }),
   };
 }

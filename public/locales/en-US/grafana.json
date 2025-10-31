@@ -10928,14 +10928,6 @@
       "title-click-to-close": "Click again to close this section",
       "tooltip-delete": "Delete"
     },
-    "sub-header": {
-      "non-applicables": {
-        "count": {
-          "filter": "filter",
-          "filters": "filters"
-        }
-      }
-    },
     "visualization-suggestions": {
       "based-on-current-data": "Based on current data",
       "no-results-matched-your-query": "No results matched your query"

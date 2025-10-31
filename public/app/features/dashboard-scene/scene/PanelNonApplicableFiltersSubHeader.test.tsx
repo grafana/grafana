@@ -12,9 +12,9 @@ import {
 
 import { activateFullSceneTree } from '../utils/test-utils';
 
+import { DashboardScene } from './DashboardScene';
 import { PanelNonApplicableFiltersSubHeader } from './PanelNonApplicableFiltersSubHeader';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { DashboardScene } from './DashboardScene';
 
 describe('PanelNonApplicableFiltersSubHeader', () => {
   it('should throw error when not used with VizPanel', () => {
@@ -107,7 +107,7 @@ function buildTestPanel(
   const panel = new VizPanel({
     title: 'Test Panel',
     pluginId: 'table',
-    subHeaderContent: subHeader,
+    subHeader: subHeader,
     $data: new SceneQueryRunner({
       datasource: { uid: 'test-ds' },
       queries: [{ refId: 'A' }],

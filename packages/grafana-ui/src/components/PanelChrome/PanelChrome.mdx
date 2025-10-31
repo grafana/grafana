@@ -421,6 +421,70 @@ Component used for rendering content wrapped in the same style as grafana panels
   </PanelChrome>
 </ExampleFrame>
 
+### Sub-header content
+
+The panel supports displaying additional content below the main header using the `subHeaderContent` prop. This can be used to show context-specific information.
+
+```tsx
+<PanelChrome
+  title="My awesome panel title"
+  subHeaderContent={
+    <div style={{ display: 'flex', gap: '8px', padding: '4px 8px' }}>
+      <span style={{ fontSize: '12px', color: '#999' }}>Additional info</span>
+    </div>
+  }
+  width={400}
+  height={200}
+>
+  {(innerwidth, innerheight) => {
+    return (
+      <div
+        style={{
+          width: innerwidth,
+          height: innerheight,
+          background: 'rgba(230,0,0,0.05)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        Content
+      </div>
+    );
+  }}
+</PanelChrome>
+```
+
+<ExampleFrame>
+  <PanelChrome
+    title="My awesome panel title"
+    subHeaderContent={
+      <div style={{ display: 'flex', gap: '8px', padding: '4px 8px' }}>
+        <span style={{ fontSize: '12px', color: '#999' }}>Additional info</span>
+      </div>
+    }
+    width={400}
+    height={200}
+  >
+    {(innerwidth, innerheight) => {
+      return (
+        <div
+          style={{
+            width: innerwidth,
+            height: innerheight,
+            background: 'rgba(230,0,0,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          Content
+        </div>
+      );
+    }}
+  </PanelChrome>
+</ExampleFrame>
+
 ### Collapsible
 
 The panel can be collapsed/expanded by clicking on the chevron or the title.

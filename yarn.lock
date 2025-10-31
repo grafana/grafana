@@ -3555,11 +3555,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.40.0--canary.1278.18560955561.0":
-  version: 6.40.0--canary.1278.18560955561.0
-  resolution: "@grafana/scenes-react@npm:6.40.0--canary.1278.18560955561.0"
+"@grafana/scenes-react@npm:6.43.0--canary.1278.18972704866.0":
+  version: 6.43.0--canary.1278.18972704866.0
+  resolution: "@grafana/scenes-react@npm:6.43.0--canary.1278.18972704866.0"
   dependencies:
-    "@grafana/scenes": "npm:6.40.0--canary.1278.18560955561.0"
+    "@grafana/scenes": "npm:6.43.0--canary.1278.18972704866.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3571,7 +3571,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/81f852d00c1a76f72e8f28019d97e2678f51362ec53ed4d585814119f05293397c1e5eed14b347e3ee52ddff0917bb6fd881cce47f07ffb2d1cacdbaa72430d8
+  checksum: 10/33e2f7dda01837d5cfb58cb5c7e9b47d4a26a3c4933fd4c1ce46faaac54ce0b1e3cf3cee006fab65ce034d7bd2b40aa765541a6c646d20b2ea68cba9c818e3e5
   languageName: node
   linkType: hard
 
@@ -3601,9 +3601,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.40.0--canary.1278.18560955561.0":
-  version: 6.40.0--canary.1278.18560955561.0
-  resolution: "@grafana/scenes@npm:6.40.0--canary.1278.18560955561.0"
+"@grafana/scenes@npm:6.43.0--canary.1278.18972704866.0":
+  version: 6.43.0--canary.1278.18972704866.0
+  resolution: "@grafana/scenes@npm:6.43.0--canary.1278.18972704866.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3623,7 +3623,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/96dcc208cb0b4dab9685a0efcb8c45e63084599a7905711037b97779c275174dbcb24baa161657e41c54a9497e72291b85be9050745fb1c70009941e0b4f1835
+  checksum: 10/4b2dc41ee429e3ac664695d44e87a7dc21a3649c0d7deb146ee75a766b19811ffa7b477213db8a21004574c7f9142efaad94fa0bdb66e2db3d8447ef958bd594
   languageName: node
   linkType: hard
 
@@ -18865,8 +18865,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.10.10"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.40.0--canary.1278.18560955561.0"
-    "@grafana/scenes-react": "npm:6.40.0--canary.1278.18560955561.0"
+    "@grafana/scenes": "npm:6.43.0--canary.1278.18972704866.0"
+    "@grafana/scenes-react": "npm:6.43.0--canary.1278.18972704866.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"

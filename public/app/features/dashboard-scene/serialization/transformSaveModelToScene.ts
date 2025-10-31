@@ -438,7 +438,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,
-    subHeaderContent: [new PanelNonApplicableFiltersSubHeader()],
+    subHeader: [new PanelNonApplicableFiltersSubHeader()],
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
