@@ -96,6 +96,13 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 				},
+
+				{
+					Kind:       "ExternalGroupMapping",
+					Plural:     "ExternalGroupMappings",
+					Scope:      "Namespaced",
+					Conversion: false,
+				},
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{},
@@ -115,16 +122,17 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"GlobalRole/v0alpha1":         v0alpha1.GlobalRoleKind(),
-	"GlobalRoleBinding/v0alpha1":  v0alpha1.GlobalRoleBindingKind(),
-	"CoreRole/v0alpha1":           v0alpha1.CoreRoleKind(),
-	"Role/v0alpha1":               v0alpha1.RoleKind(),
-	"RoleBinding/v0alpha1":        v0alpha1.RoleBindingKind(),
-	"ResourcePermission/v0alpha1": v0alpha1.ResourcePermissionKind(),
-	"User/v0alpha1":               v0alpha1.UserKind(),
-	"Team/v0alpha1":               v0alpha1.TeamKind(),
-	"TeamBinding/v0alpha1":        v0alpha1.TeamBindingKind(),
-	"ServiceAccount/v0alpha1":     v0alpha1.ServiceAccountKind(),
+	"GlobalRole/v0alpha1":           v0alpha1.GlobalRoleKind(),
+	"GlobalRoleBinding/v0alpha1":    v0alpha1.GlobalRoleBindingKind(),
+	"CoreRole/v0alpha1":             v0alpha1.CoreRoleKind(),
+	"Role/v0alpha1":                 v0alpha1.RoleKind(),
+	"RoleBinding/v0alpha1":          v0alpha1.RoleBindingKind(),
+	"ResourcePermission/v0alpha1":   v0alpha1.ResourcePermissionKind(),
+	"User/v0alpha1":                 v0alpha1.UserKind(),
+	"Team/v0alpha1":                 v0alpha1.TeamKind(),
+	"TeamBinding/v0alpha1":          v0alpha1.TeamBindingKind(),
+	"ServiceAccount/v0alpha1":       v0alpha1.ServiceAccountKind(),
+	"ExternalGroupMapping/v0alpha1": v0alpha1.ExternalGroupMappingKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

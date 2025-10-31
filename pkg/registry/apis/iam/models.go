@@ -35,14 +35,19 @@ type RoleStorageBackend interface{ resource.StorageBackend }
 // Used by wire to identify the storage backend for role bindings.
 type RoleBindingStorageBackend interface{ resource.StorageBackend }
 
+// ExternalGroupMappingStorageBackend uses the resource.StorageBackend interface to provide storage for external group mappings.
+// Used by wire to identify the storage backend for external group mappings.
+type ExternalGroupMappingStorageBackend interface{ resource.StorageBackend }
+
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
 	// Stores
-	store                      legacy.LegacyIdentityStore
-	coreRolesStorage           CoreRoleStorageBackend
-	rolesStorage               RoleStorageBackend
-	resourcePermissionsStorage resource.StorageBackend
-	roleBindingsStorage        RoleBindingStorageBackend
+	store                       legacy.LegacyIdentityStore
+	coreRolesStorage            CoreRoleStorageBackend
+	rolesStorage                RoleStorageBackend
+	resourcePermissionsStorage  resource.StorageBackend
+	roleBindingsStorage         RoleBindingStorageBackend
+	externalGroupMappingStorage ExternalGroupMappingStorageBackend
 
 	// Access Control
 	authorizer authorizer.Authorizer

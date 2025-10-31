@@ -36,6 +36,7 @@ func newIAMAuthorizer(accessClient authlib.AccessClient, legacyAccessClient auth
 	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.ExternalGroupMappingResourceInfo.GetName()] = authorizer
 
 	return &iamAuthorizer{resourceAuthorizer: resourceAuthorizer}
 }
