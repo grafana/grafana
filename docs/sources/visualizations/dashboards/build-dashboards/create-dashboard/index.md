@@ -23,27 +23,27 @@ refs:
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#special-data-sources
   visualization-specific-options:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
   configure-standard-options:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-standard-options/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/
   configure-value-mappings:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-value-mappings/
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-value-mappings/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-value-mappings/
   generative-ai-features:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
   configure-thresholds:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-thresholds/
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-thresholds/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-thresholds/
   data-sources:
@@ -63,27 +63,27 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
   visualizations-options:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
   configure-repeating-panels:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-panels
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-panel-options/#configure-repeating-panels
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-panel-options/#configure-repeating-panels
   override-field-values:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-overrides/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/
   saved-queries:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#saved-queries
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#saved-queries
   save-query:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#save-a-query
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#save-a-query
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#save-a-query
 ---
@@ -125,7 +125,12 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 1. To create a query, do one of the following:
    - Write or construct a query in the query language of your data source.
-   - Click **Replace with saved query** to reuse a saved query.
+   - Click **Replace with saved query** to reuse a [saved query](ref:saved-queries).
+
+1. (Optional) To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
+
+1. Click **Refresh** to query the data source.
+1. (Optional) To add subsequent queries, click **+ Add query** or **+ Add from saved queries**, and refresh the data source as many times as needed.
 
    {{< admonition type="note" >}}
    [Saved queries](ref:saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
@@ -133,10 +138,6 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    This feature is only available on Grafana Enterprise and Grafana Cloud.
    {{< /admonition >}}
 
-1. (Optional) To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
-
-1. (Optional) Click **+ Add query** or **Add from saved queries** to add more queries as needed.
-1. Click **Refresh** to query the data source.
 1. In the visualization list, select a visualization type.
 
    ![Visualization selector](/media/docs/grafana/dashboards/screenshot-select-visualization-11-2.png)
