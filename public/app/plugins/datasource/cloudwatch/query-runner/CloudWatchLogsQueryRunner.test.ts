@@ -766,7 +766,7 @@ const stopQueryResponseStub = {
 const anomaliesQueryResponse: DataQueryResponse = {
   data: [
     {
-      name: 'Logs anomalies',
+      name: 'Log anomalies',
       refId: 'A',
       meta: {
         preferredVisualisationType: 'table',
