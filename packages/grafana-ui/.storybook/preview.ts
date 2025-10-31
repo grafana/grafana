@@ -113,6 +113,7 @@ const preview: Preview = {
 
           'plugins',
           'alerting',
+          'profiling',
           'developers',
         ];
 
