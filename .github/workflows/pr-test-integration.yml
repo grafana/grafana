@@ -109,14 +109,14 @@ jobs:
             ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | \
             ./scripts/ci/backend-tests/run-go-tests-with-profiling.sh -o profiles -t sqlite -r '^TestIntegration' -T 8m -P -
       - name: Check if profile artifacts exist
-        if: always()
+        if: (!cancelled())
         id: check-artifacts
         run: |
           set -euo pipefail
           ./scripts/ci/backend-tests/check-profile-artifacts.sh
       - name: Output test profiles and traces
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: always() && steps.check-artifacts.outputs.upload_artifact == 'true'
+        if: (!cancelled() && steps.check-artifacts.outputs.upload_artifact == 'true')
         with:
           name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}-shard-${{ steps.check-artifacts.outputs.shard }}
           path: profiles/
