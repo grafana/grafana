@@ -1859,6 +1859,126 @@ describe('logs volume', () => {
   });
 });
 
+describe('logs volume, field configuration', () => {
+  class TestDataQuery implements DataQuery {
+    refId = 'A';
+    target = '';
+  }
+
+  let logsVolumeProvider: Observable<DataQueryResponse>,
+    datasource: MockObservableDataSourceApi,
+    request: DataQueryRequest<TestDataQuery>;
+
+  // Loki (and maybe other sources) returns results where a label defines the log level
+  function createLokiFrame() {
+    return toDataFrame({
+      fields: [
+        {
+          name: 'Time',
+          type: FieldType.time,
+          config: {},
+          values: [3000000, 4000000],
+        },
+        {
+          name: 'Value',
+          type: FieldType.number,
+          config: {},
+          values: [5, 4],
+          labels: {
+            level: 'debug',
+          },
+        },
+      ],
+    });
+  }
+
+  // ElasticSearch (and maybe other sources) returns results where the frame name defines the log level
+  function createElasticFrame() {
+    return toDataFrame({
+      name: 'debug',
+      fields: [
+        {
+          name: 'Time',
+          type: FieldType.time,
+          config: {},
+          values: [3000000, 4000000],
+        },
+        {
+          name: 'Value',
+          type: FieldType.number,
+          config: {},
+          values: [5, 4],
+        },
+      ],
+    });
+  }
+
+  // Mock datasource, always returns the defined frames from datasourceSetup().
+  function setup(datasourceSetup: () => void) {
+    datasourceSetup();
+    request = {
+      targets: [{ target: '' }],
+      range: getDefaultTimeRange(),
+      scopedVars: {},
+    } as unknown as DataQueryRequest<TestDataQuery>;
+    logsVolumeProvider = queryLogsVolume(datasource, request, { targets: request.targets });
+  }
+
+  function setupLokiResult() {
+    datasource = new MockObservableDataSourceApi('loki', [
+      {
+        data: [createLokiFrame()],
+      },
+    ]);
+  }
+
+  function setupElasticResult() {
+    datasource = new MockObservableDataSourceApi('elasticSearch', [
+      {
+        data: [createElasticFrame()],
+      },
+    ]);
+  }
+
+  // Validate the number fields for proper configuration. This is later used by the panels
+  // to display the logs volume. These should be the same for any datasource used.
+  let checkFieldConfiguration = (f: any) => {
+    if (f.type === 'number') {
+      expect(f.config?.displayNameFromDS).toBe('debug')
+    }
+  }
+
+  it('field configuration is properly set when log level is in the labels', async () => {
+    setup(setupLokiResult);
+    await expect(logsVolumeProvider).toEmitValuesWith((received) => {
+      expect(received).toHaveLength(2);
+
+      const dataEvent = received[1];
+      expect(dataEvent).toBeDefined();
+
+      const frame = dataEvent.data[0];
+      expect(frame).toBeDefined();
+
+      frame.fields.forEach(checkFieldConfiguration);
+    });
+  });
+
+  it('field configuration is properly set when log level is in the frame name', async () => {
+    setup(setupElasticResult);
+    await expect(logsVolumeProvider).toEmitValuesWith((received) => {
+      expect(received).toHaveLength(2);
+
+      const dataEvent = received[1];
+      expect(dataEvent).toBeDefined();
+
+      const frame = dataEvent.data[0];
+      expect(frame).toBeDefined();
+
+      frame.fields.forEach(checkFieldConfiguration);
+    });
+  });
+});
+
 const mockLogRow = {
   dataFrame: toDataFrame({
     fields: [
