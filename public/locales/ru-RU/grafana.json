@@ -7235,7 +7235,8 @@
     "logs-table-multi-select": {
       "fields": "Поля",
       "reset": "Сброс",
-      "selected-fields": "Выбранные поля"
+      "selected-fields": "Выбранные поля",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Выбрать запрос по имени",
@@ -8079,26 +8080,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "Позавчера",
+          "previousFiscalQuarter": "Предыдущий финансовый квартал",
+          "previousFiscalYear": "Предыдущий финансовый год",
+          "previousMonth": "Предыдущий месяц",
+          "previousWeek": "Предыдущая неделя",
+          "previousYear": "Предыдущий год",
+          "thisDayLastWeek": "Этот день на прошлой неделе",
+          "thisFiscalQuarter": "Текущий финансовый квартал",
+          "thisFiscalQuarterSoFar": "Текущий финансовый квартал по состоянию на настоящий момент",
+          "thisFiscalYear": "Текущий финансовый год",
+          "thisFiscalYearSoFar": "Текущий финансовый год по состоянию на настоящий момент",
+          "thisMonth": "Текущий месяц",
+          "thisMonthSoFar": "Текущий месяц по состоянию на настоящий момент",
+          "thisWeek": "Текущая неделя",
+          "thisWeekSoFar": "Текущая неделя по состоянию на настоящий момент",
+          "thisYear": "Текущий год",
+          "thisYearSoFar": "Текущий год по состоянию на настоящий момент",
+          "today": "Сегодня",
+          "todaySoFar": "Сегодня по состоянию на настоящий момент",
+          "yesterday": "Вчера"
         },
         "lastNDays_one": "",
         "lastNDays_few": "",
