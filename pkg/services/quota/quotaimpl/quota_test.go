@@ -508,7 +508,7 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	folderSvc := folderimpl.ProvideService(
 		fStore, acmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-		nil, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), restconfig.RestConfigProvider)
+		nil, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), restconfig.WithoutRestConfig)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	dashService, err := dashService.ProvideDashboardServiceImpl(

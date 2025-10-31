@@ -78,7 +78,7 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 	fStore := folderimpl.ProvideStore(store)
 	folderSvc := folderimpl.ProvideService(
 		fStore, mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardWriteStore,
-		nil, store, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), restconfig.RestConfigProvider)
+		nil, store, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), restconfig.WithoutRestConfig)
 
 	rootFolders := make([]*folder.Folder, 0, numFolders)
 	dashes := make([]dashboards.Dashboard, 0, numDashboards)
