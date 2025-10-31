@@ -68,7 +68,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	ctx := c.Req.Context()
-	if hs.OpenFeature.Boolean(ctx, featuremgmt.FlagIndividualCookiePreferences, true, openfeature.EvaluationContext{}) {
+	if hs.OpenFeature.Boolean(ctx, featuremgmt.FlagIndividualCookiePreferences, true, openfeature.TransactionContext(ctx)) {
 		hs.log.FromContext(ctx).Info(featuremgmt.FlagIndividualCookiePreferences, "enabled")
 	}
 
