@@ -67,7 +67,7 @@ jobs:
           SHARD: ${{ matrix.shard }}
         run: |
           set -euo pipefail
-          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
 
   sqlite_nocgo:
@@ -106,7 +106,7 @@ jobs:
             pkg/tests/apis/dashboard
         run: |
           set -euo pipefail
-          # Build regex pattern using sed and paste: pkg1$|pkg2$|pkg3$
+          # Build regex pattern like: pkg1$|pkg2$|pkg3$
           SKIP_PATTERN=$(echo "$SKIP_PACKAGES" | sed '/^$/d' | sed 's|.*|&$|' | paste -sd '|' -)
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | grep -Ev "($SKIP_PATTERN)")"
           go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
@@ -153,11 +153,11 @@ jobs:
           exit $EXIT_CODE
       - name: Output test profiles and traces
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: (matrix.shard == 'profiled' && steps.run-profiled-tests.conclusion == 'failure')
+        if: (matrix.shard == 'profiled' && !cancelled())
         with:
           name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}
           path: profiles/
-          retention-days: 1
+          retention-days: 7
           if-no-files-found: ignore
   mysql:
     needs: detect-changes
