@@ -1081,6 +1081,7 @@ export interface FeatureToggles {
   alertingImportAlertmanagerUI?: boolean;
   /**
   * Enables image sharing functionality for dashboards
+  * @default true
   */
   sharingDashboardImage?: boolean;
   /**

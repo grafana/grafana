@@ -1662,9 +1662,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1722,9 +1719,6 @@
       },
       "placeholder-key": "sleutel",
       "placeholder-value": "waarde"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Contactpunten bekijken of maken",
@@ -2950,7 +2944,9 @@
       "alert-instances": "",
       "error-loading-rule": "",
       "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
       "no-instances-found": "",
       "no-labels": "",
       "open-in-sidebar": "",
@@ -4157,6 +4153,7 @@
     "cancel": "Annuleren",
     "clear": "Wissen",
     "collapse": "Samenvouwen",
+    "disabled": "",
     "edit": "Bewerken",
     "help": "Help",
     "loading": "Bezig met laden ...",
@@ -5133,6 +5130,19 @@
       "aria-label-remove-override": "Overschrijving verwijderen",
       "tooltip-remove-override": "Overschrijving verwijderen"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard moet worden opgeslagen voordat waarschuwingen kunnen worden toegevoegd.",
@@ -5687,6 +5697,11 @@
       "open-dashboard": "Dashboard openen",
       "open-in-new-tab": "In een nieuw tabblad openen",
       "title-error-adding-the-panel": "Er is een fout opgetreden bij het toevoegen van het paneel"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Terug naar lijst",
@@ -6250,6 +6265,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -7644,7 +7660,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "Geen mappen gevonden",
     "select-aria-label": "Mapfilter",
     "select-placeholder": "Filteren op map"
   },
@@ -8762,6 +8777,9 @@
     },
     "drawer": {
       "close": "Sluiten"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "Experimenteel",
@@ -10579,7 +10597,12 @@
       }
     },
     "help": {
-      "aria-label": "Help"
+      "aria-label": "Help",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "Uitnodigen",
@@ -10872,6 +10895,7 @@
       "replace-library-panel": "Bibliotheekpaneel vervangen",
       "share": "Delen",
       "show-legend": "Legenda tonen",
+      "time-settings": "",
       "unlink-library-panel": "Bibliotheekpaneel ontkoppelen",
       "view": "Weergave"
     },
@@ -11345,12 +11369,15 @@
       "label-workflow": "Werkstroom",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "Deze bron bevindt zich achter de tak in {{repoType}}.",
+      "branch-text": "",
       "not-saved": "De rest van de Grafana-gebruikers in je organisatie ziet nog steeds de huidige versie die is opgeslagen in de geconfigureerde standaardtak totdat deze tak is samengevoegd",
       "open-in-repo-button": "Openen in {{repoType}}",
       "open-pull-request-in-repo": "Pull-verzoek openen in {{repoType}}",
@@ -12290,8 +12317,6 @@
       "title": "Scopes selecteren"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "Geen resultaten gevonden voor je zoekopdracht",
         "recommended": "Aanbevolen",
@@ -13134,6 +13159,14 @@
       "form-label": "Labelformulier",
       "title": "Paneel"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {

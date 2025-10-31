@@ -1873,10 +1873,10 @@ var (
 		{
 			Name:         "sharingDashboardImage",
 			Description:  "Enables image sharing functionality for dashboards",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSharingSquad,
-			HideFromDocs: true,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:        "preferLibraryPanelTitle",

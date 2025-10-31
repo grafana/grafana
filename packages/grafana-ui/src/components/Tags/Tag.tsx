@@ -57,6 +57,11 @@ const TagSkeleton: SkeletonComponent = ({ rootProps }) => {
   return <Skeleton width={60} height={22} containerClassName={styles.container} {...rootProps} />;
 };
 
+/**
+ * Used for displaying metadata, for example to add more details to search results. Background and border colors are generated from the tag name.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-tag--docs
+ */
 export const Tag = attachSkeleton(TagComponent, TagSkeleton);
 
 const getSkeletonStyles = () => ({

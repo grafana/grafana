@@ -1662,9 +1662,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1722,9 +1719,6 @@
       },
       "placeholder-key": "chave",
       "placeholder-value": "valor"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Visualizar ou criar pontos de contato",
@@ -2950,7 +2944,9 @@
       "alert-instances": "",
       "error-loading-rule": "",
       "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
       "no-instances-found": "",
       "no-labels": "",
       "open-in-sidebar": "",
@@ -4157,6 +4153,7 @@
     "cancel": "Cancelar",
     "clear": "Limpar",
     "collapse": "Recolher",
+    "disabled": "",
     "edit": "Editar",
     "help": "Ajuda",
     "loading": "Carregando...",
@@ -5133,6 +5130,19 @@
       "aria-label-remove-override": "Remover substituição",
       "tooltip-remove-override": "Remover substituição"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "O painel de controle deve ser salvo para que os alertas possam ser adicionados.",
@@ -5687,6 +5697,11 @@
       "open-dashboard": "Abrir o painel",
       "open-in-new-tab": "Abrir em nova aba",
       "title-error-adding-the-panel": "Erro ao adicionar o painel"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Voltar para a lista",
@@ -6250,6 +6265,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -7644,7 +7660,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "Nenhuma pasta encontrada",
     "select-aria-label": "Filtro de pasta",
     "select-placeholder": "Filtrar por pasta"
   },
@@ -8762,6 +8777,9 @@
     },
     "drawer": {
       "close": "Fechar"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "Em testes",
@@ -10579,7 +10597,12 @@
       }
     },
     "help": {
-      "aria-label": "Ajuda"
+      "aria-label": "Ajuda",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "Convidar",
@@ -10872,6 +10895,7 @@
       "replace-library-panel": "Substituir painel da biblioteca",
       "share": "Compartilhar",
       "show-legend": "Mostrar legenda",
+      "time-settings": "",
       "unlink-library-panel": "Desvincular painel de biblioteca",
       "view": "Visualizar"
     },
@@ -11345,12 +11369,15 @@
       "label-workflow": "Fluxo de trabalho",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "Este recurso está atrás da ramificação em {{repoType}}.",
+      "branch-text": "",
       "not-saved": "O restante dos usuários do Grafana na sua organização ainda verá a versão atual salva na ramificação padrão configurada até que esta ramificação seja mesclada",
       "open-in-repo-button": "Abrir em {{repoType}}",
       "open-pull-request-in-repo": "Abrir solicitação de pull no {{repoType}}",
@@ -12290,8 +12317,6 @@
       "title": "Selecionar escopos"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "Nenhum resultado encontrado para sua consulta",
         "recommended": "Recomendado",
@@ -13134,6 +13159,14 @@
       "form-label": "Etiqueta do formulário",
       "title": "Painel"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {

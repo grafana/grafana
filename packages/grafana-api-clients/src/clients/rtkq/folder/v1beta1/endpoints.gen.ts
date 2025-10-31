@@ -560,3 +560,24 @@ export type FolderInfoList = {
   kind?: string;
   metadata?: ListMeta;
 };
+export const {
+  useGetApiResourcesQuery,
+  useLazyGetApiResourcesQuery,
+  useListFolderQuery,
+  useLazyListFolderQuery,
+  useCreateFolderMutation,
+  useDeletecollectionFolderMutation,
+  useGetFolderQuery,
+  useLazyGetFolderQuery,
+  useReplaceFolderMutation,
+  useDeleteFolderMutation,
+  useUpdateFolderMutation,
+  useGetFolderAccessQuery,
+  useLazyGetFolderAccessQuery,
+  useGetFolderChildrenQuery,
+  useLazyGetFolderChildrenQuery,
+  useGetFolderCountsQuery,
+  useLazyGetFolderCountsQuery,
+  useGetFolderParentsQuery,
+  useLazyGetFolderParentsQuery,
+} = injectedRtkApi;

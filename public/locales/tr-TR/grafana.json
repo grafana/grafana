@@ -1662,9 +1662,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1722,9 +1719,6 @@
       },
       "placeholder-key": "anahtar",
       "placeholder-value": "değer"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "İletişim noktalarını görüntüle veya oluştur",
@@ -2950,7 +2944,9 @@
       "alert-instances": "",
       "error-loading-rule": "",
       "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
       "no-instances-found": "",
       "no-labels": "",
       "open-in-sidebar": "",
@@ -4157,6 +4153,7 @@
     "cancel": "İptal",
     "clear": "Temizle",
     "collapse": "Daralt",
+    "disabled": "",
     "edit": "Düzenle",
     "help": "Yardım",
     "loading": "Yükleniyor...",
@@ -5133,6 +5130,19 @@
       "aria-label-remove-override": "Geçersiz kılmayı kaldır",
       "tooltip-remove-override": "Geçersiz kılmayı kaldır"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Uyarılar eklenmeden önce pano kaydedilmelidir.",
@@ -5687,6 +5697,11 @@
       "open-dashboard": "Panoyu aç",
       "open-in-new-tab": "Yeni sekmede aç",
       "title-error-adding-the-panel": "Panel eklenirken hata oluştu"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Listeye geri dön",
@@ -6250,6 +6265,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -7644,7 +7660,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "Klasör bulunamadı",
     "select-aria-label": "Klasör filtresi",
     "select-placeholder": "Klasöre göre filtrele"
   },
@@ -8762,6 +8777,9 @@
     },
     "drawer": {
       "close": "Kapat"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "Deneysel",
@@ -10579,7 +10597,12 @@
       }
     },
     "help": {
-      "aria-label": "Yardım"
+      "aria-label": "Yardım",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "Davet et",
@@ -10872,6 +10895,7 @@
       "replace-library-panel": "Kütüphane panelini değiştir",
       "share": "Paylaş",
       "show-legend": "Açıklamayı göster",
+      "time-settings": "",
       "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır",
       "view": "Görüntüle"
     },
@@ -11345,12 +11369,15 @@
       "label-workflow": "İş akışı",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "Bu kaynak, {{repoType}} içindeki dalın gerisinde.",
+      "branch-text": "",
       "not-saved": "Kuruluşunuzdaki diğer Grafana kullanıcıları, bu dal birleştirilene kadar yapılandırılmış varsayılan dala kaydedilen mevcut sürümü görmeye devam edecektir",
       "open-in-repo-button": "Şurada aç: {{repoType}}",
       "open-pull-request-in-repo": "Şurada çekme isteği aç: {{repoType}}",
@@ -12290,8 +12317,6 @@
       "title": "Kapsam seçin"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "Sorgunuz için sonuç bulunamadı",
         "recommended": "Önerilen",
@@ -13134,6 +13159,14 @@
       "form-label": "Form etiketi",
       "title": "Panel"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {
