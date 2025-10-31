@@ -9,6 +9,10 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
 import {
+  __clearRuleViewTabsForTests,
+  addEnrichmentSection,
+} from '../../enterprise-components/rule-view-page/extensions';
+import {
   getCloudRule,
   getGrafanaRule,
   getVanillaPromRule,
@@ -85,6 +89,18 @@ const openSilenceDrawer = async () => {
   await user.click(ELEMENTS.actions.more.actions.silence.get());
   await screen.findByText(/Configure silences/i);
 };
+
+beforeAll(() => {
+  // Register the enrichment tab for all tests
+  addEnrichmentSection();
+});
+
+afterEach(() => {
+  // Clear tabs after each test to prevent interference
+  __clearRuleViewTabsForTests();
+  // Re-register for next test
+  addEnrichmentSection();
+});
 
 beforeEach(() => {
   grantPermissionsHelper([
