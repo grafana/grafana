@@ -8,14 +8,14 @@ import { guessFieldTypeForField } from './processDataFrame';
  *
  * @deprecated use arrayToDataFrame
  */
-export class ArrayDataFrame<T = Array<Record<string, unknown>> | unknown[]> implements DataFrame {
+export class ArrayDataFrame implements DataFrame {
   fields: Field[] = [];
   length = 0;
   name?: string;
   refId?: string;
   meta?: QueryResultMeta;
 
-  constructor(source: T[], names?: string[]) {
+  constructor(source: unknown[], names?: string[]) {
     return arrayToDataFrame(source, names); // returns a standard DataFrame
   }
 }
@@ -27,7 +27,7 @@ export class ArrayDataFrame<T = Array<Record<string, unknown>> | unknown[]> impl
  *
  * @public
  */
-export function arrayToDataFrame(source: Array<Record<string, unknown>> | unknown[], names?: string[]): DataFrame {
+export function arrayToDataFrame(source: unknown[], names?: string[]): DataFrame {
   const df: DataFrame = {
     fields: [],
     length: source.length,
