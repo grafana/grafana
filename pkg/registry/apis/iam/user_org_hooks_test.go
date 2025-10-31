@@ -269,7 +269,7 @@ func TestBeginUserUpdate(t *testing.T) {
 		wg.Wait()
 	})
 
-	t.Run("should only write new role when old role was empty", func(t *testing.T) {
+	t.Run("should be able to add a new role when old role was empty", func(t *testing.T) {
 		wg.Add(1)
 		oldUser := iamv0.User{
 			ObjectMeta: metav1.ObjectMeta{

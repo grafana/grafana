@@ -110,7 +110,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterUserCreate(obj runtime.Object,
 	}(user.DeepCopy())
 }
 
-// BeginUserUpdate is a pre-update hook that prepares zanzana updates
+// BeginUserUpdate is a pre-update hook that gets called on user updates
 // It compares old and new roles and performs the zanzana write after K8s update succeeds
 func (b *IdentityAccessManagementAPIBuilder) BeginUserUpdate(ctx context.Context, obj, oldObj runtime.Object, options *metav1.UpdateOptions) (registry.FinishFunc, error) {
 	if b.zClient == nil {
