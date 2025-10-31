@@ -22,11 +22,14 @@ func (j *JaegerClient) GrpcServices() ([]string, error) {
 
 	u, err := url.JoinPath(j.url, "/api/v3/services")
 	if err != nil {
-		return services, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
+		return services, backend.DownstreamErrorf("failed to join url: %w", err)
 	}
 
 	res, err := j.httpClient.Get(u)
 	if err != nil {
+		if backend.IsDownstreamHTTPError(err) {
+			return services, backend.DownstreamError(err)
+		}
 		return services, err
 	}
 
@@ -37,7 +40,7 @@ func (j *JaegerClient) GrpcServices() ([]string, error) {
 	}()
 
 	if res != nil && res.StatusCode != http.StatusOK {
-		err := backend.DownstreamError(fmt.Errorf("request failed: %s", res.Status))
+		err := fmt.Errorf("request failed: %s", res.Status)
 		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
 			return services, backend.DownstreamError(err)
 		}
@@ -45,7 +48,7 @@ func (j *JaegerClient) GrpcServices() ([]string, error) {
 	}
 
 	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
-		return services, err
+		return services, backend.DownstreamError(err)
 	}
 
 	services = response.Services
@@ -58,12 +61,12 @@ func (j *JaegerClient) GrpcOperations(s string) ([]string, error) {
 
 	u, err := url.JoinPath(j.url, "/api/v3/operations")
 	if err != nil {
-		return operations, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
+		return operations, backend.DownstreamErrorf("failed to join url: %w", err)
 	}
 
 	jaegerURL, err := url.Parse(u)
 	if err != nil {
-		return operations, backend.DownstreamError(fmt.Errorf("failed to parse Jaeger URL: %w", err))
+		return operations, backend.DownstreamErrorf("failed to parse Jaeger URL: %w", err)
 	}
 
 	urlQuery := jaegerURL.Query()
@@ -72,6 +75,9 @@ func (j *JaegerClient) GrpcOperations(s string) ([]string, error) {
 
 	res, err := j.httpClient.Get(jaegerURL.String())
 	if err != nil {
+		if backend.IsDownstreamHTTPError(err) {
+			return operations, backend.DownstreamError(err)
+		}
 		return operations, err
 	}
 
@@ -82,7 +88,7 @@ func (j *JaegerClient) GrpcOperations(s string) ([]string, error) {
 	}()
 
 	if res != nil && res.StatusCode != http.StatusOK {
-		err := backend.DownstreamError(fmt.Errorf("request failed: %s", res.Status))
+		err := fmt.Errorf("request failed: %s", res.Status)
 		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
 			return operations, backend.DownstreamError(err)
 		}
@@ -90,7 +96,7 @@ func (j *JaegerClient) GrpcOperations(s string) ([]string, error) {
 	}
 
 	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
-		return operations, err
+		return operations, backend.DownstreamError(err)
 	}
 
 	// extract name from operations response
@@ -106,12 +112,12 @@ func (j *JaegerClient) GrpcOperations(s string) ([]string, error) {
 func (j *JaegerClient) GrpcSearch(query *JaegerQuery, start, end time.Time) (*data.Frame, error) {
 	u, err := url.JoinPath(j.url, "/api/v3/traces")
 	if err != nil {
-		return nil, backend.DownstreamError(fmt.Errorf("failed to join url path: %w", err))
+		return nil, backend.DownstreamErrorf("failed to join url path: %w", err)
 	}
 
 	jaegerURL, err := url.Parse(u)
 	if err != nil {
-		return nil, backend.DownstreamError(fmt.Errorf("failed to parse Jaeger URL: %w", err))
+		return nil, backend.DownstreamErrorf("failed to parse Jaeger URL: %w", err)
 	}
 
 	var queryTags string
@@ -128,7 +134,7 @@ func (j *JaegerClient) GrpcSearch(query *JaegerQuery, start, end time.Time) (*da
 
 		marshaledTags, err := json.Marshal(tagMap)
 		if err != nil {
-			return nil, backend.DownstreamError(fmt.Errorf("failed to convert tags to JSON: %w", err))
+			return nil, backend.DownstreamErrorf("failed to convert tags to JSON: %w", err)
 		}
 
 		queryTags = string(marshaledTags)
@@ -177,7 +183,7 @@ func (j *JaegerClient) GrpcSearch(query *JaegerQuery, start, end time.Time) (*da
 
 	var response types.GrpcTracesResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, backend.DownstreamError(fmt.Errorf("failed to decode Jaeger response: %w", err))
+		return nil, backend.DownstreamErrorf("failed to decode Jaeger response: %w", err)
 	}
 
 	// for search call, an unsuccessful response is exposed through the error attribute
@@ -198,17 +204,17 @@ func (j *JaegerClient) GrpcTrace(ctx context.Context, traceID string, start, end
 	var response types.GrpcTracesResponse
 
 	if traceID == "" {
-		return nil, backend.DownstreamError(fmt.Errorf("traceID is empty"))
+		return nil, backend.DownstreamErrorf("traceID is empty")
 	}
 
 	traceUrl, err := url.JoinPath(j.url, "/api/v3/traces", url.QueryEscape(traceID))
 	if err != nil {
-		return nil, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
+		return nil, backend.DownstreamErrorf("failed to join url: %w", err)
 	}
 
 	var jsonData types.SettingsJSONData
 	if err := json.Unmarshal(j.settings.JSONData, &jsonData); err != nil {
-		return nil, backend.DownstreamError(fmt.Errorf("failed to parse settings JSON data: %w", err))
+		return nil, backend.DownstreamErrorf("failed to parse settings JSON data: %w", err)
 	}
 
 	// Add time parameters if trace ID time is enabled and time range is provided
@@ -216,7 +222,7 @@ func (j *JaegerClient) GrpcTrace(ctx context.Context, traceID string, start, end
 		if start.UnixMicro() > 0 || end.UnixMicro() > 0 {
 			parsedURL, err := url.Parse(traceUrl)
 			if err != nil {
-				return nil, backend.DownstreamError(fmt.Errorf("failed to parse url: %w", err))
+				return nil, backend.DownstreamErrorf("failed to parse url: %w", err)
 			}
 
 			// jaeger will not be able to process the request if the time is encoded, all other parameters are encoded except for the start and end time

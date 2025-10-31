@@ -39,7 +39,7 @@ func (j *JaegerClient) Services() ([]string, error) {
 
 	u, err := url.JoinPath(j.url, "/api/services")
 	if err != nil {
-		return services, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
+		return services, backend.DownstreamErrorf("failed to join url: %w", err)
 	}
 
 	res, err := j.httpClient.Get(u)
@@ -67,7 +67,7 @@ func (j *JaegerClient) Operations(s string) ([]string, error) {
 
 	u, err := url.JoinPath(j.url, "/api/services/", s, "/operations")
 	if err != nil {
-		return operations, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
+		return operations, backend.DownstreamErrorf("failed to join url: %w", err)
 	}
 
 	res, err := j.httpClient.Get(u)
@@ -92,12 +92,12 @@ func (j *JaegerClient) Operations(s string) ([]string, error) {
 func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) (*data.Frame, error) {
 	u, err := url.JoinPath(j.url, "/api/traces")
 	if err != nil {
-		return nil, backend.DownstreamError(fmt.Errorf("failed to join url path: %w", err))
+		return nil, backend.DownstreamErrorf("failed to join url path: %w", err)
 	}
 
 	jaegerURL, err := url.Parse(u)
 	if err != nil {
-		return nil, backend.DownstreamError(fmt.Errorf("failed to parse Jaeger URL: %w", err))
+		return nil, backend.DownstreamErrorf("failed to parse Jaeger URL: %w", err)
 	}
 
 	var queryTags string
@@ -114,7 +114,7 @@ func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) (*data.Frame
 
 		marshaledTags, err := json.Marshal(tagMap)
 		if err != nil {
-			return nil, backend.DownstreamError(fmt.Errorf("failed to convert tags to JSON: %w", err))
+			return nil, backend.DownstreamErrorf("failed to convert tags to JSON: %w", err)
 		}
 
 		queryTags = string(marshaledTags)
@@ -171,7 +171,7 @@ func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) (*data.Frame
 
 	var result types.TracesResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode Jaeger response: %w", err)
+		return nil, backend.DownstreamErrorf("failed to decode Jaeger response: %w", err)
 	}
 
 	frames := utils.TransformSearchResponse(result.Data, j.settings.UID, j.settings.Name)
@@ -183,17 +183,17 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 	var response types.TracesResponse
 
 	if traceID == "" {
-		return nil, backend.DownstreamError(fmt.Errorf("traceID is empty"))
+		return nil, backend.DownstreamErrorf("traceID is empty")
 	}
 
 	traceUrl, err := url.JoinPath(j.url, "/api/traces", url.QueryEscape(traceID))
 	if err != nil {
-		return nil, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
+		return nil, backend.DownstreamErrorf("failed to join url path: %w", err)
 	}
 
 	var jsonData types.SettingsJSONData
 	if err := json.Unmarshal(j.settings.JSONData, &jsonData); err != nil {
-		return nil, backend.DownstreamError(fmt.Errorf("failed to parse settings JSON data: %w", err))
+		return nil, backend.DownstreamErrorf("failed to parse settings JSON data: %w", err)
 	}
 
 	// Add time parameters if trace ID time is enabled and time range is provided
@@ -201,7 +201,7 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 		if start > 0 || end > 0 {
 			parsedURL, err := url.Parse(traceUrl)
 			if err != nil {
-				return nil, backend.DownstreamError(fmt.Errorf("failed to parse url: %w", err))
+				return nil, backend.DownstreamErrorf("failed to parse url: %w", err)
 			}
 
 			query := parsedURL.Query()
@@ -255,13 +255,13 @@ func (j *JaegerClient) Dependencies(ctx context.Context, start, end int64) (type
 
 	u, err := url.JoinPath(j.url, "/api/dependencies")
 	if err != nil {
-		return dependencies, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
+		return dependencies, backend.DownstreamErrorf("failed to join url path: %w", err)
 	}
 
 	// Add time parameters
 	parsedURL, err := url.Parse(u)
 	if err != nil {
-		return dependencies, backend.DownstreamError(fmt.Errorf("failed to parse url: %w", err))
+		return dependencies, backend.DownstreamErrorf("failed to parse url: %w", err)
 	}
 
 	query := parsedURL.Query()
