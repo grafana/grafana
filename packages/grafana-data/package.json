@@ -84,7 +84,7 @@
     "xss": "^1.0.14"
   },
   "devDependencies": {
-    "@grafana/scenes": "6.38.0",
+    "@grafana/scenes": "6.40.1",
     "@rollup/plugin-node-resolve": "16.0.1",
     "@testing-library/react": "16.3.0",
     "@types/history": "4.7.11",
