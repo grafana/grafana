@@ -130,10 +130,10 @@ To connect your GitHub repository, follow these steps:
 
 ### Choose what to synchronize
 
-In this step you can decide which elements to synchronize. Keep in mind the available options depend on the status of your Grafana instance. 
+In this step you can decide which elements to synchronize. Keep in mind the available options depend on the status of your Grafana instance.
 
 - If the instance contains resources in an incompatible data format, you'll have to migrate all the data using instance sync. Folder sync won't be supported.
-- If there is already another connection using folder sync, instance sync won't be offered. 
+- If there is already another connection using folder sync, instance sync won't be offered.
 
 #### Synchronization limitations
 
