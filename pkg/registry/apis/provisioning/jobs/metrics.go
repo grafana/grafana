@@ -1,6 +1,8 @@
 package jobs
 
 import (
+	"time"
+
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -9,6 +11,10 @@ type JobMetrics struct {
 	registry       prometheus.Registerer
 	processedTotal *prometheus.CounterVec
 	durationHist   *prometheus.HistogramVec
+
+	incrementalSyncPhaseDurationHist *prometheus.HistogramVec // phases of incremental sync
+	fullSyncPhaseDurationHist        *prometheus.HistogramVec // phases of full sync
+	syncDurationHist                 *prometheus.HistogramVec // total sync durations
 }
 
 type QueueMetrics struct {
@@ -72,12 +78,44 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		},
 		[]string{"action", "resources_changed_bucket"},
 	)
-	registry.MustRegister(durationHist)
+
+	incrementalSyncPhaseDurationHist := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "grafana_provisioning_jobs_incremental_sync_phase_duration_seconds",
+			Help:    "Duration of job phases for incremental sync",
+			Buckets: prometheus.ExponentialBucketsRange(0.01, 10*60, 8), // 1ms -> 10m
+		},
+		[]string{"phase"},
+	)
+	registry.MustRegister(incrementalSyncPhaseDurationHist)
+
+	fullSyncPhaseDurationHist := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "grafana_provisioning_jobs_full_sync_phase_duration_seconds",
+			Help:    "Duration of job phases for full sync",
+			Buckets: prometheus.ExponentialBucketsRange(0.01, 10*60, 8), // 1ms -> 10m
+		},
+		[]string{"phase"},
+	)
+	registry.MustRegister(fullSyncPhaseDurationHist)
+
+	syncDurationHist := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "grafana_provisioning_jobs_sync_duration_seconds",
+			Help:    "Duration of sync (full or incremental)",
+			Buckets: prometheus.ExponentialBucketsRange(0.01, 10*60, 8), // 1ms -> 10m
+		},
+		[]string{"type"},
+	)
+	registry.MustRegister(syncDurationHist)
 
 	return JobMetrics{
-		registry:       registry,
-		processedTotal: processedTotal,
-		durationHist:   durationHist,
+		registry:                         registry,
+		processedTotal:                   processedTotal,
+		durationHist:                     durationHist,
+		incrementalSyncPhaseDurationHist: incrementalSyncPhaseDurationHist,
+		fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
+		syncDurationHist:                 syncDurationHist,
 	}
 }
 
@@ -90,6 +128,18 @@ func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountCh
 	}
 }
 
+func (m *JobMetrics) RecordIncrementalSyncPhase(phase IncrementalSyncPhase, duration time.Duration) {
+	m.incrementalSyncPhaseDurationHist.WithLabelValues(phase.String()).Observe(duration.Seconds())
+}
+
+func (m *JobMetrics) RecordFullSyncPhase(phase FullSyncPhase, duration time.Duration) {
+	m.fullSyncPhaseDurationHist.WithLabelValues(phase.String()).Observe(duration.Seconds())
+}
+
+func (m *JobMetrics) RecordSyncDuration(syncType SyncType, duration time.Duration) {
+	m.syncDurationHist.WithLabelValues(syncType.String()).Observe(duration.Seconds())
+}
+
 func recordConcurrentDriverMetric(registry prometheus.Registerer, numDrivers int) {
 	concurrentDriver := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -100,4 +150,73 @@ func recordConcurrentDriverMetric(registry prometheus.Registerer, numDrivers int
 	)
 	registry.MustRegister(concurrentDriver)
 	concurrentDriver.WithLabelValues().Set(float64(numDrivers))
+}
+
+type SyncType int
+
+const (
+	SyncTypeUnknown SyncType = iota // to prevent zero value being valid
+	SyncTypeFull
+	SyncTypeIncremental
+)
+
+func (t SyncType) String() string {
+	switch t {
+	case SyncTypeFull:
+		return "full"
+	case SyncTypeIncremental:
+		return "incremental"
+	default:
+		return "unknown"
+	}
+}
+
+type FullSyncPhase int
+
+const (
+	FullSyncPhaseUnknown FullSyncPhase = iota // to prevent zero value being valid
+	FullSyncPhaseCompare
+	FullSyncPhaseFileDeletions
+	FullSyncPhaseFolderDeletions
+	FullSyncPhaseFolderCreations
+	FullSyncPhaseFileCreations
+)
+
+func (p FullSyncPhase) String() string {
+	switch p {
+	case FullSyncPhaseCompare:
+		return "compare"
+	case FullSyncPhaseFileDeletions:
+		return "file_deletions"
+	case FullSyncPhaseFolderDeletions:
+		return "folder_deletions"
+	case FullSyncPhaseFolderCreations:
+		return "folder_creations"
+	case FullSyncPhaseFileCreations:
+		return "file_creations"
+	default:
+		return "unknown"
+	}
+}
+
+type IncrementalSyncPhase int
+
+const (
+	IncrementalSyncPhaseUnknown IncrementalSyncPhase = iota // to prevent zero value being valid
+	IncrementalSyncPhaseCompare
+	IncrementalSyncPhaseApply
+	IncrementalSyncPhaseCleanup
+)
+
+func (p IncrementalSyncPhase) String() string {
+	switch p {
+	case IncrementalSyncPhaseCompare:
+		return "compare"
+	case IncrementalSyncPhaseApply:
+		return "apply"
+	case IncrementalSyncPhaseCleanup:
+		return "cleanup"
+	default:
+		return "unknown"
+	}
 }
