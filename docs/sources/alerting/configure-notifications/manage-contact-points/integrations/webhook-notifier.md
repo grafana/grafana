@@ -75,10 +75,27 @@ For more details on contact points, including how to test them and enable notifi
 | Basic Authentication Password     | Password for HTTP Basic Authentication.                                                                                                                                                   |
 | Authentication Header Scheme      | Scheme for the `Authorization` Request Header. Default is `Bearer`.                                                                                                                       |
 | Authentication Header Credentials | Credentials for the `Authorization` Request header.                                                                                                                                       |
-| Extra Headers                     | Additional HTTP headers to include in the request. You can also override the default `Content-Type: application/json` header to specify a different content type for the request payload. |
+| Extra Headers                     | (Provisioning only) Additional HTTP headers to include in the request. This option is not currently available in the UI. Use [provisioning](#configure-extra-headers-via-provisioning) to define custom headers. |
 | Max Alerts                        | Maximum number of alerts to include in a notification. Any alerts exceeding this limit are ignored. `0` means no limit.                                                                   |
 | TLS                               | TLS configuration options, including CA certificate, client certificate, and client key.                                                                                                  |
 | HMAC Signature                    | HMAC signature configuration options.                                                                                                                                                     |
+### Configure extra headers via provisioning {#configure-extra-headers-via-provisioning}
+
+> **Note:** As of Grafana v11.6.3, the Webhook contact point UI does **not** include a field to add extra HTTP headers.  
+> To include headers such as `X-API-KEY`, you must use provisioning instead of the UI.
+
+```yaml
+# Example: Provisioning a Webhook contact point with custom headers
+apiVersion: 1
+contactPoints:
+  - name: "example-webhook"
+    type: webhook
+    settings:
+      url: https://your-webhook-url.example
+      httpConfig:
+        headers:
+          "X-API-KEY": your-api-key
+```
 
 {{< admonition type="note" >}}
 
