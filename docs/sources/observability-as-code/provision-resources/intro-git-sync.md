@@ -65,19 +65,22 @@ With Git Sync, you can make changes to the files in the provisioned folder in Gi
 
 **Git Sync is under development and the following limitations apply.**
 
-**Synced resources**  
-- You can only sync dashboards and folders. Refer to [Supported resources](#supported-resources) for more information. 
+**Synced resources**
+
+- You can only sync dashboards and folders. Refer to [Supported resources](#supported-resources) for more information.
 - If you're using Git Sync in Grafana OSS and Grafana Enterprise, some resources might be in an incompatible data format and won't be synced.
 - Full-instance sync is not available in Grafana Cloud and has limitations in Grafana OSS and Grafana Enterprise. Refer to [Choose what to synchronize](../git-sync-setup.md#choose-what-to-synchronize) for more details.
-- During the synchronization process, your resources will be temporarily unavailable. No one will be able to create, edit, or delete resources during this process. 
+- During the synchronization process, your resources will be temporarily unavailable. No one will be able to create, edit, or delete resources during this process.
 - If you want to manage resources using Git Sync, you need to save them as JSON files and commit them to the synced repository. Open a PR to import, copy, move, or save a dashboard or folder.
-- Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.      
+- Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
 
-**Authentication**     
-- You can only authenticate in GitHub using your Personal Access Token token.       
+**Authentication**
 
-**Compatibility**     
-- Support for native Git, Git app, and other providers, such as GitLab or Bitbucket, is on the roadmap.       
+- You can only authenticate in GitHub using your Personal Access Token token.
+
+**Compatibility**
+
+- Support for native Git, Git app, and other providers, such as GitLab or Bitbucket, is on the roadmap.
 
 ## Supported resources
 

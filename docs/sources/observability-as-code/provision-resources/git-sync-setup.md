@@ -147,8 +147,10 @@ In Grafana OSS/Enterprise:
 To set up synchronization:
 
 1. Choose to either sync your entire organization resources with external storage, or to sync certain resources to a new Grafana folder (with up to 10 connections).
-  - Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. With this option, all of your dashboards are synced to that one repository. You can only have one provisioned connection with this selection, and you won't have the option of setting up additional repositories to connect to.
-  - Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
+
+- Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. With this option, all of your dashboards are synced to that one repository. You can only have one provisioned connection with this selection, and you won't have the option of setting up additional repositories to connect to.
+- Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
+
 1. Enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
 1. Click **Synchronize** to continue.
 
