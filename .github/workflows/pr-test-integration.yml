@@ -107,12 +107,12 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          readarray -t skip_packaged <<< "SKIP_PACKAGES"
+          readarray -t SKIP_PACKAGES_ARRAY <<< "$SKIP_PACKAGES"
 
           FILTERED_PACKAGES=()
           for pkg in "${PACKAGES[@]}"; do
             EXCLUDE=false
-            for exclude_pkg in "${skip_packaged[@]}"; do
+            for exclude_pkg in "${SKIP_PACKAGES_ARRAY[@]}"; do
               if [[ -n "$exclude_pkg" && "$pkg" == *"/$exclude_pkg" ]]; then
                 EXCLUDE=true
                 break
@@ -158,13 +158,10 @@ jobs:
               fi
             done
           done
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "upload_artifact=true" >> "$GITHUB_OUTPUT"
-          fi
           exit $EXIT_CODE
       - name: Output test profiles and traces
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: (matrix.shard == 'profiled' && !cancelled() && steps.run-profiled-tests.outputs.upload_artifact == 'true')
+        if: (matrix.shard == 'profiled' && steps.run-profiled-tests.conclusion == 'failure')
         with:
           name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}
           path: profiles/
