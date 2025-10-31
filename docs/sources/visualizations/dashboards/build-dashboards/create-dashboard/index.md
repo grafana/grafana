@@ -133,9 +133,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. (Optional) To add subsequent queries, click **+ Add query** or **+ Add from saved queries**, and refresh the data source as many times as needed.
 
    {{< admonition type="note" >}}
-   [Saved queries](ref:saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-
-   This feature is only available on Grafana Enterprise and Grafana Cloud.
+   [Saved queries](ref:saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
    {{< /admonition >}}
 
 1. In the visualization list, select a visualization type.
