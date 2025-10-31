@@ -3,6 +3,7 @@ import { AnyAction, combineReducers } from 'redux';
 
 import { notificationsAPIv0alpha1, rulesAPIv0alpha1 } from '@grafana/alerting/unstable';
 import { allReducers as allApiClientReducers } from '@grafana/api-clients/rtkq';
+import { generatedAPI as legacyAPI } from '@grafana/api-clients/rtkq/legacy';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
@@ -51,6 +52,7 @@ const rootReducers = {
   ...templatingReducers,
   ...supportBundlesReducer,
   ...authConfigReducers,
+  [legacyAPI.reducerPath]: legacyAPI.reducer,
   plugins: pluginsReducer,
   [alertingApi.reducerPath]: alertingApi.reducer,
   [notificationsAPIv0alpha1.reducerPath]: notificationsAPIv0alpha1.reducer,

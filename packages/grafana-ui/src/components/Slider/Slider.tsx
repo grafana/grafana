@@ -13,6 +13,8 @@ import { SliderProps } from './types';
 
 /**
  * @public
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-slider--docs
  */
 export const Slider = ({
   min,
@@ -27,6 +29,7 @@ export const Slider = ({
   marks,
   included,
   inputId,
+  showInput = true,
 }: SliderProps) => {
   const isHorizontal = orientation === 'horizontal';
   const styles = useStyles2(getStyles, isHorizontal, Boolean(marks));
@@ -112,17 +115,19 @@ export const Slider = ({
           included={included}
         />
 
-        <Input
-          type="text"
-          width={7.5}
-          className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
-          value={sliderValue}
-          onChange={onSliderInputChange}
-          onBlur={onSliderInputBlur}
-          min={min}
-          max={max}
-          id={inputId}
-        />
+        {showInput && (
+          <Input
+            type="text"
+            width={7.5}
+            className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
+            value={sliderValue}
+            onChange={onSliderInputChange}
+            onBlur={onSliderInputBlur}
+            min={min}
+            max={max}
+            id={inputId}
+          />
+        )}
       </div>
     </div>
   );

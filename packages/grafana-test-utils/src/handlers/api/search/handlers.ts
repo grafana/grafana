@@ -17,12 +17,17 @@ const slugify = (str: string) => {
     .replace(/ +/g, '-');
 };
 
+const typeFilterMap: Record<string, string> = {
+  'dash-db': 'dashboard',
+  'dash-folder': 'folder',
+};
+
 const getLegacySearchHandler = () =>
   http.get('/api/search', ({ request }) => {
     const folderFilter = new URL(request.url).searchParams.get('folderUIDs') || null;
     const typeFilter = new URL(request.url).searchParams.get('type') || null;
     // Workaround for the fixture kind being 'dashboard' instead of 'dash-db'
-    const mappedTypeFilter = typeFilter === 'dash-db' ? 'dashboard' : typeFilter;
+    const mappedTypeFilter = typeFilter ? typeFilterMap[typeFilter] || typeFilter : null;
     const starredFilter = new URL(request.url).searchParams.get('starred') || null;
     const tagFilter = new URL(request.url).searchParams.getAll('tag') || null;
 

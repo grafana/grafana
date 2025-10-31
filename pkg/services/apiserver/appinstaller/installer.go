@@ -12,24 +12,30 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstore "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/kube-openapi/pkg/common"
 
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 type LegacyStorageGetterFunc func(schema.GroupVersionResource) grafanarest.Storage
 
 type LegacyStorageProvider interface {
 	GetLegacyStorage(schema.GroupVersionResource) grafanarest.Storage
+}
+
+// In the rare case that that legacy needs to support the status subresource
+// Unlike resource storage, dual writing must be managed explicitly
+type LegacyStatusProvider interface {
+	GetLegacyStatus(schema.GroupVersionResource, *appsdkapiserver.StatusREST) rest.Storage
 }
 
 type AuthorizerProvider interface {

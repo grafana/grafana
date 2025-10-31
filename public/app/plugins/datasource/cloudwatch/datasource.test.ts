@@ -306,7 +306,7 @@ describe('datasource', () => {
       });
     });
 
-    it('should add a data link field to log queries', async () => {
+    it('should add links to log insights queries', async () => {
       const { datasource } = setupForLogs();
 
       const observable = datasource.query({
@@ -439,7 +439,7 @@ describe('datasource', () => {
       const { datasource } = setupMockedDataSource();
       expect(datasource.getDefaultQuery(CoreApp.PanelEditor).queryMode).toEqual('Metrics');
     });
-    it('should set default log groups in default query', () => {
+    it('should set default log groups in default logs insights query', () => {
       const { datasource } = setupMockedDataSource({
         customInstanceSettings: {
           ...CloudWatchSettings,
