@@ -177,6 +177,9 @@ export interface PluginInclude {
   // Adds the "page" or "dashboard" type includes to the navigation if set to `true`.
   addToNav?: boolean;
 
+  // if reqFeatureToggle is set then the include will only show up in the navigation if the feature toggle is enabled.
+  reqFeatureToggle?: string;
+
   // Angular app pages
   component?: string;
 }
