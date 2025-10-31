@@ -144,13 +144,12 @@ In Grafana OSS/Enterprise:
 
 #### Set up synchronization
 
-To set up synchronization:
+To set up synchronization, choose to either sync your entire organization resources with external storage, or to sync certain resources to a new Grafana folder (with up to 10 connections).
 
-1. Choose to either sync your entire organization resources with external storage, or to sync certain resources to a new Grafana folder (with up to 10 connections).
-  - Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. With this option, all of your dashboards are synced to that one repository. You can only have one provisioned connection with this selection, and you won't have the option of setting up additional repositories to connect to.
-  - Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
-1. Enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
-1. Click **Synchronize** to continue.
+- Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. With this option, all of your dashboards are synced to that one repository. You can only have one provisioned connection with this selection, and you won't have the option of setting up additional repositories to connect to.
+- Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
+
+Next, enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI. Click **Synchronize** to continue.
 
 ### Choose additional settings
 
@@ -175,18 +174,18 @@ You can extend Git Sync by getting instant updates and pull requests using webho
 
 When connecting to a GitHub repository, Git Sync uses webhooks to enable real-time updates from GitHub public repositories or enable pull request integrations. Without webhooks, the polling interval is set in the final configuration screen, and the default is 60 seconds. If you use local storage, then Git Sync only provides periodic pulling.
 
-Follow these steps to set up webhooks:
+You can set up webhooks with whichever service or tooling you prefer. You can use Cloudflare Tunnels with a Cloudflare-managed domain, port-forwarding and DNS options, or a tool such as `ngrok`.
 
-1. Expose your Grafana instance to the public Internet.
-  - You can do this via port forwarding and DNS, a tool such as `ngrok`, or any other method you prefer.
-  - The permissions set in your GitHub access token provide the authorization for this communication.
-1. Set up webhooks with whichever service or tooling you prefer. You can use Cloudflare Tunnels with a Cloudflare-managed domain, port-forwarding and DNS options, or a tool such as `ngrok`.
-1. After you have the public URL, you can add it to your Grafana configuration file:
-  ```yaml
-  [server]
-  root_url = https://PUBLIC_DOMAIN.HERE
-  ```
-1. To check the configured webhooks, go to **Administration** > **Provisioning** and click the **View** link for your GitHub repository.
+To set up webhooks you need to expose your Grafana instance to the public Internet. You can do this via port forwarding and DNS, a tool such as `ngrok`, or any other method you prefer. The permissions set in your GitHub access token provide the authorization for this communication.
+
+After you have the public URL, you can add it to your Grafana configuration file:
+
+```yaml
+[server]
+root_url = https://PUBLIC_DOMAIN.HERE
+```
+
+To check the configured webhooks, go to **Administration** > **Provisioning** and click the **View** link for your GitHub repository.
 
 #### Expose necessary paths only
 
