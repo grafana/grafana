@@ -110,6 +110,7 @@ const config: ConfigFile = {
     ...createAPIConfig('shorturl', 'v1beta1'),
     ...createAPIConfig('shorturl', 'v1beta1'),
     ...createAPIConfig('shorturl', 'v1beta1'),
+    ...createAPIConfig('logsdrilldown', 'v1alpha1'),
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };

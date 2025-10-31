@@ -83,6 +83,10 @@
     "./rtkq/shorturl/v1beta1": {
       "import": "./src/clients/rtkq/shorturl/v1beta1/index.ts",
       "require": "./src/clients/rtkq/shorturl/v1beta1/index.ts"
+    },
+    "./rtkq/logsdrilldown/v1alpha1": {
+      "import": "./src/clients/rtkq/logsdrilldown/v1alpha1/index.ts",
+      "require": "./src/clients/rtkq/logsdrilldown/v1alpha1/index.ts"
     }
   },
   "publishConfig": {
