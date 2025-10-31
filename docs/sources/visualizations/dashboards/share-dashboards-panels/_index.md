@@ -258,7 +258,7 @@ To export a dashboard in its current state as a PNG image file, follow these ste
 1. Click **Download image**.
 1. Click the **X** at the top-right corner to close the share drawer.
 
-The generated image reflects how the dashboard appears.
+The generated image reflects how the dashboard appears in your browser.
 To change it, make changes to the dashboard or browser, like zooming in or out or resizing.
 ## Share panels {#share-a-panel}
 
