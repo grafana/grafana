@@ -59,7 +59,7 @@ func InitOpenFeature(config OpenFeatureConfig) error {
 }
 
 // InitOpenFeatureWithCfg initializes OpenFeature from setting.Cfg
-func InitOpenFeatureWithCfg(cfg *setting.Cfg, provider restconfig.DirectRestConfigProvider) error {
+func InitOpenFeatureWithCfg(cfg *setting.Cfg, provider restconfig.RestConfigProvider) error {
 	confFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
 	if err != nil {
 		return fmt.Errorf("failed to read feature flags from config: %w", err)
@@ -67,7 +67,7 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg, provider restconfig.DirectRestConf
 
 	var httpcli *http.Client
 	if cfg.OpenFeature.ProviderType == setting.GOFFProviderType {
-		httpcli, err = goffHTTPClient(restconfig.NewDirectlyServeWithRestConfigRoundtripper(provider))
+		httpcli, err = goffHTTPClient(restconfig.NewRedirectViaRestConfigRoundtripper(provider))
 		if err != nil {
 			return err
 		}
@@ -105,7 +105,7 @@ func createProvider(
 	return newGOFFProvider(u.String(), httpClient)
 }
 
-func goffHTTPClient(directlyServeMiddlewareFactory *restconfig.DirectlyServeMiddlewareFactory) (*http.Client, error) {
+func goffHTTPClient(directlyServeMiddlewareFactory *restconfig.RedirectViaRestConfigMiddlewareFactory) (*http.Client, error) {
 	httpcli, err := sdkhttpclient.NewProvider().New(sdkhttpclient.Options{
 		TLS: &sdkhttpclient.TLSOptions{InsecureSkipVerify: true},
 		Timeouts: &sdkhttpclient.TimeoutOptions{
