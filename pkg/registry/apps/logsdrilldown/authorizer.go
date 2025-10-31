@@ -43,4 +43,3 @@ func GetAuthorizer() authorizer.Authorizer {
 		return authorizer.DecisionAllow, "", nil
 	})
 }
-
