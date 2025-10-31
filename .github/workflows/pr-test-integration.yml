@@ -140,7 +140,7 @@ jobs:
           EXIT_CODE=0
           for profiled_pkg in "${PROFILED_PACKAGES[@]}"; do
             for pkg in "${PACKAGES[@]}"; do
-              if [[ -n "pkg" && "profiled_pkg" == *"/pkg" ]]; then
+              if [[ -n "$pkg" && "$profiled_pkg" == *"/$pkg" ]]; then
                 pkg_name=$(echo "$profile_pkg" | tr '/' '_' | tr '.' '_')
                 set +e
                 go test -count=1 -tags=sqlite -timeout=8m -run '^TestIntegration' \
