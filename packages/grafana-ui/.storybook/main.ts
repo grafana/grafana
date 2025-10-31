@@ -21,6 +21,11 @@ const profilingComponentsGlobs: StorybookConfig['stories'] = [
   {
     titlePrefix: 'Profiling',
     directory: '../../grafana-flamegraph/src',
+    files: 'Intro.mdx',
+  },
+  {
+    titlePrefix: 'Profiling',
+    directory: '../../grafana-flamegraph/src',
     files: process.env.NODE_ENV === 'production' ? '**/!(*.internal).story.tsx' : '**/*.story.tsx',
   },
 ];
