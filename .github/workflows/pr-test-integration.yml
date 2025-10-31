@@ -67,7 +67,7 @@ jobs:
           SHARD: ${{ matrix.shard }}
         run: |
           set -euo pipefail
-          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
           go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
 
   sqlite_nocgo:
@@ -106,57 +106,49 @@ jobs:
             pkg/tests/apis/dashboard
         run: |
           set -euo pipefail
-          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          readarray -t SKIP_PACKAGES_ARRAY <<< "$SKIP_PACKAGES"
-
-          FILTERED_PACKAGES=()
-          for pkg in "${PACKAGES[@]}"; do
-            EXCLUDE=false
-            for exclude_pkg in "${SKIP_PACKAGES_ARRAY[@]}"; do
-              if [[ -n "$exclude_pkg" && "$pkg" == *"/$exclude_pkg" ]]; then
-                EXCLUDE=true
-                break
-              fi
-            done
-            if [ "$EXCLUDE" = false ]; then
-              FILTERED_PACKAGES+=("$pkg")
-            fi
-          done
-
-          go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${FILTERED_PACKAGES[@]}"
+          # Build regex pattern using sed and paste: pkg1$|pkg2$|pkg3$
+          SKIP_PATTERN=$(echo "$SKIP_PACKAGES" | sed '/^$/d' | sed 's|.*|&$|' | paste -sd '|' -)
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | grep -Ev "($SKIP_PATTERN)")"
+          go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Run profiled tests
         id: run-profiled-tests
         if: matrix.shard == 'profiled'
         env:
           CGO_ENABLED: 0
+          PROFILED_PACKAGES: |-
+            pkg/tests/apis/folder
+            pkg/tests/apis/dashboard
         run: |
           set -euo pipefail
-          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration)"
-          PROFILED_PACKAGES=(
-            "pkg/tests/apis/folder"
-            "pkg/tests/apis/dashboard"
-          )
+          # Build regex pattern line: pkg1$|pkg2$|pkg3$
+          PROFILE_PATTERN=$(echo "$PROFILED_PACKAGES" | sed '/^$/d' | sed 's|.*|&$|' | paste -sd '|' -)
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | grep -E "($PROFILE_PATTERN)")"
+          if [ ${#PACKAGES[@]} -eq 0 ]; then
+            echo "⚠️  No profiled packages found"
+            exit 0
+          fi
           mkdir -p profiles
           EXIT_CODE=0
-          for profiled_pkg in "${PROFILED_PACKAGES[@]}"; do
-            for pkg in "${PACKAGES[@]}"; do
-              if [[ -n "$pkg" && "$profiled_pkg" == *"/$pkg" ]]; then
-                pkg_name=$(echo "$profile_pkg" | tr '/' '_' | tr '.' '_')
-                set +e
-                go test -count=1 -tags=sqlite -timeout=8m -run '^TestIntegration' \
-                  -outputdir=profiles \
-                  -cpuprofile="cpu_${pkg_name}.prof" \
-                  -memprofile="mem_${pkg_name}.prof" \
-                  -trace="trace_${pkg_name}.out" \
-                  "$profiled_pkg" 2>&1 | tee "profiles/test_${pkg_name}.log"
-                TEST_EXIT=$?
-                set -e
-                if [ $TEST_EXIT -ne 0 ]; then
-                  EXIT_CODE=1
-                fi
-                break
-              fi
-            done
+          # Run each profiled package sequentially
+          for full_pkg in "${PACKAGES[@]}"; do
+            # Build valid file name
+            pkg_name=$(basename "$full_pkg" | tr '/' '_' | tr '.' '_')
+            echo "📦 Running $full_pkg"
+            set +e
+            go test -tags=sqlite -timeout=8m -run '^TestIntegration' \
+              -outputdir=profiles \
+              -cpuprofile="cpu_${pkg_name}.prof" \
+              -memprofile="mem_${pkg_name}.prof" \
+              -trace="trace_${pkg_name}.out" \
+              "$full_pkg" 2>&1 | tee "profiles/test_${pkg_name}.log"
+            TEST_EXIT=$?
+            set -e
+            if [ $TEST_EXIT -ne 0 ]; then
+              echo "❌ $full_pkg failed with exit code $TEST_EXIT"
+              EXIT_CODE=1
+            else
+              echo "✅ $full_pkg passed"
+            fi
           done
           exit $EXIT_CODE
       - name: Output test profiles and traces
