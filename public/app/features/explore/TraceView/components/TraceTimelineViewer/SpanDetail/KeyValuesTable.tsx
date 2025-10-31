@@ -32,7 +32,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     KeyValueTable: css({
       label: 'KeyValueTable',
       background: autoColor(theme, '#fff'),
-      border: `1px solid ${autoColor(theme, '#ddd')}`,
       maxHeight: '450px',
       overflow: 'auto',
     }),
