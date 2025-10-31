@@ -511,10 +511,13 @@ export type Status = {
 export type Patch = object;
 export const {
   useGetApiResourcesQuery,
+  useLazyGetApiResourcesQuery,
   useListCorrelationQuery,
+  useLazyListCorrelationQuery,
   useCreateCorrelationMutation,
   useDeletecollectionCorrelationMutation,
   useGetCorrelationQuery,
+  useLazyGetCorrelationQuery,
   useReplaceCorrelationMutation,
   useDeleteCorrelationMutation,
   useUpdateCorrelationMutation,
