@@ -130,7 +130,10 @@ To connect your GitHub repository, follow these steps:
 
 ### Choose what to synchronize
 
-In this step you can decide which elements to synchronize. Keep in mind the available options depend on the status of your GitHub repository. The first time you connect Grafana with a GitHub repository, you need to synchronize with external storage. If you are syncing with a new or empty repository, you won't have an option to migrate dashboards.
+In this step you can decide which elements to synchronize. Keep in mind the available options depend on the status of your Grafana instance. 
+- If the instance contains resources in an incompatible data format, a migration of all the data will be needed. The migration is not supported for folder sync, only for instance sync. 
+- If there is already another connection using folder sync, then instance sync won't be offered. 
+
 
 #### Synchronization limitations
 
