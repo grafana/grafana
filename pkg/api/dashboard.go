@@ -438,7 +438,6 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	}
 
 	ctx = c.Req.Context()
-	var err error
 
 	var userID int64
 	if id, err := identity.UserIdentifier(c.GetID()); err == nil {
