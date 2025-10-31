@@ -1,3 +1,92 @@
+<!-- 12.2.1 START -->
+
+# 12.2.1 (2025-10-21)
+
+### Features and enhancements
+
+- **Go:** Update to 1.25.2 + golangci-lint v2.5.0 + golang.org/x/net v0.45.0 [#112156](https://github.com/grafana/grafana/pull/112156), [@macabu](https://github.com/macabu)
+- **Go:** Update to 1.25.3 [#112361](https://github.com/grafana/grafana/pull/112361), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Auth:** Fix render user OAuth passthrough [#112092](https://github.com/grafana/grafana/pull/112092), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Dashboards:** Fix missing Ctrl+O keyboard shortcut for crosshair toggle [#111402](https://github.com/grafana/grafana/pull/111402), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Fix:** Fix redirection after login when Grafana is served from subpath [#111069](https://github.com/grafana/grafana/pull/111069), [@mgyongyosi](https://github.com/mgyongyosi)
+- **FlameGraph:** Ensure total is only counted once for recursive function calls [#111606](https://github.com/grafana/grafana/pull/111606), [@simonswine](https://github.com/simonswine)
+- **LDAP Authentication:** Fix URL to propagate username context as parameter [#111849](https://github.com/grafana/grafana/pull/111849), [@bradleypettit](https://github.com/bradleypettit)
+- **Plugins:** Dependencies do not inherit parent URL for preinstall [#111769](https://github.com/grafana/grafana/pull/111769), [@wbrowne](https://github.com/wbrowne)
+- **Table:** Backport the Safari 26 fixes to 12.2.1 [#111906](https://github.com/grafana/grafana/pull/111906), [@fastfrwrd](https://github.com/fastfrwrd)
+
+<!-- 12.2.1 END -->
+<!-- 12.1.3 START -->
+
+# 12.1.3 (2025-10-21)
+
+### Features and enhancements
+
+- **Go:** Update to 1.25.2 + golangci-lint v2.5.0 + golang.org/x/net v0.45.0 [#112159](https://github.com/grafana/grafana/pull/112159), [@macabu](https://github.com/macabu)
+- **Go:** Update to 1.25.3 [#112362](https://github.com/grafana/grafana/pull/112362), [@macabu](https://github.com/macabu)
+- **Table:** Avoid thrown error due to internal React issue [#111945](https://github.com/grafana/grafana/pull/111945), [@fastfrwrd](https://github.com/fastfrwrd)
+
+### Bug fixes
+
+- **Auth:** Fix render user OAuth passthrough [#112097](https://github.com/grafana/grafana/pull/112097), [@mgyongyosi](https://github.com/mgyongyosi)
+- **FlameGraph:** Ensure total is only counted once for recursive function calls [#111605](https://github.com/grafana/grafana/pull/111605), [@simonswine](https://github.com/simonswine)
+- **LDAP Authentication:** Fix URL to propagate username context as parameter [#111848](https://github.com/grafana/grafana/pull/111848), [@bradleypettit](https://github.com/bradleypettit)
+- **Plugins:** Dependencies do not inherit parent URL for preinstall [#111767](https://github.com/grafana/grafana/pull/111767), [@wbrowne](https://github.com/wbrowne)
+
+<!-- 12.1.3 END -->
+<!-- 12.0.6 START -->
+
+# 12.0.6 (2025-10-21)
+
+### Features and enhancements
+
+- **Go:** Update to 1.25.2 + golangci-lint v2.5.0 + golang.org/x/net v0.45.0 [#112161](https://github.com/grafana/grafana/pull/112161), [@macabu](https://github.com/macabu)
+- **Go:** Update to 1.25.3 [#112364](https://github.com/grafana/grafana/pull/112364), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Auth:** Fix render user OAuth passthrough [#112096](https://github.com/grafana/grafana/pull/112096), [@mgyongyosi](https://github.com/mgyongyosi)
+- **FlameGraph:** Ensure total is only counted once for recursive function calls [#111604](https://github.com/grafana/grafana/pull/111604), [@simonswine](https://github.com/simonswine)
+- **LDAP Authentication:** Fix URL to propagate username context as parameter [#111847](https://github.com/grafana/grafana/pull/111847), [@bradleypettit](https://github.com/bradleypettit)
+- **Plugins:** Dependencies do not inherit parent URL for preinstall [#111766](https://github.com/grafana/grafana/pull/111766), [@wbrowne](https://github.com/wbrowne)
+
+<!-- 12.0.6 END -->
+<!-- 11.6.7 START -->
+
+# 11.6.7 (2025-10-21)
+
+### Features and enhancements
+
+- **Analytics:** Apply proper batching to Loki exports and add configurable settings (Enterprise)
+- **Go:** Update to 1.25.2 + golangci-lint v2.5.0 + golang.org/x/net v0.45.0 [#112162](https://github.com/grafana/grafana/pull/112162), [@grambbledook](https://github.com/grambbledook)
+- **Go:** Update to 1.25.3 [#112365](https://github.com/grafana/grafana/pull/112365), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Auth:** Fix render user OAuth passthrough [#112094](https://github.com/grafana/grafana/pull/112094), [@mgyongyosi](https://github.com/mgyongyosi)
+- **LDAP Authentication:** Fix URL to propagate username context as parameter [#111846](https://github.com/grafana/grafana/pull/111846), [@bradleypettit](https://github.com/bradleypettit)
+- **Plugins:** Dependencies do not inherit parent URL for preinstall [#111801](https://github.com/grafana/grafana/pull/111801), [@wbrowne](https://github.com/wbrowne)
+- **URLParams:** Stringify true values as key=true always (fixes issues with variables with true value) [#112045](https://github.com/grafana/grafana/pull/112045), [@torkelo](https://github.com/torkelo)
+
+<!-- 11.6.7 END -->
+<!-- 11.5.10 START -->
+
+# 11.5.10 (2025-10-21)
+
+### Features and enhancements
+
+- **Go:** Update to 1.25.2 + golangci-lint v2.5.0 + golang.org/x/net v0.45.0 [#112163](https://github.com/grafana/grafana/pull/112163), [@macabu](https://github.com/macabu)
+- **Go:** Update to 1.25.3 [#112366](https://github.com/grafana/grafana/pull/112366), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Auth:** Fix render user OAuth passthrough [#112093](https://github.com/grafana/grafana/pull/112093), [@mgyongyosi](https://github.com/mgyongyosi)
+- **LDAP Authentication:** Fix URL to propagate username context as parameter [#111845](https://github.com/grafana/grafana/pull/111845), [@bradleypettit](https://github.com/bradleypettit)
+- **Plugins:** Dependencies do not inherit parent URL for preinstall [#111802](https://github.com/grafana/grafana/pull/111802), [@wbrowne](https://github.com/wbrowne)
+
+<!-- 11.5.10 END -->
 <!-- 12.2.0 START -->
 
 # 12.2.0 (2025-09-23)

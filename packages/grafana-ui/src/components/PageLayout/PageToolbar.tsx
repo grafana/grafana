@@ -34,7 +34,11 @@ export interface Props {
   forceShowLeftItems?: boolean;
 }
 
-/** @deprecated Use Page instead */
+/**
+ * @deprecated Use Page instead
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-deprecated-pagetoolbar--docs
+ */
 export const PageToolbar = memo(
   ({
     title,

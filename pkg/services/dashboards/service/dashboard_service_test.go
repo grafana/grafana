@@ -1938,6 +1938,33 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 		assert.Equal(t, "dash-db", query.Type) // query type should be added
 	})
 
+	t.Run("search will try and match all included tags", func(t *testing.T) {
+		ctx := context.Background()
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		query := &dashboards.FindPersistedDashboardsQuery{
+			OrgId: 1,
+			Sort:  model.SortOption{Name: "viewed-recently-desc"},
+			Tags:  []string{"tag1", "tag2"},
+		}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			// make sure we use AND logic with multiple tags
+			for _, field := range req.Options.Fields {
+				if field.Key == "tags" {
+					return field.Operator == "="
+				}
+			}
+			return false
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{},
+				Rows:    []*resourcepb.ResourceTableRow{},
+			}}, nil)
+		_, err := service.searchDashboardsThroughK8s(ctx, query)
+		require.NoError(t, err)
+	})
+
 	t.Run("search will include sort field in hit fields", func(t *testing.T) {
 		ctx := context.Background()
 		k8sCliMock := new(client.MockK8sHandler)
@@ -2100,6 +2127,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 			name                        string
 			rootFolder                  bool
 			featureKubernetesDashboards bool
+			User                        *user.SignedInUser
 			expectedPermission          []accesscontrol.SetResourcePermissionCommand
 		}{
 			{
@@ -2118,6 +2146,19 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				featureKubernetesDashboards: true,
 				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
 					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+				},
+			},
+			{
+				name:                        "with kubernetesDashboards feature in root folder and user is anonymous",
+				rootFolder:                  true,
+				featureKubernetesDashboards: true,
+				User: &user.SignedInUser{
+					IsAnonymous: true,
+					UserID:      0,
+				},
+				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
 					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 				},
@@ -2144,6 +2185,9 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 					OrgID:   1,
 					OrgRole: "Admin",
 					UserID:  1,
+				}
+				if tc.User != nil {
+					user = tc.User
 				}
 				ctx := request.WithNamespace(context.Background(), "default")
 				ctx = identity.WithRequester(ctx, user)

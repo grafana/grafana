@@ -42,7 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -50,6 +50,7 @@ import (
 	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -68,6 +69,8 @@ var (
 	_ builder.APIGroupVersionsProvider = (*DashboardsAPIBuilder)(nil)
 	_ builder.OpenAPIPostProcessor     = (*DashboardsAPIBuilder)(nil)
 	_ builder.APIGroupRouteProvider    = (*DashboardsAPIBuilder)(nil)
+	_ builder.APIGroupMutation         = (*DashboardsAPIBuilder)(nil)
+	_ builder.APIGroupValidation       = (*DashboardsAPIBuilder)(nil)
 )
 
 const (
@@ -92,7 +95,6 @@ type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
 	features         featuremgmt.FeatureToggles
 
-	authorizer                   authorizer.Authorizer
 	accessControl                accesscontrol.AccessControl
 	accessClient                 authlib.AccessClient
 	legacy                       *DashboardStorage
@@ -109,6 +111,7 @@ type DashboardsAPIBuilder struct {
 	minRefreshInterval           string
 	dualWriter                   dualwrite.Service
 	folderClientProvider         client.K8sHandlerProvider
+	libraryPanels                libraryelements.Service // for legacy library panels
 
 	isStandalone bool // skips any handling including anything to do with legacy storage
 }
@@ -136,6 +139,7 @@ func RegisterAPIService(
 	libraryPanelSvc librarypanels.Service,
 	restConfigProvider apiserver.RestConfigProvider,
 	userService user.Service,
+	libraryPanels libraryelements.Service,
 ) *DashboardsAPIBuilder {
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -143,7 +147,6 @@ func RegisterAPIService(
 	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
 
 	builder := &DashboardsAPIBuilder{
-		authorizer:                   newLegacyAuthorizer(accessControl),
 		dashboardService:             dashboardService,
 		dashboardPermissions:         dashboardPermissions,
 		dashboardPermissionsSvc:      dashboardPermissionsSvc,
@@ -159,6 +162,7 @@ func RegisterAPIService(
 		minRefreshInterval:           cfg.MinRefreshInterval,
 		dualWriter:                   dual,
 		folderClientProvider:         newSimpleFolderClientProvider(folderClient),
+		libraryPanels:                libraryPanels,
 
 		legacy: &DashboardStorage{
 			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
@@ -179,7 +183,6 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     "10s",
 		accessClient:           ac,
-		authorizer:             authsvc.NewResourceAuthorizer(ac),
 		features:               features,
 		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider:   folderClientProvider,
@@ -232,26 +235,35 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 func (b *DashboardsAPIBuilder) AllowedV0Alpha1Resources() []string {
-	return []string{dashv0.DashboardKind().Plural()}
+	return []string{
+		dashv0.DashboardKind().Plural(),
+		dashv0.LIBRARY_PANEL_RESOURCE,
+	}
 }
 
 // Validate validates dashboard operations for the apiserver
 func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	op := a.GetOperation()
 
-	// Handle different operations
-	switch op {
-	case admission.Delete:
-		return b.validateDelete(ctx, a)
-	case admission.Create:
-		return b.validateCreate(ctx, a, o)
-	case admission.Update:
-		return b.validateUpdate(ctx, a, o)
-	case admission.Connect:
-		return nil
+	switch a.GetResource().Resource {
+	case dashv0.DASHBOARD_RESOURCE:
+		// Handle different operations
+		switch op {
+		case admission.Delete:
+			return b.validateDelete(ctx, a)
+		case admission.Create:
+			return b.validateCreate(ctx, a, o)
+		case admission.Update:
+			return b.validateUpdate(ctx, a, o)
+		case admission.Connect:
+			return nil
+		}
+
+	case dashv0.LIBRARY_PANEL_RESOURCE:
+		return nil // OK for now
 	}
 
-	return nil
+	return fmt.Errorf("unsupported validation: %+v", a.GetResource())
 }
 
 // validateDelete checks if a dashboard can be deleted
@@ -506,6 +518,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// Split dashboards when they are large
 	var largeObjects apistore.LargeObjectSupport
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
 		largeObjects = NewDashboardLargeObjectSupport(opts.Scheme, opts.StorageOpts.BlobThresholdBytes)
 		storageOpts.LargeObjectSupport = largeObjects
@@ -644,12 +657,13 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		return err
 	}
 
-	// Expose read only library panels
-	if libraryPanels != nil {
+	// Expose read library panels
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if libraryPanels != nil && b.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		legacyLibraryStore := &LibraryPanelStore{
-			Access:        b.legacy.Access,
-			ResourceInfo:  *libraryPanels,
-			AccessControl: b.accessControl,
+			Access:       b.legacy.Access,
+			ResourceInfo: *libraryPanels,
+			service:      b.libraryPanels,
 		}
 
 		unifiedLibraryStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
@@ -764,8 +778,9 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 	return b.search.GetAPIRoutes(defs)
 }
 
+// The default authorizer is fine because authorization happens in storage where we know the parent folder
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return b.authorizer
+	return grafanaauthorizer.NewServiceAuthorizer()
 }
 
 func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderIds ...string) error {
