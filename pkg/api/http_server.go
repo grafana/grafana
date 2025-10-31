@@ -49,8 +49,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -218,7 +218,7 @@ type HTTPServer struct {
 	starApi              *starApi.API
 	promRegister         prometheus.Registerer
 	promGatherer         prometheus.Gatherer
-	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
+	clientConfigProvider restconfig.DirectRestConfigProvider
 	namespacer           request.NamespaceMapper
 	anonService          anonymous.Service
 	userVerifier         user.Verifier
@@ -271,7 +271,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
-	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
+	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider restconfig.DirectRestConfigProvider, anonService anonymous.Service,
 	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env

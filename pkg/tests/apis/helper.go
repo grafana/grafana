@@ -366,7 +366,7 @@ func (c *User) NewRestConfig() *rest.Config {
 	return cfg
 }
 
-// Implements: apiserver.RestConfigProvider
+// Implements: restconfig.RestConfigProvider
 func (c *User) GetRestConfig(context.Context) (*rest.Config, error) {
 	return c.NewRestConfig(), nil
 }

@@ -52,7 +52,7 @@ func setup(t *testing.T, conf []byte) {
 	cfg, err := setting.NewCfgFromBytes(conf)
 	require.NoError(t, err)
 
-	err = InitOpenFeatureWithCfg(cfg)
+	err = InitOpenFeatureWithCfg(cfg, nil)
 	require.NoError(t, err)
 }
 
@@ -68,7 +68,7 @@ ABCD = true
 	// InitOpenFeatureWithCfg needed to initialize OpenFeature with the static provider configuration,
 	// so that StaticFlagEvaluator can use an open feature client.
 	// In real scenarios, this would be done during server startup.
-	err = InitOpenFeatureWithCfg(cfg)
+	err = InitOpenFeatureWithCfg(cfg, nil)
 	require.NoError(t, err)
 
 	// Use StaticFlagEvaluator instead of OpenFeatureService for static evaluation

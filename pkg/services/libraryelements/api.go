@@ -21,8 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -561,13 +561,13 @@ type libraryElementsK8sHandler struct {
 	cfg                  *setting.Cfg
 	namespacer           request.NamespaceMapper
 	gvr                  schema.GroupVersionResource
-	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
+	clientConfigProvider restconfig.DirectRestConfigProvider
 	folderService        folder.Service
 	dashboardsService    dashboards.DashboardService
 	userService          user.Service
 }
 
-func newLibraryElementsK8sHandler(cfg *setting.Cfg, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, folderService folder.Service, userService user.Service, dashboardsService dashboards.DashboardService) *libraryElementsK8sHandler {
+func newLibraryElementsK8sHandler(cfg *setting.Cfg, clientConfigProvider restconfig.DirectRestConfigProvider, folderService folder.Service, userService user.Service, dashboardsService dashboards.DashboardService) *libraryElementsK8sHandler {
 	gvr := schema.GroupVersionResource{
 		Group:    dashboardV0.APIGroup,
 		Version:  dashboardV0.APIVersion,

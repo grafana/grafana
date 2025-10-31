@@ -6,17 +6,18 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 )
 
 // ProvideClientGenerator creates a lazy-initialized ClientGenerator.
-func ProvideClientGenerator(restConfigProvider RestConfigProvider) resource.ClientGenerator {
+func ProvideClientGenerator(restConfigProvider restconfig.RestConfigProvider) resource.ClientGenerator {
 	return &lazyClientGenerator{
 		restConfigProvider: restConfigProvider,
 	}
 }
 
 type lazyClientGenerator struct {
-	restConfigProvider RestConfigProvider
+	restConfigProvider restconfig.RestConfigProvider
 	clientGenerator    resource.ClientGenerator
 	initOnce           sync.Once
 	initError          error

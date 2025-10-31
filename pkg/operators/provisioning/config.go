@@ -15,7 +15,7 @@ import (
 	"k8s.io/client-go/util/flowcontrol"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -166,7 +166,7 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 		resources.FolderResource.Group:    foldersServerURL,
 		provisioning.GROUP:                provisioningServerURL,
 	}
-	configProviders := make(map[string]apiserver.RestConfigProvider)
+	configProviders := make(map[string]restconfig.RestConfigProvider)
 
 	tlsConfigForTransport, err := rest.TLSConfigFor(&rest.Config{TLSClientConfig: tlsConfig})
 	if err != nil {
@@ -376,12 +376,12 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resource
 }
 
 // directConfigProvider is a simple RestConfigProvider that always returns the same rest.Config
-// it implements apiserver.RestConfigProvider
+// it implements restconfig.RestConfigProvider
 type directConfigProvider struct {
 	cfg *rest.Config
 }
 
-func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
+func NewDirectConfigProvider(cfg *rest.Config) restconfig.RestConfigProvider {
 	return &directConfigProvider{cfg: cfg}
 }
 

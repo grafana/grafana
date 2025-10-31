@@ -20,6 +20,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -31,7 +32,7 @@ type RESTOptionsGetter struct {
 	client         resource.ResourceClient
 	secrets        secret.InlineSecureValueSupport
 	original       storagebackend.Config
-	configProvider RestConfigProvider
+	configProvider restconfig.RestConfigProvider
 
 	// Each group+resource may need custom options
 	options map[string]StorageOptions
@@ -41,7 +42,7 @@ func NewRESTOptionsGetterForClient(
 	client resource.ResourceClient,
 	secrets secret.InlineSecureValueSupport,
 	original storagebackend.Config,
-	configProvider RestConfigProvider,
+	configProvider restconfig.RestConfigProvider,
 ) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
 		client:         client,

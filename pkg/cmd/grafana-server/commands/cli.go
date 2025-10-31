@@ -107,7 +107,7 @@ func RunServer(opts standalone.BuildInfo, cli *cli.Context) error {
 	metrics.SetBuildInformation(metrics.ProvideRegisterer(), opts.Version, opts.Commit, opts.BuildBranch, getBuildstamp(opts))
 
 	// Initialize the OpenFeature feature flag system
-	if err := featuremgmt.InitOpenFeatureWithCfg(cfg); err != nil {
+	if err := featuremgmt.InitOpenFeatureWithCfg(cfg, nil); err != nil {
 		return err
 	}
 

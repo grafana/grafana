@@ -7,8 +7,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -25,7 +25,7 @@ func ProvideApi(
 	cfg *setting.Cfg, // for namespacer
 	features featuremgmt.FeatureToggles,
 	starService star.Service,
-	configProvider apiserver.DirectRestConfigProvider,
+	configProvider restconfig.DirectRestConfigProvider,
 ) *API {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesStars) {

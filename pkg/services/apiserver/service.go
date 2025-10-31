@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -60,10 +61,10 @@ import (
 )
 
 var (
-	_ Service                    = (*service)(nil)
-	_ RestConfigProvider         = (*service)(nil)
-	_ registry.BackgroundService = (*service)(nil)
-	_ registry.CanBeDisabled     = (*service)(nil)
+	_ Service                       = (*service)(nil)
+	_ restconfig.RestConfigProvider = (*service)(nil)
+	_ registry.BackgroundService    = (*service)(nil)
+	_ registry.CanBeDisabled        = (*service)(nil)
 )
 
 const MaxRequestBodyBytes = 16 * 1024 * 1024 // 16MB - determined by the size of `mediumtext` on mysql, which is used to save dashboard data
@@ -107,7 +108,7 @@ type service struct {
 	pluginStore        pluginstore.Store
 	unified            resource.ResourceClient
 	secrets            secret.InlineSecureValueSupport
-	restConfigProvider RestConfigProvider
+	restConfigProvider restconfig.RestConfigProvider
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 	aggregatorRunner                  aggregatorrunner.AggregatorRunner
@@ -131,7 +132,7 @@ func ProvideService(
 	storageStatus dualwrite.Service,
 	unified resource.ResourceClient,
 	secrets secret.InlineSecureValueSupport,
-	restConfigProvider RestConfigProvider,
+	restConfigProvider restconfig.RestConfigProvider,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
 	reg prometheus.Registerer,

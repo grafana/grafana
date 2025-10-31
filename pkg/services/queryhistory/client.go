@@ -9,13 +9,13 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	preferencesV1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
 type k8sClients struct {
 	namespacer     authlib.NamespaceFormatter
-	configProvider apiserver.DirectRestConfigProvider
+	configProvider restconfig.DirectRestConfigProvider
 }
 
 // GetStars implements K8sClients.
