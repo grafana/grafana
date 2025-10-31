@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/shorturls"
@@ -31,7 +32,7 @@ func TestShortURLAPIEndpoint(t *testing.T) {
 			Path:  cmd.Path,
 		}
 		service := &fakeShortURLService{
-			createShortURLFunc: func(ctx context.Context, user *user.SignedInUser, cmd *dtos.CreateShortURLCmd) (*shorturls.ShortUrl, error) {
+			createShortURLFunc: func(ctx context.Context, user identity.Requester, cmd *dtos.CreateShortURLCmd) (*shorturls.ShortUrl, error) {
 				return createResp, nil
 			},
 			createConvertShortURLToDTO: func(shortURL *shorturls.ShortUrl, appURL string) *dtos.ShortURL {
@@ -81,7 +82,7 @@ func createShortURLScenario(t *testing.T, desc string, url string, routePattern 
 }
 
 type fakeShortURLService struct {
-	createShortURLFunc         func(ctx context.Context, user *user.SignedInUser, cmd *dtos.CreateShortURLCmd) (*shorturls.ShortUrl, error)
+	createShortURLFunc         func(ctx context.Context, user identity.Requester, cmd *dtos.CreateShortURLCmd) (*shorturls.ShortUrl, error)
 	createConvertShortURLToDTO func(shortURL *shorturls.ShortUrl, appURL string) *dtos.ShortURL
 }
 
@@ -89,11 +90,11 @@ func (s *fakeShortURLService) List(ctx context.Context, orgID int64) ([]*shortur
 	return nil, nil
 }
 
-func (s *fakeShortURLService) GetShortURLByUID(ctx context.Context, user *user.SignedInUser, uid string) (*shorturls.ShortUrl, error) {
+func (s *fakeShortURLService) GetShortURLByUID(ctx context.Context, user identity.Requester, uid string) (*shorturls.ShortUrl, error) {
 	return nil, nil
 }
 
-func (s *fakeShortURLService) CreateShortURL(ctx context.Context, user *user.SignedInUser, cmd *dtos.CreateShortURLCmd) (*shorturls.ShortUrl, error) {
+func (s *fakeShortURLService) CreateShortURL(ctx context.Context, user identity.Requester, cmd *dtos.CreateShortURLCmd) (*shorturls.ShortUrl, error) {
 	if s.createShortURLFunc != nil {
 		return s.createShortURLFunc(ctx, user, cmd)
 	}

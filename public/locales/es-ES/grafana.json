@@ -1662,9 +1662,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1722,9 +1719,6 @@
       },
       "placeholder-key": "clave",
       "placeholder-value": "valor"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Ver o crear puntos de contacto",
@@ -2950,7 +2944,9 @@
       "alert-instances": "",
       "error-loading-rule": "",
       "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
       "no-instances-found": "",
       "no-labels": "",
       "open-in-sidebar": "",
@@ -4120,6 +4116,7 @@
       "description": "Usar valor personalizado"
     },
     "options": {
+      "loading": "",
       "no-found": "No se han encontrado opciones."
     }
   },
@@ -4156,6 +4153,7 @@
     "cancel": "Cancelar",
     "clear": "Borrar",
     "collapse": "Contraer",
+    "disabled": "",
     "edit": "Editar",
     "help": "Ayuda",
     "loading": "Cargando...",
@@ -5132,6 +5130,19 @@
       "aria-label-remove-override": "Quitar anulación",
       "tooltip-remove-override": "Quitar anulación"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "El panel de control debe guardarse antes de poder añadir alertas.",
@@ -5686,6 +5697,11 @@
       "open-dashboard": "Abrir panel",
       "open-in-new-tab": "Abrir en pestaña nueva",
       "title-error-adding-the-panel": "Error al añadir el panel"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Regresar a la lista",
@@ -6249,6 +6265,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -7172,7 +7189,8 @@
     "logs-table-multi-select": {
       "fields": "Campos",
       "reset": "Restablecer",
-      "selected-fields": "Campos seleccionados"
+      "selected-fields": "Campos seleccionados",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Seleccionar consulta por nombre",
@@ -7643,7 +7661,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "No se han encontrado carpetas",
     "select-aria-label": "Filtro de carpeta",
     "select-placeholder": "Filtrar por carpeta"
   },
@@ -8013,26 +8030,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "Anteayer",
+          "previousFiscalQuarter": "Trimestre fiscal anterior",
+          "previousFiscalYear": "Año fiscal anterior",
+          "previousMonth": "Mes anterior",
+          "previousWeek": "Semana anterior",
+          "previousYear": "Año anterior",
+          "thisDayLastWeek": "Este día de la semana pasada",
+          "thisFiscalQuarter": "Este trimestre fiscal",
+          "thisFiscalQuarterSoFar": "Este trimestre fiscal hasta ahora",
+          "thisFiscalYear": "Este año fiscal",
+          "thisFiscalYearSoFar": "Este año fiscal hasta ahora",
+          "thisMonth": "Este mes",
+          "thisMonthSoFar": "Este mes hasta ahora",
+          "thisWeek": "Esta semana",
+          "thisWeekSoFar": "Esta semana hasta ahora",
+          "thisYear": "Este año",
+          "thisYearSoFar": "Este año hasta ahora",
+          "today": "Hoy",
+          "todaySoFar": "Hoy hasta ahora",
+          "yesterday": "Ayer"
         },
         "lastNDays_one": "",
         "lastNDays_other": "",
@@ -8761,6 +8778,9 @@
     },
     "drawer": {
       "close": "Cerrar"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "Experimental",
@@ -10578,7 +10598,12 @@
       }
     },
     "help": {
-      "aria-label": "Ayuda"
+      "aria-label": "Ayuda",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "Invitar",
@@ -10871,6 +10896,7 @@
       "replace-library-panel": "Reemplazar panel de la biblioteca",
       "share": "Compartir",
       "show-legend": "Mostrar leyenda",
+      "time-settings": "",
       "unlink-library-panel": "Desvincular panel de librería",
       "view": "Vista"
     },
@@ -11344,12 +11370,15 @@
       "label-workflow": "Flujo de trabajo",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "Este recurso se encuentra detrás de la rama en {{repoType}}.",
+      "branch-text": "",
       "not-saved": "El resto de usuarios de Grafana de tu organización seguirán viendo la versión actual guardada en la rama predeterminada configurada hasta que se fusione esta rama",
       "open-in-repo-button": "Abrir en {{repoType}}",
       "open-pull-request-in-repo": "Abrir solicitud de extracción en {{repoType}}",
@@ -12289,8 +12318,6 @@
       "title": "Seleccionar ámbitos"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "No se han encontrado resultados para tu consulta",
         "recommended": "Recomendado",
@@ -13133,6 +13160,14 @@
       "form-label": "Etiqueta del formulario",
       "title": "Panel"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {

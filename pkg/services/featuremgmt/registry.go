@@ -1867,10 +1867,10 @@ var (
 		{
 			Name:         "sharingDashboardImage",
 			Description:  "Enables image sharing functionality for dashboards",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSharingSquad,
-			HideFromDocs: true,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:        "preferLibraryPanelTitle",
@@ -2132,6 +2132,24 @@ var (
 			HideFromAdminPage: true, // this should not be a user facing change
 			Owner:             identityAccessTeam,
 			Expression:        "true",
+		},
+		{
+			Name:              "panelTimeSettings",
+			Description:       "Enables a new panel time settings drawer",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			RequiresRestart:   false,
+			AllowSelfServe:    false,
+			HideFromDocs:      false,
+			HideFromAdminPage: false,
+		},
+		{
+			Name:         "dashboardTemplates",
+			Description:  "Enable template dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
 		},
 	}
 )

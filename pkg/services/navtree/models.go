@@ -11,7 +11,7 @@ const (
 	// are negative to ensure that the default items are placed above
 	// any items with default weight.
 
-	WeightHome = (iota - 20) * 100
+	WeightHome = (iota - 40) * 100
 	WeightBookmarks
 	WeightSavedItems
 	WeightDashboard
@@ -21,12 +21,13 @@ const (
 	WeightAlerting
 	WeightAlertsAndIncidents
 	WeightAIAndML
+	WeightAdaptiveTelemetry
+	WeightCMAB
 	WeightTestingAndSynthetics
 	WeightObservability
 	WeightCloudServiceProviders
 	WeightInfrastructure
 	WeightApplication
-	WeightFrontend
 	WeightAsserts
 	WeightDataConnections
 	WeightApps
@@ -48,7 +49,6 @@ const (
 	NavIDAlerting             = "alerting"
 	NavIDObservability        = "observability"
 	NavIDInfrastructure       = "infrastructure"
-	NavIDFrontend             = "frontend"
 	NavIDReporting            = "reports"
 	NavIDApps                 = "apps"
 	NavIDCfgGeneral           = "cfg/general"
@@ -155,69 +155,6 @@ func Sort(nodes []*NavLink) {
 
 	for _, child := range nodes {
 		child.Sort()
-	}
-}
-
-func (root *NavTreeRoot) ApplyCostManagementIA() {
-	orgAdminNode := root.FindById(NavIDCfg)
-	var costManagementApp *NavLink
-	var adaptiveMetricsApp *NavLink
-	var adaptiveLogsApp *NavLink
-	var adaptiveTracesApp *NavLink
-	var attributionsApp *NavLink
-	var logVolumeExplorerApp *NavLink
-
-	if orgAdminNode != nil {
-		adminNodeLinks := []*NavLink{}
-		for _, element := range orgAdminNode.Children {
-			switch navId := element.Id; navId {
-			case "plugin-page-grafana-costmanagementui-app":
-				costManagementApp = element
-			case "plugin-page-grafana-adaptive-metrics-app":
-				adaptiveMetricsApp = element
-			case "plugin-page-grafana-adaptivelogs-app":
-				adaptiveLogsApp = element
-			case "plugin-page-grafana-adaptivetraces-app":
-				adaptiveTracesApp = element
-			case "plugin-page-grafana-attributions-app":
-				attributionsApp = element
-			case "plugin-page-grafana-logvolumeexplorer-app":
-				logVolumeExplorerApp = element
-			default:
-				adminNodeLinks = append(adminNodeLinks, element)
-			}
-		}
-
-		if costManagementApp != nil {
-			costManagementMetricsNode := FindByURL(costManagementApp.Children, "/a/grafana-costmanagementui-app/metrics")
-			if costManagementMetricsNode != nil {
-				if adaptiveMetricsApp != nil {
-					costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, adaptiveMetricsApp)
-				}
-				if attributionsApp != nil {
-					costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, attributionsApp)
-				}
-			}
-
-			costManagementLogsNode := FindByURL(costManagementApp.Children, "/a/grafana-costmanagementui-app/logs")
-			if costManagementLogsNode != nil {
-				if adaptiveLogsApp != nil {
-					costManagementLogsNode.Children = append(costManagementLogsNode.Children, adaptiveLogsApp)
-				}
-				if logVolumeExplorerApp != nil {
-					costManagementLogsNode.Children = append(costManagementLogsNode.Children, logVolumeExplorerApp)
-				}
-			}
-
-			costManagementTracesNode := FindByURL(costManagementApp.Children, "/a/grafana-costmanagementui-app/traces")
-			if costManagementTracesNode != nil {
-				if adaptiveTracesApp != nil {
-					costManagementTracesNode.Children = append(costManagementTracesNode.Children, adaptiveTracesApp)
-				}
-			}
-			adminNodeLinks = append(adminNodeLinks, costManagementApp)
-		}
-		orgAdminNode.Children = adminNodeLinks
 	}
 }
 

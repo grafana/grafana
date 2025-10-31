@@ -17,7 +17,6 @@ import { Dashboard, Panel, RowPanel } from '@grafana/schema';
 import { createLogger } from '@grafana/ui';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
-import { CustomTimeRangeCompare } from '../scene/CustomTimeRangeCompare';
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -256,9 +255,6 @@ export function getDefaultVizPanel(): VizPanel {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
-    headerActions: config.featureToggles.timeComparison
-      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
-      : undefined,
     $data: new SceneDataTransformer({
       $data: new SceneQueryRunner({
         queries: [{ refId: 'A' }],
@@ -431,3 +427,11 @@ export function hasLibraryPanelsInV1Dashboard(dashboard: Dashboard | undefined):
 }
 
 export const dashboardLog = createLogger('Dashboard');
+
+/**
+ * Checks if there are save changes but not counting time range, refresh rate and default variable value change
+ */
+export function hasActualSaveChanges(dashboard: DashboardScene) {
+  const changes = dashboard.getDashboardChanges();
+  return !!changes.diffCount;
+}
