@@ -798,6 +798,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.statusPatcher,
 				b.registry,
 				b.tracer,
+				10,
 			)
 			if err != nil {
 				return err

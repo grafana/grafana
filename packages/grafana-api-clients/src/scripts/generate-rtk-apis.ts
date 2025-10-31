@@ -17,6 +17,12 @@ type OperationDefinition = {
 };
 type EndpointMatcher = string[] | ((operationName: string, operationDefinition: OperationDefinition) => boolean);
 
+const defaultHooksOptions = {
+  queries: true,
+  lazyQueries: true,
+  mutations: true,
+};
+
 /**
  * Helper to return consistent base API generation config
  */
@@ -28,7 +34,7 @@ const createAPIConfig = (app: string, version: string, filterEndpoints?: Endpoin
       apiFile: `../clients/rtkq/${app}/${version}/baseAPI.ts`,
       filterEndpoints,
       tag: true,
-      hooks: true,
+      hooks: defaultHooksOptions,
       ...additional,
     },
   };
@@ -43,7 +49,7 @@ const config: ConfigFile = {
     // OpenAPI3 client with all endpoints
     '../clients/rtkq/legacy/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
-      hooks: true,
+      hooks: defaultHooksOptions,
       tag: true,
       apiFile: '../clients/rtkq/legacy/baseAPI.ts',
       filterEndpoints: (_name, operation) => !operation.operation.deprecated,
@@ -51,7 +57,7 @@ const config: ConfigFile = {
     '../clients/rtkq/migrate-to-cloud/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
       apiFile: '../clients/rtkq/migrate-to-cloud/baseAPI.ts',
-      hooks: true,
+      hooks: defaultHooksOptions,
       filterEndpoints: [
         'getSessionList',
         'getSession',
@@ -76,13 +82,13 @@ const config: ConfigFile = {
     },
     '../clients/rtkq/preferences/user/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
-      hooks: true,
+      hooks: defaultHooksOptions,
       apiFile: '../clients/rtkq/preferences/user/baseAPI.ts',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
     '../clients/rtkq/user/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
-      hooks: true,
+      hooks: defaultHooksOptions,
       apiFile: '../clients/rtkq/user/baseAPI.ts',
       filterEndpoints: ['starDashboardByUid', 'unstarDashboardByUid'],
     },
