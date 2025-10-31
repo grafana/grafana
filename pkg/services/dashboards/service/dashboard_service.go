@@ -676,11 +676,14 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 	// Validate folder
 	if dash.FolderID != 0 || dash.FolderUID != "" { // nolint:staticcheck
-		folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
+		// use a background requester, because the user may have been granted edit access to that specific dashboard, but
+		// not have access to the parent folder. we should still allow editing in that case.
+		ctxIdentity, backgroundRequester := identity.WithServiceIdentity(ctx, dash.OrgID)
+		folder, err := dr.folderService.Get(ctxIdentity, &folder.GetFolderQuery{
 			OrgID:        dash.OrgID,
 			UID:          &dash.FolderUID,
 			ID:           &dash.FolderID, // nolint:staticcheck
-			SignedInUser: dto.User,
+			SignedInUser: backgroundRequester,
 		})
 		if err != nil {
 			return nil, err
@@ -1174,12 +1177,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	if err != nil {
 		return err
 	}
-	uid, err := user.GetInternalID()
-	if err != nil {
-		return err
-	}
 	permissions := []accesscontrol.SetResourcePermissionCommand{}
-
 	isNested := obj.GetFolder() != ""
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
@@ -1187,6 +1185,10 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 		return nil
 	}
 	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		uid, err := user.GetInternalID()
+		if err != nil {
+			return err
+		}
 		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 			UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 		})

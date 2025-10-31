@@ -1657,9 +1657,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1717,9 +1714,6 @@
       },
       "placeholder-key": "キー",
       "placeholder-value": "値"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "連絡先を表示または作成",
@@ -2938,7 +2932,9 @@
       "alert-instances": "",
       "error-loading-rule": "",
       "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
       "no-instances-found": "",
       "no-labels": "",
       "open-in-sidebar": "",
@@ -6246,6 +6242,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -7169,7 +7166,8 @@
     "logs-table-multi-select": {
       "fields": "フィールド",
       "reset": "リセット",
-      "selected-fields": "選択済みのフィールド"
+      "selected-fields": "選択済みのフィールド",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "名前でクエリを選択",
@@ -8007,26 +8005,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "一昨日",
+          "previousFiscalQuarter": "前四半期",
+          "previousFiscalYear": "前年度",
+          "previousMonth": "前月",
+          "previousWeek": "前の週",
+          "previousYear": "前の年",
+          "thisDayLastWeek": "先週の同じ曜日",
+          "thisFiscalQuarter": "今四半期",
+          "thisFiscalQuarterSoFar": "今四半期の現在まで",
+          "thisFiscalYear": "今年度",
+          "thisFiscalYearSoFar": "今年度の累計",
+          "thisMonth": "今月",
+          "thisMonthSoFar": "今月の現在まで",
+          "thisWeek": "今週",
+          "thisWeekSoFar": "今週の現在まで",
+          "thisYear": "今年",
+          "thisYearSoFar": "今年の現在まで",
+          "today": "今日",
+          "todaySoFar": "今日の現在まで",
+          "yesterday": "昨日"
         },
         "lastNDays_other": "",
         "lastNHours_other": "",
@@ -8745,6 +8743,9 @@
     },
     "drawer": {
       "close": "閉じる"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "試験運用",
@@ -10554,7 +10555,12 @@
       }
     },
     "help": {
-      "aria-label": "ヘルプ"
+      "aria-label": "ヘルプ",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "招待",
@@ -11318,12 +11324,15 @@
       "label-workflow": "ワークフロー",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "このリソースは{{repoType}}内の該当ブランチよりも古いバージョンです。",
+      "branch-text": "",
       "not-saved": "このブランチがマージされるまで、組織内の他のGrafanaユーザーには、デフォルトブランチに保存された現在のバージョンが表示されます",
       "open-in-repo-button": "{{repoType}}で開く",
       "open-pull-request-in-repo": "{{repoType}}でプルリクエストを開く",

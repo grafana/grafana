@@ -1662,9 +1662,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1722,9 +1719,6 @@
       },
       "placeholder-key": "kulcs",
       "placeholder-value": "érték"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Kapcsolattartási pontok megtekintése vagy létrehozása",
@@ -2950,7 +2944,9 @@
       "alert-instances": "",
       "error-loading-rule": "",
       "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
       "no-instances-found": "",
       "no-labels": "",
       "open-in-sidebar": "",
@@ -6269,6 +6265,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -7192,7 +7189,8 @@
     "logs-table-multi-select": {
       "fields": "Mezők",
       "reset": "Visszaállítás",
-      "selected-fields": "Kijelölt mezők"
+      "selected-fields": "Kijelölt mezők",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Lekérdezés kijelölése név alapján",
@@ -8032,26 +8030,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "Tegnapelőtt",
+          "previousFiscalQuarter": "Az előző pénzügyi negyedév",
+          "previousFiscalYear": "Az előző pénzügyi év",
+          "previousMonth": "Előző hónap",
+          "previousWeek": "Az előző hét",
+          "previousYear": "Az előző év",
+          "thisDayLastWeek": "A múlt héten ezen a napon",
+          "thisFiscalQuarter": "Ez a pénzügyi negyedév",
+          "thisFiscalQuarterSoFar": "Ebben a pénzügyi negyedévben eddig",
+          "thisFiscalYear": "Ez a pénzügyi év",
+          "thisFiscalYearSoFar": "Ebben a pénzügyi évben eddig",
+          "thisMonth": "Ez a hónap",
+          "thisMonthSoFar": "Ebben a hónapban eddig",
+          "thisWeek": "Ez a hét",
+          "thisWeekSoFar": "Ezen a héten eddig",
+          "thisYear": "Az évben",
+          "thisYearSoFar": "Ebben az évben eddig",
+          "today": "Ma",
+          "todaySoFar": "Ma eddig",
+          "yesterday": "Tegnap"
         },
         "lastNDays_one": "",
         "lastNDays_other": "",
@@ -8780,6 +8778,9 @@
     },
     "drawer": {
       "close": "Bezárás"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "Kísérleti",
@@ -10597,7 +10598,12 @@
       }
     },
     "help": {
-      "aria-label": "Súgó"
+      "aria-label": "Súgó",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "Meghívás",
@@ -11364,12 +11370,15 @@
       "label-workflow": "Munkafolyamat",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "Ez az erőforrás a(z) {{repoType}} ág mögött van.",
+      "branch-text": "",
       "not-saved": "Amíg ez az ág össze nem lesz vonva, a szervezet többi Grafana-felhasználója továbbra is a konfigurált alapértelmezett ágba mentett aktuális verziót fogja látni",
       "open-in-repo-button": "Megnyitás itt: {{repoType}}",
       "open-pull-request-in-repo": "Összefésülési kérelem megnyitása itt: {{repoType}}",
