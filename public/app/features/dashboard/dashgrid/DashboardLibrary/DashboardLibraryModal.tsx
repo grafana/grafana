@@ -180,9 +180,9 @@ function getStyles(theme: GrafanaTheme2) {
     tabContent: css({
       flex: 1,
       overflow: 'auto',
+      paddingTop: theme.spacing(1),
       paddingLeft: theme.spacing(3),
       paddingRight: theme.spacing(3),
-      paddingBottom: theme.spacing(3),
     }),
   };
 }

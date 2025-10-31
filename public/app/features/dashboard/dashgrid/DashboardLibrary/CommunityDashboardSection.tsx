@@ -6,7 +6,7 @@ import { useAsync, useDebounce } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Button, useStyles2, Stack, Grid, EmptyState, Alert, Pagination, FilterInput } from '@grafana/ui';
+import { Button, useStyles2, Stack, Grid, EmptyState, Alert, Pagination, FilterInput, Box } from '@grafana/ui';
 import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 
 import { DashboardCard } from './DashboardCard';
@@ -272,12 +272,14 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         )}
       </div>
       {(hasMore || currentPage > 1) && (
-        <Pagination
-          currentPage={currentPage}
-          numberOfPages={estimatedTotalPages}
-          onNavigate={(page) => setCurrentPage(page)}
-          className={styles.pagination}
-        />
+        <Box justifyContent="flex-end">
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={estimatedTotalPages}
+            onNavigate={(page) => setCurrentPage(page)}
+            className={styles.pagination}
+          />
+        </Box>
       )}
     </Stack>
   );
