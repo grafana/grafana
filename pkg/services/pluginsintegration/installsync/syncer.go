@@ -92,6 +92,7 @@ func (s *syncer) Sync(ctx context.Context, source install.Source, installedPlugi
 		return nil
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !s.featureToggles.IsEnabled(ctx, featuremgmt.FlagPluginStoreServiceLoading) {
 		logging.DefaultLogger.Warn("pluginInstallAPISync is enabled, but pluginStoreServiceLoading is disabled. skipping plugin sync.")
 		return nil
