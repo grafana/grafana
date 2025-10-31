@@ -103,6 +103,7 @@
 /pkg/apis/query @grafana/grafana-datasources-core-services
 /pkg/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
 /pkg/bus/ @grafana/grafana-search-and-storage
+/pkg/clientauth/ @grafana/grafana-app-platform-squad
 /pkg/cmd/ @grafana/grafana-backend-group
 /pkg/cmd/grafana-cli/commands/install_command.go @grafana/plugins-platform-backend
 /pkg/cmd/grafana-cli/commands/install_command_test.go @grafana/plugins-platform-backend
