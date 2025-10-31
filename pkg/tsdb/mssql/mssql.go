@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/url"
 	"reflect"
 	"regexp"
@@ -268,12 +269,21 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo, azureManagedIdentity
 	tlsSkipVerify := dsInfo.JsonData.TlsSkipVerify
 	hostNameInCertificate := dsInfo.JsonData.Servername
 	certificate := dsInfo.JsonData.RootCertFile
+	authType := dsInfo.JsonData.AuthenticationType
+	if authType == "" {
+		authType = sqlServerAuthentication
+	}
+
+	if authType == sqlServerAuthentication {
+		return buildSQLServerAuthenticationDSN(addr, dsInfo, encrypt, tlsSkipVerify, hostNameInCertificate, certificate)
+	}
+
 	connStr := fmt.Sprintf("server=%s;database=%s;",
 		addr.Host,
 		dsInfo.Database,
 	)
 
-	switch dsInfo.JsonData.AuthenticationType {
+	switch authType {
 	case azureAuthentication:
 		azureCredentialDSNFragment, err := getAzureCredentialDSNFragment(azureCredentials, azureManagedIdentityClientId, azureEntraPasswordCredentialsEnabled)
 		if err != nil {
@@ -311,6 +321,68 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo, azureManagedIdentity
 	}
 
 	return connStr, nil
+}
+
+func buildSQLServerAuthenticationDSN(addr util.NetworkAddress, dsInfo sqleng.DataSourceInfo, encrypt string, tlsSkipVerify bool, hostNameInCertificate, certificate string) (string, error) {
+	password := dsInfo.DecryptedSecureJSONData["password"]
+
+	u := &url.URL{Scheme: "sqlserver"}
+	if password != "" {
+		u.User = url.UserPassword(dsInfo.User, password)
+	} else {
+		u.User = url.User(dsInfo.User)
+	}
+
+	host := addr.Host
+	instance := ""
+	if strings.Contains(host, `\`) {
+		parts := strings.SplitN(host, `\`, 2)
+		host = parts[0]
+		instance = parts[1]
+	}
+
+	hostComponent := host
+	if hostComponent == "" {
+		hostComponent = "localhost"
+	}
+
+	if addr.Port != "" && addr.Port != "0" {
+		hostComponent = net.JoinHostPort(hostComponent, addr.Port)
+	} else if strings.Contains(hostComponent, ":") && !strings.HasPrefix(hostComponent, "[") && !strings.Contains(hostComponent, "]") {
+		hostComponent = fmt.Sprintf("[%s]", hostComponent)
+	}
+
+	u.Host = hostComponent
+	if instance != "" {
+		u.Path = "/" + instance
+	}
+
+	q := u.Query()
+	if dsInfo.Database != "" {
+		q.Set("database", dsInfo.Database)
+	}
+
+	switch encrypt {
+	case "true":
+		q.Set("encrypt", encrypt)
+		q.Set("TrustServerCertificate", strconv.FormatBool(tlsSkipVerify))
+		if hostNameInCertificate != "" {
+			q.Set("hostNameInCertificate", hostNameInCertificate)
+		}
+		if certificate != "" {
+			q.Set("certificate", certificate)
+		}
+	case "disable":
+		q.Set("encrypt", encrypt)
+	}
+
+	if dsInfo.JsonData.ConnectionTimeout != 0 {
+		q.Set("connection timeout", strconv.Itoa(dsInfo.JsonData.ConnectionTimeout))
+	}
+
+	u.RawQuery = q.Encode()
+
+	return u.String(), nil
 }
 
 func getAzureCredentialDSNFragment(azureCredentials azcredentials.AzureCredentials, azureManagedIdentityClientId string, azureEntraPasswordCredentialsEnabled bool) (string, error) {

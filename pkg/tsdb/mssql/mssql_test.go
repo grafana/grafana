@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net/url"
 	"os"
 	"testing"
 	"time"
@@ -30,6 +31,47 @@ import (
 // devenv/README.md for setup instructions.
 // If needed, change the variable below to the IP address of the database.
 var serverIP = "localhost"
+
+func TestGenerateConnectionStringUsesURLFormatForSQLAuth(t *testing.T) {
+	logger := backend.NewLoggerWith("logger", "mssql.test")
+	dsInfo := sqleng.DataSourceInfo{
+		JsonData: sqleng.JsonData{
+			AuthenticationType: "",
+			Encrypt:            "true",
+			TlsSkipVerify:      true,
+			Servername:         "db.example.com",
+			ConnectionTimeout:  30,
+		},
+		URL:      "db-host\\sqlexpress:1444",
+		User:     "grafana",
+		Database: "grafanadb",
+		DecryptedSecureJSONData: map[string]string{
+			"password": "ExampleValue;123",
+		},
+	}
+
+	connStr, err := generateConnectionString(dsInfo, "", false, nil, kerberos.KerberosAuth{}, logger)
+	require.NoError(t, err)
+
+	parsed, err := url.Parse(connStr)
+	require.NoError(t, err)
+	assert.Equal(t, "sqlserver", parsed.Scheme)
+	assert.Equal(t, "grafana", parsed.User.Username())
+
+	pw, ok := parsed.User.Password()
+	require.True(t, ok)
+	assert.Equal(t, "ExampleValue;123", pw)
+
+	assert.Equal(t, "db-host:1444", parsed.Host)
+	assert.Equal(t, "/sqlexpress", parsed.Path)
+
+	query := parsed.Query()
+	assert.Equal(t, "grafanadb", query.Get("database"))
+	assert.Equal(t, "true", query.Get("encrypt"))
+	assert.Equal(t, "true", query.Get("TrustServerCertificate"))
+	assert.Equal(t, "db.example.com", query.Get("hostNameInCertificate"))
+	assert.Equal(t, "30", query.Get("connection timeout"))
+}
 
 func TestMSSQL(t *testing.T) {
 	// change to true to run the MSSQL tests
