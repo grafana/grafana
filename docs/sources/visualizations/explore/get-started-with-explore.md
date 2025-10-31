@@ -14,12 +14,12 @@ title: Get started with Explore
 refs:
   saved-queries:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#saved-queries
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#saved-queries
   save-query:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#save-a-query
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#save-a-query
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#save-a-query
 weight: 5
@@ -71,12 +71,13 @@ Explore consists of a toolbar, outline, query editor, the ability to add multipl
   - **Run query** - Click to run your query.
 
 - **Query editor** - Interface where you construct the query for a specific data source. Query editor elements differ based on data source. In order to run queries across multiple data sources you need to select **Mixed** from the data source picker.
-
-- **+ Add query** - Add additional queries.
-- **+ Add from saved queries** - Add a saved query. Click the **Replace with saved query** button (or icon) to reuse a saved query. To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
+  - **Save query** - To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
+  - **Replace with saved query** - Reuse a saved query.
+  - **+ Add query** - Add an additional query.
+  - **+ Add from saved queries** - Add an additional query by reusing a saved query.
 
   {{< admonition type="note" >}}
-  [Saved queries](ref:saved-queries) is in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Cloud only.
+  [Saved queries](ref:saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
   {{< /admonition >}}
 
 - **Query history** - Query history contains the list of queries that you created in Explore. You can also add queries from the history to your saved queries. Refer to [Query history](/docs/grafana/<GRAFANA_VERSION>/explore/query-management/#query-history) for detailed information on working with your query history.
