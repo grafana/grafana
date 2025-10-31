@@ -7189,7 +7189,8 @@
     "logs-table-multi-select": {
       "fields": "Mezők",
       "reset": "Visszaállítás",
-      "selected-fields": "Kijelölt mezők"
+      "selected-fields": "Kijelölt mezők",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Lekérdezés kijelölése név alapján",
@@ -8029,26 +8030,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "Tegnapelőtt",
+          "previousFiscalQuarter": "Az előző pénzügyi negyedév",
+          "previousFiscalYear": "Az előző pénzügyi év",
+          "previousMonth": "Előző hónap",
+          "previousWeek": "Az előző hét",
+          "previousYear": "Az előző év",
+          "thisDayLastWeek": "A múlt héten ezen a napon",
+          "thisFiscalQuarter": "Ez a pénzügyi negyedév",
+          "thisFiscalQuarterSoFar": "Ebben a pénzügyi negyedévben eddig",
+          "thisFiscalYear": "Ez a pénzügyi év",
+          "thisFiscalYearSoFar": "Ebben a pénzügyi évben eddig",
+          "thisMonth": "Ez a hónap",
+          "thisMonthSoFar": "Ebben a hónapban eddig",
+          "thisWeek": "Ez a hét",
+          "thisWeekSoFar": "Ezen a héten eddig",
+          "thisYear": "Az évben",
+          "thisYearSoFar": "Ebben az évben eddig",
+          "today": "Ma",
+          "todaySoFar": "Ma eddig",
+          "yesterday": "Tegnap"
         },
         "lastNDays_one": "",
         "lastNDays_other": "",

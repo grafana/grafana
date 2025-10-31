@@ -7235,7 +7235,8 @@
     "logs-table-multi-select": {
       "fields": "Pole",
       "reset": "Resetovat",
-      "selected-fields": "Vybraná pole"
+      "selected-fields": "Vybraná pole",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Vybrat dotaz podle názvu",
@@ -8079,26 +8080,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "Předevčírem",
+          "previousFiscalQuarter": "Předchozí fiskální čtvrtletí",
+          "previousFiscalYear": "Předchozí fiskální rok",
+          "previousMonth": "Předchozí měsíc",
+          "previousWeek": "Předchozí týden",
+          "previousYear": "Předchozí rok",
+          "thisDayLastWeek": "Tento den minulý týden",
+          "thisFiscalQuarter": "Toto fiskální čtvrtletí",
+          "thisFiscalQuarterSoFar": "Dosud pro toto fiskální čtvrtletí",
+          "thisFiscalYear": "Tento fiskální rok",
+          "thisFiscalYearSoFar": "Dosud pro tento fiskální rok",
+          "thisMonth": "Tento měsíc",
+          "thisMonthSoFar": "Dosud pro tento měsíc",
+          "thisWeek": "Tento týden",
+          "thisWeekSoFar": "Dosud pro tento týden",
+          "thisYear": "Tento rok",
+          "thisYearSoFar": "Letos dosud",
+          "today": "Dnes",
+          "todaySoFar": "Dosud pro dnešní den",
+          "yesterday": "Včera"
         },
         "lastNDays_one": "",
         "lastNDays_few": "",
