@@ -89,6 +89,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
     workflow,
     repository,
     resourceType: 'folder',
+    selectedBranch: methods.getValues().ref,
     handlers: {
       onDismiss,
       onBranchSuccess,

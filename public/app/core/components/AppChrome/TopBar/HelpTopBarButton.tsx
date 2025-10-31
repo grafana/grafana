@@ -34,7 +34,12 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
   if (isSmallScreen || !enrichedHelpNode.hideFromTabs || interactiveLearningPluginId === undefined) {
     return (
       <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
-        <ToolbarButton iconOnly icon="question-circle" aria-label={t('navigation.help.aria-label', 'Help')} />
+        <ToolbarButton
+          iconOnly
+          icon="question-circle"
+          aria-label={t('navigation.help.aria-label', 'Help')}
+          tooltip={t('navigation.help.tooltip', 'Get help and useful links')}
+        />
       </Dropdown>
     );
   }
@@ -48,6 +53,14 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
       icon="question-circle"
       aria-label={t('navigation.help.aria-label', 'Help')}
       className={isOpen ? styles.helpButtonActive : undefined}
+      tooltip={
+        isOpen
+          ? t(
+              'navigation.help.interactive-learning.close-tooltip',
+              'Close interactive learning, help, and documentation'
+            )
+          : t('navigation.help.interactive-learning.open-tooltip', 'Open interactive learning, help, and documentation')
+      }
       onClick={() => {
         if (isOpen) {
           setDockedComponentId(undefined);

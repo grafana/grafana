@@ -48,7 +48,7 @@ export function RuleDetailsDrawer({ ruleUID, onClose }: RuleDetailsDrawerProps) 
 
   if (error) {
     return (
-      <Drawer title={t('alerting.triage.rule-details.title', 'Rule Details')} onClose={onClose} size="lg">
+      <Drawer title={t('alerting.triage.rule-details.title', 'Rule Details')} onClose={onClose} size="md">
         <ErrorContent error={error} />
       </Drawer>
     );
@@ -56,7 +56,7 @@ export function RuleDetailsDrawer({ ruleUID, onClose }: RuleDetailsDrawerProps) 
 
   if (loading || !rule) {
     return (
-      <Drawer title={t('alerting.triage.rule-details.title', 'Rule Details')} onClose={onClose} size="lg">
+      <Drawer title={t('alerting.triage.rule-details.title', 'Rule Details')} onClose={onClose} size="md">
         <div>{t('alerting.common.loading', 'Loading...')}</div>
       </Drawer>
     );
@@ -69,7 +69,6 @@ export function RuleDetailsDrawer({ ruleUID, onClose }: RuleDetailsDrawerProps) 
   return (
     <Drawer
       onClose={onClose}
-      subtitle={`HELLO`}
       title={
         <Stack direction="column">
           <Stack direction="row" alignItems="center">
@@ -104,7 +103,7 @@ export function RuleDetailsDrawer({ ruleUID, onClose }: RuleDetailsDrawerProps) 
           <Text color="secondary">{t('alerting.triage.rule-details.subtitle', 'Rule details and conditions')}</Text>
         </Stack>
       }
-      size="lg"
+      size="md"
       tabs={
         <TabsBar>
           <Tab

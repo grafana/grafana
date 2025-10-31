@@ -3623,15 +3623,18 @@
     {
       "metadata": {
         "name": "sharingDashboardImage",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-15T21:07:39Z"
+        "resourceVersion": "1761782859498",
+        "creationTimestamp": "2025-07-15T21:07:39Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-30 00:07:39.498343 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables image sharing functionality for dashboards",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
-        "hideFromDocs": true
+        "expression": "true"
       }
     },
     {
