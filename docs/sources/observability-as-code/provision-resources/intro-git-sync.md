@@ -63,15 +63,16 @@ With Git Sync, you can make changes to the files in the provisioned folder in Gi
 
 ## Known limitations
 
-**Git Sync is under development and the following limitations apply:**
+**Git Sync is under development and the following limitations apply.**
 
-- You can only sync dashboards and folders. Refer to [Supported resources](#supported-resources) for more information.
-  - If you're using Git Sync in Grafana OSS and Grafana Enterprise, some resources might be in an incompatible data format and can't be synced.
-- Full-instance sync is not available in Grafana Cloud and has limitations in Grafana OSS and Grafana Enterprise. Refer to [Choose what to synchronize](../git-sync-setup.md#choose-what-to-synchronize) for more details.
-- You can only authenticate in GitHub using your Personal Access Token token.
-- Support for native Git, Git app, and other providers, such as GitLab or Bitbucket, is on the roadmap.
-- You cannot import, copy, move, or save resources using Git Sync. Instead, open a PR to carry out any of these tasks.
-- Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
+| **Synced resources**  | - You can only sync dashboards and folders. Refer to [Supported resources](#supported-resources) for more information.
+                          - If you're using Git Sync in Grafana OSS and Grafana Enterprise, some resources might be in an incompatible data format and won't be synced.
+                          - Full-instance sync is not available in Grafana Cloud and has limitations in Grafana OSS and Grafana Enterprise. Refer to [Choose what to synchronize](../git-sync-setup.md#choose-what-to-synchronize) for more details.
+                          - During the synchronization process, your resources will be temporarily unavailable. No one will be able to create, edit, or delete resources during this process. 
+                          - If you want to manage resources using Git Sync, you need to save them as JSON files and commit them to the synced repository. Open a PR to import, copy, move, or save a dashboard or folder.
+                          - Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.      | 
+| **Authentication**    | - You can only authenticate in GitHub using your Personal Access Token token.       | 
+| **Compatibility**     | - Support for native Git, Git app, and other providers, such as GitLab or Bitbucket, is on the roadmap.       | 
 
 ## Supported resources
 
