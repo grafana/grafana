@@ -250,6 +250,13 @@ You can query CloudWatch Logs using three supported query language options:
 
 1. Select a region.
 1. Select **CloudWatch Logs** from the query type drop-down.
+1. Select the Logs Mode depending on whether you would like to query CloudWatch Log Insights or Log Anomalies
+
+**Log Anomalies**
+
+
+**Log Insights**
+
 1. Select the query language you would like to use in the **Query Language** drop-down.
 1. Click **Select log groups** and choose up to 20 log groups to query.
 1. Use the main input area to write your logs query. Amazon CloudWatch only supports a subset of OpenSearch SQL and PPL commands. To find out more about the syntax supported, consult [Amazon CloudWatch Logs documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_Languages.html)
@@ -258,7 +265,7 @@ You can query CloudWatch Logs using three supported query language options:
    You must specify the region and log groups when querying with **Logs Insights QL** and **OpenSearch PPL**. **OpenSearch SQL** doesn't require log group selection. However, selecting log groups simplifies query writing by populating syntax suggestions with discovered log group fields.
    {{< /admonition >}}
 
-Click **CloudWatch Logs Insights** to interactively view, search, and analyze your log data in the CloudWatch Logs Insights console. If you're not logged in to the CloudWatch console, the link forwards you to the login page.
+Click **View in CloudWatch console** to interactively view, search, and analyze your log data in the CloudWatch Logs Insights console. If you're not logged in to the CloudWatch console, the link forwards you to the login page.
 
 ### Query Log groups with OpenSearch SQL
 
