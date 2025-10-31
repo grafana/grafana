@@ -13,11 +13,13 @@ import (
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -40,6 +42,14 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 			folderPermService := acmock.NewMockedPermissionsService()
 			folderPermService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 
+			obj := &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: folder.GeneralFolderUID,
+					},
+				},
+			}
+
 			cfg := setting.NewCfg()
 			f := ini.Empty()
 			f.Section("rbac").Key("resources_with_managed_permissions_on_creation").SetValue("folder")
@@ -47,8 +57,7 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 			require.NoError(t, err)
 			cfg.RBAC = tempCfg.RBAC
 			store := grafanarest.NewMockStorage(t)
-			store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-				Return(&folders.Folder{}, nil).Maybe() // we don't really care
+			store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(obj, nil)
 
 			fs := folderStorage{
 				folderPermissionsSvc: folderPermService,
@@ -57,18 +66,15 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 				permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
 				features:             featuremgmt.WithFeatures(),
 			}
-			obj := &folders.Folder{}
 
 			ctx := request.WithNamespace(context.Background(), "org-2")
 			ctx = identity.WithRequester(ctx, &user.SignedInUser{
 				UserID: 1,
 			})
 
-			out, err := fs.Create(ctx, obj, func(ctx context.Context,
-				obj runtime.Object) error {
+			out, err := fs.Create(ctx, obj, func(ctx context.Context, obj runtime.Object) error {
 				return nil
-			},
-				&metav1.CreateOptions{})
+			}, &metav1.CreateOptions{})
 
 			require.NoError(t, err)
 			require.NotNil(t, out)

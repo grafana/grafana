@@ -159,7 +159,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
 				tt.input.obj,
 				nil,
-				folders.SchemeGroupVersion.WithKind("folder"),
+				folders.SchemeGroupVersion.WithKind("Folder"),
 				"stacks-123",
 				tt.input.name,
 				folders.SchemeGroupVersion.WithResource("folders"),
@@ -336,10 +336,17 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace:   "stacks-123",
 					Name:        "valid-name",
-					Annotations: map[string]string{"grafana.app/folder": "p5"},
+					Annotations: map[string]string{"grafana.app/folder": "p6"},
 				},
 			},
 			setupFn: func(m *grafanarest.MockStorage) {
+				m.On("Get", mock.Anything, "p6", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p6",
+							Annotations: map[string]string{"grafana.app/folder": "p5"},
+						},
+					}, nil)
 				m.On("Get", mock.Anything, "p5", mock.Anything).Return(
 					&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
@@ -373,12 +380,6 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 						ObjectMeta: metav1.ObjectMeta{
 							Name:        "p1",
 							Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
-						},
-					}, nil)
-				m.On("Get", mock.Anything, folder.GeneralFolderUID, mock.Anything).Return(
-					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name: folder.GeneralFolderUID,
 						},
 					}, nil)
 			},
@@ -416,7 +417,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
 				tt.updatedObj,
 				obj,
-				folders.SchemeGroupVersion.WithKind("folder"),
+				folders.SchemeGroupVersion.WithKind("Folder"),
 				tt.updatedObj.Namespace,
 				tt.updatedObj.Name,
 				folders.SchemeGroupVersion.WithResource("folders"),
@@ -425,8 +426,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				nil,
 				true,
 				&user.SignedInUser{},
-			),
-				nil)
+			), nil)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -466,11 +466,14 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "valid-name",
+					Annotations: map[string]string{
+						"grafana.app/folder": "general", // the root folder
+					},
 				},
 			},
 		},
 		{
-			name: "should return error if title doesnt exist",
+			name: "should return error if title doesn't exist",
 			input: &folders.Folder{
 				Spec: folders.FolderSpec{},
 				TypeMeta: metav1.TypeMeta{
@@ -478,18 +481,24 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "valid-name",
+					Annotations: map[string]string{
+						"grafana.app/folder": "general", // the root folder
+					},
 				},
 			},
 			wantErr: true,
 		},
 		{
-			name: "should return error if spec doesnt exist",
+			name: "should return error if spec doesn't exist",
 			input: &folders.Folder{
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Folder",
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "valid-name",
+					Annotations: map[string]string{
+						"grafana.app/folder": "general", // the root folder
+					},
 				},
 			},
 			wantErr: true,
@@ -574,11 +583,14 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "valid-name",
+					Annotations: map[string]string{
+						"grafana.app/folder": "general", // the root folder
+					},
 				},
 			},
 		},
 		{
-			name: "should return error if title doesnt exist",
+			name: "should return error if title doesn't exist",
 			input: &folders.Folder{
 				Spec: folders.FolderSpec{},
 				TypeMeta: metav1.TypeMeta{
@@ -591,7 +603,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should return error if spec doesnt exist",
+			name: "should return error if spec doesn't exist",
 			input: &folders.Folder{
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Folder",

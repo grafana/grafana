@@ -97,6 +97,8 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	}
 	if v.ParentUID != "" {
 		meta.SetFolder(v.ParentUID)
+	} else {
+		meta.SetFolder(folder.GeneralFolderUID)
 	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f, nil

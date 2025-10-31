@@ -579,7 +579,7 @@ func TestIntegrationCreate(t *testing.T) {
 		assert.Equal(t, folder.UID, m["folderUid"])
 	})
 
-	t.Run("create dashboard under unknow folder should fail", func(t *testing.T) {
+	t.Run("create dashboard under unknown folder should fail", func(t *testing.T) {
 		folderUID := "unknown"
 		// Import dashboard
 		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`))
