@@ -233,6 +233,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 
+		if enableZanzanaSync {
+			b.logger.Info("Enabling hooks for User to sync basic role assignments to Zanzana")
+			store.AfterCreate = b.AfterUserCreate
+			store.BeginUpdate = b.BeginUserUpdate
+			store.AfterDelete = b.AfterUserDelete
+		}
+
 		dw, err := opts.DualWriteBuilder(userResource.GroupResource(), legacyStore, store)
 		if err != nil {
 			return err
