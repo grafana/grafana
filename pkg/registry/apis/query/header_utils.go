@@ -42,6 +42,7 @@ var expectedHeaders = map[string]string{
 	strings.ToLower(queryService.HeaderPanelTitle):     queryService.HeaderPanelTitle,
 	strings.ToLower("X-Real-IP"):                       "X-Real-IP",
 	strings.ToLower("X-Forwarded-For"):                 "X-Forwarded-For",
+	strings.ToLower("Cookie"):                          "Cookie",
 }
 
 func ExtractKnownHeaders(header http.Header) map[string]string {
