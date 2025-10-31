@@ -80,7 +80,6 @@ func (c *PyroscopeClient) ProfileTypes(ctx context.Context, start int64, end int
 		End:   end,
 	}))
 	if err != nil {
-		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, backend.DownstreamError(fmt.Errorf("received error from client while getting profile types: %w", err))
@@ -115,7 +114,6 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 
 	resp, err := c.connectClient.SelectSeries(ctx, req)
 	if err != nil {
-		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, backend.DownstreamError(fmt.Errorf("received error from client while getting series: %w", err))
@@ -171,7 +169,6 @@ func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSe
 
 	resp, err := c.connectClient.SelectMergeStacktraces(ctx, req)
 	if err != nil {
-		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, backend.DownstreamError(fmt.Errorf("received error from client while getting profile: %w", err))
@@ -207,7 +204,7 @@ func (c *PyroscopeClient) GetSpanProfile(ctx context.Context, profileTypeID, lab
 	}
 
 	if resp.Msg.Flamegraph == nil {
-		// Not an error, can happen when querying data oout of range.
+		// Not an error, can happen when querying data out of range.
 		return nil, nil
 	}
 
@@ -254,7 +251,6 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context, labelSelector string, 
 		End:      end,
 	}))
 	if err != nil {
-		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, backend.DownstreamError(fmt.Errorf("error sending LabelNames request %v", err))
@@ -284,7 +280,6 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, label string, labelSe
 		End:      end,
 	}))
 	if err != nil {
-		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, backend.DownstreamError(fmt.Errorf("received error from client while getting label values: %w", err))
