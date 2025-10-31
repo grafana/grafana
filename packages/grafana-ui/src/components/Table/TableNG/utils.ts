@@ -970,17 +970,19 @@ export function canFieldBeColorized(
 export const displayJsonValue: (field: Field) => DisplayProcessor = (field: Field, decimals?: DecimalCount) => {
   const origDisplay = field.display!;
   return (value: unknown): DisplayValue => {
-    let jsonText: string;
-
     const displayValue = origDisplay(value, decimals);
-    const formattedValue = formattedValueToString(displayValue);
 
-    // Handle string values that might be JSON
-    try {
-      const parsed = JSON.parse(formattedValue);
-      jsonText = JSON.stringify(parsed, null, ' ');
-    } catch {
-      jsonText = formattedValue; // Keep original if not valid JSON
+    let jsonText: string;
+    if (!Array.isArray(value) && !isPlainObject(value)) {
+      const formattedValue = formattedValueToString(displayValue);
+      try {
+        const parsed = JSON.parse(formattedValue);
+        jsonText = JSON.stringify(parsed, null, ' ');
+      } catch {
+        jsonText = formattedValue; // Keep original if not valid JSON
+      }
+    } else {
+      jsonText = JSON.stringify(value, null, ' ');
     }
 
     return { ...displayValue, text: jsonText };
