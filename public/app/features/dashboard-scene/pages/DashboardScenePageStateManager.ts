@@ -488,7 +488,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
     const path = searchParams.get('path');
 
-    if (gnetId && datasource && pluginId && path) {
+    if (gnetId && datasource && pluginId) {
       return this.loadTemplateDashboard(gnetId, datasource, pluginId);
     }
 
