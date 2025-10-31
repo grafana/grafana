@@ -132,8 +132,8 @@ It also helps you avoid having several users build the same queries for the same
 Saved queries are available in:
 
 - [Dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#create-a-dashboard)
-- [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/get-started-with-explore/#explore-elements)
-- [Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/#add-new-annotation-queries)
+- [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/explore/get-started-with-explore/#explore-elements)
+- [Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/annotate-visualizations/#add-new-annotation-queries)
 
 You can see a list of these queries in the **Saved queries** drawer:
 
