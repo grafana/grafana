@@ -1302,5 +1302,46 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 			err = resp.Body.Close()
 			require.NoError(t, err)
 		})
+
+		t.Run("user with edit permissions on parent folder should be able to edit dashboard through permission inheritance", func(t *testing.T) {
+			inheritedPermissionsUserID := tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+				DefaultOrgRole: string(org.RoleNone),
+				Login:          "inheriteduser",
+				Password:       "inheriteduser",
+				IsAdmin:        false,
+			})
+			testFolder := createFolder(t, grafanaListedAddr, "folder with inherited permissions")
+			editFolderPermissions := []map[string]interface{}{
+				{
+					"permission": 2,
+					"userId":     inheritedPermissionsUserID,
+				},
+			}
+			setFolderPermissions(t, grafanaListedAddr, testFolder.UID, editFolderPermissions)
+
+			// create dashboard in the folder without specific dashboard permissions
+			testDash := createDashboard(t, grafanaListedAddr, "dashboard inheriting permissions", testFolder.ID, testFolder.UID) // nolint:staticcheck
+			u := fmt.Sprintf("http://inheriteduser:inheriteduser@%s/api/folders/%s", grafanaListedAddr, testFolder.UID)
+			resp, err := http.Get(u) // nolint:gosec
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, resp.StatusCode, "User should have access to the folder")
+			err = resp.Body.Close()
+			require.NoError(t, err)
+
+			// and can edit the dashboard by inheriting permissions from the folder
+			dashboardPayload := map[string]interface{}{
+				"dashboard": map[string]interface{}{
+					"uid":   testDash.UID,
+					"title": "Updated title via inherited permissions",
+				},
+				"folderUid": testFolder.UID,
+				"overwrite": true,
+			}
+			resp, err = postDashboard(t, grafanaListedAddr, "inheriteduser", "inheriteduser", dashboardPayload)
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, resp.StatusCode, "User should be able to edit dashboard through inherited folder permissions")
+			err = resp.Body.Close()
+			require.NoError(t, err)
+		})
 	})
 }
