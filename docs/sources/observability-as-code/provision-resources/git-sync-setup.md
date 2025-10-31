@@ -134,7 +134,7 @@ In this step you can decide which elements to synchronize. Keep in mind the avai
 
 #### Synchronization limitations
 
-Git Sync only supports dashboards and folders. Alerts, panels, and other resources are not supported yet. 
+Git Sync only supports dashboards and folders. Alerts, panels, and other resources are not supported yet.
 
 {{< admonition type="caution" >}}
 
