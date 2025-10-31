@@ -118,7 +118,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       ':not(:empty)': {
         border: '1px solid ' + theme.colors.border.weak,
         '&:hover': {
-          background: autoColor(theme, '#ffe7ba'),
+          border: '1px solid ' + theme.colors.border.strong,
         },
       },
       borderRadius: theme.shape.radius.md,
@@ -566,7 +566,7 @@ const CardsContainer = ({
   const styles = useStyles2(getStyles);
 
   const useTwoColumns =
-    mainContainerRef && mainContainerRef.current && mainContainerRef.current.getBoundingClientRect().right > 1000;
+    mainContainerRef && mainContainerRef.current && mainContainerRef.current.getBoundingClientRect().width > 1000;
 
   if (useTwoColumns) {
     return (
