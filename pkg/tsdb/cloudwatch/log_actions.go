@@ -232,10 +232,8 @@ func (ds *DataSource) executeStartQuery(ctx context.Context, logsClient models.C
 						arn := strings.TrimSuffix(lg.Arn, "*")
 						logGroupIdentifiers = append(logGroupIdentifiers, arn)
 					}
-					if len(logGroupIdentifiers) > 0 {
-						startQueryInput.LogGroupIdentifiers = logGroupIdentifiers
-						useLogGroupIdentifiers = true
-					}
+					startQueryInput.LogGroupIdentifiers = logGroupIdentifiers
+					useLogGroupIdentifiers = true
 				}
 			}
 		}
