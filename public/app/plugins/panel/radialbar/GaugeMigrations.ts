@@ -39,6 +39,11 @@ export function gaugePanelMigrationHandler(panel: PanelModel<Options>): Partial<
 }
 
 export function shouldMigrateGauge(panel: PanelModel): boolean {
+  // Test for new gauge option
+  if (panel.options?.shape) {
+    return false;
+  }
+
   const previousVersion = parseFloat(panel.pluginVersion ?? '8');
   return previousVersion < 13;
 }
