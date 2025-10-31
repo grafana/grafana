@@ -21,40 +21,28 @@ usage() {
         echo "Environment Variables:"
         echo "  PROFILE_PACKAGES: Newline-separated list of packages to profile."
         echo "                    These packages will run in background with profiling enabled."
-        echo "  PROFILE_PARALLEL_RUNS: Newline-separated list of parallel run counts."
-        echo "                         Must have same number of entries as PROFILE_PACKAGES."
+        echo "  PACKAGES_COUNT: Newline-separated list of run counts (optional)."
+        echo "                  Must have same number of entries as PROFILE_PACKAGES."
+        echo "                  Default: 1 for each package"
         echo "  MAX_WAIT_MINUTES: Maximum time to wait for profiled tests after main tests (in minutes)."
         echo "                    Default: 10 minutes"
         echo
         echo "Examples:"
-        echo "  # Single package with profiling:"
+        echo "  # Single package with profiling (default 1 run):"
         echo "  export PROFILE_PACKAGES=\"pkg/tests/apis/folder\""
-        echo "  export PROFILE_PARALLEL_RUNS=\"3\""
         echo "  echo \"./pkg/tests/apis/folder\" | $0 -t sqlite -r '^TestIntegration' -P -"
         echo
-        echo "  # Multiple packages with profiling:"
+        echo "  # Single package with multiple runs:"
+        echo "  export PROFILE_PACKAGES=\"pkg/tests/apis/folder\""
+        echo "  export PACKAGES_COUNT=\"3\""
+        echo "  echo \"./pkg/tests/apis/folder\" | $0 -t sqlite -r '^TestIntegration' -P -"
+        echo
+        echo "  # Multiple packages with custom run counts:"
         echo "  export PROFILE_PACKAGES=\"pkg/tests/apis/folder"
         echo "  pkg/tests/apis/dashboard\""
-        echo "  export PROFILE_PARALLEL_RUNS=\"1"
+        echo "  export PACKAGES_COUNT=\"1"
         echo "  2\""
         echo "  echo \"./pkg/tests/apis/folder ./pkg/tests/apis/dashboard\" | $0 -t sqlite -r '^TestIntegration' -P -"
-        echo
-        echo "Analyzing Downloaded Artifacts:"
-        echo "  When profiled tests fail, artifacts are generated containing:"
-        echo "    - CPU profiles (cpu_*.prof)"
-        echo "    - Memory profiles (mem_*.prof)"
-        echo "    - Execution traces (trace_*.out)"
-        echo "    - Test logs (test_*.log)"
-        echo "    - Exit codes (exit_*.code)"
-        echo
-        echo "  # Analyze profiles and traces:"
-        echo "  go tool pprof cpu_pkg_tests_apis_dashboard_run1.prof"
-        echo "  go tool pprof -alloc_space mem_pkg_tests_apis_datasource_run1.prof"
-        echo "  go tool trace trace_pkg_tests_apis_datasource_run1.out"
-        echo
-        echo "  For more information:"
-        echo "    - CPU/Memory profiling: https://go.dev/blog/pprof"
-        echo "    - Execution traces: https://pkg.go.dev/cmd/trace https://go.dev/blog/execution-traces-2024"
     } >&2
 }
 
@@ -68,21 +56,28 @@ is_int() {
 
 # Array of packages to profile (flaky tests that need detailed profiling)
 profile_packages=()
-# Number of parallel runs for each package (must match profile_packages indices)
-profile_parallel_runs=()
+# Number of runs for each package (must match profile_packages indices)
+packages_count=()
 
 if [[ -n "${PROFILE_PACKAGES:-}" ]]; then
   readarray -t profile_packages <<<"${PROFILE_PACKAGES}"
 fi
 
-if [[ -n "${PROFILE_PARALLEL_RUNS:-}" ]]; then
-  readarray -t profile_parallel_runs <<<"${PROFILE_PARALLEL_RUNS}"
+if [[ -n "${PACKAGES_COUNT:-}" ]]; then
+  readarray -t packages_count <<<"${PACKAGES_COUNT}"
 fi
 
-if [ ${#profile_packages[@]} -ne ${#profile_parallel_runs[@]} ]; then
-    echo "❌ ERROR: profile_packages and profile_parallel_runs must have the same number of elements"
+# If run counts not provided, default to 1 for each package
+if [ ${#profile_packages[@]} -gt 0 ] && [ ${#packages_count[@]} -eq 0 ]; then
+  for i in "${!profile_packages[@]}"; do
+    packages_count+=("1")
+  done
+fi
+
+if [ ${#profile_packages[@]} -ne ${#packages_count[@]} ]; then
+    echo "❌ ERROR: profile_packages and packages_count must have the same number of elements"
     echo "   profile_packages: ${#profile_packages[@]} elements"
-    echo "   profile_parallel_runs: ${#profile_parallel_runs[@]} elements"
+    echo "   packages_count: ${#packages_count[@]} elements"
     exit 1
 fi
 
@@ -92,7 +87,7 @@ if [ ${#profile_packages[@]} -gt 0 ]; then
   echo "📋 Profile Configuration Summary:"
   echo "   Packages to profile: ${#profile_packages[@]}"
   for i in "${!profile_packages[@]}"; do
-    echo "     • ${profile_packages[$i]} → ${profile_parallel_runs[$i]} parallel run(s)"
+    echo "     • ${profile_packages[$i]} → ${packages_count[$i]} run(s)"
   done
   echo ""
 fi
@@ -173,7 +168,7 @@ fi
 # Use packages directly - they're already full paths from shard.sh
 PACKAGES=("${packages[@]}")
 if [[ ${#PACKAGES[@]} -eq 0 ]]; then
-    echo "Error: No packages provided. Use -d to specify packages or pipe from stdin." >&2
+    echo "Error: No packages provided. Use -P to specify packages or pipe from stdin." >&2
     usage
     exit 1
 fi
@@ -237,34 +232,30 @@ if [ ${#profile_packages[@]} -gt 0 ]; then
     # Iterate through matched packages
     for i in "${!profile_packages[@]}"; do
       profile_pkg="${profile_packages[$i]}"
-      PARALLEL_RUNS="${profile_parallel_runs[$i]}"
+      RUN_COUNT="${packages_count[$i]}"
 
       if [ -n "${profile_packages_abs[$i]:-}" ]; then
         MATCHED_PKG="${profile_packages_abs[$i]}"
         PKG_NAME=$(echo "$profile_pkg" | tr '/' '_' | tr '.' '_')
 
-        echo "  📦 $profile_pkg: ${PARALLEL_RUNS} parallel run(s)"
+        echo "  📦 $profile_pkg: ${RUN_COUNT} run(s)"
 
-        # Start multiple runs in parallel
-        for run in $(seq 1 "$PARALLEL_RUNS"); do
-          (
-            EXIT_CODE=0
-            set +e # disable exit on error for capturing exit code
-            go test -tags="$TEST_TAGS" -timeout="$GO_TEST_TIMEOUT" -run "$RUN_PATTERN" \
-              -outputdir="$PROFILE_OUTPUT_DIR" \
-              -cpuprofile="cpu_${PKG_NAME}_run${run}.prof" \
-              -memprofile="mem_${PKG_NAME}_run${run}.prof" \
-              -trace="trace_${PKG_NAME}_run${run}.out" \
-              "$MATCHED_PKG" 2>&1 | tee "$PROFILE_OUTPUT_DIR/test_${PKG_NAME}_run${run}.log"
-            EXIT_CODE=${PIPESTATUS[0]}
-            set -e
-            echo "$EXIT_CODE" > "$PROFILE_OUTPUT_DIR/exit_${PKG_NAME}_run${run}.code"
-            echo "    ✓ Run $profile_pkg $run/$PARALLEL_RUNS completed with exit code: $EXIT_CODE"
-          ) &
-          pid=$!
-          echo "    🏃 Run $run/$PARALLEL_RUNS started (PID: $pid)"
-          PROFILE_PIDS+=("$pid")
-        done
+        # Run test with -count flag for multiple iterations
+        (
+          set +e # disable exit on error for capturing exit code
+          go test -count="$RUN_COUNT" -tags="$TEST_TAGS" -timeout="$GO_TEST_TIMEOUT" -run "$RUN_PATTERN" \
+            -outputdir="$PROFILE_OUTPUT_DIR" \
+            -cpuprofile="cpu_${PKG_NAME}.prof" \
+            -memprofile="mem_${PKG_NAME}.prof" \
+            -trace="trace_${PKG_NAME}.out" \
+            "$MATCHED_PKG" > "$PROFILE_OUTPUT_DIR/test_${PKG_NAME}.log" 2>&1
+          EXIT_CODE=$?
+          set -e
+          echo "$EXIT_CODE" > "$PROFILE_OUTPUT_DIR/exit_${PKG_NAME}.code"
+        ) &
+        pid=$!
+        echo "    🏃 Started with -count=$RUN_COUNT (PID: $pid)"
+        PROFILE_PIDS+=("$pid")
       fi
     done
 
@@ -298,10 +289,8 @@ if [ ${#PROFILE_PIDS[@]} -gt 0 ]; then
   echo "⏳ Waiting for profiled tests to complete (PIDs: ${PROFILE_PIDS[*]})..."
 
   # Configurable max wait time (in minutes)
-  MAX_WAIT_MINUTES=${MAX_WAIT_MINUTES:-10}  # Default: 10 minutes
+  MAX_WAIT_MINUTES="${MAX_WAIT_MINUTES:-10}"  # Default: 10 minutes
   MAX_WAIT=$((MAX_WAIT_MINUTES * 6))  # Convert to 10-second intervals
-  echo "  Timeout configured: ${MAX_WAIT_MINUTES} minutes"
-
   WAIT_COUNT=0
   while [ ${#PROFILE_PIDS[@]} -gt 0 ] && [ $WAIT_COUNT -lt $MAX_WAIT ]; do
     sleep 10
@@ -336,25 +325,44 @@ if [ ${#PROFILE_PIDS[@]} -gt 0 ]; then
   echo "📊 Profiled test results:"
   for i in "${!profile_packages[@]}"; do
     profile_pkg="${profile_packages[$i]}"
-    PARALLEL_RUNS="${profile_parallel_runs[$i]}"
+    RUN_COUNT="${packages_count[$i]}"
 
     if [ -n "${profile_packages_abs[$i]:-}" ]; then
       PKG_NAME=$(echo "$profile_pkg" | tr '/' '_' | tr '.' '_')
-      for run in $(seq 1 "$PARALLEL_RUNS"); do
-        EXIT_CODE_FILE="$PROFILE_OUTPUT_DIR/exit_${PKG_NAME}_run${run}.code"
-        if [ -f "$EXIT_CODE_FILE" ]; then
-          EXIT_CODE=$(cat "$EXIT_CODE_FILE")
-          if [ "$EXIT_CODE" -ne 0 ]; then
-            echo "  ❌ Run $run/$PARALLEL_RUNS of $profile_pkg failed (exit $EXIT_CODE)"
-            PROFILE_FAILED=1
-          else
-            echo "  ✅ Run $run/$PARALLEL_RUNS of $profile_pkg passed"
-          fi
-        else
-          echo "  ⚠️  Run $run/$PARALLEL_RUNS of $profile_pkg: No exit code"
+      EXIT_CODE_FILE="$PROFILE_OUTPUT_DIR/exit_${PKG_NAME}.code"
+      if [ -f "$EXIT_CODE_FILE" ]; then
+        EXIT_CODE=$(cat "$EXIT_CODE_FILE")
+        if [ "$EXIT_CODE" -ne 0 ]; then
+          echo "  ❌ $profile_pkg (${RUN_COUNT} run(s)) failed (exit $EXIT_CODE)"
           PROFILE_FAILED=1
+        else
+          echo "  ✅ $profile_pkg (${RUN_COUNT} run(s)) passed"
         fi
-      done
+      else
+        echo "  ⚠️  $profile_pkg: No exit code"
+        PROFILE_FAILED=1
+      fi
+    fi
+  done
+
+  # Print log files sequentially for better readability
+  echo ""
+  echo "📄 Profiled test logs:"
+  for i in "${!profile_packages[@]}"; do
+    profile_pkg="${profile_packages[$i]}"
+    RUN_COUNT="${packages_count[$i]}"
+
+    if [ -n "${profile_packages_abs[$i]:-}" ]; then
+      PKG_NAME=$(echo "$profile_pkg" | tr '/' '_' | tr '.' '_')
+      LOG_FILE="$PROFILE_OUTPUT_DIR/test_${PKG_NAME}.log"
+      if [ -f "$LOG_FILE" ]; then
+        echo ""
+        echo "════════════════════════════════════════════════════════════════"
+        echo "📋 Log for $profile_pkg (${RUN_COUNT} run(s))"
+        echo "════════════════════════════════════════════════════════════════"
+        cat "$LOG_FILE"
+        echo "════════════════════════════════════════════════════════════════"
+      fi
     fi
   done
 fi

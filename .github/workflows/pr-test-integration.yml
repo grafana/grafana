@@ -103,9 +103,6 @@ jobs:
           PROFILE_PACKAGES: |-
             pkg/tests/apis/folder
             pkg/tests/apis/dashboard
-          PROFILE_PARALLEL_RUNS: |-
-            1
-            2
         run: |
           set -euo pipefail
           ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | \
