@@ -8,11 +8,6 @@ import { IconButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { Spacer } from '../../components/Spacer';
 
-// Constants for grid layout - exported for use in other components (e.g., drawer width calculations)
-export const GRID_GAP_SPACING = 2; // theme.spacing(2) = 16px
-export const COLUMN_BORDER_WIDTH = 1; // 1px border on each column
-export const COLUMN_CONTENT_PADDING = 5; // 5px padding inside each column
-
 interface GenericRowProps {
   width: number;
   title: ReactNode;
@@ -113,22 +108,22 @@ export const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       position: 'relative',
       flexBasis: 0,
-      border: `${COLUMN_BORDER_WIDTH}px solid ${theme.colors.border.medium}`,
+      border: `1px solid ${theme.colors.border.medium}`,
     }),
     leftColumn: css({
       overflow: 'hidden',
     }),
     columnContent: (depth?: number) =>
       css({
-        padding: COLUMN_CONTENT_PADDING,
+        padding: 5,
         width: '100%',
-        paddingLeft: depth ? `calc(${theme.spacing(depth)} + ${COLUMN_CONTENT_PADDING}px)` : COLUMN_CONTENT_PADDING,
+        addingLeft: depth ? `calc(${theme.spacing(depth)} + 5px)` : 5,
       }),
     groupItemWrapper: (width: number) =>
       css({
         display: 'grid',
         gridTemplateColumns: `${width}px auto`,
-        gap: theme.spacing(GRID_GAP_SPACING),
+        gap: theme.spacing(2),
       }),
   };
 };
