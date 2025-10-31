@@ -21,8 +21,6 @@ type TemplateGroup struct {
 
 	// Spec is the spec of the TemplateGroup
 	Spec TemplateGroupSpec `json:"spec" yaml:"spec"`
-
-	Status TemplateGroupStatus `json:"status" yaml:"status"`
 }
 
 func (o *TemplateGroup) GetSpec() any {
@@ -39,15 +37,11 @@ func (o *TemplateGroup) SetSpec(spec any) error {
 }
 
 func (o *TemplateGroup) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
+	return map[string]any{}
 }
 
 func (o *TemplateGroup) GetSubresource(name string) (any, bool) {
 	switch name {
-	case "status":
-		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -55,13 +49,6 @@ func (o *TemplateGroup) GetSubresource(name string) (any, bool) {
 
 func (o *TemplateGroup) SetSubresource(name string, value any) error {
 	switch name {
-	case "status":
-		cast, ok := value.(TemplateGroupStatus)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type TemplateGroupStatus", value)
-		}
-		o.Status = cast
-		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -233,7 +220,6 @@ func (o *TemplateGroup) DeepCopyInto(dst *TemplateGroup) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.Status.DeepCopyInto(&dst.Status)
 }
 
 // Interface compliance compile-time check
@@ -303,17 +289,5 @@ func (s *TemplateGroupSpec) DeepCopy() *TemplateGroupSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *TemplateGroupSpec) DeepCopyInto(dst *TemplateGroupSpec) {
-	resource.CopyObjectInto(dst, s)
-}
-
-// DeepCopy creates a full deep copy of TemplateGroupStatus
-func (s *TemplateGroupStatus) DeepCopy() *TemplateGroupStatus {
-	cpy := &TemplateGroupStatus{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
-
-// DeepCopyInto deep copies TemplateGroupStatus into another TemplateGroupStatus object
-func (s *TemplateGroupStatus) DeepCopyInto(dst *TemplateGroupStatus) {
 	resource.CopyObjectInto(dst, s)
 }

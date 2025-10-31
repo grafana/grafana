@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type TemplateGroupClient struct {
@@ -74,24 +73,6 @@ func (c *TemplateGroupClient) Update(ctx context.Context, obj *TemplateGroup, op
 
 func (c *TemplateGroupClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*TemplateGroup, error) {
 	return c.client.Patch(ctx, identifier, req, opts)
-}
-
-func (c *TemplateGroupClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus TemplateGroupStatus, opts resource.UpdateOptions) (*TemplateGroup, error) {
-	return c.client.Update(ctx, &TemplateGroup{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       TemplateGroupKind().Kind(),
-			APIVersion: GroupVersion.Identifier(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			ResourceVersion: opts.ResourceVersion,
-			Namespace:       identifier.Namespace,
-			Name:            identifier.Name,
-		},
-		Status: newStatus,
-	}, resource.UpdateOptions{
-		Subresource:     "status",
-		ResourceVersion: opts.ResourceVersion,
-	})
 }
 
 func (c *TemplateGroupClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {

@@ -21,8 +21,6 @@ type Receiver struct {
 
 	// Spec is the spec of the Receiver
 	Spec ReceiverSpec `json:"spec" yaml:"spec"`
-
-	Status ReceiverStatus `json:"status" yaml:"status"`
 }
 
 func (o *Receiver) GetSpec() any {
@@ -39,15 +37,11 @@ func (o *Receiver) SetSpec(spec any) error {
 }
 
 func (o *Receiver) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
+	return map[string]any{}
 }
 
 func (o *Receiver) GetSubresource(name string) (any, bool) {
 	switch name {
-	case "status":
-		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -55,13 +49,6 @@ func (o *Receiver) GetSubresource(name string) (any, bool) {
 
 func (o *Receiver) SetSubresource(name string, value any) error {
 	switch name {
-	case "status":
-		cast, ok := value.(ReceiverStatus)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type ReceiverStatus", value)
-		}
-		o.Status = cast
-		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -233,7 +220,6 @@ func (o *Receiver) DeepCopyInto(dst *Receiver) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.Status.DeepCopyInto(&dst.Status)
 }
 
 // Interface compliance compile-time check
@@ -303,17 +289,5 @@ func (s *ReceiverSpec) DeepCopy() *ReceiverSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *ReceiverSpec) DeepCopyInto(dst *ReceiverSpec) {
-	resource.CopyObjectInto(dst, s)
-}
-
-// DeepCopy creates a full deep copy of ReceiverStatus
-func (s *ReceiverStatus) DeepCopy() *ReceiverStatus {
-	cpy := &ReceiverStatus{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
-
-// DeepCopyInto deep copies ReceiverStatus into another ReceiverStatus object
-func (s *ReceiverStatus) DeepCopyInto(dst *ReceiverStatus) {
 	resource.CopyObjectInto(dst, s)
 }
