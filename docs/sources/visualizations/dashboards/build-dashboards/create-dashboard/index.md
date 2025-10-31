@@ -123,16 +123,19 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    For more information about data sources, refer to [Data sources](ref:data-sources) for specific guidelines.
 
-1. To add a query, do one of the following:
+1. To create a query, do one of the following:
    - Write or construct a query in the query language of your data source.
-   - Click **+ Add from saved queries** or **Replace with saved query** to reuse a saved query.
+   - Click **Replace with saved query** to reuse a saved query.
+
+   {{< admonition type="note" >}}
+   [Saved queries](ref:saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+
+   This feature is only available on Grafana Enterprise and Grafana Cloud.
+   {{< /admonition >}}
 
 1. (Optional) To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
 
-   {{< admonition type="note" >}}
-   [Saved queries](ref:saved-queries) is in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Cloud only.
-   {{< /admonition >}}
-
+1. (Optional) Click **+ Add query** or **Add from saved queries** to add more queries as needed.
 1. Click **Refresh** to query the data source.
 1. In the visualization list, select a visualization type.
 
