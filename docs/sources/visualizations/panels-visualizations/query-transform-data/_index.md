@@ -224,9 +224,9 @@ To add a query, follow these steps:
 1. To add a query, do one of the following:
    - Write or construct a query in the query language of your data source.
    - Click **+ Add from saved queries** to add a previously saved query.
-   - If you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead.
+   - Reuse a saved query, click the **Replace with saved query** button (or icon).
 
-1. (Optional) To save the query for reuse, click the **Save query** icon.
+1. (Optional) To save the query for reuse, click the **Save query** button (or icon).
 
    {{< admonition type="note" >}}
    [Saved queries](#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.

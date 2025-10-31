@@ -151,9 +151,9 @@ To add a new annotation query to a dashboard, follow these steps:
 1. To add a query, do one of the following:
    - Write or construct a query in the query language of your data source. The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](ref:data-source) topic.
    - Click **+ Add from saved queries** to add a previously saved query.
-   - If you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead.
+   - Reuse a saved query, click the **Replace with saved query** button (or icon).
 
-1. (Optional) To [save the query](ref:save-query) for reuse, click the **Save query** icon.
+1. (Optional) To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
 
    {{< admonition type="note" >}}
    [Saved queries](ref:saved-queries) is in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Cloud only.
