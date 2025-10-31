@@ -10,7 +10,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';
 import { DashboardScene } from '../scene/DashboardScene';
-import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
+import { getLibraryPanelBehavior, hasActualSaveChanges, isLibraryPanel } from '../utils/utils';
 
 interface DashboardPromptProps {
   dashboard: DashboardScene;
@@ -183,5 +183,5 @@ export function ignoreChanges(scene: DashboardScene | null) {
     return true;
   }
 
-  return !canSave || fromScript || fromFile;
+  return !canSave || fromScript || fromFile || (scene.state.isEditing && !hasActualSaveChanges(scene));
 }
