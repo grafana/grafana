@@ -48,26 +48,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/#create-a-report
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/create-reports/#create-a-report
-  image-rendering-config:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#configuration
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#configuration
-  max-width:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-width
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-width
-  max-height:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-height
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-height
-  max-scale:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#maximum-device-scale-factor
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#maximum-device-scale-factor
 ---
 
 # Share dashboards and panels
@@ -264,7 +244,7 @@ To share a personalized, direct link to your panel within your organization, fol
    - **Height** - In pixels. The default is 500.
    - **Scale factor** - The default is 1.
 
-   There are maximums for [width](ref:max-width), [height](ref:max-height), and [scale factor](ref:max-scale) in the image renderer configuration that you can customize if needed.
+   There are maximums for some values in the image renderer configuration that you can customize if needed.
 
 1. (Optional) Click **Generate image** to see a preview of the panel image.
 1. (Optional) Click **Download image**.
@@ -283,7 +263,7 @@ When you click **Generate image** in the panel link settings, Grafana generates 
 | timeout   | Number of seconds. The timeout can be increased if the query for the panel needs more than the default 30 seconds.             |
 | scale     | Numeric value to configure device scale factor. Default is 1. Use a higher value to produce more detailed images (higher DPI). |
 
-You can also update these parameters in the [image rendering configuration](ref:image-rendering-config).
+You can also update these parameters in the [image rendering configuration](ref:image-rendering).
 
 The following example shows a link to a server-side rendered PNG:
 
