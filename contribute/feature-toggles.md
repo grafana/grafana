@@ -2,6 +2,8 @@
 
 This guide helps you to add your feature behind a _feature flag_, code that lets you enable or disable a feature without redeploying Grafana.
 
+Exhaustive documentation on OpenFeature can be found at [OpenFeature.dev](https://openfeature.dev/)
+
 ## Steps to adding a feature toggle
 
 1. Define the feature toggle in [registry.go](../pkg/services/featuremgmt/registry.go). To see what each feature stage means, look at the [related comments](../pkg/services/featuremgmt/features.go). If you are a community member, use the [CODEOWNERS](../.github/CODEOWNERS) file to determine which team owns the package you are updating.
@@ -15,7 +17,7 @@ Examples:
 
 ### Backend
 
-Use the OpenFeature client for all new backend feature flags and toggles.   
+Use the OpenFeature client for all new backend feature flags and toggles. 
 
 #### Key points:
 - OpenFeature SDK relies on the global state.  
