@@ -479,19 +479,22 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     throw new Error('Snapshot not found');
   }
 
-  private async loadTemplateDashboard(): Promise<DashboardDTO> {
+  private async loadSuggestedDashboard(): Promise<DashboardDTO> {
     // Extract template parameters from URL
     const searchParams = new URLSearchParams(window.location.search);
     const datasource = searchParams.get('datasource');
-    const gnetId = searchParams.get('gnetId');
     const pluginId = searchParams.get('pluginId');
     const gnetId = searchParams.get('gnetId');
 
     const path = searchParams.get('path');
 
+    if (gnetId && datasource && pluginId && path) {
+      return this.loadTemplateDashboard(gnetId, datasource, pluginId);
+    }
+
     // Check if this is a community dashboard (has gnetId) or plugin dashboard
     if (gnetId) {
-      return this.loadCommunityTemplateDashboard(gnetId, datasource, pluginId);
+      return this.loadCommunityTemplateDashboard(gnetId);
     }
 
     // Original plugin dashboard flow
@@ -590,7 +593,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     };
   }
 
-  private async loadCommunityTemplateDashboard(
+  private async loadTemplateDashboard(
     gnetId: string,
     datasource: string | null,
     pluginId: string | null
@@ -669,7 +672,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           rsp = await buildNewDashboardSaveModel(urlFolderUid);
           break;
         case DashboardRoutes.Template:
-          rsp = await this.loadTemplateDashboard();
+          rsp = await this.loadSuggestedDashboard();
           break;
         case DashboardRoutes.Provisioning:
           return this.loadProvisioningDashboard(slug || '', uid);
