@@ -29,17 +29,16 @@ import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
 const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
 
-function calculateDrawerWidth(
-  leftColumnWidth: number,
-  megaMenuDocked: boolean,
-  megaMenuOpen: boolean,
-  screenWidth: number
-): string {
+function useCalculateDrawerWidth(leftColumnWidth: number): string {
+  const { chrome } = useGrafana();
+  const chromeState = chrome.useState();
+  const { width: screenWidth } = useWindowSize();
+
   // Calculate the drawer width to align with the right column (chart area)
   // The drawer opens from the right, so we use calc to get: 100% - leftColumnWidth - gap
   // If the mega menu is docked and open, we also subtract its width
   // We also clamp to a max width to prevent the drawer from being too wide on ultra-wide monitors
-  const megaMenuOffset = megaMenuDocked && megaMenuOpen ? MENU_WIDTH : '0px';
+  const megaMenuOffset = chromeState.megaMenuDocked && chromeState.megaMenuOpen ? MENU_WIDTH : '0px';
   const gap = GRID_GAP_SPACING * 8; // theme.spacing(2) = 16px (8px per spacing unit)
 
   // Account for all the visual space the left column takes:
@@ -71,16 +70,8 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
   const [timeRange] = useTimeRange();
   const { leftColumnWidth } = useWorkbenchContext();
-  const { chrome } = useGrafana();
-  const chromeState = chrome.useState();
-  const { width: screenWidth } = useWindowSize();
 
-  const drawerWidth = calculateDrawerWidth(
-    leftColumnWidth,
-    chromeState.megaMenuDocked,
-    chromeState.megaMenuOpen,
-    screenWidth
-  );
+  const drawerWidth = useCalculateDrawerWidth(leftColumnWidth);
 
   const { data: rule, isLoading: loading, error } = useGetAlertRuleQuery({ uid: ruleUID });
 
