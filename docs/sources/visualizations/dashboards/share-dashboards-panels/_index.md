@@ -240,7 +240,7 @@ Export a Grafana JSON file that contains everything you need, including layout, 
 ### Export a dashboard as an image
 
 {{< admonition type="note">}}
-You must have the Grafana image renderer plugin installed to export a dashboard as an image.
+You must have the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer/) installed to export a dashboard as an image.
 {{< /admonition >}}
 
 To export a dashboard in its current state as a PNG image file, follow these steps:
@@ -258,6 +258,8 @@ To export a dashboard in its current state as a PNG image file, follow these ste
 1. Click **Download image**.
 1. Click the **X** at the top-right corner to close the share drawer.
 
+The generated image reflects how the dashboard appears.
+To change it, make changes to the dashboard or browser, like zooming in or out or resizing.
 ## Share panels {#share-a-panel}
 
 You can share a panels in the following ways:
