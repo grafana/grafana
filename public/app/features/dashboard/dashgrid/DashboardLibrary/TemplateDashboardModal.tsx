@@ -6,7 +6,7 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { Box, Grid, Modal, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { Box, Grid, Modal, Text, useStyles2 } from '@grafana/ui';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
@@ -108,42 +108,41 @@ export const TemplateDashboardModal = () => {
       onDismiss={onClose}
       className={styles.modal}
       title={t('dashboard-library.template-dashboard-modal.title', 'Start a dashboard from a template')}
+      contentClassName={styles.modalContent}
     >
-      <Box direction="column" gap={4} display="flex">
+      <div className={styles.stickyHeader}>
         <Text element="p">
           <Trans i18nKey="dashboard-library.template-dashboard-modal.description">
-            Browse and select from a template made by Grafana
+            Get started with Grafana templates using sample data. Connect your data to power them with real metrics.
           </Trans>
         </Text>
-        {loading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-            <Spinner />
-          </Box>
-        ) : (
-          <Grid
-            gap={4}
-            columns={{
-              xs: 1,
-              sm: 2,
-              lg: 3,
-            }}
-          >
-            {dashboards?.map((dashboard) => {
-              const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
-              const thumbnailUrl = thumbnail ? `/api/gnet${thumbnail}` : '';
+      </div>
+      <Box direction="column" gap={4} display="flex">
+        <Grid
+          gap={4}
+          columns={{
+            xs: 1,
+            sm: 2,
+            lg: 3,
+          }}
+        >
+          {loading
+            ? Array.from({ length: 4 }).map((_, index) => <DashboardCard.Skeleton key={index} />)
+            : dashboards?.map((dashboard) => {
+                const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
+                const thumbnailUrl = thumbnail ? `/api/gnet${thumbnail}` : '';
 
-              return (
-                <DashboardCard
-                  key={dashboard.uid}
-                  title={dashboard.name}
-                  imageUrl={thumbnailUrl}
-                  onClick={() => onImportDashboardClick(dashboard)}
-                  dashboard={dashboard}
-                />
-              );
-            })}
-          </Grid>
-        )}
+                return (
+                  <DashboardCard
+                    key={dashboard.uid}
+                    title={dashboard.name}
+                    imageUrl={thumbnailUrl}
+                    onClick={() => onImportDashboardClick(dashboard)}
+                    dashboard={dashboard}
+                  />
+                );
+              })}
+        </Grid>
       </Box>
     </Modal>
   );
@@ -153,6 +152,18 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     modal: css({
       width: '1200px',
+    }),
+    stickyHeader: css({
+      position: 'sticky',
+      top: 0,
+      zIndex: 2,
+      backgroundColor: theme.colors.background.primary,
+      paddingTop: theme.spacing(1),
+      paddingBottom: theme.spacing(2),
+    }),
+    modalContent: css({
+      paddingTop: 0,
+      height: '100%',
     }),
   };
 }

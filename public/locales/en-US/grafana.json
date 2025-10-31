@@ -5677,7 +5677,7 @@
       "use-template-button": "Use template"
     },
     "template-dashboard-modal": {
-      "description": "Browse and select from a template made by Grafana",
+      "description": "Get started with Grafana templates using sample data. Connect your data to power them with real metrics.",
       "title": "Start a dashboard from a template"
     }
   },

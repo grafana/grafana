@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
+import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Box, Button, Card, Text, Toggletip, useStyles2 } from '@grafana/ui';
+import { attachSkeleton } from '@grafana/ui/unstable';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { GnetDashboard } from './types';
@@ -24,7 +26,9 @@ interface Props {
   onDetailsClick?: () => void;
 }
 
-export function DashboardCard({ title, imageUrl, onClick, onDetailsClick, dashboard, details }: Props) {
+const DashboardCardSkeleton = () => <Skeleton width="350px" height="300px" />;
+
+function DashboardCardComponent({ title, imageUrl, onClick, onDetailsClick, dashboard, details }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -98,6 +102,8 @@ function DetailsToggletipContent({ details }: { details: Details }) {
   );
 }
 
+export const DashboardCard = attachSkeleton(DashboardCardComponent, DashboardCardSkeleton);
+
 function getStyles(theme: GrafanaTheme2) {
   return {
     card: css({
@@ -111,6 +117,7 @@ function getStyles(theme: GrafanaTheme2) {
       width: '350px',
       background: 'transparent',
       gridGap: theme.spacing(1),
+      paddingLeft: 0,
     }),
     thumbnailContainer: css({
       gridArea: 'Thumbnail',
