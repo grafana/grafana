@@ -129,9 +129,15 @@ You can save queries that you've created so they can be reused by you and others
 This helps users across your organization create dashboards or find insights in Explore without having to create their own queries or know a query language.
 It also helps you avoid having several users build the same queries for the same data sources multiple times.
 
+Saved queries are available in:
+
+- [Dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#create-a-dashboard)
+- [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/explore/get-started-with-explore/#explore-elements)
+- [Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/annotate-visualizations/#add-new-annotation-queries)
+
 You can see a list of these queries in the **Saved queries** drawer:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-queries-v12.2png.png" max-width="550px" alt="List of saved queries and the edit query form" caption="The Saved queries drawer accessed from Dashboards" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-v12.3.png" max-width="550px" alt="List of saved queries and the edit query form" caption="The Saved queries drawer accessed from Dashboards" >}}
 
 When you first open the drawer, the list of queries in the **All** tab is filtered by the data source of the panel.
 However, you can clear that filter to display all saved queries.
@@ -149,8 +155,6 @@ In the **Saved queries** drawer, you can:
 - Duplicate, lock and unlock a query for editing, or delete a saved query.
 - Edit a query title, description, tags, or the availability of the query to other users in your organization. By default, saved queries are locked for editing.
 - When you access the **Saved queries** drawer from Explore, you can use the **Edit in Explore** option to edit the body of a query.
-
-Access the duplicate, lock, unlock, and delete query options through the menu in the top-right corner of the query form next to the **Edit** button.
 
 To access your saved queries, click **+ Add from saved queries** in the query editor:
 
@@ -219,10 +223,10 @@ To add a query, follow these steps:
 
 1. To add a query, do one of the following:
    - Write or construct a query in the query language of your data source.
-   - Click **+ Add from saved queries** to add a previously saved query.
-   - If you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead.
+   - Click **+ Add from saved queries** to reuse a saved query.
+   - Click the **Replace with saved query** button (or icon) to reuse a saved query.
 
-1. (Optional) To save the query for reuse, click the **Save query** icon.
+1. (Optional) To save the query for reuse, click the **Save query** button (or icon).
 
    {{< admonition type="note" >}}
    [Saved queries](#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.

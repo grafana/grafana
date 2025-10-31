@@ -18,8 +18,11 @@ import {
 import { ensureV2Response, transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource, isDashboardV2Spec, isV2StoredVersion } from 'app/features/dashboard/api/utils';
+import { initializeDashboardAnalyticsAggregator } from 'app/features/dashboard/services/DashboardAnalyticsAggregator';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -41,6 +44,14 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
+
+/**
+ * Initialize both performance services to ensure they're ready before profiling starts
+ */
+function initializeDashboardPerformanceServices(): void {
+  initializeScenePerformanceLogger();
+  initializeDashboardAnalyticsAggregator();
+}
 
 export interface LoadError {
   status?: number;
@@ -297,6 +308,16 @@ abstract class DashboardScenePageStateManagerBase<T>
       const queryController = sceneGraph.getQueryController(dashboard);
 
       trackDashboardSceneLoaded(dashboard, measure?.duration);
+
+      const enableProfiling =
+        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === options.uid) !== -1;
+
+      if (enableProfiling) {
+        // Initialize both performance services before starting profiling to ensure observers are registered
+        initializeDashboardPerformanceServices();
+      }
+
+      // Start dashboard_view profiling (both services are now guaranteed to be listening)
       queryController?.startProfile('dashboard_view');
 
       if (options.route !== DashboardRoutes.New) {
@@ -410,6 +431,11 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       fromCache.state.version === rsp?.dashboard.version &&
       fromCache.state.meta.created === rsp?.meta.created
     ) {
+      const profiler = getDashboardSceneProfiler();
+      profiler.setMetadata({
+        dashboardUID: fromCache.state.uid,
+        dashboardTitle: fromCache.state.title,
+      });
       return fromCache;
     }
 
@@ -752,6 +778,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     const fromCache = this.getSceneFromCache(options.uid);
 
     if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
+      const profiler = getDashboardSceneProfiler();
+      profiler.setMetadata({
+        dashboardUID: fromCache.state.uid,
+        dashboardTitle: fromCache.state.title,
+      });
       return fromCache;
     }
 

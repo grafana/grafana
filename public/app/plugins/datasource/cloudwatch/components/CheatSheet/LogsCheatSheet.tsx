@@ -80,7 +80,7 @@ interface CollapseProps {
 const CheatSheetCollapse = (props: CollapseProps) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <Collapse label={props.label} isOpen={isOpen} onToggle={setIsOpen} key={props.key} collapsible>
+    <Collapse label={props.label} isOpen={isOpen} onToggle={setIsOpen} key={props.key}>
       {props.children}
     </Collapse>
   );

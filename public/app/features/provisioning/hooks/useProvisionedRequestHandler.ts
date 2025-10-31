@@ -14,6 +14,8 @@ import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
 import { useDispatch } from 'app/types/store';
 
+import { useLastBranch } from './useLastBranch';
+
 type ResourceType = 'dashboard' | 'folder'; // Add more as needed, e.g., 'alert', etc.
 
 // Information object that gets passed to all handlers
@@ -56,6 +58,7 @@ interface Props<T> {
   successMessage?: string;
   repository?: RepositoryView;
   resourceType?: ResourceType;
+  selectedBranch?: string; // The branch selected by the user in the form
 }
 
 /**
@@ -72,10 +75,12 @@ export function useProvisionedRequestHandler<T>({
   successMessage,
   repository,
   resourceType,
+  selectedBranch,
 }: Props<T>) {
   const dispatch = useDispatch();
   // useRef to ensure handlers are only called once per request
   const hasHandled = useRef(false);
+  const { setLastBranch } = useLastBranch();
 
   useEffect(() => {
     const repoType = repository?.type || 'git';
@@ -84,6 +89,11 @@ export function useProvisionedRequestHandler<T>({
       resourceType,
       workflow,
     };
+
+    // Reset handler guard when a new request starts loading
+    if (request.isLoading) {
+      hasHandled.current = false;
+    }
 
     if (request.isError) {
       hasHandled.current = true;
@@ -96,6 +106,15 @@ export function useProvisionedRequestHandler<T>({
       const { ref, path, urls, resource } = request.data;
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const resourceData = resource.upsert as Resource<T>;
+
+      // Save the last used branch to local storage
+      if (workflow === 'branch' && ref) {
+        // For branch workflow, save the ref from the response
+        setLastBranch(repository?.name, ref);
+      } else if (workflow === 'write') {
+        // For write workflow, save the selectedBranch or fall back to repository branch
+        setLastBranch(repository?.name, selectedBranch || repository?.branch);
+      }
 
       // Success message
       const message = successMessage || getContextualSuccessMessage(info);
@@ -121,7 +140,18 @@ export function useProvisionedRequestHandler<T>({
 
       handlers.onDismiss?.();
     }
-  }, [request, workflow, handlers, successMessage, repository, resourceType, folderUID, dispatch]);
+  }, [
+    request,
+    workflow,
+    handlers,
+    successMessage,
+    repository,
+    resourceType,
+    folderUID,
+    dispatch,
+    selectedBranch,
+    setLastBranch,
+  ]);
 }
 
 function getContextualSuccessMessage(info: ProvisionedOperationInfo): string {
