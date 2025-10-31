@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/selection"
 	clientrest "k8s.io/client-go/rest"
 
@@ -752,23 +753,36 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 
 func TestGetFoldersFromApiServer(t *testing.T) {
 	fakeK8sClient := new(client.MockK8sHandler)
-	folderStore := folder.NewFakeStore()
-	folderStore.ExpectedFolder = &folder.Folder{
-		UID:   "parent-uid",
-		ID:    2,
-		Title: "parent title",
-	}
 	tracer := noop.NewTracerProvider().Tracer("TestGetFoldersFromApiServer")
+
+	fstore := &FolderUnifiedStoreImpl{
+		k8sclient:   fakeK8sClient,
+		userService: usertest.NewUserServiceFake(),
+		tracer:      tracer,
+	}
+	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+	fakeK8sClient.On("Get", mock.Anything, "foouid", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"name":        "foouid",
+				"annotations": map[string]interface{}{"grafana.app/folder": "parentuid"},
+			},
+			"spec": map[string]interface{}{
+				"title": "foo title",
+			},
+		},
+	}, nil)
+
 	service := Service{
 		k8sclient:     fakeK8sClient,
 		features:      featuremgmt.WithFeatures(),
-		unifiedStore:  folderStore,
+		unifiedStore:  fstore,
 		accessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
+		log:           slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
 		tracer:        tracer,
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
-	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	folderkey := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
@@ -777,16 +791,6 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 
 	t.Run("Get folder by title", func(t *testing.T) {
 		// the search here will return a parent, this will be the parent folder returned when we query for it to add to the hit info
-		fakeFolderStore := folder.NewFakeStore()
-		fakeFolderStore.ExpectedFolder = &folder.Folder{
-			UID:       "foouid",
-			ParentUID: "parentuid",
-			ID:        2,
-			OrgID:     1,
-			Title:     "foo title",
-			URL:       "/dashboards/f/foouid/foo-title",
-		}
-		service.unifiedStore = fakeFolderStore
 		fakeK8sClient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: folderkey,
@@ -815,11 +819,84 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 					Rows: []*resourcepb.ResourceTableRow{
 						{
 							Key: &resourcepb.ResourceKey{
-								Name:     "uid",
+								Name:     "foouid",
 								Resource: "folder",
 							},
 							Cells: [][]byte{
-								[]byte("foouid"),
+								[]byte("foo title"),
+								[]byte("parentuid"),
+							},
+						},
+					},
+				},
+				TotalHits: 1,
+			}, nil).Once()
+
+		result, err := service.getFolderByTitleFromApiServer(ctx, 1, "foo title", nil)
+		require.NoError(t, err)
+
+		expectedResult := &folder.Folder{
+			ID:        2,
+			UID:       "foouid",
+			ParentUID: "parentuid",
+			Title:     "foo title",
+			OrgID:     1,
+			URL:       "/dashboards/f/foouid/foo-title",
+		}
+		compareFoldersNormalizeTime(t, expectedResult, result)
+		fakeK8sClient.AssertExpectations(t)
+	})
+
+	fakeK8sClient.On("Get", mock.Anything, "missing-from-unified-store", orgID, mock.Anything, mock.Anything).Return(nil, dashboards.ErrFolderNotFound)
+
+	// in this case the search returns multiple results with the same title, but only one exists in unified store
+	// this simulates the search index being out of date
+	// we should still return the folder that exists in unified store
+	// and not error out with "folder not found"
+	t.Run("Get folder by title - Search index is outdated", func(t *testing.T) {
+		fakeK8sClient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: folderkey,
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      resource.SEARCH_FIELD_TITLE_PHRASE, // nolint:staticcheck
+						Operator: string(selection.Equals),
+						Values:   []string{"foo title"},
+					},
+				},
+				Labels: []*resourcepb.Requirement{},
+			},
+			Limit: folderSearchLimit}).
+			Return(&resourcepb.ResourceSearchResponse{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{
+						{
+							Name: "title",
+							Type: resourcepb.ResourceTableColumnDefinition_STRING,
+						},
+						{
+							Name: "folder",
+							Type: resourcepb.ResourceTableColumnDefinition_STRING,
+						},
+					},
+					Rows: []*resourcepb.ResourceTableRow{
+						{
+							Key: &resourcepb.ResourceKey{
+								Name:     "missing-from-unified-store",
+								Resource: "folder",
+							},
+							Cells: [][]byte{
+								[]byte("foo title"),
+								[]byte("parentuid"),
+							},
+						},
+						{
+							Key: &resourcepb.ResourceKey{
+								Name:     "foouid",
+								Resource: "folder",
+							},
+							Cells: [][]byte{
+								[]byte("foo title"),
 								[]byte("parentuid"),
 							},
 						},
