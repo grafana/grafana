@@ -87,7 +87,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 		runstore = true
 	}
 
-	err = featuremgmt.InitOpenFeatureWithCfg(cfg)
+	err = featuremgmt.InitOpenFeatureWithCfg(cfg, nil)
 	require.NoError(t, err)
 
 	// Use proper database type based on the environment variable GRAFANA_TEST_DB in tests
