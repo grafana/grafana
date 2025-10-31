@@ -2,13 +2,12 @@ import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
+import { isOnPrem } from '../utils/isOnPrem';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
@@ -141,8 +140,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         </Grid>
 
         {/* job status is not ready for Cloud yet */}
-        {(config.buildInfo.edition === GrafanaEdition.OpenSource ||
-          config.buildInfo.edition === GrafanaEdition.Enterprise) && (
+        {isOnPrem() && (
           <div className={styles.cardContainer}>
             <RecentJobs repo={repo} />
           </div>
