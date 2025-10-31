@@ -99,7 +99,6 @@ export const QueryPatternsModal = (props: Props) => {
             key={patternType}
             label={`${capitalize(patternType)} query starters`}
             isOpen={openTabs.includes(patternType)}
-            collapsible={true}
             onToggle={() =>
               setOpenTabs((tabs) =>
                 // close tab if it's already open, otherwise open it

@@ -48,12 +48,7 @@ function getStyles(theme: GrafanaTheme2) {
     sidebarWrap: css({
       overflowY: 'scroll',
       flex: 1,
-      /* Hide scrollbar for Chrome, Safari, and Opera */
-      '&::-webkit-scrollbar': {
-        display: 'none',
-      },
-      /* Hide scrollbar for Firefox */
-      scrollbarWidth: 'none',
+      scrollbarWidth: 'thin',
     }),
     columnHeader: css({
       display: 'flex',

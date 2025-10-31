@@ -9,7 +9,7 @@ import (
 // metadata contains embedded CommonMetadata and can be extended with custom string fields
 // TODO: use CommonMetadata instead of redefining here; currently needs to be defined here
 // without external reference as using the CommonMetadata reference breaks thema codegen.
-type PluginInstallMetadata struct {
+type PluginMetadata struct {
 	UpdateTimestamp   time.Time         `json:"updateTimestamp"`
 	CreatedBy         string            `json:"createdBy"`
 	Uid               string            `json:"uid"`
@@ -22,9 +22,9 @@ type PluginInstallMetadata struct {
 	Labels            map[string]string `json:"labels"`
 }
 
-// NewPluginInstallMetadata creates a new PluginInstallMetadata object.
-func NewPluginInstallMetadata() *PluginInstallMetadata {
-	return &PluginInstallMetadata{
+// NewPluginMetadata creates a new PluginMetadata object.
+func NewPluginMetadata() *PluginMetadata {
+	return &PluginMetadata{
 		Finalizers: []string{},
 		Labels:     map[string]string{},
 	}

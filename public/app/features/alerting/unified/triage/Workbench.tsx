@@ -4,15 +4,12 @@ import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { SceneQueryRunner } from '@grafana/scenes';
 import { ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
-import { EditorColumnHeader } from '../components/EditorColumnHeader';
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';
 
-import { TimelineHeader } from './Timeline';
 import { WorkbenchProvider } from './WorkbenchContext';
 import { AlertRuleRow } from './rows/AlertRuleRow';
 import { FolderGroupRow } from './rows/FolderGroupRow';
@@ -26,7 +23,7 @@ import { Domain, Filter, WorkbenchRow } from './types';
 type WorkbenchProps = {
   domain: Domain;
   data: WorkbenchRow[];
-  groupBy?: string[]; // @TODO proper type
+  groupBy?: string[];
   filterBy?: Filter[];
   queryRunner: SceneQueryRunner;
 };
@@ -39,13 +36,30 @@ function renderWorkbenchRow(
   leftColumnWidth: number,
   domain: Domain,
   key: React.Key,
+  enableFolderMeta: boolean,
   depth = 0
 ): React.ReactElement {
   if (row.type === 'alertRule') {
-    return <AlertRuleRow key={key} row={row} leftColumnWidth={leftColumnWidth} rowKey={key} depth={depth} />;
+    return (
+      <AlertRuleRow
+        key={key}
+        row={row}
+        leftColumnWidth={leftColumnWidth}
+        rowKey={key}
+        depth={depth}
+        enableFolderMeta={enableFolderMeta}
+      />
+    );
   } else {
     const children = row.rows.map((childRow, childIndex) =>
-      renderWorkbenchRow(childRow, leftColumnWidth, domain, `${key}-${generateRowKey(childRow, childIndex)}`, depth + 1)
+      renderWorkbenchRow(
+        childRow,
+        leftColumnWidth,
+        domain,
+        `${key}-${generateRowKey(childRow, childIndex)}`,
+        enableFolderMeta,
+        depth + 1
+      )
     );
 
     // Check if this is a grafana_folder group and use FolderGroupRow
@@ -102,11 +116,14 @@ function renderWorkbenchRow(
  │                         │ │                                   │
  └─────────────────────────┘ └───────────────────────────────────┘
  */
-export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
+export function Workbench({ domain, data, queryRunner, groupBy }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
 
   const isLoading = !queryRunner.isDataReadyToDisplay();
   const [pageIndex, setPageIndex] = useState<number>(1);
+
+  // Calculate once: show folder metadata only if not grouping by grafana_folder
+  const enableFolderMeta = !groupBy?.includes('grafana_folder');
   // splitter for template and payload editor
   const splitter = useSplitter({
     direction: 'row',
@@ -116,8 +133,10 @@ export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
   });
 
   // this will measure the size of the left most column of the splitter, so we can use it to set the width of the group items
-  const [ref, rect] = useMeasure<HTMLDivElement>();
-  const leftColumnWidth = rect.width;
+  const [leftColumnRef, leftColumnRect] = useMeasure<HTMLDivElement>();
+  const leftColumnWidth = leftColumnRect.width;
+  const [rightColumnRef, rightColumnRect] = useMeasure<HTMLDivElement>();
+  const rightColumnWidth = rightColumnRect.width;
 
   const itemsToRender = pageIndex * DEFAULT_PER_PAGE_PAGINATION;
   const dataSlice = take(data, itemsToRender);
@@ -128,11 +147,11 @@ export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
       {/* dummy splitter to handle flex width of group items */}
       <div {...splitter.containerProps}>
         <div {...splitter.primaryProps}>
-          <div ref={ref} className={cx(styles.flexFull, styles.minColumnWidth)} />
+          <div ref={leftColumnRef} className={cx(styles.flexFull, styles.minColumnWidth)} />
         </div>
         <div {...splitter.splitterProps} />
         <div {...splitter.secondaryProps}>
-          <div className={cx(styles.flexFull, styles.minColumnWidth)} />
+          <div ref={rightColumnRef} className={cx(styles.flexFull, styles.minColumnWidth)} />
         </div>
       </div>
       {/* content goes here */}
@@ -141,15 +160,14 @@ export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
           <SummaryStatsReact />
           <SummaryChartReact />
         </div>
-        <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.headerContainer)}>
-          <EditorColumnHeader label={t('alerting.left-column.label-instances', 'Instances')} />
-          <EditorColumnHeader>
-            <TimelineHeader domain={domain} />
-          </EditorColumnHeader>
-        </div>
         {/* Render actual data */}
         <div className={styles.virtualizedContainer}>
-          <WorkbenchProvider leftColumnWidth={leftColumnWidth} domain={domain} queryRunner={queryRunner}>
+          <WorkbenchProvider
+            leftColumnWidth={leftColumnWidth}
+            rightColumnWidth={rightColumnWidth}
+            domain={domain}
+            queryRunner={queryRunner}
+          >
             <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators>
               {isLoading ? (
                 <>
@@ -160,7 +178,7 @@ export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
               ) : (
                 dataSlice.map((row, index) => {
                   const rowKey = generateRowKey(row, index);
-                  return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey);
+                  return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey, enableFolderMeta);
                 })
               )}
               {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}

@@ -1,4 +1,4 @@
-import { PureComponent } from 'react';
+import { memo } from 'react';
 
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { ConnectionConfig } from '@grafana/google-sdk';
@@ -10,8 +10,8 @@ import { CloudMonitoringOptions, CloudMonitoringSecureJsonData } from '../../typ
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudMonitoringOptions, CloudMonitoringSecureJsonData>;
 
-export class ConfigEditor extends PureComponent<Props> {
-  handleOnOptionsChange = (options: Props['options']) => {
+export const ConfigEditor = memo(({ options, onOptionsChange }: Props) => {
+  const handleOnOptionsChange = (options: Props['options']) => {
     if (options.jsonData.privateKeyPath || options.secureJsonFields['privateKey']) {
       reportInteraction('grafana_cloud_monitoring_config_changed', {
         authenticationType: 'JWT',
@@ -19,34 +19,32 @@ export class ConfigEditor extends PureComponent<Props> {
         privateKeyPath: !!options.jsonData.privateKeyPath,
       });
     }
-    this.props.onOptionsChange(options);
+    onOptionsChange(options);
   };
 
-  render() {
-    const { options, onOptionsChange } = this.props;
-    return (
-      <>
-        <DataSourceDescription
-          dataSourceName="Google Cloud Monitoring"
-          docsLink="https://grafana.com/docs/grafana/latest/datasources/google-cloud-monitoring/"
-          hasRequiredFields
-        />
-        <Divider />
-        <ConnectionConfig {...this.props} onOptionsChange={this.handleOnOptionsChange}></ConnectionConfig>
-        {config.secureSocksDSProxyEnabled && (
-          <>
-            <Divider />
-            <ConfigSection
-              title="Additional settings"
-              description="Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy."
-              isCollapsible={true}
-              isInitiallyOpen={options.jsonData.enableSecureSocksProxy !== undefined}
-            >
-              <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-            </ConfigSection>
-          </>
-        )}
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <DataSourceDescription
+        dataSourceName="Google Cloud Monitoring"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/google-cloud-monitoring/"
+        hasRequiredFields
+      />
+      <Divider />
+      <ConnectionConfig options={options} onOptionsChange={handleOnOptionsChange}></ConnectionConfig>
+      {config.secureSocksDSProxyEnabled && (
+        <>
+          <Divider />
+          <ConfigSection
+            title="Additional settings"
+            description="Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy."
+            isCollapsible
+            isInitiallyOpen={options.jsonData.enableSecureSocksProxy !== undefined}
+          >
+            <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+          </ConfigSection>
+        </>
+      )}
+    </>
+  );
+});
+ConfigEditor.displayName = 'ConfigEditor';
