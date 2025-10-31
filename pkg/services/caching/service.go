@@ -98,7 +98,13 @@ func GetKey(namespace, prefix string, query interface{}) (string, error) {
 		return "", err
 	}
 
-	return strings.Join([]string{namespace, prefix, key}, ":"), nil
+	// The namespace is empty only when this function is used by the legacy caching module.
+	// This case can be removed when the legacy caching module is not being used anymore.
+	if namespace != "" {
+		return strings.Join([]string{namespace, prefix, key}, ":"), nil
+	}
+
+	return strings.Join([]string{prefix, key}, ":"), nil
 }
 
 // SHA256KeyFunc copies the data from `r` into a sha256.Hash, and returns the encoded Sum.
