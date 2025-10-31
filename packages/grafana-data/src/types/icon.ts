@@ -286,6 +286,7 @@ export const availableIconsIndex = {
   bitbucket: true,
   git: true,
   'tachometer-fast': true,
+  'cmab-logo': true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;
