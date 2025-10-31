@@ -14,7 +14,6 @@ weight: 1000
 
 This section of the documentation contains additional resources for developers and contributors.
 
-
 ## Contribute to Grafana
 
 Refer to the [Contribute to Grafana](./contribute.md) guide to learn the various ways you can contribute to Grafana. Read the [Grafana Labs Software Grant and Contributor License Agreement](./cla.md) before making any contribution.
@@ -24,11 +23,11 @@ Refer to the [Contribute to Grafana](./contribute.md) guide to learn the various
 Go to the [Grafana developer portal](/developers) to access the following documentation:
 
 - [Grafana plugin development tools](/developers/plugin-tools)
-- [Grafana React Components library](https://developers.grafana.com)
-- [Grafana Scenes](/developers/scenes)
 - [Grafana data model](/developers/dataplane)
+- [Grafana React components library](https://developers.grafana.com)
+- [Grafana Scenes library](/developers/scenes)
 
-## API reference
+## API reference guides
 
 Learn about the following Grafana APIs:
 
