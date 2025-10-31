@@ -78,6 +78,7 @@ jobs:
         # We don't need more than this since it has to wait for the other tests.
         shard: [
           1/4, 2/4, 3/4, 4/4,
+          profiled,
         ]
       fail-fast: false
 
@@ -96,29 +97,76 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Run tests
-        id: run-tests
+        if: matrix.shard != 'profiled'
         env:
           SHARD: ${{ matrix.shard }}
           CGO_ENABLED: 0
-          PROFILE_PACKAGES: |-
+          SKIP_PACKAGES: |-
             pkg/tests/apis/folder
             pkg/tests/apis/dashboard
         run: |
           set -euo pipefail
-          ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | \
-            ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | \
-            ./scripts/ci/backend-tests/run-go-tests-with-profiling.sh -o profiles -t sqlite -r '^TestIntegration' -T 8m -P -
-      - name: Check if profile artifacts exist
-        if: (!cancelled())
-        id: check-artifacts
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
+          readarray -t skip_packaged <<< "SKIP_PACKAGES"
+
+          FILTERED_PACKAGES=()
+          for pkg in "${PACKAGES[@]}"; do
+            EXCLUDE=false
+            for exclude_pkg in "${skip_packaged[@]}"; do
+              if [[ -n "$exclude_pkg" && "$pkg" == *"/$exclude_pkg" ]]; then
+                EXCLUDE=true
+                break
+              fi
+            done
+            if [ "$EXCLUDE" = false ]; then
+              FILTERED_PACKAGES+=("$pkg")
+            fi
+          done
+
+          go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${FILTERED_PACKAGES[@]}"
+      - name: Run profiled tests
+        id: run-profiled-tests
+        if: matrix.shard == 'profiled'
+        env:
+          CGO_ENABLED: 0
         run: |
           set -euo pipefail
-          ./scripts/ci/backend-tests/check-profile-artifacts.sh
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration)"
+          PROFILED_PACKAGES=(
+            "pkg/tests/apis/folder"
+            "pkg/tests/apis/dashboard"
+          )
+          mkdir -p profiles
+          EXIT_CODE=0
+          for profiled_pkg in "${PROFILED_PACKAGES[@]}"; do
+            for pkg in "${PACKAGES[@]}"; do
+              if [[ -n "pkg" && "profiled_pkg" == *"/pkg" ]]; then
+                pkg_name=$(echo "$profile_pkg" | tr '/' '_' | tr '.' '_')
+                set +e
+                go test -count=1 -tags=sqlite -timeout=8m -run '^TestIntegration' \
+                  -outputdir=profiles \
+                  -cpuprofile="cpu_${pkg_name}.prof" \
+                  -memprofile="mem_${pkg_name}.prof" \
+                  -trace="trace_${pkg_name}.out" \
+                  "$profiled_pkg" 2>&1 | tee "profiles/test_${pkg_name}.log"
+                TEST_EXIT=$?
+                set -e
+                if [ $TEST_EXIT -ne 0 ]; then
+                  EXIT_CODE=1
+                fi
+                break
+              fi
+            done
+          done
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "upload_artifact=true" >> "$GITHUB_OUTPUT"
+          fi
+          exit $EXIT_CODE
       - name: Output test profiles and traces
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: (!cancelled() && steps.check-artifacts.outputs.upload_artifact == 'true')
+        if: (matrix.shard == 'profiled' && !cancelled() && steps.run-profiled-tests.outputs.upload_artifact == 'true')
         with:
-          name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}-shard-${{ steps.check-artifacts.outputs.shard }}
+          name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}
           path: profiles/
           retention-days: 1
           if-no-files-found: ignore
