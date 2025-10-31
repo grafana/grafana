@@ -1,15 +1,13 @@
 import { css } from '@emotion/css';
 import { orderBy } from 'lodash';
 import { Fragment, useMemo } from 'react';
-import { useMeasure, useWindowSize } from 'react-use';
+import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
 import { Alert, Box, Drawer, Icon, LoadingBar, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
-import { MENU_WIDTH } from 'app/core/components/AppChrome/MegaMenu/MegaMenu';
-import { useGrafana } from 'app/core/context/GrafanaContext';
 import { AlertQuery, GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -20,7 +18,6 @@ import { LogRecord, historyDataFrameToLogRecords } from '../../components/rules/
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { stringifyErrorLike } from '../../utils/misc';
 import { useWorkbenchContext } from '../WorkbenchContext';
-import { COLUMN_BORDER_WIDTH, COLUMN_CONTENT_PADDING, GRID_GAP_SPACING } from '../rows/GenericRow';
 
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
 import { QueryVisualization } from './QueryVisualization';
@@ -29,35 +26,11 @@ import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
 const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
 
-function useCalculateDrawerWidth(leftColumnWidth: number): string {
-  const { chrome } = useGrafana();
-  const chromeState = chrome.useState();
-  const { width: screenWidth } = useWindowSize();
-
-  // Calculate the drawer width to align with the right column (chart area)
-  // The drawer opens from the right, so we use calc to get: 100% - leftColumnWidth - gap
-  // If the mega menu is docked and open, we also subtract its width
-  // We also clamp to a max width to prevent the drawer from being too wide on ultra-wide monitors
-  const megaMenuOffset = chromeState.megaMenuDocked && chromeState.megaMenuOpen ? MENU_WIDTH : '0px';
-  const gap = GRID_GAP_SPACING * 8; // theme.spacing(2) = 16px (8px per spacing unit)
-
-  // Account for all the visual space the left column takes:
-  // - Both column borders (left and right)
-  // - Right padding of the left column content
-  // - Left padding of the right column content (to fully clear the separator area)
-  const borders = COLUMN_BORDER_WIDTH * 2; // Border on each column
-  const leftColumnPadding = COLUMN_CONTENT_PADDING * 2; // Left column has padding on both sides
-  const calculatedWidth = `calc(100% - ${leftColumnWidth}px - ${gap + borders + leftColumnPadding}px - ${megaMenuOffset})`;
-
-  // Calculate max width based on screen size:
-  // - On smaller screens (< 1920px): no max width, always align with left column separator (with larger buffer)
-  // - On larger screens (ultra-wide): cap at 1400px to prevent drawer from being too wide
-  if (screenWidth < 1920) {
-    return calculatedWidth; // No max width constraint, use calculated width based on separator
-  }
-
-  const maxWidth = '1400px';
-  return `min(${calculatedWidth}, ${maxWidth})`;
+function calculateDrawerWidth(rightColumnWidth: number): number {
+  //first add the padding from the Page (32px)
+  const calculatedWidth = rightColumnWidth + 32;
+  // now clamp the width to a max of 1400px
+  return Math.min(calculatedWidth, 1400);
 }
 
 interface InstanceDetailsDrawerProps {
@@ -69,9 +42,9 @@ interface InstanceDetailsDrawerProps {
 export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: InstanceDetailsDrawerProps) {
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
   const [timeRange] = useTimeRange();
-  const { leftColumnWidth } = useWorkbenchContext();
+  const { rightColumnWidth } = useWorkbenchContext();
 
-  const drawerWidth = useCalculateDrawerWidth(leftColumnWidth);
+  const drawerWidth = calculateDrawerWidth(rightColumnWidth);
 
   const { data: rule, isLoading: loading, error } = useGetAlertRuleQuery({ uid: ruleUID });
 
