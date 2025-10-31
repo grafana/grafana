@@ -2,9 +2,7 @@ import { reportInteraction } from '@grafana/runtime';
 
 const SCHEMA_VERSION = 1;
 
-type ContentKind = 'datasource_dashboard' | 'template_dashboard';
-// in future this could be "community_dashboard"
-// | 'community_dashboard';
+type ContentKind = 'datasource_dashboard' | 'community_dashboard' | 'template_dashboard';
 
 export type TemplateDashboardSourceEntryPoint =
   | 'quick_add_button'
@@ -15,12 +13,18 @@ type SourceEntryPoint = 'datasource_page' | TemplateDashboardSourceEntryPoint | 
 // possible future flows onboarding, create-dashboard, empty states
 // | 'create_dashboard' | 'empty_state';
 
+type EventLocation =
+  | 'empty_dashboard'
+  | 'suggested_dashboards_modal_provisioned_tab'
+  | 'suggested_dashboards_modal_community_tab';
+
 export const DashboardLibraryInteractions = {
   loaded: (properties: {
     numberOfItems: number;
     contentKinds: ContentKind[];
     datasourceTypes: string[];
     sourceEntryPoint: SourceEntryPoint;
+    eventLocation: EventLocation;
   }) => {
     reportDashboardLibraryInteraction('loaded', properties);
   },
@@ -30,6 +34,7 @@ export const DashboardLibraryInteractions = {
     libraryItemId: string;
     libraryItemTitle: string;
     sourceEntryPoint: SourceEntryPoint;
+    eventLocation: EventLocation;
   }) => {
     reportDashboardLibraryInteraction('item_clicked', properties);
   },
