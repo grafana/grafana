@@ -12,6 +12,7 @@ import (
 	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
@@ -65,7 +66,8 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*OSSKeeperService, error)
 	require.NoError(t, err)
 
 	// Initialize the keeper service
-	keeperService, err := ProvideService(tracer, encValueStore, encryptionManager, nil)
+	keeperService, err := ProvideService(tracer, encValueStore, encryptionManager, &testutils.NoopMigrationExecutor{}, nil, cfg, nil)
+	require.NoError(t, err)
 
 	return keeperService, err
 }

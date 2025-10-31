@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
@@ -34,7 +35,7 @@ func TestMain(m *testing.M) {
 func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 	svc := setupTestService(t)
 	ctx := context.Background()
-	namespace := "test-namespace"
+	namespace := xkube.Namespace("test-namespace")
 
 	t.Run("encrypting should create DEK", func(t *testing.T) {
 		plaintext := []byte("very secret string")
@@ -46,7 +47,7 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := svc.store.ListDataKeys(ctx, namespace)
+		keys, err := svc.store.ListDataKeys(ctx, namespace.String())
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
@@ -61,7 +62,7 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := svc.store.ListDataKeys(ctx, namespace)
+		keys, err := svc.store.ListDataKeys(ctx, namespace.String())
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
@@ -212,7 +213,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		}
 		encryptionManager.providerConfig.CurrentProvider = encryption.ProviderID("fakeProvider.v1")
 
-		namespace := "test-namespace"
+		namespace := xkube.Namespace("test-namespace")
 		encrypted, _ := encryptionManager.Encrypt(context.Background(), namespace, []byte{})
 		assert.True(t, fake.encryptCalled)
 		assert.False(t, fake.decryptCalled)
@@ -241,7 +242,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 
 func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 	ctx := context.Background()
-	namespace := "test-namespace"
+	namespace := xkube.Namespace("test-namespace")
 
 	// Generate random keys for testing
 	oldKey := util.GenerateShortUID() + util.GenerateShortUID() // 32 chars
@@ -416,14 +417,28 @@ func (p *fakeProvider) Decrypt(_ context.Context, _ []byte) ([]byte, error) {
 
 func TestEncryptionService_Decrypt(t *testing.T) {
 	ctx := context.Background()
-	namespace := "test-namespace"
+	namespace := xkube.Namespace("test-namespace")
 
 	t.Run("empty payload should fail", func(t *testing.T) {
 		svc := setupTestService(t)
-		_, err := svc.Decrypt(context.Background(), namespace, []byte(""))
+		_, err := svc.Decrypt(context.Background(), namespace, contracts.EncryptedPayload{
+			DataKeyID:     "test-data-key-id",
+			EncryptedData: []byte(""),
+		})
 		require.Error(t, err)
 
 		assert.Equal(t, "unable to decrypt empty payload", err.Error())
+	})
+
+	t.Run("empty data key id should fail", func(t *testing.T) {
+		svc := setupTestService(t)
+		_, err := svc.Decrypt(context.Background(), namespace, contracts.EncryptedPayload{
+			DataKeyID:     "",
+			EncryptedData: []byte("some payload"),
+		})
+		require.Error(t, err)
+
+		assert.Equal(t, "unable to decrypt empty data key id", err.Error())
 	})
 
 	t.Run("ee encrypted payload with ee enabled should work", func(t *testing.T) {
@@ -442,7 +457,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 
 	ctx := context.Background()
 	someData := []byte(`some-data`)
-	namespace := "test-namespace"
+	namespace := xkube.Namespace("test-namespace")
 
 	tcs := map[string]func(*testing.T, db.DB, contracts.EncryptionManager){
 		"regular": func(t *testing.T, _ db.DB, svc contracts.EncryptionManager) {
@@ -562,7 +577,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 			require.NoError(t, err)
 
 			ctx := context.Background()
-			namespace := "test-namespace"
+			namespace := xkube.Namespace("test-namespace")
 
 			// Here's what actually matters and varies on each test: look at the test case name.
 			//
