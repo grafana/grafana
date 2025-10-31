@@ -6,6 +6,7 @@ import { generatedAPI as correlationsAPIv0alpha1 } from './correlations/v0alpha1
 import { generatedAPI as dashboardAPIv0alpha1 } from './dashboard/v0alpha1';
 import { generatedAPI as folderAPIv1beta1 } from './folder/v1beta1';
 import { generatedAPI as iamAPIv0alpha1 } from './iam/v0alpha1';
+import { generatedAPI as logsdrilldownAPIv1alpha1 } from './logsdrilldown/v1alpha1';
 import { generatedAPI as migrateToCloudAPI } from './migrate-to-cloud';
 import { generatedAPI as playlistAPIv0alpha1 } from './playlist/v0alpha1';
 import { generatedAPI as preferencesUserAPI } from './preferences/user';
@@ -29,6 +30,7 @@ export const allMiddleware = [
   shortURLAPIv1alpha1.middleware,
   correlationsAPIv0alpha1.middleware,
   legacyUserAPI.middleware,
+  logsdrilldownAPIv1alpha1.middleware,
   // PLOP_INJECT_MIDDLEWARE
 ] as const;
 
@@ -46,6 +48,7 @@ export const allReducers = {
   [shortURLAPIv1alpha1.reducerPath]: shortURLAPIv1alpha1.reducer,
   [correlationsAPIv0alpha1.reducerPath]: correlationsAPIv0alpha1.reducer,
   [legacyUserAPI.reducerPath]: legacyUserAPI.reducer,
+  [logsdrilldownAPIv1alpha1.reducerPath]: logsdrilldownAPIv1alpha1.reducer,
   // PLOP_INJECT_REDUCER
 };
 

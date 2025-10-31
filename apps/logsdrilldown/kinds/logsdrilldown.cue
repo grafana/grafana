@@ -5,6 +5,8 @@ logsdrilldownv0alpha1: {
 	schema: {
 		spec: {
 			defaultFields: [...string] | *[]
+			prettifyJSON: bool
+			wrapLogMessage: bool
 		}
 	}
 }
