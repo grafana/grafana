@@ -14,7 +14,6 @@ export function DataLayerControls({ dashboard }: { dashboard: DashboardScene }) 
   // In case it's not specified, we are rendering the controls here (default).
   const isDefaultPlacement = (layer: SceneDataLayerProvider) => layer.state.placement === undefined;
 
-  // Use the type guard
   if (isDashboardDataLayerSetState(state)) {
     return (
       <>

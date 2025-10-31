@@ -78,5 +78,9 @@ function DashboardDataLayerSetRenderer({ model }: SceneComponentProps<DashboardD
 }
 
 export function isDashboardDataLayerSetState(data: unknown): data is DashboardDataLayerSetState {
-  return data instanceof isDashboardDataLayerSetState;
+  if (data && typeof data === 'object') {
+    return 'annotationLayers' in data;
+  }
+
+  return false;
 }
