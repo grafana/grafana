@@ -1224,6 +1224,10 @@ export interface FeatureToggles {
   */
   preventPanelChromeOverflow?: boolean;
   /**
+  * Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
+  */
+  jaegerEnableGrpcEndpoint?: boolean;
+  /**
   * Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
   * @default false
   */

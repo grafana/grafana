@@ -2116,6 +2116,12 @@ var (
 			Expression:   "true",
 		},
 		{
+			Name:        "jaegerEnableGrpcEndpoint",
+			Description: "Enable querying trace data through Jaeger's gRPC endpoint (HTTP)",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOSSBigTent,
+		},
+		{
 			Name:         "pluginStoreServiceLoading",
 			Description:  "Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded",
 			Stage:        FeatureStageExperimental,
