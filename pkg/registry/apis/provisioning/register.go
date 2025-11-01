@@ -87,9 +87,9 @@ type APIBuilder struct {
 	// onlyApiServer used to disable starting controllers for the standalone API server.
 	// HACK:This will be removed once we have proper wire providers for the controllers.
 	// TODO: Set this up in the standalone API server
-	onlyApiServer bool
+	onlyApiServer                       bool
 	useExclusivelyAccessCheckerForAuthz bool
-	
+
 	allowedTargets      []provisioning.SyncTargetType
 	allowImageRendering bool
 
