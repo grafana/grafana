@@ -26,13 +26,13 @@ import { dataFrameFromJSON } from './DataFrameJSON';
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
     // TODO: should be Column but type does not exists there so not sure whats up here.
-    const { text, type, ...disp } = c as any;
+    const { text, type, ...disp } = c as Column & { type?: FieldType };
     const values: unknown[] = [];
     return {
-      name: text?.length ? text : c, // rename 'text' to the 'name' field
-      config: (disp || {}) as FieldConfig,
+      name: text, // rename 'text' to the 'name' field
+      config: disp || {},
       values,
-      type: type && Object.values(FieldType).includes(type as FieldType) ? (type as FieldType) : FieldType.other,
+      type: type && Object.values(FieldType).includes(type) ? type : FieldType.other,
     };
   });
 
@@ -400,8 +400,9 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
       if (config) {
         // keep unit etc
         const { ...column } = config;
-        (column as Column).text = name;
-        return column as Column;
+        const result = column as Column;
+        result.text = name;
+        return result;
       }
       return { text: name };
     }),

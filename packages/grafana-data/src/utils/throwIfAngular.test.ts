@@ -33,6 +33,7 @@ describe('throwIfAngular', () => {
 
   it('should throw if angular panel', () => {
     const underTest = new PanelPlugin(null);
+    // @ts-expect-error
     underTest.angularPanelCtrl = {};
     expect(() => throwIfAngular(underTest)).toThrow('Angular plugins are not supported');
   });
