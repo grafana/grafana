@@ -21,3 +21,7 @@ weight: 01
 # Authentication options for the HTTP API
 
 {{< docs/shared lookup="developers/authentication.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Authentication options for the HTTP API in Grafana Cloud
+
+{{< docs/shared source="grafana-cloud" lookup="/developer-resources/authentication.md" version="" >}}
