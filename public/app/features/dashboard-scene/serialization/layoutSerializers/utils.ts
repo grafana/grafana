@@ -29,6 +29,7 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
+import { PanelNonApplicableFiltersSubHeader } from '../../scene/PanelNonApplicableFiltersSubHeader';
 import { PanelNotices } from '../../scene/PanelNotices';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
@@ -69,6 +70,7 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     seriesLimit: config.panelSeriesLimit,
     $data: createPanelDataProvider(panel),
     titleItems,
+    subHeader: [new PanelNonApplicableFiltersSubHeader()],
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
   };
@@ -105,6 +107,7 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     titleItems,
+    subHeader: [new PanelNonApplicableFiltersSubHeader()],
     seriesLimit: config.panelSeriesLimit,
     $behaviors: [
       new LibraryPanelBehavior({
