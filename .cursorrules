@@ -1,0 +1,26 @@
+Before making any code changes, always consult and follow the ESLint configuration defined in eslint.config.js. This file contains all the rules, plugins, and configurations that must be enforced in the Grafana codebase.
+
+**Key Requirements:**
+
+- Read and understand the complete eslint.config.js file before writing or modifying code
+- Apply all ESLint rules exactly as specified in the configuration
+- Follow all import restrictions, naming conventions, and code organization rules
+- Respect file-specific overrides and special cases defined in the configuration
+- Ensure all generated code passes ESLint validation
+
+**Additional Guidelines:**
+
+- Follow the frontend style guide in contribute/style-guides/frontend.md
+- Follow the testing guidelines in contribute/style-guides/testing.md
+- Use TypeScript with explicit return types for functions
+- Use function declarations for React components, not arrow functions or React.FC
+- Use named exports instead of default exports
+- Import from public exports, not internal paths
+- Use @grafana/i18n for all user-facing strings
+- Use emotion for styling with useStyles2 hook
+
+**Reference Files:**
+
+- eslint.config.js - Complete ESLint configuration
+- contribute/style-guides/frontend.md - Frontend coding standards
+- contribute/style-guides/testing.md - Testing guidelines
