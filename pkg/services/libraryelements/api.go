@@ -186,6 +186,20 @@ func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.
 // 200: getLibraryElementsResponse
 // 401: unauthorisedError
 // 500: internalServerError
+//
+// Query Parameters:
+//   - perPage: Maximum number of library elements to return per page (default 100)
+//   - page: Page number to retrieve
+//   - searchString: Filter library elements by name
+//   - sortDirection: Sort order (asc|desc)
+//   - kind: Type of library element
+//   - typeFilter: Filter by type of library element
+//   - excludeUid: UID to exclude from results
+//   - folderFilterUIDs: A comma-separated list of folder UID(s) to filter the elements by
+//
+// Deprecated:
+//   - folderFilter: Use folderFilterUIDs instead.
+
 func (l *LibraryElementService) getAllHandler(c *contextmodel.ReqContext) response.Response {
 	query := model.SearchLibraryElementsQuery{
 		PerPage:          c.QueryInt("perPage"),

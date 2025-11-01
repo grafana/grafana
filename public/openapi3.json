@@ -20535,9 +20535,18 @@
             }
           },
           {
-            "description": "A comma separated list of folder ID(s) to filter the elements by.",
+            "description": "A comma-separated list of folder UID(s) to filter the elements by.",
+            "in": "query",
+            "name": "folderFilterUIDs",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Deprecated. Use folderFilterUIDs instead.",
             "in": "query",
             "name": "folderFilter",
+            "deprecated": true,
             "schema": {
               "type": "string"
             }
