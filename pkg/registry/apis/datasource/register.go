@@ -108,6 +108,7 @@ func RegisterAPIService(
 			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
 		}
 
+		// TODO deprecate this group
 		builder, err = NewDataSourceAPIBuilder(pluginJSON,
 			client,
 			datasources.GetDatasourceProvider(pluginJSON),
@@ -116,12 +117,30 @@ func RegisterAPIService(
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
 			false,
+			false, // useShorterAPIGroupName
 		)
 		if err != nil {
 			return nil, err
 		}
 
 		apiRegistrar.RegisterAPI(builder)
+
+		// Also register the plugin with the new apiGroup naming convention. The other endpoint will be deleted in the near future.
+		builder, err = NewDataSourceAPIBuilder(pluginJSON,
+			client,
+			datasources.GetDatasourceProvider(pluginJSON),
+			contextProvider,
+			accessControl,
+			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
+			false,
+			true, // useShorterAPIGroupName
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		apiRegistrar.RegisterAPI(builder)
+
 	}
 	return builder, nil // only used for wire
 }
@@ -143,10 +162,21 @@ func NewDataSourceAPIBuilder(
 	accessControl accesscontrol.AccessControl,
 	loadQueryTypes bool,
 	configCrudUseNewApis bool,
+	useShorterAPIGroupName bool,
 ) (*DataSourceAPIBuilder, error) {
-	group, err := plugins.GetDatasourceGroupNameFromPluginID(plugin.ID)
-	if err != nil {
-		return nil, err
+	var group string
+	var err error
+
+	if useShorterAPIGroupName {
+		group, err = plugins.GetShortDatasourceGroupNameFromPluginID(plugin.ID)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		group, err = plugins.GetDatasourceGroupNameFromPluginID(plugin.ID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	builder := &DataSourceAPIBuilder{
@@ -170,9 +200,9 @@ func getHardcodedQueryTypes(group string) (*queryV0.QueryTypeDefinitionList, err
 	var err error
 	var raw json.RawMessage
 	switch group {
-	case "testdata.datasource.grafana.app":
+	case "testdata.datasource.grafana.app", "testdata":
 		raw, err = kinds.QueryTypeDefinitionListJSON()
-	case "prometheus.datasource.grafana.app":
+	case "prometheus.datasource.grafana.app", "prometheus":
 		raw, err = models.QueryTypeDefinitionListJSON()
 	}
 	if err != nil {
