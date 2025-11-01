@@ -1,7 +1,7 @@
 import { createDataFrame, dateTime, DateTimeInput, EventBus, FieldType } from '@grafana/data';
 import { getTheme } from '@grafana/ui';
 
-import { preparePlotConfigBuilder } from './utils';
+import { calculateAnnotationLaneSizes, preparePlotConfigBuilder, UPLOT_DEFAULT_AXIS_GAP } from './utils';
 
 describe('when fill below to option is used', () => {
   let eventBus: EventBus;
@@ -373,5 +373,31 @@ describe('time axis units', () => {
     expect(config.axes![0]!.values).toEqual(expect.any(Function));
     // @ts-ignore
     expect(config.axes![0]!.values(config, [1667406900000, 1761316576114], 0, 100, 1000)).toEqual(['11-02', '10-24']);
+  });
+});
+
+describe('calculateAnnotationLaneSizes', () => {
+  it('should not regress', () => {
+    expect(calculateAnnotationLaneSizes()).toEqual({});
+    expect(calculateAnnotationLaneSizes(6)).toEqual({});
+    expect(calculateAnnotationLaneSizes(0, { multiLane: true })).toEqual({});
+    expect(calculateAnnotationLaneSizes(1, { multiLane: true })).toEqual({});
+    expect(calculateAnnotationLaneSizes(2, { multiLane: false })).toEqual({});
+  });
+  it('should return config to resize x-axis size, gap, and ticks size', () => {
+    expect(calculateAnnotationLaneSizes(2, { multiLane: true })).toEqual({
+      gap: UPLOT_DEFAULT_AXIS_GAP,
+      size: 36,
+      ticks: {
+        size: 19,
+      },
+    });
+    expect(calculateAnnotationLaneSizes(3, { multiLane: true })).toEqual({
+      gap: UPLOT_DEFAULT_AXIS_GAP,
+      size: 43,
+      ticks: {
+        size: 26,
+      },
+    });
   });
 });

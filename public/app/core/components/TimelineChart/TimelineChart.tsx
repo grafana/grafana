@@ -1,10 +1,17 @@
 import { useCallback } from 'react';
 
 import { DataFrame, FALLBACK_COLOR, FieldType, TimeRange } from '@grafana/data';
-import { VisibilityMode, TimelineValueAlignment, TooltipDisplayMode, VizTooltipOptions } from '@grafana/schema';
+import {
+  VisibilityMode,
+  TimelineValueAlignment,
+  TooltipDisplayMode,
+  VizTooltipOptions,
+  VizAnnotations,
+} from '@grafana/schema';
 import { UPlotConfigBuilder, VizLayout, VizLegend, VizLegendItem } from '@grafana/ui';
 
 import { GraphNG, GraphNGProps } from '../GraphNG/GraphNG';
+import { calculateAnnotationLaneSizes } from '../TimeSeries/utils';
 
 import { preparePlotConfigBuilder, TimelineMode } from './utils';
 
@@ -21,6 +28,7 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   tooltip?: VizTooltipOptions;
   // Whenever `paginationRev` changes, the graph will be fully re-configured/rendered.
   paginationRev?: string;
+  annotations?: VizAnnotations;
 }
 
 const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'tooltip', 'paginationRev'];
@@ -60,6 +68,7 @@ export const TimelineChart = (props: TimelineProps) => {
         getValueColor: getValueColor,
 
         hoverMulti: tooltip?.mode === TooltipDisplayMode.Multi,
+        xAxisConfig: calculateAnnotationLaneSizes(props.annotationLanes, props?.annotations),
       });
     },
     [frames, props, timeZone, rowHeight, getValueColor, tooltip]

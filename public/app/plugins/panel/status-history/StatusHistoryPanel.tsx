@@ -24,6 +24,7 @@ import { usePagination } from '../state-timeline/hooks';
 import { containerStyles } from '../state-timeline/styles';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+import { getAnnotationFrames } from '../timeseries/plugins/utils';
 import { getTimezones } from '../timeseries/utils';
 
 import { Options } from './panelcfg.gen';
@@ -108,6 +109,7 @@ export const StatusHistoryPanel = ({
         replaceVariables={replaceVariables}
         dataLinkPostProcessor={dataLinkPostProcessor}
         cursorSync={cursorSync}
+        annotationLanes={getAnnotationFrames(data.annotations).length}
       >
         {(builder, alignedFrame) => {
           return (
@@ -165,6 +167,7 @@ export const StatusHistoryPanel = ({
               {alignedFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
                 <AnnotationsPlugin2
                   replaceVariables={replaceVariables}
+                  annotationsConfig={options.annotations}
                   annotations={data.annotations ?? []}
                   config={builder}
                   timeZone={timeZone}
