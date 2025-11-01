@@ -290,17 +290,24 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 		// for classic FP, we will return the regular search response alongside all the data in the dashboard_provisioning table
 		provisioningData := []*dashboards.DashboardProvisioningSearchResults{}
 		if query.ManagerIdentity == "" {
-			var data *dashboards.DashboardProvisioningSearchResults
-			if len(query.DashboardIds) > 0 {
-				data, err = c.dashboardStore.GetProvisionedDataByDashboardID(ctx, query.DashboardIds[0])
-			} else if len(query.DashboardUIDs) > 0 {
-				data, err = c.dashboardStore.GetProvisionedDataByDashboardUID(ctx, user.GetOrgID(), query.DashboardUIDs[0])
-			}
-			if err != nil {
-				return nil, err
-			}
-			if data != nil {
-				provisioningData = append(provisioningData, data)
+			if len(query.DashboardIds) > 0 || len(query.DashboardUIDs) > 0 {
+				var data *dashboards.DashboardProvisioningSearchResults
+				if len(query.DashboardIds) > 0 {
+					data, err = c.dashboardStore.GetProvisionedDataByDashboardID(ctx, query.DashboardIds[0])
+				} else if len(query.DashboardUIDs) > 0 {
+					data, err = c.dashboardStore.GetProvisionedDataByDashboardUID(ctx, user.GetOrgID(), query.DashboardUIDs[0])
+				}
+				if err != nil {
+					return nil, err
+				}
+				if data != nil {
+					provisioningData = append(provisioningData, data)
+				}
+			} else {
+				provisioningData, err = c.dashboardStore.GetAllProvisionedDashboards(ctx, user.GetOrgID())
+				if err != nil {
+					return nil, err
+				}
 			}
 		} else {
 			provisioningData, err = c.dashboardStore.GetProvisionedDashboardsByName(ctx, query.ManagerIdentity, user.GetOrgID())
