@@ -107,9 +107,15 @@ func (b *SearchRequestBuilder) Sort(order SortOrder, field string, unmappedType 
 	return b
 }
 
-// AddTimeFieldWithStandardizedFormat adds a time field to fields with standardized time format
-func (b *SearchRequestBuilder) AddTimeFieldWithStandardizedFormat(timeField string) *SearchRequestBuilder {
-	b.customProps["fields"] = []map[string]string{{"field": timeField, "format": "strict_date_optional_time_nanos"}}
+// AddFieldsOption adds a time field to fields with standardized time format and all fields
+func (b *SearchRequestBuilder) AddFieldsOption(timeField string) *SearchRequestBuilder {
+	b.customProps["fields"] = []map[string]string{{"field": timeField, "format": "strict_date_optional_time_nanos"}, {"field": "*"}}
+
+	return b
+}
+
+func (b *SearchRequestBuilder) DisableSource() *SearchRequestBuilder {
+	b.customProps["_source"] = false
 	return b
 }
 
