@@ -69,6 +69,10 @@ func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
 	}
 }
 
+func (r *jobProgressRecorder) Started() time.Time {
+	return r.started
+}
+
 func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
 	var shouldLogError bool
 	var logErr error
