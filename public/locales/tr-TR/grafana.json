@@ -2885,6 +2885,8 @@
       "notification-message": "Bildirim mesajı",
       "predefined-notification-message": "",
       "send-test-notification": "Test bildirimi gönder",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "İletişim noktasını test et"
     },
     "threshold": {

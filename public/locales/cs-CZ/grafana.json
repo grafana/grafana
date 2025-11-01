@@ -2909,6 +2909,8 @@
       "notification-message": "Oznamovací zpráva",
       "predefined-notification-message": "",
       "send-test-notification": "Odeslat testovací oznámení",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Otestovat kontaktní bod"
     },
     "threshold": {

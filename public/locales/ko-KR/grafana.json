@@ -2873,6 +2873,8 @@
       "notification-message": "알림 메시지",
       "predefined-notification-message": "",
       "send-test-notification": "테스트 알림 전송",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "연락처 테스트"
     },
     "threshold": {
