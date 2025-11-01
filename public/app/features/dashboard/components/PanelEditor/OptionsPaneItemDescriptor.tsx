@@ -23,6 +23,8 @@ export interface OptionsPaneItemInfo {
   useShowIf?: () => boolean;
   overrides?: OptionPaneItemOverrideInfo[];
   addon?: ReactNode;
+  collapseWhenUnset?: boolean;
+
   /** Must be unique on the page! */
   id: string;
 }
