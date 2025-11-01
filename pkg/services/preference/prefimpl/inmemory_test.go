@@ -124,3 +124,13 @@ func (s *inmemStore) Update(ctx context.Context, preference *pref.Preference) er
 func (s *inmemStore) Delete(context.Context, *pref.DeleteCommand) error {
 	panic("not yet implemented")
 }
+
+func (s *inmemStore) Find(ctx context.Context, query *pref.FindPreferenceQuery) ([]*pref.Preference, error) {
+	out := []*pref.Preference{}
+	for _, pref := range s.preference {
+		if pref.HomeDashboardUID == query.HomeDashboardUID {
+			out = append(out, &pref)
+		}
+	}
+	return out, nil
+}

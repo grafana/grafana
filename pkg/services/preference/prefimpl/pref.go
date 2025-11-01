@@ -109,6 +109,10 @@ func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pre
 	return prefs, nil
 }
 
+func (s *Service) Find(ctx context.Context, query *pref.FindPreferenceQuery) ([]*pref.Preference, error) {
+	return s.store.Find(ctx, query)
+}
+
 func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) error {
 	jsonData, err := preferenceData(cmd)
 	if err != nil {

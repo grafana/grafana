@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -2275,6 +2276,7 @@ func TestCleanUpDashboard(t *testing.T) {
 				cfg:                    setting.NewCfg(),
 				dashboardStore:         &fakeStore,
 				publicDashboardService: fakePublicDashboardService,
+				preferenceService:      preftest.NewPreferenceServiceFake(),
 			}
 
 			ctx := context.Background()
@@ -2500,6 +2502,7 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 				kvstore:                kv,
 				features:               features,
 				dual:                   dual,
+				preferenceService:      preftest.NewPreferenceServiceFake(),
 			}
 
 			ctx, k8sCliMock := setupK8sDashboardTests(service)
