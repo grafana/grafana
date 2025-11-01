@@ -22,6 +22,7 @@ import {
 
 import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';
+import { evaluateStringFlag } from '../internal/openFeature';
 import {
   BackendSrvRequest,
   FetchResponse,
@@ -216,7 +217,9 @@ class DataSourceWithBackend<
 
     // Use the new query service
     if (config.featureToggles.queryServiceFromUI) {
-      url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
+      if (isQueryAllowedForQueryService(pluginIDs)) {
+        url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
+      }
     }
 
     if (hasExpr) {
@@ -394,6 +397,19 @@ class DataSourceWithBackend<
       });
     });
   }
+}
+
+// FIXME: do not do this. send in the plugin-id for evaluation in the_context,
+// and receive a boolean
+function isQueryAllowedForQueryService(pluginsInQuery:Set<string>):boolean {
+  const problemPlugins = evaluateStringFlag('queryServiceProblemPlugins', '')
+  if (problemPlugins === '') {
+    return true;
+  }
+
+  var problemPluginFound = problemPlugins.split(',').some(p => pluginsInQuery.has(p))
+
+  return !problemPluginFound;
 }
 
 /**
