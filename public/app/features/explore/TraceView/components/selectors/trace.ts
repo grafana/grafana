@@ -51,6 +51,8 @@ export function getTraceSpanIdsAsTree(trace: TraceResponse, spanMap: Map<string,
       const { refType, spanID: parentID } = span.references[0];
       if (refType === 'CHILD_OF' || refType === 'FOLLOWS_FROM') {
         const parent = nodesById.get(parentID) || root;
+        // TODO(#110330): Add cycle detection here before pushing to prevent infinite structures
+        // Check if parentID would create a cycle by verifying it's not already a descendant
         parent.children?.push(node);
       } else {
         throw new Error(`Unrecognized ref type: ${refType}`);
