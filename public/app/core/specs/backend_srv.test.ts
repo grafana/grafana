@@ -133,7 +133,21 @@ describe('backendSrv', () => {
     const testMessage = 'Datasource updated';
     const errorMessage = 'UnAuthorized';
 
-    describe('when making a successful call and conditions for showSuccessAlert are not favorable', () => {
+    describe('when making a successful call and showSuccessAlert is not explicitly set', () => {
+      it('then it should return correct result and not emit anything', async () => {
+        const { backendSrv, appEventsMock, expectRequestCallChain } = getTestContext({
+          data: { message: testMessage },
+        });
+        const url = '/api/dashboard/';
+        const result = await backendSrv.request({ url, method: 'DELETE' });
+
+        expect(result).toEqual({ message: testMessage });
+        expect(appEventsMock.emit).not.toHaveBeenCalled();
+        expectRequestCallChain({ url, method: 'DELETE' });
+      });
+    });
+
+    describe('when making a successful call and showSuccessAlert is explicitly set to false', () => {
       it('then it should return correct result and not emit anything', async () => {
         const { backendSrv, appEventsMock, expectRequestCallChain } = getTestContext({
           data: { message: testMessage },
@@ -147,7 +161,7 @@ describe('backendSrv', () => {
       });
     });
 
-    describe('when making a successful call and conditions for showSuccessAlert are favorable', () => {
+    describe('when making a successful call and showSuccessAlert is explicitly set to true', () => {
       it('then it should emit correct message', async () => {
         const { backendSrv, appEventsMock, expectRequestCallChain } = getTestContext({
           data: { message: testMessage },

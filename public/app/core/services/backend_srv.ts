@@ -362,15 +362,8 @@ export class BackendSrv implements BackendService {
   showSuccessAlert<T>(response: FetchResponse<T>) {
     const { config } = response;
 
-    if (config.showSuccessAlert === false) {
-      return;
-    }
-
-    // if showSuccessAlert is undefined we only show alerts non GET request, non data query and local api requests
-    if (
-      config.showSuccessAlert === undefined &&
-      (config.method === 'GET' || isDataQuery(config.url) || !isLocalUrl(config.url))
-    ) {
+    // Only show success alert if explicitly requested (opt-in behavior)
+    if (config.showSuccessAlert !== true) {
       return;
     }
 
