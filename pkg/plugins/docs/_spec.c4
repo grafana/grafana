@@ -1,0 +1,10 @@
+specification {
+  element person
+  element system
+  element container
+  element component
+  
+  tag deprecated
+  tag next
+}
+

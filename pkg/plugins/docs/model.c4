@@ -1,0 +1,135 @@
+model {
+  
+  grafana = system 'Grafana' {
+    description 'Monitoring and observability platform'
+    link https://github.com/grafana/grafana
+    
+    pluginStore = container 'Plugin Store' {
+      description 'Coordinates plugin loading on startup and provides plugin lookup'
+      technology 'Go Service'
+      link https://github.com/grafana/grafana/blob/main/pkg/plugins/manager/loader/loader.go
+      
+      -> pluginSources 'Lists sources'
+      -> pluginLoader 'Loads each source'
+      -> pluginRegistry 'Queries plugins'
+    }
+    
+    pluginSources = container 'Sources Service' {
+      description 'Discovers plugins from multiple sources'
+      technology 'Go'
+      link https://github.com/grafana/grafana/blob/main/pkg/plugins/manager/sources/sources.go
+      
+      localSource = component 'Local Source' {
+        description 'Scans filesystem for plugin.json files'
+      }
+      
+      coreSource = component 'Core Source' {
+        description 'Provides built-in datasources and panels'
+      }
+      
+      settingsSource = component 'Settings Source' {
+        description 'Plugins from paths in plugin settings'
+      }
+    }
+    
+    pluginLoader = container 'Loader' {
+      description 'Executes 4-stage pipeline for each source'
+      technology 'Go'
+      link https://github.com/grafana/grafana/blob/main/pkg/plugins/manager/loader/loader.go
+      
+      discoveryStage = component 'Discovery' {
+        description 'Finds plugins and applies filters'
+        link https://github.com/grafana/grafana/blob/main/pkg/plugins/manager/pipeline/discovery/discovery.go
+        
+        -> pluginRegistry 'Checks duplicates'
+      }
+      
+      bootstrapStage = component 'Bootstrap' {
+        description 'Constructs plugin objects with metadata'
+        link https://github.com/grafana/grafana/blob/main/pkg/plugins/manager/pipeline/bootstrap/bootstrap.go
+      }
+      
+      validationStage = component 'Validation' {
+        description 'Validates signatures and compatibility'
+        link https://github.com/grafana/grafana/blob/main/pkg/plugins/manager/pipeline/validation/validation.go
+      }
+      
+      initStage = component 'Initialization' {
+        description 'Initializes plugins for runtime (9 steps)'
+        link https://github.com/grafana/grafana/blob/main/pkg/plugins/manager/pipeline/initialization/initialization.go
+        
+        -> pluginRegistry 'Registers plugin'
+      }
+    }
+    
+    pluginInstaller = container 'Installer' {
+      description 'Downloads and installs plugins at runtime (via UI/API)'
+      technology 'Go'
+      link https://github.com/grafana/grafana/blob/main/pkg/plugins/manager/installer.go
+      
+      repoClient = component 'Repository Client' {
+        description 'Fetches plugin archives and metadata'
+        -> pluginRepo 'Downloads'
+      }
+      
+      extractor = component 'Extractor' {
+        description 'Extracts ZIP archives to filesystem'
+      }
+      
+      depResolver = component 'Dependency Resolver' {
+        description 'Recursively installs dependencies'
+      }
+      
+      -> pluginLoader 'Loads installed'
+      -> pluginRegistry 'Checks existing'
+    }
+    
+    pluginRegistry = container 'Plugin Registry' {
+      description 'In-memory store of loaded plugins'
+      technology 'Go Map'
+      link https://github.com/grafana/grafana/blob/main/pkg/plugins/manager/registry/in_memory.go
+    }
+    
+    preinstaller = container 'Preinstaller' {
+      description 'Installs plugins from config on startup (sync and async)'
+      technology 'Go Service'
+      
+      -> pluginInstaller 'Installs plugins'
+    }
+  }
+  
+  pluginRepo = system 'Plugin Repository' {
+    description 'Grafana.com plugin catalog'
+    link https://grafana.com/api/plugins
+    style {
+      color muted
+    }
+  }
+  
+  filesystem = system 'Filesystem' {
+    description 'Stores plugin files and configuration'
+    style {
+      color muted
+    }
+  }
+  
+  // External system relationships
+  grafana -> pluginRepo 'Fetches plugins'
+  grafana -> filesystem 'Reads/writes plugin files'
+  
+  // Container relationships - Sources
+  pluginSources.localSource -> filesystem 'Scans directories'
+  pluginSources.coreSource -> filesystem 'Reads built-in plugins'
+  pluginSources.settingsSource -> filesystem 'Reads configured paths'
+  
+  // Loader pipeline flow
+  pluginLoader.discoveryStage -> pluginLoader.bootstrapStage 'Found bundles'
+  pluginLoader.bootstrapStage -> pluginLoader.validationStage 'Constructed plugins'
+  pluginLoader.validationStage -> pluginLoader.initStage 'Validated plugins'
+  
+  // Installer flow
+  pluginInstaller.repoClient -> pluginInstaller.depResolver 'Resolves'
+  pluginInstaller.depResolver -> pluginInstaller.extractor 'Extracts'
+  pluginInstaller.extractor -> filesystem 'Writes files'
+}
+
