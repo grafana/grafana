@@ -8,7 +8,7 @@ import (
 
 const (
 	MIN_VERSION    = 0
-	LATEST_VERSION = 42
+	LATEST_VERSION = 43
 )
 
 type SchemaVersionMigrationFunc func(context.Context, map[string]interface{}) error
@@ -76,6 +76,7 @@ func GetMigrations(dsInfoProvider DataSourceInfoProvider) map[int]SchemaVersionM
 		40: V40,
 		41: V41,
 		42: V42,
+		43: V43,
 	}
 }
 
