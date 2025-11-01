@@ -45,7 +45,27 @@ export const StateTimelineTooltip = ({
 
   mode = isPinned ? TooltipDisplayMode.Single : mode;
 
-  const contentItems = getContentItems(series.fields, xField, dataIdxs, seriesIdx, mode, sortOrder);
+  // Fix for issue #113082: Populate dataIdxs for fields hidden from viz but not from tooltip
+  // When a field is hidden from viz (hideFrom.viz=true), uPlot doesn't track cursor for it,
+  // resulting in dataIdxs[fieldIndex] = null. We need to populate it manually for tooltip display.
+  const enrichedDataIdxs = dataIdxs.map((idx, i) => {
+    // If we already have an index for this field, use it
+    if (idx != null) {
+      return idx;
+    }
+
+    // Check if this field is hidden from viz but should show in tooltip
+    const field = series.fields[i];
+    if (field && field.config.custom?.hideFrom?.viz && !field.config.custom?.hideFrom?.tooltip) {
+      // Use the dataIdx from the currently hovered/selected series, or first available
+      return dataIdx ?? dataIdxs.find((existingIdx) => existingIdx != null) ?? 0;
+    }
+
+    // Field is either hidden from tooltip or not a data field, keep as null
+    return idx;
+  });
+
+  const contentItems = getContentItems(series.fields, xField, enrichedDataIdxs, seriesIdx, mode, sortOrder);
   let endTime = null;
 
   // append duration in single mode

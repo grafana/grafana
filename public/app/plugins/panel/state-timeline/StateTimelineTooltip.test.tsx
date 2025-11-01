@@ -132,4 +132,218 @@ describe('StateTimelineTooltip', () => {
       expect(link).not.toBeInTheDocument();
     });
   });
+
+  describe('hideFrom configuration (issue #113082)', () => {
+    it('should show field in tooltip when hidden from viz but not from tooltip', () => {
+      const vizHiddenField: Field = {
+        name: 'OrderNumber',
+        type: FieldType.string,
+        values: ['ORD123', 'ORD456', 'ORD789'],
+        display: (v) => ({ text: String(v), numeric: NaN }),
+        config: {
+          custom: {
+            hideFrom: {
+              viz: true,      // Hidden from visualization
+              legend: true,   // Hidden from legend
+              tooltip: false, // But VISIBLE in tooltip
+            },
+          },
+        },
+      };
+
+      const visibleField: Field = {
+        name: 'HydraState',
+        type: FieldType.string,
+        values: ['PRODUCTION', 'IDLE', 'MAINTENANCE'],
+        display: (v) => ({ text: String(v), numeric: NaN }),
+        config: {},
+      };
+
+      const seriesWithHiddenField = createDataFrame({
+        fields: [timeField, visibleField, vizHiddenField],
+      });
+
+      // Simulate tooltip hover: seriesIdx=1 (HydraState), but OrderNumber's dataIdx is null
+      // because uPlot doesn't track cursor for viz-hidden fields
+      render(
+        <StateTimelineTooltip
+          series={seriesWithHiddenField}
+          seriesIdx={1}
+          dataIdxs={[0, 1, null]} // OrderNumber (index 2) has null dataIdx from uPlot
+          mode={TooltipDisplayMode.Multi}
+          timeRange={timeRange}
+          withDuration={false}
+          dataLinks={[]}
+          isPinned={false}
+        />
+      );
+
+      // Both fields should appear in tooltip
+      expect(screen.queryByText('HydraState')).toBeInTheDocument();
+      expect(screen.queryByText('IDLE')).toBeInTheDocument();
+      expect(screen.queryByText('OrderNumber')).toBeInTheDocument();
+      expect(screen.queryByText('ORD456')).toBeInTheDocument(); // Should use index 1 from visible field
+    });
+
+    it('should NOT show field in tooltip when hidden from both viz and tooltip', () => {
+      const fullyHiddenField: Field = {
+        name: 'InternalId',
+        type: FieldType.number,
+        values: [1001, 1002, 1003],
+        display: (v) => ({ text: String(v), numeric: Number(v) }),
+        config: {
+          custom: {
+            hideFrom: {
+              viz: true,
+              legend: true,
+              tooltip: true, // Hidden from tooltip as well
+            },
+          },
+        },
+      };
+
+      const visibleField: Field = {
+        name: 'Status',
+        type: FieldType.string,
+        values: ['Active', 'Pending', 'Complete'],
+        display: (v) => ({ text: String(v), numeric: NaN }),
+        config: {},
+      };
+
+      const seriesWithFullyHiddenField = createDataFrame({
+        fields: [timeField, visibleField, fullyHiddenField],
+      });
+
+      render(
+        <StateTimelineTooltip
+          series={seriesWithFullyHiddenField}
+          seriesIdx={1}
+          dataIdxs={[0, 1, null]}
+          mode={TooltipDisplayMode.Multi}
+          timeRange={timeRange}
+          withDuration={false}
+          dataLinks={[]}
+          isPinned={false}
+        />
+      );
+
+      // Visible field should appear
+      expect(screen.queryByText('Status')).toBeInTheDocument();
+      expect(screen.queryByText('Pending')).toBeInTheDocument();
+
+      // Hidden field should NOT appear
+      expect(screen.queryByText('InternalId')).not.toBeInTheDocument();
+      expect(screen.queryByText('1002')).not.toBeInTheDocument();
+    });
+
+    it('should work in Single mode with viz-hidden field', () => {
+      const vizHiddenField: Field = {
+        name: 'DetailCode',
+        type: FieldType.string,
+        values: ['ABC', 'DEF', 'GHI'],
+        display: (v) => ({ text: String(v), numeric: NaN }),
+        config: {
+          custom: {
+            hideFrom: {
+              viz: true,
+              legend: false,
+              tooltip: false,
+            },
+          },
+        },
+      };
+
+      const visibleField: Field = {
+        name: 'MainState',
+        type: FieldType.string,
+        values: ['On', 'Off', 'Standby'],
+        display: (v) => ({ text: String(v), numeric: NaN }),
+        config: {},
+      };
+
+      const seriesWithMixedVisibility = createDataFrame({
+        fields: [timeField, visibleField, vizHiddenField],
+      });
+
+      // In single mode, hovering over MainState (seriesIdx=1)
+      render(
+        <StateTimelineTooltip
+          series={seriesWithMixedVisibility}
+          seriesIdx={1}
+          dataIdxs={[2, 2, null]} // DetailCode has null from uPlot
+          mode={TooltipDisplayMode.Single}
+          timeRange={timeRange}
+          withDuration={false}
+          dataLinks={[]}
+          isPinned={false}
+        />
+      );
+
+      // Only the hovered series should show in Single mode
+      expect(screen.queryByText('MainState')).toBeInTheDocument();
+      expect(screen.queryByText('Standby')).toBeInTheDocument();
+
+      // Other field shouldn't show in Single mode (even if visible in tooltip config)
+      expect(screen.queryByText('DetailCode')).not.toBeInTheDocument();
+    });
+
+    it('should handle multiple viz-hidden fields correctly', () => {
+      const field1: Field = {
+        name: 'Visible1',
+        type: FieldType.string,
+        values: ['A', 'B', 'C'],
+        display: (v) => ({ text: String(v), numeric: NaN }),
+        config: {},
+      };
+
+      const field2: Field = {
+        name: 'HiddenViz1',
+        type: FieldType.string,
+        values: ['X', 'Y', 'Z'],
+        display: (v) => ({ text: String(v), numeric: NaN }),
+        config: {
+          custom: {
+            hideFrom: { viz: true, legend: false, tooltip: false },
+          },
+        },
+      };
+
+      const field3: Field = {
+        name: 'HiddenViz2',
+        type: FieldType.string,
+        values: ['P', 'Q', 'R'],
+        display: (v) => ({ text: String(v), numeric: NaN }),
+        config: {
+          custom: {
+            hideFrom: { viz: true, legend: false, tooltip: false },
+          },
+        },
+      };
+
+      const seriesWithMultipleHidden = createDataFrame({
+        fields: [timeField, field1, field2, field3],
+      });
+
+      render(
+        <StateTimelineTooltip
+          series={seriesWithMultipleHidden}
+          seriesIdx={1}
+          dataIdxs={[0, 0, null, null]} // Both hidden fields have null from uPlot
+          mode={TooltipDisplayMode.Multi}
+          timeRange={timeRange}
+          withDuration={false}
+          dataLinks={[]}
+          isPinned={false}
+        />
+      );
+
+      // All fields should appear (using index 0 from visible field)
+      expect(screen.queryByText('Visible1')).toBeInTheDocument();
+      expect(screen.queryByText('A')).toBeInTheDocument();
+      expect(screen.queryByText('HiddenViz1')).toBeInTheDocument();
+      expect(screen.queryByText('X')).toBeInTheDocument();
+      expect(screen.queryByText('HiddenViz2')).toBeInTheDocument();
+      expect(screen.queryByText('P')).toBeInTheDocument();
+    });
+  });
 });
