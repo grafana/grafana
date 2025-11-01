@@ -35,8 +35,18 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper, gvr schema.GroupVersionResource) {
+func runDashboardTest(t *testing.T, mode rest.DualWriterMode, gvr schema.GroupVersionResource) {
 	t.Run("simple crud+list", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			DisableAnonymous: true,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: mode,
+				},
+			},
+		})
+		t.Cleanup(helper.Shutdown)
+
 		ctx := context.Background()
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,
@@ -128,15 +138,7 @@ func TestIntegrationDashboardsAppV0Alpha1(t *testing.T) {
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("v0alpha1 with dual writer mode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous: true,
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: mode,
-					},
-				},
-			})
-			runDashboardTest(t, helper, gvr)
+			runDashboardTest(t, mode, gvr)
 		})
 	}
 }
@@ -152,15 +154,7 @@ func TestIntegrationDashboardsAppV1(t *testing.T) {
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("v1beta1 with dual writer mode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous: true,
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: mode,
-					},
-				},
-			})
-			runDashboardTest(t, helper, gvr)
+			runDashboardTest(t, mode, gvr)
 		})
 	}
 }
@@ -176,15 +170,7 @@ func TestIntegrationDashboardsAppV2alpha1(t *testing.T) {
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("v2alpha1 with dual writer mode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous: true,
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: mode,
-					},
-				},
-			})
-			runDashboardTest(t, helper, gvr)
+			runDashboardTest(t, mode, gvr)
 		})
 	}
 }
@@ -200,15 +186,7 @@ func TestIntegrationDashboardsAppV2beta1(t *testing.T) {
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("v1alpha2 with dual writer mode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous: true,
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: mode,
-					},
-				},
-			})
-			runDashboardTest(t, helper, gvr)
+			runDashboardTest(t, mode, gvr)
 		})
 	}
 }
