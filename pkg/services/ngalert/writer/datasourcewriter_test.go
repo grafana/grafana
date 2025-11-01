@@ -83,10 +83,16 @@ func setupDataSources(t *testing.T) *testDataSources {
 	})
 
 	p1, _ := res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-		Name:     "prom-1",
-		UID:      "prom-1",
-		Type:     datasources.DS_PROMETHEUS,
-		JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Prometheus"}`)),
+		Name: "prom-1",
+		UID:  "prom-1",
+		Type: datasources.DS_PROMETHEUS,
+		JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Prometheus",` +
+			`"httpHeaderName1": "X-Custom-Header",` +
+			`"httpHeaderName2": "X-Test-Header1"}`)),
+		EncryptedSecureJsonData: map[string][]byte{
+			"httpHeaderValue1": []byte("overwrittenValue"),
+			"httpHeaderValue2": []byte("headerValue2"),
+		},
 	})
 	p1.URL = res.prom1.srv.URL
 	res.prom1.ExpectedPath = "/api/v1/write"
@@ -202,6 +208,7 @@ func TestDatasourceWriter(t *testing.T) {
 
 		assert.Equal(t, headers[header1], testDS.prom1.LastHeaders.Get(header1))
 		assert.Equal(t, headers[header2], testDS.prom1.LastHeaders.Get(header2))
+		assert.Equal(t, "headerValue2", testDS.prom1.LastHeaders.Get("X-Test-Header1"))
 	})
 
 	t.Run("when PDC is enabled proxy options are passed to HTTP client provider", func(t *testing.T) {
