@@ -243,6 +243,13 @@ export class TimeSrv {
       intervalMs = rangeUtil.intervalToMs(refresh);
     }
 
+    // Prevent excessively short refresh intervals that can cause performance issues
+    const minIntervalMs = 1000; // 1 second minimum
+    if (intervalMs < minIntervalMs) {
+      console.warn(`Refresh interval ${intervalMs}ms is too short, setting to minimum ${minIntervalMs}ms`);
+      intervalMs = minIntervalMs;
+    }
+
     this.refreshMS = intervalMs;
     this.refreshTimer = window.setTimeout(() => {
       this.startNextRefreshTimer(intervalMs);

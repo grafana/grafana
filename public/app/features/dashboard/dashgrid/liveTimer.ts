@@ -15,6 +15,7 @@ interface LiveListener {
 
 class LiveTimer {
   listeners: LiveListener[] = [];
+  maxListeners = 100; // Prevent excessive listener accumulation
 
   budget = 1;
   threshold = 1.5; // trial and error appears about right
@@ -42,6 +43,18 @@ class LiveTimer {
   }
 
   listen(panel: PanelStateWrapper) {
+    // Prevent duplicate listeners for the same panel
+    const existingIndex = this.listeners.findIndex(listener => listener.panel === panel);
+    if (existingIndex !== -1) {
+      return; // Panel already has a listener
+    }
+
+    // Prevent excessive listener accumulation
+    if (this.listeners.length >= this.maxListeners) {
+      console.warn('LiveTimer: Maximum listeners reached, removing oldest listener');
+      this.listeners.shift(); // Remove oldest listener
+    }
+
     this.listeners.push({
       last: this.lastUpdate,
       panel: panel,
@@ -80,27 +93,43 @@ class LiveTimer {
     }
     this.lastUpdate = now;
 
+    // Clean up orphaned listeners (panels that may have been unmounted)
+    this.listeners = this.listeners.filter(listener => {
+      try {
+        // Check if panel is still mounted and accessible
+        return listener.panel && listener.panel.props && !listener.panel.props.dashboard?.meta?.canEdit === false;
+      } catch (e) {
+        // Remove listeners that throw errors (likely unmounted components)
+        return false;
+      }
+    });
+
     // For live dashboards, listen to changes
     if (this.isLive && this.ok.getValue() && this.timeRange) {
       // when the time-range is relative fire events
       let tr: TimeRange | undefined = undefined;
       for (const listener of this.listeners) {
-        if (!listener.panel.props.isInView) {
-          continue;
-        }
-
-        const elapsed = now - listener.last;
-        if (elapsed >= listener.intervalMs) {
-          if (!tr) {
-            const { raw } = this.timeRange;
-            tr = {
-              raw,
-              from: dateTime(now - this.liveTimeOffset),
-              to: dateTime(now),
-            };
+        try {
+          if (!listener.panel.props.isInView) {
+            continue;
           }
-          listener.panel.liveTimeChanged(tr);
-          listener.last = now;
+
+          const elapsed = now - listener.last;
+          if (elapsed >= listener.intervalMs) {
+            if (!tr) {
+              const { raw } = this.timeRange;
+              tr = {
+                raw,
+                from: dateTime(now - this.liveTimeOffset),
+                to: dateTime(now),
+              };
+            }
+            listener.panel.liveTimeChanged(tr);
+            listener.last = now;
+          }
+        } catch (e) {
+          // Skip listeners that error out (likely unmounted)
+          console.warn('LiveTimer: Skipping listener due to error:', e);
         }
       }
     }
