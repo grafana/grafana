@@ -3,9 +3,17 @@ import { Unsubscribable } from 'rxjs';
 
 import { getAppEvents } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { AbsoluteTimeEvent, CopyTimeEvent, PasteTimeEvent, ShiftTimeEvent, ZoomOutEvent } from 'app/types/events';
+import {
+  AbsoluteTimeEvent,
+  CopyTimeEvent,
+  PasteTimeEvent,
+  RunQueryEvent,
+  ShiftTimeEvent,
+  ZoomOutEvent,
+} from 'app/types/events';
 import { useDispatch } from 'app/types/store';
 
+import { refreshQueriesInAllPanes } from '../state/query';
 import {
   copyTimeRangeToClipboard,
   makeAbsoluteTime,
@@ -20,6 +28,7 @@ export function useKeyboardShortcuts() {
 
   useEffect(() => {
     keybindings.setupTimeRangeBindings(false);
+    keybindings.setupExploreBindings();
 
     const tearDown: Unsubscribable[] = [];
 
@@ -50,6 +59,12 @@ export function useKeyboardShortcuts() {
     tearDown.push(
       getAppEvents().subscribe(PasteTimeEvent, () => {
         dispatch(pasteTimeRangeFromClipboard());
+      })
+    );
+
+    tearDown.push(
+      getAppEvents().subscribe(RunQueryEvent, () => {
+        dispatch(refreshQueriesInAllPanes());
       })
     );
 
