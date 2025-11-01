@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getDataSourceSrv, config, locationService } from '@grafana/runtime';
 import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import {
   shouldRenderInviteUserButton,
@@ -9,6 +10,7 @@ import {
 } from 'app/core/components/AppChrome/TopBar/InviteUserButtonUtils';
 import { changeTheme } from 'app/core/services/theme';
 import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
+import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { useSelector } from 'app/types/store';
 
 import { CommandPaletteAction } from '../types';
@@ -141,6 +143,21 @@ export function useStaticActions(): CommandPaletteAction[] {
   const navBarTree = useSelector((state) => state.navBarTree);
   return useMemo(() => {
     const navBarActions = navTreeToActions(navBarTree);
+
+    const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
+    const renderPreBuiltDashboardAction = testDataSources.length > 0 && config.featureToggles.dashboardTemplates;
+    if (renderPreBuiltDashboardAction) {
+      navBarActions.splice(1, 0, {
+        id: 'browse-template-dashboard',
+        name: t('command-palette.action.dashboard-from-template', 'Dashboard from template'),
+        section: t('command-palette.section.actions', 'Actions'),
+        priority: ACTIONS_PRIORITY,
+        perform: () => {
+          DashboardLibraryInteractions.entryPointClicked({ entryPoint: 'command_palette' });
+          locationService.push('/dashboards?templateDashboards=true&source=commandPalette');
+        },
+      });
+    }
 
     if (shouldRenderInviteUserButton()) {
       navBarActions.push({

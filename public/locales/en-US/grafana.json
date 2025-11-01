@@ -4126,6 +4126,7 @@
     "action": {
       "change-theme": "Change theme",
       "dark-theme": "Dark",
+      "dashboard-from-template": "Dashboard from template",
       "light-theme": "Light",
       "scopes": "Scopes"
     },
@@ -5658,6 +5659,24 @@
     "json-field": {
       "label": "Import via dashboard JSON model",
       "validation-required": "Need a dashboard JSON model"
+    }
+  },
+  "dashboard-library": {
+    "dashboard-card": {
+      "details": {
+        "datasource-label": "Datasource",
+        "dependencies-label": "Dependencies",
+        "id": "ID",
+        "last-update-label": "Last Update",
+        "published-by-label": "Published By"
+      },
+      "details-button": "Details",
+      "details-title": "Details",
+      "use-template-button": "Use template"
+    },
+    "template-dashboard-modal": {
+      "description": "Get started with Grafana templates using sample data. Connect your data to power them with real metrics.",
+      "title": "Start a dashboard from a template"
     }
   },
   "dashboard-links": {
@@ -10472,7 +10491,7 @@
       "title": "New"
     },
     "new-dashboard": {
-      "title": "New dashboard"
+      "title": "Empty dashboard"
     },
     "new-folder": {
       "title": "New folder"
@@ -12351,8 +12370,9 @@
     "dashboard-actions": {
       "import": "Import",
       "new": "New",
-      "new-dashboard": "New dashboard",
-      "new-folder": "New folder"
+      "new-dashboard": "Empty dashboard",
+      "new-folder": "New folder",
+      "new-template-dashboard": "Dashboard from template"
     },
     "generate-columns": {
       "score": "Score"

@@ -4,6 +4,7 @@ import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService 
 import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
+import { contextSrv } from 'app/core/core';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
@@ -442,7 +443,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       const scene = transformSaveModelToScene(rsp);
 
       // Special handling for Template route - set up edit mode and dirty state
-      if (config.featureToggles.dashboardLibrary && options.route === DashboardRoutes.Template) {
+      if (
+        (config.featureToggles.dashboardLibrary || config.featureToggles.dashboardTemplates) &&
+        options.route === DashboardRoutes.Template
+      ) {
         scene.setInitialSaveModel(rsp.dashboard, rsp.meta);
         scene.onEnterEditMode();
         scene.setState({ isDirty: true });
@@ -479,7 +483,14 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const searchParams = new URLSearchParams(window.location.search);
     const datasource = searchParams.get('datasource');
     const pluginId = searchParams.get('pluginId');
+    const gnetId = searchParams.get('gnetId');
+
     const path = searchParams.get('path');
+
+    // Check if this is a community dashboard (has gnetId) or plugin dashboard
+    if (gnetId) {
+      return this.loadCommunityTemplateDashboard(gnetId, datasource, pluginId);
+    }
 
     if (!datasource || !pluginId || !path) {
       throw new Error('Missing required parameters for template dashboard');
@@ -516,6 +527,51 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       meta: {
         canSave: true,
         canEdit: true,
+        canStar: false,
+        canShare: false,
+        canDelete: false,
+        isNew: true,
+        folderUid: '',
+      },
+    };
+  }
+
+  private async loadCommunityTemplateDashboard(
+    gnetId: string,
+    datasource: string | null,
+    pluginId: string | null
+  ): Promise<DashboardDTO> {
+    // Fetch the community dashboard from grafana.com
+    const gnetDashboard = await getBackendSrv().get(`/api/gnet/dashboards/${gnetId}`);
+
+    // The dashboard JSON is in the 'json' property
+    const dashboardJson = gnetDashboard.json;
+
+    const data = {
+      dashboard: dashboardJson,
+      overwrite: true,
+      inputs: [
+        {
+          name: '*',
+          type: 'datasource',
+          pluginId: pluginId,
+          value: datasource,
+        },
+      ],
+    };
+
+    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+
+    return {
+      dashboard: {
+        ...interpolatedDashboard,
+        uid: '',
+        version: 0,
+        id: null,
+      },
+      meta: {
+        canSave: contextSrv.hasEditPermissionInFolders,
+        canEdit: contextSrv.hasEditPermissionInFolders,
         canStar: false,
         canShare: false,
         canDelete: false,

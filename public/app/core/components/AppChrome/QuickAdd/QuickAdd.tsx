@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceSrv, reportInteraction, config } from '@grafana/runtime';
 import { Menu, Dropdown, ToolbarButton } from '@grafana/ui';
+import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { useSelector } from 'app/types/store';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
@@ -15,7 +16,24 @@ export const QuickAdd = ({}: Props) => {
   const navBarTree = useSelector((state) => state.navBarTree);
   const [isOpen, setIsOpen] = useState(false);
 
-  const createActions = useMemo(() => findCreateActions(navBarTree), [navBarTree]);
+  const createActions = useMemo(() => {
+    const createActions = findCreateActions(navBarTree);
+
+    const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
+    const renderPreBuiltDashboardAction = testDataSources.length > 0 && config.featureToggles.dashboardTemplates;
+    if (renderPreBuiltDashboardAction) {
+      createActions.splice(1, 0, {
+        id: 'browse-template-dashboard',
+        text: 'Dashboard from template',
+        url: '/dashboards?templateDashboards=true&source=quickAdd',
+        onClick: () => {
+          DashboardLibraryInteractions.entryPointClicked({ entryPoint: 'quick_add_button' });
+        },
+      });
+    }
+
+    return createActions;
+  }, [navBarTree]);
   const showQuickAdd = createActions.length > 0;
 
   if (!showQuickAdd) {
@@ -30,7 +48,10 @@ export const QuickAdd = ({}: Props) => {
             key={index}
             url={createAction.url}
             label={createAction.text}
-            onClick={() => reportInteraction('grafana_menu_item_clicked', { url: createAction.url, from: 'quickadd' })}
+            onClick={() => {
+              reportInteraction('grafana_menu_item_clicked', { url: createAction.url, from: 'quickadd' });
+              createAction.onClick?.();
+            }}
           />
         ))}
       </Menu>
