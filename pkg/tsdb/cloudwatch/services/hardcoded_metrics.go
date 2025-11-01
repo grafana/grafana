@@ -28,6 +28,14 @@ var GetHardCodedMetricsByNamespace = func(namespace string) ([]resources.Resourc
 		response = append(response, resources.Metric{Namespace: namespace, Name: metric})
 	}
 
+	// Add extended metrics for AWS/RDS namespace (Performance Insights and Enhanced Monitoring)
+	if namespace == "AWS/RDS" {
+		extendedMetrics := GetExtendedRDSMetrics()
+		for _, metric := range extendedMetrics {
+			response = append(response, resources.Metric{Namespace: namespace, Name: metric})
+		}
+	}
+
 	return valuesToListMetricResponse(response), nil
 }
 
@@ -36,6 +44,14 @@ var GetAllHardCodedMetrics = func() []resources.ResourceResponse[resources.Metri
 	for namespace, metrics := range cloudWatchConsts.NamespaceMetricsMap {
 		for _, metric := range metrics {
 			response = append(response, resources.Metric{Namespace: namespace, Name: metric})
+		}
+
+		// Add extended metrics for AWS/RDS namespace
+		if namespace == "AWS/RDS" {
+			extendedMetrics := GetExtendedRDSMetrics()
+			for _, metric := range extendedMetrics {
+				response = append(response, resources.Metric{Namespace: namespace, Name: metric})
+			}
 		}
 	}
 
