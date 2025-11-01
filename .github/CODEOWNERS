@@ -151,7 +151,7 @@
 /pkg/promlib @grafana/oss-big-tent
 /pkg/storage/ @grafana/grafana-search-and-storage
 /pkg/storage/secret/ @grafana/grafana-operator-experience-squad
-/pkg/services/annotations/ @grafana/grafana-search-and-storage
+/pkg/services/annotations/ @grafana/grafana-backend-services-squad
 /pkg/services/apikey/ @grafana/identity-squad
 /pkg/services/cleanup/ @grafana/grafana-backend-group
 /pkg/services/contexthandler/ @grafana/grafana-backend-group @grafana/grafana-app-platform-squad
