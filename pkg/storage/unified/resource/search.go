@@ -863,7 +863,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), iter.Value())
 				if err != nil {
 					span.RecordError(err)
-					logger.Error("error building search document", "key", SearchID(key), "err", err)
+					logger.Error("error building search document", "key", SearchID(key), "rv", iter.ResourceVersion(), "err", err)
 					continue
 				}
 
@@ -933,7 +933,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				doc, err := builder.BuildDocument(ctx, key, res.ResourceVersion, res.Value)
 				if err != nil {
 					span.RecordError(err)
-					logger.Error("error building search document", "key", SearchID(key), "err", err)
+					logger.Error("error building search document", "key", SearchID(key), "rv", res.ResourceVersion, "err", err)
 					continue
 				}
 
