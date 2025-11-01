@@ -124,18 +124,17 @@ class K8sAPI implements DashboardSnapshotSrv {
   }
 
   async getSnapshot(uid: string): Promise<DashboardDTO> {
-    const headers: Record<string, string> = {};
+    //unknown users should fall back to legacy HTTP endpoint to ensure snapshots load
     if (!contextSrv.isSignedIn) {
-      alert('TODO... need a barer token for anonymous use case');
-      const token = `??? TODO, get anon token for snapshots (${contextSrv.user?.name}) ???`;
-      headers['Authorization'] = `Bearer ${token}`;
+      return legacyDashboardSnapshotSrv.getSnapshot(uid);
     }
+
     return lastValueFrom(
       getBackendSrv()
         .fetch<K8sDashboardSnapshot>({
           url: this.url + '/' + uid + '/body',
           method: 'GET',
-          headers: headers,
+          // headers: headers,
         })
         .pipe(
           map((response: FetchResponse<K8sDashboardSnapshot>) => {
