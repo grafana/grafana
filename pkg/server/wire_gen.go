@@ -888,20 +888,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-<<<<<<< HEAD
-	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, provisioningAPIBuilder, ofrepAPIBuilder, dependencyRegisterer)
-=======
-	secretDBMigrator := migrator2.NewWithEngine(sqlStore)
-	dependencyRegisterer, err := secret.RegisterDependencies(featureToggles, cfg, secretDBMigrator, acimplService)
-	if err != nil {
-		return nil, err
-	}
 	provisioningDependencyRegisterer, err := provisioning2.RegisterDependencies(cfg, acimplService, featureToggles)
 	if err != nil {
 		return nil, err
 	}
 	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, provisioningAPIBuilder, ofrepAPIBuilder, dependencyRegisterer, provisioningDependencyRegisterer)
->>>>>>> 4e4dacf6de9 (remove scopes)
 	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
@@ -1531,20 +1522,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-<<<<<<< HEAD
-	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, provisioningAPIBuilder, ofrepAPIBuilder, dependencyRegisterer)
-=======
-	secretDBMigrator := migrator2.NewWithEngine(sqlStore)
-	dependencyRegisterer, err := secret.RegisterDependencies(featureToggles, cfg, secretDBMigrator, acimplService)
-	if err != nil {
-		return nil, err
-	}
 	provisioningDependencyRegisterer, err := provisioning2.RegisterDependencies(cfg, acimplService, featureToggles)
 	if err != nil {
 		return nil, err
 	}
 	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, provisioningAPIBuilder, ofrepAPIBuilder, dependencyRegisterer, provisioningDependencyRegisterer)
->>>>>>> 4e4dacf6de9 (remove scopes)
 	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
