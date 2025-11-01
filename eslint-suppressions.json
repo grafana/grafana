@@ -3328,23 +3328,6 @@
       "count": 2
     }
   },
-  "public/app/features/query/components/QueryEditorRow.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 1
-    },
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 3
-    },
-    "no-restricted-syntax": {
-      "count": 1
-    },
-    "react-hooks/rules-of-hooks": {
-      "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/query/components/QueryEditorRowHeader.tsx": {
     "@grafana/no-aria-label-selectors": {
       "count": 1
