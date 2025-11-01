@@ -13,6 +13,7 @@ use (
 	./apps/dashboard
 	./apps/example
 	./apps/folder
+	./apps/history
 	./apps/iam
 	./apps/investigations
 	./apps/logsdrilldown
