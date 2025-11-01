@@ -50,7 +50,7 @@ func (i *Initialize) Initialize(ctx context.Context, ps *plugins.Plugin) (*plugi
 	for _, init := range i.initializeSteps {
 		ip, err = init(ctx, ps)
 		if err != nil {
-			i.log.Error("Could not initialize plugin", "pluginId", ps.ID, "error", err)
+			ps.Logger().Error("Could not initialize plugin", "pluginId", ps.ID, "error", err)
 			return nil, err
 		}
 	}
