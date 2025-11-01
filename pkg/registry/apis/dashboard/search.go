@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -119,6 +120,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Description: "tag query filter",
 										Required:    false,
 										Schema:      spec.ArrayProperty(spec.StringProperty()),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "libraryPanel",
+										In:          "query",
+										Description: "find dashboards that reference a given libraryPanel",
+										Required:    false,
+										Schema:      spec.StringProperty(),
 									},
 								},
 								{
@@ -360,6 +370,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			Key:      "tags",
 			Operator: "=",
 			Values:   tags,
+		}}
+	}
+
+	// The libraryPanel filter
+	if libraryPanel, ok := queryParams["libraryPanel"]; ok {
+		searchRequest.Options.Fields = []*resourcepb.Requirement{{
+			Key:      unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+			Operator: "=",
+			Values:   libraryPanel,
 		}}
 	}
 
