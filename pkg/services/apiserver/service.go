@@ -293,7 +293,6 @@ func (s *service) start(ctx context.Context) error {
 	// Register authorizers from app installers
 	appinstaller.RegisterAuthorizers(ctx, s.appInstallers, s.authorizer)
 
-	klog.Info("applying grafana config", "cfg", s.cfg, "features", s.features, "o", o)
 	err = applyGrafanaConfig(s.cfg, s.features, o)
 	if err != nil {
 		return err
