@@ -47,6 +47,7 @@ type DatasourceProvisioner struct {
 	cfgProvider       *configReader
 	dsService         BaseDataSourceService
 	correlationsStore CorrelationsStore
+	orgService        org.Service
 }
 
 func newDatasourceProvisioner(log log.Logger, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) DatasourceProvisioner {
@@ -55,6 +56,7 @@ func newDatasourceProvisioner(log log.Logger, dsService BaseDataSourceService, c
 		cfgProvider:       &configReader{log: log, orgService: orgService},
 		dsService:         dsService,
 		correlationsStore: correlationsStore,
+		orgService:        orgService,
 	}
 }
 
@@ -91,6 +93,34 @@ func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *
 	}
 
 	return nil
+}
+
+func createStaticTestdataDataSource(orgID int64) *upsertDataSourceFromConfig {
+	return &upsertDataSourceFromConfig{
+		OrgID:      orgID,
+		Version:    1,
+		Name:       "Test Data",
+		Type:       datasources.DS_TESTDATA,
+		UID:        datasources.DS_TESTDATA,
+		IsDefault:  false,
+		Editable:   false,
+		IsPrunable: false,
+	}
+}
+
+// staticTestdataDataSourceConfig creates a testdata datasource for each org.
+func (dc *DatasourceProvisioner) staticTestdataDataSourceConfig(ctx context.Context) (*configs, error) {
+	orgs, err := dc.orgService.Search(ctx, &org.SearchOrgsQuery{})
+	if err != nil {
+		return nil, err
+	}
+	configs := &configs{
+		Datasources: make([]*upsertDataSourceFromConfig, 0, len(orgs)),
+	}
+	for _, org := range orgs {
+		configs.Datasources = append(configs.Datasources, createStaticTestdataDataSource(org.ID))
+	}
+	return configs, nil
 }
 
 func (dc *DatasourceProvisioner) provisionCorrelations(ctx context.Context, cfg *configs) error {
@@ -142,6 +172,12 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 	if err != nil {
 		return err
 	}
+
+	testdataConfigs, err := dc.staticTestdataDataSourceConfig(ctx)
+	if err != nil {
+		return err
+	}
+	configs = append(configs, testdataConfigs)
 
 	// Creates a list of data sources that will be ultimately deleted after provisioning finishes
 	willExistAfterProvisioning := map[DataSourceMapKey]bool{}
