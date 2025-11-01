@@ -23,6 +23,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardControlsButton } from './DashboardControlsMenu';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
+import { DataLayerControls } from './DataLayerControls';
 import { VariableControls } from './VariableControls';
 
 export interface DashboardControlsState extends SceneObjectState {
@@ -186,18 +187,6 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       )}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
-  );
-}
-
-function DataLayerControls({ dashboard }: { dashboard: DashboardScene }) {
-  const layers = sceneGraph.getDataLayers(dashboard, true);
-
-  return (
-    <>
-      {layers.map((layer) => (
-        <layer.Component model={layer} key={layer.state.key} />
-      ))}
-    </>
   );
 }
 

@@ -15,6 +15,7 @@ export type {
   DashboardLink,
   DashboardLinkType,
   DashboardLinkPlacement,
+  AnnotationQueryPlacement,
   ActionType,
   FetchOptions,
   InfinityOptions,

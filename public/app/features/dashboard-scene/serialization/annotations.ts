@@ -26,6 +26,7 @@ export function transformV1ToV2AnnotationQuery(
     target,
     snapshotData,
     type,
+    placement,
 
     // unknown properties that are still available for configuration through API
     ...legacyOptions
@@ -48,6 +49,11 @@ export function transformV1ToV2AnnotationQuery(
       },
     },
   };
+
+  // Add placement if it exists
+  if (annotation.placement) {
+    result.spec.placement = annotation.placement;
+  }
 
   if (dsUID) {
     result.spec.query.datasource = {
@@ -80,6 +86,11 @@ export function transformV2ToV1AnnotationQuery(annotation: AnnotationQueryKind):
     name: annotation.spec.name,
     // TOOO: mappings
   };
+
+  // Add placement if it exists
+  if (annotation.spec.placement) {
+    annoQuerySpec.placement = annotation.spec.placement;
+  }
 
   if (Object.keys(dataQuery.spec).length > 0) {
     // @ts-expect-error DataQueryKind spec should be typed as DataQuery interface

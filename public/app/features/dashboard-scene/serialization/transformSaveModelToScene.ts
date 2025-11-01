@@ -272,6 +272,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         name: a.name,
         isEnabled: Boolean(a.enable),
         isHidden: Boolean(a.hide),
+        placement: a.placement,
       });
     });
   }
