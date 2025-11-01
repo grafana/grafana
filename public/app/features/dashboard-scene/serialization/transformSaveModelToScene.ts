@@ -231,6 +231,7 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
     children: children,
     $behaviors: behaviors,
     actions: new RowActions({}),
+    scopedVars: row.scopedVars,
   });
 }
 
