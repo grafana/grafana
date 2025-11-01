@@ -30,7 +30,7 @@ type CookiesMiddleware struct {
 	skipCookiesNames []string
 }
 
-func (m *CookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.PluginContext, req any) error {
+func ApplyCookies(ctx context.Context, pCtx backend.PluginContext, req any, skipCookiesNames []string) error {
 	reqCtx := contexthandler.FromContext(ctx)
 	allowedCookies := []string{}
 	// if no HTTP request context skip middleware
@@ -55,7 +55,7 @@ func (m *CookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.Plugi
 		allowedCookies = ds.AllowedCookies()
 	}
 
-	proxyutil.ClearCookieHeader(reqCtx.Req, allowedCookies, m.skipCookiesNames)
+	proxyutil.ClearCookieHeader(reqCtx.Req, allowedCookies, skipCookiesNames)
 
 	cookieStr := reqCtx.Req.Header.Get(cookieHeaderName)
 	switch t := req.(type) {
@@ -87,7 +87,7 @@ func (m *CookiesMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 		return m.BaseHandler.QueryData(ctx, req)
 	}
 
-	err := m.applyCookies(ctx, req.PluginContext, req)
+	err := ApplyCookies(ctx, req.PluginContext, req, m.skipCookiesNames)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (m *CookiesMiddleware) CallResource(ctx context.Context, req *backend.CallR
 		return m.BaseHandler.CallResource(ctx, req, sender)
 	}
 
-	err := m.applyCookies(ctx, req.PluginContext, req)
+	err := ApplyCookies(ctx, req.PluginContext, req, m.skipCookiesNames)
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (m *CookiesMiddleware) CheckHealth(ctx context.Context, req *backend.CheckH
 		return m.BaseHandler.CheckHealth(ctx, req)
 	}
 
-	err := m.applyCookies(ctx, req.PluginContext, req)
+	err := ApplyCookies(ctx, req.PluginContext, req, m.skipCookiesNames)
 	if err != nil {
 		return nil, err
 	}

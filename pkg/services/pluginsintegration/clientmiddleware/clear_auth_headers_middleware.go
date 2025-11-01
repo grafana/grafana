@@ -23,7 +23,7 @@ type ClearAuthHeadersMiddleware struct {
 	backend.BaseHandler
 }
 
-func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, h backend.ForwardHTTPHeaders) {
+func ClearHeaders(ctx context.Context, h backend.ForwardHTTPHeaders) {
 	reqCtx := contexthandler.FromContext(ctx)
 	// if no HTTP request context skip middleware
 	if h == nil || reqCtx == nil || reqCtx.Req == nil || reqCtx.SignedInUser == nil {
@@ -43,7 +43,7 @@ func (m *ClearAuthHeadersMiddleware) QueryData(ctx context.Context, req *backend
 		return m.BaseHandler.QueryData(ctx, req)
 	}
 
-	m.clearHeaders(ctx, req)
+	ClearHeaders(ctx, req)
 
 	return m.BaseHandler.QueryData(ctx, req)
 }
@@ -53,7 +53,7 @@ func (m *ClearAuthHeadersMiddleware) CallResource(ctx context.Context, req *back
 		return m.BaseHandler.CallResource(ctx, req, sender)
 	}
 
-	m.clearHeaders(ctx, req)
+	ClearHeaders(ctx, req)
 
 	return m.BaseHandler.CallResource(ctx, req, sender)
 }
@@ -63,7 +63,7 @@ func (m *ClearAuthHeadersMiddleware) CheckHealth(ctx context.Context, req *backe
 		return m.BaseHandler.CheckHealth(ctx, req)
 	}
 
-	m.clearHeaders(ctx, req)
+	ClearHeaders(ctx, req)
 
 	return m.BaseHandler.CheckHealth(ctx, req)
 }
@@ -73,7 +73,7 @@ func (m *ClearAuthHeadersMiddleware) SubscribeStream(ctx context.Context, req *b
 		return m.BaseHandler.SubscribeStream(ctx, req)
 	}
 
-	m.clearHeaders(ctx, req)
+	ClearHeaders(ctx, req)
 
 	return m.BaseHandler.SubscribeStream(ctx, req)
 }
@@ -83,7 +83,7 @@ func (m *ClearAuthHeadersMiddleware) PublishStream(ctx context.Context, req *bac
 		return m.BaseHandler.PublishStream(ctx, req)
 	}
 
-	m.clearHeaders(ctx, req)
+	ClearHeaders(ctx, req)
 
 	return m.BaseHandler.PublishStream(ctx, req)
 }
@@ -93,7 +93,7 @@ func (m *ClearAuthHeadersMiddleware) RunStream(ctx context.Context, req *backend
 		return m.BaseHandler.RunStream(ctx, req, sender)
 	}
 
-	m.clearHeaders(ctx, req)
+	ClearHeaders(ctx, req)
 
 	return m.BaseHandler.RunStream(ctx, req, sender)
 }
