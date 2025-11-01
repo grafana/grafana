@@ -36,6 +36,19 @@ func setupTestStorageBackend(t *testing.T) *kvStorageBackend {
 	return kvBackend
 }
 
+func setupTestStorageBackendWithClusterScope(t *testing.T) *kvStorageBackend {
+	kv := setupTestKV(t)
+	opts := KVBackendOptions{
+		KvStore:                      kv,
+		WithPruner:                   true,
+		WithExperimentalClusterScope: true,
+	}
+	backend, err := NewKVStorageBackend(opts)
+	kvBackend := backend.(*kvStorageBackend)
+	require.NoError(t, err)
+	return kvBackend
+}
+
 func TestNewKvStorageBackend(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 
@@ -1583,4 +1596,254 @@ func createAndWriteTestObject(t *testing.T, backend *kvStorageBackend) (*unstruc
 	require.NoError(t, err)
 
 	return testObj, rv
+}
+
+// TestKvStorageBackend_ClusterScopedResources tests create, update, delete, list, and watch
+// operations for cluster-scoped resources (empty namespace).
+// This test requires the backend to be configured with WithExperimentalClusterScoped set to true.
+//
+// The test verifies that:
+// - All write operations accept empty namespace
+// - ReadResource responses return empty namespace
+// - ListIterator results return empty namespace
+// - WatchWriteEvents return empty namespace
+func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
+	backend := setupTestStorageBackendWithClusterScope(t)
+	ctx := context.Background()
+
+	// Start watching for events before creating resources
+	stream, err := backend.WatchWriteEvents(ctx)
+	require.NoError(t, err)
+
+	// Use empty namespace for cluster-scoped resources
+	clusterNS := NamespacedResource{
+		Namespace: "",
+		Group:     "cluster.example.com",
+		Resource:  "clusterresources",
+	}
+
+	// Test Create - Add 3 cluster-scoped resources
+	testObj1, err := createTestObjectWithName("cluster-item1", clusterNS, "data-1")
+	require.NoError(t, err)
+	metaAccessor1, err := utils.MetaAccessor(testObj1)
+	require.NoError(t, err)
+
+	writeEvent1 := WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "",
+			Group:     "cluster.example.com",
+			Resource:  "clusterresources",
+			Name:      "cluster-item1",
+		},
+		Value:      objectToJSONBytes(t, testObj1),
+		Object:     metaAccessor1,
+		PreviousRV: 0,
+	}
+	rv1, err := backend.WriteEvent(ctx, writeEvent1)
+	require.NoError(t, err)
+	require.Greater(t, rv1, int64(0))
+
+	testObj2, err := createTestObjectWithName("cluster-item2", clusterNS, "data-2")
+	require.NoError(t, err)
+	metaAccessor2, err := utils.MetaAccessor(testObj2)
+	require.NoError(t, err)
+
+	writeEvent2 := WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "",
+			Group:     "cluster.example.com",
+			Resource:  "clusterresources",
+			Name:      "cluster-item2",
+		},
+		Value:      objectToJSONBytes(t, testObj2),
+		Object:     metaAccessor2,
+		PreviousRV: 0,
+	}
+	rv2, err := backend.WriteEvent(ctx, writeEvent2)
+	require.NoError(t, err)
+	require.Greater(t, rv2, rv1)
+
+	testObj3, err := createTestObjectWithName("cluster-item3", clusterNS, "data-3")
+	require.NoError(t, err)
+	metaAccessor3, err := utils.MetaAccessor(testObj3)
+	require.NoError(t, err)
+
+	writeEvent3 := WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "",
+			Group:     "cluster.example.com",
+			Resource:  "clusterresources",
+			Name:      "cluster-item3",
+		},
+		Value:      objectToJSONBytes(t, testObj3),
+		Object:     metaAccessor3,
+		PreviousRV: 0,
+	}
+	rv3, err := backend.WriteEvent(ctx, writeEvent3)
+	require.NoError(t, err)
+	require.Greater(t, rv3, rv2)
+
+	// Test Update - Modify cluster-item2
+	testObj2.Object["spec"].(map[string]any)["value"] = "updated-data"
+	metaAccessor2Updated, err := utils.MetaAccessor(testObj2)
+	require.NoError(t, err)
+
+	writeEvent2Updated := WriteEvent{
+		Type: resourcepb.WatchEvent_MODIFIED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "",
+			Group:     "cluster.example.com",
+			Resource:  "clusterresources",
+			Name:      "cluster-item2",
+		},
+		Value:      objectToJSONBytes(t, testObj2),
+		Object:     metaAccessor2Updated,
+		ObjectOld:  metaAccessor2,
+		PreviousRV: rv2,
+	}
+	rv4, err := backend.WriteEvent(ctx, writeEvent2Updated)
+	require.NoError(t, err)
+	require.Greater(t, rv4, rv3)
+
+	// Test Read - Read latest cluster-item2
+	readReq := &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Name:      "cluster-item2",
+			Namespace: "", // Request with empty namespace
+			Group:     "cluster.example.com",
+			Resource:  "clusterresources",
+		},
+		ResourceVersion: 0,
+	}
+	response := backend.ReadResource(ctx, readReq)
+	require.Nil(t, response.Error)
+	require.Equal(t, rv4, response.ResourceVersion)
+	require.Contains(t, string(response.Value), "updated-data")
+	require.NotNil(t, response.Key, "response key should be populated")
+	require.Empty(t, response.Key.Namespace, "cluster-scoped resource should have empty namespace in response")
+
+	// Test Read - Read early version of cluster-item2
+	readReq.ResourceVersion = rv3 // Should return rv2 version
+	response = backend.ReadResource(ctx, readReq)
+	require.Nil(t, response.Error)
+	require.Equal(t, rv2, response.ResourceVersion)
+	require.Contains(t, string(response.Value), "data-2")
+	require.NotNil(t, response.Key, "response key should be populated")
+	require.Empty(t, response.Key.Namespace, "cluster-scoped resource should have empty namespace in response")
+
+	// Test Delete - Delete cluster-item1
+	writeEvent1Delete := WriteEvent{
+		Type: resourcepb.WatchEvent_DELETED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "",
+			Group:     "cluster.example.com",
+			Resource:  "clusterresources",
+			Name:      "cluster-item1",
+		},
+		Value:      objectToJSONBytes(t, testObj1),
+		Object:     metaAccessor1,
+		ObjectOld:  metaAccessor1,
+		PreviousRV: rv1,
+	}
+	rv5, err := backend.WriteEvent(ctx, writeEvent1Delete)
+	require.NoError(t, err)
+	require.Greater(t, rv5, rv4)
+
+	// Test List - List all cluster-scoped resources
+	listReq := &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "",
+				Group:     "cluster.example.com",
+				Resource:  "clusterresources",
+			},
+		},
+		Limit: 10,
+	}
+
+	var listedItems []struct {
+		name      string
+		namespace string
+		value     []byte
+	}
+	rv, err := backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
+			listedItems = append(listedItems, struct {
+				name      string
+				namespace string
+				value     []byte
+			}{
+				name:      iter.Name(),
+				namespace: iter.Namespace(),
+				value:     iter.Value(),
+			})
+		}
+		return iter.Error()
+	})
+
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, rv, rv5)
+	require.Len(t, listedItems, 2) // cluster-item2 and cluster-item3 (item1 was deleted)
+
+	// Verify all items have empty namespace
+	for _, item := range listedItems {
+		require.Empty(t, item.namespace, "cluster-scoped resources should have empty namespace")
+	}
+
+	// Verify items are sorted and have expected content
+	require.Equal(t, "cluster-item2", listedItems[0].name)
+	require.Contains(t, string(listedItems[0].value), "updated-data")
+	require.Equal(t, "cluster-item3", listedItems[1].name)
+	require.Contains(t, string(listedItems[1].value), "data-3")
+
+	// Verify deleted resource is not in list
+	readReqDeleted := &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Name:      "cluster-item1",
+			Namespace: "",
+			Group:     "cluster.example.com",
+			Resource:  "clusterresources",
+		},
+		ResourceVersion: 0,
+	}
+	responseDeleted := backend.ReadResource(ctx, readReqDeleted)
+	require.NotNil(t, responseDeleted.Error)
+	require.Equal(t, int32(404), responseDeleted.Error.Code)
+	// Key should still be empty for cluster-scoped resources even on error
+	if responseDeleted.Key != nil {
+		require.Empty(t, responseDeleted.Key.Namespace, "cluster-scoped resource should have empty namespace even on error")
+	}
+
+	// Test Watch - Verify all events were published with empty namespace
+	watchedEvents := []struct {
+		name         string
+		expectedType resourcepb.WatchEvent_Type
+		expectedRV   int64
+	}{
+		{"cluster-item1", resourcepb.WatchEvent_ADDED, rv1},
+		{"cluster-item2", resourcepb.WatchEvent_ADDED, rv2},
+		{"cluster-item3", resourcepb.WatchEvent_ADDED, rv3},
+		{"cluster-item2", resourcepb.WatchEvent_MODIFIED, rv4},
+		{"cluster-item1", resourcepb.WatchEvent_DELETED, rv5},
+	}
+
+	for i, expected := range watchedEvents {
+		select {
+		case event := <-stream:
+			require.Equal(t, expected.name, event.Key.Name, "Event %d: wrong name", i)
+			require.Empty(t, event.Key.Namespace, "Event %d: cluster-scoped resource should have empty namespace", i)
+			require.Equal(t, "cluster.example.com", event.Key.Group, "Event %d: wrong group", i)
+			require.Equal(t, "clusterresources", event.Key.Resource, "Event %d: wrong resource", i)
+			require.Equal(t, expected.expectedType, event.Type, "Event %d: wrong type", i)
+			require.Equal(t, expected.expectedRV, event.ResourceVersion, "Event %d: wrong resource version", i)
+		case <-ctx.Done():
+			t.Fatalf("Timeout waiting for event %d", i)
+		}
+	}
 }
