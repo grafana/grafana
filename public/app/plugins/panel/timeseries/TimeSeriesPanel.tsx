@@ -10,6 +10,7 @@ import {
   useDataLinksContext,
   FieldType,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
@@ -93,7 +94,7 @@ export const TimeSeriesPanel = ({
     if (frames?.length && frames.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
       const s = getPrepareTimeseriesSuggestion(id);
       return {
-        message: 'Long data must be converted to wide',
+        message: t('timeseries.suggestions.long-to-wide-required', 'Long data must be converted to wide'),
         suggestions: s ? [s] : undefined,
       };
     }
