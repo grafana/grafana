@@ -17,7 +17,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
-func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
+func Convert_V0_to_V1beta1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 
 	out.Spec.Object = in.Spec.Object

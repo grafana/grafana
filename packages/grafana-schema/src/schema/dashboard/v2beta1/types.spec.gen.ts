@@ -457,7 +457,8 @@ export type ThresholdsMode = "absolute" | "percentage";
 export const defaultThresholdsMode = (): ThresholdsMode => ("absolute");
 
 export interface Threshold {
-	value: number;
+	// Value null means -Infinity
+	value: number | null;
 	color: string;
 }
 
@@ -1275,7 +1276,7 @@ export interface IntervalVariableSpec {
 	auto: boolean;
 	auto_min: string;
 	auto_count: number;
-	refresh: VariableRefresh;
+	refresh: "onTimeRangeChanged";
 	label?: string;
 	hide: VariableHide;
 	skipUrlSync: boolean;
@@ -1290,7 +1291,7 @@ export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
 	auto: false,
 	auto_min: "",
 	auto_count: 0,
-	refresh: "never",
+	refresh: "onTimeRangeChanged",
 	hide: "dontHide",
 	skipUrlSync: false,
 });

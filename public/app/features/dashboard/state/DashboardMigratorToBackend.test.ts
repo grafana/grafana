@@ -84,6 +84,9 @@ describe('Backend / Frontend result comparison', () => {
       // version in the backend is never added because it is returned from the backend as metadata
       delete frontendMigrationResult.version;
 
+      // TODO: three tests will fail because the backend output will set up autoMigration fields for nested panels too
+      // however on the frontend this doesn't happen at PanelModel level, but in transformSaveModelToScene.
+
       expect(backendMigrationResult).toEqual(frontendMigrationResult);
     });
   });

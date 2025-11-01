@@ -245,7 +245,8 @@ MatcherConfig: {
 }
 
 Threshold: {
-	value: number
+	// Value null means -Infinity
+	value: number | null
 	color: string
 }
 
@@ -870,7 +871,7 @@ IntervalVariableSpec: {
 	auto:         bool | *false
 	auto_min:     string | *""
 	auto_count:   int | *0
-	refresh:      VariableRefresh
+	refresh:      "onTimeRangeChanged"
 	label?:       string
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
