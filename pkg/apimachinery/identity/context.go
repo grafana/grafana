@@ -74,7 +74,7 @@ func newInternalIdentity(name string, namespace string, orgID int64, opts ...Ide
 	return staticRequester
 }
 
-// WithServiceIdentity sets an identity representing the service itself in provided namespace and store it in context.
+// WithServiceIdentityForSingleNamespace sets an identity representing the service itself in provided namespace and store it in context.
 // This is useful for background tasks that has to communicate with other services in the same namespace. It also returns a Requester with
 // static permissions so it can be used in legacy code paths.
 func WithServiceIdentityForSingleNamespace(ctx context.Context, namespace string, opts ...IdentityOpts) (context.Context, Requester) {
@@ -82,7 +82,8 @@ func WithServiceIdentityForSingleNamespace(ctx context.Context, namespace string
 	return WithRequester(ctx, r), r
 }
 
-// WithServiceIdentityForSingleNamespaceContext sets an identity representing the service itself in context.
+// WithServiceIdentityForSingleNamespaceContext sets an identity representing the service itself in context, restricted to a namespace.
+// Use when using a middleware that signs tokens with the same restriction.
 func WithServiceIdentityForSingleNamespaceContext(ctx context.Context, namespace string, opts ...IdentityOpts) context.Context {
 	ctx, _ = WithServiceIdentityForSingleNamespace(ctx, namespace, opts...)
 	return ctx
