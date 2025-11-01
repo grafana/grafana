@@ -5517,7 +5517,11 @@
         "title-remove": "Remove",
         "title-show-transform-help": "Show transform help"
       },
-      "title-delete": "Delete {{name}}?"
+      "title-delete": "Delete {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "Edit transformation name",
+        "edit-refId-placeholder": "(Auto)"
+      }
     },
     "transformation-picker": {
       "info": "Transformations allow you to join, calculate, re-order, hide, and rename your query results before they are visualized.",
