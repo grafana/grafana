@@ -6,7 +6,8 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "scripts": {
-    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
+    "test": "npx jest --config ../../jest.config.js --testPathPattern=\"packages/grafana-eslint-rules/tests/.*\\.test\\.js$\""
   },
   "repository": {
     "type": "git",
