@@ -731,3 +731,26 @@ export function fmtDuration(milliSeconds: number): string {
                     : '0'
   ).trim();
 }
+
+export function getSeriesAndRest(alignedFrame: DataFrame) {
+  const seriesFields: Field[] = [];
+  const restFields: Field[] = [];
+
+  alignedFrame.fields.forEach((field) => {
+    if (field.config.custom?.hideFrom?.viz) {
+      restFields.push(field);
+    } else {
+      seriesFields.push(field);
+    }
+  });
+
+  const seriesFrame: DataFrame = {
+    ...alignedFrame,
+    fields: seriesFields,
+  };
+
+  return {
+    seriesFrame: seriesFrame,
+    restFields: restFields,
+  };
+}

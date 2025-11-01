@@ -13,6 +13,7 @@ import {
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
+  getSeriesAndRest,
   prepareTimelineFields,
   prepareTimelineLegendItems,
   TimelineMode,
@@ -94,10 +95,13 @@ export const StateTimelinePanel = ({
         cursorSync={cursorSync}
       >
         {(builder, alignedFrame) => {
+          // TODO: refactor frame prep not to do this here, should be memod at panel level once GraphNG is dissolved
+          const { seriesFrame, restFields } = getSeriesAndRest(alignedFrame);
+
           return (
             <>
               {cursorSync !== DashboardCursorSync.Off && (
-                <EventBusPlugin config={builder} eventBus={eventBus} frame={alignedFrame} />
+                <EventBusPlugin config={builder} eventBus={eventBus} frame={seriesFrame} />
               )}
               {options.tooltip.mode !== TooltipDisplayMode.None && (
                 <TooltipPlugin2
@@ -109,7 +113,7 @@ export const StateTimelinePanel = ({
                   syncMode={cursorSync}
                   syncScope={eventsScope}
                   getDataLinks={(seriesIdx, dataIdx) =>
-                    alignedFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
+                    seriesFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
                   }
                   render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
                     if (enableAnnotationCreation && timeRange2 != null) {
@@ -127,7 +131,7 @@ export const StateTimelinePanel = ({
 
                     return (
                       <StateTimelineTooltip
-                        series={alignedFrame}
+                        series={seriesFrame}
                         dataIdxs={dataIdxs}
                         seriesIdx={seriesIdx}
                         mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
@@ -140,13 +144,14 @@ export const StateTimelinePanel = ({
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
                         canExecuteActions={userCanExecuteActions}
+                        _rest={restFields}
                       />
                     );
                   }}
                   maxWidth={options.tooltip.maxWidth}
                 />
               )}
-              {alignedFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
+              {seriesFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
                 <AnnotationsPlugin2
                   replaceVariables={replaceVariables}
                   annotations={data.annotations ?? []}
