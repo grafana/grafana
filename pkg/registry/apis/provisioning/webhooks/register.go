@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
-	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -63,7 +63,7 @@ func ProvideWebhooksWithImages(
 	cfg *setting.Cfg,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
-	configProvider apiserver.RestConfigProvider,
+	configProvider restconfig.RestConfigProvider,
 	registry prometheus.Registerer,
 ) *WebhookExtraBuilder {
 	urlProvider := func(_ context.Context, _ string) string {

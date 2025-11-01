@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/datasourcecheck"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/plugincheck"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	apiserverrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,7 +26,7 @@ type Service struct {
 
 func ProvideService(
 	cfg *setting.Cfg,
-	restConfigProvider apiserver.RestConfigProvider,
+	restConfigProvider restconfig.RestConfigProvider,
 ) (*Service, error) {
 	namespace := "default"
 	if cfg.StackID != "" {

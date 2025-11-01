@@ -28,7 +28,6 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
-	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
 	authtypes "github.com/grafana/authlib/types"
@@ -36,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -85,8 +85,8 @@ type Storage struct {
 
 	store          resource.ResourceClient
 	getKey         func(string) (*resourcepb.ResourceKey, error)
-	snowflake      *snowflake.Node    // used to enforce internal ids
-	configProvider RestConfigProvider // used for provisioning
+	snowflake      *snowflake.Node               // used to enforce internal ids
+	configProvider restconfig.RestConfigProvider // used for provisioning
 
 	versioner storage.Versioner
 
@@ -100,10 +100,6 @@ var ErrFileNotExists = fmt.Errorf("file doesn't exist")
 // ErrNamespaceNotExists means the directory for the namespace doesn't actually exist.
 var ErrNamespaceNotExists = errors.New("namespace does not exist")
 
-type RestConfigProvider interface {
-	GetRestConfig(context.Context) (*clientrest.Config, error)
-}
-
 // NewStorage instantiates a new Storage.
 func NewStorage(
 	config *storagebackend.ConfigForResource,
@@ -115,7 +111,7 @@ func NewStorage(
 	getAttrsFunc storage.AttrFunc,
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
-	configProvider RestConfigProvider,
+	configProvider restconfig.RestConfigProvider,
 	opts StorageOptions,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{

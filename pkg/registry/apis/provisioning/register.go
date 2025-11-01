@@ -54,8 +54,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -132,7 +132,7 @@ func NewAPIBuilder(
 	repoFactory repository.Factory,
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
-	configProvider apiserver.RestConfigProvider,
+	configProvider restconfig.RestConfigProvider,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
@@ -146,7 +146,7 @@ func NewAPIBuilder(
 	allowImageRendering bool,
 	minSyncInterval time.Duration,
 	registry prometheus.Registerer,
-	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
+	newStandaloneClientFactoryFunc func(loopbackConfigProvider restconfig.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 ) *APIBuilder {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -228,7 +228,7 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
 	client resource.ResourceClient, // implements resource.RepositoryClient
-	configProvider apiserver.RestConfigProvider,
+	configProvider restconfig.RestConfigProvider,
 	access authlib.AccessClient,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,

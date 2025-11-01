@@ -21,9 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -81,7 +81,7 @@ type Service struct {
 // deprecated: Use ProvideAppInstallers instead.
 func ProvideBuilderRunners(
 	registrar builder.APIRegistrar,
-	restConfigProvider apiserver.RestConfigProvider,
+	restConfigProvider restconfig.RestConfigProvider,
 	features featuremgmt.FeatureToggles,
 	investigationAppProvider *investigations.InvestigationsAppProvider,
 	advisorAppProvider *advisor.AdvisorAppProvider,

@@ -23,8 +23,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -57,7 +57,7 @@ type CleanUpService struct {
 	tempUserService           tempuser.Service
 	annotationCleaner         annotations.Cleaner
 	alertRuleService          AlertRuleService
-	clientConfigProvider      grafanaapiserver.RestConfigProvider
+	clientConfigProvider      restconfig.RestConfigProvider
 	orgService                org.Service
 	teamService               team.Service
 	dataSourceService         datasources.DataSourceService
@@ -66,7 +66,7 @@ type CleanUpService struct {
 func ProvideService(cfg *setting.Cfg, Features featuremgmt.FeatureToggles, serverLockService *serverlock.ServerLockService,
 	shortURLService shorturls.Service, sqlstore db.DB, queryHistoryService queryhistory.Service,
 	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service, deleteExpiredImageService *image.DeleteExpiredService,
-	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner, service AlertRuleService, clientConfigProvider grafanaapiserver.RestConfigProvider, orgService org.Service, teamService team.Service, dataSourceService datasources.DataSourceService) *CleanUpService {
+	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner, service AlertRuleService, clientConfigProvider restconfig.RestConfigProvider, orgService org.Service, teamService team.Service, dataSourceService datasources.DataSourceService) *CleanUpService {
 	s := &CleanUpService{
 		Cfg:                       cfg,
 		Features:                  Features,
