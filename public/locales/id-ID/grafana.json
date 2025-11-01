@@ -2873,6 +2873,8 @@
       "notification-message": "Pesan pemberitahuan",
       "predefined-notification-message": "",
       "send-test-notification": "Kirim pemberitahuan tes",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Uji titik kontak"
     },
     "threshold": {
