@@ -35,7 +35,7 @@ type AppBuilderConfig struct {
 	// And then, when you're ready to expose this to the end user, go to v1beta1 instead.
 	AllowedV0Alpha1Resources []string
 
-	groupVersion schema.GroupVersion
+	GroupVersion schema.GroupVersion
 }
 
 type AppBuilder interface {
@@ -62,7 +62,7 @@ func (b *appBuilder) SetApp(app app.App) {
 
 // GetGroupVersion implements APIGroupBuilder.GetGroupVersion
 func (b *appBuilder) GetGroupVersion() schema.GroupVersion {
-	return b.config.groupVersion
+	return b.config.GroupVersion
 }
 
 // InstallSchema implements APIGroupBuilder.InstallSchema
