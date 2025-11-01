@@ -18,7 +18,6 @@ import (
 	"k8s.io/apiserver/pkg/util/notfoundhandler"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/authlib/types"
