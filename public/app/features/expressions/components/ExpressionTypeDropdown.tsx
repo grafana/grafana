@@ -37,7 +37,7 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect }) =>
           <div className={styles.expressionTypeItemContent} data-testid={`expression-type-${value}`}>
             <Icon className={styles.icon} name={EXPRESSION_ICON_MAP[value!]} aria-hidden="true" />
             {label}
-            {value === ExpressionQueryType.sql && <FeatureBadge featureState={FeatureState.new} />}
+            {value === ExpressionQueryType.sql && <FeatureBadge featureState={FeatureState.preview} />}
           </div>
           <Tooltip placement="right" content={description!}>
             <Icon className={styles.infoIcon} name="info-circle" />
