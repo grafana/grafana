@@ -1,5 +1,5 @@
+import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { updateNavIndex } from 'app/core/actions';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { FolderDTO } from 'app/types/folders';
 import { ThunkResult } from 'app/types/store';
 
@@ -8,7 +8,7 @@ import { loadFolder } from './reducers';
 
 export function getFolderByUid(uid: string): ThunkResult<Promise<FolderDTO>> {
   return async (dispatch) => {
-    const folder = await backendSrv.getFolderByUid(uid);
+    const folder = await getFolderByUidFacade(uid);
     dispatch(loadFolder(folder));
     dispatch(updateNavIndex(buildNavModel(folder)));
     return folder;
