@@ -302,6 +302,7 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
 
 	if renderType == RenderPDF {
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !rs.features.IsEnabled(ctx, featuremgmt.FlagNewPDFRendering) {
 			return nil, fmt.Errorf("feature 'newPDFRendering' disabled")
 		}

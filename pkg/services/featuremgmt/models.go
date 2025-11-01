@@ -10,6 +10,9 @@ import (
 type FeatureToggles interface {
 	// IsEnabled checks if a feature is enabled for a given context.
 	// The settings may be per user, tenant, or globally set in the cloud
+	//
+	// Deprecated: FeatureToggles.IsEnabled is deprecated and will be removed in a future release.
+	// Evaluate with OpenFeature instead (see [github.com/open-feature/go-sdk/openfeature.Client])
 	IsEnabled(ctx context.Context, flag string) bool
 
 	// IsEnabledGlobally checks if a flag is configured globally.  For now, this is the same

@@ -59,6 +59,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagIndividualCookiePreferences) {
 		if !prefs.Cookies("analytics") {
 			settings.GoogleAnalytics4Id = ""
@@ -91,6 +92,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	var regionalFormat string
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagLocaleFormatPreference) {
 		regionalFormat = "en"
 

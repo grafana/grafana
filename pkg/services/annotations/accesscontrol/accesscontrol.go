@@ -61,6 +61,7 @@ func (authz *AuthService) Authorize(ctx context.Context, query annotations.ItemQ
 	scopeTypes := annotationScopeTypes(scopes)
 	_, canAccessOrgAnnotations := scopeTypes[annotations.Organization.String()]
 	_, canAccessDashAnnotations := scopeTypes[annotations.Dashboard.String()]
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if authz.features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
 		canAccessDashAnnotations = true
 	}
@@ -122,6 +123,7 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 	}
 
 	filterType := searchstore.TypeDashboard
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if authz.features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
 		filterType = searchstore.TypeAnnotation
 	}

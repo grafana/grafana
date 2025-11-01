@@ -111,6 +111,7 @@ func (s *Service) installPlugins(ctx context.Context, pluginsToInstall []setting
 				continue
 			}
 			if installPlugin.Version == "" {
+				//nolint:staticcheck // not yet migrated to OpenFeature
 				if !s.features.IsEnabled(ctx, featuremgmt.FlagPreinstallAutoUpdate) {
 					// Skip updating the plugin if the feature flag is disabled
 					continue
