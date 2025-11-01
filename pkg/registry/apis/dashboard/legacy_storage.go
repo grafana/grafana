@@ -42,7 +42,7 @@ func (s *DashboardStorage) NewStore(dash utils.ResourceInfo, scheme *runtime.Sch
 	}
 	client := legacy.NewDirectResourceClient(server) // same context
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil,
-		defaultOpts.StorageConfig.Config, nil,
+		defaultOpts.StorageConfig.Config, scheme, nil,
 	)
 	optsGetter.RegisterOptions(dash.GroupResource(), apistore.StorageOptions{
 		EnableFolderSupport:         true,
