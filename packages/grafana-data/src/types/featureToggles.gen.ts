@@ -1245,4 +1245,9 @@ export interface FeatureToggles {
   * Enable template dashboards
   */
   dashboardTemplates?: boolean;
+  /**
+  * Enables app platform API for annotations
+  * @default false
+  */
+  kubernetesAnnotations?: boolean;
 }
