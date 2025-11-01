@@ -17,7 +17,8 @@ export const SORT = 'sort';
 export const LIMIT = 'limit';
 export const PARSE = 'parse';
 export const DEDUP = 'dedup';
-export const LOGS_COMMANDS = [DISPLAY, FIELDS, FILTER, PATTERN, STATS, SORT, LIMIT, PARSE, DEDUP, DIFF];
+export const ANOMALY = 'anomaly';
+export const LOGS_COMMANDS = [DISPLAY, FIELDS, FILTER, PATTERN, STATS, SORT, LIMIT, PARSE, DEDUP, DIFF, ANOMALY];
 
 export const LOGS_LOGIC_OPERATORS = ['and', 'or', 'not'];
 
