@@ -6,6 +6,7 @@ require (
 	github.com/grafana/grafana-app-sdk v0.48.1
 	github.com/grafana/grafana-app-sdk/logging v0.48.1
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250428110029-a8ea72012bde
+	github.com/stretchr/testify v1.11.1
 	k8s.io/apimachinery v0.34.1
 	k8s.io/apiserver v0.34.1
 	k8s.io/klog/v2 v2.130.1
