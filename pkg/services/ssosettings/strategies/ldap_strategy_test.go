@@ -25,6 +25,7 @@ var (
 		"enabled":            true,
 		"allow_sign_up":      true,
 		"skip_org_role_sync": false,
+		"config_file":        "./testdata/ldap.toml",
 		"config": map[string]interface{}{
 			"servers": []interface{}{
 				map[string]interface{}{

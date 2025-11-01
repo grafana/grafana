@@ -17,6 +17,14 @@ func resolveBool(input any, defaultValue bool) bool {
 	return result
 }
 
+func resolveString(input any, defaultValue string) string {
+	result, ok := input.(string)
+	if !ok || result == "" {
+		return defaultValue
+	}
+	return result
+}
+
 func resolveServerConfig(input any) (*ldap.ServersConfig, error) {
 	var ldapCfg ldap.ServersConfig
 
