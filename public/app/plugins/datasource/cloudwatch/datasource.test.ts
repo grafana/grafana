@@ -460,7 +460,7 @@ describe('datasource', () => {
       expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).metricEditorMode).toEqual(
         MetricEditorMode.Builder
       );
-      expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).matchExact).toEqual(true);
+      expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).matchExact).toEqual(false);
     });
     it('should set default values from logs query', () => {
       const defaultLogGroups = [{ name: 'logName', arn: 'logARN' }];
