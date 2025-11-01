@@ -19,6 +19,7 @@ type Service interface {
 	ListByIdOrUID(context.Context, []string, []int64) ([]*User, error)
 	GetByLogin(context.Context, *GetUserByLoginQuery) (*User, error)
 	GetByEmail(context.Context, *GetUserByEmailQuery) (*User, error)
+	GetByExternalID(context.Context, *GetUserByExternalIDQuery) (*User, error)
 	Update(context.Context, *UpdateUserCommand) error
 	UpdateLastSeenAt(context.Context, *UpdateUserLastSeenAtCommand) error
 	GetSignedInUser(context.Context, *GetSignedInUserQuery) (*SignedInUser, error)

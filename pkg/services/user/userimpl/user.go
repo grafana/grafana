@@ -264,6 +264,13 @@ func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuer
 	return s.store.GetByEmail(ctx, query)
 }
 
+func (s *Service) GetByExternalID(ctx context.Context, query *user.GetUserByExternalIDQuery) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.GetByExternalID")
+	defer span.End()
+
+	return s.store.GetByExternalID(ctx, query)
+}
+
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
 	ctx, span := s.tracer.Start(ctx, "user.Update", trace.WithAttributes(
 		attribute.Int64("userID", cmd.UserID),
