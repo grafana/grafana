@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
+import { getAPINamespace } from '@grafana/api-clients';
+import { generatedAPI as logsdrilldownAPI } from '@grafana/api-clients/rtkq/logsdrilldown/v1alpha1';
 import {
   applyFieldOverrides,
   CustomTransformOperator,
@@ -44,6 +46,11 @@ export function LogsTable(props: Props) {
   const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta, logsFrame } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
   const timeIndex = logsFrame?.timeField.index;
+
+  const { currentData: logsDrilldownData, error: logsDrilldownError } =
+    logsdrilldownAPI.endpoints.listLogsDrilldown.useQuery({});
+
+  const [createLogsDrilldown] = logsdrilldownAPI.endpoints.createLogsDrilldown.useMutation();
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
@@ -96,6 +103,47 @@ export function LogsTable(props: Props) {
     },
     [logsSortOrder, timeZone, splitOpen, range, logsFrame?.bodyField.name, logsFrame?.timeField.name, timeIndex]
   );
+
+  useEffect(() => {
+    if (logsDrilldownData) {
+      console.log('LogsDrilldown API Response:', logsDrilldownData);
+    }
+    if (logsDrilldownError) {
+      console.error('LogsDrilldown API Error:', logsDrilldownError);
+    }
+  }, [logsDrilldownData, logsDrilldownError]);
+
+  // Create LogsDrilldown with default fields if none exist
+  useEffect(() => {
+    const createDefaultLogsDrilldown = async () => {
+      // Check if items array is empty (no resources exist)
+      if (logsDrilldownData && logsDrilldownData.items && logsDrilldownData.items.length === 0) {
+        try {
+          const namespace = getAPINamespace();
+          const result = await createLogsDrilldown({
+            logsDrilldown: {
+              apiVersion: 'logsdrilldown.grafana.app/v1alpha1',
+              kind: 'LogsDrilldown',
+              metadata: {
+                namespace,
+                generateName: 'logs-drilldown-',
+              },
+              spec: {
+                defaultFields: ['time', 'body', 'level'],
+              },
+            },
+          }).unwrap();
+          console.log('Created LogsDrilldown with default fields:', result);
+        } catch (error) {
+          console.error('Failed to create LogsDrilldown:', error);
+        }
+      }
+    };
+
+    if (logsDrilldownData !== undefined) {
+      createDefaultLogsDrilldown();
+    }
+  }, [logsDrilldownData, createLogsDrilldown]);
 
   useEffect(() => {
     const prepare = async () => {
