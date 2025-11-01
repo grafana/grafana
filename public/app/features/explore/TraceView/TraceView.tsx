@@ -30,7 +30,6 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { changePanelState } from '../state/explorePane';
 
 import memoizedTraceCriticalPath from './components/CriticalPath';
-import SpanGraph from './components/TracePageHeader/SpanGraph';
 import { TracePageHeader } from './components/TracePageHeader/TracePageHeader';
 import TraceTimelineViewer from './components/TraceTimelineViewer';
 import { TraceFlameGraphs } from './components/TraceTimelineViewer/SpanDetail';
@@ -199,13 +198,11 @@ export function TraceView(props: Props) {
             datasourceUid={datasourceUid}
             setHeaderHeight={setHeaderHeight}
             app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
-          />
-          <SpanGraph
-            trace={traceProp}
-            viewRange={viewRange}
             updateNextViewRangeTime={updateNextViewRangeTime}
             updateViewRangeTime={updateViewRangeTime}
+            viewRange={viewRange}
           />
+
           <TraceTimelineViewer
             findMatchesIDs={spanFilterMatches}
             trace={traceProp}

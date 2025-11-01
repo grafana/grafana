@@ -7507,8 +7507,10 @@
       "aria-label-share-dropdown": "Open share trace options menu",
       "duration": "Duration",
       "export-started": "Export started",
+      "filters": "Filters",
       "give-feedback": "Feedback",
       "link-copied": "Link copied to clipboard",
+      "overview": "Overview",
       "path": "Path",
       "route": "Route",
       "services": "Services",
@@ -13326,6 +13328,16 @@
     }
   },
   "traces": {
+    "adhocFilters": {
+      "customValue": "Type a value",
+      "duration1h": "1h",
+      "duration1m": "1m",
+      "duration1ms": "1ms",
+      "duration1s": "1s",
+      "durationLabel": "duration",
+      "textSearchDescription": "Search for text in the trace",
+      "textSearchLabel": "Text search"
+    },
     "category-span-filters": "Span filters",
     "name-critical-path-only": "Show critical path only",
     "name-find-in-trace": "Find in trace",
