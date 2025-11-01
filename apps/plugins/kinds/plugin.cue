@@ -141,6 +141,7 @@ pluginV0Alpha1: {
 	component?: string
 	role?: "Admin" | "Editor" | "Viewer"
 	action?: string
+	reqFeatureToggle?: string
 	path?: string
 	addToNav?: bool
 	defaultNav?: bool

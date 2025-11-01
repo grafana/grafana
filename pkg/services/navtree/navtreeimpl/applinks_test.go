@@ -514,3 +514,274 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		require.Equal(t, "/a/test-app1/announcements", appsNode.Children[0].Children[0].Url)
 	})
 }
+
+func TestAddAppLinksFeatureToggles(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	user := &user.SignedInUser{OrgID: 1, OrgRole: identity.RoleViewer}
+	reqCtx := &contextmodel.ReqContext{SignedInUser: user, Context: &web.Context{Req: httpReq}}
+
+	testApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID: "test-app-with-feature-toggles", Name: "Test app with feature toggles", Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:       "Always Visible",
+					Path:       "/a/test-app-with-feature-toggles/always-visible",
+					Type:       "page",
+					AddToNav:   true,
+					DefaultNav: true,
+					Role:       identity.RoleViewer,
+				},
+				{
+					Name:             "Feature Toggle Enabled",
+					Path:             "/a/test-app-with-feature-toggles/enabled-feature",
+					Type:             "page",
+					AddToNav:         true,
+					Role:             identity.RoleViewer,
+					ReqFeatureToggle: "enabledFeature",
+				},
+				{
+					Name:             "Feature Toggle Disabled",
+					Path:             "/a/test-app-with-feature-toggles/disabled-feature",
+					Type:             "page",
+					AddToNav:         true,
+					Role:             identity.RoleViewer,
+					ReqFeatureToggle: "disabledFeature",
+				},
+			},
+		},
+	}
+
+	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+		testApp.ID: {ID: 0, OrgID: 1, PluginID: testApp.ID, PluginVersion: "1.0.0", Enabled: true},
+	}}
+
+	cfg := setting.NewCfg()
+	permissions := []ac.Permission{
+		{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+	}
+
+	t.Run("Should hide includes when feature toggle is disabled", func(t *testing.T) {
+		service := ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            cfg,
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &pluginSettings,
+			features:       featuremgmt.WithFeatures("enabledFeature"),
+			pluginStore: &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{testApp},
+			},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		appsNode := treeRoot.FindById(navtree.NavIDApps)
+		require.NotNil(t, appsNode)
+		require.Len(t, appsNode.Children, 1)
+
+		appNode := appsNode.Children[0]
+		require.Equal(t, "Test app with feature toggles", appNode.Text)
+		require.Len(t, appNode.Children, 1)
+		require.Equal(t, "Feature Toggle Enabled", appNode.Children[0].Text)
+		require.Equal(t, "/a/test-app-with-feature-toggles/enabled-feature", appNode.Children[0].Url)
+	})
+
+	t.Run("Should show includes when feature toggle is enabled", func(t *testing.T) {
+		service := ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            cfg,
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &pluginSettings,
+			features:       featuremgmt.WithFeatures("enabledFeature", "disabledFeature"),
+			pluginStore: &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{testApp},
+			},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		appsNode := treeRoot.FindById(navtree.NavIDApps)
+		require.NotNil(t, appsNode)
+		require.Len(t, appsNode.Children, 1)
+
+		appNode := appsNode.Children[0]
+		require.Equal(t, "Test app with feature toggles", appNode.Text)
+		require.Len(t, appNode.Children, 2)
+		require.Equal(t, "Feature Toggle Enabled", appNode.Children[0].Text)
+		require.Equal(t, "Feature Toggle Disabled", appNode.Children[1].Text)
+	})
+
+	t.Run("Should show includes without feature toggle regardless of toggles", func(t *testing.T) {
+		service := ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            cfg,
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &pluginSettings,
+			features:       featuremgmt.WithFeatures(),
+			pluginStore: &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{testApp},
+			},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		appsNode := treeRoot.FindById(navtree.NavIDApps)
+		require.NotNil(t, appsNode)
+		require.Len(t, appsNode.Children, 1)
+
+		appNode := appsNode.Children[0]
+		require.Equal(t, "Test app with feature toggles", appNode.Text)
+		require.Equal(t, "/a/test-app-with-feature-toggles/always-visible", appNode.Url)
+		require.Len(t, appNode.Children, 0)
+	})
+
+	t.Run("Should not show app when all includes are hidden by feature toggles", func(t *testing.T) {
+		appWithOnlyToggledFeatures := pluginstore.Plugin{
+			JSONData: plugins.JSONData{
+				ID: "test-app-all-toggled", Name: "Test app all toggled", Type: plugins.TypeApp,
+				Includes: []*plugins.Includes{
+					{
+						Name:             "Disabled Feature 1",
+						Path:             "/a/test-app-all-toggled/feature1",
+						Type:             "page",
+						AddToNav:         true,
+						Role:             identity.RoleViewer,
+						ReqFeatureToggle: "disabledFeature1",
+					},
+					{
+						Name:             "Disabled Feature 2",
+						Path:             "/a/test-app-all-toggled/feature2",
+						Type:             "page",
+						AddToNav:         true,
+						Role:             identity.RoleViewer,
+						ReqFeatureToggle: "disabledFeature2",
+					},
+				},
+			},
+		}
+
+		pluginSettingsWithToggled := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+			appWithOnlyToggledFeatures.ID: {ID: 0, OrgID: 1, PluginID: appWithOnlyToggledFeatures.ID, PluginVersion: "1.0.0", Enabled: true},
+		}}
+
+		service := ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            cfg,
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &pluginSettingsWithToggled,
+			features:       featuremgmt.WithFeatures(),
+			pluginStore: &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{appWithOnlyToggledFeatures},
+			},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		appsNode := treeRoot.FindById(navtree.NavIDApps)
+		require.Nil(t, appsNode)
+	})
+
+	t.Run("Feature toggle should work together with RBAC permissions", func(t *testing.T) {
+		appWithBoth := pluginstore.Plugin{
+			JSONData: plugins.JSONData{
+				ID: "test-app-both", Name: "Test app both", Type: plugins.TypeApp,
+				Includes: []*plugins.Includes{
+					{
+						Name:             "Feature with toggle and permission",
+						Path:             "/a/test-app-both/secured-feature",
+						Type:             "page",
+						AddToNav:         true,
+						Role:             identity.RoleViewer,
+						Action:           "test-app-both.feature:read",
+						ReqFeatureToggle: "securedFeature",
+					},
+				},
+			},
+		}
+
+		pluginSettingsBoth := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+			appWithBoth.ID: {ID: 0, OrgID: 1, PluginID: appWithBoth.ID, PluginVersion: "1.0.0", Enabled: true},
+		}}
+
+		t.Run("Should not see include when feature is disabled even with permission", func(t *testing.T) {
+			service := ServiceImpl{
+				log: log.New("navtree"),
+				cfg: cfg,
+				accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{
+					{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+					{Action: "test-app-both.feature:read", Scope: "*"},
+				}),
+				pluginSettings: &pluginSettingsBoth,
+				features:       featuremgmt.WithFeatures(),
+				pluginStore: &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{appWithBoth},
+				},
+			}
+
+			treeRoot := navtree.NavTreeRoot{}
+			err := service.addAppLinks(&treeRoot, reqCtx)
+			require.NoError(t, err)
+
+			appsNode := treeRoot.FindById(navtree.NavIDApps)
+			require.Nil(t, appsNode)
+		})
+
+		t.Run("Should not see include when feature is enabled but without permission", func(t *testing.T) {
+			service := ServiceImpl{
+				log: log.New("navtree"),
+				cfg: cfg,
+				accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{
+					{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+				}),
+				pluginSettings: &pluginSettingsBoth,
+				features:       featuremgmt.WithFeatures("securedFeature"),
+				pluginStore: &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{appWithBoth},
+				},
+			}
+
+			treeRoot := navtree.NavTreeRoot{}
+			err := service.addAppLinks(&treeRoot, reqCtx)
+			require.NoError(t, err)
+
+			appsNode := treeRoot.FindById(navtree.NavIDApps)
+			require.Nil(t, appsNode)
+		})
+
+		t.Run("Should see include when feature is enabled and has permission", func(t *testing.T) {
+			service := ServiceImpl{
+				log: log.New("navtree"),
+				cfg: cfg,
+				accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{
+					{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+					{Action: "test-app-both.feature:read", Scope: "*"},
+				}),
+				pluginSettings: &pluginSettingsBoth,
+				features:       featuremgmt.WithFeatures("securedFeature"),
+				pluginStore: &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{appWithBoth},
+				},
+			}
+
+			treeRoot := navtree.NavTreeRoot{}
+			err := service.addAppLinks(&treeRoot, reqCtx)
+			require.NoError(t, err)
+
+			appsNode := treeRoot.FindById(navtree.NavIDApps)
+			require.NotNil(t, appsNode)
+			require.Len(t, appsNode.Children, 1)
+			appNode := appsNode.Children[0]
+			require.Equal(t, "Test app both", appNode.Text)
+			require.Len(t, appNode.Children, 1)
+			require.Equal(t, "Feature with toggle and permission", appNode.Children[0].Text)
+		})
+	})
+}

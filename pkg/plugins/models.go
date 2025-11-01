@@ -148,17 +148,18 @@ type ExtensionsDependencies struct {
 }
 
 type Includes struct {
-	Name       string       `json:"name"`
-	Path       string       `json:"path"`
-	Type       string       `json:"type"`
-	Component  string       `json:"component"`
-	Role       org.RoleType `json:"role"`
-	Action     string       `json:"action,omitempty"`
-	AddToNav   bool         `json:"addToNav"`
-	DefaultNav bool         `json:"defaultNav"`
-	Slug       string       `json:"slug"`
-	Icon       string       `json:"icon"`
-	UID        string       `json:"uid"`
+	Name             string       `json:"name"`
+	Path             string       `json:"path"`
+	Type             string       `json:"type"`
+	Component        string       `json:"component"`
+	Role             org.RoleType `json:"role"`
+	Action           string       `json:"action,omitempty"`
+	AddToNav         bool         `json:"addToNav"`
+	DefaultNav       bool         `json:"defaultNav"`
+	Slug             string       `json:"slug"`
+	Icon             string       `json:"icon"`
+	UID              string       `json:"uid"`
+	ReqFeatureToggle string       `json:"reqFeatureToggle,omitempty"`
 
 	ID string `json:"-"`
 }
