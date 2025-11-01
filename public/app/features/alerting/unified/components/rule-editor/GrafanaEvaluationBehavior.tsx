@@ -439,7 +439,7 @@ export function GrafanaEvaluationBehaviorStep({
   );
 }
 
-function EvaluationGroupCreationModal({
+export function EvaluationGroupCreationModal({
   onClose,
   onCreate,
   groupfoldersForGrafana,

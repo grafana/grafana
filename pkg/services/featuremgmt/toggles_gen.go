@@ -223,6 +223,10 @@ const (
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
 
+	// FlagCreateAlertRuleFromPanel
+	// Enables creating alert rules from a panel using a drawer UI
+	FlagCreateAlertRuleFromPanel = "createAlertRuleFromPanel"
+
 	// FlagPanelMonitoring
 	// Enables panel monitoring through logs and measurements
 	FlagPanelMonitoring = "panelMonitoring"

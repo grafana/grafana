@@ -27,8 +27,8 @@ export const CreateNewFolder = ({ onCreate }: { onCreate: (folder: Folder) => vo
         onClick={() => setIsCreatingFolder(true)}
         type="button"
         icon="plus"
-        fill="outline"
         variant="secondary"
+        size="sm"
         disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
       >
         <Trans i18nKey="alerting.create-new-folder.new-folder">New folder</Trans>

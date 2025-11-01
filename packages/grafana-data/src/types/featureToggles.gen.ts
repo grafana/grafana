@@ -252,6 +252,10 @@ export interface FeatureToggles {
   */
   externalServiceAccounts?: boolean;
   /**
+  * Enables creating alert rules from a panel using a drawer UI
+  */
+  createAlertRuleFromPanel?: boolean;
+  /**
   * Enables panel monitoring through logs and measurements
   * @default true
   */

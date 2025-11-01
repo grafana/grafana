@@ -520,9 +520,11 @@ export const getDefaultRecordingRulesQueries = (
     },
   ];
 };
-const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
+const getDefaultExpressions = (...refIds: [string, string] | [string, string, string]): AlertQuery[] => {
   const refOne = refIds[0];
   const refTwo = refIds[1];
+  // If a third parameter is provided, use it as the source query refId, otherwise default to 'A'
+  const sourceRefId = refIds.length === 3 ? refIds[2] : 'A';
 
   const reduceExpression: ExpressionQuery = {
     refId: refIds[0],
@@ -551,7 +553,7 @@ const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
       },
     ],
     reducer: 'last',
-    expression: 'A',
+    expression: sourceRefId,
   };
 
   const thresholdExpression: ExpressionQuery = {
@@ -587,13 +589,13 @@ const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
     {
       refId: refOne,
       datasourceUid: ExpressionDatasourceUID,
-      queryType: '',
+      queryType: 'expression',
       model: reduceExpression,
     },
     {
       refId: refTwo,
       datasourceUid: ExpressionDatasourceUID,
-      queryType: '',
+      queryType: 'expression',
       model: thresholdExpression,
     },
   ];
@@ -720,15 +722,15 @@ export const panelToRuleFormValues = async (
     return undefined;
   }
 
+  // Add default expression queries if they don't exist
   if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefId(queries), '-');
-    queries.push(reduceExpression);
-
-    const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
-      reduceExpression.refId,
-      getNextRefId(queries)
-    );
-    queries.push(thresholdExpression);
+    // Get the last data query's refId to use as the source for the reduce expression
+    const lastDataQueryRefId = queries[queries.length - 1].refId;
+    const reduceRefId = getNextRefId(queries);
+    const queriesWithReduce = [...queries, { refId: reduceRefId, datasourceUid: '', queryType: '', model: {} }];
+    const thresholdRefId = getNextRefId(queriesWithReduce);
+    const expressions = getDefaultExpressions(reduceRefId, thresholdRefId, lastDataQueryRefId);
+    queries.push(...expressions);
   }
 
   const { folderTitle, folderUid } = dashboard.meta;
@@ -792,15 +794,15 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
     return undefined;
   }
 
+  // Add default expression queries if they don't exist
   if (!grafanaQueries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefId(grafanaQueries), '-');
-    grafanaQueries.push(reduceExpression);
-
-    const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
-      reduceExpression.refId,
-      getNextRefId(grafanaQueries)
-    );
-    grafanaQueries.push(thresholdExpression);
+    // Get the last data query's refId to use as the source for the reduce expression
+    const lastDataQueryRefId = grafanaQueries[grafanaQueries.length - 1].refId;
+    const reduceRefId = getNextRefId(grafanaQueries);
+    const queriesWithReduce = [...grafanaQueries, { refId: reduceRefId, datasourceUid: '', queryType: '', model: {} }];
+    const thresholdRefId = getNextRefId(queriesWithReduce);
+    const expressions = getDefaultExpressions(reduceRefId, thresholdRefId, lastDataQueryRefId);
+    grafanaQueries.push(...expressions);
   }
 
   const { folderTitle, folderUid } = dashboard.state.meta;
