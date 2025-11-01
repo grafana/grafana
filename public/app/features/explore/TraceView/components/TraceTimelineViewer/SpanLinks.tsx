@@ -18,7 +18,8 @@ const renderMenuItems = (
   closeMenu: () => void,
   datasourceType: string
 ) => {
-  links.sort(function (linkA, linkB) {
+  links.sort((linkA, linkB) => {
+    // eslint-disable-next-line no-restricted-syntax
     return (linkA.title || 'link').toLowerCase().localeCompare((linkB.title || 'link').toLowerCase());
   });
 
@@ -88,7 +89,7 @@ const getStyles = (color: string) => ({
     border: 'none',
     background: `${color}10`,
     borderBottom: `1px solid ${color}CF`,
-    paddingRight: '4px',
+    paddingInline: '4px',
   }),
   button: css({
     background: 'transparent',
