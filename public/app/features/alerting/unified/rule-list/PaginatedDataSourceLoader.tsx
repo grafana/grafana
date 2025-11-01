@@ -23,6 +23,7 @@ interface LoaderProps extends Required<Pick<DataSourceSectionProps, 'application
   rulesSourceIdentifier: DataSourceRulesSourceIdentifier;
   groupFilter?: string;
   namespaceFilter?: string;
+  freeFormWordsFilter?: string[];
 }
 
 export function PaginatedDataSourceLoader({
@@ -30,6 +31,7 @@ export function PaginatedDataSourceLoader({
   application,
   groupFilter,
   namespaceFilter,
+  freeFormWordsFilter,
 }: LoaderProps) {
   const key = `${rulesSourceIdentifier.uid}-${groupFilter}-${namespaceFilter}`;
 
@@ -41,11 +43,18 @@ export function PaginatedDataSourceLoader({
       application={application}
       groupFilter={groupFilter}
       namespaceFilter={namespaceFilter}
+      freeFormWordsFilter={freeFormWordsFilter}
     />
   );
 }
 
-function PaginatedGroupsLoader({ rulesSourceIdentifier, application, groupFilter, namespaceFilter }: LoaderProps) {
+function PaginatedGroupsLoader({
+  rulesSourceIdentifier,
+  application,
+  groupFilter,
+  namespaceFilter,
+  freeFormWordsFilter,
+}: LoaderProps) {
   // If there are filters, we don't want to populate the cache to avoid performance issues
   // Filtering may trigger multiple HTTP requests, which would populate the cache with a lot of groups hurting performance
   const hasFilters = Boolean(groupFilter || namespaceFilter);
@@ -73,8 +82,9 @@ function PaginatedGroupsLoader({ rulesSourceIdentifier, application, groupFilter
       groupFilterFn(group, {
         namespace: namespaceFilter,
         groupName: groupFilter,
-      }),
-    [namespaceFilter, groupFilter]
+        freeFormWords: freeFormWordsFilter ?? [],
+      }).matches,
+    [namespaceFilter, groupFilter, freeFormWordsFilter]
   );
 
   const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
