@@ -2885,6 +2885,8 @@
       "notification-message": "Aviseringsmeddelande",
       "predefined-notification-message": "",
       "send-test-notification": "Skicka testavisering",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Testa kontaktpunkt"
     },
     "threshold": {

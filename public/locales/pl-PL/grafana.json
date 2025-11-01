@@ -2909,6 +2909,8 @@
       "notification-message": "Wiadomość z powiadomieniem",
       "predefined-notification-message": "",
       "send-test-notification": "Wyślij powiadomienie testowe",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Testuj punkt kontaktu"
     },
     "threshold": {

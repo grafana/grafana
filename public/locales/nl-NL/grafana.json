@@ -2885,6 +2885,8 @@
       "notification-message": "Melding",
       "predefined-notification-message": "",
       "send-test-notification": "Testmelding verzenden",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Contactpunt testen"
     },
     "threshold": {

@@ -2873,6 +2873,8 @@
       "notification-message": "通知訊息",
       "predefined-notification-message": "",
       "send-test-notification": "傳送測試通知",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "測試聯絡點"
     },
     "threshold": {
