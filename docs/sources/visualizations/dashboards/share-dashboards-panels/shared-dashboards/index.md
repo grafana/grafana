@@ -49,6 +49,8 @@ Externally shared dashboards allow you to share your Grafana dashboard with anyo
 
 If you change a dashboard, ensure that you save the changes before sharing.
 
+In order to create a public dashboards you need to be an Admin, or have the `dashboards.public:write` permission.
+
 {{< admonition type="warning" >}}
 Sharing your dashboard externally could result in a large number of queries to the data sources used by your dashboard.
 This can be mitigated by using the Enterprise [caching](ref:caching) and/or rate limiting features.
