@@ -28,6 +28,10 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
    */
   rowHeight: number;
   /**
+   * Controls series name alignment on the y-axis
+   */
+  seriesNameAlignment?: 'left' | 'right';
+  /**
    * Show timeline values on chart
    */
   showValue: ui.VisibilityMode;
@@ -38,6 +42,7 @@ export const defaultOptions: Partial<Options> = {
   mergeValues: true,
   perPage: 20,
   rowHeight: 0.9,
+  seriesNameAlignment: 'left',
   showValue: ui.VisibilityMode.Auto,
 };
 
