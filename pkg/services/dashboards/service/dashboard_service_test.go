@@ -629,16 +629,19 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 
 func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	fakeDashboardStore := &dashboards.FakeDashboardStore{}
 	service := &DashboardServiceImpl{
 		cfg: setting.NewCfg(),
 		orgService: &orgtest.FakeOrgService{
 			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
 		},
 		publicDashboardService: fakePublicDashboardService,
+		dashboardStore:         fakeDashboardStore,
 		log:                    log.NewNopLogger(),
 	}
 
 	t.Run("Should delete across all orgs, but only delete file based provisioned dashboards", func(t *testing.T) {
+		fakeDashboardStore.On("GetDuplicateProvisionedDashboards", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{}, nil)
 		_, k8sCliMock := setupK8sDashboardTests(service)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -783,6 +786,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	})
 
 	t.Run("Should retry until deleted dashboard not found in search", func(t *testing.T) {
+		fakeDashboardStore.On("GetDuplicateProvisionedDashboards", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{}, nil)
 		repo := "test"
 		singleOrgService := &DashboardServiceImpl{
 			cfg: setting.NewCfg(),
@@ -790,6 +794,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 			},
 			publicDashboardService: fakePublicDashboardService,
+			dashboardStore:         fakeDashboardStore,
 			log:                    log.NewNopLogger(),
 		}
 		ctx, k8sCliMock := setupK8sDashboardTests(singleOrgService)
@@ -876,6 +881,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	})
 
 	t.Run("Will not wait for indexer when no dashboards were deleted", func(t *testing.T) {
+		fakeDashboardStore.On("GetDuplicateProvisionedDashboards", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{}, nil)
 		repo := "test"
 		singleOrgService := &DashboardServiceImpl{
 			cfg: setting.NewCfg(),
@@ -883,6 +889,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 			},
 			publicDashboardService: fakePublicDashboardService,
+			dashboardStore:         fakeDashboardStore,
 			log:                    log.NewNopLogger(),
 		}
 		ctx, k8sCliMock := setupK8sDashboardTests(singleOrgService)
