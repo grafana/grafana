@@ -209,7 +209,9 @@ func (d *dashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, da
 		return sess.Table(`dashboard`).
 			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
 			Where(`dashboard_provisioning.dashboard_id = ?`, dashboardID).
-			Select("dashboard.*, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
+			Select(`dashboard.id, dashboard.uid, dashboard.title, dashboard.folder_uid, 
+				dashboard_provisioning.name, dashboard_provisioning.external_id, 
+				dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum`).
 			Find(&data)
 	})
 	if err != nil {
@@ -241,7 +243,9 @@ func (d *dashboardStore) GetProvisionedDataByDashboardUID(ctx context.Context, o
 		return sess.Table(`dashboard`).
 			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
 			Where(`dashboard_provisioning.dashboard_id = ?`, dashboard.ID).
-			Select("dashboard.*, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
+			Select(`dashboard.id, dashboard.uid, dashboard.title, dashboard.folder_uid, 
+				dashboard_provisioning.name, dashboard_provisioning.external_id, 
+				dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum`).
 			Find(&provisionedDashboard)
 	})
 	if err != nil {
@@ -275,7 +279,9 @@ func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, nam
 		return sess.Table(`dashboard`).
 			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
 			Where(`dashboard_provisioning.name = ? AND dashboard.org_id = ?`, name, orgID).
-			Select("dashboard.*, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
+			Select(`dashboard.id, dashboard.uid, dashboard.title, dashboard.folder_uid, 
+				dashboard_provisioning.name, dashboard_provisioning.external_id, 
+				dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum`).
 			Find(&dashes)
 	})
 	if err != nil {
@@ -290,10 +296,13 @@ func (d *dashboardStore) GetAllProvisionedDashboards(ctx context.Context, orgID 
 
 	dashes := []*dashboards.DashboardProvisioningSearchResults{}
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		// Select only the minimal fields needed for search/provisioning operations (no dashboard body)
 		return sess.Table(`dashboard`).
 			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
 			Where(`dashboard.org_id = ?`, orgID).
-			Select("dashboard.*, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
+			Select(`dashboard.id, dashboard.uid, dashboard.title, dashboard.folder_uid, 
+				dashboard_provisioning.name, dashboard_provisioning.external_id, 
+				dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum`).
 			Find(&dashes)
 	})
 	if err != nil {

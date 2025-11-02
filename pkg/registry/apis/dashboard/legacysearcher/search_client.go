@@ -319,7 +319,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 		for _, dashboard := range provisioningData {
 			list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
 				Key: getResourceKey(&dashboards.DashboardSearchProjection{
-					UID: dashboard.Dashboard.UID,
+					UID: dashboard.UID,
 				}, req.Options.Key.Namespace),
 				Cells: c.createDetailedProvisioningCells(dashboard, query),
 			})
@@ -519,7 +519,7 @@ func (c *DashboardSearchClient) createProvisioningCells(dashboard *dashboards.Da
 }
 
 func (c *DashboardSearchClient) createDetailedProvisioningCells(dashboard *dashboards.DashboardProvisioningSearchResults, query *dashboards.FindPersistedDashboardsQuery) [][]byte {
-	cells := c.createCommonCells(dashboard.Dashboard.Title, dashboard.Dashboard.FolderUID, dashboard.Dashboard.ID, []byte("[]"))
+	cells := c.createCommonCells(dashboard.Title, dashboard.FolderUID, dashboard.ID, []byte("[]"))
 	return append(cells,
 		[]byte(query.ManagedBy),
 		[]byte(dashboard.Provisioner),
