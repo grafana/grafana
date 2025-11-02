@@ -938,8 +938,8 @@ func (dr *DashboardServiceImpl) DeleteDuplicateProvisionedDashboards(ctx context
 			externalID: dash.ExternalID,
 		}
 		if _, exists := groups[key]; exists {
-			if err = dr.deleteDashboard(ctx, dash.Dashboard.ID, dash.Dashboard.UID, dash.Dashboard.OrgID, false); err != nil {
-				dr.log.Error("Failed to delete duplicate provisioned dashboard", "error", err, "dashboardUID", dash.Dashboard.UID, "dashboardID", dash.Dashboard.ID)
+			if err = dr.deleteDashboard(ctx, dash.ID, dash.UID, dash.OrgID, false); err != nil {
+				dr.log.Error("Failed to delete duplicate provisioned dashboard", "error", err, "dashboardUID", dash.UID, "dashboardID", dash.ID)
 			}
 		}
 		groups[key] = append(groups[key], dash)
