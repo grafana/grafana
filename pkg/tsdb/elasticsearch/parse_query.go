@@ -11,6 +11,26 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/kinds/dataquery"
 )
 
+/*
+	{
+	  "query": {
+	    "bool": {
+	      "must": [
+	        {
+	          "range": {
+	            "@timestamp": {
+	              "gte": "$__from",
+	              "lte": "$__to",
+	              "format": "epoch_millis"
+	            }
+	          }
+	        }
+	      ]
+	    }
+	  },
+	  "size": 500
+	}
+*/
 func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, error) {
 	queries := make([]*Query, 0)
 	for _, q := range tsdbQuery {
@@ -23,7 +43,7 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 		// please do not create a new field with that name, to avoid potential problems with old, persisted queries.
 
 		rawQuery := model.Get("query").MustString()
-		var rawDSLQuery dataquery.RawQuery
+		rawDSLQuery := dataquery.RawQuery{}
 		rr := model.Get("rawQuery")
 		if rrBytes, err := rr.Encode(); err == nil {
 			_ = json.Unmarshal(rrBytes, &rawDSLQuery)
@@ -53,7 +73,7 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 			RefID:         q.RefID,
 			MaxDataPoints: q.MaxDataPoints,
 			TimeRange:     q.TimeRange,
-			RawDSLQuery:   &rawDSLQuery,
+			RawDSLQuery:   rawDSLQuery,
 		})
 	}
 

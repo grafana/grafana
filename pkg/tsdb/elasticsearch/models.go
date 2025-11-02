@@ -19,7 +19,7 @@ type Query struct {
 	RefID         string
 	MaxDataPoints int64
 	TimeRange     backend.TimeRange
-	RawDSLQuery   *dataquery.RawQuery
+	RawDSLQuery   dataquery.RawQuery
 }
 
 // BucketAgg represents a bucket aggregation of the time series query model of the datasource
