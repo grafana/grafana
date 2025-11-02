@@ -307,8 +307,6 @@ func (d *dashboardStore) GetDuplicateProvisionedDashboards(ctx context.Context) 
 
 	dashes := []*dashboards.DashboardProvisioningSearchResults{}
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		// Find all provisioned dashboards that have duplicates based on name, external_id, and check_sum
-		// First, find the duplicate groups
 		type duplicateGroup struct {
 			Name       string `xorm:"name"`
 			ExternalID string `xorm:"external_id"`
