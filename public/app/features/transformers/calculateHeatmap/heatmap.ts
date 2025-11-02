@@ -78,7 +78,7 @@ export function sortAscStrInf(aName?: string | null, bName?: string | null) {
 
 export interface HeatmapRowsCustomMeta {
   /** This provides the lookup values */
-  yOrdinalDisplay: string[];
+  yOrdinalDisplay?: string[];
   yOrdinalLabel?: string[];
   yMatchWithLabel?: string;
   yMinDisplay?: string;
@@ -129,6 +129,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   const len = xValues.length * yFields.length;
   const xs = new Array(len);
   const ys = new Array(len);
+  const ys2 = new Array(len);
   const counts2 = new Array(len);
 
   const counts = yFields.map((field) => field.values.slice());
@@ -140,21 +141,8 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     }
   });
 
-  const bucketBounds = Array.from({ length: yFields.length }, (v, i) => i);
-
-  // fill flat/repeating array
-  for (let i = 0, yi = 0, xi = 0; i < len; yi = ++i % bucketBounds.length) {
-    ys[i] = bucketBounds[yi];
-
-    if (yi === 0 && i >= bucketBounds.length) {
-      xi++;
-    }
-
-    xs[i] = xValues[xi];
-  }
-
   // this name determines whether cells are drawn above, below, or centered on the values
-  let ordinalFieldName = yFields[0].labels?.le != null ? 'yMax' : 'y';
+  let ordinalFieldName = yFields[0].labels?.le != null ? 'yMax' : yFields[0].labels?.ge != null ? 'yMin' : 'y';
   switch (opts.layout) {
     case HeatmapCellLayout.le:
       ordinalFieldName = 'yMax';
@@ -171,6 +159,44 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     yOrdinalDisplay: yFields.map((f) => getFieldDisplayName(f, opts.frame)),
     yMatchWithLabel: Object.keys(yFields[0].labels ?? {})[0],
   };
+
+  // const bucketBounds = Array.from({ length: yFields.length }, (v, i) => i);
+
+  const bucketBounds = Array.from({ length: yFields.length }, (v, i) => Number(custom.yOrdinalDisplay[i]));
+  const bucketBoundsMax = bucketBounds.slice();
+  bucketBoundsMax.shift();
+  bucketBoundsMax.push(bucketBounds.at(-1)! * 1.07);
+  custom.yMatchWithLabel = undefined;
+
+  // add a bukkit bound on the correct side by multiplier
+
+  // fill flat/repeating array
+  for (let i = 0, yi = 0, xi = 0; i < len; yi = ++i % bucketBounds.length) {
+    ys[i] = bucketBounds[yi];
+    ys2[i] = bucketBoundsMax[yi];
+
+    if (yi === 0 && i >= bucketBounds.length) {
+      xi++;
+    }
+
+    xs[i] = xValues[xi];
+  }
+
+  // ymax = [1,  2,4,8,16]
+  // ymin = [0.5,1,2,4,8]
+
+  // ymin = [1,2,4,8,16]
+  // ymax = [2,4,8,16,32]
+
+  // // le
+  // if (ordinalFieldName === 'yMax') {
+  //   let yFirst = ys[0] / 1.07;
+  //   ys2 = ys.slice()
+  // }
+  // if (ordinalFieldName === 'yMin') {
+
+  // }
+
   if (custom.yMatchWithLabel) {
     custom.yOrdinalLabel = yFields.map((f) => f.labels?.[custom.yMatchWithLabel!] ?? '');
     if (custom.yMatchWithLabel === 'le') {
@@ -185,7 +211,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     if (custom.yMinDisplay) {
       custom.yMinDisplay = formattedValueToString(fmt(0, opts.decimals));
     }
-    custom.yOrdinalDisplay = custom.yOrdinalDisplay.map((name) => {
+    custom.yOrdinalDisplay = custom.yOrdinalDisplay!.map((name) => {
       let num = +name;
 
       if (!Number.isNaN(num)) {
@@ -195,6 +221,8 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
       return name;
     });
   }
+
+  custom.yOrdinalDisplay = undefined;
 
   const valueCfg = {
     ...yFields[0].config,
@@ -223,11 +251,19 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
         type: FieldType.number,
         values: ys,
         config: {
-          unit: 'short', // ordinal lookup
+          // unit: 'short', // ordinal lookup
         },
       },
       {
-        name: opts.value?.length ? opts.value : 'Value',
+        name: 'yMax',
+        type: FieldType.number,
+        values: ys2,
+        config: {
+          // unit: 'short', // ordinal lookup
+        },
+      },
+      {
+        name: opts.value?.length ? opts.value : 'count',
         type: FieldType.number,
         values: counts2,
         config: valueCfg,
