@@ -224,6 +224,14 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 
+		// Only teamBindingStore exposes the AfterCreate, AfterDelete, and BeginUpdate hooks
+		if enableZanzanaSync {
+			b.logger.Info("Enabling hooks for TeamBinding to sync to Zanzana")
+			teamBindingStore.AfterCreate = b.AfterTeamBindingCreate
+			teamBindingStore.AfterDelete = b.AfterTeamBindingDelete
+			teamBindingStore.BeginUpdate = b.BeginTeamBindingUpdate
+		}
+
 		storage[teamBindingResource.StoragePath()] = teamBindingDW
 	}
 
