@@ -29,28 +29,27 @@ export const CommunityDashboardMappingForm = ({
   const [userDatasourceMappings, setUserDatasourceMappings] = useState<Record<string, DataSourceInstanceSettings>>({});
   const [constantValues, setConstantValues] = useState<Record<string, string>>(() => {
     // Initialize with default values from constantInputs
-    const initial: Record<string, string> = {};
-    constantInputs.forEach((input) => {
-      initial[input.name] = input.value;
-    });
-    return initial;
+    return constantInputs.reduce<Record<string, string>>((acc, input) => {
+      acc[input.name] = input.value;
+      return acc;
+    }, {});
   });
 
-  const handleDatasourceSelect = (inputName: string, datasource: DataSourceInstanceSettings) => {
+  const onDatasourceSelect = (inputName: string, datasource: DataSourceInstanceSettings) => {
     setUserDatasourceMappings((prev) => ({
       ...prev,
       [inputName]: datasource,
     }));
   };
 
-  const handleConstantChange = (inputName: string, value: string) => {
+  const onConstantChange = (inputName: string, value: string) => {
     setConstantValues((prev) => ({
       ...prev,
       [inputName]: value,
     }));
   };
 
-  const handlePreview = () => {
+  const onPreviewClick = () => {
     // Combine all mappings:
     // 1. Existing auto-mapped datasources
     // 2. User-selected datasources
@@ -119,7 +118,7 @@ export const CommunityDashboardMappingForm = ({
                 noMargin
               >
                 <DataSourcePicker
-                  onChange={(ds) => handleDatasourceSelect(input.name, ds)}
+                  onChange={(ds) => onDatasourceSelect(input.name, ds)}
                   current={selectedDatasource?.uid}
                   noDefault={true}
                   placeholder={
@@ -148,7 +147,7 @@ export const CommunityDashboardMappingForm = ({
             >
               <Input
                 value={constantValues[input.name] || ''}
-                onChange={(e) => handleConstantChange(input.name, e.currentTarget.value)}
+                onChange={(e) => onConstantChange(input.name, e.currentTarget.value)}
                 placeholder={input.value}
               />
             </Field>
@@ -160,7 +159,7 @@ export const CommunityDashboardMappingForm = ({
         <Button variant="secondary" icon="arrow-left" onClick={onBack}>
           <Trans i18nKey="dashboard.library.community-mapping-form.back">Back to dashboards</Trans>
         </Button>
-        <Button onClick={handlePreview} disabled={!allDatasourcesMapped}>
+        <Button onClick={onPreviewClick} disabled={!allDatasourcesMapped}>
           <Trans i18nKey="dashboard.library.community-mapping-form.preview">Preview dashboard</Trans>
         </Button>
       </Stack>
