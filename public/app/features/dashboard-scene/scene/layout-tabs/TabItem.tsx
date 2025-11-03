@@ -7,7 +7,8 @@ import {
   sceneGraph,
   VariableDependencyConfig,
   SceneObject,
-  VizPanel,
+  SceneGridItemLike,
+  SceneGridLayout,
 } from '@grafana/scenes';
 import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
@@ -20,11 +21,15 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
+import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardDropTarget } from '../types/DashboardDropTarget';
+import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { LayoutParent } from '../types/LayoutParent';
@@ -186,18 +191,34 @@ export class TabItem
     }
   }
 
-  public draggedPanelOutside(panel: VizPanel) {
-    this.getLayout().removePanel?.(panel);
+  public draggedGridItemOutside?(gridItem: SceneGridItemLike): void {
+    // Remove from source layout
+    if (gridItem instanceof DashboardGridItem || gridItem instanceof AutoGridItem) {
+      const layout = gridItem.parent;
+      if (gridItem instanceof DashboardGridItem && layout instanceof SceneGridLayout) {
+        const newChildren = layout.state.children.filter((child) => child !== gridItem);
+        layout.setState({ children: newChildren });
+      } else if (gridItem instanceof AutoGridItem && layout instanceof AutoGridLayout) {
+        const newChildren = layout.state.children.filter((child) => child !== gridItem);
+        layout.setState({ children: newChildren });
+      } else {
+        throw new Error('Grid item has unexpected parent type');
+      }
+    }
     this.setIsDropTarget(false);
   }
 
-  public draggedPanelInside(panel: VizPanel) {
-    panel.clearParent();
-    this.getLayout().addPanel(panel);
+  public draggedGridItemInside(gridItem: SceneGridItemLike): void {
+    const layout = this.getLayout();
+
+    if (isDashboardLayoutGrid(layout)) {
+      layout.addGridItem(gridItem);
+    } else {
+      throw new Error('Layout manager does not support addGridItem');
+    }
     this.setIsDropTarget(false);
 
     const parentLayout = this.getParentLayout();
-
     if (parentLayout.state.currentTabSlug !== this.getSlug()) {
       parentLayout.setState({ currentTabSlug: this.getSlug() });
     }
