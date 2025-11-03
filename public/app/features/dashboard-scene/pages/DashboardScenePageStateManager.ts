@@ -469,7 +469,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     };
   }
 
-  private async loadTemplateDashboard(): Promise<DashboardDTO> {
+  private async loadSuggestedDashboard(): Promise<DashboardDTO> {
     // Extract template parameters from URL
     const searchParams = new URLSearchParams(window.location.search);
     const datasource = searchParams.get('datasource');
@@ -578,7 +578,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           rsp = await buildNewDashboardSaveModel(urlFolderUid);
           break;
         case DashboardRoutes.Template:
-          rsp = await this.loadTemplateDashboard();
+          rsp = await this.loadSuggestedDashboard();
           break;
         case DashboardRoutes.Provisioning:
           return this.loadProvisioningDashboard(slug || '', uid);
