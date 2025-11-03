@@ -2885,6 +2885,8 @@
       "notification-message": "Benachrichtigungsnachricht",
       "predefined-notification-message": "",
       "send-test-notification": "Testbenachrichtigung senden",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Kontaktpunkt testen"
     },
     "threshold": {
@@ -7189,7 +7191,8 @@
     "logs-table-multi-select": {
       "fields": "Felder",
       "reset": "Zurücksetzen",
-      "selected-fields": "Ausgewählte Felder"
+      "selected-fields": "Ausgewählte Felder",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Abfrage nach Name auswählen",
@@ -8029,26 +8032,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "Vorgestern",
+          "previousFiscalQuarter": "Vorheriges Geschäftsquartal",
+          "previousFiscalYear": "Vorheriges Geschäftsjahr",
+          "previousMonth": "Vorheriger Monat",
+          "previousWeek": "Vorherige Woche",
+          "previousYear": "Vorheriges Jahr",
+          "thisDayLastWeek": "Dieser Tag letzte Woche",
+          "thisFiscalQuarter": "Dieses Geschäftsquartal",
+          "thisFiscalQuarterSoFar": "Dieses Geschäftsquartal bisher",
+          "thisFiscalYear": "Dieses Geschäftsjahr",
+          "thisFiscalYearSoFar": "Dieses Geschäftsjahr bisher",
+          "thisMonth": "Dieser Monat",
+          "thisMonthSoFar": "Dieser Monat bisher",
+          "thisWeek": "Diese Woche",
+          "thisWeekSoFar": "Diese Woche bisher",
+          "thisYear": "Dieses Jahr",
+          "thisYearSoFar": "Dieses Jahr bisher",
+          "today": "Heute",
+          "todaySoFar": "Heute bisher",
+          "yesterday": "Gestern"
         },
         "lastNDays_one": "",
         "lastNDays_other": "",

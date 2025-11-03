@@ -2873,6 +2873,8 @@
       "notification-message": "通知消息",
       "predefined-notification-message": "",
       "send-test-notification": "发送测试通知",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "测试联络点"
     },
     "threshold": {
@@ -7166,7 +7168,8 @@
     "logs-table-multi-select": {
       "fields": "字段",
       "reset": "重置",
-      "selected-fields": "已选择的字段"
+      "selected-fields": "已选择的字段",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "按名称选择查询",
@@ -8004,26 +8007,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "前天",
+          "previousFiscalQuarter": "上一财季",
+          "previousFiscalYear": "上一财年",
+          "previousMonth": "上个月",
+          "previousWeek": "上周",
+          "previousYear": "上一年",
+          "thisDayLastWeek": "上周的今天",
+          "thisFiscalQuarter": "本财季",
+          "thisFiscalQuarterSoFar": "本财季到现在",
+          "thisFiscalYear": "本财年",
+          "thisFiscalYearSoFar": "本财年到现在",
+          "thisMonth": "本月",
+          "thisMonthSoFar": "本月到现在",
+          "thisWeek": "本周",
+          "thisWeekSoFar": "本周到现在",
+          "thisYear": "今年",
+          "thisYearSoFar": "今年到现在",
+          "today": "今天",
+          "todaySoFar": "今天到现在",
+          "yesterday": "昨天"
         },
         "lastNDays_other": "",
         "lastNHours_other": "",

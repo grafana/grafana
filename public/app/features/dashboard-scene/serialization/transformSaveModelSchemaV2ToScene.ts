@@ -281,7 +281,8 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
 
-  if (config.featureToggles.scopeFilters) {
+  // Explicitly disable scopes for public dashboards
+  if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
 

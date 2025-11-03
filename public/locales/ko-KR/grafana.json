@@ -2873,6 +2873,8 @@
       "notification-message": "알림 메시지",
       "predefined-notification-message": "",
       "send-test-notification": "테스트 알림 전송",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "연락처 테스트"
     },
     "threshold": {
@@ -7166,7 +7168,8 @@
     "logs-table-multi-select": {
       "fields": "필드",
       "reset": "재설정",
-      "selected-fields": "선택된 필드"
+      "selected-fields": "선택된 필드",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "이름으로 쿼리 선택",
@@ -8004,26 +8007,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "그저께",
+          "previousFiscalQuarter": "이전 회계 분기",
+          "previousFiscalYear": "이전 회계 연도",
+          "previousMonth": "지난 달",
+          "previousWeek": "지난주",
+          "previousYear": "작년",
+          "thisDayLastWeek": "지난주 오늘",
+          "thisFiscalQuarter": "이번 회계 분기",
+          "thisFiscalQuarterSoFar": "이번 회계 분기 현재까지",
+          "thisFiscalYear": "이번 회계 연도",
+          "thisFiscalYearSoFar": "이번 회계 연도 현재까지",
+          "thisMonth": "이번 달",
+          "thisMonthSoFar": "이번 달 현재까지",
+          "thisWeek": "이번 주",
+          "thisWeekSoFar": "이번 주 현재까지",
+          "thisYear": "올해",
+          "thisYearSoFar": "올해 현재까지",
+          "today": "오늘",
+          "todaySoFar": "오늘 현재까지",
+          "yesterday": "어제"
         },
         "lastNDays_other": "",
         "lastNHours_other": "",

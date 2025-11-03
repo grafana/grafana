@@ -17,6 +17,7 @@ import { EventState } from '../../components/rules/central-state-history/EventLi
 import { LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { stringifyErrorLike } from '../../utils/misc';
+import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
 import { QueryVisualization } from './QueryVisualization';
@@ -24,6 +25,13 @@ import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
 
 const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
+
+function calculateDrawerWidth(rightColumnWidth: number): number {
+  //first add the padding from the Page (32px)
+  const calculatedWidth = rightColumnWidth + 32;
+  // now clamp the width to a max of 1400px
+  return Math.min(calculatedWidth, 1400);
+}
 
 interface InstanceDetailsDrawerProps {
   ruleUID: string;
@@ -34,6 +42,9 @@ interface InstanceDetailsDrawerProps {
 export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: InstanceDetailsDrawerProps) {
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
   const [timeRange] = useTimeRange();
+  const { rightColumnWidth } = useWorkbenchContext();
+
+  const drawerWidth = calculateDrawerWidth(rightColumnWidth);
 
   const { data: rule, isLoading: loading, error } = useGetAlertRuleQuery({ uid: ruleUID });
 
@@ -66,7 +77,11 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
 
   if (error) {
     return (
-      <Drawer title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} />} onClose={onClose} size="md">
+      <Drawer
+        title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} />}
+        onClose={onClose}
+        width={drawerWidth}
+      >
         <ErrorContent error={error} />
       </Drawer>
     );
@@ -74,7 +89,11 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
 
   if (loading || !rule) {
     return (
-      <Drawer title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} />} onClose={onClose} size="md">
+      <Drawer
+        title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} />}
+        onClose={onClose}
+        width={drawerWidth}
+      >
         <LoadingPlaceholder text={t('alerting.common.loading', 'Loading...')} />
       </Drawer>
     );
@@ -84,7 +103,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
     <Drawer
       title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} rule={rule.grafana_alert} />}
       onClose={onClose}
-      size="md"
+      width={drawerWidth}
     >
       <Stack direction="column" gap={3}>
         <Stack justifyContent="flex-end">

@@ -133,8 +133,10 @@ export function Workbench({ domain, data, queryRunner, groupBy }: WorkbenchProps
   });
 
   // this will measure the size of the left most column of the splitter, so we can use it to set the width of the group items
-  const [ref, rect] = useMeasure<HTMLDivElement>();
-  const leftColumnWidth = rect.width;
+  const [leftColumnRef, leftColumnRect] = useMeasure<HTMLDivElement>();
+  const leftColumnWidth = leftColumnRect.width;
+  const [rightColumnRef, rightColumnRect] = useMeasure<HTMLDivElement>();
+  const rightColumnWidth = rightColumnRect.width;
 
   const itemsToRender = pageIndex * DEFAULT_PER_PAGE_PAGINATION;
   const dataSlice = take(data, itemsToRender);
@@ -145,11 +147,11 @@ export function Workbench({ domain, data, queryRunner, groupBy }: WorkbenchProps
       {/* dummy splitter to handle flex width of group items */}
       <div {...splitter.containerProps}>
         <div {...splitter.primaryProps}>
-          <div ref={ref} className={cx(styles.flexFull, styles.minColumnWidth)} />
+          <div ref={leftColumnRef} className={cx(styles.flexFull, styles.minColumnWidth)} />
         </div>
         <div {...splitter.splitterProps} />
         <div {...splitter.secondaryProps}>
-          <div className={cx(styles.flexFull, styles.minColumnWidth)} />
+          <div ref={rightColumnRef} className={cx(styles.flexFull, styles.minColumnWidth)} />
         </div>
       </div>
       {/* content goes here */}
@@ -160,7 +162,12 @@ export function Workbench({ domain, data, queryRunner, groupBy }: WorkbenchProps
         </div>
         {/* Render actual data */}
         <div className={styles.virtualizedContainer}>
-          <WorkbenchProvider leftColumnWidth={leftColumnWidth} domain={domain} queryRunner={queryRunner}>
+          <WorkbenchProvider
+            leftColumnWidth={leftColumnWidth}
+            rightColumnWidth={rightColumnWidth}
+            domain={domain}
+            queryRunner={queryRunner}
+          >
             <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators>
               {isLoading ? (
                 <>

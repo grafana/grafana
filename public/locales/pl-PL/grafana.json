@@ -2909,6 +2909,8 @@
       "notification-message": "Wiadomość z powiadomieniem",
       "predefined-notification-message": "",
       "send-test-notification": "Wyślij powiadomienie testowe",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Testuj punkt kontaktu"
     },
     "threshold": {
@@ -7235,7 +7237,8 @@
     "logs-table-multi-select": {
       "fields": "Pola",
       "reset": "Zresetuj",
-      "selected-fields": "Wybrane pola"
+      "selected-fields": "Wybrane pola",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Wybierz zapytanie według nazwy",
@@ -8079,26 +8082,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "Przedwczoraj",
+          "previousFiscalQuarter": "Poprzedni kwartał podatkowy",
+          "previousFiscalYear": "Poprzedni rok podatkowy",
+          "previousMonth": "Poprzedni miesiąc",
+          "previousWeek": "Poprzedni tydzień",
+          "previousYear": "Poprzedni rok",
+          "thisDayLastWeek": "Ten dzień w poprzednim tygodniu",
+          "thisFiscalQuarter": "Bieżący kwartał podatkowy",
+          "thisFiscalQuarterSoFar": "Bieżący kwartał podatkowy do tej pory",
+          "thisFiscalYear": "Bieżący rok podatkowy",
+          "thisFiscalYearSoFar": "Bieżący rok podatkowy do tej pory",
+          "thisMonth": "Bieżący miesiąc",
+          "thisMonthSoFar": "Bieżący miesiąc do tej pory",
+          "thisWeek": "Bieżący tydzień",
+          "thisWeekSoFar": "Bieżący tydzień do tej pory",
+          "thisYear": "Bieżący rok",
+          "thisYearSoFar": "Bieżący rok do tej pory",
+          "today": "Dzisiaj",
+          "todaySoFar": "Dzisiaj do tej pory",
+          "yesterday": "Wczoraj"
         },
         "lastNDays_one": "",
         "lastNDays_few": "",

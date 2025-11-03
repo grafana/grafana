@@ -2885,6 +2885,8 @@
       "notification-message": "Bildirim mesajı",
       "predefined-notification-message": "",
       "send-test-notification": "Test bildirimi gönder",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "İletişim noktasını test et"
     },
     "threshold": {
@@ -7189,7 +7191,8 @@
     "logs-table-multi-select": {
       "fields": "Alanlar",
       "reset": "Sıfırla",
-      "selected-fields": "Seçilen alanlar"
+      "selected-fields": "Seçilen alanlar",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Sorguyu ada göre seç",
@@ -8029,26 +8032,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "Dünden önceki gün",
+          "previousFiscalQuarter": "Önceki mali çeyrek",
+          "previousFiscalYear": "Önceki mali yıl",
+          "previousMonth": "Önceki ay",
+          "previousWeek": "Önceki hafta",
+          "previousYear": "Önceki yıl",
+          "thisDayLastWeek": "Geçen hafta bugün",
+          "thisFiscalQuarter": "Bu mali çeyrek",
+          "thisFiscalQuarterSoFar": "Bu mali çeyreğin başından bugüne",
+          "thisFiscalYear": "Bu mali yıl",
+          "thisFiscalYearSoFar": "Bu mali yıl şimdiye kadar",
+          "thisMonth": "Bu ay",
+          "thisMonthSoFar": "Bu ay şimdiye kadar",
+          "thisWeek": "Bu hafta",
+          "thisWeekSoFar": "Bu hafta şimdiye kadar",
+          "thisYear": "Bu yıl ",
+          "thisYearSoFar": "Bu yıl şimdiye kadar",
+          "today": "Bugün",
+          "todaySoFar": "Bugün şimdiye kadar",
+          "yesterday": "Dün"
         },
         "lastNDays_one": "",
         "lastNDays_other": "",
