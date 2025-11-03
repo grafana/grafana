@@ -350,6 +350,14 @@ func NewTypedTuple(typ, subject, relation, name string) *openfgav1.TupleKey {
 	}
 }
 
+func NewTuple(subject, relation, object string) *openfgav1.TupleKey {
+	return &openfgav1.TupleKey{
+		User:     subject,
+		Relation: relation,
+		Object:   object,
+	}
+}
+
 func ToAuthzExtTupleKey(t *openfgav1.TupleKey) *authzextv1.TupleKey {
 	tupleKey := &authzextv1.TupleKey{
 		User:     t.GetUser(),

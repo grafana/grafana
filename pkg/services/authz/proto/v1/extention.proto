@@ -30,6 +30,8 @@ message MutateOperation {
     DeleteFolderOperation delete_folder = 2;
     CreatePermissionOperation create_permission = 3;
     DeletePermissionOperation delete_permission = 4;
+    UpdateUserOrgRoleOperation update_user_org_role = 5;
+    DeleteUserOrgRoleOperation delete_user_org_role = 6;
   }
 }
 
@@ -59,6 +61,20 @@ message CreatePermissionOperation {
 message DeletePermissionOperation {
   Resource resource = 1;
   Permission permission = 2;
+}
+
+message UpdateUserOrgRoleOperation {
+  // User UID
+  string user = 1;
+  // Role name (e.g: "Admin", "Editor", "Viewer")
+  string role = 2;
+}
+
+message DeleteUserOrgRoleOperation {
+  // User UID
+  string user = 1;
+  // Role name (e.g: "Admin", "Editor", "Viewer")
+  string role = 2;
 }
 
 message Resource {
