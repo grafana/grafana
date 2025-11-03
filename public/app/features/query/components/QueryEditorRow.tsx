@@ -85,6 +85,7 @@ interface State<TQuery extends DataQuery> {
   showingHelp: boolean;
 }
 
+// eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
 export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Props<TQuery>, State<TQuery>> {
   dataSourceSrv = getDataSourceSrv();
   id = '';
@@ -135,6 +136,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
 
     this.setState({
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       datasource: datasource as unknown as DataSourceApi<TQuery>,
       queriedDataSourceIdentifier: interpolatedUID,
     });
@@ -230,6 +232,17 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   onRemoveQuery = () => {
     const { onRemoveQuery, query, onQueryRemoved } = this.props;
+
+    // Track expression query removal
+    const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
+    if (isExpressionQuery && 'type' in query && query.type) {
+      reportInteraction('dashboards_expression_interaction', {
+        action: 'remove_expression',
+        expression_type: query.type,
+        context: 'panel_query_section',
+      });
+    }
+
     onRemoveQuery(query);
 
     if (onQueryRemoved) {
@@ -365,6 +378,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           query,
           queries,
           timeRange: data.timeRange,
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           onAddQuery: onAddQuery as (query: DataQuery) => void,
           dataSource,
           key: index,
@@ -483,6 +497,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       data?.error && data.error.refId === query.refId ? data.error : data?.errors?.find((e) => e.refId === query.refId);
     const rowClasses = classNames('query-editor-row', {
       'query-editor-row--disabled': isHidden,
+      // eslint-disable-next-line no-restricted-syntax
       'gf-form-disabled': isHidden,
     });
 
@@ -524,6 +539,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     );
 
     return (
+      // eslint-disable-next-line @grafana/no-aria-label-selectors
       <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
         {queryLibraryRef && (
           <MaybeQueryLibraryEditingHeader
@@ -620,6 +636,7 @@ function MaybeQueryLibraryEditingHeader(props: {
 
 function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
   try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const { isLoading, components } = usePluginComponents<PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context>({
       extensionPointId: PluginExtensionPoints.QueryEditorRowAdaptiveTelemetryV1,
     });
