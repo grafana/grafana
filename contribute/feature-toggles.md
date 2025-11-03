@@ -22,7 +22,8 @@ Use the OpenFeature client for all new backend feature flags and toggles.
 #### Key points:
 
 - OpenFeature SDK relies on the global state.
-- OpenFeature Provider configuration happens in the `commands` module before initialization of other modules
+- OpenFeature Provider configuration happens in the `commands` module before initialization of other modules.
+- It is safe to create an instance of the OpenFeature client directly in a function.
 - Flag evaluation is context-aware -- you can pass metadata such as org name, grafana version, or environment to the evaluation context.
 - Flags can be of different types (boolean, string, number, or object).
 - Always perform flag evaluation at runtime, not during service startup, to ensure correct and up-to-date flag values.
