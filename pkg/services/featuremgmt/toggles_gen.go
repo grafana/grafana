@@ -371,6 +371,10 @@ const (
 	// Enables unlimited dashboard panel grouping
 	FlagUnlimitedLayoutsNesting = "unlimitedLayoutsNesting"
 
+	// FlagPanelGroupBy
+	// Enabled a group by action per panel
+	FlagPanelGroupBy = "panelGroupBy"
+
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
 	FlagPanelFilterVariable = "panelFilterVariable"

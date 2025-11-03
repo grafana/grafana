@@ -408,6 +408,10 @@ export interface FeatureToggles {
   */
   unlimitedLayoutsNesting?: boolean;
   /**
+  * Enabled a group by action per panel
+  */
+  panelGroupBy?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
   panelFilterVariable?: boolean;

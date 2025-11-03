@@ -2886,6 +2886,19 @@
     },
     {
       "metadata": {
+        "name": "panelGroupBy",
+        "resourceVersion": "1762169261546",
+        "creationTimestamp": "2025-11-03T11:27:41Z"
+      },
+      "spec": {
+        "description": "Enabled a group by action per panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "panelMonitoring",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-10-09T05:19:08Z"
