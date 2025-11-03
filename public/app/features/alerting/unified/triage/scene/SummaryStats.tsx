@@ -92,6 +92,23 @@ function countInstances(instanceDfv: DataFrameView<Frame>) {
   return { firing: getValue('firing'), pending: getValue('pending') };
 }
 
+interface StatRowProps {
+  i18nKey: string;
+  color: 'error' | 'warning';
+  values: Record<string, number>;
+  children: React.ReactNode;
+}
+
+function StatRow({ i18nKey, color, values, children }: StatRowProps) {
+  return (
+    <Text color={color}>
+      <Trans i18nKey={i18nKey} values={values}>
+        {children}
+      </Trans>
+    </Text>
+  );
+}
+
 export function SummaryStatsReact() {
   const filter = useQueryFilter();
   const alertstateFilter = parseAlertstateFilter(filter);
@@ -118,14 +135,14 @@ export function SummaryStatsReact() {
     ],
   });
 
-  const instanceData = instanceDataProvider.useState().data;
-  const ruleData = ruleDataProvider.useState().data;
+  const { data: instanceData } = instanceDataProvider.useState();
+  const { data: ruleData } = ruleDataProvider.useState();
   const instanceFrame = instanceData?.series?.at(0);
   const ruleFrame = ruleData?.series?.at(0);
 
   if (
-    !instanceDataProvider.isDataReadyToDisplay ||
-    !ruleDataProvider.isDataReadyToDisplay ||
+    !instanceDataProvider.isDataReadyToDisplay() ||
+    !ruleDataProvider.isDataReadyToDisplay() ||
     !instanceFrame ||
     !ruleFrame
   ) {
@@ -135,82 +152,70 @@ export function SummaryStatsReact() {
   const instanceDfv = new DataFrameView<Frame>(instanceFrame);
   const ruleDfv = new DataFrameView<RuleFrame>(ruleFrame);
 
-  if (instanceDfv.length === 0 || ruleDfv.length === 0) {
+  if (instanceDfv.length === 0 && ruleDfv.length === 0) {
     return <div />;
   }
 
   const instances = countInstances(instanceDfv);
   const rules = countRules(ruleDfv, alertstateFilter);
 
-  const renderStat = (i18nKey: string, color: 'error' | 'warning', values: Record<string, number>, text: string) => (
-    <Text color={color}>
-      <Trans i18nKey={i18nKey} values={values}>
-        {text}
-      </Trans>
-    </Text>
-  );
-
   return (
     <Stack direction="column" alignItems="flex-end" gap={0}>
       <Spacer />
       {alertstateFilter === 'firing' && (
         <>
-          {renderStat(
-            'alerting.triage.firing-rules-count',
-            'error',
-            { count: rules.firing },
-            '{{count}} firing alert rules'
-          )}
-          {renderStat(
-            'alerting.triage.firing-instances-count',
-            'error',
-            { firingCount: instances.firing },
-            '{{firingCount}} firing instances'
-          )}
+          <StatRow i18nKey="alerting.triage.firing-rules-count" color="error" values={{ count: rules.firing }}>
+            {'{{count}} firing alert rules'}
+          </StatRow>
+          <StatRow
+            i18nKey="alerting.triage.firing-instances-count"
+            color="error"
+            values={{ firingCount: instances.firing }}
+          >
+            {'{{firingCount}} firing instances'}
+          </StatRow>
         </>
       )}
       {alertstateFilter === 'pending' && (
         <>
-          {renderStat(
-            'alerting.triage.rules-with-pending-instances',
-            'warning',
-            { count: rules.pending },
-            '{{count}} alert rules with pending instances'
-          )}
-          {renderStat(
-            'alerting.triage.pending-instances-count',
-            'warning',
-            { pendingCount: instances.pending },
-            '{{pendingCount}} pending instances'
-          )}
+          <StatRow
+            i18nKey="alerting.triage.rules-with-pending-instances"
+            color="warning"
+            values={{ count: rules.pending }}
+          >
+            {'{{count}} rules with pending instances'}
+          </StatRow>
+          <StatRow
+            i18nKey="alerting.triage.pending-instances-count"
+            color="warning"
+            values={{ pendingCount: instances.pending }}
+          >
+            {'{{pendingCount}} pending instances'}
+          </StatRow>
         </>
       )}
       {!alertstateFilter && (
         <>
-          {renderStat(
-            'alerting.triage.firing-rules-count',
-            'error',
-            { count: rules.firing },
-            '{{count}} firing alert rules'
-          )}
-          {renderStat(
-            'alerting.triage.firing-instances-count',
-            'error',
-            { firingCount: instances.firing },
-            '{{firingCount}} firing instances'
-          )}
-          {renderStat(
-            'alerting.triage.pending-rules-count',
-            'warning',
-            { count: rules.pending },
-            '{{count}} pending alert rules'
-          )}
-          {renderStat(
-            'alerting.triage.pending-instances-count',
-            'warning',
-            { pendingCount: instances.pending },
-            '{{pendingCount}} pending instances'
-          )}
+          <StatRow i18nKey="alerting.triage.firing-rules-count" color="error" values={{ count: rules.firing }}>
+            {'{{count}} firing alert rules'}
+          </StatRow>
+          <StatRow
+            i18nKey="alerting.triage.firing-instances-count"
+            color="error"
+            values={{ firingCount: instances.firing }}
+          >
+            {'{{firingCount}} firing instances'}
+          </StatRow>
+          <StatRow i18nKey="alerting.triage.pending-rules-count" color="warning" values={{ count: rules.pending }}>
+            {'{{count}} pending alert rules'}
+          </StatRow>
+          <StatRow
+            i18nKey="alerting.triage.pending-instances-count"
+            color="warning"
+            values={{ pendingCount: instances.pending }}
+          >
+            {'{{pendingCount}} pending instances'}
+          </StatRow>
         </>
       )}
     </Stack>
