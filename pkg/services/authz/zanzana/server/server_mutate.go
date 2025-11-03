@@ -12,8 +12,9 @@ import (
 type OperationGroup string
 
 const (
-	OperationGroupFolder     OperationGroup = "folder"
-	OperationGroupPermission OperationGroup = "permission"
+	OperationGroupFolder      OperationGroup = "folder"
+	OperationGroupPermission  OperationGroup = "permission"
+	OperationGroupUserOrgRole OperationGroup = "user_org_role"
 )
 
 func (s *Server) Mutate(ctx context.Context, req *authzextv1.MutateRequest) (*authzextv1.MutateResponse, error) {
@@ -72,6 +73,8 @@ func getOperationGroup(operation *authzextv1.MutateOperation) (OperationGroup, e
 		return OperationGroupFolder, nil
 	case *authzextv1.MutateOperation_CreatePermission, *authzextv1.MutateOperation_DeletePermission:
 		return OperationGroupPermission, nil
+	case *authzextv1.MutateOperation_UpdateUserOrgRole, *authzextv1.MutateOperation_DeleteUserOrgRole:
+		return OperationGroupUserOrgRole, nil
 	}
 	return OperationGroup(""), errors.New("unsupported mutate operation type")
 }
