@@ -2363,7 +2363,9 @@ func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, org
 	return definitions.Route{}, nil
 }
 
-type fakeFailingNotificationPolicyService struct{}
+type fakeFailingNotificationPolicyService struct {
+	NotificationPolicyService
+}
 
 func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
 	return definitions.Route{}, "", fmt.Errorf("something went wrong")
@@ -2377,7 +2379,9 @@ func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Conte
 	return definitions.Route{}, fmt.Errorf("something went wrong")
 }
 
-type fakeRejectingNotificationPolicyService struct{}
+type fakeRejectingNotificationPolicyService struct {
+	NotificationPolicyService
+}
 
 type fakeRejectingNotificationSettingsValidatorProvider struct{}
 

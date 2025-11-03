@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
@@ -875,7 +876,9 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 
 	// Removing the new extra route should leave only 1.
 	amConfig.AlertmanagerConfig.Route.Routes = amConfig.AlertmanagerConfig.Route.Routes[:1]
-	v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, *amConfig.AlertmanagerConfig.Route, "", func(int64) string { return "default" })
+	managedRoute := legacy_storage.NewManagedRoute(v0alpha1.UserDefinedRoutingTreeName, amConfig.AlertmanagerConfig.Route)
+	managedRoute.Version = "" // Avoid version conflict.
+	v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, managedRoute, func(int64) string { return "default" })
 	require.NoError(t, err)
 	routeAdminClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
@@ -898,7 +901,9 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 
 	// Remove the remaining routes.
 	amConfig.AlertmanagerConfig.Route.Routes = nil
-	v1route, err := routingtree.ConvertToK8sResource(1, *amConfig.AlertmanagerConfig.Route, "", func(int64) string { return "default" })
+	managedRoute = legacy_storage.NewManagedRoute(v0alpha1.UserDefinedRoutingTreeName, amConfig.AlertmanagerConfig.Route)
+	managedRoute.Version = "" // Avoid version conflict.
+	v1route, err := routingtree.ConvertToK8sResource(1, managedRoute, func(int64) string { return "default" })
 	require.NoError(t, err)
 	_, err = routeAdminClient.Update(ctx, v1route, resource.UpdateOptions{})
 	require.NoError(t, err)
@@ -1582,7 +1587,9 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig)
 
 	routeClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
-	v1route, err := routingtree.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, *amConfig.AlertmanagerConfig.Route, "", nsMapper)
+	managedRoute := legacy_storage.NewManagedRoute(v0alpha1.UserDefinedRoutingTreeName, amConfig.AlertmanagerConfig.Route)
+	managedRoute.Version = "" // Avoid version conflict.
+	v1route, err := routingtree.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, managedRoute, nsMapper)
 	require.NoError(t, err)
 	_, err = routeClient.Update(ctx, v1route, resource.UpdateOptions{})
 	require.NoError(t, err)
