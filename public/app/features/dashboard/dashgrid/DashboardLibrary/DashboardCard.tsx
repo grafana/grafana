@@ -1,8 +1,10 @@
 import { css, cx } from '@emotion/css';
+import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, Button, Card, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { GnetDashboard } from './types';
@@ -28,7 +30,7 @@ interface Props {
   buttonText?: React.ReactNode; // Optional custom button text, defaults to "Use template"
 }
 
-export function DashboardCard({
+function DashboardCardComponent({
   title,
   imageUrl,
   onClick,
@@ -246,3 +248,16 @@ function getStyles(theme: GrafanaTheme2) {
     }),
   };
 }
+
+const DashboardCardSkeleton: SkeletonComponent = ({ rootProps }) => {
+  const styles = useStyles2(getSkeletonStyles);
+  return <Skeleton width={350} height={300} containerClassName={styles.container} {...rootProps} />;
+};
+
+const getSkeletonStyles = () => ({
+  container: css({
+    lineHeight: 1,
+  }),
+});
+
+export const DashboardCard = attachSkeleton(DashboardCardComponent, DashboardCardSkeleton);

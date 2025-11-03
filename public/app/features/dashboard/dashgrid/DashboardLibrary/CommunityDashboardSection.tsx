@@ -192,7 +192,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
             }}
           >
             {Array.from({ length: COMMUNITY_PAGE_SIZE }).map((_, i) => (
-              <div key={i} className={styles.skeleton} />
+              <DashboardCard.Skeleton key={`skeleton-${i}`} />
             ))}
           </Grid>
         ) : showError ? (
@@ -290,22 +290,6 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
       minHeight: '600px',
       position: 'relative',
-    }),
-    skeleton: css({
-      height: '300px',
-      backgroundColor: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
-      [theme.transitions.handleMotion('no-preference')]: {
-        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-      },
-      '@keyframes pulse': {
-        '0%, 100%': {
-          opacity: 1,
-        },
-        '50%': {
-          opacity: 0.5,
-        },
-      },
     }),
     pagination: css({
       position: 'sticky',

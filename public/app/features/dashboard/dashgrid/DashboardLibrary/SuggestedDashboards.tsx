@@ -289,7 +289,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
         }}
       >
         {loading
-          ? Array.from({ length: 3 }).map((_, i) => <div key={i} className={styles.skeleton} />)
+          ? Array.from({ length: 3 }).map((_, i) => <DashboardCard.Skeleton key={`skeleton-${i}`} />)
           : result?.dashboards.map((item, idx) => {
               if (item.type === 'provisioned') {
                 return (
@@ -344,6 +344,8 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'flex-start',
       marginBottom: theme.spacing(1),
       gap: theme.spacing(2),
+      paddingRight: theme.spacing(2),
+      paddingLeft: theme.spacing(2),
     }),
     headerText: css({
       display: 'flex',
@@ -362,24 +364,6 @@ function getStyles(theme: GrafanaTheme2) {
       fontSize: theme.typography.body.fontSize,
       color: theme.colors.text.secondary,
       lineHeight: theme.typography.body.lineHeight,
-    }),
-    skeleton: css({
-      width: '350px',
-      height: '200px',
-      padding: theme.spacing(4),
-      backgroundColor: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
-      [theme.transitions.handleMotion('no-preference')]: {
-        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-      },
-      '@keyframes pulse': {
-        '0%, 100%': {
-          opacity: 1,
-        },
-        '50%': {
-          opacity: 0.5,
-        },
-      },
     }),
   };
 }

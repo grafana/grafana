@@ -130,7 +130,7 @@ export const DashboardLibrarySection = () => {
           }}
         >
           {loading && !templateDashboards
-            ? Array.from({ length: 9 }).map((_, i) => <div key={i} className={styles.skeleton} />)
+            ? Array.from({ length: 9 }).map((_, i) => <DashboardCard.Skeleton key={`skeleton-${i}`} />)
             : dashboardsToShow?.map((dashboard, index) => {
                 // Use global index for consistent image assignment across pages
                 const globalIndex = startIndex + index;
@@ -163,22 +163,6 @@ export const DashboardLibrarySection = () => {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    skeleton: css({
-      height: '300px',
-      backgroundColor: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
-      [theme.transitions.handleMotion('no-preference')]: {
-        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-      },
-      '@keyframes pulse': {
-        '0%, 100%': {
-          opacity: 1,
-        },
-        '50%': {
-          opacity: 0.5,
-        },
-      },
-    }),
     pagination: css({
       position: 'sticky',
       bottom: 0,
