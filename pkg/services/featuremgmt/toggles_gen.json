@@ -2775,14 +2775,18 @@
     {
       "metadata": {
         "name": "newLogsPanel",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-02-04T17:40:17Z"
+        "resourceVersion": "1762166693458",
+        "creationTimestamp": "2025-02-04T17:40:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-03 10:44:53.458924 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new logs panel in Explore",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {

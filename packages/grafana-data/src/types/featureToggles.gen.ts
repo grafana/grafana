@@ -884,6 +884,7 @@ export interface FeatureToggles {
   fetchRulesUsingPost?: boolean;
   /**
   * Enables the new logs panel in Explore
+  * @default true
   */
   newLogsPanel?: boolean;
   /**
