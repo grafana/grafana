@@ -5,7 +5,6 @@ import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
 import { DisplayList, iamAPIv0alpha1, useLazyGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
-import { legacyAPI } from 'app/api/clients/legacy';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import {
   useDeleteFolderMutation as useDeleteFolderMutationLegacy,
@@ -19,9 +18,11 @@ import {
   MoveFoldersArgs,
   DeleteFoldersArgs,
   MoveFolderArgs,
+  browseDashboardsAPI,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardTreeSelection } from 'app/features/browse-dashboards/types';
-import { dispatch } from 'app/store/store';
+import { AppDispatch } from 'app/store/configureStore';
+import { dispatch as untypedDispatch } from 'app/store/store';
 import { FolderDTO, NewFolder } from 'app/types/folders';
 
 import kbn from '../../../../core/utils/kbn';
@@ -57,6 +58,9 @@ import {
   useGetAffectedItemsQuery,
   FolderInfo,
 } from './index';
+
+// Workaround for untyped dispatch from store - useDispatch is typed by
+const dispatch: AppDispatch = untypedDispatch;
 
 function getFolderUrl(uid: string, title: string): string {
   // mimics https://github.com/grafana/grafana/blob/79fe8a9902335c7a28af30e467b904a4ccfac503/pkg/services/dashboards/models.go#L188
@@ -104,7 +108,7 @@ const combineFolderResponses = (
 export async function getFolderByUidFacade(uid: string): Promise<FolderDTO> {
   const isVirtualFolder = uid && [GENERAL_FOLDER_UID, config.sharedWithMeFolderUID].includes(uid);
   // We need the legacy API call regardless, for now
-  const legacyApiCall = dispatch(legacyAPI.endpoints.getFolderByUid.initiate({ folderUid: uid }));
+  const legacyApiCall = dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(uid));
 
   const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
   if (shouldUseAppPlatformAPI) {
@@ -117,12 +121,16 @@ export async function getFolderByUidFacade(uid: string): Promise<FolderDTO> {
       // We still need to call legacy endpoints for access control metadata
       legacyApiCall,
       isVirtualFolder
-        ? Promise.resolve(virtualFolderResponse)
+        ? Promise.resolve({ data: virtualFolderResponse })
         : dispatch(folderAPIv1beta1.endpoints.getFolder.initiate({ name: uid })),
       dispatch(folderAPIv1beta1.endpoints.getFolderParents.initiate({ name: uid })),
     ]);
 
     const [legacyFolderResponse, folderResponse, parentsResponse] = responses;
+
+    if (!folderResponse?.data || !legacyFolderResponse?.data || !parentsResponse?.data) {
+      throw new Error('One of the folder responses is undefined');
+    }
 
     const userKeys = getUserKeys(folderResponse.data);
     let userResponse;
@@ -133,8 +141,8 @@ export async function getFolderByUidFacade(uid: string): Promise<FolderDTO> {
     return combineFolderResponses(
       folderResponse.data,
       legacyFolderResponse.data,
-      parentsResponse.data,
-      userResponse.data
+      parentsResponse.data.items,
+      userResponse?.data
     );
   }
 
