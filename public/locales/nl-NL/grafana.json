@@ -1662,9 +1662,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1722,9 +1719,6 @@
       },
       "placeholder-key": "sleutel",
       "placeholder-value": "waarde"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Contactpunten bekijken of maken",
@@ -2891,6 +2885,8 @@
       "notification-message": "Melding",
       "predefined-notification-message": "",
       "send-test-notification": "Testmelding verzenden",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Contactpunt testen"
     },
     "threshold": {
@@ -2950,7 +2946,9 @@
       "alert-instances": "",
       "error-loading-rule": "",
       "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
       "no-instances-found": "",
       "no-labels": "",
       "open-in-sidebar": "",
@@ -6269,6 +6267,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -7192,7 +7191,8 @@
     "logs-table-multi-select": {
       "fields": "Velden",
       "reset": "Resetten",
-      "selected-fields": "Geselecteerde velden"
+      "selected-fields": "Geselecteerde velden",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Query selecteren op naam",
@@ -8032,26 +8032,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "Eergisteren",
+          "previousFiscalQuarter": "Vorig fiscaal kwartaal",
+          "previousFiscalYear": "Vorig fiscaal jaar",
+          "previousMonth": "Vorige maand",
+          "previousWeek": "Vorige week",
+          "previousYear": "Vorig jaar",
+          "thisDayLastWeek": "Deze dag vorige week",
+          "thisFiscalQuarter": "Dit fiscaal kwartaal",
+          "thisFiscalQuarterSoFar": "Dit fiscaal kwartaal tot nu toe",
+          "thisFiscalYear": "Dit fiscale jaar",
+          "thisFiscalYearSoFar": "Dit fiscale jaar tot nu toe",
+          "thisMonth": "Deze maand",
+          "thisMonthSoFar": "Deze maand tot nu toe",
+          "thisWeek": "Deze week",
+          "thisWeekSoFar": "Deze week tot nu toe",
+          "thisYear": "Dit jaar",
+          "thisYearSoFar": "Dit jaar tot nu toe",
+          "today": "Vandaag",
+          "todaySoFar": "Vandaag tot nu toe",
+          "yesterday": "Gisteren"
         },
         "lastNDays_one": "",
         "lastNDays_other": "",
@@ -8780,6 +8780,9 @@
     },
     "drawer": {
       "close": "Sluiten"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "Experimenteel",
@@ -10597,7 +10600,12 @@
       }
     },
     "help": {
-      "aria-label": "Help"
+      "aria-label": "Help",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "Uitnodigen",
@@ -11364,12 +11372,15 @@
       "label-workflow": "Werkstroom",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "Deze bron bevindt zich achter de tak in {{repoType}}.",
+      "branch-text": "",
       "not-saved": "De rest van de Grafana-gebruikers in je organisatie ziet nog steeds de huidige versie die is opgeslagen in de geconfigureerde standaardtak totdat deze tak is samengevoegd",
       "open-in-repo-button": "Openen in {{repoType}}",
       "open-pull-request-in-repo": "Pull-verzoek openen in {{repoType}}",

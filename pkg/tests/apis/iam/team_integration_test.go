@@ -113,7 +113,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, "Failure", statusErr.ErrStatus.Status)
-		require.Contains(t, statusErr.ErrStatus.Message, "team not found")
+		require.Contains(t, statusErr.ErrStatus.Message, "not found")
 	})
 
 	t.Run("should not be able to create team when using a user with insufficient permissions", func(t *testing.T) {
@@ -332,6 +332,6 @@ func doTeamCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper,
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, "Failure", statusErr.ErrStatus.Status)
-		require.Contains(t, statusErr.ErrStatus.Message, "team not found")
+		require.Contains(t, statusErr.ErrStatus.Message, "not found")
 	})
 }
