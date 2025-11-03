@@ -20,6 +20,7 @@ func NewSearchOptions(
 	indexMetrics *resource.BleveIndexMetrics,
 	ownsIndexFn func(key resource.NamespacedResource) (bool, error),
 ) (resource.SearchOptions, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) || features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		root := cfg.IndexPath
 		if root == "" {
@@ -41,13 +42,12 @@ func NewSearchOptions(
 		}
 
 		bleve, err := NewBleveBackend(BleveOptions{
-			Root:          root,
-			FileThreshold: int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
-			BatchSize:     cfg.IndexMaxBatchSize,         // This is the batch size for how many objects to add to the index at once
-			IndexCacheTTL: cfg.IndexCacheTTL,             // How long to keep the index cache in memory
-			BuildVersion:  cfg.BuildVersion,
-			UseFullNgram:  features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageUseFullNgram),
-			OwnsIndex:     ownsIndexFn,
+			Root:                   root,
+			FileThreshold:          int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
+			IndexCacheTTL:          cfg.IndexCacheTTL,             // How long to keep the index cache in memory
+			BuildVersion:           cfg.BuildVersion,
+			OwnsIndex:              ownsIndexFn,
+			IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
 		}, tracer, indexMetrics)
 
 		if err != nil {
@@ -55,14 +55,15 @@ func NewSearchOptions(
 		}
 
 		return resource.SearchOptions{
-			Backend:              bleve,
-			Resources:            docs,
-			InitWorkerThreads:    cfg.IndexWorkers,
-			IndexRebuildWorkers:  cfg.IndexRebuildWorkers,
-			InitMinCount:         cfg.IndexMinCount,
-			DashboardIndexMaxAge: cfg.IndexRebuildInterval,
-			MaxIndexAge:          cfg.MaxFileIndexAge,
-			MinBuildVersion:      minVersion,
+			Backend:                bleve,
+			Resources:              docs,
+			InitWorkerThreads:      cfg.IndexWorkers,
+			IndexRebuildWorkers:    cfg.IndexRebuildWorkers,
+			InitMinCount:           cfg.IndexMinCount,
+			DashboardIndexMaxAge:   cfg.IndexRebuildInterval,
+			MaxIndexAge:            cfg.MaxFileIndexAge,
+			MinBuildVersion:        minVersion,
+			IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
 		}, nil
 	}
 	return resource.SearchOptions{}, nil

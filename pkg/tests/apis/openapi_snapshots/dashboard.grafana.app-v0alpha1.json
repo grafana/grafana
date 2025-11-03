@@ -2381,6 +2381,10 @@
             "type": "boolean",
             "default": false
           },
+          "source": {
+            "description": "The original value map[string]any",
+            "type": "object"
+          },
           "storedVersion": {
             "description": "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
             "type": "string"
@@ -2690,7 +2694,7 @@
             "items": {
               "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataQuery"
             },
-            "x-kubernetes-list-type": "set"
+            "x-kubernetes-list-type": "atomic"
           },
           "title": {
             "description": "The title of the library panel",

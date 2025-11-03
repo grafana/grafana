@@ -29,7 +29,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
-var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder  = (*APIBuilder)(nil)
+	_ builder.APIGroupMutation = (*APIBuilder)(nil)
+)
 
 type APIBuilder struct {
 	authorizer  authorizer.Authorizer
@@ -49,6 +52,7 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 ) *APIBuilder {
 	// Requires development settings and clearly experimental
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil
 	}
@@ -112,7 +116,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	if err != nil {
 		return err
 	}
-	stars = &starStorage{store: stars} // wrap List so we only return one value
+	stars = &starStorage{Storage: stars} // wrap List so we only return one value
 	if b.legacyStars != nil && opts.DualWriteBuilder != nil {
 		stars, err = opts.DualWriteBuilder(resource.GroupResource(), b.legacyStars, stars)
 		if err != nil {

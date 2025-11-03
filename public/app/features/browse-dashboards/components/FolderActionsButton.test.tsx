@@ -17,7 +17,7 @@ function render(...[ui, options]: Parameters<typeof rtlRender>) {
 }
 
 // Mock out the Permissions component for now
-jest.mock('app/core/components/AccessControl', () => ({
+jest.mock('app/core/components/AccessControl/Permissions', () => ({
   Permissions: () => <div>Hello!</div>,
 }));
 

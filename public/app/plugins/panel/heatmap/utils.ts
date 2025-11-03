@@ -10,6 +10,7 @@ import {
   incrRoundUp,
   TimeRange,
   FieldType,
+  getDisplayProcessor,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, HeatmapCellLayout } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
@@ -163,6 +164,13 @@ export function prepConfig(opts: PrepConfigOpts) {
     }
   }
 
+  let xField = dataRef.current?.heatmap?.fields[0]!;
+  xField.display ??= getDisplayProcessor({
+    field: xField,
+    theme,
+    timeZone,
+  });
+
   builder.addAxis({
     scaleKey: xScaleKey,
     placement: AxisPlacement.Bottom,
@@ -170,6 +178,10 @@ export function prepConfig(opts: PrepConfigOpts) {
     isTime,
     theme: theme,
     timeZone,
+    formatValue:
+      isTime && xField.config.unit?.startsWith('time:')
+        ? (v, decimals) => xField.display!(v, decimals).text
+        : undefined,
   });
 
   const yField = dataRef.current?.heatmap?.fields[1]!;
@@ -411,11 +423,15 @@ export function prepConfig(opts: PrepConfigOpts) {
           : dataRef.current?.xLayout === HeatmapCellLayout.ge
             ? 1
             : 0,
-      yAlign: ((dataRef.current?.yLayout === HeatmapCellLayout.le
-        ? -1
-        : dataRef.current?.yLayout === HeatmapCellLayout.ge
-          ? 1
-          : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
+      yAlign: (() => {
+        const yAlign =
+          dataRef.current?.yLayout === HeatmapCellLayout.le
+            ? -1
+            : dataRef.current?.yLayout === HeatmapCellLayout.ge
+              ? 1
+              : 0;
+        return yAxisReverse ? (yAlign === -1 ? 1 : yAlign === 1 ? -1 : 0) : yAlign;
+      })(),
       ySizeDivisor,
       disp: {
         fill: {

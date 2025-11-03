@@ -26,8 +26,9 @@ var (
 )
 
 var appManifestData = app.ManifestData{
-	AppName: "shorturl",
-	Group:   "shorturl.grafana.app",
+	AppName:          "shorturl",
+	Group:            "shorturl.grafana.app",
+	PreferredVersion: "v1alpha1",
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v1alpha1",
@@ -52,7 +53,7 @@ var appManifestData = app.ManifestData{
 							Get: &spec3.Operation{
 								OperationProps: spec3.OperationProps{
 
-									OperationId: "GetGoto",
+									OperationId: "getGoto",
 
 									Responses: &spec3.Responses{
 										ResponsesProps: spec3.ResponsesProps{
@@ -90,6 +91,7 @@ var appManifestData = app.ManifestData{
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{},
 				Cluster:    map[string]spec3.PathProps{},
+				Schemas:    map[string]spec.Schema{},
 			},
 		},
 	},

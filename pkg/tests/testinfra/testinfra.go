@@ -103,7 +103,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	dbCfg.Key("password").SetValue(testDB.Password)
 	dbCfg.Key("name").SetValue(testDB.Database)
 
-	t.Log("Using test database", "type", testDB.DriverName, "host", testDB.Host, "port", testDB.Port, "user", testDB.User, "name", testDB.Database)
+	t.Log("Using test database", "type", testDB.DriverName, "host", testDB.Host, "port", testDB.Port, "user", testDB.User, "name", testDB.Database, "path", testDB.Path)
 
 	env, err := server.InitializeForTest(ctx, t, t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
@@ -129,7 +129,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	var storage sql.UnifiedStorageGrpcService
 	if runstore {
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
-			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil)
+			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil)
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
@@ -545,10 +545,17 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
-	if opts.DisableProvisioningControllers {
-		provisioningSection, err := getOrCreateSection("provisioning")
+	if opts.DisableControllers {
+		apiserverSection, err := getOrCreateSection("grafana-apiserver")
 		require.NoError(t, err)
-		_, err = provisioningSection.NewKey("disable_controllers", "true")
+		_, err = apiserverSection.NewKey("disable_controllers", "true")
+		require.NoError(t, err)
+	}
+
+	if opts.SecretsManagerEnableDBMigrations {
+		apiserverSection, err := getOrCreateSection("secrets_manager")
+		require.NoError(t, err)
+		_, err = apiserverSection.NewKey("run_secrets_db_migrations", "true")
 		require.NoError(t, err)
 	}
 
@@ -622,7 +629,8 @@ type GrafanaOpts struct {
 	EnableRecordingRules                  bool
 	EnableSCIM                            bool
 	APIServerRuntimeConfig                string
-	DisableProvisioningControllers        bool
+	DisableControllers                    bool
+	SecretsManagerEnableDBMigrations      bool
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType

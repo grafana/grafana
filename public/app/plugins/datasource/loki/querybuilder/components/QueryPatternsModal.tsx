@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { CoreApp, GrafanaTheme2, getNextRefId } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Button, Collapse, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Collapse, Modal, Stack, useStyles2 } from '@grafana/ui';
 
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
@@ -99,7 +99,6 @@ export const QueryPatternsModal = (props: Props) => {
             key={patternType}
             label={`${capitalize(patternType)} query starters`}
             isOpen={openTabs.includes(patternType)}
-            collapsible={true}
             onToggle={() =>
               setOpenTabs((tabs) =>
                 // close tab if it's already open, otherwise open it
@@ -107,7 +106,7 @@ export const QueryPatternsModal = (props: Props) => {
               )
             }
           >
-            <div className={styles.cardsContainer}>
+            <Stack wrap justifyContent="space-between">
               {lokiQueryModeller
                 .getQueryPatterns()
                 .filter((pattern) => pattern.type === patternType)
@@ -122,7 +121,7 @@ export const QueryPatternsModal = (props: Props) => {
                     setSelectedPatternName={setSelectedPatternName}
                   />
                 ))}
-            </div>
+            </Stack>
           </Collapse>
         );
       })}
@@ -135,12 +134,6 @@ export const QueryPatternsModal = (props: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    cardsContainer: css({
-      display: 'flex',
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-    }),
     spacing: css({
       marginBottom: theme.spacing(1),
     }),

@@ -7,6 +7,7 @@ import { SliderProps } from './types';
 const sliderProps: SliderProps = {
   min: 10,
   max: 20,
+  inputId: 'slider-test',
 };
 
 describe('Slider', () => {
@@ -30,6 +31,18 @@ describe('Slider', () => {
     expect(slider).toHaveAttribute('aria-valuemax', '20');
     expect(slider).toHaveAttribute('aria-valuenow', '10');
     expect(sliderInput).toHaveValue('10');
+  });
+
+  it('hides the slider input if showInput is false', () => {
+    render(<Slider {...sliderProps} showInput={false} />);
+
+    const slider = screen.getByRole('slider');
+    const sliderInput = screen.queryByRole('textbox');
+
+    expect(slider).toHaveAttribute('aria-valuemin', '10');
+    expect(slider).toHaveAttribute('aria-valuemax', '20');
+    expect(slider).toHaveAttribute('aria-valuenow', '10');
+    expect(sliderInput).not.toBeInTheDocument();
   });
 
   it('renders correct contents with a value', () => {

@@ -23,11 +23,12 @@ func TestAPIBuilderValidate(t *testing.T) {
 	mockRepo := repository.NewMockConfigRepository(t)
 	mockRepo.EXPECT().Validate().Return(nil)
 	factory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockRepo, nil)
+	validator := repository.NewValidator(30*time.Second, []v0alpha1.SyncTargetType{v0alpha1.SyncTargetTypeFolder}, false)
 	b := &APIBuilder{
 		repoFactory:         factory,
 		allowedTargets:      []v0alpha1.SyncTargetType{v0alpha1.SyncTargetTypeFolder},
 		allowImageRendering: false,
-		minSyncInterval:     30 * time.Second,
+		validator:           validator,
 	}
 
 	t.Run("min sync interval is less than 10 seconds", func(t *testing.T) {

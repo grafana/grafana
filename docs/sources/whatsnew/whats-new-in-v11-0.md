@@ -376,7 +376,7 @@ If you manage your users using Grafana's built-in basic authorization as an iden
 
 Starting with Grafana v11.0, you can enable an opinionated strong password policy feature. This configuration option validates all password updates to comply with our strong password policy.
 
-To learn more about Grafana's strong password policy, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/grafana/#strong-password-policy).
+To learn more about the strong password policy in Grafana, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/grafana/#strong-password-policy).
 
 ### Anonymous users are billed in Grafana Enterprise
 
@@ -388,6 +388,6 @@ We are announcing a license change to the anonymous access feature in Grafana 1
 
 **Affected Grafana versions**
 
-[Anonymous authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/grafana/#anonymous-authentication) is disabled by default in Grafana Cloud. This licensing change only affects Grafana Enterprise (self-managed) edition. Anonymous users will be charged as active users in Grafana Enterprise.
+[Anonymous authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/grafana/#anonymous-authentication) is disabled by default in Grafana Cloud. This licensing change only affects Grafana Enterprise (self-managed) edition. Anonymous users will be charged as active users in Grafana Enterprise.
 
-[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/grafana/#anonymous-devices)
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/grafana/#anonymous-devices)

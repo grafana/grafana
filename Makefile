@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.24.6
+GO_VERSION = 1.25.3
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -135,14 +135,14 @@ i18n-extract-enterprise:
 	@echo "Skipping i18n extract for Enterprise: not enabled"
 else
 i18n-extract-enterprise:
-	@echo "Extracting i18n strings for Enterprise"
-	yarn run i18next --config public/locales/i18next-parser-enterprise.config.cjs
+	@echo "Extracting i18n strings for Enterprise"	
+	cd public/locales/enterprise && yarn run i18next-cli extract --sync-primary
 endif
 
 .PHONY: i18n-extract
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
-	yarn run i18next --config public/locales/i18next-parser.config.cjs
+	yarn run i18next-cli extract --sync-primary
 	@echo "Extracting i18n strings for packages"
 	yarn run packages:i18n-extract
 	@echo "Extracting i18n strings for plugins"
@@ -178,7 +178,7 @@ gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run go
 	@if [ -n "$$CODEGEN_VERIFY" ]; then \
 		echo "Verifying generated code is up to date..."; \
 		if ! git diff --quiet; then \
-			echo "Error: Generated apps code is not up to date. Please run 'make gen-apps' to regenerate."; \
+			echo "Error: Generated code is not up to date. Please run 'make gen-apps', 'make gen-cue', and 'make gen-jsonnet' to regenerate."; \
 			git diff --name-only; \
 			exit 1; \
 		fi; \
@@ -233,13 +233,13 @@ update-workspace: gen-go
 	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
-build-go: gen-go update-workspace ## Build all Go binaries.
+build-go: ## Build all Go binaries.
 	@echo "build go files with updated workspace"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
-build-go-fast: gen-go ## Build all Go binaries.
-	@echo "build go files"
-	$(GO) run build.go $(GO_BUILD_FLAGS) build
+.PHONY: build-go-fast
+build-go-fast: ## Build all Go binaries without updating workspace.
+	@echo "!!! [DEPRECATED] use build-go, they do the same thing now. This command will be removed soon"
 
 .PHONY: build-backend
 build-backend: ## Build Grafana backend.

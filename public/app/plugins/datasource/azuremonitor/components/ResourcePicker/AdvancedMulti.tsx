@@ -19,7 +19,6 @@ const AdvancedMulti = ({ resources, onChange, renderAdvanced }: ResourcePickerPr
   return (
     <div data-testid={selectors.components.queryEditor.resourcePicker.advanced.collapse}>
       <Collapse
-        collapsible
         label={t('components.advanced-multi.label-advanced', 'Advanced')}
         isOpen={isAdvancedOpen}
         onToggle={() => setIsAdvancedOpen(!isAdvancedOpen)}

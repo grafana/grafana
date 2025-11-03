@@ -46,7 +46,7 @@ func TestSyncWorker_IsSupported(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			worker := NewSyncWorker(nil, nil, nil, nil, nil, metrics, tracing.NewNoopTracerService())
+			worker := NewSyncWorker(nil, nil, nil, nil, nil, metrics, tracing.NewNoopTracerService(), 10)
 			result := worker.IsSupported(context.Background(), tt.job)
 			require.Equal(t, tt.expected, result)
 		})
@@ -65,7 +65,7 @@ func TestSyncWorker_ProcessNotReaderWriter(t *testing.T) {
 	})
 	fakeDualwrite := dualwrite.NewMockService(t)
 	fakeDualwrite.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
-	worker := NewSyncWorker(nil, nil, fakeDualwrite, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracing.NewNoopTracerService())
+	worker := NewSyncWorker(nil, nil, fakeDualwrite, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracing.NewNoopTracerService(), 10)
 	err := worker.Process(context.Background(), repo, provisioning.Job{}, jobs.NewMockJobProgressRecorder(t))
 	require.EqualError(t, err, "sync job submitted for repository that does not support read-write")
 }
@@ -153,10 +153,15 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Initial status update succeeds
 				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
-				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil)
+				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil).Once()
 
 				// Repository resources creation fails
 				rrf.On("Client", mock.Anything, mock.Anything).Return(nil, errors.New("failed to create repository resources client"))
+
+				// Progress.Complete should be called with the error
+				pr.On("Complete", mock.Anything, mock.MatchedBy(func(err error) bool {
+					return err != nil && err.Error() == "create repository resources client: failed to create repository resources client"
+				})).Return(provisioning.JobStatus{State: provisioning.JobStateError})
 			},
 			expectedError: "create repository resources client: failed to create repository resources client",
 		},
@@ -185,13 +190,18 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Initial status update succeeds
 				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
-				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil)
+				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil).Once()
 
 				// Repository resources creation succeeds
 				rrf.On("Client", mock.Anything, mock.Anything).Return(&resources.MockRepositoryResources{}, nil)
 
 				// Getting clients for namespace fails
 				cf.On("Clients", mock.Anything, "test-namespace").Return(nil, errors.New("failed to get clients"))
+
+				// Progress.Complete should be called with the error
+				pr.On("Complete", mock.Anything, mock.MatchedBy(func(err error) bool {
+					return err != nil && err.Error() == "get clients for test-repo: failed to get clients"
+				})).Return(provisioning.JobStatus{State: provisioning.JobStateError})
 			},
 			expectedError: "get clients for test-repo: failed to get clients",
 		},
@@ -535,6 +545,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				syncer,
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
 				tracing.NewNoopTracerService(),
+				10,
 			)
 
 			// Create test job

@@ -2103,17 +2103,10 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingSpec(ref common.ReferenceCallback) 
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"subjects": {
+					"subject": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingspecSubject"),
-									},
-								},
-							},
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingspecSubject"),
 						},
 					},
 					"teamRef": {
@@ -2122,8 +2115,23 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingSpec(ref common.ReferenceCallback) 
 							Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingTeamRef"),
 						},
 					},
+					"permission": {
+						SchemaProps: spec.SchemaProps{
+							Description: "permission of the identity in the team",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"external": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
 				},
-				Required: []string{"subjects", "teamRef"},
+				Required: []string{"subject", "teamRef", "permission", "external"},
 			},
 		},
 		Dependencies: []string{
@@ -2210,16 +2218,8 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingspecSubject(ref common.ReferenceCal
 							Format:      "",
 						},
 					},
-					"permission": {
-						SchemaProps: spec.SchemaProps{
-							Description: "permission of the identity in the team",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 				},
-				Required: []string{"name", "permission"},
+				Required: []string{"name"},
 			},
 		},
 	}
@@ -2591,7 +2591,7 @@ func schema_pkg_apis_iam_v0alpha1_UserSpec(ref common.ReferenceCallback) common.
 							Format:  "",
 						},
 					},
-					"name": {
+					"title": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
@@ -2613,7 +2613,7 @@ func schema_pkg_apis_iam_v0alpha1_UserSpec(ref common.ReferenceCallback) common.
 						},
 					},
 				},
-				Required: []string{"disabled", "email", "emailVerified", "grafanaAdmin", "login", "name", "provisioned", "role"},
+				Required: []string{"disabled", "email", "emailVerified", "grafanaAdmin", "login", "title", "provisioned", "role"},
 			},
 		},
 	}

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v1alpha1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 )
@@ -28,8 +29,9 @@ var (
 )
 
 var appManifestData = app.ManifestData{
-	AppName: "preferences",
-	Group:   "preferences.grafana.app",
+	AppName:          "preferences",
+	Group:            "preferences.grafana.app",
+	PreferredVersion: "v1alpha1",
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v1alpha1",
@@ -70,6 +72,7 @@ var appManifestData = app.ManifestData{
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{},
 				Cluster:    map[string]spec3.PathProps{},
+				Schemas:    map[string]spec.Schema{},
 			},
 		},
 	},

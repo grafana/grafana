@@ -4,6 +4,7 @@ import (
 	"path"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -268,6 +269,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 		// keep current sorting if the pages, but above all the other apps
 		for _, child := range sectionChildren {
 			child.SortWeight = -100 + child.SortWeight
+			child.Id = "standalone-plugin-page-" + strings.ReplaceAll(strings.ToLower(child.Text), " ", "-")
 		}
 	}
 
@@ -288,7 +290,6 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Url:        s.cfg.AppSubURL + "/apps",
 			})
 		case navtree.NavIDObservability:
-
 			treeRoot.AddSection(&navtree.NavLink{
 				Text:       "Observability",
 				Id:         navtree.NavIDObservability,
@@ -343,8 +344,8 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Id:         navtree.NavIDAdaptiveTelemetry,
 				SubTitle:   "Reduce noise, cut costs, and accelerate troubleshooting by intelligently ingesting only the telemetry data that matters most.",
 				Icon:       "adaptive-telemetry",
-				SortWeight: navtree.WeightAIAndML + 1, // Place under "AI & Machine Learning"
-				Children:   []*navtree.NavLink{appLink},
+				SortWeight: navtree.WeightAdaptiveTelemetry,
+				Children:   sectionChildren,
 				Url:        "adaptive-telemetry",
 				// Use the icon URL from the first "Adaptive Telemetry" plugin in the list (they will all be the same)
 				Img:   s.cfg.AppSubURL + plugin.Info.Logos.Large,
@@ -376,7 +377,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-asserts-app":              {SectionID: navtree.NavIDObservability, SortWeight: 1, Icon: "asserts"},
 		"grafana-kowalski-app":             {SectionID: navtree.NavIDObservability, SortWeight: 2, Text: "Frontend"},
 		"grafana-app-observability-app":    {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Application"},
-		"grafana-dbo11y-app":               {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Database"},
+		"grafana-dbo11y-app":               {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Database", IsNew: true},
 		"grafana-k8s-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Kubernetes"},
 		"grafana-csp-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 6, Icon: "cloud-provider"},
 		"grafana-metricsdrilldown-app":     {SectionID: navtree.NavIDDrilldown, SortWeight: 1, Text: "Metrics"},
@@ -391,17 +392,16 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
 		"grafana-slo-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 7},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
-		"grafana-costmanagementui-app":     {SectionID: navtree.NavIDCfg, Text: "Cost management"},
 		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1},
 		"grafana-adaptivelogs-app":         {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 2},
 		"grafana-adaptivetraces-app":       {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 3},
 		"grafana-adaptiveprofiles-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 4},
-		"grafana-attributions-app":         {SectionID: navtree.NavIDCfg, Text: "Attributions"},
-		"grafana-logvolumeexplorer-app":    {SectionID: navtree.NavIDCfg, Text: "Log Volume Explorer"},
+		"grafana-cmab-app":                 {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightCMAB, Icon: "cmab-logo", IsNew: true},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
 		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Performance"},
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
 		s.navigationAppConfig["grafana-advisor-app"] = NavigationAppConfig{
 			SectionID: navtree.NavIDCfg,

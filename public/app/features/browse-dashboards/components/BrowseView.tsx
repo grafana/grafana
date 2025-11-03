@@ -33,9 +33,10 @@ interface BrowseViewProps {
   width: number;
   folderUID: string | undefined;
   permissions: BrowseDashboardsPermissions;
+  isReadOnlyRepo?: boolean;
 }
 
-export function BrowseView({ folderUID, width, height, permissions }: BrowseViewProps) {
+export function BrowseView({ folderUID, width, height, permissions, isReadOnlyRepo }: BrowseViewProps) {
   const status = useBrowseLoadingStatus(folderUID);
   const dispatch = useDispatch();
   const flatTree = useFlatTreeState(folderUID);
@@ -163,6 +164,7 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
                 href={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
                 icon="plus"
                 size="lg"
+                disabled={isReadOnlyRepo}
               >
                 <Trans i18nKey="browse-dashboards.empty-state.button-title">Create dashboard</Trans>
               </LinkButton>
@@ -173,7 +175,7 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
                 : t('browse-dashboards.empty-state.title', "You haven't created any dashboards yet")
             }
           >
-            {folderUID && (
+            {folderUID && !isReadOnlyRepo && (
               <Trans i18nKey="browse-dashboards.empty-state.pro-tip">
                 Add/move dashboards to your folder at{' '}
                 <TextLink external={false} href="/dashboards">
