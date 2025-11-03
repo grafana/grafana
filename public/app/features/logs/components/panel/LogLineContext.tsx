@@ -329,7 +329,6 @@ export const LogLineContext = memo(
           <div>{getLogRowContextUi(log, updateResults)}</div>
         )}
         <Collapse
-          collapsible={true}
           isOpen={showLog}
           onToggle={() => setShowLog(!showLog)}
           className={styles.referenceLogLine}

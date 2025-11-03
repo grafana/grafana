@@ -30,6 +30,8 @@ type DashboardAnnotationQuerySpec struct {
 	Name      string                          `json:"name"`
 	BuiltIn   *bool                           `json:"builtIn,omitempty"`
 	Filter    *DashboardAnnotationPanelFilter `json:"filter,omitempty"`
+	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+	Placement *string `json:"placement,omitempty"`
 	// Catch-all field for datasource-specific properties. Should not be available in as code tooling.
 	LegacyOptions map[string]interface{} `json:"legacyOptions,omitempty"`
 }
@@ -37,8 +39,9 @@ type DashboardAnnotationQuerySpec struct {
 // NewDashboardAnnotationQuerySpec creates a new DashboardAnnotationQuerySpec object.
 func NewDashboardAnnotationQuerySpec() *DashboardAnnotationQuerySpec {
 	return &DashboardAnnotationQuerySpec{
-		Query:   *NewDashboardDataQueryKind(),
-		BuiltIn: (func(input bool) *bool { return &input })(false),
+		Query:     *NewDashboardDataQueryKind(),
+		BuiltIn:   (func(input bool) *bool { return &input })(false),
+		Placement: (func(input string) *string { return &input })(DashboardAnnotationQueryPlacement),
 	}
 }
 
@@ -77,6 +80,11 @@ func NewDashboardAnnotationPanelFilter() *DashboardAnnotationPanelFilter {
 		Ids:     []uint32{},
 	}
 }
+
+// Annotation Query placement. Defines where the annotation query should be displayed.
+// - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+// +k8s:openapi-gen=true
+const DashboardAnnotationQueryPlacement = "inControlsMenu"
 
 // "Off" for no shared crosshair or tooltip (default).
 // "Crosshair" for shared crosshair.
@@ -278,6 +286,7 @@ type DashboardQueryOptionsSpec struct {
 	Interval         *string `json:"interval,omitempty"`
 	CacheTimeout     *string `json:"cacheTimeout,omitempty"`
 	HideTimeOverride *bool   `json:"hideTimeOverride,omitempty"`
+	TimeCompare      *string `json:"timeCompare,omitempty"`
 }
 
 // NewDashboardQueryOptionsSpec creates a new DashboardQueryOptionsSpec object.

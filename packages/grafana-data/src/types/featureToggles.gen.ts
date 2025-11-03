@@ -1077,6 +1077,7 @@ export interface FeatureToggles {
   alertingImportAlertmanagerUI?: boolean;
   /**
   * Enables image sharing functionality for dashboards
+  * @default true
   */
   sharingDashboardImage?: boolean;
   /**
@@ -1222,6 +1223,10 @@ export interface FeatureToggles {
   * @default true
   */
   preventPanelChromeOverflow?: boolean;
+  /**
+  * Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
+  */
+  jaegerEnableGrpcEndpoint?: boolean;
   /**
   * Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
   * @default false

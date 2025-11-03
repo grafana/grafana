@@ -1657,9 +1657,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1717,9 +1714,6 @@
       },
       "placeholder-key": "キー",
       "placeholder-value": "値"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "連絡先を表示または作成",
@@ -2879,6 +2873,8 @@
       "notification-message": "通知メッセージ",
       "predefined-notification-message": "",
       "send-test-notification": "テスト通知を送信",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "連絡先をテスト"
     },
     "threshold": {
@@ -2938,7 +2934,9 @@
       "alert-instances": "",
       "error-loading-rule": "",
       "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
       "no-instances-found": "",
       "no-labels": "",
       "open-in-sidebar": "",
@@ -4137,6 +4135,7 @@
     "cancel": "キャンセル",
     "clear": "消去",
     "collapse": "折りたたみ表示",
+    "disabled": "",
     "edit": "編集",
     "help": "ヘルプ",
     "loading": "読み込み中...",
@@ -5112,6 +5111,19 @@
       "aria-label-remove-override": "オーバーライドを削除",
       "tooltip-remove-override": "オーバーライドを削除"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "アラートを追加する前に、ダッシュボードを保存する必要があります。",
@@ -5666,6 +5678,11 @@
       "open-dashboard": "ダッシュボードを開く",
       "open-in-new-tab": "新しいタブで開く",
       "title-error-adding-the-panel": "パネル追加時のエラー"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "一覧に戻る",
@@ -6227,6 +6244,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -7150,7 +7168,8 @@
     "logs-table-multi-select": {
       "fields": "フィールド",
       "reset": "リセット",
-      "selected-fields": "選択済みのフィールド"
+      "selected-fields": "選択済みのフィールド",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "名前でクエリを選択",
@@ -7619,7 +7638,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "フォルダが見つかりません",
     "select-aria-label": "フォルダフィルター",
     "select-placeholder": "フォルダでフィルタリング"
   },
@@ -7989,26 +8007,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "一昨日",
+          "previousFiscalQuarter": "前四半期",
+          "previousFiscalYear": "前年度",
+          "previousMonth": "前月",
+          "previousWeek": "前の週",
+          "previousYear": "前の年",
+          "thisDayLastWeek": "先週の同じ曜日",
+          "thisFiscalQuarter": "今四半期",
+          "thisFiscalQuarterSoFar": "今四半期の現在まで",
+          "thisFiscalYear": "今年度",
+          "thisFiscalYearSoFar": "今年度の累計",
+          "thisMonth": "今月",
+          "thisMonthSoFar": "今月の現在まで",
+          "thisWeek": "今週",
+          "thisWeekSoFar": "今週の現在まで",
+          "thisYear": "今年",
+          "thisYearSoFar": "今年の現在まで",
+          "today": "今日",
+          "todaySoFar": "今日の現在まで",
+          "yesterday": "昨日"
         },
         "lastNDays_other": "",
         "lastNHours_other": "",
@@ -8727,6 +8745,9 @@
     },
     "drawer": {
       "close": "閉じる"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "試験運用",
@@ -10536,7 +10557,12 @@
       }
     },
     "help": {
-      "aria-label": "ヘルプ"
+      "aria-label": "ヘルプ",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "招待",
@@ -10826,6 +10852,7 @@
       "replace-library-panel": "ライブラリパネルを置き換える",
       "share": "共有",
       "show-legend": "凡例を表示",
+      "time-settings": "",
       "unlink-library-panel": "ライブラリパネルのリンクを解除",
       "view": "表示"
     },
@@ -11299,12 +11326,15 @@
       "label-workflow": "ワークフロー",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "このリソースは{{repoType}}内の該当ブランチよりも古いバージョンです。",
+      "branch-text": "",
       "not-saved": "このブランチがマージされるまで、組織内の他のGrafanaユーザーには、デフォルトブランチに保存された現在のバージョンが表示されます",
       "open-in-repo-button": "{{repoType}}で開く",
       "open-pull-request-in-repo": "{{repoType}}でプルリクエストを開く",
@@ -12235,8 +12265,6 @@
       "title": "スコープを選択"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "クエリに一致する結果が見つかりませんでした。",
         "recommended": "おすすめ",
@@ -13077,6 +13105,14 @@
       "form-label": "フォームラベル",
       "title": "パネル"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {

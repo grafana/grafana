@@ -6,9 +6,10 @@ import { InlineSelect } from '@grafana/plugin-ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
 import { DEFAULT_CWLI_QUERY_STRING, DEFAULT_PPL_QUERY_STRING, DEFAULT_SQL_QUERY_STRING } from '../../../defaultQueries';
-import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery, LogsQueryLanguage } from '../../../types';
+import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery, LogsMode, LogsQueryLanguage } from '../../../types';
 
 import { CloudWatchLink } from './CloudWatchLink';
+import { LogsAnomaliesQueryEditor } from './LogsAnomaliesQueryEditor';
 import { CloudWatchLogsQueryField } from './LogsQueryField';
 
 type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> & {
@@ -20,6 +21,11 @@ const logsQueryLanguageOptions: Array<SelectableValue<LogsQueryLanguage>> = [
   { label: 'Logs Insights QL', value: LogsQueryLanguage.CWLI },
   { label: 'OpenSearch SQL', value: LogsQueryLanguage.SQL },
   { label: 'OpenSearch PPL', value: LogsQueryLanguage.PPL },
+];
+
+const logsModeOptions: Array<SelectableValue<LogsMode>> = [
+  { label: 'Logs Insights', value: LogsMode.Insights },
+  { label: 'Logs Anomalies', value: LogsMode.Anomalies },
 ];
 
 export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor(props: Props) {
@@ -42,6 +48,13 @@ export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor
     [isQueryNew, onChange, query]
   );
 
+  const onLogsModeChange = useCallback(
+    (logsMode: LogsMode | undefined) => {
+      onChange({ ...query, logsMode });
+    },
+    [query, onChange]
+  );
+
   // if the query has already been saved from before, we shouldn't replace it with a default one
   useEffectOnce(() => {
     if (query.expression) {
@@ -58,20 +71,32 @@ export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor
 
   useEffect(() => {
     extraHeaderElementLeft?.(
-      <InlineSelect
-        label="Query language"
-        value={query.queryLanguage || LogsQueryLanguage.CWLI}
-        options={logsQueryLanguageOptions}
-        onChange={({ value }) => {
-          onQueryLanguageChange(value);
-        }}
-      />
+      <>
+        <InlineSelect
+          label="Logs Mode"
+          value={query.logsMode || LogsMode.Insights}
+          options={logsModeOptions}
+          onChange={({ value }) => {
+            onLogsModeChange(value);
+          }}
+        />
+        {query.logsMode !== LogsMode.Anomalies && (
+          <InlineSelect
+            label="Query language"
+            value={query.queryLanguage || LogsQueryLanguage.CWLI}
+            options={logsQueryLanguageOptions}
+            onChange={({ value }) => {
+              onQueryLanguageChange(value);
+            }}
+          />
+        )}
+      </>
     );
 
     return () => {
       extraHeaderElementLeft?.(undefined);
     };
-  }, [extraHeaderElementLeft, onChange, onQueryLanguageChange, query]);
+  }, [extraHeaderElementLeft, onChange, onQueryLanguageChange, query, onLogsModeChange]);
 
   const onQueryStringChange = (query: CloudWatchQuery) => {
     onChange(query);
@@ -79,11 +104,17 @@ export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor
   };
 
   return (
-    <CloudWatchLogsQueryField
-      {...props}
-      onChange={onQueryStringChange}
-      ExtraFieldElement={<CloudWatchLink query={query} panelData={data} datasource={datasource} />}
-    />
+    <>
+      {query.logsMode === LogsMode.Anomalies ? (
+        <LogsAnomaliesQueryEditor query={query} onChange={onChange} />
+      ) : (
+        <CloudWatchLogsQueryField
+          {...props}
+          onChange={onQueryStringChange}
+          ExtraFieldElement={<CloudWatchLink query={query} panelData={data} datasource={datasource} />}
+        />
+      )}
+    </>
   );
 });
 
