@@ -70,6 +70,17 @@ export function ChannelSubForm<R extends ChannelValues>({
   const onCallIntegrationType = watch(`${settingsFieldPath}.integration_type`);
   const isTestAvailable = onCallIntegrationType !== OnCallIntegrationType.NewIntegration;
 
+  // Check if email integration has placeholder addresses
+  const emailAddresses = watch(`${settingsFieldPath}.addresses`);
+  const hasPlaceholderEmail = useMemo(() => {
+    if (selectedType !== 'email' || !emailAddresses) {
+      return false;
+    }
+    const placeholders = ['<example@email.com>', 'example@email.com'];
+    const addresses = typeof emailAddresses === 'string' ? [emailAddresses] : emailAddresses;
+    return addresses.some((addr: string) => placeholders.includes(addr?.trim()));
+  }, [selectedType, emailAddresses]);
+
   useEffect(() => {
     register(`${channelFieldPath}.__id`);
     /* Need to manually register secureFields or else they'll
@@ -230,7 +241,22 @@ export function ChannelSubForm<R extends ChannelValues>({
         </div>
         <div className={styles.buttons}>
           {isTestable && onTest && isTestAvailable && (
-            <Button size="xs" variant="secondary" type="button" onClick={() => handleTest()} icon="message">
+            <Button
+              disabled={hasPlaceholderEmail}
+              size="xs"
+              variant="secondary"
+              type="button"
+              onClick={() => handleTest()}
+              icon="message"
+              tooltip={
+                hasPlaceholderEmail
+                  ? t(
+                      'alerting.channel-sub-form.test-disabled-placeholder',
+                      'Please configure a valid email address before testing'
+                    )
+                  : undefined
+              }
+            >
               <Trans i18nKey="alerting.channel-sub-form.test">Test</Trans>
             </Button>
           )}
@@ -257,6 +283,20 @@ export function ChannelSubForm<R extends ChannelValues>({
       </div>
       {notifier && (
         <div className={styles.innerContent}>
+          {hasPlaceholderEmail && (
+            <Alert
+              title={t(
+                'alerting.contact-points.email.placeholder-warning-title',
+                'Configure a valid email address'
+              )}
+              severity="info"
+            >
+              <Trans i18nKey="alerting.contact-points.email.placeholder-warning-body">
+                This contact point is using a placeholder email address (<Text variant="code">example@email.com</Text>
+                ). Please update it with a valid email address to receive alerts and enable testing.
+              </Trans>
+            </Alert>
+          )}
           {showTelegramWarning && (
             <Alert
               title={t(
