@@ -367,8 +367,8 @@ export const prepConfig = ({
   let markerMax = 0;
   for (let i = 0; i < markerData.length; i++) {
     const vals = markerData[i].values.filter((v) => v != null);
-    const min = Math.min(...vals, markerMin);
-    const max = Math.max(...vals, markerMax)
+    markerMin = Math.min(...vals, markerMin);
+    markerMax = Math.max(...vals, markerMax);
   }
 
   // iterate the y values
