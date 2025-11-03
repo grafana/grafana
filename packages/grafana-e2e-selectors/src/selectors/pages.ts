@@ -797,53 +797,53 @@ export const versionedPages = {
     },
     ShareExternally: {
       container: {
-        '11.3.0': 'share externally drawer container',
+        '11.3.0': 'data-testid share externally drawer container',
       },
       publicAlert: {
-        '11.3.0': 'public share alert',
+        '11.3.0': 'data-testid public share alert',
       },
       emailSharingAlert: {
-        '11.3.0': 'email share alert',
+        '11.3.0': 'data-testid email share alert',
       },
       shareTypeSelect: {
-        '11.3.0': 'share externally share type select',
+        '11.3.0': 'data-testid share externally share type select',
       },
       Creation: {
         PublicShare: {
           createButton: {
-            '11.3.0': 'public share dashboard create button',
+            '11.3.0': 'data-testid public share dashboard create button',
           },
           cancelButton: {
-            '11.3.0': 'public share dashboard cancel button',
+            '11.3.0': 'data-testid public share dashboard cancel button',
           },
         },
         EmailShare: {
           createButton: {
-            '11.3.0': 'email share dashboard create button',
+            '11.3.0': 'data-testid email share dashboard create button',
           },
           cancelButton: {
-            '11.3.0': 'email share dashboard cancel button',
+            '11.3.0': 'data-testid email share dashboard cancel button',
           },
         },
         willBePublicCheckbox: {
-          '11.3.0': 'share dashboard will be public checkbox',
+          '11.3.0': 'data-testid share dashboard will be public checkbox',
         },
       },
       Configuration: {
         enableTimeRangeSwitch: {
-          '11.3.0': 'share externally enable time range switch',
+          '11.3.0': 'data-testid share externally enable time range switch',
         },
         enableAnnotationsSwitch: {
-          '11.3.0': 'share externally enable annotations switch',
+          '11.3.0': 'data-testid share externally enable annotations switch',
         },
         copyUrlButton: {
-          '11.3.0': 'share externally copy url button',
+          '11.3.0': 'data-testid share externally copy url button',
         },
         revokeAccessButton: {
-          '11.3.0': 'share externally revoke access button',
+          '11.3.0': 'data-testid share externally revoke access button',
         },
         toggleAccessButton: {
-          '11.3.0': 'share externally pause or resume access button',
+          '11.3.0': 'data-testid share externally pause or resume access button',
         },
       },
     },
