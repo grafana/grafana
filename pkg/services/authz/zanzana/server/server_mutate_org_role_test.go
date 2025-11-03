@@ -22,7 +22,7 @@ func setupMutateOrgRoles(t *testing.T, srv *Server) *Server {
 }
 
 func testMutateOrgRoles(t *testing.T, srv *Server) {
-	setupMutateResourcePermissions(t, srv)
+	setupMutateOrgRoles(t, srv)
 
 	t.Run("should update user org role and delete old role", func(t *testing.T) {
 		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
