@@ -187,14 +187,14 @@ describe('TimePickerTooltip', () => {
 
   it('renders time range without timezone if timezone is not passed in', () => {
     render(<TimePickerTooltip timeRange={timeRange} />);
-    expect(screen.getByText(/United States, E[DS]T/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/United States, E[DS]T/)).not.toBeInTheDocument();
   });
 
   it('renders time range with browser timezone', () => {
     render(<TimePickerTooltip timeRange={timeRange} timeZone="browser" />);
 
     expect(screen.getByText('Local browser time')).toBeInTheDocument();
-    expect(screen.getByText(/United States, E[DS]T/)).toBeInTheDocument(); // this was mocked at the beginning, in beforeAll block. matches either daylight savings time or standard time
+    expect(screen.queryByText(/United States, E[DS]T/)).toBeInTheDocument(); // this was mocked at the beginning, in beforeAll block. matches either daylight savings time or standard time
   });
 
   it('renders time range with specific timezone', () => {
