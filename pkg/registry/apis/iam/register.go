@@ -226,6 +226,14 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 
+		// Only teamBindingStore exposes the AfterCreate, AfterDelete, and BeginUpdate hooks
+		if enableZanzanaSync {
+			b.logger.Info("Enabling hooks for TeamBinding to sync to Zanzana")
+			teamBindingStore.AfterCreate = b.AfterTeamBindingCreate
+			teamBindingStore.AfterDelete = b.AfterTeamBindingDelete
+			teamBindingStore.BeginUpdate = b.BeginTeamBindingUpdate
+		}
+
 		storage[teamBindingResource.StoragePath()] = teamBindingDW
 	}
 
@@ -238,6 +246,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, userResource, opts.OptsGetter)
 		if err != nil {
 			return err
+		}
+
+		if enableZanzanaSync {
+			b.logger.Info("Enabling hooks for User to sync basic role assignments to Zanzana")
+			store.AfterCreate = b.AfterUserCreate
+			store.BeginUpdate = b.BeginUserUpdate
+			store.AfterDelete = b.AfterUserDelete
 		}
 
 		dw, err := opts.DualWriteBuilder(userResource.GroupResource(), legacyStore, store)
