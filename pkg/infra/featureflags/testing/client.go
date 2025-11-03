@@ -9,7 +9,11 @@ import (
 )
 
 var (
-	mutex    sync.Mutex
+	// Use mutex to make sure that we initialise TestProvider only once
+	mutex sync.Mutex
+
+	// TestProvider should be a global instance shared between tests
+	// Under the hood it utilises a custom _goroutine local_ storage to manage state on a per-test basis
 	provider *testing.TestProvider
 )
 
@@ -34,9 +38,9 @@ func NewTestClient() *TestClient {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	provider2 := testing.NewTestProvider()
 	if provider == nil {
-		provider = &provider2
+		newProvider := testing.NewTestProvider()
+		provider = &newProvider
 	}
 
 	err := openfeature.SetProviderAndWait(provider)
