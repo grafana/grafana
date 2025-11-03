@@ -3,9 +3,9 @@ import { merge } from 'lodash';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { TableCellOptions } from '@grafana/schema';
 import { Combobox, ComboboxOption, Field, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
+import { getTableCellLocalizedDisplayModes } from '@grafana/ui/internal';
 
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
@@ -27,26 +27,27 @@ interface Props {
   id?: string;
 }
 
+const LOCALIZED_CELL_TYPES = getTableCellLocalizedDisplayModes();
+const CELL_TYPE_OPTIONS: Array<ComboboxOption<TableCellOptions['type']>> = (
+  [
+    TableCellDisplayMode.Auto,
+    TableCellDisplayMode.ColorText,
+    TableCellDisplayMode.ColorBackground,
+    TableCellDisplayMode.DataLinks,
+    TableCellDisplayMode.Gauge,
+    TableCellDisplayMode.Sparkline,
+    TableCellDisplayMode.JSONView,
+    TableCellDisplayMode.Pill,
+    TableCellDisplayMode.Markdown,
+    TableCellDisplayMode.Image,
+    TableCellDisplayMode.Actions,
+  ] as const
+).map((value) => ({ label: LOCALIZED_CELL_TYPES[value], value }));
+
 export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
   const cellType = value.type;
   const styles = useStyles2(getStyles);
-  const cellDisplayModeOptions: Array<ComboboxOption<TableCellOptions['type']>> = [
-    { value: TableCellDisplayMode.Auto, label: t('table.cell-types.auto', 'Auto') },
-    { value: TableCellDisplayMode.ColorText, label: t('table.cell-types.color-text', 'Colored text') },
-    {
-      value: TableCellDisplayMode.ColorBackground,
-      label: t('table.cell-types.color-background', 'Colored background'),
-    },
-    { value: TableCellDisplayMode.DataLinks, label: t('table.cell-types.data-links', 'Data links') },
-    { value: TableCellDisplayMode.Gauge, label: t('table.cell-types.gauge', 'Gauge') },
-    { value: TableCellDisplayMode.Sparkline, label: t('table.cell-types.sparkline', 'Sparkline') },
-    { value: TableCellDisplayMode.JSONView, label: t('table.cell-types.json', 'JSON View') },
-    { value: TableCellDisplayMode.Pill, label: t('table.cell-types.pill', 'Pill') },
-    { value: TableCellDisplayMode.Markdown, label: t('table.cell-types.markdown', 'Markdown + HTML') },
-    { value: TableCellDisplayMode.Image, label: t('table.cell-types.image', 'Image') },
-    { value: TableCellDisplayMode.Actions, label: t('table.cell-types.actions', 'Actions') },
-  ];
-  const currentMode = cellDisplayModeOptions.find((o) => o.value === cellType)!;
+  const currentMode = CELL_TYPE_OPTIONS.find((o) => o.value === cellType)!;
 
   let [settingCache, setSettingCache] = useState<Record<string, TableCellOptions>>({});
 
@@ -79,7 +80,7 @@ export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
   return (
     <div className={styles.fixBottomMargin}>
       <Field>
-        <Combobox id={id} options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
+        <Combobox id={id} options={CELL_TYPE_OPTIONS} value={currentMode} onChange={onCellTypeChange} />
       </Field>
       {cellType === TableCellDisplayMode.Gauge && (
         <BarGaugeCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />

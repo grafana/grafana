@@ -105,3 +105,4 @@ export { closePopover } from '../utils/closePopover';
 
 export { flattenTokens } from '../slate-plugins/slate-prism';
 export { RadialGauge } from '../components/RadialGauge/RadialGauge';
+export { getTableCellLocalizedDisplayModes } from '../components/Table/TableNG/Cells/i18n';

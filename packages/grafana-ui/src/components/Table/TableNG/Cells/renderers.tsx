@@ -4,7 +4,13 @@ import { memo, MemoExoticComponent } from 'react';
 import { Field, FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 
 import { TableCellDisplayMode, TableCellOptions, TableCustomCellOptions } from '../../types';
-import { TableCellRenderer, TableCellRendererProps, TableCellStyleOptions, TableCellStyles } from '../types';
+import {
+  RenderableCellTypes,
+  TableCellRenderer,
+  TableCellRendererProps,
+  TableCellStyleOptions,
+  TableCellStyles,
+} from '../types';
 import { getCellOptions } from '../utils';
 
 import { ActionsCell, getStyles as getActionsCellStyles } from './ActionsCell';
@@ -13,6 +19,7 @@ import { BarGaugeCell } from './BarGaugeCell';
 import { DataLinksCell, getStyles as getDataLinksStyles } from './DataLinksCell';
 import { GeoCell, getStyles as getGeoCellStyles } from './GeoCell';
 import { ImageCell, getStyles as getImageStyles } from './ImageCell';
+import { InvalidCell } from './InvalidCell';
 import { MarkdownCell, getStyles as getMarkdownCellStyles } from './MarkdownCell';
 import { PillCell, getStyles as getPillStyles } from './PillCell';
 import { SparklineCell, getStyles as getSparklineCellStyles } from './SparklineCell';
@@ -24,6 +31,18 @@ AutoCellRenderer.displayName = 'AutoCellRenderer';
 
 function isCustomCellOptions(options: TableCellOptions): options is TableCustomCellOptions {
   return options.type === TableCellDisplayMode.Custom;
+}
+
+const PRIMITIVE_TYPES: FieldType[] = [
+  FieldType.time,
+  FieldType.number,
+  FieldType.boolean,
+  FieldType.string,
+  FieldType.enum,
+];
+const AUTO_CELL_TYPES: FieldType[] = [...PRIMITIVE_TYPES, FieldType.other];
+function canAutoCellRender(field: Field): boolean {
+  return AUTO_CELL_TYPES.includes(field.type);
 }
 
 function mixinAutoCellStyles(fn: TableCellStyles): TableCellStyles {
@@ -39,22 +58,31 @@ interface CellRegistryEntry {
   testField?: (field: Field) => boolean;
 }
 
-const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
+const InvalidCellRenderer: TableCellRenderer = memo((props) => (
+  <InvalidCell field={props.field} cellOptions={props.cellOptions} />
+));
+InvalidCellRenderer.displayName = 'InvalidCellRenderer';
+
+const CELL_REGISTRY: Record<RenderableCellTypes, CellRegistryEntry> = {
   [TableCellDisplayMode.Auto]: {
     renderer: AutoCellRenderer,
     getStyles: getAutoCellStyles,
+    testField: canAutoCellRender,
   },
   [TableCellDisplayMode.ColorBackground]: {
     renderer: AutoCellRenderer,
     getStyles: getAutoCellStyles,
+    testField: canAutoCellRender,
   },
   [TableCellDisplayMode.ColorText]: {
     renderer: AutoCellRenderer,
     getStyles: getAutoCellStyles,
+    testField: canAutoCellRender,
   },
   [TableCellDisplayMode.JSONView]: {
     renderer: AutoCellRenderer,
     getStyles: mixinAutoCellStyles(getJsonCellStyles),
+    testField: canAutoCellRender,
   },
   [TableCellDisplayMode.Actions]: {
     // eslint-disable-next-line react/display-name
@@ -80,6 +108,7 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
         rowIdx={props.rowIdx}
       />
     )),
+    testField: (field: Field) => field.type === FieldType.number,
   },
   [TableCellDisplayMode.Sparkline]: {
     // eslint-disable-next-line react/display-name
@@ -94,11 +123,16 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
       />
     )),
     getStyles: getSparklineCellStyles,
+    testField: (field: Field) => {
+      const firstNonNullValue = field.values.find((v) => v != null);
+      return firstNonNullValue != null && isDataFrame(firstNonNullValue) && isTimeSeriesFrame(firstNonNullValue);
+    },
   },
   [TableCellDisplayMode.Geo]: {
     // eslint-disable-next-line react/display-name
     renderer: memo((props: TableCellRendererProps) => <GeoCell value={props.value} height={props.height} />),
     getStyles: getGeoCellStyles,
+    testField: (field: Field) => field.type === FieldType.geo,
   },
   [TableCellDisplayMode.Image]: {
     // eslint-disable-next-line react/display-name
@@ -106,6 +140,7 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
       <ImageCell cellOptions={props.cellOptions} field={props.field} value={props.value} rowIdx={props.rowIdx} />
     )),
     getStyles: getImageStyles,
+    testField: (field: Field) => field.type === FieldType.string || field.type === FieldType.enum,
   },
   [TableCellDisplayMode.Pill]: {
     // eslint-disable-next-line react/display-name
@@ -118,9 +153,16 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
       />
     )),
     getStyles: getPillStyles,
-    testField: (field: Field) =>
-      field.type === FieldType.string ||
-      (field.type === FieldType.other && field.values.some((val) => Array.isArray(val))),
+    testField: (field: Field) => {
+      if (PRIMITIVE_TYPES.includes(field.type)) {
+        return true;
+      }
+      if (field.type === FieldType.other) {
+        const firstNonNullValue = field.values.find((v) => v != null);
+        return Array.isArray(firstNonNullValue);
+      }
+      return false;
+    },
   },
   [TableCellDisplayMode.Markdown]: {
     // eslint-disable-next-line react/display-name
@@ -128,7 +170,7 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
       <MarkdownCell field={props.field} rowIdx={props.rowIdx} disableSanitizeHtml={props.disableSanitizeHtml} />
     )),
     getStyles: getMarkdownCellStyles,
-    testField: (field: Field) => field.type === FieldType.string,
+    testField: (field: Field) => PRIMITIVE_TYPES.includes(field.type),
   },
   [TableCellDisplayMode.Custom]: {
     // eslint-disable-next-line react/display-name
@@ -141,6 +183,10 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
         <CustomCellComponent field={props.field} rowIndex={props.rowIdx} frame={props.frame} value={props.value} />
       );
     }),
+    testField: (field) => {
+      const cellOptions = getCellOptions(field);
+      return !isCustomCellOptions(cellOptions) || !cellOptions.cellComponent;
+    },
   },
 };
 
@@ -150,22 +196,21 @@ export function getCellRenderer(
   cellOptions: TableCellOptions = getCellOptions(field)
 ): TableCellRenderer {
   const cellType = cellOptions?.type ?? TableCellDisplayMode.Auto;
-  if (cellType === TableCellDisplayMode.Auto) {
-    return CELL_REGISTRY[getAutoRendererDisplayMode(field)].renderer;
-  }
+  const displayMode = cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType;
+  const candidate = CELL_REGISTRY[displayMode];
 
-  // if the field fails the test for a specific renderer, fallback to Auto
-  if (CELL_REGISTRY[cellType]?.testField && CELL_REGISTRY[cellType].testField(field) !== true) {
-    return AutoCellRenderer;
+  // if the field fails the test for a specific renderer, return the Invalid renderer
+  if ((candidate?.testField?.(field) ?? true) !== true) {
+    return InvalidCellRenderer;
   }
 
   // cautious fallback to Auto renderer in case some garbage cell type has been provided.
-  return CELL_REGISTRY[cellType]?.renderer ?? AutoCellRenderer;
+  return candidate?.renderer ?? AutoCellRenderer;
 }
 
 /** @internal */
 export function getCellSpecificStyles(
-  cellType: TableCellOptions['type'],
+  cellType: RenderableCellTypes,
   field: Field,
   theme: GrafanaTheme2,
   options: TableCellStyleOptions
@@ -190,15 +235,12 @@ export function getAutoRendererStyles(
 }
 
 /** @internal */
-export function getAutoRendererDisplayMode(field: Field): TableCellOptions['type'] {
+export function getAutoRendererDisplayMode(field: Field): RenderableCellTypes {
   if (field.type === FieldType.geo) {
     return TableCellDisplayMode.Geo;
   }
   if (field.type === FieldType.frame) {
-    const firstValue = field.values[0];
-    if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
-      return TableCellDisplayMode.Sparkline;
-    }
+    return TableCellDisplayMode.Sparkline;
   }
   return TableCellDisplayMode.Auto;
 }

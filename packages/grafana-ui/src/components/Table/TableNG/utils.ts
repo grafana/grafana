@@ -30,6 +30,7 @@ import {
 } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
+import { Table } from '../Table';
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellOptions } from '../types';
 
@@ -792,6 +793,10 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
     // catching a nonsense case: `displayMode`: 'custom' should pre-date the CustomCell.
     // if it doesn't, we need to just nope out and return an auto cell.
     case TableCellDisplayMode.Custom:
+      return {
+        type: TableCellDisplayMode.Auto,
+      };
+    case TableCellDisplayMode.Geo:
       return {
         type: TableCellDisplayMode.Auto,
       };
