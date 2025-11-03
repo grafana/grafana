@@ -9,7 +9,7 @@ import { Box, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { isDashboardDataLayerSetState } from './DashboardDataLayerSet';
 import { DashboardLinkRenderer } from './DashboardLinkRenderer';
 import { DashboardScene } from './DashboardScene';
-import { DataLayerControl } from './DataLayerControls';
+import { DataLayerControl } from './DataLayerControl';
 import { VariableValueSelectWrapper } from './VariableControls';
 
 export const DASHBOARD_CONTROLS_MENU_ARIA_LABEL = 'Dashboard controls menu';

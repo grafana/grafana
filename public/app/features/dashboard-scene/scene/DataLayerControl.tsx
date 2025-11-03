@@ -1,34 +1,17 @@
 import { css } from '@emotion/css';
 
 import { LoadingState, GrafanaTheme2 } from '@grafana/data';
-import { ControlsLabel, SceneDataLayerProvider, sceneGraph } from '@grafana/scenes';
+import { ControlsLabel, SceneDataLayerProvider } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { isDashboardDataLayerSetState } from './DashboardDataLayerSet';
-import { DashboardScene } from './DashboardScene';
-
-export function DataLayerControls({ dashboard }: { dashboard: DashboardScene }) {
-  // Currently we are only rendering the annotation data layers
-  const state = sceneGraph.getData(dashboard).useState();
-  // It is possible to render the controls for the annotation data layers in separate places using the `placement` property.
-  // In case it's not specified, we are rendering the controls here (default).
-  const isDefaultPlacement = (layer: SceneDataLayerProvider) => layer.state.placement === undefined;
-
-  if (isDashboardDataLayerSetState(state)) {
-    return (
-      <>
-        {state.annotationLayers.filter(isDefaultPlacement).map((layer) => (
-          <DataLayerControl layer={layer} key={layer.state.key} />
-        ))}
-      </>
-    );
-  }
-
-  return null;
-}
+export type Props = {
+  layer: SceneDataLayerProvider;
+  // Set to true if the control is rendered inside a drop-down menu
+  inMenu?: boolean;
+};
 
 // Renders the controls for a single data layer
-export function DataLayerControl({ layer, inMenu }: { layer: SceneDataLayerProvider; inMenu?: boolean }) {
+export function DataLayerControl({ layer, inMenu }: Props) {
   const elementId = `data-layer-${layer.state.key}`;
   const { data, isHidden } = layer.useState();
   const showLoading = Boolean(data && data.state === LoadingState.Loading);

@@ -21,9 +21,9 @@ import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardControlsButton } from './DashboardControlsMenu';
+import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
-import { DataLayerControls } from './DataLayerControls';
 import { VariableControls } from './VariableControls';
 
 export interface DashboardControlsState extends SceneObjectState {
@@ -167,7 +167,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {!hideVariableControls && (
           <>
             <VariableControls dashboard={dashboard} />
-            <DataLayerControls dashboard={dashboard} />
+            <DashboardDataLayerControls dashboard={dashboard} />
           </>
         )}
         <Box grow={1} />
