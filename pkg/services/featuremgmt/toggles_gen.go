@@ -804,7 +804,7 @@ const (
 	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
 
 	// FlagNewLogsPanel
-	// Enables the new logs panel in Explore
+	// Enables the new logs panel
 	FlagNewLogsPanel = "newLogsPanel"
 
 	// FlagGrafanaconThemes
