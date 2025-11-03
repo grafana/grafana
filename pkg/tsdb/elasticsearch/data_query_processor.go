@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -11,6 +12,11 @@ import (
 
 // processQuery processes a single query and adds it to the multi-search request builder
 func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
+	// Handle raw DSL queries
+	if q.RawDSLQuery.Query != nil {
+		return e.processRawDSLQuery(q, ms, from, to)
+	}
+
 	err := isQueryWithError(q)
 	if err != nil {
 		return backend.DownstreamError(fmt.Errorf("received invalid query. %w", err))
@@ -182,6 +188,25 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64
 			})
 		}
 	}
+}
+
+func (e *elasticsearchDataQuery) processRawDSLQuery(q *Query, ms *es.MultiSearchRequestBuilder, _ /* from */, _ /* to */ int64) error {
+	if *q.RawDSLQuery.Query == "" {
+		return backend.DownstreamError(fmt.Errorf("raw DSL query is empty"))
+	}
+
+	// Parse the raw DSL query JSON
+	var queryBody map[string]any
+	if err := json.Unmarshal([]byte(*q.RawDSLQuery.Query), &queryBody); err != nil {
+		return backend.DownstreamError(fmt.Errorf("invalid raw DSL query JSON: %w", err))
+	}
+
+	// Create a search request builder and set the raw body directly
+	// This will bypass all builder logic and send the query as-is to Elasticsearch
+	b := ms.Search(q.Interval, q.TimeRange)
+	b.SetRawBody(queryBody)
+
+	return nil
 }
 
 // getPipelineAggField returns the pipeline aggregation field

@@ -2,6 +2,8 @@ package elasticsearch
 
 import (
 	"fmt"
+
+	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/kinds/dataquery"
 )
 
 // isQueryWithError validates the query and returns an error if invalid
@@ -17,7 +19,7 @@ func isQueryWithError(query *Query) error {
 
 // isLogsQuery checks if the query is a logs query
 func isLogsQuery(query *Query) bool {
-	return len(query.Metrics) > 0 && query.Metrics[0].Type == logsType
+	return len(query.Metrics) > 0 && query.Metrics[0].Type == logsType || query.RawDSLQuery.Query != nil && *query.RawDSLQuery.ProcessAs == dataquery.ProcessAsTypeLogs
 }
 
 // isDocumentQuery checks if the query is a document query (raw_data or raw_document)
@@ -27,7 +29,7 @@ func isDocumentQuery(query *Query) bool {
 
 // isRawDataQuery checks if the query is a raw_data query
 func isRawDataQuery(query *Query) bool {
-	return len(query.Metrics) > 0 && query.Metrics[0].Type == rawDataType
+	return len(query.Metrics) > 0 && query.Metrics[0].Type == rawDataType || query.RawDSLQuery.Query != nil && *query.RawDSLQuery.ProcessAs == dataquery.ProcessAsTypeRawData
 }
 
 // isRawDocumentQuery checks if the query is a raw_document query
