@@ -1098,6 +1098,10 @@ const (
 	// Restrict PanelChrome contents with overflow: hidden;
 	FlagPreventPanelChromeOverflow = "preventPanelChromeOverflow"
 
+	// FlagJaegerEnableGrpcEndpoint
+	// Enable querying trace data through Jaeger&#39;s gRPC endpoint (HTTP)
+	FlagJaegerEnableGrpcEndpoint = "jaegerEnableGrpcEndpoint"
+
 	// FlagPluginStoreServiceLoading
 	// Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
 	FlagPluginStoreServiceLoading = "pluginStoreServiceLoading"
