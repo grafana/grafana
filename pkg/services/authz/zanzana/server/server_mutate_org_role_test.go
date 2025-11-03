@@ -15,7 +15,7 @@ func setupMutateOrgRoles(t *testing.T, srv *Server) *Server {
 
 	// seed tuples
 	tuples := []*openfgav1.TupleKey{
-		common.NewTuple("user:1", common.RelationAssignee, "role:Editor"),
+		common.NewTuple("user:1", common.RelationAssignee, "role:basic_editor"),
 	}
 
 	return setupOpenFGADatabase(t, srv, tuples)
@@ -52,11 +52,21 @@ func testMutateOrgRoles(t *testing.T, srv *Server) {
 			Namespace: "default",
 			TupleKey: &v1.ReadRequestTupleKey{
 				Relation: common.RelationAssignee,
-				Object:   "role:Admin",
+				Object:   "role:basic_admin",
 			},
 		})
 		require.NoError(t, err)
 		require.Len(t, res.Tuples, 1)
 		require.Equal(t, "user:1", res.Tuples[0].Key.User)
+
+		res, err = srv.Read(newContextWithNamespace(), &v1.ReadRequest{
+			Namespace: "default",
+			TupleKey: &v1.ReadRequestTupleKey{
+				Relation: common.RelationAssignee,
+				Object:   "role:basic_editor",
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, res.Tuples, 0)
 	})
 }

@@ -66,17 +66,19 @@ func (s *Server) mutateOrgRoles(ctx context.Context, store *storeInfo, operation
 }
 
 func (s *Server) getUserOrgRoleWriteTuple(ctx context.Context, store *storeInfo, req *authzextv1.UpdateUserOrgRoleOperation) (*openfgav1.TupleKey, error) {
+	basicRole := zanzana.TranslateBasicRole(req.GetRole())
 	return &openfgav1.TupleKey{
 		User:     zanzana.NewTupleEntry(zanzana.TypeUser, req.GetUser(), ""),
 		Relation: zanzana.RelationAssignee,
-		Object:   zanzana.NewTupleEntry(zanzana.TypeRole, req.GetRole(), ""),
+		Object:   zanzana.NewTupleEntry(zanzana.TypeRole, basicRole, ""),
 	}, nil
 }
 
 func (s *Server) getUserOrgRoleDeleteTuple(ctx context.Context, store *storeInfo, req *authzextv1.DeleteUserOrgRoleOperation) (*openfgav1.TupleKeyWithoutCondition, error) {
+	basicRole := zanzana.TranslateBasicRole(req.GetRole())
 	return &openfgav1.TupleKeyWithoutCondition{
 		User:     zanzana.NewTupleEntry(zanzana.TypeUser, req.GetUser(), ""),
 		Relation: zanzana.RelationAssignee,
-		Object:   zanzana.NewTupleEntry(zanzana.TypeRole, req.GetRole(), ""),
+		Object:   zanzana.NewTupleEntry(zanzana.TypeRole, basicRole, ""),
 	}, nil
 }
