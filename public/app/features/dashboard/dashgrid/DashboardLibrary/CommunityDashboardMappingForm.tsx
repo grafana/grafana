@@ -1,10 +1,9 @@
-import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Stack, Text, Button, Alert, useStyles2, Field, Input } from '@grafana/ui';
+import { Stack, Text, Button, Alert, Field, Input } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { DashboardInput, DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 
@@ -27,7 +26,6 @@ export const CommunityDashboardMappingForm = ({
   onBack,
   onPreview,
 }: Props) => {
-  const styles = useStyles2(getStyles);
   const [userDatasourceMappings, setUserDatasourceMappings] = useState<Record<string, DataSourceInstanceSettings>>({});
   const [constantValues, setConstantValues] = useState<Record<string, string>>(() => {
     // Initialize with default values from constantInputs
@@ -77,18 +75,11 @@ export const CommunityDashboardMappingForm = ({
 
   return (
     <Stack direction="column" gap={3}>
-      <div>
-        <Text element="p" color="secondary">
-          <Trans i18nKey="dashboard-library.community-mapping-form.description">
-            This dashboard requires datasource configuration. Select datasources for each input below.
-          </Trans>
-        </Text>
-        <div className={styles.dashboardName}>
-          <Text element="p" weight="medium">
-            {dashboardName}
-          </Text>
-        </div>
-      </div>
+      <Text element="p" color="secondary">
+        <Trans i18nKey="dashboard-library.community-mapping-form.description">
+          This dashboard requires datasource configuration. Select datasources for each input below.
+        </Trans>
+      </Text>
 
       {existingMappings.length > 0 && (
         <Alert title="" severity="info">
@@ -98,18 +89,14 @@ export const CommunityDashboardMappingForm = ({
                 {{ count: existingMappings.length }} datasources were automatically configured:
               </Trans>
             </Text>
-            <ul style={{ margin: 0, paddingLeft: '20px' }}>
-              {existingMappings.map((mapping) => {
-                const ds = getDataSourceSrv().getInstanceSettings(mapping.value);
-                return (
-                  <li key={mapping.name}>
-                    <Text color="secondary">
-                      <strong>{mapping.name}</strong> → {ds?.name || mapping.value}
-                    </Text>
-                  </li>
-                );
-              })}
-            </ul>
+            <Text color="secondary">
+              {existingMappings
+                .map((mapping) => {
+                  const ds = getDataSourceSrv().getInstanceSettings(mapping.value);
+                  return `${mapping.pluginId} → ${ds?.name || mapping.value}`;
+                })
+                .join(' | ')}
+            </Text>
           </Stack>
         </Alert>
       )}
@@ -180,11 +167,3 @@ export const CommunityDashboardMappingForm = ({
     </Stack>
   );
 };
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    dashboardName: css({
-      marginTop: theme.spacing(1),
-    }),
-  };
-}

@@ -93,8 +93,10 @@ export const DashboardLibraryModal = ({
   return (
     <Modal
       title={
-        activeView === 'mapping'
-          ? t('dashboard.library-modal.title-mapping', 'Configure datasources')
+        activeView === 'mapping' && mappingContext
+          ? t('dashboard.library-modal.title-mapping-with-name', 'Configure datasources for {{dashboardName}}', {
+              dashboardName: mappingContext.dashboardName,
+            })
           : datasourceInfo.type
             ? t(
                 'dashboard.library-modal.title-with-datasource',
@@ -148,7 +150,6 @@ export const DashboardLibraryModal = ({
             onBack={handleBackToDashboards}
             onPreview={(allMappings) => {
               mappingContext.onInterpolateAndNavigate(allMappings);
-              onDismiss();
             }}
           />
         )}
