@@ -24,8 +24,8 @@ import {
 } from '@grafana/ui/internal';
 import { getActions, getActionsDefaultField } from 'app/features/actions/utils';
 import { Scene } from 'app/features/canvas/runtime/scene';
+import { getDataLinks } from 'app/features/datalinks/utils';
 
-import { getDataLinks } from '../../status-history/utils';
 import { getElementFields, getRowIndex } from '../utils';
 
 interface Props {

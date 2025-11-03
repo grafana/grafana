@@ -9,9 +9,8 @@ import { TimeZone } from '@grafana/schema';
 import { floatingUtils, Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
 import { VizTooltipItem } from '@grafana/ui/internal';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { getDataLinks } from 'app/features/datalinks/utils';
 import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
-
-import { getDataLinks } from '../../status-history/utils';
 
 interface ExemplarMarkerProps {
   timeZone: TimeZone;

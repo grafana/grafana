@@ -19,8 +19,7 @@ import {
   VizTooltipItem,
   AdHocFilterModel,
 } from '@grafana/ui/internal';
-
-import { getFieldActions } from '../status-history/utils';
+import { getFieldActions } from 'app/features/actions/utils';
 
 import { isTooltipScrollable } from './utils';
 
