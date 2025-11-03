@@ -152,3 +152,14 @@ Check [`security_config_step.go`](./pkg/app/checks/configchecks/security_config_
 ## Testing
 
 Create tests for your check and its steps to ensure they work as expected. Test both successful and failure scenarios.
+
+## Running the Standalone Mode
+
+To run the standalone mode, you can use the `make run` command. This will start the advisor app in standalone mode, which means it will not be running in a Kubernetes cluster.
+
+```bash
+make etcd # Start etcd in a docker container
+make run  # Start the advisor app in standalone mode
+```
+
+This will start the advisor app on port 7445. You can then access the advisor app at `http://localhost:7445`.
