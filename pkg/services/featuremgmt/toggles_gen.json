@@ -407,6 +407,21 @@
     },
     {
       "metadata": {
+        "name": "alertingMultiplePolicies",
+        "resourceVersion": "1762186293341",
+        "creationTimestamp": "2025-11-03T16:11:33Z"
+      },
+      "spec": {
+        "description": "Enables the ability to create multiple alerting policies",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNotificationHistory",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-07-17T13:26:26Z"

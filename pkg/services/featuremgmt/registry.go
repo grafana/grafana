@@ -2158,6 +2158,15 @@ var (
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
 		},
+		{
+			Name:              "alertingMultiplePolicies",
+			Description:       "Enables the ability to create multiple alerting policies",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
 	}
 )
 
