@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
-	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -376,7 +375,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	// The libraryPanel filter
 	if libraryPanel, ok := queryParams["libraryPanel"]; ok {
 		searchRequest.Options.Fields = []*resourcepb.Requirement{{
-			Key:      unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+			Key:      search.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 			Operator: "=",
 			Values:   libraryPanel,
 		}}
