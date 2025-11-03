@@ -141,8 +141,6 @@ function DetailsTooltipContent({ details }: { details: Details }) {
   );
 }
 
-export const DashboardCard = attachSkeleton(DashboardCardComponent, DashboardCardSkeleton);
-
 function getStyles(theme: GrafanaTheme2) {
   return {
     card: css({
