@@ -67,6 +67,13 @@ var resourceTranslations = map[string]resourceTranslation{
 			"dashboards:write":  newScopedMapping(RelationUpdate, dashboardGroup, dashboardResource, ""),
 			"dashboards:create": newScopedMapping(RelationCreate, dashboardGroup, dashboardResource, ""),
 			"dashboards:delete": newScopedMapping(RelationDelete, dashboardGroup, dashboardResource, ""),
+			// Action sets
+			"folders:view":     newMapping(RelationSetView, ""),
+			"folders:edit":     newMapping(RelationSetEdit, ""),
+			"folders:admin":    newMapping(RelationSetAdmin, ""),
+			"dashboards:view":  newScopedMapping(RelationSetView, dashboardGroup, dashboardResource, ""),
+			"dashboards:edit":  newScopedMapping(RelationSetEdit, dashboardGroup, dashboardResource, ""),
+			"dashboards:admin": newScopedMapping(RelationSetAdmin, dashboardGroup, dashboardResource, ""),
 		},
 	},
 	KindDashboards: {
@@ -78,6 +85,10 @@ var resourceTranslations = map[string]resourceTranslation{
 			"dashboards:write":  newMapping(RelationUpdate, ""),
 			"dashboards:create": newMapping(RelationCreate, ""),
 			"dashboards:delete": newMapping(RelationDelete, ""),
+			// Action sets
+			"dashboards:view":  newMapping(RelationSetView, ""),
+			"dashboards:edit":  newMapping(RelationSetEdit, ""),
+			"dashboards:admin": newMapping(RelationSetAdmin, ""),
 		},
 	},
 }
