@@ -108,10 +108,17 @@ export async function getFolderByUidFacade(uid: string): Promise<FolderDTO> {
 
   const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
   if (shouldUseAppPlatformAPI) {
+    let virtualFolderResponse;
+    if (isVirtualFolder) {
+      virtualFolderResponse = GENERAL_FOLDER_UID === uid ? rootFolder : sharedWithMeFolder;
+    }
+
     const responses = await Promise.all([
       // We still need to call legacy endpoints for access control metadata
       legacyApiCall,
-      dispatch(folderAPIv1beta1.endpoints.getFolder.initiate({ name: uid })),
+      isVirtualFolder
+        ? Promise.resolve(virtualFolderResponse)
+        : dispatch(folderAPIv1beta1.endpoints.getFolder.initiate({ name: uid })),
       dispatch(folderAPIv1beta1.endpoints.getFolderParents.initiate({ name: uid })),
     ]);
 
