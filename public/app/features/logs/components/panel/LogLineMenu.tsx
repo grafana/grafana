@@ -7,6 +7,7 @@ import { Dropdown, IconButton, Menu } from '@grafana/ui';
 
 import { copyText, handleOpenLogsContextClick } from '../../utils';
 
+import { useLogDetailsContext } from './LogDetailsContext';
 import { LogLineStyles } from './LogLine';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
@@ -35,8 +36,6 @@ interface Props {
 
 export const LogLineMenu = ({ log, styles }: Props) => {
   const {
-    enableLogDetails,
-    detailsDisplayed,
     getRowContextQuery,
     onOpenContext,
     onPermalinkClick,
@@ -44,10 +43,10 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     onUnpinLine,
     logLineMenuCustomItems = [],
     logSupportsContext,
-    toggleDetails,
     isAssistantAvailable,
     openAssistantByLog,
   } = useLogListContext();
+  const { enableLogDetails, detailsDisplayed, toggleDetails } = useLogDetailsContext();
   const pinned = useLogIsPinned(log);
   const menuRef = useRef(null);
 

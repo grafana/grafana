@@ -23,6 +23,7 @@ import { LogMessageAnsi } from '../LogMessageAnsi';
 import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
 import { HighlightedLogRenderer } from './HighlightedLogRenderer';
+import { useLogDetailsContext } from './LogDetailsContext';
 import { InlineLogLineDetails } from './LogLineDetails';
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
@@ -113,10 +114,7 @@ const LogLineComponent = memo(
     wrapLogMessage,
   }: LogLineComponentProps) => {
     const {
-      detailsDisplayed,
-      detailsMode,
       dedupStrategy,
-      enableLogDetails,
       fontSize,
       hasLogsWithErrors,
       hasSampledLogs,
@@ -124,6 +122,7 @@ const LogLineComponent = memo(
       timestampResolution,
       onLogLineHover,
     } = useLogListContext();
+    const { detailsDisplayed, detailsMode, enableLogDetails } = useLogDetailsContext();
     const [collapsed, setCollapsed] = useState<boolean | undefined>(
       wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
     );

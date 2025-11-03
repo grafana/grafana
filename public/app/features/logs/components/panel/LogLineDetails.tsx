@@ -8,8 +8,9 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, Icon, Tab, TabsBar, useStyles2 } from '@grafana/ui';
 
+import { getDetailsScrollPosition, saveDetailsScrollPosition, useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsComponent } from './LogLineDetailsComponent';
-import { getDetailsScrollPosition, saveDetailsScrollPosition, useLogListContext } from './LogListContext';
+import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
@@ -26,7 +27,8 @@ export type LogLineDetailsMode = 'inline' | 'sidebar';
 
 export const LogLineDetails = memo(
   ({ containerElement, focusLogLine, logs, timeRange, timeZone, showControls }: Props) => {
-    const { detailsWidth, noInteractions, setDetailsWidth } = useLogListContext();
+    const { noInteractions } = useLogListContext();
+    const { detailsWidth, setDetailsWidth } = useLogDetailsContext();
     const styles = useStyles2(getStyles, 'sidebar', showControls);
     const dragStyles = useStyles2(getDragStyles);
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -69,7 +71,8 @@ LogLineDetails.displayName = 'LogLineDetails';
 
 const LogLineDetailsTabs = memo(
   ({ focusLogLine, logs, timeRange, timeZone }: Pick<Props, 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
-    const { app, closeDetails, noInteractions, showDetails, toggleDetails, wrapLogMessage } = useLogListContext();
+    const { app, noInteractions, wrapLogMessage } = useLogListContext();
+    const { closeDetails, showDetails, toggleDetails } = useLogDetailsContext();
     const [currentLog, setCurrentLog] = useState(showDetails[0]);
     const previousShowDetails = usePrevious(showDetails);
     const styles = useStyles2(getStyles, 'sidebar');
@@ -152,7 +155,8 @@ export interface InlineLogLineDetailsProps {
 }
 
 export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, timeZone }: InlineLogLineDetailsProps) => {
-  const { app, detailsWidth, noInteractions } = useLogListContext();
+  const { app, noInteractions } = useLogListContext();
+  const { detailsWidth } = useLogDetailsContext();
   const styles = useStyles2(getStyles, 'inline');
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
