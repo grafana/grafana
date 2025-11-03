@@ -222,6 +222,10 @@ function getStyles(theme: GrafanaTheme2) {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
       },
+      '&:hover .dashboard-canvas-add-button': {
+        opacity: 1,
+        filter: 'unset',
+      },
     }),
     controlsPanelEdit: css({
       flexWrap: 'wrap-reverse',
