@@ -41,6 +41,8 @@ var (
 	ErrRouteConflictingMatchers = errutil.BadRequest("alerting.notifications.routes.conflictingMatchers").MustTemplate("Routing tree conflicts with the external configuration",
 		errutil.WithPublic("Cannot add\\update route: matchers conflict with an external routing tree merging matchers {{ .Public.Matchers }}, making the added\\updated route unreachable."),
 	)
+
+	ErrRouteNotFound = errutil.NotFound("alerting.notifications.routes.notFound", errutil.WithPublicMessage("Route not found"))
 )
 
 // MakeErrTimeIntervalInvalid creates an error with the ErrTimeIntervalInvalid template

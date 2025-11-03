@@ -336,7 +336,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
 		ps.alertingStore, ps.SQLStore, receiverSvc, ps.log, ps.alertingStore, ps.resourcePermissions)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,
-		ps.alertingStore, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
+		ps.alertingStore, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.alertingStore.FeatureToggles, ps.log)
 	mutetimingsService := provisioning.NewMuteTimingService(configStore, ps.alertingStore, ps.alertingStore, ps.log, ps.alertingStore)
 	templateService := provisioning.NewTemplateService(configStore, ps.alertingStore, ps.alertingStore, ps.log)
 	cfg := prov_alerting.ProvisionerConfig{

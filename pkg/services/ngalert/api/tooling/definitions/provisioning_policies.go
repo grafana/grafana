@@ -70,7 +70,8 @@ type NotificationPolicyExport struct {
 // RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in
 // provisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.
 type RouteExport struct {
-	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty" hcl:"contact_point"`
+	Name     *string `yaml:"name,omitempty" json:"name,omitempty" hcl:"name,optional"`
+	Receiver string  `yaml:"receiver,omitempty" json:"receiver,omitempty" hcl:"contact_point"`
 
 	GroupByStr *[]string `yaml:"group_by,omitempty" json:"group_by,omitempty" hcl:"group_by"`
 	// Deprecated. Remove before v1.0 release.

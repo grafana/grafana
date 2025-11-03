@@ -2,15 +2,19 @@ package alerting
 
 import (
 	"encoding/json"
+	"errors"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
 type NotificiationPolicyV1 struct {
 	OrgID values.Int64Value `json:"orgId" yaml:"orgId"`
 	// We use JSONValue here, as we want to have interpolation the values.
-	Policy values.JSONValue `json:"-" yaml:"-"`
+	Policy values.JSONValue   `json:"-" yaml:"-"`
+	Name   values.StringValue `json:"name" yaml:"name"`
 }
 
 func (v1 *NotificiationPolicyV1) UnmarshalYAML(unmarshal func(any) error) error {
@@ -30,6 +34,10 @@ func (v1 *NotificiationPolicyV1) mapToModel() (NotificiationPolicy, error) {
 	if orgID < 1 {
 		orgID = 1
 	}
+	name := v1.Name.Value()
+	if name == "" {
+		name = legacy_storage.UserDefinedRoutingTreeName
+	}
 	var route definitions.Route
 	// We need the string json representation, so we marshal the policy back
 	// as a string and interpolate it at the same time.
@@ -48,10 +56,37 @@ func (v1 *NotificiationPolicyV1) mapToModel() (NotificiationPolicy, error) {
 	return NotificiationPolicy{
 		OrgID:  orgID,
 		Policy: route,
+		Name:   strings.TrimSpace(name),
 	}, nil
 }
 
 type NotificiationPolicy struct {
 	OrgID  int64
+	Name   string
 	Policy definitions.Route
+}
+
+type DeleteNotificationPolicyV1 struct {
+	OrgID values.Int64Value  `json:"orgId" yaml:"orgId"`
+	Name  values.StringValue `json:"name" yaml:"name"`
+}
+
+func (v1 DeleteNotificationPolicyV1) mapToModel() (DeleteNotificationPolicy, error) {
+	name := strings.TrimSpace(v1.Name.Value())
+	if name == "" {
+		return DeleteNotificationPolicy{}, errors.New("delete policy missing name")
+	}
+	orgID := v1.OrgID.Value()
+	if orgID < 1 {
+		orgID = 1
+	}
+	return DeleteNotificationPolicy{
+		OrgID: orgID,
+		Name:  name,
+	}, nil
+}
+
+type DeleteNotificationPolicy struct {
+	OrgID int64
+	Name  string
 }

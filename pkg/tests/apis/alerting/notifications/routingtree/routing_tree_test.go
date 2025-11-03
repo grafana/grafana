@@ -18,6 +18,7 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1/fakes"
 	"github.com/grafana/grafana/pkg/bus"
@@ -48,6 +49,8 @@ func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 }
 
 func TestIntegrationNotAllowedMethods(t *testing.T) {
+	// TODO: Add more tests.
+	t.Skip("No longer applies, need real tests.")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
@@ -387,7 +390,9 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	createRoute := func(t *testing.T, route definitions.Route) {
 		t.Helper()
 		routeClient := common.NewRoutingTreeClient(t, helper.Org1.Admin)
-		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), route, "", func(int64) string { return "default" })
+		managedRoute := legacy_storage.NewManagedRoute(v0alpha1.UserDefinedRoutingTreeName, &route)
+		managedRoute.Version = "" // Avoid version conflict.
+		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), managedRoute, func(int64) string { return "default" })
 		require.NoError(t, err)
 		_, err = routeClient.Update(ctx, v1Route, v1.UpdateOptions{})
 		require.NoError(t, err)

@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
@@ -656,7 +657,9 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	}
 
 	routeClient := common.NewRoutingTreeClient(t, helper.Org1.Admin)
-	v1route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), *amConfig.AlertmanagerConfig.Route, "", func(int64) string { return "default" })
+	route := legacy_storage.NewManagedRoute(v0alpha1.UserDefinedRoutingTreeName, amConfig.AlertmanagerConfig.Route)
+	route.Version = "" // Avoid version conflict.
+	v1route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), route, func(int64) string { return "default" })
 	require.NoError(t, err)
 	_, err = routeClient.Update(ctx, v1route, v1.UpdateOptions{})
 	require.NoError(t, err)
