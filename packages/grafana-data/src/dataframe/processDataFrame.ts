@@ -29,7 +29,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
     const { text, type, ...disp } = c as Column & { type?: FieldType };
     const values: unknown[] = [];
     return {
-      name: text, // rename 'text' to the 'name' field
+      name: text ?? c, // rename 'text' to the 'name' field
       config: disp || {},
       values,
       type: type && Object.values(FieldType).includes(type) ? type : FieldType.other,
