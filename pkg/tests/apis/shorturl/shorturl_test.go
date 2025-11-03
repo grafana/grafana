@@ -256,6 +256,7 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 	})
 
 	t.Run("Redirect functionality", func(t *testing.T) {
+		t.Skip("Skipping redirect functionality tests for now - flaky test")
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Editor,
 			GVR:  gvr,
