@@ -2,7 +2,8 @@ import { DataFrameView } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { useQueryRunner } from '@grafana/scenes-react';
-import { Stack, Text } from '@grafana/ui';
+import { ErrorBoundaryAlert, Stack, Text } from '@grafana/ui';
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { Spacer } from '../../components/Spacer';
 import { METRIC_NAME } from '../constants';
@@ -10,19 +11,19 @@ import { METRIC_NAME } from '../constants';
 import { getDataQuery, useQueryFilter } from './utils';
 
 interface Frame {
-  alertstate: 'firing' | 'pending';
+  alertstate: PromAlertingRuleState.Firing | PromAlertingRuleState.Pending;
   Value: number;
 }
 
-interface RuleFrame {
-  alertstate: 'firing' | 'pending';
+export interface RuleFrame {
+  alertstate: PromAlertingRuleState.Firing | PromAlertingRuleState.Pending;
   alertname: string;
   grafana_folder: string;
   grafana_rule_uid: string;
   Value: number;
 }
 
-type AlertState = 'firing' | 'pending';
+type AlertState = PromAlertingRuleState.Firing | PromAlertingRuleState.Pending;
 
 export function parseAlertstateFilter(filter: string): AlertState | null {
   const firingMatch = filter.match(/alertstate\s*=~?\s*"firing"/);
@@ -33,11 +34,11 @@ export function parseAlertstateFilter(filter: string): AlertState | null {
   }
 
   if (firingMatch) {
-    return 'firing';
+    return PromAlertingRuleState.Firing;
   }
 
   if (pendingMatch) {
-    return 'pending';
+    return PromAlertingRuleState.Pending;
   }
 
   return null;
@@ -49,16 +50,16 @@ export function countRules(ruleDfv: DataFrameView<RuleFrame>, alertstateFilter: 
 
   ruleDfv.fields.grafana_rule_uid.values.forEach((ruleUID, i) => {
     const alertstate = ruleDfv.fields.alertstate.values[i];
-    if (alertstate === 'firing') {
+    if (alertstate === PromAlertingRuleState.Firing) {
       rulesWithFiring.add(ruleUID);
     }
-    if (alertstate === 'pending') {
+    if (alertstate === PromAlertingRuleState.Pending) {
       rulesWithPending.add(ruleUID);
     }
   });
 
   // When filtering by pending, count all rules with pending instances (may also have firing)
-  if (alertstateFilter === 'pending') {
+  if (alertstateFilter === PromAlertingRuleState.Pending) {
     return {
       firing: 0,
       pending: rulesWithPending.size,
@@ -66,7 +67,7 @@ export function countRules(ruleDfv: DataFrameView<RuleFrame>, alertstateFilter: 
   }
 
   // When filtering by firing, count all rules with firing instances (may also have pending)
-  if (alertstateFilter === 'firing') {
+  if (alertstateFilter === PromAlertingRuleState.Firing) {
     return {
       firing: rulesWithFiring.size,
       pending: 0,
@@ -89,7 +90,7 @@ function countInstances(instanceDfv: DataFrameView<Frame>) {
     const index = instanceDfv.fields.alertstate.values.findIndex((s) => s === state);
     return instanceDfv.fields.Value.values[index] ?? 0;
   };
-  return { firing: getValue('firing'), pending: getValue('pending') };
+  return { firing: getValue(PromAlertingRuleState.Firing), pending: getValue(PromAlertingRuleState.Pending) };
 }
 
 interface StatRowProps {
@@ -109,7 +110,7 @@ function StatRow({ i18nKey, color, values, children }: StatRowProps) {
   );
 }
 
-export function SummaryStatsReact() {
+function SummaryStatsContent() {
   const filter = useQueryFilter();
   const alertstateFilter = parseAlertstateFilter(filter);
 
@@ -162,7 +163,7 @@ export function SummaryStatsReact() {
   return (
     <Stack direction="column" alignItems="flex-end" gap={0}>
       <Spacer />
-      {alertstateFilter === 'firing' && (
+      {alertstateFilter === PromAlertingRuleState.Firing && (
         <>
           <StatRow i18nKey="alerting.triage.firing-rules-count" color="error" values={{ count: rules.firing }}>
             {'{{count}} firing alert rules'}
@@ -176,7 +177,7 @@ export function SummaryStatsReact() {
           </StatRow>
         </>
       )}
-      {alertstateFilter === 'pending' && (
+      {alertstateFilter === PromAlertingRuleState.Pending && (
         <>
           <StatRow
             i18nKey="alerting.triage.rules-with-pending-instances"
@@ -219,6 +220,14 @@ export function SummaryStatsReact() {
         </>
       )}
     </Stack>
+  );
+}
+
+export function SummaryStatsReact() {
+  return (
+    <ErrorBoundaryAlert>
+      <SummaryStatsContent />
+    </ErrorBoundaryAlert>
   );
 }
 
