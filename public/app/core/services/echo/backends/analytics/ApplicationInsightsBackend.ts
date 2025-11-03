@@ -33,10 +33,11 @@ export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent
       config: {
         connectionString: options.connectionString,
         endpointUrl: options.endpointUrl,
+        enableAutoRouteTracking: true,
       },
     };
 
-    const url = 'https://js.monitor.azure.com/scripts/b/ai.2.min.js';
+    const url = 'https://js.monitor.azure.com/scripts/b/ai.2.js';
     System.import(url)
       .then((m) => (m.default ? m.default : m))
       .then(({ ApplicationInsights }) => {
