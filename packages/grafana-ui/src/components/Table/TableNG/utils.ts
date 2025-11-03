@@ -15,6 +15,7 @@ import {
   DisplayValueAlignmentFactors,
   DataFrame,
   DisplayProcessor,
+  DecimalCount,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -970,28 +971,24 @@ export function canFieldBeColorized(
   );
 }
 
-export const displayJsonValue: DisplayProcessor = (value: unknown): DisplayValue => {
-  let displayValue: string;
+export const displayJsonValue: (field: Field) => DisplayProcessor = (field: Field, decimals?: DecimalCount) => {
+  const origDisplay = field.display!;
+  return (value: unknown): DisplayValue => {
+    let jsonText: string;
 
-  // Handle string values that might be JSON
-  if (typeof value === 'string') {
+    const displayValue = origDisplay(value, decimals);
+    const formattedValue = formattedValueToString(displayValue);
+
+    // Handle string values that might be JSON
     try {
-      const parsed = JSON.parse(value);
-      displayValue = JSON.stringify(parsed, null, ' ');
+      const parsed = JSON.parse(formattedValue);
+      jsonText = JSON.stringify(parsed, null, ' ');
     } catch {
-      displayValue = value; // Keep original if not valid JSON
+      jsonText = formattedValue; // Keep original if not valid JSON
     }
-  } else {
-    // For non-string values, stringify them
-    try {
-      displayValue = JSON.stringify(value, null, ' ');
-    } catch (error) {
-      // Handle circular references or other stringify errors
-      displayValue = String(value);
-    }
-  }
 
-  return { text: displayValue, numeric: Number.NaN };
+    return { ...displayValue, text: jsonText };
+  };
 };
 
 export function getSummaryCellTextAlign(textAlign: TextAlign, cellType: TableCellDisplayMode): TextAlign {
