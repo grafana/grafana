@@ -57,6 +57,7 @@ func (c *TestClient) IsEnabled(ctx context.Context, flag string) bool {
 	return c.delegate.Boolean(ctx, flag, false, openfeature.TransactionContext(ctx))
 }
 
+// SetFeatureFlags sets flags for the scope of a test.
 func (c *TestClient) SetFeatureFlags(t testing.TestFramework, flags ...FeatureFlag) {
 	featureFlags := make(map[string]memprovider.InMemoryFlag)
 
@@ -80,4 +81,9 @@ func (c *TestClient) SetFeatureFlags(t testing.TestFramework, flags ...FeatureFl
 		}
 	}
 	provider.UsingFlags(t, featureFlags)
+}
+
+// Cleanup deletes the flags bound to the current test and should be executed after each test execution
+func (c *TestClient) Cleanup() {
+	provider.Cleanup()
 }
