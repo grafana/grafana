@@ -6382,7 +6382,7 @@
       "content-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
     },
     "variable-controls": {
-      "add-variable": "Add"
+      "add-variable": "Add variable"
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
