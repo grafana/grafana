@@ -167,14 +167,15 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   return (
     <Stack direction="column" gap={2}>
       <FilterInput
+        className={styles.searchInput}
         placeholder={
           datasourceType
             ? t(
-                'dashboard.library.community-search-placeholder-with-datasource',
+                'dashboard-library.community-search-placeholder-with-datasource',
                 'Search {{datasourceType}} community dashboards...',
                 { datasourceType }
               )
-            : t('dashboard.library.community-search-placeholder', 'Search community dashboards...')
+            : t('dashboard-library.community-search-placeholder', 'Search community dashboards...')
         }
         value={searchQuery}
         onChange={setSearchQuery}
@@ -191,21 +192,21 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
             }}
           >
             {Array.from({ length: COMMUNITY_PAGE_SIZE }).map((_, i) => (
-              <div key={i} className={styles.skeleton} />
+              <DashboardCard.Skeleton key={`skeleton-${i}`} />
             ))}
           </Grid>
         ) : showError ? (
           <Stack direction="column" alignItems="center" gap={2}>
             <Alert
-              title={t('dashboard.library.community-error-title', 'Error loading community dashboards')}
+              title={t('dashboard-library.community-error-title', 'Error loading community dashboards')}
               severity="error"
             >
-              <Trans i18nKey="dashboard.library.community-error">
+              <Trans i18nKey="dashboard-library.community-error">
                 Failed to load community dashboards. Please try again.
               </Trans>
             </Alert>
             <Button variant="secondary" onClick={() => setCurrentPage(1)}>
-              <Trans i18nKey="dashboard.library.retry">Retry</Trans>
+              <Trans i18nKey="dashboard-library.retry">Retry</Trans>
             </Button>
           </Stack>
         ) : showEmptyState ? (
@@ -214,27 +215,27 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
             message={
               datasourceType
                 ? t(
-                    'dashboard.library.community-empty-title-with-datasource',
+                    'dashboard-library.community-empty-title-with-datasource',
                     'No {{datasourceType}} community dashboards found',
                     { datasourceType }
                   )
-                : t('dashboard.library.community-empty-title', 'No community dashboards found')
+                : t('dashboard-library.community-empty-title', 'No community dashboards found')
             }
             button={
               <Button
                 variant="secondary"
                 onClick={() => window.open('https://grafana.com/grafana/dashboards/', '_blank')}
               >
-                <Trans i18nKey="dashboard.library.browse-grafana-com">Browse Grafana.com</Trans>
+                <Trans i18nKey="dashboard-library.browse-grafana-com">Browse Grafana.com</Trans>
               </Button>
             }
           >
             {searchQuery && !datasourceType ? (
-              <Trans i18nKey="dashboard.library.no-community-dashboards-search">
+              <Trans i18nKey="dashboard-library.no-community-dashboards-search">
                 Try a different search term or browse more dashboards on Grafana.com.
               </Trans>
             ) : (
-              <Trans i18nKey="dashboard.library.no-community-dashboards-datasource">
+              <Trans i18nKey="dashboard-library.no-community-dashboards-datasource">
                 Try a different search term or browse dashboards for different datasource types on Grafana.com.
               </Trans>
             )}
@@ -264,7 +265,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                   onClick={() => onUseCommunityDashboard(dashboard)}
                   isLogo={isLogo}
                   details={details}
-                  buttonText={<Trans i18nKey="dashboard-template.card.use-dashboard-button">Use dashboard</Trans>}
+                  buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}
                 />
               );
             })}
@@ -292,31 +293,17 @@ function getStyles(theme: GrafanaTheme2) {
       minHeight: '600px',
       position: 'relative',
     }),
-    skeleton: css({
-      height: '300px',
-      backgroundColor: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
-      [theme.transitions.handleMotion('no-preference')]: {
-        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-      },
-      '@keyframes pulse': {
-        '0%, 100%': {
-          opacity: 1,
-        },
-        '50%': {
-          opacity: 0.5,
-        },
-      },
-    }),
     pagination: css({
       position: 'sticky',
       bottom: 0,
       backgroundColor: theme.colors.background.primary,
-      paddingTop: theme.spacing(2),
-      paddingBottom: theme.spacing(1),
-      marginTop: theme.spacing(2),
+      padding: theme.spacing(2),
       alignItems: 'center',
       zIndex: 2,
+    }),
+    searchInput: css({
+      paddingLeft: theme.spacing(2),
+      paddingRight: theme.spacing(2),
     }),
   };
 }

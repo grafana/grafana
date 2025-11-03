@@ -1662,6 +1662,9 @@
             "no-history": "No recent state changes",
             "state-history": "Recent State Changes"
         },
+        "instance-details-drawer": {
+            "title-instance-details": "Instance Details"
+        },
         "instance-match": {
             "non-matching-labels": "Non-matching labels",
             "notification-policy": "View route"
@@ -1719,6 +1722,9 @@
             },
             "placeholder-key": "key",
             "placeholder-value": "value"
+        },
+        "left-column": {
+            "label-instances": "Instances"
         },
         "link-to-contact-points": {
             "aria-label-view-or-create-contact-points": "View or create contact points",
@@ -2885,8 +2891,6 @@
             "notification-message": "Notification message",
             "predefined-notification-message": "You will send a test notification that uses a predefined alert. If you have defined a custom template or message, for better results switch to <strong>custom</strong> notification message, from above.",
             "send-test-notification": "Send test notification",
-            "test-failed": "Test notification failed",
-            "test-successful": "Test notification sent successfully",
             "title-test-contact-point": "Test contact point"
         },
         "threshold": {
@@ -2946,9 +2950,7 @@
             "alert-instances": "Alert instances",
             "error-loading-rule": "Error loading rule",
             "firing-instances-count": "{{firingCount}} firing instances",
-            "instance-details-drawer": {
-                "instance-details": "Instance details"
-            },
+            "instance-details": "Instance Details",
             "no-instances-found": "No alert instances found for rule: {{ruleUID}}",
             "no-labels": "No labels",
             "open-in-sidebar": "Open in sidebar",
@@ -4126,7 +4128,6 @@
         "action": {
             "change-theme": "Change theme",
             "dark-theme": "Dark",
-            "dashboard-from-template": "Dashboard from template",
             "light-theme": "Light",
             "scopes": "Scopes"
         },
@@ -4836,11 +4837,7 @@
             "add-visualization-header": "Start your new dashboard by adding a visualization",
             "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2> .",
             "import-a-dashboard-header": "Import a dashboard",
-            "import-dashboard-button": "Import dashboard",
-            "suggested-dashboards-subtitle": "Browse and select from data-source provided or community dashboards",
-            "suggested-dashboards-title": "Build a dashboard using suggested options for your selected data source",
-            "suggested-dashboards-title-with-datasource": "Build a dashboard using suggested options for your {{datasourceType}} data source",
-            "view-all": "View all"
+            "import-dashboard-button": "Import dashboard"
         },
         "errors": {
             "failed-to-load": "Failed to load dashboard"
@@ -5075,40 +5072,6 @@
                 }
             }
         },
-        "library": {
-            "browse-grafana-com": "Browse Grafana.com",
-            "browse-plugins": "Browse plugins",
-            "community-empty-title": "No community dashboards found",
-            "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
-            "community-error": "Failed to load community dashboards. Please try again.",
-            "community-error-title": "Error loading community dashboards",
-            "community-mapping-form": {
-                "auto-mapped_one": "{{count}} datasources were automatically configured:",
-                "auto-mapped_other": "{{count}} datasources were automatically configured:",
-                "back": "Back to dashboards",
-                "constants-title": "Dashboard Variables",
-                "datasources-title": "Datasource Configuration",
-                "description": "This dashboard requires datasource configuration. Select datasources for each input below.",
-                "preview": "Preview dashboard"
-            },
-            "community-mapping-select-datasource": "Select a datasource",
-            "community-search-placeholder": "Search community dashboards...",
-            "community-search-placeholder-with-datasource": "Search {{datasourceType}} community dashboards...",
-            "no-community-dashboards-datasource": "Try a different search term or browse dashboards for different datasource types on Grafana.com.",
-            "no-community-dashboards-search": "Try a different search term or browse more dashboards on Grafana.com.",
-            "no-provisioned-dashboards": "Provisioned dashboards are provided by data source plugins. You can find more plugins on Grafana.com.",
-            "provisioned-empty-title": "No provisioned dashboards found",
-            "provisioned-empty-title-with-datasource": "No {{datasourceType}} provisioned dashboards found",
-            "retry": "Retry"
-        },
-        "library-modal": {
-            "description": "Browse and select from data-source provided or community dashboards",
-            "tab-community": "Community",
-            "tab-datasource": "Data-source provided",
-            "title": "Suggested dashboards",
-            "title-mapping": "Configure datasources",
-            "title-with-datasource": "Suggested dashboards for your {{datasourceType}} datasource"
-        },
         "make-editable": {
             "dashboard-not-editable": "Dashboard not editable",
             "make-editable": "Make editable"
@@ -5169,15 +5132,15 @@
         },
         "panel": {
             "time-range-settings": {
-                "hide-time-info": "Hide panel time range",
-                "hide-time-info-description": "Do not show the panel time range in the panel header",
-                "time-from": "Panel time range",
-                "time-from-description": "Overrides the dashboard time range. Use one of the preset values or enter a custom value like 5m or 2h.",
+                "hide-time-info": "Hidden time info",
+                "hide-time-info-description": "Do not show the custom time range in the panel header",
+                "time-from": "Custom panel time range",
+                "time-from-description": "Overrides the dashboard time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
                 "time-shift": "Time shift",
-                "time-shift-description": "Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like 5m or 2h.",
-                "time-window-compare": "Time comparison",
-                "time-window-compare-description": "Compare data between two time ranges",
-                "title": "Panel time settings"
+                "time-shift-description": "Adds a time shift relative to the dashboard or panel time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
+                "time-window-compare": "Time window comparison",
+                "time-window-compare-description": "Query and overlay data from a different time period",
+                "title": "Panel time range settings"
             }
         },
         "panel-edit": {
@@ -5696,6 +5659,31 @@
         }
     },
     "dashboard-library": {
+        "browse-grafana-com": "Browse Grafana.com",
+        "browse-plugins": "Browse plugins",
+        "card": {
+            "datasource-provided-badge": "Data source provided",
+            "details-tooltip": "Details",
+            "no-preview": "No preview available",
+            "use-dashboard-button": "Use dashboard",
+            "use-template-button": "Use template"
+        },
+        "community-empty-title": "No community dashboards found",
+        "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
+        "community-error": "Failed to load community dashboards. Please try again.",
+        "community-error-title": "Error loading community dashboards",
+        "community-mapping-form": {
+            "auto-mapped_one": "{{count}} datasources were automatically configured:",
+            "auto-mapped_other": "{{count}} datasources were automatically configured:",
+            "back": "Back to dashboards",
+            "constants-title": "Dashboard Variables",
+            "datasources-title": "Datasource Configuration",
+            "description": "This dashboard requires datasource configuration. Select datasources for each input below.",
+            "preview": "Preview dashboard"
+        },
+        "community-mapping-select-datasource": "Select a datasource",
+        "community-search-placeholder": "Search community dashboards...",
+        "community-search-placeholder-with-datasource": "Search {{datasourceType}} community dashboards...",
         "dashboard-card": {
             "details": {
                 "datasource": "Datasource",
@@ -5705,7 +5693,25 @@
                 "published-by": "Published By",
                 "view-on-grafana-com": "View on Grafana.com"
             }
-        }
+        },
+        "modal": {
+            "description": "Browse and select from data-source provided or community dashboards",
+            "tab-community": "Community",
+            "tab-datasource": "Data-source provided",
+            "title": "Suggested dashboards",
+            "title-mapping-with-name": "Configure datasources for {{dashboardName}}",
+            "title-with-datasource": "Suggested dashboards for your {{datasourceType}} datasource"
+        },
+        "no-community-dashboards-datasource": "Try a different search term or browse dashboards for different datasource types on Grafana.com.",
+        "no-community-dashboards-search": "Try a different search term or browse more dashboards on Grafana.com.",
+        "no-provisioned-dashboards": "Provisioned dashboards are provided by data source plugins. You can find more plugins on Grafana.com.",
+        "provisioned-empty-title": "No provisioned dashboards found",
+        "provisioned-empty-title-with-datasource": "No {{datasourceType}} provisioned dashboards found",
+        "retry": "Retry",
+        "suggested-dashboards-subtitle": "Browse and select from data-source provided or community dashboards",
+        "suggested-dashboards-title": "Build a dashboard using suggested options for your selected data source",
+        "suggested-dashboards-title-with-datasource": "Build a dashboard using suggested options for your {{datasourceType}} data source",
+        "view-all": "View all"
     },
     "dashboard-links": {
         "empty-state": {
@@ -6314,7 +6320,6 @@
             "enabled-value": "Enabled value",
             "enabled-value-description": "Value when switch is enabled",
             "enabled-value-placeholder": "e.g. On, Enabled, Active",
-            "same-values-error": "Enabled and disabled values cannot be the same",
             "switch-options": "Switch options",
             "value-pair-type": "Value pair type",
             "value-pair-type-description": "Choose the type of values for the switch states"
@@ -6538,15 +6543,6 @@
         },
         "versions": {
             "title": "Versions"
-        }
-    },
-    "dashboard-template": {
-        "card": {
-            "datasource-provided-badge": "Data source provided",
-            "details-tooltip": "Details",
-            "no-preview": "No preview available",
-            "use-dashboard-button": "Use dashboard",
-            "use-template-button": "Use template"
         }
     },
     "dashboards": {
@@ -7247,8 +7243,7 @@
         "logs-table-multi-select": {
             "fields": "Fields",
             "reset": "Reset",
-            "selected-fields": "Selected fields",
-            "suggested-fields": "Suggested"
+            "selected-fields": "Selected fields"
         },
         "logs-table-wrap": {
             "aria-label-select-query-by-name": "Select query by name",
@@ -8836,9 +8831,6 @@
         },
         "drawer": {
             "close": "Close"
-        },
-        "error-boundary": {
-            "title": "An unexpected error happened"
         },
         "feature-badge": {
             "experimental": "Experimental",
@@ -10528,7 +10520,7 @@
             "title": "New"
         },
         "new-dashboard": {
-            "title": "Empty dashboard"
+            "title": "New dashboard"
         },
         "new-folder": {
             "title": "New folder"
@@ -10656,12 +10648,7 @@
             }
         },
         "help": {
-            "aria-label": "Help",
-            "interactive-learning": {
-                "close-tooltip": "Close interactive learning, help, and documentation",
-                "open-tooltip": "Open interactive learning, help, and documentation"
-            },
-            "tooltip": "Get help and useful links"
+            "aria-label": "Help"
         },
         "invite-user": {
             "invite-button": "Invite",
@@ -11428,15 +11415,12 @@
             "label-workflow": "Workflow",
             "placeholder-branch": "Select or enter branch name",
             "placeholder-new-branch": "Enter new branch name",
-            "suffix-configured-branch": "Configured branch",
-            "suffix-last-used": "Last branch",
-            "suffix-pr-branch": "Pull request branch"
+            "suffix-configured-branch": "Configured branch"
         }
     },
     "provisioned-resource-preview-banner": {
         "preview-banner": {
             "behind-branch-text": "This resource is behind the branch in {{repoType}}.",
-            "branch-text": "branch:",
             "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
             "open-in-repo-button": "Open in {{repoType}}",
             "open-pull-request-in-repo": "Open pull request in {{repoType}}",
@@ -12407,9 +12391,8 @@
         "dashboard-actions": {
             "import": "Import",
             "new": "New",
-            "new-dashboard": "Empty dashboard",
-            "new-folder": "New folder",
-            "new-template-dashboard": "Dashboard from template"
+            "new-dashboard": "New dashboard",
+            "new-folder": "New folder"
         },
         "generate-columns": {
             "score": "Score"

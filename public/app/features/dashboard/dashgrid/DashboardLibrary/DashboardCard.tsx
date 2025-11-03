@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, Button, Card, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
-import { attachSkeleton } from '@grafana/ui/unstable';
+import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { GnetDashboard } from './types';
@@ -29,8 +29,6 @@ interface Props {
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
   buttonText?: React.ReactNode; // Optional custom button text, defaults to "Use template"
 }
-
-const DashboardCardSkeleton = () => <Skeleton width="350px" height="300px" />;
 
 function DashboardCardComponent({
   title,
@@ -64,13 +62,13 @@ function DashboardCardComponent({
           />
         ) : (
           <div className={styles.noImage}>
-            <Trans i18nKey="dashboard-template.card.no-preview">No preview available </Trans>
+            <Trans i18nKey="dashboard-library.card.no-preview">No preview available </Trans>
           </div>
         )}
         {showDatasourceProvidedBadge && (
           <div className={styles.badgeContainer}>
             <Badge
-              text={t('dashboard-template.card.datasource-provided-badge', 'Data source provided')}
+              text={t('dashboard-library.card.datasource-provided-badge', 'Data source provided')}
               color="orange"
             />
           </div>
@@ -83,14 +81,14 @@ function DashboardCardComponent({
       </div>
       <Card.Actions className={styles.actionsContainer}>
         <Button variant="secondary" onClick={onClick}>
-          {buttonText || <Trans i18nKey="dashboard-template.card.use-template-button">Use template</Trans>}
+          {buttonText || <Trans i18nKey="dashboard-library.card.use-template-button">Use template</Trans>}
         </Button>
         {details && (
           <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
             <IconButton
               name="info-circle"
               size="xl"
-              aria-label={t('dashboard-template.card.details-tooltip', 'Details')}
+              aria-label={t('dashboard-library.card.details-tooltip', 'Details')}
             />
           </Tooltip>
         )}
@@ -253,3 +251,16 @@ function getStyles(theme: GrafanaTheme2) {
     }),
   };
 }
+
+const DashboardCardSkeleton: SkeletonComponent = ({ rootProps }) => {
+  const styles = useStyles2(getSkeletonStyles);
+  return <Skeleton width={350} height={300} containerClassName={styles.container} {...rootProps} />;
+};
+
+const getSkeletonStyles = () => ({
+  container: css({
+    lineHeight: 1,
+  }),
+});
+
+export const DashboardCard = attachSkeleton(DashboardCardComponent, DashboardCardSkeleton);

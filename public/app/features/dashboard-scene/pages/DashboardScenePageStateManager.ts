@@ -479,6 +479,26 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     throw new Error('Snapshot not found');
   }
 
+  private buildDashboardDTOFromInterpolated(interpolatedDashboard: DashboardDataDTO): DashboardDTO {
+    return {
+      dashboard: {
+        ...interpolatedDashboard,
+        uid: '',
+        version: 0,
+        id: null,
+      },
+      meta: {
+        canSave: contextSrv.hasEditPermissionInFolders,
+        canEdit: contextSrv.hasEditPermissionInFolders,
+        canStar: false,
+        canShare: false,
+        canDelete: false,
+        isNew: true,
+        folderUid: '',
+      },
+    };
+  }
+
   private async loadSuggestedDashboard(): Promise<DashboardDTO> {
     // Extract template parameters from URL
     const searchParams = new URLSearchParams(window.location.search);
@@ -522,24 +542,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     };
 
     const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
-
-    return {
-      dashboard: {
-        ...interpolatedDashboard,
-        uid: '',
-        version: 0,
-        id: null,
-      },
-      meta: {
-        canSave: contextSrv.hasEditPermissionInFolders,
-        canEdit: contextSrv.hasEditPermissionInFolders,
-        canStar: false,
-        canShare: false,
-        canDelete: false,
-        isNew: true,
-        folderUid: '',
-      },
-    };
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
   }
 
   private async loadCommunityTemplateDashboard(gnetId: string): Promise<DashboardDTO> {
@@ -573,24 +576,35 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     };
 
     const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
+  }
 
-    return {
-      dashboard: {
-        ...interpolatedDashboard,
-        uid: '',
-        version: 0,
-        id: null,
-      },
-      meta: {
-        canSave: contextSrv.hasEditPermissionInFolders,
-        canEdit: contextSrv.hasEditPermissionInFolders,
-        canStar: false,
-        canShare: false,
-        canDelete: false,
-        isNew: true,
-        folderUid: '',
-      },
+  private async loadTemplateDashboard(
+    gnetId: string,
+    datasource: string | null,
+    pluginId: string | null
+  ): Promise<DashboardDTO> {
+    // Fetch the community dashboard from grafana.com
+    const gnetDashboard = await getBackendSrv().get(`/api/gnet/dashboards/${gnetId}`);
+
+    // The dashboard JSON is in the 'json' property
+    const dashboardJson = gnetDashboard.json;
+
+    const data = {
+      dashboard: dashboardJson,
+      overwrite: true,
+      inputs: [
+        {
+          name: '*',
+          type: 'datasource',
+          pluginId: pluginId,
+          value: datasource,
+        },
+      ],
     };
+
+    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
   }
 
   private async loadTemplateDashboard(

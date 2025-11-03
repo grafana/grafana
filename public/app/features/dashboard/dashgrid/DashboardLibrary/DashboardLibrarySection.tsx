@@ -104,19 +104,19 @@ export const DashboardLibrarySection = () => {
           message={
             datasourceType
               ? t(
-                  'dashboard.library.provisioned-empty-title-with-datasource',
+                  'dashboard-library.provisioned-empty-title-with-datasource',
                   'No {{datasourceType}} provisioned dashboards found',
                   { datasourceType }
                 )
-              : t('dashboard.library.provisioned-empty-title', 'No provisioned dashboards found')
+              : t('dashboard-library.provisioned-empty-title', 'No provisioned dashboards found')
           }
           button={
             <Button variant="secondary" onClick={() => window.open('https://grafana.com/grafana/plugins/', '_blank')}>
-              <Trans i18nKey="dashboard.library.browse-plugins">Browse plugins</Trans>
+              <Trans i18nKey="dashboard-library.browse-plugins">Browse plugins</Trans>
             </Button>
           }
         >
-          <Trans i18nKey="dashboard.library.no-provisioned-dashboards">
+          <Trans i18nKey="dashboard-library.no-provisioned-dashboards">
             Provisioned dashboards are provided by data source plugins. You can find more plugins on Grafana.com.
           </Trans>
         </EmptyState>
@@ -130,7 +130,7 @@ export const DashboardLibrarySection = () => {
           }}
         >
           {loading && !templateDashboards
-            ? Array.from({ length: 9 }).map((_, i) => <div key={i} className={styles.skeleton} />)
+            ? Array.from({ length: 9 }).map((_, i) => <DashboardCard.Skeleton key={`skeleton-${i}`} />)
             : dashboardsToShow?.map((dashboard, index) => {
                 // Use global index for consistent image assignment across pages
                 const globalIndex = startIndex + index;
@@ -143,7 +143,7 @@ export const DashboardLibrarySection = () => {
                     imageUrl={imageUrl}
                     dashboard={dashboard}
                     onClick={() => onUseProvisionedDashboard(dashboard)}
-                    buttonText={<Trans i18nKey="dashboard-template.card.use-dashboard-button">Use dashboard</Trans>}
+                    buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}
                   />
                 );
               }) || []}
@@ -163,22 +163,6 @@ export const DashboardLibrarySection = () => {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    skeleton: css({
-      height: '300px',
-      backgroundColor: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
-      [theme.transitions.handleMotion('no-preference')]: {
-        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-      },
-      '@keyframes pulse': {
-        '0%, 100%': {
-          opacity: 1,
-        },
-        '50%': {
-          opacity: 0.5,
-        },
-      },
-    }),
     pagination: css({
       position: 'sticky',
       bottom: 0,

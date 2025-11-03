@@ -38,7 +38,7 @@ export const DashboardLibraryModal = ({
   initialMappingContext,
   defaultTab = 'datasource',
 }: DashboardLibraryModalProps) => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
 
   const [activeView, setActiveView] = useState<ModalView>(initialMappingContext ? 'mapping' : defaultTab);
@@ -70,6 +70,16 @@ export const DashboardLibraryModal = ({
     }
   }, [initialMappingContext, isOpen, defaultTab]);
 
+  const onTabChange = (tab: 'datasource' | 'community') => {
+    setActiveView(tab);
+    // Update URL to reflect current tab
+    setSearchParams((params) => {
+      const newParams = new URLSearchParams(params);
+      newParams.set('dashboardLibraryTab', tab);
+      return newParams;
+    });
+  };
+
   const handleShowMapping = (context: MappingContext) => {
     setMappingContext(context);
     setActiveView('mapping');
@@ -83,15 +93,17 @@ export const DashboardLibraryModal = ({
   return (
     <Modal
       title={
-        activeView === 'mapping'
-          ? t('dashboard.library-modal.title-mapping', 'Configure datasources')
+        activeView === 'mapping' && mappingContext
+          ? t('dashboard-library.modal.title-mapping-with-name', 'Configure datasources for {{dashboardName}}', {
+              dashboardName: mappingContext.dashboardName,
+            })
           : datasourceInfo.type
             ? t(
-                'dashboard.library-modal.title-with-datasource',
+                'dashboard-library.modal.title-with-datasource',
                 'Suggested dashboards for your {{datasourceType}} datasource',
                 { datasourceType: datasourceInfo.type }
               )
-            : t('dashboard.library-modal.title', 'Suggested dashboards')
+            : t('dashboard-library.modal.title', 'Suggested dashboards')
       }
       isOpen={isOpen}
       onDismiss={onDismiss}
@@ -102,23 +114,23 @@ export const DashboardLibraryModal = ({
       {activeView !== 'mapping' && (
         <div className={styles.stickyHeader}>
           <Text element="p">
-            <Trans i18nKey="dashboard.library-modal.description">
+            <Trans i18nKey="dashboard-library.modal.description">
               Browse and select from data-source provided or community dashboards
             </Trans>
           </Text>
 
           <TabsBar>
             <Tab
-              label={t('dashboard.library-modal.tab-datasource', 'Data-source provided')}
+              label={t('dashboard-library.modal.tab-datasource', 'Data-source provided')}
               icon="apps"
               active={activeView === 'datasource'}
-              onChangeTab={() => setActiveView('datasource')}
+              onChangeTab={() => onTabChange('datasource')}
             />
             <Tab
-              label={t('dashboard.library-modal.tab-community', 'Community')}
+              label={t('dashboard-library.modal.tab-community', 'Community')}
               icon="users-alt"
               active={activeView === 'community'}
-              onChangeTab={() => setActiveView('community')}
+              onChangeTab={() => onTabChange('community')}
             />
           </TabsBar>
         </div>
@@ -138,7 +150,6 @@ export const DashboardLibraryModal = ({
             onBack={handleBackToDashboards}
             onPreview={(allMappings) => {
               mappingContext.onInterpolateAndNavigate(allMappings);
-              onDismiss();
             }}
           />
         )}
@@ -172,7 +183,6 @@ function getStyles(theme: GrafanaTheme2) {
       paddingTop: theme.spacing(3),
       paddingLeft: theme.spacing(3),
       paddingRight: theme.spacing(3),
-      paddingBottom: theme.spacing(2),
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(2),
@@ -180,7 +190,7 @@ function getStyles(theme: GrafanaTheme2) {
     tabContent: css({
       flex: 1,
       overflow: 'auto',
-      paddingTop: theme.spacing(1),
+      paddingTop: theme.spacing(3),
       paddingLeft: theme.spacing(3),
       paddingRight: theme.spacing(3),
     }),
