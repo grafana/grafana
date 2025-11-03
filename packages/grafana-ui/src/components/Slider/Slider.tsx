@@ -3,6 +3,8 @@ import { Global } from '@emotion/react';
 import SliderComponent from 'rc-slider';
 import { useState, useCallback, ChangeEvent, FocusEvent } from 'react';
 
+import { t } from '@grafana/i18n';
+
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Input } from '../Input/Input';
 
@@ -11,6 +13,8 @@ import { SliderProps } from './types';
 
 /**
  * @public
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-slider--docs
  */
 export const Slider = ({
   min,
@@ -24,11 +28,15 @@ export const Slider = ({
   ariaLabelForHandle,
   marks,
   included,
+  inputId,
+  showInput = true,
 }: SliderProps) => {
   const isHorizontal = orientation === 'horizontal';
   const styles = useStyles2(getStyles, isHorizontal, Boolean(marks));
   const SliderWithTooltip = SliderComponent;
   const [sliderValue, setSliderValue] = useState<number>(value ?? min);
+  const dragHandleAriaLabel =
+    ariaLabelForHandle ?? t('grafana-ui.slider.drag-handle-aria-label', 'Use arrow keys to change the value');
 
   const onSliderChange = useCallback(
     (v: number | number[]) => {
@@ -102,21 +110,24 @@ export const Slider = ({
           onChangeComplete={handleChangeComplete}
           vertical={!isHorizontal}
           reverse={reverse}
-          ariaLabelForHandle={ariaLabelForHandle}
+          ariaLabelForHandle={dragHandleAriaLabel}
           marks={marks}
           included={included}
         />
 
-        <Input
-          type="text"
-          width={7.5}
-          className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
-          value={sliderValue}
-          onChange={onSliderInputChange}
-          onBlur={onSliderInputBlur}
-          min={min}
-          max={max}
-        />
+        {showInput && (
+          <Input
+            type="text"
+            width={7.5}
+            className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
+            value={sliderValue}
+            onChange={onSliderInputChange}
+            onBlur={onSliderInputBlur}
+            min={min}
+            max={max}
+            id={inputId}
+          />
+        )}
       </div>
     </div>
   );

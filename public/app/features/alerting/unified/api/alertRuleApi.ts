@@ -1,6 +1,6 @@
 import { RelativeTimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerAlert, Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import {
   AlertQuery,
@@ -33,11 +33,9 @@ import {
 } from './prometheus';
 import { FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
 
-export type ResponseLabels = {
-  labels: AlertInstances[];
-};
-
-export type PreviewResponse = ResponseLabels[];
+export type PreviewResponse = Array<
+  Pick<AlertmanagerAlert, 'annotations' | 'endsAt' | 'startsAt' | 'generatorURL' | 'labels'>
+>;
 
 export interface Datasource {
   type: string;
@@ -82,8 +80,6 @@ export interface Rule {
   labels: Labels;
   annotations: Annotations;
 }
-
-export type AlertInstances = Record<string, string>;
 
 interface ExportRulesParams {
   format: ExportFormats;
@@ -192,11 +188,19 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         excludeAlerts,
       }) => {
         const queryParams: Record<string, string | undefined> = {
-          rule_group: groupName,
-          rule_name: ruleName,
           dashboard_uid: dashboardUid, // Supported only by Grafana managed rules
           panel_id: panelId?.toString(), // Supported only by Grafana managed rules
         };
+
+        if (groupName) {
+          queryParams[PrometheusAPIFilters.RuleGroup] = groupName;
+          queryParams[PrometheusAPIFilters.RuleGroupVanilla] = groupName;
+        }
+
+        if (ruleName) {
+          queryParams[PrometheusAPIFilters.RuleName] = ruleName;
+          queryParams[PrometheusAPIFilters.RuleNameVanilla] = ruleName;
+        }
 
         if (namespace) {
           if (isGrafanaRulesSource(ruleSourceName)) {
@@ -208,7 +212,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         }
 
         if (limitAlerts !== undefined) {
-          queryParams[PrometheusAPIFilters.LimitAlerts] = String(PrometheusAPIFilters.LimitAlerts);
+          queryParams[PrometheusAPIFilters.LimitAlerts] = String(limitAlerts);
         }
 
         if (maxGroups) {

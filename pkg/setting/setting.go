@@ -78,6 +78,8 @@ var (
 )
 
 // TODO move all global vars to this struct
+// Deprecated: Direct access to Cfg will be disallowed in a future release.
+// Use the ConfigProvider interface (see pkg/configprovider/configprovider.go) instead.
 type Cfg struct {
 	Target []string
 	Raw    *ini.File
@@ -132,16 +134,21 @@ type Cfg struct {
 	HomePath                   string
 	ProvisioningPath           string
 	PermittedProvisioningPaths []string
+	// Grafana API Server
+	DisableControllers bool
 	// Provisioning config
-	ProvisioningDisableControllers bool
-	ProvisioningLokiURL            string
-	ProvisioningLokiUser           string
-	ProvisioningLokiPassword       string
-	ProvisioningLokiTenantID       string
-	DataPath                       string
-	LogsPath                       string
-	PluginsPath                    string
-	EnterpriseLicensePath          string
+	ProvisioningAllowedTargets      []string
+	ProvisioningAllowImageRendering bool
+	ProvisioningMinSyncInterval     time.Duration
+	ProvisioningRepositoryTypes     []string
+	ProvisioningLokiURL             string
+	ProvisioningLokiUser            string
+	ProvisioningLokiPassword        string
+	ProvisioningLokiTenantID        string
+	DataPath                        string
+	LogsPath                        string
+	PluginsPath                     string
+	EnterpriseLicensePath           string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -538,9 +545,6 @@ type Cfg struct {
 	// Cloud Migration
 	CloudMigration CloudMigrationSettings
 
-	// Feature Management Settings
-	FeatureManagement FeatureMgmtSettings
-
 	// Alerting
 	AlertingEvaluationTimeout   time.Duration
 	AlertingNotificationTimeout time.Duration
@@ -573,12 +577,14 @@ type Cfg struct {
 	MaxPageSizeBytes                           int
 	IndexPath                                  string
 	IndexWorkers                               int
-	IndexMaxBatchSize                          int
+	IndexRebuildWorkers                        int
 	IndexFileThreshold                         int
 	IndexMinCount                              int
-	IndexMaxCount                              int
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
+	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
+	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
+	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	EnableSharding                             bool
 	QOSEnabled                                 bool
 	QOSNumberWorker                            int
@@ -595,6 +601,7 @@ type Cfg struct {
 	SprinklesApiServerPageLimit                int
 	CACertPath                                 string
 	HttpsSkipVerify                            bool
+	ResourceServerJoinRingTimeout              time.Duration
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
@@ -767,7 +774,7 @@ func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 		labelName := model.LabelName(key.Name())
 		labelValue := model.LabelValue(key.Value())
 
-		if !labelName.IsValid() {
+		if !labelName.IsValid() { // nolint:staticcheck
 			return fmt.Errorf("invalid label name in [metrics.environment_info] configuration. name %q", labelName)
 		}
 
@@ -1423,7 +1430,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	logSection := iniFile.Section("log")
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
 
-	cfg.readFeatureManagementConfig()
 	cfg.readPublicDashboardsSettings()
 	cfg.readCloudMigrationSettings()
 	cfg.readSecretsManagerSettings()
@@ -2103,7 +2109,31 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 		}
 	}
 
-	cfg.ProvisioningDisableControllers = iniFile.Section("provisioning").Key("disable_controllers").MustBool(false)
+	repositoryTypes := strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "repository_types", "github|local"))
+	if repositoryTypes != "|" && repositoryTypes != "" {
+		cfg.ProvisioningRepositoryTypes = strings.Split(repositoryTypes, "|")
+		for i, s := range cfg.ProvisioningRepositoryTypes {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				return fmt.Errorf("a provisioning repository type is empty in '%s' (at index %d)", repositoryTypes, i)
+			}
+
+			cfg.ProvisioningRepositoryTypes[i] = s
+		}
+	}
+
+	cfg.DisableControllers = iniFile.Section("provisioning").Key("disable_controllers").MustBool(false)
+	// if disable_controllers is not set, check if grafana-apiserver.disable_controllers is set
+	// TODO: consolidate to just [grafana-apiserver]disable_controllers
+	if !cfg.DisableControllers {
+		cfg.DisableControllers = iniFile.Section("grafana-apiserver").Key("disable_controllers").MustBool(false)
+	}
+	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
+	if len(cfg.ProvisioningAllowedTargets) == 0 {
+		cfg.ProvisioningAllowedTargets = []string{"instance", "folder"}
+	}
+	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
+	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

@@ -79,7 +79,7 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
           <Stack direction="column" alignItems="center">
             <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
               <Spinner size={24} />
-              <Text element="h5" color="secondary">
+              <Text element="h3" variant="h5" color="secondary">
                 {message ?? state ?? t('provisioning.job-status.starting', 'Starting...')}
               </Text>
             </Stack>
@@ -95,13 +95,11 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
           </Stack>
         )}
         {state === 'success' ? (
-          <Stack direction="row" gap={1}>
-            {pullRequestURL ? (
-              <PullRequestButtons urls={job.status?.url} jobType={jobType} />
-            ) : (
-              <RepositoryLink name={repoName} jobType={jobType} />
-            )}
-          </Stack>
+          pullRequestURL ? (
+            <PullRequestButtons urls={job.status?.url} jobType={jobType} />
+          ) : (
+            <RepositoryLink name={repoName} jobType={jobType} />
+          )
         ) : (
           <ControlledCollapse label={t('provisioning.job-status.label-view-details', 'View details')} isOpen={false}>
             <pre>{JSON.stringify(job, null, 2)}</pre>

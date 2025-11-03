@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -66,6 +67,7 @@ func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgm
 }
 
 func (d *dashboardStore) emitEntityEvent() bool {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	return d.features != nil && d.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch)
 }
 
@@ -96,6 +98,7 @@ func (d *dashboardStore) GetDashboardsByLibraryPanelUID(ctx context.Context, lib
 	return connectedDashboards, err
 }
 
+// nolint:gocyclo
 func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dash *dashboards.Dashboard, overwrite bool) (bool, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.ValidateDashboardBeforesave")
 	defer span.End()
@@ -107,7 +110,7 @@ func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dash *
 
 		// we don't save FolderID in kubernetes object when saving through k8s
 		// this block guarantees we save dashboards with folder_id and folder_uid in those cases
-		if !dash.IsFolder && dash.FolderUID != "" && dash.FolderID == 0 { // nolint:staticcheck
+		if !dash.IsFolder && dash.FolderUID != "" && dash.FolderID == 0 && dash.FolderUID != folder.GeneralFolderUID { // nolint:staticcheck
 			var existing dashboards.Dashboard
 			folderIdFound, err := sess.Where("uid=? AND org_id=?", dash.FolderUID, dash.OrgID).Get(&existing)
 			if err != nil {
@@ -206,7 +209,7 @@ func (d *dashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, da
 		return sess.Table(`dashboard`).
 			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
 			Where(`dashboard_provisioning.dashboard_id = ?`, dashboardID).
-			Select("dashboard.*, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
+			Select("dashboard.id, dashboard.uid, dashboard.title, dashboard.folder_uid, dashboard.org_id, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
 			Find(&data)
 	})
 	if err != nil {
@@ -238,7 +241,7 @@ func (d *dashboardStore) GetProvisionedDataByDashboardUID(ctx context.Context, o
 		return sess.Table(`dashboard`).
 			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
 			Where(`dashboard_provisioning.dashboard_id = ?`, dashboard.ID).
-			Select("dashboard.*, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
+			Select("dashboard.id, dashboard.uid, dashboard.title, dashboard.folder_uid, dashboard.org_id, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
 			Find(&provisionedDashboard)
 	})
 	if err != nil {
@@ -272,7 +275,7 @@ func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, nam
 		return sess.Table(`dashboard`).
 			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
 			Where(`dashboard_provisioning.name = ? AND dashboard.org_id = ?`, name, orgID).
-			Select("dashboard.*, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
+			Select("dashboard.id, dashboard.uid, dashboard.title, dashboard.folder_uid, dashboard.org_id, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
 			Find(&dashes)
 	})
 	if err != nil {
@@ -292,6 +295,56 @@ func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, n
 			Where(`dashboard.org_id = ?`, orgID).
 			NotIn(`dashboard_provisioning.name`, notIn).Find(&dashes)
 	})
+	if err != nil {
+		return nil, err
+	}
+	return dashes, nil
+}
+
+func (d *dashboardStore) GetDuplicateProvisionedDashboards(ctx context.Context) ([]*dashboards.DashboardProvisioningSearchResults, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetDuplicateProvisionedDashboards")
+	defer span.End()
+
+	dashes := []*dashboards.DashboardProvisioningSearchResults{}
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		type duplicateGroup struct {
+			Name       string `xorm:"name"`
+			ExternalID string `xorm:"external_id"`
+			CheckSum   string `xorm:"check_sum"`
+		}
+
+		duplicateGroups := []duplicateGroup{}
+		err := sess.SQL(`
+			SELECT dp.name, dp.external_id
+			FROM dashboard_provisioning dp
+			INNER JOIN dashboard d ON d.id = dp.dashboard_id
+			GROUP BY dp.name, dp.external_id, dp.check_sum 
+			HAVING COUNT(*) > 1
+		`).Find(&duplicateGroups)
+
+		if err != nil {
+			return err
+		}
+
+		if len(duplicateGroups) == 0 {
+			return nil
+		}
+
+		for _, group := range duplicateGroups {
+			var groupDashes []*dashboards.DashboardProvisioningSearchResults
+			err := sess.Table(`dashboard`).
+				Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
+				Where(`dashboard_provisioning.name = ? AND dashboard_provisioning.external_id = ?`, group.Name, group.ExternalID).
+				Find(&groupDashes)
+			if err != nil {
+				return err
+			}
+			dashes = append(dashes, groupDashes...)
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}

@@ -107,6 +107,10 @@ export interface AnnotationQuery {
    */
   name: string;
   /**
+   * Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+   */
+  placement?: AnnotationQueryPlacement;
+  /**
    * TODO.. this should just be a normal query target
    */
   target?: AnnotationTarget;
@@ -315,6 +319,10 @@ export interface DashboardLink {
    */
   keepTime: boolean;
   /**
+   * Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+   */
+  placement?: DashboardLinkPlacement;
+  /**
    * List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
    */
   tags: Array<string>;
@@ -354,6 +362,99 @@ export const defaultDashboardLink: Partial<DashboardLink> = {
 export type DashboardLinkType = ('link' | 'dashboards');
 
 /**
+ * Dashboard Link placement. Defines where the link should be displayed.
+ * - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+ */
+export type DashboardLinkPlacement = 'inControlsMenu';
+
+/**
+ * Annotation Query placement. Defines where the annotation query should be displayed.
+ * - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+ */
+export type AnnotationQueryPlacement = 'inControlsMenu';
+
+/**
+ * Dashboard action type
+ */
+export type ActionType = ('fetch' | 'infinity');
+
+/**
+ * Fetch options
+ */
+export interface FetchOptions {
+  body?: string;
+  headers?: Array<Array<string>>;
+  method: HttpRequestMethod;
+  /**
+   * These are 2D arrays of strings, each representing a key-value pair
+   * We are defining this way because we can't generate a go struct that
+   * that would have exactly two strings in each sub-array
+   */
+  queryParams?: Array<Array<string>>;
+  url: string;
+}
+
+export const defaultFetchOptions: Partial<FetchOptions> = {
+  headers: [],
+  queryParams: [],
+};
+
+/**
+ * Infinity options
+ */
+export interface InfinityOptions {
+  body?: string;
+  datasourceUid: string;
+  headers?: Array<Array<string>>;
+  method: HttpRequestMethod;
+  /**
+   * These are 2D arrays of strings, each representing a key-value pair
+   * We are defining them this way because we can't generate a go struct that
+   * that would have exactly two strings in each sub-array
+   */
+  queryParams?: Array<Array<string>>;
+  url: string;
+}
+
+export const defaultInfinityOptions: Partial<InfinityOptions> = {
+  headers: [],
+  queryParams: [],
+};
+
+export type HttpRequestMethod = ('GET' | 'PUT' | 'POST' | 'DELETE' | 'PATCH');
+
+/**
+ * Action variable type
+ */
+export type ActionVariableType = 'string';
+
+export interface ActionVariable {
+  key: string;
+  name: string;
+  type: ActionVariableType;
+}
+
+/**
+ * Dashboard action
+ */
+export interface Action {
+  confirmation?: string;
+  fetch?: FetchOptions;
+  infinity?: InfinityOptions;
+  oneClick?: boolean;
+  style?: {
+    backgroundColor?: string;
+  };
+  title: string;
+  type: ActionType;
+  variables?: Array<ActionVariable>;
+}
+
+export const defaultAction: Partial<Action> = {
+  variables: [],
+};
+
+/**
  * Dashboard variable type
  * `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
  * `adhoc`: Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only).
@@ -363,8 +464,9 @@ export type DashboardLinkType = ('link' | 'dashboards');
  * `textbox`: Display a free text input field with an optional default value.
  * `custom`: Define the variable options manually using a comma-separated list.
  * `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+ * `switch`: Boolean variables rendered as a switch
  */
-export type VariableType = ('query' | 'adhoc' | 'groupby' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system' | 'snapshot');
+export type VariableType = ('query' | 'adhoc' | 'groupby' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system' | 'snapshot' | 'switch');
 
 /**
  * Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
@@ -798,6 +900,11 @@ export interface Panel {
    */
   targets?: Array<Record<string, unknown>>;
   /**
+   * Compare the current time range with a previous period
+   * For example "1d" to compare current period but shifted back 1 day
+   */
+  timeCompare?: string;
+  /**
    * Overrides the relative time range for individual panels,
    * which causes them to be different than what is selected in
    * the dashboard time picker in the top-right corner of the dashboard. You can use this to show metrics from different
@@ -911,6 +1018,10 @@ export const defaultMatcherConfig: Partial<MatcherConfig> = {
  */
 export interface FieldConfig {
   /**
+   * Define interactive HTTP requests that can be triggered from data visualizations.
+   */
+  actions?: Array<Action>;
+  /**
    * Panel color configuration
    */
   color?: FieldColor;
@@ -995,6 +1106,7 @@ export interface FieldConfig {
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {
+  actions: [],
   links: [],
   mappings: [],
 };

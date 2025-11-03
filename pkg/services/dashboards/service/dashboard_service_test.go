@@ -629,16 +629,19 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 
 func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	fakeDashboardStore := &dashboards.FakeDashboardStore{}
 	service := &DashboardServiceImpl{
 		cfg: setting.NewCfg(),
 		orgService: &orgtest.FakeOrgService{
 			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
 		},
 		publicDashboardService: fakePublicDashboardService,
+		dashboardStore:         fakeDashboardStore,
 		log:                    log.NewNopLogger(),
 	}
 
 	t.Run("Should delete across all orgs, but only delete file based provisioned dashboards", func(t *testing.T) {
+		fakeDashboardStore.On("GetDuplicateProvisionedDashboards", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{}, nil)
 		_, k8sCliMock := setupK8sDashboardTests(service)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -783,6 +786,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	})
 
 	t.Run("Should retry until deleted dashboard not found in search", func(t *testing.T) {
+		fakeDashboardStore.On("GetDuplicateProvisionedDashboards", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{}, nil)
 		repo := "test"
 		singleOrgService := &DashboardServiceImpl{
 			cfg: setting.NewCfg(),
@@ -790,6 +794,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 			},
 			publicDashboardService: fakePublicDashboardService,
+			dashboardStore:         fakeDashboardStore,
 			log:                    log.NewNopLogger(),
 		}
 		ctx, k8sCliMock := setupK8sDashboardTests(singleOrgService)
@@ -876,6 +881,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	})
 
 	t.Run("Will not wait for indexer when no dashboards were deleted", func(t *testing.T) {
+		fakeDashboardStore.On("GetDuplicateProvisionedDashboards", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{}, nil)
 		repo := "test"
 		singleOrgService := &DashboardServiceImpl{
 			cfg: setting.NewCfg(),
@@ -883,6 +889,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 			},
 			publicDashboardService: fakePublicDashboardService,
+			dashboardStore:         fakeDashboardStore,
 			log:                    log.NewNopLogger(),
 		}
 		ctx, k8sCliMock := setupK8sDashboardTests(singleOrgService)
@@ -1078,7 +1085,7 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 	}
 
 	service.features = featuremgmt.WithFeatures()
-	folder, err := service.SaveFolderForProvisionedDashboards(context.Background(), cmd)
+	folder, err := service.SaveFolderForProvisionedDashboards(context.Background(), cmd, "")
 	require.NoError(t, err)
 	require.NotNil(t, folder)
 
@@ -1938,6 +1945,33 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 		assert.Equal(t, "dash-db", query.Type) // query type should be added
 	})
 
+	t.Run("search will try and match all included tags", func(t *testing.T) {
+		ctx := context.Background()
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		query := &dashboards.FindPersistedDashboardsQuery{
+			OrgId: 1,
+			Sort:  model.SortOption{Name: "viewed-recently-desc"},
+			Tags:  []string{"tag1", "tag2"},
+		}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			// make sure we use AND logic with multiple tags
+			for _, field := range req.Options.Fields {
+				if field.Key == "tags" {
+					return field.Operator == "="
+				}
+			}
+			return false
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{},
+				Rows:    []*resourcepb.ResourceTableRow{},
+			}}, nil)
+		_, err := service.searchDashboardsThroughK8s(ctx, query)
+		require.NoError(t, err)
+	})
+
 	t.Run("search will include sort field in hit fields", func(t *testing.T) {
 		ctx := context.Background()
 		k8sCliMock := new(client.MockK8sHandler)
@@ -2100,6 +2134,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 			name                        string
 			rootFolder                  bool
 			featureKubernetesDashboards bool
+			User                        *user.SignedInUser
 			expectedPermission          []accesscontrol.SetResourcePermissionCommand
 		}{
 			{
@@ -2118,6 +2153,19 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				featureKubernetesDashboards: true,
 				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
 					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+				},
+			},
+			{
+				name:                        "with kubernetesDashboards feature in root folder and user is anonymous",
+				rootFolder:                  true,
+				featureKubernetesDashboards: true,
+				User: &user.SignedInUser{
+					IsAnonymous: true,
+					UserID:      0,
+				},
+				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
 					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 				},
@@ -2144,6 +2192,9 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 					OrgID:   1,
 					OrgRole: "Admin",
 					UserID:  1,
+				}
+				if tc.User != nil {
+					user = tc.User
 				}
 				ctx := request.WithNamespace(context.Background(), "default")
 				ctx = identity.WithRequester(ctx, user)

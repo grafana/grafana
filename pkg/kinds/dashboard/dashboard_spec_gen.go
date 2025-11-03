@@ -191,6 +191,9 @@ type Panel struct {
 	TimeShift *string `json:"timeShift,omitempty"`
 	// Controls if the timeFrom or timeShift overrides are shown in the panel header
 	HideTimeOverride *bool `json:"hideTimeOverride,omitempty"`
+	// Compare the current time range with a previous period
+	// For example "1d" to compare current period but shifted back 1 day
+	TimeCompare *string `json:"timeCompare,omitempty"`
 	// Dynamically load the panel
 	LibraryPanel *LibraryPanelRef `json:"libraryPanel,omitempty"`
 	// Sets panel queries cache timeout.
@@ -206,7 +209,8 @@ type Panel struct {
 // NewPanel creates a new Panel object.
 func NewPanel() *Panel {
 	return &Panel{
-		Transparent: (func(input bool) *bool { return &input })(false),
+		Transparent:     (func(input bool) *bool { return &input })(false),
+		RepeatDirection: (func(input PanelRepeatDirection) *PanelRepeatDirection { return &input })(PanelRepeatDirectionH),
 	}
 }
 
@@ -272,6 +276,8 @@ type DashboardLink struct {
 	Tags []string `json:"tags"`
 	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
 	AsDropdown bool `json:"asDropdown"`
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	Placement *string `json:"placement,omitempty"`
 	// If true, the link will be opened in a new tab
 	TargetBlank bool `json:"targetBlank"`
 	// If true, includes current template variables values in the link as query params
@@ -285,6 +291,7 @@ func NewDashboardLink() *DashboardLink {
 	return &DashboardLink{
 		Tags:        []string{},
 		AsDropdown:  false,
+		Placement:   (func(input string) *string { return &input })(DashboardLinkPlacement),
 		TargetBlank: false,
 		IncludeVars: false,
 		KeepTime:    false,
@@ -298,6 +305,10 @@ const (
 	DashboardLinkTypeLink       DashboardLinkType = "link"
 	DashboardLinkTypeDashboards DashboardLinkType = "dashboards"
 )
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+const DashboardLinkPlacement = "inControlsMenu"
 
 // Transformations allow to manipulate data returned by a query before the system applies a visualization.
 // Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
@@ -422,6 +433,8 @@ type FieldConfig struct {
 	Color *FieldColor `json:"color,omitempty"`
 	// The behavior when clicking on a result
 	Links []any `json:"links,omitempty"`
+	// Define interactive HTTP requests that can be triggered from data visualizations.
+	Actions []Action `json:"actions,omitempty"`
 	// Alternative to empty string
 	NoValue *string `json:"noValue,omitempty"`
 	// custom is specified by the FieldConfig field
@@ -649,6 +662,92 @@ const (
 	FieldColorSeriesByModeLast FieldColorSeriesByMode = "last"
 )
 
+// Dashboard action
+type Action struct {
+	Type         ActionType            `json:"type"`
+	Title        string                `json:"title"`
+	Fetch        *FetchOptions         `json:"fetch,omitempty"`
+	Infinity     *InfinityOptions      `json:"infinity,omitempty"`
+	Confirmation *string               `json:"confirmation,omitempty"`
+	OneClick     *bool                 `json:"oneClick,omitempty"`
+	Variables    []ActionVariable      `json:"variables,omitempty"`
+	Style        *DashboardActionStyle `json:"style,omitempty"`
+}
+
+// NewAction creates a new Action object.
+func NewAction() *Action {
+	return &Action{}
+}
+
+// Dashboard action type
+type ActionType string
+
+const (
+	ActionTypeFetch    ActionType = "fetch"
+	ActionTypeInfinity ActionType = "infinity"
+)
+
+// Fetch options
+type FetchOptions struct {
+	Method HttpRequestMethod `json:"method"`
+	Url    string            `json:"url"`
+	Body   *string           `json:"body,omitempty"`
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	QueryParams [][]string `json:"queryParams,omitempty"`
+	Headers     [][]string `json:"headers,omitempty"`
+}
+
+// NewFetchOptions creates a new FetchOptions object.
+func NewFetchOptions() *FetchOptions {
+	return &FetchOptions{}
+}
+
+type HttpRequestMethod string
+
+const (
+	HttpRequestMethodGET    HttpRequestMethod = "GET"
+	HttpRequestMethodPUT    HttpRequestMethod = "PUT"
+	HttpRequestMethodPOST   HttpRequestMethod = "POST"
+	HttpRequestMethodDELETE HttpRequestMethod = "DELETE"
+	HttpRequestMethodPATCH  HttpRequestMethod = "PATCH"
+)
+
+// Infinity options
+type InfinityOptions struct {
+	Method HttpRequestMethod `json:"method"`
+	Url    string            `json:"url"`
+	Body   *string           `json:"body,omitempty"`
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	QueryParams   [][]string `json:"queryParams,omitempty"`
+	Headers       [][]string `json:"headers,omitempty"`
+	DatasourceUid string     `json:"datasourceUid"`
+}
+
+// NewInfinityOptions creates a new InfinityOptions object.
+func NewInfinityOptions() *InfinityOptions {
+	return &InfinityOptions{}
+}
+
+type ActionVariable struct {
+	Key  string `json:"key"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+// NewActionVariable creates a new ActionVariable object.
+func NewActionVariable() *ActionVariable {
+	return &ActionVariable{
+		Type: ActionVariableType,
+	}
+}
+
+// Action variable type
+const ActionVariableType = "string"
+
 type DynamicConfigValue struct {
 	Id    string `json:"id"`
 	Value any    `json:"value,omitempty"`
@@ -752,6 +851,7 @@ func NewVariableModel() *VariableModel {
 // `textbox`: Display a free text input field with an optional default value.
 // `custom`: Define the variable options manually using a comma-separated list.
 // `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+// `switch`: Boolean variables rendered as a switch
 type VariableType string
 
 const (
@@ -765,6 +865,7 @@ const (
 	VariableTypeCustom     VariableType = "custom"
 	VariableTypeSystem     VariableType = "system"
 	VariableTypeSnapshot   VariableType = "snapshot"
+	VariableTypeSwitch     VariableType = "switch"
 )
 
 // Determine if the variable shows on dashboard
@@ -869,6 +970,8 @@ type AnnotationQuery struct {
 	Type *string `json:"type,omitempty"`
 	// Set to 1 for the standard annotation query all dashboards have by default.
 	BuiltIn *float64 `json:"builtIn,omitempty"`
+	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+	Placement *string `json:"placement,omitempty"`
 }
 
 // NewAnnotationQuery creates a new AnnotationQuery object.
@@ -878,6 +981,7 @@ func NewAnnotationQuery() *AnnotationQuery {
 		Enable:     true,
 		Hide:       (func(input bool) *bool { return &input })(false),
 		BuiltIn:    (func(input float64) *float64 { return &input })(0),
+		Placement:  (func(input string) *string { return &input })(AnnotationQueryPlacement),
 	}
 }
 
@@ -919,6 +1023,10 @@ func NewAnnotationTarget() *AnnotationTarget {
 		Tags: []string{},
 	}
 }
+
+// Annotation Query placement. Defines where the annotation query should be displayed.
+// - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+const AnnotationQueryPlacement = "inControlsMenu"
 
 // A dashboard snapshot shares an interactive dashboard publicly.
 // It is a read-only version of a dashboard, and is not editable.
@@ -1035,6 +1143,15 @@ func NewDashboardSpecialValueMapOptions() *DashboardSpecialValueMapOptions {
 	return &DashboardSpecialValueMapOptions{
 		Result: *NewValueMappingResult(),
 	}
+}
+
+type DashboardActionStyle struct {
+	BackgroundColor *string `json:"backgroundColor,omitempty"`
+}
+
+// NewDashboardActionStyle creates a new DashboardActionStyle object.
+func NewDashboardActionStyle() *DashboardActionStyle {
+	return &DashboardActionStyle{}
 }
 
 type PanelRepeatDirection string

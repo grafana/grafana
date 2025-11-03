@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "12.2.0-pre";
+export const pluginVersion = "12.3.0-pre";
 
 export interface MetricStat {
   /**
@@ -218,6 +218,11 @@ export interface QueryEditorArrayExpression {
 
 export type QueryEditorExpression = (QueryEditorArrayExpression | QueryEditorPropertyExpression | QueryEditorGroupByExpression | QueryEditorFunctionExpression | QueryEditorFunctionParameterExpression | QueryEditorOperatorExpression);
 
+export enum LogsMode {
+  Anomalies = 'Anomalies',
+  Insights = 'Insights',
+}
+
 export enum LogsQueryLanguage {
   CWLI = 'CWLI',
   PPL = 'PPL',
@@ -242,6 +247,10 @@ export interface CloudWatchLogsQuery extends common.DataQuery {
    */
   logGroups?: Array<LogGroup>;
   /**
+   * Whether a query is a Logs Insights or Logs Anomalies query
+   */
+  logsMode?: LogsMode;
+  /**
    * Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
    */
   queryLanguage?: LogsQueryLanguage;
@@ -264,6 +273,33 @@ export const defaultCloudWatchLogsQuery: Partial<CloudWatchLogsQuery> = {
   logGroups: [],
   statsGroups: [],
 };
+
+/**
+ * Shape of a Cloudwatch Logs Anomalies query
+ */
+export interface CloudWatchLogsAnomaliesQuery extends common.DataQuery {
+  /**
+   * Used to filter only the anomalies found by a certain anomaly detector
+   */
+  anomalyDetectionARN?: string;
+  id: string;
+  /**
+   * Whether a query is a Logs Insights or Logs Anomalies query
+   */
+  logsMode?: LogsMode;
+  /**
+   * Whether a query is a Metrics, Logs or Annotations query
+   */
+  queryMode?: CloudWatchQueryMode;
+  /**
+   * AWS region to query for the logs
+   */
+  region: string;
+  /**
+   * Filter to return only anomalies that are 'SUPPRESSED', 'UNSUPPRESSED', or 'ALL' (default)
+   */
+  suppressionState?: string;
+}
 
 export interface LogGroup {
   /**

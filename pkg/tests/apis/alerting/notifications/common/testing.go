@@ -3,12 +3,11 @@ package common
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
 func NewReceiverClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.Receiver, v0alpha1.ReceiverList] {
@@ -19,11 +18,8 @@ func NewReceiverClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.
 
 	return &apis.TypedClient[v0alpha1.Receiver, v0alpha1.ReceiverList]{
 		Client: client.Resource(
-			schema.GroupVersionResource{
-				Group:    v0alpha1.ReceiverKind().Group(),
-				Version:  v0alpha1.ReceiverKind().Version(),
-				Resource: v0alpha1.ReceiverKind().Plural(),
-			}).Namespace("default"),
+			v0alpha1.ReceiverKind().GroupVersionResource()).
+			Namespace("default"),
 	}
 }
 
@@ -35,11 +31,7 @@ func NewRoutingTreeClient(t *testing.T, user apis.User) *apis.TypedClient[v0alph
 
 	return &apis.TypedClient[v0alpha1.RoutingTree, v0alpha1.RoutingTreeList]{
 		Client: client.Resource(
-			schema.GroupVersionResource{
-				Group:    v0alpha1.RoutingTreeKind().Group(),
-				Version:  v0alpha1.RoutingTreeKind().Version(),
-				Resource: v0alpha1.RoutingTreeKind().Plural(),
-			}).Namespace("default"),
+			v0alpha1.RoutingTreeKind().GroupVersionResource()).Namespace("default"),
 	}
 }
 
@@ -51,11 +43,7 @@ func NewTemplateGroupClient(t *testing.T, user apis.User) *apis.TypedClient[v0al
 
 	return &apis.TypedClient[v0alpha1.TemplateGroup, v0alpha1.TemplateGroupList]{
 		Client: client.Resource(
-			schema.GroupVersionResource{
-				Group:    v0alpha1.TemplateGroupKind().Group(),
-				Version:  v0alpha1.TemplateGroupKind().Version(),
-				Resource: v0alpha1.TemplateGroupKind().Plural(),
-			}).Namespace("default"),
+			v0alpha1.TemplateGroupKind().GroupVersionResource()).Namespace("default"),
 	}
 }
 
@@ -67,10 +55,6 @@ func NewTimeIntervalClient(t *testing.T, user apis.User) *apis.TypedClient[v0alp
 
 	return &apis.TypedClient[v0alpha1.TimeInterval, v0alpha1.TimeIntervalList]{
 		Client: client.Resource(
-			schema.GroupVersionResource{
-				Group:    v0alpha1.TimeIntervalKind().Group(),
-				Version:  v0alpha1.TimeIntervalKind().Version(),
-				Resource: v0alpha1.TimeIntervalKind().Plural(),
-			}).Namespace("default"),
+			v0alpha1.TimeIntervalKind().GroupVersionResource()).Namespace("default"),
 	}
 }

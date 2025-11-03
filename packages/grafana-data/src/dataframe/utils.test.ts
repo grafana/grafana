@@ -1,3 +1,4 @@
+import { createTheme } from '../themes/createTheme';
 import { FieldType } from '../types/dataFrame';
 import { TimeRange } from '../types/time';
 
@@ -118,7 +119,7 @@ describe('alignTimeRangeCompareData', () => {
       ],
     });
 
-    alignTimeRangeCompareData(frame, ONE_DAY_MS);
+    alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
 
     expect(frame.fields[0].values).toEqual([ONE_DAY_MS + 1000, ONE_DAY_MS + 2000, ONE_DAY_MS + 3000]);
     expect(frame.fields[1].values).toEqual([10, 20, 30]); // non-time fields unchanged
@@ -132,13 +133,13 @@ describe('alignTimeRangeCompareData', () => {
       ],
     });
 
-    alignTimeRangeCompareData(frame, -ONE_WEEK_MS);
+    alignTimeRangeCompareData(frame, -ONE_WEEK_MS, createTheme());
 
     // When diff is negative, function does v - diff, so v - (-ONE_WEEK_MS) = v + ONE_WEEK_MS
     expect(frame.fields[0].values).toEqual([ONE_WEEK_MS + 1000, ONE_WEEK_MS + 2000, ONE_WEEK_MS + 3000]);
   });
 
-  it('should apply default gray color and timeCompare config', () => {
+  it('should apply timeCompare config', () => {
     const frame = toDataFrame({
       fields: [
         { name: 'time', type: FieldType.time, values: [1000, 2000] },
@@ -146,25 +147,14 @@ describe('alignTimeRangeCompareData', () => {
       ],
     });
 
-    alignTimeRangeCompareData(frame, ONE_DAY_MS);
+    alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
 
     frame.fields.forEach((field) => {
-      expect(field.config.color?.fixedColor).toBe('gray');
       expect(field.config.custom?.timeCompare).toEqual({
         diffMs: ONE_DAY_MS,
         isTimeShiftQuery: true,
       });
     });
-  });
-
-  it('should apply custom color when provided', () => {
-    const frame = toDataFrame({
-      fields: [{ name: 'value', type: FieldType.number, values: [10, 20] }],
-    });
-
-    alignTimeRangeCompareData(frame, ONE_DAY_MS, 'red');
-
-    expect(frame.fields[0].config.color?.fixedColor).toBe('red');
   });
 
   it('should preserve existing config when merging', () => {
@@ -182,7 +172,7 @@ describe('alignTimeRangeCompareData', () => {
       ],
     });
 
-    alignTimeRangeCompareData(frame, ONE_WEEK_MS);
+    alignTimeRangeCompareData(frame, ONE_WEEK_MS, createTheme());
 
     expect(frame.fields[0].config.displayName).toBe('My Display Name');
     expect(frame.fields[0].config.custom?.existingProperty).toBe('existingValue');

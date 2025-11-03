@@ -5,6 +5,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -28,8 +29,8 @@ var (
 
 type ShortURLAppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg     *setting.Cfg
-	service shorturls.Service
+	service    shorturls.Service
+	namespacer request.NamespaceMapper
 }
 
 func RegisterAppInstaller(
@@ -37,20 +38,16 @@ func RegisterAppInstaller(
 	service shorturls.Service,
 ) (*ShortURLAppInstaller, error) {
 	installer := &ShortURLAppInstaller{
-		cfg:     cfg,
-		service: service,
+		service:    service,
+		namespacer: request.GetNamespaceMapper(cfg),
 	}
-	specificConfig := any(&shorturlapp.ShortURLConfig{
-		AppURL: cfg.AppURL,
-	})
-	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, shorturlapp.New)
+	provider := simple.NewAppProvider(apis.LocalManifest(), nil, shorturlapp.New)
 
 	appCfg := app.Config{
-		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
-		ManifestData:   *apis.LocalManifest().ManifestData,
-		SpecificConfig: specificConfig,
+		KubeConfig:   restclient.Config{}, // this will be overridden by the installer's InitializeApp method
+		ManifestData: *apis.LocalManifest().ManifestData,
 	}
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appCfg, apis.ManifestGoTypeAssociator, apis.ManifestCustomRouteResponsesAssociator)
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appCfg, &apis.GoTypeAssociator{})
 	if err != nil {
 		return nil, err
 	}
@@ -59,17 +56,13 @@ func RegisterAppInstaller(
 }
 
 func (s *ShortURLAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
-	gvr := schema.GroupVersionResource{
-		Group:    shorturl.ShortURLKind().Group(),
-		Version:  shorturl.ShortURLKind().Version(),
-		Resource: shorturl.ShortURLKind().Plural(),
-	}
+	gvr := shorturl.ShortURLKind().GroupVersionResource()
 	if requested.String() != gvr.String() {
 		return nil
 	}
 	legacyStore := &legacyStorage{
 		service:    s.service,
-		namespacer: request.GetNamespaceMapper(s.cfg),
+		namespacer: s.namespacer,
 	}
 	legacyStore.tableConverter = utils.NewTableConverter(
 		gvr.GroupResource(),
@@ -93,4 +86,19 @@ func (s *ShortURLAppInstaller) GetLegacyStorage(requested schema.GroupVersionRes
 		},
 	)
 	return legacyStore
+}
+
+func (s *ShortURLAppInstaller) GetLegacyStatus(requested schema.GroupVersionResource, unified *appsdkapiserver.StatusREST) rest.Storage {
+	gvr := shorturl.ShortURLKind().GroupVersionResource()
+	if requested.String() != gvr.String() {
+		return nil
+	}
+	return &statusDualWriter{
+		gv:     gvr.GroupVersion(),
+		status: unified,
+		legacy: &legacyStorage{
+			service:    s.service,
+			namespacer: s.namespacer,
+		},
+	}
 }

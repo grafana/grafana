@@ -5,7 +5,6 @@ package dashboards
 import (
 	context "context"
 
-	quota "github.com/grafana/grafana/pkg/services/quota"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -30,36 +29,6 @@ func (_m *FakeDashboardStore) CleanupAfterDelete(ctx context.Context, cmd *Delet
 	}
 
 	return r0
-}
-
-// Count provides a mock function with given fields: _a0, _a1
-func (_m *FakeDashboardStore) Count(_a0 context.Context, _a1 *quota.ScopeParameters) (*quota.Map, error) {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Count")
-	}
-
-	var r0 *quota.Map
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *quota.ScopeParameters) (*quota.Map, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *quota.ScopeParameters) *quota.Map); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*quota.Map)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *quota.ScopeParameters) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // CountInOrg provides a mock function with given fields: ctx, orgID, isFolder
@@ -329,6 +298,36 @@ func (_m *FakeDashboardStore) GetOrphanedProvisionedDashboards(ctx context.Conte
 
 	if rf, ok := ret.Get(1).(func(context.Context, []string, int64) error); ok {
 		r1 = rf(ctx, notIn, orgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetDuplicateProvisionedDashboards provides a mock function with given fields: ctx
+func (_m *FakeDashboardStore) GetDuplicateProvisionedDashboards(ctx context.Context) ([]*DashboardProvisioningSearchResults, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDuplicateProvisionedDashboards")
+	}
+
+	var r0 []*DashboardProvisioningSearchResults
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]*DashboardProvisioningSearchResults, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []*DashboardProvisioningSearchResults); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*DashboardProvisioningSearchResults)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}

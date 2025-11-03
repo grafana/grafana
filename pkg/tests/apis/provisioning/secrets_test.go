@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,7 +17,9 @@ import (
 func TestIntegrationProvisioning_InlineSecrets(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		opts.SecretsManagerEnableDBMigrations = true
+	})
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
 
@@ -39,6 +42,8 @@ func TestIntegrationProvisioning_InlineSecrets(t *testing.T) {
 			values: map[string]any{
 				"SecureTokenCreate":         "some-token",
 				"SecureWebhookSecretCreate": "some-secret",
+				"SyncEnabled":               true,
+				"Target":                    "folder",
 			},
 			inputFile: "testdata/github-with-inline-secrets.json.tmpl",
 			expectedFields: []expectedField{

@@ -1,6 +1,6 @@
 {
   "name": "@test-plugins/grafana-e2etest-datasource",
-  "version": "12.2.0-pre",
+  "version": "12.3.0-pre",
   "private": true,
   "scripts": {
     "build": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -c ./webpack.config.ts --env production",
@@ -13,7 +13,7 @@
   "devDependencies": {
     "@grafana/plugin-configs": "workspace:*",
     "@types/lodash": "4.17.7",
-    "@types/node": "22.15.0",
+    "@types/node": "24.9.2",
     "@types/prismjs": "1.26.4",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",

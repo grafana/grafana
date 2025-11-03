@@ -1,6 +1,4 @@
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
 // Because the navigation content is dynamic (defined in the backend), we can not use
 // the normal inline message definition method.
@@ -46,9 +44,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'reports':
       return t('nav.reporting.title', 'Reporting');
     case 'dashboards/public':
-      return config.featureToggles.newDashboardSharingComponent
-        ? t('nav.shared-dashboard.title', 'Shared dashboards')
-        : t('nav.public.title', 'Public dashboards');
+      return t('nav.shared-dashboard.title', 'Shared dashboards');
     case 'dashboards/recently-deleted':
       return t('nav.recently-deleted.title', 'Recently deleted');
     case 'dashboards/new':
@@ -158,7 +154,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'plugin-page-grafana-k8s-app':
       return t('nav.kubernetes.title', 'Kubernetes');
     case 'plugin-page-grafana-dbo11y-app':
-      return t('nav.databases.title', 'Databases');
+      return t('nav.databases.title', 'Database');
     case 'plugin-page-grafana-app-observability-app':
       return t('nav.application.title', 'Application');
     case 'plugin-page-grafana-pyroscope-app':
@@ -218,15 +214,13 @@ export function getNavSubTitle(navId: string | undefined) {
         'Interactive, publically available, point-in-time representations of dashboards and panels'
       );
     case 'dashboards/public':
-      return config.featureToggles.newDashboardSharingComponent
-        ? t('nav.shared-dashboard.subtitle', "Manage your organization's externally shared dashboards")
-        : undefined;
+      t('nav.shared-dashboard.subtitle', "Manage your organization's externally shared dashboards");
     case 'dashboards/library-panels':
       return t('nav.library-panels.subtitle', 'Reusable panels that can be added to multiple dashboards');
     case 'dashboards/recently-deleted':
       return t(
         'nav.recently-deleted.subtitle',
-        'Any items listed here for more than 30 days will be automatically deleted.'
+        'Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.'
       );
     case 'alerting':
       return t('nav.alerting.subtitle', 'Learn about problems in your systems moments after they occur');
