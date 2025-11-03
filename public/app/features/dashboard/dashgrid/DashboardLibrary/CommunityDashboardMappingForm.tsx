@@ -84,7 +84,7 @@ export const CommunityDashboardMappingForm = ({
         <Alert title="" severity="info">
           <Stack direction="column" gap={1}>
             <Text>
-              <Trans i18nKey="dashboard.library.community-mapping-form.auto-mapped" count={existingMappings.length}>
+              <Trans i18nKey="dashboard-library.community-mapping-form.auto-mapped" count={existingMappings.length}>
                 {{ count: existingMappings.length }} datasources were automatically configured:
               </Trans>
             </Text>
@@ -104,7 +104,7 @@ export const CommunityDashboardMappingForm = ({
       {unmappedInputs.length > 0 && (
         <Stack direction="column" gap={2}>
           <Text element="h4" weight="medium">
-            <Trans i18nKey="dashboard.library.community-mapping-form.datasources-title">Datasource Configuration</Trans>
+            <Trans i18nKey="dashboard-library.community-mapping-form.datasources-title">Datasource Configuration</Trans>
           </Text>
           {unmappedInputs.map((input) => {
             const selectedDatasource = userDatasourceMappings[input.name];
@@ -122,7 +122,7 @@ export const CommunityDashboardMappingForm = ({
                   current={selectedDatasource?.uid}
                   noDefault={true}
                   placeholder={
-                    input.info || t('dashboard.library.community-mapping-select-datasource', 'Select a datasource')
+                    input.info || t('dashboard-library.community-mapping-select-datasource', 'Select a datasource')
                   }
                   pluginId={input.pluginId}
                 />
@@ -136,7 +136,7 @@ export const CommunityDashboardMappingForm = ({
       {constantInputs.length > 0 && (
         <Stack direction="column" gap={2}>
           <Text element="h4" weight="medium">
-            <Trans i18nKey="dashboard.library.community-mapping-form.constants-title">Dashboard Variables</Trans>
+            <Trans i18nKey="dashboard-library.community-mapping-form.constants-title">Dashboard Variables</Trans>
           </Text>
           {constantInputs.map((input) => (
             <Field
@@ -157,10 +157,10 @@ export const CommunityDashboardMappingForm = ({
 
       <Stack direction="row" justifyContent="space-between" gap={2}>
         <Button variant="secondary" icon="arrow-left" onClick={onBack}>
-          <Trans i18nKey="dashboard.library.community-mapping-form.back">Back to dashboards</Trans>
+          <Trans i18nKey="dashboard-library.community-mapping-form.back">Back to dashboards</Trans>
         </Button>
         <Button onClick={onPreviewClick} disabled={!allDatasourcesMapped}>
-          <Trans i18nKey="dashboard.library.community-mapping-form.preview">Preview dashboard</Trans>
+          <Trans i18nKey="dashboard-library.community-mapping-form.preview">Preview dashboard</Trans>
         </Button>
       </Stack>
     </Stack>

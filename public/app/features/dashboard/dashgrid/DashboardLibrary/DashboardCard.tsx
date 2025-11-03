@@ -62,13 +62,13 @@ function DashboardCardComponent({
           />
         ) : (
           <div className={styles.noImage}>
-            <Trans i18nKey="dashboard-template.card.no-preview">No preview available </Trans>
+            <Trans i18nKey="dashboard-library.card.no-preview">No preview available </Trans>
           </div>
         )}
         {showDatasourceProvidedBadge && (
           <div className={styles.badgeContainer}>
             <Badge
-              text={t('dashboard-template.card.datasource-provided-badge', 'Data source provided')}
+              text={t('dashboard-library.card.datasource-provided-badge', 'Data source provided')}
               color="orange"
             />
           </div>
@@ -81,14 +81,14 @@ function DashboardCardComponent({
       </div>
       <Card.Actions className={styles.actionsContainer}>
         <Button variant="secondary" onClick={onClick}>
-          {buttonText || <Trans i18nKey="dashboard-template.card.use-template-button">Use template</Trans>}
+          {buttonText || <Trans i18nKey="dashboard-library.card.use-template-button">Use template</Trans>}
         </Button>
         {details && (
           <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
             <IconButton
               name="info-circle"
               size="xl"
-              aria-label={t('dashboard-template.card.details-tooltip', 'Details')}
+              aria-label={t('dashboard-library.card.details-tooltip', 'Details')}
             />
           </Tooltip>
         )}

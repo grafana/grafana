@@ -171,11 +171,11 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         placeholder={
           datasourceType
             ? t(
-                'dashboard.library.community-search-placeholder-with-datasource',
+                'dashboard-library.community-search-placeholder-with-datasource',
                 'Search {{datasourceType}} community dashboards...',
                 { datasourceType }
               )
-            : t('dashboard.library.community-search-placeholder', 'Search community dashboards...')
+            : t('dashboard-library.community-search-placeholder', 'Search community dashboards...')
         }
         value={searchQuery}
         onChange={setSearchQuery}
@@ -198,15 +198,15 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         ) : showError ? (
           <Stack direction="column" alignItems="center" gap={2}>
             <Alert
-              title={t('dashboard.library.community-error-title', 'Error loading community dashboards')}
+              title={t('dashboard-library.community-error-title', 'Error loading community dashboards')}
               severity="error"
             >
-              <Trans i18nKey="dashboard.library.community-error">
+              <Trans i18nKey="dashboard-library.community-error">
                 Failed to load community dashboards. Please try again.
               </Trans>
             </Alert>
             <Button variant="secondary" onClick={() => setCurrentPage(1)}>
-              <Trans i18nKey="dashboard.library.retry">Retry</Trans>
+              <Trans i18nKey="dashboard-library.retry">Retry</Trans>
             </Button>
           </Stack>
         ) : showEmptyState ? (
@@ -215,27 +215,27 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
             message={
               datasourceType
                 ? t(
-                    'dashboard.library.community-empty-title-with-datasource',
+                    'dashboard-library.community-empty-title-with-datasource',
                     'No {{datasourceType}} community dashboards found',
                     { datasourceType }
                   )
-                : t('dashboard.library.community-empty-title', 'No community dashboards found')
+                : t('dashboard-library.community-empty-title', 'No community dashboards found')
             }
             button={
               <Button
                 variant="secondary"
                 onClick={() => window.open('https://grafana.com/grafana/dashboards/', '_blank')}
               >
-                <Trans i18nKey="dashboard.library.browse-grafana-com">Browse Grafana.com</Trans>
+                <Trans i18nKey="dashboard-library.browse-grafana-com">Browse Grafana.com</Trans>
               </Button>
             }
           >
             {searchQuery && !datasourceType ? (
-              <Trans i18nKey="dashboard.library.no-community-dashboards-search">
+              <Trans i18nKey="dashboard-library.no-community-dashboards-search">
                 Try a different search term or browse more dashboards on Grafana.com.
               </Trans>
             ) : (
-              <Trans i18nKey="dashboard.library.no-community-dashboards-datasource">
+              <Trans i18nKey="dashboard-library.no-community-dashboards-datasource">
                 Try a different search term or browse dashboards for different datasource types on Grafana.com.
               </Trans>
             )}
@@ -265,7 +265,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                   onClick={() => onUseCommunityDashboard(dashboard)}
                   isLogo={isLogo}
                   details={details}
-                  buttonText={<Trans i18nKey="dashboard-template.card.use-dashboard-button">Use dashboard</Trans>}
+                  buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}
                 />
               );
             })}

@@ -104,19 +104,19 @@ export const DashboardLibrarySection = () => {
           message={
             datasourceType
               ? t(
-                  'dashboard.library.provisioned-empty-title-with-datasource',
+                  'dashboard-library.provisioned-empty-title-with-datasource',
                   'No {{datasourceType}} provisioned dashboards found',
                   { datasourceType }
                 )
-              : t('dashboard.library.provisioned-empty-title', 'No provisioned dashboards found')
+              : t('dashboard-library.provisioned-empty-title', 'No provisioned dashboards found')
           }
           button={
             <Button variant="secondary" onClick={() => window.open('https://grafana.com/grafana/plugins/', '_blank')}>
-              <Trans i18nKey="dashboard.library.browse-plugins">Browse plugins</Trans>
+              <Trans i18nKey="dashboard-library.browse-plugins">Browse plugins</Trans>
             </Button>
           }
         >
-          <Trans i18nKey="dashboard.library.no-provisioned-dashboards">
+          <Trans i18nKey="dashboard-library.no-provisioned-dashboards">
             Provisioned dashboards are provided by data source plugins. You can find more plugins on Grafana.com.
           </Trans>
         </EmptyState>
@@ -143,7 +143,7 @@ export const DashboardLibrarySection = () => {
                     imageUrl={imageUrl}
                     dashboard={dashboard}
                     onClick={() => onUseProvisionedDashboard(dashboard)}
-                    buttonText={<Trans i18nKey="dashboard-template.card.use-dashboard-button">Use dashboard</Trans>}
+                    buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}
                   />
                 );
               }) || []}

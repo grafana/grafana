@@ -258,24 +258,24 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
           <h1 className={styles.title}>
             {datasourceType
               ? t(
-                  'dashboard.empty.suggested-dashboards-title-with-datasource',
+                  'dashboard-library.suggested-dashboards-title-with-datasource',
                   'Build a dashboard using suggested options for your {{datasourceType}} data source',
                   { datasourceType }
                 )
               : t(
-                  'dashboard.empty.suggested-dashboards-title',
+                  'dashboard-library.suggested-dashboards-title',
                   'Build a dashboard using suggested options for your selected data source'
                 )}
           </h1>
           <p className={styles.subtitle}>
-            <Trans i18nKey="dashboard.empty.suggested-dashboards-subtitle">
+            <Trans i18nKey="dashboard-library.suggested-dashboards-subtitle">
               Browse and select from data-source provided or community dashboards
             </Trans>
           </p>
         </div>
         {result?.hasMoreDashboards && (
           <Button variant="secondary" fill="outline" onClick={() => onOpenModal(defaultTab)} size="sm">
-            <Trans i18nKey="dashboard.empty.view-all">View all</Trans>
+            <Trans i18nKey="dashboard-library.view-all">View all</Trans>
           </Button>
         )}
       </div>
@@ -301,7 +301,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
                     onClick={() => onUseProvisionedDashboard(item.dashboard)}
                     showDatasourceProvidedBadge={true}
                     dimThumbnail={true}
-                    buttonText={<Trans i18nKey="dashboard-template.card.use-dashboard-button">Use dashboard</Trans>}
+                    buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}
                   />
                 );
               } else {
@@ -319,7 +319,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
                     onClick={() => onUseCommunityDashboard(item.dashboard)}
                     isLogo={isLogo}
                     details={details}
-                    buttonText={<Trans i18nKey="dashboard-template.card.use-dashboard-button">Use dashboard</Trans>}
+                    buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}
                   />
                 );
               }

@@ -94,16 +94,16 @@ export const DashboardLibraryModal = ({
     <Modal
       title={
         activeView === 'mapping' && mappingContext
-          ? t('dashboard.library-modal.title-mapping-with-name', 'Configure datasources for {{dashboardName}}', {
+          ? t('dashboard-library.modal.title-mapping-with-name', 'Configure datasources for {{dashboardName}}', {
               dashboardName: mappingContext.dashboardName,
             })
           : datasourceInfo.type
             ? t(
-                'dashboard.library-modal.title-with-datasource',
+                'dashboard-library.modal.title-with-datasource',
                 'Suggested dashboards for your {{datasourceType}} datasource',
                 { datasourceType: datasourceInfo.type }
               )
-            : t('dashboard.library-modal.title', 'Suggested dashboards')
+            : t('dashboard-library.modal.title', 'Suggested dashboards')
       }
       isOpen={isOpen}
       onDismiss={onDismiss}
@@ -114,20 +114,20 @@ export const DashboardLibraryModal = ({
       {activeView !== 'mapping' && (
         <div className={styles.stickyHeader}>
           <Text element="p">
-            <Trans i18nKey="dashboard.library-modal.description">
+            <Trans i18nKey="dashboard-library.modal.description">
               Browse and select from data-source provided or community dashboards
             </Trans>
           </Text>
 
           <TabsBar>
             <Tab
-              label={t('dashboard.library-modal.tab-datasource', 'Data-source provided')}
+              label={t('dashboard-library.modal.tab-datasource', 'Data-source provided')}
               icon="apps"
               active={activeView === 'datasource'}
               onChangeTab={() => onTabChange('datasource')}
             />
             <Tab
-              label={t('dashboard.library-modal.tab-community', 'Community')}
+              label={t('dashboard-library.modal.tab-community', 'Community')}
               icon="users-alt"
               active={activeView === 'community'}
               onChangeTab={() => onTabChange('community')}
