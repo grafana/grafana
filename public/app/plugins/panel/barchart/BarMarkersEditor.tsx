@@ -3,28 +3,38 @@ import { useState } from 'react';
 
 import { StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Field, InlineField, Input, Label, Combobox, ComboboxOption, useTheme2, Slider } from '@grafana/ui';
+import {
+  Button,
+  Field,
+  InlineField,
+  Input,
+  Label,
+  Combobox,
+  ComboboxOption,
+  useTheme2,
+  Slider,
+  ColorPicker,
+} from '@grafana/ui';
 
-import { ColorPicker } from '../../../../../packages/grafana-ui/src/components/ColorPicker/ColorPicker';
 import { hoverColor } from '../../../../../packages/grafana-ui/src/themes/mixins';
 
-import { BarMarkerOpts, Marker } from './markerTypes';
+import { BarMarkerOpts, MarkerGroup } from './markerTypes';
 
-export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
+export const BarMarkersEditor = ({ context, onChange, value }: StandardEditorProps<MarkerGroup[]>) => {
   const theme = useTheme2();
 
-  let [markers, setMarkers] = useState<Marker[]>(props.value || []);
+  let [markers, setMarkers] = useState<MarkerGroup[]>(value || []);
 
   const handleRemoveMarker = (id: number) => {
-    const updatedMarkers = markers.filter((marker: Marker) => marker.id !== id);
+    const updatedMarkers = markers.filter((marker: MarkerGroup) => marker.id !== id);
     setMarkers(updatedMarkers);
-    props.onChange(updatedMarkers);
+    onChange(updatedMarkers);
   };
 
   const handleAddMarker = () => {
     let newId = Math.max(...markers.map((m) => m.id), 0) + 1;
 
-    const newMarker: Marker = {
+    const newMarker: MarkerGroup = {
       id: newId,
       targetField: '',
       dataField: '',
@@ -38,11 +48,11 @@ export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
     };
     const updatedMarkers = [...markers, newMarker];
     setMarkers(updatedMarkers);
-    props.onChange(updatedMarkers);
+    onChange(updatedMarkers);
   };
 
-  const fields = props.context?.data[0]?.fields ?? [];
-  const xAxis = props.context?.options?.xField;
+  const fields = context?.data[0]?.fields ?? [];
+  const xAxis = context?.options?.xField;
   let xFieldIdx = 0;
   if (xAxis) {
     xFieldIdx = fields.findIndex((f) => f.name === xAxis);
@@ -59,19 +69,19 @@ export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
 
   // Update a field in marker.opts
   const handleOptsSettingChange = (id: number, field: keyof BarMarkerOpts, newValue: string | number | undefined) => {
-    const updatedMarkers = markers.map((marker: Marker) =>
+    const updatedMarkers = markers.map((marker: MarkerGroup) =>
       marker.id === id ? { ...marker, opts: { ...marker.opts, [field]: newValue } } : marker
     );
     setMarkers(updatedMarkers);
-    props.onChange(updatedMarkers);
+    onChange(updatedMarkers);
   };
 
-  const handleSettingChange = (id: number, field: keyof Marker, newValue: string | number | undefined) => {
-    const updatedMarkers = markers.map((marker: Marker) =>
+  const handleSettingChange = (id: number, field: keyof MarkerGroup, newValue: string | number | undefined) => {
+    const updatedMarkers = markers.map((marker: MarkerGroup) =>
       marker.id === id ? { ...marker, [field]: newValue } : marker
     );
     setMarkers(updatedMarkers);
-    props.onChange(updatedMarkers);
+    onChange(updatedMarkers);
   };
 
   const shapeOptions: Array<ComboboxOption<string>> = [
@@ -97,7 +107,7 @@ export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
         {t('barchart.barmarkers-editor.add-marker', '+ Add marker')}
       </Button>
 
-      {markers.map((marker: Marker) => (
+      {markers.map((marker: MarkerGroup) => (
         <div
           key={marker.id}
           style={{
@@ -188,7 +198,7 @@ export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
                 max={2}
                 step={0.01}
                 value={marker.opts.size ?? 1}
-                onChange={(v) => handleOptsSettingChange(marker.id, 'size', typeof v === 'number' ? v : v[0])}
+                onChange={(v) => handleOptsSettingChange(marker.id, 'size', v)}
                 marks={{ 0.01: '0.01', 2: '2' }}
               />
             </Field>

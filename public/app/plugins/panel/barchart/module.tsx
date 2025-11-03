@@ -255,8 +255,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
     });
     builder.addCustomEditor({
       category: markersCategory,
-      id: 'Markers',
-      path: 'markers',
+      id: 'markerGroups',
+      path: 'markerGroups',
       name: 'Add Markers',
       editor: BarMarkersEditor,
     });

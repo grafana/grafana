@@ -1,4 +1,4 @@
-import { isFinite } from 'lodash';
+import { cloneDeep, isFinite } from 'lodash';
 import uPlot, { Padding } from 'uplot';
 
 import {
@@ -42,7 +42,7 @@ import { setClassicPaletteIdxs } from '../timeseries/utils';
 
 import { drawBarMarkers } from './barmarkers';
 import { BarsOptions, getConfig } from './bars';
-import { PreparedMarker, Marker } from './markerTypes';
+import { PreparedMarker, MarkerGroup } from './markerTypes';
 import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
 // import { isLegendOrdered } from './utils';
 
@@ -312,7 +312,7 @@ export const prepConfig = ({
   builder.addHook('init', config.init);
   builder.addHook('drawClear', config.drawClear);
 
-  builder.addHook('draw', drawBarMarkers(builder, config.resolvedMarkers));
+  builder.addHook('draw', drawBarMarkers(config.resolvedMarkers));
 
   if (xTickLabelRotation !== 0) {
     // these are the amount of space we already have available between plot edge and first label
@@ -606,24 +606,24 @@ function getScaleOrientation(orientation: VizOrientation) {
 export function prepMarkers(
   vizFields: Field[],
   markerFields: Field[],
-  markers: Marker[],
+  markers: MarkerGroup[],
   stacking: StackingMode
 ): PreparedMarker[] {
-  let prepMarkerList = [];
+  let prepMarkerList: PreparedMarker[] = [];
 
-  switch (stacking) {
-    case StackingMode.None: {
-      for (const m of markers ?? []) {
-        const i = markerFields.findIndex((f) => f.name === m.dataField);
+  for (const m of markers ?? []) {
+    const i = markerFields.findIndex((f) => f.name === m.dataField);
 
-        if (i === -1) {
-          continue;
-        }
+    if (i === -1) {
+      continue;
+    }
 
-        const fi = markerFields[i];
+    const fi = markerFields[i];
 
-        const targetIdx = vizFields.findIndex((f) => f.name === m.targetField);
+    const targetIdx = vizFields.findIndex((f) => f.name === m.targetField);
 
+    switch (stacking) {
+      case StackingMode.None: {
         for (let j = 0; j < fi.values.length; j++) {
           const pm: PreparedMarker = {
             groupIdx: j,
@@ -635,22 +635,9 @@ export function prepMarkers(
 
           prepMarkerList.push(pm);
         }
+        continue;
       }
-
-      return prepMarkerList;
-    }
-    case StackingMode.Normal: {
-      for (let a = 0; a < markers.length; a++) {
-        const i = markerFields.findIndex((f) => f.name === markers[a].dataField);
-
-        if (i === -1) {
-          continue;
-        }
-
-        const fi = markerFields[i];
-
-        const targetIdx = vizFields.findIndex((f) => f.name === markers[a].targetField);
-
+      case StackingMode.Normal: {
         for (let j = 0; j < fi.values.length; j++) {
           let yTotal = 0;
           for (let k = 1; k < targetIdx; k++) {
@@ -661,26 +648,14 @@ export function prepMarkers(
             yValue: yTotal + fi.values[j],
             seriesIdx: targetIdx,
             yScaleKey: fi.config.unit || FIXED_UNIT,
-            opts: markers[a].opts,
+            opts: m.opts,
           };
 
           prepMarkerList.push(pm);
         }
+        continue;
       }
-
-      return prepMarkerList;
-    }
-    case StackingMode.Percent: {
-      for (let a = 0; a < markers.length; a++) {
-        const i = markerFields.findIndex((f) => f.name === markers[a].dataField);
-
-        if (i === -1) {
-          continue;
-        }
-
-        const fi = markerFields[i];
-        const targetIdx = vizFields.findIndex((f) => f.name === markers[a].targetField);
-
+      case StackingMode.Percent: {
         for (let j = 0; j < fi.values.length; j++) {
           let yTotal = 0;
           let yBase = 0;
@@ -699,20 +674,27 @@ export function prepMarkers(
             yValue: val === 0 ? 0 : val / yTotal,
             seriesIdx: targetIdx,
             yScaleKey: fi.config.unit || FIXED_UNIT,
-            opts: markers[a].opts,
+            opts: m.opts,
           };
 
           prepMarkerList.push(pm);
         }
+        continue;
       }
-      return prepMarkerList;
     }
   }
+  return prepMarkerList;
 }
 
-export function hideMarkerSeries(data: PanelData, markers: Marker[]): { barData: PanelData; markerData: Field[] } {
-  const barData = deepCopy(data); //deepCopy to ensure useMemo works correctly
+export function seperateMarkerSeries(
+  data: PanelData,
+  markers: MarkerGroup[]
+): { barData: PanelData; markerData: Field[] } {
+  const barData = cloneDeep(data); //deepCopy to ensure useMemo works correctly
   const markerData: Field[] = [];
+  if (!markers) {
+    return { barData, markerData };
+  }
   for (const m of markers ?? []) {
     const i = barData.series[0].fields.findIndex((f) => f.name === m.dataField);
 
@@ -720,8 +702,7 @@ export function hideMarkerSeries(data: PanelData, markers: Marker[]): { barData:
       continue;
     }
 
-    let fi = null;
-    fi = barData.series[0].fields.splice(i, 1)[0];
+    const fi = barData.series[0].fields.splice(i, 1)[0];
 
     fi.config.color = { ...(fi.config.color ?? {}), mode: FieldColorModeId.Fixed, fixedColor: m.opts.color };
 
@@ -730,40 +711,14 @@ export function hideMarkerSeries(data: PanelData, markers: Marker[]): { barData:
   return { barData, markerData };
 }
 
-export function deepCopy<T>(obj: T, seen = new Map<any, any>()): T {
-  if (obj === null || typeof obj !== 'object') {
-    return obj;
-  }
-
-  if (seen.has(obj)) {
-    return seen.get(obj);
-  }
-
-  if (Array.isArray(obj)) {
-    const newArr: any[] = [];
-    seen.set(obj, newArr);
-    for (const item of obj) {
-      newArr.push(deepCopy(item, seen));
-    }
-    return newArr as unknown as T;
-  }
-
-  const result: any = {};
-  seen.set(obj, result);
-
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      result[key] = deepCopy((obj as any)[key], seen);
-    }
-  }
-  return result;
-}
-
-export function mergeLegendData(info: BarSeries, markerData: Field[], markers: Marker[]) {
+export function mergeLegendData(info: BarSeries, markerData: Field[], markers: MarkerGroup[]) {
   const legendData: BarSeries = { ...info };
   legendData.series = info.series.map((s: any) => ({ ...s }));
 
   const markerFields: Field[] = [];
+  if (!markers) {
+    return legendData;
+  }
   for (const m of markers) {
     const fi = markerData.find((f) => f.name === m.dataField);
     if (fi) {

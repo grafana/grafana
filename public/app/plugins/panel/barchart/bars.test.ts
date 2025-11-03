@@ -1,7 +1,9 @@
 import uPlot from 'uplot';
+
 import { ScaleOrientation } from '@grafana/schema';
-import { PreparedMarker, ResolvedMarker } from './markerTypes';
+
 import { populateMarkerList } from './bars';
+import { PreparedMarker, MarkerDrawingArgs } from './markerTypes';
 
 describe('populateMarkerList', () => {
   const mockValToPos = jest.fn((val: number) => val * 10);
@@ -52,7 +54,7 @@ describe('populateMarkerList', () => {
       const result = populateMarkerList(markers, 0, 1, xOri, 100, 100, mockUplot, 20, 25);
 
       expect(result).toHaveLength(1);
-      const resolvedMarker: ResolvedMarker = result[0];
+      const resolvedMarker: MarkerDrawingArgs = result[0];
 
       expect(mockValToPos).toHaveBeenCalledWith(5, 'y-scale', true);
       // markerX = barX + wid/2 = 20 + 100/2 = 70
@@ -88,7 +90,7 @@ describe('populateMarkerList', () => {
       const result = populateMarkerList(markers, 0, 1, xOri, 50, 50, mockUplot, 20, 25);
 
       expect(result).toHaveLength(1);
-      const resolvedMarker: ResolvedMarker = result[0];
+      const resolvedMarker: MarkerDrawingArgs = result[0];
 
       expect(mockValToPos).toHaveBeenCalledWith(5, 'y-scale', true);
       // resolvedX = u.valToPos(...) = 50

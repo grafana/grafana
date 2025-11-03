@@ -19,7 +19,7 @@ import {
 } from '@grafana/schema';
 
 import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
-import { prepSeries, prepConfig, PrepConfigOpts, prepMarkers, hideMarkerSeries } from './utils';
+import { prepSeries, prepConfig, PrepConfigOpts, prepMarkers, seperateMarkerSeries } from './utils';
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
@@ -101,6 +101,7 @@ describe('BarChart utils', () => {
       orientation: VizOrientation.Auto,
 
       options: {
+        showMarkersInLegend: false,
         orientation: VizOrientation.Auto,
         groupWidth: 20,
         barWidth: 2,
@@ -122,7 +123,7 @@ describe('BarChart utils', () => {
           valueSize: 10,
         },
         fullHighlight: false,
-        markers: [],
+        markerGroups: [],
       },
       preparedMarkers: [],
       markerData: [],
@@ -367,7 +368,7 @@ describe('BarChart utils', () => {
 
           const originalFieldCount = panelData.series[0].fields.length;
 
-          const { barData, markerData } = hideMarkerSeries(panelData, markers);
+          const { barData, markerData } = seperateMarkerSeries(panelData, markers);
 
           // marker removed from returned barData
           expect(barData.series[0].fields.find((f: any) => f.name === 'marker')).toBeUndefined();
@@ -408,7 +409,7 @@ describe('BarChart utils', () => {
             },
           ];
 
-          const { barData, markerData } = hideMarkerSeries(panelData, markers);
+          const { barData, markerData } = seperateMarkerSeries(panelData, markers);
 
           // only one marker field present and removed once
           expect(markerData).toHaveLength(1);

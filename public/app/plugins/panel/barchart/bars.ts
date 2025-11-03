@@ -23,7 +23,7 @@ import { timeUnitSize, StackingGroup, preparePlotData2 } from '@grafana/ui/inter
 const intervals = systemDateFormats.interval;
 
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { PreparedMarker, ResolvedMarker } from './markerTypes';
+import { PreparedMarker, MarkerDrawingArgs } from './markerTypes';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
 
 const groupDistr = SPACE_BETWEEN;
@@ -157,7 +157,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const numSeries = 30; // !!
   const hovered: Array<Rect | null> = Array(numSeries).fill(null);
   let hRect: Rect | null;
-  let resolvedMarkers: ResolvedMarker[] = [];
+  let resolvedMarkers: MarkerDrawingArgs[] = [];
 
   // for distr: 2 scales, the splits array should contain indices into data[0] rather than values
   const xSplits: Axis.Splits | undefined = (u) => Array.from(u.data[0].map((v, i) => i));
@@ -705,49 +705,54 @@ export function populateMarkerList(
   barX: number,
   barY: number
 ) {
-  const resolvedMarkerList: ResolvedMarker[] = [];
-  if (markers) {
-    for (const marker of markers) {
-      if (
-        marker.groupIdx === dataIdx &&
-        seriesIdx === marker.seriesIdx //match to bar
-      ) {
-        if (xOri === ScaleOrientation.Horizontal) {
-          // Compute marker position at center of bar
-          const markerX = barX + wid / 2;
-          const markerY = marker.yValue;
+  const resolvedMarkerList: MarkerDrawingArgs[] = [];
+  if (!markers) {
+    return resolvedMarkerList;
+  }
 
-          let resolvedY: number;
-          if (markerY != null && marker.yScaleKey !== '' && marker.yScaleKey != null) {
-            resolvedY = u.valToPos(markerY, marker.yScaleKey, true);
-          } else {
-            resolvedY = Infinity;
-          }
-          const m: ResolvedMarker = {
-            x: markerX!,
-            y: resolvedY,
-            opts: { ...marker.opts, size: marker.opts.size * wid },
-            isRotated: false,
-          };
-          resolvedMarkerList.push(m);
+  for (const marker of markers) {
+    if (
+      marker.groupIdx !== dataIdx ||
+      seriesIdx !== marker.seriesIdx //match to bar
+    ) {
+      continue;
+    }
+    {
+      if (xOri === ScaleOrientation.Horizontal) {
+        // Compute marker position at center of bar
+        const markerX = barX + wid / 2;
+        const markerY = marker.yValue;
+
+        let resolvedY: number;
+        if (markerY != null && marker.yScaleKey !== '' && marker.yScaleKey != null) {
+          resolvedY = u.valToPos(markerY, marker.yScaleKey, true);
         } else {
-          const markerY = barY + hgt / 2;
-          const markerX = marker.yValue;
-
-          let resolvedX: number;
-          if (markerX != null && marker.yScaleKey !== '' && marker.yScaleKey != null) {
-            resolvedX = u.valToPos(markerX, marker.yScaleKey, true);
-          } else {
-            resolvedX = Infinity;
-          }
-          const m: ResolvedMarker = {
-            x: resolvedX!,
-            y: markerY!,
-            opts: { ...marker.opts, size: marker.opts.size * hgt },
-            isRotated: true,
-          };
-          resolvedMarkerList.push(m);
+          resolvedY = Infinity;
         }
+        const m: MarkerDrawingArgs = {
+          x: markerX!,
+          y: resolvedY,
+          opts: { ...marker.opts, size: marker.opts.size * wid },
+          isRotated: false,
+        };
+        resolvedMarkerList.push(m);
+      } else {
+        const markerY = barY + hgt / 2;
+        const markerX = marker.yValue;
+
+        let resolvedX: number;
+        if (markerX != null && marker.yScaleKey !== '' && marker.yScaleKey != null) {
+          resolvedX = u.valToPos(markerX, marker.yScaleKey, true);
+        } else {
+          resolvedX = Infinity;
+        }
+        const m: MarkerDrawingArgs = {
+          x: resolvedX!,
+          y: markerY!,
+          opts: { ...marker.opts, size: marker.opts.size * hgt },
+          isRotated: true,
+        };
+        resolvedMarkerList.push(m);
       }
     }
   }

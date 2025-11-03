@@ -55,7 +55,7 @@ composableKinds: PanelCfg: {
 					// Controls whether markers are shown in legend
 					showMarkersInLegend: bool
 					//Sets visual markers on each bar of a targeted field, based on y values provided by the data field
-					markers: [...{
+					markerGroups: [...{
 						// Ids the marker group, generated automatically
 						id: number
 						// Sets the field on which the markers will appear

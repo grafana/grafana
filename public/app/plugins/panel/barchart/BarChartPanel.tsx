@@ -19,7 +19,7 @@ import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
 import { Options } from './panelcfg.gen';
-import { hideMarkerSeries, prepConfig, prepSeries, prepMarkers, mergeLegendData } from './utils';
+import { seperateMarkerSeries, prepConfig, prepSeries, prepMarkers, mergeLegendData } from './utils';
 
 const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;
 const toRads = Math.PI / 180;
@@ -47,7 +47,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     fullHighlight,
     xField,
     colorByField,
-    markers,
+    markerGroups: markers,
   } = options;
 
   // size-dependent, calculated opts that should cause viz re-config
@@ -69,7 +69,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
         // auto max length clamps to half viz height, subracts 3 chars for ... ellipsis
         Math.floor(height / 2 / Math.sin(Math.abs(xTickLabelRotation * toRads)) / charWidth - 3);
 
-  const { barData, markerData } = useMemo(() => hideMarkerSeries(data, markers), [data, markers]);
+  const { barData, markerData } = useMemo(() => seperateMarkerSeries(data, markers), [data, markers]);
 
   // TODO: config data links
   const info = useMemo(
@@ -91,8 +91,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
   const totalSeries = Math.max(0, (info.series[0]?.fields.length ?? 0) - 1);
 
   const preparedMarkers = useMemo(
-    () => prepMarkers(vizSeries[0].fields ?? [], markerData ?? [], options.markers ?? [], stacking),
-    [markerData, options.markers, stacking, vizSeries]
+    () => prepMarkers(vizSeries[0].fields ?? [], markerData ?? [], options.markerGroups ?? [], stacking),
+    [markerData, options.markerGroups, stacking, vizSeries]
   );
 
   let { builder, prepData } = useMemo(

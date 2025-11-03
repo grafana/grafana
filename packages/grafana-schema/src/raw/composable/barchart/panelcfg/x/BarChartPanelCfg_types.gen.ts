@@ -37,7 +37,7 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
   /**
    * Sets visual markers on each bar of a targeted field, based on y values provided by the data field
    */
-  markers: Array<{
+  markerGroups: Array<{
     /**
      * Ids the marker group, generated automatically
      */
@@ -113,7 +113,7 @@ export const defaultOptions: Partial<Options> = {
   barWidth: 0.97,
   fullHighlight: false,
   groupWidth: 0.7,
-  markers: [],
+  markerGroups: [],
   orientation: common.VizOrientation.Auto,
   showValue: common.VisibilityMode.Auto,
   stacking: common.StackingMode.None,

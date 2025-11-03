@@ -6,13 +6,16 @@ export type BarMarkerOpts = {
   opacity: number;
 };
 
-export interface Marker {
+// Group of markers as they are defined in the panels settings.
+// Each group represents a set of markers to be drawn on a target field, with y values taken from the data field.
+export interface MarkerGroup {
   id: number;
   targetField: string;
   dataField: string;
   opts: BarMarkerOpts;
 }
 
+//Individual markers after being matched to data points
 export interface PreparedMarker {
   groupIdx?: number | null;
   yScaleKey?: string;
@@ -21,7 +24,8 @@ export interface PreparedMarker {
   opts: BarMarkerOpts;
 }
 
-export interface ResolvedMarker {
+//Markers with pixel positions for rendering
+export interface MarkerDrawingArgs {
   x: number;
   y: number;
   opts: BarMarkerOpts;
