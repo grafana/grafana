@@ -147,6 +147,15 @@ func int64Ptr(i int64) *int64 {
 	return &i
 }
 
+// isTemplateVariable checks if a string is a Grafana template variable reference
+// Template variables can be in the form: $varname or ${varname}
+func isTemplateVariable(s string) bool {
+	if s == "" {
+		return false
+	}
+	return strings.HasPrefix(s, "$") || strings.HasPrefix(s, "${")
+}
+
 func getIntField(m map[string]interface{}, key string, defaultValue int) int {
 	if val, ok := m[key]; ok {
 		switch v := val.(type) {
@@ -1009,9 +1018,10 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 		datasourceType = schemaversion.GetStringValue(ds, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
-		if datasourceUID != "" {
+		// BUT: Don't try to resolve types for template variables
+		if datasourceUID != "" && datasourceType == "" && !isTemplateVariable(datasourceUID) {
 			datasourceType = getDatasourceTypeByUID(datasourceUID)
-		} else if datasourceType == "" {
+		} else if datasourceUID == "" && datasourceType == "" {
 			// If no UID and no type, use default
 			datasourceType = *getDefaultDatasourceRef().Type
 		}
@@ -1285,9 +1295,10 @@ func buildAdhocVariable(varMap map[string]interface{}, commonProps CommonVariabl
 		datasourceType = schemaversion.GetStringValue(ds, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
-		if datasourceUID != "" {
+		// BUT: Don't try to resolve types for template variables
+		if datasourceUID != "" && datasourceType == "" && !isTemplateVariable(datasourceUID) {
 			datasourceType = getDatasourceTypeByUID(datasourceUID)
-		} else if datasourceType == "" {
+		} else if datasourceUID == "" && datasourceType == "" {
 			// If no UID and no type, use default
 			datasourceType = *getDefaultDatasourceRef().Type
 		}
@@ -1446,9 +1457,10 @@ func buildGroupByVariable(varMap map[string]interface{}, commonProps CommonVaria
 		datasourceType = schemaversion.GetStringValue(ds, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
-		if datasourceUID != "" {
+		// BUT: Don't try to resolve types for template variables
+		if datasourceUID != "" && datasourceType == "" && !isTemplateVariable(datasourceUID) {
 			datasourceType = getDatasourceTypeByUID(datasourceUID)
-		} else if datasourceType == "" {
+		} else if datasourceUID == "" && datasourceType == "" {
 			// If no UID and no type, use default
 			datasourceType = *getDefaultDatasourceRef().Type
 		}
@@ -1525,7 +1537,10 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 		datasourceType = schemaversion.GetStringValue(datasource, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
-		if datasourceUID != "" && datasourceType == "" {
+		// BUT: Don't try to resolve types for template variables (starting with $ or ${)
+		// Template variables don't have types until runtime - leave type empty and let
+		// the frontend resolve it when the variable is interpolated
+		if datasourceUID != "" && datasourceType == "" && !isTemplateVariable(datasourceUID) {
 			datasourceType = getDatasourceTypeByUID(datasourceUID)
 		}
 
@@ -1659,9 +1674,10 @@ func transformPanelQueries(panelMap map[string]interface{}) []dashv2alpha1.Dashb
 		dsType := schemaversion.GetStringValue(ds, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
-		if dsUID != "" {
+		// BUT: Don't try to resolve types for template variables
+		if dsUID != "" && dsType == "" && !isTemplateVariable(dsUID) {
 			dsType = getDatasourceTypeByUID(dsUID)
-		} else if dsType == "" {
+		} else if dsUID == "" && dsType == "" {
 			// If no UID and no type, use default
 			dsType = *getDefaultDatasourceRef().Type
 		}
@@ -1722,7 +1738,8 @@ func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *das
 		queryDatasourceType = schemaversion.GetStringValue(ds, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
-		if queryDatasourceUID != "" {
+		// BUT: Don't try to resolve types for template variables
+		if queryDatasourceUID != "" && queryDatasourceType == "" && !isTemplateVariable(queryDatasourceUID) {
 			queryDatasourceType = getDatasourceTypeByUID(queryDatasourceUID)
 		}
 	} else if panelDatasource != nil {

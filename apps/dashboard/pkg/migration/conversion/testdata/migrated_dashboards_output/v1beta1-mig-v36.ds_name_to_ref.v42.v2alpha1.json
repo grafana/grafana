@@ -561,7 +561,7 @@
                       "spec": {}
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "__expr__",
                       "uid": "__expr__"
                     },
                     "refId": "B",

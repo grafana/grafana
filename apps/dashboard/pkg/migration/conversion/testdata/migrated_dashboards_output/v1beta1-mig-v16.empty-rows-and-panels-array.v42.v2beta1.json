@@ -49,7 +49,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "${example_datasource}"
@@ -156,7 +156,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "${example_datasource}"
@@ -263,7 +263,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "${example_datasource}"
@@ -374,7 +374,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "${example_datasource}"
@@ -485,7 +485,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "${example_datasource}"
@@ -596,7 +596,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "${example_datasource}"
@@ -707,7 +707,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "${example_datasource}"
@@ -818,7 +818,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "${example_datasource}"
@@ -928,7 +928,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "${example_datasource}"
@@ -949,7 +949,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "${example_datasource}"
@@ -1059,7 +1059,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "${example_datasource}"
@@ -1365,7 +1365,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
             "datasource": {
               "name": "${example_datasource}"
@@ -1397,7 +1397,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
             "datasource": {
               "name": "${example_datasource}"
@@ -1429,7 +1429,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
             "datasource": {
               "name": "${example_datasource}"
@@ -1461,7 +1461,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
             "datasource": {
               "name": "${example_datasource}"

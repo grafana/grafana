@@ -334,7 +334,7 @@ export function sceneVariablesSetToSchemaV2Variables(
         dataQuery = {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
-          group: datasource?.type ?? getDataQueryKind(query),
+          group: datasource?.type || getDataQueryKind(query),
           ...(datasource?.uid && {
             datasource: {
               name: datasource.uid,
@@ -351,7 +351,7 @@ export function sceneVariablesSetToSchemaV2Variables(
         dataQuery = {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
-          group: datasource?.type ?? getDataQueryKind(query),
+          group: datasource?.type || getDataQueryKind(query),
           ...(datasource?.uid && {
             datasource: {
               name: datasource.uid,

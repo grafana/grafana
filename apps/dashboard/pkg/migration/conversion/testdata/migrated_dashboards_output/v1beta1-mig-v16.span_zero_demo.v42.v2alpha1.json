@@ -99,7 +99,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "loki",
                       "uid": "${loki}"
                     },
                     "refId": "A",
@@ -265,7 +265,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "tempo",
                       "uid": "${tempo}"
                     },
                     "refId": "A",
@@ -1205,7 +1205,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "loki",
                       "uid": "${loki}"
                     },
                     "refId": "A",

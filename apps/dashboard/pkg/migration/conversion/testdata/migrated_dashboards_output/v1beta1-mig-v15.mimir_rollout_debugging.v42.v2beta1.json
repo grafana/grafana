@@ -33,7 +33,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
             "datasource": {
               "name": "$datasource"
@@ -73,7 +73,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "$datasource"
@@ -218,7 +218,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "$datasource"
@@ -342,7 +342,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "$datasource"
@@ -466,7 +466,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "$datasource"
@@ -556,7 +556,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "$datasource"
@@ -680,7 +680,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "$datasource"

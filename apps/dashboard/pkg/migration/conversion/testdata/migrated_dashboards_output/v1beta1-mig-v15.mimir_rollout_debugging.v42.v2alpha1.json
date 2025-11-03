@@ -31,7 +31,7 @@
         "kind": "AnnotationQuery",
         "spec": {
           "datasource": {
-            "type": "prometheus",
+            "type": "",
             "uid": "$datasource"
           },
           "query": {
@@ -79,7 +79,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "$datasource"
                     },
                     "refId": "A",
@@ -222,7 +222,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "$datasource"
                     },
                     "refId": "A",
@@ -344,7 +344,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "$datasource"
                     },
                     "refId": "A",
@@ -465,7 +465,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "$datasource"
                     },
                     "refId": "A",
@@ -554,7 +554,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "$datasource"
                     },
                     "refId": "A",
@@ -676,7 +676,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "$datasource"
                     },
                     "refId": "A",

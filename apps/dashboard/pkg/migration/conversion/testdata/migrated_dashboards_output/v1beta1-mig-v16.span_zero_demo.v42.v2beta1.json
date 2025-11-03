@@ -97,7 +97,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "loki",
                       "version": "v0",
                       "datasource": {
                         "name": "${loki}"
@@ -248,7 +248,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "tempo",
                       "version": "v0",
                       "datasource": {
                         "name": "${tempo}"
@@ -1249,7 +1249,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "loki",
                       "version": "v0",
                       "datasource": {
                         "name": "${loki}"

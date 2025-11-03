@@ -57,7 +57,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "${example_datasource}"
                     },
                     "refId": "A",
@@ -162,7 +162,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "${example_datasource}"
                     },
                     "refId": "A",
@@ -267,7 +267,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "${example_datasource}"
                     },
                     "refId": "A",
@@ -375,7 +375,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "${example_datasource}"
                     },
                     "refId": "A",
@@ -485,7 +485,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "${example_datasource}"
                     },
                     "refId": "A",
@@ -594,7 +594,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "${example_datasource}"
                     },
                     "refId": "A",
@@ -703,7 +703,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "${example_datasource}"
                     },
                     "refId": "A",
@@ -811,7 +811,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "${example_datasource}"
                     },
                     "refId": "A",
@@ -919,7 +919,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "${example_datasource}"
                     },
                     "refId": "A",
@@ -939,7 +939,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "${example_datasource}"
                     },
                     "refId": "B",
@@ -1047,7 +1047,7 @@
                       }
                     },
                     "datasource": {
-                      "type": "prometheus",
+                      "type": "",
                       "uid": "${example_datasource}"
                     },
                     "refId": "A",
@@ -1182,7 +1182,7 @@
           "refresh": "onTimeRangeChanged",
           "skipUrlSync": false,
           "datasource": {
-            "type": "prometheus",
+            "type": "",
             "uid": "${example_datasource}"
           },
           "query": {
@@ -1213,7 +1213,7 @@
           "refresh": "onTimeRangeChanged",
           "skipUrlSync": false,
           "datasource": {
-            "type": "prometheus",
+            "type": "",
             "uid": "${example_datasource}"
           },
           "query": {
@@ -1244,7 +1244,7 @@
           "refresh": "onTimeRangeChanged",
           "skipUrlSync": false,
           "datasource": {
-            "type": "prometheus",
+            "type": "",
             "uid": "${example_datasource}"
           },
           "query": {
@@ -1275,7 +1275,7 @@
           "refresh": "onTimeRangeChanged",
           "skipUrlSync": false,
           "datasource": {
-            "type": "prometheus",
+            "type": "",
             "uid": "${example_datasource}"
           },
           "query": {
