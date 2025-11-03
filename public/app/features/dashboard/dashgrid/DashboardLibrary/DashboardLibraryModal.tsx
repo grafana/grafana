@@ -107,7 +107,6 @@ export const DashboardLibraryModal = ({
       }
       isOpen={isOpen}
       onDismiss={onDismiss}
-      closeOnBackdropClick={false}
       className={styles.modal}
       contentClassName={styles.modalContent}
     >

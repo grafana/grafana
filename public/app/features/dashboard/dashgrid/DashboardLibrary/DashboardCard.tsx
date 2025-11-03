@@ -216,12 +216,12 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     description: css({
       display: '-webkit-box',
-      WebkitLineClamp: 1,
+      WebkitLineClamp: 2,
       WebkitBoxOrient: 'vertical',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       margin: 0,
-      height: `calc(${theme.typography.body.lineHeight} * 1em)`, // Fixed height for 1 line
+      // height: `calc(${theme.typography.body.lineHeight} * 1em)`, // Fixed height for 1 line
     }),
     actionsContainer: css({
       marginTop: 0,
