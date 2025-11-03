@@ -2,6 +2,7 @@ package testing
 
 import (
 	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/open-feature/go-sdk/openfeature/testing"
 	"golang.org/x/net/context"
 	"sync"
@@ -35,4 +36,6 @@ func (c *TestClient) IsEnabled(ctx context.Context, flag string) bool {
 	return c.delegate.Boolean(ctx, flag, false, openfeature.TransactionContext(ctx))
 }
 
-func (c *TestClient) SetEnabled(ctx context.Context, flag string, enabled bool) {}
+func (c *TestClient) SetFeatureFlags(t testing.TestFramework, flags map[string]memprovider.InMemoryFlag) {
+	provider.UsingFlags(t, flags)
+}
