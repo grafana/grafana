@@ -149,12 +149,34 @@ func ProvideStandaloneAuthZClient(
 		return nil, nil
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
+
+	zanzanaClient, err := ProvideStandaloneZanzanaClient(cfg, features)
+	if err != nil {
+		return nil, err
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient) {
+		return zanzanaClient, nil
+	}
+
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return newRemoteRBACClient(authCfg, tracer, reg)
+	remoteRBACClient, err := newRemoteRBACClient(authCfg, tracer, reg)
+	if err != nil {
+		return nil, err
+	}
+
+	if zanzanaEnabled {
+		return zClient.WithShadowClient(remoteRBACClient, zanzanaClient, reg)
+	}
+
+	return remoteRBACClient, nil
 }
 
 func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, reg prometheus.Registerer) (authlib.AccessClient, error) {

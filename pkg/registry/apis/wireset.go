@@ -50,6 +50,7 @@ var WireSet = wire.NewSet(
 	// Secrets
 	secret.RegisterDependencies,
 	// Provisioning
+	provisioning.RegisterDependencies,
 	provisioningExtras,
 
 	// Each must be added here *and* in the ServiceSink above

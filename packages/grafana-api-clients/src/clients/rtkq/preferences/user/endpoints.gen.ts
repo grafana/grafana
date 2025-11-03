@@ -102,5 +102,9 @@ export type UpdatePrefsCmd = {
   timezone?: 'utc' | 'browser';
   weekStart?: string;
 };
-export const { useGetUserPreferencesQuery, usePatchUserPreferencesMutation, useUpdateUserPreferencesMutation } =
-  injectedRtkApi;
+export const {
+  useGetUserPreferencesQuery,
+  useLazyGetUserPreferencesQuery,
+  usePatchUserPreferencesMutation,
+  useUpdateUserPreferencesMutation,
+} = injectedRtkApi;

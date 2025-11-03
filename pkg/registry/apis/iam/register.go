@@ -101,21 +101,26 @@ func RegisterAPIService(
 	return builder, nil
 }
 
-// TODO zClient, zTickets, reg
 func NewAPIService(
 	accessClient types.AccessClient,
 	dbProvider legacysql.LegacyDatabaseProvider,
 	features featuremgmt.FeatureToggles,
+	zClient zanzana.Client,
+	reg prometheus.Registerer,
 ) *IdentityAccessManagementAPIBuilder {
 	store := legacy.NewLegacySQLStores(dbProvider)
 	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
+	registerMetrics(reg)
 	return &IdentityAccessManagementAPIBuilder{
 		store:                      store,
 		display:                    user.NewLegacyDisplayREST(store),
 		resourcePermissionsStorage: resourcePermissionsStorage,
 		logger:                     log.New("iam.apis"),
 		features:                   features,
+		zClient:                    zClient,
+		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
+		reg:                        reg,
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				// For now only authorize resourcepermissions resource

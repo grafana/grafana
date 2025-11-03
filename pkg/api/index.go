@@ -215,7 +215,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
-	data.NavTree.ApplyCostManagementIA()
 	data.NavTree.Sort()
 
 	return &data, nil
