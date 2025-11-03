@@ -1536,15 +1536,10 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 		datasourceUID = schemaversion.GetStringValue(datasource, "uid")
 		datasourceType = schemaversion.GetStringValue(datasource, "type")
 
-		// If we have a UID, use it to get the correct type from the datasource service
-		// BUT: Don't try to resolve types for template variables (starting with $ or ${)
-		// Template variables don't have types until runtime - leave type empty and let
-		// the frontend resolve it when the variable is interpolated
-		if datasourceUID != "" && datasourceType == "" && !isTemplateVariable(datasourceUID) {
-			datasourceType = getDatasourceTypeByUID(datasourceUID)
-		}
-
-		if datasourceUID != "" {
+		// Only create datasource ref if the annotation actually has a valid datasource type in the original input
+		// This matches frontend behavior: if (dsUID && annotation.datasource && annotation.datasource.type)
+		// We don't try to resolve datasources that are missing a type - they should be resolved at runtime
+		if datasourceUID != "" && datasourceType != "" {
 			datasourceRef = &dashv2alpha1.DashboardDataSourceRef{
 				Type: &datasourceType,
 				Uid:  &datasourceUID,

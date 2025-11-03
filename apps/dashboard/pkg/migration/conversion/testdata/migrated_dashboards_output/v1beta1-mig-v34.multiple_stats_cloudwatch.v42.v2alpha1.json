@@ -186,7 +186,7 @@
         "spec": {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "default-ds-uid"
           },
           "query": {
             "kind": "DataQuery",

@@ -339,8 +339,14 @@ export function getDataQueryKind(query: SceneDataQuery | string | undefined, que
     return query.datasource.type;
   }
 
-  // Get type from query runner's datasource
+  // If query has a datasource UID (even without type), check if it matches the queryRunner's datasource
+  // Only use queryRunner's type if the UIDs match or if query has no datasource at all
   if (queryRunner?.state.datasource?.type) {
+    // If query has a datasource UID that differs from queryRunner's, fall back to default
+    if (query.datasource?.uid && query.datasource.uid !== queryRunner.state.datasource.uid) {
+      const defaultDS = getDefaultDataSourceRef();
+      return defaultDS?.type || '';
+    }
     return queryRunner.state.datasource.type;
   }
 

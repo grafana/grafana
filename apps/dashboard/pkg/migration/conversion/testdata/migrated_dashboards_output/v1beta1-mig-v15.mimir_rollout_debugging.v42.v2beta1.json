@@ -35,9 +35,6 @@
             "kind": "DataQuery",
             "group": "",
             "version": "v0",
-            "datasource": {
-              "name": "$datasource"
-            },
             "spec": {}
           },
           "enable": true,

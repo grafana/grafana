@@ -33,11 +33,8 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
-            "datasource": {
-              "name": "grafana"
-            },
             "spec": {}
           },
           "enable": true,

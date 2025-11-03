@@ -196,7 +196,7 @@
             "group": "prometheus",
             "version": "v0",
             "datasource": {
-              "name": "prometheus"
+              "name": "default-ds-uid"
             },
             "spec": {}
           },

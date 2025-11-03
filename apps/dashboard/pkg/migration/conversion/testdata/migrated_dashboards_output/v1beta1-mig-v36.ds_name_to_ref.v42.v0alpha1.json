@@ -53,6 +53,8 @@
         },
         {
           "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
             "uid": "unknown-datasource-name"
           },
           "name": "Unknown Datasource Annotation - Tests unknown datasource preserved as UID"
@@ -141,6 +143,8 @@
           },
           {
             "datasource": {
+              "apiVersion": "v2",
+              "type": "elasticsearch",
               "uid": "existing-target-uid"
             },
             "refId": "B"
@@ -158,6 +162,7 @@
         "targets": [
           {
             "datasource": {
+              "apiVersion": "v2",
               "type": "elasticsearch",
               "uid": "existing-target-uid"
             },
@@ -184,6 +189,8 @@
       },
       {
         "datasource": {
+          "apiVersion": "v2",
+          "type": "elasticsearch",
           "uid": "existing-target-uid"
         },
         "description": "Tests panel with expression query - should not inherit expression as panel datasource",
@@ -191,6 +198,8 @@
         "targets": [
           {
             "datasource": {
+              "apiVersion": "v2",
+              "type": "elasticsearch",
               "uid": "existing-target-uid"
             },
             "refId": "A"
@@ -207,6 +216,8 @@
       },
       {
         "datasource": {
+          "apiVersion": "v2",
+          "type": "elasticsearch",
           "uid": "existing-target-uid"
         },
         "description": "Tests panel inheriting datasource from target when panel datasource was default",
@@ -214,6 +225,8 @@
         "targets": [
           {
             "datasource": {
+              "apiVersion": "v2",
+              "type": "elasticsearch",
               "uid": "existing-target-uid"
             },
             "refId": "A"
@@ -296,6 +309,8 @@
         "panels": [
           {
             "datasource": {
+              "apiVersion": "v2",
+              "type": "elasticsearch",
               "uid": "existing-target-uid"
             },
             "description": "Nested panel in collapsed row with default datasource",
@@ -303,6 +318,8 @@
             "targets": [
               {
                 "datasource": {
+                  "apiVersion": "v2",
+                  "type": "elasticsearch",
                   "uid": "existing-target-uid"
                 },
                 "refId": "A"
