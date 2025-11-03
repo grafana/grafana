@@ -23,6 +23,15 @@ Please note that PDF exports and Reporting are available only in [Grafana Enterp
 
 You can also render a PNG by hovering over the panel to display the actions menu in the top-right corner, and then clicking **Share > Share link**. The **Render image** option is displayed in the link settings.
 
+<{{ admontition type="info" }}>
+Please note that the Grafana Image Renderer is not covered under the standard Grafana versioning policy.
+This means that the latest version is the only officially supported version.
+<{{ /admonition }}>
+<{{ admontition type="info" }}>
+Please note that prior to Grafana Image Renderer v5, a plugin existed as well.
+In v4, this stopped supporting Windows, and in v5, it was fully removed in favour of the standalone service.
+<{{ /admonition }}>
+
 ## Alerting and render limits
 
 Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [max_concurrent_screenshots](../configure-grafana/#max_concurrent_screenshots).
