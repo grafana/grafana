@@ -125,9 +125,12 @@ export class DefaultGridLayoutManager
   private _activationHandler() {
     if (config.featureToggles.dashboardNewLayouts) {
       this._subs.add(
-        this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) =>
-          getLayoutOrchestratorFor(this)?.startDraggingSync(evt, panel)
-        )
+        this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) => {
+          const gridItem = panel.parent;
+          if (gridItem instanceof DashboardGridItem) {
+            getLayoutOrchestratorFor(this)?.startDraggingSync(evt, gridItem);
+          }
+        })
       );
     }
 

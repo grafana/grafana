@@ -39,11 +39,11 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     };
   }
 
-  public startDraggingSync(evt: ReactPointerEvent, panel: VizPanel): void {
+  public startDraggingSync(evt: ReactPointerEvent, gridItem: SceneGridItemLike): void {
     this._pointerDistance.set(evt);
     this._isSelectedObject = false;
 
-    const dropTarget = sceneGraph.findObject(panel, isDashboardDropTarget);
+    const dropTarget = sceneGraph.findObject(gridItem, isDashboardDropTarget);
 
     if (!dropTarget || !isDashboardDropTarget(dropTarget)) {
       return;
@@ -55,15 +55,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     document.body.addEventListener('pointermove', this._onPointerMove);
     document.body.addEventListener('pointerup', this._stopDraggingSync);
 
-    // Get the grid item if the panel is inside one (could be DashboardGridItem or AutoGridItem)
-    const gridItem = panel.parent;
-    if (gridItem && 'isDashboardLayoutItem' in gridItem) {
-      this.setState({ draggingGridItem: gridItem.getRef() });
-    } else {
-      // If no grid item, we can't drag it properly
-      console.warn('Panel is not inside a grid item, cannot drag');
-      return;
-    }
+    this.setState({ draggingGridItem: gridItem.getRef() });
   }
 
   private _stopDraggingSync(_evt: PointerEvent) {
