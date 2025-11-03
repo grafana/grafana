@@ -8,11 +8,13 @@ import { LogListModel } from './processing';
 import { getScrollbarWidth, LOG_LIST_CONTROLS_WIDTH, LOG_LIST_MIN_WIDTH } from './virtualization';
 
 export interface LogDetailsContextData {
+  currentLog: LogListModel | undefined;
   closeDetails: () => void;
   detailsDisplayed: (log: LogListModel) => boolean;
   detailsMode: LogLineDetailsMode;
   detailsWidth: number;
   enableLogDetails: boolean;
+  setCurrentLog(log: LogListModel): void;
   setDetailsMode: (mode: LogLineDetailsMode) => void;
   setDetailsWidth: (width: number) => void;
   showDetails: LogListModel[];
@@ -20,11 +22,13 @@ export interface LogDetailsContextData {
 }
 
 export const LogDetailsContext = createContext<LogDetailsContextData>({
+  currentLog: undefined,
   closeDetails: () => {},
   detailsDisplayed: () => false,
   detailsMode: 'sidebar',
   detailsWidth: 0,
   enableLogDetails: false,
+  setCurrentLog: () => {},
   setDetailsMode: () => {},
   setDetailsWidth: () => {},
   showDetails: [],
@@ -63,6 +67,7 @@ export const LogDetailsContextProvider = ({
   showControls,
 }: Props) => {
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
+  const [currentLog, setCurrentLog] = useState<LogListModel | undefined>(undefined);
   const [detailsWidth, setDetailsWidthState] = useState(
     getDetailsWidth(containerElement, logOptionsStorageKey, undefined, detailsModeProp, showControls)
   );
@@ -118,6 +123,7 @@ export const LogDetailsContextProvider = ({
   const closeDetails = useCallback(() => {
     showDetails.forEach((log) => removeDetailsScrollPosition(log));
     setShowDetails([]);
+    setCurrentLog(undefined);
   }, [showDetails]);
 
   const toggleDetails = useCallback(
@@ -158,10 +164,12 @@ export const LogDetailsContextProvider = ({
     <LogDetailsContext.Provider
       value={{
         closeDetails,
+        currentLog: currentLog ? currentLog : showDetails[0],
         detailsDisplayed,
         detailsMode,
         detailsWidth,
         enableLogDetails,
+        setCurrentLog,
         setDetailsMode,
         setDetailsWidth,
         showDetails,

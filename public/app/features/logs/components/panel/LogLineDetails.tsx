@@ -72,15 +72,15 @@ LogLineDetails.displayName = 'LogLineDetails';
 const LogLineDetailsTabs = memo(
   ({ focusLogLine, logs, timeRange, timeZone }: Pick<Props, 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
     const { app, noInteractions, wrapLogMessage } = useLogListContext();
-    const { closeDetails, showDetails, toggleDetails } = useLogDetailsContext();
-    const [currentLog, setCurrentLog] = useState(showDetails[0]);
+    const { closeDetails, currentLog, setCurrentLog, showDetails, toggleDetails } = useLogDetailsContext();
+
     const previousShowDetails = usePrevious(showDetails);
     const styles = useStyles2(getStyles, 'sidebar');
 
     useEffect(() => {
       // When wrapping is enabled and details is in sidebar mode, the logs panel width changes and the
       // user may lose focus of the log line, so we scroll to it.
-      if (wrapLogMessage) {
+      if (wrapLogMessage && currentLog) {
         focusLogLine(currentLog);
       }
       if (!noInteractions) {
@@ -102,10 +102,10 @@ const LogLineDetailsTabs = memo(
       if (!previousShowDetails || showDetails.length > previousShowDetails.length) {
         setCurrentLog(showDetails[showDetails.length - 1]);
         return;
-      } else if (!showDetails.find((log) => log.uid === currentLog.uid)) {
+      } else if (!showDetails.find((log) => log.uid === currentLog?.uid)) {
         setCurrentLog(showDetails[showDetails.length - 1]);
       }
-    }, [closeDetails, currentLog.uid, previousShowDetails, showDetails]);
+    }, [closeDetails, currentLog?.uid, previousShowDetails, setCurrentLog, showDetails]);
 
     return (
       <>
@@ -117,7 +117,7 @@ const LogLineDetailsTabs = memo(
                   key={log.uid}
                   truncate
                   label={log.entry.substring(0, 25)}
-                  active={currentLog.uid === log.uid}
+                  active={currentLog?.uid === log.uid}
                   onChangeTab={() => setCurrentLog(log)}
                   suffix={() => (
                     <Icon
