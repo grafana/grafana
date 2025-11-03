@@ -17,13 +17,14 @@ Examples:
 
 ### Backend
 
-Use the OpenFeature client for all new backend feature flags and toggles. 
+Use the OpenFeature client for all new backend feature flags and toggles.
 
 #### Key points:
-- OpenFeature SDK relies on the global state.  
-- OpenFeature Provider configuration happens in the `commands` module before initialization of other modules 
+
+- OpenFeature SDK relies on the global state.
+- OpenFeature Provider configuration happens in the `commands` module before initialization of other modules
 - Flag evaluation is context-aware -- you can pass metadata such as org name, grafana version, or environment to the evaluation context.
-- Flags can be of different types (boolean, string, number, or object). 
+- Flags can be of different types (boolean, string, number, or object).
 - Always perform flag evaluation at runtime, not during service startup, to ensure correct and up-to-date flag values.
 - Do not cache or store flag values globally -- evaluate flags when needed, especially in request or handler logic.
 
@@ -49,7 +50,7 @@ import (
 
 var (
     // Since openfeature relies on global state,
-    // TestProvider should be a global instance shared between tests  
+    // TestProvider should be a global instance shared between tests
     // Under the hood it uses a custom _goroutine local_ storage to manage state on a per-test basis
     provider = testing.NewTestProvider()
 )
@@ -76,7 +77,6 @@ func TestFoo(t *testing.T) {
     ...
 }
 ```
-
 
 ### Frontend
 
