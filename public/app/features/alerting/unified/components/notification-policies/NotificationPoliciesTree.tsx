@@ -33,7 +33,11 @@ import {
   useUpdateExistingNotificationPolicy,
 } from './useNotificationPolicyRoute';
 
-export const NotificationPoliciesList = () => {
+interface NotificationPoliciesTreeProps {
+  routeName?: string;
+}
+
+export const NotificationPoliciesTree = ({ routeName }: NotificationPoliciesTreeProps) => {
   const appNotification = useAppNotification();
   const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
 
@@ -53,16 +57,11 @@ export const NotificationPoliciesList = () => {
   );
 
   const {
-    currentData,
+    currentData: defaultPolicy,
     isLoading,
     error: fetchPoliciesError,
     refetch: refetchNotificationPolicyRoute,
-  } = useNotificationPolicyRoute({ alertmanager: selectedAlertmanager ?? '' });
-
-  // We make the assumption that the first policy is the default one
-  // At the time of writing, this will be always the case for the AM config response, and the K8S API
-  // TODO in the future: Generalise the component to support any number of "root" policies
-  const [defaultPolicy] = currentData ?? [];
+  } = useNotificationPolicyRoute({ alertmanager: selectedAlertmanager ?? '' }, routeName);
 
   // deleting policies
   const [deleteNotificationPolicy, deleteNotificationPolicyState] = useDeleteNotificationPolicy({
@@ -140,7 +139,7 @@ export const NotificationPoliciesList = () => {
   }
 
   async function handleDelete(route: RouteWithID) {
-    await deleteNotificationPolicy.execute(route.id);
+    await deleteNotificationPolicy.execute(route);
     handleActionResult({ error: deleteNotificationPolicyState.error });
   }
 
@@ -151,7 +150,7 @@ export const NotificationPoliciesList = () => {
   ) {
     await addNotificationPolicy.execute({
       partialRoute,
-      referenceRouteIdentifier: referenceRoute.id,
+      referenceRoute: referenceRoute,
       insertPosition,
     });
     handleActionResult({ error: addNotificationPolicyState.error });

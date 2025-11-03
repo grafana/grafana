@@ -1246,4 +1246,9 @@ export interface FeatureToggles {
   * Enable template dashboards
   */
   dashboardTemplates?: boolean;
+  /**
+  * Enables the ability to create multiple alerting policies
+  * @default false
+  */
+  alertingMultiplePolicies?: boolean;
 }

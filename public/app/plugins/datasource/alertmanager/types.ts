@@ -1,6 +1,6 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
 import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
-import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
+import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/routesApi.gen';
 import { ExtraConfiguration } from 'app/features/alerting/unified/utils/alertmanager/extraConfigs';
 
 export const ROUTES_META_SYMBOL = Symbol('routes_metadata');
@@ -123,6 +123,7 @@ export type Receiver = GrafanaManagedContactPoint | AlertmanagerReceiver;
 export type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
 
 export type Route = {
+  name?: string;
   receiver?: string | null;
   group_by?: string[];
   continue?: boolean;
@@ -147,6 +148,7 @@ export type Route = {
     provisioned?: boolean;
     resourceVersion?: string;
     name?: string;
+    metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
   };
 };
 
