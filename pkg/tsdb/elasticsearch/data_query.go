@@ -104,4 +104,3 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 
 	return parseResponse(e.ctx, res.Responses, queries, e.client.GetConfiguredFields(), e.keepLabelsInResponse, e.logger)
 }
-
