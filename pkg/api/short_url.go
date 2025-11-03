@@ -212,7 +212,7 @@ func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel
 
 	c.Logger.Debug("Creating short URL", "path", cmd.Path)
 	obj := shorturl.LegacyCreateCommandToUnstructured(cmd)
-	obj.SetGenerateName("u") // becomes a prefix
+	obj.SetGenerateName("s") // becomes a prefix
 
 	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
 	if err != nil {

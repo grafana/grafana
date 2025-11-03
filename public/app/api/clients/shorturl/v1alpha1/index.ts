@@ -17,8 +17,7 @@ export const shortURLAPIv1alpha1 = generatedAPI.enhanceEndpoints({
         const metadata = requestOptions.shortUrl.metadata;
         if (!metadata.name && !metadata.generateName) {
           // GenerateName lets the apiserver create a new uid for the name
-          // This wont be used, the backend will generate a random uid but cannot be blank or will fail.
-          metadata.generateName = 's-';
+          metadata.generateName = 's'; // becomes a prefix
         }
         return originalQuery(requestOptions);
       };
