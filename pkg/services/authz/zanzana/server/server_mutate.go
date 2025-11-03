@@ -59,6 +59,10 @@ func (s *Server) mutate(ctx context.Context, req *authzextv1.MutateRequest) (*au
 			if err := s.mutateResourcePermissions(ctx, storeInf, operations); err != nil {
 				return nil, fmt.Errorf("failed to mutate resource permissions: %w", err)
 			}
+		case OperationGroupUserOrgRole:
+			if err := s.mutateOrgRoles(ctx, storeInf, operations); err != nil {
+				return nil, fmt.Errorf("failed to mutate org roles: %w", err)
+			}
 		default:
 			s.logger.Warn("unsupported operation group", "operationGroup", operationGroup)
 		}
