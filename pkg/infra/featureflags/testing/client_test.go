@@ -60,6 +60,7 @@ func Test_Parallel_GoroutineA(t *testing.T) {
 
 	client := NewTestClient()
 	client.SetFeatureFlags(t, FlagFoo)
+	defer client.Cleanup()
 
 	barrier1.Wait()
 	// proceed only when test-a finished the setup of the flag "bar"
@@ -80,6 +81,7 @@ func Test_Parallel_GoroutineB(t *testing.T) {
 	// Initialise the Test Client and set up the test flag
 	client := NewTestClient()
 	client.SetFeatureFlags(t, FlagBar)
+	defer client.Cleanup()
 
 	barrier2.Wait()
 
@@ -89,15 +91,20 @@ func Test_Parallel_GoroutineB(t *testing.T) {
 }
 
 func Test_Sequential(t *testing.T) {
-	client := NewTestClient()
-
 	tests := []FeatureFlag{FlagBaz, FlagFoobar}
 
 	for _, flag := range tests {
-		client.SetFeatureFlags(t, flag)
+		executeTest(t, flag)
+	}
+}
 
-		if !client.IsEnabled(context.Background(), flag.Name) {
-			t.Fatalf("expected %s to be disabled", flag.Name)
-		}
+func executeTest(t *testing.T, flag FeatureFlag) {
+	client := NewTestClient()
+
+	client.SetFeatureFlags(t, flag)
+	defer client.Cleanup()
+
+	if !client.IsEnabled(context.Background(), flag.Name) {
+		t.Fatalf("expected %s to be disabled", flag.Name)
 	}
 }
