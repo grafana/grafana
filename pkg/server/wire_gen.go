@@ -775,7 +775,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	pluginsAppInstaller, err := plugins.RegisterAppInstaller(cfg, featureToggles)
+	pluginsAppInstaller, err := plugins.ProvideAppInstaller()
 	if err != nil {
 		return nil, err
 	}
@@ -1413,7 +1413,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	pluginsAppInstaller, err := plugins.RegisterAppInstaller(cfg, featureToggles)
+	pluginsAppInstaller, err := plugins.ProvideAppInstaller()
 	if err != nil {
 		return nil, err
 	}
