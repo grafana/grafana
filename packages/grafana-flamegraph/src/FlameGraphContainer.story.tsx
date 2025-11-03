@@ -1,5 +1,4 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react';
-import { ComponentProps } from 'react';
+import type { Meta, StoryObj } from '@storybook/react';
 
 import { createDataFrame } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
@@ -13,13 +12,11 @@ const WrappedFlameGraph = (props: Omit<Props, 'getTheme'>) => {
   return <FlameGraphContainer {...props} data={df} getTheme={() => theme} />;
 };
 
-const StoryRenderFn: StoryFn<ComponentProps<typeof FlameGraphContainer>> = (args) => {
-  return <WrappedFlameGraph {...args} />;
-};
-
 const meta: Meta<typeof FlameGraphContainer> = {
-  title: 'FlameGraph',
-  render: StoryRenderFn,
+  title: 'FlameGraphContainer',
+  render: (args) => {
+    return <WrappedFlameGraph {...args} />;
+  },
 };
 
 export default meta;
