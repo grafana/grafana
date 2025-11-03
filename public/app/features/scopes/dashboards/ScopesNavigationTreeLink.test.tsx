@@ -105,4 +105,32 @@ describe('ScopesNavigationTreeLink', () => {
     expect(matchingLink).toHaveAttribute('aria-current', 'page');
     expect(otherLink).not.toHaveAttribute('aria-current');
   });
+
+  it('shows correct icon for grafana-metricsdrilldown-app with query parameters', () => {
+    renderWithRouter(
+      <ScopesNavigationTreeLink
+        to="/a/grafana-metricsdrilldown-app?from=now-1h&to=now"
+        title="Metrics Drilldown"
+        id="metrics-drilldown"
+      />
+    );
+
+    const link = screen.getByTestId('scopes-dashboards-metrics-drilldown');
+    // Icon should be rendered (check for SVG element which is how Icon renders)
+    const icon = link.querySelector('svg');
+    expect(icon).toBeInTheDocument();
+    // The link should contain the title text
+    expect(link).toHaveTextContent('Metrics Drilldown');
+  });
+
+  it('shows correct icon for grafana-metricsdrilldown-app without trailing slash', () => {
+    renderWithRouter(
+      <ScopesNavigationTreeLink to="/a/grafana-metricsdrilldown-app" title="Metrics Drilldown" id="metrics-drilldown" />
+    );
+
+    const link = screen.getByTestId('scopes-dashboards-metrics-drilldown');
+    const icon = link.querySelector('svg');
+    expect(icon).toBeInTheDocument();
+    expect(link).toHaveTextContent('Metrics Drilldown');
+  });
 });
