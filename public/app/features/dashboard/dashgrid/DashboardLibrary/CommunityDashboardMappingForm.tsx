@@ -79,7 +79,7 @@ export const CommunityDashboardMappingForm = ({
     <Stack direction="column" gap={3}>
       <div>
         <Text element="p" color="secondary">
-          <Trans i18nKey="dashboard.library.community-mapping-form.description">
+          <Trans i18nKey="dashboard-library.community-mapping-form.description">
             This dashboard requires datasource configuration. Select datasources for each input below.
           </Trans>
         </Text>
