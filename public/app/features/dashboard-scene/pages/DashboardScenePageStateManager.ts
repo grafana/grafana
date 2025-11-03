@@ -449,6 +449,26 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     throw new Error('Snapshot not found');
   }
 
+  private buildDashboardDTOFromInterpolated(interpolatedDashboard: DashboardDataDTO): DashboardDTO {
+    return {
+      dashboard: {
+        ...interpolatedDashboard,
+        uid: '',
+        version: 0,
+        id: null,
+      },
+      meta: {
+        canSave: contextSrv.hasEditPermissionInFolders,
+        canEdit: contextSrv.hasEditPermissionInFolders,
+        canStar: false,
+        canShare: false,
+        canDelete: false,
+        isNew: true,
+        folderUid: '',
+      },
+    };
+  }
+
   private async loadTemplateDashboard(): Promise<DashboardDTO> {
     // Extract template parameters from URL
     const searchParams = new URLSearchParams(window.location.search);
@@ -487,24 +507,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     };
 
     const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
-
-    return {
-      dashboard: {
-        ...interpolatedDashboard,
-        uid: '',
-        version: 0,
-        id: null,
-      },
-      meta: {
-        canSave: contextSrv.hasEditPermissionInFolders,
-        canEdit: contextSrv.hasEditPermissionInFolders,
-        canStar: false,
-        canShare: false,
-        canDelete: false,
-        isNew: true,
-        folderUid: '',
-      },
-    };
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
   }
 
   private async loadCommunityTemplateDashboard(gnetId: string): Promise<DashboardDTO> {
@@ -538,24 +541,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     };
 
     const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
-
-    return {
-      dashboard: {
-        ...interpolatedDashboard,
-        uid: '',
-        version: 0,
-        id: null,
-      },
-      meta: {
-        canSave: contextSrv.hasEditPermissionInFolders,
-        canEdit: contextSrv.hasEditPermissionInFolders,
-        canStar: false,
-        canShare: false,
-        canDelete: false,
-        isNew: true,
-        folderUid: '',
-      },
-    };
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
   }
 
   public async fetchDashboard({
