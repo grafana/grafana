@@ -21,6 +21,7 @@ import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardControlsButton } from './DashboardControlsMenu';
+import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
 import { VariableControls } from './VariableControls';
@@ -166,7 +167,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {!hideVariableControls && (
           <>
             <VariableControls dashboard={dashboard} />
-            <DataLayerControls dashboard={dashboard} />
+            <DashboardDataLayerControls dashboard={dashboard} />
           </>
         )}
         <Box grow={1} />
@@ -186,18 +187,6 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       )}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
-  );
-}
-
-function DataLayerControls({ dashboard }: { dashboard: DashboardScene }) {
-  const layers = sceneGraph.getDataLayers(dashboard, true);
-
-  return (
-    <>
-      {layers.map((layer) => (
-        <layer.Component model={layer} key={layer.state.key} />
-      ))}
-    </>
   );
 }
 
