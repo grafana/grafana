@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type RoutingTreeClient struct {
@@ -74,24 +73,6 @@ func (c *RoutingTreeClient) Update(ctx context.Context, obj *RoutingTree, opts r
 
 func (c *RoutingTreeClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*RoutingTree, error) {
 	return c.client.Patch(ctx, identifier, req, opts)
-}
-
-func (c *RoutingTreeClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus RoutingTreeStatus, opts resource.UpdateOptions) (*RoutingTree, error) {
-	return c.client.Update(ctx, &RoutingTree{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       RoutingTreeKind().Kind(),
-			APIVersion: GroupVersion.Identifier(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			ResourceVersion: opts.ResourceVersion,
-			Namespace:       identifier.Namespace,
-			Name:            identifier.Name,
-		},
-		Status: newStatus,
-	}, resource.UpdateOptions{
-		Subresource:     "status",
-		ResourceVersion: opts.ResourceVersion,
-	})
 }
 
 func (c *RoutingTreeClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {

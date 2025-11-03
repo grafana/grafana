@@ -32,6 +32,10 @@
       "import": "./src/clients/rtkq/advisor/v0alpha1/index.ts",
       "require": "./src/clients/rtkq/advisor/v0alpha1/index.ts"
     },
+    "./rtkq/correlations/v0alpha1": {
+      "import": "./src/clients/rtkq/correlations/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/correlations/v0alpha1/index.ts"
+    },
     "./rtkq/dashboard/v0alpha1": {
       "import": "./src/clients/rtkq/dashboard/v0alpha1/index.ts",
       "require": "./src/clients/rtkq/dashboard/v0alpha1/index.ts"
@@ -43,6 +47,10 @@
     "./rtkq/iam/v0alpha1": {
       "import": "./src/clients/rtkq/iam/v0alpha1/index.ts",
       "require": "./src/clients/rtkq/iam/v0alpha1/index.ts"
+    },
+    "./rtkq/legacy": {
+      "import": "./src/clients/rtkq/legacy/index.ts",
+      "require": "./src/clients/rtkq/legacy/index.ts"
     },
     "./rtkq/legacy/migrate-to-cloud": {
       "import": "./src/clients/rtkq/migrate-to-cloud/index.ts",

@@ -443,7 +443,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) {
 		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-				Text: "Triage", SubTitle: "Triage alerts", Id: "alert-triage", Url: s.cfg.AppSubURL + "/alerting/triage", Icon: "medkit",
+				Text: "Alerts", SubTitle: "Visualize active and pending alerts", Id: "alert-alerts", Url: s.cfg.AppSubURL + "/alerting/alerts", Icon: "bell", IsNew: true,
 			})
 		}
 	}

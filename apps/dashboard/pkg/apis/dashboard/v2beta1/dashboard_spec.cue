@@ -121,6 +121,10 @@ DashboardLink: {
 // - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
 DashboardLinkPlacement: "inControlsMenu"
 
+// Annotation Query placement. Defines where the annotation query should be displayed.
+// - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+AnnotationQueryPlacement: "inControlsMenu"
+
 // A topic is attached to DataFrame metadata in query results.
 // This specifies where the data should be used.
 DataTopic: "series" | "annotations" | "alertStates" @cog(kind="enum",memberNames="Series|Annotations|AlertStates")
@@ -440,6 +444,8 @@ AnnotationQuerySpec: {
 	name:        string
 	builtIn?:    bool | *false
 	filter?:     AnnotationPanelFilter
+	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+	placement?:  AnnotationQueryPlacement
 	legacyOptions?:     [string]: _ // Catch-all field for datasource-specific properties. Should not be available in as code tooling.
 }
 
@@ -456,6 +462,7 @@ QueryOptionsSpec: {
 	interval?:         string
 	cacheTimeout?:     string
 	hideTimeOverride?: bool
+	timeCompare?:      string
 }
 
 DataQueryKind: {

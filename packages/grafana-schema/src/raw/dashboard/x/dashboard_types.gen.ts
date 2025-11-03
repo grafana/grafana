@@ -107,6 +107,10 @@ export interface AnnotationQuery {
    */
   name: string;
   /**
+   * Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+   */
+  placement?: AnnotationQueryPlacement;
+  /**
    * TODO.. this should just be a normal query target
    */
   target?: AnnotationTarget;
@@ -362,6 +366,12 @@ export type DashboardLinkType = ('link' | 'dashboards');
  * - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
  */
 export type DashboardLinkPlacement = 'inControlsMenu';
+
+/**
+ * Annotation Query placement. Defines where the annotation query should be displayed.
+ * - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+ */
+export type AnnotationQueryPlacement = 'inControlsMenu';
 
 /**
  * Dashboard action type
@@ -885,6 +895,11 @@ export interface Panel {
    * Depends on the panel plugin. See the plugin documentation for details.
    */
   targets?: Array<Record<string, unknown>>;
+  /**
+   * Compare the current time range with a previous period
+   * For example "1d" to compare current period but shifted back 1 day
+   */
+  timeCompare?: string;
   /**
    * Overrides the relative time range for individual panels,
    * which causes them to be different than what is selected in

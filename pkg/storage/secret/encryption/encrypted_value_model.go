@@ -6,6 +6,7 @@ type EncryptedValue struct {
 	Namespace     string
 	Name          string
 	Version       int64
+	DataKeyID     string
 	EncryptedData []byte
 	Created       int64
 	Updated       int64
