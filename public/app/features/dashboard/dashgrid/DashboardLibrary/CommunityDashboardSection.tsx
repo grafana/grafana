@@ -167,6 +167,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   return (
     <Stack direction="column" gap={2}>
       <FilterInput
+        className={styles.searchInput}
         placeholder={
           datasourceType
             ? t(
@@ -313,6 +314,10 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(2),
       alignItems: 'center',
       zIndex: 2,
+    }),
+    searchInput: css({
+      paddingLeft: theme.spacing(2),
+      paddingRight: theme.spacing(2),
     }),
   };
 }
