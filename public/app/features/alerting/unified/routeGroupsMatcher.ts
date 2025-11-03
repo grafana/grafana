@@ -52,7 +52,7 @@ export const routeGroupsMatcher = {
           .map((matchDetails) => ({
             route,
             routeTree: {
-              metadata: { name: 'user-defined' },
+              metadata: { name: routeTree.name },
               expandedSpec: expandedTree,
             },
             matchDetails,

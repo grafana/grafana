@@ -298,10 +298,10 @@ const useAlertGroupsModal = (
   return [modalElement, handleShow, handleDismiss];
 };
 
-const UpdatingModal: FC<Pick<ModalProps, 'isOpen'>> = ({ isOpen }) => (
+export const UpdatingModal: FC<Pick<ModalProps, 'isOpen' | 'onDismiss'>> = ({ isOpen, onDismiss = () => {}} ) => (
   <Modal
     isOpen={isOpen}
-    onDismiss={() => {}}
+    onDismiss={onDismiss}
     closeOnBackdropClick={false}
     closeOnEscape={false}
     ariaLabel={t('alerting.policies.update.updating', 'Updating...')}
