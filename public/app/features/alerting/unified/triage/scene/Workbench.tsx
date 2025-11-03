@@ -34,7 +34,20 @@ export function WorkbenchRenderer() {
   const { data } = runner.useState();
   const rows = data ? convertToWorkbenchRows(data, groupByKeys) : [];
 
-  return <Workbench data={rows} domain={domain} queryRunner={runner} groupBy={groupByKeys} />;
+  // Check if filters or non-default time range are applied
+  const hasFiltersApplied = queryFilter.length > 0;
+  const hasCustomTimeRange = timeRange.raw.from !== 'now-4h' || timeRange.raw.to !== 'now';
+  const hasActiveFilters = hasFiltersApplied || hasCustomTimeRange;
+
+  return (
+    <Workbench
+      data={rows}
+      domain={domain}
+      queryRunner={runner}
+      groupBy={groupByKeys}
+      hasActiveFilters={hasActiveFilters}
+    />
+  );
 }
 
 type DataPoint = Record<ArrayValues<typeof DEFAULT_FIELDS>, string> & Record<string, string | undefined>;

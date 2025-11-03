@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { SceneQueryRunner } from '@grafana/scenes';
-import { ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
+import { EmptyState, ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';
@@ -26,6 +27,7 @@ type WorkbenchProps = {
   groupBy?: string[];
   filterBy?: Filter[];
   queryRunner: SceneQueryRunner;
+  hasActiveFilters?: boolean;
 };
 
 const initialSize = 1 / 3;
@@ -116,7 +118,7 @@ function renderWorkbenchRow(
  │                         │ │                                   │
  └─────────────────────────┘ └───────────────────────────────────┘
  */
-export function Workbench({ domain, data, queryRunner, groupBy }: WorkbenchProps) {
+export function Workbench({ domain, data, queryRunner, groupBy, hasActiveFilters = false }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
 
   const isLoading = !queryRunner.isDataReadyToDisplay();
@@ -149,17 +151,21 @@ export function Workbench({ domain, data, queryRunner, groupBy }: WorkbenchProps
         <div {...splitter.primaryProps}>
           <div ref={leftColumnRef} className={cx(styles.flexFull, styles.minColumnWidth)} />
         </div>
-        <div {...splitter.splitterProps} />
+        {/* Hide splitter when there's no data */}
+        <div {...splitter.splitterProps} style={{ display: !isLoading && data.length === 0 ? 'none' : undefined }} />
         <div {...splitter.secondaryProps}>
           <div ref={rightColumnRef} className={cx(styles.flexFull, styles.minColumnWidth)} />
         </div>
       </div>
       {/* content goes here */}
       <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
-        <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
-          <SummaryStatsReact />
-          <SummaryChartReact />
-        </div>
+        {/* Only show summary stats and chart when we have data or are loading */}
+        {(isLoading || data.length > 0) && (
+          <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
+            <SummaryStatsReact />
+            <SummaryChartReact />
+          </div>
+        )}
         {/* Render actual data */}
         <div className={styles.virtualizedContainer}>
           <WorkbenchProvider
@@ -168,19 +174,43 @@ export function Workbench({ domain, data, queryRunner, groupBy }: WorkbenchProps
             domain={domain}
             queryRunner={queryRunner}
           >
-            <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators>
-              {isLoading ? (
+            <ScrollContainer
+              height="100%"
+              width="100%"
+              scrollbarWidth="none"
+              showScrollIndicators={!isLoading && data.length > 0}
+            >
+              {isLoading && (
                 <>
                   <GenericRowSkeleton key="skeleton-1" width={leftColumnWidth} depth={0} />
                   <GenericRowSkeleton key="skeleton-2" width={leftColumnWidth} depth={0} />
                   <GenericRowSkeleton key="skeleton-3" width={leftColumnWidth} depth={0} />
                 </>
-              ) : (
+              )}
+              {!isLoading && data.length === 0 && (
+                <div className={styles.emptyStateContainer}>
+                  <EmptyState
+                    variant="not-found"
+                    message={hasActiveFilters ? 'No matching instances found' : 'No firing or pending instances'}
+                  >
+                    {hasActiveFilters ? (
+                      <Trans i18nKey="alerting.triage.no-matching-instances-with-filters">
+                        No alert instances match your current set of filters for the selected time range.
+                      </Trans>
+                    ) : (
+                      <Trans i18nKey="alerting.triage.no-firing-or-pending-instances">
+                        You have no alert instances in a firing or pending state.
+                      </Trans>
+                    )}
+                  </EmptyState>
+                </div>
+              )}
+              {!isLoading &&
+                data.length > 0 &&
                 dataSlice.map((row, index) => {
                   const rowKey = generateRowKey(row, index);
                   return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey, enableFolderMeta);
-                })
-              )}
+                })}
               {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}
             </ScrollContainer>
           </WorkbenchProvider>
@@ -225,6 +255,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     minColumnWidth: css({
       minWidth: 300,
+    }),
+    emptyStateContainer: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '100%',
+      height: '100%',
+      minHeight: '400px',
+      overflow: 'hidden',
     }),
   };
 };
