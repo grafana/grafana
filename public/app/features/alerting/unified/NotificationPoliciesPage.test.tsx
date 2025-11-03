@@ -32,7 +32,7 @@ import {
 import { AccessControlAction } from 'app/types/accessControl';
 
 import NotificationPolicies from './NotificationPoliciesPage';
-import { findRoutesMatchingFilters } from './components/notification-policies/NotificationPoliciesList';
+import { findRoutesMatchingFilters } from './components/notification-policies/NotificationPoliciesTree';
 import {
   grantUserPermissions,
   mockDataSource,
