@@ -38,7 +38,7 @@ export const DashboardLibraryModal = ({
   initialMappingContext,
   defaultTab = 'datasource',
 }: DashboardLibraryModalProps) => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
 
   const [activeView, setActiveView] = useState<ModalView>(initialMappingContext ? 'mapping' : defaultTab);
@@ -69,6 +69,16 @@ export const DashboardLibraryModal = ({
       setMappingContext(null);
     }
   }, [initialMappingContext, isOpen, defaultTab]);
+
+  const onTabChange = (tab: 'datasource' | 'community') => {
+    setActiveView(tab);
+    // Update URL to reflect current tab
+    setSearchParams((params) => {
+      const newParams = new URLSearchParams(params);
+      newParams.set('dashboardLibraryTab', tab);
+      return newParams;
+    });
+  };
 
   const handleShowMapping = (context: MappingContext) => {
     setMappingContext(context);
@@ -112,13 +122,13 @@ export const DashboardLibraryModal = ({
               label={t('dashboard.library-modal.tab-datasource', 'Data-source provided')}
               icon="apps"
               active={activeView === 'datasource'}
-              onChangeTab={() => setActiveView('datasource')}
+              onChangeTab={() => onTabChange('datasource')}
             />
             <Tab
               label={t('dashboard.library-modal.tab-community', 'Community')}
               icon="users-alt"
               active={activeView === 'community'}
-              onChangeTab={() => setActiveView('community')}
+              onChangeTab={() => onTabChange('community')}
             />
           </TabsBar>
         </div>

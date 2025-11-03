@@ -342,7 +342,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      marginBottom: theme.spacing(3),
+      marginBottom: theme.spacing(1),
       gap: theme.spacing(2),
     }),
     headerText: css({
