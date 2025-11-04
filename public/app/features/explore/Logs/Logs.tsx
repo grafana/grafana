@@ -215,6 +215,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [visualisationType, setVisualisationType] = useState<LogsVisualisationType>(
     panelState?.logs?.visualisationType ?? getDefaultVisualisationType()
   );
+  const previousVisualisationType = usePrevious(visualisationType);
   const logsContainerRef = useRef<HTMLDivElement | null>(null);
   const dispatch = useDispatch();
   const previousLoading = usePrevious(loading);
@@ -351,29 +352,41 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   useEffect(() => {
     const panelDisplayedFields = panelState?.logs?.displayedFields ?? [];
 
+    // In table mode always sync with panelState
+    if (visualisationType === 'table') {
+      setDisplayedFields(panelDisplayedFields);
+      return;
+    }
+
+    // Only sync when transitioning from 'table' to 'logs'
+    if (previousVisualisationType !== 'table' || visualisationType !== 'logs') {
+      return;
+    }
+
     if (!shallowCompare(displayedFields, panelDisplayedFields)) {
       // Special case: In logs mode, if local displayedFields is empty and panel has fields,
-      if (visualisationType === 'logs' && displayedFields.length === 0 && panelDisplayedFields.length > 0) {
+      if (displayedFields.length === 0 && panelDisplayedFields.length > 0) {
         // Don't update, we're in the process of clearing via clearDisplayedFields
         return;
       }
+      // Transitioning from table to logs mode with fields: merge and write to panelState
+      const mergedFields = Array.from(new Set([...panelDisplayedFields, ...displayedFields]));
+      // Update local state first to prevent loop
+      setDisplayedFields(mergedFields);
 
-      if (visualisationType === 'logs' && displayedFields.length > 0) {
-        // In logs mode with fields: merge and write to panelState
-        const mergedFields = Array.from(new Set([...panelDisplayedFields, ...displayedFields]));
-        // Update local state first to prevent loop
-        setDisplayedFields(mergedFields);
-
-        updatePanelState({
-          ...panelState?.logs,
-          displayedFields: mergedFields,
-        });
-      } else {
-        // In table mode always sync with panelState
-        setDisplayedFields(panelDisplayedFields);
-      }
+      updatePanelState({
+        ...panelState?.logs,
+        displayedFields: mergedFields,
+      });
     }
-  }, [displayedFields, panelState?.logs?.displayedFields, visualisationType, panelState?.logs, updatePanelState]);
+  }, [
+    displayedFields,
+    panelState?.logs?.displayedFields,
+    visualisationType,
+    previousVisualisationType,
+    updatePanelState,
+    panelState?.logs,
+  ]);
 
   // actions
   const onLogRowHover = useCallback(
