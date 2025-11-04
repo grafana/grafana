@@ -110,5 +110,4 @@ func (s *Server) getUserOrgRoleUpdateTuples(ctx context.Context, store *storeInf
 	}
 
 	return writeTuple, existingBasicRoleTuples, nil
-
 }
