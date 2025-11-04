@@ -176,7 +176,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
       groups: ['Performance'],
     },
   },
-  // Navigation without groups
+  // Navigations without groups
   {
     metadata: { name: 'prod-logs' },
     spec: {
@@ -185,6 +185,36 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
     },
     status: {
       title: 'Production Logs',
+    },
+  },
+  {
+    metadata: { name: 'cloud-status' },
+    spec: {
+      url: '/d/cloud-status',
+      scope: 'cloud',
+    },
+    status: {
+      title: 'Cloud Status',
+    },
+  },
+  {
+    metadata: { name: 'dev-health' },
+    spec: {
+      url: '/d/dev-health',
+      scope: 'dev',
+    },
+    status: {
+      title: 'Development Health',
+    },
+  },
+  {
+    metadata: { name: 'ops-overview' },
+    spec: {
+      url: '/d/ops-overview',
+      scope: 'ops',
+    },
+    status: {
+      title: 'Operations Overview',
     },
   },
   // Navigation with subScope but no groups
