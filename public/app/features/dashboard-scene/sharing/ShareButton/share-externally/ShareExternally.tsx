@@ -55,11 +55,7 @@ function ShareExternallyRenderer({ model }: SceneComponentProps<ShareExternally>
   const styles = useStyles2(getStyles);
   const dashboard = getDashboardSceneFor(model);
 
-  // only fetch if dashboard is actually public
-  const hasPublicDashboard = dashboard.state.meta.publicDashboardEnabled;
-  const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(dashboard.state.uid!, {
-    skip: !hasPublicDashboard,
-  });
+  const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(dashboard.state.uid!);
   const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
 
   const onRevokeClick = () => {

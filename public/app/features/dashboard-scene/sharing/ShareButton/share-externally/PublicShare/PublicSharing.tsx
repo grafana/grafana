@@ -7,7 +7,6 @@ import CreatePublicSharing from './CreatePublicSharing';
 
 export function PublicSharing() {
   const { dashboard } = useShareDrawerContext();
-
   const { data: publicDashboard, isError } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
     dashboard.state.uid!
   );
