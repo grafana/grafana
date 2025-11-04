@@ -278,7 +278,7 @@
     "@glideapps/glide-data-grid": "^6.0.0",
     "@grafana/alerting": "workspace:*",
     "@grafana/api-clients": "workspace:*",
-    "@grafana/assistant": "0.1.0",
+    "@grafana/assistant": "0.1.1",
     "@grafana/aws-sdk": "0.7.1",
     "@grafana/azure-sdk": "0.0.8",
     "@grafana/data": "workspace:*",

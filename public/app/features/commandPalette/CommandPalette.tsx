@@ -190,8 +190,7 @@ const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: 
           origin="grafana/command-palette-empty-state"
           prompt={`Help me to find ${searchQuery}`}
           title={t('command-palette.empty-state.button-title', 'Try searching with AI Assistant')}
-          // We need to update OpenAssistantButton to accept onClick prop
-          // onClick={query.toggle}
+          onClick={query.toggle}
         />
       )}
     </EmptyState>
