@@ -18,6 +18,7 @@ import {
   getJsonInputFiles,
   constructLatestVersionOutputFilename,
 } from './__tests__/migrationTestUtils';
+import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
 
 /*
  * Backend / Frontend Migration Comparison Test Design Explanation:
@@ -86,6 +87,23 @@ describe('Backend / Frontend result comparison', () => {
 
       // TODO: three tests will fail because the backend output will set up autoMigration fields for nested panels too
       // however on the frontend this doesn't happen at PanelModel level, but in transformSaveModelToScene.
+
+      // since we are initializing panels inside collapsed rows with PanelModel in transformSceneToSaveModel (see createRowItemFromLegacyRow)
+      // and not in DashboardModel, this means that these panels will have automigratedFrom and panel type changed to the new panel type
+      // backend matches this behaviour by setting up autoMigrateFrom and type for nested panels too
+      // @ts-expect-error - we are using the type from the frontend migration result
+      for (const panel of frontendMigrationResult.panels) {
+        if (panel.type === 'row' && 'panels' in panel) {
+          for (const nestedPanel of panel.panels) {
+            const panelPluginToMigrateTo = getPanelPluginToMigrateTo(nestedPanel);
+            if (panelPluginToMigrateTo) {
+              // @ts-expect-error - we are using the type from the frontend migration result
+              nestedPanel.autoMigrateFrom = nestedPanel.type;
+              nestedPanel.type = panelPluginToMigrateTo;
+            }
+          }
+        }
+      }
 
       expect(backendMigrationResult).toEqual(frontendMigrationResult);
     });
