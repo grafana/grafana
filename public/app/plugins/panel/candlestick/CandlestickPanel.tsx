@@ -253,7 +253,6 @@ export const CandlestickPanel = ({
 
   return (
     <TimeSeries
-      annotations={options.annotations}
       frames={[info.frame]}
       structureRev={data.structureRev}
       timeRange={timeRange}
@@ -268,7 +267,7 @@ export const CandlestickPanel = ({
       replaceVariables={replaceVariables}
       dataLinkPostProcessor={dataLinkPostProcessor}
       cursorSync={cursorSync}
-      annotationLanes={getAnnotationFrames(data.annotations).length}
+      annotationLanes={options.annotations?.multiLane ? getAnnotationFrames(data.annotations).length : undefined}
     >
       {(uplotConfig, alignedFrame) => {
         return (

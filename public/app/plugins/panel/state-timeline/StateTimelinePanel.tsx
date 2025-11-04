@@ -94,7 +94,7 @@ export const StateTimelinePanel = ({
         replaceVariables={replaceVariables}
         dataLinkPostProcessor={dataLinkPostProcessor}
         cursorSync={cursorSync}
-        annotationLanes={getAnnotationFrames(data.annotations).length}
+        annotationLanes={options.annotations?.multiLane ? getAnnotationFrames(data.annotations).length : undefined}
       >
         {(builder, alignedFrame) => {
           return (

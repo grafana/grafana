@@ -720,18 +720,15 @@ function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<str
   return originNames;
 }
 
-export function calculateAnnotationLaneSizes(
-  annotationLanes = 0,
-  annotationConfig?: common.VizAnnotations
-): Pick<AxisProps, 'size' | 'gap' | 'ticks'> {
-  if (annotationConfig?.multiLane && annotationLanes > 1) {
-    const annotationLanesSize = annotationLanes * ANNOTATION_LANE_SIZE;
+export function getXAxisConfig(lanes = 1): Pick<AxisProps, 'size' | 'gap' | 'ticks'> | undefined {
+  if (lanes > 1) {
+    const annotationLanesSize = lanes * ANNOTATION_LANE_SIZE;
     // Add an extra lane's worth of height below the annotation lanes in order to show the gridlines through the annotation lanes
-    const axisSize = annotationLanes > 0 ? annotationLanesSize + UPLOT_DEFAULT_AXIS_GAP : 0;
+    const axisSize = annotationLanesSize + UPLOT_DEFAULT_AXIS_GAP;
     // Consistent gap between gridlines and x-axis labels
     const gap = UPLOT_DEFAULT_AXIS_GAP;
     // Axis size is: default size + gap size + annotationLaneSize
-    const size = annotationLanes > 0 ? UPLOT_DEFAULT_AXIS_SIZE + gap + annotationLanesSize : UPLOT_DEFAULT_AXIS_SIZE;
+    const size = UPLOT_DEFAULT_AXIS_SIZE + gap + annotationLanesSize;
 
     return {
       size,
@@ -742,5 +739,5 @@ export function calculateAnnotationLaneSizes(
     };
   }
 
-  return {};
+  return undefined;
 }

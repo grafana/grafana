@@ -105,12 +105,11 @@ export const StatusHistoryPanel = ({
         height={height - paginationHeight}
         legendItems={legendItems}
         {...options}
-        annotations={options.annotations}
         mode={TimelineMode.Samples}
         replaceVariables={replaceVariables}
         dataLinkPostProcessor={dataLinkPostProcessor}
         cursorSync={cursorSync}
-        annotationLanes={getAnnotationFrames(data.annotations).length}
+        annotationLanes={options.annotations?.multiLane ? getAnnotationFrames(data.annotations).length : undefined}
       >
         {(builder, alignedFrame) => {
           return (
@@ -168,7 +167,7 @@ export const StatusHistoryPanel = ({
               {alignedFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
                 <AnnotationsPlugin2
                   replaceVariables={replaceVariables}
-                  annotationsConfig={options.annotations}
+                  multiLane={options.annotations?.multiLane}
                   annotations={data.annotations ?? []}
                   config={builder}
                   timeZone={timeZone}

@@ -19,7 +19,7 @@ import { FacetedData, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal'
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { calculateAnnotationLaneSizes } from '../../../core/components/TimeSeries/utils';
+import { getXAxisConfig } from '../../../core/components/TimeSeries/utils';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getAnnotationFrames } from '../timeseries/plugins/utils';
@@ -151,7 +151,7 @@ const HeatmapPanelViz = ({
       yAxisConfig: options.yAxis,
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
       selectionMode: options.selectionMode,
-      xAxisConfig: calculateAnnotationLaneSizes(annotationsLength, options.annotations),
+      xAxisConfig: getXAxisConfig(annotationsLength),
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps

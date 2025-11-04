@@ -121,7 +121,6 @@ export const TimeSeriesPanel = ({
 
   return (
     <TimeSeries
-      annotations={options.annotations}
       frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
@@ -133,7 +132,7 @@ export const TimeSeriesPanel = ({
       replaceVariables={replaceVariables}
       dataLinkPostProcessor={dataLinkPostProcessor}
       cursorSync={cursorSync}
-      annotationLanes={getAnnotationFrames(data.annotations).length}
+      annotationLanes={options.annotations?.multiLane ? getAnnotationFrames(data.annotations).length : undefined}
     >
       {(uplotConfig, alignedFrame) => {
         return (

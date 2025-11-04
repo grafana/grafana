@@ -5,7 +5,7 @@ import { TimelineValueAlignment, TooltipDisplayMode, VisibilityMode, VizTooltipO
 import { UPlotConfigBuilder, VizLayout, VizLegend, VizLegendItem } from '@grafana/ui';
 
 import { GraphNG, GraphNGProps } from '../GraphNG/GraphNG';
-import { calculateAnnotationLaneSizes } from '../TimeSeries/utils';
+import { getXAxisConfig } from '../TimeSeries/utils';
 
 import { preparePlotConfigBuilder, TimelineMode } from './utils';
 
@@ -24,7 +24,7 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   paginationRev?: string;
 }
 
-const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'tooltip', 'paginationRev'];
+const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'tooltip', 'paginationRev', 'annotationLanes'];
 
 export const TimelineChart = (props: TimelineProps) => {
   const { frames, timeZone, rowHeight, tooltip, legend, legendItems } = props;
@@ -61,7 +61,7 @@ export const TimelineChart = (props: TimelineProps) => {
         getValueColor: getValueColor,
 
         hoverMulti: tooltip?.mode === TooltipDisplayMode.Multi,
-        xAxisConfig: calculateAnnotationLaneSizes(props.annotationLanes, props?.annotations),
+        xAxisConfig: getXAxisConfig(props.annotationLanes),
       });
     },
     [frames, props, timeZone, rowHeight, getValueColor, tooltip]

@@ -27,7 +27,6 @@ import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
 export type PropDiffFn<T extends Record<string, unknown> = {}> = (prev: T, next: T) => boolean;
 
 export interface GraphNGProps extends Themeable2 {
-  annotations?: VizAnnotations;
   frames: DataFrame[];
   structureRev?: number; // a number that will change when the frames[] structure changes
   width: number;
@@ -229,12 +228,13 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
+        console.log(this.props.annotationLanes, prevProps.annotationLanes);
+
         const shouldReconfig =
           this.state.config === undefined ||
           timeZone !== prevProps.timeZone ||
           cursorSync !== prevProps.cursorSync ||
           structureRev !== prevProps.structureRev ||
-          (this.props.annotations?.multiLane && this.props.annotationLanes !== prevProps.annotationLanes) ||
           !structureRev ||
           propsChanged;
 
