@@ -23,7 +23,6 @@ export const LogTimelineViewer = memo(({ frames, timeRange }: LogTimelineViewerP
     <AutoSizer disableHeight>
       {({ width }) => (
         <TimelineChart
-          annotations={undefined}
           frames={frames}
           timeRange={timeRange}
           timeZone={'browser'}
