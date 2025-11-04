@@ -6,7 +6,7 @@ import { useMeasure } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { SceneQueryRunner } from '@grafana/scenes';
-import { EmptyState, ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
+import { Box, EmptyState, ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';
@@ -163,7 +163,7 @@ export function Workbench({ domain, data, queryRunner, groupBy, hasActiveFilters
       {/* content goes here */}
       <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
         {showEmptyState ? (
-          <div className={styles.emptyStateContainer}>
+          <Box display="flex" alignItems="center" justifyContent="center" width="100%" height="100%" minHeight="400px">
             <EmptyState
               variant="not-found"
               message={hasActiveFilters ? 'No matching instances found' : 'No firing or pending instances'}
@@ -178,7 +178,7 @@ export function Workbench({ domain, data, queryRunner, groupBy, hasActiveFilters
                 </Trans>
               )}
             </EmptyState>
-          </div>
+          </Box>
         ) : (
           <>
             <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
@@ -251,15 +251,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     minColumnWidth: css({
       minWidth: 300,
-    }),
-    emptyStateContainer: css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: '100%',
-      height: '100%',
-      minHeight: '400px',
-      overflow: 'hidden',
     }),
   };
 };
