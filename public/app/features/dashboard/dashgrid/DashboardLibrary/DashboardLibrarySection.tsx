@@ -97,7 +97,7 @@ export const DashboardLibrarySection = () => {
   };
 
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={2} justifyContent="space-between" height="100%">
       {showEmptyState ? (
         <EmptyState
           variant="call-to-action"
@@ -167,9 +167,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'sticky',
       bottom: 0,
       backgroundColor: theme.colors.background.primary,
-      paddingTop: theme.spacing(2),
-      paddingBottom: theme.spacing(1),
-      marginTop: theme.spacing(2),
+      padding: theme.spacing(2),
       alignItems: 'center',
       zIndex: 2,
     }),

@@ -164,7 +164,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   };
 
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={2} justifyContent="space-between" height="100%">
       <FilterInput
         className={styles.searchInput}
         placeholder={
