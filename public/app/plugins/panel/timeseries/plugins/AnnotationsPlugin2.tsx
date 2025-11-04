@@ -33,7 +33,7 @@ interface AnnotationsPluginProps {
   setNewRange: (newRage: TimeRange2 | null) => void;
   canvasRegionRendering?: boolean;
   replaceVariables: InterpolateFunction;
-  annotationsConfig?: VizAnnotations;
+  multiLane?: boolean;
 }
 
 // TODO: batch by color, use Path2D objects
@@ -67,7 +67,6 @@ function getVals(frame: DataFrame) {
 }
 
 export const AnnotationsPlugin2 = ({
-  annotationsConfig,
   annotations,
   timeZone,
   config,
@@ -75,6 +74,7 @@ export const AnnotationsPlugin2 = ({
   setNewRange,
   replaceVariables,
   canvasRegionRendering = true,
+  multiLane = false,
 }: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
 
@@ -180,7 +180,7 @@ export const AnnotationsPlugin2 = ({
             ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
           }
         } else {
-          if (!annotationsConfig?.multiLane) {
+          if (!multiLane) {
             let y0 = u.bbox.top;
             let y1 = y0 + u.bbox.height;
 
@@ -188,7 +188,7 @@ export const AnnotationsPlugin2 = ({
             ctx.setLineDash([5, 5]);
 
             for (let i = 0; i < vals.time.length; i++) {
-              let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
+              let color = getColorByName(vals.color?.[i] ?? DEFAULT_ANNOTATION_COLOR_HEX8);
 
               let x0 = u.valToPos(vals.time[i], 'x', true);
               renderLine(ctx, y0, y1, x0, color);
@@ -211,7 +211,7 @@ export const AnnotationsPlugin2 = ({
 
       ctx.restore();
     });
-  }, [config, canvasRegionRendering, getColorByName, annotationsConfig]);
+  }, [config, canvasRegionRendering, getColorByName, multiLane]);
 
   // ensure annos are re-drawn whenever they change
   useEffect(() => {
@@ -234,7 +234,8 @@ export const AnnotationsPlugin2 = ({
       let markers: React.ReactNode[] = [];
 
       // Top offset for multi-lane annotations
-      const top = annotationsConfig?.multiLane ? frameIdx * ANNOTATION_LANE_SIZE : undefined;
+      const top = multiLane ? frameIdx * ANNOTATION_LANE_SIZE : undefined;
+
       for (let i = 0; i < vals.time.length; i++) {
         let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
         let left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
