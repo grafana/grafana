@@ -11,7 +11,7 @@ import {
   LogsSortOrder,
   store,
 } from '@grafana/data';
-import { GrafanaTheme2 } from '@grafana/data/';
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, Menu, useStyles2 } from '@grafana/ui';
