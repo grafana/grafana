@@ -225,6 +225,17 @@ export const DashboardInteractions = {
   copyImageUrlClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('dashboard_image_url_copied', properties);
   },
+
+  // Dashboard library discard tracking
+  dashboardLibraryDiscarded: (
+    properties: DashboardLibraryTrackingInfo & {
+      timeBeforeDiscard?: number;
+      eventLocation?: string;
+      contentKind?: string;
+    }
+  ) => {
+    reportInteraction('grafana_dashboard_library_discarded', properties);
+  },
 };
 
 const reportDashboardInteraction = (

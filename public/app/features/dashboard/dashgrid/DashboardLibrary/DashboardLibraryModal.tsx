@@ -12,6 +12,7 @@ import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { CommunityDashboardMappingForm } from './CommunityDashboardMappingForm';
 import { CommunityDashboardSection } from './CommunityDashboardSection';
 import { DashboardLibrarySection } from './DashboardLibrarySection';
+import { ContentKind, EventLocation } from './interactions';
 import { InputMapping } from './utils/autoMapDatasources';
 
 interface DashboardLibraryModalProps {
@@ -30,6 +31,9 @@ export interface MappingContext {
   constantInputs: DashboardInput[];
   existingMappings: InputMapping[];
   onInterpolateAndNavigate: (mappings: InputMapping[]) => void;
+  // Tracking context for analytics
+  eventLocation: EventLocation;
+  contentKind: ContentKind;
 }
 
 export const DashboardLibraryModal = ({
@@ -149,6 +153,11 @@ export const DashboardLibraryModal = ({
             onPreview={(allMappings) => {
               mappingContext.onInterpolateAndNavigate(allMappings);
             }}
+            dashboardName={mappingContext.dashboardName}
+            libraryItemId={String(mappingContext.dashboardJson.gnetId || '')}
+            eventLocation={mappingContext.eventLocation}
+            contentKind={mappingContext.contentKind}
+            datasourceTypes={[datasourceInfo.type]}
           />
         )}
       </TabContent>

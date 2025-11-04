@@ -16,6 +16,7 @@ import { DashboardMeta } from 'app/types/dashboard';
 
 import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';
 import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardInteractions } from '../utils/interactions';
 import { getLibraryPanelBehavior, hasActualSaveChanges, isLibraryPanel } from '../utils/utils';
 
 interface DashboardPromptProps {
@@ -99,6 +100,24 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
       },
 
       onDiscard: () => {
+        // Track dashboard library discard if this is a library dashboard
+        if (originalPath === DASHBOARD_LIBRARY_ROUTES.Template) {
+          const urlParams = new URLSearchParams(window.location.search);
+          const libraryItemId = urlParams.get('libraryItemId');
+          const eventLocation = urlParams.get('eventLocation');
+          const contentKind = urlParams.get('contentKind');
+          const creationOrigin = urlParams.get('creationOrigin');
+
+          if (libraryItemId && eventLocation && contentKind) {
+            DashboardInteractions.dashboardLibraryDiscarded({
+              libraryItemId,
+              eventLocation,
+              contentKind,
+              creationOrigin: creationOrigin || undefined,
+            });
+          }
+        }
+
         dashboard.exitEditMode({ skipConfirm: true });
         hideModal();
         if (originalPath === DASHBOARD_LIBRARY_ROUTES.Template) {

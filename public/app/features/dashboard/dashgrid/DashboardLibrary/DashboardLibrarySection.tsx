@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
@@ -13,7 +13,7 @@ import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { DashboardCard } from './DashboardCard';
 import { fetchProvisionedDashboards } from './api/dashboardLibraryApi';
-import { DashboardLibraryInteractions } from './interactions';
+import { CONTENT_KINDS, DashboardLibraryInteractions, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './interactions';
 import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
 
 // Constants for datasource-provided dashboards pagination
@@ -24,6 +24,7 @@ export const DashboardLibrarySection = () => {
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
 
   const [currentPage, setCurrentPage] = useState(1);
+  const hasTrackedLoaded = useRef(false);
 
   // Get datasource info for empty state
   const datasourceType = useMemo(() => {
@@ -46,14 +47,16 @@ export const DashboardLibrarySection = () => {
 
     const dashboards = await fetchProvisionedDashboards(ds.type);
 
-    if (dashboards.length > 0) {
+    // Track analytics on first load only (once per component lifetime)
+    if (!hasTrackedLoaded.current && dashboards.length > 0) {
       DashboardLibraryInteractions.loaded({
         numberOfItems: dashboards.length,
-        contentKinds: ['datasource_dashboard'],
+        contentKinds: [CONTENT_KINDS.DATASOURCE_DASHBOARD],
         datasourceTypes: [ds.type],
-        sourceEntryPoint: 'datasource_page',
-        eventLocation: 'suggested_dashboards_modal_provisioned_tab',
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+        eventLocation: EVENT_LOCATIONS.MODAL_PROVISIONED_TAB,
       });
+      hasTrackedLoaded.current = true;
     }
 
     return dashboards;
@@ -73,12 +76,14 @@ export const DashboardLibrarySection = () => {
 
   const onUseProvisionedDashboard = async (dashboard: PluginDashboard) => {
     DashboardLibraryInteractions.itemClicked({
-      contentKind: 'datasource_dashboard',
+      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
       datasourceTypes: [dashboard.pluginId],
       libraryItemId: dashboard.uid,
       libraryItemTitle: dashboard.title,
-      sourceEntryPoint: 'datasource_page',
-      eventLocation: 'suggested_dashboards_modal_provisioned_tab',
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+      eventLocation: EVENT_LOCATIONS.MODAL_PROVISIONED_TAB,
+      clickedAt: Date.now(),
+      discoveryMethod: 'browse',
     });
 
     const params = new URLSearchParams({
@@ -87,9 +92,11 @@ export const DashboardLibrarySection = () => {
       pluginId: dashboard.pluginId,
       path: dashboard.path,
       // tracking event purpose values
-      sourceEntryPoint: 'datasource_page',
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       libraryItemId: dashboard.uid,
       creationOrigin: 'dashboard_library_datasource_dashboard',
+      eventLocation: EVENT_LOCATIONS.MODAL_PROVISIONED_TAB,
+      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
     });
 
     const templateUrl = `${DASHBOARD_LIBRARY_ROUTES.Template}?${params.toString()}`;

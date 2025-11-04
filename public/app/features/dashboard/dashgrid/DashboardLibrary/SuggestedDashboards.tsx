@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -16,7 +16,7 @@ import {
   fetchCommunityDashboards,
   fetchProvisionedDashboards,
 } from './api/dashboardLibraryApi';
-import { DashboardLibraryInteractions } from './interactions';
+import { CONTENT_KINDS, DashboardLibraryInteractions, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './interactions';
 import { GnetDashboard } from './types';
 import { tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './utils/autoMapDatasources';
 import {
@@ -51,6 +51,7 @@ const INCLUDE_LOGO = true;
 
 export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping }: Props) => {
   const styles = useStyles2(getStyles);
+  const hasTrackedLoaded = useRef(false);
 
   // Get datasource type for dynamic title
   const datasourceType = useMemo(() => {
@@ -119,19 +120,24 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
         }
       }
 
-      // Track analytics
-      if (mixed.length > 0) {
-        const contentKinds: Array<'datasource_dashboard' | 'community_dashboard'> = [
-          ...new Set(mixed.map((m) => (m.type === 'provisioned' ? 'datasource_dashboard' : 'community_dashboard'))),
+      // Track analytics on first load only (once per component lifetime)
+      if (!hasTrackedLoaded.current && mixed.length > 0) {
+        const contentKinds = [
+          ...new Set(
+            mixed.map((m) =>
+              m.type === 'provisioned' ? CONTENT_KINDS.DATASOURCE_DASHBOARD : CONTENT_KINDS.COMMUNITY_DASHBOARD
+            )
+          ),
         ];
 
         DashboardLibraryInteractions.loaded({
           numberOfItems: mixed.length,
           contentKinds,
           datasourceTypes: [ds.type],
-          sourceEntryPoint: 'datasource_page',
-          eventLocation: 'empty_dashboard',
+          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+          eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
         });
+        hasTrackedLoaded.current = true;
       }
 
       // Determine if there are more dashboards available beyond what we're showing
@@ -168,12 +174,14 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
     }
 
     DashboardLibraryInteractions.itemClicked({
-      contentKind: 'datasource_dashboard',
+      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
       datasourceTypes: [ds.type],
       libraryItemId: dashboard.uid,
       libraryItemTitle: dashboard.title,
-      sourceEntryPoint: 'datasource_page',
-      eventLocation: 'empty_dashboard',
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+      eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+      clickedAt: Date.now(),
+      discoveryMethod: 'browse',
     });
 
     // Navigate to template route (existing flow)
@@ -182,9 +190,11 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
       title: dashboard.title || 'Template',
       pluginId: dashboard.pluginId,
       path: dashboard.path,
-      sourceEntryPoint: 'datasource_page',
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       libraryItemId: dashboard.uid,
       creationOrigin: 'dashboard_library_datasource_dashboard',
+      eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
     });
 
     locationService.push(`/dashboard/template?${params.toString()}`);
@@ -201,12 +211,14 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
     }
 
     DashboardLibraryInteractions.itemClicked({
-      contentKind: 'community_dashboard',
+      contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
       datasourceTypes: [ds.type],
       libraryItemId: String(dashboard.id),
       libraryItemTitle: dashboard.name,
-      sourceEntryPoint: 'datasource_page',
-      eventLocation: 'empty_dashboard',
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+      eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+      clickedAt: Date.now(),
+      discoveryMethod: 'browse',
     });
 
     try {
@@ -229,7 +241,14 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
 
       if (!needsMapping) {
         // No mapping needed - all datasources auto-mapped, no constants
-        navigateToTemplate(dashboard.name, dashboard.id, datasourceUid || '', mappingResult.mappings);
+        navigateToTemplate(
+          dashboard.name,
+          dashboard.id,
+          datasourceUid || '',
+          mappingResult.mappings,
+          EVENT_LOCATIONS.EMPTY_DASHBOARD,
+          CONTENT_KINDS.COMMUNITY_DASHBOARD
+        );
       } else {
         // Show mapping form for unmapped datasources and/or constants
         onShowMapping({
@@ -238,8 +257,17 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
           unmappedInputs: mappingResult.unmappedInputs,
           constantInputs,
           existingMappings: mappingResult.mappings,
+          eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+          contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
           onInterpolateAndNavigate: (mappings) =>
-            navigateToTemplate(dashboard.name, dashboard.id, datasourceUid || '', mappings),
+            navigateToTemplate(
+              dashboard.name,
+              dashboard.id,
+              datasourceUid || '',
+              mappings,
+              EVENT_LOCATIONS.EMPTY_DASHBOARD,
+              CONTENT_KINDS.COMMUNITY_DASHBOARD
+            ),
         });
       }
     } catch (err) {

@@ -82,7 +82,9 @@ export function navigateToTemplate(
   dashboardTitle: string,
   gnetId: number,
   datasourceUid: string,
-  mappings: InputMapping[]
+  mappings: InputMapping[],
+  eventLocation: string,
+  contentKind: string
 ): void {
   const searchParams = new URLSearchParams({
     datasource: datasourceUid,
@@ -90,6 +92,8 @@ export function navigateToTemplate(
     gnetId: String(gnetId),
     sourceEntryPoint: 'datasource_page',
     creationOrigin: 'dashboard_library_community_dashboard',
+    contentKind,
+    eventLocation,
     mappings: JSON.stringify(mappings),
   });
 

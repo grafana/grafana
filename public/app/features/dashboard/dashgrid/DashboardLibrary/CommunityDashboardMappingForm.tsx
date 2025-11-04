@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -7,6 +8,7 @@ import { Stack, Text, Button, Alert, Field, Input, Box } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { DashboardInput, DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 
+import { ContentKind, DashboardLibraryInteractions, EventLocation, SOURCE_ENTRY_POINTS } from './interactions';
 import { InputMapping, mapConstantInputs } from './utils/autoMapDatasources';
 
 interface Props {
@@ -15,6 +17,11 @@ interface Props {
   existingMappings: InputMapping[];
   onBack: () => void;
   onPreview: (allMappings: InputMapping[]) => void;
+  dashboardName: string;
+  libraryItemId: string;
+  eventLocation: EventLocation;
+  contentKind: ContentKind;
+  datasourceTypes: string[];
 }
 
 interface UserSelectedDatasourceMappings {
@@ -29,7 +36,27 @@ export const CommunityDashboardMappingForm = ({
   existingMappings,
   onBack,
   onPreview,
+  dashboardName,
+  libraryItemId,
+  eventLocation,
+  contentKind,
+  datasourceTypes,
 }: Props) => {
+  // Track mapping form shown on mount
+  useEffect(() => {
+    DashboardLibraryInteractions.mappingFormShown({
+      contentKind,
+      datasourceTypes,
+      libraryItemId,
+      libraryItemTitle: dashboardName,
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+      eventLocation,
+      unmappedInputsCount: unmappedInputs.length,
+      constantInputsCount: constantInputs.length,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [userSelectedDsMappings, setUserSelectedDsMappings] = useState<Record<string, UserSelectedDatasourceMappings>>(
     () => {
       // Initialize with existing unmapped inputs
@@ -71,6 +98,18 @@ export const CommunityDashboardMappingForm = ({
   };
 
   const onPreviewClick = () => {
+    // Track mapping form completion
+    DashboardLibraryInteractions.mappingFormCompleted({
+      contentKind,
+      datasourceTypes,
+      libraryItemId,
+      libraryItemTitle: dashboardName,
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+      eventLocation,
+      userMappedCount: unmappedInputs.length,
+      autoMappedCount: existingMappings.length,
+    });
+
     // Combine all mappings:
     // 1. Existing auto-mapped datasources
     // 2. User-selected datasources

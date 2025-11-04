@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync, useDebounce } from 'react-use';
 
@@ -12,7 +12,7 @@ import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './DashboardLibraryModal';
 import { fetchCommunityDashboard, fetchCommunityDashboards } from './api/dashboardLibraryApi';
-import { DashboardLibraryInteractions } from './interactions';
+import { CONTENT_KINDS, DashboardLibraryInteractions, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './interactions';
 import { GnetDashboard } from './types';
 import { tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './utils/autoMapDatasources';
 import {
@@ -40,6 +40,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const hasTrackedLoaded = useRef(false);
 
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   useDebounce(
@@ -81,15 +82,27 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         filter: debouncedSearchQuery.trim() || undefined,
       });
 
-      // Track analytics on first load
-      if (currentPage === 1 && apiResponse.dashboards.length > 0) {
+      // Track search if query is present
+      if (debouncedSearchQuery.trim()) {
+        DashboardLibraryInteractions.searchPerformed({
+          datasourceTypes: [ds.type],
+          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+          hasResults: apiResponse.dashboards.length > 0,
+          resultCount: apiResponse.dashboards.length,
+        });
+      }
+
+      // Track analytics on first load only (once per component lifetime)
+      if (!hasTrackedLoaded.current && currentPage === 1 && apiResponse.dashboards.length > 0) {
         DashboardLibraryInteractions.loaded({
           numberOfItems: apiResponse.dashboards.length,
-          contentKinds: ['community_dashboard'],
+          contentKinds: [CONTENT_KINDS.COMMUNITY_DASHBOARD],
           datasourceTypes: [ds.type],
-          sourceEntryPoint: 'datasource_page',
-          eventLocation: 'suggested_dashboards_modal_community_tab',
+          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
         });
+        hasTrackedLoaded.current = true;
       }
 
       return {
@@ -114,12 +127,14 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   const onUseCommunityDashboard = async (dashboard: GnetDashboard) => {
     if (response) {
       DashboardLibraryInteractions.itemClicked({
-        contentKind: 'community_dashboard',
+        contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
         datasourceTypes: [response.datasourceType],
         libraryItemId: String(dashboard.id),
         libraryItemTitle: dashboard.name,
-        sourceEntryPoint: 'datasource_page',
-        eventLocation: 'suggested_dashboards_modal_community_tab',
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+        eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+        clickedAt: Date.now(),
+        discoveryMethod: debouncedSearchQuery.trim() ? 'search' : 'browse',
       });
     }
 
@@ -144,7 +159,14 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
 
       if (!needsMapping) {
         // No mapping needed - all datasources auto-mapped, no constants
-        navigateToTemplate(dashboard.name, dashboard.id, datasourceUid || '', mappingResult.mappings);
+        navigateToTemplate(
+          dashboard.name,
+          dashboard.id,
+          datasourceUid || '',
+          mappingResult.mappings,
+          EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+          CONTENT_KINDS.COMMUNITY_DASHBOARD
+        );
       } else {
         // Show mapping form for unmapped datasources and/or constants
         onShowMapping({
@@ -153,8 +175,17 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
           unmappedInputs: mappingResult.unmappedInputs,
           constantInputs,
           existingMappings: mappingResult.mappings,
+          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+          contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
           onInterpolateAndNavigate: (mappings) =>
-            navigateToTemplate(dashboard.name, dashboard.id, datasourceUid || '', mappings),
+            navigateToTemplate(
+              dashboard.name,
+              dashboard.id,
+              datasourceUid || '',
+              mappings,
+              EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+              CONTENT_KINDS.COMMUNITY_DASHBOARD
+            ),
         });
       }
     } catch (err) {
