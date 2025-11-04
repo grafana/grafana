@@ -92,7 +92,7 @@ Refer to [Requirements](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/obser
 
 **Permission management**
 
-- You cannot modify the permissions of a provisioned folder after you've synced it. 
+- You cannot modify the permissions of a provisioned folder after you've synced it.
   - Default permissions are: Admin = Admin, Editor = Editor, and Viewer = Viewer. Refer to [Roles and permissions](ref:roles-and-permissions) for more information.
 - To change a default permission, update the metadata file in the repository and wait for Git Sync to synchronize it, or use the Grafana UI to save a new folders permissions drawer and commit it to the repository.
 
