@@ -30,7 +30,6 @@ import {
 } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
-import { Table } from '../Table';
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellOptions } from '../types';
 
