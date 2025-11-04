@@ -121,6 +121,7 @@ export const TimeSeriesPanel = ({
 
   return (
     <TimeSeries
+      annotations={options.annotations}
       frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}

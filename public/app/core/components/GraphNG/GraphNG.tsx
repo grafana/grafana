@@ -14,7 +14,7 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { DashboardCursorSync, VizLegendOptions } from '@grafana/schema';
+import { DashboardCursorSync, VizLegendOptions, VizAnnotations } from '@grafana/schema';
 import { Themeable2, VizLayout } from '@grafana/ui';
 import { UPlotChart, AxisProps, Renderers, UPlotConfigBuilder, ScaleProps, pluginLog } from '@grafana/ui/internal';
 
@@ -27,6 +27,7 @@ import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
 export type PropDiffFn<T extends Record<string, unknown> = {}> = (prev: T, next: T) => boolean;
 
 export interface GraphNGProps extends Themeable2 {
+  annotations?: VizAnnotations | undefined;
   frames: DataFrame[];
   structureRev?: number; // a number that will change when the frames[] structure changes
   width: number;
@@ -233,7 +234,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
           timeZone !== prevProps.timeZone ||
           cursorSync !== prevProps.cursorSync ||
           structureRev !== prevProps.structureRev ||
-          this.props.annotationLanes !== prevProps.annotationLanes ||
+          (this.props.annotations?.multiLane && this.props.annotationLanes !== prevProps.annotationLanes) ||
           !structureRev ||
           propsChanged;
 

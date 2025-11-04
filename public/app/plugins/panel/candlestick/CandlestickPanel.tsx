@@ -253,6 +253,7 @@ export const CandlestickPanel = ({
 
   return (
     <TimeSeries
+      annotations={options.annotations}
       frames={[info.frame]}
       structureRev={data.structureRev}
       timeRange={timeRange}

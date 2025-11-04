@@ -88,6 +88,7 @@ export const StateTimelinePanel = ({
         width={width}
         height={height - paginationHeight}
         legendItems={legendItems}
+        annotations={options.annotations}
         {...options}
         mode={TimelineMode.Changes}
         replaceVariables={replaceVariables}

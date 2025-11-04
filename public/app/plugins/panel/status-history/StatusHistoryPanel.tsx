@@ -105,6 +105,7 @@ export const StatusHistoryPanel = ({
         height={height - paginationHeight}
         legendItems={legendItems}
         {...options}
+        annotations={options.annotations}
         mode={TimelineMode.Samples}
         replaceVariables={replaceVariables}
         dataLinkPostProcessor={dataLinkPostProcessor}
