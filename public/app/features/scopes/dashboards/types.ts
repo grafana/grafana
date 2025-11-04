@@ -4,6 +4,7 @@ import { ScopeDashboardBinding } from '@grafana/data';
 export interface ScopeNavigationSpec {
   url: string;
   scope: string;
+  subScope?: string;
 }
 
 export interface ScopeNavigationStatus {
@@ -37,8 +38,9 @@ export interface SuggestedNavigationsFolder {
   expanded: boolean;
   folders: SuggestedNavigationsFoldersMap;
   suggestedNavigations: SuggestedNavigationsMap;
+  isSubScope?: boolean;
 }
 
 export type SuggestedNavigationsFoldersMap = Record<string, SuggestedNavigationsFolder>;
 export type SuggestedNavigationsMap = Record<string, SuggestedNavigation>;
-export type OnFolderUpdate = (path: string[], expanded: boolean) => void;
+export type OnFolderUpdate = (path: string[], expanded: boolean) => void | Promise<void>;

@@ -28,7 +28,9 @@ export const potentiallySetupMockApi = async () => {
 
     // TODO: Generalise and move Alerting handlers into @grafana/test-utils or @grafana/alerting package
     const { alertingHandlers } = await import('./features/alerting/unified/mocks/server/all-handlers');
-    worker.use(...alertingHandlers);
+    const scopesHandlers = await import('./features/scopes/mocks/server/handlers/scopes');
+
+    worker.use(...alertingHandlers, ...scopesHandlers.default);
 
     worker.start({ onUnhandledRequest: 'bypass' });
   }

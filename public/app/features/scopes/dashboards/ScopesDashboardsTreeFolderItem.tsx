@@ -36,7 +36,10 @@ export function ScopesDashboardsTreeFolderItem({
       >
         <Icon name={!folder.expanded ? 'angle-right' : 'angle-down'} className={styles.icon} />
 
-        {folder.title}
+        <span className={folder.isSubScope ? styles.boldTitle : undefined}>
+          {folder.title}
+          {folder.isSubScope && <span className={styles.dot}> •</span>}
+        </span>
       </button>
 
       {folder.expanded && (
@@ -71,6 +74,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     children: css({
       paddingLeft: theme.spacing(3),
+    }),
+    boldTitle: css({
+      fontWeight: theme.typography.fontWeightBold,
+    }),
+    dot: css({
+      fontWeight: theme.typography.fontWeightMedium,
+      opacity: 0.7,
     }),
   };
 };
