@@ -149,3 +149,8 @@ func TranslateToGroupResource(kind string) string {
 func TranslateBasicRole(name string) string {
 	return basicRolesTranslations[name]
 }
+
+func IsBasicRole(name string) bool {
+	_, ok := basicRolesTranslations[name]
+	return ok
+}
