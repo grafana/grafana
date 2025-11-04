@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -12,6 +12,7 @@ import { useTestIntegrationMutation } from '../../../api/receiversApi';
 import { GrafanaChannelValues } from '../../../types/receiver-form';
 import { defaultAnnotations } from '../../../utils/constants';
 import { stringifyErrorLike } from '../../../utils/misc';
+import { hasPlaceholderEmail } from '../../../utils/receiver-form';
 import AnnotationsStep from '../../rule-editor/AnnotationsStep';
 import LabelsField from '../../rule-editor/labels/LabelsField';
 
@@ -58,18 +59,7 @@ export const TestContactPointModal = ({
   const [testIntegration, { isLoading, error, isSuccess }] = useTestIntegrationMutation();
 
   // Check if email integration has placeholder addresses
-  const hasPlaceholderEmail = useMemo(() => {
-    if (!channelValues || channelValues.type !== 'email') {
-      return false;
-    }
-    const addresses = channelValues.settings?.addresses;
-    if (!addresses) {
-      return false;
-    }
-    const placeholders = ['<example@email.com>', 'example@email.com'];
-    const addressList = typeof addresses === 'string' ? [addresses] : addresses;
-    return addressList.some((addr: string) => placeholders.includes(addr?.trim()));
-  }, [channelValues]);
+  const isPlaceholderEmail = hasPlaceholderEmail(channelValues);
 
   const onSubmit = async (data: FormFields) => {
     let alert: TestReceiversAlert | undefined;
@@ -114,7 +104,7 @@ export const TestContactPointModal = ({
         />
       )}
 
-      {hasPlaceholderEmail && (
+      {isPlaceholderEmail && (
         <div className={styles.section}>
           <Alert
             title={t(
@@ -171,9 +161,9 @@ export const TestContactPointModal = ({
           <Modal.ButtonRow>
             <Button
               type="submit"
-              disabled={isLoading || hasPlaceholderEmail}
+              disabled={isLoading || isPlaceholderEmail}
               tooltip={
-                hasPlaceholderEmail
+                isPlaceholderEmail
                   ? t(
                       'alerting.test-contact-point-modal.test-disabled-placeholder',
                       'Please configure a valid email address before testing'

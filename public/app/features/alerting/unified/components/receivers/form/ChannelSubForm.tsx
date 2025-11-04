@@ -16,6 +16,7 @@ import {
   GrafanaChannelValues,
   ReceiverFormValues,
 } from '../../../types/receiver-form';
+import { hasPlaceholderEmail } from '../../../utils/receiver-form';
 import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
 import { ChannelOptions } from './ChannelOptions';
@@ -71,15 +72,8 @@ export function ChannelSubForm<R extends ChannelValues>({
   const isTestAvailable = onCallIntegrationType !== OnCallIntegrationType.NewIntegration;
 
   // Check if email integration has placeholder addresses
-  const emailAddresses = watch(`${settingsFieldPath}.addresses`);
-  const hasPlaceholderEmail = useMemo(() => {
-    if (selectedType !== 'email' || !emailAddresses) {
-      return false;
-    }
-    const placeholders = ['<example@email.com>', 'example@email.com'];
-    const addresses = typeof emailAddresses === 'string' ? [emailAddresses] : emailAddresses;
-    return addresses.some((addr: string) => placeholders.includes(addr?.trim()));
-  }, [selectedType, emailAddresses]);
+  const channelValues = getValues(channelFieldPath) as GrafanaChannelValues | undefined;
+  const isPlaceholderEmail = hasPlaceholderEmail(channelValues);
 
   useEffect(() => {
     register(`${channelFieldPath}.__id`);
@@ -242,14 +236,14 @@ export function ChannelSubForm<R extends ChannelValues>({
         <div className={styles.buttons}>
           {isTestable && onTest && isTestAvailable && (
             <Button
-              disabled={hasPlaceholderEmail}
+              disabled={isPlaceholderEmail}
               size="xs"
               variant="secondary"
               type="button"
               onClick={() => handleTest()}
               icon="message"
               tooltip={
-                hasPlaceholderEmail
+                isPlaceholderEmail
                   ? t(
                       'alerting.channel-sub-form.test-disabled-placeholder',
                       'Please configure a valid email address before testing'
@@ -283,7 +277,7 @@ export function ChannelSubForm<R extends ChannelValues>({
       </div>
       {notifier && (
         <div className={styles.innerContent}>
-          {hasPlaceholderEmail && (
+          {isPlaceholderEmail && (
             <Alert
               title={t(
                 'alerting.contact-points.email.placeholder-warning-title',

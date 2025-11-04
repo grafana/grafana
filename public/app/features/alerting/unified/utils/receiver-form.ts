@@ -304,3 +304,42 @@ export function omitTemporaryIdentifiers<T>(object: Readonly<T>): T {
 
   return objectCopy;
 }
+
+/**
+ * Placeholder emails that ship with the default grafana-default-email contact point.
+ * These should not trigger actual email sends or throw errors.
+ */
+const PLACEHOLDER_EMAILS = ['<example@email.com>', 'example@email.com'];
+
+/**
+ * Check if a single channel/integration has placeholder email addresses.
+ * Used in UI components to disable test buttons and show warnings.
+ */
+export function hasPlaceholderEmail(channelValues?: GrafanaChannelValues): boolean {
+  if (!channelValues || channelValues.type !== 'email') {
+    return false;
+  }
+  const addresses = channelValues.settings?.addresses;
+  if (!addresses) {
+    return false;
+  }
+  const addressList = typeof addresses === 'string' ? [addresses] : addresses;
+  return addressList.some((addr: string) => PLACEHOLDER_EMAILS.includes(addr?.trim()));
+}
+
+/**
+ * Check if any receiver in a list has placeholder email addresses.
+ * Used in actions to determine if warning messages should be shown.
+ */
+export function receiverHasPlaceholderEmail(receivers: Receiver[]): boolean {
+  return receivers.some((receiver) =>
+    receiver.grafana_managed_receiver_configs?.some((config) => {
+      if (config.type === 'email' && config.settings?.addresses) {
+        const addresses = config.settings.addresses;
+        const addressList = typeof addresses === 'string' ? [addresses] : addresses;
+        return addressList.some((addr: string) => PLACEHOLDER_EMAILS.includes(addr.trim()));
+      }
+      return false;
+    })
+  );
+}

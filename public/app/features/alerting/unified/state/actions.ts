@@ -30,6 +30,7 @@ import { FetchRulerRulesFilter, fetchRulerRules } from '../api/ruler';
 import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
 import { getAllRulesSourceNames } from '../utils/datasource';
 import { makeAMLink } from '../utils/misc';
+import { receiverHasPlaceholderEmail } from '../utils/receiver-form';
 import { withAppEvents, withSerializedError } from '../utils/redux';
 import { getAlertInfo } from '../utils/rules';
 import { safeParsePrometheusDuration } from '../utils/time';
@@ -272,27 +273,10 @@ interface TestReceiversOptions {
   alert?: TestReceiversAlert;
 }
 
-// Check if a receiver uses placeholder email addresses
-function hasPlaceholderEmail(receivers: Receiver[]): boolean {
-  const placeholderEmails = ['<example@email.com>', 'example@email.com'];
-  
-  return receivers.some((receiver) =>
-    receiver.grafana_managed_receiver_configs?.some((config) => {
-      if (config.type === 'email' && config.settings?.addresses) {
-        const addresses = config.settings.addresses;
-        // addresses can be a string or array
-        const addressList = typeof addresses === 'string' ? [addresses] : addresses;
-        return addressList.some((addr: string) => placeholderEmails.includes(addr.trim()));
-      }
-      return false;
-    })
-  );
-}
-
 export const testReceiversAction = createAsyncThunk(
   'unifiedalerting/testReceivers',
   async ({ alertManagerSourceName, receivers, alert }: TestReceiversOptions): Promise<void> => {
-    const usesPlaceholder = hasPlaceholderEmail(receivers);
+    const usesPlaceholder = receiverHasPlaceholderEmail(receivers);
     
     if (usesPlaceholder) {
       // Handle placeholder email case with custom warning message
