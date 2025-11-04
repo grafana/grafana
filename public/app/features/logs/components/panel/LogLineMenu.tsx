@@ -30,7 +30,7 @@ type MenuItemDivider = {
 export type LogLineMenuCustomItem = MenuItem | MenuItemDivider;
 
 interface Props {
-  active: boolean;
+  active?: boolean;
   log: LogListModel;
   styles: LogLineStyles;
 }

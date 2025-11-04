@@ -15,6 +15,7 @@ import { LogListSearchContext } from './LogListSearchContext';
 import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
 import { LogLineVirtualization } from './virtualization';
+import { emptyContextData, LogDetailsContext } from './LogDetailsContext';
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
@@ -551,32 +552,32 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
   describe('Inline details', () => {
     test('Details are not rendered if details mode is not inline', () => {
       render(
-        <LogListContext.Provider
+        <LogDetailsContext.Provider
           value={{
-            ...defaultValue,
+            ...emptyContextData,
             showDetails: [log],
             detailsMode: 'sidebar',
             detailsDisplayed: jest.fn().mockReturnValue(true),
           }}
         >
           <LogLine {...defaultProps} />
-        </LogListContext.Provider>
+        </LogDetailsContext.Provider>
       );
       expect(screen.queryByPlaceholderText('Search field names and values')).not.toBeInTheDocument();
     });
 
     test('Details are rendered if details mode is inline', () => {
       render(
-        <LogListContext.Provider
+        <LogDetailsContext.Provider
           value={{
-            ...defaultValue,
+            ...emptyContextData,
             showDetails: [log],
             detailsMode: 'inline',
             detailsDisplayed: jest.fn().mockReturnValue(true),
           }}
         >
           <LogLine {...defaultProps} />
-        </LogListContext.Provider>
+        </LogDetailsContext.Provider>
       );
       expect(screen.getByPlaceholderText('Search field names and values')).toBeInTheDocument();
     });
