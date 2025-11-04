@@ -492,32 +492,34 @@ export function getDefaultDatasource(): DataSourceRef {
   };
 }
 
-export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] {
-  return targets.map((t) => {
-    const { refId, hide, datasource, ...query } = t;
-    const ds = t.datasource || panelDatasource;
-    const q: PanelQueryKind = {
-      kind: 'PanelQuery',
-      spec: {
-        refId: t.refId,
-        hidden: t.hide ?? false,
-        query: {
-          kind: 'DataQuery',
-          version: defaultDataQueryKind().version,
-          group: ds.type ?? '',
-          ...(ds.uid && {
-            datasource: {
-              name: ds.uid,
+export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] | undefined {
+  return targets
+    .filter((t) => !(Object.keys(t).length === 1 && 'refId' in t))
+    .map((t) => {
+      const { refId, hide, datasource, ...query } = t;
+      const ds = t.datasource || panelDatasource;
+      const q: PanelQueryKind = {
+        kind: 'PanelQuery',
+        spec: {
+          refId: t.refId,
+          hidden: t.hide ?? false,
+          query: {
+            kind: 'DataQuery',
+            version: defaultDataQueryKind().version,
+            group: ds.type ?? '',
+            ...(ds.uid && {
+              datasource: {
+                name: ds.uid,
+              },
+            }),
+            spec: {
+              ...query,
             },
-          }),
-          spec: {
-            ...query,
           },
         },
-      },
-    };
-    return q;
-  });
+      };
+      return q;
+    });
 }
 
 export function buildPanelKind(p: Panel): PanelKind {
@@ -570,7 +572,7 @@ export function buildPanelKind(p: Panel): PanelKind {
       data: {
         kind: 'QueryGroup',
         spec: {
-          queries,
+          queries: queries || [],
           transformations,
           queryOptions: {
             ...(p.cacheTimeout !== undefined && { cacheTimeout: p.cacheTimeout }),
