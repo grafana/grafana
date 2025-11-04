@@ -2,7 +2,6 @@ import { DataFrame } from '@grafana/data';
 
 import { AlertRuleRow, EmptyLabelValue, GenericGroupedRow, WorkbenchRow } from '../types';
 
-// Single-pass implementation: 30x faster than previous approach
 // Builds tree structure in one pass through data, avoiding intermediate row objects
 export function convertToWorkbenchRows(series: DataFrame[], groupBy: string[] = []): WorkbenchRow[] {
   if (!series.at(0)?.fields.length) {
