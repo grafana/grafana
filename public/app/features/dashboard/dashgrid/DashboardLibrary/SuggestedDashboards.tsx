@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Button, useStyles2, Grid } from '@grafana/ui';
 import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 import { PluginDashboard } from 'app/types/plugins';
@@ -187,7 +187,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
       creationOrigin: 'dashboard_library_datasource_dashboard',
     });
 
-   locationService.push(`/dashboard/template?${params.toString()}`);
+    locationService.push(`/dashboard/template?${params.toString()}`);
   };
 
   const onUseCommunityDashboard = async (dashboard: GnetDashboard) => {
