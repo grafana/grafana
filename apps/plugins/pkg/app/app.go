@@ -6,11 +6,13 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	restclient "k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
 	pluginsapi "github.com/grafana/grafana/apps/plugins/pkg/apis"
@@ -74,6 +76,16 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	return a, nil
+}
+
+func ProvideAppInstaller(specificConfig any) (appsdkapiserver.AppInstaller, error) {
+	provider := simple.NewAppProvider(pluginsapi.LocalManifest(), specificConfig, New)
+	appConfig := app.Config{
+		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
+		ManifestData:   *pluginsapi.LocalManifest().ManifestData,
+		SpecificConfig: specificConfig,
+	}
+	return appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, pluginsapi.NewGoTypeAssociator())
 }
 
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
