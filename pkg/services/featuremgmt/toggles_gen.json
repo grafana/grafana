@@ -3092,7 +3092,8 @@
       "metadata": {
         "name": "pluginsSkipHostEnvVars",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-11-15T17:09:14Z"
+        "creationTimestamp": "2023-11-15T17:09:14Z",
+        "deletionTimestamp": "2025-11-04T16:51:13Z"
       },
       "spec": {
         "description": "Disables passing host environment variable to plugin processes",
