@@ -242,6 +242,7 @@
 /devenv/dev-dashboards/panel-library @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-piechart @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-stat @grafana/dataviz-squad
+/devenv/dev-dashboards/panel-status-history @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-table @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-timeline @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-timeseries @grafana/dataviz-squad
@@ -473,24 +474,12 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/fixtures/long-trace-response.json @grafana/observability-traces-and-profiling
 /e2e-playwright/fixtures/tempo-response.json @grafana/oss-big-tent
 /e2e-playwright/fixtures/prometheus-response.json @grafana/datapro
-/e2e-playwright/panels-suite/canvas-scene.spec.ts @grafana/dataviz-squad
+/e2e-playwright/panels-suite/ @grafana/dataviz-squad
 /e2e-playwright/panels-suite/dashlist.spec.ts @grafana/grafana-search-navigate-organise
-/e2e-playwright/panels-suite/datagrid-data-change.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/datagrid-editing-features.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/frontend-sandbox-panel.spec.ts @grafana/plugins-platform-frontend
-/e2e-playwright/panels-suite/geomap-layer-types.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/geomap-map-controls.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/geomap-spatial-operations-transform.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/heatmap.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/panelEdit_base.spec.ts @grafana/dashboards-squad
 /e2e-playwright/panels-suite/panelEdit_queries.spec.ts @grafana/dashboards-squad
 /e2e-playwright/panels-suite/panelEdit_transforms.spec.ts @grafana/datapro
-/e2e-playwright/panels-suite/state-timeline.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/table-footer.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/table-kitchenSink.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/table-markdown.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/table-sparkline.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/table-utils.ts @grafana/dataviz-squad
 /e2e-playwright/plugin-e2e/ @grafana/oss-big-tent @grafana/partner-datasources
 /e2e-playwright/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
 /e2e-playwright/smoke-tests-suite/ @grafana/grafana-frontend-platform
