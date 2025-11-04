@@ -1,5 +1,5 @@
-import { Component } from 'react';
 import * as React from 'react';
+import { Component } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
 import {
@@ -14,9 +14,9 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { DashboardCursorSync, VizLegendOptions, VizAnnotations } from '@grafana/schema';
+import { DashboardCursorSync, VizLegendOptions } from '@grafana/schema';
 import { Themeable2, VizLayout } from '@grafana/ui';
-import { UPlotChart, AxisProps, Renderers, UPlotConfigBuilder, ScaleProps, pluginLog } from '@grafana/ui/internal';
+import { AxisProps, pluginLog, Renderers, ScaleProps, UPlotChart, UPlotConfigBuilder } from '@grafana/ui/internal';
 
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { preparePlotFrame as defaultPreparePlotFrame } from './utils';

@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useReducer } from 'react';
 import * as React from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
 import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic, InterpolateFunction } from '@grafana/data';
-import { TimeZone, VizAnnotations } from '@grafana/schema';
+import { TimeZone } from '@grafana/schema';
 import {
   DEFAULT_ANNOTATION_COLOR,
   getPortalContainer,

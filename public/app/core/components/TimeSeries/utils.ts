@@ -60,7 +60,6 @@ for (let i = 0; i < BIN_INCRS.length; i++) {
   BIN_INCRS[i] = 2 ** i;
 }
 
-import * as common from '@grafana/schema/dist/esm/index';
 import { DrawStyle } from '@grafana/ui';
 import {
   UPlotConfigBuilder,
