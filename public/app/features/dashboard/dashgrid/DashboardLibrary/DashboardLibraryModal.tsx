@@ -107,7 +107,6 @@ export const DashboardLibraryModal = ({
       }
       isOpen={isOpen}
       onDismiss={onDismiss}
-      closeOnBackdropClick={false}
       className={styles.modal}
       contentClassName={styles.modalContent}
     >
@@ -143,7 +142,6 @@ export const DashboardLibraryModal = ({
         )}
         {activeView === 'mapping' && mappingContext && (
           <CommunityDashboardMappingForm
-            dashboardName={mappingContext.dashboardName}
             unmappedInputs={mappingContext.unmappedInputs}
             constantInputs={mappingContext.constantInputs}
             existingMappings={mappingContext.existingMappings}
