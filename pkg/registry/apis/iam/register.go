@@ -99,21 +99,26 @@ func RegisterAPIService(
 	return builder, nil
 }
 
-// TODO zClient, zTickets, reg
 func NewAPIService(
 	accessClient types.AccessClient,
 	dbProvider legacysql.LegacyDatabaseProvider,
 	features featuremgmt.FeatureToggles,
+	zClient zanzana.Client,
+	reg prometheus.Registerer,
 ) *IdentityAccessManagementAPIBuilder {
 	store := legacy.NewLegacySQLStores(dbProvider)
 	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
+	registerMetrics(reg)
 	return &IdentityAccessManagementAPIBuilder{
 		store:                      store,
 		display:                    user.NewLegacyDisplayREST(store),
 		resourcePermissionsStorage: resourcePermissionsStorage,
 		logger:                     log.New("iam.apis"),
 		features:                   features,
+		zClient:                    zClient,
+		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
+		reg:                        reg,
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				// For now only authorize resourcepermissions resource
@@ -219,6 +224,14 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 
+		// Only teamBindingStore exposes the AfterCreate, AfterDelete, and BeginUpdate hooks
+		if enableZanzanaSync {
+			b.logger.Info("Enabling hooks for TeamBinding to sync to Zanzana")
+			teamBindingStore.AfterCreate = b.AfterTeamBindingCreate
+			teamBindingStore.AfterDelete = b.AfterTeamBindingDelete
+			teamBindingStore.BeginUpdate = b.BeginTeamBindingUpdate
+		}
+
 		storage[teamBindingResource.StoragePath()] = teamBindingDW
 	}
 
@@ -231,6 +244,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, userResource, opts.OptsGetter)
 		if err != nil {
 			return err
+		}
+
+		if enableZanzanaSync {
+			b.logger.Info("Enabling hooks for User to sync basic role assignments to Zanzana")
+			store.AfterCreate = b.AfterUserCreate
+			store.BeginUpdate = b.BeginUserUpdate
+			store.AfterDelete = b.AfterUserDelete
 		}
 
 		dw, err := opts.DualWriteBuilder(userResource.GroupResource(), legacyStore, store)
@@ -277,8 +297,10 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 		if enableZanzanaSync {
-			b.logger.Info("Enabling AfterCreate hook for CoreRole to sync to Zanzana")
+			b.logger.Info("Enabling hooks for CoreRole to sync to Zanzana")
 			coreRoleStore.AfterCreate = b.AfterRoleCreate
+			coreRoleStore.AfterDelete = b.AfterRoleDelete
+			coreRoleStore.BeginUpdate = b.BeginRoleUpdate
 		}
 		storage[iamv0.CoreRoleInfo.StoragePath()] = coreRoleStore
 
@@ -287,8 +309,10 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 		if enableZanzanaSync {
-			b.logger.Info("Enabling AfterCreate hook for Role to sync to Zanzana")
+			b.logger.Info("Enabling hooks for Role to sync to Zanzana")
 			roleStore.AfterCreate = b.AfterRoleCreate
+			roleStore.AfterDelete = b.AfterRoleDelete
+			roleStore.BeginUpdate = b.BeginRoleUpdate
 		}
 		storage[iamv0.RoleInfo.StoragePath()] = roleStore
 

@@ -26,7 +26,7 @@ export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) 
 
   return (
     <Button icon="plus" variant="primary" fill="text" onPointerDown={handlePointerDown}>
-      <Trans i18nKey="dashboard-scene.variable-controls.add-variable">Add</Trans>
+      <Trans i18nKey="dashboard-scene.variable-controls.add-variable">Add variable</Trans>
     </Button>
   );
 }

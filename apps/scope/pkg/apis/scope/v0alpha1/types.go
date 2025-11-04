@@ -146,7 +146,12 @@ type ScopeNodeSpec struct {
 
 	NodeType NodeType `json:"nodeType"` // container | leaf
 
-	Title              string `json:"title"`
+	Title string `json:"title"`
+	//+optional
+	// Displays next to the title to provide more context.
+	SubTitle string `json:"subTitle,omitempty"`
+
+	//+optional
 	Description        string `json:"description,omitempty"`
 	DisableMultiSelect bool   `json:"disableMultiSelect"`
 

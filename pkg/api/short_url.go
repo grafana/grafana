@@ -119,13 +119,8 @@ type shortURLK8sHandler struct {
 }
 
 func newShortURLK8sHandler(hs *HTTPServer) *shortURLK8sHandler {
-	gvr := schema.GroupVersionResource{
-		Group:    v1alpha1.ShortURLKind().Group(),
-		Version:  v1alpha1.ShortURLKind().Version(),
-		Resource: v1alpha1.ShortURLKind().Plural(),
-	}
 	return &shortURLK8sHandler{
-		gvr:                  gvr,
+		gvr:                  v1alpha1.ShortURLKind().GroupVersionResource(),
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
 		cfg:                  hs.Cfg,
@@ -217,7 +212,7 @@ func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel
 
 	c.Logger.Debug("Creating short URL", "path", cmd.Path)
 	obj := shorturl.LegacyCreateCommandToUnstructured(cmd)
-	obj.SetGenerateName("u") // becomes a prefix
+	obj.SetGenerateName("s") // becomes a prefix
 
 	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
 	if err != nil {

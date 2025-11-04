@@ -5,7 +5,7 @@ go 1.25.3
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
-replace github.com/docker/docker => github.com/moby/moby v27.5.1+incompatible
+replace github.com/docker/docker => github.com/moby/moby v28.0.1+incompatible
 
 require (
 	github.com/google/uuid v1.6.0 // indirect; @grafana/grafana-backend-group
@@ -38,7 +38,7 @@ require (
 	dagger.io/dagger v0.18.8
 	github.com/Masterminds/semver v1.5.0
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
-	github.com/urfave/cli/v3 v3.4.1
+	github.com/urfave/cli/v3 v3.5.0
 )
 
 require (

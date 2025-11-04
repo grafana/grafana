@@ -14,16 +14,6 @@ GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_RACE_FLAG := $(if $(GO_RACE),-race)
-
-## Always include gms_pure_go for go-mysql-server dependency
-ifneq (,$(findstring gms_pure_go,$(GO_BUILD_TAGS)))
-  GO_BUILD_TAGS := $(GO_BUILD_TAGS)
-else ifneq (,$(strip $(GO_BUILD_TAGS)))
-  GO_BUILD_TAGS := $(GO_BUILD_TAGS),gms_pure_go
-else
-  GO_BUILD_TAGS := gms_pure_go
-endif
-
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
@@ -188,7 +178,7 @@ gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run go
 	@if [ -n "$$CODEGEN_VERIFY" ]; then \
 		echo "Verifying generated code is up to date..."; \
 		if ! git diff --quiet; then \
-			echo "Error: Generated apps code is not up to date. Please run 'make gen-apps' to regenerate."; \
+			echo "Error: Generated code is not up to date. Please run 'make gen-apps', 'make gen-cue', and 'make gen-jsonnet' to regenerate."; \
 			git diff --name-only; \
 			exit 1; \
 		fi; \
