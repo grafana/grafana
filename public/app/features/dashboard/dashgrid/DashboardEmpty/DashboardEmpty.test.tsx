@@ -53,7 +53,7 @@ jest.mock('../DashboardLibrary/DashboardLibrarySection', () => ({
 
 jest.mock('../DashboardLibrary/api/dashboardLibraryApi', () => ({
   fetchProvisionedDashboards: jest.fn(() => Promise.resolve([])),
-  fetchCommunityDashboards: jest.fn(() => Promise.resolve([])),
+  fetchCommunityDashboards: jest.fn(() => Promise.resolve({ page: 1, pages: 1, dashboards: [] })),
   fetchCommunityDashboard: jest.fn(() => Promise.resolve({ json: {} })),
 }));
 
