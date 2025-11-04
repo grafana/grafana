@@ -3285,7 +3285,8 @@
       "metadata": {
         "name": "publicDashboardsScene",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-03-22T14:48:21Z"
+        "creationTimestamp": "2024-03-22T14:48:21Z",
+        "deletionTimestamp": "2025-11-04T13:33:00Z"
       },
       "spec": {
         "description": "Enables public dashboard rendering using scenes",

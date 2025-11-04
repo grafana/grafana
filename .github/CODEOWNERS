@@ -1117,7 +1117,6 @@ eslint-suppressions.json @grafanabot
 /pkg/api/render.go @grafana/grafana-operator-experience-squad
 /pkg/services/publicdashboards/ @grafana/grafana-operator-experience-squad
 /pkg/services/rendering/ @grafana/grafana-operator-experience-squad
-/public/app/features/dashboard/containers/PublicDashboardPage* @grafana/grafana-operator-experience-squad
 /public/app/features/dashboard/components/PublicDashboard/ @grafana/grafana-operator-experience-squad
 /public/app/features/dashboard/components/PublicDashboardNotAvailable/ @grafana/grafana-operator-experience-squad
 /public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ @grafana/grafana-operator-experience-squad

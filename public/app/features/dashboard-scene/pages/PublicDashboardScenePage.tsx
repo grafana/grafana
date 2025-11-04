@@ -193,3 +193,5 @@ function PublicDashboardScenePageError({ error }: { error: LoadError }) {
     </Page>
   );
 }
+
+export default PublicDashboardScenePage;

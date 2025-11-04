@@ -42,14 +42,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:         "publicDashboardsScene",
-			Description:  "Enables public dashboard rendering using scenes",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaOperatorExperienceSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:        "lokiExperimentalStreaming",
 			Description: "Support new streaming approach for loki (prototype, needs special loki build)",
 			Stage:       FeatureStageExperimental,

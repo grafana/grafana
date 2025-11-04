@@ -2,7 +2,6 @@ Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 disableEnvelopeEncryption,GA,@grafana/grafana-operator-experience-squad,false,false,false
 panelTitleSearch,preview,@grafana/search-and-storage,false,false,false
 publicDashboardsEmailSharing,preview,@grafana/grafana-operator-experience-squad,false,false,false
-publicDashboardsScene,GA,@grafana/grafana-operator-experience-squad,false,false,true
 lokiExperimentalStreaming,experimental,@grafana/observability-logs,false,false,false
 featureHighlights,GA,@grafana/grafana-operator-experience-squad,false,false,false
 storage,experimental,@grafana/search-and-storage,false,false,false
