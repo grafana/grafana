@@ -1,5 +1,6 @@
 import { PointerEvent as ReactPointerEvent } from 'react';
 
+import { logWarning } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneObjectBase,
@@ -70,7 +71,9 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
           this._sourceDropTarget?.draggedGridItemOutside?.(gridItem);
           this._lastDropTarget?.draggedGridItemInside?.(gridItem);
         } else {
-          console.warn('No grid item to drag');
+          const warningMessage = 'No grid item to drag';
+          console.warn(warningMessage);
+          logWarning(warningMessage);
         }
       });
     }

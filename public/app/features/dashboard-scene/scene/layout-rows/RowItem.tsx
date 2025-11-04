@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { t } from '@grafana/i18n';
+import { logWarning } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneObject,
@@ -184,7 +185,9 @@ export class RowItem
         const newChildren = layout.state.children.filter((child) => child !== gridItem);
         layout.setState({ children: newChildren });
       } else {
-        throw new Error('Grid item has unexpected parent type');
+        const warningMessage = 'Grid item has unexpected parent type';
+        console.warn(warningMessage);
+        logWarning(warningMessage);
       }
     }
     this.setIsDropTarget(false);
@@ -196,7 +199,9 @@ export class RowItem
     if (isDashboardLayoutGrid(layout)) {
       layout.addGridItem(gridItem);
     } else {
-      throw new Error('Layout manager does not support addGridItem');
+      const warningMessage = 'Layout manager does not support addGridItem';
+      console.warn(warningMessage);
+      logWarning(warningMessage);
     }
     this.setIsDropTarget(false);
   }
