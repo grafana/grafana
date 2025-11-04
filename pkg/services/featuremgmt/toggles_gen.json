@@ -2131,17 +2131,18 @@
     {
       "metadata": {
         "name": "kubernetesAggregatorCapTokenAuth",
-        "resourceVersion": "1762283599781",
+        "resourceVersion": "1762288089631",
         "creationTimestamp": "2025-05-15T18:14:23Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-04 19:13:19.781785 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-11-04 20:28:09.63125 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enable CAP token based authentication in grafana's embedded kube-aggregator",
         "stage": "GA",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true
+        "requiresRestart": true,
+        "expression": "true"
       }
     },
     {

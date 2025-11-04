@@ -896,6 +896,7 @@ var (
 			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:              "groupByVariable",
