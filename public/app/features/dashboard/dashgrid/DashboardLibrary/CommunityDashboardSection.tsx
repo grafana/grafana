@@ -141,7 +141,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
 
       // Decide whether to show mapping form or navigate directly
       // Show mapping form if: (a) there are unmapped datasources OR (b) there are constants
-      const needsMapping = mappingResult.unmappedInputs.length > 0 || constantInputs.length > 0;
+      const needsMapping = !mappingResult.allMapped || constantInputs.length > 0;
 
       if (!needsMapping) {
         // No mapping needed - all datasources auto-mapped, no constants
