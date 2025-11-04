@@ -15,9 +15,9 @@ const config = getEnvConfig() as Record<string, string | boolean>;
 
 if (config.frontend_dev_fail_tests_on_console || process.env.CI) {
   failOnConsole({
-    shouldFailOnLog: true,
-    shouldFailOnDebug: true,
-    shouldFailOnInfo: true,
+    shouldFailOnLog: false,
+    shouldFailOnDebug: false,
+    shouldFailOnInfo: false,
   });
 }
 

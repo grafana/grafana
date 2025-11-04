@@ -11,6 +11,7 @@ import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
   defaultDataQueryKind,
+  defaultPanelQueryKind,
   defaultPanelSpec,
   GridLayoutKind,
   PanelKind,
@@ -702,7 +703,7 @@ describe('DashboardSceneSerializer', () => {
           tabsLayoutCount: 2,
           panelsByDatasourceType: {
             cloudwatch: 5,
-            datasource: 1,
+            'gdev-testdata-datasource': 1,
           },
         });
       });
@@ -783,7 +784,18 @@ describe('DashboardSceneSerializer', () => {
             data: {
               kind: 'QueryGroup',
               spec: {
-                queries: [],
+                queries: [
+                  {
+                    ...defaultPanelQueryKind(),
+                    spec: {
+                      ...defaultPanelQueryKind().spec,
+                      query: {
+                        ...defaultPanelQueryKind().spec.query,
+                        group: 'datasource',
+                      },
+                    },
+                  },
+                ],
                 queryOptions: {},
                 transformations: [],
               },

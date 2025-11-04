@@ -37,7 +37,7 @@ import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
-import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
+import { createElements, getDefaultDataSourceRef, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 import { transformDataTopic } from '../transformToV2TypesUtils';
 
@@ -132,13 +132,26 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
   return new VizPanel(vizPanelState);
 }
 
+const defaultPanelQuery: PanelQueryKind = {
+  ...defaultPanelQueryKind(),
+  spec: {
+    ...defaultPanelQueryKind().spec,
+    query: {
+      ...defaultPanelQueryKind().spec.query,
+      datasource: {
+        name: getDefaultDataSourceRef().type,
+      },
+    },
+  },
+};
+
 export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider | undefined {
   const panel = panelKind.spec;
 
   const targets =
     Array.isArray(panel.data?.spec.queries) && panel.data?.spec.queries.length > 0
       ? panel.data?.spec.queries
-      : [defaultPanelQueryKind()];
+      : [defaultPanelQuery];
   // Skip setting query runner for panels without queries
   if (!targets?.length) {
     return undefined;
