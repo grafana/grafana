@@ -66,10 +66,10 @@ export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectP
       const testId = evt.target.closest('label[data-testid]')?.getAttribute('data-testid');
 
       if (!testId?.startsWith(selectors.pages.Dashboard.SubMenu.submenuItemLabels(''))) {
+        // Prevent clearing selection when clicking inside value
         evt.stopPropagation();
         return;
       }
-      // Prevent clearing selection when clicking inside value
     }
 
     if (isSelectable && onSelect) {
