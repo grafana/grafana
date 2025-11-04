@@ -30,11 +30,12 @@ type MenuItemDivider = {
 export type LogLineMenuCustomItem = MenuItem | MenuItemDivider;
 
 interface Props {
+  active: boolean;
   log: LogListModel;
   styles: LogLineStyles;
 }
 
-export const LogLineMenu = ({ log, styles }: Props) => {
+export const LogLineMenu = ({ active, log, styles }: Props) => {
   const {
     getRowContextQuery,
     onOpenContext,
@@ -160,6 +161,7 @@ export const LogLineMenu = ({ log, styles }: Props) => {
         name="ellipsis-v"
         aria-label={t('logs.log-line-menu.icon-label', 'Log menu')}
         role="button"
+        variant={active ? 'primary' : undefined}
       />
     </Dropdown>
   );

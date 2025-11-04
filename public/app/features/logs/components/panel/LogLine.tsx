@@ -209,7 +209,7 @@ const LogLineComponent = memo(
           onFocus={handleMouseOver}
           onClick={handleClick}
         >
-          <LogLineMenu styles={styles} log={log} />
+          <LogLineMenu styles={styles} log={log} active={isLogDetailsFocused} />
           {dedupStrategy !== LogsDedupStrategy.none && (
             <div className={`${styles.duplicates}`}>
               {log.duplicates && log.duplicates > 0 ? `${log.duplicates + 1}x` : null}
@@ -250,7 +250,7 @@ const LogLineComponent = memo(
             </div>
           )}
           <div
-            className={`${styles.fieldsWrapper} ${detailsShown ? styles.detailsDisplayed : ''} ${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''}`}
+            className={`${styles.fieldsWrapper} ${detailsShown ? styles.detailsDisplayed : ''} ${isLogDetailsFocused ? styles.currentLog : ''} ${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''}`}
             style={
               collapsed && virtualization
                 ? { maxHeight: `${virtualization.getTruncationLineCount() * virtualization.getLineHeight()}px` }
