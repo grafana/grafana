@@ -36,9 +36,9 @@ export function ScopesDashboardsTreeFolderItem({
       >
         <Icon name={!folder.expanded ? 'angle-right' : 'angle-down'} className={styles.icon} />
 
-        <span className={folder.isSubScope ? styles.boldTitle : undefined}>
-          {folder.title}
-          {folder.isSubScope && <span className={styles.dot}> •</span>}
+        <span className={styles.titleContainer}>
+          <span>{folder.title}</span>
+          {folder.isSubScope && <Icon name="exchange-alt" className={styles.exchangeIcon} />}
         </span>
       </button>
 
@@ -68,19 +68,25 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: 0,
       textAlign: 'left',
       wordBreak: 'break-word',
+      width: '100%',
     }),
     icon: css({
       marginTop: theme.spacing(0.25),
     }),
+    titleContainer: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flex: 1,
+      gap: theme.spacing(1),
+    }),
+    exchangeIcon: css({
+      marginLeft: 'auto',
+      opacity: 0.7,
+      flexShrink: 0,
+    }),
     children: css({
       paddingLeft: theme.spacing(3),
-    }),
-    boldTitle: css({
-      fontWeight: theme.typography.fontWeightBold,
-    }),
-    dot: css({
-      fontWeight: theme.typography.fontWeightMedium,
-      opacity: 0.7,
     }),
   };
 };

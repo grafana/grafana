@@ -31,6 +31,7 @@ export interface SuggestedNavigation {
   url: string;
   // Used for testid and keys
   id: string;
+  hasSubScope?: boolean;
 }
 
 export interface SuggestedNavigationsFolder {
@@ -39,6 +40,7 @@ export interface SuggestedNavigationsFolder {
   folders: SuggestedNavigationsFoldersMap;
   suggestedNavigations: SuggestedNavigationsMap;
   isSubScope?: boolean;
+  subScopeName?: string;
 }
 
 export type SuggestedNavigationsFoldersMap = Record<string, SuggestedNavigationsFolder>;
