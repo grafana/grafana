@@ -10,20 +10,20 @@ import { METRIC_NAME } from '../constants';
 
 import { getDataQuery, useQueryFilter } from './utils';
 
+type AlertState = PromAlertingRuleState.Firing | PromAlertingRuleState.Pending;
+
 interface Frame {
-  alertstate: PromAlertingRuleState.Firing | PromAlertingRuleState.Pending;
+  alertstate: AlertState;
   Value: number;
 }
 
 export interface RuleFrame {
-  alertstate: PromAlertingRuleState.Firing | PromAlertingRuleState.Pending;
+  alertstate: AlertState;
   alertname: string;
   grafana_folder: string;
   grafana_rule_uid: string;
   Value: number;
 }
-
-type AlertState = PromAlertingRuleState.Firing | PromAlertingRuleState.Pending;
 
 export function parseAlertstateFilter(filter: string): AlertState | null {
   const firingMatch = filter.match(/alertstate\s*=~?\s*"firing"/);
