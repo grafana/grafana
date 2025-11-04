@@ -84,6 +84,25 @@
                           "text": "Up"
                         }
                       }
+                    },
+                    {
+                      "type": "range",
+                      "options": {
+                        "from": 10,
+                        "to": 20,
+                        "result": {
+                          "text": "Medium"
+                        }
+                      }
+                    },
+                    {
+                      "type": "special",
+                      "options": {
+                        "match": "null",
+                        "result": {
+                          "text": "Null Value"
+                        }
+                      }
                     }
                   ],
                   "thresholds": {
@@ -317,6 +336,26 @@
                       "options": {
                         "100": {
                           "text": "Critical"
+                        }
+                      }
+                    },
+                    {
+                      "type": "range",
+                      "options": {
+                        "from": 50,
+                        "to": 99,
+                        "result": {
+                          "text": "Warning"
+                        }
+                      }
+                    },
+                    {
+                      "type": "range",
+                      "options": {
+                        "from": 0,
+                        "to": 49,
+                        "result": {
+                          "text": "OK"
                         }
                       }
                     }

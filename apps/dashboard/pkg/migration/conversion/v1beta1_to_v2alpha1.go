@@ -2177,26 +2177,26 @@ func buildRangeMap(mappingMap map[string]interface{}) *dashv2alpha1.DashboardRan
 	rangeMap := &dashv2alpha1.DashboardRangeMap{}
 	rangeMap.Type = dashv2alpha1.DashboardMappingTypeRange
 
-	opts, ok := mappingMap["options"].([]interface{})
+	opts, ok := mappingMap["options"].(map[string]interface{})
 	if !ok || len(opts) == 0 {
 		return nil
 	}
 
-	optMap, ok := opts[0].(map[string]interface{})
-	if !ok {
+	// Return nil only if both "from" and "to" are missing
+	if opts["from"] == nil && opts["to"] == nil {
 		return nil
 	}
 
 	r := dashv2alpha1.DashboardV2alpha1RangeMapOptions{}
-	if from, ok := optMap["from"].(float64); ok {
+	if from, ok := opts["from"].(float64); ok {
 		r.From = &from
 	}
-	if to, ok := optMap["to"].(float64); ok {
+	if to, ok := opts["to"].(float64); ok {
 		r.To = &to
 	}
 
 	// Result is a DashboardValueMappingResult
-	if resMap, ok := optMap["result"].(map[string]interface{}); ok {
+	if resMap, ok := opts["result"].(map[string]interface{}); ok {
 		r.Result = buildValueMappingResult(resMap)
 	}
 
@@ -2236,23 +2236,18 @@ func buildSpecialValueMap(mappingMap map[string]interface{}) *dashv2alpha1.Dashb
 	specialMap := &dashv2alpha1.DashboardSpecialValueMap{}
 	specialMap.Type = dashv2alpha1.DashboardMappingTypeSpecial
 
-	opts, ok := mappingMap["options"].([]interface{})
+	opts, ok := mappingMap["options"].(map[string]interface{})
 	if !ok || len(opts) == 0 {
 		return nil
 	}
 
-	optMap, ok := opts[0].(map[string]interface{})
-	if !ok {
-		return nil
-	}
-
 	r := dashv2alpha1.DashboardV2alpha1SpecialValueMapOptions{}
-	if match, ok := optMap["match"].(string); ok {
+	if match, ok := opts["match"].(string); ok {
 		r.Match = dashv2alpha1.DashboardSpecialValueMatch(match)
 	}
 
 	// Result is a DashboardValueMappingResult
-	if resMap, ok := optMap["result"].(map[string]interface{}); ok {
+	if resMap, ok := opts["result"].(map[string]interface{}); ok {
 		r.Result = buildValueMappingResult(resMap)
 	}
 
