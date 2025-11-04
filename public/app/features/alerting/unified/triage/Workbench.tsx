@@ -5,7 +5,7 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneQueryRunner } from '@grafana/scenes';
-import { ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
+import { LoadingBar, ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';
@@ -26,6 +26,7 @@ type WorkbenchProps = {
   groupBy?: string[]; // @TODO proper type
   filterBy?: Filter[];
   queryRunner: SceneQueryRunner;
+  isLoading?: boolean;
 };
 
 const initialSize = 1 / 3;
@@ -99,10 +100,9 @@ function renderWorkbenchRow(
  │                         │ │                                   │
  └─────────────────────────┘ └───────────────────────────────────┘
  */
-export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
+export function Workbench({ domain, data, queryRunner, isLoading = false }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
 
-  const isLoading = !queryRunner.isDataReadyToDisplay();
   const [pageIndex, setPageIndex] = useState<number>(1);
   // splitter for template and payload editor
   const splitter = useSplitter({
