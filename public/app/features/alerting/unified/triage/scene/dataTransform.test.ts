@@ -1,4 +1,4 @@
-import { FieldType, LoadingState, PanelData, getDefaultTimeRange } from '@grafana/data';
+import { FieldType } from '@grafana/data';
 
 import { EmptyLabelValue } from '../types';
 
@@ -7,7 +7,7 @@ import { convertToWorkbenchRows } from './dataTransform';
 /**
  * convertToWorkbenchRows transforms time series alert instance data into a hierarchical structure of alert rules.
  *
- * Input: PanelData containing alert instances (firing/pending alerts) over time.
+ * Input: DataFrame[] containing alert instances (firing/pending alerts) over time.
  *        Each alert instance includes metadata linking it to its parent alert rule via grafana_rule_uid.
  *
  * Output: A hierarchical structure where:
@@ -18,140 +18,98 @@ import { convertToWorkbenchRows } from './dataTransform';
 describe('convertToWorkbenchRows', () => {
   describe('empty and invalid data handling', () => {
     it('should return empty array when series is empty', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data);
+      const result = convertToWorkbenchRows([]);
 
       expect(result).toEqual([]);
     });
 
     it('should return empty array when series has no fields', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
-          {
-            fields: [],
-            length: 0,
-          },
-        ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data);
+      const result = convertToWorkbenchRows([
+        {
+          fields: [],
+          length: 0,
+        },
+      ]);
 
       expect(result).toEqual([]);
     });
 
     it('should return empty array when frame is missing required Time field', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
-          {
-            fields: [
-              { name: 'alertname', type: FieldType.string, values: ['TestAlert'], config: {} },
-              { name: 'grafana_folder', type: FieldType.string, values: ['folder'], config: {} },
-              { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid'], config: {} },
-              { name: 'alertstate', type: FieldType.string, values: ['firing'], config: {} },
-            ],
-            length: 1,
-          },
-        ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data);
+      const result = convertToWorkbenchRows([
+        {
+          fields: [
+            { name: 'alertname', type: FieldType.string, values: ['TestAlert'], config: {} },
+            { name: 'grafana_folder', type: FieldType.string, values: ['folder'], config: {} },
+            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid'], config: {} },
+            { name: 'alertstate', type: FieldType.string, values: ['firing'], config: {} },
+          ],
+          length: 1,
+        },
+      ]);
 
       expect(result).toEqual([]);
     });
 
     it('should return empty array when frame is missing required alertname field', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
-          {
-            fields: [
-              { name: 'Time', type: FieldType.time, values: [1000], config: {} },
-              { name: 'grafana_folder', type: FieldType.string, values: ['folder'], config: {} },
-              { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid'], config: {} },
-              { name: 'alertstate', type: FieldType.string, values: ['firing'], config: {} },
-            ],
-            length: 1,
-          },
-        ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data);
+      const result = convertToWorkbenchRows([
+        {
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [1000], config: {} },
+            { name: 'grafana_folder', type: FieldType.string, values: ['folder'], config: {} },
+            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid'], config: {} },
+            { name: 'alertstate', type: FieldType.string, values: ['firing'], config: {} },
+          ],
+          length: 1,
+        },
+      ]);
 
       expect(result).toEqual([]);
     });
 
     it('should return empty array when frame is missing grafana_folder field', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
-          {
-            fields: [
-              { name: 'Time', type: FieldType.time, values: [1000], config: {} },
-              { name: 'alertname', type: FieldType.string, values: ['TestAlert'], config: {} },
-              { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid'], config: {} },
-              { name: 'alertstate', type: FieldType.string, values: ['firing'], config: {} },
-            ],
-            length: 1,
-          },
-        ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data);
+      const result = convertToWorkbenchRows([
+        {
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [1000], config: {} },
+            { name: 'alertname', type: FieldType.string, values: ['TestAlert'], config: {} },
+            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid'], config: {} },
+            { name: 'alertstate', type: FieldType.string, values: ['firing'], config: {} },
+          ],
+          length: 1,
+        },
+      ]);
 
       expect(result).toEqual([]);
     });
 
     it('should return empty array when frame is missing grafana_rule_uid field', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
-          {
-            fields: [
-              { name: 'Time', type: FieldType.time, values: [1000], config: {} },
-              { name: 'alertname', type: FieldType.string, values: ['TestAlert'], config: {} },
-              { name: 'grafana_folder', type: FieldType.string, values: ['folder'], config: {} },
-              { name: 'alertstate', type: FieldType.string, values: ['firing'], config: {} },
-            ],
-            length: 1,
-          },
-        ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data);
+      const result = convertToWorkbenchRows([
+        {
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [1000], config: {} },
+            { name: 'alertname', type: FieldType.string, values: ['TestAlert'], config: {} },
+            { name: 'grafana_folder', type: FieldType.string, values: ['folder'], config: {} },
+            { name: 'alertstate', type: FieldType.string, values: ['firing'], config: {} },
+          ],
+          length: 1,
+        },
+      ]);
 
       expect(result).toEqual([]);
     });
 
     it('should return empty array when frame is missing alertstate field', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
-          {
-            fields: [
-              { name: 'Time', type: FieldType.time, values: [1000], config: {} },
-              { name: 'alertname', type: FieldType.string, values: ['TestAlert'], config: {} },
-              { name: 'grafana_folder', type: FieldType.string, values: ['folder'], config: {} },
-              { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid'], config: {} },
-            ],
-            length: 1,
-          },
-        ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data);
+      const result = convertToWorkbenchRows([
+        {
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [1000], config: {} },
+            { name: 'alertname', type: FieldType.string, values: ['TestAlert'], config: {} },
+            { name: 'grafana_folder', type: FieldType.string, values: ['folder'], config: {} },
+            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid'], config: {} },
+          ],
+          length: 1,
+        },
+      ]);
 
       expect(result).toEqual([]);
     });
@@ -159,29 +117,23 @@ describe('convertToWorkbenchRows', () => {
 
   describe('no grouping - flat alert rule list', () => {
     it('should aggregate alert instances into flat list of alert rules when no groupBy is provided', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
-          {
-            fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
-              { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert2', 'Alert1'], config: {} },
-              {
-                name: 'grafana_folder',
-                type: FieldType.string,
-                values: ['Folder1', 'Folder2', 'Folder1'],
-                config: {},
-              },
-              { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid2', 'uid1'], config: {} },
-              { name: 'alertstate', type: FieldType.string, values: ['firing', 'pending', 'firing'], config: {} },
-            ],
-            length: 3,
-          },
-        ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data);
+      const result = convertToWorkbenchRows([
+        {
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+            { name: 'alertname', type: FieldType.string, values: ['Alert1', 'Alert2', 'Alert1'], config: {} },
+            {
+              name: 'grafana_folder',
+              type: FieldType.string,
+              values: ['Folder1', 'Folder2', 'Folder1'],
+              config: {},
+            },
+            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid1', 'uid2', 'uid1'], config: {} },
+            { name: 'alertstate', type: FieldType.string, values: ['firing', 'pending', 'firing'], config: {} },
+          ],
+          length: 3,
+        },
+      ]);
 
       expect(result).toHaveLength(2);
       expect(result).toEqual([
@@ -205,9 +157,8 @@ describe('convertToWorkbenchRows', () => {
     });
 
     it('should return flat list when groupBy is empty array', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
+      const result = convertToWorkbenchRows(
+        [
           {
             fields: [
               { name: 'Time', type: FieldType.time, values: [1000], config: {} },
@@ -219,10 +170,8 @@ describe('convertToWorkbenchRows', () => {
             length: 1,
           },
         ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data, []);
+        []
+      );
 
       expect(result).toEqual([
         {
@@ -237,44 +186,38 @@ describe('convertToWorkbenchRows', () => {
     });
 
     it('should aggregate multiple alert instances from the same rule into a single alert rule', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
-          {
-            fields: [
-              { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000, 4000], config: {} },
-              {
-                name: 'alertname',
-                type: FieldType.string,
-                values: ['Alert1', 'Alert1', 'Alert2', 'Alert1'],
-                config: {},
-              },
-              {
-                name: 'grafana_folder',
-                type: FieldType.string,
-                values: ['Folder1', 'Folder1', 'Folder2', 'Folder1'],
-                config: {},
-              },
-              {
-                name: 'grafana_rule_uid',
-                type: FieldType.string,
-                values: ['uid1', 'uid1', 'uid2', 'uid1'],
-                config: {},
-              },
-              {
-                name: 'alertstate',
-                type: FieldType.string,
-                values: ['firing', 'pending', 'firing', 'firing'],
-                config: {},
-              },
-            ],
-            length: 4,
-          },
-        ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data);
+      const result = convertToWorkbenchRows([
+        {
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000, 4000], config: {} },
+            {
+              name: 'alertname',
+              type: FieldType.string,
+              values: ['Alert1', 'Alert1', 'Alert2', 'Alert1'],
+              config: {},
+            },
+            {
+              name: 'grafana_folder',
+              type: FieldType.string,
+              values: ['Folder1', 'Folder1', 'Folder2', 'Folder1'],
+              config: {},
+            },
+            {
+              name: 'grafana_rule_uid',
+              type: FieldType.string,
+              values: ['uid1', 'uid1', 'uid2', 'uid1'],
+              config: {},
+            },
+            {
+              name: 'alertstate',
+              type: FieldType.string,
+              values: ['firing', 'pending', 'firing', 'firing'],
+              config: {},
+            },
+          ],
+          length: 4,
+        },
+      ]);
 
       expect(result).toHaveLength(2);
       expect(result).toEqual([
@@ -300,9 +243,8 @@ describe('convertToWorkbenchRows', () => {
 
   describe('single-level grouping', () => {
     it('should group by single field', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
+      const result = convertToWorkbenchRows(
+        [
           {
             fields: [
               { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
@@ -315,10 +257,8 @@ describe('convertToWorkbenchRows', () => {
             length: 3,
           },
         ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data, ['team']);
+        ['team']
+      );
 
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
@@ -366,9 +306,8 @@ describe('convertToWorkbenchRows', () => {
     });
 
     it('should handle empty label values and place them at the end', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
+      const result = convertToWorkbenchRows(
+        [
           {
             fields: [
               { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000, 4000], config: {} },
@@ -401,10 +340,8 @@ describe('convertToWorkbenchRows', () => {
             length: 4,
           },
         ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data, ['team']);
+        ['team']
+      );
 
       expect(result).toHaveLength(3);
       expect(result[0].type).toBe('group');
@@ -422,9 +359,8 @@ describe('convertToWorkbenchRows', () => {
     });
 
     it('should handle undefined label values and place them at the end', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
+      const result = convertToWorkbenchRows(
+        [
           {
             fields: [
               { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
@@ -442,10 +378,8 @@ describe('convertToWorkbenchRows', () => {
             length: 3,
           },
         ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data, ['team']);
+        ['team']
+      );
 
       expect(result).toHaveLength(3);
       expect(result[0].type).toBe('group');
@@ -463,9 +397,8 @@ describe('convertToWorkbenchRows', () => {
     });
 
     it('should handle all empty label values', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
+      const result = convertToWorkbenchRows(
+        [
           {
             fields: [
               { name: 'Time', type: FieldType.time, values: [1000, 2000], config: {} },
@@ -478,10 +411,8 @@ describe('convertToWorkbenchRows', () => {
             length: 2,
           },
         ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data, ['team']);
+        ['team']
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
@@ -514,9 +445,8 @@ describe('convertToWorkbenchRows', () => {
 
   describe('multi-level grouping', () => {
     it('should group by two levels', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
+      const result = convertToWorkbenchRows(
+        [
           {
             fields: [
               { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000, 4000], config: {} },
@@ -560,10 +490,8 @@ describe('convertToWorkbenchRows', () => {
             length: 4,
           },
         ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data, ['team', 'severity']);
+        ['team', 'severity']
+      );
 
       expect(result).toHaveLength(2);
 
@@ -619,9 +547,8 @@ describe('convertToWorkbenchRows', () => {
     });
 
     it('should group by three levels', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
+      const result = convertToWorkbenchRows(
+        [
           {
             fields: [
               { name: 'Time', type: FieldType.time, values: [1000, 2000], config: {} },
@@ -636,10 +563,8 @@ describe('convertToWorkbenchRows', () => {
             length: 2,
           },
         ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data, ['team', 'severity', 'region']);
+        ['team', 'severity', 'region']
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0].type).toBe('group');
@@ -677,9 +602,8 @@ describe('convertToWorkbenchRows', () => {
     });
 
     it('should handle empty values at multiple levels and place them at the end', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
+      const result = convertToWorkbenchRows(
+        [
           {
             fields: [
               { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000, 4000], config: {} },
@@ -713,10 +637,8 @@ describe('convertToWorkbenchRows', () => {
             length: 4,
           },
         ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data, ['team', 'severity']);
+        ['team', 'severity']
+      );
 
       expect(result).toHaveLength(2);
       expect(result[0].type).toBe('group');
@@ -740,9 +662,8 @@ describe('convertToWorkbenchRows', () => {
 
   describe('alert instance aggregation with grouping', () => {
     it('should aggregate alert instances from the same rule within groups', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
+      const result = convertToWorkbenchRows(
+        [
           {
             fields: [
               { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000, 4000], config: {} },
@@ -780,10 +701,8 @@ describe('convertToWorkbenchRows', () => {
             length: 4,
           },
         ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data, ['team']);
+        ['team']
+      );
 
       expect(result).toHaveLength(2);
 
@@ -817,9 +736,8 @@ describe('convertToWorkbenchRows', () => {
 
   describe('grouping by non-existent field', () => {
     it('should treat all values as empty when grouping by field that does not exist', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
+      const result = convertToWorkbenchRows(
+        [
           {
             fields: [
               { name: 'Time', type: FieldType.time, values: [1000, 2000], config: {} },
@@ -831,10 +749,8 @@ describe('convertToWorkbenchRows', () => {
             length: 2,
           },
         ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data, ['nonexistent']);
+        ['nonexistent']
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
@@ -867,9 +783,8 @@ describe('convertToWorkbenchRows', () => {
 
   describe('additional fields', () => {
     it('should work with extra fields in the data frame', () => {
-      const data: PanelData = {
-        state: LoadingState.Done,
-        series: [
+      const result = convertToWorkbenchRows(
+        [
           {
             fields: [
               { name: 'Time', type: FieldType.time, values: [1000, 2000], config: {} },
@@ -885,10 +800,8 @@ describe('convertToWorkbenchRows', () => {
             length: 2,
           },
         ],
-        timeRange: getDefaultTimeRange(),
-      };
-
-      const result = convertToWorkbenchRows(data, ['team']);
+        ['team']
+      );
 
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({

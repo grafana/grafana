@@ -5,7 +5,7 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneQueryRunner } from '@grafana/scenes';
-import { LoadingBar, ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';
