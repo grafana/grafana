@@ -15,7 +15,6 @@ import {
   DataFrame,
   ScopedVars,
   dateTime,
-  getDefaultTimeRange,
 } from '@grafana/data';
 import { setPluginLinksHook } from '@grafana/runtime';
 import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
@@ -23,10 +22,10 @@ import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../mocks/logRow';
 
+import { emptyContextData, LogDetailsContext, LogDetailsContextData } from './LogDetailsContext';
 import { LogLineDetails, Props } from './LogLineDetails';
 import { LogListContext, LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
-import { emptyContextData, LogDetailsContext, LogDetailsContextData } from './LogDetailsContext';
 
 jest.mock('@grafana/assistant', () => {
   return {

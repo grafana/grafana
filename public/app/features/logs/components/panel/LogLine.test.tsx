@@ -8,6 +8,7 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../mocks/logRow';
 import { getDisplayedFieldsForLogs, OTEL_PROBE_FIELD } from '../otel/formats';
 
+import { emptyContextData, LogDetailsContext } from './LogDetailsContext';
 import { getGridTemplateColumns, getStyles, LogLine, Props } from './LogLine';
 import { LogListFontSize } from './LogList';
 import { LogListContextProvider, LogListContext } from './LogListContext';
@@ -15,7 +16,6 @@ import { LogListSearchContext } from './LogListSearchContext';
 import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
 import { LogLineVirtualization } from './virtualization';
-import { emptyContextData, LogDetailsContext } from './LogDetailsContext';
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),

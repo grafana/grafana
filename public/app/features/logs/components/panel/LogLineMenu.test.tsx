@@ -5,12 +5,12 @@ import { CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana
 
 import { createLogLine } from '../mocks/logRow';
 
+import { LogDetailsContextProvider } from './LogDetailsContext';
 import { getStyles } from './LogLine';
 import { LogLineMenu, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider } from './LogListContext';
 import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
-import { LogDetailsContextProvider } from './LogDetailsContext';
 
 jest.mock('./LogListContext');
 
