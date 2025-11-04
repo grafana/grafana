@@ -193,7 +193,8 @@ export function prepConfig(opts: PrepConfigOpts) {
   const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
-  const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || isSparseHeatmap;
+  // const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || isSparseHeatmap;
+  const shouldUseLogScale = false;
   const isOrdinalY = readHeatmapRowsCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
 
   // random to prevent syncing y in other heatmaps
