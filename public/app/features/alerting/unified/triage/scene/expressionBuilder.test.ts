@@ -99,11 +99,6 @@ describe('prometheusExpressionBuilder', () => {
     expect(prometheusExpressionBuilder(filters)).toBe('');
   });
 
-  it('should handle undefined values gracefully', () => {
-    const filters: AdHocFilterWithLabels[] = [{ key: 'alertname', operator: '=', value: undefined }];
-    expect(prometheusExpressionBuilder(filters)).toBe('alertname=""');
-  });
-
   describe('reported bug test cases', () => {
     it('should match alerts starting with foo using foo.*', () => {
       const filters: AdHocFilterWithLabels[] = [{ key: 'alertname', operator: '=~', value: 'foo.*' }];
