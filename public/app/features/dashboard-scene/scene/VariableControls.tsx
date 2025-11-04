@@ -27,7 +27,11 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
         .map((variable) => (
           <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
         ))}
-      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
+      {config.featureToggles.dashboardNewLayouts ? (
+        <div className="dashboard-canvas-add-button">
+          <AddVariableButton dashboard={dashboard} />
+        </div>
+      ) : null}
     </>
   );
 }
@@ -166,10 +170,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   switchLabel: css({
     marginTop: 0,
     marginBottom: 0,
-  }),
-  labelWrapper: css({
-    display: 'flex',
-    alignItems: 'center',
   }),
   labelSelectable: css({
     cursor: 'pointer',

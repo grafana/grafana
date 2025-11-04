@@ -1516,10 +1516,11 @@ var (
 		},
 		{
 			Name:         "newLogsPanel",
-			Description:  "Enables the new logs panel in Explore",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables the new logs panel",
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "true",
 		},
 		{
 			Name:              "grafanaconThemes",
@@ -1867,10 +1868,10 @@ var (
 		{
 			Name:         "sharingDashboardImage",
 			Description:  "Enables image sharing functionality for dashboards",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSharingSquad,
-			HideFromDocs: true,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:        "preferLibraryPanelTitle",
@@ -2114,6 +2115,12 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
 			Expression:   "true",
+		},
+		{
+			Name:        "jaegerEnableGrpcEndpoint",
+			Description: "Enable querying trace data through Jaeger's gRPC endpoint (HTTP)",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOSSBigTent,
 		},
 		{
 			Name:         "pluginStoreServiceLoading",

@@ -7,8 +7,11 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"sync/atomic"
 	"time"
 
+	"github.com/grafana/dskit/concurrency"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -27,6 +30,7 @@ type finalizer struct {
 	lister        resources.ResourceLister
 	clientFactory resources.ClientFactory
 	metrics       *finalizerMetrics
+	maxWorkers    int
 }
 
 func (f *finalizer) process(ctx context.Context,
@@ -113,27 +117,73 @@ func (f *finalizer) processExistingItems(
 
 	// Safe deletion order
 	sortResourceListForDeletion(items)
-	count := 0
 
+	var dashboards, folderItems []*provisioning.ResourceListItem
 	for _, item := range items.Items {
-		res, _, err := clients.ForResource(ctx, schema.GroupVersionResource{
+		if item.Group == folders.GroupVersion.Group {
+			folderItems = append(folderItems, &item)
+		} else {
+			dashboards = append(dashboards, &item)
+		}
+	}
+
+	processItem := func(jobCtx context.Context, item *provisioning.ResourceListItem) error {
+		res, _, err := clients.ForResource(jobCtx, schema.GroupVersionResource{
 			Group:    item.Group,
 			Resource: item.Resource,
 		})
 		if err != nil {
 			logger.Error("error getting client for resource", "resource", item.Resource, "error", err)
-			return count, err
+			return err
 		}
 
-		err = cb(res, &item)
+		err = cb(res, item)
 		if err != nil {
+			if errors.IsNotFound(err) {
+				logger.Info("resource not found, skipping", "name", item.Name, "group", item.Group, "resource", item.Resource)
+				return nil
+			}
 			logger.Error("error processing item", "name", item.Name, "error", err)
-			return count, fmt.Errorf("processing item: %w", err)
-		} else {
+			return fmt.Errorf("processing item: %w", err)
+		}
+		return nil
+	}
+
+	processGroup := func(group []*provisioning.ResourceListItem) (int, error) {
+		var processed int64
+		err := concurrency.ForEachJob(ctx, len(group), f.maxWorkers, func(ctx context.Context, idx int) error {
+			jobCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+			defer cancel()
+			item := group[idx]
+			if err := processItem(jobCtx, item); err != nil {
+				return err
+			}
+			atomic.AddInt64(&processed, 1)
+			return nil
+		})
+		return int(processed), err
+	}
+
+	count := 0
+
+	if len(dashboards) > 0 {
+		processed, err := processGroup(dashboards)
+		if err != nil {
+			return processed, err
+		}
+		count += processed
+	}
+
+	if len(folderItems) > 0 {
+		for _, item := range folderItems {
+			if err := processItem(ctx, item); err != nil {
+				return count, err
+			}
 			count++
 		}
 	}
-	logger.Info("processed orphan items", "items", count)
+
+	logger.Info("processed items", "items", count)
 	return count, nil
 }
 
