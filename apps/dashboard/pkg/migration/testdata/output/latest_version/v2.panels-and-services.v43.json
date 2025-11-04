@@ -1,0 +1,168 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "autoMigrateFrom": "graphite",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "grid": {
+        "max": 100,
+        "min": 0
+      },
+      "id": 1,
+      "legend": true,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "target": "cpu.usage"
+        }
+      ],
+      "title": "CPU Usage",
+      "type": "timeseries",
+      "y2_format": "short",
+      "y_format": "percent"
+    },
+    {
+      "autoMigrateFrom": "graph",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "grid": {
+        "min": 0
+      },
+      "id": 2,
+      "legend": false,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "target": "memory.usage"
+        }
+      ],
+      "title": "Memory Usage",
+      "type": "timeseries",
+      "y_format": "bytes"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "grid": {
+        "max": 100,
+        "min": 0
+      },
+      "id": 3,
+      "legend": true,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Server Stats",
+      "type": "table",
+      "y2_format": "bytes",
+      "y_format": "short"
+    },
+    {
+      "autoMigrateFrom": "graphite",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "id": 4,
+      "legend": true,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A",
+          "target": "disk.io"
+        }
+      ],
+      "title": "Disk I/O",
+      "type": "timeseries",
+      "y2_format": "Bps"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 43,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "datasource": "prometheus",
+        "name": "server",
+        "options": [],
+        "query": "label_values(server)",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "name": "env",
+        "options": [
+          {
+            "text": "Production",
+            "value": "prod"
+          },
+          {
+            "text": "Staging",
+            "value": "stage"
+          }
+        ],
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V2 Comprehensive Migration Test Dashboard",
+  "weekStart": ""
+}

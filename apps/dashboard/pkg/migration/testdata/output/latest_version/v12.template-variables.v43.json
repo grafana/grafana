@@ -1,0 +1,81 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [],
+  "refresh": "",
+  "schemaVersion": 43,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "name": "refresh_true_var",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "name": "refresh_false_var",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "hide": 2,
+        "hideVariable": true,
+        "name": "hide_variable_var",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "hide": 1,
+        "hideLabel": true,
+        "name": "hide_label_var",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "hide": 2,
+        "hideLabel": true,
+        "hideVariable": true,
+        "name": "priority_var",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "name": "no_properties_var",
+        "options": [],
+        "refresh": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V12 Template Variables Migration Test",
+  "weekStart": ""
+}
