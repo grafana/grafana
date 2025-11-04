@@ -4812,6 +4812,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardV2beta1FieldConfigSourceOverride
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"__systemRef": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Describes config override rules created when interacting with Grafana.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"matcher": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},

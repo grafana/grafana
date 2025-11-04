@@ -1866,6 +1866,8 @@ func NewDashboardSpec() *DashboardSpec {
 
 // +k8s:openapi-gen=true
 type DashboardV2alpha1FieldConfigSourceOverrides struct {
+	// Describes config override rules created when interacting with Grafana.
+	SystemRef  *string                       `json:"__systemRef,omitempty"`
 	Matcher    DashboardMatcherConfig        `json:"matcher"`
 	Properties []DashboardDynamicConfigValue `json:"properties"`
 }

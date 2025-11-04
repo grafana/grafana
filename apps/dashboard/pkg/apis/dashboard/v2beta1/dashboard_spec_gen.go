@@ -1918,6 +1918,8 @@ func NewDashboardV2beta1DataQueryKindDatasource() *DashboardV2beta1DataQueryKind
 
 // +k8s:openapi-gen=true
 type DashboardV2beta1FieldConfigSourceOverrides struct {
+	// Describes config override rules created when interacting with Grafana.
+	SystemRef  *string                       `json:"__systemRef,omitempty"`
 	Matcher    DashboardMatcherConfig        `json:"matcher"`
 	Properties []DashboardDynamicConfigValue `json:"properties"`
 }

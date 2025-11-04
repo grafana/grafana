@@ -2319,6 +2319,10 @@ func extractFieldConfigOverrides(fieldConfig map[string]interface{}) []dashv2alp
 
 		fieldOverride := dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides{}
 
+		if systemRef, ok := overrideMap["__systemRef"].(string); ok {
+			fieldOverride.SystemRef = &systemRef
+		}
+
 		// Map override fields individually
 		if matcher, exists := overrideMap["matcher"]; exists {
 			if matcherMap, ok := matcher.(map[string]interface{}); ok {

@@ -118,6 +118,7 @@
                     ]
                   },
                   {
+                    "__systemRef": "hideSeriesFrom",
                     "matcher": {
                       "id": "byNames",
                       "options": {

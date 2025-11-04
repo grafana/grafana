@@ -259,6 +259,8 @@ export interface FieldConfigSource {
 	defaults: FieldConfig;
 	// Overrides are the options applied to specific fields overriding the defaults.
 	overrides: {
+		// Describes config override rules created when interacting with Grafana.
+		__systemRef?: string;
 		matcher: MatcherConfig;
 		properties: DynamicConfigValue[];
 	}[];

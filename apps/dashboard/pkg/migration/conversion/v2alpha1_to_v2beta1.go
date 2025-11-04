@@ -335,6 +335,8 @@ func convertFieldConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFieldConfi
 }
 
 func convertFieldConfigOverride_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides, out *dashv2beta1.DashboardV2beta1FieldConfigSourceOverrides) {
+	out.SystemRef = in.SystemRef
+
 	out.Matcher = dashv2beta1.DashboardMatcherConfig{
 		Id:      in.Matcher.Id,
 		Options: in.Matcher.Options,
