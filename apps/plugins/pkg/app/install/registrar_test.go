@@ -20,7 +20,7 @@ func TestPluginInstall_ShouldUpdate(t *testing.T) {
 			Namespace: "org-1",
 			Name:      "plugin-1",
 			Annotations: map[string]string{
-				PluginInstallSourceAnnotation: string(SourcePluginStore),
+				PluginInstallSourceAnnotation: SourcePluginStore,
 			},
 		},
 		Spec: pluginsv0alpha1.PluginSpec{
@@ -71,7 +71,7 @@ func TestPluginInstall_ShouldUpdate(t *testing.T) {
 		{
 			name: "source differs",
 			modifyExisting: func(existing *pluginsv0alpha1.Plugin) {
-				existing.Annotations[PluginInstallSourceAnnotation] = string(SourceUnknown)
+				existing.Annotations[PluginInstallSourceAnnotation] = SourceUnknown
 			},
 			expectUpdate: true,
 		},
@@ -129,7 +129,7 @@ func TestInstallRegistrar_Register(t *testing.T) {
 					Name:            "plugin-1",
 					ResourceVersion: "7",
 					Annotations: map[string]string{
-						PluginInstallSourceAnnotation: string(SourcePluginStore),
+						PluginInstallSourceAnnotation: SourcePluginStore,
 					},
 				},
 				Spec: pluginsv0alpha1.PluginSpec{
@@ -154,7 +154,7 @@ func TestInstallRegistrar_Register(t *testing.T) {
 					Name:            "plugin-1",
 					ResourceVersion: "9",
 					Annotations: map[string]string{
-						PluginInstallSourceAnnotation: string(SourcePluginStore),
+						PluginInstallSourceAnnotation: SourcePluginStore,
 					},
 				},
 				Spec: pluginsv0alpha1.PluginSpec{
@@ -469,7 +469,7 @@ func TestPluginInstall_ToPluginInstallV0Alpha1(t *testing.T) {
 			},
 			namespace: "org-1",
 			validate: func(t *testing.T, p *pluginsv0alpha1.Plugin) {
-				require.Equal(t, string(SourceUnknown), p.Annotations[PluginInstallSourceAnnotation])
+				require.Equal(t, SourceUnknown, p.Annotations[PluginInstallSourceAnnotation])
 			},
 		},
 		{
@@ -620,7 +620,7 @@ func TestPluginInstall_ShouldUpdate_URLTransitions(t *testing.T) {
 					Namespace: "org-1",
 					Name:      "plugin-1",
 					Annotations: map[string]string{
-						PluginInstallSourceAnnotation: string(SourcePluginStore),
+						PluginInstallSourceAnnotation: SourcePluginStore,
 					},
 				},
 				Spec: pluginsv0alpha1.PluginSpec{
@@ -712,7 +712,7 @@ func TestInstallRegistrar_Register_ErrorCases(t *testing.T) {
 							Name:            "plugin-1",
 							ResourceVersion: "5",
 							Annotations: map[string]string{
-								PluginInstallSourceAnnotation: string(SourcePluginStore),
+								PluginInstallSourceAnnotation: SourcePluginStore,
 							},
 						},
 						Spec: pluginsv0alpha1.PluginSpec{
@@ -769,7 +769,7 @@ func TestInstallRegistrar_Unregister(t *testing.T) {
 					Namespace: "org-1",
 					Name:      "plugin-1",
 					Annotations: map[string]string{
-						PluginInstallSourceAnnotation: string(SourcePluginStore),
+						PluginInstallSourceAnnotation: SourcePluginStore,
 					},
 				},
 			},
@@ -794,7 +794,7 @@ func TestInstallRegistrar_Unregister(t *testing.T) {
 					Namespace: "org-1",
 					Name:      "plugin-1",
 					Annotations: map[string]string{
-						PluginInstallSourceAnnotation: string(SourceUnknown),
+						PluginInstallSourceAnnotation: SourceUnknown,
 					},
 				},
 			},
@@ -819,7 +819,7 @@ func TestInstallRegistrar_Unregister(t *testing.T) {
 					Namespace: "org-1",
 					Name:      "plugin-1",
 					Annotations: map[string]string{
-						PluginInstallSourceAnnotation: string(SourcePluginStore),
+						PluginInstallSourceAnnotation: SourcePluginStore,
 					},
 				},
 			},
