@@ -975,9 +975,12 @@ describe('ResponseTransformers', () => {
         const result = getPanelQueries(targets, panelDs);
 
         expect(result).toHaveLength(targets.length);
+        // @ts-expect-error
         expect(result[0].spec.refId).toBe('A');
+        // @ts-expect-error
         expect(result[1].spec.refId).toBe('B');
 
+        // @ts-expect-error
         result.forEach((query) => {
           expect(query.kind).toBe('PanelQuery');
           expect(query.spec.query.group).toEqual('theoretical-ds');
@@ -1003,9 +1006,12 @@ describe('ResponseTransformers', () => {
         const result = getPanelQueries(targets, panelDs);
 
         expect(result).toHaveLength(targets.length);
+        // @ts-expect-error
         expect(result[0].spec.refId).toBe('A');
+        // @ts-expect-error
         expect(result[1].spec.refId).toBe('B');
 
+        // @ts-expect-error
         result.forEach((query) => {
           expect(query.kind).toBe('PanelQuery');
           expect(query.spec.query.group).toEqual('theoretical-ds');

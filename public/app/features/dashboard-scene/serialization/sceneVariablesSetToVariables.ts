@@ -1,5 +1,3 @@
-import { omit } from 'lodash';
-
 import { config } from '@grafana/runtime';
 import {
   AdHocFilterWithLabels as SceneAdHocFilterWithLabels,
