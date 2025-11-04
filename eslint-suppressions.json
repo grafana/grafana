@@ -2629,6 +2629,9 @@
   "public/app/features/dashboard/state/DashboardMigrator.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
+    },
+    "@typescript-eslint/no-explicit-any": {
+      "count": 16
     }
   },
   "public/app/features/dashboard/state/DashboardModel.repeat.test.ts": {
