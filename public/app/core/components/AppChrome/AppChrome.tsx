@@ -45,9 +45,8 @@ export function AppChrome({ children }: Props) {
   );
 
   const headerLevels = useChromeHeaderLevels();
-  const headerHeight = headerLevels * getChromeHeaderLevelHeight();
-  const sidebarTop = headerLevels === 2 ? getChromeHeaderLevelHeight() : headerHeight;
-  const styles = useStyles2(getStyles, headerHeight, sidebarTop);
+  const useSidebarTop = headerLevels === 2;
+  const styles = useStyles2(getStyles, getChromeHeaderLevelHeight());
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles);
 
@@ -57,7 +56,7 @@ export function AppChrome({ children }: Props) {
   const contentClass = cx({
     [styles.content]: true,
     [styles.contentChromeless]: state.chromeless,
-    [styles.contentWithSidebar]: isExtensionSidebarOpen && !state.chromeless && headerLevels !== 2,
+    [styles.contentWithSidebar]: isExtensionSidebarOpen && !state.chromeless && !useSidebarTop,
   });
 
   const handleMegaMenu = () => {
@@ -110,7 +109,7 @@ export function AppChrome({ children }: Props) {
               actions={state.actions}
               breadcrumbActions={state.breadcrumbActions}
               scopes={scopes}
-              showToolbarLevel={headerLevels === 2}
+              showToolbarLevel={useSidebarTop}
             />
           </header>
         </>
@@ -132,7 +131,7 @@ export function AppChrome({ children }: Props) {
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-              [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen && headerLevels !== 2,
+              [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen && !useSidebarTop,
               [contentSizeStyles.contentWidth]: !state.chromeless && isExtensionSidebarOpen,
             })}
             id="pageContent"
@@ -187,7 +186,7 @@ function useResponsiveDockedMegaMenu(chrome: AppChromeService) {
   }, [isLargeScreen, chrome, dockedMenuLocalStorageState]);
 }
 
-const getStyles = (theme: GrafanaTheme2, headerHeight: number, sidebarTop: number) => {
+const getStyles = (theme: GrafanaTheme2, headerHeight: number) => {
   return {
     content: css({
       label: 'page-content',
@@ -282,7 +281,7 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number, sidebarTop: numbe
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       position: 'fixed !important' as 'fixed',
       // When two bars, position from first level (next to Share button); otherwise from full header
-      top: sidebarTop,
+      top: headerHeight,
       bottom: 0,
       zIndex: theme.zIndex.navbarFixed + 1,
       right: 0,
