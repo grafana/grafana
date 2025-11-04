@@ -316,6 +316,31 @@ describe('ScopesSelectorService', () => {
       expect(service.state.nodes).toEqual({ 'test-scope-node': mockNode });
       expect(storeValue[RECENT_SCOPES_KEY]).toEqual(JSON.stringify([[{ ...mockScope, parentNode: mockNode }]]));
     });
+
+    it('should set scopeNodeId for the first scope only', async () => {
+      await service.changeScopes(['test-scope', 'test-scope-2'], 'parent-node', 'scope-node-1');
+
+      expect(service.state.appliedScopes).toEqual([
+        { scopeId: 'test-scope', scopeNodeId: 'scope-node-1', parentNodeId: 'parent-node' },
+        { scopeId: 'test-scope-2', scopeNodeId: undefined, parentNodeId: 'parent-node' },
+      ]);
+    });
+
+    it('should handle scopeNodeId without parentNodeId', async () => {
+      await service.changeScopes(['test-scope'], undefined, 'scope-node-1');
+
+      expect(service.state.appliedScopes).toEqual([
+        { scopeId: 'test-scope', scopeNodeId: 'scope-node-1', parentNodeId: undefined },
+      ]);
+    });
+
+    it('should maintain backward compatibility when only parentNodeId is provided', async () => {
+      await service.changeScopes(['test-scope'], 'parent-node');
+
+      expect(service.state.appliedScopes).toEqual([
+        { scopeId: 'test-scope', scopeNodeId: undefined, parentNodeId: 'parent-node' },
+      ]);
+    });
   });
 
   describe('open', () => {

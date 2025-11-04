@@ -41,7 +41,12 @@ interface BasePropsWithAriaLabel extends BaseProps {
   ['aria-label']: string;
 }
 
-export type Props = BasePropsWithTooltip | BasePropsWithAriaLabel;
+interface BasePropsWithAriaLabelledBy extends BaseProps {
+  /** Reference to an element id that labels the button. No tooltip will be set in this case. */
+  ['aria-labelledby']: string;
+}
+
+export type Props = BasePropsWithTooltip | BasePropsWithAriaLabel | BasePropsWithAriaLabelledBy;
 
 /**
  * This component looks just like an icon but behaves like a button.

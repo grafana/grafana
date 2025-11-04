@@ -415,6 +415,7 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
     queryOptions.timeFrom = panelTime.state.timeFrom;
     queryOptions.timeShift = panelTime.state.timeShift;
     queryOptions.hideTimeOverride = panelTime.state.hideTimeOverride;
+    queryOptions.timeCompare = panelTime.state.compareWith;
   }
   return queryOptions;
 }

@@ -51,6 +51,18 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => {
   };
 });
 
+// Mock the new hooks that depend on router context
+jest.mock('../../hooks/usePRBranch', () => ({
+  usePRBranch: jest.fn().mockReturnValue(undefined),
+}));
+
+jest.mock('../../hooks/useLastBranch', () => ({
+  useLastBranch: jest.fn().mockReturnValue({
+    getLastBranch: jest.fn().mockReturnValue(undefined),
+    setLastBranch: jest.fn(),
+  }),
+}));
+
 jest.mock('../../hooks/useProvisionedFolderFormData', () => {
   return {
     useProvisionedFolderFormData: jest.fn(),
