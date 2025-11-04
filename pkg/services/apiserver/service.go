@@ -424,11 +424,15 @@ func (s *service) start(ctx context.Context) error {
 
 	var runningServer *genericapiserver.GenericAPIServer
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	isKubernetesAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator)
-	//nolint:staticcheck // not yet migrated to OpenFeature
 	isDataplaneAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator)
+	isKubernetesAggregatorEnabled := true
 
-	if isKubernetesAggregatorEnabled {
+	if isDataplaneAggregatorEnabled {
+		runningServer, err = s.startDataplaneAggregator(ctx, transport, serverConfig, delegate)
+		if err != nil {
+			return err
+		}
+	} else { // assume KubernetesAggregator is enabled when dataplane aggregator is disabled
 		aggregatorServer, err := s.aggregatorRunner.Configure(s.options, serverConfig, delegate, s.scheme, builders)
 		if err != nil {
 			return err
@@ -444,16 +448,8 @@ func (s *service) start(ctx context.Context) error {
 			} else {
 				delegate = aggregatorServer
 			}
-		} else {
-			// even though the FT is set to true, enterprise isn't linked
+		} else { // enterprise isn't linked, this is the noop aggregator
 			isKubernetesAggregatorEnabled = false
-		}
-	}
-
-	if isDataplaneAggregatorEnabled {
-		runningServer, err = s.startDataplaneAggregator(ctx, transport, serverConfig, delegate)
-		if err != nil {
-			return err
 		}
 	}
 

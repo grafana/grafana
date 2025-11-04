@@ -528,10 +528,6 @@ export interface FeatureToggles {
   */
   tlsMemcached?: boolean;
   /**
-  * Enable grafana's embedded kube-aggregator
-  */
-  kubernetesAggregator?: boolean;
-  /**
   * Enable CAP token based authentication in grafana's embedded kube-aggregator
   */
   kubernetesAggregatorCapTokenAuth?: boolean;

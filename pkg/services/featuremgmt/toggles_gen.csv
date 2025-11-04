@@ -117,8 +117,7 @@ sqlExpressionsColumnAutoComplete,experimental,@grafana/datapro,false,false,true
 groupToNestedTableTransformation,GA,@grafana/dataviz-squad,false,false,true
 newPDFRendering,GA,@grafana/grafana-operator-experience-squad,false,false,false
 tlsMemcached,GA,@grafana/grafana-operator-experience-squad,false,false,false
-kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
-kubernetesAggregatorCapTokenAuth,experimental,@grafana/grafana-app-platform-squad,false,true,false
+kubernetesAggregatorCapTokenAuth,GA,@grafana/grafana-app-platform-squad,false,true,false
 groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
 scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
 oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
