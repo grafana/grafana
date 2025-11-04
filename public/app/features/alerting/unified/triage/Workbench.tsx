@@ -126,6 +126,10 @@ export function Workbench({ domain, data, queryRunner, groupBy, hasActiveFilters
 
   // Calculate once: show folder metadata only if not grouping by grafana_folder
   const enableFolderMeta = !groupBy?.includes('grafana_folder');
+
+  // Determine UI state
+  const showEmptyState = !isLoading && data.length === 0;
+  const showData = !isLoading && data.length > 0;
   // splitter for template and payload editor
   const splitter = useSplitter({
     direction: 'row',
@@ -151,8 +155,7 @@ export function Workbench({ domain, data, queryRunner, groupBy, hasActiveFilters
         <div {...splitter.primaryProps}>
           <div ref={leftColumnRef} className={cx(styles.flexFull, styles.minColumnWidth)} />
         </div>
-        {/* Hide splitter when there's no data */}
-        <div {...splitter.splitterProps} style={{ display: !isLoading && data.length === 0 ? 'none' : undefined }} />
+        {!showEmptyState && <div {...splitter.splitterProps} />}
         <div {...splitter.secondaryProps}>
           <div ref={rightColumnRef} className={cx(styles.flexFull, styles.minColumnWidth)} />
         </div>
@@ -160,7 +163,7 @@ export function Workbench({ domain, data, queryRunner, groupBy, hasActiveFilters
       {/* content goes here */}
       <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
         {/* Only show summary stats and chart when we have data or are loading */}
-        {(isLoading || data.length > 0) && (
+        {!showEmptyState && (
           <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
             <SummaryStatsReact />
             <SummaryChartReact />
@@ -174,12 +177,7 @@ export function Workbench({ domain, data, queryRunner, groupBy, hasActiveFilters
             domain={domain}
             queryRunner={queryRunner}
           >
-            <ScrollContainer
-              height="100%"
-              width="100%"
-              scrollbarWidth="none"
-              showScrollIndicators={!isLoading && data.length > 0}
-            >
+            <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators={showData}>
               {isLoading && (
                 <>
                   <GenericRowSkeleton key="skeleton-1" width={leftColumnWidth} depth={0} />
@@ -187,7 +185,7 @@ export function Workbench({ domain, data, queryRunner, groupBy, hasActiveFilters
                   <GenericRowSkeleton key="skeleton-3" width={leftColumnWidth} depth={0} />
                 </>
               )}
-              {!isLoading && data.length === 0 && (
+              {showEmptyState && (
                 <div className={styles.emptyStateContainer}>
                   <EmptyState
                     variant="not-found"
@@ -205,8 +203,7 @@ export function Workbench({ domain, data, queryRunner, groupBy, hasActiveFilters
                   </EmptyState>
                 </div>
               )}
-              {!isLoading &&
-                data.length > 0 &&
+              {showData &&
                 dataSlice.map((row, index) => {
                   const rowKey = generateRowKey(row, index);
                   return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey, enableFolderMeta);
