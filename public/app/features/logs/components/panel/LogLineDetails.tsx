@@ -111,7 +111,10 @@ const LogLineDetailsTabs = memo(
                     <Icon
                       name="times"
                       aria-label={t('logs.log-line-details.remove-log', 'Remove log')}
-                      onClick={() => toggleDetails(log)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleDetails(log);
+                      }}
                     />
                   )}
                 />
