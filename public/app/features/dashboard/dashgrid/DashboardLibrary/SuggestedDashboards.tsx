@@ -187,7 +187,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
       creationOrigin: 'dashboard_library_datasource_dashboard',
     });
 
-    window.location.href = `/dashboard/template?${params.toString()}`;
+   locationService.push(`/dashboard/template?${params.toString()}`);
   };
 
   const onUseCommunityDashboard = async (dashboard: GnetDashboard) => {
