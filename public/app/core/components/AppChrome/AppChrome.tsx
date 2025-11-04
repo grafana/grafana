@@ -46,7 +46,7 @@ export function AppChrome({ children }: Props) {
 
   const headerLevels = useChromeHeaderLevels();
   const useSidebarTop = headerLevels === 2;
-  const styles = useStyles2(getStyles, getChromeHeaderLevelHeight());
+  const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight());
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles);
 
@@ -186,13 +186,13 @@ function useResponsiveDockedMegaMenu(chrome: AppChromeService) {
   }, [isLargeScreen, chrome, dockedMenuLocalStorageState]);
 }
 
-const getStyles = (theme: GrafanaTheme2, headerHeight: number) => {
+const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: number) => {
   return {
     content: css({
       label: 'page-content',
       display: 'flex',
       flexDirection: 'column',
-      paddingTop: headerHeight,
+      paddingTop: headerLevels * headerHeight,
       flexGrow: 1,
       height: 'auto',
     }),
