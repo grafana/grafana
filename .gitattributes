@@ -1,1 +1,4 @@
 * text=auto eol=lf
+*.gen.ts linguist-generated
+*_gen.ts linguist-generated
+*_gen.go linguist-generated
