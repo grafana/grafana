@@ -2,7 +2,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { PluginDashboard } from 'app/types/plugins';
 
-import { GnetDashboard } from '../types';
+import { GnetDashboardsResponse } from '../types';
 
 /**
  * Parameters for fetching community dashboards from Grafana.com
@@ -29,7 +29,9 @@ export interface GnetDashboardResponse {
 /**
  * Fetch community dashboards from Grafana.com
  */
-export async function fetchCommunityDashboards(params: FetchCommunityDashboardsParams): Promise<GnetDashboard[]> {
+export async function fetchCommunityDashboards(
+  params: FetchCommunityDashboardsParams
+): Promise<GnetDashboardsResponse> {
   const searchParams = new URLSearchParams({
     orderBy: params.orderBy,
     direction: params.direction,
@@ -50,17 +52,23 @@ export async function fetchCommunityDashboards(params: FetchCommunityDashboardsP
     showErrorAlert: false,
   });
 
-  // Handle different API response structures
-  if (Array.isArray(result)) {
-    return result;
-  } else if (result && Array.isArray(result.dashboards)) {
-    return result.dashboards;
-  } else if (result && Array.isArray(result.items)) {
-    return result.items;
+  // Grafana.com API returns format: { page: number, pages: number, items: GnetDashboard[] }
+  // We normalize it to use "dashboards" instead of "items" for consistency
+  if (result && Array.isArray(result.items)) {
+    return {
+      page: result.page || params.page,
+      pages: result.pages || 1,
+      dashboards: result.items,
+    };
   }
 
-  console.warn('Unexpected API response format:', result);
-  return [];
+  // Fallback for unexpected response format
+  console.warn('Unexpected API response format from Grafana.com:', result);
+  return {
+    page: params.page,
+    pages: 1,
+    dashboards: [],
+  };
 }
 
 /**

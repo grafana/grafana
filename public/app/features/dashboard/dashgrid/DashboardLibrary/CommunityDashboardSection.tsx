@@ -29,7 +29,6 @@ interface Props {
 
 // Constants for community dashboard pagination and API params
 const COMMUNITY_PAGE_SIZE = 9;
-const COMMUNITY_PAGINATION_OFFSET = 4;
 const SEARCH_DEBOUNCE_MS = 500;
 const DEFAULT_SORT_ORDER = 'downloads';
 const DEFAULT_SORT_DIRECTION = 'desc';
@@ -71,7 +70,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
     }
 
     try {
-      const dashboards = await fetchCommunityDashboards({
+      const apiResponse = await fetchCommunityDashboards({
         orderBy: DEFAULT_SORT_ORDER,
         direction: DEFAULT_SORT_DIRECTION,
         page: currentPage,
@@ -83,9 +82,9 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       });
 
       // Track analytics on first load
-      if (currentPage === 1 && dashboards.length > 0) {
+      if (currentPage === 1 && apiResponse.dashboards.length > 0) {
         DashboardLibraryInteractions.loaded({
-          numberOfItems: dashboards.length,
+          numberOfItems: apiResponse.dashboards.length,
           contentKinds: ['community_dashboard'],
           datasourceTypes: [ds.type],
           sourceEntryPoint: 'datasource_page',
@@ -94,7 +93,8 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       }
 
       return {
-        dashboards,
+        dashboards: apiResponse.dashboards,
+        pages: apiResponse.pages,
         datasourceType: ds.type,
       };
     } catch (err) {
@@ -107,8 +107,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
 
   // Determine what to show in results area
   const dashboards = Array.isArray(response?.dashboards) ? response.dashboards : [];
-  const hasMore = dashboards.length >= COMMUNITY_PAGE_SIZE;
-  const estimatedTotalPages = hasMore ? currentPage + COMMUNITY_PAGINATION_OFFSET : currentPage;
+  const totalPages = response?.pages || 1;
   const showEmptyState = !loading && (!response?.dashboards || response.dashboards.length === 0);
   const showError = !loading && error;
 
@@ -272,10 +271,10 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
           </Grid>
         )}
       </div>
-      {(hasMore || currentPage > 1) && (
+      {totalPages > 1 && (
         <Pagination
           currentPage={currentPage}
-          numberOfPages={estimatedTotalPages}
+          numberOfPages={totalPages}
           onNavigate={(page) => setCurrentPage(page)}
           className={styles.pagination}
         />

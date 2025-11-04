@@ -73,7 +73,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
 
     try {
       // Fetch both provisioned and community dashboards in parallel
-      const [provisioned, community] = await Promise.all([
+      const [provisioned, communityResponse] = await Promise.all([
         // Fetch provisioned dashboards
         fetchProvisionedDashboards(ds.type),
 
@@ -88,6 +88,8 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
           includeLogo: INCLUDE_LOGO,
         }),
       ]);
+
+      const community = communityResponse.dashboards;
 
       // Mix: 1 provisioned + 2 community
       const mixed: MixedDashboard[] = [];

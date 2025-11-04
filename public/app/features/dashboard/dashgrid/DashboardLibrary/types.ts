@@ -40,3 +40,9 @@ export interface GnetDashboard {
   userId?: number;
   userName?: string;
 }
+
+export interface GnetDashboardsResponse {
+  page: number;
+  pages: number;
+  dashboards: GnetDashboard[];
+}
