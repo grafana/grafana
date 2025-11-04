@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
-import { memo, useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -91,6 +91,8 @@ const LogLineDetailsTabs = memo(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    const tabs = useMemo(() => showDetails.slice().reverse(), [showDetails]);
+
     if (!currentLog) {
       return null;
     }
@@ -99,7 +101,7 @@ const LogLineDetailsTabs = memo(
       <>
         {showDetails.length > 1 && (
           <TabsBar>
-            {showDetails.map((log) => {
+            {tabs.map((log) => {
               return (
                 <Tab
                   key={log.uid}
