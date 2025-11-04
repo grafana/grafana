@@ -47,7 +47,7 @@ function DashboardCardComponent({
     <Card className={styles.card} noMargin>
       <Card.Heading className={styles.title}>{title}</Card.Heading>
       <div className={isLogo ? styles.logoContainer : styles.thumbnailContainer}>
-        {imageUrl && imageUrl.trim() ? (
+        {imageUrl ? (
           <img
             src={imageUrl}
             alt={title}
