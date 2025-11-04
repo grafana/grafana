@@ -67,7 +67,7 @@ export const LogDetailsContextProvider = ({
   showControls,
 }: Props) => {
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
-  
+
   const [currentLog, setCurrentLog] = useState<LogListModel | undefined>(undefined);
   const [detailsWidth, setDetailsWidthState] = useState(
     getDetailsWidth(containerElement, logOptionsStorageKey, undefined, detailsModeProp, showControls)
@@ -135,13 +135,18 @@ export const LogDetailsContextProvider = ({
       const found = showDetails.find((stateLog) => stateLog === log || stateLog.uid === log.uid);
       if (found) {
         removeDetailsScrollPosition(found);
-        setShowDetails(showDetails.filter((stateLog) => stateLog !== log && stateLog.uid !== log.uid));
+        const newShowDetails = showDetails.filter((stateLog) => stateLog.uid !== log.uid);
+        setShowDetails(newShowDetails);
+        if (currentLog && currentLog.uid === log.uid) {
+          setCurrentLog(newShowDetails[newShowDetails.length - 1]);
+        }
       } else {
         // Supporting one displayed details for now
         setShowDetails([...showDetails, log]);
+        setCurrentLog(log);
       }
     },
-    [enableLogDetails, showDetails]
+    [currentLog, enableLogDetails, showDetails]
   );
 
   const setDetailsWidth = useCallback(
