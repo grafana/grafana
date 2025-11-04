@@ -161,6 +161,11 @@ func (st ProtoInstanceDBStore) FullSync(ctx context.Context, instances []models.
 		syncTimestamp := time.Now()
 		logger.Debug("Starting FullSync transaction", "rules_count", len(preparedRules), "timestamp", syncTimestamp)
 
+		// First we delete all records from the table
+		if _, err := sess.Exec("DELETE FROM alert_rule_state"); err != nil {
+			return fmt.Errorf("failed to delete alert_rule_state: %w", err)
+		}
+
 		for i, prepared := range preparedRules {
 			logger.Debug("Executing UPSERT for rule", "rule_uid", prepared.ruleKey.UID, "org_id", prepared.ruleKey.OrgID, "rule_index", i+1, "total_rules", len(preparedRules))
 
