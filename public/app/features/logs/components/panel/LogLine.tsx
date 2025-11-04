@@ -123,6 +123,7 @@ const LogLineComponent = memo(
       onLogLineHover,
     } = useLogListContext();
     const { detailsDisplayed, detailsMode, enableLogDetails } = useLogDetailsContext();
+    const { currentLog } = useLogDetailsContext();
     const [collapsed, setCollapsed] = useState<boolean | undefined>(
       wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
     );
@@ -194,6 +195,7 @@ const LogLineComponent = memo(
       [log, onClick]
     );
 
+    const isLogDetailsFocused = currentLog?.uid === log.uid;
     const detailsShown = detailsDisplayed(log);
 
     return (
@@ -201,7 +203,7 @@ const LogLineComponent = memo(
         {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
-          className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${fontSize === 'small' ? styles.fontSizeSmall : ''} ${enableLogDetails ? styles.clickable : ''}`}
+          className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${isLogDetailsFocused ? styles.currentLog : ''} ${fontSize === 'small' ? styles.fontSizeSmall : ''} ${enableLogDetails ? styles.clickable : ''}`}
           ref={onOverflow ? logLineRef : undefined}
           onMouseEnter={handleMouseOver}
           onFocus={handleMouseOver}
@@ -480,7 +482,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     parsedField: theme.colors.text.secondary,
   };
 
-  const hoverColor = tinycolor(theme.colors.background.canvas).darken(5).toRgbString();
+  const hoverColor = tinycolor(theme.colors.background.canvas).darken(11).toRgbString();
 
   return {
     logLine: css({
@@ -553,7 +555,10 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       lineHeight: theme.typography.bodySmall.lineHeight,
     }),
     detailsDisplayed: css({
-      background: tinycolor(theme.colors.background.canvas).darken(2).toRgbString(),
+      background: tinycolor(theme.colors.background.canvas).darken(3).toRgbString(),
+    }),
+    currentLog: css({
+      background: hoverColor,
     }),
     pinnedLogLine: css({
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),

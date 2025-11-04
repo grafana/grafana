@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { usePrevious } from 'react-use';
+import { memo, useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -72,9 +71,8 @@ LogLineDetails.displayName = 'LogLineDetails';
 const LogLineDetailsTabs = memo(
   ({ focusLogLine, logs, timeRange, timeZone }: Pick<Props, 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
     const { app, noInteractions, wrapLogMessage } = useLogListContext();
-    const { closeDetails, currentLog, setCurrentLog, showDetails, toggleDetails } = useLogDetailsContext();
+    const { currentLog, setCurrentLog, showDetails, toggleDetails } = useLogDetailsContext();
 
-    const previousShowDetails = usePrevious(showDetails);
     const styles = useStyles2(getStyles, 'sidebar');
 
     useEffect(() => {
@@ -93,19 +91,9 @@ const LogLineDetailsTabs = memo(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    useEffect(() => {
-      if (!showDetails.length) {
-        closeDetails();
-        return;
-      }
-      // Focus on the recently open
-      if (!previousShowDetails || showDetails.length > previousShowDetails.length) {
-        setCurrentLog(showDetails[showDetails.length - 1]);
-        return;
-      } else if (!showDetails.find((log) => log.uid === currentLog?.uid)) {
-        setCurrentLog(showDetails[showDetails.length - 1]);
-      }
-    }, [closeDetails, currentLog?.uid, previousShowDetails, setCurrentLog, showDetails]);
+    if (!currentLog) {
+      return null;
+    }
 
     return (
       <>
@@ -117,7 +105,7 @@ const LogLineDetailsTabs = memo(
                   key={log.uid}
                   truncate
                   label={log.entry.substring(0, 25)}
-                  active={currentLog?.uid === log.uid}
+                  active={currentLog.uid === log.uid}
                   onChangeTab={() => setCurrentLog(log)}
                   suffix={() => (
                     <Icon

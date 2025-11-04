@@ -67,6 +67,7 @@ export const LogDetailsContextProvider = ({
   showControls,
 }: Props) => {
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
+  
   const [currentLog, setCurrentLog] = useState<LogListModel | undefined>(undefined);
   const [detailsWidth, setDetailsWidthState] = useState(
     getDetailsWidth(containerElement, logOptionsStorageKey, undefined, detailsModeProp, showControls)
@@ -115,16 +116,16 @@ export const LogDetailsContextProvider = ({
     return () => observer.disconnect();
   }, [containerElement, detailsMode, logOptionsStorageKey, showControls]);
 
-  const detailsDisplayed = useCallback(
-    (log: LogListModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),
-    [showDetails]
-  );
-
   const closeDetails = useCallback(() => {
     showDetails.forEach((log) => removeDetailsScrollPosition(log));
     setShowDetails([]);
     setCurrentLog(undefined);
   }, [showDetails]);
+
+  const detailsDisplayed = useCallback(
+    (log: LogListModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),
+    [showDetails]
+  );
 
   const toggleDetails = useCallback(
     (log: LogListModel) => {
@@ -164,7 +165,7 @@ export const LogDetailsContextProvider = ({
     <LogDetailsContext.Provider
       value={{
         closeDetails,
-        currentLog: currentLog ? currentLog : showDetails[0],
+        currentLog: detailsMode === 'sidebar' ? currentLog : undefined,
         detailsDisplayed,
         detailsMode,
         detailsWidth,
