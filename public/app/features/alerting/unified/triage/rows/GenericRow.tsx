@@ -121,7 +121,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       css({
         padding: 5,
         width: '100%',
-        paddingLeft: depth ? `calc(${theme.spacing(depth)} + 5px)` : 5,
+        addingLeft: depth ? `calc(${theme.spacing(depth)} + 5px)` : 5,
       }),
     groupItemWrapper: (width: number) =>
       css({

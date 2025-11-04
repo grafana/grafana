@@ -76,5 +76,5 @@ export function WorkbenchRenderer() {
   const isDataLoading = data?.state === 'Loading';
   const isLoading = isDataLoading || isPending;
 
-  return <Workbench data={rows} domain={domain} queryRunner={runner} isLoading={isLoading} />;
+  return <Workbench data={rows} domain={domain} queryRunner={runner} groupBy={groupByKeys} isLoading={isLoading} />;
 }
