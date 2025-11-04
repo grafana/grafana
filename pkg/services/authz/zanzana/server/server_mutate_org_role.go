@@ -35,12 +35,12 @@ func (s *Server) mutateOrgRoles(ctx context.Context, store *storeInfo, operation
 			}
 			deleteTuples = append(deleteTuples, tuple)
 		case *authzextv1.MutateOperation_UpdateUserOrgRole:
-			writeTuple, deleteTuples, err := s.getUserOrgRoleUpdateTuples(ctx, store, op.UpdateUserOrgRole)
+			writeTuple, existingTuples, err := s.getUserOrgRoleUpdateTuples(ctx, store, op.UpdateUserOrgRole)
 			if err != nil {
 				return err
 			}
 			writeTuples = append(writeTuples, writeTuple)
-			deleteTuples = append(deleteTuples, deleteTuples...)
+			deleteTuples = append(deleteTuples, existingTuples...)
 		default:
 			s.logger.Debug("unsupported mutate operation", "operation", op)
 		}
@@ -92,7 +92,8 @@ func (s *Server) getUserOrgRoleUpdateTuples(ctx context.Context, store *storeInf
 	}
 	existingBasicRoleTuples := make([]*openfgav1.TupleKeyWithoutCondition, 0)
 	for _, tuple := range res.GetTuples() {
-		if zanzana.IsBasicRole(tuple.GetKey().GetObject()) {
+		_, roleName, _ := zanzana.SplitTupleObject(tuple.GetKey().GetObject())
+		if zanzana.IsBasicRole(roleName) {
 			existingBasicRoleTuples = append(existingBasicRoleTuples, &openfgav1.TupleKeyWithoutCondition{
 				User:     tuple.GetKey().GetUser(),
 				Relation: tuple.GetKey().GetRelation(),
