@@ -45,7 +45,6 @@ export function AppChrome({ children }: Props) {
   );
 
   const headerLevels = useChromeHeaderLevels();
-  const useSidebarTop = headerLevels === 2;
   const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight());
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles);
@@ -56,7 +55,7 @@ export function AppChrome({ children }: Props) {
   const contentClass = cx({
     [styles.content]: true,
     [styles.contentChromeless]: state.chromeless,
-    [styles.contentWithSidebar]: isExtensionSidebarOpen && !state.chromeless && !useSidebarTop,
+    [styles.contentWithSidebar]: isExtensionSidebarOpen && !state.chromeless,
   });
 
   const handleMegaMenu = () => {
@@ -109,7 +108,7 @@ export function AppChrome({ children }: Props) {
               actions={state.actions}
               breadcrumbActions={state.breadcrumbActions}
               scopes={scopes}
-              showToolbarLevel={useSidebarTop}
+              showToolbarLevel={headerLevels === 2}
             />
           </header>
         </>
@@ -131,7 +130,7 @@ export function AppChrome({ children }: Props) {
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-              [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen && !useSidebarTop,
+              [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
               [contentSizeStyles.contentWidth]: !state.chromeless && isExtensionSidebarOpen,
             })}
             id="pageContent"
