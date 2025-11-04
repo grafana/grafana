@@ -644,6 +644,20 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 			return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
 		}
 
+		libraryPanelSrv, ok := s.registry[entity.StandardKindLibraryPanel]
+		if !ok {
+			return folder.ErrInternal.Errorf("no library panel service found in registry")
+		}
+		//	/* TODO: after a decision regarding folder deletion permissions has been made
+		//	(https://github.com/grafana/grafana-enterprise/issues/5144),
+		//	remove the following call to DeleteInFolders
+		//	and remove "user" from the signature of DeleteInFolder in the folder RegistryService.
+		//	Context: https://github.com/grafana/grafana/pull/69149#discussion_r1235057903
+		//	*/
+		if err := libraryPanelSrv.DeleteInFolders(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {
+			s.log.Error("failed to delete dangling library panels in folder", "error", err)
+			return err
+		}
 		// We need a list of dashboard uids inside the folder to delete related dashboards & public dashboards -
 		// we cannot use the dashboard service directly due to circular dependencies, so use the search client to get the dashboards
 		request := &resourcepb.ResourceSearchRequest{
