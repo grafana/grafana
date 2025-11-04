@@ -191,14 +191,19 @@ func TestBeginUserUpdate(t *testing.T) {
 			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-1", req.Namespace)
-			require.Len(t, req.Operations, 1)
+			require.Len(t, req.Operations, 2)
 
-			op := req.Operations[0]
-			require.NotNil(t, op)
-			updateOp := op.GetUpdateUserOrgRole()
+			// First operation should be UpdateUserOrgRole with new role
+			updateOp := req.Operations[0].GetUpdateUserOrgRole()
 			require.NotNil(t, updateOp)
 			require.Equal(t, "testuser", updateOp.User)
 			require.Equal(t, "Admin", updateOp.Role)
+
+			// Second operation should be DeleteUserOrgRole with old role
+			deleteOp := req.Operations[1].GetDeleteUserOrgRole()
+			require.NotNil(t, deleteOp)
+			require.Equal(t, "testuser", deleteOp.User)
+			require.Equal(t, "Viewer", deleteOp.Role)
 
 			return nil
 		}
@@ -239,14 +244,19 @@ func TestBeginUserUpdate(t *testing.T) {
 			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-2", req.Namespace)
-			require.Len(t, req.Operations, 1)
+			require.Len(t, req.Operations, 2)
 
-			op := req.Operations[0]
-			require.NotNil(t, op)
-			updateOp := op.GetUpdateUserOrgRole()
+			// First operation should be UpdateUserOrgRole with empty role
+			updateOp := req.Operations[0].GetUpdateUserOrgRole()
 			require.NotNil(t, updateOp)
 			require.Equal(t, "testuser2", updateOp.User)
 			require.Equal(t, "", updateOp.Role)
+
+			// Second operation should be DeleteUserOrgRole with old role
+			deleteOp := req.Operations[1].GetDeleteUserOrgRole()
+			require.NotNil(t, deleteOp)
+			require.Equal(t, "testuser2", deleteOp.User)
+			require.Equal(t, "Editor", deleteOp.Role)
 
 			return nil
 		}
@@ -287,14 +297,19 @@ func TestBeginUserUpdate(t *testing.T) {
 			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-3", req.Namespace)
-			require.Len(t, req.Operations, 1)
+			require.Len(t, req.Operations, 2)
 
-			op := req.Operations[0]
-			require.NotNil(t, op)
-			updateOp := op.GetUpdateUserOrgRole()
+			// First operation should be UpdateUserOrgRole with new role
+			updateOp := req.Operations[0].GetUpdateUserOrgRole()
 			require.NotNil(t, updateOp)
 			require.Equal(t, "testuser3", updateOp.User)
 			require.Equal(t, "Admin", updateOp.Role)
+
+			// Second operation should be DeleteUserOrgRole with empty old role
+			deleteOp := req.Operations[1].GetDeleteUserOrgRole()
+			require.NotNil(t, deleteOp)
+			require.Equal(t, "testuser3", deleteOp.User)
+			require.Equal(t, "", deleteOp.Role)
 
 			return nil
 		}

@@ -144,6 +144,10 @@ func (b *IdentityAccessManagementAPIBuilder) BeginUserUpdate(ctx context.Context
 						Operation: &v1.MutateOperation_UpdateUserOrgRole{
 							UpdateUserOrgRole: &v1.UpdateUserOrgRoleOperation{User: subjectName, Role: newRole},
 						},
+					}, {
+						Operation: &v1.MutateOperation_DeleteUserOrgRole{
+							DeleteUserOrgRole: &v1.DeleteUserOrgRoleOperation{User: subjectName, Role: oldRole},
+						},
 					},
 				},
 			})
@@ -154,6 +158,7 @@ func (b *IdentityAccessManagementAPIBuilder) BeginUserUpdate(ctx context.Context
 					"namespace", namespace,
 					"name", subjectName,
 					"role", newRole,
+					"oldRole", oldRole,
 				)
 			}
 		}(oldUser.Namespace, oldUser.Name, oldUser.Spec.Role, newUser.Spec.Role)
