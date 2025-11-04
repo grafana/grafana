@@ -99,7 +99,6 @@ spec:
 1. `custom.ini` changes:
 ```ini
 [feature_toggles]
-kubernetesAggregator = true
 dataplaneAggregator = true
 grafanaAPIServerEnsureKubectlAccess = true
 ```
