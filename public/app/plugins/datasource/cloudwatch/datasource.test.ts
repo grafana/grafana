@@ -306,7 +306,7 @@ describe('datasource', () => {
       });
     });
 
-    it('should add links to log queries', async () => {
+    it('should add links to log insights queries', async () => {
       const { datasource } = setupForLogs();
 
       const observable = datasource.query({
@@ -344,7 +344,7 @@ describe('datasource', () => {
         },
       ]);
 
-      expect(emits[0].data[0].fields.find((f: Field) => f.name === '@message').config.links).toMatchObject([
+      expect(emits[0].data[0].fields.find((f: Field) => f.name === '').config.links).toMatchObject([
         {
           title: 'View in CloudWatch console',
           url: "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2016-12-31T16*3a00*3a00.000Z~start~'2016-12-31T15*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'some*20query~isLiveTail~false~source~(~'test))",
@@ -439,7 +439,7 @@ describe('datasource', () => {
       const { datasource } = setupMockedDataSource();
       expect(datasource.getDefaultQuery(CoreApp.PanelEditor).queryMode).toEqual('Metrics');
     });
-    it('should set default log groups in default query', () => {
+    it('should set default log groups in default logs insights query', () => {
       const { datasource } = setupMockedDataSource({
         customInstanceSettings: {
           ...CloudWatchSettings,

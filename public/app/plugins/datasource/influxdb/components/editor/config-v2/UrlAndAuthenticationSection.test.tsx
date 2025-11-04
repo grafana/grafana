@@ -1,4 +1,16 @@
+const backendSrv = {
+  fetch: jest.fn(),
+} as unknown as BackendSrv;
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
+
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { of } from 'rxjs';
+
+import { BackendSrv } from '@grafana/runtime';
 
 import { InfluxVersion } from '../../../types';
 
@@ -11,6 +23,7 @@ describe('UrlAndAuthenticationSection', () => {
 
   const defaultProps = createTestProps({
     options: {
+      id: 1234,
       jsonData: {
         url: 'http://localhost:8086',
         product: '',
@@ -23,6 +36,29 @@ describe('UrlAndAuthenticationSection', () => {
       onOptionsChange: onOptionsChangeMock,
     },
   });
+
+  const mockFetchPing = ({ build, version, status = 204 }: { build?: string; version?: string; status?: number }) => {
+    backendSrv.fetch = jest.fn().mockReturnValue(
+      of({
+        status,
+        ok: status >= 200 && status < 300,
+        data: status === 204 ? '' : {},
+        headers: {
+          get: (k: string) => {
+            const key = k.toLowerCase();
+            if (key === 'x-influxdb-build') {
+              return build ?? null;
+            }
+            if (key === 'x-influxdb-version') {
+              return version ?? null;
+            }
+            return null;
+          },
+        },
+        url: '/api/datasources/proxy/1234/ping',
+      })
+    );
+  };
 
   beforeEach(() => {
     // Mock console.error to suppress React act() warnings
@@ -239,7 +275,7 @@ describe('UrlAndAuthenticationSection', () => {
       },
     };
 
-    mockFetchPing({ ok: true, build: 'OSS', version: '1.8.10' });
+    mockFetchPing({ build: 'OSS', version: '1.8.10' });
 
     render(<UrlAndAuthenticationSection {...props} />);
     const input = screen.getByTestId('influxdb-v2-config-url-input');
@@ -268,7 +304,7 @@ describe('UrlAndAuthenticationSection', () => {
       },
     };
 
-    mockFetchPing({ ok: true, build: 'OSS', version: '2.7.1' });
+    mockFetchPing({ build: 'OSS', version: '2.7.1' });
 
     render(<UrlAndAuthenticationSection {...props} />);
     const input = screen.getByTestId('influxdb-v2-config-url-input');
@@ -297,7 +333,7 @@ describe('UrlAndAuthenticationSection', () => {
       },
     };
 
-    mockFetchPing({ ok: true, build: undefined, version: undefined });
+    mockFetchPing({ build: undefined, version: undefined });
 
     render(<UrlAndAuthenticationSection {...props} />);
     const input = screen.getByTestId('influxdb-v2-config-url-input');
@@ -358,23 +394,3 @@ describe('UrlAndAuthenticationSection', () => {
     });
   });
 });
-
-export function mockFetchPing(resp: { ok?: boolean; build?: string; version?: string } = {}) {
-  const { ok = true, build, version } = resp;
-
-  global.fetch = jest.fn().mockResolvedValue({
-    ok,
-    headers: {
-      get: (key: string) => {
-        const normalized = key.toLowerCase();
-        if (normalized === 'x-influxdb-build') {
-          return build ?? null;
-        }
-        if (normalized === 'x-influxdb-version') {
-          return version ?? null;
-        }
-        return null;
-      },
-    },
-  });
-}

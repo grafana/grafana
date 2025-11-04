@@ -109,6 +109,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	ualert.CreateOrgMigratedKVStoreEntries(mg)
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	// https://github.com/grafana/identity-access-team/issues/546: tracks removal of the feature toggle from the annotation permission migration
 	if oss.features != nil && oss.features.IsEnabledGlobally(featuremgmt.FlagAnnotationPermissionUpdate) {
 		accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)
@@ -155,4 +156,8 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.DropTitleUniqueIndexMigration(mg)
 
 	ualert.AddStateFiredAtColumn(mg)
+
+	ualert.CollateAlertRuleGroup(mg)
+
+	ualert.AddAlertRuleGroupIndexMigration(mg)
 }

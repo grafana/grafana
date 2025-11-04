@@ -5,7 +5,7 @@ go 1.25.3
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
-replace github.com/docker/docker => github.com/moby/moby v27.5.1+incompatible
+replace github.com/docker/docker => github.com/moby/moby v28.0.1+incompatible
 
 require (
 	github.com/google/uuid v1.6.0 // indirect; @grafana/grafana-backend-group
@@ -13,7 +13,7 @@ require (
 	go.opentelemetry.io/otel v1.38.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.38.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.45.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.46.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/sync v0.17.0 // @grafana/alerting-backend
 	golang.org/x/text v0.30.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/grpc v1.76.0 // indirect; @grafana/plugins-platform-backend
@@ -29,16 +29,16 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250908214217-97024824d090 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250908214217-97024824d090 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251002232023-7c0ddcbb5797 // indirect
 )
 
 require (
 	dagger.io/dagger v0.18.8
 	github.com/Masterminds/semver v1.5.0
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
-	github.com/urfave/cli/v3 v3.4.1
+	github.com/urfave/cli/v3 v3.5.0
 )
 
 require (

@@ -74,10 +74,12 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `elasticsearchCrossClusterSearch`      | Enables cross cluster search in the Elasticsearch data source                                                                                                 |                    |
 | `lokiLabelNamesQueryApi`               | Defaults to using the Loki `/labels` API instead of `/series`                                                                                                 | Yes                |
 | `improvedExternalSessionHandlingSAML`  | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. | Yes                |
+| `newLogsPanel`                         | Enables the new logs panel                                                                                                                                    | Yes                |
 | `alertingMigrationUI`                  | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                                              | Yes                |
 | `alertingImportYAMLUI`                 | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                       | Enables unified navbars                                                                                                                                       |                    |
 | `grafanaAssistantInProfilesDrilldown`  | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
+| `sharingDashboardImage`                | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
 | `dashboardDsAdHocFiltering`            | Enables adhoc filtering support for the dashboard datasource                                                                                                  | Yes                |
 | `adhocFiltersInTooltips`               | Enable adhoc filter buttons in visualization tooltips                                                                                                         | Yes                |
@@ -109,7 +111,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureMonitorLogsBuilderEditor` | Enables the logs builder mode for the Azure Monitor data source                                        |
 | `localeFormatPreference`        | Specifies the locale so the correct format for numbers and dates can be shown                          |
 | `logsPanelControls`             | Enables a control component for the logs panel in Explore                                              |
-| `grafanaPathfinder`             | Enables Pathfinder app                                                                                 |
+| `interactiveLearning`           | Enables the interactive learning app                                                                   |
 | `azureResourcePickerUpdates`    | Enables the updated Azure Monitor resource picker                                                      |
 | `preventPanelChromeOverflow`    | Restrict PanelChrome contents with overflow: hidden;                                                   |
 

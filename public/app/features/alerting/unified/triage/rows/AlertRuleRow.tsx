@@ -16,9 +16,16 @@ interface AlertRuleRowProps {
   leftColumnWidth: number;
   rowKey: React.Key;
   depth?: number;
+  enableFolderMeta?: boolean;
 }
 
-export const AlertRuleRow = ({ row, leftColumnWidth, rowKey, depth = 0 }: AlertRuleRowProps) => {
+export const AlertRuleRow = ({
+  row,
+  leftColumnWidth,
+  rowKey,
+  depth = 0,
+  enableFolderMeta = true,
+}: AlertRuleRowProps) => {
   const { ruleUID, folder, title } = row.metadata;
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -45,12 +52,14 @@ export const AlertRuleRow = ({ row, leftColumnWidth, rowKey, depth = 0 }: AlertR
           />
         }
         metadata={
-          <Stack direction="row" gap={0.5} alignItems="center">
-            <MetaText icon="folder" />
-            <Text variant="bodySmall" color="secondary">
-              {folder}
-            </Text>
-          </Stack>
+          enableFolderMeta ? (
+            <Stack direction="row" gap={0.5} alignItems="center">
+              <MetaText icon="folder" />
+              <Text variant="bodySmall" color="secondary">
+                {folder}
+              </Text>
+            </Stack>
+          ) : undefined
         }
         content={<AlertRuleSummary ruleUID={ruleUID} />}
         depth={depth}
