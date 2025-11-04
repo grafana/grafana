@@ -181,7 +181,7 @@
 /pkg/services/search/ @grafana/grafana-search-and-storage
 /pkg/services/searchusers/ @grafana/grafana-search-and-storage
 /pkg/services/secrets/ @grafana/grafana-operator-experience-squad
-/pkg/services/shorturls/ @grafana/grafana-backend-group
+/pkg/services/shorturls/ @grafana/sharing-squad
 /pkg/services/sqlstore/ @grafana/grafana-search-and-storage
 /pkg/services/ssosettings/ @grafana/identity-squad
 /pkg/services/star/ @grafana/grafana-search-and-storage
@@ -199,6 +199,7 @@
 /pkg/tests/apis/features @grafana/grafana-backend-services-squad
 /pkg/tests/apis/folder @grafana/grafana-search-and-storage
 /pkg/tests/apis/iam @grafana/identity-access-team
+/pkg/tests/apis/shorturl @grafana/sharing-squad
 /pkg/tests/api/correlations/ @grafana/datapro
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
 /pkg/tsdb/opentsdb/ @grafana/partner-datasources
@@ -1176,6 +1177,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/registry/apis/ @grafana/grafana-app-platform-squad
 /pkg/registry/apis/folders @grafana/grafana-search-and-storage
+/pkg/registry/apis/datasource @grafana/grafana-datasources-core-services
 /pkg/registry/apis/query @grafana/grafana-datasources-core-services
 /pkg/registry/apis/secret @grafana/grafana-operator-experience-squad
 /pkg/registry/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
