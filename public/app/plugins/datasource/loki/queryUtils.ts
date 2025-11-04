@@ -1,6 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
+import { DataQueryRequest } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -29,6 +30,7 @@ import {
 import { DataQuery } from '@grafana/schema';
 
 import { addDropToQuery, addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
+import { QuerySplittingOptions } from './querySplitting.ts';
 import { ErrorId } from './querybuilder/parsingUtils';
 import { LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
@@ -424,4 +426,35 @@ export const getSelectorForShardValues = (query: string) => {
     return query.substring(selector[0].from, selector[0].to);
   }
   return '';
+};
+
+/**
+ * Adds query plan to shard/split queries
+ * Must be called after interpolation step!
+ *
+ * @todo Since shard/splitting mutates the lokiQuery only the first request has the correct query plan,
+ * we probably want to omit the plan on subsequent queries
+ * @param lokiQuery
+ * @param request
+ * @param options
+ */
+export const addQueryPlan = (
+  lokiQuery: LokiQuery,
+  request: DataQueryRequest<LokiQuery>,
+  options: QuerySplittingOptions
+) => {
+  if (options.isInitialQuery) {
+    const lokiQueryWithPlan: LokiQuery = {
+      ...lokiQuery,
+      plan: {
+        expr: lokiQuery.expr,
+        from: request.range.from.toDate().getTime(),
+        to: request.range.to.toDate().getTime(),
+      },
+    };
+
+    return lokiQueryWithPlan;
+  }
+
+  return lokiQuery;
 };

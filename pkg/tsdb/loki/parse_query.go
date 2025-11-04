@@ -82,6 +82,34 @@ func parseQueryType(jsonPointerValue *string) (QueryType, error) {
 	}
 }
 
+func parseQueryPlanExpr(jsonPointerValue *dataquery.DataqueryLokiDataQueryPlan) string {
+	if jsonPointerValue == nil {
+		return ""
+	} else {
+		jsonValue := *jsonPointerValue
+		return jsonValue.Expr
+	}
+}
+
+// There has to be a less stupid way of doing this
+func parseQueryPlanFrom(jsonPointerValue *dataquery.DataqueryLokiDataQueryPlan) int64 {
+	if jsonPointerValue == nil {
+		return 0
+	} else {
+		jsonValue := *jsonPointerValue
+		return jsonValue.From
+	}
+}
+
+func parseQueryPlanTo(jsonPointerValue *dataquery.DataqueryLokiDataQueryPlan) int64 {
+	if jsonPointerValue == nil {
+		return 0
+	} else {
+		jsonValue := *jsonPointerValue
+		return jsonValue.To
+	}
+}
+
 func parseDirection(jsonPointerValue *string) (Direction, error) {
 	if jsonPointerValue == nil {
 		// there are older queries stored in alerting that did not have queryDirection,
@@ -128,6 +156,9 @@ func parseSupportingQueryType(jsonPointerValue *string) SupportingQueryType {
 func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
+		var exprPlan string
+		var toPlan int64
+		var fromPlan int64
 		model, err := parseQueryModel(query.JSON)
 		if err != nil {
 			return nil, err
@@ -155,6 +186,15 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 		}
 
 		expr := interpolateVariables(model.Expr, interval, timeRange, queryType, step)
+
+		uninterpolatedExprPlan := parseQueryPlanExpr(model.Plan)
+
+		if uninterpolatedExprPlan != "" {
+			exprPlan = interpolateVariables(uninterpolatedExprPlan, interval, timeRange, queryType, step)
+		}
+
+		toPlan = parseQueryPlanTo(model.Plan)
+		fromPlan = parseQueryPlanFrom(model.Plan)
 
 		direction, err := parseDirection(model.Direction)
 		if err != nil {
@@ -192,6 +232,11 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 			RefID:               query.RefID,
 			SupportingQueryType: supportingQueryType,
 			Scopes:              model.Scopes,
+			Plan: QueryPlan{
+				Expr: exprPlan,
+				From: fromPlan,
+				To:   toPlan,
+			},
 		})
 	}
 

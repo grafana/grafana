@@ -55,6 +55,14 @@ export interface LokiDataQuery extends common.DataQuery {
    */
   maxLines?: number;
   /**
+   * The full query plan, for split/shard queries
+   */
+  plan?: {
+    expr: string;
+    from: number;
+    to: number;
+  };
+  /**
    * @deprecated, now use queryType.
    */
   range?: boolean;

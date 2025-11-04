@@ -11,6 +11,11 @@ import (
 type QueryType = dataquery.LokiQueryType
 type SupportingQueryType = dataquery.SupportingQueryType
 type Direction = dataquery.LokiQueryDirection
+type QueryPlan struct {
+	Expr string
+	From int64
+	To   int64
+}
 
 const (
 	QueryTypeRange   = dataquery.LokiQueryTypeRange
@@ -42,4 +47,5 @@ type lokiQuery struct {
 	RefID               string
 	SupportingQueryType SupportingQueryType
 	Scopes              []scope.ScopeFilter
+	Plan                QueryPlan
 }

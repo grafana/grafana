@@ -96,6 +96,17 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 		return nil, backend.DownstreamError(fmt.Errorf("failed to create request: %w", err))
 	}
 
+	// @todo better
+	if len(query.Plan.Expr) > 0 {
+		req.Header.Set("X-Query-Plan-Expr", query.Plan.Expr)
+	}
+	if query.Plan.From > 0 {
+		req.Header.Set("X-Query-Plan-From", strconv.FormatInt(query.Plan.From, 10))
+	}
+	if query.Plan.To > 0 {
+		req.Header.Set("X-Query-Plan-To", strconv.FormatInt(query.Plan.To, 10))
+	}
+
 	if query.SupportingQueryType != SupportingQueryNone {
 		value := getSupportingQueryHeaderValue(query.SupportingQueryType)
 		if value != "" {

@@ -17,7 +17,7 @@ import { LokiDatasource } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
 import { combineResponses } from './mergeResponses';
 import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
-import { isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
+import { addQueryPlan, isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
 import { isRetriableError } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
 import { LokiGroupedRequest, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
@@ -46,7 +46,7 @@ export function partitionTimeRange(
   });
 }
 
-interface QuerySplittingOptions {
+export interface QuerySplittingOptions {
   /**
    * Tells the query splitting code to not emit partial updates. Only emit on error or when it finishes querying.
    */
@@ -55,6 +55,7 @@ interface QuerySplittingOptions {
    * Do not retry failed queries.
    */
   disableRetry?: boolean;
+  isInitialQuery?: boolean;
 }
 
 /**
@@ -88,7 +89,7 @@ export function adjustTargetsFromResponseState(targets: LokiQuery[], response: D
 export function runSplitGroupedQueries(
   datasource: LokiDatasource,
   requests: LokiGroupedRequest[],
-  options: QuerySplittingOptions = {}
+  options: QuerySplittingOptions = { isInitialQuery: true }
 ) {
   const responseKey = requests.length ? requests[0].request.queryGroupId : uuidv4();
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming, key: responseKey };
@@ -177,6 +178,7 @@ export function runSplitGroupedQueries(
       subRequest.requestId = `${group.request.requestId}_${requestN}`;
     }
 
+    // @todo remove plan if not first request?
     subquerySubscription = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse) => {
         if ((partialResponse.errors ?? []).length > 0 || partialResponse.error != null) {
@@ -291,12 +293,14 @@ function querySupportsSplitting(query: LokiQuery) {
 export function runSplitQuery(
   datasource: LokiDatasource,
   request: DataQueryRequest<LokiQuery>,
-  options: QuerySplittingOptions = {}
+  options: QuerySplittingOptions = { isInitialQuery: true }
 ) {
   const queries = request.targets
     .filter((query) => !query.hide)
     .filter((query) => query.expr)
-    .map((query) => datasource.applyTemplateVariables(query, request.scopedVars, request.filters));
+    .map((query) =>
+      addQueryPlan(datasource.applyTemplateVariables(query, request.scopedVars, request.filters), request, options)
+    );
   const [nonSplittingQueries, normalQueries] = partition(queries, (query) => !querySupportsSplitting(query));
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 

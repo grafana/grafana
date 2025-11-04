@@ -1,16 +1,20 @@
-import { groupBy, partition } from 'lodash';
+import { groupBy, partition, cloneDeep } from 'lodash';
 import { Observable, Subscriber, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { DataQueryRequest, LoadingState, DataQueryResponse, QueryResultMetaStat } from '@grafana/data';
+import { DataQueryRequest, DataQueryResponse, LoadingState, QueryResultMetaStat } from '@grafana/data';
 
 import { LokiDatasource } from './datasource';
 import { combineResponses, replaceResponses } from './mergeResponses';
 import { adjustTargetsFromResponseState, runSplitQuery } from './querySplitting';
-import { getSelectorForShardValues, interpolateShardingSelector, requestSupportsSharding } from './queryUtils';
+import {
+  addQueryPlan,
+  getSelectorForShardValues,
+  interpolateShardingSelector,
+  requestSupportsSharding,
+} from './queryUtils';
 import { isRetriableError } from './responseUtils';
 import { LokiQuery } from './types';
-
 /**
  * Query splitting by stream shards.
  * Query splitting was introduced in Loki to optimize querying for long intervals and high volume of data,
@@ -46,12 +50,18 @@ import { LokiQuery } from './types';
  */
 
 export function runShardSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
-  const queries = request.targets
+  console.log('runShardSplitQuery', JSON.parse(JSON.stringify(request.targets)));
+  const requestCloned = cloneDeep(request);
+  const queries = requestCloned.targets
     .filter((query) => query.expr)
     .filter((query) => !query.hide)
-    .map((query) => datasource.applyTemplateVariables(query, request.scopedVars, request.filters));
+    .map((query) =>
+      addQueryPlan(datasource.applyTemplateVariables(query, requestCloned.scopedVars, requestCloned.filters), request, {
+        isInitialQuery: true,
+      })
+    );
 
-  return splitQueriesByStreamShard(datasource, request, queries);
+  return splitQueriesByStreamShard(datasource, requestCloned, queries);
 }
 
 function splitQueriesByStreamShard(
@@ -164,6 +174,7 @@ function splitQueriesByStreamShard(
     subquerySubscription = runSplitQuery(datasource, subRequest, {
       skipPartialUpdates: true,
       disableRetry: true,
+      isInitialQuery: false,
     }).subscribe({
       next: (partialResponse: DataQueryResponse) => {
         if ((partialResponse.errors ?? []).length > 0 || partialResponse.error != null) {

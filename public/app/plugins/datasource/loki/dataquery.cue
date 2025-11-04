@@ -42,6 +42,12 @@ composableKinds: DataQuery: {
 				instant?: bool
 				// Used to set step value for range queries.
 				step?: string
+				// The full query plan, for split/shard queries
+				plan?: {
+					expr: string
+					from: int64
+					to: int64
+				}
 
 				#QueryEditorMode: "code" | "builder" @cuetsy(kind="enum")
 
