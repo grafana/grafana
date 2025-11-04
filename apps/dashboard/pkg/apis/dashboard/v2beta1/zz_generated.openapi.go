@@ -767,6 +767,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAnnotationQuerySpec(ref common.R
 							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAnnotationPanelFilter"),
 						},
 					},
+					"placement": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"legacyOptions": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Catch-all field for datasource-specific properties. Should not be available in as code tooling.",
