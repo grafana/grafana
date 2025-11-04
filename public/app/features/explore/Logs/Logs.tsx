@@ -30,7 +30,6 @@ import {
   serializeStateToUrlParam,
   urlUtil,
   LogLevel,
-  shallowCompare,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -352,32 +351,17 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   useEffect(() => {
     const panelDisplayedFields = panelState?.logs?.displayedFields ?? [];
 
-    // In table mode always sync with panelState
-    if (visualisationType === 'table') {
-      setDisplayedFields(panelDisplayedFields);
-      return;
-    }
-
-    // Only sync when transitioning from 'table' to 'logs'
-    if (previousVisualisationType !== 'table' || visualisationType !== 'logs') {
-      return;
-    }
-
-    if (!shallowCompare(displayedFields, panelDisplayedFields)) {
-      // Special case: In logs mode, if local displayedFields is empty and panel has fields,
-      if (displayedFields.length === 0 && panelDisplayedFields.length > 0) {
-        // Don't update, we're in the process of clearing via clearDisplayedFields
-        return;
-      }
-      // Transitioning from table to logs mode with fields: merge and write to panelState
-      const mergedFields = Array.from(new Set([...panelDisplayedFields, ...displayedFields]));
-      // Update local state first to prevent loop
-      setDisplayedFields(mergedFields);
-
+    // When switching from logs to table mode, always sync panelState with displayedFields
+    if (previousVisualisationType === 'logs' && visualisationType === 'table') {
       updatePanelState({
         ...panelState?.logs,
-        displayedFields: mergedFields,
+        displayedFields: displayedFields,
       });
+    }
+
+    // When switching from table to logs mode, always sync displayedFields with panelState
+    if (previousVisualisationType === 'table' && visualisationType === 'logs') {
+      setDisplayedFields(panelDisplayedFields);
     }
   }, [
     displayedFields,
