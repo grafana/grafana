@@ -162,7 +162,7 @@ export interface PanelQuerySpec {
 
 export const defaultPanelQuerySpec = (): PanelQuerySpec => ({
 	query: defaultDataQueryKind(),
-	refId: "",
+	refId: "A",
 	hidden: false,
 });
 

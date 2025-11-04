@@ -291,7 +291,17 @@ export function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSR
 
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query) => {
-      const queryDatasource = getElementDatasource(vizPanel, query, 'panel', queryRunner, dsReferencesMapping);
+      // Check if this is a default empty query (refId "A", empty spec)
+      // Default queries are injected during deserialization when panels have no queries
+      const querySpec = omit(query, 'datasource', 'refId', 'hide');
+      const isDefaultEmptyQuery =
+        query.refId === 'A' && vizPanelQueries.length === 1 && Object.keys(querySpec).length === 0;
+
+      // For default empty queries, don't use getElementDatasource as it will assign a datasource
+      // Instead, leave datasource undefined so it gets deleted below
+      const queryDatasource = isDefaultEmptyQuery
+        ? undefined
+        : getElementDatasource(vizPanel, query, 'panel', queryRunner, dsReferencesMapping);
 
       const dataQuery: DataQueryKind = {
         kind: 'DataQuery',
@@ -300,21 +310,21 @@ export function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSR
         datasource: {
           name: queryDatasource?.uid,
         },
-        spec: omit(query, 'datasource', 'refId', 'hide'),
+        spec: querySpec,
       };
 
       if (!dataQuery.datasource?.name) {
         delete dataQuery.datasource;
       }
 
-      const querySpec: PanelQuerySpec = {
+      const querySpecObj: PanelQuerySpec = {
         query: dataQuery,
         refId: query.refId,
         hidden: Boolean(query.hide),
       };
       queries.push({
         kind: 'PanelQuery',
-        spec: querySpec,
+        spec: querySpecObj,
       });
     });
   }

@@ -43,6 +43,7 @@ import {
   defaultDashboardLinkType,
   defaultDashboardLink,
   defaultFieldConfigSource,
+  defaultPanelQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
@@ -493,33 +494,31 @@ export function getDefaultDatasource(): DataSourceRef {
 }
 
 export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] | undefined {
-  return targets
-    .filter((t) => !(Object.keys(t).length === 1 && 'refId' in t))
-    .map((t) => {
-      const { refId, hide, datasource, ...query } = t;
-      const ds = t.datasource || panelDatasource;
-      const q: PanelQueryKind = {
-        kind: 'PanelQuery',
-        spec: {
-          refId: t.refId,
-          hidden: t.hide ?? false,
-          query: {
-            kind: 'DataQuery',
-            version: defaultDataQueryKind().version,
-            group: ds.type ?? '',
-            ...(ds.uid && {
-              datasource: {
-                name: ds.uid,
-              },
-            }),
-            spec: {
-              ...query,
+  return targets.map((t) => {
+    const { refId, hide, datasource, ...query } = t;
+    const ds = t.datasource || panelDatasource;
+    const q: PanelQueryKind = {
+      kind: 'PanelQuery',
+      spec: {
+        refId: t.refId,
+        hidden: t.hide ?? false,
+        query: {
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: ds.type ?? '',
+          ...(ds.uid && {
+            datasource: {
+              name: ds.uid,
             },
+          }),
+          spec: {
+            ...query,
           },
         },
-      };
-      return q;
-    });
+      },
+    };
+    return q;
+  });
 }
 
 export function buildPanelKind(p: Panel): PanelKind {
@@ -572,7 +571,7 @@ export function buildPanelKind(p: Panel): PanelKind {
       data: {
         kind: 'QueryGroup',
         spec: {
-          queries: queries || [],
+          queries: queries || [defaultPanelQueryKind()],
           transformations,
           queryOptions: {
             ...(p.cacheTimeout !== undefined && { cacheTimeout: p.cacheTimeout }),

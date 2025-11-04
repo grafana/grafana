@@ -482,7 +482,7 @@ DataQueryKind: {
 
 PanelQuerySpec: {
 	query:       DataQueryKind
-	refId:  string
+	refId:  string | *"A"
 	hidden: bool
 }
 

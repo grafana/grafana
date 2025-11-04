@@ -209,6 +209,7 @@ type DashboardPanelQuerySpec struct {
 func NewDashboardPanelQuerySpec() *DashboardPanelQuerySpec {
 	return &DashboardPanelQuerySpec{
 		Query: *NewDashboardDataQueryKind(),
+		RefId: "A",
 	}
 }
 

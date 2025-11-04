@@ -20,6 +20,7 @@ import {
   QueryVariableKind,
   TabsLayoutTabKind,
   DataQueryKind,
+  defaultPanelQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -133,7 +134,11 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
 
 export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider | undefined {
   const panel = panelKind.spec;
-  const targets = panel.data?.spec.queries ?? [];
+
+  const targets =
+    Array.isArray(panel.data?.spec.queries) && panel.data?.spec.queries.length > 0
+      ? panel.data?.spec.queries
+      : [defaultPanelQueryKind()];
   // Skip setting query runner for panels without queries
   if (!targets?.length) {
     return undefined;
