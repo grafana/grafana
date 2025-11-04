@@ -33,21 +33,22 @@ func TestAfterUserCreate(t *testing.T) {
 			},
 		}
 
-		testAdminRole := func(ctx context.Context, req *v1.WriteRequest) error {
+		testAdminRole := func(ctx context.Context, req *v1.MutateRequest) error {
 			defer wg.Done()
 			require.NotNil(t, req)
-			require.NotNil(t, req.Writes)
-			require.Len(t, req.Writes.TupleKeys, 1)
 			require.Equal(t, "org-1", req.Namespace)
+			require.Len(t, req.Operations, 1)
 
-			tuple := req.Writes.TupleKeys[0]
-			require.Equal(t, "user:df2p421det1q8c", tuple.User)
-			require.Equal(t, "assignee", tuple.Relation)
-			require.Equal(t, "role:basic_admin", tuple.Object)
+			op := req.Operations[0]
+			require.NotNil(t, op)
+			updateOp := op.GetUpdateUserOrgRole()
+			require.NotNil(t, updateOp)
+			require.Equal(t, "df2p421det1q8c", updateOp.User)
+			require.Equal(t, "Admin", updateOp.Role)
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testAdminRole}
+		b.zClient = &FakeZanzanaClient{mutateCallback: testAdminRole}
 		b.AfterUserCreate(&user, nil)
 		wg.Wait()
 	})
@@ -64,21 +65,22 @@ func TestAfterUserCreate(t *testing.T) {
 			},
 		}
 
-		testEditorRole := func(ctx context.Context, req *v1.WriteRequest) error {
+		testEditorRole := func(ctx context.Context, req *v1.MutateRequest) error {
 			defer wg.Done()
 			require.NotNil(t, req)
-			require.NotNil(t, req.Writes)
-			require.Len(t, req.Writes.TupleKeys, 1)
 			require.Equal(t, "org-2", req.Namespace)
+			require.Len(t, req.Operations, 1)
 
-			tuple := req.Writes.TupleKeys[0]
-			require.Equal(t, "user:user123", tuple.User)
-			require.Equal(t, "assignee", tuple.Relation)
-			require.Equal(t, "role:basic_editor", tuple.Object)
+			op := req.Operations[0]
+			require.NotNil(t, op)
+			updateOp := op.GetUpdateUserOrgRole()
+			require.NotNil(t, updateOp)
+			require.Equal(t, "user123", updateOp.User)
+			require.Equal(t, "Editor", updateOp.Role)
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testEditorRole}
+		b.zClient = &FakeZanzanaClient{mutateCallback: testEditorRole}
 		b.AfterUserCreate(&user, nil)
 		wg.Wait()
 	})
@@ -95,21 +97,22 @@ func TestAfterUserCreate(t *testing.T) {
 			},
 		}
 
-		testViewerRole := func(ctx context.Context, req *v1.WriteRequest) error {
+		testViewerRole := func(ctx context.Context, req *v1.MutateRequest) error {
 			defer wg.Done()
 			require.NotNil(t, req)
-			require.NotNil(t, req.Writes)
-			require.Len(t, req.Writes.TupleKeys, 1)
 			require.Equal(t, "org-3", req.Namespace)
+			require.Len(t, req.Operations, 1)
 
-			tuple := req.Writes.TupleKeys[0]
-			require.Equal(t, "user:viewer456", tuple.User)
-			require.Equal(t, "assignee", tuple.Relation)
-			require.Equal(t, "role:basic_viewer", tuple.Object)
+			op := req.Operations[0]
+			require.NotNil(t, op)
+			updateOp := op.GetUpdateUserOrgRole()
+			require.NotNil(t, updateOp)
+			require.Equal(t, "viewer456", updateOp.User)
+			require.Equal(t, "Viewer", updateOp.Role)
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testViewerRole}
+		b.zClient = &FakeZanzanaClient{mutateCallback: testViewerRole}
 		b.AfterUserCreate(&user, nil)
 		wg.Wait()
 	})
@@ -184,31 +187,23 @@ func TestBeginUserUpdate(t *testing.T) {
 			},
 		}
 
-		testRoleChange := func(ctx context.Context, req *v1.WriteRequest) error {
+		testRoleChange := func(ctx context.Context, req *v1.MutateRequest) error {
 			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-1", req.Namespace)
+			require.Len(t, req.Operations, 1)
 
-			// Should delete old role
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 1)
-			deleteTuple := req.Deletes.TupleKeys[0]
-			require.Equal(t, "user:testuser", deleteTuple.User)
-			require.Equal(t, "assignee", deleteTuple.Relation)
-			require.Equal(t, "role:basic_viewer", deleteTuple.Object)
-
-			// Should write new role
-			require.NotNil(t, req.Writes)
-			require.Len(t, req.Writes.TupleKeys, 1)
-			writeTuple := req.Writes.TupleKeys[0]
-			require.Equal(t, "user:testuser", writeTuple.User)
-			require.Equal(t, "assignee", writeTuple.Relation)
-			require.Equal(t, "role:basic_admin", writeTuple.Object)
+			op := req.Operations[0]
+			require.NotNil(t, op)
+			updateOp := op.GetUpdateUserOrgRole()
+			require.NotNil(t, updateOp)
+			require.Equal(t, "testuser", updateOp.User)
+			require.Equal(t, "Admin", updateOp.Role)
 
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testRoleChange}
+		b.zClient = &FakeZanzanaClient{mutateCallback: testRoleChange}
 
 		finishFunc, err := b.BeginUserUpdate(context.Background(), &newUser, &oldUser, nil)
 		require.NoError(t, err)
@@ -218,7 +213,7 @@ func TestBeginUserUpdate(t *testing.T) {
 		wg.Wait()
 	})
 
-	t.Run("should delete old role when new role is empty", func(t *testing.T) {
+	t.Run("should update role when new role is empty", func(t *testing.T) {
 		wg.Add(1)
 		oldUser := iamv0.User{
 			ObjectMeta: metav1.ObjectMeta{
@@ -240,26 +235,23 @@ func TestBeginUserUpdate(t *testing.T) {
 			},
 		}
 
-		testRemoveRole := func(ctx context.Context, req *v1.WriteRequest) error {
+		testRemoveRole := func(ctx context.Context, req *v1.MutateRequest) error {
 			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-2", req.Namespace)
+			require.Len(t, req.Operations, 1)
 
-			// Should delete old role
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 1)
-			deleteTuple := req.Deletes.TupleKeys[0]
-			require.Equal(t, "user:testuser2", deleteTuple.User)
-			require.Equal(t, "assignee", deleteTuple.Relation)
-			require.Equal(t, "role:basic_editor", deleteTuple.Object)
-
-			// Should not write new role
-			require.Nil(t, req.Writes)
+			op := req.Operations[0]
+			require.NotNil(t, op)
+			updateOp := op.GetUpdateUserOrgRole()
+			require.NotNil(t, updateOp)
+			require.Equal(t, "testuser2", updateOp.User)
+			require.Equal(t, "", updateOp.Role)
 
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testRemoveRole}
+		b.zClient = &FakeZanzanaClient{mutateCallback: testRemoveRole}
 
 		finishFunc, err := b.BeginUserUpdate(context.Background(), &newUser, &oldUser, nil)
 		require.NoError(t, err)
@@ -291,26 +283,23 @@ func TestBeginUserUpdate(t *testing.T) {
 			},
 		}
 
-		testAddRole := func(ctx context.Context, req *v1.WriteRequest) error {
+		testAddRole := func(ctx context.Context, req *v1.MutateRequest) error {
 			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-3", req.Namespace)
+			require.Len(t, req.Operations, 1)
 
-			// Should not delete old role (was empty)
-			require.Nil(t, req.Deletes)
-
-			// Should write new role
-			require.NotNil(t, req.Writes)
-			require.Len(t, req.Writes.TupleKeys, 1)
-			writeTuple := req.Writes.TupleKeys[0]
-			require.Equal(t, "user:testuser3", writeTuple.User)
-			require.Equal(t, "assignee", writeTuple.Relation)
-			require.Equal(t, "role:basic_admin", writeTuple.Object)
+			op := req.Operations[0]
+			require.NotNil(t, op)
+			updateOp := op.GetUpdateUserOrgRole()
+			require.NotNil(t, updateOp)
+			require.Equal(t, "testuser3", updateOp.User)
+			require.Equal(t, "Admin", updateOp.Role)
 
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testAddRole}
+		b.zClient = &FakeZanzanaClient{mutateCallback: testAddRole}
 
 		finishFunc, err := b.BeginUserUpdate(context.Background(), &newUser, &oldUser, nil)
 		require.NoError(t, err)
@@ -368,12 +357,12 @@ func TestBeginUserUpdate(t *testing.T) {
 		}
 
 		callCount := 0
-		testNoCall := func(ctx context.Context, req *v1.WriteRequest) error {
+		testNoCall := func(ctx context.Context, req *v1.MutateRequest) error {
 			callCount++
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testNoCall}
+		b.zClient = &FakeZanzanaClient{mutateCallback: testNoCall}
 
 		finishFunc, err := b.BeginUserUpdate(context.Background(), &newUser, &oldUser, nil)
 		require.NoError(t, err)
@@ -437,25 +426,23 @@ func TestAfterUserDelete(t *testing.T) {
 			},
 		}
 
-		testDeleteAdmin := func(ctx context.Context, req *v1.WriteRequest) error {
+		testDeleteAdmin := func(ctx context.Context, req *v1.MutateRequest) error {
 			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-1", req.Namespace)
+			require.Len(t, req.Operations, 1)
 
-			// Should have deletes but no writes
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 1)
-			require.Nil(t, req.Writes)
-
-			deleteTuple := req.Deletes.TupleKeys[0]
-			require.Equal(t, "user:df2p421det1q8c", deleteTuple.User)
-			require.Equal(t, "assignee", deleteTuple.Relation)
-			require.Equal(t, "role:basic_admin", deleteTuple.Object)
+			op := req.Operations[0]
+			require.NotNil(t, op)
+			deleteOp := op.GetDeleteUserOrgRole()
+			require.NotNil(t, deleteOp)
+			require.Equal(t, "df2p421det1q8c", deleteOp.User)
+			require.Equal(t, "Admin", deleteOp.Role)
 
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testDeleteAdmin}
+		b.zClient = &FakeZanzanaClient{mutateCallback: testDeleteAdmin}
 		b.AfterUserDelete(&user, nil)
 		wg.Wait()
 	})
@@ -472,22 +459,23 @@ func TestAfterUserDelete(t *testing.T) {
 			},
 		}
 
-		testDeleteEditor := func(ctx context.Context, req *v1.WriteRequest) error {
+		testDeleteEditor := func(ctx context.Context, req *v1.MutateRequest) error {
 			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-2", req.Namespace)
+			require.Len(t, req.Operations, 1)
 
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 1)
-			deleteTuple := req.Deletes.TupleKeys[0]
-			require.Equal(t, "user:editor123", deleteTuple.User)
-			require.Equal(t, "assignee", deleteTuple.Relation)
-			require.Equal(t, "role:basic_editor", deleteTuple.Object)
+			op := req.Operations[0]
+			require.NotNil(t, op)
+			deleteOp := op.GetDeleteUserOrgRole()
+			require.NotNil(t, deleteOp)
+			require.Equal(t, "editor123", deleteOp.User)
+			require.Equal(t, "Editor", deleteOp.Role)
 
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testDeleteEditor}
+		b.zClient = &FakeZanzanaClient{mutateCallback: testDeleteEditor}
 		b.AfterUserDelete(&user, nil)
 		wg.Wait()
 	})
@@ -504,22 +492,23 @@ func TestAfterUserDelete(t *testing.T) {
 			},
 		}
 
-		testDeleteViewer := func(ctx context.Context, req *v1.WriteRequest) error {
+		testDeleteViewer := func(ctx context.Context, req *v1.MutateRequest) error {
 			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-3", req.Namespace)
+			require.Len(t, req.Operations, 1)
 
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 1)
-			deleteTuple := req.Deletes.TupleKeys[0]
-			require.Equal(t, "user:viewer456", deleteTuple.User)
-			require.Equal(t, "assignee", deleteTuple.Relation)
-			require.Equal(t, "role:basic_viewer", deleteTuple.Object)
+			op := req.Operations[0]
+			require.NotNil(t, op)
+			deleteOp := op.GetDeleteUserOrgRole()
+			require.NotNil(t, deleteOp)
+			require.Equal(t, "viewer456", deleteOp.User)
+			require.Equal(t, "Viewer", deleteOp.Role)
 
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testDeleteViewer}
+		b.zClient = &FakeZanzanaClient{mutateCallback: testDeleteViewer}
 		b.AfterUserDelete(&user, nil)
 		wg.Wait()
 	})
@@ -561,49 +550,5 @@ func TestAfterUserDelete(t *testing.T) {
 		// Should return early without calling zanzana
 		builder.AfterUserDelete(&user, nil)
 		// If we get here without panic, the test passes
-	})
-}
-
-func TestCreateUserBasicRoleTuple(t *testing.T) {
-	t.Run("should create tuple for Admin role", func(t *testing.T) {
-		tuple := createUserBasicRoleTuple("user123", "Admin")
-		require.NotNil(t, tuple)
-		require.Equal(t, "user:user123", tuple.User)
-		require.Equal(t, "assignee", tuple.Relation)
-		require.Equal(t, "role:basic_admin", tuple.Object)
-	})
-
-	t.Run("should create tuple for Editor role", func(t *testing.T) {
-		tuple := createUserBasicRoleTuple("user456", "Editor")
-		require.NotNil(t, tuple)
-		require.Equal(t, "user:user456", tuple.User)
-		require.Equal(t, "assignee", tuple.Relation)
-		require.Equal(t, "role:basic_editor", tuple.Object)
-	})
-
-	t.Run("should create tuple for Viewer role", func(t *testing.T) {
-		tuple := createUserBasicRoleTuple("user789", "Viewer")
-		require.NotNil(t, tuple)
-		require.Equal(t, "user:user789", tuple.User)
-		require.Equal(t, "assignee", tuple.Relation)
-		require.Equal(t, "role:basic_viewer", tuple.Object)
-	})
-
-	t.Run("should create tuple for None role", func(t *testing.T) {
-		tuple := createUserBasicRoleTuple("user000", "None")
-		require.NotNil(t, tuple)
-		require.Equal(t, "user:user000", tuple.User)
-		require.Equal(t, "assignee", tuple.Relation)
-		require.Equal(t, "role:basic_none", tuple.Object)
-	})
-
-	t.Run("should return nil for empty role", func(t *testing.T) {
-		tuple := createUserBasicRoleTuple("user123", "")
-		require.Nil(t, tuple)
-	})
-
-	t.Run("should return nil for invalid role", func(t *testing.T) {
-		tuple := createUserBasicRoleTuple("user123", "InvalidRole")
-		require.Nil(t, tuple)
 	})
 }
