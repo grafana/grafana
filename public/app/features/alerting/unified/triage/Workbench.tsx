@@ -162,56 +162,55 @@ export function Workbench({ domain, data, queryRunner, groupBy, hasActiveFilters
       </div>
       {/* content goes here */}
       <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
-        {/* Only show summary stats and chart when we have data or are loading */}
-        {!showEmptyState && (
-          <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
-            <SummaryStatsReact />
-            <SummaryChartReact />
+        {showEmptyState ? (
+          <div className={styles.emptyStateContainer}>
+            <EmptyState
+              variant="not-found"
+              message={hasActiveFilters ? 'No matching instances found' : 'No firing or pending instances'}
+            >
+              {hasActiveFilters ? (
+                <Trans i18nKey="alerting.triage.no-matching-instances-with-filters">
+                  No alert instances match your current set of filters for the selected time range.
+                </Trans>
+              ) : (
+                <Trans i18nKey="alerting.triage.no-firing-or-pending-instances">
+                  You have no alert instances in a firing or pending state for the selected time range.
+                </Trans>
+              )}
+            </EmptyState>
           </div>
+        ) : (
+          <>
+            <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
+              <SummaryStatsReact />
+              <SummaryChartReact />
+            </div>
+            <div className={styles.virtualizedContainer}>
+              <WorkbenchProvider
+                leftColumnWidth={leftColumnWidth}
+                rightColumnWidth={rightColumnWidth}
+                domain={domain}
+                queryRunner={queryRunner}
+              >
+                <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators={showData}>
+                  {isLoading && (
+                    <>
+                      <GenericRowSkeleton key="skeleton-1" width={leftColumnWidth} depth={0} />
+                      <GenericRowSkeleton key="skeleton-2" width={leftColumnWidth} depth={0} />
+                      <GenericRowSkeleton key="skeleton-3" width={leftColumnWidth} depth={0} />
+                    </>
+                  )}
+                  {showData &&
+                    dataSlice.map((row, index) => {
+                      const rowKey = generateRowKey(row, index);
+                      return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey, enableFolderMeta);
+                    })}
+                  {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}
+                </ScrollContainer>
+              </WorkbenchProvider>
+            </div>
+          </>
         )}
-        {/* Render actual data */}
-        <div className={styles.virtualizedContainer}>
-          <WorkbenchProvider
-            leftColumnWidth={leftColumnWidth}
-            rightColumnWidth={rightColumnWidth}
-            domain={domain}
-            queryRunner={queryRunner}
-          >
-            <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators={showData}>
-              {isLoading && (
-                <>
-                  <GenericRowSkeleton key="skeleton-1" width={leftColumnWidth} depth={0} />
-                  <GenericRowSkeleton key="skeleton-2" width={leftColumnWidth} depth={0} />
-                  <GenericRowSkeleton key="skeleton-3" width={leftColumnWidth} depth={0} />
-                </>
-              )}
-              {showEmptyState && (
-                <div className={styles.emptyStateContainer}>
-                  <EmptyState
-                    variant="not-found"
-                    message={hasActiveFilters ? 'No matching instances found' : 'No firing or pending instances'}
-                  >
-                    {hasActiveFilters ? (
-                      <Trans i18nKey="alerting.triage.no-matching-instances-with-filters">
-                        No alert instances match your current set of filters for the selected time range.
-                      </Trans>
-                    ) : (
-                      <Trans i18nKey="alerting.triage.no-firing-or-pending-instances">
-                        You have no alert instances in a firing or pending state.
-                      </Trans>
-                    )}
-                  </EmptyState>
-                </div>
-              )}
-              {showData &&
-                dataSlice.map((row, index) => {
-                  const rowKey = generateRowKey(row, index);
-                  return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey, enableFolderMeta);
-                })}
-              {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}
-            </ScrollContainer>
-          </WorkbenchProvider>
-        </div>
       </div>
     </div>
   );

@@ -34,10 +34,7 @@ export function WorkbenchRenderer() {
   const { data } = runner.useState();
   const rows = data ? convertToWorkbenchRows(data, groupByKeys) : [];
 
-  // Check if filters or non-default time range are applied
   const hasFiltersApplied = queryFilter.length > 0;
-  const hasCustomTimeRange = timeRange.raw.from !== 'now-4h' || timeRange.raw.to !== 'now';
-  const hasActiveFilters = hasFiltersApplied || hasCustomTimeRange;
 
   return (
     <Workbench
@@ -45,7 +42,7 @@ export function WorkbenchRenderer() {
       domain={domain}
       queryRunner={runner}
       groupBy={groupByKeys}
-      hasActiveFilters={hasActiveFilters}
+      hasActiveFilters={hasFiltersApplied}
     />
   );
 }
