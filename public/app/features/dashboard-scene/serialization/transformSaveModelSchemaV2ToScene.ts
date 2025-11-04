@@ -148,6 +148,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     folderUid: metadata.annotations?.[AnnoKeyFolder],
     isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
     isEmbedded: Boolean(metadata.annotations?.[AnnoKeyEmbedded]),
+    publicDashboardEnabled: dto.access.isPublic,
 
     // UI-only metadata, ref: DashboardModel.initMeta
     showSettings: Boolean(dto.access.canEdit),
