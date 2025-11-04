@@ -2,3 +2,5 @@
 *.gen.ts linguist-generated
 *_gen.ts linguist-generated
 *_gen.go linguist-generated
+**/openapi_snapshots/*.json linguist-generated
+apps/**/pkg/apis/*_manifest.go linguist-generated
