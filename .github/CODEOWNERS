@@ -127,6 +127,7 @@
 /pkg/extensions/ @grafana/grafana-backend-group
 /pkg/ifaces/ @grafana/grafana-backend-group
 /pkg/infra/db/ @grafana/grafana-backend-group
+/pkg/infra/featureflags/ @grafana/grafana-backend-group
 /pkg/infra/localcache/ @grafana/grafana-backend-group
 /pkg/infra/log/ @grafana/grafana-backend-group
 /pkg/infra/metrics/ @grafana/grafana-backend-group
