@@ -46,7 +46,8 @@ export function AppChrome({ children }: Props) {
 
   const headerLevels = useChromeHeaderLevels();
   const headerHeight = headerLevels * getChromeHeaderLevelHeight();
-  const styles = useStyles2(getStyles, headerHeight);
+  const sidebarTop = headerLevels === 2 ? getChromeHeaderLevelHeight() : headerHeight;
+  const styles = useStyles2(getStyles, headerHeight, sidebarTop);
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles);
 
@@ -56,7 +57,7 @@ export function AppChrome({ children }: Props) {
   const contentClass = cx({
     [styles.content]: true,
     [styles.contentChromeless]: state.chromeless,
-    [styles.contentWithSidebar]: isExtensionSidebarOpen && !state.chromeless,
+    [styles.contentWithSidebar]: isExtensionSidebarOpen && !state.chromeless && headerLevels !== 2,
   });
 
   const handleMegaMenu = () => {
@@ -131,7 +132,7 @@ export function AppChrome({ children }: Props) {
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-              [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
+              [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen && headerLevels !== 2,
               [contentSizeStyles.contentWidth]: !state.chromeless && isExtensionSidebarOpen,
             })}
             id="pageContent"
@@ -186,7 +187,7 @@ function useResponsiveDockedMegaMenu(chrome: AppChromeService) {
   }, [isLargeScreen, chrome, dockedMenuLocalStorageState]);
 }
 
-const getStyles = (theme: GrafanaTheme2, headerHeight: number) => {
+const getStyles = (theme: GrafanaTheme2, headerHeight: number, sidebarTop: number) => {
   return {
     content: css({
       label: 'page-content',
@@ -280,9 +281,10 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number) => {
       // the `Resizeable` component overrides the needed `position` and `height`
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       position: 'fixed !important' as 'fixed',
-      top: headerHeight,
+      // When two bars, position from first level (next to Share button); otherwise from full header
+      top: sidebarTop,
       bottom: 0,
-      zIndex: 2,
+      zIndex: theme.zIndex.navbarFixed + 1,
       right: 0,
     }),
   };
