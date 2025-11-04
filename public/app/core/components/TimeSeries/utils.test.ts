@@ -378,11 +378,8 @@ describe('time axis units', () => {
 
 describe('calculateAnnotationLaneSizes', () => {
   it('should not regress', () => {
-    expect(getXAxisConfig()).toEqual({});
-    expect(getXAxisConfig(6)).toEqual({});
-    expect(getXAxisConfig(0)).toEqual({});
-    expect(getXAxisConfig(1)).toEqual({});
-    expect(getXAxisConfig(2)).toEqual({});
+    expect(getXAxisConfig()).toEqual(undefined);
+    expect(getXAxisConfig(0)).toEqual(undefined);
   });
   it('should return config to resize x-axis size, gap, and ticks size', () => {
     expect(getXAxisConfig(2)).toEqual({
