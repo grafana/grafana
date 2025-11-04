@@ -33,8 +33,11 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "grafana",
             "version": "v0",
+            "datasource": {
+              "name": "grafana"
+            },
             "spec": {}
           },
           "enable": true,

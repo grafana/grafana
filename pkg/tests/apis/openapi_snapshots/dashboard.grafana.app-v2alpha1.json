@@ -3918,6 +3918,10 @@
           "properties"
         ],
         "properties": {
+          "__systemRef": {
+            "description": "Describes config override rules created when interacting with Grafana.",
+            "type": "string"
+          },
           "matcher": {
             "default": {},
             "allOf": [

@@ -30,6 +30,10 @@
       {
         "kind": "AnnotationQuery",
         "spec": {
+          "datasource": {
+            "type": "grafana",
+            "uid": "grafana"
+          },
           "query": {
             "kind": "DataQuery",
             "spec": {}
