@@ -167,10 +167,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginTop: 0,
     marginBottom: 0,
   }),
-  labelWrapper: css({
-    display: 'flex',
-    alignItems: 'center',
-  }),
   labelSelectable: css({
     cursor: 'pointer',
   }),
