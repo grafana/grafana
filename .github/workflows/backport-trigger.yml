@@ -40,7 +40,7 @@ jobs:
           }' "$GITHUB_EVENT_PATH" > /tmp/pr_info.json
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pr_info
           path: /tmp/pr_info.json
