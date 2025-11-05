@@ -1,6 +1,16 @@
 import { css, cx } from '@emotion/css';
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { firstValueFrom } from 'rxjs';
+import {
+  autoUpdate,
+  offset,
+  flip,
+  shift,
+  useFloating,
+  useClick,
+  useDismiss,
+  useInteractions,
+} from '@floating-ui/react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { lastValueFrom } from 'rxjs';
 
 import { GrafanaTheme2, fuzzySearch } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -14,6 +24,9 @@ import {
 } from '@grafana/scenes';
 import { Button, Icon, Input, useStyles2, Checkbox, Portal } from '@grafana/ui';
 
+interface OptionWithChecked extends VariableValueOption {
+  checked: boolean;
+}
 export class PanelGroupByAction extends SceneObjectBase {
   static Component = PanelGroupByActionRenderer;
 
@@ -38,152 +51,131 @@ export class PanelGroupByAction extends SceneObjectBase {
   public getGroupByVariable() {
     return this._groupByVariable;
   }
+
+  public async getGroupByOptions() {
+    if (
+      this._groupByVariable &&
+      (!this._groupByVariable.state.options || this._groupByVariable.state.options.length === 0)
+    ) {
+      await lastValueFrom(this._groupByVariable.validateAndUpdate());
+    }
+
+    const options = this._groupByVariable?.state.options;
+
+    if (!options || options.length === 0) {
+      return [];
+    }
+
+    const data = sceneGraph.getData(this);
+    const queries = data.state.data?.request?.targets;
+
+    if (!queries || queries.length === 0) {
+      return options;
+    }
+
+    const values = options.map((option) => option.value);
+    const applicability = await this._groupByVariable?.getGroupByApplicabilityForQueries(values, queries);
+
+    if (!applicability) {
+      return options;
+    }
+
+    return applicability.filter((item) => item.applicable).map((item) => ({ label: item.key, value: item.key }));
+  }
 }
 
 function PanelGroupByActionRenderer({ model }: SceneComponentProps<PanelGroupByAction>) {
-  const groupByVariable = model.getGroupByVariable();
-  const groupByState = groupByVariable?.useState();
+  const groupByState = model.getGroupByVariable()?.useState();
+  const dataState = sceneGraph.getData(model).useState();
   const styles = useStyles2(getStyles);
 
-  // Track temporary selections (not applied yet)
-  const [selectedItems, setSelectedItems] = useState<VariableValueOption[]>([]);
-  // Track search input
+  const [options, setOptions] = useState<OptionWithChecked[]>([]);
   const [searchValue, setSearchValue] = useState('');
-  // Track loading state
   const [isLoading, setIsLoading] = useState(false);
-  // Track dropdown open state
   const [isOpen, setIsOpen] = useState(false);
 
-  // Refs for positioning and click outside detection
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const { context, refs, floatingStyles } = useFloating({
+    open: isOpen,
+    onOpenChange: setIsOpen,
+    placement: 'bottom-start',
+    middleware: [offset(4), flip(), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+  });
 
-  // Check if an option is selected in temp state
-  const isOptionSelected = useCallback(
-    (item: VariableValueOption) => selectedItems.some((opt) => opt.value === item.value),
-    [selectedItems]
-  );
+  const click = useClick(context);
+  const dismiss = useDismiss(context);
+  const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss]);
 
-  // Toggle selection in temp state
-  const handleItemClick = useCallback(
-    (item: VariableValueOption) => {
-      if (isOptionSelected(item)) {
-        setSelectedItems(selectedItems.filter((opt) => opt.value !== item.value));
-      } else {
-        setSelectedItems([...selectedItems, item]);
-      }
-    },
-    [isOptionSelected, selectedItems]
-  );
+  const handleItemClick = useCallback((item: OptionWithChecked) => {
+    setOptions((prevOptions) =>
+      prevOptions.map((opt) => (opt.value === item.value ? { ...opt, checked: !opt.checked } : opt))
+    );
+  }, []);
 
-  // Apply selections and close dropdown
   const handleApply = () => {
     const groupByVariable = model.getGroupByVariable();
-    const selectedValues = selectedItems.map((item) => item.value);
+    const checkedOptions = options.filter((opt) => opt.checked);
+    const selectedValues = checkedOptions.map((item) => item.value);
+    const selectedLabels = checkedOptions.map((item) => item.label);
+
     if (groupByVariable) {
-      groupByVariable.changeValueTo(selectedValues, selectedValues, true);
+      groupByVariable.changeValueTo(selectedValues, selectedLabels, true);
     }
     setIsOpen(false);
   };
 
-  // Cancel and close dropdown
   const handleCancel = () => {
     setIsOpen(false);
   };
 
-  // Toggle dropdown open/close
-  const handleToggle = async () => {
-    const newOpenState = !isOpen;
-    setIsOpen(newOpenState);
-
-    if (newOpenState) {
-      // If groupBy has no options, fetch them
-      if (groupByVariable && (!groupByState?.options || groupByState.options.length === 0)) {
-        setIsLoading(true);
-        try {
-          await firstValueFrom(groupByVariable.validateAndUpdate());
-        } catch (error) {
-          console.error('Failed to fetch group by options:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-      setSearchValue('');
-    }
-  };
-
-  // Handle click outside to close dropdown
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        isOpen &&
-        menuRef.current &&
-        buttonRef.current &&
-        !menuRef.current.contains(event.target as Node) &&
-        !buttonRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
+    const fetchOptions = async () => {
+      setIsLoading(true);
+      try {
+        const applicableOptions = await model.getGroupByOptions();
+        const currentValue = groupByState?.value || [];
+        const currentValues = Array.isArray(currentValue) ? currentValue : [currentValue];
+
+        const optionsWithChecked: OptionWithChecked[] = applicableOptions.map((opt) => ({
+          ...opt,
+          checked: currentValues.includes(opt.value),
+        }));
+
+        setOptions(optionsWithChecked);
+      } catch (error) {
+        setOptions([]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
+    fetchOptions();
+  }, [model, groupByState?.value, dataState.data?.request?.targets]);
 
-  // Filter options based on search using fuzzy search
   const filteredOptions = useMemo(() => {
-    if (!groupByState?.options) {
-      return [];
-    }
-
     if (!searchValue) {
-      return groupByState.options;
+      return options;
     }
 
-    const haystack = groupByState.options.map((option) => option.label);
+    const haystack = options.map((option) => option.label);
     const indices = fuzzySearch(haystack, searchValue);
-    return indices.map((idx) => groupByState.options[idx]);
-  }, [groupByState?.options, searchValue]);
+    return indices.map((idx) => options[idx]);
+  }, [options, searchValue]);
 
   if (!groupByState) {
     return null;
   }
 
-  // Calculate menu position based on button position
-  const getMenuPosition = () => {
-    if (!buttonRef.current) {
-      return { top: 0, left: 0 };
-    }
-    const rect = buttonRef.current.getBoundingClientRect();
-    return {
-      top: rect.bottom + 4,
-      left: rect.left,
-    };
-  };
-
-  const menuPosition = getMenuPosition();
-
   return (
     <>
-      <Button variant="secondary" size="sm" ref={buttonRef} onClick={handleToggle}>
+      <Button variant="secondary" size="sm" ref={refs.setReference} {...getReferenceProps()}>
         <Trans i18nKey="panel-group-by.button">Group by</Trans>
         <Icon name="angle-down" />
       </Button>
 
       {isOpen && (
         <Portal>
-          <div
-            ref={menuRef}
-            className={styles.menuContainer}
-            style={{
-              position: 'fixed',
-              top: menuPosition.top,
-              left: menuPosition.left,
-              zIndex: 1060,
-            }}
-          >
+          <div ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()} className={styles.menuContainer}>
             {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
             <div className={styles.searchContainer} onClick={(e) => e.stopPropagation()}>
               <Input
@@ -204,10 +196,9 @@ function PanelGroupByActionRenderer({ model }: SceneComponentProps<PanelGroupByA
                 </div>
               ) : (
                 filteredOptions.map((option) => {
-                  const isSelected = isOptionSelected(option);
                   return (
                     <div
-                      key={option.value as string}
+                      key={String(option.value)}
                       className={cx(styles.option)}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -222,9 +213,9 @@ function PanelGroupByActionRenderer({ model }: SceneComponentProps<PanelGroupByA
                       }}
                       role="button"
                       tabIndex={0}
-                      aria-pressed={isSelected}
+                      aria-pressed={option.checked}
                     >
-                      <Checkbox value={isSelected} onChange={() => handleItemClick(option)} />
+                      <Checkbox value={option.checked} onChange={() => handleItemClick(option)} />
                       <span className={styles.optionLabel}>{option.label}</span>
                     </div>
                   );
@@ -256,6 +247,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
     boxShadow: theme.shadows.z3,
+    zIndex: theme.zIndex.dropdown,
   }),
   searchContainer: css({
     padding: theme.spacing(1),
