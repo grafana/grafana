@@ -17,7 +17,7 @@ import {
 } from '@grafana/ui';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
-import { ANNOTATION_LANE_SIZE, getXAnnotationFrames } from './utils';
+import { ANNOTATION_LANE_SIZE, getXAnnotationFrames, getXYAnnotationFrames } from './utils';
 
 // (copied from TooltipPlugin2)
 interface TimeRange2 {
@@ -90,7 +90,7 @@ export const AnnotationsPlugin2 = ({
 
   const { xAnnos, xyAnnos } = useMemo(() => {
     let xAnnos = getXAnnotationFrames(annotations);
-    let xyAnnos = annotations.filter((frame) => frame.name === 'xymark');
+    let xyAnnos = getXYAnnotationFrames(annotations);
 
     if (newRange) {
       let isRegion = newRange.to > newRange.from;

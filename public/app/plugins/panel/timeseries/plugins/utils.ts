@@ -12,3 +12,7 @@ export function getXAnnotationFrames(dataFrames: DataFrame[] = []) {
       frame.fields.some((f) => f.type === FieldType.time)
   );
 }
+
+export function getXYAnnotationFrames(dataFrames: DataFrame[] = []) {
+  return dataFrames.filter((frame) => frame.name === 'xymark');
+}
