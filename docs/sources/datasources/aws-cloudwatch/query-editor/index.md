@@ -254,11 +254,12 @@ You can query CloudWatch Logs using three supported query language options:
 
 **Log Anomalies**
 
-[Anomaly detection](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/LogsAnomalyDetection.html) uses machine-learning and pattern recognition to establish baselines of typical log content. 
-Log Anomalies query editor fetches the list of anomalies detected in your CloudWatch service. In order to query log anomalies in the editor, a log anomaly detector must be created in the AWS CloudWatch console first. 
-The query editor supports filtering by Log Anomaly ARN and suppressed state. The log trend cell shows the number of occurrences of the pattern over the selected query time range. 
+[Anomaly detection](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/LogsAnomalyDetection.html) uses machine-learning and pattern recognition to establish baselines of typical log content.  
+Log Anomalies query editor fetches the list of anomalies detected in your CloudWatch service. In order to query log anomalies in the editor, a log anomaly detector must be created in the AWS CloudWatch console first.
+The log trend cell shows the number of occurrences of the pattern over the selected query time range.
+The table shows 50 log anomalies at a time. If you would like to narrow down the list, you can filter anomalies by their ARN and suppressed state.
 
-In addition to this, you can use the Logs Insights QL editor and the `anomaly` command together with the `patterns` command to define and display log anomalies ad-hoc. See [CloudWatch Logs Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/LogsAnomalyDetection-Insights.html) for more info. 
+In addition to this, you can use the Logs Insights QL editor and the `anomaly` command together with the `patterns` command to define and display log anomalies ad-hoc. See [CloudWatch Logs Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/LogsAnomalyDetection-Insights.html) for more info.
 
 **Log Insights**
 
