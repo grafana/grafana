@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw';
 
 import { Scope } from '@grafana/data';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
 
 import { ScopeNavigation } from '../../../dashboards/types';
 
@@ -14,16 +15,41 @@ interface NavigationTreeNode {
   children?: NavigationTreeNode[];
 }
 
+// Get all dashboard UIDs from the mocked tree (used by dashboard handlers)
+// This ensures we use dashboard UIDs that exist in the mocked dashboard API
+const [mockTree] = getFolderFixtures();
+const mockDashboards = mockTree.filter(
+  (item): item is typeof item & { item: { kind: 'dashboard' } } => item.item.kind === 'dashboard'
+);
+const MOCK_DASHBOARD_UIDS = mockDashboards.map(({ item }) => item.uid);
+const FALLBACK_DASHBOARD_UID = MOCK_DASHBOARD_UIDS[0] || 'dash-1';
+
+// Helper function to get a dashboard UID by index (cycles through available dashboards)
+let dashboardIndexCounter = 0;
+function getNextDashboardUID(): string {
+  if (MOCK_DASHBOARD_UIDS.length === 0) {
+    return FALLBACK_DASHBOARD_UID;
+  }
+  const uid = MOCK_DASHBOARD_UIDS[dashboardIndexCounter % MOCK_DASHBOARD_UIDS.length];
+  dashboardIndexCounter++;
+  return uid;
+}
+
+// Reset counter for each tree conversion
+function resetDashboardCounter() {
+  dashboardIndexCounter = 0;
+}
+
 // Convert tree structure to flat navigation array
 function treeToNavigations(node: NavigationTreeNode, parentPath: string[] = []): ScopeNavigation[] {
   const navigations: ScopeNavigation[] = [];
   const currentPath = [...parentPath, node.name];
 
-  // Create navigation item for this node
+  // Create navigation item for this node - assign different mocked dashboards
   navigations.push({
     metadata: { name: node.name },
     spec: {
-      url: `/d/${node.name}`,
+      url: `/d/${getNextDashboardUID()}`,
       scope: node.scope,
       ...(node.subScope ? { subScope: node.subScope } : {}),
     },
@@ -185,12 +211,14 @@ const MOCK_SCOPES: Scope[] = [
 
 // Mock ScopeNavigations - using commonly selected scopes like 'cloud', 'dev', 'ops', 'prod'
 // so they will match when users select these scopes
+// Reset counter before creating static navigations to ensure consistent distribution
+resetDashboardCounter();
 const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   // Navigations for 'cloud' scope with groups
   {
     metadata: { name: 'cloud-overview' },
     spec: {
-      url: '/d/cloud-overview',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'cloud',
     },
     status: {
@@ -201,7 +229,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'cloud-analytics' },
     spec: {
-      url: '/d/cloud-analytics',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'cloud',
       subScope: 'prod-env',
     },
@@ -214,7 +242,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'dev-dashboard' },
     spec: {
-      url: '/d/dev-dashboard',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'dev',
     },
     status: {
@@ -225,7 +253,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'dev-metrics' },
     spec: {
-      url: '/d/dev-metrics',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'dev',
       subScope: 'dev-env',
     },
@@ -238,7 +266,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'ops-monitoring' },
     spec: {
-      url: '/d/ops-monitoring',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'ops',
     },
     status: {
@@ -249,7 +277,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'ops-alerts' },
     spec: {
-      url: '/d/ops-alerts',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'ops',
     },
     status: {
@@ -261,7 +289,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'prod-overview' },
     spec: {
-      url: '/d/prod-overview',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'prod',
     },
     status: {
@@ -272,7 +300,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'prod-performance' },
     spec: {
-      url: '/d/prod-performance',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'prod',
       subScope: 'prod-env',
     },
@@ -285,7 +313,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'prod-logs' },
     spec: {
-      url: '/d/prod-logs',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'prod',
     },
     status: {
@@ -295,7 +323,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'cloud-status' },
     spec: {
-      url: '/d/cloud-status',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'cloud',
     },
     status: {
@@ -305,7 +333,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'dev-health' },
     spec: {
-      url: '/d/dev-health',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'dev',
     },
     status: {
@@ -315,7 +343,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'ops-overview' },
     spec: {
-      url: '/d/ops-overview',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'ops',
     },
     status: {
@@ -326,7 +354,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'dev-logs' },
     spec: {
-      url: '/d/dev-logs',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'dev',
       subScope: 'dev-env',
     },
@@ -338,7 +366,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'grafana-overview' },
     spec: {
-      url: '/d/grafana-overview',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'grafana',
     },
     status: {
@@ -349,7 +377,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'grafana-dev-dashboard' },
     spec: {
-      url: '/d/grafana-dev-dashboard',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'grafana',
       subScope: 'dev',
     },
@@ -362,7 +390,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'dev-env-overview' },
     spec: {
-      url: '/d/dev-env-overview',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'dev-env',
     },
     status: {
@@ -373,7 +401,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'dev-env-infrastructure' },
     spec: {
-      url: '/d/dev-env-infrastructure',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'dev-env',
     },
     status: {
@@ -384,7 +412,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'dev-env-cluster-metrics' },
     spec: {
-      url: '/d/dev-env-cluster-metrics',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'dev-env',
       subScope: 'dev-cluster',
     },
@@ -396,7 +424,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'dev-env-cluster-logs' },
     spec: {
-      url: '/d/dev-env-cluster-logs',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'dev-env',
       subScope: 'dev-cluster',
     },
@@ -408,7 +436,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'prod-env-overview' },
     spec: {
-      url: '/d/prod-env-overview',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'prod-env',
     },
     status: {
@@ -419,7 +447,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'prod-env-monitoring' },
     spec: {
-      url: '/d/prod-env-monitoring',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'prod-env',
     },
     status: {
@@ -430,7 +458,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'prod-env-cluster-health' },
     spec: {
-      url: '/d/prod-env-cluster-health',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'prod-env',
       subScope: 'prod-cluster',
     },
@@ -443,7 +471,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'dev-cluster-nodes' },
     spec: {
-      url: '/d/dev-cluster-nodes',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'dev-cluster',
     },
     status: {
@@ -454,7 +482,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'dev-cluster-services' },
     spec: {
-      url: '/d/dev-cluster-services',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'dev-cluster',
     },
     status: {
@@ -465,7 +493,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'prod-cluster-nodes' },
     spec: {
-      url: '/d/prod-cluster-nodes',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'prod-cluster',
     },
     status: {
@@ -476,7 +504,7 @@ const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
   {
     metadata: { name: 'prod-cluster-services' },
     spec: {
-      url: '/d/prod-cluster-services',
+      url: `/d/${getNextDashboardUID()}`,
       scope: 'prod-cluster',
     },
     status: {

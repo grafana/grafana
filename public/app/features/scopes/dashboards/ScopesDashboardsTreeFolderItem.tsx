@@ -2,7 +2,9 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
+
+import { useScopesServices } from '../ScopesContextProvider';
 
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
 import { OnFolderUpdate, SuggestedNavigationsFolder, SuggestedNavigationsFoldersMap } from './types';
@@ -22,6 +24,9 @@ export function ScopesDashboardsTreeFolderItem({
 }: ScopesDashboardsTreeFolderItemProps) {
   const styles = useStyles2(getStyles);
 
+  // get scopesselector service
+  const scopesSelectorService = useScopesServices()?.scopesSelectorService ?? undefined;
+
   return (
     <div className={styles.container} role="treeitem" aria-selected={folder.expanded}>
       <button
@@ -38,7 +43,26 @@ export function ScopesDashboardsTreeFolderItem({
 
         <span className={styles.titleContainer}>
           <span>{folder.title}</span>
-          {folder.isSubScope && <Icon name="exchange-alt" className={styles.exchangeIcon} />}
+
+          {folder.isSubScope && (
+            <Tooltip
+              content={t('scopes.dashboards.exchange', 'Change root scope to {{scope}}', {
+                scope: folder.subScopeName || '',
+              })}
+            >
+              <IconButton
+                aria-label={t('scopes.dashboards.exchange', 'Change root scope')}
+                name="exchange-alt"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (folder.subScopeName && scopesSelectorService) {
+                    scopesSelectorService.changeScopes([folder.subScopeName]);
+                  }
+                }}
+              />
+            </Tooltip>
+          )}
         </span>
       </button>
 
