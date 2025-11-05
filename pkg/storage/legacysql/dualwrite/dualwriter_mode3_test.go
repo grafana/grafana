@@ -451,15 +451,15 @@ func TestMode3_CleanupOnCreateFailureWithContextCancelled(t *testing.T) {
 		ls.Mock.On("Create", mock.Anything, exampleObj, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
 
 		// Setup: Unified Create fails and cancels the context
-		us.Mock.On("Create", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Return(nil, errors.New("unified create error")).Once()
-
-		// Setup: Legacy Delete should be called and cancel the context
-		ls.Mock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		us.Mock.On("Create", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 			cancel()
-		}).Return(nil, false, context.Canceled).Once()
+		}).Return(nil, context.Canceled).Once()
 
 		// Setup: Background Legacy Delete should be called with a fresh context (via context.WithoutCancel)
 		ls.Mock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+			if args.Get(0).(context.Context).Err() != nil {
+				t.Error("Expected fresh context in background delete, but got a cancelled context")
+			}
 			deleteCalled <- true
 		}).Return(exampleObj, true, nil).Once()
 
@@ -469,9 +469,8 @@ func TestMode3_CleanupOnCreateFailureWithContextCancelled(t *testing.T) {
 		obj, err := dw.Create(ctx, exampleObj, createFn, &metav1.CreateOptions{})
 
 		// Should return an error because unified create failed
-		require.Error(t, err)
+		require.ErrorIs(t, err, context.Canceled)
 		require.Nil(t, obj)
-		require.Contains(t, err.Error(), "unified create error")
 
 		// Wait for background delete to be called (with timeout)
 		select {
