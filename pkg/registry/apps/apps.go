@@ -35,6 +35,7 @@ import (
 // This is the pattern that should be used to provide app installers in the app registry.
 func ProvideAppInstallers(
 	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
 	playlistAppInstaller *playlist.PlaylistAppInstaller,
 	pluginsApplInstaller *plugins.AppInstaller,
 	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
@@ -76,8 +77,8 @@ func ProvideAppInstallers(
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesLogsDrilldown) {
 		installers = append(installers, logsdrilldownAppInstaller)
 	}
-	//nolint:staticcheck
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
+
+	if cfg.AppRegistry.KubernetesAnnotationsAppEnabled {
 		installers = append(installers, annotationAppInstaller)
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
