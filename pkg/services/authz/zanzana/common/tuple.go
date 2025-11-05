@@ -465,3 +465,21 @@ func AddRenderContext(req *openfgav1.CheckRequest) {
 		),
 	})
 }
+
+func SplitTupleObject(object string) (string, string, string) {
+	var objectType, name, relation string
+	parts := strings.Split(object, ":")
+	if len(parts) < 2 {
+		return "", "", ""
+	}
+
+	objectType = parts[0]
+	nameRel := parts[1]
+	parts = strings.Split(nameRel, "#")
+	if len(parts) > 1 {
+		relation = parts[1]
+	}
+	name = parts[0]
+
+	return objectType, name, relation
+}
