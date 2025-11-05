@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { DEFAULT_SPAN_FILTERS, randomId } from '../state/constants';
 import { changePanelState } from '../state/explorePane';
 
-import { TraceSpan } from './components/types/trace';
+import { TraceSpan, CriticalPathSection } from './components/types/trace';
 import { filterSpans } from './components/utils/filter-spans';
 
 /**
@@ -81,8 +81,14 @@ function migrateToAdhocFilters(search: TraceSearchProps): TraceSearchProps {
  * @param exploreId - The explore pane ID (optional, for global state management)
  * @param spans - The trace spans to filter
  * @param initialFilters - Initial filters to set
+ * @param criticalPath - The critical path sections (optional)
  */
-export function useSearch(exploreId?: string, spans?: TraceSpan[], initialFilters?: TraceSearchProps) {
+export function useSearch(
+  exploreId?: string,
+  spans?: TraceSpan[],
+  initialFilters?: TraceSearchProps,
+  criticalPath?: CriticalPathSection[]
+) {
   const dispatch = useDispatch();
 
   // Global state logic (for Explore)
@@ -176,8 +182,8 @@ export function useSearch(exploreId?: string, spans?: TraceSpan[], initialFilter
   );
 
   const spanFilterMatches: Set<string> | undefined = useMemo(() => {
-    return spans && filterSpans(search, spans);
-  }, [search, spans]);
+    return spans && filterSpans(search, spans, criticalPath);
+  }, [search, spans, criticalPath]);
 
   return { search, setSearch, spanFilterMatches };
 }

@@ -18,7 +18,7 @@ import { SelectableValue, TraceKeyValuePair, TraceSearchProps, TraceSearchTag } 
 
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../constants/span';
 import TNil from '../types/TNil';
-import { TraceSpan } from '../types/trace';
+import { TraceSpan, CriticalPathSection } from '../types/trace';
 
 /**
  * Filter spans using adhoc filters.
@@ -151,7 +151,11 @@ const matchTextSearch = (query: string, span: TraceSpan): boolean => {
 
 // filter spans where all filters added need to be true for each individual span that is returned
 // i.e. the more filters added -> the more specific that the returned results are
-export function filterSpans(searchProps: TraceSearchProps, spans: TraceSpan[] | TNil) {
+export function filterSpans(
+  searchProps: TraceSearchProps,
+  spans: TraceSpan[] | TNil,
+  criticalPath?: CriticalPathSection[]
+) {
   if (!spans) {
     return undefined;
   }
@@ -192,6 +196,12 @@ export function filterSpans(searchProps: TraceSearchProps, spans: TraceSpan[] | 
       spans = queryMatches;
       filteredSpans = true;
     }
+  }
+
+  // Critical path filtering
+  if (searchProps.criticalPathOnly && criticalPath) {
+    spans = getCriticalPathMatches(spans, criticalPath);
+    filteredSpans = true;
   }
 
   return filteredSpans ? new Set(spans.map((span: TraceSpan) => span.spanID)) : undefined;
@@ -381,6 +391,12 @@ const getDurationMatches = (spans: TraceSpan[], searchProps: TraceSearchProps) =
   }
 
   return filteredSpans;
+};
+
+const getCriticalPathMatches = (spans: TraceSpan[], criticalPath: CriticalPathSection[]) => {
+  return spans.filter((span: TraceSpan) => {
+    return criticalPath.some((section) => section.spanId === span.spanID);
+  });
 };
 
 export const convertTimeFilter = (time: string) => {

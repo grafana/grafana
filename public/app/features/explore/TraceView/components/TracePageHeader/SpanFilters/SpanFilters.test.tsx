@@ -52,16 +52,10 @@ describe('SpanFilters', () => {
   let user: ReturnType<typeof userEvent.setup>;
   const SpanFiltersWithProps = ({ showFilters = true, matches }: { showFilters?: boolean; matches?: Set<string> }) => {
     const [search, setSearch] = useState(DEFAULT_SPAN_FILTERS);
-    const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
-    const [showCriticalPathSpansOnly, setShowCriticalPathSpansOnly] = useState(false);
     const props = {
       trace: trace,
       showSpanFilters: showFilters,
       setShowSpanFilters: jest.fn(),
-      showSpanFilterMatchesOnly,
-      setShowSpanFilterMatchesOnly,
-      showCriticalPathSpansOnly,
-      setShowCriticalPathSpansOnly,
       search,
       setSearch,
       spanFilterMatches: matches,
