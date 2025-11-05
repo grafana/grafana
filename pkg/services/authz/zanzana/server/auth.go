@@ -26,7 +26,7 @@ func authorize(ctx context.Context, namespace string, ss setting.ZanzanaServerSe
 		return status.Errorf(codes.Unauthenticated, "unauthenticated")
 	}
 	if !claims.NamespaceMatches(c.GetNamespace(), namespace) {
-		return status.Errorf(codes.PermissionDenied, "namespace does not match")
+		return status.Errorf(codes.PermissionDenied, "token namespace %s does not match request namespace", c.GetNamespace())
 	}
 	return nil
 }
