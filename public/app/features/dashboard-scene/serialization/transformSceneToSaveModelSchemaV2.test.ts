@@ -31,6 +31,7 @@ import {
   AutoGridLayoutSpec,
   RowsLayoutSpec,
   TabsLayoutSpec,
+  defaultDataQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
@@ -847,7 +848,7 @@ describe('getVizPanelQueries', () => {
     expect(result.length).toBe(2);
     expect(result[0].spec.query.kind).toBe('DataQuery');
     expect(result[0].spec.query.datasource).toBeUndefined(); // ignore datasource if it wasn't provided
-    expect(result[0].spec.query.group).toBe('default');
+    expect(result[0].spec.query.group).toBe(defaultDataQueryKind().group); // this is a default query that contains only refId and therefore group should be the default group
     expect(result[0].spec.query.version).toBe('v0');
 
     expect(result[1].spec.query.kind).toBe('DataQuery');
