@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
@@ -54,7 +55,7 @@ func (s *Service) newServiceAccountNameResolver(ctx context.Context, ns types.Na
 func (s *Service) fetchTeams(ctx context.Context, ns types.NamespaceInfo) (map[int64]string, error) {
 	key := teamIDsCacheKey(ns.Value)
 	res, err, _ := s.sf.Do(key, func() (any, error) {
-		teams, err := s.identityStore.ListTeams(ctx, ns, legacy.ListTeamQuery{})
+		teams, err := s.identityStore.ListTeams(ctx, ns, legacy.ListTeamQuery{Pagination: common.Pagination{Limit: 100}})
 		if err != nil {
 			return nil, fmt.Errorf("could not fetch teams: %w", err)
 		}
@@ -170,6 +171,7 @@ func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, scop
 	if scopePrefix == "teams:id:" {
 		return s.newTeamNameResolver(ctx, ns)
 	}
+
 	if scopePrefix == "permissions:type:" {
 		return permissionsDelegateResolverFunc, nil
 	}
