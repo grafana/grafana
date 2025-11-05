@@ -238,6 +238,13 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 			if err != nil {
 				return nil, err
 			}
+			if len(query.DashboardUIDs) == 0 {
+				// Empty results
+				return &resourcepb.ResourceSearchResponse{
+					TotalHits: 0,
+					Results:   &resourcepb.ResourceTable{},
+				}, nil
+			}
 
 		case resource.SEARCH_FIELD_TITLE_PHRASE:
 			if len(vals) != 1 {
