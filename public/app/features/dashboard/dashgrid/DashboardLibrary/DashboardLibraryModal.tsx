@@ -27,7 +27,7 @@ type ModalView = 'datasource' | 'community' | 'mapping';
 export interface MappingContext {
   dashboardName: string;
   dashboardJson: DashboardJson;
-  unmappedInputs: DataSourceInput[];
+  unmappedDsInputs: DataSourceInput[];
   constantInputs: DashboardInput[];
   existingMappings: InputMapping[];
   onInterpolateAndNavigate: (mappings: InputMapping[]) => void;
@@ -146,7 +146,7 @@ export const DashboardLibraryModal = ({
         )}
         {activeView === 'mapping' && mappingContext && (
           <CommunityDashboardMappingForm
-            unmappedInputs={mappingContext.unmappedInputs}
+            unmappedDsInputs={mappingContext.unmappedDsInputs}
             constantInputs={mappingContext.constantInputs}
             existingMappings={mappingContext.existingMappings}
             onBack={handleBackToDashboards}

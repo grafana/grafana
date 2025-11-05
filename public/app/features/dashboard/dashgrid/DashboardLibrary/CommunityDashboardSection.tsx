@@ -172,7 +172,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         onShowMapping({
           dashboardName: dashboard.name,
           dashboardJson,
-          unmappedInputs: mappingResult.unmappedInputs,
+          unmappedDsInputs: mappingResult.unmappedDsInputs,
           constantInputs,
           existingMappings: mappingResult.mappings,
           eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,

@@ -237,7 +237,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
 
       // Decide whether to show mapping form or navigate directly
       // Show mapping form if: (a) there are unmapped datasources OR (b) there are constants
-      const needsMapping = mappingResult.unmappedInputs.length > 0 || constantInputs.length > 0;
+      const needsMapping = mappingResult.unmappedDsInputs.length > 0 || constantInputs.length > 0;
 
       if (!needsMapping) {
         // No mapping needed - all datasources auto-mapped, no constants
@@ -254,7 +254,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
         onShowMapping({
           dashboardName: dashboard.name,
           dashboardJson,
-          unmappedInputs: mappingResult.unmappedInputs,
+          unmappedDsInputs: mappingResult.unmappedDsInputs,
           constantInputs,
           existingMappings: mappingResult.mappings,
           eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,

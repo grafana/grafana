@@ -69,7 +69,7 @@ export const DashboardLibraryInteractions = {
     libraryItemTitle: string;
     sourceEntryPoint: SourceEntryPoint;
     eventLocation: EventLocation;
-    unmappedInputsCount: number;
+    unmappedDsInputsCount: number;
     constantInputsCount: number;
   }) => {
     reportDashboardLibraryInteraction('mapping_form_shown', properties);

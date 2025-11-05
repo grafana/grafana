@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useEffectOnce } from 'react-use';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -12,7 +11,7 @@ import { ContentKind, DashboardLibraryInteractions, EventLocation, SOURCE_ENTRY_
 import { InputMapping, mapConstantInputs } from './utils/autoMapDatasources';
 
 interface Props {
-  unmappedInputs: DataSourceInput[];
+  unmappedDsInputs: DataSourceInput[];
   constantInputs: DashboardInput[];
   existingMappings: InputMapping[];
   onBack: () => void;
@@ -31,7 +30,7 @@ interface UserSelectedDatasourceMappings {
 }
 
 export const CommunityDashboardMappingForm = ({
-  unmappedInputs,
+  unmappedDsInputs,
   constantInputs,
   existingMappings,
   onBack,
@@ -51,7 +50,7 @@ export const CommunityDashboardMappingForm = ({
       libraryItemTitle: dashboardName,
       sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       eventLocation,
-      unmappedInputsCount: unmappedInputs.length,
+      unmappedDsInputsCount: unmappedDsInputs.length,
       constantInputsCount: constantInputs.length,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -60,7 +59,7 @@ export const CommunityDashboardMappingForm = ({
   const [userSelectedDsMappings, setUserSelectedDsMappings] = useState<Record<string, UserSelectedDatasourceMappings>>(
     () => {
       // Initialize with existing unmapped inputs
-      return unmappedInputs.reduce<Record<string, UserSelectedDatasourceMappings>>((acc, input) => {
+      return unmappedDsInputs.reduce<Record<string, UserSelectedDatasourceMappings>>((acc, input) => {
         const unmappedInput = {
           name: input.name,
           pluginId: input.pluginId,
@@ -106,7 +105,7 @@ export const CommunityDashboardMappingForm = ({
       libraryItemTitle: dashboardName,
       sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       eventLocation,
-      userMappedCount: unmappedInputs.length,
+      userMappedCount: unmappedDsInputs.length,
       autoMappedCount: existingMappings.length,
     });
 
@@ -115,7 +114,7 @@ export const CommunityDashboardMappingForm = ({
     // 2. User-selected datasources
     // 3. Constant values (user-edited or defaults)
 
-    const userSelectedDatasources: InputMapping[] = unmappedInputs.map((input) => ({
+    const userSelectedDatasources: InputMapping[] = unmappedDsInputs.map((input) => ({
       name: input.name,
       type: 'datasource',
       pluginId: input.pluginId,
@@ -130,7 +129,7 @@ export const CommunityDashboardMappingForm = ({
 
   // Check if all unmapped datasource inputs have been mapped by user
   // Constants are optional (have default values)
-  const allDatasourcesMapped = unmappedInputs.every((input) => userSelectedDsMappings[input.name]?.datasource);
+  const allDatasourcesMapped = unmappedDsInputs.every((input) => userSelectedDsMappings[input.name]?.datasource);
 
   return (
     <Stack direction="column" gap={3} height="100%" justifyContent="space-between">
@@ -161,14 +160,14 @@ export const CommunityDashboardMappingForm = ({
           </Alert>
         )}
 
-        {unmappedInputs.length > 0 && (
+        {unmappedDsInputs.length > 0 && (
           <Stack direction="column" gap={2}>
             <Text element="h4" weight="medium">
               <Trans i18nKey="dashboard-library.community-mapping-form.datasources-title">
                 Datasource Configuration
               </Trans>
             </Text>
-            {unmappedInputs.map((input) => {
+            {unmappedDsInputs.map((input) => {
               const selectedDatasource = userSelectedDsMappings[input.name]?.datasource;
 
               return (
