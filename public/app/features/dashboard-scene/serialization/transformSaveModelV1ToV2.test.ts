@@ -65,6 +65,12 @@ jest.mock('@grafana/runtime', () => {
         name: 'Loki Test',
         meta: { id: 'loki' },
       },
+      '-- Mixed --': {
+        type: 'mixed',
+        uid: '-- Mixed --',
+        name: '-- Mixed --',
+        meta: { id: 'mixed' },
+      },
     },
     featureToggles: {
       dashboardNewLayouts: true,

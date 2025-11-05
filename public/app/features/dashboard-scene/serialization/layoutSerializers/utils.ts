@@ -132,26 +132,13 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
   return new VizPanel(vizPanelState);
 }
 
-const defaultPanelQuery: PanelQueryKind = {
-  ...defaultPanelQueryKind(),
-  spec: {
-    ...defaultPanelQueryKind().spec,
-    query: {
-      ...defaultPanelQueryKind().spec.query,
-      datasource: {
-        name: getDefaultDataSourceRef().type,
-      },
-    },
-  },
-};
-
 export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider | undefined {
   const panel = panelKind.spec;
 
   const targets =
     Array.isArray(panel.data?.spec.queries) && panel.data?.spec.queries.length > 0
       ? panel.data?.spec.queries
-      : [defaultPanelQuery];
+      : [defaultPanelQueryKind()];
   // Skip setting query runner for panels without queries
   if (!targets?.length) {
     return undefined;
@@ -196,6 +183,10 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
     return undefined;
   }
 
+  // if (panel.spec.data.spec.queries.length === 1 && isDefaultEmptyPanelQuery(panel.spec.data.spec.queries[0])) {
+  //   return undefined;
+  // }
+
   let datasource: DataSourceRef | undefined = undefined;
   let isMixedDatasource = false;
 
@@ -225,7 +216,7 @@ export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataS
   return getDataSourceForQuery(ds, variable.spec.query.group);
 }
 
-export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef {
+export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef | undefined {
   const ds: DataSourceRef = {
     uid: query.datasource?.name,
     type: query.group,
@@ -292,8 +283,8 @@ export function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | n
 function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
   return {
     refId: query.spec.refId,
-    datasource: getRuntimePanelDataSource(query.spec.query),
     hide: query.spec.hidden,
+    ...(isDefaultEmptyPanelQuery(query) ? {} : { datasource: getRuntimePanelDataSource(query.spec.query) }),
     ...query.spec.query.spec,
   };
 }
@@ -326,4 +317,8 @@ export function getElement(
   scene: DashboardScene
 ): DashboardV2Spec['elements'] {
   return createElements([vizPanelToSchemaV2(gridItem.state.body, scene.serializer.getDSReferencesMapping())], scene);
+}
+
+export function isDefaultEmptyPanelQuery(query: PanelQueryKind): boolean {
+  return query.spec.refId === 'A' && Object.keys(query.spec.query.spec).length === 0;
 }

@@ -1043,7 +1043,9 @@ describe('DashboardSceneSerializer', () => {
                               datasource: {
                                 name: 'prometheus-uid',
                               },
-                              spec: {},
+                              spec: {
+                                expr: 'label_values(node_cpu_seconds_total{job="node-exporter", mode="idle"}, mode)',
+                              },
                             },
                           },
                         },

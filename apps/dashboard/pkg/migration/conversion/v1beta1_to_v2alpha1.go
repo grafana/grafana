@@ -1712,10 +1712,12 @@ func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *das
 			queryDatasourceType = getDatasourceTypeByUID(queryDatasourceUID)
 		}
 	} else if panelDatasource != nil {
-		if panelDatasource.Type != nil {
-			queryDatasourceType = *panelDatasource.Type
-		}
-		if panelDatasource.Uid != nil {
+		// Only use panel datasource if it's not a mixed datasource
+		// Mixed datasources should not be propagated to individual queries
+		if panelDatasource.Uid != nil && *panelDatasource.Uid != "-- Mixed --" {
+			if panelDatasource.Type != nil {
+				queryDatasourceType = *panelDatasource.Type
+			}
 			queryDatasourceUID = *panelDatasource.Uid
 		}
 	}
