@@ -22,11 +22,15 @@ composableKinds: PanelCfg: lineage: {
 	schemas: [{
 		version: [0, 0]
 		schema: {
-			Options: common.OptionsWithTimezones & {
+			Options: {
+				common.OptionsWithTimezones
+				common.OptionsWithAnnotations
+
 				legend:       common.VizLegendOptions
 				tooltip:      common.VizTooltipOptions
 				timeCompare?: common.TimeCompareOptions
 				orientation?: common.VizOrientation
+				annotations?: common.VizAnnotations
 			} @cuetsy(kind="interface")
 
 			FieldConfig: common.GraphFieldConfig & {} @cuetsy(kind="interface")

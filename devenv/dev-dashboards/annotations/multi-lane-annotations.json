@@ -1,0 +1,1020 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "maxDataPoints": 30,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "noise": 10,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "spread": 10
+        },
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "rawFrameContent": "[\n  {\n    \"fields\": [\n      {\n        \"name\": \"type\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\",\n          \"Milestones\"\n        ],\n        \"type\": \"string\"\n      },\n      {\n        \"name\": \"color\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\",\n          \"#F2495C\"\n        ],\n        \"type\": \"string\"\n      },\n      {\n        \"name\": \"time\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          1720697881000,\n          1728580067000,\n          1730129182000,\n          1730734644000,\n          1732542118000,\n          1736426576000,\n          1736874473000,\n          1738676647000,\n          1740067713000,\n          1740684246000,\n          1743733609000,\n          1744034815000,\n          1745335229000,\n          1745936130000,\n          1746107356000,\n          1747055303000,\n          1747946736000,\n          1748446531000,\n          1750098297000,\n          1750963080000,\n          1750963096000,\n          1752067555000,\n          1752080606000,\n          1753125884000,\n          1754395568000,\n          1754407010000,\n          1756228450000,\n          1757947221000,\n          1759763050000,\n          1759924632000,\n          1761572602000\n        ],\n        \"type\": \"time\"\n      },\n      {\n        \"name\": \"timeEnd\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          1729081505000,\n          1730129307000,\n          1730838127000,\n          1732543887000,\n          1736528756000,\n          1736874600000,\n          1740064375000,\n          1740170732000,\n          1742397235000,\n          1743733611000,\n          1744038997000,\n          1745341972000,\n          1745936141000,\n          1746118905000,\n          1747055307000,\n          1747853613000,\n          1748446520000,\n          1750187872000,\n          1750963071000,\n          1751038503000,\n          1752067563000,\n          1752166243000,\n          1753396603000,\n          1754395592000,\n          1754407004000,\n          1756228445000,\n          1758134868000,\n          1759763044000,\n          1761572592000,\n          1761572593000,\n          null\n        ],\n        \"type\": \"number\"\n      },\n      {\n        \"name\": \"title\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          \"0.1.0\",\n          \"1.0.2\",\n          \"1.0.3\",\n          \"1.0.4\",\n          \"1.0.5\",\n          \"1.0.6\",\n          \"1.0.7\",\n          \"1.0.8\",\n          \"1.0.9\",\n          \"1.0.10\",\n          \"1.0.11\",\n          \"1.0.12\",\n          \"1.0.13\",\n          \"1.0.14\",\n          \"1.0.15\",\n          \"1.0.16\",\n          \"1.0.17\",\n          \"1.0.18\",\n          \"1.0.19\",\n          \"1.0.20\",\n          \"1.0.21\",\n          \"1.0.22\",\n          \"1.0.23\",\n          \"1.0.24\",\n          \"1.0.25\",\n          \"1.0.26\",\n          \"1.0.27\",\n          \"1.0.28\",\n          \"1.0.29\",\n          \"1.0.30\",\n          \"1.0.31\"\n        ],\n        \"type\": \"string\"\n      },\n      {\n        \"name\": \"text\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          false\n        ],\n        \"type\": \"boolean\"\n      },\n      {\n        \"name\": \"source\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          {\n            \"datasource\": {\n              \"type\": \"grafana-github-datasource\",\n              \"uid\": \"feyypehpl45xcf\"\n            },\n            \"enable\": true,\n            \"hide\": false,\n            \"iconColor\": \"red\",\n            \"mappings\": {\n              \"text\": {\n                \"source\": \"field\",\n                \"value\": \"closed\"\n              },\n              \"time\": {\n                \"source\": \"field\",\n                \"value\": \"created_at\"\n              },\n              \"timeEnd\": {\n                \"source\": \"field\",\n                \"value\": \"closed_at\"\n              },\n              \"title\": {\n                \"source\": \"field\",\n                \"value\": \"title\"\n              }\n            },\n            \"name\": \"Milestones\",\n            \"target\": {\n              \"options\": {\n                \"query\": \"\"\n              },\n              \"owner\": \"grafana\",\n              \"queryType\": \"Milestones\",\n              \"refId\": \"Anno\",\n              \"repository\": \"logs-drilldown\"\n            }\n          },\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null\n        ],\n        \"type\": \"other\"\n      },\n      {\n        \"name\": \"isRegion\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          true,\n          false\n        ],\n        \"type\": \"boolean\"\n      }\n    ],\n    \"length\": 31,\n    \"meta\": {\n      \"dataTopic\": \"annotations\"\n    }\n  },\n  {\n    \"fields\": [\n      {\n        \"name\": \"type\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          \"Issues\",\n          \"Issues\",\n          \"Issues\",\n          \"Issues\"\n        ],\n        \"type\": \"string\"\n      },\n      {\n        \"name\": \"color\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          \"#FADE2A\",\n          \"#FADE2A\",\n          \"#FADE2A\",\n          \"#FADE2A\"\n        ],\n        \"type\": \"string\"\n      },\n      {\n        \"name\": \"time\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          1760112753000,\n          1759930212000,\n          1759924899000,\n          1759850404000\n        ],\n        \"type\": \"time\"\n      },\n      {\n        \"name\": \"timeEnd\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          1760972421000,\n          null,\n          null,\n          1759926839000\n        ],\n        \"type\": \"number\"\n      },\n      {\n        \"name\": \"title\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          \"[BUG]: Error when data source configured for multi tenant queries\",\n          \"[FEAT]: Allow users without explore permissions to use logs drilldown\",\n          \"Sync Logs panel and label/fields empty states\",\n          \"fix: labels clear variable state not showing\"\n        ],\n        \"type\": \"string\"\n      },\n      {\n        \"name\": \"text\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          \"[BUG]: Error when data source configured for multi tenant queries\",\n          \"[FEAT]: Allow users without explore permissions to use logs drilldown\",\n          \"Sync Logs panel and label/fields empty states\",\n          \"fix: labels clear variable state not showing\"\n        ],\n        \"type\": \"string\"\n      },\n      {\n        \"name\": \"tags\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          [\n            \"bug\",\n            \"needs-triage\"\n          ],\n          [\n            \"enhancement\",\n            \"needs-triage\"\n          ],\n          [\n            \"needs-triage\"\n          ],\n          [\n            \"bug\"\n          ]\n        ],\n        \"type\": \"other\"\n      },\n      {\n        \"name\": \"source\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          {\n            \"datasource\": {\n              \"type\": \"grafana-github-datasource\",\n              \"uid\": \"feyypehpl45xcf\"\n            },\n            \"enable\": true,\n            \"hide\": false,\n            \"iconColor\": \"yellow\",\n            \"mappings\": {\n              \"tags\": {\n                \"source\": \"field\",\n                \"value\": \"labels\"\n              },\n              \"time\": {\n                \"source\": \"field\",\n                \"value\": \"created_at\"\n              },\n              \"timeEnd\": {\n                \"source\": \"field\",\n                \"value\": \"closed_at\"\n              }\n            },\n            \"name\": \"Issues\",\n            \"target\": {\n              \"options\": {\n                \"query\": \"\"\n              },\n              \"owner\": \"grafana\",\n              \"queryType\": \"Issues\",\n              \"refId\": \"Anno\",\n              \"repository\": \"logs-drilldown\"\n            }\n          },\n          null,\n          null,\n          null\n        ],\n        \"type\": \"other\"\n      },\n      {\n        \"name\": \"isRegion\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          true,\n          false,\n          false,\n          true\n        ],\n        \"type\": \"boolean\"\n      }\n    ],\n    \"length\": 4,\n    \"meta\": {\n      \"dataTopic\": \"annotations\"\n    }\n  },\n  {\n    \"fields\": [\n      {\n        \"name\": \"type\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          \"Pulls\",\n          \"Pulls\",\n          \"Pulls\",\n          \"Pulls\",\n          \"Pulls\",\n          \"Pulls\"\n        ],\n        \"type\": \"string\"\n      },\n      {\n        \"name\": \"color\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          \"#5794F2\",\n          \"#5794F2\",\n          \"#5794F2\",\n          \"#5794F2\",\n          \"#5794F2\",\n          \"#5794F2\"\n        ],\n        \"type\": \"string\"\n      },\n      {\n        \"name\": \"time\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          1759941908000,\n          1759854730000,\n          1759852733000,\n          1759841416000,\n          1759786844000,\n          1759762979000\n        ],\n        \"type\": \"time\"\n      },\n      {\n        \"name\": \"timeEnd\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          1760110687000,\n          1759857566000,\n          1759926838000,\n          1759843529000,\n          1759848237000,\n          1759769543000\n        ],\n        \"type\": \"number\"\n      },\n      {\n        \"name\": \"title\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          \"feat(EmptyLogs): add button to fix with assistant\",\n          \"docs: Update troubleshooting page\",\n          \"fix: unexpected clear variable behavior\",\n          \"docs: update stale readme, fix docker install script\",\n          \"docs: Update install and troubleshooting\",\n          \"fix: fix RegExp.source removing flags, use toString instead\"\n        ],\n        \"type\": \"string\"\n      },\n      {\n        \"name\": \"text\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          \"feat(EmptyLogs): add button to fix with assistant\",\n          \"docs: Update troubleshooting page\",\n          \"fix: unexpected clear variable behavior\",\n          \"docs: update stale readme, fix docker install script\",\n          \"docs: Update install and troubleshooting\",\n          \"fix: fix RegExp.source removing flags, use toString instead\"\n        ],\n        \"type\": \"string\"\n      },\n      {\n        \"name\": \"source\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          {\n            \"datasource\": {\n              \"type\": \"grafana-github-datasource\",\n              \"uid\": \"feyypehpl45xcf\"\n            },\n            \"enable\": true,\n            \"hide\": false,\n            \"iconColor\": \"blue\",\n            \"mappings\": {\n              \"time\": {\n                \"source\": \"field\",\n                \"value\": \"created_at\"\n              },\n              \"timeEnd\": {\n                \"source\": \"field\",\n                \"value\": \"merged_at\"\n              }\n            },\n            \"name\": \"Pulls\",\n            \"target\": {\n              \"options\": {\n                \"query\": \"\",\n                \"timeField\": 1\n              },\n              \"owner\": \"grafana\",\n              \"queryType\": \"Pull_Requests\",\n              \"refId\": \"Anno\",\n              \"repository\": \"logs-drilldown\"\n            }\n          },\n          null,\n          null,\n          null,\n          null,\n          null\n        ],\n        \"type\": \"other\"\n      },\n      {\n        \"name\": \"isRegion\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          true,\n          true,\n          true,\n          true,\n          true,\n          true\n        ],\n        \"type\": \"boolean\"\n      }\n    ],\n    \"length\": 6,\n    \"meta\": {\n      \"dataTopic\": \"annotations\"\n    }\n  },\n  {\n    \"fields\": [\n      {\n        \"name\": \"type\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          \"Commits\",\n          \"Commits\",\n          \"Commits\",\n          \"Commits\",\n          \"Commits\",\n          \"Commits\",\n          \"Commits\",\n          \"Commits\",\n          \"Commits\",\n          \"Commits\",\n          \"Commits\",\n          \"Commits\"\n        ],\n        \"type\": \"string\"\n      },\n      {\n        \"name\": \"color\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          \"#73BF69\",\n          \"#73BF69\",\n          \"#73BF69\",\n          \"#73BF69\",\n          \"#73BF69\",\n          \"#73BF69\",\n          \"#73BF69\",\n          \"#73BF69\",\n          \"#73BF69\",\n          \"#73BF69\",\n          \"#73BF69\",\n          \"#73BF69\"\n        ],\n        \"type\": \"string\"\n      },\n      {\n        \"name\": \"time\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          1760349982000,\n          1760110687000,\n          1759950041000,\n          1759948586000,\n          1759933371000,\n          1759926838000,\n          1759857566000,\n          1759850172000,\n          1759848237000,\n          1759843529000,\n          1759769543000,\n          1759762725000\n        ],\n        \"type\": \"time\"\n      },\n      {\n        \"name\": \"title\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          \"Matias Chomicki\",\n          \"Matias Chomicki\",\n          \"github-actions[bot]\",\n          \"Liza Detrick\",\n          \"grafana-plugins-platform-bot[bot]\",\n          \"Galen Kistler\",\n          \"J Stickler\",\n          \"Piotr Jamróz\",\n          \"J Stickler\",\n          \"Galen Kistler\",\n          \"Galen Kistler\",\n          \"Galen Kistler\"\n        ],\n        \"type\": \"string\"\n      },\n      {\n        \"name\": \"text\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          \"feat(LogsListScene): add defaultDisplayedFields support (#1554)\\n\\n* feat(LogsListScene): add defaultDisplayedFields support\\n\\n* chore: update mock\\n\\n* fix(Table): omit unsupported field\\n\\n* fix(LogListScene): reset default displayed fields when switching viz\\n\\n* chore: lint\",\n          \"feat(EmptyLogs): add button to fix with assistant (#1571)\\n\\n* feat(LogListScene): add error type to identify empty results\\n\\n* feat(LogsPanelError): use assistant to investigate no results\\n\\n* fix(Shoo): shoo\\n\\n* feat(EmbeddedLogs): customize empty logs prompt\\n\\n* feat(LogsPanelError): implement custom CTA\\n\\n* chore: spelling\\n\\n* chore: add unit test\\n\\n* chore: remove it.only\\n\\n* fix(variableHelpers): exclude primary label from variables to clear\\n\\n* feat(embedding): refactor options\\n\\n* feat(assistant): create service\\n\\n* feat(assistant): integrate with empty layout and no matching labels\\n\\n* chore: fix types\\n\\n* chore: update tests\\n\\n* chore: remove quotes\\n\\n* chore: prevent access to an undefined object\\n\\n* chore: move label to constants\\n\\n* Revert \\\"chore: move label to constants\\\"\\n\\nThis reverts commit fbdf96415e5b2af7a5cae4eec6e6d5a30bc05d1c.\\n\\n* chore: use name instead of label\\n\\n* Revert \\\"fix(Shoo): shoo\\\"\\n\\nThis reverts commit 75993f7a845b514cb5da9667e94a2f0a3c913f24.\\n\\n* chore: more unit tests\\n\\n* test(variableHelpers): test getVariablesThatCanBeCleared\",\n          \"chore: bump @grafana/create-plugin configuration to 5.26.9 (#1559)\",\n          \"feat(table): preferences (#1534)\",\n          \"chore(version): bump version to v1.0.29\",\n          \"fix: unexpected clear variable behavior (#1567)\\n\\n* fix: show clear ui when query contains clearable label filters\",\n          \"docs: Update troubleshooting page (#1568)\",\n          \"fix: validate primary label correctly (#1561)\\n\\n* fix: properly clear variables for legacy urls\",\n          \"docs: Update install and troubleshooting (#1564)\\n\\nCo-authored-by: Galen Kistler <109082771+gtk-grafana@users.noreply.github.com>\",\n          \"docs: update stale readme, fix docker install script (#1565)\\n\\n* docs: update stale readme\\n\\n* chore: fix docker script\",\n          \"fix: fix RegExp.source removing flags, use toString instead (#1563)\\n\\n* fix: fix RegExp.source removing flags, use toString instead\",\n          \"fix: stale urls (#1562)\"\n        ],\n        \"type\": \"string\"\n      },\n      {\n        \"name\": \"id\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          \"cf08043276597abe16f4ae9dbe97bd988d31b7ed\",\n          \"01e343dacde3b9fcd862ec2cb2b04fbea4eb6d63\",\n          \"9e67734938b980a80496d4cdc60efe7dbc4ba74e\",\n          \"924ebd235b6ea99d297d8e04e08ac8ea90a32968\",\n          \"23b9b5dc0504a4c397b326562cb796cfdc0531df\",\n          \"089fdfa26c7daad5543be1aae2377850348663c3\",\n          \"437a568a7a7279c436a674c7b1b0d11a4971d47b\",\n          \"ee12a20b32db26b82fe32ed9d5868bd2dde4a4d0\",\n          \"657880b399682101616b3413e04c2b664d018ef3\",\n          \"fc776d767ebf2a64fb9fad7ab0f479cdaf536cdb\",\n          \"a9207d235af9b2f5a4915f072801128a41c4063b\",\n          \"e2eae8b8f45dc685659689f85962b0f0a58f13b1\"\n        ],\n        \"type\": \"string\"\n      },\n      {\n        \"name\": \"source\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          {\n            \"datasource\": {\n              \"type\": \"grafana-github-datasource\",\n              \"uid\": \"feyypehpl45xcf\"\n            },\n            \"enable\": true,\n            \"hide\": false,\n            \"iconColor\": \"green\",\n            \"mappings\": {\n              \"text\": {\n                \"source\": \"field\",\n                \"value\": \"message\"\n              },\n              \"time\": {\n                \"source\": \"field\",\n                \"value\": \"committed_at\"\n              },\n              \"title\": {\n                \"source\": \"field\",\n                \"value\": \"author\"\n              }\n            },\n            \"name\": \"Commits\",\n            \"target\": {\n              \"options\": {\n                \"gitRef\": \"main\"\n              },\n              \"owner\": \"grafana\",\n              \"queryType\": \"Commits\",\n              \"refId\": \"Anno\",\n              \"repository\": \"logs-drilldown\"\n            }\n          },\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null,\n          null\n        ],\n        \"type\": \"other\"\n      },\n      {\n        \"name\": \"isRegion\",\n        \"config\": {\n          \"custom\": {}\n        },\n        \"values\": [\n          false,\n          false,\n          false,\n          false,\n          false,\n          false,\n          false,\n          false,\n          false,\n          false,\n          false,\n          false\n        ],\n        \"type\": \"boolean\"\n      }\n    ],\n    \"length\": 12,\n    \"meta\": {\n      \"dataTopic\": \"annotations\"\n    }\n  }\n]",
+          "refId": "B",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "Time series",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "annotations": {
+          "multiLane": true
+        },
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 1,
+          "refId": "A"
+        }
+      ],
+      "title": "Time series (multi-lane)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "candleStyle": "candles",
+        "colorStrategy": "open-close",
+        "colors": {
+          "down": "red",
+          "up": "green"
+        },
+        "includeAllFields": false,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mode": "candles+volume",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 1,
+          "refId": "A"
+        }
+      ],
+      "title": "Candlestick",
+      "type": "candlestick"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "annotations": {
+          "multiLane": true
+        },
+        "candleStyle": "candles",
+        "colorStrategy": "open-close",
+        "colors": {
+          "down": "red",
+          "up": "green"
+        },
+        "includeAllFields": false,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mode": "candles+volume",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 1,
+          "refId": "A"
+        }
+      ],
+      "title": "Candlestick (multi-lane)",
+      "type": "candlestick"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 1,
+          "refId": "A"
+        }
+      ],
+      "title": "State timeline",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 6,
+      "options": {
+        "alignValue": "left",
+        "annotations": {
+          "multiLane": true
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 1,
+          "refId": "A"
+        }
+      ],
+      "title": "State timeline (multi-lane)",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 7,
+      "options": {
+        "calculate": false,
+        "cellGap": 1,
+        "color": {
+          "exponent": 0.5,
+          "fill": "dark-orange",
+          "mode": "scheme",
+          "reverse": false,
+          "scale": "exponential",
+          "scheme": "Oranges",
+          "steps": 64
+        },
+        "exemplars": {
+          "color": "rgba(255,0,255,0.7)"
+        },
+        "filterValues": {
+          "le": 1e-9
+        },
+        "legend": {
+          "show": true
+        },
+        "rowsFrame": {
+          "layout": "auto"
+        },
+        "tooltip": {
+          "mode": "single",
+          "showColorScale": false,
+          "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false
+        }
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 1,
+          "refId": "A"
+        }
+      ],
+      "title": "Heatmap",
+      "type": "heatmap"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 8,
+      "options": {
+        "annotations": {
+          "multiLane": true
+        },
+        "calculate": false,
+        "cellGap": 1,
+        "color": {
+          "exponent": 0.5,
+          "fill": "dark-orange",
+          "mode": "scheme",
+          "reverse": false,
+          "scale": "exponential",
+          "scheme": "Oranges",
+          "steps": 64
+        },
+        "exemplars": {
+          "color": "rgba(255,0,255,0.7)"
+        },
+        "filterValues": {
+          "le": 1e-9
+        },
+        "legend": {
+          "show": true
+        },
+        "rowsFrame": {
+          "layout": "auto"
+        },
+        "tooltip": {
+          "mode": "single",
+          "showColorScale": false,
+          "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false
+        }
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 1,
+          "refId": "A"
+        }
+      ],
+      "title": "Heatmap (multi-lane)",
+      "type": "heatmap"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 9,
+      "options": {
+        "colWidth": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 1,
+          "refId": "A"
+        }
+      ],
+      "title": "Status history",
+      "type": "status-history"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "id": 10,
+      "options": {
+        "annotations": {
+          "multiLane": true
+        },
+        "colWidth": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 1,
+          "refId": "A"
+        }
+      ],
+      "title": "Status history (multi-lane)",
+      "type": "status-history"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 40
+      },
+      "id": 11,
+      "maxDataPoints": 5,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"meta\": {\n        \"type\": \"timeseries\"\n      },\n      \"fields\": [\n        {\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"config\": {\n            \"interval\": 604800000\n          }\n        },\n        {\n          \"name\": \"A-series\",\n          \"type\": \"number\",\n          \"labels\": {},\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1755870318505,\n          1756475118505,\n          1757079918505,\n          1757684718505,\n          1758289518505,\n          1758894318505,\n          1759499118505,\n          1760103918505,\n          1760708718505,\n          1761313518505\n        ],\n        [\n          49.57457814271496,\n          64.78808691382616,\n          94.88860442042386,\n          96.59132232810856,\n          58.57144477681538,\n          79.33618638515327,\n          89.64117713117561,\n          134.51905322565585,\n          122.83710544843791,\n          79.84039369237018\n        ]\n      ]\n    }\n  }\n]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        },
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"B\",\n      \"name\": \"xymark\",\n      \"meta\": {\n        \"dataTopic\": \"annotations\"\n      },\n      \"fields\": [\n        {\n          \"name\": \"xMin\",\n          \"type\": \"time\",\n          \"config\": {}\n        },\n        {\n          \"name\": \"xMax\",\n          \"type\": \"time\",\n          \"config\": {}\n        },\n        {\n          \"name\": \"yMin\",\n          \"type\": \"number\",\n          \"config\": {}\n        },\n        {\n          \"name\": \"yMax\",\n          \"type\": \"number\",\n          \"config\": {}\n        },\n        {\n          \"name\": \"color\",\n          \"type\": \"string\",\n          \"config\": {}\n        },\n        {\n          \"name\": \"fillOpacity\",\n          \"type\": \"number\",\n          \"config\": {}\n        },\n        {\n          \"name\": \"lineWidth\",\n          \"type\": \"number\",\n          \"config\": {}\n        },\n        {\n          \"name\": \"lineStyle\",\n          \"type\": \"string\",\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1757684718505\n        ],\n        [\n          1758894318505\n        ],\n        [\n          70\n        ],\n        [\n          120\n        ],\n        [\n          \"#f00\"\n        ],\n        [\n          0.1\n        ],\n        [\n          1\n        ],\n        [\n          \"dash\"\n        ]\n      ]\n    }\n  }\n]",
+          "refId": "B",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "xymark",
+      "type": "timeseries"
+    }
+  ],
+  "preload": false,
+  "refresh": "",
+  "schemaVersion": 42,
+  "tags": ["gdev", "panel-tests", "graph-ng"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "2025-08-22T13:45:18.505Z",
+    "to": "2025-10-28T04:38:37.130Z"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Multi-lane annotations",
+  "uid": "ad7p5pj",
+  "version": 17
+}
