@@ -2,7 +2,7 @@ import { defaultsDeep } from 'lodash';
 
 import { EventBus } from '../events/types';
 import { StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
-import { PanelDataSummary, getPanelDataSummary } from '../panel/getPanelDataSummary';
+import { PanelDataSummary, getPanelDataSummary } from '../panel/suggestions/getPanelDataSummary';
 import { Registry } from '../utils/Registry';
 
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';

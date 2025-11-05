@@ -250,7 +250,6 @@
 /devenv/dev-dashboards/all-panels.json @grafana/dataviz-squad
 /devenv/dev-dashboards/dashboards.go @grafana/dataviz-squad
 /devenv/dev-dashboards/home.json @grafana/dataviz-squad
-
 /devenv/dev-dashboards/datasource-elasticsearch/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-opentsdb/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-influxdb/ @grafana/partner-datasources
@@ -557,6 +556,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/geo/ @grafana/dataviz-squad
 /packages/grafana-data/src/monaco/ @grafana/partner-datasources
 /packages/grafana-data/src/panel/ @grafana/dashboards-squad
+/packages/grafana-data/src/panel/suggestions/ @grafana/dataviz-squad
 /packages/grafana-data/src/query/ @grafana/grafana-datasources-core-services
 /packages/grafana-data/src/rbac/ @grafana/access-squad
 /packages/grafana-data/src/table/ @grafana/dataviz-squad

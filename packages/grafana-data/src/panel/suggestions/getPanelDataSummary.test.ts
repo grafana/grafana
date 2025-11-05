@@ -1,5 +1,5 @@
-import { createDataFrame } from '../dataframe/processDataFrame';
-import { FieldType } from '../types/dataFrame';
+import { createDataFrame } from '../../dataframe/processDataFrame';
+import { FieldType } from '../../types/dataFrame';
 
 import { getPanelDataSummary } from './getPanelDataSummary';
 

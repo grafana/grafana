@@ -1,5 +1,5 @@
-import { PreferredVisualisationType } from '../types/data';
-import { DataFrame, FieldType } from '../types/dataFrame';
+import { PreferredVisualisationType } from '../../types/data';
+import { DataFrame, FieldType } from '../../types/dataFrame';
 
 /**
  * @alpha
