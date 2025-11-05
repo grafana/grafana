@@ -9,7 +9,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { DashboardScene } from './DashboardScene';
 
 export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) {
-  const { isEditing } = dashboard.useState();
+  const { editview, editPanel, isEditing, viewPanel } = dashboard.useState();
 
   const handlePointerDown: PointerEventHandler = useCallback(
     (evt) => {
@@ -20,13 +20,20 @@ export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) 
     [dashboard]
   );
 
-  if (!isEditing) {
+  // Hide the button if:
+  // - the dashboard is not in edit mode
+  // - the dashboard is in an edit view mode
+  // - the dashboard is in a view panel mode
+  // - the dashboard is in an edit panel mode
+  if (!isEditing || !!editview || !!viewPanel || !!editPanel) {
     return null;
   }
 
   return (
-    <Button icon="plus" variant="primary" fill="text" onPointerDown={handlePointerDown}>
-      <Trans i18nKey="dashboard-scene.variable-controls.add-variable">Add variable</Trans>
-    </Button>
+    <div className="dashboard-canvas-add-button">
+      <Button icon="plus" variant="primary" fill="text" onPointerDown={handlePointerDown}>
+        <Trans i18nKey="dashboard-scene.variable-controls.add-variable">Add variable</Trans>
+      </Button>
+    </div>
   );
 }
