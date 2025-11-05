@@ -2948,8 +2948,10 @@
       "instance-details-drawer": {
         "instance-details": "Instance details"
       },
+      "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
       "no-instances-found": "No alert instances found for rule: {{ruleUID}}",
       "no-labels": "No labels",
+      "no-matching-instances-with-filters": "No alert instances match your current set of filters for the selected time range.",
       "open-in-sidebar": "Open in sidebar",
       "open-rule-details": "Open rule details",
       "rule-details": {
