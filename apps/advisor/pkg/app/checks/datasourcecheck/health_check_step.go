@@ -15,7 +15,7 @@ import (
 )
 
 type healthCheckStep struct {
-	PluginContextProvider pluginContextProvider
+	PluginContextProvider PluginContextProvider
 	PluginClient          plugins.Client
 }
 
