@@ -134,7 +134,7 @@ const HeatmapPanelViz = ({
   const dataRef = useRef(info);
   dataRef.current = info;
 
-  const annotationsLength = getXAnnotationFrames(data.annotations).length;
+  const annotationsLength = options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined;
 
   const builder = useMemo(() => {
     const scaleConfig: ScaleDistributionConfig = dataRef.current?.heatmap?.fields[1].config?.custom?.scaleDistribution;
