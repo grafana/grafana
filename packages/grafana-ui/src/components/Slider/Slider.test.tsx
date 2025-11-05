@@ -20,17 +20,16 @@ describe('Slider', () => {
   });
 
   it('allows decimal numbers in input', async () => {
-  render(<Slider {...sliderProps} min={0} max={10} step={0.1} />);
-  const sliderInput = screen.getByRole('textbox');
-  const slider = screen.getByRole('slider');
+    render(<Slider {...sliderProps} min={0} max={10} step={0.1} />);
+    const sliderInput = screen.getByRole('textbox');
+    const slider = screen.getByRole('slider');
 
-  await user.clear(sliderInput);
-  await user.type(sliderInput, '3.5');
+    await user.clear(sliderInput);
+    await user.type(sliderInput, '3.5');
 
-  expect(sliderInput).toHaveValue('3.5');
-  expect(slider).toHaveAttribute('aria-valuenow', '3.5');
-});
-
+    expect(sliderInput).toHaveValue('3.5');
+    expect(slider).toHaveAttribute('aria-valuenow', '3.5');
+  });
 
   it('respects min/max bounds after decimal input blur', async () => {
     render(<Slider min={0} max={10} value={5} />);
@@ -62,7 +61,6 @@ describe('Slider', () => {
 
     expect(slider).toHaveAttribute('aria-valuenow', '7.3');
   });
-
 
   it('renders without error', () => {
     expect(() => render(<Slider {...sliderProps} />)).not.toThrow();
@@ -145,5 +143,4 @@ describe('Slider', () => {
     expect(sliderInput).toHaveValue('10');
     expect(slider).toHaveAttribute('aria-valuenow', '10');
   });
-
 });
