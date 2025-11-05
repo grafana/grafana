@@ -22,13 +22,6 @@ test.describe(
     tag: ['@panels'],
   },
   () => {
-    test.beforeEach(async ({ page }) => {
-      await page.addInitScript(() => {
-        window.localStorage.setItem('grafana.featureToggles', 'pluginsFrontendSandbox=1');
-      });
-      await page.reload();
-    });
-
     test('Does not add iframes to body', async ({ page, gotoDashboardPage }) => {
       await gotoDashboardPage({
         uid: DASHBOARD_ID,
