@@ -122,8 +122,7 @@ const LogLineComponent = memo(
       timestampResolution,
       onLogLineHover,
     } = useLogListContext();
-    const { detailsDisplayed, detailsMode, enableLogDetails } = useLogDetailsContext();
-    const { currentLog } = useLogDetailsContext();
+    const { currentLog, detailsDisplayed, detailsMode, enableLogDetails } = useLogDetailsContext();
     const [collapsed, setCollapsed] = useState<boolean | undefined>(
       wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
     );
