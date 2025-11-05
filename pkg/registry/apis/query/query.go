@@ -127,6 +127,17 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
 		traceId := span.SpanContext().TraceID()
 		connectLogger := b.log.New("traceId", traceId.String(), "rule_uid", httpreq.Header.Get("X-Rule-Uid"))
+
+		namespace := request.NamespaceValue(ctx)
+		if namespace == "" {
+			namespace = request.NamespaceValue(connectCtx)
+		}
+		connectLogger.Info("[QUERY_REST] Incoming query request",
+			"method", httpreq.Method,
+			"path", httpreq.URL.Path,
+			"namespace", namespace,
+		)
+
 		responder := newResponderWrapper(incomingResponder,
 			func(statusCode *int, obj runtime.Object) {
 				if *statusCode/100 == 4 {
