@@ -72,7 +72,7 @@ type TreeNode struct {
 }
 
 type NavigationConfig struct {
-	URL   string `yaml:"url"`   // URL path (e.g., /d/abc123 or /explore)
+	URL   string `yaml:"url"` // URL path (e.g., /d/abc123 or /explore)
 	Scope string `yaml:"scope"`
 }
 
@@ -121,29 +121,29 @@ func basicAuth(username, password string) string {
 
 func (c *Client) makeRequest(method, endpoint string, body []byte) error {
 	url := fmt.Sprintf("%s/apis/%s/namespaces/%s%s", c.baseURL, apiVersion, c.namespace, endpoint)
-	
+
 	var req *http.Request
 	var err error
-	
+
 	if body != nil {
 		req, err = http.NewRequest(method, url, bytes.NewBuffer(body))
 	} else {
 		req, err = http.NewRequest(method, url, nil)
 	}
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
-	
+
 	req.Header.Set("Content-Type", "application/json")
 	req.SetBasicAuth(strings.Split(c.auth, ":")[0], strings.Split(c.auth, ":")[1])
-	
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		bodyBytes, _ := io.ReadAll(resp.Body)
 		// For DELETE requests, 404 is acceptable (resource already deleted)
@@ -152,15 +152,15 @@ func (c *Client) makeRequest(method, endpoint string, body []byte) error {
 		}
 		return fmt.Errorf("API request failed: HTTP %d - %s", resp.StatusCode, string(bodyBytes))
 	}
-	
+
 	return nil
 }
 
 func (c *Client) createScope(name string, cfg ScopeConfig) error {
 	prefixedName := prefix + "-" + name
-	
+
 	spec := convertScopeSpec(cfg)
-	
+
 	resource := v0alpha1.Scope{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: apiVersion,
@@ -171,12 +171,12 @@ func (c *Client) createScope(name string, cfg ScopeConfig) error {
 		},
 		Spec: spec,
 	}
-	
+
 	body, err := json.Marshal(resource)
 	if err != nil {
 		return fmt.Errorf("failed to marshal scope: %w", err)
 	}
-	
+
 	fmt.Printf("✓ Creating scope: %s\n", prefixedName)
 	return c.makeRequest("POST", "/scopes", body)
 }
@@ -185,40 +185,40 @@ func (c *Client) createScopeNode(name string, node TreeNode, parentName string) 
 	prefixedName := prefix + "-" + name
 	prefixedParent := ""
 	prefixedLinkID := ""
-	
+
 	if parentName != "" {
 		prefixedParent = prefix + "-" + parentName
 	}
-	
+
 	if node.LinkID != "" {
 		prefixedLinkID = prefix + "-" + node.LinkID
 	}
-	
+
 	nodeType := v0alpha1.NodeType(node.NodeType)
 	if nodeType == "" {
 		nodeType = v0alpha1.NodeTypeContainer
 	}
-	
+
 	linkType := v0alpha1.LinkType(node.LinkType)
 	if linkType == "" {
 		linkType = v0alpha1.LinkTypeScope
 	}
-	
+
 	spec := v0alpha1.ScopeNodeSpec{
-		Title:            node.Title,
-		NodeType:         nodeType,
+		Title:              node.Title,
+		NodeType:           nodeType,
 		DisableMultiSelect: false,
 	}
-	
+
 	if prefixedParent != "" {
 		spec.ParentName = prefixedParent
 	}
-	
+
 	if prefixedLinkID != "" {
 		spec.LinkID = prefixedLinkID
 		spec.LinkType = linkType
 	}
-	
+
 	resource := v0alpha1.ScopeNode{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: apiVersion,
@@ -229,12 +229,12 @@ func (c *Client) createScopeNode(name string, node TreeNode, parentName string) 
 		},
 		Spec: spec,
 	}
-	
+
 	body, err := json.Marshal(resource)
 	if err != nil {
 		return fmt.Errorf("failed to marshal scope node: %w", err)
 	}
-	
+
 	fmt.Printf("✓ Creating scope node: %s\n", prefixedName)
 	return c.makeRequest("POST", "/scopenodes", body)
 }
@@ -242,16 +242,16 @@ func (c *Client) createScopeNode(name string, node TreeNode, parentName string) 
 func (c *Client) createScopeNavigation(name string, nav NavigationConfig) error {
 	prefixedName := prefix + "-" + name
 	prefixedScope := prefix + "-" + nav.Scope
-	
+
 	if nav.URL == "" {
 		return fmt.Errorf("navigation %s must have 'url' specified", name)
 	}
-	
+
 	spec := v0alpha1.ScopeNavigationSpec{
 		URL:   nav.URL,
 		Scope: prefixedScope,
 	}
-	
+
 	resource := v0alpha1.ScopeNavigation{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: apiVersion,
@@ -262,12 +262,12 @@ func (c *Client) createScopeNavigation(name string, nav NavigationConfig) error 
 		},
 		Spec: spec,
 	}
-	
+
 	body, err := json.Marshal(resource)
 	if err != nil {
 		return fmt.Errorf("failed to marshal scope navigation: %w", err)
 	}
-	
+
 	fmt.Printf("✓ Creating scope navigation: %s\n", prefixedName)
 	return c.makeRequest("POST", "/scopenavigations", body)
 }
@@ -280,13 +280,13 @@ func (c *Client) createTreeNodes(children map[string]TreeNode, parentName string
 		if parentName != "" {
 			fullNodeName = parentName + "-" + name
 		}
-		
+
 		// parentName here is the full parent name (already includes full path)
 		err := c.createScopeNode(fullNodeName, node, parentName)
 		if err != nil {
 			return err
 		}
-		
+
 		if len(node.Children) > 0 {
 			// Pass fullNodeName as parent for children (will be prefixed with "gdev-" in createScopeNode)
 			if err := c.createTreeNodes(node.Children, fullNodeName); err != nil {
@@ -294,55 +294,55 @@ func (c *Client) createTreeNodes(children map[string]TreeNode, parentName string
 			}
 		}
 	}
-	
+
 	return nil
 }
 
 func (c *Client) deleteResources() error {
 	fmt.Println("Deleting all gdev-prefixed resources...")
-	
+
 	// Delete scopes
 	if err := c.deleteResourceType("/scopes", "scope"); err != nil {
 		return err
 	}
-	
+
 	// Delete scope nodes
 	if err := c.deleteResourceType("/scopenodes", "scope node"); err != nil {
 		return err
 	}
-	
+
 	// Delete scope navigations
 	if err := c.deleteResourceType("/scopenavigations", "scope navigation"); err != nil {
 		return err
 	}
-	
+
 	fmt.Println("✓ Cleanup complete")
 	return nil
 }
 
 func (c *Client) deleteResourceType(endpoint, resourceType string) error {
 	url := fmt.Sprintf("%s/apis/%s/namespaces/%s%s", c.baseURL, apiVersion, c.namespace, endpoint)
-	
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
-	
+
 	req.Header.Set("Content-Type", "application/json")
 	req.SetBasicAuth(strings.Split(c.auth, ":")[0], strings.Split(c.auth, ":")[1])
-	
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		bodyBytes, _ := io.ReadAll(resp.Body)
 		fmt.Printf("  Warning: Failed to list %s: HTTP %d - %s\n", resourceType, resp.StatusCode, string(bodyBytes))
 		return nil
 	}
-	
+
 	var listResponse struct {
 		Items []struct {
 			Metadata struct {
@@ -350,19 +350,19 @@ func (c *Client) deleteResourceType(endpoint, resourceType string) error {
 			} `json:"metadata"`
 		} `json:"items"`
 	}
-	
+
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	if err := json.Unmarshal(bodyBytes, &listResponse); err != nil {
 		fmt.Printf("  Warning: Failed to decode %s list response: %v\n", resourceType, err)
 		fmt.Printf("  Response body: %s\n", string(bodyBytes))
 		return nil
 	}
-	
+
 	if len(listResponse.Items) == 0 {
 		fmt.Printf("  No %s found\n", resourceType)
 		return nil
 	}
-	
+
 	deletedCount := 0
 	for _, item := range listResponse.Items {
 		if strings.HasPrefix(item.Metadata.Name, prefix+"-") {
@@ -375,19 +375,19 @@ func (c *Client) deleteResourceType(endpoint, resourceType string) error {
 			}
 		}
 	}
-	
+
 	if deletedCount == 0 {
 		fmt.Printf("  No %s with prefix '%s-' found\n", resourceType, prefix)
 	}
-	
+
 	return nil
 }
 
 func main() {
 	flag.Parse()
-	
+
 	client := NewClient(*grafanaURL, *namespace, *user, *password)
-	
+
 	if *cleanupFlag {
 		if err := client.deleteResources(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error during cleanup: %v\n", err)
@@ -395,24 +395,24 @@ func main() {
 		}
 		return
 	}
-	
+
 	configData, err := os.ReadFile(*configFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading config file: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	var config Config
 	if err := yaml.Unmarshal(configData, &config); err != nil {
 		fmt.Fprintf(os.Stderr, "Error parsing config file: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	fmt.Printf("Loading configuration from: %s\n", *configFile)
 	fmt.Printf("Grafana URL: %s\n", *grafanaURL)
 	fmt.Printf("Namespace: %s\n", *namespace)
 	fmt.Printf("Prefix: %s\n\n", prefix)
-	
+
 	// Create scopes
 	fmt.Println("Creating scopes...")
 	for name, scope := range config.Scopes {
@@ -422,7 +422,7 @@ func main() {
 		}
 	}
 	fmt.Println()
-	
+
 	// Create scope nodes (tree structure)
 	if len(config.Tree) > 0 {
 		fmt.Println("Creating scope nodes...")
@@ -432,7 +432,7 @@ func main() {
 		}
 		fmt.Println()
 	}
-	
+
 	// Create scope navigations
 	if len(config.Navigations) > 0 {
 		fmt.Println("Creating scope navigations...")
@@ -444,7 +444,6 @@ func main() {
 		}
 		fmt.Println()
 	}
-	
+
 	fmt.Println("✓ All resources created successfully!")
 }
-
