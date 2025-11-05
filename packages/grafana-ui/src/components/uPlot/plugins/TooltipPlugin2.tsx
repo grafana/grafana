@@ -9,6 +9,7 @@ import { DashboardCursorSync } from '@grafana/schema';
 
 import { AdHocFilterModel } from '../../../internal';
 import { useStyles2 } from '../../../themes/ThemeContext';
+import { getFeatureToggle } from '../../../utils/featureToggle';
 import { RangeSelection1D, RangeSelection2D, OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
@@ -436,7 +437,7 @@ export const TooltipPlugin2 = ({
         );
       }
 
-      if (queryZoom != null) {
+      if (queryZoom != null && getFeatureToggle('timeRangePan')) {
         setupXAxisPan(u, queryZoom);
       }
 
