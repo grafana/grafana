@@ -219,6 +219,11 @@ export interface FeatureToggles {
   */
   queryCacheRequestDeduplication?: boolean;
   /**
+  * Enable using the multi-tenant query caching service
+  * @default false
+  */
+  multiTenantQueryCaching?: boolean;
+  /**
   * Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
   */
   permissionsFilterRemoveSubquery?: boolean;

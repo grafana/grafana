@@ -2654,6 +2654,19 @@
     },
     {
       "metadata": {
+        "name": "multiTenantQueryCaching",
+        "resourceVersion": "1762348372721",
+        "creationTimestamp": "2025-11-05T13:12:52Z"
+      },
+      "spec": {
+        "description": "Enable using the multi-tenant query caching service",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "multiTenantTempCredentials",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-04-02T20:25:50Z"

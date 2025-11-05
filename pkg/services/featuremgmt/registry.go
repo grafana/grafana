@@ -354,6 +354,13 @@ var (
 			Owner:       grafanaOperatorExperienceSquad,
 		},
 		{
+			Name:        "multiTenantQueryCaching",
+			Description: "Enable using the multi-tenant query caching service",
+			Stage:       FeatureStageExperimental,
+			Expression:  "false",
+			Owner:       grafanaOperatorExperienceSquad,
+		},
+		{
 			Name:        "permissionsFilterRemoveSubquery",
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,
