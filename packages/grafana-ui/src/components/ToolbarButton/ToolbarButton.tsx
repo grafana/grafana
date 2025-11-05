@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles, mediaUp } from '../../themes/mixins';
 import { IconSize } from '../../types/icon';
-import { getPropertiesForVariant } from '../Button/Button';
+import { getActiveButtonStyles, getPropertiesForVariant } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -41,6 +41,11 @@ export type ToolbarButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonEl
 
 export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active' | 'canvas';
 
+/**
+ * Multiple buttons that form a toolbar. Each button can contain an icon, image and text. There are three variants of the ToolbarButton: default, primary and destructive.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-toolbarbutton--docs
+ */
 export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
   (
     {
@@ -134,10 +139,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     color: theme.colors.text.primary,
     background: theme.colors.secondary.main,
 
-    '&:hover': {
+    '&:hover, &:focus': {
       color: theme.colors.text.primary,
       background: theme.colors.secondary.shade,
       border: `1px solid ${theme.colors.border.medium}`,
+    },
+
+    '&:active': {
+      ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
     },
   });
 
@@ -155,7 +164,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: `1px solid ${theme.colors.secondary.border}`,
       whiteSpace: 'nowrap',
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
+        transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
           duration: theme.transitions.duration.short,
         }),
       },
@@ -189,9 +198,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: 'transparent',
       border: `1px solid transparent`,
 
-      '&:hover': {
+      '&:hover, &:focus': {
         color: theme.colors.text.primary,
         background: theme.colors.action.hover,
+      },
+
+      '&:active': {
+        ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
       },
     }),
     canvas: defaultOld,

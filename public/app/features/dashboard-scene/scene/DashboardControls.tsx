@@ -21,6 +21,7 @@ import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardControlsButton } from './DashboardControlsMenu';
+import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
 import { VariableControls } from './VariableControls';
@@ -116,7 +117,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     const { links } = dashboard.state;
     const hasControlMenuVariables = sceneGraph
       .getVariables(dashboard)
-      ?.state.variables.some((v) => v.state.showInControlsMenu === true);
+      ?.state.variables.some((v) => v.state.hide === VariableHide.inControlsMenu);
     const hasControlMenuLinks = links.some((link) => link.placement === 'inControlsMenu');
 
     return hasControlMenuVariables || hasControlMenuLinks;
@@ -153,7 +154,8 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered
-    return <Box padding={1} />;
+
+    return <Box padding={1}>{renderHiddenVariables(dashboard)}</Box>;
   }
 
   return (
@@ -165,7 +167,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {!hideVariableControls && (
           <>
             <VariableControls dashboard={dashboard} />
-            <DataLayerControls dashboard={dashboard} />
+            <DashboardDataLayerControls dashboard={dashboard} />
           </>
         )}
         <Box grow={1} />
@@ -188,16 +190,19 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   );
 }
 
-function DataLayerControls({ dashboard }: { dashboard: DashboardScene }) {
-  const layers = sceneGraph.getDataLayers(dashboard, true);
-
-  return (
-    <>
-      {layers.map((layer) => (
-        <layer.Component model={layer} key={layer.state.key} />
-      ))}
-    </>
-  );
+function renderHiddenVariables(dashboard: DashboardScene) {
+  const { variables } = sceneGraph.getVariables(dashboard).useState();
+  const renderAsHiddenVariables = variables.filter((v) => v.UNSAFE_renderAsHidden);
+  if (renderAsHiddenVariables && renderAsHiddenVariables.length > 0) {
+    return (
+      <>
+        {renderAsHiddenVariables.map((v) => (
+          <v.Component model={v} key={v.state.key} />
+        ))}
+      </>
+    );
+  }
+  return null;
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -216,6 +221,10 @@ function getStyles(theme: GrafanaTheme2) {
       [theme.breakpoints.down('sm')]: {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
+      },
+      '&:hover .dashboard-canvas-add-button': {
+        opacity: 1,
+        filter: 'unset',
       },
     }),
     controlsPanelEdit: css({

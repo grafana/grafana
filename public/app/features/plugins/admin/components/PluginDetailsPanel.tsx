@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/internal';
 import {
@@ -69,7 +69,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
   return (
     <>
       <Stack direction="column" gap={3} shrink={0} grow={0} width={width} data-testid="plugin-details-panel">
-        <Box padding={2} borderColor="medium" borderStyle="solid">
+        <Box borderRadius="lg" padding={2} borderColor="medium" borderStyle="solid">
           <Stack direction="column" gap={2}>
             {pluginExtentionsInfo.map((infoItem, index) => {
               return (
@@ -97,7 +97,13 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
         </Box>
         {shouldRenderLinks && (
           <>
-            <Box padding={2} borderColor="medium" borderStyle="solid" data-testid="plugin-details-regular-links">
+            <Box
+              borderRadius="lg"
+              padding={2}
+              borderColor="medium"
+              borderStyle="solid"
+              data-testid="plugin-details-regular-links"
+            >
               <Stack direction="column" gap={2}>
                 {plugin.details?.repositoryUrl && (
                   <LinkButton
@@ -164,7 +170,13 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
           </>
         )}
         {customLinks && customLinks?.length > 0 && (
-          <Box padding={2} borderColor="medium" borderStyle="solid" data-testid="plugin-details-custom-links">
+          <Box
+            borderRadius="lg"
+            padding={2}
+            borderColor="medium"
+            borderStyle="solid"
+            data-testid="plugin-details-custom-links"
+          >
             <CollapsableSection
               isOpen={true}
               label={
@@ -197,7 +209,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
           </Box>
         )}
         {!plugin?.isCore && (
-          <Box padding={2} borderColor="medium" borderStyle="solid">
+          <Box borderRadius="lg" padding={2} borderColor="medium" borderStyle="solid">
             <CollapsableSection
               headerDataTestId="reportConcern"
               isOpen={false}
@@ -230,7 +242,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
       </Stack>
       {reportAbuseModalOpen && (
         <Modal
-          title={<Trans i18nKey="plugins.details.modal.title">Report a plugin concern</Trans>}
+          title={t('plugins.details.modal.title', 'Report a plugin concern')}
           isOpen
           onDismiss={() => setReportAbuseModalOpen(false)}
         >

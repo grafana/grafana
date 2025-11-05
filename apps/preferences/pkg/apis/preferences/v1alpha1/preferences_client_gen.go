@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type PreferencesClient struct {
@@ -74,22 +73,6 @@ func (c *PreferencesClient) Update(ctx context.Context, obj *Preferences, opts r
 
 func (c *PreferencesClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*Preferences, error) {
 	return c.client.Patch(ctx, identifier, req, opts)
-}
-
-func (c *PreferencesClient) UpdateStatus(ctx context.Context, newStatus PreferencesStatus, opts resource.UpdateOptions) (*Preferences, error) {
-	return c.client.Update(ctx, &Preferences{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       PreferencesKind().Kind(),
-			APIVersion: GroupVersion.Identifier(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			ResourceVersion: opts.ResourceVersion,
-		},
-		Status: newStatus,
-	}, resource.UpdateOptions{
-		Subresource:     "status",
-		ResourceVersion: opts.ResourceVersion,
-	})
 }
 
 func (c *PreferencesClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {

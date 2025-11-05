@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	shorturlv1alpha1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
@@ -29,18 +30,21 @@ var (
 
 func New(cfg app.Config) (app.App, error) {
 	cfg.KubeConfig.APIPath = "apis"
-	client, err := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig()).
+	tmp, err := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig()).
 		ClientFor(shorturlv1alpha1.ShortURLKind())
 	if err != nil {
 		return nil, fmt.Errorf("unable to create client")
 	}
+	client := shorturlv1alpha1.NewShortURLClient(tmp)
 
 	simpleConfig := simple.AppConfig{
 		Name:       "shorturl",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
-			ErrorHandler: func(ctx context.Context, err error) {
-				klog.ErrorS(err, "Informer processing error")
+			InformerOptions: operator.InformerOptions{
+				ErrorHandler: func(ctx context.Context, err error) {
+					klog.ErrorS(err, "Informer processing error")
+				},
 			},
 		},
 		ManagedKinds: []simple.AppManagedKind{
@@ -78,8 +82,8 @@ func New(cfg app.Config) (app.App, error) {
 							Name:      req.ResourceIdentifier.Name,
 						}
 
-						info := &shorturlv1alpha1.ShortURL{}
-						if err := client.GetInto(ctx, id, info); err != nil {
+						info, err := client.Get(ctx, id)
+						if err != nil {
 							return err
 						}
 
@@ -90,7 +94,12 @@ func New(cfg app.Config) (app.App, error) {
 							if err != nil {
 								logging.FromContext(ctx).Warn("unable to create background identity", "err", err)
 							} else {
-								_, _ = client.Update(ctx, id, info, resource.UpdateOptions{})
+								_, err = client.UpdateStatus(ctx, id, info.Status, resource.UpdateOptions{
+									ResourceVersion: info.ResourceVersion,
+								})
+								if err != nil {
+									logging.FromContext(ctx).Warn("unable to update status", "err", err)
+								}
 							}
 						}()
 

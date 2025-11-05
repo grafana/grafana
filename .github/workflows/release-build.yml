@@ -96,7 +96,7 @@ jobs:
           private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
           repositories: '["grafana-enterprise"]'
           permissions: '{"actions": "write"}'
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         env:
           REF: ${{ github.ref_name }}
           VERSION: ${{ needs.setup.outputs.version }}
@@ -156,16 +156,16 @@ jobs:
             artifacts: targz:grafana:linux/arm/v6,deb:grafana:linux/arm/v6
             verify: true
           - name: windows-amd64
-            artifacts: targz:grafana:windows/amd64,zip:grafana:windows/amd64,msi:grafana:windows/amd64
+            artifacts: targz:grafana:windows/amd64:nocgo,zip:grafana:windows/amd64:nocgo,msi:grafana:windows/amd64:nocgo
             verify: true
           - name: windows-arm64
-            artifacts: targz:grafana:windows/arm64,zip:grafana:windows/arm64
+            artifacts: targz:grafana:windows/arm64:nocgo,zip:grafana:windows/arm64:nocgo
             verify: true
           - name: darwin-amd64
-            artifacts: targz:grafana:darwin/amd64
+            artifacts: targz:grafana:darwin/amd64:nocgo
             verify: true
           - name: darwin-arm64
-            artifacts: targz:grafana:darwin/arm64
+            artifacts: targz:grafana:darwin/arm64:nocgo
             verify: true
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
@@ -187,12 +187,12 @@ jobs:
           output: artifacts-${{ matrix.name }}.txt
           verify: ${{ matrix.verify }}
           build-id: ${{ github.run_id }}
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: artifacts-list-${{ matrix.name }}
           path: ${{ steps.build.outputs.file }}
           retention-days: 1
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: artifacts-${{ matrix.name }}
           path: ${{ steps.build.outputs.dist-dir }}
@@ -224,27 +224,27 @@ jobs:
       - build
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-list-linux-amd64
           path: .
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-list-linux-arm64
           path: .
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-list-linux-armv7
           path: .
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-linux-amd64
           path: dist
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-linux-arm64
           path: dist
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-linux-armv7
           path: dist
@@ -271,43 +271,76 @@ jobs:
           docker manifest push "grafana/grafana-dev:${VERSION}"
           docker manifest push "grafana/grafana-dev:${VERSION}-ubuntu"
 
-  publish-npm:
+  dispatch-npm-canaries:
     if: github.ref_name == 'main'
+    name: Dispatch publish NPM canaries
+    permissions:
+      actions: write
+      contents: read
+    runs-on: ubuntu-x64-small
+    needs:
+      - setup
+    steps:
+      - name: Dispatch action
+        env:
+          GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
+          VERSION: ${{ needs.setup.outputs.version }}
+          BUILD_ID: ${{ github.run_id }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run release-npm.yml \
+            --repo grafana/grafana \
+            --ref main \
+            --field grafana_commit="$GRAFANA_COMMIT" \
+            --field version="$VERSION" \
+            --field build_id="$BUILD_ID"\
+            --field version_type="canary"
+
+  # notify-pr creates (or updates) a comment in a pull request to link to this workflow where the release artifacts are
+  # being built.
+  notify-pr:
+    runs-on: ubuntu-x64-small
     permissions:
       contents: read
       id-token: write
-    # NPM Trusted Publishing does not yet support self-hosted runners
-    runs-on: github-hosted-ubuntu-x64-small
     needs:
       - setup
-      - build
-    env:
-      PACKAGES_VERSION: ${{ needs.setup.outputs.version }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
-          persist-credentials: false
-
-      # Setting nodejs up just for npm publish. Not restoring the cache for all our dependencies
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         with:
-          node-version-file: '.nvmrc'
-
-      # Trusted Publishing is only available in npm v11.5.1 and later
-      - name: Update npm
-        run: npm install -g npm@^11.5.1
-
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: artifacts-linux-amd64
-          path: dist
-
-      - name: Copy packages
-        run: mv dist/"${PACKAGES_VERSION}"/npm-packages npm-artifacts
-
-      - name: Publish to NPM
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          repositories: '["grafana"]'
+          permissions: '{"issues": "write", "pull_requests": "write", "contents": "read"}'
+      - name: Find PR
         env:
-          NPM_TOKEN: "oidc"
-        run: ./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org/'
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
+        run: echo "ISSUE_NUMBER=$(gh api "/repos/grafana/grafana/commits/${GRAFANA_COMMIT}/pulls" | jq -r '.[0].number')" >> "$GITHUB_ENV"
+      - name: Find Comment
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
+        id: fc
+        with:
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          comment-author: 'grafana-delivery-bot[bot]'
+          body-includes: GitHub Actions Build
+          token: ${{ steps.generate_token.outputs.token }}
+      - name: Create or update comment
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v4
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          body: |
+            :rocket: Your submission is now being built and packaged.
+
+            - [GitHub Actions Build](https://github.com/grafana/grafana/actions/runs/${{ github.run_id }})
+            - Version: ${{ needs.setup.outputs.version }}
+          edit-mode: replace

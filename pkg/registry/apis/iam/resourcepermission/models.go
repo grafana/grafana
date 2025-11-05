@@ -57,8 +57,9 @@ type ListResourcePermissionsQuery struct {
 }
 
 type DeleteResourcePermissionsQuery struct {
-	Scope string
-	OrgID int64
+	Scope    string
+	OrgID    int64
+	RoleName string
 }
 
 type rbacAssignmentCreate struct {
@@ -248,22 +249,28 @@ func (s *ResourcePermSqlBackend) parseScope(scope string) (*groupResourceName, e
 }
 
 // splitResourceName splits a resource name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs) into its components
-func (s *ResourcePermSqlBackend) splitResourceName(resourceName string) (Mapper, *groupResourceName, error) {
+func splitResourceName(resourceName string) (*groupResourceName, error) {
 	// e.g. dashboard.grafana.app-dashboards-ad5rwqs
 	parts := strings.SplitN(resourceName, "-", 3)
 	if len(parts) != 3 {
-		return nil, nil, fmt.Errorf("%w: %s", errInvalidName, resourceName)
+		return nil, fmt.Errorf("%w: %s", errInvalidName, resourceName)
 	}
 
 	group, resourceType, uid := parts[0], parts[1], parts[2]
-	mapper, ok := s.mappers[schema.GroupResource{Group: group, Resource: resourceType}]
-	if !ok {
-		return nil, nil, fmt.Errorf("%w: %s/%s", errUnknownGroupResource, group, resourceType)
-	}
 
-	return mapper, &groupResourceName{
+	return &groupResourceName{
 		Group:    group,
 		Resource: resourceType,
 		Name:     uid,
 	}, nil
+}
+
+// getResourceMapper returns the Mapper of the given group and resource to access levels and scope prefix for that resource.
+func (s *ResourcePermSqlBackend) getResourceMapper(group, resource string) (Mapper, error) {
+	mapper, ok := s.mappers[schema.GroupResource{Group: group, Resource: resource}]
+	if !ok {
+		return nil, fmt.Errorf("%w: %s/%s", errUnknownGroupResource, group, resource)
+	}
+
+	return mapper, nil
 }

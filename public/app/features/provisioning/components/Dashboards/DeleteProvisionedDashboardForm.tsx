@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack } from '@grafana/ui';
 import { Job, RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -12,7 +12,9 @@ import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 
+import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { StatusInfo } from '../../types';
 import { ProvisionedDashboardFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
@@ -44,16 +46,20 @@ export function DeleteProvisionedDashboardForm({
   repository,
   onDismiss,
 }: Props) {
-  const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
-  const { editPanel: panelEditor } = dashboard.useState();
-  const { handleSubmit, watch } = methods;
-  const navigate = useNavigate();
-
-  const [ref, workflow] = watch(['ref', 'workflow']);
-  const { createBulkJob, isLoading } = useBulkActionJob();
-  const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
+  // State
   const [job, setJob] = useState<Job>();
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [jobError, setJobError] = useState<string | StatusInfo>();
+
+  // Hooks
+  const navigate = useNavigate();
+  const { editPanel: panelEditor } = dashboard.useState();
+  const { createBulkJob, isLoading } = useBulkActionJob();
+  const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
+  // Form
+  const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
+  const { handleSubmit, watch } = methods;
+  const [ref, workflow] = watch(['ref', 'workflow']);
 
   // Helper function to show error messages
   const showError = (error?: unknown) => {
@@ -73,6 +79,12 @@ export function DeleteProvisionedDashboardForm({
       console.error('Missing required repository for deletion:', { repo });
       return;
     }
+
+    reportInteraction('grafana_provisioning_dashboard_delete_submitted', {
+      workflow,
+      repositoryName: repo,
+      repositoryType: repository?.type ?? 'unknown',
+    });
 
     // Branch workflow: use /files API for direct file operations
     if (workflow === 'branch') {
@@ -136,17 +148,26 @@ export function DeleteProvisionedDashboardForm({
     navigate(url);
   };
 
-  const handleJobStatusChange = (statusInfo: StepStatusInfo) => {
-    if (statusInfo.status === 'success') {
-      panelEditor?.onDiscard();
-      navigate('/dashboards');
-    }
-  };
+  const handleJobStatusChange = useCallback(
+    (statusInfo: StepStatusInfo) => {
+      if (statusInfo.status === 'success') {
+        panelEditor?.onDiscard();
+        navigate('/dashboards');
+      }
+
+      if (statusInfo.status === 'error' && statusInfo.error) {
+        setJobError(statusInfo.error);
+      }
+    },
+    [panelEditor, navigate]
+  );
 
   useProvisionedRequestHandler({
     request,
     workflow,
     resourceType: 'dashboard',
+    repository,
+    selectedBranch: ref || loadedFromRef,
     successMessage: t(
       'dashboard-scene.delete-provisioned-dashboard-form.success-message',
       'Dashboard deleted successfully'
@@ -165,7 +186,10 @@ export function DeleteProvisionedDashboardForm({
       onClose={onDismiss}
     >
       {hasSubmitted && job ? (
-        <JobStatus watch={job} jobType="delete" onStatusChange={handleJobStatusChange} />
+        <>
+          <ProvisioningAlert error={jobError} />
+          <JobStatus watch={job} jobType="move" onStatusChange={handleJobStatusChange} />
+        </>
       ) : (
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(handleSubmitForm)}>

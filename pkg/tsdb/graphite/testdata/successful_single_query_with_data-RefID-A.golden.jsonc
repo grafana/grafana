@@ -1,0 +1,75 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
+//  }
+//  Name: A
+//  Dimensions: 2 Fields by 3 Rows
+//  +-------------------------------+------------------+
+//  | Name: time                    | Name: value      |
+//  | Labels:                       | Labels:          |
+//  | Type: []time.Time             | Type: []*float64 |
+//  +-------------------------------+------------------+
+//  | 2021-01-01 00:00:00 +0000 UTC | 100              |
+//  | 2021-01-01 00:01:00 +0000 UTC | 150              |
+//  | 2021-01-01 00:02:00 +0000 UTC | 120              |
+//  +-------------------------------+------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "A",
+        "meta": {
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
+        },
+        "fields": [
+          {
+            "name": "time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {},
+            "config": {
+              "displayNameFromDS": "stats.counters.web.hits"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1609459200000,
+            1609459260000,
+            1609459320000
+          ],
+          [
+            100,
+            150,
+            120
+          ]
+        ]
+      }
+    }
+  ]
+}

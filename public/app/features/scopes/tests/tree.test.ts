@@ -21,6 +21,9 @@ import {
   selectResultCloud,
   selectResultCloudDev,
   selectResultCloudOps,
+  expandResultEnvironments,
+  selectResultEnvironmentsDev,
+  selectResultEnvironmentsProd,
   updateScopes,
 } from './utils/actions';
 import {
@@ -33,10 +36,10 @@ import {
   expectResultApplicationsMimirNotPresent,
   expectResultApplicationsMimirPresent,
   expectResultApplicationsMimirSelected,
-  expectResultCloudDevNotSelected,
-  expectResultCloudDevSelected,
-  expectResultCloudOpsNotSelected,
-  expectResultCloudOpsSelected,
+  expectResultEnvironmentsDevNotSelected,
+  expectResultEnvironmentsDevSelected,
+  expectResultEnvironmentsProdNotSelected,
+  expectResultEnvironmentsProdSelected,
   expectScopesHeadline,
   expectScopesSelectorValue,
 } from './utils/assertions';
@@ -133,12 +136,33 @@ describe('Tree', () => {
     await openSelector();
     await expandResultCloud();
     await selectResultCloudDev();
-    expectResultCloudDevSelected();
-    expectResultCloudOpsNotSelected();
 
+    // Verify the content of the scopes selector input
+    expectScopesSelectorValue('Dev');
+
+    // Single leaf node links always apply the scope, hence we need to open the selector again
+    await openSelector();
     await selectResultCloudOps();
-    expectResultCloudDevNotSelected();
-    expectResultCloudOpsSelected();
+    expectScopesSelectorValue('Ops');
+  });
+
+  it('Can only select one selectable container at a time', async () => {
+    await openSelector();
+    await expandResultEnvironments();
+
+    // Select the Development environment container
+    await selectResultEnvironmentsDev();
+    expectResultEnvironmentsDevSelected(); // Check selection state before applying
+    expectResultEnvironmentsProdNotSelected(); // Production should not be selected
+
+    // Select the Production environment container - should replace Development
+    await selectResultEnvironmentsProd();
+    expectResultEnvironmentsProdSelected(); // Check selection state before applying
+    expectResultEnvironmentsDevNotSelected(); // Development should no longer be selected
+
+    // Apply scopes and verify final state
+    await applyScopes();
+    expectScopesSelectorValue('Production');
   });
 
   it('Search works', async () => {
@@ -265,6 +289,18 @@ describe('Tree', () => {
     await expandResultApplications();
     await expandResultApplicationsCloud();
     expectScopesHeadline('Recommended');
+  });
+
+  it('Should open to a specific path when scopes and scope_parent are provided', async () => {
+    await openSelector();
+    await expandResultApplications();
+    await expandResultApplicationsCloud();
+    await selectResultApplicationsCloudDev();
+    await applyScopes();
+    await openSelector();
+
+    // Verify that Cloud is expanded
+    expect(screen.getByRole('button', { name: 'Cloud' })).toBeInTheDocument();
   });
 
   describe('Keyboard Navigation', () => {

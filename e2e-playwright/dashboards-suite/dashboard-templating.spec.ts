@@ -19,9 +19,7 @@ test.describe(
       // Open dashboard global variables and interpolation
       await gotoDashboardPage({ uid: DASHBOARD_UID });
 
-      // Get the actual timezone from the browser context (should be Pacific/Easter due to test.use)
-      const timeZone = await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
-      const example = `Example: from=now-6h&to=now&timezone=${encodeURIComponent(timeZone)}`;
+      const example = `Example: from=now-6h&to=now&timezone=browser`;
 
       const expectedItems: string[] = [
         '__dashboard = Templating - Global variables and interpolation',
@@ -68,10 +66,7 @@ test.describe(
 
       // Check link interpolation is working correctly
       const exampleLink = page.locator(`a:has-text("${example}")`);
-      await expect(exampleLink).toHaveAttribute(
-        'href',
-        `https://example.com/?from=now-6h&to=now&timezone=${encodeURIComponent(timeZone)}`
-      );
+      await expect(exampleLink).toHaveAttribute('href', `https://example.com/?from=now-6h&to=now&timezone=browser`);
     });
   }
 );

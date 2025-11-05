@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import { useScopesServices } from '../ScopesContextProvider';
+
 import { getTreeItemElementId } from './ScopesTreeItem';
 import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
 import { NodesMap, SelectedScope, TreeNode } from './types';
@@ -11,7 +13,7 @@ interface UseScopesHighlightingParams {
   treeQuery: string;
   scopeNodes: NodesMap;
   selectedScopes: SelectedScope[];
-  onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
+  toggleExpandedNode: (scopeNodeId: string) => void;
   selectScope: (scopeNodeId: string) => void;
   deselectScope: (scopeNodeId: string) => void;
 }
@@ -22,12 +24,14 @@ export function useScopesHighlighting({
   treeQuery,
   scopeNodes,
   selectedScopes,
-  onNodeUpdate,
+  toggleExpandedNode,
   selectScope,
   deselectScope,
 }: UseScopesHighlightingParams) {
   // Enable keyboard highlighting when the search field is focused
   const [highlightEnabled, setHighlightEnabled] = useState(false);
+  const services = useScopesServices();
+  const { changeScopes } = services?.scopesSelectorService || {};
 
   const items = [...selectedNodes, ...resultNodes];
 
@@ -47,8 +51,18 @@ export function useScopesHighlighting({
         isNodeExpandable(scopeNodes[nodeId]);
 
       if (isExpanding || isSelectingAndExpandable) {
-        onNodeUpdate(nodeId, true, treeQuery);
+        toggleExpandedNode(nodeId);
         setHighlightEnabled(false);
+        return;
+      }
+
+      // If parent has disableMultiSelect, apply scope directly
+      const parentNode = scopeNodes[nodeId]?.spec.parentName
+        ? scopeNodes[scopeNodes[nodeId]?.spec.parentName]
+        : undefined;
+
+      if (parentNode?.spec.disableMultiSelect && changeScopes && scopeNodes[nodeId]?.spec.linkId) {
+        changeScopes([scopeNodes[nodeId].spec.linkId], parentNode.metadata.name);
         return;
       }
 

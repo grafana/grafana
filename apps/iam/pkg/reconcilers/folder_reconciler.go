@@ -5,21 +5,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana-app-sdk/operator"
-	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	"github.com/grafana/grafana/pkg/services/authz"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"k8s.io/client-go/rest"
-)
 
-// FolderStore interface for retrieving folder information
-type FolderStore interface {
-	GetFolderParent(ctx context.Context, namespace, uid string) (string, error)
-}
+	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/operator"
+	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/authz"
+)
 
 // PermissionStore interface for managing folder permissions
 type PermissionStore interface {
@@ -28,33 +24,31 @@ type PermissionStore interface {
 	DeleteFolderParents(ctx context.Context, namespace, folderUID string) error
 }
 
-// AppConfig represents the app-specific configuration
+// ReconcilerConfig represents the app-specific configuration
 type ReconcilerConfig struct {
-	ZanzanaCfg                authz.ZanzanaClientConfig
-	KubeConfig                *rest.Config
-	FolderReconcilerNamespace string
+	ZanzanaCfg authz.ZanzanaClientConfig
+	Metrics    *ReconcilerMetrics
 }
 
 type FolderReconciler struct {
 	permissionStore PermissionStore
-	folderStore     FolderStore
+	metrics         *ReconcilerMetrics
 }
 
 func NewFolderReconciler(cfg ReconcilerConfig) (operator.Reconciler, error) {
 	// Create Zanzana client
-	zanzanaClient, err := authz.NewZanzanaClient("*", cfg.ZanzanaCfg)
+	zanzanaClient, err := authz.NewRemoteZanzanaClient("*", cfg.ZanzanaCfg)
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to create zanzana client: %w", err)
 	}
 
 	// Create dependencies
-	folderStore := NewAPIFolderStore(cfg.KubeConfig)
 	permissionStore := NewZanzanaPermissionStore(zanzanaClient)
 
 	folderReconciler := &FolderReconciler{
 		permissionStore: permissionStore,
-		folderStore:     folderStore,
+		metrics:         cfg.Metrics,
 	}
 
 	reconciler := &operator.TypedReconciler[*foldersKind.Folder]{
@@ -68,13 +62,13 @@ func NewFolderReconciler(cfg ReconcilerConfig) (operator.Reconciler, error) {
 func actionToString(action operator.ReconcileAction) string {
 	switch action {
 	case operator.ReconcileActionCreated:
-		return "CREATE"
+		return "create"
 	case operator.ReconcileActionUpdated:
-		return "UPDATE"
+		return "update"
 	case operator.ReconcileActionDeleted:
-		return "DELETE"
+		return "delete"
 	default:
-		return "UNKNOWN"
+		return "unknown"
 	}
 }
 
@@ -94,22 +88,30 @@ func (r *FolderReconciler) reconcile(ctx context.Context, req operator.TypedReco
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
+	action := actionToString(req.Action)
+
 	err := validateFolder(req.Object)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "validation failed")
+		if r.metrics != nil {
+			r.metrics.RecordReconcileFailure(action, "informer")
+		}
 		return operator.ReconcileResult{}, err
 	}
 
 	var result operator.ReconcileResult
 	switch req.Action {
 	case operator.ReconcileActionCreated:
-		result, err = r.handleUpdateFolder(ctx, req.Object)
+		result, err = r.handleUpdateFolder(ctx, req.Object, action)
 	case operator.ReconcileActionUpdated:
-		result, err = r.handleUpdateFolder(ctx, req.Object)
+		result, err = r.handleUpdateFolder(ctx, req.Object, action)
 	case operator.ReconcileActionDeleted:
-		result, err = r.handleDeleteFolder(ctx, req.Object)
+		result, err = r.handleDeleteFolder(ctx, req.Object, action)
 	default:
+		if r.metrics != nil {
+			r.metrics.RecordReconcileSuccess(action, "no_changes_needed")
+		}
 		return operator.ReconcileResult{}, nil
 	}
 
@@ -121,41 +123,57 @@ func (r *FolderReconciler) reconcile(ctx context.Context, req operator.TypedReco
 	return result, err
 }
 
-func (r *FolderReconciler) handleUpdateFolder(ctx context.Context, folder *foldersKind.Folder) (operator.ReconcileResult, error) {
+func (r *FolderReconciler) handleUpdateFolder(ctx context.Context, folder *foldersKind.Folder, action string) (operator.ReconcileResult, error) {
 	logger := logging.FromContext(ctx)
 
 	folderUID := folder.Name
 	namespace := folder.Namespace
 
-	parentUID, err := r.folderStore.GetFolderParent(ctx, namespace, folderUID)
+	parentUID, err := getFolderParent(ctx, folder)
 	if err != nil {
 		logger.Error("Error getting folder parent", "error", err)
+		if r.metrics != nil {
+			r.metrics.RecordReconcileFailure(action, "failure_informer")
+		}
 		return operator.ReconcileResult{}, err
 	}
 
 	parents, err := r.permissionStore.GetFolderParents(ctx, namespace, folderUID)
 	if err != nil {
 		logger.Error("Error getting folder parents", "error", err)
+		if r.metrics != nil {
+			r.metrics.RecordReconcileFailure(action, "permission_store")
+		}
 		return operator.ReconcileResult{}, err
 	}
 
 	if (len(parents) == 0 && parentUID == "") || (len(parents) == 1 && parents[0] == parentUID) {
 		logger.Info("Folder is already reconciled", "folder", folderUID, "parent", parentUID, "namespace", namespace)
+		if r.metrics != nil {
+			r.metrics.RecordReconcileSuccess(action, "no_changes_needed")
+		}
 		return operator.ReconcileResult{}, nil
 	}
 
 	err = r.permissionStore.SetFolderParent(ctx, namespace, folderUID, parentUID)
 	if err != nil {
 		logger.Error("Error setting folder parent", "error", err)
+		if r.metrics != nil {
+			r.metrics.RecordReconcileFailure(action, "permission_store")
+		}
 		return operator.ReconcileResult{}, err
 	}
 
 	logger.Info("Folder parent set in permission store", "folder", folderUID, "parent", parentUID, "namespace", namespace)
 
+	if r.metrics != nil {
+		r.metrics.RecordReconcileSuccess(action, "changes_made")
+	}
+
 	return operator.ReconcileResult{}, nil
 }
 
-func (r *FolderReconciler) handleDeleteFolder(ctx context.Context, folder *foldersKind.Folder) (operator.ReconcileResult, error) {
+func (r *FolderReconciler) handleDeleteFolder(ctx context.Context, folder *foldersKind.Folder, action string) (operator.ReconcileResult, error) {
 	logger := logging.FromContext(ctx)
 
 	namespace := folder.Namespace
@@ -164,10 +182,17 @@ func (r *FolderReconciler) handleDeleteFolder(ctx context.Context, folder *folde
 	err := r.permissionStore.DeleteFolderParents(ctx, namespace, folderUID)
 	if err != nil {
 		logger.Error("Error deleting folder parents", "error", err)
+		if r.metrics != nil {
+			r.metrics.RecordReconcileFailure(action, "permission_store")
+		}
 		return operator.ReconcileResult{}, err
 	}
 
 	logger.Info("Folder deleted from permission store", "folder", folderUID, "namespace", namespace)
+
+	if r.metrics != nil {
+		r.metrics.RecordReconcileSuccess(action, "changes_made")
+	}
 
 	return operator.ReconcileResult{}, nil
 }
@@ -183,4 +208,22 @@ func validateFolder(folder *foldersKind.Folder) error {
 		return fmt.Errorf("folder namespace is empty")
 	}
 	return nil
+}
+
+func getFolderParent(ctx context.Context, folder *foldersKind.Folder) (string, error) {
+	tracer := otel.GetTracerProvider().Tracer("iam-folder-reconciler")
+	_, span := tracer.Start(ctx, "get-folder-parent",
+		trace.WithAttributes(
+			attribute.String("folder.uid", folder.Name),
+		),
+	)
+	defer span.End()
+
+	folderMeta, err := utils.MetaAccessor(folder)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to get folder meta accessor")
+		return "", err
+	}
+	return folderMeta.GetFolder(), nil
 }

@@ -203,7 +203,7 @@ func TestValidateUpdate(t *testing.T) {
 			expectedErr: "k6 project may not be moved",
 		},
 		{
-			name: "no error when moving to max depth",
+			name: "can move a folder to max depth",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",
@@ -230,11 +230,10 @@ func TestValidateUpdate(t *testing.T) {
 					{Name: folder.GeneralFolderUID},
 				},
 			},
-			maxDepth:    folder.MaxNestedFolderDepth,
-			expectedErr: "[folder.maximum-depth-reached]",
+			maxDepth: folder.MaxNestedFolderDepth,
 		},
 		{
-			name: "error when moving too deep",
+			name: "error when moving exceeds max depth",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",
@@ -321,7 +320,7 @@ func TestValidateDelete(t *testing.T) {
 			},
 		},
 	}, {
-		name: "stats error",
+		name: "stats error - nil stats",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "nnn",
@@ -332,7 +331,7 @@ func TestValidateDelete(t *testing.T) {
 		},
 		expectedErr: "could not verify if folder is empty",
 	}, {
-		name: "stats error",
+		name: "stats error - search error",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "nnn",
@@ -343,7 +342,7 @@ func TestValidateDelete(t *testing.T) {
 		},
 		expectedErr: "error running stats",
 	}, {
-		name: "stats error",
+		name: "stats error - error result",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "nnn",
@@ -358,7 +357,64 @@ func TestValidateDelete(t *testing.T) {
 		},
 		expectedErr: "could not verify if folder is empty",
 	}, {
-		name: "folder not empty",
+		name: "folder not empty - contains dashboards",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "dashboards",
+						Count:    10, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder not empty - contains alertrules",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "alerting.grafana.app",
+						Resource: "alertrules",
+						Count:    5, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder not empty - contains library_elements",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "library.grafana.app",
+						Resource: "library_elements",
+						Count:    3, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder not empty - contains folders",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "nnn",
@@ -370,7 +426,54 @@ func TestValidateDelete(t *testing.T) {
 					{
 						Group:    "folders.grafana.app",
 						Resource: "folders",
-						Count:    10, // not empty
+						Count:    2, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder can be deleted when it only contains non-validated resource types",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "playlist.grafana.app",
+						Resource: "playlists",
+						Count:    10, // has content but not a validated resource type
+					},
+					{
+						Group:    "other.grafana.app",
+						Resource: "other",
+						Count:    5, // has content but not a validated resource type
+					},
+				},
+			},
+		},
+	}, {
+		name: "folder not empty - mixed resources with validated types",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "folders.grafana.app",
+						Resource: "folders",
+						Count:    10, // now validated
+					},
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "dashboards",
+						Count:    2, // validated and has content
 					},
 				},
 			},
