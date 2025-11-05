@@ -60,24 +60,27 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
         datasourceType={datasourceType}
         showSpanFilters={showSpanFilters}
       />
-      <div
-        className={styles.matchesOnly}
-        onClick={() => setShowSpanFilterMatchesOnly(!search.matchesOnly)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            setShowSpanFilterMatchesOnly(!search.matchesOnly);
-          }
-        }}
-        role="button"
-        tabIndex={0}
-      >
+      <div className={styles.matchesOnly}>
         <Switch
           value={!search.matchesOnly}
-          onChange={(value) => setShowSpanFilterMatchesOnly(!value.currentTarget.checked)}
           label={t('explore.trace-page-search-bar.label-show-all-spans', 'Show all spans switch')}
           disabled={!spanFilterMatches?.size}
+          onChange={(e) => {
+            e.stopPropagation();
+            setShowSpanFilterMatchesOnly(!search.matchesOnly);
+          }}
         />
-        <span className={styles.clearMatchesButton}>
+        <span
+          className={styles.clearMatchesButton}
+          role="button"
+          tabIndex={0}
+          onClick={() => setShowSpanFilterMatchesOnly(!search.matchesOnly)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              setShowSpanFilterMatchesOnly(!search.matchesOnly);
+            }
+          }}
+        >
           <Trans i18nKey="explore.show-all-spans">Show all spans</Trans>
         </span>
       </div>
