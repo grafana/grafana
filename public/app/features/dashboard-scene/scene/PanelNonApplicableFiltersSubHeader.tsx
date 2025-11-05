@@ -65,7 +65,7 @@ function PanelNonApplicableFiltersSubHeaderRenderer({
   const groupByState = groupByVariable?.useState();
 
   const fetchApplicability = useCallback(async () => {
-    const queries = data.$data instanceof SceneQueryRunner ? data.$data.state.queries : [];
+    const queries = data.data?.request?.targets;
     const filters = filtersState?.filters ?? [];
     const originFilters = filtersState?.originFilters ?? [];
     const groupByValue = groupByState?.value ?? [];
