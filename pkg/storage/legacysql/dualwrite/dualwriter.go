@@ -244,6 +244,15 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 			_, _, err = d.legacy.Delete(ctx, accCreated.GetName(), nil, &metav1.DeleteOptions{})
 			if err != nil {
 				log.With("name", accCreated.GetName()).Error("failed to CLEANUP object in legacy storage", "err", err)
+				if ctx.Err() != nil {
+					// Best effort to delete in case context was cancelled or timed out.
+					go func(ctxBg context.Context, cancel context.CancelFunc) {
+						defer cancel()
+						if _, _, err := d.legacy.Delete(ctxBg, accCreated.GetName(), nil, &metav1.DeleteOptions{}); err != nil {
+							log.With("object", createdCopy).Error("failed to background CLEANUP object in legacy storage", "err", err)
+						}
+					}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
+				}
 			}
 			return nil, errObjectSt
 		}
@@ -268,6 +277,15 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 			_, _, errLegacy := d.legacy.Delete(ctx, accCreated.GetName(), nil, &metav1.DeleteOptions{})
 			if errLegacy != nil {
 				log.With("name", accCreated.GetName()).Error("failed to CLEANUP object in legacy storage", "err", errLegacy)
+				if ctx.Err() != nil {
+					// Best effort to delete in case context was cancelled or timed out.
+					go func(ctxBg context.Context, cancel context.CancelFunc) {
+						defer cancel()
+						if _, _, err := d.legacy.Delete(ctxBg, accCreated.GetName(), nil, &metav1.DeleteOptions{}); err != nil {
+							log.With("object", createdCopy).Error("failed to background CLEANUP object in legacy storage", "err", err)
+						}
+					}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
+				}
 			}
 			return nil, err
 		}

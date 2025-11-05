@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -485,4 +486,58 @@ func TestMode2_Update(t *testing.T) {
 			require.NotEqual(t, anotherObj, obj)
 		})
 	}
+}
+
+func TestMode2_CleanupOnCreateFailureWithContextCancelled(t *testing.T) {
+	t.Run("should attempt background delete when legacy cleanup fails due to context error", func(t *testing.T) {
+		l := (rest.Storage)(nil)
+		s := (rest.Storage)(nil)
+
+		ls := storageMock{&mock.Mock{}, l}
+		us := storageMock{&mock.Mock{}, s}
+
+		// Channel to signal that background delete was attempted
+		deleteCalled := make(chan bool, 1)
+
+		// Context that will be cancelled during the operation
+		ctx, cancel := context.WithCancel(context.Background())
+
+		// Setup: Legacy Create succeeds
+		ls.Mock.On("Create", mock.Anything, exampleObj, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
+
+		// Setup: Unified Create fails and cancels the context
+		us.Mock.On("Create", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Return(nil, errors.New("unified create error")).Once()
+
+		// Setup: Legacy Delete should be called and cancel the context
+		ls.Mock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+			cancel()
+		}).Return(nil, false, context.Canceled).Once()
+
+		// Setup: Background Legacy Delete should be called with a fresh context (via context.WithoutCancel)
+		ls.Mock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+			deleteCalled <- true
+		}).Return(exampleObj, true, nil).Once()
+
+		dw, err := NewDualWriter(kind, rest.Mode2, ls, us)
+		require.NoError(t, err)
+
+		obj, err := dw.Create(ctx, exampleObj, createFn, &metav1.CreateOptions{})
+
+		// Should return an error because unified create failed
+		require.Error(t, err)
+		require.Nil(t, obj)
+		require.Contains(t, err.Error(), "unified create error")
+
+		// Wait for background delete to be called (with timeout)
+		select {
+		case <-deleteCalled:
+			// Background delete was called successfully
+		case <-time.After(2 * time.Second):
+			t.Fatal("Background delete was not attempted within timeout")
+		}
+
+		// Verify all expectations were met
+		ls.AssertExpectations(t)
+		us.AssertExpectations(t)
+	})
 }
