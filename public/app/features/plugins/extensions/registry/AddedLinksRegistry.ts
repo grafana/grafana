@@ -74,13 +74,12 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
         const pointIdLog = configLog.child({ extensionPointId });
         const { targets, ...registryItem } = config;
 
-        if (!(extensionPointId in registry)) {
-          registry[extensionPointId] = [];
-        }
-
         pointIdLog.debug('Added link extension successfully registered');
 
-        registry[extensionPointId].push({ ...registryItem, pluginId, extensionPointId });
+        // Creating a new array instead of pushing to get a new references
+        const slice = registry[extensionPointId] ?? [];
+        const result = { ...registryItem, pluginId, extensionPointId };
+        registry[extensionPointId] = Array.from([...slice, result]);
       }
     }
 

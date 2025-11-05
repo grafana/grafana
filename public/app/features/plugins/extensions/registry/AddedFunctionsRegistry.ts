@@ -67,11 +67,9 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
 
         pointIdLog.debug('Added function extension successfully registered');
 
-        if (!(extensionPointId in registry)) {
-          registry[extensionPointId] = [result];
-        } else {
-          registry[extensionPointId].push(result);
-        }
+        // Creating a new array instead of pushing to get a new reference
+        const slice = registry[extensionPointId] ?? [];
+        registry[extensionPointId] = Array.from([...slice, result]);
       }
     }
 

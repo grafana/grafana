@@ -1,4 +1,4 @@
-import { act, render, renderHook, screen } from '@testing-library/react';
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import {
@@ -413,7 +413,7 @@ describe('usePluginComponents()', () => {
     expect(result.current.components.length).toBe(2);
   });
 
-  it('should honour the limitPerPlugin arg if its set', () => {
+  it('should honour the limitPerPlugin arg if its set', async () => {
     const plugins = ['my-awesome1-app', 'my-awesome2-app', 'my-awesome3-app'];
     let { result, rerender } = renderHook(() => usePluginComponents({ extensionPointId, limitPerPlugin: 2 }), {
       wrapper,
@@ -451,10 +451,10 @@ describe('usePluginComponents()', () => {
       }
     });
 
-    // Check if the hook returns the new extensions
     rerender();
 
-    expect(result.current.components.length).toBe(6);
+    // Check if the hook returns the new extensions
+    await waitFor(() => expect(result.current.components.length).toBe(6));
   });
 
   it('should not validate the extension point meta-info in production mode', () => {
