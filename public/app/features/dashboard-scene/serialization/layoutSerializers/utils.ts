@@ -115,6 +115,7 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
       }),
     ],
     extendPanelContext: setDashboardPanelContext,
+    headerActions: config.featureToggles.panelGroupBy ? [new PanelGroupByAction()] : [],
     pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
     title: panel.spec.title,
     options: {},
