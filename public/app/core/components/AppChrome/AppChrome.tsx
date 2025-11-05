@@ -279,7 +279,6 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       // the `Resizeable` component overrides the needed `position` and `height`
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       position: 'fixed !important' as 'fixed',
-      // When two bars, position from first level (next to Share button); otherwise from full header
       top: headerHeight,
       bottom: 0,
       zIndex: theme.zIndex.navbarFixed + 1,
