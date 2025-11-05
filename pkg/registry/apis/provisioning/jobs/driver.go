@@ -196,6 +196,10 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	// Complete the job
 	d.mu.Lock()
 	d.currentJob.Status = recorder.Complete(ctx, err)
+	defer func() {
+		d.currentJob = nil
+		d.mu.Unlock()
+	}()
 
 	// Save the finished job
 	err = d.historicJobs.WriteJob(ctx, d.currentJob.DeepCopy())
@@ -205,11 +209,6 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	} else {
 		logger.Debug("created historic job", "historic_job", *d.currentJob)
 	}
-
-	defer func() {
-		d.currentJob = nil
-		d.mu.Unlock()
-	}()
 
 	// Mark the job as completed.
 	if err := d.store.Complete(ctx, d.currentJob); err != nil {
