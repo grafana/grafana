@@ -10,6 +10,12 @@ labels:
     - enterprise
     - oss
     - cloud
+refs:
+  roles-and-permissions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/
 title: Git Sync
 weight: 100
 ---
@@ -83,6 +89,11 @@ Refer to [Requirements](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/obser
 **Authentication**
 
 - You can only authenticate in GitHub using your Personal Access Token token.
+
+**Permission management**
+
+- You cannot modify the permissions of a provisioned folder after you've synced it.
+- Default permissions are: Admin = Admin, Editor = Editor, and Viewer = Viewer. Refer to [Roles and permissions](ref:roles-and-permissions) for more information.
 
 **Compatibility**
 
