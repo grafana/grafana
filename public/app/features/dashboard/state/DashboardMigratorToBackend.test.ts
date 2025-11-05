@@ -85,9 +85,6 @@ describe('Backend / Frontend result comparison', () => {
       // version in the backend is never added because it is returned from the backend as metadata
       delete frontendMigrationResult.version;
 
-      // TODO: three tests will fail because the backend output will set up autoMigration fields for nested panels too
-      // however on the frontend this doesn't happen at PanelModel level, but in transformSaveModelToScene.
-
       // since we are initializing panels inside collapsed rows with PanelModel in transformSceneToSaveModel (see createRowItemFromLegacyRow)
       // and not in DashboardModel, this means that these panels will have automigratedFrom and panel type changed to the new panel type
       // backend matches this behaviour by setting up autoMigrateFrom and type for nested panels too
