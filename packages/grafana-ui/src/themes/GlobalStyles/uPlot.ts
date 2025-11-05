@@ -12,6 +12,10 @@ export function getUplotStyles(theme: GrafanaTheme2) {
       background: 'rgba(120, 120, 130, 0.2)',
     },
 
+    '.u-over.zoom-drag': {
+      cursor: 'zoom-in !important',
+    },
+
     '.u-hz .u-cursor-x, .u-vt .u-cursor-y': {
       borderRight: '1px dashed rgba(120, 120, 130, 0.5)',
     },
