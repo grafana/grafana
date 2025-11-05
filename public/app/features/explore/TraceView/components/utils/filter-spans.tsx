@@ -106,12 +106,21 @@ const matchTimeField = (fieldValue: number, operator: string, expectedValue: str
   if (!timeFilter) {
     return false;
   }
-  if (operator === '>=') {
-    return fieldValue >= timeFilter;
-  } else if (operator === '<=') {
-    return fieldValue <= timeFilter;
+
+  switch (operator) {
+    case '>':
+      return fieldValue > timeFilter;
+    case '<':
+      return fieldValue < timeFilter;
+    case '>=':
+      return fieldValue >= timeFilter;
+    case '<=':
+      return fieldValue <= timeFilter;
+    case '=':
+      return fieldValue === timeFilter;
+    default:
+      return false;
   }
-  return false;
 };
 
 /**
