@@ -184,9 +184,9 @@ func addUserMigrations(mg *Migrator) {
 
 	// Prefix SCIM UID for provisioned users to avoid numeric/existing-id collisions
 	mg.AddMigration("Prefix SCIM uid for provisioned users", NewRawSQLMigration("").
-		SQLite("UPDATE user SET uid = 'scim_' || uid WHERE is_provisioned = 1 AND uid NOT LIKE 'scim_%';").
-		Postgres("UPDATE `user` SET uid = 'scim_' || uid WHERE is_provisioned = TRUE AND uid NOT LIKE 'scim_%';").
-		Mysql("UPDATE user SET uid = CONCAT('scim_', uid) WHERE is_provisioned = 1 AND uid NOT LIKE 'scim_%';"))
+		SQLite("UPDATE user SET uid = 'scim-' || uid WHERE is_provisioned = 1 AND uid NOT LIKE 'scim-%';").
+		Postgres("UPDATE `user` SET uid = 'scim-' || uid WHERE is_provisioned = TRUE AND uid NOT LIKE 'scim-%';").
+		Mysql("UPDATE user SET uid = CONCAT('scim-', uid) WHERE is_provisioned = 1 AND uid NOT LIKE 'scim-%';"))
 }
 
 const migSQLITEisServiceAccountNullable = `ALTER TABLE user ADD COLUMN tmp_service_account BOOLEAN DEFAULT 0;
