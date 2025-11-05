@@ -10939,6 +10939,14 @@
       "could-anything-matching-query": "Could not find anything matching your query"
     }
   },
+  "panel-group-by": {
+    "apply": "Apply",
+    "button": "Group by",
+    "cancel": "Cancel",
+    "loading": "Loading options...",
+    "no-options": "No options found",
+    "search-placeholder": "Search..."
+  },
   "panel-type-filter": {
     "clear-button": "Clear types",
     "select-aria-label": "Panel type filter",
