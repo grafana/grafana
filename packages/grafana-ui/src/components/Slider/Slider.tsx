@@ -1,7 +1,8 @@
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
 import SliderComponent from 'rc-slider';
-import { useState, useCallback, ChangeEvent, FocusEvent } from 'react';
+import { useState, useCallback, ChangeEvent, FocusEvent, useEffect } from 'react';
+import { usePrevious } from 'react-use';
 
 import { t } from '@grafana/i18n';
 
@@ -10,6 +11,36 @@ import { Input } from '../Input/Input';
 
 import { getStyles } from './styles';
 import { SliderProps } from './types';
+
+// gets rid of pesky things like 1.20000000000000002 and such, since this needs to be printed
+// nicely for people.
+function roundFloatingPointError(n: number) {
+  return parseFloat(n.toPrecision(12));
+}
+
+function clampToAllowedValue(min: number, max: number, step: number, n: number): number {
+  // default to min
+  if (Number.isNaN(n)) {
+    return min;
+  }
+
+  // clamp to max and min
+  if (n > max) {
+    return max;
+  }
+  if (n < min) {
+    return min;
+  }
+
+  // ensure the value is exactly one of the allowed steps
+  // find the closest step
+  const closestStep = roundFloatingPointError(Math.round((n - min) / step) * step + min);
+
+  // clamp the closest found step to min/max
+  // this should never be needed unless the step isn't divisible by max-min, but it's a
+  // quick and easy check to include.
+  return Math.min(max, Math.max(min, closestStep));
+}
 
 /**
  * @public
@@ -23,7 +54,7 @@ export const Slider = ({
   onAfterChange,
   orientation = 'horizontal',
   reverse,
-  step,
+  step = 1,
   value,
   ariaLabelForHandle,
   marks,
@@ -35,8 +66,19 @@ export const Slider = ({
   const styles = useStyles2(getStyles, isHorizontal, Boolean(marks));
   const SliderWithTooltip = SliderComponent;
 
-  const [numericValue, setNumericValue] = useState<number>(value ?? min);
   const [inputValue, setInputValue] = useState<string>((value ?? min).toString());
+  const numericValue = clampToAllowedValue(min, max, step, parseFloat(inputValue));
+
+  // State synchronization. This is a hack since we have to maintain our own source of truth for the text input
+  const previousValue = usePrevious(value);
+  const externalValueChanged = value !== previousValue && value !== numericValue;
+  useEffect(() => {
+    if (externalValueChanged && value !== undefined) {
+      // This only causes a re-render if the value is actually different, which should
+      // only happen if the value is externally changed
+      setInputValue(String(value));
+    }
+  }, [externalValueChanged, value]);
 
   const dragHandleAriaLabel =
     ariaLabelForHandle ?? t('grafana-ui.slider.drag-handle-aria-label', 'Use arrow keys to change the value');
@@ -44,7 +86,6 @@ export const Slider = ({
   const onSliderChange = useCallback(
     (v: number | number[]) => {
       const num = typeof v === 'number' ? v : v[0];
-      setNumericValue(num);
       setInputValue(num.toString());
       onChange?.(num);
     },
@@ -59,42 +100,46 @@ export const Slider = ({
     [onAfterChange]
   );
 
-  const onSliderInputChange = useCallback(
+  const onTextInputChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
+      const integersOnly = Number.isInteger(step) && Number.isInteger(min);
+
       const raw = e.target.value;
 
-      // Always update the raw input string to show exactly what user typed
-      setInputValue(raw);
+      if (
+        // If only integers are allowed (step and min are integers), then ignore inputs that include
+        // non-digit characters
+        (integersOnly && /[^\d\-]/.test(raw)) ||
+        // Also ignore inputs that make the value NaN, unless it is `.`, `-.`, or `-`
+        (Number.isNaN(Number(raw)) && !/^(\-\.|\.|\-|0\-)$/.test(raw))
+      ) {
+        return;
+      }
+
+      // Update the raw input string to show what user typed, except the special case of `0-`, which
+      // should result in just `-` as a user convenience.
+      setInputValue(raw === '0-' ? '-' : raw);
 
       // Parse and validate the number
       const parsed = parseFloat(raw);
-      if (!isNaN(parsed)) {
-        // Allow the numeric value to temporarily go outside min/max while typing
-        // (it will be clamped on blur)
-        setNumericValue(parsed);
-        onChange?.(parsed);
+      if (onChange && !Number.isNaN(parsed)) {
+        // Clamp the output value
+        onChange(clampToAllowedValue(min, max, step, parsed));
       }
     },
-    [onChange]
+    [onChange, min, max, step]
   );
 
-  const onSliderInputBlur = useCallback(
+  const onTextInputBlur = useCallback(
     (e: FocusEvent<HTMLInputElement>) => {
-      let parsed = parseFloat(e.target.value);
-      if (isNaN(parsed)) {
-        parsed = min;
-      }
-
-      // Clamp to min/max
-      parsed = Math.max(min, Math.min(max, parsed));
+      const parsed = clampToAllowedValue(min, max, step, parseFloat(e.target.value));
 
       // Update both numeric and string values with the clamped result
-      setNumericValue(parsed);
       setInputValue(parsed.toString());
       onChange?.(parsed);
       onAfterChange?.(parsed);
     },
-    [min, max, onChange, onAfterChange]
+    [min, max, step, onChange, onAfterChange]
   );
 
   const sliderInputClassNames = !isHorizontal ? [styles.sliderInputVertical] : [];
@@ -124,8 +169,8 @@ export const Slider = ({
             width={7.5}
             className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
             value={inputValue}
-            onChange={onSliderInputChange}
-            onBlur={onSliderInputBlur}
+            onChange={onTextInputChange}
+            onBlur={onTextInputBlur}
             min={min}
             max={max}
             id={inputId}

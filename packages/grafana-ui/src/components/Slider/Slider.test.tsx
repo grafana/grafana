@@ -19,20 +19,8 @@ describe('Slider', () => {
     user = userEvent.setup();
   });
 
-  it('allows decimal numbers in input', async () => {
-    render(<Slider {...sliderProps} min={0} max={10} step={0.1} />);
-    const sliderInput = screen.getByRole('textbox');
-    const slider = screen.getByRole('slider');
-
-    await user.clear(sliderInput);
-    await user.type(sliderInput, '3.5');
-
-    expect(sliderInput).toHaveValue('3.5');
-    expect(slider).toHaveAttribute('aria-valuenow', '3.5');
-  });
-
   it('respects min/max bounds after decimal input blur', async () => {
-    render(<Slider min={0} max={10} value={5} />);
+    render(<Slider {...sliderProps} min={0} max={10} value={5} />);
 
     const sliderInput = screen.getByRole('textbox');
 
@@ -50,7 +38,7 @@ describe('Slider', () => {
   });
 
   it('updates slider value correctly when decimal input is typed', async () => {
-    render(<Slider min={0} max={10} step={0.1} value={5} />);
+    render(<Slider {...sliderProps} min={0} max={10} step={0.2} value={5} />);
 
     const slider = screen.getByRole('slider');
     const sliderInput = screen.getByRole('textbox');
@@ -59,7 +47,7 @@ describe('Slider', () => {
     await user.type(sliderInput, '7.3');
     await user.click(document.body);
 
-    expect(slider).toHaveAttribute('aria-valuenow', '7.3');
+    expect(slider).toHaveAttribute('aria-valuenow', '7.4');
   });
 
   it('renders without error', () => {
@@ -119,6 +107,66 @@ describe('Slider', () => {
     expect(sliderInput).toHaveValue('50');
   });
 
+  it('does not allow decimal numbers in input when step is integer', async () => {
+    render(<Slider {...sliderProps} min={0} max={10} step={1} />);
+    const sliderInput = screen.getByRole('textbox');
+    const slider = screen.getByRole('slider');
+
+    await user.clear(sliderInput);
+    await user.type(sliderInput, '3.');
+
+    expect(sliderInput).toHaveValue('3');
+
+    await user.type(sliderInput, '5');
+
+    expect(sliderInput).toHaveValue('35');
+
+    // slider is clamped to min/max
+    expect(slider).toHaveAttribute('aria-valuenow', '10');
+  });
+
+  it('allows decimal numbers in input when step is decimal', async () => {
+    render(<Slider {...sliderProps} min={0} max={10} step={0.1} />);
+    const sliderInput = screen.getByRole('textbox');
+    const slider = screen.getByRole('slider');
+
+    await user.clear(sliderInput);
+    await user.type(sliderInput, '3.5');
+
+    expect(sliderInput).toHaveValue('3.5');
+    expect(slider).toHaveAttribute('aria-valuenow', '3.5');
+  });
+
+  it('does not allow non-numeric characters to be typed in the text input', async () => {
+    render(<Slider {...sliderProps} min={-10} max={10} step={0.1} />);
+    const sliderInput = screen.getByRole('textbox');
+    const slider = screen.getByRole('slider');
+
+    await user.clear(sliderInput);
+
+    // the characters other than numbers and the first `-` and `.` are stripped as you type
+    await user.type(sliderInput, 'ab-cd1ef.gh.1');
+
+    expect(sliderInput).toHaveValue('-1.1');
+    expect(slider).toHaveAttribute('aria-valuenow', '-1.1');
+  });
+
+  // this is because it's a bit confusing when the value is zeroed out and you click the input that you
+  // can't type "-" immediately and it's an easy case to handle
+  it('allows you to type "-" when the value is "0"', async () => {
+    render(<Slider {...sliderProps} min={-10} max={10} step={0.1} />);
+    const sliderInput = screen.getByRole('textbox');
+    const slider = screen.getByRole('slider');
+
+    await user.clear(sliderInput);
+
+    // the zero is stripped
+    await user.type(sliderInput, '0-1');
+
+    expect(sliderInput).toHaveValue('-1');
+    expect(slider).toHaveAttribute('aria-valuenow', '-1');
+  });
+
   it('sets value to the closest available one after blur if input value is outside of range', async () => {
     render(<Slider {...sliderProps} value={10} min={10} max={100} />);
 
@@ -142,5 +190,43 @@ describe('Slider', () => {
     await user.click(document.body); // click outside the input field to blur
     expect(sliderInput).toHaveValue('10');
     expect(slider).toHaveAttribute('aria-valuenow', '10');
+  });
+
+  // the rest of the tests are uncontrolled already, don't need to separately test that
+  it('can be a controlled input', async () => {
+    const mockOnChange = jest.fn();
+    const props: SliderProps = {
+      ...sliderProps,
+      onChange: mockOnChange,
+      min: -10,
+      max: 100,
+    };
+
+    const { rerender } = render(<Slider {...props} value={0} />);
+    const slider = screen.getByRole('slider');
+    const sliderInput = screen.getByRole('textbox');
+
+    await user.type(sliderInput, '-1');
+    // click outside the input field to blur
+    await user.click(document.body);
+
+    expect(slider).toHaveAttribute('aria-valuenow', '-1');
+    expect(sliderInput).toHaveValue('-1');
+
+    // Called once for each character of "-1" and once more on blur
+    expect(mockOnChange).toHaveBeenCalledTimes(3);
+    expect(mockOnChange).toHaveBeenCalledWith(-1);
+
+    rerender(<Slider {...props} value={-1} />);
+
+    rerender(<Slider {...props} value={45} />);
+
+    // onChange should not be called when slider is re-rendered with a new value
+    // this check ensure the state synchronization is working properly, since accidentally
+    // causing onChange calls is a easy failure mode if that code is modified
+    expect(mockOnChange).toHaveBeenCalledTimes(3);
+
+    expect(slider).toHaveAttribute('aria-valuenow', '45');
+    expect(sliderInput).toHaveValue('45');
   });
 });
