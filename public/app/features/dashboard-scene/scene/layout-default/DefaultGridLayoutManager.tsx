@@ -125,9 +125,12 @@ export class DefaultGridLayoutManager
   private _activationHandler() {
     if (config.featureToggles.dashboardNewLayouts) {
       this._subs.add(
-        this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) =>
-          getLayoutOrchestratorFor(this)?.startDraggingSync(evt, panel)
-        )
+        this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) => {
+          const gridItem = panel.parent;
+          if (gridItem instanceof DashboardGridItem) {
+            getLayoutOrchestratorFor(this)?.startDraggingSync(evt, gridItem);
+          }
+        })
       );
     }
 
@@ -513,6 +516,51 @@ export class DefaultGridLayoutManager
         this.state.grid.toggleRow(child);
       }
     });
+  }
+
+  public addGridItem(gridItem: SceneGridItemLike): void {
+    if (!(gridItem instanceof DashboardGridItem)) {
+      // If it's an AutoGridItem, convert it to DashboardGridItem
+      if (gridItem instanceof AutoGridItem) {
+        if (!(gridItem.state.body instanceof VizPanel)) {
+          throw new Error('AutoGridItem body is not a VizPanel');
+        }
+        const panel = gridItem.state.body;
+        panel.clearParent();
+
+        const emptySpace = findSpaceForNewPanel(this.state.grid);
+        const newGridItem = new DashboardGridItem({
+          x: emptySpace?.x ?? 0,
+          y: emptySpace?.y ?? 0,
+          width: emptySpace?.width ?? NEW_PANEL_WIDTH,
+          height: emptySpace?.height ?? NEW_PANEL_HEIGHT,
+          itemHeight: emptySpace?.height ?? NEW_PANEL_HEIGHT,
+          body: panel,
+          variableName: gridItem.state.variableName,
+        });
+
+        this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
+        return;
+      }
+      throw new Error('Grid item must be a DashboardGridItem or AutoGridItem');
+    }
+
+    // Move the whole grid item to another CustomGrid
+    // Clear parent before moving
+    gridItem.clearParent();
+
+    // Find empty space for the grid item, preserving its size
+    const emptySpace = findSpaceForNewPanel(this.state.grid);
+    if (emptySpace) {
+      // Update position to empty space, but keep original size
+      gridItem.setState({
+        x: emptySpace.x,
+        y: emptySpace.y,
+        // Keep original width and height
+      });
+    }
+
+    this.state.grid.setState({ children: [...this.state.grid.state.children, gridItem] });
   }
 
   public static createFromLayout(currentLayout: DashboardLayoutManager): DefaultGridLayoutManager {
