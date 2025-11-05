@@ -614,7 +614,7 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		return dashboards.ErrFolderAccessDenied
 	}
 
-	descFolders, err := s.unifiedStore.GetDescendants(ctx, cmd.OrgID, cmd.UID)
+	descFolders, err := s.unifiedStore.GetDescendantsPostorder(ctx, cmd.OrgID, cmd.UID)
 	if err != nil {
 		return err
 	}
@@ -625,6 +625,7 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 	}
 	// must delete children first, then the parent folder
 	folders = append(folders, cmd.UID)
+	s.log.InfoContext(ctx, "deleting folders", "org_id", cmd.OrgID, "uid", cmd.UID, "folderUIDs", strings.Join(folders, ","))
 
 	if cmd.ForceDeleteRules {
 		if err := s.deleteChildrenInFolder(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {

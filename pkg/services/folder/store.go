@@ -48,6 +48,8 @@ type Store interface {
 	GetFolders(ctx context.Context, q GetFoldersFromStoreQuery) ([]*Folder, error)
 	// GetDescendants returns all descendants of a folder
 	GetDescendants(ctx context.Context, orgID int64, anchestor_uid string) ([]*Folder, error)
+	// GetDescendantsPostorder returns all descendants of a folder in postorder (children before parents)
+	GetDescendantsPostorder(ctx context.Context, orgID int64, ancestorUID string) ([]*Folder, error)
 
 	// CountInOrg returns the number of folders in the given org
 	CountInOrg(ctx context.Context, orgID int64) (int64, error)

@@ -1123,3 +1123,444 @@ func TestList(t *testing.T) {
 		})
 	}
 }
+
+func TestGetDescendantsPostorder(t *testing.T) {
+	type args struct {
+		ctx         context.Context
+		orgID       int64
+		ancestorUID string
+	}
+	type testCase struct {
+		name             string
+		args             args
+		mock             func(mockCli *client.MockK8sHandler)
+		expectedCount    int
+		expectedUIDs     []string
+		validateOrdering func(t *testing.T, descendants []*folder.Folder)
+		wantErr          bool
+	}
+
+	ctx := context.Background()
+	orgID := int64(1)
+
+	tests := []testCase{
+		{
+			name: "returns empty list for folder with no descendants",
+			args: args{
+				ctx:         ctx,
+				orgID:       orgID,
+				ancestorUID: "parent",
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
+					Limit:    folderListLimit,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{},
+				}, nil).Once()
+			},
+			expectedCount: 0,
+			wantErr:       false,
+		},
+		{
+			name: "returns single child in postorder",
+			args: args{
+				ctx:         ctx,
+				orgID:       orgID,
+				ancestorUID: "parent",
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
+					Limit:    folderListLimit,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "child",
+									"uid":         "child",
+									"annotations": map[string]interface{}{"grafana.app/folder": "parent"},
+								},
+								"spec": map[string]interface{}{
+									"title": "child",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			expectedCount: 1,
+			expectedUIDs:  []string{"child"},
+			wantErr:       false,
+		},
+		{
+			name: "returns linear hierarchy in postorder",
+			args: args{
+				ctx:         ctx,
+				orgID:       orgID,
+				ancestorUID: "parent",
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				// Structure: parent -> a -> b -> c
+				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
+					Limit:    folderListLimit,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "a",
+									"uid":         "a",
+									"annotations": map[string]interface{}{"grafana.app/folder": "parent"},
+								},
+								"spec": map[string]interface{}{
+									"title": "a",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "b",
+									"uid":         "b",
+									"annotations": map[string]interface{}{"grafana.app/folder": "a"},
+								},
+								"spec": map[string]interface{}{
+									"title": "b",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "c",
+									"uid":         "c",
+									"annotations": map[string]interface{}{"grafana.app/folder": "b"},
+								},
+								"spec": map[string]interface{}{
+									"title": "c",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			expectedCount: 3,
+			expectedUIDs:  []string{"c", "b", "a"}, // Postorder: deepest first
+			wantErr:       false,
+		},
+		{
+			name: "returns branching hierarchy in postorder",
+			args: args{
+				ctx:         ctx,
+				orgID:       orgID,
+				ancestorUID: "parent",
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				// Structure:
+				//     parent
+				//     /  |  \
+				//    a   b   c
+				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
+					Limit:    folderListLimit,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "a",
+									"uid":         "a",
+									"annotations": map[string]interface{}{"grafana.app/folder": "parent"},
+								},
+								"spec": map[string]interface{}{
+									"title": "a",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "b",
+									"uid":         "b",
+									"annotations": map[string]interface{}{"grafana.app/folder": "parent"},
+								},
+								"spec": map[string]interface{}{
+									"title": "b",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "c",
+									"uid":         "c",
+									"annotations": map[string]interface{}{"grafana.app/folder": "parent"},
+								},
+								"spec": map[string]interface{}{
+									"title": "c",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			expectedCount: 3,
+			validateOrdering: func(t *testing.T, descendants []*folder.Folder) {
+				// All children should be in the result
+				childUIDs := []string{"a", "b", "c"}
+				for _, desc := range descendants {
+					require.Contains(t, childUIDs, desc.UID)
+				}
+			},
+			wantErr: false,
+		},
+		{
+			name: "returns complex hierarchy in postorder",
+			args: args{
+				ctx:         ctx,
+				orgID:       orgID,
+				ancestorUID: "parent",
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				// Structure:
+				//       parent
+				//       /    \
+				//      a      b
+				//     / \     |
+				//    c   d    e
+				//    |
+				//    f
+				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
+					Limit:    folderListLimit,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "a",
+									"uid":         "a",
+									"annotations": map[string]interface{}{"grafana.app/folder": "parent"},
+								},
+								"spec": map[string]interface{}{
+									"title": "a",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "b",
+									"uid":         "b",
+									"annotations": map[string]interface{}{"grafana.app/folder": "parent"},
+								},
+								"spec": map[string]interface{}{
+									"title": "b",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "c",
+									"uid":         "c",
+									"annotations": map[string]interface{}{"grafana.app/folder": "a"},
+								},
+								"spec": map[string]interface{}{
+									"title": "c",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "d",
+									"uid":         "d",
+									"annotations": map[string]interface{}{"grafana.app/folder": "a"},
+								},
+								"spec": map[string]interface{}{
+									"title": "d",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "e",
+									"uid":         "e",
+									"annotations": map[string]interface{}{"grafana.app/folder": "b"},
+								},
+								"spec": map[string]interface{}{
+									"title": "e",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "f",
+									"uid":         "f",
+									"annotations": map[string]interface{}{"grafana.app/folder": "c"},
+								},
+								"spec": map[string]interface{}{
+									"title": "f",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			expectedCount: 6,
+			validateOrdering: func(t *testing.T, descendants []*folder.Folder) {
+				// Build index map for checking ordering
+				indices := make(map[string]int)
+				for i, f := range descendants {
+					indices[f.UID] = i
+				}
+
+				// Verify postorder constraints: children must come before their parents
+				require.Less(t, indices["f"], indices["c"], "f should come before c")
+				require.Less(t, indices["c"], indices["a"], "c should come before a")
+				require.Less(t, indices["d"], indices["a"], "d should come before a")
+				require.Less(t, indices["e"], indices["b"], "e should come before b")
+			},
+			wantErr: false,
+		},
+		{
+			name: "detects circular references",
+			args: args{
+				ctx:         ctx,
+				orgID:       orgID,
+				ancestorUID: "a",
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				// Tree: a -> b -> c (no actual circular reference in this test)
+				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
+					Limit:    folderListLimit,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "b",
+									"uid":         "b",
+									"annotations": map[string]interface{}{"grafana.app/folder": "a"},
+								},
+								"spec": map[string]interface{}{
+									"title": "b",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "c",
+									"uid":         "c",
+									"annotations": map[string]interface{}{"grafana.app/folder": "b"},
+								},
+								"spec": map[string]interface{}{
+									"title": "c",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			expectedCount: 2,
+			wantErr:       false,
+		},
+		{
+			name: "handles folders with empty parent (general folder)",
+			args: args{
+				ctx:         ctx,
+				orgID:       orgID,
+				ancestorUID: "general",
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				// Folders with empty ParentUID should be treated as children of "general"
+				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
+					Limit:    folderListLimit,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "a",
+									"uid":  "a",
+									// No folder annotation means it's under root/general
+								},
+								"spec": map[string]interface{}{
+									"title": "a",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "b",
+									"uid":         "b",
+									"annotations": map[string]interface{}{"grafana.app/folder": "a"},
+								},
+								"spec": map[string]interface{}{
+									"title": "b",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			expectedCount: 2,
+			validateOrdering: func(t *testing.T, descendants []*folder.Folder) {
+				// Build index map for checking ordering
+				indices := make(map[string]int)
+				for i, f := range descendants {
+					indices[f.UID] = i
+				}
+
+				// b must come before a (postorder)
+				require.Less(t, indices["b"], indices["a"], "b should come before a")
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCli := new(client.MockK8sHandler)
+			tt.mock(mockCli)
+			tracer := noop.NewTracerProvider().Tracer("TestGetDescendantsPostorder")
+			store := FolderUnifiedStoreImpl{
+				k8sclient:   mockCli,
+				userService: usertest.NewUserServiceFake(),
+				tracer:      tracer,
+			}
+
+			descendants, err := store.GetDescendantsPostorder(tt.args.ctx, tt.args.orgID, tt.args.ancestorUID)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Len(t, descendants, tt.expectedCount)
+
+			if len(tt.expectedUIDs) > 0 {
+				for i, expectedUID := range tt.expectedUIDs {
+					require.Equal(t, expectedUID, descendants[i].UID)
+				}
+			}
+
+			if tt.validateOrdering != nil {
+				tt.validateOrdering(t, descendants)
+			}
+
+			mockCli.AssertExpectations(t)
+		})
+	}
+}

@@ -63,6 +63,10 @@ func (f *fakeStore) GetDescendants(ctx context.Context, orgID int64, ancestor_ui
 	return f.ExpectedFolders, f.ExpectedError
 }
 
+func (f *fakeStore) GetDescendantsPostorder(ctx context.Context, orgID int64, ancestorUID string) ([]*Folder, error) {
+	return f.ExpectedFolders, f.ExpectedError
+}
+
 func (f *fakeStore) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
 	return int64(len(f.ExpectedFolders)), f.ExpectedError
 }

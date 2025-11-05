@@ -401,17 +401,21 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 	return hits, nil
 }
 
-func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {
-	ctx, span := ss.tracer.Start(ctx, tracePrefix+"GetDescendants")
-	defer span.End()
-
+func (ss *FolderUnifiedStoreImpl) getFoldersInLegacyFormat(ctx context.Context, orgID int64) ([]*folder.Folder, error) {
 	out, err := ss.list(ctx, orgID, v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
+	return ss.UnstructuredToLegacyFolderList(ctx, out)
+}
+
+func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"GetDescendants")
+	defer span.End()
+
 	// convert item to legacy folder format
-	folders, err := ss.UnstructuredToLegacyFolderList(ctx, out)
+	folders, err := ss.getFoldersInLegacyFormat(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -452,6 +456,53 @@ func getDescendants(nodes map[string]*folder.Folder, tree map[string]map[string]
 		descendantsMap[uid] = nodes[uid]
 		getDescendants(nodes, tree, uid, descendantsMap)
 	}
+}
+
+func (ss *FolderUnifiedStoreImpl) GetDescendantsPostorder(ctx context.Context, orgID int64, ancestorUID string) ([]*folder.Folder, error) {
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"GetDescendantsPostorder")
+	defer span.End()
+
+	// convert item to legacy folder format
+	folders, err := ss.getFoldersInLegacyFormat(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build parent-to-children map
+	tree := make(map[string][]*folder.Folder)
+	for _, f := range folders {
+		parentUID := f.ParentUID
+		if parentUID == "" {
+			parentUID = "general"
+		}
+		tree[parentUID] = append(tree[parentUID], f)
+	}
+
+	// Collect descendants in postorder (depth-first)
+	descendants := make([]*folder.Folder, 0, len(folders))
+	visited := make(map[string]bool, len(folders))
+	if err := getDescendantsPostorder(tree, ancestorUID, &descendants, visited); err != nil {
+		return nil, err
+	}
+
+	return descendants, nil
+}
+
+func getDescendantsPostorder(tree map[string][]*folder.Folder, ancestorUID string, descendants *[]*folder.Folder, visited map[string]bool) error {
+	if visited[ancestorUID] {
+		return folder.ErrCircularReference.Errorf("circular reference detected at folder uid: %s", ancestorUID)
+	}
+	visited[ancestorUID] = true
+	defer func() { visited[ancestorUID] = false }()
+
+	// Process all children recursively (postorder: children first, then parent)
+	for _, child := range tree[ancestorUID] {
+		if err := getDescendantsPostorder(tree, child.UID, descendants, visited); err != nil {
+			return err
+		}
+		*descendants = append(*descendants, child)
+	}
+	return nil
 }
 
 func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID int64, ancestor_uid string) (folder.DescendantCounts, error) {

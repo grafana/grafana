@@ -618,6 +618,60 @@ func (ss *FolderStoreImpl) GetDescendants(ctx context.Context, orgID int64, ance
 	return folders, nil
 }
 
+func (ss *FolderStoreImpl) GetDescendantsPostorder(ctx context.Context, orgID int64, ancestorUID string) ([]*folder.Folder, error) {
+	folders, err := ss.GetDescendants(ctx, orgID, ancestorUID)
+	if err != nil {
+		return nil, err
+	}
+	return sortFoldersPostorder(folders), nil
+}
+
+// sortFoldersPostorder sorts folders so that children appear before their parents
+func sortFoldersPostorder(folders []*folder.Folder) []*folder.Folder {
+	if len(folders) == 0 {
+		return folders
+	}
+
+	// Build parent-to-children map
+	tree := make(map[string][]*folder.Folder)
+	folderMap := make(map[string]*folder.Folder)
+	for _, f := range folders {
+		folderMap[f.UID] = f
+		tree[f.ParentUID] = append(tree[f.ParentUID], f)
+	}
+
+	// Find all roots (folders whose parents are not in the result set)
+	roots := []*folder.Folder{}
+	for _, f := range folders {
+		if folderMap[f.ParentUID] == nil {
+			roots = append(roots, f)
+		}
+	}
+
+	// Traverse in postorder
+	result := make([]*folder.Folder, 0, len(folders))
+	visited := make(map[string]bool)
+	var traverse func(f *folder.Folder)
+	traverse = func(f *folder.Folder) {
+		if visited[f.UID] {
+			return
+		}
+		visited[f.UID] = true
+		// First visit all children
+		for _, child := range tree[f.UID] {
+			traverse(child)
+		}
+		// Then add current folder
+		result = append(result, f)
+	}
+
+	for _, root := range roots {
+		traverse(root)
+	}
+
+	return result
+}
+
 func getFullpathSQL(dialect migrator.Dialect) string {
 	escaped := `\/`
 	if dialect.DriverName() == migrator.MySQL {

@@ -1236,7 +1236,7 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 		return descendantUIDs, err
 	}
 
-	descendants, err := s.store.GetDescendants(ctx, cmd.OrgID, cmd.UID)
+	descendants, err := s.store.GetDescendantsPostorder(ctx, cmd.OrgID, cmd.UID)
 	if err != nil {
 		s.log.ErrorContext(ctx, "failed to get descendant folders", "error", err)
 		return descendantUIDs, err
@@ -1245,7 +1245,7 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 	for _, f := range descendants {
 		descendantUIDs = append(descendantUIDs, f.UID)
 	}
-	s.log.InfoContext(ctx, "deleting folder descendants", "org_id", cmd.OrgID, "uid", cmd.UID)
+	s.log.InfoContext(ctx, "deleting folder descendants", "org_id", cmd.OrgID, "uid", cmd.UID, "descendantsUIDs", strings.Join(descendantUIDs, ","))
 
 	err = s.store.Delete(ctx, descendantUIDs, cmd.OrgID)
 	if err != nil {

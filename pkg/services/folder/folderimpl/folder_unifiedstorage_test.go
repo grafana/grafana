@@ -864,6 +864,7 @@ func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
 		registry:               make(map[string]folder.RegistryService),
 		features:               featuremgmt.WithFeatures(),
 		tracer:                 tracer,
+		log:                    slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
@@ -950,6 +951,161 @@ func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 		dashboardStore.AssertExpectations(t)
+		publicDashboardFakeService.AssertExpectations(t)
+	})
+
+	t.Run("Should delete nested folders in postorder with dashboards", func(t *testing.T) {
+		// Create a nested folder structure:
+		//       parent (uid-parent)
+		//       /              \
+		//   child1 (uid-child1)  child2 (uid-child2)
+		//      |
+		//   grandchild (uid-grandchild)
+		//
+		// Expected deletion order (postorder): grandchild, child1, child2, parent
+
+		// Mock GetDescendantsPostorder to return folders in postorder
+		fakeFolderStore.ExpectedFolders = []*folder.Folder{
+			{UID: "uid-grandchild", ID: 4, ParentUID: "uid-child1", Title: "grandchild", OrgID: 1},
+			{UID: "uid-child1", ID: 2, ParentUID: "uid-parent", Title: "child1", OrgID: 1},
+			{UID: "uid-child2", ID: 3, ParentUID: "uid-parent", Title: "child2", OrgID: 1},
+		}
+
+		// Mock dashboard search to return dashboards in each folder
+		// The search should look for dashboards in all folders (including parent)
+		dashboardK8sclient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Labels: []*resourcepb.Requirement{},
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      resource.SEARCH_FIELD_FOLDER,
+						Operator: string(selection.In),
+						Values:   []string{"uid-grandchild", "uid-child1", "uid-child2", "uid-parent"},
+					},
+				},
+			},
+			Limit: folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: "title", Type: resourcepb.ResourceTableColumnDefinition_STRING},
+					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "dash-grandchild",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("dashboard in grandchild"),
+							[]byte("uid-grandchild"),
+						},
+					},
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "dash-child1",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("dashboard in child1"),
+							[]byte("uid-child1"),
+						},
+					},
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "dash-child2",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("dashboard in child2"),
+							[]byte("uid-child2"),
+						},
+					},
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "dash-parent",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("dashboard in parent"),
+							[]byte("uid-parent"),
+						},
+					},
+				},
+			},
+			TotalHits: 4,
+		}, nil).Once()
+
+		// Expect dashboards to be deleted (order doesn't matter for dashboards)
+		dashboardK8sclient.On("Delete", mock.Anything, "dash-grandchild", int64(1), mock.Anything).Return(nil).Once()
+		dashboardK8sclient.On("Delete", mock.Anything, "dash-child1", int64(1), mock.Anything).Return(nil).Once()
+		dashboardK8sclient.On("Delete", mock.Anything, "dash-child2", int64(1), mock.Anything).Return(nil).Once()
+		dashboardK8sclient.On("Delete", mock.Anything, "dash-parent", int64(1), mock.Anything).Return(nil).Once()
+
+		// Expect public dashboards to be deleted
+		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1),
+			[]string{"dash-grandchild", "dash-child1", "dash-child2", "dash-parent"}).Return(nil).Once()
+
+		// Execute the delete command
+		err := service.deleteFromApiServer(ctx, &folder.DeleteFolderCommand{
+			UID:          "uid-parent",
+			OrgID:        1,
+			SignedInUser: user,
+		})
+		require.NoError(t, err)
+
+		// Verify all expectations were met
+		dashboardK8sclient.AssertExpectations(t)
+		publicDashboardFakeService.AssertExpectations(t)
+
+		// Verify that GetDescendantsPostorder was called (through ExpectedFolders)
+		// The folders should have been returned in postorder: grandchild, child1, child2
+		require.Len(t, fakeFolderStore.ExpectedFolders, 3)
+		require.Equal(t, "uid-grandchild", fakeFolderStore.ExpectedFolders[0].UID)
+		require.Equal(t, "uid-child1", fakeFolderStore.ExpectedFolders[1].UID)
+		require.Equal(t, "uid-child2", fakeFolderStore.ExpectedFolders[2].UID)
+	})
+
+	t.Run("Should handle deeply nested folders in postorder", func(t *testing.T) {
+		// Create a linear deep hierarchy: parent -> l1 -> l2 -> l3 -> l4
+		// Expected deletion order: l4, l3, l2, l1, parent
+
+		fakeFolderStore.ExpectedFolders = []*folder.Folder{
+			{UID: "uid-l4", ID: 5, ParentUID: "uid-l3", Title: "level4", OrgID: 1},
+			{UID: "uid-l3", ID: 4, ParentUID: "uid-l2", Title: "level3", OrgID: 1},
+			{UID: "uid-l2", ID: 3, ParentUID: "uid-l1", Title: "level2", OrgID: 1},
+			{UID: "uid-l1", ID: 2, ParentUID: "uid-parent", Title: "level1", OrgID: 1},
+		}
+
+		// Mock dashboard search (no dashboards for simplicity)
+		dashboardK8sclient.On("Search", mock.Anything, int64(1), mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: "title", Type: resourcepb.ResourceTableColumnDefinition_STRING},
+					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
+				},
+				Rows: []*resourcepb.ResourceTableRow{},
+			},
+			TotalHits: 0,
+		}, nil).Once()
+
+		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{}).Return(nil).Once()
+
+		err := service.deleteFromApiServer(ctx, &folder.DeleteFolderCommand{
+			UID:          "uid-parent",
+			OrgID:        1,
+			SignedInUser: user,
+		})
+		require.NoError(t, err)
+
+		// Verify postorder: deepest folders first
+		require.Len(t, fakeFolderStore.ExpectedFolders, 4)
+		require.Equal(t, "uid-l4", fakeFolderStore.ExpectedFolders[0].UID, "deepest folder should be first")
+		require.Equal(t, "uid-l3", fakeFolderStore.ExpectedFolders[1].UID)
+		require.Equal(t, "uid-l2", fakeFolderStore.ExpectedFolders[2].UID)
+		require.Equal(t, "uid-l1", fakeFolderStore.ExpectedFolders[3].UID, "shallowest child should be last")
+
+		dashboardK8sclient.AssertExpectations(t)
 		publicDashboardFakeService.AssertExpectations(t)
 	})
 }

@@ -1500,3 +1500,121 @@ func TestIntegrationMoveNestedFolderToRootK8S(t *testing.T) {
 	require.Equal(t, "f2", get.Result.UID)
 	require.Equal(t, "", get.Result.ParentUID)
 }
+
+// Test deleting nested folders ensures postorder deletion
+func TestIntegrationDeleteNestedFoldersPostorder(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	// Test across different dual writer modes
+	for mode := 0; mode <= 5; mode++ {
+		t.Run(fmt.Sprintf("Mode %d: Delete nested folder hierarchy in postorder", mode), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagUnifiedStorageSearch,
+				},
+			})
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+
+			// Create a nested folder structure:
+			//       parent
+			//       /    \
+			//   child1  child2
+			//      |
+			//  grandchild
+
+			// Create parent folder
+			parentPayload := fmt.Sprintf(`{"title":"Parent-%d","uid":"parent-%d"}`, mode, mode)
+			parentCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(parentPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, parentCreate.Result)
+			require.Equal(t, http.StatusOK, parentCreate.Response.StatusCode)
+			parentUID := parentCreate.Result.UID
+
+			// Create child1 folder
+			child1Payload := fmt.Sprintf(`{"title":"Child1-%d","uid":"child1-%d","parentUid":"%s"}`, mode, mode, parentUID)
+			child1Create := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(child1Payload),
+			}, &folder.Folder{})
+			require.NotNil(t, child1Create.Result)
+			require.Equal(t, http.StatusOK, child1Create.Response.StatusCode)
+			child1UID := child1Create.Result.UID
+			require.Equal(t, parentUID, child1Create.Result.ParentUID)
+
+			// Create child2 folder
+			child2Payload := fmt.Sprintf(`{"title":"Child2-%d","uid":"child2-%d","parentUid":"%s"}`, mode, mode, parentUID)
+			child2Create := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(child2Payload),
+			}, &folder.Folder{})
+			require.NotNil(t, child2Create.Result)
+			require.Equal(t, http.StatusOK, child2Create.Response.StatusCode)
+			child2UID := child2Create.Result.UID
+			require.Equal(t, parentUID, child2Create.Result.ParentUID)
+
+			// Create grandchild folder under child1
+			grandchildPayload := fmt.Sprintf(`{"title":"Grandchild-%d","uid":"grandchild-%d","parentUid":"%s"}`, mode, mode, child1UID)
+			grandchildCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(grandchildPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, grandchildCreate.Result)
+			require.Equal(t, http.StatusOK, grandchildCreate.Response.StatusCode)
+			grandchildUID := grandchildCreate.Result.UID
+			require.Equal(t, child1UID, grandchildCreate.Result.ParentUID)
+
+			// Verify the structure before deletion
+			verifyFolderExists := func(uid string, shouldExist bool) {
+				_, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+				if shouldExist {
+					require.NoError(t, err, "folder %s should exist", uid)
+				} else {
+					require.Error(t, err, "folder %s should not exist", uid)
+				}
+			}
+
+			// All folders should exist
+			verifyFolderExists(parentUID, true)
+			verifyFolderExists(child1UID, true)
+			verifyFolderExists(child2UID, true)
+			verifyFolderExists(grandchildUID, true)
+
+			// Delete the parent folder - this should trigger postorder deletion
+			parentDelete := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodDelete,
+				Path:   "/api/folders/" + parentUID,
+			}, &folder.Folder{})
+			require.NotNil(t, parentDelete.Result)
+			require.Equal(t, http.StatusOK, parentDelete.Response.StatusCode)
+
+			// All folders should now be deleted (postorder deletion: grandchild, child1, child2, parent)
+			verifyFolderExists(grandchildUID, false)
+			verifyFolderExists(child1UID, false)
+			verifyFolderExists(child2UID, false)
+			verifyFolderExists(parentUID, false)
+		})
+	}
+}
