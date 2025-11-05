@@ -47,15 +47,32 @@ describe('SpanTreeOffset', () => {
   });
 
   describe('.SpanTreeOffset--indentGuide', () => {
-    it('renders only one SpanTreeOffset--indentGuide for entire trace if span has no ancestors', () => {
+    it('renders no indentGuide if span has no ancestors and no children', () => {
       jest.mocked(spanAncestorIdsSpy).mockReturnValue([]);
+      render(<SpanTreeOffset {...props} />);
+      const indentGuides = screen.queryAllByTestId('SpanTreeOffset--indentGuide');
+      expect(indentGuides.length).toBe(0);
+    });
+
+    it('renders only one SpanTreeOffset--indentGuide for entire trace if span has no ancestors but has children', () => {
+      jest.mocked(spanAncestorIdsSpy).mockReturnValue([]);
+      props.span.hasChildren = true;
       render(<SpanTreeOffset {...props} />);
       const indentGuide = screen.getByTestId('SpanTreeOffset--indentGuide');
       expect(indentGuide).toBeInTheDocument();
       expect(indentGuide).toHaveAttribute('data-ancestor-id', specialRootID);
     });
 
-    it('renders one SpanTreeOffset--indentGuide per ancestor span, plus one for entire trace', () => {
+    it('renders one SpanTreeOffset--indentGuide per ancestor span when span has no children', () => {
+      render(<SpanTreeOffset {...props} />);
+      const indentGuides = screen.getAllByTestId('SpanTreeOffset--indentGuide');
+      expect(indentGuides.length).toBe(2);
+      expect(indentGuides[0]).toHaveAttribute('data-ancestor-id', specialRootID);
+      expect(indentGuides[1]).toHaveAttribute('data-ancestor-id', rootSpanID);
+    });
+
+    it('renders one SpanTreeOffset--indentGuide per ancestor span, plus one for entire trace when span has children', () => {
+      props.span.hasChildren = true;
       render(<SpanTreeOffset {...props} />);
       const indentGuides = screen.getAllByTestId('SpanTreeOffset--indentGuide');
       expect(indentGuides.length).toBe(3);
@@ -65,28 +82,28 @@ describe('SpanTreeOffset', () => {
     });
 
     it('adds .is-active to correct indentGuide', () => {
-      props.hoverIndentGuideIds = new Set([parentSpanID]);
+      props.hoverIndentGuideIds = new Set([rootSpanID]);
       render(<SpanTreeOffset {...props} />);
       const styles = getStyles(createTheme());
       const activeIndentGuide = document.querySelector(`.${styles.indentGuideActive}`);
       expect(activeIndentGuide).toBeInTheDocument();
-      expect(activeIndentGuide).toHaveAttribute('data-ancestor-id', parentSpanID);
+      expect(activeIndentGuide).toHaveAttribute('data-ancestor-id', rootSpanID);
     });
 
     it('calls props.addHoverIndentGuideId on mouse enter', async () => {
       render(<SpanTreeOffset {...props} />);
-      const span = document.querySelector(`[data-ancestor-id=${parentSpanID}]`);
+      const span = document.querySelector(`[data-ancestor-id=${rootSpanID}]`);
       await userEvent.hover(span!);
       expect(props.addHoverIndentGuideId).toHaveBeenCalledTimes(1);
-      expect(props.addHoverIndentGuideId).toHaveBeenCalledWith(parentSpanID);
+      expect(props.addHoverIndentGuideId).toHaveBeenCalledWith(rootSpanID);
     });
 
     it('calls props.removeHoverIndentGuideId on mouse leave', async () => {
       render(<SpanTreeOffset {...props} />);
-      const span = document.querySelector(`[data-ancestor-id=${parentSpanID}]`);
+      const span = document.querySelector(`[data-ancestor-id=${rootSpanID}]`);
       await userEvent.unhover(span!);
       expect(props.removeHoverIndentGuideId).toHaveBeenCalledTimes(1);
-      expect(props.removeHoverIndentGuideId).toHaveBeenCalledWith(parentSpanID);
+      expect(props.removeHoverIndentGuideId).toHaveBeenCalledWith(rootSpanID);
     });
   });
 
