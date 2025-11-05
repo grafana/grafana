@@ -183,10 +183,6 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
     return undefined;
   }
 
-  // if (panel.spec.data.spec.queries.length === 1 && isDefaultEmptyPanelQuery(panel.spec.data.spec.queries[0])) {
-  //   return undefined;
-  // }
-
   let datasource: DataSourceRef | undefined = undefined;
   let isMixedDatasource = false;
 
@@ -284,7 +280,8 @@ function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
   return {
     refId: query.spec.refId,
     hide: query.spec.hidden,
-    ...(isDefaultEmptyPanelQuery(query) ? {} : { datasource: getRuntimePanelDataSource(query.spec.query) }),
+    // If the query has no group, it means it's a default empty query, so we don't need to set a datasource
+    ...(!query.spec.query.group ? {} : { datasource: getRuntimePanelDataSource(query.spec.query) }),
     ...query.spec.query.spec,
   };
 }
@@ -317,8 +314,4 @@ export function getElement(
   scene: DashboardScene
 ): DashboardV2Spec['elements'] {
   return createElements([vizPanelToSchemaV2(gridItem.state.body, scene.serializer.getDSReferencesMapping())], scene);
-}
-
-export function isDefaultEmptyPanelQuery(query: PanelQueryKind): boolean {
-  return query.spec.refId === 'A' && Object.keys(query.spec.query.spec).length === 0;
 }
