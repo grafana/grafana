@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -18,6 +19,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -100,6 +102,17 @@ func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry
 // If err is not nil, the job and rollback values are always nil.
 // The err may be ErrNoJobs if there are no jobs to claim.
 func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rollback func(), err error) {
+	ctx, span := tracing.Start(ctx, "provisioning.jobs.claim")
+	defer func() {
+		if err != nil && !errors.Is(err, ErrNoJobs) {
+			span.RecordError(err)
+		}
+		span.End()
+	}()
+
+	logger := logging.FromContext(ctx).With("operation", "claim")
+	logger.Debug("start claim job")
+
 	requirement, err := labels.NewRequirement(LabelJobClaim, selection.DoesNotExist, nil)
 	if err != nil {
 		return nil, nil, apifmt.Errorf("could not create requirement: %w", err)
@@ -114,8 +127,11 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 	}
 
 	if len(jobs.Items) == 0 {
+		logger.Debug("no jobs available to claim")
 		return nil, nil, ErrNoJobs
 	}
+
+	logger.Debug("found jobs available", "count", len(jobs.Items))
 
 	for _, job := range jobs.Items {
 		if job.Labels == nil {
@@ -144,6 +160,20 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 		if err != nil {
 			return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 		}
+
+		logger.Info("job claim complete",
+			"job", updatedJob.GetName(),
+			"namespace", updatedJob.GetNamespace(),
+			"repository", updatedJob.Spec.Repository,
+			"action", updatedJob.Spec.Action,
+		)
+
+		span.SetAttributes(
+			attribute.String("job.name", updatedJob.GetName()),
+			attribute.String("job.namespace", updatedJob.GetNamespace()),
+			attribute.String("job.repository", updatedJob.Spec.Repository),
+			attribute.String("job.action", string(updatedJob.Spec.Action)),
+		)
 
 		return updatedJob.DeepCopy(), func() {
 			// Rolling back does not need to care about the parent's cancellation state.
@@ -181,50 +211,102 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 	}
 
 	// We failed to claim any jobs.
+	logger.Debug("no jobs claimed - all already claimed by others")
 	return nil, nil, ErrNoJobs
 }
 
 // Update saves the job back to the store.
 func (s *persistentStore) Update(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+	ctx, span := tracing.Start(ctx, "provisioning.jobs.update")
+	defer span.End()
+
+	logger := logging.FromContext(ctx).With(
+		"operation", "update",
+		"job", job.GetName(),
+		"namespace", job.GetNamespace(),
+	)
+	logger.Debug("start update job")
+
+	span.SetAttributes(
+		attribute.String("job.name", job.GetName()),
+		attribute.String("job.namespace", job.GetNamespace()),
+	)
+
 	// Set up the provisioning identity for this namespace
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, job.GetNamespace())
 	if err != nil {
+		span.RecordError(err)
 		return nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
 	}
 
 	updatedJob, err := s.client.Jobs(job.GetNamespace()).Update(ctx, job, metav1.UpdateOptions{})
 	if err != nil {
+		span.RecordError(err)
 		return nil, apifmt.Errorf("failed to update job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
 
+	logger.Debug("update job complete")
 	return updatedJob, nil
 }
 
 // Get retrieves a job by name for conflict resolution.
 func (s *persistentStore) Get(ctx context.Context, namespace, name string) (*provisioning.Job, error) {
+	ctx, span := tracing.Start(ctx, "provisioning.jobs.get")
+	defer span.End()
+
+	logger := logging.FromContext(ctx).With(
+		"operation", "get",
+		"job", name,
+		"namespace", namespace,
+	)
+	logger.Debug("start get job")
+
+	span.SetAttributes(
+		attribute.String("job.name", name),
+		attribute.String("job.namespace", namespace),
+	)
+
 	// Set up provisioning identity to access jobs across all namespaces
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
+		span.RecordError(err)
 		return nil, apifmt.Errorf("failed to grant provisioning identity for job lookup: %w", err)
 	}
 
 	// Use Get to directly fetch the job by name
 	job, err := s.client.Jobs(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
+		span.RecordError(err)
 		return nil, apifmt.Errorf("failed to get job by name '%s': %w", name, err)
 	}
 
+	logger.Debug("get job complete")
 	return job, nil
 }
 
 // Complete marks a job as completed and moves it to the historic job store.
 // When in the historic store, there is no more claim on the job.
 func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) error {
-	logger := logging.FromContext(ctx).With("namespace", job.GetNamespace(), "job", job.GetName())
+	ctx, span := tracing.Start(ctx, "provisioning.jobs.complete")
+	defer span.End()
+
+	logger := logging.FromContext(ctx).With(
+		"operation", "complete",
+		"namespace", job.GetNamespace(),
+		"job", job.GetName(),
+	)
+	logger.Debug("start complete job")
+
+	span.SetAttributes(
+		attribute.String("job.name", job.GetName()),
+		attribute.String("job.namespace", job.GetNamespace()),
+		attribute.String("job.action", string(job.Spec.Action)),
+	)
 
 	// Set up the provisioning identity for this namespace
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, job.GetNamespace())
 	if err != nil {
+		span.RecordError(err)
 		return apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
 	}
 
@@ -235,6 +317,7 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 	// This is a best-effort operation; if the job is not in the claimed state, we will still attempt to move it to the historic job store.
 	err = s.client.Jobs(job.GetNamespace()).Delete(ctx, job.GetName(), metav1.DeleteOptions{})
 	if err != nil {
+		span.RecordError(err)
 		return apifmt.Errorf("failed to delete job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
 	logger.Debug("deleted job from job store")
@@ -246,26 +329,45 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 	delete(job.Labels, LabelJobClaim)
 	s.queueMetrics.DecreaseQueueSize(string(job.Spec.Action))
 
-	logger.Debug("job completion done")
+	logger.Debug("complete job complete")
 	return nil
 }
 
 // RenewLease renews the lease for a claimed job, extending its expiry time.
 // Returns an error if the lease cannot be renewed (e.g., job was completed or lease expired).
 func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job) error {
+	ctx, span := tracing.Start(ctx, "provisioning.jobs.renew_lease")
+	defer span.End()
+
+	logger := logging.FromContext(ctx).With(
+		"operation", "renew_lease",
+		"job", job.GetName(),
+		"namespace", job.GetNamespace(),
+	)
+	logger.Debug("start renew lease")
+
+	span.SetAttributes(
+		attribute.String("job.name", job.GetName()),
+		attribute.String("job.namespace", job.GetNamespace()),
+	)
+
 	if job.Labels == nil || job.Labels[LabelJobClaim] == "" {
-		return apifmt.Errorf("job '%s' in '%s' is not claimed", job.GetName(), job.GetNamespace())
+		err := apifmt.Errorf("job '%s' in '%s' is not claimed", job.GetName(), job.GetNamespace())
+		span.RecordError(err)
+		return err
 	}
 
 	// Set up the provisioning identity for this namespace
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, job.GetNamespace())
 	if err != nil {
+		span.RecordError(err)
 		return apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
 	}
 
 	// Fetch the latest version to avoid conflicts
 	latestJob, err := s.client.Jobs(job.GetNamespace()).Get(ctx, job.GetName(), metav1.GetOptions{})
 	if err != nil {
+		span.RecordError(err)
 		if apierrors.IsNotFound(err) {
 			return apifmt.Errorf("failed to renew lease for job '%s' in '%s': job no longer exists", job.GetName(), job.GetNamespace())
 		}
@@ -274,7 +376,9 @@ func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job)
 
 	// Verify we still own the lease
 	if latestJob.Labels == nil || latestJob.Labels[LabelJobClaim] == "" {
-		return apifmt.Errorf("lease lost for job '%s' in '%s': no longer claimed", job.GetName(), job.GetNamespace())
+		err := apifmt.Errorf("lease lost for job '%s' in '%s': no longer claimed", job.GetName(), job.GetNamespace())
+		span.RecordError(err)
+		return err
 	}
 
 	// Update the claim timestamp to current time
@@ -284,85 +388,217 @@ func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job)
 	// Update the job in storage with the latest resource version
 	_, err = s.client.Jobs(job.GetNamespace()).Update(ctx, updatedJob, metav1.UpdateOptions{})
 	if apierrors.IsConflict(err) {
-		return apifmt.Errorf("failed to renew lease for job '%s' in '%s': lease conflict", job.GetName(), job.GetNamespace())
+		err := apifmt.Errorf("failed to renew lease for job '%s' in '%s': lease conflict", job.GetName(), job.GetNamespace())
+		span.RecordError(err)
+		return err
 	}
 	if apierrors.IsNotFound(err) {
-		return apifmt.Errorf("failed to renew lease for job '%s' in '%s': job no longer exists", job.GetName(), job.GetNamespace())
+		err := apifmt.Errorf("failed to renew lease for job '%s' in '%s': job no longer exists", job.GetName(), job.GetNamespace())
+		span.RecordError(err)
+		return err
 	}
 	if err != nil {
+		span.RecordError(err)
 		return apifmt.Errorf("failed to renew lease for job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
 
 	// Update the job's claim timestamp and resource version in memory
 	job.Labels[LabelJobClaim] = updatedJob.Labels[LabelJobClaim]
 	job.ResourceVersion = updatedJob.ResourceVersion
+
+	logger.Debug("renew lease complete")
 	return nil
 }
 
 // Cleanup finds jobs with expired leases and marks them as failed.
 // This replaces the old cleanup mechanism and should be called more frequently.
 func (s *persistentStore) Cleanup(ctx context.Context) error {
-	// Set up provisioning identity to access jobs across all namespaces
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, "*") // "*" grants access to all namespaces
-	if err != nil {
-		return apifmt.Errorf("failed to grant provisioning identity for cleanup: %w", err)
-	}
+	ctx, span := tracing.Start(ctx, "provisioning.jobs.cleanup")
+	defer span.End()
 
-	// Find jobs with expired leases (older than expiry time)
-	expiry := s.clock().Add(-s.expiry).UnixMilli()
-	requirement, err := labels.NewRequirement(LabelJobClaim, selection.LessThan, []string{strconv.FormatInt(expiry, 10)})
-	if err != nil {
-		return apifmt.Errorf("could not create requirement: %w", err)
-	}
+	startTime := s.clock()
+	logger := logging.FromContext(ctx).With("operation", "cleanup")
+	logger.Debug("start cleanup", "expiry_duration", s.expiry)
 
-	timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	jobs, err := s.client.Jobs("").List(timeoutCtx, metav1.ListOptions{
-		LabelSelector: labels.NewSelector().Add(*requirement).String(),
-		Limit:         100, // Process in batches
-	})
-	cancel()
+	// List expired jobs
+	jobs, err := s.listExpiredJobs(ctx)
 	if err != nil {
-		return apifmt.Errorf("failed to list jobs with expired leases: %w", err)
+		span.RecordError(err)
+		return err
 	}
 
 	// If no jobs found, cleanup is complete
-	if len(jobs.Items) == 0 {
+	if len(jobs) == 0 {
+		duration := s.clock().Sub(startTime)
+		logger.Info("cleanup complete - no expired jobs found", "duration", duration)
+		span.SetAttributes(
+			attribute.Int("count", 0),
+			attribute.Int64("duration_ms", duration.Milliseconds()),
+		)
 		return nil
 	}
 
-	for _, job := range jobs.Items {
-		// Mark job as failed due to lease expiry and archive it
-		job := job.DeepCopy()
-		job.Status.State = provisioning.JobStateError
-		job.Status.Message = "Job failed due to lease expiry - worker may have crashed or lost connection"
+	logger.Info("found expired jobs", "count", len(jobs))
 
-		// Set namespace context for the completion
-		ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
-		if err != nil {
-			return apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
-		}
-
-		// Use Complete to properly archive the failed job
-		if err := s.Complete(ctx, job); err != nil {
-			if apierrors.IsNotFound(err) {
-				// Job was already completed/deleted by another process
-				continue
-			}
-			return apifmt.Errorf("failed to complete expired job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+	// Clean up each expired job
+	for _, job := range jobs {
+		if err := s.cleanUpExpiredJob(ctx, job); err != nil {
+			span.RecordError(err)
+			return err
 		}
 	}
+
+	duration := s.clock().Sub(startTime)
+	logger.Info("cleanup complete",
+		"duration", duration,
+		"count", len(jobs),
+	)
+
+	span.SetAttributes(
+		attribute.Int("count", len(jobs)),
+		attribute.Int64("duration_ms", duration.Milliseconds()),
+	)
 
 	return nil
 }
 
+// listExpiredJobs returns jobs with expired leases.
+func (s *persistentStore) listExpiredJobs(ctx context.Context) ([]provisioning.Job, error) {
+	logger := logging.FromContext(ctx)
+
+	// Set up provisioning identity to access jobs across all namespaces
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, "*") // "*" grants access to all namespaces
+	if err != nil {
+		return nil, apifmt.Errorf("failed to grant provisioning identity for cleanup: %w", err)
+	}
+
+	// Find jobs with expired leases (older than expiry time)
+	expiry := s.clock().Add(-s.expiry).UnixMilli()
+	expiryTime := time.UnixMilli(expiry)
+	logger.Debug("search for expired jobs", "expiry_threshold", expiryTime.Format(time.RFC3339))
+
+	requirement, err := labels.NewRequirement(LabelJobClaim, selection.LessThan, []string{strconv.FormatInt(expiry, 10)})
+	if err != nil {
+		return nil, apifmt.Errorf("could not create requirement: %w", err)
+	}
+
+	listCtx, listSpan := tracing.Start(ctx, "provisioning.jobs.cleanup.list_expired_jobs")
+	defer listSpan.End()
+
+	listSpan.SetAttributes(
+		attribute.String("expiry_threshold", expiryTime.Format(time.RFC3339)),
+		attribute.Int64("expiry_duration_seconds", int64(s.expiry.Seconds())),
+	)
+
+	timeoutCtx, cancel := context.WithTimeout(listCtx, 5*time.Second)
+	defer cancel()
+
+	jobList, err := s.client.Jobs("").List(timeoutCtx, metav1.ListOptions{
+		LabelSelector: labels.NewSelector().Add(*requirement).String(),
+		Limit:         100, // Process in batches
+	})
+	if err != nil {
+		listSpan.RecordError(err)
+		return nil, apifmt.Errorf("failed to list jobs with expired leases: %w", err)
+	}
+
+	listSpan.SetAttributes(attribute.Int("jobs_found", len(jobList.Items)))
+	return jobList.Items, nil
+}
+
+// cleanUpExpiredJob marks a single expired job as failed and archives it.
+func (s *persistentStore) cleanUpExpiredJob(ctx context.Context, job provisioning.Job) error {
+	// Calculate how long the job has been expired
+	var expiredFor time.Duration
+	var claimTimestamp time.Time
+	if claimTime, exists := job.Labels[LabelJobClaim]; exists {
+		claimMillis, parseErr := strconv.ParseInt(claimTime, 10, 64)
+		if parseErr == nil {
+			claimTimestamp = time.UnixMilli(claimMillis)
+			expiredFor = s.clock().Sub(claimTimestamp)
+		}
+	}
+
+	logger := logging.FromContext(ctx).With(
+		"job", job.GetName(),
+		"namespace", job.GetNamespace(),
+		"repository", job.Spec.Repository,
+		"action", job.Spec.Action,
+		"expired_for", expiredFor,
+	)
+
+	if !claimTimestamp.IsZero() {
+		logger = logger.With("claim_time", claimTimestamp.Format(time.RFC3339))
+	}
+
+	jobCtx, jobSpan := tracing.Start(ctx, "provisioning.jobs.cleanup.complete_expired_job")
+	defer jobSpan.End()
+
+	jobSpan.SetAttributes(
+		attribute.String("job.name", job.GetName()),
+		attribute.String("job.namespace", job.GetNamespace()),
+		attribute.String("job.repository", job.Spec.Repository),
+		attribute.String("job.action", string(job.Spec.Action)),
+		attribute.String("job.expired_for", expiredFor.String()),
+	)
+
+	logger.Info("start clean up expired job")
+
+	// Mark job as failed due to lease expiry and archive it
+	jobCopy := job.DeepCopy()
+	jobCopy.Status.State = provisioning.JobStateError
+	jobCopy.Status.Message = "Job failed due to lease expiry - worker may have crashed or lost connection"
+
+	// Set namespace context for the completion
+	jobCtx, _, err := identity.WithProvisioningIdentity(jobCtx, job.GetNamespace())
+	if err != nil {
+		jobSpan.RecordError(err)
+		return apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
+	}
+
+	// Use Complete to properly archive the failed job
+	if err := s.Complete(jobCtx, jobCopy); err != nil {
+		if apierrors.IsNotFound(err) {
+			// Job was already completed/deleted by another process - this is expected
+			logger.Warn("job already completed by another process")
+			return nil
+		}
+		jobSpan.RecordError(err)
+		return apifmt.Errorf("failed to complete expired job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+	}
+
+	logger.Info("clean up expired job complete")
+	return nil
+}
+
 func (s *persistentStore) Insert(ctx context.Context, namespace string, spec provisioning.JobSpec) (*provisioning.Job, error) {
+	ctx, span := tracing.Start(ctx, "provisioning.jobs.insert")
+	defer span.End()
+
+	logger := logging.FromContext(ctx).With(
+		"operation", "insert",
+		"namespace", namespace,
+		"repository", spec.Repository,
+		"action", spec.Action,
+	)
+	logger.Debug("start insert job")
+
+	span.SetAttributes(
+		attribute.String("job.namespace", namespace),
+		attribute.String("job.repository", spec.Repository),
+		attribute.String("job.action", string(spec.Action)),
+	)
+
 	if spec.Repository == "" {
-		return nil, errors.New("missing repository in job")
+		err := errors.New("missing repository in job")
+		span.RecordError(err)
+		return nil, err
 	}
 
 	// Set up the provisioning identity for this namespace
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
+		span.RecordError(err)
 		return nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
 	}
 
@@ -376,19 +612,27 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		Spec: spec,
 	}
 	if err := mutateJobAction(job); err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 	generateJobName(job) // Side-effect: updates the job's name.
+
+	logger = logger.With("job", job.GetName())
+	span.SetAttributes(attribute.String("job.name", job.GetName()))
+
 	created, err := s.client.Jobs(namespace).Create(ctx, job, metav1.CreateOptions{})
 	if apierrors.IsAlreadyExists(err) {
+		span.RecordError(err)
 		return nil, apifmt.Errorf("job '%s' in '%s' already exists: %w", job.GetName(), job.GetNamespace(), err)
 	}
 	if err != nil {
+		span.RecordError(err)
 		return nil, apifmt.Errorf("failed to create job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
 
 	s.queueMetrics.IncreaseQueueSize(string(job.Spec.Action))
 
+	logger.Info("insert job complete")
 	return created, nil
 }
 

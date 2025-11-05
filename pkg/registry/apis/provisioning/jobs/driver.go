@@ -3,10 +3,12 @@ package jobs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // Store is an abstraction for the storage API.
@@ -122,7 +125,8 @@ func (d *jobDriver) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			logger.Info("job driver stopped")
+			return nil // Context cancellation is expected during shutdown
 		case <-jobTicker.C:
 			d.processJobsUntilDoneOrError(ctx)
 		case <-d.notifications:
@@ -134,6 +138,11 @@ func (d *jobDriver) Run(ctx context.Context) error {
 // This will keep processing jobs until there are none left (or we hit an error)
 func (d *jobDriver) processJobsUntilDoneOrError(ctx context.Context) {
 	for {
+		// Check if context is cancelled before attempting to claim jobs
+		if ctx.Err() != nil {
+			return
+		}
+
 		err := d.claimAndProcessOneJob(ctx)
 		if err != nil {
 			if !errors.Is(err, ErrNoJobs) {
@@ -145,11 +154,17 @@ func (d *jobDriver) processJobsUntilDoneOrError(ctx context.Context) {
 }
 
 func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
+	ctx, span := tracing.Start(ctx, "provisioning.jobs.claim_and_process_one_job")
+	defer span.End()
+
 	logger := logging.FromContext(ctx)
 
 	// Claim a job to work on.
 	claimedJob, rollback, err := d.store.Claim(ctx)
 	if err != nil {
+		if !errors.Is(err, ErrNoJobs) {
+			span.RecordError(err)
+		}
 		return apifmt.Errorf("failed to claim job: %w", err)
 	}
 	// Ensure that the job is cleaned up if we fail to complete it.
@@ -159,8 +174,15 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	namespace := claimedJob.GetNamespace()
 	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace)
 	ctx = logging.Context(ctx, logger)
-	logger.Debug("claimed a job")
+	logger.Info("claim job")
 	d.currentJob = claimedJob
+
+	span.SetAttributes(
+		attribute.String("job.name", claimedJob.GetName()),
+		attribute.String("job.namespace", namespace),
+		attribute.String("job.repository", claimedJob.Spec.Repository),
+		attribute.String("job.action", string(claimedJob.Spec.Action)),
+	)
 
 	// Now that we have a job, we need to augment our namespace to grant ourselves permission to work on it.
 	// Incidentally, this also limits our permissions to only the namespace of the job.
@@ -188,9 +210,24 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	end := time.Now()
 	logger.Debug("job processed", "duration", end.Sub(recorder.Started()), "error", err)
 
-	// Capture job timeout
-	if jobctx.Err() != nil && err == nil {
+	// Check if parent context was cancelled (graceful shutdown)
+	if ctx.Err() != nil {
+		logger.Debug("context cancel - job will retry")
+		// Don't complete the job - let it be retried by another worker
+		d.mu.Lock()
+		d.currentJob = nil
+		d.mu.Unlock()
+		return nil
+	}
+
+	// Capture job timeout (but not parent context cancellation)
+	if jobctx.Err() != nil && err == nil && ctx.Err() == nil {
 		err = jobctx.Err()
+	}
+
+	// Record job processing error on span
+	if err != nil {
+		span.RecordError(err)
 	}
 
 	// Complete the job
@@ -205,16 +242,15 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	err = d.historicJobs.WriteJob(ctx, d.currentJob.DeepCopy())
 	if err != nil {
 		// We're not going to return this as it is not critical. Not ideal, but not critical.
-		logger.Warn("failed to create historic job", "historic_job", *d.currentJob, "error", err)
-	} else {
-		logger.Debug("created historic job", "historic_job", *d.currentJob)
+		logger.Warn("failed to write historic job", "error", err)
 	}
 
 	// Mark the job as completed.
 	if err := d.store.Complete(ctx, d.currentJob); err != nil {
+		span.RecordError(err)
 		return apifmt.Errorf("failed to complete job '%s' in '%s': %w", d.currentJob.GetName(), d.currentJob.GetNamespace(), err)
 	}
-	logger.Debug("job completed")
+	logger.Info("job complete")
 
 	return nil
 }
@@ -225,7 +261,7 @@ func (d *jobDriver) leaseRenewalLoop(ctx context.Context, logger logging.Logger,
 	ticker := time.NewTicker(d.leaseRenewalInterval)
 	defer ticker.Stop()
 
-	logger.Debug("starting lease renewal loop", "renewal_interval", d.leaseRenewalInterval)
+	logger.Debug("start lease renewal loop", "renewal_interval", d.leaseRenewalInterval)
 
 	consecutiveFailures := 0
 	maxFailures := 3 // Allow a few failures before giving up
@@ -233,7 +269,7 @@ func (d *jobDriver) leaseRenewalLoop(ctx context.Context, logger logging.Logger,
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Debug("lease renewal loop stopping")
+			logger.Debug("lease renewal loop stopped")
 			return
 		case <-ticker.C:
 			d.mu.Lock()
@@ -264,16 +300,16 @@ func (d *jobDriver) leaseRenewalLoop(ctx context.Context, logger logging.Logger,
 				}
 			} else {
 				if consecutiveFailures > 0 {
-					logger.Debug("lease renewal recovered", "previous_failures", consecutiveFailures)
+					logger.Debug("lease renewal recover", "previous_failures", consecutiveFailures)
 				}
 				consecutiveFailures = 0
-				logger.Debug("lease renewed successfully")
+				logger.Debug("renew lease complete")
 			}
 		}
 	}
 }
 
-// processJobWithLeaseCheck processes a job but aborts if the lease expires.
+// processJobWithLeaseCheck processes a job but aborts if the lease expires or context is cancelled.
 func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, recorder JobProgressRecorder, leaseExpired <-chan struct{}) error {
 	// Run the job processing in a goroutine so we can monitor lease expiry
 	resultChan := make(chan error, 1)
@@ -287,11 +323,16 @@ func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, recorder JobPr
 	case <-leaseExpired:
 		return apifmt.Errorf("job aborted due to lease expiry")
 	case <-ctx.Done():
-		return ctx.Err()
+		// Return context error - caller will determine if this is due to graceful shutdown
+		// or job timeout based on which context was cancelled
+		return fmt.Errorf("job processing interrupted: %w", ctx.Err())
 	}
 }
 
 func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder) error {
+	ctx, span := tracing.Start(ctx, "provisioning.jobs.process_job")
+	defer span.End()
+
 	logger := logging.FromContext(ctx)
 	d.mu.Lock()
 	if d.currentJob == nil {
@@ -305,6 +346,11 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 	namespace := d.currentJob.Namespace
 	d.mu.Unlock()
 
+	span.SetAttributes(
+		attribute.String("job.repository", repoName),
+		attribute.String("job.action", string(job.Spec.Action)),
+	)
+
 	for _, worker := range d.workers {
 		if !worker.IsSupported(ctx, *job) {
 			continue
@@ -312,12 +358,13 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 
 		repo, err := d.repoGetter.GetRepository(ctx, namespace, repoName)
 		if err != nil {
+			span.RecordError(err)
 			return apifmt.Errorf("failed to get repository '%s': %w", repoName, err)
 		}
 
 		r := repo.Config()
 		if r.DeletionTimestamp != nil && !r.DeletionTimestamp.IsZero() {
-			logger.Info("repository is marked for deletion, skipping processing job",
+			logger.Info("repository marked for deletion - skip job",
 				"name", r.Name,
 				"namespace", r.Namespace,
 				"deletionTimestamp", r.DeletionTimestamp,
@@ -325,10 +372,16 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 			return nil
 		}
 
-		return worker.Process(ctx, repo, *job, recorder)
+		err = worker.Process(ctx, repo, *job, recorder)
+		if err != nil {
+			span.RecordError(err)
+		}
+		return err
 	}
 
-	return apifmt.Errorf("no workers were registered to handle the job")
+	err := apifmt.Errorf("no workers were registered to handle the job")
+	span.RecordError(err)
+	return err
 }
 
 func (d *jobDriver) onProgress() ProgressFn {
