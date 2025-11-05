@@ -146,7 +146,7 @@ func validateOnDelete(ctx context.Context,
 
 	for _, v := range resp.Stats {
 		if v.Count > 0 {
-			return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d resources", v.Count)
+			return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d %s.%s", v.Count, v.Group, v.Resource)
 		}
 	}
 	return nil
