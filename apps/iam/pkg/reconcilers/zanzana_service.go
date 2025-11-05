@@ -34,44 +34,22 @@ func (c *ZanzanaPermissionStore) SetFolderParent(ctx context.Context, namespace,
 	)
 	defer span.End()
 
-	err := c.DeleteFolderParents(ctx, namespace, folderUID)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "failed to delete existing folder parents")
-		return err
-	}
-
-	if parentUID == "" {
-		// Setting the parent to empty means the folder is at root which Zanzana doesn't care about.
-		return nil
-	}
-
-	user, err := toFolderTuple(parentUID)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "failed to create parent tuple")
-		return err
-	}
-
-	object, err := toFolderTuple(folderUID)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "failed to create folder tuple")
-		return err
-	}
-
-	if err := c.zanzanaClient.Write(ctx, &authzextv1.WriteRequest{
+	if err := c.zanzanaClient.Mutate(ctx, &authzextv1.MutateRequest{
 		Namespace: namespace,
-		Writes: &authzextv1.WriteRequestWrites{
-			TupleKeys: []*authzextv1.TupleKey{{
-				User:     user,
-				Relation: zanzana.RelationParent,
-				Object:   object,
-			}},
+		Operations: []*authzextv1.MutateOperation{
+			{
+				Operation: &authzextv1.MutateOperation_SetFolderParent{
+					SetFolderParent: &authzextv1.SetFolderParentOperation{
+						Folder:         folderUID,
+						Parent:         parentUID,
+						DeleteExisting: true,
+					},
+				},
+			},
 		},
 	}); err != nil {
 		span.RecordError(err)
-		span.SetStatus(codes.Error, "failed to write parent tuple to zanzana")
+		span.SetStatus(codes.Error, "failed to set folder parent")
 		return err
 	}
 
@@ -133,22 +111,22 @@ func (c *ZanzanaPermissionStore) DeleteFolderParents(ctx context.Context, namesp
 	)
 	defer span.End()
 
-	tuples, err := c.listFolderParentRelations(ctx, namespace, folderUID)
-	if err != nil {
+	if err := c.zanzanaClient.Mutate(ctx, &authzextv1.MutateRequest{
+		Namespace: namespace,
+		Operations: []*authzextv1.MutateOperation{
+			{
+				Operation: &authzextv1.MutateOperation_DeleteFolder{
+					DeleteFolder: &authzextv1.DeleteFolderOperation{
+						Folder:         folderUID,
+						DeleteExisting: true,
+					},
+				},
+			},
+		},
+	}); err != nil {
 		span.RecordError(err)
-		span.SetStatus(codes.Error, "failed to list folder parent relations")
+		span.SetStatus(codes.Error, "failed to delete folder parents")
 		return err
-	}
-
-	span.SetAttributes(attribute.Int("tuples.toDelete.count", len(tuples)))
-
-	if len(tuples) > 0 {
-		err = c.deleteTuples(ctx, namespace, tuples)
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, "failed to delete tuples")
-			return err
-		}
 	}
 
 	return nil
@@ -210,41 +188,6 @@ func (c *ZanzanaPermissionStore) listFolderParentRelations(ctx context.Context, 
 	}
 
 	return list.Tuples, nil
-}
-
-func (c *ZanzanaPermissionStore) deleteTuples(ctx context.Context, namespace string, tuples []*authzextv1.Tuple) error {
-	tracer := otel.GetTracerProvider().Tracer("zanzana-folder-reconciler")
-	ctx, span := tracer.Start(ctx, "zanzana-permission-store.delete-tuples",
-		trace.WithAttributes(
-			attribute.String("namespace", namespace),
-			attribute.Int("tuples.count", len(tuples)),
-		),
-	)
-	defer span.End()
-
-	tupleKeys := make([]*authzextv1.TupleKeyWithoutCondition, 0, len(tuples))
-	for _, t := range tuples {
-		tupleKeys = append(tupleKeys, &authzextv1.TupleKeyWithoutCondition{
-			User:     t.Key.User,
-			Relation: t.Key.Relation,
-			Object:   t.Key.Object,
-		})
-	}
-
-	err := c.zanzanaClient.Write(ctx, &authzextv1.WriteRequest{
-		Namespace: namespace,
-		Deletes: &authzextv1.WriteRequestDeletes{
-			TupleKeys: tupleKeys,
-		},
-	})
-
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "failed to delete tuples in zanzana")
-		return err
-	}
-
-	return nil
 }
 
 func toFolderTuple(UID string) (string, error) {
