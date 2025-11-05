@@ -34,7 +34,17 @@ export function WorkbenchRenderer() {
   const { data } = runner.useState();
   const rows = data ? convertToWorkbenchRows(data, groupByKeys) : [];
 
-  return <Workbench data={rows} domain={domain} queryRunner={runner} />;
+  const hasFiltersApplied = queryFilter.length > 0;
+
+  return (
+    <Workbench
+      data={rows}
+      domain={domain}
+      queryRunner={runner}
+      groupBy={groupByKeys}
+      hasActiveFilters={hasFiltersApplied}
+    />
+  );
 }
 
 type DataPoint = Record<ArrayValues<typeof DEFAULT_FIELDS>, string> & Record<string, string | undefined>;

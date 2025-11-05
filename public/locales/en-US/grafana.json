@@ -2885,6 +2885,8 @@
       "notification-message": "Notification message",
       "predefined-notification-message": "You will send a test notification that uses a predefined alert. If you have defined a custom template or message, for better results switch to <strong>custom</strong> notification message, from above.",
       "send-test-notification": "Send test notification",
+      "test-failed": "Test notification failed",
+      "test-successful": "Test notification sent successfully",
       "title-test-contact-point": "Test contact point"
     },
     "threshold": {
@@ -2943,15 +2945,15 @@
     "triage": {
       "alert-instances": "Alert instances",
       "error-loading-rule": "Error loading rule",
-      "firing-instances-count": "{{firingCount}} firing instances",
       "instance-details-drawer": {
         "instance-details": "Instance details"
       },
+      "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
       "no-instances-found": "No alert instances found for rule: {{ruleUID}}",
       "no-labels": "No labels",
+      "no-matching-instances-with-filters": "No alert instances match your current set of filters for the selected time range.",
       "open-in-sidebar": "Open in sidebar",
       "open-rule-details": "Open rule details",
-      "pending-instances-count": "{{pendingCount}} pending instances",
       "rule-details": {
         "subtitle": "Rule details and conditions",
         "title": "Rule Details"
@@ -5132,15 +5134,15 @@
     },
     "panel": {
       "time-range-settings": {
-        "hide-time-info": "Hidden time info",
-        "hide-time-info-description": "Do not show the custom time range in the panel header",
-        "time-from": "Custom panel time range",
-        "time-from-description": "Overrides the dashboard time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
+        "hide-time-info": "Hide panel time range",
+        "hide-time-info-description": "Do not show the panel time range in the panel header",
+        "time-from": "Panel time range",
+        "time-from-description": "Overrides the dashboard time range. Use one of the preset values or enter a custom value like 5m or 2h.",
         "time-shift": "Time shift",
-        "time-shift-description": "Adds a time shift relative to the dashboard or panel time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
-        "time-window-compare": "Time window comparison",
-        "time-window-compare-description": "Query and overlay data from a different time period",
-        "title": "Panel time range settings"
+        "time-shift-description": "Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like 5m or 2h.",
+        "time-window-compare": "Time comparison",
+        "time-window-compare-description": "Compare data between two time ranges",
+        "title": "Panel time settings"
       }
     },
     "panel-edit": {
@@ -6324,7 +6326,7 @@
       "content-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
     },
     "variable-controls": {
-      "add-variable": "Add"
+      "add-variable": "Add variable"
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
@@ -7189,7 +7191,8 @@
     "logs-table-multi-select": {
       "fields": "Fields",
       "reset": "Reset",
-      "selected-fields": "Selected fields"
+      "selected-fields": "Selected fields",
+      "suggested-fields": "Suggested"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Select query by name",
@@ -10599,7 +10602,12 @@
       }
     },
     "help": {
-      "aria-label": "Help"
+      "aria-label": "Help",
+      "interactive-learning": {
+        "close-tooltip": "Close interactive learning, help, and documentation",
+        "open-tooltip": "Open interactive learning, help, and documentation"
+      },
+      "tooltip": "Get help and useful links"
     },
     "invite-user": {
       "invite-button": "Invite",

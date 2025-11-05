@@ -1388,6 +1388,14 @@ describe('TableNG utils', () => {
       expect(displayJsonValue(field)(42).text).toBe('**42**ms');
       expect(displayJsonValue(field)(42).numeric).toBe(42);
     });
+
+    it('should not mangle objects into [object Object]', () => {
+      expect(displayJsonValue(field)({ a: 1, b: 2 }).text).toBe('{\n "a": 1,\n "b": 2\n}');
+    });
+
+    it('should render arrays as JSON', () => {
+      expect(displayJsonValue(field)([1, 2, 3]).text).toBe('[\n 1,\n 2,\n 3\n]');
+    });
   });
 
   describe('applySort', () => {

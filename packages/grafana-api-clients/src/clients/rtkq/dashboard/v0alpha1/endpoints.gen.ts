@@ -845,6 +845,7 @@ export type DashboardAccess = {
   /** The permissions part */
   canSave: boolean;
   canStar: boolean;
+  isPublic: boolean;
   /** Metadata fields */
   slug?: string;
   url?: string;
@@ -1061,21 +1062,29 @@ export type SearchResults = {
 };
 export const {
   useGetApiResourcesQuery,
+  useLazyGetApiResourcesQuery,
   useListDashboardQuery,
+  useLazyListDashboardQuery,
   useCreateDashboardMutation,
   useDeletecollectionDashboardMutation,
   useGetDashboardQuery,
+  useLazyGetDashboardQuery,
   useReplaceDashboardMutation,
   useDeleteDashboardMutation,
   useUpdateDashboardMutation,
   useGetDashboardDtoQuery,
+  useLazyGetDashboardDtoQuery,
   useListLibraryPanelQuery,
+  useLazyListLibraryPanelQuery,
   useCreateLibraryPanelMutation,
   useDeletecollectionLibraryPanelMutation,
   useGetLibraryPanelQuery,
+  useLazyGetLibraryPanelQuery,
   useReplaceLibraryPanelMutation,
   useDeleteLibraryPanelMutation,
   useUpdateLibraryPanelMutation,
   useGetSearchQuery,
+  useLazyGetSearchQuery,
   useGetSearchSortableQuery,
+  useLazyGetSearchSortableQuery,
 } = injectedRtkApi;

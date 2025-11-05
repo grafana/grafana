@@ -144,7 +144,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
 
   return (
     <div className={styles.container}>
-      <Collapse label={collapseLabel} collapsible={true} isOpen={showSpanFilters} onToggle={setShowSpanFilters}>
+      <Collapse label={collapseLabel} isOpen={showSpanFilters} onToggle={setShowSpanFilters}>
         <InlineFieldRow className={styles.flexContainer}>
           <InlineField label={t('explore.span-filters.label-service-name', 'Service name')} labelWidth={16}>
             <Stack gap={0.5}>
