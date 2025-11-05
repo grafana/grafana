@@ -18,30 +18,30 @@ export function useAddedComponentsRegistrySlice<Props>(
   extensionPointId: string
 ): Array<AddedComponentRegistryItem<Props>> | undefined {
   const registry = useAddedComponentsRegistry();
-  return useRegistrySliceRegistry(extensionPointId, registry);
+  return useRegistrySlice(extensionPointId, registry);
 }
 
 export function useExposedComponentsRegistrySlice(
   extensionPointId: string
 ): ExposedComponentRegistryItem<{}> | undefined {
   const registry = useExposedComponentsRegistry();
-  return useRegistrySliceRegistry(extensionPointId, registry);
+  return useRegistrySlice(extensionPointId, registry);
 }
 
 export function useAddedLinksRegistrySlice(extensionPointId: string): AddedLinkRegistryItem[] | undefined {
   const registry = useAddedLinksRegistry();
-  return useRegistrySliceRegistry(extensionPointId, registry);
+  return useRegistrySlice(extensionPointId, registry);
 }
 
 export function useAddedFunctionsRegistrySlice(extensionPointId: string): AddedFunctionsRegistryItem[] | undefined {
   const registry = useAddedFunctionsRegistry();
-  return useRegistrySliceRegistry(extensionPointId, registry);
+  return useRegistrySlice(extensionPointId, registry);
 }
 
-function useRegistrySliceRegistry<
-  TRegistryValue extends object | unknown[] | Record<string | symbol, unknown>,
-  TMapType,
->(extensionPointId: string, registry: Registry<TRegistryValue, TMapType>): TRegistryValue | undefined {
+function useRegistrySlice<TRegistryValue extends object | unknown[] | Record<string | symbol, unknown>, TMapType>(
+  extensionPointId: string,
+  registry: Registry<TRegistryValue, TMapType>
+): TRegistryValue | undefined {
   const observable = useMemo(() => {
     return registry.asObservableSlice((state) => state[extensionPointId]);
   }, [extensionPointId, registry]);
