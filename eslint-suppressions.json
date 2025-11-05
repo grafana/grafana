@@ -3258,11 +3258,6 @@
       "count": 1
     }
   },
-  "public/app/features/plugins/extensions/usePluginComponents.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/plugins/extensions/usePluginFunctions.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1

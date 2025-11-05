@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { useObservable } from 'react-use';
 
 import {
   type ComponentTypeWithExtensionMeta,
@@ -9,8 +8,7 @@ import {
 } from '@grafana/data';
 import { UsePluginComponentsOptions, UsePluginComponentsResult } from '@grafana/runtime';
 
-import { useAddedComponentsRegistry } from './ExtensionRegistriesContext';
-import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
+import { useAddedComponentsRegistrySlice } from './registry/useRegistrySlice';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { generateExtensionId, getExtensionPointPluginDependencies } from './utils';
 import { validateExtensionPoint } from './validateExtensionPoint';
@@ -20,8 +18,7 @@ export function usePluginComponents<Props extends object = {}>({
   limitPerPlugin,
   extensionPointId,
 }: UsePluginComponentsOptions): UsePluginComponentsResult<Props> {
-  const registry = useAddedComponentsRegistry();
-  const registryState = useObservable(registry.asObservable());
+  const registryItems = useAddedComponentsRegistrySlice(extensionPointId);
   const pluginContext = usePluginContext();
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
 
@@ -38,7 +35,7 @@ export function usePluginComponents<Props extends object = {}>({
     const components: Array<ComponentTypeWithExtensionMeta<Props>> = [];
     const extensionsByPlugin: Record<string, number> = {};
 
-    for (const registryItem of registryState?.[extensionPointId] ?? []) {
+    for (const registryItem of registryItems ?? []) {
       const { pluginId } = registryItem;
 
       // Only limit if the `limitPerPlugin` is set
@@ -50,10 +47,7 @@ export function usePluginComponents<Props extends object = {}>({
         extensionsByPlugin[pluginId] = 0;
       }
 
-      const component = createComponentWithMeta<Props>(
-        registryItem as AddedComponentRegistryItem<Props>,
-        extensionPointId
-      );
+      const component = createComponentWithMeta<Props>(registryItem, extensionPointId);
 
       components.push(component);
       extensionsByPlugin[pluginId] += 1;
@@ -63,11 +57,11 @@ export function usePluginComponents<Props extends object = {}>({
       isLoading: false,
       components,
     };
-  }, [extensionPointId, limitPerPlugin, pluginContext, registryState, isLoadingAppPlugins]);
+  }, [extensionPointId, limitPerPlugin, pluginContext, registryItems, isLoadingAppPlugins]);
 }
 
 export function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
-  registryItem: AddedComponentRegistryItem<Props>,
+  registryItem: AddedComponentRegistryItem,
   extensionPointId: string
 ): ComponentTypeWithExtensionMeta<Props> {
   const { component: Component, ...config } = registryItem;

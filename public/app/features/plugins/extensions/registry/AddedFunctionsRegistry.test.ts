@@ -120,6 +120,61 @@ describe('addedFunctionsRegistry', () => {
       ],
     });
   });
+
+  it('should not emit when registering with empty configs', async () => {
+    const addedFunctionsRegistry = new AddedFunctionsRegistry();
+    const observable = addedFunctionsRegistry.asObservable();
+    const subscribeCallback = jest.fn();
+
+    observable.subscribe(subscribeCallback);
+
+    // Initial subscription should be called once with empty registry
+    expect(subscribeCallback).toHaveBeenCalledTimes(1);
+
+    // Register with empty configs - should not emit
+    addedFunctionsRegistry.register({
+      pluginId,
+      configs: [],
+    });
+
+    // Should still only be called once (no new emission)
+    expect(subscribeCallback).toHaveBeenCalledTimes(1);
+    expect(subscribeCallback.mock.calls[0][0]).toEqual({});
+
+    // Verify registry state is still empty
+    const registry = await addedFunctionsRegistry.getState();
+    expect(registry).toEqual({});
+  });
+
+  it('should not change registry state when registering with empty configs after previous registrations', async () => {
+    const addedFunctionsRegistry = new AddedFunctionsRegistry();
+
+    // First register some extensions
+    addedFunctionsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Function 1',
+          description: 'Function 1 description',
+          targets: 'grafana/dashboard/panel/menu',
+          fn: jest.fn(),
+        },
+      ],
+    });
+
+    const registryBefore = await addedFunctionsRegistry.getState();
+    expect(Object.keys(registryBefore)).toHaveLength(1);
+
+    // Register with empty configs - should not change state
+    addedFunctionsRegistry.register({
+      pluginId,
+      configs: [],
+    });
+
+    const registryAfter = await addedFunctionsRegistry.getState();
+    expect(registryAfter).toEqual(registryBefore);
+  });
+
   it('should be possible to asynchronously register function extensions for the same placement (different plugins)', async () => {
     const pluginId1 = 'grafana-basic-app';
     const pluginId2 = 'grafana-basic-app2';
