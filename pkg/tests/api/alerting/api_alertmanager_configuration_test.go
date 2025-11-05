@@ -552,3 +552,113 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 `, generatedUID), getBody(t, resp.Body))
 	}
 }
+
+func TestIntegrationAlertmanagerConfiguration_ProtectedFields(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+		DisableFeatureToggles: []string{featuremgmt.FlagAlertingApiServer},
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "editor",
+		Login:          "editor",
+	})
+
+	adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+	editorClient := newAlertingApiClient(grafanaListedAddr, "editor", "editor")
+
+	payload := `
+{
+	"template_files": {},
+	"alertmanager_config": {
+		"route": {
+			"receiver": "webhook.receiver"
+		},
+		"receivers": [{
+			"name": "webhook.receiver",
+			"grafana_managed_receiver_configs": [{
+				"settings": {
+					"url": "http://localhost:9000"
+				},
+				"type": "webhook",
+				"name": "webhook.receiver",
+				"disableResolveMessage": false
+			}]
+		}]
+	}
+}
+`
+	var cfg apimodels.PostableUserConfig
+	err := json.Unmarshal([]byte(payload), &cfg)
+	require.NoError(t, err)
+
+	// create a new configuration that has protected fields, one is a secret
+	_, err = adminClient.PostConfiguration(t, cfg)
+	require.NoError(t, err)
+
+	patchUIDs := func(t *testing.T) {
+		t.Helper()
+		gCfg, _, _ := adminClient.GetAlertmanagerConfigWithStatus(t)
+		patched := 0
+		for i, gr := range gCfg.AlertmanagerConfig.GetReceivers() {
+			for j, gi := range gr.GrafanaManagedReceivers {
+				assert.Equal(t,
+					cfg.AlertmanagerConfig.Receivers[i].GrafanaManagedReceivers[j].Name,
+					gi.Name,
+				)
+				cfg.AlertmanagerConfig.Receivers[i].GrafanaManagedReceivers[j].UID = gi.UID
+				patched++
+			}
+		}
+	}
+	patchUIDs(t)
+
+	// Now check that editor can update non-protected fields and add new integrations to existing receivers
+	cfg.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Settings = apimodels.RawMessage(`
+		{
+			"url":"http://localhost:9000", 
+			"httpMethod": "PUT"
+		}
+	`)
+	cfg.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers = append(cfg.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers,
+		&apimodels.PostableGrafanaReceiver{
+			Name:                  cfg.AlertmanagerConfig.Receivers[0].Name,
+			Type:                  "webhook",
+			DisableResolveMessage: false,
+			Settings:              apimodels.RawMessage(`{"url":"http://new-localhost:9000"}`),
+			SecureSettings:        nil,
+		},
+	)
+
+	_, err = editorClient.PostConfiguration(t, cfg)
+	require.NoError(t, err)
+
+	patchUIDs(t)
+
+	// Now editor tries to update protected field and fails
+	cfg.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[1].Settings = apimodels.RawMessage(`{"url":"http://very-localhost:9001"}`)
+
+	// Editor can add new integrations to existing receivers
+	success, err := editorClient.PostConfiguration(t, cfg)
+	require.Falsef(t, success, "the request should have failed")
+	t.Log(err)
+	require.Error(t, err)
+
+	// but Admin should still be able to update protected fields
+	_, err = adminClient.PostConfiguration(t, cfg)
+	require.NoError(t, err)
+}

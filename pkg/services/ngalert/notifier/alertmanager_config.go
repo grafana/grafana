@@ -275,7 +275,7 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	return result, nil
 }
 
-func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
+func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig, authzFn AuthorizeProtectedFn) error {
 	// We cannot add this validation to PostableUserConfig as that struct is used for both
 	// Grafana Alertmanager (where inhibition rules are not supported) and External Alertmanagers
 	// (including Mimir) where inhibition rules are supported.
@@ -293,7 +293,8 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx conte
 	}
 	cleanPermissionsErr := err
 
-	if err := moa.Crypto.ProcessSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
+	// TODO shoud not be nil
+	if err := moa.Crypto.ProcessSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers, authzFn); err != nil {
 		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
 	}
 

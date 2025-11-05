@@ -197,10 +197,15 @@ function grafanaChannelConfigToFormChannelValues(
     disableResolveMessage: channel.disableResolveMessage,
   };
 
-  notifier?.options.forEach((option) => {
-    if (option.secure && values.settings[option.propertyName]) {
-      values.secureSettings[option.propertyName] = values.settings[option.propertyName];
-      delete values.settings[option.propertyName];
+  // Get all secure field names (including nested ones like "sigv4.access_key")
+  const secureFieldNames = notifier ? getSecureFieldNames(notifier) : [];
+
+  secureFieldNames.forEach((fieldPath) => {
+    const value = get(values.settings, fieldPath);
+    if (value !== undefined) {
+      values.secureSettings[fieldPath] = value;
+      // Remove from settings using omit to handle nested paths
+      values.settings = omit(values.settings, [fieldPath]);
     }
   });
 

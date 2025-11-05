@@ -55,6 +55,7 @@ describe('GrafanaReceiverForm', () => {
     grantUserPermissions([
       AccessControlAction.AlertingNotificationsRead,
       AccessControlAction.AlertingNotificationsWrite,
+      AccessControlAction.AlertingReceiversRead,
     ]);
   });
 

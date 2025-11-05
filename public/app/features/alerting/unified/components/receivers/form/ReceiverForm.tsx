@@ -7,7 +7,7 @@ import { isFetchError } from '@grafana/runtime';
 import { Alert, Button, Field, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { useValidateContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { ManagePermissions } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 
@@ -42,6 +42,7 @@ interface Props<R extends ChannelValues> {
   showDefaultRouteWarning?: boolean;
   contactPointId?: string;
   canManagePermissions?: boolean;
+  canEditProtectedFields: boolean;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -58,6 +59,7 @@ export function ReceiverForm<R extends ChannelValues>({
   showDefaultRouteWarning,
   contactPointId,
   canManagePermissions,
+  canEditProtectedFields,
 }: Props<R>) {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
@@ -66,15 +68,16 @@ export function ReceiverForm<R extends ChannelValues>({
   // normalize deprecated and new config values
   const normalizedConfig = normalizeFormValues(initialValues);
 
-  const defaultValues = normalizedConfig ?? {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const defaultValues = (normalizedConfig ?? {
     name: '',
     items: [
       {
         ...defaultItem,
         __id: String(Math.random()),
-      } as any,
+      },
     ],
-  };
+  }) as ReceiverFormValues<R>;
 
   const formAPI = useForm<ReceiverFormValues<R>>({
     // making a copy here beacuse react-hook-form will mutate these, and break if the object is frozen. for real.
@@ -147,7 +150,12 @@ export function ReceiverForm<R extends ChannelValues>({
             />
           )}
         </Stack>
-        <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message} required>
+        <Field
+          label={t('alerting.receiver-form.label-name', 'Name')}
+          invalid={!!errors.name}
+          error={errors.name && errors.name.message}
+          required
+        >
           <Input
             readOnly={!isEditable}
             id="name"
@@ -163,7 +171,7 @@ export function ReceiverForm<R extends ChannelValues>({
           />
         </Field>
         {fields.map((field, index) => {
-          const pathPrefix = `items.${index}.`;
+           const pathPrefix = `items.${index}.` as const;
           if (field.__deleted) {
             return <DeletedSubForm key={field.__id} pathPrefix={pathPrefix} />;
           }
@@ -185,14 +193,16 @@ export function ReceiverForm<R extends ChannelValues>({
                     }
                   : undefined
               }
+              integrationIndex={index}
               onDelete={() => remove(index)}
               pathPrefix={pathPrefix}
               notifiers={notifiers}
-              secureFields={initialItem?.secureFields}
-              errors={errors?.items?.[index] as FieldErrors<R>}
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              errors={errors?.items?.[index] as FieldErrors<R> | undefined}
               commonSettingsComponent={commonSettingsComponent}
               isEditable={isEditable}
               isTestable={isTestable}
+              canEditProtectedFields={canEditProtectedFields}
               customValidators={customValidators ? customValidators[field.type] : undefined}
             />
           );

@@ -137,6 +137,26 @@ var (
 		)
 	}
 
+	// Asserts pre-conditions for access to modify protected fields of receivers. If this evaluates to false, the user cannot modify protected fields of any receivers.
+	updateReceiversProtectedPreConditionsEval = ac.EvalAll(
+		updateReceiversPreConditionsEval,
+		ac.EvalPermission(ac.ActionAlertingReceiversUpdateProtected), // Action for receivers. UID scope.
+	)
+
+	// Asserts access to modify protected fields of a specific receiver.
+	updateReceiverProtectedEval = func(uid string) ac.Evaluator {
+		return ac.EvalAll(
+			updateReceiverEval(uid),
+			ac.EvalPermission(ac.ActionAlertingReceiversUpdateProtected, ScopeReceiversProvider.GetResourceScopeUID(uid)),
+		)
+	}
+
+	// Asserts access to modify protected fields of all receivers.
+	updateAllReceiverProtectedEval = ac.EvalAll(
+		updateAllReceiversEval,
+		ac.EvalPermission(ac.ActionAlertingReceiversUpdateProtected, ScopeReceiversAll),
+	)
+
 	// Delete
 
 	// Asserts pre-conditions for delete access to receivers. If this evaluates to false, the user cannot delete any receivers.
@@ -183,12 +203,13 @@ var (
 )
 
 type ReceiverAccess[T models.Identified] struct {
-	read          actionAccess[T]
-	readDecrypted actionAccess[T]
-	create        actionAccess[T]
-	update        actionAccess[T]
-	delete        actionAccess[T]
-	permissions   actionAccess[T]
+	read            actionAccess[T]
+	readDecrypted   actionAccess[T]
+	create          actionAccess[T]
+	update          actionAccess[T]
+	updateProtected actionAccess[T]
+	delete          actionAccess[T]
+	permissions     actionAccess[T]
 }
 
 // NewReceiverAccess creates a new ReceiverAccess service. If includeProvisioningActions is true, the service will include
@@ -242,6 +263,18 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 				return updateReceiverEval(receiver.GetUID())
 			},
 			authorizeAll: updateAllReceiversEval,
+		},
+		updateProtected: actionAccess[T]{
+			genericService: genericService{
+				ac: a,
+			},
+			resource:      "receiver",
+			action:        "update protected fields of", // this produces message "user is not authorized to update protected fields of X receiver"
+			authorizeSome: updateReceiversProtectedPreConditionsEval,
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
+				return updateReceiverProtectedEval(receiver.GetUID())
+			},
+			authorizeAll: updateAllReceiverProtectedEval,
 		},
 		delete: actionAccess[T]{
 			genericService: genericService{
@@ -353,6 +386,14 @@ func (s ReceiverAccess[T]) AuthorizeUpdate(ctx context.Context, user identity.Re
 	return s.update.Authorize(ctx, user, receiver)
 }
 
+func (s ReceiverAccess[T]) HasUpdateProtected(ctx context.Context, user identity.Requester, receiver T) (bool, error) {
+	return s.updateProtected.Has(ctx, user, receiver)
+}
+
+func (s ReceiverAccess[T]) AuthorizeUpdateProtected(ctx context.Context, user identity.Requester, receiver T) error {
+	return s.updateProtected.Authorize(ctx, user, receiver)
+}
+
 // Global
 
 // AuthorizeCreate checks if user has access to create receivers. Returns an error if user does not have access.
@@ -422,6 +463,12 @@ func (s ReceiverAccess[T]) Access(ctx context.Context, user identity.Requester, 
 		basePerms.Set(models.ReceiverPermissionDelete, true) // Has access to all receivers.
 	}
 
+	if err := s.updateProtected.AuthorizePreConditions(ctx, user); err != nil {
+		basePerms.Set(models.ReceiverPermissionModifyProtected, false)
+	} else if err := s.updateProtected.AuthorizeAll(ctx, user); err == nil {
+		basePerms.Set(models.ReceiverPermissionModifyProtected, true)
+	}
+
 	if basePerms.AllSet() {
 		// Shortcut for the case when all permissions are known based on preconditions.
 		result := make(map[string]models.ReceiverPermissionSet, len(receivers))
@@ -452,6 +499,11 @@ func (s ReceiverAccess[T]) Access(ctx context.Context, user identity.Requester, 
 		if _, ok := permSet.Has(models.ReceiverPermissionDelete); !ok {
 			err := s.delete.authorize(ctx, user, rcv)
 			permSet.Set(models.ReceiverPermissionDelete, err == nil)
+		}
+
+		if _, ok := permSet.Has(models.ReceiverPermissionModifyProtected); !ok {
+			err := s.updateProtected.authorize(ctx, user, rcv)
+			permSet.Set(models.ReceiverPermissionModifyProtected, err == nil)
 		}
 
 		result[rcv.GetUID()] = permSet

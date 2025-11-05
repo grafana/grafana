@@ -132,7 +132,7 @@ func TestReceiverAccess(t *testing.T) {
 				recv3.UID: permissions(),
 			},
 		},
-		//{
+		// {
 		//	name: "legacy global notifications provisioning writer should have full write on provisioning only",
 		//	user: newViewUser(ac.Permission{Action: ac.ActionAlertingNotificationsProvisioningWrite}),
 		//	expected: map[string]models.ReceiverPermissionSet{
@@ -145,8 +145,8 @@ func TestReceiverAccess(t *testing.T) {
 		//		recv2.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete),
 		//		recv3.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete),
 		//	},
-		//},
-		//{
+		// },
+		// {
 		//	name: "legacy global provisioning writer should have full write on provisioning only",
 		//	user: newViewUser(ac.Permission{Action: ac.ActionAlertingProvisioningWrite}),
 		//	expected: map[string]models.ReceiverPermissionSet{
@@ -159,7 +159,7 @@ func TestReceiverAccess(t *testing.T) {
 		//		recv2.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete),
 		//		recv3.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionDelete),
 		//	},
-		//},
+		// },
 		// Receiver create
 		{
 			name: "receiver create should not have write",
@@ -201,6 +201,33 @@ func TestReceiverAccess(t *testing.T) {
 			expected: map[string]models.ReceiverPermissionSet{
 				recv1.UID: permissions(),
 				recv2.UID: permissions(),
+				recv3.UID: permissions(),
+			},
+		},
+		{
+			name: "update protected cannot update receivers",
+			user: newEmptyUser(
+				ac.Permission{Action: ac.ActionAlertingReceiversRead, Scope: ScopeReceiversAll},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdateProtected, Scope: ScopeReceiversAll},
+			),
+			expected: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(),
+				recv2.UID: permissions(),
+				recv3.UID: permissions(),
+			},
+		},
+		{
+			name: "update protected receivers",
+			user: newEmptyUser(
+				ac.Permission{Action: ac.ActionAlertingReceiversRead, Scope: ScopeReceiversAll},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdateProtected, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdate, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv2.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversUpdateProtected, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+			),
+			expected: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(models.ReceiverPermissionWrite, models.ReceiverPermissionModifyProtected),
+				recv2.UID: permissions(models.ReceiverPermissionWrite),
 				recv3.UID: permissions(),
 			},
 		},

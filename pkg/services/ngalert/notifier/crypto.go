@@ -9,18 +9,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
+type AuthorizeProtectedFn func(uid string, paths []models.IntegrationFieldPath) error
+
 // Crypto allows decryption of Alertmanager Configuration and encryption of arbitrary payloads.
 type Crypto interface {
-	LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error
+	LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver, fn AuthorizeProtectedFn) error
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
 
 	getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error)
-	ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver) error
+	ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver, fn AuthorizeProtectedFn) error
 }
 
 // alertmanagerCrypto implements decryption of Alertmanager configuration and encryption of arbitrary payloads based on Grafana's encryptions.
@@ -39,7 +42,7 @@ func NewCrypto(secrets secrets.Service, configs configurationStore, log log.Logg
 }
 
 // ProcessSecureSettings encrypts new secure settings and loads existing secure settings from the database.
-func (c *alertmanagerCrypto) ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver) error {
+func (c *alertmanagerCrypto) ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver, authorizeProtected AuthorizeProtectedFn) error {
 	// First, we encrypt the new or updated secure settings. Then, we load the existing secure settings from the database
 	// and add back any that weren't updated.
 	// We perform these steps in this order to ensure the hash of the secure settings remains stable when no secure
@@ -50,7 +53,7 @@ func (c *alertmanagerCrypto) ProcessSecureSettings(ctx context.Context, orgId in
 		return fmt.Errorf("failed to encrypt receivers: %w", err)
 	}
 
-	if err := c.LoadSecureSettings(ctx, orgId, recvs); err != nil {
+	if err := c.LoadSecureSettings(ctx, orgId, recvs, authorizeProtected); err != nil {
 		return err
 	}
 
@@ -152,7 +155,7 @@ func encryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt defini
 }
 
 // LoadSecureSettings adds the corresponding unencrypted secrets stored to the list of input receivers.
-func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error {
+func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver, authorizeProtected AuthorizeProtectedFn) error {
 	// Get the last known working configuration.
 	amConfig, err := c.configs.GetLatestAlertmanagerConfiguration(ctx, orgId)
 	if err != nil {
@@ -161,10 +164,10 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 			return fmt.Errorf("failed to get latest configuration: %w", err)
 		}
 	}
-
+	var currentConfig *definitions.PostableUserConfig
 	currentReceiverMap := make(map[string]*definitions.PostableGrafanaReceiver)
 	if amConfig != nil {
-		currentConfig, err := Load([]byte(amConfig.AlertmanagerConfiguration))
+		currentConfig, err = Load([]byte(amConfig.AlertmanagerConfiguration))
 		// If the current config is un-loadable, treat it as if it never existed. Providing a new, valid config should be able to "fix" this state.
 		if err != nil {
 			c.log.Warn("Last known alertmanager configuration was invalid. Overwriting...")
@@ -192,6 +195,33 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 			if !ok {
 				// It tries to update a receiver that didn't previously exist
 				return UnknownReceiverError{UID: gr.UID}
+			}
+
+			if authorizeProtected != nil {
+				incoming, errIn := PostableGrafanaReceiverToIntegration(gr)
+				existing, errEx := PostableGrafanaReceiverToIntegration(cgmr)
+				var secure []models.IntegrationFieldPath
+				authz := true
+				if errIn == nil && errEx == nil {
+					secure = models.HasIntegrationsDifferentProtectedFields(existing, incoming)
+					authz = len(secure) > 0
+				}
+				// if conversion failed, consider there are changes and authorize
+				if authz && currentConfig != nil {
+					var receiverName string
+				NAME:
+					for _, rcv := range currentConfig.AlertmanagerConfig.Receivers {
+						for _, intg := range rcv.GrafanaManagedReceivers {
+							if intg.UID == cgmr.UID {
+								receiverName = rcv.Name
+								break NAME
+							}
+						}
+					}
+					if err := authorizeProtected(receiverName, secure); err != nil {
+						return err
+					}
+				}
 			}
 
 			// Frontend sends only the secure settings that have to be updated
