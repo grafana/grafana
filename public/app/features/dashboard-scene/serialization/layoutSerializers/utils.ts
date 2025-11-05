@@ -27,6 +27,7 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
+import { PanelGroupByAction } from '../../scene/PanelGroupByAction';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
@@ -70,6 +71,7 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     $data: createPanelDataProvider(panel),
     titleItems,
     $behaviors: [],
+    headerActions: config.featureToggles.panelGroupBy ? [new PanelGroupByAction()] : [],
     extendPanelContext: setDashboardPanelContext,
   };
 
