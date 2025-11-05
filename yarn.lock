@@ -2543,7 +2543,7 @@ __metadata:
     typescript: "npm:5.9.2"
     webpack: "npm:5.101.0"
   peerDependencies:
-    "@grafana/assistant": ^0.1.0
+    "@grafana/assistant": ^0.1.1
     "@grafana/runtime": "*"
   languageName: unknown
   linkType: soft
@@ -3017,9 +3017,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/assistant@npm:0.1.0":
-  version: 0.1.0
-  resolution: "@grafana/assistant@npm:0.1.0"
+"@grafana/assistant@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@grafana/assistant@npm:0.1.1"
   peerDependencies:
     "@grafana/data": ">=12.1.0"
     "@grafana/runtime": ">=12.1.0"
@@ -3027,7 +3027,7 @@ __metadata:
     "@grafana/ui": ">=12.1.0"
     react: ">=18.0.0"
     rxjs: ">=7.0.0"
-  checksum: 10/90cfee9860bc128190ec1357e554685892b3ddd080d914457da311f1d45294dfcc15a427be36c381463eefe39268b5abbc39e6b541ad402e78264cc6d038c23f
+  checksum: 10/33e5b3f59b3b7a747a736f36183c77014214fa6e8048faac7a680dbba64833b1827dd7ef2e8c1ddf566a31829347449579ef6255811586b39914ca0510bb34a5
   languageName: node
   linkType: hard
 
@@ -3248,7 +3248,7 @@ __metadata:
     tslib: "npm:2.8.1"
     typescript: "npm:5.9.2"
   peerDependencies:
-    "@grafana/assistant": ^0.1.0
+    "@grafana/assistant": ^0.1.1
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -18844,7 +18844,7 @@ __metadata:
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
     "@grafana/api-clients": "workspace:*"
-    "@grafana/assistant": "npm:0.1.0"
+    "@grafana/assistant": "npm:0.1.1"
     "@grafana/aws-sdk": "npm:0.7.1"
     "@grafana/azure-sdk": "npm:0.0.8"
     "@grafana/data": "workspace:*"
