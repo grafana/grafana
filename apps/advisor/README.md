@@ -163,3 +163,17 @@ make run  # Start the advisor app in standalone mode
 ```
 
 This will start the advisor app on port 7445. You can then access the advisor app at `http://localhost:7445`.
+
+To see some sample checks, you can run the following command:
+
+```bash
+make create-checks
+```
+
+Then you can see list in the URL: `http://localhost:7445/apis/advisor.grafana.app/v0alpha1/namespaces/stacks-1/checks`
+
+To delete all checks, you can run the following command:
+
+```bash
+make delete-checks
+```

@@ -845,6 +845,7 @@ export type DashboardAccess = {
   /** The permissions part */
   canSave: boolean;
   canStar: boolean;
+  isPublic: boolean;
   /** Metadata fields */
   slug?: string;
   url?: string;
