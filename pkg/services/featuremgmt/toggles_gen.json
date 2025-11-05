@@ -3917,6 +3917,22 @@
     },
     {
       "metadata": {
+        "name": "timeRangePan",
+        "resourceVersion": "1762290731154",
+        "creationTimestamp": "2025-10-24T19:49:53Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-04 21:12:11.154822 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables time range panning functionality",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "timeRangeProvider",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-10-22T10:52:33Z"
