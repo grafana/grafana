@@ -22,7 +22,7 @@ import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHe
 import { getXAxisConfig } from '../../../core/components/TimeSeries/utils';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
-import { getAnnotationFrames } from '../timeseries/plugins/utils';
+import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 
 import { HeatmapTooltip } from './HeatmapTooltip';
 import { HeatmapData, prepareHeatmapData } from './fields';
@@ -134,7 +134,7 @@ const HeatmapPanelViz = ({
   const dataRef = useRef(info);
   dataRef.current = info;
 
-  const annotationsLength = getAnnotationFrames(data.annotations).length;
+  const annotationsLength = getXAnnotationFrames(data.annotations).length;
 
   const builder = useMemo(() => {
     const scaleConfig: ScaleDistributionConfig = dataRef.current?.heatmap?.fields[1].config?.custom?.scaleDistribution;
