@@ -54,7 +54,7 @@ describe('dashboard tracking', () => {
         customGridLayoutCount: 2,
         panelsByDatasourceType: {
           cloudwatch: 5,
-          'gdev-testdata-datasource': 1,
+          datasource: 1,
         },
       });
     });

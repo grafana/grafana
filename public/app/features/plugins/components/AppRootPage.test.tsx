@@ -42,15 +42,6 @@ jest.mock('@grafana/runtime', () => ({
         },
       },
     },
-    defaultDatasource: '-- Grafana --',
-    datasources: {
-      '-- Grafana --': {
-        name: 'Grafana',
-        meta: { id: 'grafana' },
-        type: 'datasource',
-        uid: 'grafana',
-      },
-    },
   },
 }));
 

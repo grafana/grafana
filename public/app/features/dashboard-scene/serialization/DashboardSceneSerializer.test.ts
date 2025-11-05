@@ -703,7 +703,7 @@ describe('DashboardSceneSerializer', () => {
           tabsLayoutCount: 2,
           panelsByDatasourceType: {
             cloudwatch: 5,
-            'gdev-testdata-datasource': 1,
+            datasource: 1,
           },
         });
       });
@@ -784,18 +784,7 @@ describe('DashboardSceneSerializer', () => {
             data: {
               kind: 'QueryGroup',
               spec: {
-                queries: [
-                  {
-                    ...defaultPanelQueryKind(),
-                    spec: {
-                      ...defaultPanelQueryKind().spec,
-                      query: {
-                        ...defaultPanelQueryKind().spec.query,
-                        group: 'datasource',
-                      },
-                    },
-                  },
-                ],
+                queries: [defaultPanelQueryKind()],
                 queryOptions: {},
                 transformations: [],
               },
@@ -1043,9 +1032,7 @@ describe('DashboardSceneSerializer', () => {
                               datasource: {
                                 name: 'prometheus-uid',
                               },
-                              spec: {
-                                expr: 'label_values(node_cpu_seconds_total{job="node-exporter", mode="idle"}, mode)',
-                              },
+                              spec: {},
                             },
                           },
                         },

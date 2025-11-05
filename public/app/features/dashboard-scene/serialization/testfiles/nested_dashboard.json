@@ -192,14 +192,11 @@
                   "hidden": false,
                   "query": {
                     "datasource": {
-                      "name": "gdev-testdata"
+                      "name": "grafana"
                     },
-                    "group": "gdev-testdata-datasource",
+                    "group": "datasource",
                     "kind": "DataQuery",
-                    "spec": {
-                      "scenarioId": "random_walk",
-                      "seriesCount": 1
-                    },
+                    "spec": {},
                     "version": "v0"
                   },
                   "refId": "A"
