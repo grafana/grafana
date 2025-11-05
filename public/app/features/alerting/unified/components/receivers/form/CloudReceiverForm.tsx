@@ -89,6 +89,7 @@ export const CloudReceiverForm = ({ contactPoint, alertManagerSourceName, readOn
         alertManagerSourceName={alertManagerSourceName}
         defaultItem={defaultChannelValues}
         commonSettingsComponent={CloudCommonChannelSettings}
+        canEditProtectedFields={true}
       />
     </>
   );

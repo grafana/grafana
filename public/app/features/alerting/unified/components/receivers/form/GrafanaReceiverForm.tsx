@@ -2,20 +2,20 @@ import { useMemo, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
 import {
   useCreateContactPoint,
   useUpdateContactPoint,
 } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { showManageContactPointPermissions } from 'app/features/alerting/unified/components/contact-points/utils';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { canEditEntity } from 'app/features/alerting/unified/utils/k8s/utils';
+import { canEditEntity, canModifyProtectedEntity } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
   GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
+import { AccessControlAction, useDispatch } from 'app/types';
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { testReceiversAction } from '../../../state/actions';
@@ -84,11 +84,11 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
       return [undefined, {}];
     }
 
-    return grafanaReceiverToFormValues(extendOnCallReceivers(contactPoint), grafanaNotifiers);
-  }, [contactPoint, isLoadingNotifiers, grafanaNotifiers, extendOnCallReceivers, isLoadingOnCallIntegration]);
+    return grafanaReceiverToFormValues(extendOnCallReceivers(contactPoint));
+  }, [contactPoint, isLoadingNotifiers, extendOnCallReceivers, isLoadingOnCallIntegration]);
 
   const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
-    const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues, grafanaNotifiers);
+    const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues);
 
     try {
       if (editMode) {
@@ -136,16 +136,19 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
       dispatch(testReceiversAction(payload));
     }
   };
-
-  const isEditable = Boolean(
-    (!readOnly || (contactPoint && canEditEntity(contactPoint))) && !contactPoint?.provisioned
+  const hasGlobalEditProtectedPermission = contextSrv.hasPermission(
+    AccessControlAction.AlertingReceiversUpdateProtected
   );
-  const isTestable = !readOnly;
-
-  if (isLoadingNotifiers || isLoadingOnCallIntegration) {
-    return (
-      <LoadingPlaceholder text={t('alerting.grafana-receiver-form.text-loading-notifiers', 'Loading notifiers...')} />
-    );
+ // If there is no contact point it means we're creating a new one, so scoped permissions doesn't exist yet
+ const hasScopedEditPermissions = contactPoint ? canEditEntity(contactPoint) : true;
+ const hasScopedEditProtectedPermissions = contactPoint ? canModifyProtectedEntity(contactPoint) : true;
+ const isEditable = !readOnly && hasScopedEditPermissions && !contactPoint?.provisioned;
+ const isTestable = !readOnly;
+ //  If we're using k8s API, we need to check the scoped permissions, otherwise we need to check the global permission
+ const canEditProtectedField = useK8sAPI ? hasScopedEditProtectedPermissions : hasGlobalEditProtectedPermission;
+ 
+ if (isLoadingNotifiers || isLoadingOnCallIntegration) {
+    return <LoadingPlaceholder text="Loading notifiers..." />;
   }
 
   const notifiers: Notifier[] = grafanaNotifiers.map((n) => {
@@ -161,13 +164,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   return (
     <>
       {hasOnCallError && (
-        <Alert
-          severity="error"
-          title={t(
-            'alerting.grafana-receiver-form.title-loading-on-call-integration-failed',
-            'Loading OnCall integration failed'
-          )}
-        >
+        <Alert severity="error" title="Loading OnCall integration failed">
           Grafana OnCall plugin has been enabled in your Grafana instances but it is not reachable. Please check the
           plugin configuration
         </Alert>
@@ -190,6 +187,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         canManagePermissions={
           editMode && contactPoint && showManageContactPointPermissions(GRAFANA_RULES_SOURCE_NAME, contactPoint)
         }
+        canEditProtectedFields={canEditProtectedField}
       />
       <TestContactPointModal
         onDismiss={() => setTestChannelValues(undefined)}

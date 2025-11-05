@@ -1386,3 +1386,9 @@ func ConvertToRecordingRule(rule *AlertRule) {
 func nameToUid(name string) string { // Avoid legacy_storage.NameToUid import cycle.
 	return base64.RawURLEncoding.EncodeToString([]byte(name))
 }
+
+func (n IntegrationMutators) RemoveSetting(key string) Mutator[Integration] {
+	return func(c *Integration) {
+		delete(c.Settings, key)
+	}
+}
