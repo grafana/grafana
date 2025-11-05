@@ -151,7 +151,7 @@
 /pkg/promlib @grafana/oss-big-tent
 /pkg/storage/ @grafana/grafana-search-and-storage
 /pkg/storage/secret/ @grafana/grafana-operator-experience-squad
-/pkg/services/annotations/ @grafana/grafana-search-and-storage
+/pkg/services/annotations/ @grafana/grafana-backend-services-squad
 /pkg/services/apikey/ @grafana/identity-squad
 /pkg/services/cleanup/ @grafana/grafana-backend-group
 /pkg/services/contexthandler/ @grafana/grafana-backend-group @grafana/grafana-app-platform-squad
@@ -181,7 +181,7 @@
 /pkg/services/search/ @grafana/grafana-search-and-storage
 /pkg/services/searchusers/ @grafana/grafana-search-and-storage
 /pkg/services/secrets/ @grafana/grafana-operator-experience-squad
-/pkg/services/shorturls/ @grafana/grafana-backend-group
+/pkg/services/shorturls/ @grafana/sharing-squad
 /pkg/services/sqlstore/ @grafana/grafana-search-and-storage
 /pkg/services/ssosettings/ @grafana/identity-squad
 /pkg/services/star/ @grafana/grafana-search-and-storage
@@ -199,6 +199,7 @@
 /pkg/tests/apis/features @grafana/grafana-backend-services-squad
 /pkg/tests/apis/folder @grafana/grafana-search-and-storage
 /pkg/tests/apis/iam @grafana/identity-access-team
+/pkg/tests/apis/shorturl @grafana/sharing-squad
 /pkg/tests/api/correlations/ @grafana/datapro
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
 /pkg/tsdb/opentsdb/ @grafana/partner-datasources
@@ -241,6 +242,7 @@
 /devenv/dev-dashboards/panel-library @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-piechart @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-stat @grafana/dataviz-squad
+/devenv/dev-dashboards/panel-status-history @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-table @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-timeline @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-timeseries @grafana/dataviz-squad
@@ -472,23 +474,12 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/fixtures/long-trace-response.json @grafana/observability-traces-and-profiling
 /e2e-playwright/fixtures/tempo-response.json @grafana/oss-big-tent
 /e2e-playwright/fixtures/prometheus-response.json @grafana/datapro
-/e2e-playwright/panels-suite/canvas-scene.spec.ts @grafana/dataviz-squad
+/e2e-playwright/panels-suite/ @grafana/dataviz-squad
 /e2e-playwright/panels-suite/dashlist.spec.ts @grafana/grafana-search-navigate-organise
-/e2e-playwright/panels-suite/datagrid-data-change.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/datagrid-editing-features.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/frontend-sandbox-panel.spec.ts @grafana/plugins-platform-frontend
-/e2e-playwright/panels-suite/geomap-layer-types.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/geomap-map-controls.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/geomap-spatial-operations-transform.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/panelEdit_base.spec.ts @grafana/dashboards-squad
 /e2e-playwright/panels-suite/panelEdit_queries.spec.ts @grafana/dashboards-squad
 /e2e-playwright/panels-suite/panelEdit_transforms.spec.ts @grafana/datapro
-/e2e-playwright/panels-suite/state-timeline.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/table-footer.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/table-kitchenSink.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/table-markdown.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/table-sparkline.spec.ts @grafana/dataviz-squad
-/e2e-playwright/panels-suite/table-utils.ts @grafana/dataviz-squad
 /e2e-playwright/plugin-e2e/ @grafana/oss-big-tent @grafana/partner-datasources
 /e2e-playwright/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
 /e2e-playwright/smoke-tests-suite/ @grafana/grafana-frontend-platform
@@ -505,6 +496,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/frontend-sandbox-app.spec.ts @grafana/plugins-platform-frontend
 /e2e-playwright/various-suite/frontend-sandbox-datasource.spec.ts @grafana/plugins-platform-frontend
 /e2e-playwright/various-suite/gauge.spec.ts @grafana/dataviz-squad
+/e2e-playwright/various-suite/grafana-datasource-random-walk.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/graph-auto-migrate.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/inspect-drawer.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/keybinds.spec.ts @grafana/grafana-frontend-platform
@@ -797,7 +789,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/ColorScale/ @grafana/dataviz-squad
 /public/app/core/components/DynamicImports/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/EmptyListCTA/ @grafana/grafana-frontend-platform
-/public/app/core/components/FolderFilter/ @grafana/sharing-squad
+/public/app/core/components/FolderFilter/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/Footer/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/ForgottenPassword/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/Form/ @grafana/grafana-frontend-platform
@@ -1174,6 +1166,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/registry/apis/ @grafana/grafana-app-platform-squad
 /pkg/registry/apis/folders @grafana/grafana-search-and-storage
+/pkg/registry/apis/datasource @grafana/grafana-datasources-core-services
 /pkg/registry/apis/query @grafana/grafana-datasources-core-services
 /pkg/registry/apis/secret @grafana/grafana-operator-experience-squad
 /pkg/registry/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend

@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash';
 import { ArrayValues } from 'type-fest';
 
 import { DataFrame, PanelData } from '@grafana/data';
@@ -6,7 +7,7 @@ import { useQueryRunner, useTimeRange, useVariableValues } from '@grafana/scenes
 
 import { Workbench } from '../Workbench';
 import { DEFAULT_FIELDS, METRIC_NAME, VARIABLES } from '../constants';
-import { AlertRuleRow, GenericGroupedRow, WorkbenchRow } from '../types';
+import { AlertRuleRow, EmptyLabelValue, GenericGroupedRow, WorkbenchRow } from '../types';
 
 import { convertTimeRangeToDomain, getDataQuery, useQueryFilter } from './utils';
 
@@ -33,7 +34,17 @@ export function WorkbenchRenderer() {
   const { data } = runner.useState();
   const rows = data ? convertToWorkbenchRows(data, groupByKeys) : [];
 
-  return <Workbench data={rows} domain={domain} queryRunner={runner} />;
+  const hasFiltersApplied = queryFilter.length > 0;
+
+  return (
+    <Workbench
+      data={rows}
+      domain={domain}
+      queryRunner={runner}
+      groupBy={groupByKeys}
+      hasActiveFilters={hasFiltersApplied}
+    />
+  );
 }
 
 type DataPoint = Record<ArrayValues<typeof DEFAULT_FIELDS>, string> & Record<string, string | undefined>;
@@ -79,29 +90,40 @@ function groupData(dataPoints: DataPoint[], groupBy: string[], depth: number): W
   }
 
   const groupByKey = groupBy[depth];
-  const grouped = new Map<string, DataPoint[]>();
+  const grouped = new Map<string | typeof EmptyLabelValue, DataPoint[]>();
 
   for (const dp of dataPoints) {
-    const key = String(dp[groupByKey] ?? 'undefined');
-    if (!grouped.has(key)) {
-      grouped.set(key, []);
+    const mapKey = dp[groupByKey] ?? EmptyLabelValue;
+    if (!grouped.has(mapKey)) {
+      grouped.set(mapKey, []);
     }
-    grouped.get(key)?.push(dp);
+    grouped.get(mapKey)?.push(dp);
   }
 
   const result: GenericGroupedRow[] = [];
+  const emptyGroups: GenericGroupedRow[] = [];
+
   for (const [value, rows] of grouped.entries()) {
-    result.push({
+    const labelValue = isEmpty(value) ? EmptyLabelValue : value;
+
+    const group: GenericGroupedRow = {
       type: 'group',
       metadata: {
         label: groupByKey,
-        value: value,
+        value: labelValue,
       },
       rows: groupData(rows, groupBy, depth + 1),
-    });
+    };
+
+    // Separate empty label groups to append at the end
+    if (group.metadata.value === EmptyLabelValue) {
+      emptyGroups.push(group);
+    } else {
+      result.push(group);
+    }
   }
 
-  return result;
+  return [...result, ...emptyGroups];
 }
 
 // @TODO narrower types for PanelData! (if possible)

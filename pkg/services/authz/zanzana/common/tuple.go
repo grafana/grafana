@@ -1,12 +1,14 @@
 package common
 
 import (
+	"fmt"
 	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
@@ -31,6 +33,11 @@ const (
 	TypeResourcePrefix     string = TypeResource + ":"
 	TypeGroupResoucePrefix string = TypeGroupResouce + ":"
 	TypeTeamPrefix         string = TypeTeam + ":"
+)
+
+const (
+	KindDashboards string = dashboardV1.DASHBOARD_RESOURCE
+	KindFolders    string = folderV1.RESOURCE
 )
 
 const (
@@ -144,6 +151,10 @@ func isValidRelation(relation string, valid []string) bool {
 	return false
 }
 
+func IsFolderResourceTuple(t *openfgav1.TupleKey) bool {
+	return strings.HasPrefix(t.Object, TypeFolder) && strings.HasPrefix(t.Relation, "resource_")
+}
+
 func SubresourceRelation(relation string) string {
 	return TypeResource + "_" + relation
 }
@@ -178,6 +189,69 @@ func FormatGroupResource(group, resource, subresource string) string {
 	return b.String()
 }
 
+// NewTupleEntry constructs new openfga entry type:name[#relation].
+// Relation allows to specify group of users (subjects) related to type:name
+// (for example, team:devs#member refers to users which are members of team devs)
+func NewTupleEntry(objectType, name, relation string) string {
+	obj := fmt.Sprintf("%s:%s", objectType, name)
+	if relation != "" {
+		obj = fmt.Sprintf("%s#%s", obj, relation)
+	}
+	return obj
+}
+
+func NewObjectEntry(objectType, group, resource, subresource, name string) string {
+	if objectType == TypeFolder {
+		return TypeFolder + ":" + name
+	}
+
+	obj := fmt.Sprintf("%s:%s/%s", objectType, group, resource)
+	if subresource != "" {
+		obj = fmt.Sprintf("%s/%s", obj, subresource)
+	}
+	if name != "" {
+		obj = fmt.Sprintf("%s/%s", obj, name)
+	}
+	return obj
+}
+
+func TranslateToResourceTuple(subject string, action, kind, name string) (*openfgav1.TupleKey, bool) {
+	translation, ok := resourceTranslations[kind]
+
+	if !ok {
+		return nil, false
+	}
+
+	m, ok := translation.mapping[action]
+	if !ok {
+		return nil, false
+	}
+
+	if name == "*" {
+		return NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource), true
+	}
+
+	if translation.typ == TypeResource {
+		return NewResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource, name), true
+	}
+
+	if translation.typ == TypeFolder {
+		if m.group != "" && m.resource != "" {
+			return NewFolderResourceTuple(subject, m.relation, m.group, m.resource, m.subresource, name), true
+		}
+
+		return NewFolderTuple(subject, m.relation, name), true
+	}
+
+	return NewTypedTuple(translation.typ, subject, m.relation, name), true
+}
+
+func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {
+	va := a.Condition.Context.Fields["subresources"]
+	vb := b.Condition.Context.Fields["subresources"]
+	va.GetListValue().Values = append(va.GetListValue().Values, vb.GetListValue().Values...)
+}
+
 func NewResourceTuple(subject, relation, group, resource, subresource, name string) *openfgav1.TupleKey {
 	return &openfgav1.TupleKey{
 		User:     subject,
@@ -198,6 +272,18 @@ func isSubresourceRelationSet(relation string) bool {
 	return relation == RelationSubresourceSetView ||
 		relation == RelationSubresourceSetEdit ||
 		relation == RelationSubresourceSetAdmin
+}
+
+func NewFolderParentTuple(folder, parent string) *openfgav1.TupleKey {
+	return &openfgav1.TupleKey{
+		Object:   NewFolderIdent(folder),
+		Relation: RelationParent,
+		User:     NewFolderIdent(parent),
+	}
+}
+
+func NewFolderTuple(subject, relation, name string) *openfgav1.TupleKey {
+	return NewTypedTuple(TypeFolder, subject, relation, name)
 }
 
 func NewFolderResourceTuple(subject, relation, group, resource, subresource, folder string) *openfgav1.TupleKey {
@@ -256,23 +342,19 @@ func NewGroupResourceTuple(subject, relation, group, resource, subresource strin
 	}
 }
 
-func NewFolderParentTuple(folder, parent string) *openfgav1.TupleKey {
-	return &openfgav1.TupleKey{
-		Object:   NewFolderIdent(folder),
-		Relation: RelationParent,
-		User:     NewFolderIdent(parent),
-	}
-}
-
-func NewFolderTuple(subject, relation, name string) *openfgav1.TupleKey {
-	return NewTypedTuple(TypeFolder, subject, relation, name)
-}
-
 func NewTypedTuple(typ, subject, relation, name string) *openfgav1.TupleKey {
 	return &openfgav1.TupleKey{
 		User:     subject,
 		Relation: relation,
 		Object:   NewTypedIdent(typ, name),
+	}
+}
+
+func NewTuple(subject, relation, object string) *openfgav1.TupleKey {
+	return &openfgav1.TupleKey{
+		User:     subject,
+		Relation: relation,
+		Object:   object,
 	}
 }
 
@@ -382,4 +464,22 @@ func AddRenderContext(req *openfgav1.CheckRequest) {
 			"",
 		),
 	})
+}
+
+func SplitTupleObject(object string) (string, string, string) {
+	var objectType, name, relation string
+	parts := strings.Split(object, ":")
+	if len(parts) < 2 {
+		return "", "", ""
+	}
+
+	objectType = parts[0]
+	nameRel := parts[1]
+	parts = strings.Split(nameRel, "#")
+	if len(parts) > 1 {
+		relation = parts[1]
+	}
+	name = parts[0]
+
+	return objectType, name, relation
 }

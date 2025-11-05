@@ -61,7 +61,8 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, sec
 
 	kv := resource.NewBadgerKV(db)
 	backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
-		KvStore: kv,
+		KvStore:                      kv,
+		WithExperimentalClusterScope: true,
 	})
 	if err != nil {
 		return nil, err
