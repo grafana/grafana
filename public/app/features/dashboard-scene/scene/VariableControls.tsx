@@ -27,11 +27,7 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
         .map((variable) => (
           <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
         ))}
-      {config.featureToggles.dashboardNewLayouts ? (
-        <div className="dashboard-canvas-add-button">
-          <AddVariableButton dashboard={dashboard} />
-        </div>
-      ) : null}
+      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
     </>
   );
 }
