@@ -63,7 +63,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.2 // @grafana/identity-access-team
 	github.com/go-kit/log v0.2.1 //  @grafana/grafana-backend-group
 	github.com/go-ldap/ldap/v3 v3.4.4 // @grafana/identity-access-team
-	github.com/go-logfmt/logfmt v0.6.0 // @grafana/oss-big-tent
+	github.com/go-logfmt/logfmt v0.6.1 // @grafana/oss-big-tent
 	github.com/go-openapi/loads v0.23.1 // @grafana/alerting-backend
 	github.com/go-openapi/runtime v0.28.0 // @grafana/alerting-backend
 	github.com/go-openapi/strfmt v0.24.0 // @grafana/alerting-backend
@@ -701,6 +701,9 @@ replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
 // Use our fork of dolthub/go-mysql-server which makes non-cgo the default
 // since using a build tag is not sufficient for some use cases (e.g. developers tests in IDE).
 replace github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.1-grafana1
+
+// Use fork of slog-gokit with fix for data race in handler
+replace github.com/tjhop/slog-gokit => github.com/MissingRoberto/slog-gokit v0.0.0-20251105092822-783f72952ce4
 
 // v1.* versions were retracted, we need to stick with v0.*. This should work
 // without the exclude, but this otherwise gets pulled in as a transitive
