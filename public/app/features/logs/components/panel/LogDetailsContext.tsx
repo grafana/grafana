@@ -133,7 +133,7 @@ export const LogDetailsContextProvider = ({
       if (!enableLogDetails) {
         return;
       }
-      const found = showDetails.find((stateLog) => stateLog === log || stateLog.uid === log.uid);
+      const found = showDetails.find((stateLog) => stateLog.uid === log.uid);
       if (found) {
         removeDetailsScrollPosition(found);
         const newShowDetails = showDetails.filter((stateLog) => stateLog.uid !== log.uid);
