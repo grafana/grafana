@@ -24,7 +24,16 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   paginationRev?: string;
 }
 
-const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'tooltip', 'paginationRev', 'annotationLanes'];
+const propsToDiff = [
+  'rowHeight',
+  'colWidth',
+  'showValue',
+  'mergeValues',
+  'alignValue',
+  'tooltip',
+  'paginationRev',
+  'annotationLanes',
+];
 
 export const TimelineChart = (props: TimelineProps) => {
   const { frames, timeZone, rowHeight, tooltip, legend, legendItems } = props;
