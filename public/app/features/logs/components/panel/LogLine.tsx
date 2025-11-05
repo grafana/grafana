@@ -559,6 +559,21 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     }),
     currentLog: css({
       background: hoverColor,
+      '.field.level-critical': {
+        color: colors.default,
+      },
+      '.field.level-error': {
+        color: colors.default,
+      },
+      '.field.level-warning': {
+        color: colors.default,
+      },
+      '.field.level-info': {
+        color: colors.default,
+      },
+      '.field.level-debug': {
+        color: colors.default,
+      },
     }),
     pinnedLogLine: css({
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
