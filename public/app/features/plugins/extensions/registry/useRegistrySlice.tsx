@@ -18,14 +18,16 @@ export function useAddedComponentsRegistrySlice<Props>(
   extensionPointId: string
 ): Array<AddedComponentRegistryItem<Props>> | undefined {
   const registry = useAddedComponentsRegistry();
-  return useRegistrySlice(extensionPointId, registry);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return useRegistrySlice(extensionPointId, registry) as Array<AddedComponentRegistryItem<Props>> | undefined;
 }
 
-export function useExposedComponentsRegistrySlice(
+export function useExposedComponentsRegistrySlice<Props>(
   extensionPointId: string
-): ExposedComponentRegistryItem<{}> | undefined {
+): ExposedComponentRegistryItem<Props> | undefined {
   const registry = useExposedComponentsRegistry();
-  return useRegistrySlice(extensionPointId, registry);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return useRegistrySlice(extensionPointId, registry) as ExposedComponentRegistryItem<Props> | undefined;
 }
 
 export function useAddedLinksRegistrySlice(extensionPointId: string): AddedLinkRegistryItem[] | undefined {
@@ -33,9 +35,12 @@ export function useAddedLinksRegistrySlice(extensionPointId: string): AddedLinkR
   return useRegistrySlice(extensionPointId, registry);
 }
 
-export function useAddedFunctionsRegistrySlice(extensionPointId: string): AddedFunctionsRegistryItem[] | undefined {
+export function useAddedFunctionsRegistrySlice<Signature>(
+  extensionPointId: string
+): Array<AddedFunctionsRegistryItem<Signature>> | undefined {
   const registry = useAddedFunctionsRegistry();
-  return useRegistrySlice(extensionPointId, registry);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return useRegistrySlice(extensionPointId, registry) as Array<AddedFunctionsRegistryItem<Signature>> | undefined;
 }
 
 function useRegistrySlice<TRegistryValue extends object | unknown[] | Record<string | symbol, unknown>, TMapType>(

@@ -8,6 +8,7 @@ import {
 } from '@grafana/data';
 import { UsePluginComponentsOptions, UsePluginComponentsResult } from '@grafana/runtime';
 
+import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { useAddedComponentsRegistrySlice } from './registry/useRegistrySlice';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { generateExtensionId, getExtensionPointPluginDependencies } from './utils';
@@ -18,7 +19,7 @@ export function usePluginComponents<Props extends object = {}>({
   limitPerPlugin,
   extensionPointId,
 }: UsePluginComponentsOptions): UsePluginComponentsResult<Props> {
-  const registryItems = useAddedComponentsRegistrySlice(extensionPointId);
+  const registryItems = useAddedComponentsRegistrySlice<Props>(extensionPointId);
   const pluginContext = usePluginContext();
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
 
@@ -61,7 +62,7 @@ export function usePluginComponents<Props extends object = {}>({
 }
 
 export function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
-  registryItem: AddedComponentRegistryItem,
+  registryItem: AddedComponentRegistryItem<Props>,
   extensionPointId: string
 ): ComponentTypeWithExtensionMeta<Props> {
   const { component: Component, ...config } = registryItem;
