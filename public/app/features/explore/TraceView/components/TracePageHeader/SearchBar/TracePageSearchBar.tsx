@@ -16,8 +16,8 @@ import { css } from '@emotion/css';
 import { memo, Dispatch, SetStateAction } from 'react';
 
 import { GrafanaTheme2, TraceSearchProps } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { Switch, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { InlineSwitch, useStyles2 } from '@grafana/ui';
 
 import { Trace } from '../../types/trace';
 
@@ -60,30 +60,16 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
         datasourceType={datasourceType}
         showSpanFilters={showSpanFilters}
       />
-      <div className={styles.matchesOnly}>
-        <Switch
-          value={!search.matchesOnly}
-          label={t('explore.trace-page-search-bar.label-show-all-spans', 'Show all spans switch')}
-          disabled={!spanFilterMatches?.size}
-          onChange={(e) => {
-            e.stopPropagation();
-            setShowSpanFilterMatchesOnly(!search.matchesOnly);
-          }}
-        />
-        <span
-          className={styles.clearMatchesButton}
-          role="button"
-          tabIndex={0}
-          onClick={() => setShowSpanFilterMatchesOnly(!search.matchesOnly)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              setShowSpanFilterMatchesOnly(!search.matchesOnly);
-            }
-          }}
-        >
-          <Trans i18nKey="explore.show-all-spans">Show all spans</Trans>
-        </span>
-      </div>
+      <InlineSwitch
+        showLabel={true}
+        value={!search.matchesOnly}
+        label={t('explore.show-all-spans', 'Show all spans')}
+        disabled={!spanFilterMatches?.size}
+        className={styles.switch}
+        onChange={(e) => {
+          setShowSpanFilterMatchesOnly(!search.matchesOnly);
+        }}
+      />
     </div>
   );
 });
@@ -93,15 +79,16 @@ export const getStyles = (theme: GrafanaTheme2) => {
     controls: css({
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(3),
+      gap: theme.spacing(1),
     }),
-    matchesOnly: css({
-      display: 'inline-flex',
-      marginLeft: 'auto',
-      verticalAlign: 'middle',
-      alignItems: 'center',
-      cursor: 'pointer',
+    switch: css({
+      flexDirection: 'row-reverse',
       gap: theme.spacing(0.5),
+
+      label: {
+        padding: 0,
+        fontSize: theme.typography.bodySmall.fontSize,
+      },
     }),
     clearMatchesButton: css({
       color: theme.colors.text.primary,
