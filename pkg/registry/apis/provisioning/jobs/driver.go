@@ -344,7 +344,7 @@ func (d *jobDriver) onProgress() ProgressFn {
 				return nil
 			}
 
-			// Use the current job for the first attempt, fetch fresh for retries
+			// Use the current job for the first attempt; on retry attempts, fetch fresh data from the store to resolve conflicts
 			if attempt > 0 {
 				// Fetch the latest version to resolve conflicts
 				latest, err := d.store.Get(ctx, d.currentJob.GetNamespace(), d.currentJob.GetName())
