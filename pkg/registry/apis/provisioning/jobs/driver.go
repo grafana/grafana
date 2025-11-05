@@ -300,7 +300,7 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		return nil
 	}
 
-	// Here it's save to copy as only job spec is used for processing
+	// Here it's safe to copy as only job spec is used for processing
 	job := d.currentJob.DeepCopy()
 	repoName := d.currentJob.Spec.Repository
 	namespace := d.currentJob.Namespace
