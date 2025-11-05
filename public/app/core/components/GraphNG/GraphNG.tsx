@@ -228,8 +228,6 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
-        console.log(this.props.annotationLanes, prevProps.annotationLanes);
-
         const shouldReconfig =
           this.state.config === undefined ||
           timeZone !== prevProps.timeZone ||
