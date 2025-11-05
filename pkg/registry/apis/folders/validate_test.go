@@ -320,7 +320,7 @@ func TestValidateDelete(t *testing.T) {
 			},
 		},
 	}, {
-		name: "stats error",
+		name: "stats error - nil stats",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "nnn",
@@ -331,7 +331,7 @@ func TestValidateDelete(t *testing.T) {
 		},
 		expectedErr: "could not verify if folder is empty",
 	}, {
-		name: "stats error",
+		name: "stats error - search error",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "nnn",
@@ -342,7 +342,7 @@ func TestValidateDelete(t *testing.T) {
 		},
 		expectedErr: "error running stats",
 	}, {
-		name: "stats error",
+		name: "stats error - error result",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "nnn",
@@ -414,7 +414,7 @@ func TestValidateDelete(t *testing.T) {
 		},
 		expectedErr: "[folder.not-empty]",
 	}, {
-		name: "folder can be deleted when it only contains non-validated resource types",
+		name: "folder not empty - contains folders",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "nnn",
@@ -426,6 +426,25 @@ func TestValidateDelete(t *testing.T) {
 					{
 						Group:    "folders.grafana.app",
 						Resource: "folders",
+						Count:    2, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder can be deleted when it only contains non-validated resource types",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "playlist.grafana.app",
+						Resource: "playlists",
 						Count:    10, // has content but not a validated resource type
 					},
 					{
@@ -436,7 +455,6 @@ func TestValidateDelete(t *testing.T) {
 				},
 			},
 		},
-		// No error expected - these resource types are not validated
 	}, {
 		name: "folder not empty - mixed resources with validated types",
 		folder: &folders.Folder{
@@ -450,7 +468,7 @@ func TestValidateDelete(t *testing.T) {
 					{
 						Group:    "folders.grafana.app",
 						Resource: "folders",
-						Count:    10, // not validated
+						Count:    10, // now validated
 					},
 					{
 						Group:    "dashboard.grafana.app",

@@ -144,7 +144,7 @@ func validateOnDelete(ctx context.Context,
 		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
 	}
 
-	allowedResourceTypes := []string{"alertrules", "dashboards", "library_elements"}
+	allowedResourceTypes := []string{"alertrules", "dashboards", "library_elements", "folders"}
 
 	for _, v := range resp.Stats {
 		if slices.Contains(allowedResourceTypes, v.Resource) && v.Count > 0 {
