@@ -156,7 +156,8 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest)
 
 	rsp, err := d.pluginClient.QueryData(ctx, qdr)
 	if err != nil {
-		return rsp, err
+		// Wrap error to identify it came from plugin client
+		return rsp, fmt.Errorf("[PLUGIN_CLIENT] query failed for datasource %s: %w", dsRef.UID, err)
 	}
 	return rsp, err
 }

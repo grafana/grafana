@@ -312,23 +312,36 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 
 	qsDsClient, ok, err := s.qsDatasourceClientBuilder.BuildClient(ds.Type, ds.UID)
 	if err != nil {
+		s.log.Error("[QUERY_SERVICE] Failed to build datasource client", "err", err, "ds_type", ds.Type, "ds_uid", ds.UID)
 		return nil, err
 	}
 
 	if !ok { // single tenant flow
+		s.log.Info("[QUERY_SERVICE] Using single-tenant plugin flow", "ds_type", ds.Type, "ds_uid", ds.UID)
 		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
 		if err != nil {
+			s.log.Error("[QUERY_SERVICE] Failed to get plugin context", "err", err, "ds_type", ds.Type, "ds_uid", ds.UID)
 			return nil, err
 		}
 		req.PluginContext = pCtx
-		return s.pluginClient.QueryData(ctx, req)
+		resp, err := s.pluginClient.QueryData(ctx, req)
+		if err != nil {
+			s.log.Error("[QUERY_SERVICE] Plugin query failed", "err", err, "ds_type", ds.Type, "ds_uid", ds.UID, "error_detail", err.Error())
+		}
+		return resp, err
 	} else { // query-service flow (single or multi tenant)
+		s.log.Info("[QUERY_SERVICE] Using multi-tenant query-service flow", "ds_type", ds.Type, "ds_uid", ds.UID)
 		// transform request from backend.QueryDataRequest to k8s request
 		k8sReq, err := expr.ConvertBackendRequestToDataRequest(req)
 		if err != nil {
+			s.log.Error("[QUERY_SERVICE] Failed to convert request", "err", err, "ds_type", ds.Type, "ds_uid", ds.UID)
 			return nil, err
 		}
-		return qsDsClient.QueryData(ctx, *k8sReq)
+		resp, err := qsDsClient.QueryData(ctx, *k8sReq)
+		if err != nil {
+			s.log.Error("[QUERY_SERVICE] Query service datasource client query failed", "err", err, "ds_type", ds.Type, "ds_uid", ds.UID, "error_detail", err.Error())
+		}
+		return resp, err
 	}
 }
 
