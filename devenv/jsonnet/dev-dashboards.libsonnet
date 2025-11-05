@@ -74,6 +74,7 @@
     "mostly-blank-dashboard": (import '../dev-dashboards/scenarios/mostly-blank-dashboard.json'),
     "mssql_fakedata": (import '../dev-dashboards/datasource-mssql/mssql_fakedata.json'),
     "mssql_unittest": (import '../dev-dashboards/datasource-mssql/mssql_unittest.json'),
+    "multi-lane-annotations": (import '../dev-dashboards/annotations/multi-lane-annotations.json'),
     "mysql_fakedata": (import '../dev-dashboards/datasource-mysql/mysql_fakedata.json'),
     "mysql_unittest": (import '../dev-dashboards/datasource-mysql/mysql_unittest.json'),
     "new_features_in_v74": (import '../dev-dashboards/datasource-testdata/new_features_in_v74.json'),
