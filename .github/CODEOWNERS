@@ -226,6 +226,7 @@
 /devenv/datasources.yaml @grafana/grafana-backend-group
 /devenv/datasources_docker.yaml @grafana/grafana-backend-group
 /devenv/dev-dashboards-without-uid/ @grafana/dashboards-squad
+/devenv/scopes/ @grafana/grafana-operator-experience-squad
 
 /devenv/dev-dashboards/annotations @grafana/dataviz-squad
 /devenv/dev-dashboards/migrations @grafana/dataviz-squad
