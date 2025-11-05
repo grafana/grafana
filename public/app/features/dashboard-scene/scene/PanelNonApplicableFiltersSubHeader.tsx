@@ -7,7 +7,6 @@ import {
   GroupByVariable,
   SceneComponentProps,
   SceneObjectBase,
-  SceneQueryRunner,
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
