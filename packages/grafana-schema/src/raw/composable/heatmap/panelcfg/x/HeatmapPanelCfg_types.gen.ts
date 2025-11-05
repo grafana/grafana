@@ -188,6 +188,7 @@ export interface RowsHeatmapOptions {
 }
 
 export interface Options {
+  annotations?: ui.VizAnnotations;
   /**
    * Controls if the heatmap should be calculated from data
    */
