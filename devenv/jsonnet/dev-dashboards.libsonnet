@@ -96,6 +96,7 @@
     "rows-to-fields": (import '../dev-dashboards/transforms/rows-to-fields.json'),
     "shared_queries": (import '../dev-dashboards/panel-common/shared_queries.json'),
     "slow_queries_and_annotations": (import '../dev-dashboards/scenarios/slow_queries_and_annotations.json'),
+    "status-history-thresholds-mappings": (import '../dev-dashboards/panel-status-history/status-history-thresholds-mappings.json'),
     "table_footer": (import '../dev-dashboards/panel-table/table_footer.json'),
     "table_kitchen_sink": (import '../dev-dashboards/panel-table/table_kitchen_sink.json'),
     "table_markdown": (import '../dev-dashboards/panel-table/table_markdown.json'),
