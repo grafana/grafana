@@ -29,7 +29,7 @@ func main() {
 		KubeConfig:   rest.Config{}, // this will be replaced by the apiserver loopback config
 		ManifestData: *apis.LocalManifest().ManifestData,
 		SpecificConfig: checkregistry.AdvisorAppConfig{
-			CheckRegistry: &mockchecks.CheckRegistry{},
+			CheckRegistry: mockchecks.New(),
 			PluginConfig:  map[string]string{},
 			StackID:       "1", // Numeric stack ID for standalone mode
 			OrgService:    nil, // Not needed when StackID is set
