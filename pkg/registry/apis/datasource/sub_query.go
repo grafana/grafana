@@ -94,6 +94,8 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			Headers:       query_headers.ExtractKnownHeaders(req.Header),
 		})
 
+		fmt.Println("test32")
+
 		// all errors get converted into k8 errors when sent in responder.Error and lose important context like downstream info
 		var e errutil.Error
 		if errors.As(err, &e) && e.Source == errutil.SourceDownstream {
