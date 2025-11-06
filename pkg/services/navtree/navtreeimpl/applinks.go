@@ -222,11 +222,6 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 				IsNew:      true,
 			}
 			alertsSection.Children = append(alertsSection.Children, serviceLink)
-
-			reportsNavLink := navtree.FindByURL(alertsSection.Children, "/a/grafana-slo-app/reports")
-			if reportsNavLink != nil {
-				reportsNavLink.IsNew = true
-			}
 		}
 	}
 
