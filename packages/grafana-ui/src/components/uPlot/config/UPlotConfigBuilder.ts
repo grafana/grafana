@@ -47,7 +47,7 @@ export class UPlotConfigBuilder {
   // to prevent more than one threshold per scale
   private thresholds: Record<string, UPlotThresholdOptions> = {};
   private padding?: Padding = undefined;
-  private panState = { isPanning: false, min: 0, max: 0 };
+  private state = { isPanning: false, min: 0, max: 0 };
 
   private cachedConfig?: PlotConfig;
 
@@ -60,18 +60,18 @@ export class UPlotConfigBuilder {
   // Exposed to let the container know the primary scale keys
   scaleKeys: [string, string] = ['', ''];
 
-  setPanState(isPanning: boolean, min?: number, max?: number) {
-    this.panState.isPanning = isPanning;
+  setState(isPanning: boolean, min?: number, max?: number) {
+    this.state.isPanning = isPanning;
     if (min !== undefined) {
-      this.panState.min = min;
+      this.state.min = min;
     }
     if (max !== undefined) {
-      this.panState.max = max;
+      this.state.max = max;
     }
   }
 
-  getPanState() {
-    return this.panState;
+  getState() {
+    return this.state;
   }
 
   addHook<T extends keyof Hooks.Defs>(type: T, hook: Hooks.Defs[T]) {

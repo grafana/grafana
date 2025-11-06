@@ -9,7 +9,6 @@ import { DashboardCursorSync } from '@grafana/schema';
 
 import { AdHocFilterModel } from '../../../internal';
 import { useStyles2 } from '../../../themes/ThemeContext';
-import { getFeatureToggle } from '../../../utils/featureToggle';
 import { RangeSelection1D, RangeSelection2D, OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
@@ -113,95 +112,6 @@ const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e
 
 const getDataLinksFallback: GetDataLinksCallback = () => [];
 const getAdHocFiltersFallback: GetAdHocFiltersCallback = () => [];
-
-/**
- * Enables panning the time range by dragging x-axis labels.
- * Provides visual feedback (grab/grabbing cursor) and real-time grid updates during drag.
- * Calls queryZoom() on drag end to update dashboard time range if drag exceeds MIN_ZOOM_DIST.
- * Uses UPlotConfigBuilder.setPanState() to avoid mutation of scale.range function.
- * @internal - exported for testing only
- */
-export const setupXAxisPan = (
-  u: uPlot,
-  config: UPlotConfigBuilder,
-  queryZoom: (range: { from: number; to: number }) => void
-) => {
-  let xAxes = u.root.querySelectorAll('.u-axis');
-  let xAxis = xAxes[0];
-
-  if (!xAxis || !(xAxis instanceof HTMLElement)) {
-    return;
-  }
-
-  const xAxisEl = xAxis;
-
-  xAxisEl.addEventListener('mouseenter', () => {
-    xAxisEl.style.cursor = 'grab';
-  });
-
-  xAxisEl.addEventListener('mouseleave', () => {
-    xAxisEl.style.cursor = '';
-  });
-
-  xAxisEl.addEventListener('mousedown', (e: Event) => {
-    if (!(e instanceof MouseEvent)) {
-      return;
-    }
-    e.preventDefault();
-
-    xAxisEl.style.cursor = 'grabbing';
-
-    let xScale = u.scales.x;
-
-    let rect = u.over.getBoundingClientRect();
-    let startX = e.clientX - rect.left;
-    let startMin = xScale.min!;
-    let startMax = xScale.max!;
-    let unitsPerPx = (startMax - startMin) / (u.bbox.width / uPlot.pxRatio);
-
-    let onMove = (e: MouseEvent) => {
-      e.preventDefault();
-
-      let currentX = e.clientX - rect.left;
-      let dx = currentX - startX;
-      let shiftBy = dx * unitsPerPx;
-
-      let panMin = startMin - shiftBy;
-      let panMax = startMax - shiftBy;
-
-      config.setPanState(true, panMin, panMax);
-
-      u.setScale('x', {
-        min: panMin,
-        max: panMax,
-      });
-    };
-
-    let onUp = (e: MouseEvent) => {
-      let endX = e.clientX - rect.left;
-      let dx = endX - startX;
-
-      xAxisEl.style.cursor = 'grab';
-
-      config.setPanState(false);
-
-      if (Math.abs(dx) >= MIN_ZOOM_DIST) {
-        let shiftBy = dx * unitsPerPx;
-
-        queryZoom({
-          from: startMin - shiftBy,
-          to: startMax - shiftBy,
-        });
-      }
-
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-    };
-
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-  });
-};
 
 const userAgentIsMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
 
@@ -428,10 +338,6 @@ export const TooltipPlugin2 = ({
           },
           true
         );
-      }
-
-      if (queryZoom != null && getFeatureToggle('timeRangePan')) {
-        setupXAxisPan(u, config, queryZoom);
       }
 
       // this handles pinning, 0-width range selection, and one-click
