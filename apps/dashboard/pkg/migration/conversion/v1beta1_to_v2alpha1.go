@@ -1696,7 +1696,7 @@ func transformPanelQueries(panelMap map[string]interface{}) []dashv2alpha1.Dashb
 }
 
 func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *dashv2alpha1.DashboardDataSourceRef) dashv2alpha1.DashboardPanelQueryKind {
-	refId := schemaversion.GetStringValue(targetMap, "refId")
+	refId := schemaversion.GetStringValue(targetMap, "refId", "A")
 	hidden := getBoolField(targetMap, "hide", false)
 
 	// Extract datasource from query or use panel datasource
@@ -2265,8 +2265,17 @@ func buildThresholdsConfig(thresholdsMap map[string]interface{}) *dashv2alpha1.D
 		for _, step := range steps {
 			if stepMap, ok := step.(map[string]interface{}); ok {
 				threshold := dashv2alpha1.DashboardThreshold{}
-				if value, ok := stepMap["value"].(float64); ok {
-					threshold.Value = &value
+				// Handle threshold value: null means -Infinity
+				if value, exists := stepMap["value"]; exists {
+					if value == nil {
+						// null means -Infinity
+						threshold.Value = nil
+					} else if floatVal, ok := value.(float64); ok {
+						threshold.Value = &floatVal
+					}
+				} else {
+					// Value not present, leave as nil (represents -Infinity)
+					threshold.Value = nil
 				}
 				if color, ok := stepMap["color"].(string); ok {
 					threshold.Color = color
