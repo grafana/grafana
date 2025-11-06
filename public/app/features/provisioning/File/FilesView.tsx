@@ -35,15 +35,6 @@ export function FilesView({ repo }: FilesViewProps) {
       },
     },
     {
-      id: 'size',
-      header: 'Size (KB)',
-      cell: ({ row: { original } }: FileCell<'size'>) => {
-        const { size } = original;
-        return (parseInt(size, 10) / 1024).toFixed(2);
-      },
-      sortType: 'number',
-    },
-    {
       id: 'hash',
       header: 'Hash',
       sortType: 'string',
