@@ -172,6 +172,18 @@ func addUserMigrations(mg *Migrator) {
 	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail, &usermig.UsersLowerCaseLoginAndEmail{})
 	// Users login and email should be in lower case - 2, fix for creating users not lowering login and email
 	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail+"2", &usermig.UsersLowerCaseLoginAndEmail{})
+
+	// Expand uid column to safely accommodate 'scim-' prefix without truncation/collisions
+	mg.AddMigration("Expand user.uid length to 190", NewRawSQLMigration("").
+		SQLite("SELECT 1;").
+		Postgres("ALTER TABLE `user` ALTER COLUMN uid TYPE VARCHAR(190);").
+		Mysql("ALTER TABLE user MODIFY uid VARCHAR(190);"))
+
+	// Prefix SCIM UID for provisioned users to avoid numeric/existing-id collisions
+	mg.AddMigration("Prefix SCIM uid for provisioned users", NewRawSQLMigration("").
+		SQLite("UPDATE user SET uid = 'scim-' || uid WHERE is_provisioned = 1 AND uid NOT LIKE 'scim-%';").
+		Postgres("UPDATE `user` SET uid = 'scim-' || uid WHERE is_provisioned = TRUE AND uid NOT LIKE 'scim-%';").
+		Mysql("UPDATE user SET uid = CONCAT('scim-', uid) WHERE is_provisioned = 1 AND uid NOT LIKE 'scim-%';"))
 }
 
 const migSQLITEisServiceAccountNullable = `ALTER TABLE user ADD COLUMN tmp_service_account BOOLEAN DEFAULT 0;
