@@ -107,6 +107,7 @@ composableKinds: PanelCfg: lineage: {
 				layout?: ui.HeatmapCellLayout
 			} @cuetsy(kind="interface")
 			Options: {
+				annotations?: ui.VizAnnotations
 				// Controls if the heatmap should be calculated from data
 				calculate?: bool | *false
 				// Calculation options for the heatmap
