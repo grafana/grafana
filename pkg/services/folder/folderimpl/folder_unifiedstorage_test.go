@@ -17,6 +17,7 @@ import (
 	clientrest "k8s.io/client-go/rest"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/bus"
@@ -33,6 +34,9 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -209,6 +213,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				{Action: dashboards.ActionFoldersDelete, Scope: dashboards.ScopeFoldersAll},
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
 				{Action: accesscontrol.ActionAlertingRuleDelete, Scope: dashboards.ScopeFoldersAll},
+				{Action: accesscontrol.ActionLibraryPanelsDelete, Scope: dashboards.ScopeFoldersAll},
 			}),
 	}}
 
@@ -217,6 +222,16 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		Cfg:           cfg.UnifiedAlerting,
 		Logger:        log.New("test-alerting-store"),
 		AccessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
+	}
+
+	mockDashboardService := dashboards.NewFakeDashboardService(t)
+	mockFolderService := foldertest.NewFakeService()
+	elementService := libraryelements.ProvideService(cfg, db, routing.NewRouteRegister(), mockFolderService, featuremgmt.WithFeatures(), actest.FakeAccessControl{ExpectedEvaluate: true}, mockDashboardService, nil, nil)
+	lps := librarypanels.LibraryPanelService{
+		Cfg:                   cfg,
+		SQLStore:              db,
+		LibraryElementService: elementService,
+		FolderService:         mockFolderService,
 	}
 
 	publicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
@@ -237,6 +252,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	}
 
 	require.NoError(t, folderService.RegisterService(alertingStore))
+	require.NoError(t, folderService.RegisterService(lps))
 
 	t.Run("Folder service tests", func(t *testing.T) {
 		t.Run("Given user has no permissions", func(t *testing.T) {
@@ -877,6 +893,17 @@ func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
 		AccessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
 	require.NoError(t, service.RegisterService(alertingStore))
+
+	mockDashboardService := dashboards.NewFakeDashboardService(t)
+	mockFolderService := foldertest.NewFakeService()
+	elementService := libraryelements.ProvideService(cfg, db, routing.NewRouteRegister(), mockFolderService, featuremgmt.WithFeatures(), actest.FakeAccessControl{ExpectedEvaluate: true}, mockDashboardService, nil, nil)
+	lps := librarypanels.LibraryPanelService{
+		Cfg:                   cfg,
+		SQLStore:              db,
+		LibraryElementService: elementService,
+		FolderService:         mockFolderService,
+	}
+	require.NoError(t, service.RegisterService(lps))
 
 	t.Run("Should delete folder", func(t *testing.T) {
 		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{}).Return(nil).Once()

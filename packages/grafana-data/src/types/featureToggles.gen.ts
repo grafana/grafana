@@ -165,10 +165,6 @@ export interface FeatureToggles {
   */
   extraThemes?: boolean;
   /**
-  * Enables the plugins frontend sandbox
-  */
-  pluginsFrontendSandbox?: boolean;
-  /**
   * Enables writing multiple items from a single query within Recorded Queries
   * @default true
   */
