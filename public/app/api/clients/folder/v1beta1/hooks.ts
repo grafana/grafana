@@ -21,9 +21,8 @@ import {
   browseDashboardsAPI,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardTreeSelection } from 'app/features/browse-dashboards/types';
-import { AppDispatch } from 'app/store/configureStore';
-import { dispatch as untypedDispatch } from 'app/store/store';
 import { FolderDTO, NewFolder } from 'app/types/folders';
+import { dispatch } from 'app/types/store';
 
 import kbn from '../../../../core/utils/kbn';
 import {
@@ -58,9 +57,6 @@ import {
   useGetAffectedItemsQuery,
   FolderInfo,
 } from './index';
-
-// Workaround for untyped dispatch from store - useDispatch is typed by
-const dispatch: AppDispatch = untypedDispatch;
 
 function getFolderUrl(uid: string, title: string): string {
   // mimics https://github.com/grafana/grafana/blob/79fe8a9902335c7a28af30e467b904a4ccfac503/pkg/services/dashboards/models.go#L188
