@@ -4,7 +4,8 @@ const PAGE_UNDER_TEST = 'WVpf2jp7z/repeating-a-panel-horizontally';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    v2DashboardAPIVersion: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });
 

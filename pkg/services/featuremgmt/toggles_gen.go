@@ -363,6 +363,10 @@ const (
 	// Enables experimental new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
+	// FlagV2DashboardAPIVersion
+	// Enables the v2 dashboard API version
+	FlagV2DashboardAPIVersion = "v2DashboardAPIVersion"
+
 	// FlagDashboardUndoRedo
 	// Enables undo/redo in dynamic dashboards
 	FlagDashboardUndoRedo = "dashboardUndoRedo"

@@ -400,6 +400,10 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Enables the v2 dashboard API version
+  */
+  v2DashboardAPIVersion?: boolean;
+  /**
   * Enables undo/redo in dynamic dashboards
   */
   dashboardUndoRedo?: boolean;

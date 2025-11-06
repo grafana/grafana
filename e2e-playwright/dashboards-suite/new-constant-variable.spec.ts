@@ -5,7 +5,8 @@ const DASHBOARD_NAME = 'Test variable output';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    v2DashboardAPIVersion: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });
 

@@ -4235,6 +4235,21 @@
     },
     {
       "metadata": {
+        "name": "v2DashboardAPIVersion",
+        "resourceVersion": "1762457740470",
+        "creationTimestamp": "2025-11-06T19:22:05Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-06 19:35:40.470587 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the v2 dashboard API version",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "vizActionsAuth",
         "resourceVersion": "1756904995830",
         "creationTimestamp": "2025-08-08T18:59:18Z",

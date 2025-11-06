@@ -874,6 +874,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   }
 }
 
+export function shouldForceV2API(): boolean {
+  return Boolean(config.featureToggles.v2DashboardAPIVersion || config.featureToggles.dashboardNewLayouts);
+}
+
 export class UnifiedDashboardScenePageStateManager extends DashboardScenePageStateManagerBase<
   DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>
 > {
@@ -886,7 +890,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     this.v1Manager = new DashboardScenePageStateManager(initialState);
     this.v2Manager = new DashboardScenePageStateManagerV2(initialState);
 
-    this.activeManager = config.featureToggles.dashboardNewLayouts ? this.v2Manager : this.v1Manager;
+    this.activeManager = shouldForceV2API() ? this.v2Manager : this.v1Manager;
   }
 
   private async withVersionHandling<T>(

@@ -7,7 +7,8 @@ const TIMEZONE_DASHBOARD_UID = 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    v2DashboardAPIVersion: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });
 
