@@ -1649,6 +1649,8 @@ github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.281.0 h1:V8dGyatzcOLQeivFhBV2JWMwTSZH/clDnpfKG9p3dTA=
 github.com/grafana/grafana-plugin-sdk-go v0.281.0/go.mod h1:3I0g+v6jAwVmrt6BEjDUP4V6pkhGP5QKY5NkXY4Ayr4=
+github.com/grafana/grafana/apps/annotation v0.0.0-20251106211025-f468597ad83b h1:yb64uLZsSUT4/2Z3JVHhjTo2GlVEgfp+mOTq53KZWFQ=
+github.com/grafana/grafana/apps/annotation v0.0.0-20251106211025-f468597ad83b/go.mod h1:XYNhZKgaaK7W5sjo1NIK32ejLzaHfb10TuwscbFif1o=
 github.com/grafana/grafana/apps/example v0.0.0-20251027162426-edef69fdc82b h1:6Bo65etvjQ4tStkaA5+N3A3ENbO4UAWj53TxF6g2Hdk=
 github.com/grafana/grafana/apps/example v0.0.0-20251027162426-edef69fdc82b/go.mod h1:6+wASOCN8LWt6FJ8dc0oODUBIEY5XHaE6ABi8g0mR+k=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=

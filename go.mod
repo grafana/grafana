@@ -655,6 +655,8 @@ require (
 
 require github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/observability-traces-and-profiling
 
+require github.com/grafana/grafana/apps/annotation v0.0.0-20251106211025-f468597ad83b
+
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/containerd/log v0.1.0 // indirect
