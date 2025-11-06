@@ -143,10 +143,6 @@ const (
 	// Enables extra themes
 	FlagExtraThemes = "extraThemes"
 
-	// FlagPluginsFrontendSandbox
-	// Enables the plugins frontend sandbox
-	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
-
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"

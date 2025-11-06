@@ -15,7 +15,6 @@ import {
 
 jest.mock('@grafana/runtime', () => ({
   config: {
-    featureToggles: { pluginsFrontendSandbox: true },
     buildInfo: { env: 'production' },
     enableFrontendSandboxForPlugins: [],
   },
@@ -53,7 +52,6 @@ describe('Sandbox eligibility checks', () => {
     setSandboxEnabledCheck(isPluginFrontendSandboxEnabled);
 
     config.enableFrontendSandboxForPlugins = [];
-    config.featureToggles.pluginsFrontendSandbox = true;
     process.env.NODE_ENV = 'development';
   });
 
@@ -65,12 +63,6 @@ describe('Sandbox eligibility checks', () => {
     mockContextSrv.isSignedIn = false;
     const isEligible = await isPluginFrontendSandboxEligible({ pluginId: 'test-plugin' });
     expect(isEligible).toBe(false);
-  });
-
-  test('shouldLoadPluginInFrontendSandbox returns false when feature toggle is off', async () => {
-    config.featureToggles.pluginsFrontendSandbox = false;
-    const result = await shouldLoadPluginInFrontendSandbox({ pluginId: 'test-plugin' });
-    expect(result).toBe(false);
   });
 
   test('setSandboxEnabledCheck sets custom check function', async () => {

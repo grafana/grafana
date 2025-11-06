@@ -3080,7 +3080,8 @@
       "metadata": {
         "name": "pluginsFrontendSandbox",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-06-05T08:51:36Z"
+        "creationTimestamp": "2023-06-05T08:51:36Z",
+        "deletionTimestamp": "2025-11-05T10:06:22Z"
       },
       "spec": {
         "description": "Enables the plugins frontend sandbox",
