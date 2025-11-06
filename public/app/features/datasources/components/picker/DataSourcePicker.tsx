@@ -11,7 +11,7 @@ import { Observable } from 'rxjs';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
+import { FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { Button, floatingUtils, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
@@ -306,6 +306,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
               onDismiss={onClose}
               onNavigateOutsiteFooter={onNavigateOutsiteFooter}
               dataSources={dataSources}
+              favoriteDataSources={favoriteDataSources}
             />
           </div>
         </Portal>
@@ -343,10 +344,11 @@ export interface PickerContentProps extends DataSourcePickerProps {
   footerRef: (element: HTMLElement | null) => void;
   onNavigateOutsiteFooter: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
   dataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
+  favoriteDataSources: FavoriteDatasources;
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
-  const { filterTerm, onChange, onClose, onClickAddCSV, current, filter, dataSources } = props;
+  const { filterTerm, onChange, onClose, onClickAddCSV, current, filter, dataSources, favoriteDataSources } = props;
 
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings) => {
@@ -368,6 +370,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
       <ScrollContainer showScrollIndicators>
         <DataSourceList
           {...props}
+          favoriteDataSources={favoriteDataSources}
           enableKeyboardNavigation
           className={styles.dataSourceList}
           current={current}

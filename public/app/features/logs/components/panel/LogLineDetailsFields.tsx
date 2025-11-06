@@ -14,6 +14,7 @@ import { LogLabelStats } from '../LogLabelStats';
 import { FieldDef } from '../logParser';
 import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
+import { useLogDetailsContext } from './LogDetailsContext';
 import { useLogListContext } from './LogListContext';
 import { LogListModel, getNormalizedFieldName } from './processing';
 
@@ -139,7 +140,6 @@ export const LogLineDetailsField = ({
   const [fieldStats, setFieldStats] = useState<LogLabelStatsModel[] | null>(null);
   const {
     app,
-    closeDetails,
     displayedFields,
     isLabelFilterActive,
     noInteractions,
@@ -151,6 +151,7 @@ export const LogLineDetailsField = ({
     pinLineButtonTooltipTitle,
     prettifyJSON,
   } = useLogListContext();
+  const { closeDetails } = useLogDetailsContext();
 
   const styles = useStyles2(getFieldStyles);
 

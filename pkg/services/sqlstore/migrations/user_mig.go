@@ -182,6 +182,12 @@ func addUserMigrations(mg *Migrator) {
 		Cols: []string{"is_service_account", "last_seen_at"}, Type: IndexType,
 	}))
 
+	// Expand uid column to safely accommodate 'scim-' prefix without truncation/collisions
+	mg.AddMigration("Expand user.uid length to 190", NewRawSQLMigration("").
+		SQLite("SELECT 1;").
+		Postgres("ALTER TABLE `user` ALTER COLUMN uid TYPE VARCHAR(190);").
+		Mysql("ALTER TABLE user MODIFY uid VARCHAR(190);"))
+
 	// Prefix SCIM UID for provisioned users to avoid numeric/existing-id collisions
 	mg.AddMigration("Prefix SCIM uid for provisioned users", NewRawSQLMigration("").
 		SQLite("UPDATE user SET uid = 'scim-' || uid WHERE is_provisioned = 1 AND uid NOT LIKE 'scim-%';").
