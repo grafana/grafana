@@ -63,9 +63,9 @@ export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectP
     if (evt.target instanceof Element) {
       // multi variable options contain label element so we need a more specific
       //  condition to target variable label to prevent edit pane selection on option click
-      const testId = evt.target.closest('label[data-testid]')?.getAttribute('data-testid');
+      const forAttribute = evt.target.closest('label[for]')?.getAttribute('for');
 
-      if (!testId?.startsWith(selectors.pages.Dashboard.SubMenu.submenuItemLabels(''))) {
+      if (!(forAttribute === `var-${variable.state.key || ''}`)) {
         // Prevent clearing selection when clicking inside value
         evt.stopPropagation();
         return;
