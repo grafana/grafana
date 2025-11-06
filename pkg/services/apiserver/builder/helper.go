@@ -59,6 +59,12 @@ var PathRewriters = []filters.PathRewriter{
 		},
 	},
 	{
+		Pattern: regexp.MustCompile(`(/apis/query.grafana.app/v0alpha1/namespaces/.*/sqlschemas$)`),
+		ReplaceFunc: func(matches []string) string {
+			return matches[1] + "/name" // connector requires a name
+		},
+	},
+	{
 		Pattern: regexp.MustCompile(`(/apis/.*/v0alpha1/namespaces/.*/queryconvert$)`),
 		ReplaceFunc: func(matches []string) string {
 			return matches[1] + "/name" // connector requires a name
@@ -406,6 +412,7 @@ func InstallAPIs(
 			}
 
 			// if grafanaAPIServerWithExperimentalAPIs is not enabled, remove v0alpha1 resources unless explicitly allowed
+			//nolint:staticcheck // not yet migrated to OpenFeature
 			if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 				if resources, ok := g.VersionedResourcesStorageMap["v0alpha1"]; ok {
 					for name := range resources {

@@ -156,16 +156,16 @@ jobs:
             artifacts: targz:grafana:linux/arm/v6,deb:grafana:linux/arm/v6
             verify: true
           - name: windows-amd64
-            artifacts: targz:grafana:windows/amd64,zip:grafana:windows/amd64,msi:grafana:windows/amd64
+            artifacts: targz:grafana:windows/amd64:nocgo,zip:grafana:windows/amd64:nocgo,msi:grafana:windows/amd64:nocgo
             verify: true
           - name: windows-arm64
-            artifacts: targz:grafana:windows/arm64,zip:grafana:windows/arm64
+            artifacts: targz:grafana:windows/arm64:nocgo,zip:grafana:windows/arm64:nocgo
             verify: true
           - name: darwin-amd64
-            artifacts: targz:grafana:darwin/amd64
+            artifacts: targz:grafana:darwin/amd64:nocgo
             verify: true
           - name: darwin-arm64
-            artifacts: targz:grafana:darwin/arm64
+            artifacts: targz:grafana:darwin/arm64:nocgo
             verify: true
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
@@ -187,12 +187,12 @@ jobs:
           output: artifacts-${{ matrix.name }}.txt
           verify: ${{ matrix.verify }}
           build-id: ${{ github.run_id }}
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: artifacts-list-${{ matrix.name }}
           path: ${{ steps.build.outputs.file }}
           retention-days: 1
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: artifacts-${{ matrix.name }}
           path: ${{ steps.build.outputs.dist-dir }}
@@ -224,27 +224,27 @@ jobs:
       - build
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-list-linux-amd64
           path: .
-      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-list-linux-arm64
           path: .
-      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-list-linux-armv7
           path: .
-      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-linux-amd64
           path: dist
-      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-linux-arm64
           path: dist
-      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-linux-armv7
           path: dist

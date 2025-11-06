@@ -165,10 +165,6 @@ export interface FeatureToggles {
   */
   extraThemes?: boolean;
   /**
-  * Enables the plugins frontend sandbox
-  */
-  pluginsFrontendSandbox?: boolean;
-  /**
   * Enables writing multiple items from a single query within Recorded Queries
   * @default true
   */
@@ -712,10 +708,6 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchSprinkles?: boolean;
   /**
-  * Use full n-gram indexing instead of edge n-gram for unified storage search
-  */
-  unifiedStorageUseFullNgram?: boolean;
-  /**
   * Pick the dual write mode from database configs
   */
   managedDualWriter?: boolean;
@@ -732,6 +724,10 @@ export interface FeatureToggles {
   * Enables time pickers sync
   */
   timeRangeProvider?: boolean;
+  /**
+  * Enables time range panning functionality
+  */
+  timeRangePan?: boolean;
   /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
@@ -887,7 +883,8 @@ export interface FeatureToggles {
   */
   fetchRulesUsingPost?: boolean;
   /**
-  * Enables the new logs panel in Explore
+  * Enables the new logs panel
+  * @default true
   */
   newLogsPanel?: boolean;
   /**
@@ -1055,11 +1052,6 @@ export interface FeatureToggles {
   */
   restoreDashboards?: boolean;
   /**
-  * Skip token rotation if it was already rotated less than 5 seconds ago
-  * @default true
-  */
-  skipTokenRotationIfRecent?: boolean;
-  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
@@ -1086,6 +1078,7 @@ export interface FeatureToggles {
   alertingImportAlertmanagerUI?: boolean;
   /**
   * Enables image sharing functionality for dashboards
+  * @default true
   */
   sharingDashboardImage?: boolean;
   /**
@@ -1118,11 +1111,6 @@ export interface FeatureToggles {
   * @default false
   */
   foldersAppPlatformAPI?: boolean;
-  /**
-  * Set this to true to use the new PluginImporter functionality
-  * @default false
-  */
-  enablePluginImporter?: boolean;
   /**
   * Applies OTel formatting templates to displayed logs
   */
@@ -1222,6 +1210,11 @@ export interface FeatureToggles {
   */
   cdnPluginsUrls?: boolean;
   /**
+  * Enable syncing plugin installations to the installs API
+  * @default false
+  */
+  pluginInstallAPISync?: boolean;
+  /**
   * Enable new gauge visualization
   * @default false
   */
@@ -1232,7 +1225,11 @@ export interface FeatureToggles {
   */
   preventPanelChromeOverflow?: boolean;
   /**
-  * Load plugins during store service startup instead of wire provider
+  * Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
+  */
+  jaegerEnableGrpcEndpoint?: boolean;
+  /**
+  * Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
   * @default false
   */
   pluginStoreServiceLoading?: boolean;
@@ -1241,4 +1238,12 @@ export interface FeatureToggles {
   * @default true
   */
   onlyStoreActionSets?: boolean;
+  /**
+  * Enables a new panel time settings drawer
+  */
+  panelTimeSettings?: boolean;
+  /**
+  * Enable template dashboards
+  */
+  dashboardTemplates?: boolean;
 }

@@ -160,14 +160,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
       border: 'none',
       background: 'transparent',
       paddingRight: theme.spacing(0.5),
+      height: theme.spacing(2),
     },
   }),
   switchLabel: css({
-    marginTop: theme.spacing(0.5),
-  }),
-  labelWrapper: css({
-    display: 'flex',
-    alignItems: 'center',
+    marginTop: 0,
+    marginBottom: 0,
   }),
   labelSelectable: css({
     cursor: 'pointer',

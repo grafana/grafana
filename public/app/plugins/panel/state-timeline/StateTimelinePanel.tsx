@@ -20,6 +20,7 @@ import {
 
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
@@ -29,9 +30,6 @@ import { containerStyles } from './styles';
 
 interface TimelinePanelProps extends PanelProps<Options> {}
 
-/**
- * @alpha
- */
 export const StateTimelinePanel = ({
   data,
   timeRange,
@@ -90,11 +88,13 @@ export const StateTimelinePanel = ({
         width={width}
         height={height - paginationHeight}
         legendItems={legendItems}
+        annotations={options.annotations}
         {...options}
         mode={TimelineMode.Changes}
         replaceVariables={replaceVariables}
         dataLinkPostProcessor={dataLinkPostProcessor}
         cursorSync={cursorSync}
+        annotationLanes={options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined}
       >
         {(builder, alignedFrame) => {
           return (
@@ -152,6 +152,7 @@ export const StateTimelinePanel = ({
               {alignedFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
                 <AnnotationsPlugin2
                   replaceVariables={replaceVariables}
+                  multiLane={options.annotations?.multiLane}
                   annotations={data.annotations ?? []}
                   config={builder}
                   timeZone={timeZone}

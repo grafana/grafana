@@ -73,8 +73,9 @@ export const useOnAddLibraryPanel = ({ dashboard, canCreate, isReadOnlyRepo }: H
 };
 
 export const useOnImportDashboard = ({ dashboard, canCreate, isReadOnlyRepo }: HookProps) => {
+  const isProvisioned = dashboard instanceof DashboardScene && dashboard.isManagedRepository();
   return useMemo(() => {
-    if (!canCreate || isReadOnlyRepo) {
+    if (!canCreate || isProvisioned || isReadOnlyRepo) {
       return undefined;
     }
 
@@ -82,5 +83,5 @@ export const useOnImportDashboard = ({ dashboard, canCreate, isReadOnlyRepo }: H
       DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_dashboard' });
       onImportDashboardImpl();
     };
-  }, [canCreate, isReadOnlyRepo]);
+  }, [canCreate, isReadOnlyRepo, isProvisioned]);
 };

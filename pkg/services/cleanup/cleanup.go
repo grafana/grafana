@@ -14,7 +14,6 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
@@ -293,6 +292,7 @@ func (srv *CleanUpService) expireOldVerifications(ctx context.Context) {
 
 func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if srv.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
 		srv.deleteStaleKubernetesShortURLs(ctx)
 	} else {
@@ -325,11 +325,7 @@ func (srv *CleanUpService) deleteStaleKubernetesShortURLs(ctx context.Context) {
 	}
 
 	// Set up the GroupVersionResource for shortURLs
-	gvr := schema.GroupVersionResource{
-		Group:    v1alpha1.ShortURLKind().Group(),
-		Version:  v1alpha1.ShortURLKind().Version(),
-		Resource: v1alpha1.ShortURLKind().Plural(),
-	}
+	gvr := v1alpha1.ShortURLKind().GroupVersionResource()
 
 	// Calculate the expiration time
 	expirationTime := time.Now().Add(-time.Duration(srv.Cfg.ShortLinkExpiration*24) * time.Hour)

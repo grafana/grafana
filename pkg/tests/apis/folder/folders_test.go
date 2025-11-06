@@ -48,20 +48,17 @@ var gvr = schema.GroupVersionResource{
 }
 
 func TestIntegrationFoldersApp(t *testing.T) {
-	t.Skip("Skipping flaky test")
-
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")
 	}
 
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction:    true,
-		EnableFeatureToggles: []string{},
-	})
-
 	t.Run("Check discovery client", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			EnableFeatureToggles: []string{},
+		})
 		disco := helper.NewDiscoveryClient()
 		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1beta1")
 		require.NoError(t, err)

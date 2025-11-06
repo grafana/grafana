@@ -979,6 +979,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             displayedFields={displayedFields}
             clearDisplayedFields={clearDisplayedFields}
             defaultDisplayedFields={defaultDisplayedFields}
+            visualisationType={visualisationType}
           />
         </div>
         <div className={cx(styles.logsSection, visualisationType === 'table' ? styles.logsTable : undefined)}>
@@ -995,7 +996,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
                 panelState={panelState?.logs}
-                theme={theme}
                 updatePanelState={updatePanelState}
                 datasourceType={props.datasourceType}
               />
@@ -1134,6 +1134,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   app={CoreApp.Explore}
                   containerElement={logsContainerRef.current}
                   enableLogDetails={true}
+                  dataFrames={props.logsFrames ?? []}
                   dedupStrategy={dedupStrategy}
                   displayedFields={displayedFields}
                   filterLevels={filterLevels}
@@ -1163,6 +1164,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   pinnedLogs={pinnedLogs}
                   setDisplayedFields={setDisplayedFields}
                   showControls
+                  showFieldSelector
                   showTime={showTime}
                   sortOrder={logsSortOrder}
                   timeRange={props.range}

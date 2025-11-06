@@ -1,4 +1,5 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { FieldColorModeId } from '@grafana/schema/dist/esm/index.gen';
 import { SuggestionName } from 'app/types/suggestions';
 
 import { Options } from './panelcfg.gen';
@@ -12,7 +13,7 @@ export class GaugeSuggestionsSupplier {
     }
 
     // for many fields / series this is probably not a good fit
-    if (dataSummary.numberFieldCount >= 50) {
+    if (dataSummary.numberFieldCount >= 10) {
       return;
     }
 
@@ -35,7 +36,7 @@ export class GaugeSuggestionsSupplier {
 
     if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
       list.append({
-        name: SuggestionName.RadialBar,
+        name: SuggestionName.Gauge,
         options: {
           reduceOptions: {
             values: true,
@@ -43,14 +44,55 @@ export class GaugeSuggestionsSupplier {
           },
         },
       });
+      list.append({
+        name: SuggestionName.GaugeCircular,
+        options: {
+          shape: 'circle',
+          showThresholdMarkers: false,
+          reduceOptions: {
+            values: true,
+            calcs: [],
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            color: { mode: FieldColorModeId.PaletteClassic },
+          },
+          overrides: [],
+        },
+      });
     } else {
       list.append({
-        name: SuggestionName.RadialBar,
+        name: SuggestionName.Gauge,
         options: {
           reduceOptions: {
             values: false,
             calcs: ['lastNotNull'],
           },
+        },
+      });
+      list.append({
+        name: SuggestionName.GaugeCircular,
+        options: {
+          shape: 'circle',
+          showThresholdMarkers: false,
+          barWidthFactor: 0.3,
+          effects: {
+            rounded: true,
+            barGlow: true,
+            centerGlow: true,
+            spotlight: true,
+          },
+          reduceOptions: {
+            values: false,
+            calcs: ['lastNotNull'],
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            color: { mode: FieldColorModeId.PaletteClassic },
+          },
+          overrides: [],
         },
       });
     }

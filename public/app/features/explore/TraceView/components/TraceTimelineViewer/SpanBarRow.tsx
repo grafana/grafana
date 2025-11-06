@@ -25,13 +25,14 @@ import { SpanBarOptions } from '../settings/SpanBarSettings';
 import TNil from '../types/TNil';
 import { SpanLinkFunc } from '../types/links';
 import { TraceSpan, CriticalPathSection } from '../types/trace';
+import { formatDuration } from '../utils/date';
 
 import SpanBar from './SpanBar';
 import { SpanLinksMenu } from './SpanLinks';
 import SpanTreeOffset from './SpanTreeOffset';
 import Ticks from './Ticks';
 import TimelineRow from './TimelineRow';
-import { formatDuration, ViewedBoundsFunctionType } from './utils';
+import { ViewedBoundsFunctionType } from './utils';
 
 const spanBarClassName = 'spanBar';
 const spanBarLabelClassName = 'spanBarLabel';
@@ -40,7 +41,7 @@ const nameWrapperMatchingFilterClassName = 'nameWrapperMatchingFilter';
 const viewClassName = 'jaegerView';
 const nameColumnClassName = 'nameColumn';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly: boolean) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly: boolean, serviceColor: string) => {
   const animations = {
     flash: keyframes`
     from {
@@ -59,10 +60,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       lineHeight: '27px',
       overflow: 'hidden',
       display: 'flex',
+
+      [`& > *`]: {
+        background: theme.colors.background.secondary,
+      },
     }),
     nameWrapperMatchingFilter: css({
       label: 'nameWrapperMatchingFilter',
       backgroundColor: backgroundColor,
+
+      [`& > *`]: {
+        background: backgroundColor,
+      },
     }),
     nameColumn: css({
       label: 'nameColumn',
@@ -95,6 +104,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     row: css({
       label: 'row',
       fontSize: '0.9em',
+
       [`&:hover .${spanBarClassName}`]: {
         opacity: 1,
       },
@@ -112,6 +122,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       [`&:hover .${viewClassName}`]: {
         backgroundColor: autoColor(theme, '#f5f5f5'),
         outline: `1px solid ${autoColor(theme, '#ddd')}`,
+      },
+      ['& .icon-wrapper']: {
+        borderBottomColor: `${serviceColor}CF`,
+        borderBottomWidth: '2px',
+        borderBottomStyle: 'solid',
       },
     }),
     rowClippingLeft: css({
@@ -167,7 +182,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     }),
     rowMatchingFilter: css({
       label: 'rowMatchingFilter',
-      // background-color: ${autoColor(theme, '#fffbde')};
+
       [`&:hover .${nameWrapperClassName}`]: {
         background: `linear-gradient(
           90deg,
@@ -199,9 +214,22 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       [`& .${spanBarLabelClassName}`]: {
         color: autoColor(theme, '#000'),
       },
-      ['&:hover .${nameWrapperClassName}, :hover .${viewClassName}']: {
-        background: autoColor(theme, '#d5ebff'),
-        boxShadow: `0 1px 0 ${autoColor(theme, '#ddd')}`,
+    }),
+
+    rowError: css({
+      label: 'rowError',
+      backgroundColor: theme.colors.error.transparent,
+
+      [`&:hover .${nameWrapperClassName}`]: {
+        background: theme.colors.error.borderTransparent,
+      },
+      [`&:hover .${viewClassName}`]: {
+        backgroundColor: theme.colors.error.borderTransparent,
+        outline: `1px solid ${theme.colors.error.borderTransparent}`,
+      },
+
+      [`& .${nameWrapperClassName} > *`]: {
+        background: theme.colors.error.transparent,
       },
     }),
 
@@ -220,8 +248,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       outline: 'none',
       overflowY: 'hidden',
       overflowX: 'auto',
-      paddingLeft: '4px',
-      paddingRight: '0.25em',
+      padding: '4px',
       position: 'relative',
       '-ms-overflow-style': 'none',
       scrollbarWidth: 'none',
@@ -235,9 +262,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
         color: autoColor(theme, '#000'),
       },
       textAlign: 'left',
-      background: 'transparent',
       border: 'none',
-      borderBottomWidth: '1px',
+      borderBottomColor: `${serviceColor}CF`,
+      borderBottomWidth: '2px',
       borderBottomStyle: 'solid',
     }),
     nameDetailExpanded: css({
@@ -249,27 +276,25 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     svcName: css({
       label: 'svcName',
       fontSize: '0.9em',
-      fontWeight: 'bold',
+      fontWeight: '500',
       marginRight: '0.25rem',
     }),
     svcNameChildrenCollapsed: css({
       label: 'svcNameChildrenCollapsed',
-      fontWeight: 'bold',
+      fontWeight: '500',
       fontStyle: 'italic',
     }),
     errorIcon: css({
       label: 'errorIcon',
-      // eslint-disable-next-line @grafana/no-border-radius-literal
-      borderRadius: '6.5px',
+      borderRadius: theme.shape.radius.md,
       color: autoColor(theme, '#fff'),
-      fontSize: '0.85em',
+      fontSize: '0.6em',
       marginRight: '0.25rem',
       padding: '1px',
     }),
     rpcColorMarker: css({
       label: 'rpcColorMarker',
-      // eslint-disable-next-line @grafana/no-border-radius-literal
-      borderRadius: '6.5px',
+      borderRadius: theme.shape.radius.md,
       display: 'inline-block',
       fontSize: '0.85em',
       height: '1em',
@@ -334,257 +359,252 @@ export type SpanBarRowProps = {
   criticalPath: CriticalPathSection[];
 };
 
-/**
- * This was originally a stateless function, but changing to a PureComponent
- * reduced the render time of expanding a span row detail by ~50%. This is
- * even true in the case where the stateless function has the same prop types as
- * this class and arrow functions are created in the stateless function as
- * handlers to the onClick props. E.g. for now, the PureComponent is more
- * performance than the stateless function.
- */
-export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
-  static displayName = 'UnthemedSpanBarRow';
-  static defaultProps: Partial<SpanBarRowProps> = {
-    className: '',
-    rpc: null,
-  };
+const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
+  const {
+    className = '',
+    color,
+    spanBarOptions,
+    columnDivision,
+    isChildrenExpanded,
+    isDetailExpanded,
+    isMatchingFilter,
+    showSpanFilterMatchesOnly,
+    isFocused,
+    numTicks,
+    rpc = null,
+    noInstrumentedServer,
+    showErrorIcon,
+    getViewedBounds,
+    traceStartTime,
+    span,
+    hoverIndentGuideIds,
+    addHoverIndentGuideId,
+    removeHoverIndentGuideId,
+    clippingLeft,
+    clippingRight,
+    theme,
+    createSpanLink,
+    datasourceType,
+    showServiceName,
+    visibleSpanIds,
+    criticalPath,
+    onDetailToggled,
+    onChildrenToggled,
+  } = props;
 
-  _detailToggle = () => {
-    this.props.onDetailToggled(this.props.span.spanID);
-  };
+  const {
+    duration,
+    hasChildren: isParent,
+    operationName,
+    process: { serviceName },
+  } = span;
+  const label = formatDuration(duration);
 
-  _childrenToggle = () => {
-    this.props.onChildrenToggled(this.props.span.spanID);
-  };
+  const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
+  const viewStart = viewBounds.start;
+  const viewEnd = viewBounds.end;
+  const styles = getStyles(theme, showSpanFilterMatchesOnly, color);
 
-  render() {
-    const {
-      className,
-      color,
-      spanBarOptions,
-      columnDivision,
-      isChildrenExpanded,
-      isDetailExpanded,
-      isMatchingFilter,
-      showSpanFilterMatchesOnly,
-      isFocused,
-      numTicks,
-      rpc,
-      noInstrumentedServer,
-      showErrorIcon,
-      getViewedBounds,
-      traceStartTime,
-      span,
-      hoverIndentGuideIds,
-      addHoverIndentGuideId,
-      removeHoverIndentGuideId,
-      clippingLeft,
-      clippingRight,
-      theme,
-      createSpanLink,
-      datasourceType,
-      showServiceName,
-      visibleSpanIds,
-      criticalPath,
-    } = this.props;
-    const {
-      duration,
-      hasChildren: isParent,
-      operationName,
-      process: { serviceName },
-    } = span;
-    const label = formatDuration(duration);
-
-    const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
-    const viewStart = viewBounds.start;
-    const viewEnd = viewBounds.end;
-    const styles = getStyles(theme, showSpanFilterMatchesOnly);
-
-    const labelDetail = `${serviceName}::${operationName}`;
-    let longLabel;
-    let hintClassName;
-    if (viewStart > 1 - viewEnd) {
-      longLabel = `${labelDetail} | ${label}`;
-      hintClassName = styles.labelLeft;
-    } else {
-      longLabel = `${label} | ${labelDetail}`;
-      hintClassName = styles.labelRight;
-    }
-
-    return (
-      <TimelineRow
-        className={cx(
-          styles.row,
-          {
-            [styles.rowExpanded]: isDetailExpanded,
-            [styles.rowMatchingFilter]: isMatchingFilter,
-            [styles.rowExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
-            [styles.rowFocused]: isFocused,
-            [styles.rowClippingLeft]: clippingLeft,
-            [styles.rowClippingRight]: clippingRight,
-          },
-          className
-        )}
-      >
-        <TimelineRow.Cell className={cx(styles.nameColumn, nameColumnClassName)} width={columnDivision}>
-          <div
-            className={cx(styles.nameWrapper, nameWrapperClassName, {
-              [styles.nameWrapperMatchingFilter]: isMatchingFilter,
-              nameWrapperMatchingFilter: isMatchingFilter,
-            })}
-          >
-            <SpanTreeOffset
-              onClick={isParent ? this._childrenToggle : undefined}
-              childrenVisible={isChildrenExpanded}
-              span={span}
-              hoverIndentGuideIds={hoverIndentGuideIds}
-              addHoverIndentGuideId={addHoverIndentGuideId}
-              removeHoverIndentGuideId={removeHoverIndentGuideId}
-              visibleSpanIds={visibleSpanIds}
-            />
-            <button
-              type="button"
-              className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
-              aria-checked={isDetailExpanded}
-              title={labelDetail}
-              onClick={this._detailToggle}
-              role="switch"
-              style={{ background: `${color}10`, borderBottomColor: `${color}CF` }}
-              tabIndex={0}
-            >
-              {showErrorIcon && (
-                <Icon
-                  name={'exclamation-circle'}
-                  style={{
-                    backgroundColor: span.errorIconColor
-                      ? autoColor(theme, span.errorIconColor)
-                      : autoColor(theme, '#db2828'),
-                  }}
-                  className={styles.errorIcon}
-                />
-              )}
-              {showServiceName && (
-                <span
-                  className={cx(styles.svcName, {
-                    [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
-                  })}
-                >
-                  {`${serviceName} `}
-                </span>
-              )}
-              {rpc && (
-                <span>
-                  <Icon name={'arrow-right'} />{' '}
-                  <i className={styles.rpcColorMarker} style={{ background: rpc.color }} />
-                  {rpc.serviceName}
-                </span>
-              )}
-              {noInstrumentedServer && (
-                <span>
-                  <Icon name={'arrow-right'} />{' '}
-                  <i className={styles.rpcColorMarker} style={{ background: noInstrumentedServer.color }} />
-                  {noInstrumentedServer.serviceName}
-                </span>
-              )}
-              <span className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</span>
-              <span className={styles.endpointName}> {this.getSpanBarLabel(span, spanBarOptions, label)}</span>
-            </button>
-            {createSpanLink &&
-              (() => {
-                const links = createSpanLink(span);
-                const count = links?.length || 0;
-                if (links && count === 1) {
-                  if (!links[0]) {
-                    return null;
-                  }
-
-                  return (
-                    <a
-                      href={links[0].href}
-                      // Needs to have target otherwise preventDefault would not work due to angularRouter.
-                      target={'_blank'}
-                      style={{ background: `${color}10`, borderBottom: `1px solid ${color}CF`, paddingRight: '4px' }}
-                      rel="noopener noreferrer"
-                      onClick={
-                        links[0].onClick
-                          ? (event) => {
-                              if (!(event.ctrlKey || event.metaKey || event.shiftKey) && links[0].onClick) {
-                                event.preventDefault();
-                                links[0].onClick(event);
-                              }
-                            }
-                          : undefined
-                      }
-                    >
-                      {links[0].content}
-                    </a>
-                  );
-                } else if (links && count > 1) {
-                  return <SpanLinksMenu links={links} datasourceType={datasourceType} color={color} />;
-                } else {
-                  return null;
-                }
-              })()}
-          </div>
-        </TimelineRow.Cell>
-        <TimelineRow.Cell
-          className={cx(styles.view, viewClassName, {
-            [styles.viewExpanded]: isDetailExpanded,
-            [styles.viewExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
-          })}
-          data-testid="span-view"
-          style={{ cursor: 'pointer' }}
-          width={1 - columnDivision}
-          onClick={this._detailToggle}
-        >
-          <Ticks numTicks={numTicks} />
-          <SpanBar
-            criticalPath={criticalPath}
-            rpc={rpc}
-            viewStart={viewStart}
-            viewEnd={viewEnd}
-            getViewedBounds={getViewedBounds}
-            color={color}
-            shortLabel={label}
-            longLabel={longLabel}
-            traceStartTime={traceStartTime}
-            span={span}
-            labelClassName={`${spanBarLabelClassName} ${hintClassName}`}
-            className={spanBarClassName}
-          />
-        </TimelineRow.Cell>
-      </TimelineRow>
-    );
+  const labelDetail = `${serviceName}::${operationName}`;
+  let longLabel;
+  let hintClassName;
+  if (viewStart > 1 - viewEnd) {
+    longLabel = `${labelDetail} | ${label}`;
+    hintClassName = styles.labelLeft;
+  } else {
+    longLabel = `${label} | ${labelDetail}`;
+    hintClassName = styles.labelRight;
   }
 
-  getSpanBarLabel = (span: TraceSpan, spanBarOptions: SpanBarOptions | undefined, duration: string) => {
-    const type = spanBarOptions?.type ?? '';
+  const handleDetailToggle = React.useCallback(() => {
+    onDetailToggled(span.spanID);
+  }, [onDetailToggled, span.spanID]);
 
-    if (type === NONE) {
-      return '';
-    } else if (type === '' || type === DURATION) {
-      return `(${duration})`;
-    } else if (type === TAG) {
-      const tagKey = spanBarOptions?.tag?.trim() ?? '';
-      if (tagKey !== '' && span.tags) {
-        const tag = span.tags?.find((tag: TraceKeyValuePair) => {
-          return tag.key === tagKey;
-        });
-        if (tag) {
-          return `(${tag.value})`;
-        }
+  const handleChildrenToggle = React.useCallback(() => {
+    onChildrenToggled(span.spanID);
+  }, [onChildrenToggled, span.spanID]);
 
-        const process = span.process?.tags?.find((process: TraceKeyValuePair) => {
-          return process.key === tagKey;
-        });
-        if (process) {
-          return `(${process.value})`;
+  const getSpanBarLabel = React.useCallback(
+    (span: TraceSpan, spanBarOptions: SpanBarOptions | undefined, duration: string) => {
+      const type = spanBarOptions?.type ?? '';
+
+      if (type === NONE) {
+        return '';
+      } else if (type === '' || type === DURATION) {
+        return `(${duration})`;
+      } else if (type === TAG) {
+        const tagKey = spanBarOptions?.tag?.trim() ?? '';
+        if (tagKey !== '' && span.tags) {
+          const tag = span.tags?.find((tag: TraceKeyValuePair) => {
+            return tag.key === tagKey;
+          });
+          if (tag) {
+            return `(${tag.value})`;
+          }
+
+          const process = span.process?.tags?.find((process: TraceKeyValuePair) => {
+            return process.key === tagKey;
+          });
+          if (process) {
+            return `(${process.value})`;
+          }
         }
       }
-    }
 
-    return '';
-  };
-}
+      return '';
+    },
+    []
+  );
+
+  return (
+    <TimelineRow
+      className={cx(
+        styles.row,
+        {
+          [styles.rowError]: showErrorIcon,
+          [styles.rowExpanded]: isDetailExpanded,
+          [styles.rowMatchingFilter]: isMatchingFilter,
+          [styles.rowExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
+          [styles.rowFocused]: isFocused,
+          [styles.rowClippingLeft]: clippingLeft,
+          [styles.rowClippingRight]: clippingRight,
+        },
+        className
+      )}
+    >
+      <TimelineRow.Cell className={cx(styles.nameColumn, nameColumnClassName)} width={columnDivision}>
+        <div
+          className={cx(styles.nameWrapper, nameWrapperClassName, {
+            [styles.nameWrapperMatchingFilter]: isMatchingFilter,
+            nameWrapperMatchingFilter: isMatchingFilter,
+          })}
+        >
+          <SpanTreeOffset
+            onClick={isParent ? handleChildrenToggle : undefined}
+            childrenVisible={isChildrenExpanded}
+            span={span}
+            hoverIndentGuideIds={hoverIndentGuideIds}
+            addHoverIndentGuideId={addHoverIndentGuideId}
+            removeHoverIndentGuideId={removeHoverIndentGuideId}
+            visibleSpanIds={visibleSpanIds}
+          />
+          <button
+            type="button"
+            className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
+            aria-checked={isDetailExpanded}
+            title={labelDetail}
+            onClick={handleDetailToggle}
+            role="switch"
+            tabIndex={0}
+          >
+            {showErrorIcon && (
+              <Icon
+                name={'exclamation-circle'}
+                style={{
+                  backgroundColor: span.errorIconColor
+                    ? autoColor(theme, span.errorIconColor)
+                    : autoColor(theme, '#db2828'),
+                }}
+                className={styles.errorIcon}
+              />
+            )}
+            {showServiceName && (
+              <span
+                className={cx(styles.svcName, {
+                  [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
+                })}
+              >
+                {`${serviceName} `}
+              </span>
+            )}
+            {rpc && (
+              <span>
+                <Icon name={'arrow-right'} /> <i className={styles.rpcColorMarker} style={{ background: rpc.color }} />
+                {rpc.serviceName}
+              </span>
+            )}
+            {noInstrumentedServer && (
+              <span>
+                <Icon name={'arrow-right'} />{' '}
+                <i className={styles.rpcColorMarker} style={{ background: noInstrumentedServer.color }} />
+                {noInstrumentedServer.serviceName}
+              </span>
+            )}
+            <span className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</span>
+            <span className={styles.endpointName}> {getSpanBarLabel(span, spanBarOptions, label)}</span>
+          </button>
+          {createSpanLink &&
+            (() => {
+              const links = createSpanLink(span);
+              const count = links?.length || 0;
+              if (links && count === 1) {
+                if (!links[0]) {
+                  return null;
+                }
+
+                return (
+                  <a
+                    href={links[0].href}
+                    // Needs to have target otherwise preventDefault would not work due to angularRouter.
+                    target={'_blank'}
+                    style={{
+                      borderBottom: `2px solid ${color}CF`,
+                      paddingInline: '4px',
+                    }}
+                    rel="noopener noreferrer"
+                    onClick={
+                      links[0].onClick
+                        ? (event) => {
+                            if (!(event.ctrlKey || event.metaKey || event.shiftKey) && links[0].onClick) {
+                              event.preventDefault();
+                              links[0].onClick(event);
+                            }
+                          }
+                        : undefined
+                    }
+                  >
+                    {links[0].content}
+                  </a>
+                );
+              } else if (links && count > 1) {
+                return <SpanLinksMenu links={links} datasourceType={datasourceType} color={color} />;
+              } else {
+                return null;
+              }
+            })()}
+        </div>
+      </TimelineRow.Cell>
+      <TimelineRow.Cell
+        className={cx(styles.view, viewClassName, {
+          [styles.viewExpanded]: isDetailExpanded,
+          [styles.viewExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
+          [styles.rowError]: showErrorIcon,
+        })}
+        data-testid="span-view"
+        style={{ cursor: 'pointer' }}
+        width={1 - columnDivision}
+        onClick={handleDetailToggle}
+      >
+        <Ticks numTicks={numTicks} />
+        <SpanBar
+          criticalPath={criticalPath}
+          rpc={rpc}
+          viewStart={viewStart}
+          viewEnd={viewEnd}
+          getViewedBounds={getViewedBounds}
+          color={color}
+          shortLabel={label}
+          longLabel={longLabel}
+          traceStartTime={traceStartTime}
+          span={span}
+          labelClassName={`${spanBarLabelClassName} ${hintClassName}`}
+          className={spanBarClassName}
+        />
+      </TimelineRow.Cell>
+    </TimelineRow>
+  );
+});
+
+UnthemedSpanBarRow.displayName = 'UnthemedSpanBarRow';
 
 export default withTheme2(UnthemedSpanBarRow);

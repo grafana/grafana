@@ -77,6 +77,18 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryRefsQuery: jest.fn().mockReturnValue({ data: { items: [] }, isLoading: false, error: null }),
 }));
 
+// Mock the new hooks that depend on router context
+jest.mock('../../hooks/usePRBranch', () => ({
+  usePRBranch: jest.fn().mockReturnValue(undefined),
+}));
+
+jest.mock('../../hooks/useLastBranch', () => ({
+  useLastBranch: jest.fn().mockReturnValue({
+    getLastBranch: jest.fn().mockReturnValue(undefined),
+    setLastBranch: jest.fn(),
+  }),
+}));
+
 jest.mock('app/features/dashboard-scene/saving/SaveDashboardForm', () => {
   const actual = jest.requireActual('app/features/dashboard-scene/saving/SaveDashboardForm');
   return {

@@ -92,8 +92,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&Dashboard{},
 		&DashboardList{},
 		&DashboardWithAccessInfo{},
-		&DashboardVersionList{},
-		&VersionsQueryOptions{},
 		&LibraryPanel{},
 		&LibraryPanelList{},
 		&metav1.PartialObjectMetadata{},

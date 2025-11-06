@@ -329,7 +329,6 @@ export const LogLineContext = memo(
           <div>{getLogRowContextUi(log, updateResults)}</div>
         )}
         <Collapse
-          collapsible={true}
           isOpen={showLog}
           onToggle={() => setShowLog(!showLog)}
           className={styles.referenceLogLine}
@@ -389,6 +388,7 @@ export const LogLineContext = memo(
               <LogList
                 app={CoreApp.Unknown}
                 containerElement={containerRef.current}
+                dataFrames={[]}
                 dedupStrategy={LogsDedupStrategy.none}
                 detailsMode="inline"
                 displayedFields={displayedFields}
@@ -397,6 +397,7 @@ export const LogLineContext = memo(
                 infiniteScrollMode="unlimited"
                 loadMore={handleLoadMore}
                 logLineMenuCustomItems={logLineMenuCustomItems}
+                logOptionsStorageKey={logOptionsStorageKey}
                 logs={allLogs}
                 loading={aboveState === LoadingState.Loading || belowState === LoadingState.Loading}
                 permalinkedLogId={log.uid}
@@ -404,6 +405,7 @@ export const LogLineContext = memo(
                 onClickHideField={onClickHideField}
                 onClickShowField={onClickShowField}
                 showControls
+                showFieldSelector={false}
                 showTime={logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.showTime`, true) : true}
                 sortOrder={sortOrder}
                 syntaxHighlighting={syntaxHighlighting}
