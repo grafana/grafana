@@ -1,71 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { ReactNode } from 'react';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { Repository, useGetRepositoryFilesQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { FileDetails } from '../types';
-
 import { FilesView } from './FilesView';
-
-jest.mock('@grafana/i18n', () => ({
-  t: (_key: string, defaultValue: string) => defaultValue,
-  Trans: ({ children }: { children: ReactNode }) => <>{children}</>,
-}));
-
-jest.mock('@grafana/ui', () => {
-  const actual = jest.requireActual('@grafana/ui');
-
-  type MockRow = FileDetails & Record<string, ReactNode>;
-  type MockColumn = {
-    id: string;
-    cell?: (props: { row: { original: MockRow } }) => ReactNode;
-  };
-
-  return {
-    ...actual,
-    Spinner: () => <div role="status">loading</div>,
-    Stack: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-    FilterInput: ({
-      value,
-      onChange,
-      placeholder,
-    }: {
-      value: string;
-      onChange: (value: string) => void;
-      placeholder: string;
-    }) => <input placeholder={placeholder} value={value} onChange={(event) => onChange(event.target.value)} />,
-    LinkButton: ({ href, children }: { href: string; children: ReactNode }) => <a href={href}>{children}</a>,
-    // Mock InteractiveTable so tests stay focused on FilesView wiring without pulling in
-    // complex virtualization/theme behavior from the shared component.
-    InteractiveTable: ({
-      columns,
-      data,
-      getRowId,
-    }: {
-      columns: MockColumn[];
-      data: MockRow[];
-      getRowId: (row: MockRow) => string;
-    }) => (
-      <table>
-        <tbody>
-          {data.map((row) => (
-            <tr key={getRowId(row)} data-testid="file-row">
-              {columns.map((column) => (
-                <td key={column.id}>
-                  {column.cell
-                    ? column.cell({ row: { original: row } })
-                    : (row[column.id as keyof MockRow] as ReactNode)}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    ),
-  };
-});
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesQuery: jest.fn(),
@@ -124,11 +61,7 @@ const localRepository: Repository = {
 };
 
 const renderComponent = (repo: Repository = defaultRepository) => {
-  return render(
-    <MemoryRouter>
-      <FilesView repo={repo} />
-    </MemoryRouter>
-  );
+  return render(<FilesView repo={repo} />);
 };
 
 describe('FilesView', () => {
@@ -141,7 +74,7 @@ describe('FilesView', () => {
 
     renderComponent();
 
-    expect(screen.getByRole('status')).toHaveTextContent('loading');
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
   });
 
   it('renders file rows with view and history links when data is available', () => {
@@ -166,28 +99,36 @@ describe('FilesView', () => {
   });
 
   it('filters files using search input', async () => {
-    const user = userEvent.setup();
+    const mockItems = [
+      { path: 'dashboards/example.json', hash: 'abc', size: '10' },
+      { path: 'dashboards/other.yaml', hash: 'def', size: '20' },
+    ];
 
     mockRepositoryFilesQuery({
       isSuccess: true,
       status: 'fulfilled',
       data: {
-        items: [
-          { path: 'dashboards/example.json', hash: 'abc', size: '10' },
-          { path: 'dashboards/other.yaml', hash: 'def', size: '20' },
-        ],
+        items: mockItems,
       },
     });
 
-    renderComponent();
+    const { user } = renderComponent();
 
-    expect(screen.getAllByTestId('file-row')).toHaveLength(2);
+    expect(screen.getAllByRole('row')).toHaveLength(
+      // +1 for the header row
+      mockItems.length + 1
+    );
 
     const input = screen.getByPlaceholderText('Search');
     await user.clear(input);
     await user.type(input, 'other');
 
-    await waitFor(() => expect(screen.getAllByTestId('file-row')).toHaveLength(1));
+    await waitFor(() =>
+      expect(screen.getAllByRole('row')).toHaveLength(
+        // +1 for the header row
+        2
+      )
+    );
     expect(screen.getByText('dashboards/other.yaml')).toBeInTheDocument();
   });
 
