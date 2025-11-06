@@ -554,10 +554,11 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       lineHeight: theme.typography.bodySmall.lineHeight,
     }),
     detailsDisplayed: css({
-      background: tinycolor(theme.colors.background.canvas).darken(3).toRgbString(),
+      background: tinycolor(theme.colors.background.canvas).darken(5).toRgbString(),
     }),
     currentLog: css({
       background: hoverColor,
+      fontWeight: theme.typography.fontWeightBold,
     }),
     pinnedLogLine: css({
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
