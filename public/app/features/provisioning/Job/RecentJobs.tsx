@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
 import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -156,10 +156,14 @@ export function RecentJobs({ repo }: Props) {
     repositoryName: repo.metadata?.name ?? 'x',
   });
   const jobColumns = useMemo(() => getJobColumns(), []);
+  const hasLoadedDataRef = useRef(false);
+
+  if (activeQuery.data || historicQuery.data) {
+    hasLoadedDataRef.current = true;
+  }
 
   const renderContent = () => {
-    const isInitialLoading =
-      (activeQuery.isLoading && !activeQuery.data) || (historicQuery.isLoading && !historicQuery.data);
+    const isInitialLoading = !hasLoadedDataRef.current && (activeQuery.isLoading || historicQuery.isLoading);
 
     if (isInitialLoading) {
       return (
