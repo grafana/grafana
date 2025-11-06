@@ -271,6 +271,7 @@ cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,f
 cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false
 pluginInstallAPISync,experimental,@grafana/plugins-platform-backend,false,false,false
 newGauge,experimental,@grafana/dataviz-squad,false,false,true
+newVizSuggestions,preview,@grafana/dataviz-squad,false,false,true
 preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 jaegerEnableGrpcEndpoint,experimental,@grafana/oss-big-tent,false,false,false
 pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
