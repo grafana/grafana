@@ -73,7 +73,7 @@ var (
 			Name:           "correlations",
 			Description:    "Correlations page",
 			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaDatavizSquad,
+			Owner:          grafanaDataProSquad,
 			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
 		},
@@ -129,7 +129,7 @@ var (
 			Description:  "Enables drag and drop for CSV and Excel files",
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatavizSquad,
+			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:           "logsContextDatasourceUi",
@@ -444,7 +444,7 @@ var (
 			Description:  "Enable format string transformer",
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
+			Owner:        grafanaDataProSquad,
 			Expression:   "true", // enabled by default
 		},
 		{
@@ -595,7 +595,7 @@ var (
 			Description:  "Add cumulative and window functions to the add field from calculation transformation",
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
+			Owner:        grafanaDataProSquad,
 			Expression:   "true", // enabled by default
 		},
 		{
@@ -631,7 +631,7 @@ var (
 			Description:  "Make sure extracted field names are unique in the dataframe",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
+			Owner:        grafanaDataProSquad,
 		},
 		{
 			Name:         "dashboardSceneForViewers",
@@ -742,7 +742,7 @@ var (
 			Description:  "Enables regression analysis transformation",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
+			Owner:        grafanaDataProSquad,
 		},
 		{
 			Name:              "kubernetesFeatureToggles",
@@ -872,7 +872,7 @@ var (
 			Description:  "Enables the group to nested table transformation",
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
+			Owner:        grafanaDataProSquad,
 			Expression:   "true", // enabled by default,
 		},
 		{

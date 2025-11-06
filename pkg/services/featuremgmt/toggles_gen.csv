@@ -6,7 +6,7 @@ publicDashboardsScene,GA,@grafana/grafana-operator-experience-squad,false,false,
 lokiExperimentalStreaming,experimental,@grafana/observability-logs,false,false,false
 featureHighlights,GA,@grafana/grafana-operator-experience-squad,false,false,false
 storage,experimental,@grafana/search-and-storage,false,false,false
-correlations,GA,@grafana/dataviz-squad,false,false,false
+correlations,GA,@grafana/datapro,false,false,false
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
 logRequestsInstrumentedAsUnknown,experimental,@grafana/grafana-backend-group,false,false,false
 grpcServer,preview,@grafana/search-and-storage,false,false,false
@@ -14,7 +14,7 @@ cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/search-and-storage,false,false,false
 alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
-editPanelCSVDragAndDrop,experimental,@grafana/dataviz-squad,false,false,true
+editPanelCSVDragAndDrop,experimental,@grafana/grafana-frontend-platform,false,false,true
 logsContextDatasourceUi,GA,@grafana/observability-logs,false,false,true
 lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
@@ -56,7 +56,7 @@ externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
 panelMonitoring,GA,@grafana/dataviz-squad,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 disableClassicHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
-formatString,GA,@grafana/dataviz-squad,false,false,true
+formatString,GA,@grafana/datapro,false,false,true
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,GA,@grafana/dashboards-squad,false,false,true
@@ -78,12 +78,12 @@ queryServiceFromUI,experimental,@grafana/grafana-datasources-core-services,false
 queryServiceFromExplore,experimental,@grafana/grafana-datasources-core-services,false,false,true
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
-addFieldFromCalculationStatFunctions,GA,@grafana/dataviz-squad,false,false,true
+addFieldFromCalculationStatFunctions,GA,@grafana/datapro,false,false,true
 alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
 alertingProvenanceLockWrites,experimental,@grafana/alerting-squad,false,false,false
 alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
 annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
-extractFieldsNameDeduplication,experimental,@grafana/dataviz-squad,false,false,true
+extractFieldsNameDeduplication,experimental,@grafana/datapro,false,false,true
 dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true
 dashboardSceneSolo,GA,@grafana/dashboards-squad,false,false,true
 dashboardScene,GA,@grafana/dashboards-squad,false,false,true
@@ -98,7 +98,7 @@ logsInfiniteScrolling,GA,@grafana/observability-logs,false,false,true
 logRowsPopoverMenu,GA,@grafana/observability-logs,false,false,true
 pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false
 tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
-regressionTransformation,preview,@grafana/dataviz-squad,false,false,true
+regressionTransformation,preview,@grafana/datapro,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 cloudRBACRoles,preview,@grafana/identity-access-team,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
@@ -114,7 +114,7 @@ useMultipleScopeNodesEndpoint,experimental,@grafana/grafana-operator-experience-
 logQLScope,privatePreview,@grafana/observability-logs,false,false,false
 sqlExpressions,preview,@grafana/grafana-datasources-core-services,false,false,false
 sqlExpressionsColumnAutoComplete,experimental,@grafana/datapro,false,false,true
-groupToNestedTableTransformation,GA,@grafana/dataviz-squad,false,false,true
+groupToNestedTableTransformation,GA,@grafana/datapro,false,false,true
 newPDFRendering,GA,@grafana/grafana-operator-experience-squad,false,false,false
 tlsMemcached,GA,@grafana/grafana-operator-experience-squad,false,false,false
 kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
