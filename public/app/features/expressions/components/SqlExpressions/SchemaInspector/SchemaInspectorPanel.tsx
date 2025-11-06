@@ -68,19 +68,20 @@ export const SchemaInspectorPanel = ({ className, schemas, loading, error }: Sch
   const renderSchemaTabContent = ({ columns, error, sampleRows }: SchemaData) => {
     if (error) {
       return (
-        <div className={styles.responseContainer}>
-          <Badge text={error} color="red" icon="exclamation-triangle" />
+        <div className={styles.schemaInfoContainer}>
+          <Alert title={t('expressions.sql-schema.query-error-title', 'Query error')} severity="error">
+            {error}
+          </Alert>
         </div>
       );
     }
 
     if (!columns || columns.length === 0) {
       return (
-        <div className={styles.responseContainer}>
-          <Icon name="database" />
-          <Text variant="bodySmall" color="secondary">
-            <Trans i18nKey="expressions.sql-schema.no-fields-desc">No schema information available</Trans>
-          </Text>
+        <div className={styles.schemaInfoContainer}>
+          <Alert severity="warning" title={t('expressions.sql-schema.no-fields-title', 'No schema information')}>
+            <Trans i18nKey="expressions.sql-schema.no-fields-desc">This query returned no schema information.</Trans>
+          </Alert>
         </div>
       );
     }
@@ -230,8 +231,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   requiredIcon: css({
     color: theme.colors.warning.text,
-  }),
-  responseContainer: css({
-    padding: theme.spacing(2),
   }),
 });
