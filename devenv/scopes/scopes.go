@@ -106,54 +106,6 @@ type Client struct {
 	auth       string
 }
 
-// checkFeatureFlag checks if a feature flag is enabled via the features API
-func (c *Client) checkFeatureFlag(flagName string) (bool, error) {
-	url := fmt.Sprintf("%s/apis/features.grafana.app/v0alpha1/namespaces/%s/ofrep/v1/evaluate/flags/%s", c.baseURL, c.namespace, flagName)
-
-	req, err := http.NewRequest("POST", url, nil)
-	if err != nil {
-		return false, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.SetBasicAuth(strings.Split(c.auth, ":")[0], strings.Split(c.auth, ":")[1])
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return false, fmt.Errorf("request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == 404 {
-		// Feature flag API might not be available, assume enabled for backward compatibility
-		return true, nil
-	}
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		// If we can't check, assume enabled for backward compatibility
-		return true, nil
-	}
-
-	var result struct {
-		Value   bool   `json:"value"`
-		Key     string `json:"key"`
-		Reason  string `json:"reason"`
-		Variant string `json:"variant"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		// If we can't decode, assume enabled for backward compatibility
-		return true, nil
-	}
-
-	return result.Value, nil
-}
-
-// checkScopeAPIEnabled checks if the scope API is available by checking the feature flag
-func (c *Client) checkScopeAPIEnabled() (bool, error) {
-	return c.checkFeatureFlag("scopeApi")
-}
-
 func NewClient(baseURL, namespace, user, password string) *Client {
 	return &Client{
 		baseURL:    baseURL,
@@ -346,51 +298,45 @@ func (c *Client) createTreeNodes(children map[string]TreeNode, parentName string
 	return nil
 }
 
-func (c *Client) deleteResources() error {
+func (c *Client) deleteResources() {
 	fmt.Println("Deleting all gdev-prefixed resources...")
-
-	// Delete scopes
-	if err := c.deleteResourceType("/scopes", "scope"); err != nil {
-		return err
-	}
-
+	
+	// Delete scopes (silently handle errors if endpoints aren't available)
+	c.deleteResourceType("/scopes", "scope")
+	
 	// Delete scope nodes
-	if err := c.deleteResourceType("/scopenodes", "scope node"); err != nil {
-		return err
-	}
-
+	c.deleteResourceType("/scopenodes", "scope node")
+	
 	// Delete scope navigations
-	if err := c.deleteResourceType("/scopenavigations", "scope navigation"); err != nil {
-		return err
-	}
-
+	c.deleteResourceType("/scopenavigations", "scope navigation")
+	
 	fmt.Println("✓ Cleanup complete")
-	return nil
 }
 
-func (c *Client) deleteResourceType(endpoint, resourceType string) error {
+func (c *Client) deleteResourceType(endpoint, resourceType string) {
 	url := fmt.Sprintf("%s/apis/%s/namespaces/%s%s", c.baseURL, apiVersion, c.namespace, endpoint)
-
+	
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		// Silently skip if we can't create request
+		return
 	}
-
+	
 	req.Header.Set("Content-Type", "application/json")
 	req.SetBasicAuth(strings.Split(c.auth, ":")[0], strings.Split(c.auth, ":")[1])
-
+	
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
+		// Silently skip if endpoint isn't available
+		return
 	}
 	defer resp.Body.Close()
-
+	
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		fmt.Printf("  Warning: Failed to list %s: HTTP %d - %s\n", resourceType, resp.StatusCode, string(bodyBytes))
-		return nil
+		// Silently skip if endpoint returns error (might not be available)
+		return
 	}
-
+	
 	var listResponse struct {
 		Items []struct {
 			Metadata struct {
@@ -398,62 +344,39 @@ func (c *Client) deleteResourceType(endpoint, resourceType string) error {
 			} `json:"metadata"`
 		} `json:"items"`
 	}
-
+	
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	if err := json.Unmarshal(bodyBytes, &listResponse); err != nil {
-		fmt.Printf("  Warning: Failed to decode %s list response: %v\n", resourceType, err)
-		fmt.Printf("  Response body: %s\n", string(bodyBytes))
-		return nil
+		// Silently skip if we can't decode response
+		return
 	}
-
+	
 	if len(listResponse.Items) == 0 {
-		fmt.Printf("  No %s found\n", resourceType)
-		return nil
+		return
 	}
-
+	
 	deletedCount := 0
 	for _, item := range listResponse.Items {
 		if strings.HasPrefix(item.Metadata.Name, prefix+"-") {
 			fmt.Printf("  Deleting %s: %s\n", resourceType, item.Metadata.Name)
 			deleteURL := fmt.Sprintf("%s/%s", endpoint, item.Metadata.Name)
 			if err := c.makeRequest("DELETE", deleteURL, nil); err != nil {
-				fmt.Printf("    Warning: Failed to delete %s: %v\n", item.Metadata.Name, err)
+				// Silently skip deletion errors
 			} else {
 				deletedCount++
 			}
 		}
 	}
-
-	if deletedCount == 0 {
-		fmt.Printf("  No %s with prefix '%s-' found\n", resourceType, prefix)
-	}
-
-	return nil
 }
 
 func main() {
 	flag.Parse()
-
+	
 	client := NewClient(*grafanaURL, *namespace, *user, *password)
-
-	// Check if scope API is enabled
-	enabled, err := client.checkScopeAPIEnabled()
-	if err != nil {
-		fmt.Printf("Warning: Could not check if scope API is enabled: %v\n", err)
-		fmt.Printf("Skipping scope provisioning...\n\n")
-		return
-	}
-	if !enabled {
-		fmt.Printf("Scope API feature flag is not enabled. Skipping scope provisioning.\n")
-		fmt.Printf("To enable scopes, set the 'scopeApi' feature flag.\n\n")
-		return
-	}
-
+	
 	if *cleanupFlag {
-		if err := client.deleteResources(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error during cleanup: %v\n", err)
-			os.Exit(1)
-		}
+		// Cleanup should be silent if endpoints aren't available
+		client.deleteResources()
 		return
 	}
 
