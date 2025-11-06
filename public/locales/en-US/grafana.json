@@ -7659,6 +7659,13 @@
       "modal-title": "SQL Editor",
       "tooltip-experimental": "SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team."
     },
+    "sql-schema": {
+      "error-title": "Error",
+      "loading": "Loading schema information...",
+      "no-data-title": "No schema information available",
+      "no-fields-desc": "No schema information available",
+      "toggle-button": "Close schema"
+    },
     "threshold": {
       "label-input": "Input"
     }
