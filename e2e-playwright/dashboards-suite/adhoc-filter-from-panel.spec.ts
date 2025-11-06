@@ -1,5 +1,3 @@
-import { first } from 'lodash';
-
 import { test, expect } from '@grafana/plugin-e2e';
 
 import testDashboard from '../dashboards/AdHocFilterTest.json';
