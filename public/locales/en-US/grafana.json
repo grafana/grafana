@@ -5824,14 +5824,26 @@
     },
     "annotation-settings-edit": {
       "back-to-list": "Back to list",
+      "control-display-options": {
+        "above-dashboard": {
+          "label": "Above dashboard"
+        },
+        "controls-menu": {
+          "description": "Can be accessed when the controls menu is open",
+          "label": "Controls menu"
+        },
+        "hidden": {
+          "description": "Hides the toggle for turning this annotation on or off",
+          "label": "Hidden"
+        }
+      },
       "delete": "Delete",
       "description-color-annotation-event-markers": "Color to use for the annotation event markers",
       "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
-      "description-hidden": "Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden.",
+      "label-annotation-controls-display": "Show annotation controls in",
       "label-color": "Color",
       "label-data-source": "Data source",
       "label-enabled": "Enabled",
-      "label-hidden": "Hidden",
       "label-name": "Name",
       "label-show-in": "Show in",
       "placeholder-choose-panels": "Choose panels",
@@ -5887,6 +5899,7 @@
       "label-open-link-in-new-tab": "Open link in new tab",
       "label-options": "Options",
       "label-show-as-dropdown": "Show as dropdown",
+      "label-show-in-controls-menu": "Show in controls menu",
       "label-title": "Title",
       "label-tooltip": "Tooltip",
       "label-type": "Type",
@@ -6447,6 +6460,25 @@
     },
     "variable-controls": {
       "add-variable": "Add variable"
+    },
+    "variable-display-select": {
+      "label": "Display",
+      "options": {
+        "above-dashboard": {
+          "label": "Above dashboard"
+        },
+        "controls-menu": {
+          "description": "Visible when the controls menu is open",
+          "label": "Controls menu"
+        },
+        "hidden": {
+          "label": "Hidden"
+        },
+        "hidden-label": {
+          "description": "Above the dashboard, but without showing the name of variable",
+          "label": "Above dashboard, label hidden"
+        }
+      }
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
