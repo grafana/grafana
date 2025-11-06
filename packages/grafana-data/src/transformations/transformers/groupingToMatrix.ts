@@ -1,6 +1,5 @@
 import { map } from 'rxjs/operators';
 
-import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import {
   SpecialValue,
