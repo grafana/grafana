@@ -234,6 +234,15 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 			if len(vals) != 1 {
 				return nil, fmt.Errorf("only one library panel uid is supported")
 			}
+
+			// Make sure the query does not include incompatible combinations
+			for _, f := range req.Options.Fields {
+				switch f.Key {
+				case resource.SEARCH_FIELD_NAME:
+					return nil, fmt.Errorf("libraryPanel query must not include explicit names")
+				}
+			}
+
 			query.DashboardUIDs, err = c.getLibraryPanelConnections(ctx, user, vals[0])
 			if err != nil {
 				return nil, err
