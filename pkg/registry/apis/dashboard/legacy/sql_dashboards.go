@@ -40,7 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-const tracePrefix = "legacy"
+const tracePrefix = "legacy."
 
 var (
 	_      DashboardAccess = (*dashboardSqlAccess)(nil)
