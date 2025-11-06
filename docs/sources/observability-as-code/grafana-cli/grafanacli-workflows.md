@@ -18,7 +18,7 @@ weight: 300
 # Manage resources with Grafana CLI
 
 {{< admonition type="note" >}}
-`grafanactl` is under active development. Command-line flags and subcommands described here may change. This document outlines the target workflows the tool is expected to support.
+`grafanactl` is under active development. Command-line flags and subcommands described here may change. This document outlines the target workflows the tool is expected to support. You can find a full list of supported commands (in this page)[https://grafana.github.io/grafanactl/reference/cli/grafanactl/].
 {{< /admonition >}}
 
 ## Migrate resources between environments
