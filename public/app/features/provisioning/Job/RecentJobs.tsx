@@ -155,12 +155,13 @@ export function RecentJobs({ repo }: Props) {
   const [jobs, activeQuery, historicQuery] = useRepositoryAllJobs({
     repositoryName: repo.metadata?.name ?? 'x',
   });
-  console.log('activeQuery', activeQuery);
-  console.log('historicQuery', historicQuery);
   const jobColumns = useMemo(() => getJobColumns(), []);
 
   const renderContent = () => {
-    if (activeQuery.isLoading || historicQuery.isLoading) {
+    const isInitialLoading =
+      (activeQuery.isLoading && !activeQuery.data) || (historicQuery.isLoading && !historicQuery.data);
+
+    if (isInitialLoading) {
       return (
         <Stack direction="column" alignItems="center">
           <Spinner />
