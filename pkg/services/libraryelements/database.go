@@ -476,11 +476,11 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 
 		// Every signed in user can see the general folder. The general folder might have "general" or the empty string as its UID.
 		// Using a map for O(1) lookup instead of O(n) slice iteration
-		folderUIDSet := map[string]bool{
-			"general": true,
-			"":        true,
-		}
-		folderMap := map[string]string{}
+		folderUIDSet := make(map[string]bool, len(fs)+2)
+		folderUIDSet["general"] = true
+		folderUIDSet[""] = true
+
+		folderMap := make(map[string]string, len(fs))
 		for _, f := range fs {
 			folderUIDSet[f.UID] = true
 			folderMap[f.UID] = f.Title
