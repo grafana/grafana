@@ -1262,9 +1262,7 @@ func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
 		t.Skip("test only on sqlite for now")
 	}
 
-	// Test across different dual writer modes
-	modes := []int{2, 3, 5}
-	for mode := range modes {
+	for mode := 0; mode <= 5; mode++ {
 		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, delete blocked by library elements)", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 
@@ -1342,9 +1340,7 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 		t.Skip("test only on sqlite for now")
 	}
 
-	// Test across different dual writer modes
-	modes := []int{2, 3, 5}
-	for mode := range modes {
+	for mode := 0; mode <= 5; mode++ {
 		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, delete parent blocked by library elements in child)", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 
@@ -1438,9 +1434,7 @@ func TestIntegrationFolderDeletionBlockedByConnectedLibraryPanels(t *testing.T) 
 		t.Skip("test only on sqlite for now")
 	}
 
-	// Test across different dual writer modes
-	modes := []int{2, 3, 5}
-	for mode := range modes {
+	for mode := 0; mode <= 5; mode++ {
 		t.Run(fmt.Sprintf("mode %v - delete blocked by connected library panels in folder and subfolder", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 
@@ -1520,9 +1514,7 @@ func TestIntegrationFolderDeletionWithDanglingLibraryPanels(t *testing.T) {
 		t.Skip("test only on sqlite for now")
 	}
 
-	// Test across different dual writer modes
-	modes := []int{2, 3, 5}
-	for mode := range modes {
+	for mode := 0; mode <= 5; mode++ {
 		t.Run(fmt.Sprintf("mode %v - delete succeeds and cleans up dangling library panels in folder and subfolder", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 
@@ -1798,9 +1790,7 @@ func TestIntegrationDeleteNestedFoldersPostorder(t *testing.T) {
 		t.Skip("test only on sqlite for now")
 	}
 
-	// Test across different dual writer modes
-	modes := []int{2, 3, 5}
-	for mode := range modes {
+	for mode := 0; mode <= 5; mode++ {
 		t.Run(fmt.Sprintf("Mode %d: Delete nested folder hierarchy in postorder", mode), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
