@@ -1262,8 +1262,7 @@ func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
 		t.Skip("test only on sqlite for now")
 	}
 
-	// test on all dualwriter modes
-	for mode := 0; mode <= 2; mode++ {
+	for mode := 0; mode <= 5; mode++ {
 		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, delete blocked by library elements)", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 
@@ -1781,4 +1780,107 @@ func TestIntegrationMoveNestedFolderToRootK8S(t *testing.T) {
 	require.Equal(t, http.StatusOK, get.Response.StatusCode)
 	require.Equal(t, "f2", get.Result.UID)
 	require.Equal(t, "", get.Result.ParentUID)
+}
+
+// Test deleting nested folders ensures postorder deletion
+func TestIntegrationDeleteNestedFoldersPostorder(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	for mode := 0; mode <= 5; mode++ {
+		t.Run(fmt.Sprintf("Mode %d: Delete nested folder hierarchy in postorder", mode), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagUnifiedStorageSearch,
+				},
+			})
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+			// Helper function to create a folder and return its UID and ParentUID
+			createFolder := func(title, uid, parentUid string) (string, string) {
+				payload := fmt.Sprintf(`{"title":"%s","uid":"%s"%s}`, title, uid, func() string {
+					if parentUid != "" {
+						return fmt.Sprintf(`,"parentUid":"%s"`, parentUid)
+					}
+					return ""
+				}())
+				create := apis.DoRequest(helper, apis.RequestParams{
+					User:   client.Args.User,
+					Method: http.MethodPost,
+					Path:   "/api/folders",
+					Body:   []byte(payload),
+				}, &folder.Folder{})
+				require.NotNil(t, create.Result)
+				require.Equal(t, http.StatusOK, create.Response.StatusCode)
+				return create.Result.UID, create.Result.ParentUID
+			}
+
+			// Create a nested folder structure:
+			//       parent
+			//       /    \
+			//   child1  child2
+			//      |
+			//  grandchild
+
+			// Create parent folder
+			parentUID, _ := createFolder(fmt.Sprintf("Parent-%d", mode), fmt.Sprintf("parent-%d", mode), "")
+
+			// Create child1 folder
+			child1UID, child1ParentUID := createFolder(fmt.Sprintf("Child1-%d", mode), fmt.Sprintf("child1-%d", mode), parentUID)
+			require.Equal(t, parentUID, child1ParentUID)
+
+			// Create child2 folder
+			child2UID, child2ParentUID := createFolder(fmt.Sprintf("Child2-%d", mode), fmt.Sprintf("child2-%d", mode), parentUID)
+			require.Equal(t, parentUID, child2ParentUID)
+
+			// Create grandchild folder under child1
+			grandchildUID, grandchildParentUID := createFolder(fmt.Sprintf("Grandchild-%d", mode), fmt.Sprintf("grandchild-%d", mode), child1UID)
+			require.Equal(t, child1UID, grandchildParentUID)
+
+			// Verify the structure before deletion
+			verifyFolderExists := func(uid string, shouldExist bool) {
+				_, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+				if shouldExist {
+					require.NoError(t, err, "folder %s should exist", uid)
+				} else {
+					require.Error(t, err, "folder %s should not exist", uid)
+				}
+			}
+
+			// All folders should exist
+			verifyFolderExists(parentUID, true)
+			verifyFolderExists(child1UID, true)
+			verifyFolderExists(child2UID, true)
+			verifyFolderExists(grandchildUID, true)
+
+			// Delete the parent folder - this should trigger postorder deletion
+			parentDelete := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodDelete,
+				Path:   "/api/folders/" + parentUID,
+			}, &folder.Folder{})
+			require.NotNil(t, parentDelete.Result)
+			require.Equal(t, http.StatusOK, parentDelete.Response.StatusCode)
+
+			// All folders should now be deleted (postorder deletion: grandchild, child1, child2, parent)
+			verifyFolderExists(grandchildUID, false)
+			verifyFolderExists(child1UID, false)
+			verifyFolderExists(child2UID, false)
+			verifyFolderExists(parentUID, false)
+		})
+	}
 }
