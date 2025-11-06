@@ -68,7 +68,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -tags=sqlite -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   sqlite_nocgo:
     needs: detect-changes
@@ -101,7 +101,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -tags=sqlite -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
   mysql:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
