@@ -24,7 +24,7 @@ type emailSender struct {
 // isPlaceholderEmail checks if the given email address is a placeholder that should not be sent
 func isPlaceholderEmail(email string) bool {
 	trimmed := strings.TrimSpace(email)
-	return trimmed == placeholderEmailAddress || trimmed == "example@email.com"
+	return trimmed == placeholderEmailAddress
 }
 
 func (s emailSender) SendEmail(ctx context.Context, cmd *receivers.SendEmailSettings) error {

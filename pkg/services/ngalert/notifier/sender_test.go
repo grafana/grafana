@@ -18,21 +18,21 @@ func TestIsPlaceholderEmail(t *testing.T) {
 		email    string
 		expected bool
 	}{
-		{
-			name:     "placeholder with angle brackets",
-			email:    "<example@email.com>",
-			expected: true,
-		},
-		{
-			name:     "placeholder without angle brackets",
-			email:    "example@email.com",
-			expected: true,
-		},
-		{
-			name:     "placeholder with spaces",
-			email:    "  <example@email.com>  ",
-			expected: true,
-		},
+	{
+		name:     "placeholder with angle brackets",
+		email:    "<example@email.com>",
+		expected: true,
+	},
+	{
+		name:     "not a placeholder - example@email.com without angle brackets",
+		email:    "example@email.com",
+		expected: false,
+	},
+	{
+		name:     "placeholder with spaces",
+		email:    "  <example@email.com>  ",
+		expected: true,
+	},
 		{
 			name:     "valid email",
 			email:    "user@example.com",
@@ -118,20 +118,20 @@ func TestEmailSender_SendEmail_PlaceholderHandling(t *testing.T) {
 			expectedRecips: []string{"user@example.com", "admin@grafana.com"},
 			description:    "Should send to all valid addresses",
 		},
-		{
-			name:           "multiple placeholders with one valid",
-			recipients:     []string{"example@email.com", "<example@email.com>", "valid@example.com"},
-			expectSend:     true,
-			expectedRecips: []string{"valid@example.com"},
-			description:    "Should filter out all placeholder variations and send to valid address",
-		},
-		{
-			name:           "only placeholders without angle brackets",
-			recipients:     []string{"example@email.com"},
-			expectSend:     false,
-			expectedRecips: nil,
-			description:    "Should skip sending when placeholder is without angle brackets",
-		},
+	{
+		name:           "placeholder with angle brackets filtered, others sent",
+		recipients:     []string{"example@email.com", "<example@email.com>", "valid@example.com"},
+		expectSend:     true,
+		expectedRecips: []string{"example@email.com", "valid@example.com"},
+		description:    "Should filter out only placeholder with angle brackets and send to other addresses",
+	},
+	{
+		name:           "example@email.com without angle brackets is valid",
+		recipients:     []string{"example@email.com"},
+		expectSend:     true,
+		expectedRecips: []string{"example@email.com"},
+		description:    "Should send to example@email.com when it doesn't have angle brackets",
+	},
 	}
 
 	for _, tt := range tests {

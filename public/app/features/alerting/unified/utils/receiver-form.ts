@@ -309,7 +309,7 @@ export function omitTemporaryIdentifiers<T>(object: Readonly<T>): T {
  * Placeholder emails that ship with the default grafana-default-email contact point.
  * These should not trigger actual email sends or throw errors.
  */
-const PLACEHOLDER_EMAILS = ['<example@email.com>', 'example@email.com'];
+const PLACEHOLDER_EMAILS = ['<example@email.com>'];
 
 /**
  * Check if a single channel/integration has placeholder email addresses.
