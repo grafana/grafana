@@ -1526,6 +1526,24 @@ func TestIntegrationDeleteNestedFoldersPostorder(t *testing.T) {
 				User: helper.Org1.Admin,
 				GVR:  gvr,
 			})
+			// Helper function to create a folder and return its UID and ParentUID
+			createFolder := func(title, uid, parentUid string) (string, string) {
+				payload := fmt.Sprintf(`{"title":"%s","uid":"%s"%s}`, title, uid, func() string {
+					if parentUid != "" {
+						return fmt.Sprintf(`,"parentUid":"%s"`, parentUid)
+					}
+					return ""
+				}())
+				create := apis.DoRequest(helper, apis.RequestParams{
+					User:   client.Args.User,
+					Method: http.MethodPost,
+					Path:   "/api/folders",
+					Body:   []byte(payload),
+				}, &folder.Folder{})
+				require.NotNil(t, create.Result)
+				require.Equal(t, http.StatusOK, create.Response.StatusCode)
+				return create.Result.UID, create.Result.ParentUID
+			}
 
 			// Create a nested folder structure:
 			//       parent
@@ -1535,55 +1553,19 @@ func TestIntegrationDeleteNestedFoldersPostorder(t *testing.T) {
 			//  grandchild
 
 			// Create parent folder
-			parentPayload := fmt.Sprintf(`{"title":"Parent-%d","uid":"parent-%d"}`, mode, mode)
-			parentCreate := apis.DoRequest(helper, apis.RequestParams{
-				User:   client.Args.User,
-				Method: http.MethodPost,
-				Path:   "/api/folders",
-				Body:   []byte(parentPayload),
-			}, &folder.Folder{})
-			require.NotNil(t, parentCreate.Result)
-			require.Equal(t, http.StatusOK, parentCreate.Response.StatusCode)
-			parentUID := parentCreate.Result.UID
+			parentUID, _ := createFolder(fmt.Sprintf("Parent-%d", mode), fmt.Sprintf("parent-%d", mode), "")
 
 			// Create child1 folder
-			child1Payload := fmt.Sprintf(`{"title":"Child1-%d","uid":"child1-%d","parentUid":"%s"}`, mode, mode, parentUID)
-			child1Create := apis.DoRequest(helper, apis.RequestParams{
-				User:   client.Args.User,
-				Method: http.MethodPost,
-				Path:   "/api/folders",
-				Body:   []byte(child1Payload),
-			}, &folder.Folder{})
-			require.NotNil(t, child1Create.Result)
-			require.Equal(t, http.StatusOK, child1Create.Response.StatusCode)
-			child1UID := child1Create.Result.UID
-			require.Equal(t, parentUID, child1Create.Result.ParentUID)
+			child1UID, child1ParentUID := createFolder(fmt.Sprintf("Child1-%d", mode), fmt.Sprintf("child1-%d", mode), parentUID)
+			require.Equal(t, parentUID, child1ParentUID)
 
 			// Create child2 folder
-			child2Payload := fmt.Sprintf(`{"title":"Child2-%d","uid":"child2-%d","parentUid":"%s"}`, mode, mode, parentUID)
-			child2Create := apis.DoRequest(helper, apis.RequestParams{
-				User:   client.Args.User,
-				Method: http.MethodPost,
-				Path:   "/api/folders",
-				Body:   []byte(child2Payload),
-			}, &folder.Folder{})
-			require.NotNil(t, child2Create.Result)
-			require.Equal(t, http.StatusOK, child2Create.Response.StatusCode)
-			child2UID := child2Create.Result.UID
-			require.Equal(t, parentUID, child2Create.Result.ParentUID)
+			child2UID, child2ParentUID := createFolder(fmt.Sprintf("Child2-%d", mode), fmt.Sprintf("child2-%d", mode), parentUID)
+			require.Equal(t, parentUID, child2ParentUID)
 
 			// Create grandchild folder under child1
-			grandchildPayload := fmt.Sprintf(`{"title":"Grandchild-%d","uid":"grandchild-%d","parentUid":"%s"}`, mode, mode, child1UID)
-			grandchildCreate := apis.DoRequest(helper, apis.RequestParams{
-				User:   client.Args.User,
-				Method: http.MethodPost,
-				Path:   "/api/folders",
-				Body:   []byte(grandchildPayload),
-			}, &folder.Folder{})
-			require.NotNil(t, grandchildCreate.Result)
-			require.Equal(t, http.StatusOK, grandchildCreate.Response.StatusCode)
-			grandchildUID := grandchildCreate.Result.UID
-			require.Equal(t, child1UID, grandchildCreate.Result.ParentUID)
+			grandchildUID, grandchildParentUID := createFolder(fmt.Sprintf("Grandchild-%d", mode), fmt.Sprintf("grandchild-%d", mode), child1UID)
+			require.Equal(t, child1UID, grandchildParentUID)
 
 			// Verify the structure before deletion
 			verifyFolderExists := func(uid string, shouldExist bool) {

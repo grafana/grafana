@@ -278,3 +278,52 @@ type GetDescendantCountsQuery struct {
 }
 
 type DescendantCounts map[string]int64
+
+type Folders []*Folder
+
+// SortByPostorder returns the folders in postorder traversal order.
+// That is, children folders appear before their parents in the returned slice.
+func (fs Folders) SortByPostorder() Folders {
+	if len(fs) == 0 {
+		return fs
+	}
+
+	// Build parent-to-children map
+	tree := make(map[string][]*Folder)
+	folderMap := make(map[string]*Folder)
+	for _, f := range fs {
+		folderMap[f.UID] = f
+		tree[f.ParentUID] = append(tree[f.ParentUID], f)
+	}
+
+	// Find all roots (fs whose parents are not in the result set)
+	roots := []*Folder{}
+	for _, f := range fs {
+		if folderMap[f.ParentUID] == nil {
+			roots = append(roots, f)
+		}
+	}
+
+	// Traverse in postorder
+	result := make(Folders, 0, len(fs))
+	visited := make(map[string]bool)
+	var traverse func(f *Folder)
+	traverse = func(f *Folder) {
+		if visited[f.UID] {
+			return
+		}
+		visited[f.UID] = true
+		// First visit all children
+		for _, child := range tree[f.UID] {
+			traverse(child)
+		}
+		// Then add current folder
+		result = append(result, f)
+	}
+
+	for _, root := range roots {
+		traverse(root)
+	}
+
+	return result
+}
