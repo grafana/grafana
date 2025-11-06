@@ -10,7 +10,7 @@ import { Button, useStyles2, Stack, Grid, EmptyState, Alert, Pagination, FilterI
 import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 
 import { DashboardCard } from './DashboardCard';
-import { MappingContext } from './DashboardLibraryModal';
+import { MappingContext } from './SuggestedDashboardsModal';
 import { fetchCommunityDashboard, fetchCommunityDashboards } from './api/dashboardLibraryApi';
 import { DashboardLibraryInteractions } from './interactions';
 import { GnetDashboard } from './types';

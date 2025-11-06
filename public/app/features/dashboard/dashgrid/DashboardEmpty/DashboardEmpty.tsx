@@ -10,8 +10,8 @@ import { Button, useStyles2, Text, Box, Stack, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { DashboardLibraryModal, MappingContext } from '../DashboardLibrary/DashboardLibraryModal';
 import { SuggestedDashboards } from '../DashboardLibrary/SuggestedDashboards';
+import { SuggestedDashboardsModal, MappingContext } from '../DashboardLibrary/SuggestedDashboardsModal';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
@@ -103,11 +103,19 @@ const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImpor
 
             {/* Suggested Dashboards Section */}
             {config.featureToggles.dashboardLibrary && dashboardLibraryDatasourceUid && (
-              <SuggestedDashboards
-                datasourceUid={dashboardLibraryDatasourceUid}
-                onOpenModal={onOpenModal}
-                onShowMapping={onShowMapping}
-              />
+              <>
+                <SuggestedDashboards
+                  datasourceUid={dashboardLibraryDatasourceUid}
+                  onOpenModal={onOpenModal}
+                  onShowMapping={onShowMapping}
+                />
+                <SuggestedDashboardsModal
+                  isOpen={showLibraryModal}
+                  onDismiss={onModalDismiss}
+                  initialMappingContext={mappingContext}
+                  defaultTab={defaultTab}
+                />
+              </>
             )}
             <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
               <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
@@ -164,16 +172,6 @@ const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImpor
           </Stack>
         </div>
       </Stack>
-
-      {/* Dashboard Library Modal */}
-      {config.featureToggles.dashboardLibrary && dashboardLibraryDatasourceUid && (
-        <DashboardLibraryModal
-          isOpen={showLibraryModal}
-          onDismiss={onModalDismiss}
-          initialMappingContext={mappingContext}
-          defaultTab={defaultTab}
-        />
-      )}
     </>
   );
 };

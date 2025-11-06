@@ -10,7 +10,7 @@ import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { DashboardCard } from './DashboardCard';
-import { MappingContext } from './DashboardLibraryModal';
+import { MappingContext } from './SuggestedDashboardsModal';
 import {
   fetchCommunityDashboard,
   fetchCommunityDashboards,
