@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Card, IconButton, useStyles2 } from '@grafana/ui';
 
+import { useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsMode } from './LogLineDetails';
 import { useLogListContext } from './LogListContext';
 import { reportInteractionOnce } from './analytics';
@@ -89,7 +90,8 @@ const DisplayedField = ({
   moveField,
   provided,
 }: DraggableDisplayedFieldProps & { provided: DraggableProvided }) => {
-  const { detailsMode, displayedFields, onClickHideField } = useLogListContext();
+  const { displayedFields, onClickHideField } = useLogListContext();
+  const { detailsMode } = useLogDetailsContext();
   const styles = useStyles2(getStyles, detailsMode);
   const nextIndex = index === displayedFields.length - 1 ? 0 : index + 1;
   const prevIndex = index === 0 ? displayedFields.length - 1 : index - 1;

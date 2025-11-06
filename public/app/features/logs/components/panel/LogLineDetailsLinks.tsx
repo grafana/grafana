@@ -7,6 +7,7 @@ import { DataLinkButton, Icon, Toggletip, useStyles2 } from '@grafana/ui';
 
 import { FieldDef } from '../logParser';
 
+import { useLogDetailsContext } from './LogDetailsContext';
 import { filterFields, MultipleValue, SingleValue } from './LogLineDetailsFields';
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
@@ -53,7 +54,8 @@ interface LogLineDetailsFieldProps {
 }
 
 export const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) => {
-  const { closeDetails, onPinLine, pinLineButtonTooltipTitle, prettifyJSON } = useLogListContext();
+  const { onPinLine, pinLineButtonTooltipTitle, prettifyJSON } = useLogListContext();
+  const { closeDetails } = useLogDetailsContext();
 
   const styles = useStyles2(getFieldStyles);
 

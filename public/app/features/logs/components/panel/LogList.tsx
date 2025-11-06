@@ -26,6 +26,7 @@ import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { LogListFieldSelector } from '../fieldSelector/FieldSelector';
 
 import { InfiniteScrollMode, InfiniteScroll, LoadMoreLogsType } from './InfiniteScroll';
+import { LogDetailsContextProvider, useLogDetailsContext } from './LogDetailsContext';
 import { getGridTemplateColumns, LogLineTimestampResolution } from './LogLine';
 import { LogLineDetails, LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
@@ -174,9 +175,7 @@ export const LogList = ({
       app={app}
       containerElement={containerElement}
       dedupStrategy={dedupStrategy}
-      detailsMode={detailsMode}
       displayedFields={displayedFields}
-      enableLogDetails={enableLogDetails}
       filterLevels={filterLevels}
       fontSize={fontSize}
       getRowContextQuery={getRowContextQuery}
@@ -213,24 +212,33 @@ export const LogList = ({
       timestampResolution={timestampResolution}
       wrapLogMessage={wrapLogMessage}
     >
-      <LogListSearchContextProvider>
-        <LogListComponent
-          containerElement={containerElement}
-          dataFrames={dataFrames}
-          eventBus={eventBus}
-          getFieldLinks={getFieldLinks}
-          grammar={grammar}
-          initialScrollPosition={initialScrollPosition}
-          infiniteScrollMode={infiniteScrollMode}
-          loading={loading}
-          loadMore={loadMore}
-          logs={logs}
-          showControls={showControls}
-          showFieldSelector={showFieldSelector}
-          timeRange={timeRange}
-          timeZone={timeZone}
-        />
-      </LogListSearchContextProvider>
+      <LogDetailsContextProvider
+        containerElement={containerElement}
+        detailsMode={detailsMode}
+        enableLogDetails={enableLogDetails}
+        logs={logs}
+        logOptionsStorageKey={logOptionsStorageKey}
+        showControls={showControls}
+      >
+        <LogListSearchContextProvider>
+          <LogListComponent
+            containerElement={containerElement}
+            dataFrames={dataFrames}
+            eventBus={eventBus}
+            getFieldLinks={getFieldLinks}
+            grammar={grammar}
+            initialScrollPosition={initialScrollPosition}
+            infiniteScrollMode={infiniteScrollMode}
+            loading={loading}
+            loadMore={loadMore}
+            logs={logs}
+            showControls={showControls}
+            showFieldSelector={showFieldSelector}
+            timeRange={timeRange}
+            timeZone={timeZone}
+          />
+        </LogListSearchContextProvider>
+      </LogDetailsContextProvider>
     </LogListContextProvider>
   );
 };
@@ -255,7 +263,6 @@ const LogListComponent = ({
     app,
     displayedFields,
     dedupStrategy,
-    detailsMode,
     filterLevels,
     fontSize,
     forceEscape,
@@ -265,14 +272,13 @@ const LogListComponent = ({
     onClickFilterOutString,
     permalinkedLogId,
     prettifyJSON,
-    showDetails,
     showTime,
     showUniqueLabels,
     sortOrder,
     timestampResolution,
-    toggleDetails,
     wrapLogMessage,
   } = useLogListContext();
+  const { detailsMode, showDetails, toggleDetails } = useLogDetailsContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(getListHeight(containerElement, app));
   const theme = useTheme2();
