@@ -433,7 +433,7 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.GreaterOrEqual(t, continueToken.ResourceVersion, rv8)
 
 		res, err = server.List(ctx, &resourcepb.ListRequest{
-			Limit: 3,
+			Limit:         3,
 			NextPageToken: continueToken.String(),
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
@@ -497,7 +497,7 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		res, err = server.List(ctx, &resourcepb.ListRequest{
 			Limit:           3,
 			ResourceVersion: rv7,
-			NextPageToken: continueToken.String(),
+			NextPageToken:   continueToken.String(),
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Namespace: ns,
