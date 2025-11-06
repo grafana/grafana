@@ -1813,6 +1813,14 @@
             }
           },
           {
+            "name": "libraryPanel",
+            "in": "query",
+            "description": "find dashboards that reference a given libraryPanel",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "sort",
             "in": "query",
             "description": "sortable field",
@@ -2324,6 +2332,7 @@
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardAccess": {
         "type": "object",
         "required": [
+          "isPublic",
           "canSave",
           "canEdit",
           "canAdmin",
@@ -2353,6 +2362,10 @@
             "default": false
           },
           "canStar": {
+            "type": "boolean",
+            "default": false
+          },
+          "isPublic": {
             "type": "boolean",
             "default": false
           },

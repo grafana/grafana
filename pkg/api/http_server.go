@@ -164,7 +164,6 @@ type HTTPServer struct {
 	LoggerMiddleware             loggermw.Logger
 	SQLStore                     db.DB
 	AlertNG                      *ngalert.AlertNG
-	LibraryPanelService          librarypanels.Service
 	LibraryElementService        libraryelements.Service
 	SocialService                social.Service
 	Listener                     net.Listener
@@ -319,7 +318,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		ContextHandler:               contextHandler,
 		LoggerMiddleware:             loggerMiddleware,
 		AlertNG:                      alertNG,
-		LibraryPanelService:          libraryPanelService,
 		LibraryElementService:        libraryElementService,
 		QuotaService:                 quotaService,
 		tracer:                       tracer,

@@ -33,7 +33,6 @@ refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,true
 extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,true
-pluginsFrontendSandbox,privatePreview,@grafana/plugins-platform-backend,false,false,false
 recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false
 logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
 awsDatasourcesTempCredentials,GA,@grafana/aws-datasources,false,false,false
@@ -164,6 +163,7 @@ managedDualWriter,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
+timeRangePan,experimental,@grafana/dataviz-squad,false,false,true
 azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
 preinstallAutoUpdate,GA,@grafana/plugins-platform-backend,false,false,false
 playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -198,7 +198,7 @@ grafanaAdvisor,privatePreview,@grafana/plugins-platform-backend,false,false,fals
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
 datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
-newLogsPanel,experimental,@grafana/observability-logs,false,false,true
+newLogsPanel,GA,@grafana/observability-logs,false,false,true
 grafanaconThemes,GA,@grafana/grafana-frontend-platform,false,true,false
 alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
 alertingUseNewSimplifiedRoutingHashAlgorithm,preview,@grafana/alerting-squad,false,true,false
