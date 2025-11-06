@@ -79,7 +79,7 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
         // Creating a new array instead of pushing to get a new references
         const slice = registry[extensionPointId] ?? [];
         const result = { ...registryItem, pluginId, extensionPointId };
-        registry[extensionPointId] = [...slice, result];
+        registry[extensionPointId] = slice.concat(result);
       }
     }
 
