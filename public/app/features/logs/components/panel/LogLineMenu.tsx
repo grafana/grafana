@@ -158,7 +158,7 @@ export const LogLineMenu = ({ active, log, styles }: Props) => {
     <Dropdown overlay={menu} placement="bottom-start">
       <IconButton
         className={styles.menuIcon}
-        name={active ? 'ellipsis-h' : 'ellipsis-v'}
+        name={active ? 'angle-right' : 'ellipsis-v'}
         aria-label={t('logs.log-line-menu.icon-label', 'Log menu')}
         role="button"
         variant={active ? 'primary' : undefined}
