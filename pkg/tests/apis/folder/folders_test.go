@@ -1340,7 +1340,9 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 		t.Skip("test only on sqlite for now")
 	}
 
-	for mode := 0; mode <= 5; mode++ {
+	// TODO: re-enable on mode 4 and 5 when we migrate /api to /apis for library connections, and begin to
+	// use search to return the connections, rather than the connections table.
+	for mode := 0; mode <= 3; mode++ {
 		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, delete parent blocked by library elements in child)", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 
@@ -1434,7 +1436,9 @@ func TestIntegrationFolderDeletionBlockedByConnectedLibraryPanels(t *testing.T) 
 		t.Skip("test only on sqlite for now")
 	}
 
-	for mode := 0; mode <= 5; mode++ {
+	// TODO: re-enable on mode 4 and 5 when we migrate /api to /apis for library connections, and begin to
+	// use search to return the connections, rather than the connections table.
+	for mode := 0; mode <= 3; mode++ {
 		t.Run(fmt.Sprintf("mode %v - delete blocked by connected library panels in folder and subfolder", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 
