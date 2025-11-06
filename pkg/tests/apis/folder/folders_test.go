@@ -1427,6 +1427,283 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 	}
 }
 
+// Test folder deletion with connected (in-use) library panels - should be blocked
+func TestIntegrationFolderDeletionBlockedByConnectedLibraryPanels(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	for mode := 0; mode <= 5; mode++ {
+		t.Run(fmt.Sprintf("mode %v - delete blocked by connected library panels in folder and subfolder", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
+
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagUnifiedStorageSearch,
+				},
+			})
+
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+
+			// Create parent and child folders
+			parentUID := fmt.Sprintf("connected-parent-%d", mode)
+			childUID := fmt.Sprintf("connected-child-%d", mode)
+			createTestFolder(t, helper, client, parentUID, fmt.Sprintf("Parent Folder %d", mode), "")
+			createTestFolder(t, helper, client, childUID, fmt.Sprintf("Child Folder %d", mode), parentUID)
+
+			// Create library panels in both folders
+			parentLibPanelName := fmt.Sprintf("Connected LP in parent %d", mode)
+			childLibPanelName := fmt.Sprintf("Connected LP in child %d", mode)
+			parentLibPanelUID := createTestLibraryPanel(t, helper, client, parentLibPanelName, parentUID)
+			childLibPanelUID := createTestLibraryPanel(t, helper, client, childLibPanelName, childUID)
+
+			// Create dashboards using library panels (makes them connected)
+			parentDashUID := createDashboardWithLibraryPanel(t, helper, client,
+				fmt.Sprintf("Dashboard with LP in parent %d", mode),
+				parentLibPanelUID, "Connected LP in parent", parentUID)
+			childDashUID := createDashboardWithLibraryPanel(t, helper, client,
+				fmt.Sprintf("Dashboard with LP in child %d", mode),
+				childLibPanelUID, "Connected LP in child", childUID)
+
+			// Attempt to delete the parent folder - should be blocked because library panels are connected
+			parentDelete := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodDelete,
+				Path:   "/api/folders/" + parentUID,
+			}, &folder.Folder{})
+			require.Equal(t, http.StatusForbidden, parentDelete.Response.StatusCode)
+
+			// Verify both folders still exist
+			_, getParentErr := client.Resource.Get(context.Background(), parentUID, metav1.GetOptions{})
+			require.NoError(t, getParentErr, "parent folder should still exist after failed deletion")
+			_, getChildErr := client.Resource.Get(context.Background(), childUID, metav1.GetOptions{})
+			require.NoError(t, getChildErr, "child folder should still exist after failed deletion")
+
+			// Verify library panels still exist
+			verifyLibraryPanelExists(t, helper, client, parentLibPanelUID)
+			verifyLibraryPanelExists(t, helper, client, childLibPanelUID)
+
+			// Verify dashboards still exist
+			verifyDashboardExists(t, helper, client, parentDashUID)
+			verifyDashboardExists(t, helper, client, childDashUID)
+		})
+	}
+}
+
+// Test folder deletion with dangling (unconnected) library panels - should succeed and clean up
+func TestIntegrationFolderDeletionWithDanglingLibraryPanels(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	for mode := 0; mode <= 5; mode++ {
+		t.Run(fmt.Sprintf("mode %v - delete succeeds and cleans up dangling library panels in folder and subfolder", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
+
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagUnifiedStorageSearch,
+				},
+			})
+
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+
+			// Create parent and child folders
+			parentUID := fmt.Sprintf("dangling-parent-%d", mode)
+			childUID := fmt.Sprintf("dangling-child-%d", mode)
+			createTestFolder(t, helper, client, parentUID, fmt.Sprintf("Parent Folder %d", mode), "")
+			createTestFolder(t, helper, client, childUID, fmt.Sprintf("Child Folder %d", mode), parentUID)
+
+			// Create dangling library panels in both folders (not connected to any dashboard)
+			parentLibPanelUID := createTestLibraryPanel(t, helper, client,
+				fmt.Sprintf("Dangling LP in parent %d", mode), parentUID)
+			childLibPanelUID := createTestLibraryPanel(t, helper, client,
+				fmt.Sprintf("Dangling LP in child %d", mode), childUID)
+
+			// Verify library panels exist before deletion
+			verifyLibraryPanelExists(t, helper, client, parentLibPanelUID)
+			verifyLibraryPanelExists(t, helper, client, childLibPanelUID)
+
+			// Attempt to delete the parent folder - should be blocked because library panels are connected
+			parentDelete := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodDelete,
+				Path:   "/api/folders/" + parentUID,
+			}, &folder.Folder{})
+			require.Equal(t, http.StatusOK, parentDelete.Response.StatusCode)
+
+			// Verify folders are deleted
+			_, getParentErr := client.Resource.Get(context.Background(), parentUID, metav1.GetOptions{})
+			require.Error(t, getParentErr, "parent folder should not exist after deletion")
+			_, getChildErr := client.Resource.Get(context.Background(), childUID, metav1.GetOptions{})
+			require.Error(t, getChildErr, "child folder should not exist after deletion")
+
+			// Verify dangling library panels were cleaned up
+			verifyLibraryPanelDeleted(t, helper, client, parentLibPanelUID, "dangling library panel in parent should be deleted")
+			verifyLibraryPanelDeleted(t, helper, client, childLibPanelUID, "dangling library panel in child should be deleted")
+		})
+	}
+}
+
+// Helper function to create a folder with specified UID and optional parent
+func createTestFolder(t *testing.T, helper *apis.K8sTestHelper, client *apis.K8sResourceClient, uid, title, parentUID string) *folder.Folder {
+	t.Helper()
+
+	payload := fmt.Sprintf(`{
+		"title": "%s",
+		"uid": "%s"`, title, uid)
+
+	if parentUID != "" {
+		payload += fmt.Sprintf(`,
+		"parentUid": "%s"`, parentUID)
+	}
+
+	payload += "}"
+
+	folderCreate := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(payload),
+	}, &folder.Folder{})
+
+	require.NotNil(t, folderCreate.Result)
+	require.Equal(t, uid, folderCreate.Result.UID)
+
+	return folderCreate.Result
+}
+
+// Helper function to create a library panel in a folder
+func createTestLibraryPanel(t *testing.T, helper *apis.K8sTestHelper, client *apis.K8sResourceClient, name, folderUID string) string {
+	t.Helper()
+
+	libPanelPayload := fmt.Sprintf(`{
+		"kind": 1,
+		"name": "%s",
+		"folderUid": "%s",
+		"model": {
+			"type": "text",
+			"title": "%s"
+		}
+	}`, name, folderUID, name)
+
+	libCreate := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/library-elements",
+		Body:   []byte(libPanelPayload),
+	}, &map[string]interface{}{})
+
+	require.NotNil(t, libCreate.Response)
+	require.Equal(t, http.StatusOK, libCreate.Response.StatusCode)
+
+	libPanelUID := (*libCreate.Result)["result"].(map[string]interface{})["uid"].(string)
+	require.NotEmpty(t, libPanelUID)
+
+	return libPanelUID
+}
+
+// Helper function to create a dashboard that uses a library panel
+func createDashboardWithLibraryPanel(t *testing.T, helper *apis.K8sTestHelper, client *apis.K8sResourceClient, dashTitle, libPanelUID, libPanelName, folderUID string) string {
+	t.Helper()
+
+	dashPayload := fmt.Sprintf(`{
+		"dashboard": {
+			"title": "%s",
+			"panels": [{
+				"id": 1,
+				"libraryPanel": {
+					"uid": "%s",
+					"name": "%s"
+				}
+			}]
+		},
+		"folderUid": "%s",
+		"overwrite": false
+	}`, dashTitle, libPanelUID, libPanelName, folderUID)
+
+	dashCreate := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/dashboards/db",
+		Body:   []byte(dashPayload),
+	}, &map[string]interface{}{})
+
+	require.NotNil(t, dashCreate.Response)
+	require.Equal(t, http.StatusOK, dashCreate.Response.StatusCode)
+
+	// Extract dashboard UID from response
+	dashUID := (*dashCreate.Result)["uid"].(string)
+	require.NotEmpty(t, dashUID)
+
+	return dashUID
+}
+
+// Helper function to verify library panel exists
+func verifyLibraryPanelExists(t *testing.T, helper *apis.K8sTestHelper, client *apis.K8sResourceClient, libPanelUID string) {
+	t.Helper()
+
+	libGet := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodGet,
+		Path:   fmt.Sprintf("/api/library-elements/%s", libPanelUID),
+	}, &map[string]interface{}{})
+
+	require.Equal(t, http.StatusOK, libGet.Response.StatusCode)
+}
+
+// Helper function to verify library panel does not exist
+func verifyLibraryPanelDeleted(t *testing.T, helper *apis.K8sTestHelper, client *apis.K8sResourceClient, libPanelUID, message string) {
+	t.Helper()
+
+	libGet := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodGet,
+		Path:   fmt.Sprintf("/api/library-elements/%s", libPanelUID),
+	}, &map[string]interface{}{})
+
+	require.Equal(t, http.StatusNotFound, libGet.Response.StatusCode, message)
+}
+
+// Helper function to verify dashboard exists by UID
+func verifyDashboardExists(t *testing.T, helper *apis.K8sTestHelper, client *apis.K8sResourceClient, dashUID string) {
+	t.Helper()
+
+	dashGet := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodGet,
+		Path:   fmt.Sprintf("/api/dashboards/uid/%s", dashUID),
+	}, &map[string]interface{}{})
+
+	require.Equal(t, http.StatusOK, dashGet.Response.StatusCode, fmt.Sprintf("dashboard %s should still exist", dashUID))
+}
+
 // Test moving folders to root.
 func TestIntegrationMoveNestedFolderToRootK8S(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
