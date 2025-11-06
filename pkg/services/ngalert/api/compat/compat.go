@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -327,15 +328,28 @@ func ReceiverExportFromEmbeddedContactPoint(contact definitions.EmbeddedContactP
 }
 
 // AlertingFileExportFromRoute creates a definitions.AlertingFileExport DTO from definitions.Route.
-func AlertingFileExportFromRoute(orgID int64, name string, route definitions.Route) (definitions.AlertingFileExport, error) {
-	export := RouteExportFromRoute(&route)
-	export.Name = OmitDefault(util.Pointer(name))
+func AlertingFileExportFromRoute(orgID int64, route definitions.Route) (definitions.AlertingFileExport, error) {
 	f := definitions.AlertingFileExport{
 		APIVersion: 1,
 		Policies: []definitions.NotificationPolicyExport{{
 			OrgID:       orgID,
-			RouteExport: export,
+			RouteExport: RouteExportFromRoute(&route),
 		}},
+	}
+	return f, nil
+}
+
+// AlertingFileExportFromManagedRoutes creates a definitions.AlertingFileExport DTO from one or more legacy_storage.ManagedRoute.
+func AlertingFileExportFromManagedRoutes(orgID int64, routes legacy_storage.ManagedRoutes) (definitions.AlertingFileExport, error) {
+	f := definitions.AlertingFileExport{
+		APIVersion: 1,
+		Policies:   make([]definitions.NotificationPolicyExport, 0, len(routes)),
+	}
+	for _, route := range routes {
+		f.Policies = append(f.Policies, definitions.NotificationPolicyExport{
+			OrgID:       orgID,
+			RouteExport: RouteExportFromManagedRoute(route),
+		})
 	}
 	return f, nil
 }
@@ -383,6 +397,18 @@ func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
 	}
 
 	return &export
+}
+
+// RouteExportFromManagedRoute creates a definitions.RouteExport DTO from legacy_storage.ManagedRoute.
+func RouteExportFromManagedRoute(route *legacy_storage.ManagedRoute) *definitions.RouteExport {
+	amRoute := route.AsAMRoute()
+	export := RouteExportFromRoute(&amRoute)
+	if route.Name == legacy_storage.UserDefinedRoutingTreeName {
+		export.Name = nil // Functionally this shouldn't matter, aesthetically this prefers an empty name over "user-defined".
+	} else {
+		export.Name = OmitDefault(util.Pointer(route.Name))
+	}
+	return export
 }
 
 // OmitDefault returns nil if the value is the default.

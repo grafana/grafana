@@ -61,6 +61,7 @@ type NotificationPolicyService interface {
 	ResetPolicyTree(ctx context.Context, orgID int64, provenance alerting_models.Provenance) (definitions.Route, error)
 
 	GetManagedRoute(ctx context.Context, orgID int64, name string) (legacy_storage.ManagedRoute, error)
+	GetManagedRoutes(ctx context.Context, orgID int64) (legacy_storage.ManagedRoutes, error)
 }
 
 type MuteTimingService interface {
@@ -99,31 +100,43 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) respo
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext) response.Response {
-	routeName := c.Query("routeName")
-
-	var policy definitions.Route
-	if routeName == "" {
-		var err error
-		policy, _, err = srv.policies.GetPolicyTree(c.Req.Context(), c.GetOrgID())
+	if !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
+		// Default to the old behavior of exporting the single user-defined policy tree without a "name" field.
+		policy, _, err := srv.policies.GetPolicyTree(c.Req.Context(), c.GetOrgID())
 		if err != nil {
 			if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 				return ErrResp(http.StatusNotFound, err, "")
 			}
 			return ErrResp(http.StatusInternalServerError, err, "")
 		}
+		e, err := AlertingFileExportFromRoute(c.GetOrgID(), policy)
+		if err != nil {
+			return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
+		}
+		return exportResponse(c, e)
+	}
+
+	routeName := c.Query("routeName")
+	var routesToExport legacy_storage.ManagedRoutes
+	if routeName == "" {
+		// Interpreted as Export All.
+		var err error
+		routesToExport, err = srv.policies.GetManagedRoutes(c.Req.Context(), c.GetOrgID())
+		if err != nil {
+			return response.ErrOrFallback(http.StatusInternalServerError, "failed to export all notification policy trees", err)
+		}
 	} else {
 		managedRoute, err := srv.policies.GetManagedRoute(c.Req.Context(), c.GetOrgID(), routeName)
 		if err != nil {
 			return response.ErrOrFallback(http.StatusInternalServerError, "failed to export notification policy tree", err)
 		}
-		policy = managedRoute.AsAMRoute()
+		routesToExport = legacy_storage.ManagedRoutes{&managedRoute}
 	}
 
-	e, err := AlertingFileExportFromRoute(c.GetOrgID(), routeName, policy)
+	e, err := AlertingFileExportFromManagedRoutes(c.GetOrgID(), routesToExport)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
-
 	return exportResponse(c, e)
 }
 
