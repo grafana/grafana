@@ -36,9 +36,9 @@ const INCLUDE_LOGO = true;
 const INCLUDE_SCREENSHOTS = true;
 
 export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Props) => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
-  const [currentPage, setCurrentPage] = useState(1);
+  const currentPage = Number(searchParams.get('page')) || 1;
   const [searchQuery, setSearchQuery] = useState('');
 
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -52,8 +52,13 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
 
   // Reset to page 1 when debounced search query changes
   useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearchQuery]);
+    if (debouncedSearchQuery) {
+      setSearchParams((params) => {
+        params.set('page', '1');
+        return params;
+      });
+    }
+  }, [debouncedSearchQuery, setSearchParams]);
 
   const {
     value: response,
@@ -204,7 +209,15 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                 Failed to load community dashboards. Please try again.
               </Trans>
             </Alert>
-            <Button variant="secondary" onClick={() => setCurrentPage(1)}>
+            <Button
+              variant="secondary"
+              onClick={() =>
+                setSearchParams((params) => {
+                  params.set('page', '1');
+                  return params;
+                })
+              }
+            >
               <Trans i18nKey="dashboard-library.retry">Retry</Trans>
             </Button>
           </Stack>
@@ -275,7 +288,12 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         <Pagination
           currentPage={currentPage}
           numberOfPages={totalPages}
-          onNavigate={(page) => setCurrentPage(page)}
+          onNavigate={(page) =>
+            setSearchParams((params) => {
+              params.set('page', String(page));
+              return params;
+            })
+          }
           className={styles.pagination}
         />
       )}
@@ -291,12 +309,10 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'relative',
     }),
     pagination: css({
-      position: 'sticky',
-      bottom: 0,
       backgroundColor: theme.colors.background.primary,
       padding: theme.spacing(2),
       alignItems: 'center',
-      zIndex: 2,
+      justifyContent: 'flex-end',
     }),
     searchInput: css({
       paddingLeft: theme.spacing(2),

@@ -43,10 +43,9 @@ const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImpor
   const onModalDismiss = () => {
     // Remove modal-related query params while keeping datasourceUid
     setSearchParams((params) => {
-      const newParams = new URLSearchParams(params);
-      newParams.delete('dashboardLibraryModal');
-      newParams.delete('dashboardLibraryTab');
-      return newParams;
+      params.delete('dashboardLibraryModal');
+      params.delete('dashboardLibraryTab');
+      return params;
     });
     setMappingContext(null);
   };

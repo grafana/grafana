@@ -7,7 +7,7 @@ import { Stack, Text, Button, Alert, Field, Input, Box } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { DashboardInput, DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 
-import { InputMapping, mapConstantInputs } from './utils/autoMapDatasources';
+import { InputMapping, mapConstantInputs, mapUserSelectedDatasources } from './utils/autoMapDatasources';
 
 interface Props {
   unmappedInputs: DataSourceInput[];
@@ -76,13 +76,7 @@ export const CommunityDashboardMappingForm = ({
     // 2. User-selected datasources
     // 3. Constant values (user-edited or defaults)
 
-    const userSelectedDatasources: InputMapping[] = unmappedInputs.map((input) => ({
-      name: input.name,
-      type: 'datasource',
-      pluginId: input.pluginId,
-      value: userSelectedDsMappings[input.name]?.datasource?.uid || '',
-    }));
-
+    const userSelectedDatasources = mapUserSelectedDatasources(unmappedInputs, userSelectedDsMappings);
     const constantMappings = mapConstantInputs(constantInputs, constantValues);
 
     const allMappings = [...existingMappings, ...userSelectedDatasources, ...constantMappings];
