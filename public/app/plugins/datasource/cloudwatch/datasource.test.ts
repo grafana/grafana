@@ -263,8 +263,8 @@ describe('datasource', () => {
       expect(queryMock.mock.calls[0][0].targets[0]).toMatchObject({
         queryString: 'fields templatedField',
         logGroups: [
-          { name: 'templatedGroup-arn-1', arn: 'templatedGroup-arn-1' },
-          { name: 'templatedGroup-arn-2', arn: 'templatedGroup-arn-2' },
+          { name: 'templatedGroup-1', arn: 'templatedGroup-arn-1' },
+          { name: 'templatedGroup-2', arn: 'templatedGroup-arn-2' },
         ],
         logGroupNames: ['/some/group'],
         region: 'templatedRegion',
@@ -394,8 +394,9 @@ describe('datasource', () => {
 
       expect(templateService.replace).toHaveBeenNthCalledWith(1, '$regionVar', {});
       expect(templateService.replace).toHaveBeenNthCalledWith(2, '$groups', {}, 'pipe');
-      expect(templateService.replace).toHaveBeenNthCalledWith(3, '$expressionVar', {}, undefined);
-      expect(templateService.replace).toHaveBeenCalledTimes(3);
+      expect(templateService.replace).toHaveBeenNthCalledWith(3, '$groups', {}, 'text');
+      expect(templateService.replace).toHaveBeenNthCalledWith(4, '$expressionVar', {}, undefined);
+      expect(templateService.replace).toHaveBeenCalledTimes(4);
     });
 
     it('should replace correct variables in CloudWatchMetricsQuery', () => {
