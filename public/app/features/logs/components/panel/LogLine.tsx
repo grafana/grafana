@@ -554,7 +554,9 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       lineHeight: theme.typography.bodySmall.lineHeight,
     }),
     detailsDisplayed: css({
-      background: tinycolor(theme.colors.background.canvas).darken(5).toRgbString(),
+      background: tinycolor(theme.colors.background.canvas)
+        .darken(theme.isDark ? 2 : 5)
+        .toRgbString(),
     }),
     currentLog: css({
       background: hoverColor,
