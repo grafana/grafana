@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
@@ -21,7 +22,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	correlationsAppInstaller := &correlations.AppInstaller{}
 	notificationsAppInstaller := &notifications.AlertingNotificationsAppInstaller{}
 	exampleAppInstaller := &example.ExampleAppInstaller{}
-
+	advisorAppInstaller := &advisor.AdvisorAppInstaller{}
 	tests := []struct {
 		name           string
 		flags          []any
@@ -37,7 +38,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			features := featuremgmt.WithFeatures(tt.flags...)
-			got := ProvideAppInstallers(features, playlistInstaller, pluginsInstaller, nil, tt.rulesInst, correlationsAppInstaller, notificationsAppInstaller, nil, exampleAppInstaller)
+			got := ProvideAppInstallers(features, playlistInstaller, pluginsInstaller, nil, tt.rulesInst, correlationsAppInstaller, notificationsAppInstaller, nil, exampleAppInstaller, advisorAppInstaller)
 			if tt.expectRulesApp {
 				require.Contains(t, got, tt.rulesInst)
 			} else {

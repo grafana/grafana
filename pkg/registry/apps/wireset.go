@@ -20,7 +20,10 @@ var WireSet = wire.NewSet(
 	ProvideBuilderRunners,
 	playlist.RegisterAppInstaller,
 	investigations.RegisterApp,
-	advisor.RegisterApp,
+	// TODO: This needs to be conditional depending on the environment?
+	// advisor.RegisterApp,
+	advisor.ProvideAppInstaller,
+	// ------------------
 	plugins.RegisterAppInstaller,
 	shorturl.RegisterAppInstaller,
 	correlations.RegisterAppInstaller,
