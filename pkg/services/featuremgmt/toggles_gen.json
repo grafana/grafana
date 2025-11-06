@@ -3961,7 +3961,8 @@
       "metadata": {
         "name": "transformationsRedesign",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-07-12T16:35:49Z"
+        "creationTimestamp": "2023-07-12T16:35:49Z",
+        "deletionTimestamp": "2025-11-06T20:37:15Z"
       },
       "spec": {
         "description": "Enables the transformations redesign",

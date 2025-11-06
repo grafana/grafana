@@ -180,11 +180,6 @@ export interface FeatureToggles {
   */
   awsDatasourcesTempCredentials?: boolean;
   /**
-  * Enables the transformations redesign
-  * @default true
-  */
-  transformationsRedesign?: boolean;
-  /**
   * Enable support for Machine Learning in server-side expressions
   */
   mlExpressions?: boolean;

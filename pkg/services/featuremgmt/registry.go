@@ -288,15 +288,6 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:           "transformationsRedesign",
-			Description:    "Enables the transformations redesign",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Expression:     "true", // enabled by default
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: true,
-		},
-		{
 			Name:         "mlExpressions",
 			Description:  "Enable support for Machine Learning in server-side expressions",
 			Stage:        FeatureStageExperimental,
