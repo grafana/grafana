@@ -1,7 +1,7 @@
 import { createDataFrame } from '@grafana/data';
 import { ResourceDimensionMode } from '@grafana/schema';
 
-import { getResourceDimension } from './resource';
+import { getPublicOrAbsoluteUrl, getResourceDimension } from './resource';
 
 describe('getResourceDimension', () => {
   const publicPath = 'https://grafana.fake/public/';
@@ -104,4 +104,25 @@ describe('getResourceDimension', () => {
   });
 
   // TODO: write tests for mapping modes
+});
+
+describe('getPublicOrAbsoluteUrl', () => {
+  const publicPath = 'https://grafana.fake/public/';
+  beforeAll(() => {
+    window.__grafana_public_path__ = publicPath;
+  });
+
+  it('should handle string paths correctly', () => {
+    expect(getPublicOrAbsoluteUrl('icon.png')).toEqual(`${publicPath}build/icon.png`);
+    expect(getPublicOrAbsoluteUrl('https://example.com/icon.png')).toEqual('https://example.com/icon.png');
+  });
+
+  it('should return empty string for non-string values', () => {
+    expect(getPublicOrAbsoluteUrl(true)).toEqual('');
+    expect(getPublicOrAbsoluteUrl(123)).toEqual('');
+    expect(getPublicOrAbsoluteUrl(null)).toEqual('');
+    expect(getPublicOrAbsoluteUrl(undefined)).toEqual('');
+    expect(getPublicOrAbsoluteUrl({ path: 'icon.png' })).toEqual('');
+    expect(getPublicOrAbsoluteUrl(['icon.png'])).toEqual('');
+  });
 });

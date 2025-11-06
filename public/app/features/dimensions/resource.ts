@@ -7,8 +7,8 @@ import { findField, getLastNotNullFieldValue } from './utils';
 //---------------------------------------------------------
 // Resource dimension
 //---------------------------------------------------------
-export function getPublicOrAbsoluteUrl(path: string): string {
-  if (!path) {
+export function getPublicOrAbsoluteUrl(path: unknown): string {
+  if (!path || typeof path !== 'string') {
     return '';
   }
 
