@@ -9,8 +9,8 @@ import (
 func TestContinueToken(t *testing.T) {
 	token := &ContinueToken{
 		ResourceVersion: 100,
-		StartOffset:     50,
+		StartKey:        "apps/resources/default/test-resource",
 		SortAscending:   false,
 	}
-	assert.Equal(t, "eyJvIjo1MCwidiI6MTAwLCJzIjpmYWxzZX0=", token.String())
+	assert.Equal(t, "eyJ2IjoxMDAsImsiOiJhcHBzL3Jlc291cmNlcy9kZWZhdWx0L3Rlc3QtcmVzb3VyY2UiLCJzIjpmYWxzZX0=", token.String())
 }
