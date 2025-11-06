@@ -250,7 +250,7 @@ You can query CloudWatch Logs using three supported query language options:
 
 1. Select a region.
 1. Select **CloudWatch Logs** from the query type drop-down.
-1. Select the Logs Mode depending on whether you would like to query CloudWatch Log Insights or Log Anomalies
+1. Select the Logs Mode depending on whether you would like to query CloudWatch Logs Insights or Log Anomalies
 
 **Log Anomalies**
 
@@ -261,7 +261,7 @@ The table shows 50 log anomalies at a time. If you would like to narrow down the
 
 In addition to this, you can use the Logs Insights QL editor and the `anomaly` command together with the `patterns` command to define and display log anomalies in real time. See [CloudWatch Logs Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/LogsAnomalyDetection-Insights.html) for more info.
 
-**Log Insights**
+**Logs Insights**
 
 1. Select the query language you would like to use in the **Query Language** drop-down.
 1. Click **Select log groups** and choose up to 20 log groups to query.
