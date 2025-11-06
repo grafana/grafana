@@ -40,8 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-const tracePrefix = "legacy."
-
 var (
 	_      DashboardAccess = (*dashboardSqlAccess)(nil)
 	tracer                 = otel.Tracer("github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy")
@@ -109,7 +107,7 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 }
 
 func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *DashboardQuery) (*rowsWrapper, error) {
-	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.getRows")
+	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.getRows")
 	defer span.End()
 
 	if len(query.Labels) > 0 {
@@ -423,7 +421,7 @@ func getUserID(v sql.NullString, id sql.NullInt64) string {
 
 // DeleteDashboard implements DashboardAccess.
 func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, uid string) (*dashboardV1.Dashboard, bool, error) {
-	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.DeleteDashboard")
+	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.DeleteDashboard")
 	defer span.End()
 
 	dash, _, err := a.GetDashboard(ctx, orgId, uid, 0)
@@ -442,7 +440,7 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 }
 
 func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgId int64, dash *dashboardV1.Dashboard) (*dashboards.SaveDashboardCommand, bool, error) {
-	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.buildSaveDashboardCommand")
+	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.buildSaveDashboardCommand")
 	defer span.End()
 
 	created := false
@@ -508,7 +506,7 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 }
 
 func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboardV1.Dashboard, failOnExisting bool) (*dashboardV1.Dashboard, bool, error) {
-	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.SaveDashboard")
+	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.SaveDashboard")
 	defer span.End()
 
 	user, ok := claims.AuthInfoFrom(ctx)
@@ -581,7 +579,7 @@ type panel struct {
 }
 
 func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query LibraryPanelQuery) (*dashboardV0.LibraryPanelList, error) {
-	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.GetLibraryPanels")
+	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.GetLibraryPanels")
 	defer span.End()
 
 	limit := int(query.Limit)
