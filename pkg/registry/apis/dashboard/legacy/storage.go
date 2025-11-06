@@ -78,6 +78,9 @@ func isDashboardKey(key *resourcepb.ResourceKey, requireName bool) error {
 }
 
 func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.WriteEvent) (rv int64, err error) {
+	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.WriteEvent")
+	defer span.End()
+
 	info, err := claims.ParseNamespace(event.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(event.Key, true)
@@ -170,6 +173,9 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 }
 
 func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid string, v int64) (*dashboard.Dashboard, int64, error) {
+	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.GetDashboard")
+	defer span.End()
+
 	sql, err := a.sql(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -197,6 +203,9 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 
 // Read implements ResourceStoreServer.
 func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
+	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.ReadResource")
+	defer span.End()
+
 	rsp := &resource.BackendReadResponse{}
 	info, err := claims.ParseNamespace(req.Key.Namespace)
 	if err == nil {
@@ -238,16 +247,25 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resourcepb.R
 
 // ListHistory implements StorageBackend.
 func (a *dashboardSqlAccess) ListHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.ListHistory")
+	defer span.End()
+
 	return a.ListIterator(ctx, req, cb)
 }
 
 func (a *dashboardSqlAccess) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.ListModifiedSince")
+	defer span.End()
+
 	return 0, func(yield func(*resource.ModifiedResource, error) bool) {
 		yield(nil, errors.New("not implemented"))
 	}
 }
 
 func (a *dashboardSqlAccess) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
+	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.GetResourceLastImportTimes")
+	defer span.End()
+
 	return func(yield func(resource.ResourceLastImportTime, error) bool) {
 		yield(resource.ResourceLastImportTime{}, errors.New("not implemented"))
 	}
@@ -255,6 +273,9 @@ func (a *dashboardSqlAccess) GetResourceLastImportTimes(ctx context.Context) ite
 
 // List implements StorageBackend.
 func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.ListIterator")
+	defer span.End()
+
 	if req.ResourceVersion != 0 {
 		return 0, apierrors.NewBadRequest("List with explicit resourceVersion is not supported with this storage backend")
 	}
@@ -348,10 +369,16 @@ func (a *dashboardSqlAccess) WatchWriteEvents(ctx context.Context) (<-chan *reso
 
 // Simple wrapper for index implementation
 func (a *dashboardSqlAccess) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resource.BackendReadResponse, error) {
+	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.Read")
+	defer span.End()
+
 	return a.ReadResource(ctx, req), nil
 }
 
 func (a *dashboardSqlAccess) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.Search")
+	defer span.End()
+
 	return a.dashboardSearchClient.Search(ctx, req)
 }
 
@@ -365,5 +392,8 @@ func (a *dashboardSqlAccess) CountManagedObjects(context.Context, *resourcepb.Co
 
 // GetStats implements ResourceServer.
 func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
+	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.GetStats")
+	defer span.End()
+
 	return a.dashboardSearchClient.GetStats(ctx, req)
 }
