@@ -207,15 +207,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:           "dataplaneFrontendFallback",
-			Description:    "Support dataplane contract field name change for transformations and field name matchers where the name is different",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Expression:     "true",
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: true,
-		},
-		{
 			Name:        "disableSSEDataplane",
 			Description: "Disables dataplane specific processing in server side expressions.",
 			Stage:       FeatureStageExperimental,
@@ -263,6 +254,12 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
+		},
+		{
+			Name:        "pluginsFrontendSandbox",
+			Description: "Enables the plugins frontend sandbox",
+			Stage:       FeatureStagePrivatePreview,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:           "recordedQueriesMulti",
@@ -1247,13 +1244,6 @@ var (
 			Description: "Enables time pickers sync",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendPlatformSquad,
-		},
-		{
-			Name:         "timeRangePan",
-			Description:  "Enables time range panning functionality",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:        "azureMonitorDisableLogLimit",
