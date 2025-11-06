@@ -7,7 +7,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
-import { panelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
@@ -175,6 +174,8 @@ export function getPanelMenu(
   const createAlert = async () => {
     let formValues: Partial<RuleFormValues> | undefined;
     try {
+      // ⚠️ Dynamically importing this to prevent Zod from being bundled into the dashboard bundle
+      const { panelToRuleFormValues } = await import('app/features/alerting/unified/utils/rule-form');
       formValues = await panelToRuleFormValues(panel, dashboard);
     } catch (err) {
       const message = `Error getting rule values from the panel: ${getMessageFromError(err)}`;
