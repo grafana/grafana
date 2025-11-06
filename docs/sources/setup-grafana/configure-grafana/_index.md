@@ -1971,7 +1971,7 @@ If a rule frequency is lower than this value, then this value is enforced.
 
 #### `rule_version_record_limit`
 
-Defines the limits for how many alert rule versions are stored in the database per alert rule. 
+Defines the limits for how many alert rule versions are stored in the database per alert rule.
 
 The default `0` value means there's no limit.
 
