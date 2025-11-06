@@ -618,7 +618,7 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 	if err != nil {
 		return err
 	}
-	descFolders = folder.Folders(descFolders).SortByPostorder()
+	descFolders = folder.SortByPostorder(descFolders)
 
 	folders := []string{}
 	for _, f := range descFolders {

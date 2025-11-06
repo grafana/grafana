@@ -8,27 +8,28 @@ import (
 
 func TestFoldersSortByPostorder(t *testing.T) {
 	t.Run("empty list returns empty list", func(t *testing.T) {
-		result := Folders{}.SortByPostorder()
+		var folders []*Folder
+		result := SortByPostorder(folders)
 		require.Empty(t, result)
 	})
 
 	t.Run("single folder returns single folder", func(t *testing.T) {
-		folders := Folders{
+		folders := []*Folder{
 			{UID: "a", ParentUID: "root"},
 		}
-		result := folders.SortByPostorder()
+		result := SortByPostorder(folders)
 		require.Len(t, result, 1)
 		require.Equal(t, "a", result[0].UID)
 	})
 
 	t.Run("linear hierarchy orders children before parents", func(t *testing.T) {
 		// Structure: root -> a -> b -> c
-		folders := Folders{
+		folders := []*Folder{
 			{UID: "a", ParentUID: "root"},
 			{UID: "c", ParentUID: "b"},
 			{UID: "b", ParentUID: "a"},
 		}
-		result := folders.SortByPostorder()
+		result := SortByPostorder(folders)
 		require.Len(t, result, 3)
 		// Postorder: c, b, a (children before parents)
 		require.Equal(t, "c", result[0].UID)
@@ -43,13 +44,13 @@ func TestFoldersSortByPostorder(t *testing.T) {
 		//      a
 		//    / | \
 		//   b  c  d
-		folders := Folders{
+		folders := []*Folder{
 			{UID: "a", ParentUID: "root"},
 			{UID: "b", ParentUID: "a"},
 			{UID: "c", ParentUID: "a"},
 			{UID: "d", ParentUID: "a"},
 		}
-		result := folders.SortByPostorder()
+		result := SortByPostorder(folders)
 		require.Len(t, result, 4)
 		// 'a' must come after all its children (b, c, d)
 		aIndex := -1
@@ -77,14 +78,14 @@ func TestFoldersSortByPostorder(t *testing.T) {
 		//    c   d
 		//    |
 		//    e
-		folders := Folders{
+		folders := []*Folder{
 			{UID: "a", ParentUID: "root"},
 			{UID: "b", ParentUID: "a"},
 			{UID: "c", ParentUID: "b"},
 			{UID: "d", ParentUID: "b"},
 			{UID: "e", ParentUID: "c"},
 		}
-		result := folders.SortByPostorder()
+		result := SortByPostorder(folders)
 		require.Len(t, result, 5)
 		// e should come before c
 		eIndex := -1
@@ -128,14 +129,14 @@ func TestFoldersSortByPostorder(t *testing.T) {
 		//   a   b       c
 		//       |       |
 		//       d       e
-		folders := Folders{
+		folders := []*Folder{
 			{UID: "a", ParentUID: "root1"},
 			{UID: "b", ParentUID: "root1"},
 			{UID: "d", ParentUID: "b"},
 			{UID: "c", ParentUID: "root2"},
 			{UID: "e", ParentUID: "c"},
 		}
-		result := folders.SortByPostorder()
+		result := SortByPostorder(folders)
 		require.Len(t, result, 5)
 
 		// Find indices
