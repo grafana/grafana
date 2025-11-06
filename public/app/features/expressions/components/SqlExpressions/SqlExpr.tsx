@@ -247,9 +247,9 @@ LIMIT
             fill="outline"
           >
             {isSchemaInspectorOpen ? (
-              <Trans i18nKey="expressions.sql-schema.toggle-button">Close schema</Trans>
+              <Trans i18nKey="expressions.sql-schema.close-button">Close schema</Trans>
             ) : (
-              <Trans i18nKey="expressions.sql-schema.toggle-button">Inspect schema</Trans>
+              <Trans i18nKey="expressions.sql-schema.inspect-button">Inspect schema</Trans>
             )}
           </Button>
         )}
