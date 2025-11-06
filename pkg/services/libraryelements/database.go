@@ -473,17 +473,22 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		if err != nil {
 			return err
 		}
+
 		// Every signed in user can see the general folder. The general folder might have "general" or the empty string as its UID.
-		var folderUIDS = []string{"general", ""}
+		// Using a map for O(1) lookup instead of O(n) slice iteration
+		folderUIDSet := map[string]bool{
+			"general": true,
+			"":        true,
+		}
 		folderMap := map[string]string{}
 		for _, f := range fs {
-			folderUIDS = append(folderUIDS, f.UID)
+			folderUIDSet[f.UID] = true
 			folderMap[f.UID] = f.Title
 		}
 		// if the user is not an admin, we need to filter out elements that are not in folders the user can see
 		for _, element := range elements {
 			if !signedInUser.HasRole(org.RoleAdmin) {
-				if !contains(folderUIDS, element.FolderUID) {
+				if !folderUIDSet[element.FolderUID] {
 					continue
 				}
 			}
@@ -522,10 +527,11 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			})
 		}
 
-		var libraryElements []model.LibraryElement
+		var libraryElements []model.LibraryElementWithMeta
 		countBuilder := db.SQLBuilder{}
 		if folderFilter.includeGeneralFolder {
 			countBuilder.Write(selectLibraryElementDTOWithMeta)
+			countBuilder.Write(", '' as folder_uid ")
 			countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
 			countBuilder.Write(` WHERE le.org_id=? AND le.folder_id=0`, signedInUser.GetOrgID())
 			writeKindSQL(query, &countBuilder)
@@ -537,6 +543,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			countBuilder.Write(" ")
 		}
 		countBuilder.Write(selectLibraryElementDTOWithMeta)
+		countBuilder.Write(", le.folder_uid as folder_uid ")
 		countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
 		countBuilder.Write(` WHERE le.org_id=? AND le.folder_id<>0`, signedInUser.GetOrgID())
 		writeKindSQL(query, &countBuilder)
@@ -550,8 +557,19 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			return err
 		}
 
+		// Apply the same folder permission filtering to the count for non-admin users
+		totalCount := int64(len(libraryElements))
+		if !signedInUser.HasRole(org.RoleAdmin) {
+			totalCount = 0
+			for _, element := range libraryElements {
+				if folderUIDSet[element.FolderUID] {
+					totalCount++
+				}
+			}
+		}
+
 		result = model.LibraryElementSearchResult{
-			TotalCount: int64(len(libraryElements)),
+			TotalCount: totalCount,
 			Elements:   retDTOs,
 			Page:       query.Page,
 			PerPage:    query.PerPage,
