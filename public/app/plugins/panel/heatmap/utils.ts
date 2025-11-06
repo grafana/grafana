@@ -13,7 +13,7 @@ import {
   getDisplayProcessor,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, HeatmapCellLayout } from '@grafana/schema';
-import { UPlotConfigBuilder } from '@grafana/ui';
+import { UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
@@ -53,6 +53,7 @@ interface PrepConfigOpts {
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
   selectionMode?: HeatmapSelectionMode;
+  xAxisConfig?: Parameters<UPlotConfigPrepFn>[0]['xAxisConfig'];
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -67,6 +68,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     yAxisConfig,
     ySizeDivisor,
     selectionMode = HeatmapSelectionMode.X,
+    xAxisConfig,
   } = opts;
 
   const xScaleKey = 'x';
@@ -182,6 +184,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       isTime && xField.config.unit?.startsWith('time:')
         ? (v, decimals) => xField.display!(v, decimals).text
         : undefined,
+    ...xAxisConfig,
   });
 
   const yField = dataRef.current?.heatmap?.fields[1]!;
@@ -423,11 +426,15 @@ export function prepConfig(opts: PrepConfigOpts) {
           : dataRef.current?.xLayout === HeatmapCellLayout.ge
             ? 1
             : 0,
-      yAlign: ((dataRef.current?.yLayout === HeatmapCellLayout.le
-        ? -1
-        : dataRef.current?.yLayout === HeatmapCellLayout.ge
-          ? 1
-          : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
+      yAlign: (() => {
+        const yAlign =
+          dataRef.current?.yLayout === HeatmapCellLayout.le
+            ? -1
+            : dataRef.current?.yLayout === HeatmapCellLayout.ge
+              ? 1
+              : 0;
+        return yAxisReverse ? (yAlign === -1 ? 1 : yAlign === 1 ? -1 : 0) : yAlign;
+      })(),
       ySizeDivisor,
       disp: {
         fill: {

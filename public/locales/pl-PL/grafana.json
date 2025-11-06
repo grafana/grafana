@@ -2909,6 +2909,8 @@
       "notification-message": "Wiadomość z powiadomieniem",
       "predefined-notification-message": "",
       "send-test-notification": "Wyślij powiadomienie testowe",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Testuj punkt kontaktu"
     },
     "threshold": {
@@ -2967,15 +2969,15 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
-      "firing-instances-count": "",
       "instance-details-drawer": {
         "instance-details": ""
       },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
-      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -4168,6 +4170,7 @@
       "scopes": "Zakresy"
     },
     "empty-state": {
+      "button-title": "",
       "message": "Brak wyników"
     },
     "scopes": {

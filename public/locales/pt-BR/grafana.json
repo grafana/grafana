@@ -2885,6 +2885,8 @@
       "notification-message": "Mensagem de notificação",
       "predefined-notification-message": "",
       "send-test-notification": "Enviar notificação de teste",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Testar ponto de contato"
     },
     "threshold": {
@@ -2943,15 +2945,15 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
-      "firing-instances-count": "",
       "instance-details-drawer": {
         "instance-details": ""
       },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
-      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -4128,6 +4130,7 @@
       "scopes": "Escopos"
     },
     "empty-state": {
+      "button-title": "",
       "message": "Nenhum resultado encontrado"
     },
     "scopes": {

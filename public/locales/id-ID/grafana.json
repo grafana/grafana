@@ -2873,6 +2873,8 @@
       "notification-message": "Pesan pemberitahuan",
       "predefined-notification-message": "",
       "send-test-notification": "Kirim pemberitahuan tes",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Uji titik kontak"
     },
     "threshold": {
@@ -2931,15 +2933,15 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
-      "firing-instances-count": "",
       "instance-details-drawer": {
         "instance-details": ""
       },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
-      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -4108,6 +4110,7 @@
       "scopes": "Lingkup"
     },
     "empty-state": {
+      "button-title": "",
       "message": "Hasil tidak ditemukan"
     },
     "scopes": {
