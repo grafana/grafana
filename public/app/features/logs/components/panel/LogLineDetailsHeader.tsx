@@ -9,6 +9,7 @@ import { IconButton, Input, useStyles2 } from '@grafana/ui';
 import { copyText, handleOpenLogsContextClick } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 
+import { useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsMode } from './LogLineDetails';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
@@ -22,14 +23,11 @@ interface Props {
 
 export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Props) => {
   const {
-    closeDetails,
-    detailsMode,
     displayedFields,
     getRowContextQuery,
     logOptionsStorageKey,
     logSupportsContext,
     noInteractions,
-    setDetailsMode,
     onClickHideField,
     onClickShowField,
     onOpenContext,
@@ -40,6 +38,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
     isAssistantAvailable,
     openAssistantByLog,
   } = useLogListContext();
+  const { closeDetails, detailsMode, setDetailsMode } = useLogDetailsContext();
   const pinned = useLogIsPinned(log);
   const styles = useStyles2(getStyles, detailsMode, wrapLogMessage);
   const containerRef = useRef<HTMLDivElement | null>(null);
