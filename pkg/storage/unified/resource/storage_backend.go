@@ -472,15 +472,25 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	namespace := convertEmptyToClusterNamespace(req.Options.Key.Namespace, k.withExperimentalClusterScope)
 
 	// Parse continue token if provided
-	offset := int64(0)
-	resourceVersion := req.ResourceVersion
+	listOptions := ListRequestOptions{
+		ResourceVersion: req.ResourceVersion,
+	}
 	if req.NextPageToken != "" {
 		token, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("invalid continue token: %w", err)
 		}
-		offset = token.StartOffset
-		resourceVersion = token.ResourceVersion
+		listOptions.StartKeyPrefix = token.StartKey
+		listOptions.EndKeyPrefix = token.EndKey
+		listOptions.ResourceVersion = token.ResourceVersion
+	} else {
+		listOptions.StartKey = ListRequestKey{
+			Group:     req.Options.Key.Group,
+			Resource:  req.Options.Key.Resource,
+			Namespace: namespace,
+			Name:      req.Options.Key.Name,
+		}
+		listOptions.EndKeyPrefix= PrefixRangeEnd(listOptions.StartKey.Prefix())
 	}
 
 	// We set the listRV to the last event resource version.
@@ -492,27 +502,17 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		return 0, fmt.Errorf("failed to fetch last event: %w", err)
 	}
 
-	if resourceVersion > 0 {
-		listRV = resourceVersion
+	if listOptions.ResourceVersion > 0 {
+		listRV = listOptions.ResourceVersion
 	}
 
 	// Fetch the latest objects
 	keys := make([]DataKey, 0, min(defaultListBufferSize, req.Limit+1))
-	idx := 0
-	for dataKey, err := range k.dataStore.ListResourceKeysAtRevision(ctx, ListRequestKey{
-		Group:     req.Options.Key.Group,
-		Resource:  req.Options.Key.Resource,
-		Namespace: namespace,
-		Name:      req.Options.Key.Name,
-	}, resourceVersion) {
+	for dataKey, err := range k.dataStore.ListResourceKeysAtRevision(ctx, listOptions) {
 		if err != nil {
 			return 0, err
 		}
-		// Skip the first offset items. This is not efficient, but it's a simple way to implement it for now.
-		if idx < int(offset) {
-			idx++
-			continue
-		}
+
 		keys = append(keys, dataKey)
 		// Only fetch the first limit items + 1 to get the next token.
 		if req.Limit > 0 && len(keys) >= int(req.Limit+1) {
@@ -524,9 +524,9 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	defer stop()
 
 	iter := kvListIterator{
-		listRV: listRV,
-		offset: offset,
-		next:   next,
+		listRV:         listRV,
+		endKey:         listOptions.EndKeyPrefix,
+		next:           next,
 	}
 	err := cb(&iter)
 	if err != nil {
@@ -538,38 +538,51 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 // kvListIterator implements ListIterator for KV storage
 type kvListIterator struct {
-	listRV int64
-	offset int64
+	listRV         int64
+	startKeyOffset string
+	endKey         string
 
 	// pull-style iterator
 	next func() (DataObj, error, bool)
 
 	// current item state
-	currentDataObj *DataObj
+	started        bool
+	currentDataObj DataObj
 	value          []byte
 	err            error
+	nextDataObj    DataObj
+	nextErr        error
+	hasMore        bool
 }
 
 func (i *kvListIterator) Next() bool {
-	// Pull next item from the iterator
-	dataObj, err, ok := i.next()
-	if !ok {
-		return false
-	}
-	if err != nil {
-		i.err = err
-		return false
+	if !i.started {
+		i.started = true
+
+		i.nextDataObj, i.nextErr, i.hasMore = i.next()
 	}
 
-	i.currentDataObj = &dataObj
-
-	i.value, err = readAndClose(dataObj.Value)
-	if err != nil {
-		i.err = err
+	if !i.hasMore {
 		return false
 	}
 
-	i.offset++
+	i.currentDataObj, i.err = i.nextDataObj, i.nextErr
+	if i.err != nil {
+		return false
+	}
+
+	i.value, i.err = readAndClose(i.currentDataObj.Value)
+	if i.err != nil {
+		return false
+	}
+
+	i.nextDataObj, i.nextErr, i.hasMore = i.next()
+	i.startKeyOffset = ListRequestKey{
+		Group:     i.nextDataObj.Key.Group,
+		Namespace: i.nextDataObj.Key.Namespace,
+		Resource:  i.nextDataObj.Key.Resource,
+		Name:      i.nextDataObj.Key.Name,
+	}.Prefix()
 
 	return true
 }
@@ -580,37 +593,26 @@ func (i *kvListIterator) Error() error {
 
 func (i *kvListIterator) ContinueToken() string {
 	return ContinueToken{
-		StartOffset:     i.offset,
+		StartKey:        i.startKeyOffset,
+		EndKey:          i.endKey,
 		ResourceVersion: i.listRV,
 	}.String()
 }
 
 func (i *kvListIterator) ResourceVersion() int64 {
-	if i.currentDataObj != nil {
-		return i.currentDataObj.Key.ResourceVersion
-	}
-	return 0
+	return i.currentDataObj.Key.ResourceVersion
 }
 
 func (i *kvListIterator) Namespace() string {
-	if i.currentDataObj != nil {
-		return convertClusterNamespaceToEmpty(i.currentDataObj.Key.Namespace)
-	}
-	return ""
+	return convertClusterNamespaceToEmpty(i.currentDataObj.Key.Namespace)
 }
 
 func (i *kvListIterator) Name() string {
-	if i.currentDataObj != nil {
-		return i.currentDataObj.Key.Name
-	}
-	return ""
+	return i.currentDataObj.Key.Name
 }
 
 func (i *kvListIterator) Folder() string {
-	if i.currentDataObj != nil {
-		return i.currentDataObj.Key.Folder
-	}
-	return ""
+	return i.currentDataObj.Key.Folder
 }
 
 func (i *kvListIterator) Value() []byte {
@@ -1129,7 +1131,6 @@ func (i *kvHistoryIterator) ContinueToken() string {
 	}
 	rv := i.currentDataObj.Key.ResourceVersion
 	token := ContinueToken{
-		StartOffset:     rv,
 		ResourceVersion: rv,
 		SortAscending:   i.sortAscending,
 	}
