@@ -2324,12 +2324,33 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@formatjs/ecma402-abstract@npm:2.3.4":
+  version: 2.3.4
+  resolution: "@formatjs/ecma402-abstract@npm:2.3.4"
+  dependencies:
+    "@formatjs/fast-memoize": "npm:2.2.7"
+    "@formatjs/intl-localematcher": "npm:0.6.1"
+    decimal.js: "npm:^10.4.3"
+    tslib: "npm:^2.8.0"
+  checksum: 10/573971ffc291096a4b9fcc80b4708124e89bf2e3ac50e0f78b41eb797e9aa1b842f4dc3665e4467a853c738386821769d9e40408a1d25bc73323a1f057a16cf2
+  languageName: node
+  linkType: hard
+
 "@formatjs/fast-memoize@npm:1.2.6":
   version: 1.2.6
   resolution: "@formatjs/fast-memoize@npm:1.2.6"
   dependencies:
     tslib: "npm:2.4.0"
   checksum: 10/cdb944a9207b5d74e0b4cdcd047e32d904b52b8f893227809a906f65882a46ae8b342872161d797dffd4fafd565f91efebb18989ffe888786bb5e5d911bc0193
+  languageName: node
+  linkType: hard
+
+"@formatjs/fast-memoize@npm:2.2.7":
+  version: 2.2.7
+  resolution: "@formatjs/fast-memoize@npm:2.2.7"
+  dependencies:
+    tslib: "npm:^2.8.0"
+  checksum: 10/e7e6efc677d63a13d99a854305db471b69f64cbfebdcb6dbe507dab9aa7eaae482ca5de86f343c856ca0a2c8f251672bd1f37c572ce14af602c0287378097d43
   languageName: node
   linkType: hard
 
@@ -2354,12 +2375,32 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@formatjs/intl-durationformat@npm:^0.7.0":
+  version: 0.7.4
+  resolution: "@formatjs/intl-durationformat@npm:0.7.4"
+  dependencies:
+    "@formatjs/ecma402-abstract": "npm:2.3.4"
+    "@formatjs/intl-localematcher": "npm:0.6.1"
+    tslib: "npm:^2.8.0"
+  checksum: 10/d62273ecd635475ca91e9b501301f3f396403fa91b584c550734b19b2d194ba1316b27303fed985c1d42ae933d54eb220da6540edfdf376b0d9371ecfd0d4e15
+  languageName: node
+  linkType: hard
+
 "@formatjs/intl-localematcher@npm:0.2.31":
   version: 0.2.31
   resolution: "@formatjs/intl-localematcher@npm:0.2.31"
   dependencies:
     tslib: "npm:2.4.0"
   checksum: 10/c05bf5854f04ad0cc5ad78436023805c9542d97cdf000c685793e2053b84b585be3603b370e27921a617bbb87ef021239d773bc5326ab99850786c73d46a5156
+  languageName: node
+  linkType: hard
+
+"@formatjs/intl-localematcher@npm:0.6.1":
+  version: 0.6.1
+  resolution: "@formatjs/intl-localematcher@npm:0.6.1"
+  dependencies:
+    tslib: "npm:^2.8.0"
+  checksum: 10/c7b3bc8395d18670677f207b2fd107561fff5d6394a9b4273c29e0bea920300ec3a2eefead600ebb7761c04a770cada28f78ac059f84d00520bfb57a9db36998
   languageName: node
   linkType: hard
 
@@ -3229,6 +3270,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/i18n@workspace:packages/grafana-i18n"
   dependencies:
+    "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@types/react": "npm:18.3.18"
     "@typescript-eslint/utils": "npm:^8.33.1"
     fast-deep-equal: "npm:^3.1.3"
@@ -15323,7 +15365,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"decimal.js@npm:^10.4.1":
+"decimal.js@npm:^10.4.1, decimal.js@npm:^10.4.3":
   version: 10.5.0
   resolution: "decimal.js@npm:10.5.0"
   checksum: 10/714d49cf2f2207b268221795ede330e51452b7c451a0c02a770837d2d4faed47d603a729c2aa1d952eb6c4102d999e91c9b952c1aa016db3c5cba9fc8bf4cda2
@@ -18798,6 +18840,7 @@ __metadata:
     "@emotion/react": "npm:11.14.0"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
     "@floating-ui/react": "npm:0.27.16"
+    "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
     "@grafana/api-clients": "workspace:*"
