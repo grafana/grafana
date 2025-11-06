@@ -181,6 +181,18 @@ func addUserMigrations(mg *Migrator) {
 	mg.AddMigration("Add index on user.is_service_account and user.last_seen_at", NewAddIndexMigration(userV2, &Index{
 		Cols: []string{"is_service_account", "last_seen_at"}, Type: IndexType,
 	}))
+
+	// Expand uid column to safely accommodate 'scim-' prefix without truncation/collisions
+	mg.AddMigration("Expand user.uid length to 190", NewRawSQLMigration("").
+		SQLite("SELECT 1;").
+		Postgres("ALTER TABLE `user` ALTER COLUMN uid TYPE VARCHAR(190);").
+		Mysql("ALTER TABLE user MODIFY uid VARCHAR(190);"))
+
+	// Prefix SCIM UID for provisioned users to avoid numeric/existing-id collisions
+	mg.AddMigration("Prefix SCIM uid for provisioned users", NewRawSQLMigration("").
+		SQLite("UPDATE user SET uid = 'scim-' || uid WHERE is_provisioned = 1 AND uid NOT LIKE 'scim-%';").
+		Postgres("UPDATE `user` SET uid = 'scim-' || uid WHERE is_provisioned = TRUE AND uid NOT LIKE 'scim-%';").
+		Mysql("UPDATE user SET uid = CONCAT('scim-', uid) WHERE is_provisioned = 1 AND uid NOT LIKE 'scim-%';"))
 }
 
 const migSQLITEisServiceAccountNullable = `ALTER TABLE user ADD COLUMN tmp_service_account BOOLEAN DEFAULT 0;
