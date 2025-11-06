@@ -2,7 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { getAPINamespace } from '@grafana/api-clients';
-import { generatedAPI as logsdrilldownAPI } from '@grafana/api-clients/rtkq/logsdrilldown/v1alpha1';
+import {
+  useListLogsDrilldownQuery,
+  useCreateLogsDrilldownMutation,
+  useGetLogsDrilldownQuery,
+} from '@grafana/api-clients/rtkq/logsdrilldown/v1alpha1';
 import {
   applyFieldOverrides,
   CustomTransformOperator,
@@ -47,10 +51,16 @@ export function LogsTable(props: Props) {
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
   const timeIndex = logsFrame?.timeField.index;
 
-  const { currentData: logsDrilldownData, error: logsDrilldownError } =
-    logsdrilldownAPI.endpoints.listLogsDrilldown.useQuery({});
+  const { currentData: logsDrilldownData, error: logsDrilldownError } = useListLogsDrilldownQuery({});
+  // Get a specific logs drilldown
+  const { currentData: logsDrilldownDataGet, error: logsDrilldownErrorGet } = useGetLogsDrilldownQuery({
+    name: 'logs-drilldown-<some-id>', // Need an id
+  });
 
-  const [createLogsDrilldown] = logsdrilldownAPI.endpoints.createLogsDrilldown.useMutation();
+  console.log('logsDrilldownDataGet:', logsDrilldownDataGet);
+  console.log('logsDrilldownErrorGet:', logsDrilldownErrorGet);
+
+  const [createLogsDrilldown] = useCreateLogsDrilldownMutation();
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
@@ -113,6 +123,44 @@ export function LogsTable(props: Props) {
     }
   }, [logsDrilldownData, logsDrilldownError]);
 
+  // Update defaultFields to ['app','cluster']
+  useEffect(() => {
+    const updateDefaultFields = async () => {
+      try {
+        const response = await fetch('/apis/logsdrilldown.grafana.app/v1alpha1/defaultFields', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            defaultFields: ['app', 'cluster'],
+          }),
+        });
+        const result = await response.json();
+        console.log('Updated defaultFields:', result);
+      } catch (error) {
+        console.error('Failed to update defaultFields:', error);
+      }
+    };
+    updateDefaultFields();
+  }, []);
+  // Get default fields
+  useEffect(() => {
+    const fetchDefaultFields = async () => {
+      try {
+        const response = await fetch('/apis/logsdrilldown.grafana.app/v1alpha1/defaultFields');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch: ${response.statusText}`);
+        }
+        const data = await response.json();
+        console.log('Fetched defaultFields:', data);
+      } catch (error) {
+        console.error('Failed to fetch defaultFields:', error);
+      }
+    };
+    fetchDefaultFields();
+  }, []);
+
   // Create LogsDrilldown with default fields if none exist
   useEffect(() => {
     const createDefaultLogsDrilldown = async () => {
@@ -130,6 +178,9 @@ export function LogsTable(props: Props) {
               },
               spec: {
                 defaultFields: ['time', 'body', 'level'],
+                prettifyJSON: false,
+                wrapLogMessage: false,
+                interceptinterceptDismissed: false,
               },
             },
           }).unwrap();

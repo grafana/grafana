@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	rawSchemaLogsDrilldownv1alpha1     = []byte(`{"LogsDrilldown":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"defaultFields":{"items":{"type":"string"},"type":"array"},"prettifyJSON":{"type":"boolean"},"wrapLogMessage":{"type":"boolean"}},"required":["defaultFields","prettifyJSON","wrapLogMessage"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	rawSchemaLogsDrilldownv1alpha1     = []byte(`{"LogsDrilldown":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"defaultFields":{"items":{"type":"string"},"type":"array"},"interceptDismissed":{"type":"boolean"},"prettifyJSON":{"type":"boolean"},"wrapLogMessage":{"type":"boolean"}},"required":["defaultFields","prettifyJSON","wrapLogMessage","interceptDismissed"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
 	versionSchemaLogsDrilldownv1alpha1 app.VersionSchema
 	_                                  = json.Unmarshal(rawSchemaLogsDrilldownv1alpha1, &versionSchemaLogsDrilldownv1alpha1)
 )
@@ -44,8 +44,103 @@ var appManifestData = app.ManifestData{
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
+				Cluster: map[string]spec3.PathProps{
+					"/defaultFields": {
+						Get: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "getDefaultFields",
+
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"defaultFields": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"array"},
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"defaultFields",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+						Put: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "replaceDefaultFields",
+
+								RequestBody: &spec3.RequestBody{
+									RequestBodyProps: spec3.RequestBodyProps{
+
+										Required: true,
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														SchemaProps: spec.SchemaProps{
+															Type: []string{"object"},
+															Properties: map[string]spec.Schema{
+																"defaultFields": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"array"},
+																	},
+																},
+															},
+															Required: []string{
+																"defaultFields",
+															},
+														}},
+												}},
+										},
+									}},
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"defaultFields": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"array"},
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"defaultFields",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
+				},
+				Schemas: map[string]spec.Schema{},
 			},
 		},
 	},
@@ -70,7 +165,10 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 	return goType, exists
 }
 
-var customRouteToGoResponseType = map[string]any{}
+var customRouteToGoResponseType = map[string]any{
+	"v1alpha1||defaultFields|GET": v1alpha1.GetDefaultFields{},
+	"v1alpha1||defaultFields|PUT": v1alpha1.ReplaceDefaultFields{},
+}
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
 // kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.
@@ -94,7 +192,9 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 	return goType, exists
 }
 
-var customRouteToGoRequestBodyType = map[string]any{}
+var customRouteToGoRequestBodyType = map[string]any{
+	"v1alpha1||defaultFields|PUT": v1alpha1.ReplaceDefaultFieldsRequestBody{},
+}
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
 	if len(path) > 0 && path[0] == '/' {
