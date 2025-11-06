@@ -11,6 +11,7 @@ import {
   TooltipDisplayMode,
   VisibilityMode,
 } from '@grafana/schema';
+import { Box } from '@grafana/ui';
 
 import { overrideToFixedColor } from '../../home/Insights';
 import { useWorkbenchContext } from '../WorkbenchContext';
@@ -138,16 +139,16 @@ export function AlertRuleSummary({ ruleUID }: { ruleUID: string }) {
     return () => {
       observer.disconnect();
     };
-  }, [ruleUID]);
+  }, []);
 
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
+    <Box ref={containerRef} width="100%" height="100%">
       {isVisible ? (
         <AlertRuleSummaryViz ruleUID={ruleUID} />
       ) : (
         // Placeholder while not visible - maintains layout space
-        <div style={{ width: '100%', height: '100%' }} />
+        <Box width="100%" height="100%" />
       )}
-    </div>
+    </Box>
   );
 }
