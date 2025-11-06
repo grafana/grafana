@@ -1053,7 +1053,7 @@ func logMissingPanels(t *testing.T, source, target runtime.Object, sourceVersion
 	}
 
 	// Find missing panels
-	t.Logf("      Source panels (%d):", len(sourcePanelIDs))
+	t.Logf("      Source panels (%s) - %d total:", sourceVersion, len(sourcePanelIDs))
 	for i, id := range sourcePanelIDs {
 		panelType := ""
 		if i < len(sourcePanelTypes) {
@@ -1066,7 +1066,7 @@ func logMissingPanels(t *testing.T, source, target runtime.Object, sourceVersion
 		t.Logf("         %s Panel ID %.0f (type: %s)", status, id, panelType)
 	}
 
-	t.Logf("      Target panels (%d):", len(targetPanelIDs))
+	t.Logf("      Target panels (%s) - %d total:", targetVersion, len(targetPanelIDs))
 	for i, id := range targetPanelIDs {
 		panelType := ""
 		if i < len(targetPanelTypes) {
@@ -1116,12 +1116,12 @@ func logMissingQueries(t *testing.T, source, target runtime.Object, sourceVersio
 		targetQueryInfo = extractQueryInfoV2beta1(tgt.Spec)
 	}
 
-	t.Logf("      Source queries (%d):", len(sourceQueryInfo))
+	t.Logf("      Source queries (%s) - %d total:", sourceVersion, len(sourceQueryInfo))
 	for _, q := range sourceQueryInfo {
 		t.Logf("         Panel %.0f: %s (refId: %s)", q.panelID, q.datasourceType, q.refID)
 	}
 
-	t.Logf("      Target queries (%d):", len(targetQueryInfo))
+	t.Logf("      Target queries (%s) - %d total:", targetVersion, len(targetQueryInfo))
 	for _, q := range targetQueryInfo {
 		t.Logf("         Panel %.0f: %s (refId: %s)", q.panelID, q.datasourceType, q.refID)
 	}
@@ -1139,7 +1139,7 @@ func logMissingQueries(t *testing.T, source, target runtime.Object, sourceVersio
 		if !found {
 			if missingCount == 0 {
 				t.Logf("")
-				t.Logf("      ✗ Missing queries:")
+				t.Logf("      ✗ Missing queries in %s → %s conversion:", sourceVersion, targetVersion)
 			}
 			t.Logf("         Panel %.0f: refId=%s, datasource=%s", srcQuery.panelID, srcQuery.refID, srcQuery.datasourceType)
 			missingCount++
