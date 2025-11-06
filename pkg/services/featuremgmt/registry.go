@@ -2159,6 +2159,13 @@ var (
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
 		},
+		{
+			Name:        "kubernetesAnnotations",
+			Description: "Enables app platform API for annotations",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaBackendServicesSquad,
+			Expression:  "false",
+		},
 	}
 )
 
