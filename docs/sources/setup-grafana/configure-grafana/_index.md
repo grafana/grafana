@@ -1969,6 +1969,10 @@ If a rule frequency is lower than this value, then this value is enforced.
 
 <hr>
 
+#### `rule_version_record_limit`
+
+Record limits for the alert rule version. Default is `0`.
+
 ### `[unified_alerting.screenshots]`
 
 For more information about screenshots, refer to [Images in notifications](../../alerting/configure-notifications/template-notifications/images-in-notifications/).
