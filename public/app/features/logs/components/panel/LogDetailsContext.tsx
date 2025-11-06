@@ -3,6 +3,8 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useState 
 
 import { LogRowModel, store } from '@grafana/data';
 
+import { getSidebarWidth } from '../fieldSelector/FieldSelector';
+
 import { LogLineDetailsMode } from './LogLineDetails';
 import { LogListModel } from './processing';
 import { getScrollbarWidth, LOG_LIST_CONTROLS_WIDTH, LOG_LIST_MIN_WIDTH } from './virtualization';
@@ -115,7 +117,7 @@ export const LogDetailsContextProvider = ({
     const observer = new ResizeObserver(() => handleResize());
     observer.observe(containerElement);
     return () => observer.disconnect();
-  }, [containerElement, detailsMode, logOptionsStorageKey, showControls]);
+  }, [containerElement, detailsMode, logOptionsStorageKey, showControls, showDetails]);
 
   const closeDetails = useCallback(() => {
     showDetails.forEach((log) => removeDetailsScrollPosition(log));
@@ -156,7 +158,7 @@ export const LogDetailsContextProvider = ({
         return;
       }
 
-      const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
+      const maxWidth = containerElement.clientWidth - getSidebarWidth(logOptionsStorageKey) - LOG_LIST_MIN_WIDTH;
       if (width > maxWidth) {
         return;
       }
@@ -199,20 +201,21 @@ export function getDetailsWidth(
   if (!containerElement) {
     return 0;
   }
+  const availableWidth = containerElement.clientWidth - getSidebarWidth(logOptionsStorageKey);
   if (detailsMode === 'inline') {
-    return containerElement.clientWidth - getScrollbarWidth() - (showControls ? LOG_LIST_CONTROLS_WIDTH : 0);
+    return availableWidth - getScrollbarWidth() - (showControls ? LOG_LIST_CONTROLS_WIDTH : 0);
   }
-  const defaultWidth = containerElement.clientWidth * 0.4;
+  const defaultWidth = availableWidth * 0.4;
   const detailsWidth =
     currentWidth ||
     (logOptionsStorageKey
       ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`) ?? defaultWidth, 10)
       : defaultWidth);
 
-  const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
+  const maxWidth = availableWidth - LOG_LIST_MIN_WIDTH;
 
   // The user might have resized the screen.
-  if (detailsWidth >= containerElement.clientWidth || detailsWidth > maxWidth) {
+  if (detailsWidth >= availableWidth || detailsWidth > maxWidth) {
     return currentWidth ?? defaultWidth;
   }
   return detailsWidth;
