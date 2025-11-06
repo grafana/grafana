@@ -896,15 +896,6 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 	})
 }
 
-func contains(slice []string, element string) bool {
-	for _, item := range slice {
-		if item == element {
-			return true
-		}
-	}
-	return false
-}
-
 func getFoldersWithMatchingTitles(c context.Context, l *LibraryElementService, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) ([]string, error) {
 	if len(strings.TrimSpace(query.SearchString)) <= 0 {
 		return nil, nil
