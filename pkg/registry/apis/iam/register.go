@@ -364,36 +364,40 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 	enableDualWriter bool,
 	enableZanzanaSync bool,
 ) error {
-	var dw rest.Storage
-	resourcePermissionStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
+	var store rest.Storage
+	// Create the legacy store first
+	legacyStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
 	if err != nil {
 		return err
 	}
 
+	// Register the hooks for Zanzana sync
 	// FIXME: The hooks are registered on the legacy store
 	// Once we fully migrate to unified storage, we can move these hooks to the unified store
 	if enableZanzanaSync {
 		b.logger.Info("Enabling AfterCreate, BeginUpdate, and AfterDelete hooks for ResourcePermission to sync to Zanzana")
-		resourcePermissionStore.AfterCreate = b.AfterResourcePermissionCreate
-		resourcePermissionStore.BeginUpdate = b.BeginResourcePermissionUpdate
-		resourcePermissionStore.AfterDelete = b.AfterResourcePermissionDelete
+		legacyStore.AfterCreate = b.AfterResourcePermissionCreate
+		legacyStore.BeginUpdate = b.BeginResourcePermissionUpdate
+		legacyStore.AfterDelete = b.AfterResourcePermissionDelete
 	}
 
-	dw = resourcePermissionStore
+	// Set the default store to the legacy store
+	store = legacyStore
 
 	if enableDualWriter {
-		resourcePermissionUniStore, err := grafanaregistry.NewRegistryStore(apiGroupInfo.Scheme, iamv0.ResourcePermissionInfo, opts.OptsGetter)
+		// Create the dual write store (UniStore + LegacyStore)
+		uniStore, err := grafanaregistry.NewRegistryStore(apiGroupInfo.Scheme, iamv0.ResourcePermissionInfo, opts.OptsGetter)
 		if err != nil {
 			return err
 		}
 
-		dw, err = opts.DualWriteBuilder(iamv0.ResourcePermissionInfo.GroupResource(), resourcePermissionStore, resourcePermissionUniStore)
+		store, err = opts.DualWriteBuilder(iamv0.ResourcePermissionInfo.GroupResource(), legacyStore, uniStore)
 		if err != nil {
 			return err
 		}
 	}
 
-	storage[iamv0.ResourcePermissionInfo.StoragePath()] = dw
+	storage[iamv0.ResourcePermissionInfo.StoragePath()] = store
 	return nil
 }
 
