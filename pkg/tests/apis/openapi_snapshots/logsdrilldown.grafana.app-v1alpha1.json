@@ -1158,6 +1158,17 @@
   },
   "components": {
     "schemas": {
+      "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.GetDefaultFields": {
+        "type": "object",
+        "required": [
+          "defaultFields"
+        ],
+        "properties": {
+          "defaultFields": {
+            "type": "array"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldown": {
         "type": "object",
         "required": [
@@ -1281,7 +1292,8 @@
         "required": [
           "defaultFields",
           "prettifyJSON",
-          "wrapLogMessage"
+          "wrapLogMessage",
+          "interceptDismissed"
         ],
         "properties": {
           "defaultFields": {
@@ -1289,6 +1301,9 @@
             "items": {
               "type": "string"
             }
+          },
+          "interceptDismissed": {
+            "type": "boolean"
           },
           "prettifyJSON": {
             "type": "boolean"
@@ -1319,6 +1334,28 @@
           }
         },
         "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.ReplaceDefaultFields": {
+        "type": "object",
+        "required": [
+          "defaultFields"
+        ],
+        "properties": {
+          "defaultFields": {
+            "type": "array"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.ReplaceDefaultFieldsRequestBody": {
+        "type": "object",
+        "required": [
+          "defaultFields"
+        ],
+        "properties": {
+          "defaultFields": {
+            "type": "array"
+          }
+        }
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
