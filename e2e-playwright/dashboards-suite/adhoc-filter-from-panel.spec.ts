@@ -52,7 +52,7 @@ test.describe(
         // during the test, we select the "inner_eval" slice to filter; this simulates the behavior
         // of prometheus applying that filter and removing dataframes from the response.
         if (route.request().postData()?.includes('{slice=\\\"inner_eval\\\"}')) {
-          delete fixture.results.A.frames[1];
+          fixture.results.A.frames.splice(1, 1);
         }
 
         await route.fulfill({
