@@ -63,5 +63,45 @@ describe('getResourceDimension', () => {
     expect(getResourceDimension(frame, config).value()).toEqual('https://3rdparty.fake/field.png');
   });
 
+  it('should return empty string for boolean field values', () => {
+    const frame = createDataFrame({
+      fields: [
+        {
+          name: 'image_field',
+          values: [true],
+          display: (v) => ({
+            text: String(v),
+            numeric: NaN,
+            icon: undefined,
+          }),
+        },
+      ],
+    });
+    const config = { mode: ResourceDimensionMode.Field, field: 'image_field', fixed: '' };
+
+    expect(getResourceDimension(frame, config).get(0)).toEqual('');
+    expect(getResourceDimension(frame, config).value()).toEqual('');
+  });
+
+  it('should return empty string for numeric field values', () => {
+    const frame = createDataFrame({
+      fields: [
+        {
+          name: 'image_field',
+          values: [123],
+          display: (v) => ({
+            text: String(v),
+            numeric: Number(v),
+            icon: undefined,
+          }),
+        },
+      ],
+    });
+    const config = { mode: ResourceDimensionMode.Field, field: 'image_field', fixed: '' };
+
+    expect(getResourceDimension(frame, config).get(0)).toEqual('');
+    expect(getResourceDimension(frame, config).value()).toEqual('');
+  });
+
   // TODO: write tests for mapping modes
 });
