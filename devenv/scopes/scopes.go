@@ -300,43 +300,43 @@ func (c *Client) createTreeNodes(children map[string]TreeNode, parentName string
 
 func (c *Client) deleteResources() {
 	fmt.Println("Deleting all gdev-prefixed resources...")
-	
+
 	// Delete scopes (silently handle errors if endpoints aren't available)
 	c.deleteResourceType("/scopes", "scope")
-	
+
 	// Delete scope nodes
 	c.deleteResourceType("/scopenodes", "scope node")
-	
+
 	// Delete scope navigations
 	c.deleteResourceType("/scopenavigations", "scope navigation")
-	
+
 	fmt.Println("✓ Cleanup complete")
 }
 
 func (c *Client) deleteResourceType(endpoint, resourceType string) {
 	url := fmt.Sprintf("%s/apis/%s/namespaces/%s%s", c.baseURL, apiVersion, c.namespace, endpoint)
-	
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		// Silently skip if we can't create request
 		return
 	}
-	
+
 	req.Header.Set("Content-Type", "application/json")
 	req.SetBasicAuth(strings.Split(c.auth, ":")[0], strings.Split(c.auth, ":")[1])
-	
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		// Silently skip if endpoint isn't available
 		return
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		// Silently skip if endpoint returns error (might not be available)
 		return
 	}
-	
+
 	var listResponse struct {
 		Items []struct {
 			Metadata struct {
@@ -344,17 +344,17 @@ func (c *Client) deleteResourceType(endpoint, resourceType string) {
 			} `json:"metadata"`
 		} `json:"items"`
 	}
-	
+
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	if err := json.Unmarshal(bodyBytes, &listResponse); err != nil {
 		// Silently skip if we can't decode response
 		return
 	}
-	
+
 	if len(listResponse.Items) == 0 {
 		return
 	}
-	
+
 	deletedCount := 0
 	for _, item := range listResponse.Items {
 		if strings.HasPrefix(item.Metadata.Name, prefix+"-") {
@@ -371,9 +371,9 @@ func (c *Client) deleteResourceType(endpoint, resourceType string) {
 
 func main() {
 	flag.Parse()
-	
+
 	client := NewClient(*grafanaURL, *namespace, *user, *password)
-	
+
 	if *cleanupFlag {
 		// Cleanup should be silent if endpoints aren't available
 		client.deleteResources()
