@@ -64,7 +64,7 @@ export const getSpanDetailLinkButtons = (props: Props) => {
   const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, app, shareButton } = props;
 
   let linkToProfiles: SpanLinkDef | undefined;
-  let content = <>{shareButton} </>;
+  let content = shareButton ? <>{shareButton}</> : undefined;
 
   if (createSpanLink) {
     const links = (createSpanLink(span) || [])
@@ -129,7 +129,7 @@ export const getSpanDetailLinkButtons = (props: Props) => {
           {shareButton}
         </>
       );
-    } else {
+    } else if (links.length > 0) {
       content = (
         <>
           {links.map((spanLinkModel, index) => (
@@ -139,6 +139,10 @@ export const getSpanDetailLinkButtons = (props: Props) => {
         </>
       );
     }
+  }
+
+  if (!content) {
+    return <></>;
   }
 
   return (
