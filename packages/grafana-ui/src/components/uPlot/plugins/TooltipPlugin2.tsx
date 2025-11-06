@@ -118,10 +118,14 @@ const getAdHocFiltersFallback: GetAdHocFiltersCallback = () => [];
  * Enables panning the time range by dragging x-axis labels.
  * Provides visual feedback (grab/grabbing cursor) and real-time grid updates during drag.
  * Calls queryZoom() on drag end to update dashboard time range if drag exceeds MIN_ZOOM_DIST.
- * Mutates u.scales.x.range temporarily during drag.
+ * Uses UPlotConfigBuilder.setPanState() to avoid mutation of scale.range function.
  * @internal - exported for testing only
  */
-export const setupXAxisPan = (u: uPlot, queryZoom: (range: { from: number; to: number }) => void) => {
+export const setupXAxisPan = (
+  u: uPlot,
+  config: UPlotConfigBuilder,
+  queryZoom: (range: { from: number; to: number }) => void
+) => {
   let xAxes = u.root.querySelectorAll('.u-axis');
   let xAxis = xAxes[0];
 
@@ -148,24 +152,12 @@ export const setupXAxisPan = (u: uPlot, queryZoom: (range: { from: number; to: n
     xAxisEl.style.cursor = 'grabbing';
 
     let xScale = u.scales.x;
-    let originalRange = xScale.range;
 
     let rect = u.over.getBoundingClientRect();
     let startX = e.clientX - rect.left;
     let startMin = xScale.min!;
     let startMax = xScale.max!;
     let unitsPerPx = (startMax - startMin) / (u.bbox.width / uPlot.pxRatio);
-
-    let isDragging = false;
-    let dragMin = startMin;
-    let dragMax = startMax;
-
-    xScale.range = (u, initMin, initMax, scaleKey) => {
-      if (isDragging) {
-        return [dragMin, dragMax];
-      }
-      return typeof originalRange === 'function' ? originalRange(u, initMin, initMax, scaleKey) : [initMin, initMax];
-    };
 
     let onMove = (e: MouseEvent) => {
       e.preventDefault();
@@ -174,13 +166,14 @@ export const setupXAxisPan = (u: uPlot, queryZoom: (range: { from: number; to: n
       let dx = currentX - startX;
       let shiftBy = dx * unitsPerPx;
 
-      isDragging = true;
-      dragMin = startMin - shiftBy;
-      dragMax = startMax - shiftBy;
+      let panMin = startMin - shiftBy;
+      let panMax = startMax - shiftBy;
+
+      config.setPanState(true, panMin, panMax);
 
       u.setScale('x', {
-        min: dragMin,
-        max: dragMax,
+        min: panMin,
+        max: panMax,
       });
     };
 
@@ -190,8 +183,7 @@ export const setupXAxisPan = (u: uPlot, queryZoom: (range: { from: number; to: n
 
       xAxisEl.style.cursor = 'grab';
 
-      isDragging = false;
-      xScale.range = originalRange;
+      config.setPanState(false);
 
       if (Math.abs(dx) >= MIN_ZOOM_DIST) {
         let shiftBy = dx * unitsPerPx;
@@ -439,7 +431,7 @@ export const TooltipPlugin2 = ({
       }
 
       if (queryZoom != null && getFeatureToggle('timeRangePan')) {
-        setupXAxisPan(u, queryZoom);
+        setupXAxisPan(u, config, queryZoom);
       }
 
       // this handles pinning, 0-width range selection, and one-click
