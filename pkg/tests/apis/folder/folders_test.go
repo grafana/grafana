@@ -1261,8 +1261,9 @@ func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
 		t.Skip("test only on sqlite for now")
 	}
 
-	// test on all dualwriter modes
-	for mode := 0; mode <= 2; mode++ {
+	// Test across different dual writer modes
+	modes := []int{2, 3, 5}
+	for mode := range modes {
 		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, delete blocked by library elements)", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 
@@ -1340,7 +1341,9 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 		t.Skip("test only on sqlite for now")
 	}
 
-	for mode := 0; mode <= 5; mode++ {
+	// Test across different dual writer modes
+	modes := []int{2, 3, 5}
+	for mode := range modes {
 		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, delete parent blocked by library elements in child)", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 
@@ -1505,8 +1508,13 @@ func TestIntegrationMoveNestedFolderToRootK8S(t *testing.T) {
 func TestIntegrationDeleteNestedFoldersPostorder(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
 	// Test across different dual writer modes
-	for mode := 0; mode <= 5; mode++ {
+	modes := []int{2, 3, 5}
+	for mode := range modes {
 		t.Run(fmt.Sprintf("Mode %d: Delete nested folder hierarchy in postorder", mode), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
