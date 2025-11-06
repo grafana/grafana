@@ -581,6 +581,11 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			{UID: "dashboard2", FolderUID: "folder2", ID: 2},
 		}, nil).Once()
 
+		mockStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
+			{UID: "dashboard1", FolderUID: "folder1", ID: 1},
+			{UID: "dashboard2", FolderUID: "folder2", ID: 2},
+		}, nil).Once()
+
 		req := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
