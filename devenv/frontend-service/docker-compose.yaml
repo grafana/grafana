@@ -86,7 +86,7 @@ services:
       - 'alloy.logs=true'
 
   alloy:
-    image: grafana/alloy:latest
+    image: grafana/alloy:v1.11.2
     volumes:
       - ./configs/alloy:/alloy-config
       - /var/run/docker.sock:/var/run/docker.sock # To scrape Docker container logs
@@ -104,7 +104,7 @@ services:
       - 'alloy.logs=true'
 
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:v3.7.2
     volumes:
       - prometheus-data:/prometheus
     command:
@@ -116,7 +116,7 @@ services:
       - 'alloy.logs=true'
 
   loki:
-    image: grafana/loki
+    image: grafana/loki:3.5.7
     volumes:
       - loki-data:/loki
     command: -config.file=/etc/loki/local-config.yaml
@@ -124,7 +124,7 @@ services:
       - 'alloy.logs=true'
 
   tempo-init:
-    image: busybox
+    image: busybox:1.37.0
     user: root
     entrypoint:
       - 'chown'
@@ -134,7 +134,7 @@ services:
       - tempo-data:/var/tempo
 
   tempo:
-    image: grafana/tempo
+    image: grafana/tempo:2.9.0
     volumes:
       - tempo-data:/var/lib/tempo
       - ./configs/tempo.yaml:/etc/tempo/tempo.yaml
