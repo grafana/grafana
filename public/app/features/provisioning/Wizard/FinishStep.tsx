@@ -5,6 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfiguredBranchOption';
 import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
 import { isGitProvider } from '../utils/repositoryTypes';
 
@@ -88,6 +89,14 @@ export const FinishStep = memo(function FinishStep() {
             description={gitFields.prWorkflowConfig.description}
           />
         </Field>
+      )}
+
+      {isGitBased && (
+        <EnablePushToConfiguredBranchOption<WizardFormData>
+          register={register}
+          readOnly={readOnly}
+          registerName="repository.enablePushToConfiguredBranch"
+        />
       )}
 
       {isGithub && imageRenderingAllowed && (
