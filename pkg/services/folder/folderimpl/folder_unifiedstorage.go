@@ -654,8 +654,9 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		//	and remove "user" from the signature of DeleteInFolder in the folder RegistryService.
 		//	Context: https://github.com/grafana/grafana/pull/69149#discussion_r1235057903
 		//	*/
+		// Obs: DeleteInFolders only deletes dangling library panels (not linked to any dashboard) and throws errors if there are connections
 		if err := libraryPanelSrv.DeleteInFolders(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {
-			s.log.Error("failed to delete dangling library panels in folder", "error", err)
+			s.log.Error("failed to delete dangling library panels in folders", "error", err, "folders", strings.Join(folders, ","))
 			return err
 		}
 		// We need a list of dashboard uids inside the folder to delete related dashboards & public dashboards -
