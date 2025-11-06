@@ -118,8 +118,6 @@ func TestV0ConversionErrorHandling(t *testing.T) {
 
 			if tt.expectError {
 				require.Error(t, err, "expected conversion to return error")
-			} else {
-				// For functions that don't return errors, we just verify status is set
 			}
 
 			if tt.expectStatusSet {
