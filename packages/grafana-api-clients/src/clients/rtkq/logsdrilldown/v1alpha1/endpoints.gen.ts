@@ -495,6 +495,7 @@ export type ObjectMeta = {
 };
 export type LogsDrilldownSpec = {
   defaultFields: string[];
+  interceptinterceptDismissed: boolean;
   prettifyJSON: boolean;
   wrapLogMessage: boolean;
 };

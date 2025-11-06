@@ -7,6 +7,7 @@ logsdrilldownv0alpha1: {
 			defaultFields: [...string] | *[]
 			prettifyJSON: bool
 			wrapLogMessage: bool
+			interceptDismissed: bool
 		}
 	}
 }
