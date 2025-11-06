@@ -116,7 +116,7 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	for _, field := range fields {
 		switch field {
 		case res.SEARCH_FIELD_TITLE:
-			columns = append(columns, search.TableColumnDefinitions[search.TEAM_TITLE])
+			columns = append(columns, search.TableColumnDefinitions[res.SEARCH_FIELD_TITLE])
 		}
 	}
 	return columns
