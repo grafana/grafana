@@ -241,10 +241,12 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		if errObjectSt != nil {
 			log.With("object", createdCopy).Error("failed to CREATE object in unified storage", "err", errObjectSt)
 			// If we cannot create in unified storage, attempt to clean up legacy.
-			_, _, err = d.legacy.Delete(ctx, accCreated.GetName(), nil, &metav1.DeleteOptions{})
-			if err != nil {
-				log.With("name", accCreated.GetName()).Error("failed to CLEANUP object in legacy storage", "err", err)
-			}
+			go func(ctxBg context.Context, cancel context.CancelFunc) {
+				defer cancel()
+				if _, asyncDelete, err := d.legacy.Delete(ctxBg, accCreated.GetName(), nil, &metav1.DeleteOptions{}); err != nil {
+					log.With("name", accCreated.GetName()).Error("failed to CLEANUP object in legacy storage", "err", err, "asyncDelete", asyncDelete)
+				}
+			}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
 			return nil, errObjectSt
 		}
 		return storageObj, nil
@@ -263,12 +265,13 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 			if d.errorIsOK {
 				return createdFromLegacy, nil
 			}
-
 			// If we cannot create in unified storage, attempt to clean up legacy.
-			_, _, errLegacy := d.legacy.Delete(ctx, accCreated.GetName(), nil, &metav1.DeleteOptions{})
-			if errLegacy != nil {
-				log.With("name", accCreated.GetName()).Error("failed to CLEANUP object in legacy storage", "err", errLegacy)
-			}
+			go func(ctxBg context.Context, cancel context.CancelFunc) {
+				defer cancel()
+				if _, asyncDelete, err := d.legacy.Delete(ctxBg, accCreated.GetName(), nil, &metav1.DeleteOptions{}); err != nil {
+					log.With("name", accCreated.GetName()).Error("failed to CLEANUP object in legacy storage", "err", err, "asyncDelete", asyncDelete)
+				}
+			}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
 			return nil, err
 		}
 	}

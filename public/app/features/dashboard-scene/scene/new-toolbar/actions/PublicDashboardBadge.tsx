@@ -13,17 +13,26 @@ export const PublicDashboardBadge = ({ dashboard }: ToolbarActionProps) => {
     return null;
   }
 
-  return <PublicDashboardBadgeInternal uid={dashboard.state.uid} />;
+  return (
+    <PublicDashboardBadgeInternal
+      uid={dashboard.state.uid}
+      hasPublicDashboard={dashboard.state.meta.publicDashboardEnabled}
+    />
+  );
 };
 
 // Used in old architecture
 export const PublicDashboardBadgeLegacy = PublicDashboardBadgeInternal;
 
-function PublicDashboardBadgeInternal({ uid }: { uid: string }) {
-  const { data: publicDashboard } = useGetPublicDashboardQuery(uid);
+function PublicDashboardBadgeInternal({ uid, hasPublicDashboard }: { uid: string; hasPublicDashboard?: boolean }) {
+  const { data: publicDashboard } = useGetPublicDashboardQuery(uid, {
+    skip: hasPublicDashboard !== undefined && !hasPublicDashboard,
+  });
   const styles = useStyles2(getStyles);
 
-  if (!publicDashboard) {
+  const showBadge = hasPublicDashboard !== undefined ? hasPublicDashboard : !!publicDashboard;
+
+  if (!showBadge) {
     return null;
   }
 

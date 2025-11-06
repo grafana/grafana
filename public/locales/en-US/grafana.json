@@ -2945,15 +2945,15 @@
     "triage": {
       "alert-instances": "Alert instances",
       "error-loading-rule": "Error loading rule",
-      "firing-instances-count": "{{firingCount}} firing instances",
       "instance-details-drawer": {
         "instance-details": "Instance details"
       },
+      "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
       "no-instances-found": "No alert instances found for rule: {{ruleUID}}",
       "no-labels": "No labels",
+      "no-matching-instances-with-filters": "No alert instances match your current set of filters for the selected time range.",
       "open-in-sidebar": "Open in sidebar",
       "open-rule-details": "Open rule details",
-      "pending-instances-count": "{{pendingCount}} pending instances",
       "rule-details": {
         "subtitle": "Rule details and conditions",
         "title": "Rule Details"
@@ -4130,6 +4130,7 @@
       "scopes": "Scopes"
     },
     "empty-state": {
+      "button-title": "Try searching with Grafana Assistant",
       "message": "No results found"
     },
     "scopes": {

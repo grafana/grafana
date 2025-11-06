@@ -250,6 +250,7 @@ export function ensureV1Response(
         uid: dashboard.metadata.name,
         k8s: dashboard.metadata,
         version: dashboard.metadata.generation,
+        publicDashboardEnabled: dashboard.access.isPublic,
       },
       dashboard: spec,
     };
@@ -271,6 +272,7 @@ export function ensureV1Response(
         canShare: dashboard.access.canShare,
         canStar: dashboard.access.canStar,
         annotationsPermissions: dashboard.access.annotationsPermissions,
+        publicDashboardEnabled: dashboard.access.isPublic,
       },
       dashboard: transformDashboardV2SpecToV1(spec, dashboard.metadata),
     };
