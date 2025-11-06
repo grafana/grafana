@@ -1,4 +1,4 @@
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, take } from 'rxjs';
 
 import { PluginLoadingStrategy } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -733,21 +733,26 @@ describe('AddedLinksRegistry', () => {
         ],
       });
 
-      const observable = registry.asObservableSlice((state) => state[extensionPointId]);
-      const slice = await firstValueFrom(observable);
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]).pipe(take(1));
 
-      expect(slice).toBeDefined();
-      expect(Array.isArray(slice)).toBe(true);
-      expect(slice?.length).toBe(1);
-      expect(slice?.[0].title).toBe('Test Link');
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
+
+        expect(slice).toBeDefined();
+        expect(Array.isArray(slice)).toBe(true);
+        expect(slice?.length).toBe(1);
+        expect(slice?.[0].title).toBe('Test Link');
+      });
     });
 
     it('should return undefined when the selected key does not exist', async () => {
       const registry = new AddedLinksRegistry();
-      const observable = registry.asObservableSlice((state) => state['non-existent-key']);
-      const slice = await firstValueFrom(observable);
+      const observable = registry.asObservableSlice((state) => state['non-existent-key']).pipe(take(1));
 
-      expect(slice).toBeUndefined();
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
+        expect(slice).toBeUndefined();
+      });
     });
 
     it('should only emit when the selected slice changes (distinctUntilChanged)', async () => {
@@ -833,22 +838,16 @@ describe('AddedLinksRegistry', () => {
         ],
       });
 
-      const observable = registry.asObservableSlice((state) => state[extensionPointId]);
-      const slice = await firstValueFrom(observable);
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]).pipe(take(1));
 
-      expect(slice).toBeDefined();
-      expect(() => {
-        if (slice && Array.isArray(slice)) {
-          // @ts-expect-error - Testing that frozen objects cannot be modified
-          slice.push({});
-        }
-      }).toThrow();
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
 
-      expect(() => {
-        if (slice && Array.isArray(slice) && slice[0]) {
-          slice[0].title = 'Modified';
-        }
-      }).toThrow();
+        expect(slice).toBeDefined();
+        // @ts-expect-error - Testing that frozen objects cannot be modified
+        expect(() => slice.push({})).toThrow();
+        expect(() => (slice[0].title = 'Modified')).toThrow();
+      });
     });
 
     it('should work with read-only registries', async () => {
@@ -869,13 +868,16 @@ describe('AddedLinksRegistry', () => {
         ],
       });
 
-      const observable = readOnlyRegistry.asObservableSlice((state) => state[extensionPointId]);
-      const slice = await firstValueFrom(observable);
+      const observable = readOnlyRegistry.asObservableSlice((state) => state[extensionPointId]).pipe(take(1));
 
-      expect(slice).toBeDefined();
-      expect(Array.isArray(slice)).toBe(true);
-      expect(slice?.length).toBe(1);
-      expect(slice?.[0].title).toBe('Test Link');
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
+
+        expect(slice).toBeDefined();
+        expect(Array.isArray(slice)).toBe(true);
+        expect(slice?.length).toBe(1);
+        expect(slice?.[0].title).toBe('Test Link');
+      });
     });
 
     it('should emit immediately to new subscribers with the current slice value', async () => {

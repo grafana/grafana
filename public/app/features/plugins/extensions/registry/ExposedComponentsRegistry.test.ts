@@ -1,5 +1,5 @@
 import React from 'react';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, take } from 'rxjs';
 
 import { PluginLoadingStrategy } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -528,12 +528,15 @@ describe('ExposedComponentsRegistry', () => {
         ],
       });
 
-      const observable = registry.asObservableSlice((state) => state[componentId]);
-      const slice = await firstValueFrom(observable);
+      const observable = registry.asObservableSlice((state) => state[componentId]).pipe(take(1));
 
-      expect(slice).toBeDefined();
-      expect(slice?.title).toBe('Exposed Component');
-      expect(slice?.pluginId).toBe('test-plugin');
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
+
+        expect(slice).toBeDefined();
+        expect(slice?.title).toBe('Exposed Component');
+        expect(slice?.pluginId).toBe('test-plugin');
+      });
     });
 
     it('should deep freeze exposed components', async () => {
@@ -552,16 +555,14 @@ describe('ExposedComponentsRegistry', () => {
         ],
       });
 
-      const observable = registry.asObservableSlice((state) => state[componentId]);
-      const slice = await firstValueFrom(observable);
+      const observable = registry.asObservableSlice((state) => state[componentId]).pipe(take(1));
 
-      expect(slice).toBeDefined();
-      expect(() => {
-        // @ts-expect-error - Testing that frozen objects cannot be modified
-        if (slice) {
-          slice.title = 'Modified';
-        }
-      }).toThrow();
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
+
+        expect(slice).toBeDefined();
+        expect(() => (slice.title = 'Modified')).toThrow();
+      });
     });
 
     it('should only emit when the selected exposed component changes', async () => {
