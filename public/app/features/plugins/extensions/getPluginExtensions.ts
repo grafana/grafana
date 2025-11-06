@@ -37,16 +37,22 @@ import {
 export const getObservablePluginExtensions = (
   options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry'>
 ): Observable<ReturnType<GetExtensions>> => {
+  const { extensionPointId } = options;
+  const { addedComponentsRegistry, addedLinksRegistry } = pluginExtensionRegistries;
+
   return combineLatest([
-    pluginExtensionRegistries.addedComponentsRegistry.asObservable(),
-    pluginExtensionRegistries.addedLinksRegistry.asObservable(),
+    addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),
+    addedLinksRegistry.asObservableSlice((state) => state[extensionPointId]),
   ]).pipe(
-    filter(([components, links]) => Boolean(components) && Boolean(links)), // filter out uninitialized registries
     map(([components, links]) =>
       getPluginExtensions({
         ...options,
-        addedComponentsRegistry: components,
-        addedLinksRegistry: links,
+        addedComponentsRegistry: {
+          [extensionPointId]: components,
+        },
+        addedLinksRegistry: {
+          [extensionPointId]: links,
+        },
       })
     )
   );
