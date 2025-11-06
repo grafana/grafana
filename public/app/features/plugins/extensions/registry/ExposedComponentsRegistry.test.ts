@@ -510,4 +510,105 @@ describe('ExposedComponentsRegistry', () => {
     expect(Object.keys(currentState)).toHaveLength(1);
     expect(log.error).not.toHaveBeenCalled();
   });
+
+  describe('asObservableSlice', () => {
+    it('should return the selected exposed component from the registry', async () => {
+      const registry = new ExposedComponentsRegistry();
+      const componentId = 'test-plugin/exposed-component/v1';
+
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            id: componentId,
+            title: 'Exposed Component',
+            description: 'Test description',
+            component: () => React.createElement('div', null, 'Exposed'),
+          },
+        ],
+      });
+
+      const observable = registry.asObservableSlice((state) => state[componentId]);
+      const slice = await firstValueFrom(observable);
+
+      expect(slice).toBeDefined();
+      expect(slice?.title).toBe('Exposed Component');
+      expect(slice?.pluginId).toBe('test-plugin');
+    });
+
+    it('should deep freeze exposed components', async () => {
+      const registry = new ExposedComponentsRegistry();
+      const componentId = 'test-plugin/exposed-component/v1';
+
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            id: componentId,
+            title: 'Exposed Component',
+            description: 'Test description',
+            component: () => React.createElement('div', null, 'Exposed'),
+          },
+        ],
+      });
+
+      const observable = registry.asObservableSlice((state) => state[componentId]);
+      const slice = await firstValueFrom(observable);
+
+      expect(slice).toBeDefined();
+      expect(() => {
+        // @ts-expect-error - Testing that frozen objects cannot be modified
+        if (slice) {
+          slice.title = 'Modified';
+        }
+      }).toThrow();
+    });
+
+    it('should only emit when the selected exposed component changes', async () => {
+      const registry = new ExposedComponentsRegistry();
+      const componentId1 = 'test-plugin/component1/v1';
+      const componentId2 = 'test-plugin/component2/v1';
+      const subscribeCallback = jest.fn();
+
+      const observable = registry.asObservableSlice((state) => state[componentId1]);
+      observable.subscribe(subscribeCallback);
+
+      // Initial state
+      expect(subscribeCallback).toHaveBeenCalledTimes(1);
+      expect(subscribeCallback.mock.calls[0][0]).toBeUndefined();
+
+      // Register first component
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            id: componentId1,
+            title: 'Component 1',
+            description: 'Description 1',
+            component: () => React.createElement('div', null, 'Component 1'),
+          },
+        ],
+      });
+
+      // Should emit
+      expect(subscribeCallback).toHaveBeenCalledTimes(2);
+      expect(subscribeCallback.mock.calls[1][0]?.title).toBe('Component 1');
+
+      // Register second component (different id)
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            id: componentId2,
+            title: 'Component 2',
+            description: 'Description 2',
+            component: () => React.createElement('div', null, 'Component 2'),
+          },
+        ],
+      });
+
+      // Should NOT emit because the selected slice (componentId1) didn't change
+      expect(subscribeCallback).toHaveBeenCalledTimes(2);
+    });
+  });
 });

@@ -729,4 +729,189 @@ describe('addedFunctionsRegistry', () => {
     expect(Object.keys(currentState)).toHaveLength(1);
     expect(log.error).not.toHaveBeenCalled();
   });
+
+  describe('asObservableSlice', () => {
+    it('should return the selected slice from the registry', async () => {
+      const registry = new AddedFunctionsRegistry();
+      const extensionPointId = 'grafana/dashboard/panel/menu';
+
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            title: 'Test Function',
+            description: 'Test description',
+            targets: extensionPointId,
+            fn: jest.fn(),
+          },
+        ],
+      });
+
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]);
+      const slice = await firstValueFrom(observable);
+
+      expect(slice).toBeDefined();
+      expect(Array.isArray(slice)).toBe(true);
+      expect(slice?.length).toBe(1);
+      expect(slice?.[0].title).toBe('Test Function');
+    });
+
+    it('should return undefined when the selected key does not exist', async () => {
+      const registry = new AddedFunctionsRegistry();
+      const observable = registry.asObservableSlice((state) => state['non-existent-key']);
+      const slice = await firstValueFrom(observable);
+
+      expect(slice).toBeUndefined();
+    });
+
+    it('should only emit when the selected slice changes (distinctUntilChanged)', async () => {
+      const registry = new AddedFunctionsRegistry();
+      const extensionPointId = 'grafana/dashboard/panel/menu';
+      const subscribeCallback = jest.fn();
+
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]);
+      observable.subscribe(subscribeCallback);
+
+      // Initial empty state
+      expect(subscribeCallback).toHaveBeenCalledTimes(1);
+      expect(subscribeCallback.mock.calls[0][0]).toBeUndefined();
+
+      // Register first function
+      registry.register({
+        pluginId: 'test-plugin-1',
+        configs: [
+          {
+            title: 'Function 1',
+            description: 'Description 1',
+            targets: extensionPointId,
+            fn: jest.fn(),
+          },
+        ],
+      });
+
+      // Should emit because the slice changed
+      expect(subscribeCallback).toHaveBeenCalledTimes(2);
+      expect(subscribeCallback.mock.calls[1][0]?.length).toBe(1);
+
+      // Register another function to the same extension point
+      registry.register({
+        pluginId: 'test-plugin-2',
+        configs: [
+          {
+            title: 'Function 2',
+            description: 'Description 2',
+            targets: extensionPointId,
+            fn: jest.fn(),
+          },
+        ],
+      });
+
+      // Should emit because the slice changed (array reference changed)
+      expect(subscribeCallback).toHaveBeenCalledTimes(3);
+      expect(subscribeCallback.mock.calls[2][0]?.length).toBe(2);
+
+      // Register a function to a different extension point
+      registry.register({
+        pluginId: 'test-plugin-3',
+        configs: [
+          {
+            title: 'Function 3',
+            description: 'Description 3',
+            targets: 'grafana/other/point',
+            fn: jest.fn(),
+          },
+        ],
+      });
+
+      // Should NOT emit because the selected slice (for extensionPointId) didn't change
+      expect(subscribeCallback).toHaveBeenCalledTimes(3);
+    });
+
+    it('should deep freeze the selected slice', async () => {
+      const registry = new AddedFunctionsRegistry();
+      const extensionPointId = 'grafana/dashboard/panel/menu';
+
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            title: 'Test Function',
+            description: 'Test description',
+            targets: extensionPointId,
+            fn: jest.fn(),
+          },
+        ],
+      });
+
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]);
+      const slice = await firstValueFrom(observable);
+
+      expect(slice).toBeDefined();
+      expect(() => {
+        if (slice && Array.isArray(slice)) {
+          // @ts-expect-error - Testing that frozen objects cannot be modified
+          slice.push({});
+        }
+      }).toThrow();
+
+      expect(() => {
+        if (slice && Array.isArray(slice) && slice[0]) {
+          slice[0].title = 'Modified';
+        }
+      }).toThrow();
+    });
+
+    it('should work with read-only registries', async () => {
+      const registry = new AddedFunctionsRegistry();
+      const readOnlyRegistry = registry.readOnly();
+      const extensionPointId = 'grafana/dashboard/panel/menu';
+
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            title: 'Test Function',
+            description: 'Test description',
+            targets: extensionPointId,
+            fn: jest.fn(),
+          },
+        ],
+      });
+
+      const observable = readOnlyRegistry.asObservableSlice((state) => state[extensionPointId]);
+      const slice = await firstValueFrom(observable);
+
+      expect(slice).toBeDefined();
+      expect(Array.isArray(slice)).toBe(true);
+      expect(slice?.length).toBe(1);
+      expect(slice?.[0].title).toBe('Test Function');
+    });
+
+    it('should emit immediately to new subscribers with the current slice value', async () => {
+      const registry = new AddedFunctionsRegistry();
+      const extensionPointId = 'grafana/dashboard/panel/menu';
+
+      registry.register({
+        pluginId: 'test-plugin',
+        configs: [
+          {
+            title: 'Test Function',
+            description: 'Test description',
+            targets: extensionPointId,
+            fn: jest.fn(),
+          },
+        ],
+      });
+
+      // Subscribe after registration
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]);
+      const subscribeCallback = jest.fn();
+      observable.subscribe(subscribeCallback);
+
+      // Should have been called immediately with the current value
+      expect(subscribeCallback).toHaveBeenCalledTimes(1);
+      expect(subscribeCallback.mock.calls[0][0]?.length).toBe(1);
+      expect(subscribeCallback.mock.calls[0][0]?.[0].title).toBe('Test Function');
+    });
+  });
 });
