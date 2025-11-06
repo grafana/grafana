@@ -173,10 +173,6 @@ func addUserMigrations(mg *Migrator) {
 	// Users login and email should be in lower case - 2, fix for creating users not lowering login and email
 	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail+"2", &usermig.UsersLowerCaseLoginAndEmail{})
 
-	mg.AddMigration("Add index on user.is_service_account and user.last_seen_at", NewAddIndexMigration(userV2, &Index{
-		Cols: []string{"is_service_account", "last_seen_at"}, Type: IndexType,
-	}))
-
 	// Expand uid column to safely accommodate 'scim-' prefix without truncation/collisions
 	mg.AddMigration("Expand user.uid length to 190", NewRawSQLMigration("").
 		SQLite("SELECT 1;").
