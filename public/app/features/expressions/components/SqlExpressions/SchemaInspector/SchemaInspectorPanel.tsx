@@ -29,13 +29,12 @@ type SampleRows = SampleRow[];
 type SchemaData = SQLSchemaData;
 
 interface SchemaInspectorPanelProps {
-  className?: string;
   schemas: SQLSchemas | null;
   loading: boolean;
   error: Error | null;
 }
 
-export const SchemaInspectorPanel = ({ className, schemas, loading, error }: SchemaInspectorPanelProps) => {
+export const SchemaInspectorPanel = ({ schemas, loading, error }: SchemaInspectorPanelProps) => {
   const styles = useStyles2(getStyles);
 
   const schemaResponse: SQLSchemas = schemas ?? {};
@@ -185,8 +184,7 @@ export const SchemaInspectorPanel = ({ className, schemas, loading, error }: Sch
   }
 
   return (
-    // Have to use div instead of Stack because Stack doesn't support className
-    <div className={`${styles.schemaInspector} ${className || ''}`}>
+    <div className={styles.schemaInspector}>
       <TabsBar className={styles.tabsBar}>
         {refIds.map((refId) => (
           <Tab key={refId} label={refId} active={activeSchemaTab === refId} onChangeTab={() => setSelectedTab(refId)} />
