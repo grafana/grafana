@@ -32,6 +32,7 @@ message MutateOperation {
     DeletePermissionOperation delete_permission = 4;
     UpdateUserOrgRoleOperation update_user_org_role = 5;
     DeleteUserOrgRoleOperation delete_user_org_role = 6;
+    AddUserOrgRoleOperation add_user_org_role = 7;
   }
 }
 
@@ -63,6 +64,14 @@ message DeletePermissionOperation {
   Permission permission = 2;
 }
 
+message AddUserOrgRoleOperation {
+  // User UID
+  string user = 1;
+  // Role name (e.g: "Admin", "Editor", "Viewer")
+  string role = 2;
+}
+
+// UpdateUserOrgRoleOperation assigns the user's basic role and deletes existing basic role assignments.
 message UpdateUserOrgRoleOperation {
   // User UID
   string user = 1;
