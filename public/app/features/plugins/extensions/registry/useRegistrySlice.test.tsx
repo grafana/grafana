@@ -12,7 +12,7 @@ import {
   useAddedComponentsRegistrySlice,
   useAddedFunctionsRegistrySlice,
   useAddedLinksRegistrySlice,
-  useExposedComponentsRegistrySlice,
+  useExposedComponentRegistrySlice,
 } from './useRegistrySlice';
 
 describe('useRegistrySlice', () => {
@@ -139,7 +139,7 @@ describe('useRegistrySlice', () => {
 
   describe('useExposedComponentsRegistrySlice', () => {
     it('should return undefined when no component is exposed for the extension point', () => {
-      const { result } = renderHook(() => useExposedComponentsRegistrySlice('test/exposed-component'), { wrapper });
+      const { result } = renderHook(() => useExposedComponentRegistrySlice('test/exposed-component'), { wrapper });
 
       expect(result.current).toBeUndefined();
     });
@@ -159,7 +159,7 @@ describe('useRegistrySlice', () => {
         ],
       });
 
-      const { result } = renderHook(() => useExposedComponentsRegistrySlice(exposedComponentId), { wrapper });
+      const { result } = renderHook(() => useExposedComponentRegistrySlice(exposedComponentId), { wrapper });
 
       expect(result.current).toBeDefined();
       expect(result.current?.title).toBe('Exposed Component');
@@ -183,7 +183,7 @@ describe('useRegistrySlice', () => {
         ],
       });
 
-      const { result } = renderHook(() => useExposedComponentsRegistrySlice(otherId), { wrapper });
+      const { result } = renderHook(() => useExposedComponentRegistrySlice(otherId), { wrapper });
 
       expect(result.current).toBeUndefined();
     });

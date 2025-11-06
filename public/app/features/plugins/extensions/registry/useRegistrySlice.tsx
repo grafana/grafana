@@ -22,12 +22,10 @@ export function useAddedComponentsRegistrySlice<Props>(
   return useRegistrySlice(extensionPointId, registry) as Array<AddedComponentRegistryItem<Props>> | undefined;
 }
 
-export function useExposedComponentsRegistrySlice<Props>(
-  extensionPointId: string
-): ExposedComponentRegistryItem<Props> | undefined {
+export function useExposedComponentRegistrySlice<Props>(id: string): ExposedComponentRegistryItem<Props> | undefined {
   const registry = useExposedComponentsRegistry();
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return useRegistrySlice(extensionPointId, registry) as ExposedComponentRegistryItem<Props> | undefined;
+  return useRegistrySlice(id, registry) as ExposedComponentRegistryItem<Props> | undefined;
 }
 
 export function useAddedLinksRegistrySlice(extensionPointId: string): AddedLinkRegistryItem[] | undefined {

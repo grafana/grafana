@@ -5,7 +5,7 @@ import { UsePluginComponentResult } from '@grafana/runtime';
 
 import * as errors from './errors';
 import { log } from './logs/log';
-import { useExposedComponentsRegistrySlice } from './registry/useRegistrySlice';
+import { useExposedComponentRegistrySlice } from './registry/useRegistrySlice';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { getExposedComponentPluginDependencies, isGrafanaDevMode, wrapWithPluginContext } from './utils';
 import { isExposedComponentDependencyMissing } from './validators';
@@ -13,7 +13,7 @@ import { isExposedComponentDependencyMissing } from './validators';
 // Returns a component exposed by a plugin.
 // (Exposed components can be defined in plugins by calling .exposeComponent() on the AppPlugin instance.)
 export function usePluginComponent<Props extends object = {}>(id: string): UsePluginComponentResult<Props> {
-  const registryItem = useExposedComponentsRegistrySlice<Props>(id);
+  const registryItem = useExposedComponentRegistrySlice<Props>(id);
   const pluginContext = usePluginContext();
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExposedComponentPluginDependencies(id));
 
