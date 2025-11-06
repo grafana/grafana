@@ -729,6 +729,10 @@ export interface FeatureToggles {
   */
   timeRangeProvider?: boolean;
   /**
+  * Enables time range panning functionality
+  */
+  timeRangePan?: boolean;
+  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */
@@ -883,7 +887,8 @@ export interface FeatureToggles {
   */
   fetchRulesUsingPost?: boolean;
   /**
-  * Enables the new logs panel in Explore
+  * Enables the new logs panel
+  * @default true
   */
   newLogsPanel?: boolean;
   /**

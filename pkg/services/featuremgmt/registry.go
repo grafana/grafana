@@ -1255,6 +1255,13 @@ var (
 			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
+			Name:         "timeRangePan",
+			Description:  "Enables time range panning functionality",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
 			Name:        "azureMonitorDisableLogLimit",
 			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1516,10 +1523,11 @@ var (
 		},
 		{
 			Name:         "newLogsPanel",
-			Description:  "Enables the new logs panel in Explore",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables the new logs panel",
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "true",
 		},
 		{
 			Name:              "grafanaconThemes",
