@@ -198,7 +198,7 @@ grafana_dashboard_migration_conversion_failure_total{
 
 ### Error Types
 
-The `error_type` label classifies failures into three categories:
+The `error_type` label classifies failures into four categories:
 
 #### 1. `conversion_error`
 - General conversion failures not related to schema migration
@@ -214,6 +214,12 @@ The `error_type` label classifies failures into three categories:
 - Dashboards with schema versions below the minimum supported version (< v13)
 - These are logged as warnings rather than errors
 - Indicates dashboards that cannot be migrated automatically
+
+#### 4. `conversion_data_loss_error`
+- **NEW**: Data loss detected during conversion
+- Automatically checks that panels, queries, annotations, and links are preserved
+- Triggered when target has fewer items than source
+- Includes detailed loss metrics in logs (see [Data Loss Detection](#data-loss-detection))
 
 ### Logging
 
@@ -235,6 +241,13 @@ All migration logs use structured logging with consistent field names:
 - `errorType` - Same classification as metrics error_type label
 - `erroredConversionFunc` - Name of the conversion function that failed
 - `error` - The actual error message
+
+**Data Loss Fields (conversion_data_loss_error only):**
+- `panelsLost` - Number of panels lost (0 if none lost)
+- `queriesLost` - Number of queries lost
+- `annotationsLost` - Number of annotations lost
+- `linksLost` - Number of links lost
+- `variablesLost` - Number of template variables lost
 
 #### Log levels
 
@@ -285,6 +298,55 @@ All migration logs use structured logging with consistent field names:
 }
 ```
 
+##### Data Loss Error (ERROR level)
+```json
+{
+  "level": "error",
+  "msg": "Dashboard conversion failed",
+  "sourceVersionAPI": "dashboard.grafana.app/v1beta1",
+  "targetVersionAPI": "dashboard.grafana.app/v2alpha1",
+  "erroredConversionFunc": "V1beta1_to_V2alpha1",
+  "dashboardUID": "abc123",
+  "sourceSchemaVersion": 42,
+  "targetSchemaVersion": 42,
+  "panelsLost": 0,
+  "queriesLost": 2,
+  "annotationsLost": 0,
+  "linksLost": 0,
+  "variablesLost": 0,
+  "errorType": "conversion_data_loss_error",
+  "error": "data loss detected: query count decreased from 7 to 5"
+}
+```
+
+### Data Loss Detection
+
+**Automatic Runtime Checks:**
+
+Every conversion automatically detects data loss by comparing:
+- **Panel count** - Visualization panels (regular + library panels)
+- **Query count** - Data source queries (excludes invalid row panel queries)
+- **Annotation count** - Dashboard-level annotations
+- **Link count** - Navigation links
+- **Variable count** - Template variables (from `templating.list` in v0/v1, `variables` in v2)
+
+**Detection Logic:**
+- ✅ **Allows additions**: Default annotations, enriched data
+- ❌ **Detects losses**: Any decrease in counts triggers `conversion_data_loss_error`
+
+**Testing:**
+
+Run comprehensive data loss tests on all conversion test files:
+
+```bash
+# Test all conversions for data loss
+go test ./apps/dashboard/pkg/migration/conversion/... -run TestDataLossDetectionOnAllInputFiles -v
+
+# Test shows detailed panel/query analysis when loss is detected
+```
+
+**Implementation:** See `conversion/conversion_data_loss_detection.go` and `conversion/README.md` for details.
+
 ### Implementation Details
 
 #### Automatic instrumentation
@@ -293,6 +355,7 @@ All dashboard conversions are automatically instrumented via the `withConversion
 
 ```go
 // All conversion functions are wrapped automatically
+// Includes metrics, logging, and data loss detection
 s.AddConversionFunc((*dashv0.Dashboard)(nil), (*dashv1.Dashboard)(nil),
     withConversionMetrics(dashv0.APIVERSION, dashv1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
         return Convert_V0_to_V1(a.(*dashv0.Dashboard), b.(*dashv1.Dashboard), scope)
@@ -318,6 +381,16 @@ type ConversionError struct {
     functionName      string
     currentAPIVersion string
     targetAPIVersion  string
+}
+
+// Data loss errors (NEW)
+// Detected when dashboard components (panels, queries, annotations, links, variables) 
+// are lost during conversion
+type ConversionDataLossError struct {
+    functionName     string  // Function where data loss was detected (e.g., "V1_to_V2alpha1")
+    message          string  // Detailed error message with loss statistics
+    sourceAPIVersion string  // Source API version (e.g., "dashboard.grafana.app/v1beta1")
+    targetAPIVersion string  // Target API version (e.g., "dashboard.grafana.app/v2alpha1")
 }
 ```
 

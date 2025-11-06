@@ -184,7 +184,7 @@
           "name": "constant_var",
           "query": "my-application",
           "skipUrlSync": true,
-          "type": "const"
+          "type": "constant"
         },
         {
           "auto": true,

@@ -210,6 +210,21 @@
         }
       },
       {
+        "kind": "ConstantVariable",
+        "spec": {
+          "name": "constant_var",
+          "query": "my-application",
+          "current": {
+            "text": "my-application",
+            "value": "my-application"
+          },
+          "label": "App Name",
+          "hide": "hideVariable",
+          "skipUrlSync": true,
+          "description": "Application name constant"
+        }
+      },
+      {
         "kind": "IntervalVariable",
         "spec": {
           "name": "interval_var",

@@ -161,7 +161,7 @@
         },
         {
           "name": "constant_var",
-          "type": "const",
+          "type": "constant",
           "label": "App Name",
           "description": "Application name constant",
           "query": "my-application",

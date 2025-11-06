@@ -699,11 +699,19 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 	}
 
 	if in.AdhocVariableKind != nil {
+		group := ""
+		var uid *string
+		if in.AdhocVariableKind.Spec.Datasource != nil {
+			if in.AdhocVariableKind.Spec.Datasource.Type != nil {
+				group = *in.AdhocVariableKind.Spec.Datasource.Type
+			}
+			uid = in.AdhocVariableKind.Spec.Datasource.Uid
+		}
 		out.AdhocVariableKind = &dashv2beta1.DashboardAdhocVariableKind{
 			Kind:  in.AdhocVariableKind.Kind,
-			Group: *in.AdhocVariableKind.Spec.Datasource.Type,
+			Group: group,
 			Datasource: &dashv2beta1.DashboardV2beta1AdhocVariableKindDatasource{
-				Name: in.AdhocVariableKind.Spec.Datasource.Uid,
+				Name: uid,
 			},
 			Spec: dashv2beta1.DashboardAdhocVariableSpec{
 				Name:             in.AdhocVariableKind.Spec.Name,
