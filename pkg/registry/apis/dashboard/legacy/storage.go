@@ -254,7 +254,7 @@ func (a *dashboardSqlAccess) ListHistory(ctx context.Context, req *resourcepb.Li
 }
 
 func (a *dashboardSqlAccess) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
-	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.ListModifiedSince")
+	_, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.ListModifiedSince")
 	defer span.End()
 
 	return 0, func(yield func(*resource.ModifiedResource, error) bool) {
@@ -263,7 +263,7 @@ func (a *dashboardSqlAccess) ListModifiedSince(ctx context.Context, key resource
 }
 
 func (a *dashboardSqlAccess) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
-	ctx, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.GetResourceLastImportTimes")
+	_, span := tracer.Start(ctx, tracePrefix+"dashboardSqlAccess.GetResourceLastImportTimes")
 	defer span.End()
 
 	return func(yield func(resource.ResourceLastImportTime, error) bool) {
