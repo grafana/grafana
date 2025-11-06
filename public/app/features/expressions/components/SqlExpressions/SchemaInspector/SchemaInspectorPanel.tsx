@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import {
   Stack,
   Tab,
@@ -14,228 +14,35 @@ import {
   useStyles2,
   InteractiveTable,
   ScrollContainer,
+  Alert,
+  Spinner,
 } from '@grafana/ui';
+
+import { SQLSchemas, SQLSchemaField, SQLSchemaData } from '../hooks/useSQLSchemas';
 
 import { getFieldTypeIcon } from './utils';
 
-const testData = {
-  kind: 'SQLSchemaResponse',
-  apiVersion: 'query.grafana.app/v0alpha1',
-  SQLSchema: {
-    query_name_a: {
-      columns: [
-        {
-          name: '__metric_name__',
-          mysqlType: 'text',
-          nullable: false,
-          dataFrameFieldType: 'string',
-        },
-        {
-          name: '__value__',
-          mysqlType: 'double',
-          nullable: true,
-          dataFrameFieldType: '*float64',
-        },
-        {
-          name: 'host',
-          mysqlType: 'text',
-          nullable: true,
-          dataFrameFieldType: '*string',
-        },
-      ],
-      sampleRows: [
-        ['cpu', 3.14, 'a'],
-        ['cpu', 93.14, 'b'],
-        ['cpu', 3, 'x'],
-      ],
-    },
-    query_name_b: {
-      columns: [
-        {
-          name: 'timestamp',
-          mysqlType: 'datetime',
-          nullable: false,
-          dataFrameFieldType: 'time',
-        },
-        {
-          name: 'service_name',
-          mysqlType: 'text',
-          nullable: false,
-          dataFrameFieldType: 'string',
-        },
-        {
-          name: 'request_count',
-          mysqlType: 'int',
-          nullable: false,
-          dataFrameFieldType: 'int64',
-        },
-        {
-          name: 'response_time_ms',
-          mysqlType: 'double',
-          nullable: true,
-          dataFrameFieldType: '*float64',
-        },
-        {
-          name: 'error_rate',
-          mysqlType: 'float',
-          nullable: true,
-          dataFrameFieldType: '*float32',
-        },
-        {
-          name: 'status_code',
-          mysqlType: 'int',
-          nullable: true,
-          dataFrameFieldType: '*int32',
-        },
-        {
-          name: 'user_id',
-          mysqlType: 'bigint',
-          nullable: true,
-          dataFrameFieldType: '*int64',
-        },
-        {
-          name: 'endpoint',
-          mysqlType: 'text',
-          nullable: false,
-          dataFrameFieldType: 'string',
-        },
-        {
-          name: 'method',
-          mysqlType: 'text',
-          nullable: false,
-          dataFrameFieldType: 'string',
-        },
-        {
-          name: 'is_success',
-          mysqlType: 'boolean',
-          nullable: false,
-          dataFrameFieldType: 'bool',
-        },
-        {
-          name: 'bytes_sent',
-          mysqlType: 'bigint',
-          nullable: true,
-          dataFrameFieldType: '*int64',
-        },
-        {
-          name: 'region',
-          mysqlType: 'text',
-          nullable: true,
-          dataFrameFieldType: '*string',
-        },
-        {
-          name: 'trace_id',
-          mysqlType: 'text',
-          nullable: true,
-          dataFrameFieldType: '*string',
-        },
-        {
-          name: 'created_at',
-          mysqlType: 'timestamp',
-          nullable: false,
-          dataFrameFieldType: 'time',
-        },
-        {
-          name: 'cpu_usage',
-          mysqlType: 'float',
-          nullable: true,
-          dataFrameFieldType: '*float32',
-        },
-      ],
-      sampleRows: [
-        [
-          '2023-01-01 12:00:00',
-          'auth-service',
-          150,
-          23.4,
-          0.05,
-          200,
-          12345,
-          '/api/login',
-          'POST',
-          true,
-          2048,
-          'us-east-1',
-          'abc123',
-          '2023-01-01 12:00:01',
-          45.2,
-        ],
-        [
-          '2023-01-01 12:01:00',
-          'user-service',
-          89,
-          45.7,
-          0.12,
-          201,
-          67890,
-          '/api/users',
-          'GET',
-          true,
-          1024,
-          'us-west-2',
-          'def456',
-          '2023-01-01 12:01:01',
-          32.8,
-        ],
-        [
-          '2023-01-01 12:02:00',
-          'payment-service',
-          203,
-          156.3,
-          0.03,
-          200,
-          11111,
-          '/api/payments',
-          'POST',
-          true,
-          4096,
-          'eu-west-1',
-          'ghi789',
-          '2023-01-01 12:02:01',
-          67.5,
-        ],
-      ],
-    },
-    query_name_c: {
-      columns: null,
-      sampleRows: null,
-      error: '[sse.dataQueryError] failed to execute query [query_name_c]: invalid query type. aframes_builder',
-    },
-  },
-};
-
-// Type definitions for schema
-interface SchemaField {
-  name: string;
-  mysqlType: string;
-  dataFrameFieldType: string;
-  nullable: boolean;
-}
-
+type SchemaField = SQLSchemaField;
 type SampleValue = string | number | boolean;
 type SampleRow = SampleValue[];
 type SampleRows = SampleRow[];
+type SchemaData = SQLSchemaData;
 
-interface SchemaData {
-  columns: SchemaField[] | null;
-  sampleRows: SampleRows | null;
-  error?: string;
+interface SchemaInspectorPanelProps {
+  className?: string;
+  schemas: SQLSchemas | null;
+  loading: boolean;
+  error: Error | null;
 }
 
-interface SchemaResponse {
-  [refId: string]: SchemaData;
-}
-
-export const SchemaInspectorPanel = ({ className }: { className?: string }) => {
+export const SchemaInspectorPanel = ({ className, schemas, loading, error }: SchemaInspectorPanelProps) => {
   const styles = useStyles2(getStyles);
 
-  const availableRefIds = Object.keys(testData.SQLSchema);
-
-  const [activeSchemaTab, setActiveSchemaTab] = useState(availableRefIds[0] || '');
-
-  // TODO: Replace testData with actual schema data from props/context
-  const schemaResponse: SchemaResponse = testData.SQLSchema;
+  const schemaResponse: SQLSchemas = schemas ?? {};
   const refIds = Object.keys(schemaResponse);
+
+  const [selectedTab, setSelectedTab] = useState<string>('');
+  const activeSchemaTab = refIds.includes(selectedTab) ? selectedTab : refIds[0] || '';
   const activeSchemaData = schemaResponse[activeSchemaTab];
 
   const renderSchemaFields = (fields: SchemaField[], sampleRows: SampleRows | null) => {
@@ -342,8 +149,38 @@ export const SchemaInspectorPanel = ({ className }: { className?: string }) => {
     []
   );
 
-  if (!activeSchemaData) {
-    return null;
+  if (error) {
+    return (
+      <div className={styles.schemaInfoContainer}>
+        <Alert title={t('expressions.sql-schema.error-title', 'Error')} severity="error">
+          {error.message}
+        </Alert>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className={styles.schemaInfoContainer}>
+        <Stack direction="row" alignItems="center" gap={1}>
+          <Spinner />
+          <Text variant="code" color="secondary">
+            <Trans i18nKey="expressions.sql-schema.loading">Loading schema information...</Trans>
+          </Text>
+        </Stack>
+      </div>
+    );
+  }
+
+  if (!activeSchemaData || refIds.length === 0) {
+    return (
+      <div className={styles.schemaInfoContainer}>
+        <Alert
+          severity="warning"
+          title={t('expressions.sql-schema.no-data-title', 'No schema information available')}
+        />
+      </div>
+    );
   }
 
   return (
@@ -351,12 +188,7 @@ export const SchemaInspectorPanel = ({ className }: { className?: string }) => {
     <div className={`${styles.schemaInspector} ${className || ''}`}>
       <TabsBar className={styles.tabsBar}>
         {refIds.map((refId) => (
-          <Tab
-            key={refId}
-            label={refId}
-            active={activeSchemaTab === refId}
-            onChangeTab={() => setActiveSchemaTab(refId)}
-          />
+          <Tab key={refId} label={refId} active={activeSchemaTab === refId} onChangeTab={() => setSelectedTab(refId)} />
         ))}
       </TabsBar>
       <ScrollContainer backgroundColor="primary">
@@ -367,13 +199,16 @@ export const SchemaInspectorPanel = ({ className }: { className?: string }) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  schemaInfoContainer: css({
+    padding: theme.spacing(1),
+  }),
   schemaInspector: css({
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
   }),
   tabsBar: css({
-    flexShrink: 0, // Keep tabs pinned to top
+    flexShrink: 0,
   }),
   tableCell: css({
     fontSize: theme.typography.bodySmall.fontSize,
@@ -381,9 +216,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontFamily: theme.typography.fontFamilyMonospace,
   }),
   tableContainer: css({
-    marginTop: theme.spacing(1),
-    marginBottom: theme.spacing(1),
-    marginRight: theme.spacing(1),
+    margin: theme.spacing(1),
     flex: 1,
     overflowY: 'auto',
     overflowX: 'auto',

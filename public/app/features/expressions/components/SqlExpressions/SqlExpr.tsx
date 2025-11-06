@@ -20,6 +20,7 @@ import { getSqlCompletionProvider } from './CompletionProvider/sqlCompletionProv
 import { useSQLExplanations } from './GenAI/hooks/useSQLExplanations';
 import { useSQLSuggestions } from './GenAI/hooks/useSQLSuggestions';
 import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
+import { useSQLSchemas } from './hooks/useSQLSchemas';
 
 // Lazy load the GenAI components to avoid circular dependencies
 const GenAISQLSuggestionsButton = lazy(() =>
@@ -111,6 +112,16 @@ LIMIT
     shouldShowViewExplanation,
     updatePrevExpression,
   } = useSQLExplanations(query.expression || '');
+
+  const {
+    schemas,
+    loading: schemasLoading,
+    error: schemasError,
+    isFeatureEnabled: isSchemasFeatureEnabled,
+  } = useSQLSchemas({
+    queries,
+    enabled: isSchemaInspectorOpen,
+  });
 
   const queryContext = useMemo(
     () => ({
@@ -227,19 +238,21 @@ LIMIT
   const renderSQLButtons = () => (
     <div className={styles.sqlButtons}>
       <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
-        <Button
-          icon={isSchemaInspectorOpen ? 'table-collapse-all' : 'table-expand-all'}
-          onClick={() => setIsSchemaInspectorOpen(!isSchemaInspectorOpen)}
-          size="sm"
-          variant="secondary"
-          fill="outline"
-        >
-          {isSchemaInspectorOpen ? (
-            <Trans i18nKey="expressions.sql-schema.toggle-button">Close schema</Trans>
-          ) : (
-            <Trans i18nKey="expressions.sql-schema.toggle-button">Inspect schema</Trans>
-          )}
-        </Button>
+        {isSchemasFeatureEnabled && (
+          <Button
+            icon={isSchemaInspectorOpen ? 'table-collapse-all' : 'table-expand-all'}
+            onClick={() => setIsSchemaInspectorOpen(!isSchemaInspectorOpen)}
+            size="sm"
+            variant="secondary"
+            fill="outline"
+          >
+            {isSchemaInspectorOpen ? (
+              <Trans i18nKey="expressions.sql-schema.toggle-button">Close schema</Trans>
+            ) : (
+              <Trans i18nKey="expressions.sql-schema.toggle-button">Inspect schema</Trans>
+            )}
+          </Button>
+        )}
         <Button icon="play" onClick={executeQuery} size="sm">
           {t('expressions.sql-expr.button-run-query', 'Run query')}
         </Button>
@@ -302,7 +315,13 @@ LIMIT
             </SQLEditor>
           </div>
           <div className={`${styles.schemaInspector} ${isSchemaInspectorOpen ? styles.schemaInspectorOpen : ''}`}>
-            {isSchemaInspectorOpen && <SchemaInspectorPanel />}
+            {isSchemaInspectorOpen && (
+              <SchemaInspectorPanel
+                schemas={schemas?.sqlSchemas ?? null}
+                loading={schemasLoading}
+                error={schemasError}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -373,7 +392,7 @@ const getStyles = (theme: GrafanaTheme2, editorHeight: number) => ({
     gap: theme.spacing(1),
     gridTemplateColumns: '1fr 0fr',
     gridTemplateAreas: '"editor schema"',
-    '@media (prefers-reduced-motion: no-preference)': {
+    [theme.transitions.handleMotion('no-preference')]: {
       transition: theme.transitions.create(['grid-template-columns'], {
         duration: theme.transitions.duration.standard,
       }),
@@ -419,7 +438,6 @@ const getStyles = (theme: GrafanaTheme2, editorHeight: number) => ({
   }),
   schemaInspectorOpen: css({
     border: `1px solid ${theme.colors.border.weak}`,
-    paddingLeft: theme.spacing(1),
   }),
   schemaFields: css({
     display: 'flex',
