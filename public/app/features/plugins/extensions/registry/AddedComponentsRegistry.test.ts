@@ -1,5 +1,5 @@
 import React from 'react';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, take } from 'rxjs';
 
 import { PluginLoadingStrategy } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -555,24 +555,29 @@ describe('AddedComponentsRegistry', () => {
         ],
       });
 
-      const observable = registry.asObservableSlice((state) => state[extensionPointId]);
-      const slice = await firstValueFrom(observable);
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]).pipe(take(1));
 
-      expect(slice).toBeDefined();
-      expect(Array.isArray(slice)).toBe(true);
-      expect(slice?.length).toBe(1);
-      expect(slice?.[0].title).toBe('Test Component');
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
+
+        expect(slice).toBeDefined();
+        expect(Array.isArray(slice)).toBe(true);
+        expect(slice?.length).toBe(1);
+        expect(slice?.[0].title).toBe('Test Component');
+      });
     });
 
     it('should return undefined when the selected key does not exist', async () => {
       const registry = new AddedComponentsRegistry();
-      const observable = registry.asObservableSlice((state) => state['non-existent-key']);
-      const slice = await firstValueFrom(observable);
+      const observable = registry.asObservableSlice((state) => state['non-existent-key']).pipe(take(1));
 
-      expect(slice).toBeUndefined();
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
+        expect(slice).toBeUndefined();
+      });
     });
 
-    it('should only emit when the selected slice changes (distinctUntilChanged)', async () => {
+    it('should only emit when the selected slice changes', async () => {
       const registry = new AddedComponentsRegistry();
       const extensionPointId = 'grafana/alerting/home';
       const subscribeCallback = jest.fn();
@@ -651,22 +656,16 @@ describe('AddedComponentsRegistry', () => {
         ],
       });
 
-      const observable = registry.asObservableSlice((state) => state[extensionPointId]);
-      const slice = await firstValueFrom(observable);
+      const observable = registry.asObservableSlice((state) => state[extensionPointId]).pipe(take(1));
 
-      expect(slice).toBeDefined();
-      expect(() => {
-        if (slice && Array.isArray(slice)) {
-          // @ts-expect-error - Testing that frozen objects cannot be modified
-          slice.push({});
-        }
-      }).toThrow();
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
 
-      expect(() => {
-        if (slice && Array.isArray(slice) && slice[0]) {
-          slice[0].title = 'Modified';
-        }
-      }).toThrow();
+        expect(slice).toBeDefined();
+        // @ts-expect-error - Testing that frozen objects cannot be modified
+        expect(() => slice.push({})).toThrow();
+        expect(() => (slice[0].title = 'Modified')).toThrow();
+      });
     });
 
     it('should work with read-only registries', async () => {
@@ -686,13 +685,16 @@ describe('AddedComponentsRegistry', () => {
         ],
       });
 
-      const observable = readOnlyRegistry.asObservableSlice((state) => state[extensionPointId]);
-      const slice = await firstValueFrom(observable);
+      const observable = readOnlyRegistry.asObservableSlice((state) => state[extensionPointId]).pipe(take(1));
 
-      expect(slice).toBeDefined();
-      expect(Array.isArray(slice)).toBe(true);
-      expect(slice?.length).toBe(1);
-      expect(slice?.[0].title).toBe('Test Component');
+      await expect(observable).toEmitValuesWith((received) => {
+        const [slice] = received;
+
+        expect(slice).toBeDefined();
+        expect(Array.isArray(slice)).toBe(true);
+        expect(slice?.length).toBe(1);
+        expect(slice?.[0].title).toBe('Test Component');
+      });
     });
 
     it('should emit immediately to new subscribers with the current slice value', async () => {
