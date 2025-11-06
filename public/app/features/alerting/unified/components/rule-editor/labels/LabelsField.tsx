@@ -39,11 +39,12 @@ function mapLabelsToOptions(
 }
 
 export interface LabelsInRuleProps {
-  labels: Array<{ key: string; value: string }>;
+  labels: Array<{ key: string; value: string }> | undefined | null;
 }
 
 export const LabelsInRule = ({ labels }: LabelsInRuleProps) => {
-  const labelsObj: Record<string, string> = labels.reduce((acc: Record<string, string>, label) => {
+  const safeLabels = Array.isArray(labels) ? labels : [];
+  const labelsObj: Record<string, string> = safeLabels.reduce((acc: Record<string, string>, label) => {
     if (label.key) {
       acc[label.key] = label.value;
     }

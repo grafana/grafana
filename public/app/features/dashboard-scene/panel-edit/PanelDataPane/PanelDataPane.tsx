@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -39,9 +40,9 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
       new PanelDataTransformationsTab({ panelRef }),
     ];
 
-    if (shouldShowAlertingTab(panel.state.pluginId)) {
-      tabs.push(new PanelDataAlertingTab({ panelRef }));
-    }
+    // if (shouldShowAlertingTab(panel.state.pluginId)) {
+    tabs.push(new PanelDataAlertingTab({ panelRef }));
+    // }
 
     return new PanelDataPane({
       panelRef,
