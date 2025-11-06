@@ -365,7 +365,7 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 			attribute.Bool("errorIsOK", d.errorIsOK),
 			attribute.Bool("readUnified", d.readUnified)))
 	defer span.End()
-	log := logging.FromContext(ctx).With("method", "Update", "name", name, "objInfo", objInfo)
+	log := logging.FromContext(ctx).With("method", "Update", "name", name)
 	// update in legacy first, and then unistore. Will return a failure if either fails.
 	//
 	// we want to update in legacy first, otherwise if the update from unistore was successful,
