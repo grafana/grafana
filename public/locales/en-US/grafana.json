@@ -11729,14 +11729,14 @@
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "recent-jobs": {
-      "active-jobs": "active jobs",
       "column-action": "Action",
       "column-duration": "Duration",
       "column-job-id": "Job ID",
       "column-message": "Message",
       "column-started": "Started",
       "column-status": "Status",
-      "error-loading": "Error loading {{type}}",
+      "error-loading-active-jobs": "Error loading active jobs",
+      "error-loading-historic-jobs": "Error loading historic jobs",
       "jobs": "Jobs"
     },
     "repository-actions": {
