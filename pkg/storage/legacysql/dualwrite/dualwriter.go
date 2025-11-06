@@ -32,7 +32,6 @@ const (
 	// to complete. Those run in the background and won't impact the
 	// user experience in any way.
 	backgroundReqTimeout = time.Minute
-	tracePrefix          = "dualwrite."
 )
 
 // dualWriter will write first to legacy, then to unified keeping the same internal ID
@@ -44,7 +43,7 @@ type dualWriter struct {
 }
 
 func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	ctx, span := tracer.Start(ctx, tracePrefix+"dualWriter.Get",
+	ctx, span := tracer.Start(ctx, "dualwrite.dualWriter.Get",
 		trace.WithAttributes(
 			attribute.Bool("errorIsOK", d.errorIsOK),
 			attribute.Bool("readUnified", d.readUnified)))
@@ -82,7 +81,7 @@ func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOp
 }
 
 func (d *dualWriter) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-	ctx, span := tracer.Start(ctx, tracePrefix+"dualWriter.List",
+	ctx, span := tracer.Start(ctx, "dualwrite.dualWriter.List",
 		trace.WithAttributes(
 			attribute.Bool("errorIsOK", d.errorIsOK),
 			attribute.Bool("readUnified", d.readUnified)))
@@ -196,7 +195,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
 func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	ctx, span := tracer.Start(ctx, tracePrefix+"dualWriter.Create",
+	ctx, span := tracer.Start(ctx, "dualwrite.dualWriter.Create",
 		trace.WithAttributes(
 			attribute.Bool("errorIsOK", d.errorIsOK),
 			attribute.Bool("readUnified", d.readUnified)))
@@ -314,7 +313,7 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	// By setting RemovePermissions to false in the context, we will skip the deletion of permissions
 	// in the legacy store. This is needed as otherwise the permissions would be missing when executing
 	// the delete operation in the unified storage store.
-	ctx, span := tracer.Start(ctx, tracePrefix+"dualWriter.Delete",
+	ctx, span := tracer.Start(ctx, "dualwrite.dualWriter.Delete",
 		trace.WithAttributes(
 			attribute.Bool("errorIsOK", d.errorIsOK),
 			attribute.Bool("readUnified", d.readUnified)))
@@ -360,7 +359,7 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 
 // Update overrides the behavior of the generic DualWriter and writes first to Storage and then to LegacyStorage.
 func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	ctx, span := tracer.Start(ctx, tracePrefix+"dualWriter.Update",
+	ctx, span := tracer.Start(ctx, "dualwrite.dualWriter.Update",
 		trace.WithAttributes(
 			attribute.Bool("errorIsOK", d.errorIsOK),
 			attribute.Bool("readUnified", d.readUnified)))
@@ -427,7 +426,7 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
 func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
-	ctx, span := tracer.Start(ctx, tracePrefix+"dualWriter.DeleteCollection",
+	ctx, span := tracer.Start(ctx, "dualwrite.dualWriter.DeleteCollection",
 		trace.WithAttributes(
 			attribute.Bool("errorIsOK", d.errorIsOK),
 			attribute.Bool("readUnified", d.readUnified)))
