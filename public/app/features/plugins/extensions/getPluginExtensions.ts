@@ -1,5 +1,5 @@
 import { isString } from 'lodash';
-import { combineLatest, filter, map, Observable } from 'rxjs';
+import { combineLatest, map, Observable } from 'rxjs';
 
 import {
   PluginExtensionTypes,
