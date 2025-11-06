@@ -15,6 +15,7 @@ service AuthzExtentionService {
   rpc Write(WriteRequest) returns (WriteResponse);
 
   rpc Mutate(MutateRequest) returns (MutateResponse);
+  rpc Query(QueryRequest) returns (QueryResponse);
 }
 
 message MutateRequest {
@@ -182,4 +183,31 @@ message BatchCheckResponse {
 
 message BatchCheckGroupResource {
   map<string, bool> items = 1;
+}
+
+message QueryRequest {
+  string namespace = 1;
+  QueryOperation operation = 2;
+}
+
+message QueryResponse {
+  oneof result {
+    GetFolderParentsResult folder_parents = 1;
+  }
+}
+
+message QueryOperation {
+  oneof operation {
+    GetFolderParentsQuery get_folder_parents = 1;
+  }
+}
+
+message GetFolderParentsQuery {
+  // UID of the folder
+  string folder = 1;
+}
+
+message GetFolderParentsResult {
+  // List of parent folder UIDs
+  repeated string parent_uids = 1;
 }
