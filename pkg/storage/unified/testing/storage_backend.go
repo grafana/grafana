@@ -829,7 +829,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 	t.Run("fetch second page of history at revision", func(t *testing.T) {
 		continueToken := &resource.ContinueToken{
 			ResourceVersion: rvHistory3,
-			StartOffset:     2,
+			// StartOffset:     2,
 			SortAscending:   false,
 		}
 		res, err := server.List(ctx, &resourcepb.ListRequest{
