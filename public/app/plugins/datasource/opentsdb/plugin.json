@@ -3,6 +3,7 @@
   "name": "OpenTSDB",
   "id": "opentsdb",
   "category": "tsdb",
+  "executable": "gpx_opentsdb",
 
   "metrics": true,
   "defaultMatchFormat": "pipe",
@@ -23,6 +24,10 @@
     "links": [
       { "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" },
       { "name": "Documentation", "url": "https://grafana.com/docs/grafana/latest/datasources/opentsdb/" }
-    ]
+    ],
+    "version": "%VERSION%"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=5.0.0"
   }
 }

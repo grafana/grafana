@@ -1580,7 +1580,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=5.0.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
