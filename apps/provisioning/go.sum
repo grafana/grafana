@@ -70,8 +70,8 @@ github.com/grafana/grafana/apps/secret v0.0.0-20250902093454-b56b7add012f h1:f+Z
 github.com/grafana/grafana/apps/secret v0.0.0-20250902093454-b56b7add012f/go.mod h1:RA8mP8KVIwKXBx3Ssqa/uEBABib5LvUWYPVMxrNvnP0=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2 h1:X0cnaFdR+iz+sDSuoZmkryFSjOirchHe2MdKSRwBWgM=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2/go.mod h1:RRvSjHH12/PnQaXraMO65jUhVu8n59mzvhfIMBETnV4=
-github.com/grafana/nanogit v0.0.0-20250723104447-68f58f5ecec0 h1:cS0SlJGIlZbmDLctNj5vIYGemrJDLy25wwoiIyZWVN8=
-github.com/grafana/nanogit v0.0.0-20250723104447-68f58f5ecec0/go.mod h1:ToqLjIdvV3AZQa3K6e5m9hy/nsGaUByc2dWQlctB9iA=
+github.com/grafana/nanogit v0.0.0-20251106115617-c622d3e0fc4b h1:rFjoqJFb2KxJ29K9ltuWRSsdA46SbN0GCxoQc36h5kg=
+github.com/grafana/nanogit v0.0.0-20251106115617-c622d3e0fc4b/go.mod h1:ToqLjIdvV3AZQa3K6e5m9hy/nsGaUByc2dWQlctB9iA=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=
 github.com/josharian/intern v1.0.0/go.mod h1:5DoeVV0s6jJacbCEi61lwdGj/aVlrQvzHFFd8Hwg//Y=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
