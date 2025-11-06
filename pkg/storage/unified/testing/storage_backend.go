@@ -411,7 +411,7 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Empty(t, res.NextPageToken)
 	})
 
-	t.Run("list latest first page ", func(t *testing.T) {
+	t.Run("fetch all latest with pagination", func(t *testing.T) {
 		res, err := server.List(ctx, &resourcepb.ListRequest{
 			Limit: 3,
 			Options: &resourcepb.ListOptions{
@@ -431,6 +431,22 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
 		require.Contains(t, string(res.Items[2].Value), "item4 ADDED")
 		require.GreaterOrEqual(t, continueToken.ResourceVersion, rv8)
+
+		res, err = server.List(ctx, &resourcepb.ListRequest{
+			Limit: 3,
+			NextPageToken: continueToken.String(),
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: ns,
+					Group:     "group",
+					Resource:  "resource",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Items, 2)
+		require.Empty(t, res.NextPageToken)
 	})
 
 	t.Run("list at revision", func(t *testing.T) {
@@ -454,7 +470,7 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Empty(t, res.NextPageToken)
 	})
 
-	t.Run("fetch first page at revision with limit", func(t *testing.T) {
+	t.Run("list at revision with pagination", func(t *testing.T) {
 		res, err := server.List(ctx, &resourcepb.ListRequest{
 			Limit:           3,
 			ResourceVersion: rv7,
@@ -470,7 +486,6 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 3)
-		t.Log(res.Items)
 		require.Contains(t, string(res.Items[0].Value), "item1 ADDED")
 		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
 		require.Contains(t, string(res.Items[2].Value), "item4 ADDED")
@@ -478,17 +493,11 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		continueToken, err := resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
 		require.Equal(t, rv7, continueToken.ResourceVersion)
-	})
 
-	t.Run("fetch second page at revision", func(t *testing.T) {
-		continueToken := &resource.ContinueToken{
-			ResourceVersion: rv8,
-			StartOffset:     2,
-			SortAscending:   false,
-		}
-		res, err := server.List(ctx, &resourcepb.ListRequest{
+		res, err = server.List(ctx, &resourcepb.ListRequest{
+			Limit:           3,
+			ResourceVersion: rv7,
 			NextPageToken: continueToken.String(),
-			Limit:         2,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Namespace: ns,
@@ -498,16 +507,11 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
-		require.Len(t, res.Items, 2)
-		t.Log(res.Items)
-		require.Contains(t, string(res.Items[0].Value), "item4 ADDED")
-		require.Contains(t, string(res.Items[1].Value), "item5 ADDED")
-
-		continueToken, err = resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
-		require.Equal(t, rv8, continueToken.ResourceVersion)
-		require.Equal(t, int64(4), continueToken.StartOffset)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Items, 1)
+		require.Contains(t, string(res.Items[0].Value), "item5 ADDED")
+		require.Empty(t, res.NextPageToken)
 	})
 }
 
