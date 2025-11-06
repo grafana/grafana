@@ -510,11 +510,35 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	// determine the sync strategy and sync status to apply
 	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, healthStatus)
 	if syncStatus := rc.determineSyncStatus(obj, syncOptions, healthStatus); syncStatus != nil {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/sync",
-			"value": syncStatus,
-		})
+		// Convert to granular patches to preserve other fields like 'scheduled'
+		if syncStatus.State != "" {
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/sync/state",
+				"value": syncStatus.State,
+			})
+		}
+		if syncStatus.LastRef != "" {
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/sync/lastRef",
+				"value": syncStatus.LastRef,
+			})
+		}
+		if syncStatus.Started != 0 {
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/sync/started",
+				"value": syncStatus.Started,
+			})
+		}
+		if syncStatus.Message != nil {
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/sync/message",
+				"value": syncStatus.Message,
+			})
+		}
 	}
 
 	// Apply all patch operations
