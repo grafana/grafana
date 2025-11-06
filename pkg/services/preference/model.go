@@ -56,6 +56,10 @@ type GetPreferenceQuery struct {
 	TeamID int64
 }
 
+type FindPreferenceQuery struct {
+	HomeDashboardUID string
+}
+
 type SavePreferenceCommand struct {
 	UserID int64
 	OrgID  int64

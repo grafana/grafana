@@ -63,6 +63,27 @@ func (s *sqlStore) List(ctx context.Context, query *pref.Preference) ([]*pref.Pr
 	return prefs, err
 }
 
+func (s *sqlStore) Find(ctx context.Context, query *pref.FindPreferenceQuery) ([]*pref.Preference, error) {
+	prefs := make([]*pref.Preference, 0)
+	params := make([]any, 0)
+	filter := ""
+	if query.HomeDashboardUID != "" {
+		filter += "home_dashboard_uid=?"
+		params = append(params, query.HomeDashboardUID)
+	}
+	err := s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		err := dbSession.Where(filter, params...).
+			Find(&prefs)
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	return prefs, err
+}
+
 func (s *sqlStore) Update(ctx context.Context, cmd *pref.Preference) error {
 	return s.db.WithDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.ID(cmd.ID).AllCols().Update(cmd)
