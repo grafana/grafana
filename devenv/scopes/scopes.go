@@ -109,43 +109,43 @@ type Client struct {
 // checkFeatureFlag checks if a feature flag is enabled via the features API
 func (c *Client) checkFeatureFlag(flagName string) (bool, error) {
 	url := fmt.Sprintf("%s/apis/features.grafana.app/v0alpha1/namespaces/%s/ofrep/v1/evaluate/flags/%s", c.baseURL, c.namespace, flagName)
-	
+
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
 		return false, fmt.Errorf("failed to create request: %w", err)
 	}
-	
+
 	req.Header.Set("Content-Type", "application/json")
 	req.SetBasicAuth(strings.Split(c.auth, ":")[0], strings.Split(c.auth, ":")[1])
-	
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return false, fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode == 404 {
 		// Feature flag API might not be available, assume enabled for backward compatibility
 		return true, nil
 	}
-	
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		// If we can't check, assume enabled for backward compatibility
 		return true, nil
 	}
-	
+
 	var result struct {
-		Value  bool   `json:"value"`
-		Key    string `json:"key"`
-		Reason string `json:"reason"`
+		Value   bool   `json:"value"`
+		Key     string `json:"key"`
+		Reason  string `json:"reason"`
 		Variant string `json:"variant"`
 	}
-	
+
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		// If we can't decode, assume enabled for backward compatibility
 		return true, nil
 	}
-	
+
 	return result.Value, nil
 }
 
@@ -433,9 +433,9 @@ func (c *Client) deleteResourceType(endpoint, resourceType string) error {
 
 func main() {
 	flag.Parse()
-	
+
 	client := NewClient(*grafanaURL, *namespace, *user, *password)
-	
+
 	// Check if scope API is enabled
 	enabled, err := client.checkScopeAPIEnabled()
 	if err != nil {
@@ -448,7 +448,7 @@ func main() {
 		fmt.Printf("To enable scopes, set the 'scopeApi' feature flag.\n\n")
 		return
 	}
-	
+
 	if *cleanupFlag {
 		if err := client.deleteResources(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error during cleanup: %v\n", err)
