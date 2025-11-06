@@ -69,7 +69,7 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
 
         // Creating a new array instead of pushing to get a new reference
         const slice = registry[extensionPointId] ?? [];
-        registry[extensionPointId] = Array.from([...slice, result]);
+        registry[extensionPointId] = [...slice, result];
       }
     }
 
