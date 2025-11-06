@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -1447,6 +1448,9 @@ func TestIntegrationFolderDeletionBlockedByConnectedLibraryPanels(t *testing.T) 
 					folders.RESOURCEGROUP: {
 						DualWriterMode: modeDw,
 					},
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: modeDw,
+					},
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagUnifiedStorageSearch,
@@ -1459,23 +1463,24 @@ func TestIntegrationFolderDeletionBlockedByConnectedLibraryPanels(t *testing.T) 
 			})
 
 			// Create parent and child folders
-			parentUID := fmt.Sprintf("connected-parent-%d", mode)
-			childUID := fmt.Sprintf("connected-child-%d", mode)
-			createTestFolder(t, helper, client, parentUID, fmt.Sprintf("Parent Folder %d", mode), "")
-			createTestFolder(t, helper, client, childUID, fmt.Sprintf("Child Folder %d", mode), parentUID)
+			uid := uuid.NewString()[:8]
+			parentUID := fmt.Sprintf("connected-parent-%d-%s", mode, uid)
+			childUID := fmt.Sprintf("connected-child-%d-%s", mode, uid)
+			createTestFolder(t, helper, client, parentUID, fmt.Sprintf("Parent Folder %d-%s", mode, uid), "")
+			createTestFolder(t, helper, client, childUID, fmt.Sprintf("Child Folder %d-%s", mode, uid), parentUID)
 
 			// Create library panels in both folders
-			parentLibPanelName := fmt.Sprintf("Connected LP in parent %d", mode)
-			childLibPanelName := fmt.Sprintf("Connected LP in child %d", mode)
+			parentLibPanelName := fmt.Sprintf("Connected LP in parent %d-%s", mode, uid)
+			childLibPanelName := fmt.Sprintf("Connected LP in child %d-%s", mode, uid)
 			parentLibPanelUID := createTestLibraryPanel(t, helper, client, parentLibPanelName, parentUID)
 			childLibPanelUID := createTestLibraryPanel(t, helper, client, childLibPanelName, childUID)
 
 			// Create dashboards using library panels (makes them connected)
 			parentDashUID := createDashboardWithLibraryPanel(t, helper, client,
-				fmt.Sprintf("Dashboard with LP in parent %d", mode),
+				fmt.Sprintf("Dashboard with LP in parent %d-%s", mode, uid),
 				parentLibPanelUID, "Connected LP in parent", parentUID)
 			childDashUID := createDashboardWithLibraryPanel(t, helper, client,
-				fmt.Sprintf("Dashboard with LP in child %d", mode),
+				fmt.Sprintf("Dashboard with LP in child %d-%s", mode, uid),
 				childLibPanelUID, "Connected LP in child", childUID)
 
 			// Attempt to delete the parent folder - should be blocked because library panels are connected
@@ -1535,16 +1540,17 @@ func TestIntegrationFolderDeletionWithDanglingLibraryPanels(t *testing.T) {
 			})
 
 			// Create parent and child folders
-			parentUID := fmt.Sprintf("dangling-parent-%d", mode)
-			childUID := fmt.Sprintf("dangling-child-%d", mode)
-			createTestFolder(t, helper, client, parentUID, fmt.Sprintf("Parent Folder %d", mode), "")
-			createTestFolder(t, helper, client, childUID, fmt.Sprintf("Child Folder %d", mode), parentUID)
+			uid := uuid.NewString()[:8]
+			parentUID := fmt.Sprintf("dangling-parent-%d-%s", mode, uid)
+			childUID := fmt.Sprintf("dangling-child-%d-%s", mode, uid)
+			createTestFolder(t, helper, client, parentUID, fmt.Sprintf("Parent Folder %d-%s", mode, uid), "")
+			createTestFolder(t, helper, client, childUID, fmt.Sprintf("Child Folder %d-%s", mode, uid), parentUID)
 
 			// Create dangling library panels in both folders (not connected to any dashboard)
 			parentLibPanelUID := createTestLibraryPanel(t, helper, client,
-				fmt.Sprintf("Dangling LP in parent %d", mode), parentUID)
+				fmt.Sprintf("Dangling LP in parent %d-%s", mode, uid), parentUID)
 			childLibPanelUID := createTestLibraryPanel(t, helper, client,
-				fmt.Sprintf("Dangling LP in child %d", mode), childUID)
+				fmt.Sprintf("Dangling LP in child %d-%s", mode, uid), childUID)
 
 			// Verify library panels exist before deletion
 			verifyLibraryPanelExists(t, helper, client, parentLibPanelUID)
@@ -1556,8 +1562,7 @@ func TestIntegrationFolderDeletionWithDanglingLibraryPanels(t *testing.T) {
 				Method: http.MethodDelete,
 				Path:   "/api/folders/" + parentUID,
 			}, &folder.Folder{})
-			require.Equal(t, http.StatusOK, parentDelete.Response.StatusCode)
-
+			require.Equal(t, http.StatusOK, parentDelete.Response.StatusCode, parentDelete.Body)
 			// Verify folders are deleted
 			_, getParentErr := client.Resource.Get(context.Background(), parentUID, metav1.GetOptions{})
 			require.Error(t, getParentErr, "parent folder should not exist after deletion")
