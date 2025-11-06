@@ -350,35 +350,50 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
-		var dw rest.Storage
-		resourcePermissionStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
-		if err != nil {
-			return err
-		}
-		dw = resourcePermissionStore
-
-		if b.enableDualWriter {
-			resourcePermissionUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, iamv0.ResourcePermissionInfo, opts.OptsGetter)
-			if err != nil {
-				return err
-			}
-
-			dw, err = opts.DualWriteBuilder(iamv0.ResourcePermissionInfo.GroupResource(), resourcePermissionStore, resourcePermissionUniStore)
-			if err != nil {
-				return err
-			}
-		}
-
-		if enableZanzanaSync {
-			b.logger.Info("Enabling AfterCreate, BeginUpdate, and AfterDelete hooks for ResourcePermission to sync to Zanzana")
-			resourcePermissionStore.AfterCreate = b.AfterResourcePermissionCreate
-			resourcePermissionStore.BeginUpdate = b.BeginResourcePermissionUpdate
-			resourcePermissionStore.AfterDelete = b.AfterResourcePermissionDelete
-		}
-		storage[iamv0.ResourcePermissionInfo.StoragePath()] = dw
+		b.UpdateResourcePermissionsAPIGroup(apiGroupInfo, opts, storage, b.enableDualWriter, enableZanzanaSync)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[legacyiamv0.VERSION] = storage
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
+	apiGroupInfo *genericapiserver.APIGroupInfo,
+	opts builder.APIGroupOptions,
+	storage map[string]rest.Storage,
+	enableDualWriter bool,
+	enableZanzanaSync bool,
+) error {
+	var dw rest.Storage
+	resourcePermissionStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
+	if err != nil {
+		return err
+	}
+
+	// FIXME: The hooks are registered on the legacy store
+	// Once we fully migrate to unified storage, we can move these hooks to the unified store
+	if enableZanzanaSync {
+		b.logger.Info("Enabling AfterCreate, BeginUpdate, and AfterDelete hooks for ResourcePermission to sync to Zanzana")
+		resourcePermissionStore.AfterCreate = b.AfterResourcePermissionCreate
+		resourcePermissionStore.BeginUpdate = b.BeginResourcePermissionUpdate
+		resourcePermissionStore.AfterDelete = b.AfterResourcePermissionDelete
+	}
+
+	dw = resourcePermissionStore
+
+	if enableDualWriter {
+		resourcePermissionUniStore, err := grafanaregistry.NewRegistryStore(apiGroupInfo.Scheme, iamv0.ResourcePermissionInfo, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		dw, err = opts.DualWriteBuilder(iamv0.ResourcePermissionInfo.GroupResource(), resourcePermissionStore, resourcePermissionUniStore)
+		if err != nil {
+			return err
+		}
+	}
+
+	storage[iamv0.ResourcePermissionInfo.StoragePath()] = dw
 	return nil
 }
 
