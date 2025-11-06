@@ -55,7 +55,11 @@ export function getResourceDimension(
   }
 
   // mode === ResourceDimensionMode.Field case
-  const getImageOrIcon = (value: string): string => {
+  const getImageOrIcon = (value: unknown): string => {
+    if (typeof value !== 'string') {
+      return '';
+    }
+
     let url = value;
     if (field && field.display) {
       const displayValue = field.display(value);
