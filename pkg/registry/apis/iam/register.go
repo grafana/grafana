@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
@@ -63,6 +64,7 @@ func RegisterAPIService(
 	coreRolesStorage CoreRoleStorageBackend,
 	rolesStorage RoleStorageBackend,
 	roleBindingsStorage RoleBindingStorageBackend,
+	externalGroupMappingStorageBackend ExternalGroupMappingStorageBackend,
 	dual dualwrite.Service,
 	unified resource.ResourceClient,
 	userService legacyuser.Service,
@@ -74,25 +76,26 @@ func RegisterAPIService(
 	registerMetrics(reg)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:                      store,
-		coreRolesStorage:           coreRolesStorage,
-		rolesStorage:               rolesStorage,
-		resourcePermissionsStorage: resourcepermission.ProvideStorageBackend(dbProvider),
-		roleBindingsStorage:        roleBindingsStorage,
-		sso:                        ssoService,
-		authorizer:                 authorizer,
-		legacyAccessClient:         legacyAccessClient,
-		accessClient:               accessClient,
-		zClient:                    zClient,
-		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
-		display:                    user.NewLegacyDisplayREST(store),
-		reg:                        reg,
-		logger:                     log.New("iam.apis"),
-		features:                   features,
-		enableDualWriter:           true,
-		dual:                       dual,
-		unified:                    unified,
-		userSearchClient:           resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), unified, user.NewUserLegacySearchClient(userService), features),
+		store:                       store,
+		coreRolesStorage:            coreRolesStorage,
+		rolesStorage:                rolesStorage,
+		resourcePermissionsStorage:  resourcepermission.ProvideStorageBackend(dbProvider),
+		roleBindingsStorage:         roleBindingsStorage,
+		externalGroupMappingStorage: externalGroupMappingStorageBackend,
+		sso:                         ssoService,
+		authorizer:                  authorizer,
+		legacyAccessClient:          legacyAccessClient,
+		accessClient:                accessClient,
+		zClient:                     zClient,
+		zTickets:                    make(chan bool, MaxConcurrentZanzanaWrites),
+		display:                     user.NewLegacyDisplayREST(store),
+		reg:                         reg,
+		logger:                      log.New("iam.apis"),
+		features:                    features,
+		enableDualWriter:            true,
+		dual:                        dual,
+		unified:                     unified,
+		userSearchClient:            resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), unified, user.NewUserLegacySearchClient(userService), features),
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -109,16 +112,18 @@ func NewAPIService(
 	store := legacy.NewLegacySQLStores(dbProvider)
 	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
+	noopStorage := noopstorage.ProvideStorageBackend()
 	registerMetrics(reg)
 	return &IdentityAccessManagementAPIBuilder{
-		store:                      store,
-		display:                    user.NewLegacyDisplayREST(store),
-		resourcePermissionsStorage: resourcePermissionsStorage,
-		logger:                     log.New("iam.apis"),
-		features:                   features,
-		zClient:                    zClient,
-		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
-		reg:                        reg,
+		store:                       store,
+		display:                     user.NewLegacyDisplayREST(store),
+		resourcePermissionsStorage:  resourcePermissionsStorage,
+		externalGroupMappingStorage: noopStorage,
+		logger:                      log.New("iam.apis"),
+		features:                    features,
+		zClient:                     zClient,
+		zTickets:                    make(chan bool, MaxConcurrentZanzanaWrites),
+		reg:                         reg,
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				// For now only authorize resourcepermissions resource
@@ -287,6 +292,27 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	if b.sso != nil {
 		ssoResource := legacyiamv0.SSOSettingResourceInfo
 		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.sso)
+	}
+
+	externalGroupMappingResource := iamv0.ExternalGroupMappingResourceInfo
+	externalGroupMappingLegacyStore, err := NewLocalStore(externalGroupMappingResource, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.externalGroupMappingStorage)
+	if err != nil {
+		return err
+	}
+	storage[externalGroupMappingResource.StoragePath()] = externalGroupMappingLegacyStore
+
+	if b.enableDualWriter {
+		externalGroupMappingStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, externalGroupMappingResource, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		externalGroupMappingDW, err := opts.DualWriteBuilder(externalGroupMappingResource.GroupResource(), externalGroupMappingLegacyStore, externalGroupMappingStore)
+		if err != nil {
+			return err
+		}
+
+		storage[externalGroupMappingResource.StoragePath()] = externalGroupMappingDW
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
