@@ -281,14 +281,15 @@ func TestV0ConversionSecondStepErrors(t *testing.T) {
 
 	t.Run("Convert_V0_to_V2alpha1 sets status on first step error", func(t *testing.T) {
 		// Create a dashboard that will fail v0->v1beta1 conversion
+		// Use schemaVersion 0 which will cause migration to fail
 		source := &dashv0.Dashboard{
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "invalid-namespace-format", // Invalid namespace format to trigger error
+				Namespace: "org-1",
 			},
 			Spec: common.Unstructured{
 				Object: map[string]interface{}{
 					"title":         "test dashboard",
-					"schemaVersion": 42, // Valid schema version
+					"schemaVersion": 0, // Invalid schema version that will cause migration to fail
 				},
 			},
 		}
