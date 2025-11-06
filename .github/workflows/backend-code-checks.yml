@@ -79,7 +79,7 @@ jobs:
           make swagger-clean && make openapi3-gen
 
           # Check if the generated specs differ from what's in the repository
-          for f in public/api-merged.json public/openapi3.json; do git add $f; done
+          for f in public/api-merged.json public/openapi3.json public/api-enterprise-spec.json; do git add $f; done
           if [ -z "$(git diff --name-only --cached)" ]; then
             echo "OpenAPI specs are up to date!"
           else
