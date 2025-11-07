@@ -37,7 +37,9 @@ const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImpor
       <Stack alignItems="center" justifyContent="center">
         <div
           className={cx(styles.wrapper, {
-            [styles.wrapperMaxWidth]: !config.featureToggles.dashboardLibrary || !dashboardLibraryDatasourceUid,
+            [styles.wrapperMaxWidth]:
+              !(config.featureToggles.dashboardLibrary || config.featureToggles.suggestedDashboards) ||
+              !dashboardLibraryDatasourceUid,
           })}
         >
           <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
