@@ -880,6 +880,7 @@ func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
 		registry:               make(map[string]folder.RegistryService),
 		features:               featuremgmt.WithFeatures(),
 		tracer:                 tracer,
+		log:                    slog.New(logtest.NewNopHandler(t)),
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
