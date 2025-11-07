@@ -126,6 +126,7 @@ disableNumericMetricsSortingInExpressions,experimental,@grafana/oss-big-tent,fal
 grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 queryLibrary,preview,@grafana/sharing-squad,false,false,false
 dashboardLibrary,experimental,@grafana/sharing-squad,false,false,false
+suggestedDashboards,experimental,@grafana/sharing-squad,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
