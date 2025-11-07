@@ -9,8 +9,6 @@ import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Icon, Spinner, useTheme2 } from '@grafana/ui';
 import { getChromeHeaderLevelHeight } from 'app/core/components/AppChrome/TopBar/useChromeHeaderHeight';
 
-import { LogsNavigationPages } from './LogsNavigationPages';
-
 type Props = {
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;

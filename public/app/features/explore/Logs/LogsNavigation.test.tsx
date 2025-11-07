@@ -70,11 +70,6 @@ describe('LogsNavigation', () => {
     expect(newerLogsButton).toBeDisabled();
   });
 
-  it('should render logs navigation pages section', () => {
-    setup();
-    expect(screen.getByTestId('logsNavigationPages')).toBeInTheDocument();
-  });
-
   it('should correctly request older logs when flipped order', async () => {
     const onChangeTimeMock = jest.fn();
     const { rerender } = setup({ onChangeTime: onChangeTimeMock });
