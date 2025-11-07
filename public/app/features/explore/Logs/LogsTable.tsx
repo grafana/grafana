@@ -4,8 +4,9 @@ import { lastValueFrom } from 'rxjs';
 import { getAPINamespace } from '@grafana/api-clients';
 import {
   useListLogsDrilldownQuery,
+  useListLogsDrilldownDefaultsQuery,
   useCreateLogsDrilldownMutation,
-  useGetLogsDrilldownQuery,
+  useCreateLogsDrilldownDefaultsMutation,
 } from '@grafana/api-clients/rtkq/logsdrilldown/v1alpha1';
 import {
   applyFieldOverrides,
@@ -52,15 +53,99 @@ export function LogsTable(props: Props) {
   const timeIndex = logsFrame?.timeField.index;
 
   const { currentData: logsDrilldownData, error: logsDrilldownError } = useListLogsDrilldownQuery({});
-  // Get a specific logs drilldown
-  const { currentData: logsDrilldownDataGet, error: logsDrilldownErrorGet } = useGetLogsDrilldownQuery({
-    name: 'logs-drilldown-<some-id>', // Need an id
-  });
-
-  console.log('logsDrilldownDataGet:', logsDrilldownDataGet);
-  console.log('logsDrilldownErrorGet:', logsDrilldownErrorGet);
+  const { currentData: logsDrilldownDefaultsData, error: logsDrilldownDefaultsError } =
+    useListLogsDrilldownDefaultsQuery({});
 
   const [createLogsDrilldown] = useCreateLogsDrilldownMutation();
+  const [createLogsDrilldownDefaults] = useCreateLogsDrilldownDefaultsMutation();
+
+  useEffect(() => {
+    if (logsDrilldownDefaultsData) {
+      console.log('LogsDrilldownDefaults API Response:', logsDrilldownDefaultsData);
+    }
+    if (logsDrilldownDefaultsError) {
+      console.error('LogsDrilldownDefaults API Error:', logsDrilldownDefaultsError);
+    }
+    if (logsDrilldownData) {
+      console.log('LogsDrilldown API Response:', logsDrilldownData);
+    }
+    if (logsDrilldownError) {
+      console.error('LogsDrilldown API Error:', logsDrilldownError);
+    }
+  }, [logsDrilldownData, logsDrilldownError, logsDrilldownDefaultsData, logsDrilldownDefaultsError]);
+
+  // Create LogsDrilldown with default fields if none exist
+  useEffect(() => {
+    const createDefaultLogsDrilldown = async () => {
+      // Check if items array is empty (no resources exist)
+      if (logsDrilldownData && logsDrilldownData.items && logsDrilldownData.items.length === 0) {
+        try {
+          const namespace = getAPINamespace();
+          const result = await createLogsDrilldown({
+            logsDrilldown: {
+              apiVersion: 'logsdrilldown.grafana.app/v1alpha1',
+              kind: 'LogsDrilldown',
+              metadata: {
+                namespace,
+                generateName: 'logs-drilldown-',
+              },
+              spec: {
+                defaultFields: ['time', 'body', 'level'],
+                prettifyJSON: false,
+                wrapLogMessage: false,
+                interceptDismissed: false,
+              },
+            },
+          }).unwrap();
+          console.log('Created LogsDrilldown with default fields:', result);
+        } catch (error) {
+          console.error('Failed to create LogsDrilldown:', error);
+        }
+      }
+    };
+
+    if (logsDrilldownData !== undefined) {
+      createDefaultLogsDrilldown();
+    }
+  }, [logsDrilldownData, createLogsDrilldown]);
+
+  // Create LogsDrilldown with default fields if none exist
+  useEffect(() => {
+    const createDefaultLogsDrilldownDefaults = async () => {
+      // Check if items array is empty (no resources exist)
+      if (
+        logsDrilldownDefaultsData &&
+        logsDrilldownDefaultsData.items &&
+        logsDrilldownDefaultsData.items.length === 0
+      ) {
+        try {
+          const result = await createLogsDrilldownDefaults({
+            logsDrilldownDefaults: {
+              apiVersion: 'logsdrilldown.grafana.app/v1alpha1',
+              kind: 'LogsDrilldownDefaults',
+              metadata: {
+                namespace: getAPINamespace(),
+                generateName: 'logs-drilldown-defaults',
+              },
+              spec: {
+                defaultFields: ['app', 'cluster', 'level'],
+                prettifyJSON: false,
+                wrapLogMessage: false,
+                interceptDismissed: false,
+              },
+            },
+          }).unwrap();
+          console.log('Created LogsDrilldown with default fields:', result);
+        } catch (error) {
+          console.error('Failed to create LogsDrilldown:', error);
+        }
+      }
+    };
+
+    if (logsDrilldownDefaultsData !== undefined) {
+      createDefaultLogsDrilldownDefaults();
+    }
+  }, [logsDrilldownDefaultsData, createLogsDrilldownDefaults]);
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
@@ -113,88 +198,6 @@ export function LogsTable(props: Props) {
     },
     [logsSortOrder, timeZone, splitOpen, range, logsFrame?.bodyField.name, logsFrame?.timeField.name, timeIndex]
   );
-
-  useEffect(() => {
-    if (logsDrilldownData) {
-      console.log('LogsDrilldown API Response:', logsDrilldownData);
-    }
-    if (logsDrilldownError) {
-      console.error('LogsDrilldown API Error:', logsDrilldownError);
-    }
-  }, [logsDrilldownData, logsDrilldownError]);
-
-  // Update defaultFields to ['app','cluster']
-  useEffect(() => {
-    const updateDefaultFields = async () => {
-      try {
-        const response = await fetch('/apis/logsdrilldown.grafana.app/v1alpha1/defaultFields', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            defaultFields: ['app', 'cluster'],
-          }),
-        });
-        const result = await response.json();
-        console.log('Updated defaultFields:', result);
-      } catch (error) {
-        console.error('Failed to update defaultFields:', error);
-      }
-    };
-    updateDefaultFields();
-  }, []);
-  // Get default fields
-  useEffect(() => {
-    const fetchDefaultFields = async () => {
-      try {
-        const response = await fetch('/apis/logsdrilldown.grafana.app/v1alpha1/defaultFields');
-        if (!response.ok) {
-          throw new Error(`Failed to fetch: ${response.statusText}`);
-        }
-        const data = await response.json();
-        console.log('Fetched defaultFields:', data);
-      } catch (error) {
-        console.error('Failed to fetch defaultFields:', error);
-      }
-    };
-    fetchDefaultFields();
-  }, []);
-
-  // Create LogsDrilldown with default fields if none exist
-  useEffect(() => {
-    const createDefaultLogsDrilldown = async () => {
-      // Check if items array is empty (no resources exist)
-      if (logsDrilldownData && logsDrilldownData.items && logsDrilldownData.items.length === 0) {
-        try {
-          const namespace = getAPINamespace();
-          const result = await createLogsDrilldown({
-            logsDrilldown: {
-              apiVersion: 'logsdrilldown.grafana.app/v1alpha1',
-              kind: 'LogsDrilldown',
-              metadata: {
-                namespace,
-                generateName: 'logs-drilldown-',
-              },
-              spec: {
-                defaultFields: ['time', 'body', 'level'],
-                prettifyJSON: false,
-                wrapLogMessage: false,
-                interceptinterceptDismissed: false,
-              },
-            },
-          }).unwrap();
-          console.log('Created LogsDrilldown with default fields:', result);
-        } catch (error) {
-          console.error('Failed to create LogsDrilldown:', error);
-        }
-      }
-    };
-
-    if (logsDrilldownData !== undefined) {
-      createDefaultLogsDrilldown();
-    }
-  }, [logsDrilldownData, createLogsDrilldown]);
 
   useEffect(() => {
     const prepare = async () => {
