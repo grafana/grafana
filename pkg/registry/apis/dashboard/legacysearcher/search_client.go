@@ -400,10 +400,10 @@ func (c *DashboardSearchClient) getLibraryPanelConnections(ctx context.Context, 
 func (c *DashboardSearchClient) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	info, err := claims.ParseNamespace(req.Namespace)
 	if err != nil {
-		return nil, apierrors.NewBadRequest("unable to read namespace")
+		return nil, apierrors.NewInternalError(fmt.Errorf("unable to read namespace: %w", err))
 	}
 	if info.OrgID == 0 {
-		return nil, apierrors.NewBadRequest("invalid OrgID found in namespace")
+		return nil, apierrors.NewInternalError(fmt.Errorf("invalid OrgID found in namespace"))
 	}
 
 	if len(req.Kinds) != 1 {
