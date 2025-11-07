@@ -3163,6 +3163,7 @@ __metadata:
     "@typescript-eslint/types": "npm:^8.9.0"
     "@typescript-eslint/utils": "npm:^8.9.0"
     eslint: "npm:9.32.0"
+    jest: "npm:29.7.0"
     tslib: "npm:2.8.1"
   languageName: unknown
   linkType: soft
