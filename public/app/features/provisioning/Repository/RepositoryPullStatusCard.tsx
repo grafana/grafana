@@ -44,7 +44,7 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
             <Text variant="body">{status?.sync.job ?? 'N/A'}</Text>
           </div>
 
-          <div className={cx(styles.historicalData, {[styles.historicalDataOverlay]: isWorking} )}>
+          <div className={cx(styles.historicalData, { [styles.historicalDataOverlay]: isWorking })}>
             {/* Last Ref */}
             <Text color="secondary">
               <Trans i18nKey="provisioning.repository-overview.last-ref">Last Ref:</Trans>

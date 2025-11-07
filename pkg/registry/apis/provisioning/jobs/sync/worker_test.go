@@ -116,7 +116,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
 
 				// Expect granular patches for state, job, and started fields
-				rpf.On("Execute", mock.Anything, repoConfig, 
+				rpf.On("Execute", mock.Anything, repoConfig,
 					mock.MatchedBy(func(patch map[string]interface{}) bool {
 						return patch["op"] == "replace" && patch["path"] == "/status/sync/state"
 					}),
