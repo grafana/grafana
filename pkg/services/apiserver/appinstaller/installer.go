@@ -54,7 +54,7 @@ type serverLock interface {
 
 // AddToScheme adds app installer schemas to the runtime scheme
 func AddToScheme(
-	appInstallers []appsdkapiserver.AppInstaller,
+	appInstallers map[string]appsdkapiserver.AppInstaller,
 	scheme *runtime.Scheme,
 ) ([]schema.GroupVersion, error) {
 	var additionalGroupVersions []schema.GroupVersion
@@ -70,7 +70,7 @@ func AddToScheme(
 // RegisterAdmission combines the existing admission control from builders.
 func RegisterAdmission(
 	existingAdmission admission.Interface,
-	appInstallers []appsdkapiserver.AppInstaller,
+	appInstallers map[string]appsdkapiserver.AppInstaller,
 ) (admission.Interface, error) {
 	controllers := []admission.Interface{}
 
@@ -116,7 +116,7 @@ func RegisterAuthorizers(
 }
 
 func BuildOpenAPIDefGetter(
-	appInstallers []appsdkapiserver.AppInstaller,
+	appInstallers map[string]appsdkapiserver.AppInstaller,
 ) func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		defs := make(map[string]common.OpenAPIDefinition)
@@ -130,7 +130,7 @@ func BuildOpenAPIDefGetter(
 
 func InstallAPIs(
 	ctx context.Context,
-	appInstallers []appsdkapiserver.AppInstaller,
+	appInstallers map[string]appsdkapiserver.AppInstaller,
 	server *genericapiserver.GenericAPIServer,
 	restOpsGetter generic.RESTOptionsGetter,
 	storageOpts *grafanaapiserveroptions.StorageOptions,
@@ -169,7 +169,7 @@ func InstallAPIs(
 
 // RegisterPostStartHooks registers individual post start hooks for each app installer
 func RegisterPostStartHooks(
-	appInstallers []appsdkapiserver.AppInstaller,
+	appInstallers map[string]appsdkapiserver.AppInstaller,
 	serverConfig *genericapiserver.RecommendedConfig,
 ) error {
 	for _, installer := range appInstallers {

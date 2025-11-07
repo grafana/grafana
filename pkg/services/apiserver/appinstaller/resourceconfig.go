@@ -6,7 +6,7 @@ import (
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 )
 
-func NewAPIResourceConfig(installers []appsdkapiserver.AppInstaller) *serverstorage.ResourceConfig {
+func NewAPIResourceConfig(installers map[string]appsdkapiserver.AppInstaller) *serverstorage.ResourceConfig {
 	ret := serverstorage.NewResourceConfig()
 	enable := []schema.GroupVersion{}
 	disable := []schema.GroupVersion{}
