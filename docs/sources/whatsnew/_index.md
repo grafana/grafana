@@ -181,6 +181,8 @@ weight: 1
 
 For release highlights, deprecations, and breaking changes in self-managed Grafana releases, refer to these "What's new" pages for each version.
 
+For information on new Grafana Cloud highlights, refer to [What's new from Grafana Labs](https://grafana.com/whats-new).
+
 {{< admonition type="note" >}}
 For Grafana versions prior to v9.2, additional information might also be available in the archived release notes. To access archived release notes, use the documentation for the minor version you want to see.
 
