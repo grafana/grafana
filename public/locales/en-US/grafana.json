@@ -4617,10 +4617,10 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "Your changes will be lost when you update the plugin.<br/><2>Use <strong>Save As</strong> to create custom version.</2>",
+      "body-plugin-dashboard": "This dashboard is provided by a plugin. Any changes you make here will be overwritten when the plugin is updated. To keep your modifications permanently, use <strong>Save as</strong> to create a custom copy instead.",
       "cancel": "Cancel",
-      "overwrite": "Overwrite",
-      "title-plugin-dashboard": "Plugin dashboard"
+      "overwrite": "Save and overwrite anyway",
+      "title-plugin-dashboard": "Plugin dashboard - changes may be lost"
     },
     "controls": {
       "menu": {
@@ -5995,13 +5995,13 @@
         "cancel": "Cancel"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "Your changes will be lost when you update the plugin. Use <strong>Save as</strong> to create custom version.",
+        "body-plugin-dashboard": "This dashboard is provided by a plugin. Any changes you make here will be overwritten when the plugin is updated. To keep your modifications permanently, use <strong>Save as</strong> to create a custom copy instead.",
         "title-failed-to-save-dashboard": "Failed to save dashboard",
-        "title-plugin-dashboard": "Plugin dashboard",
+        "title-plugin-dashboard": "Plugin dashboard - changes may be lost",
         "title-someone-else-has-updated-this-dashboard": "Someone else has updated this dashboard",
         "would-still-dashboard": "Would you still like to save this dashboard?"
       },
-      "save-and-overwrite": "'Save and overwrite'"
+      "save-and-overwrite": "'Save and overwrite anyway'"
     },
     "library-viz-panel-info": {
       "last-edited": "{{timeAgo}} by <person />",
@@ -6184,10 +6184,10 @@
       "label-message": "Message",
       "placeholder-describe-changes-optional": "Add a note to describe your changes (optional).",
       "render-footer": {
-        "body-plugin-dashboard": "Your changes will be lost when you update the plugin. Use <strong>Save as</strong> to create custom version.",
+        "body-plugin-dashboard": "This dashboard is provided by a plugin. Any changes you make here will be overwritten when the plugin is updated. To keep your modifications permanently, use <strong>Save as</strong> to create a custom copy instead.",
         "no-changes-to-save": "No changes to save",
         "title-failed-to-save-dashboard": "Failed to save dashboard",
-        "title-plugin-dashboard": "Plugin dashboard",
+        "title-plugin-dashboard": "Plugin dashboard - changes may be lost",
         "title-someone-else-has-updated-this-dashboard": "Someone else has updated this dashboard",
         "would-still-dashboard": "Would you still like to save this dashboard?"
       },
