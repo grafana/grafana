@@ -2975,6 +2975,10 @@
           "description": "Name of annotation.",
           "type": "string"
         },
+        "placement": {
+          "description": "Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.",
+          "type": "string"
+        },
         "target": {
           "$ref": "#/definitions/AnnotationTarget"
         },
@@ -4320,6 +4324,20 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "DashboardVersionResponseMeta": {
+      "type": "object",
+      "properties": {
+        "continueToken": {
+          "type": "string"
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardVersionMeta"
+          }
         }
       }
     },
@@ -7979,6 +7997,9 @@
         "teamUID": {
           "type": "string"
         },
+        "uid": {
+          "type": "string"
+        },
         "userId": {
           "type": "integer",
           "format": "int64"
@@ -9420,10 +9441,7 @@
     "dashboardVersionsResponse": {
       "description": "",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/DashboardVersionMeta"
-        }
+        "$ref": "#/definitions/DashboardVersionResponseMeta"
       }
     },
     "deleteCorrelationResponse": {

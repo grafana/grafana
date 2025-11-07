@@ -80,6 +80,7 @@ import (
 	advisor2 "github.com/grafana/grafana/pkg/registry/apps/advisor"
 	notifications2 "github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
+	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	correlations2 "github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
@@ -798,11 +799,15 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
+	annotationAppInstaller, err := annotation.RegisterAppInstaller(cfg, featureToggles, repositoryImpl)
+	if err != nil {
+		return nil, err
+	}
 	exampleAppInstaller, err := example.RegisterAppInstaller(cfg, featureToggles)
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, pluginsAppInstaller, shortURLAppInstaller, alertingRulesAppInstaller, appInstaller, alertingNotificationsAppInstaller, logsDrilldownAppInstaller, exampleAppInstaller)
+	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, pluginsAppInstaller, shortURLAppInstaller, alertingRulesAppInstaller, appInstaller, alertingNotificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics)
 	if err != nil {
@@ -848,7 +853,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, resourceClient, zanzanaClient)
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, storageBackendImpl, storageBackendImpl, dualwriteService, resourceClient, userService)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, storageBackendImpl, storageBackendImpl, storageBackendImpl, dualwriteService, resourceClient, userService)
 	if err != nil {
 		return nil, err
 	}
@@ -1432,11 +1437,15 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	annotationAppInstaller, err := annotation.RegisterAppInstaller(cfg, featureToggles, repositoryImpl)
+	if err != nil {
+		return nil, err
+	}
 	exampleAppInstaller, err := example.RegisterAppInstaller(cfg, featureToggles)
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, pluginsAppInstaller, shortURLAppInstaller, alertingRulesAppInstaller, appInstaller, alertingNotificationsAppInstaller, logsDrilldownAppInstaller, exampleAppInstaller)
+	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, pluginsAppInstaller, shortURLAppInstaller, alertingRulesAppInstaller, appInstaller, alertingNotificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics)
 	if err != nil {
@@ -1482,7 +1491,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, resourceClient, zanzanaClient)
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, storageBackendImpl, storageBackendImpl, dualwriteService, resourceClient, userService)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, storageBackendImpl, storageBackendImpl, storageBackendImpl, dualwriteService, resourceClient, userService)
 	if err != nil {
 		return nil, err
 	}
