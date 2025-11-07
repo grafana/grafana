@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -10,16 +11,73 @@ import (
 
 // Query represents the time series query model of the datasource
 type Query struct {
-	RawQuery      string       `json:"query"`
-	BucketAggs    []*BucketAgg `json:"bucketAggs"`
-	Metrics       []*MetricAgg `json:"metrics"`
-	Alias         string       `json:"alias"`
+	RawQuery      string             `json:"query"`
+	BucketAggs    []*BucketAgg       `json:"bucketAggs"`
+	Metrics       []*MetricAgg       `json:"metrics"`
+	Alias         string             `json:"alias"`
 	Interval      time.Duration
 	IntervalMs    int64
 	RefID         string
 	MaxDataPoints int64
 	TimeRange     backend.TimeRange
-	RawDSLQuery   dataquery.RawQuery
+	RawDSLQuery   dataquery.RawQuery `json:"rawDslQuery"`
+}
+
+// UnmarshalJSON custom unmarshaller to handle both old string format and new struct format
+func (q *Query) UnmarshalJSON(data []byte) error {
+	// Create a temporary struct with all fields explicitly defined
+	aux := &struct {
+		RawQuery      string            `json:"query"`
+		BucketAggs    []*BucketAgg      `json:"bucketAggs"`
+		Metrics       []*MetricAgg      `json:"metrics"`
+		Alias         string            `json:"alias"`
+		Interval      time.Duration     `json:"interval"`
+		IntervalMs    int64             `json:"intervalMs"`
+		RefID         string            `json:"refId"`
+		MaxDataPoints int64             `json:"maxDataPoints"`
+		TimeRange     backend.TimeRange `json:"timeRange"`
+	}{}
+
+	// Unmarshal all standard fields
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+
+	// Copy fields to query
+	q.RawQuery = aux.RawQuery
+	q.BucketAggs = aux.BucketAggs
+	q.Metrics = aux.Metrics
+	q.Alias = aux.Alias
+	q.Interval = aux.Interval
+	q.IntervalMs = aux.IntervalMs
+	q.RefID = aux.RefID
+	q.MaxDataPoints = aux.MaxDataPoints
+	q.TimeRange = aux.TimeRange
+
+	// Handle rawDslQuery field specially - it can be either a string or an object
+	var rawData map[string]json.RawMessage
+	if err := json.Unmarshal(data, &rawData); err != nil {
+		return err
+	}
+
+	if rawDslQueryData, ok := rawData["rawDslQuery"]; ok && len(rawDslQueryData) > 0 {
+		// Try to unmarshal as string first (old format)
+		var rawDslQueryString string
+		if err := json.Unmarshal(rawDslQueryData, &rawDslQueryString); err == nil {
+			// It's a string - convert to RawQuery struct
+			q.RawDSLQuery = dataquery.RawQuery{
+				Query: &rawDslQueryString,
+			}
+		} else {
+			// Try as object (new format)
+			var rawDslQueryStruct dataquery.RawQuery
+			if err := json.Unmarshal(rawDslQueryData, &rawDslQueryStruct); err == nil {
+				q.RawDSLQuery = rawDslQueryStruct
+			}
+		}
+	}
+
+	return nil
 }
 
 // BucketAgg represents a bucket aggregation of the time series query model of the datasource

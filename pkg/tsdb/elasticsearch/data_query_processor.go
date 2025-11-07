@@ -26,8 +26,22 @@ func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchReques
 
 	// Handle raw DSL queries
 	if q.RawDSLQuery.Query != nil {
-		//TODO handle error
-		_ = e.processRawDSLQuery(q, b)
+		// Check for empty query
+		if *q.RawDSLQuery.Query == "" {
+			return backend.DownstreamError(fmt.Errorf("raw DSL query is empty"))
+		}
+
+		// Determine if we should extract aggregations from raw DSL
+		shouldExtractAggregations := false
+		// Extract aggregations only when explicitly requested via processAs="metrics"
+		if q.RawDSLQuery.ProcessAs != nil && *q.RawDSLQuery.ProcessAs == "metrics" {
+			shouldExtractAggregations = true
+		}
+		// For backward compatibility, if processAs is not set, use passthrough behavior (RawBody)
+
+		if err := e.processRawDSLQuery(q, b, shouldExtractAggregations); err != nil {
+			return err
+		}
 	}
 
 	if isLogsQuery(q) {
@@ -191,7 +205,7 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64
 	}
 }
 
-func (e *elasticsearchDataQuery) processRawDSLQuery(q *Query, b *es.SearchRequestBuilder) error {
+func (e *elasticsearchDataQuery) processRawDSLQuery(q *Query, b *es.SearchRequestBuilder, shouldExtractAggregations bool) error {
 	if *q.RawDSLQuery.Query == "" {
 		return backend.DownstreamError(fmt.Errorf("raw DSL query is empty"))
 	}
@@ -202,10 +216,40 @@ func (e *elasticsearchDataQuery) processRawDSLQuery(q *Query, b *es.SearchReques
 		return backend.DownstreamError(fmt.Errorf("invalid raw DSL query JSON: %w", err))
 	}
 
-	// Create a search request builder and set the raw body directly
-	// This will bypass all builder logic and send the query as-is to Elasticsearch
-	//b := ms.Search(q.Interval, q.TimeRange)
-	b.SetRawBody(queryBody)
+	if shouldExtractAggregations {
+		// Extract aggregations for time series queries
+		parser := NewAggregationParser()
+		bucketAggs, metricAggs, err := parser.Parse(*q.RawDSLQuery.Query)
+		if err != nil {
+			return err
+		}
+
+		// If there is no metric agg that means it is count
+		if len(metricAggs) == 0 {
+			metricAggs = append(metricAggs, &MetricAgg{Type: "count"})
+		}
+
+		// Merge extracted aggregations into the query
+		// Raw DSL aggregations take precedence - they replace existing aggregations
+		if len(bucketAggs) > 0 {
+			q.BucketAggs = bucketAggs
+			q.Metrics = metricAggs
+		}
+
+		// Extract and apply the query part (not aggregations)
+		if queryPart, ok := queryBody["query"].(map[string]any); ok {
+			// Convert query part to JSON and set it as raw query string
+			queryJSON, err := json.Marshal(queryPart)
+			if err == nil {
+				// Use the query from raw DSL instead of the query string filter
+				q.RawQuery = string(queryJSON)
+			}
+		}
+	} else {
+		// For non-time-series queries (logs, raw data), pass through the raw body directly
+		// This preserves the existing behavior for those query types
+		b.SetRawBody(queryBody)
+	}
 
 	return nil
 }

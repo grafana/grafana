@@ -64,3 +64,50 @@ func (t *httpTransport) executeRequest(method, uriPath, uriQuery string, body []
 	}
 	return resp, nil
 }
+
+//"{\"ignore_unavailable\":true,\"index\":\"\",\"search_type\":\"query_then_fetch\"}\n{\"aggs\":{\"2\":{\"date_histogram\":{\"field\":\"@timestamp\",\"fixed_interval\":\"2000ms\",\"min_doc_count\":0,\"extended_bounds\":{\"min\":1762226056504,\"max\":1762229656504},\"format\":\"epoch_millis\"}}},\"query\":{\"bool\":{\"filter\":{\"range\":{\"@timestamp\":{\"format\":\"epoch_millis\",\"gte\":1762226056504,\"lte\":1762229656504}}}}},\"size\":0}\n"
+//"{\"ignore_unavailable\":true,\"index\":\"\",\"search_type\":\"query_then_fetch\"}\n{\"aggs\":{\"2\":{\"date_histogram\":{\"extended_bounds\":{\"max\":1762229656504,\"min\":1762226056504},\"field\":\"@timestamp\",\"fixed_interval\":\"2000ms\",\"format\":\"epoch_millis\",\"min_doc_count\":0}}},\"query\":{\"bool\":{\"filter\":{\"range\":{\"@timestamp\":{\"format\":\"epoch_millis\",\"gte\":1762226056504,\"lte\":1762229656504}}}}},\"size\":0}\n"
+
+//"{\"ignore_unavailable\":true,\"index\":\"\",\"search_type\":\"query_then_fetch\"}\n{\"aggs\":{\"count_by_status\":{\"terms\":{\"field\":\"status.keyword\",\"size\":10}}},\"size\":0}\n"
+//"{\"ignore_unavailable\":true,\"index\":\"\",\"search_type\":\"query_then_fetch\"}\n{\"aggs\":{\"2\":{\"aggs\":{\"1\":{\"max\":{\"field\":\"value\"}}},\"date_histogram\":{\"field\":\"@timestamp\",\"fixed_interval\":\"2000ms\",\"min_doc_count\":0,\"extended_bounds\":{\"min\":1762273734107,\"max\":1762277334107},\"format\":\"epoch_millis\"}}},\"query\":{\"bool\":{\"filter\":{\"range\":{\"@timestamp\":{\"format\":\"epoch_millis\",\"gte\":1762273734107,\"lte\":1762277334107}}}}},\"size\":0}\n"
+
+/*
+{"ignore_unavailable":true,"index":"","search_type":"query_then_fetch"},
+{
+  "aggs": {
+    "2": {
+      "aggs": {
+        "1": {
+          "max": {
+            "field": "value"
+          }
+        }
+      },
+      "date_histogram": {
+        "field": "@timestamp",
+        "fixed_interval": "2000ms",
+        "min_doc_count": 0,
+        "extended_bounds": {
+          "min": 1762273734107,
+          "max": 1762277334107
+        },
+        "format": "epoch_millis"
+      }
+    }
+  },
+  "query": {
+    "bool": {
+      "filter": {
+        "range": {
+          "@timestamp": {
+            "format": "epoch_millis",
+            "gte": 1762273734107,
+            "lte": 1762277334107
+          }
+        }
+      }
+    }
+  },
+  "size": 0
+}
+*/

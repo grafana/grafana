@@ -44,9 +44,18 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 
 		rawQuery := model.Get("query").MustString()
 		rawDSLQuery := dataquery.RawQuery{}
-		rr := model.Get("rawQuery")
+		rr := model.Get("rawDslQuery")
 		if rrBytes, err := rr.Encode(); err == nil {
-			_ = json.Unmarshal(rrBytes, &rawDSLQuery)
+			// Try to unmarshal as the new struct format first
+			if err := json.Unmarshal(rrBytes, &rawDSLQuery); err != nil {
+				// If that fails, it might be a string (old format)
+				var rawDSLQueryString string
+				if err := json.Unmarshal(rrBytes, &rawDSLQueryString); err == nil {
+					rawDSLQuery = dataquery.RawQuery{
+						Query: &rawDSLQueryString,
+					}
+				}
+			}
 		}
 
 		bucketAggs, err := parseBucketAggs(model)
