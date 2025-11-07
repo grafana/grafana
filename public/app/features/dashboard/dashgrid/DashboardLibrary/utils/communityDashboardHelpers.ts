@@ -1,9 +1,13 @@
 import { locationService } from '@grafana/runtime';
+import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
+import { MappingContext } from '../SuggestedDashboardsModal';
+import { fetchCommunityDashboard } from '../api/dashboardLibraryApi';
+import { DashboardLibraryInteractions } from '../interactions';
 import { GnetDashboard, Link } from '../types';
 
-import { InputMapping } from './autoMapDatasources';
+import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
 
 /**
  * Extract thumbnail URL from dashboard screenshots
@@ -97,4 +101,77 @@ export function navigateToTemplate(
     pathname: DASHBOARD_LIBRARY_ROUTES.Template,
     search: searchParams.toString(),
   });
+}
+
+interface UseCommunityDashboardParams {
+  dashboard: GnetDashboard;
+  datasourceUid: string;
+  datasourceType: string;
+  eventLocation: 'empty_dashboard' | 'suggested_dashboards_modal_community_tab';
+  onShowMapping?: (context: MappingContext) => void;
+}
+
+/**
+ * Handles the flow when a user selects a community dashboard:
+ * 1. Tracks analytics
+ * 2. Fetches full dashboard JSON with __inputs
+ * 3. Attempts auto-mapping of datasources
+ * 4. Either navigates directly or shows mapping form
+ */
+export async function onUseCommunityDashboard({
+  dashboard,
+  datasourceUid,
+  datasourceType,
+  eventLocation,
+  onShowMapping,
+}: UseCommunityDashboardParams): Promise<void> {
+  // Track analytics
+  DashboardLibraryInteractions.itemClicked({
+    contentKind: 'community_dashboard',
+    datasourceTypes: [datasourceType],
+    libraryItemId: String(dashboard.id),
+    libraryItemTitle: dashboard.name,
+    sourceEntryPoint: 'datasource_page',
+    eventLocation,
+  });
+
+  try {
+    // Fetch full dashboard from Gcom, this is the JSON with __inputs
+    const fullDashboard = await fetchCommunityDashboard(dashboard.id);
+    const dashboardJson = fullDashboard.json;
+
+    // Parse datasource requirements from __inputs
+    const dsInputs: DataSourceInput[] = dashboardJson.__inputs?.filter(isDataSourceInput) || [];
+
+    // Parse constant inputs - these always need user review
+    const constantInputs = parseConstantInputs(dashboardJson.__inputs || []);
+
+    // Try auto-mapping datasources
+    const mappingResult = tryAutoMapDatasources(dsInputs, datasourceUid);
+
+    // Decide whether to show mapping form or navigate directly
+    // Show mapping form if: (a) there are unmapped datasources OR (b) there are constants
+    const needsMapping = mappingResult.unmappedInputs.length > 0 || constantInputs.length > 0;
+
+    if (!needsMapping) {
+      // No mapping needed - all datasources auto-mapped, no constants
+      navigateToTemplate(dashboard.name, dashboard.id, datasourceUid, mappingResult.mappings);
+    } else {
+      // Show mapping form for unmapped datasources and/or constants
+      if (onShowMapping) {
+        onShowMapping({
+          dashboardName: dashboard.name,
+          dashboardJson,
+          unmappedInputs: mappingResult.unmappedInputs,
+          constantInputs,
+          existingMappings: mappingResult.mappings,
+          onInterpolateAndNavigate: (mappings) =>
+            navigateToTemplate(dashboard.name, dashboard.id, datasourceUid, mappings),
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Error loading community dashboard:', err);
+    // TODO: Show error notification
+  }
 }

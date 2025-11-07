@@ -7,19 +7,17 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, useStyles2, Stack, Grid, EmptyState, Alert, Pagination, FilterInput } from '@grafana/ui';
-import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 
 import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './SuggestedDashboardsModal';
-import { fetchCommunityDashboard, fetchCommunityDashboards } from './api/dashboardLibraryApi';
+import { fetchCommunityDashboards } from './api/dashboardLibraryApi';
 import { DashboardLibraryInteractions } from './interactions';
 import { GnetDashboard } from './types';
-import { tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './utils/autoMapDatasources';
 import {
   getThumbnailUrl,
   getLogoUrl,
   buildDashboardDetails,
-  navigateToTemplate,
+  onUseCommunityDashboard,
 } from './utils/communityDashboardHelpers';
 
 interface Props {
@@ -123,56 +121,18 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   const showEmptyState = !loading && (!response?.dashboards || response.dashboards.length === 0);
   const showError = !loading && error;
 
-  const onUseCommunityDashboard = async (dashboard: GnetDashboard) => {
-    if (response) {
-      DashboardLibraryInteractions.itemClicked({
-        contentKind: 'community_dashboard',
-        datasourceTypes: [response.datasourceType],
-        libraryItemId: String(dashboard.id),
-        libraryItemTitle: dashboard.name,
-        sourceEntryPoint: 'datasource_page',
-        eventLocation: 'suggested_dashboards_modal_community_tab',
-      });
+  const onPreviewCommunityDashboard = (dashboard: GnetDashboard) => {
+    if (!response) {
+      return;
     }
 
-    try {
-      // Fetch full dashboard from Gcom, this is the JSON with __inputs
-      const fullDashboard = await fetchCommunityDashboard(dashboard.id);
-      const dashboardJson = fullDashboard.json;
-
-      // Parse datasource requirements from __inputs
-      const dsInputs: DataSourceInput[] = dashboardJson.__inputs?.filter(isDataSourceInput) || [];
-
-      // Parse constant inputs - these always need user review
-      const constantInputs = parseConstantInputs(dashboardJson.__inputs || []);
-
-      // Try auto-mapping datasources, considering we could come from "build dashhoard" there should be a datasource
-      // instance selected
-      const mappingResult = tryAutoMapDatasources(dsInputs, datasourceUid || '');
-
-      // Decide whether to show mapping form or navigate directly
-      // Show mapping form if: (a) there are unmapped datasources OR (b) there are constants
-      const needsMapping = !mappingResult.allMapped || constantInputs.length > 0;
-
-      if (!needsMapping) {
-        // No mapping needed - all datasources auto-mapped, no constants
-        navigateToTemplate(dashboard.name, dashboard.id, datasourceUid || '', mappingResult.mappings);
-      } else {
-        // Show mapping form for unmapped datasources and/or constants
-        onShowMapping({
-          dashboardName: dashboard.name,
-          dashboardJson,
-          unmappedInputs: mappingResult.unmappedInputs,
-          constantInputs,
-          existingMappings: mappingResult.mappings,
-          onInterpolateAndNavigate: (mappings) =>
-            navigateToTemplate(dashboard.name, dashboard.id, datasourceUid || '', mappings),
-        });
-      }
-    } catch (err) {
-      console.error('Error loading community dashboard:', err);
-      // TODO: Show error notification
-    }
+    onUseCommunityDashboard({
+      dashboard,
+      datasourceUid: datasourceUid || '',
+      datasourceType: response.datasourceType,
+      eventLocation: 'suggested_dashboards_modal_community_tab',
+      onShowMapping,
+    });
   };
 
   return (
@@ -273,7 +233,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                   title={dashboard.name}
                   imageUrl={imageUrl}
                   dashboard={dashboard}
-                  onClick={() => onUseCommunityDashboard(dashboard)}
+                  onClick={() => onPreviewCommunityDashboard(dashboard)}
                   isLogo={isLogo}
                   details={details}
                   buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}

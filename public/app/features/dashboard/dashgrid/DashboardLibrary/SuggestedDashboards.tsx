@@ -7,24 +7,18 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Button, useStyles2, Grid } from '@grafana/ui';
-import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { DashboardCard } from './DashboardCard';
 import { MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
-import {
-  fetchCommunityDashboard,
-  fetchCommunityDashboards,
-  fetchProvisionedDashboards,
-} from './api/dashboardLibraryApi';
+import { fetchCommunityDashboards, fetchProvisionedDashboards } from './api/dashboardLibraryApi';
 import { DashboardLibraryInteractions } from './interactions';
 import { GnetDashboard } from './types';
-import { tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './utils/autoMapDatasources';
 import {
   getThumbnailUrl,
   getLogoUrl,
   buildDashboardDetails,
-  navigateToTemplate,
+  onUseCommunityDashboard,
 } from './utils/communityDashboardHelpers';
 import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
 
@@ -226,7 +220,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
     locationService.push(`/dashboard/template?${params.toString()}`);
   };
 
-  const onUseCommunityDashboard = async (dashboard: GnetDashboard) => {
+  const onPreviewCommunityDashboard = (dashboard: GnetDashboard) => {
     if (!datasourceUid) {
       return;
     }
@@ -236,52 +230,13 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
       return;
     }
 
-    DashboardLibraryInteractions.itemClicked({
-      contentKind: 'community_dashboard',
-      datasourceTypes: [ds.type],
-      libraryItemId: String(dashboard.id),
-      libraryItemTitle: dashboard.name,
-      sourceEntryPoint: 'datasource_page',
+    onUseCommunityDashboard({
+      dashboard,
+      datasourceUid,
+      datasourceType: ds.type,
       eventLocation: 'empty_dashboard',
+      onShowMapping: onShowMapping,
     });
-
-    try {
-      // Fetch full dashboard from Gcom, this is the JSON with __inputs
-      const fullDashboard = await fetchCommunityDashboard(dashboard.id);
-      const dashboardJson = fullDashboard.json;
-
-      // Parse datasource requirements from __inputs
-      const dsInputs: DataSourceInput[] = dashboardJson.__inputs?.filter(isDataSourceInput) || [];
-
-      // Parse constant inputs - these always need user review
-      const constantInputs = parseConstantInputs(dashboardJson.__inputs || []);
-
-      // Try auto-mapping datasources
-      const mappingResult = tryAutoMapDatasources(dsInputs, datasourceUid || '');
-
-      // Decide whether to show mapping form or navigate directly
-      // Show mapping form if: (a) there are unmapped datasources OR (b) there are constants
-      const needsMapping = mappingResult.unmappedInputs.length > 0 || constantInputs.length > 0;
-
-      if (!needsMapping) {
-        // No mapping needed - all datasources auto-mapped, no constants
-        navigateToTemplate(dashboard.name, dashboard.id, datasourceUid || '', mappingResult.mappings);
-      } else {
-        // Show mapping form for unmapped datasources and/or constants
-        onShowMapping({
-          dashboardName: dashboard.name,
-          dashboardJson,
-          unmappedInputs: mappingResult.unmappedInputs,
-          constantInputs,
-          existingMappings: mappingResult.mappings,
-          onInterpolateAndNavigate: (mappings) =>
-            navigateToTemplate(dashboard.name, dashboard.id, datasourceUid || '', mappings),
-        });
-      }
-    } catch (err) {
-      console.error('Error loading community dashboard:', err);
-      // TODO: Show error notification
-    }
   };
 
   // Don't render if no dashboards or still loading
@@ -355,7 +310,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
                       title={item.dashboard.name}
                       imageUrl={imageUrl}
                       dashboard={item.dashboard}
-                      onClick={() => onUseCommunityDashboard(item.dashboard)}
+                      onClick={() => onPreviewCommunityDashboard(item.dashboard)}
                       isLogo={isLogo}
                       details={details}
                       buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}
