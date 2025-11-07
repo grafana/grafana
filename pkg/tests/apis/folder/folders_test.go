@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -730,26 +731,44 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 
 	// test on all dualwriter modes
 	for mode := 0; mode <= 4; mode++ {
-		for _, tc := range tcs {
+		modeDw := grafanarest.DualWriterMode(mode)
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folders.RESOURCEGROUP: {
+					DualWriterMode: modeDw,
+				},
+			},
+		})
+		for i, tc := range tcs {
 			t.Run(fmt.Sprintf("[Mode: %v] "+tc.description, mode), func(t *testing.T) {
-				modeDw := grafanarest.DualWriterMode(mode)
-				helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-					AppModeProduction:    true,
-					DisableAnonymous:     true,
-					APIServerStorageType: "unified",
-					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-						folders.RESOURCEGROUP: {
-							DualWriterMode: modeDw,
-						},
-					},
-				})
+				username := fmt.Sprintf("user-%d", i)
+				parentUID := fmt.Sprintf("parentuid-%d", i)
+				childUID := fmt.Sprintf("uid-%d", i)
 
-				user := helper.CreateUser("user", apis.Org1, org.RoleViewer, tc.permissions)
+				// Update permissions to use unique parent UID
+				permissions := make([]resourcepermissions.SetResourcePermissionCommand, len(tc.permissions))
+				for j, perm := range tc.permissions {
+					permissions[j] = perm
+					if perm.ResourceID == "parentuid" {
+						permissions[j].ResourceID = parentUID
+					}
+				}
 
-				parentPayload := `{
+				user := helper.CreateUser(username, apis.Org1, org.RoleViewer, permissions)
+
+				// Get user ID for cleanup
+				userID, _ := user.Identity.GetInternalID()
+
+				// Register cleanup for this test case
+				t.Cleanup(helper.CleanupTestResources([]string{parentUID, childUID}, []int64{userID}))
+
+				parentPayload := fmt.Sprintf(`{
 				"title": "Test/parent",
-				"uid": "parentuid"
-				}`
+				"uid": "%s"
+				}`, parentUID)
 				parentCreate := apis.DoRequest(helper, apis.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: http.MethodPost,
@@ -757,19 +776,23 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 					Body:   []byte(parentPayload),
 				}, &folder.Folder{})
 				require.NotNil(t, parentCreate.Result)
-				parentUID := parentCreate.Result.UID
-				require.NotEmpty(t, parentUID)
+				createdParentUID := parentCreate.Result.UID
+				require.NotEmpty(t, createdParentUID)
+
+				// Update input to use unique UIDs
+				input := strings.ReplaceAll(tc.input, "parentuid", parentUID)
+				input = strings.ReplaceAll(input, `"uid": "uid"`, fmt.Sprintf(`"uid": "%s"`, childUID))
 
 				resp := apis.DoRequest(helper, apis.RequestParams{
 					User:   user,
 					Method: http.MethodPost,
 					Path:   "/api/folders",
-					Body:   []byte(tc.input),
+					Body:   []byte(input),
 				}, &dtos.Folder{})
 				require.Equal(t, tc.expectedCode, resp.Response.StatusCode)
 
 				if tc.expectedCode == http.StatusOK {
-					require.Equal(t, "uid", resp.Result.UID)
+					require.Equal(t, childUID, resp.Result.UID)
 					require.Equal(t, "Folder", resp.Result.Title)
 				}
 			})
@@ -833,98 +856,137 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 
 	// test on all dualwriter modes
 	for mode := 0; mode <= 4; mode++ {
-		for _, tc := range tcs {
-			t.Run(fmt.Sprintf("[Mode: %v] "+tc.description, mode), func(t *testing.T) {
-				modeDw := grafanarest.DualWriterMode(mode)
-				helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-					AppModeProduction:    true,
-					DisableAnonymous:     true,
-					APIServerStorageType: "unified",
-					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-						folders.RESOURCEGROUP: {
-							DualWriterMode: modeDw,
-						},
+		t.Run(fmt.Sprintf("Mode_%d", mode), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
 					},
-				})
-
-				// Create parent folder
-				parentPayload := `{
-				"title": "testparent",
-				"uid": "parentuid"
-				}`
-				parentCreate := apis.DoRequest(helper, apis.RequestParams{
-					User:   helper.Org1.Admin,
-					Method: http.MethodPost,
-					Path:   "/api/folders",
-					Body:   []byte(parentPayload),
-				}, &folder.Folder{})
-				require.NotNil(t, parentCreate.Result)
-				parentUID := parentCreate.Result.UID
-				require.NotEmpty(t, parentUID)
-
-				// Create descendant folder
-				payload := "{ \"uid\": \"descuid\", \"title\": \"Folder\", \"parentUid\": \"parentuid\"}"
-				resp := apis.DoRequest(helper, apis.RequestParams{
-					User:   helper.Org1.Admin,
-					Method: http.MethodPost,
-					Path:   "/api/folders",
-					Body:   []byte(payload),
-				}, &dtos.Folder{})
-				require.Equal(t, http.StatusOK, resp.Response.StatusCode)
-
-				user := helper.CreateUser("user", apis.Org1, org.RoleNone, tc.permissions)
-
-				// Get with accesscontrol disabled
-				getResp := apis.DoRequest(helper, apis.RequestParams{
-					User:   user,
-					Method: http.MethodGet,
-					Path:   "/api/folders/descuid",
-				}, &dtos.Folder{})
-				require.Equal(t, tc.expectedCode, getResp.Response.StatusCode)
-				require.NotNil(t, getResp.Result)
-
-				require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersRead])
-				require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersWrite])
-
-				parents := getResp.Result.Parents
-				require.Equal(t, len(tc.expectedParentUIDs), len(parents))
-				require.Equal(t, len(tc.expectedParentTitles), len(parents))
-				for i := 0; i < len(tc.expectedParentUIDs); i++ {
-					require.Equal(t, tc.expectedParentUIDs[i], parents[i].UID)
-					require.Equal(t, tc.expectedParentTitles[i], parents[i].Title)
-				}
-
-				// Get with accesscontrol enabled
-				if tc.checkAccessControl {
-					acPerms := []resourcepermissions.SetResourcePermissionCommand{
-						{
-							Actions:           []string{dashboards.ActionFoldersRead},
-							Resource:          "folders",
-							ResourceAttribute: "uid",
-							ResourceID:        "*",
-						},
-						{
-							Actions:           []string{dashboards.ActionFoldersWrite},
-							Resource:          "folders",
-							ResourceAttribute: "uid",
-							ResourceID:        "parentuid",
-						},
-					}
-					acUser := helper.CreateUser("acuser", apis.Org1, org.RoleNone, acPerms)
-
-					getWithAC := apis.DoRequest(helper, apis.RequestParams{
-						User:   acUser,
-						Method: http.MethodGet,
-						Path:   "/api/folders/descuid?accesscontrol=true",
-					}, &dtos.Folder{})
-					require.Equal(t, tc.expectedCode, getWithAC.Response.StatusCode)
-					require.NotNil(t, getWithAC.Result)
-
-					require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersRead])
-					require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersWrite])
-				}
+				},
 			})
-		}
+
+			// Run all test cases within the same server instance
+			for i, tc := range tcs {
+				t.Run(tc.description, func(t *testing.T) {
+					// Use unique UIDs per test case to avoid conflicts
+					parentUID := fmt.Sprintf("parentuid-%d", i)
+					descUID := fmt.Sprintf("descuid-%d", i)
+					parentTitle := fmt.Sprintf("testparent-%d", i)
+					userLogin := fmt.Sprintf("user-%d", i)
+					acUserLogin := fmt.Sprintf("acuser-%d", i)
+
+					// Create parent folder
+					parentPayload := fmt.Sprintf(`{
+					"title": "%s",
+					"uid": "%s"
+					}`, parentTitle, parentUID)
+					parentCreate := apis.DoRequest(helper, apis.RequestParams{
+						User:   helper.Org1.Admin,
+						Method: http.MethodPost,
+						Path:   "/api/folders",
+						Body:   []byte(parentPayload),
+					}, &folder.Folder{})
+					require.NotNil(t, parentCreate.Result)
+					require.Equal(t, parentUID, parentCreate.Result.UID)
+
+					// Create descendant folder
+					payload := fmt.Sprintf(`{ "uid": "%s", "title": "Folder-%d", "parentUid": "%s"}`, descUID, i, parentUID)
+					resp := apis.DoRequest(helper, apis.RequestParams{
+						User:   helper.Org1.Admin,
+						Method: http.MethodPost,
+						Path:   "/api/folders",
+						Body:   []byte(payload),
+					}, &dtos.Folder{})
+					require.Equal(t, http.StatusOK, resp.Response.StatusCode)
+
+					// Update permissions to use unique descUID where needed
+					permissions := tc.permissions
+					for j := range permissions {
+						if permissions[j].ResourceID == "descuid" {
+							permissions[j].ResourceID = descUID
+						}
+					}
+
+					user := helper.CreateUser(userLogin, apis.Org1, org.RoleNone, permissions)
+
+					// Get user ID for cleanup
+					userID, err := user.Identity.GetInternalID()
+					require.NoError(t, err)
+
+					// Register cleanup to delete created resources
+					t.Cleanup(helper.CleanupTestResources([]string{descUID, parentUID}, []int64{userID}))
+
+					// Adjust expected UIDs and titles
+					expectedParentUIDs := tc.expectedParentUIDs
+					expectedParentTitles := tc.expectedParentTitles
+					if len(expectedParentUIDs) > 0 {
+						expectedParentUIDs = []string{parentUID}
+						expectedParentTitles = []string{parentTitle}
+					}
+
+					// Get with accesscontrol disabled
+					getResp := apis.DoRequest(helper, apis.RequestParams{
+						User:   user,
+						Method: http.MethodGet,
+						Path:   "/api/folders/" + descUID,
+					}, &dtos.Folder{})
+					require.Equal(t, tc.expectedCode, getResp.Response.StatusCode)
+
+					if tc.expectedCode == http.StatusOK {
+						require.NotNil(t, getResp.Result)
+						require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersRead])
+						require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersWrite])
+
+						parents := getResp.Result.Parents
+						require.Equal(t, len(expectedParentUIDs), len(parents))
+						require.Equal(t, len(expectedParentTitles), len(parents))
+						for j := 0; j < len(expectedParentUIDs); j++ {
+							require.Equal(t, expectedParentUIDs[j], parents[j].UID)
+							require.Equal(t, expectedParentTitles[j], parents[j].Title)
+						}
+
+						// Get with accesscontrol enabled
+						if tc.checkAccessControl {
+							acPerms := []resourcepermissions.SetResourcePermissionCommand{
+								{
+									Actions:           []string{dashboards.ActionFoldersRead},
+									Resource:          "folders",
+									ResourceAttribute: "uid",
+									ResourceID:        "*",
+								},
+								{
+									Actions:           []string{dashboards.ActionFoldersWrite},
+									Resource:          "folders",
+									ResourceAttribute: "uid",
+									ResourceID:        parentUID,
+								},
+							}
+							acUser := helper.CreateUser(acUserLogin, apis.Org1, org.RoleNone, acPerms)
+
+							// Get user ID for cleanup
+							acUserID, err := acUser.Identity.GetInternalID()
+							require.NoError(t, err)
+							t.Cleanup(helper.CleanupTestResources([]string{}, []int64{acUserID}))
+
+							getWithAC := apis.DoRequest(helper, apis.RequestParams{
+								User:   acUser,
+								Method: http.MethodGet,
+								Path:   "/api/folders/" + descUID + "?accesscontrol=true",
+							}, &dtos.Folder{})
+							require.Equal(t, tc.expectedCode, getWithAC.Response.StatusCode)
+							require.NotNil(t, getWithAC.Result)
+
+							require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersRead])
+							require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersWrite])
+						}
+					}
+				})
+			}
+		})
 	}
 }
 
@@ -1012,21 +1074,26 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 
 	// test on all dualwriter modes
 	for mode := 0; mode <= 4; mode++ {
-		for _, tc := range tcs {
+		modeDw := grafanarest.DualWriterMode(mode)
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folders.RESOURCEGROUP: {
+					DualWriterMode: modeDw,
+				},
+			},
+		})
+		for i, tc := range tcs {
 			t.Run(fmt.Sprintf("[Mode: %v] "+testDescription(tc.description, tc.expectedFolderSvcError), mode), func(t *testing.T) {
-				modeDw := grafanarest.DualWriterMode(mode)
-				helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-					AppModeProduction:    true,
-					DisableAnonymous:     true,
-					APIServerStorageType: "unified",
-					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-						folders.RESOURCEGROUP: {
-							DualWriterMode: modeDw,
-						},
-					},
-				})
+				username := fmt.Sprintf("user-%d", i)
+				folderUID := fmt.Sprintf("uid-%d", i)
 
-				userTest := helper.CreateUser("user", apis.Org1, org.RoleViewer, tc.permissions)
+				// Update input to use unique UIDs
+				input := strings.ReplaceAll(tc.input, `"uid": "uid"`, fmt.Sprintf(`"uid": "%s"`, folderUID))
+
+				userTest := helper.CreateUser(username, apis.Org1, org.RoleViewer, tc.permissions)
 
 				if tc.createSecondRecord {
 					client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -1037,7 +1104,7 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 						User:   client.Args.User,
 						Method: http.MethodPost,
 						Path:   "/api/folders",
-						Body:   []byte(tc.input),
+						Body:   []byte(input),
 					}, &folder.Folder{})
 					require.NotEmpty(t, create2.Response)
 					require.Equal(t, http.StatusOK, create2.Response.StatusCode)
@@ -1045,13 +1112,13 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 
 				addr := helper.GetEnv().Server.HTTPServer.Listener.Addr()
 				login := userTest.Identity.GetLogin()
-				baseUrl := fmt.Sprintf("http://%s:%s@%s", login, user.Password("user"), addr)
+				baseUrl := fmt.Sprintf("http://%s:%s@%s", login, user.Password(username), addr)
 
 				req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(
 					"%s%s",
 					baseUrl,
 					"/api/folders",
-				), bytes.NewBuffer([]byte(tc.input)))
+				), bytes.NewBuffer([]byte(input)))
 				require.NoError(t, err)
 				req.Header.Set("Content-Type", "application/json")
 
@@ -1071,7 +1138,7 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 				require.NoError(t, resp.Body.Close())
 
 				if tc.expectedCode == http.StatusOK {
-					require.Equal(t, "uid", folder.UID)
+					require.Equal(t, folderUID, folder.UID)
 					require.Equal(t, "Folder", folder.Title)
 				}
 
@@ -1179,78 +1246,111 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 		},
 	}
 
-	// test on all dualwriter modes
+	// PERFORMANCE: Create ONE helper per mode, not per test case
+	// This reduces helper creation from 20 (5 modes × 4 test cases) to just 5
 	for mode := 0; mode <= 4; mode++ {
-		for _, tc := range tcs {
-			t.Run(fmt.Sprintf("Mode: %d, %s", mode, tc.description), func(t *testing.T) {
-				modeDw := grafanarest.DualWriterMode(mode)
+		t.Run(fmt.Sprintf("Mode_%d", mode), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
 
-				helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-					AppModeProduction:    true,
-					DisableAnonymous:     true,
-					APIServerStorageType: "unified",
-					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-						folders.RESOURCEGROUP: {
-							DualWriterMode: modeDw,
-						},
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
 					},
-					EnableFeatureToggles: []string{
-						featuremgmt.FlagUnifiedStorageSearch,
-					},
-				})
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagUnifiedStorageSearch,
+				},
+			})
 
-				userTest := helper.CreateUser("user", apis.Org1, org.RoleNone, tc.permissions)
+			// Run all test cases within the same server instance
+			for i, tc := range tcs {
+				t.Run(tc.description, func(t *testing.T) {
+					// Use unique UIDs for folders to avoid conflicts between test cases
+					userTest := helper.CreateUser(fmt.Sprintf("user-%d", i), apis.Org1, org.RoleNone, tc.permissions)
 
-				for _, f := range tc.createFolders {
-					client := helper.GetResourceClient(apis.ResourceClientArgs{
-						User: userTest,
-						GVR:  gvr,
-					})
-					create2 := apis.DoRequest(helper, apis.RequestParams{
-						User:   client.Args.User,
-						Method: http.MethodPost,
-						Path:   "/api/folders",
-						Body:   []byte(f),
-					}, &folder.Folder{})
-					require.NotEmpty(t, create2.Response)
-					require.Equal(t, http.StatusOK, create2.Response.StatusCode)
-				}
+					// Create folders with unique UIDs per test case
+					for _, f := range tc.createFolders {
+						// Replace hardcoded UIDs with unique ones
+						uniqueFolder := f
+						uniqueFolder = strings.Replace(uniqueFolder, `"foo"`, fmt.Sprintf(`"foo-%d"`, i), 1)
+						uniqueFolder = strings.Replace(uniqueFolder, `"bar"`, fmt.Sprintf(`"bar-%d"`, i), 1)
+						uniqueFolder = strings.Replace(uniqueFolder, `"qux"`, fmt.Sprintf(`"qux-%d"`, i), 1)
+						uniqueFolder = strings.Replace(uniqueFolder, `"parentUid": "foo"`, fmt.Sprintf(`"parentUid": "foo-%d"`, i), 1)
 
-				addr := helper.GetEnv().Server.HTTPServer.Listener.Addr()
-				login := userTest.Identity.GetLogin()
-				baseUrl := fmt.Sprintf("http://%s:%s@%s", login, user.Password("user"), addr)
-
-				req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(
-					"%s%s",
-					baseUrl,
-					fmt.Sprintf("/api/folders%s", tc.params),
-				), nil)
-				require.NoError(t, err)
-				req.Header.Set("Content-Type", "application/json")
-				if tc.requestToAnotherOrg {
-					req.Header.Set("x-grafana-org-id", "2")
-				}
-
-				resp, err := http.DefaultClient.Do(req)
-				require.NoError(t, err)
-				require.NotNil(t, resp)
-				require.Equal(t, tc.expectedCode, resp.StatusCode)
-
-				if tc.expectedCode == http.StatusOK {
-					list := []dtos.FolderSearchHit{}
-					err = json.NewDecoder(resp.Body).Decode(&list)
-					require.NoError(t, err)
-					require.NoError(t, resp.Body.Close())
-
-					// ignore IDs
-					for i := 0; i < len(list); i++ {
-						list[i].ID = 0
+						client := helper.GetResourceClient(apis.ResourceClientArgs{
+							User: userTest,
+							GVR:  gvr,
+						})
+						create2 := apis.DoRequest(helper, apis.RequestParams{
+							User:   client.Args.User,
+							Method: http.MethodPost,
+							Path:   "/api/folders",
+							Body:   []byte(uniqueFolder),
+						}, &folder.Folder{})
+						require.NotEmpty(t, create2.Response)
+						require.Equal(t, http.StatusOK, create2.Response.StatusCode)
 					}
 
-					require.ElementsMatch(t, tc.expectedOutput, list)
-				}
-			})
-		}
+					addr := helper.GetEnv().Server.HTTPServer.Listener.Addr()
+					login := userTest.Identity.GetLogin()
+					baseUrl := fmt.Sprintf("http://%s:%s@%s", login, user.Password(fmt.Sprintf("user-%d", i)), addr)
+
+					// Adjust params with unique UIDs
+					params := tc.params
+					params = strings.ReplaceAll(params, "foo", fmt.Sprintf("foo-%d", i))
+
+					req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(
+						"%s%s",
+						baseUrl,
+						fmt.Sprintf("/api/folders%s", params),
+					), nil)
+					require.NoError(t, err)
+					req.Header.Set("Content-Type", "application/json")
+					if tc.requestToAnotherOrg {
+						req.Header.Set("x-grafana-org-id", "2")
+					}
+
+					resp, err := http.DefaultClient.Do(req)
+					require.NoError(t, err)
+					require.NotNil(t, resp)
+					require.Equal(t, tc.expectedCode, resp.StatusCode)
+
+					if tc.expectedCode == http.StatusOK {
+						list := []dtos.FolderSearchHit{}
+						err = json.NewDecoder(resp.Body).Decode(&list)
+						require.NoError(t, err)
+						require.NoError(t, resp.Body.Close())
+
+						// Adjust expected output with unique UIDs
+						expectedOutput := make([]dtos.FolderSearchHit, len(tc.expectedOutput))
+						for j, output := range tc.expectedOutput {
+							expectedOutput[j] = output
+							expectedOutput[j].ID = 0 // ignore IDs
+							switch output.UID {
+							case "foo":
+								expectedOutput[j].UID = fmt.Sprintf("foo-%d", i)
+							case "bar":
+								expectedOutput[j].UID = fmt.Sprintf("bar-%d", i)
+								expectedOutput[j].ParentUID = fmt.Sprintf("foo-%d", i)
+							case "qux":
+								expectedOutput[j].UID = fmt.Sprintf("qux-%d", i)
+							}
+						}
+
+						// ignore IDs in actual list
+						for j := 0; j < len(list); j++ {
+							list[j].ID = 0
+						}
+
+						require.ElementsMatch(t, expectedOutput, list)
+					}
+				})
+			}
+		})
 	}
 }
 
