@@ -136,7 +136,7 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
   const panel = panelKind.spec;
 
   const targets =
-     // Default to an array with an empty data query with a `refId` already assigned
+    // Default to an array with an empty data query with a `refId` already assigned
     Array.isArray(panel.data?.spec.queries) && panel.data?.spec.queries.length > 0
       ? panel.data?.spec.queries
       : [defaultPanelQueryKind()];
