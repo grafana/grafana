@@ -107,26 +107,8 @@ describe('Slider', () => {
     expect(sliderInput).toHaveValue('50');
   });
 
-  it('does not allow decimal numbers in input when step is integer', async () => {
+  it('allows decimal numbers in input', async () => {
     render(<Slider {...sliderProps} min={0} max={10} step={1} />);
-    const sliderInput = screen.getByRole('textbox');
-    const slider = screen.getByRole('slider');
-
-    await user.clear(sliderInput);
-    await user.type(sliderInput, '3.');
-
-    expect(sliderInput).toHaveValue('3');
-
-    await user.type(sliderInput, '5');
-
-    expect(sliderInput).toHaveValue('35');
-
-    // slider is clamped to min/max
-    expect(slider).toHaveAttribute('aria-valuenow', '10');
-  });
-
-  it('allows decimal numbers in input when step is decimal', async () => {
-    render(<Slider {...sliderProps} min={0} max={10} step={0.1} />);
     const sliderInput = screen.getByRole('textbox');
     const slider = screen.getByRole('slider');
 
@@ -134,10 +116,12 @@ describe('Slider', () => {
     await user.type(sliderInput, '3.5');
 
     expect(sliderInput).toHaveValue('3.5');
-    expect(slider).toHaveAttribute('aria-valuenow', '3.5');
+
+    // numeric value clamped
+    expect(slider).toHaveAttribute('aria-valuenow', '4');
   });
 
-  it('does not allow non-numeric characters to be typed in the text input', async () => {
+  it('number parsing ignores non-numeric characters typed in the text input', async () => {
     render(<Slider {...sliderProps} min={-10} max={10} step={0.1} />);
     const sliderInput = screen.getByRole('textbox');
     const slider = screen.getByRole('slider');
@@ -147,8 +131,24 @@ describe('Slider', () => {
     // the characters other than numbers and the first `-` and `.` are stripped as you type
     await user.type(sliderInput, 'ab-cd1ef.gh.1');
 
-    expect(sliderInput).toHaveValue('-1.1');
+    expect(sliderInput).toHaveValue('ab-cd1ef.gh.1');
     expect(slider).toHaveAttribute('aria-valuenow', '-1.1');
+  });
+
+  it('number parsing allows but ignores non-numeric characters typed in the text input when step and min are integers', async () => {
+    render(<Slider {...sliderProps} min={-500} max={500} step={5} />);
+    const sliderInput = screen.getByRole('textbox');
+    const slider = screen.getByRole('slider');
+
+    await user.clear(sliderInput);
+
+    // the characters other than numbers and the first `-` and `.` are stripped as you type
+    await user.type(sliderInput, 'ab-cd1ef1gh6ij.5kl');
+
+    expect(sliderInput).toHaveValue('ab-cd1ef1gh6ij.5kl');
+
+    // value is clamped from 116 to 115
+    expect(slider).toHaveAttribute('aria-valuenow', '-115');
   });
 
   // this is because it's a bit confusing when the value is zeroed out and you click the input that you
@@ -213,8 +213,9 @@ describe('Slider', () => {
     expect(slider).toHaveAttribute('aria-valuenow', '-1');
     expect(sliderInput).toHaveValue('-1');
 
-    // Called once for each character of "-1" and once more on blur
-    expect(mockOnChange).toHaveBeenCalledTimes(3);
+    // Called once while typing "-1" (initial is "0", then "-", which is NaN and doesn't call
+    // onChange) and once more on blur
+    expect(mockOnChange).toHaveBeenCalledTimes(2);
     expect(mockOnChange).toHaveBeenCalledWith(-1);
 
     rerender(<Slider {...props} value={-1} />);
@@ -224,7 +225,7 @@ describe('Slider', () => {
     // onChange should not be called when slider is re-rendered with a new value
     // this check ensure the state synchronization is working properly, since accidentally
     // causing onChange calls is a easy failure mode if that code is modified
-    expect(mockOnChange).toHaveBeenCalledTimes(3);
+    expect(mockOnChange).toHaveBeenCalledTimes(2);
 
     expect(slider).toHaveAttribute('aria-valuenow', '45');
     expect(sliderInput).toHaveValue('45');

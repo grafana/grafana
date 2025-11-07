@@ -12,6 +12,33 @@ import { Input } from '../Input/Input';
 import { getStyles } from './styles';
 import { SliderProps } from './types';
 
+function stripAndParseNumber(raw: string): number {
+  const str = raw.replace(/^0+/, '');
+  let decimal = false;
+  let numericBody = '';
+  for (let i = 0; i < str.length; i += 1) {
+    const char = str.charAt(i);
+
+    // take digits
+    if (/\d/.test(char)) {
+      numericBody += char;
+    }
+    // take the first period
+    if (char === '.' && !decimal) {
+      decimal = true;
+      numericBody += '.';
+    }
+    // take only a leading negative sign
+    if (char === '-' && numericBody.length === 0) {
+      numericBody = '-';
+    }
+
+    // anything else is thrown away
+  }
+  const value = Number(numericBody);
+  return value;
+}
+
 // gets rid of pesky things like 1.20000000000000002 and such, since this needs to be printed
 // nicely for people.
 function roundFloatingPointError(n: number) {
@@ -67,7 +94,7 @@ export const Slider = ({
   const SliderWithTooltip = SliderComponent;
 
   const [inputValue, setInputValue] = useState<string>((value ?? min).toString());
-  const numericValue = clampToAllowedValue(min, max, step, parseFloat(inputValue));
+  const numericValue = clampToAllowedValue(min, max, step, stripAndParseNumber(inputValue));
 
   // State synchronization. This is a hack since we have to maintain our own source of truth for the text input
   const previousValue = usePrevious(value);
@@ -102,26 +129,14 @@ export const Slider = ({
 
   const onTextInputChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      const integersOnly = Number.isInteger(step) && Number.isInteger(min);
-
       const raw = e.target.value;
-
-      if (
-        // If only integers are allowed (step and min are integers), then ignore inputs that include
-        // non-digit characters
-        (integersOnly && /[^\d\-]/.test(raw)) ||
-        // Also ignore inputs that make the value NaN, unless it is `.`, `-.`, or `-`
-        (Number.isNaN(Number(raw)) && !/^(\-\.|\.|\-|0\-)$/.test(raw))
-      ) {
-        return;
-      }
 
       // Update the raw input string to show what user typed, except the special case of `0-`, which
       // should result in just `-` as a user convenience.
       setInputValue(raw === '0-' ? '-' : raw);
 
       // Parse and validate the number
-      const parsed = parseFloat(raw);
+      const parsed = stripAndParseNumber(raw);
       if (onChange && !Number.isNaN(parsed)) {
         // Clamp the output value
         onChange(clampToAllowedValue(min, max, step, parsed));
@@ -132,7 +147,7 @@ export const Slider = ({
 
   const onTextInputBlur = useCallback(
     (e: FocusEvent<HTMLInputElement>) => {
-      const parsed = clampToAllowedValue(min, max, step, parseFloat(e.target.value));
+      const parsed = clampToAllowedValue(min, max, step, stripAndParseNumber(e.target.value));
 
       // Update both numeric and string values with the clamped result
       setInputValue(parsed.toString());
