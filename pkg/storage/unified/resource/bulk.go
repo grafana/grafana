@@ -109,7 +109,7 @@ func NewBulkSettings(md metadata.MD) (BulkSettings, error) {
 // All requests must be to the same NAMESPACE/GROUP/RESOURCE
 func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) error {
 	ctx := stream.Context()
-	ctx, span := s.tracer.Start(ctx, "resource.server.BulkProcess")
+	ctx, span := tracer.Start(ctx, "resource.server.BulkProcess")
 	defer span.End()
 
 	sendAndClose := func(rsp *resourcepb.BulkResponse) error {

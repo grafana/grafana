@@ -61,7 +61,6 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 	}
 
 	serverOptions := resource.ResourceServerOptions{
-		Tracer: opts.Tracer,
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},

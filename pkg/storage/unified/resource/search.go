@@ -127,11 +127,8 @@ type SearchBackend interface {
 	GetOpenIndexes() []NamespacedResource
 }
 
-const tracingPrexfixSearch = "unified_search."
-
 // This supports indexing+search regardless of implementation
 type searchSupport struct {
-	tracer       trace.Tracer
 	log          *slog.Logger
 	storage      StorageBackend
 	search       SearchBackend
@@ -163,13 +160,10 @@ var (
 	_ resourcepb.ManagedObjectIndexServer = (*searchSupport)(nil)
 )
 
-func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (support *searchSupport, err error) {
+func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (support *searchSupport, err error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
-	}
-	if tracer == nil {
-		return nil, fmt.Errorf("missing tracer")
 	}
 
 	if opts.InitWorkerThreads < 1 {
@@ -188,7 +182,6 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 
 	support = &searchSupport{
 		access:         access,
-		tracer:         tracer,
 		storage:        storage,
 		search:         opts.Backend,
 		log:            slog.Default().With("logger", "resource-search"),
@@ -336,7 +329,7 @@ func (s *searchSupport) CountManagedObjects(ctx context.Context, req *resourcepb
 
 // Search implements ResourceIndexServer.
 func (s *searchSupport) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Search")
+	ctx, span := tracer.Start(ctx, "resource.searchSupport.Search")
 	defer span.End()
 
 	if req.Options.Key.Namespace == "" || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
@@ -494,7 +487,7 @@ func (s *searchSupport) buildIndexes(ctx context.Context) (int, error) {
 func (s *searchSupport) init(ctx context.Context) error {
 	origCtx := ctx
 
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Init")
+	ctx, span := tracer.Start(ctx, "resource.searchSupport.init")
 	defer span.End()
 	start := time.Now().Unix()
 
@@ -608,7 +601,7 @@ func (s *searchSupport) runIndexRebuilder(ctx context.Context) {
 }
 
 func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"RebuildIndex")
+	ctx, span := tracer.Start(ctx, "resource.searchSupport.rebuildIndex")
 	defer span.End()
 
 	l := s.log.With("namespace", req.Namespace, "group", req.Group, "resource", req.Resource)
@@ -696,7 +689,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 		return nil, fmt.Errorf("search is not configured properly (missing unifiedStorageSearch feature toggle?)")
 	}
 
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"GetOrCreateIndex")
+	ctx, span := tracer.Start(ctx, "resource.searchSupport.getOrCreateIndex")
 	defer span.End()
 	span.SetAttributes(
 		attribute.String("namespace", key.Namespace),
@@ -773,7 +766,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 }
 
 func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool) (ResourceIndex, error) {
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
+	ctx, span := tracer.Start(ctx, "resource.searchSupport.build")
 	defer span.End()
 
 	span.SetAttributes(
