@@ -2,14 +2,15 @@ import { defaultsDeep } from 'lodash';
 
 import { EventBus } from '../events/types';
 import { StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
+import { PanelDataSummary, getPanelDataSummary } from '../panel/suggestions/getPanelDataSummary';
 import { Registry } from '../utils/Registry';
 
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { ScopedVars } from './ScopedVars';
 import { AlertStateInfo } from './alerts';
 import { PanelModel } from './dashboard';
-import { LoadingState, PreferredVisualisationType } from './data';
-import { DataFrame, FieldType } from './dataFrame';
+import { LoadingState } from './data';
+import { DataFrame } from './dataFrame';
 import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
 import { FieldConfigSource } from './fieldOverrides';
 import { IconName } from './icon';
@@ -261,25 +262,6 @@ export enum VisualizationSuggestionScore {
 /**
  * @alpha
  */
-export interface PanelDataSummary {
-  hasData?: boolean;
-  rowCountTotal: number;
-  rowCountMax: number;
-  frameCount: number;
-  fieldCount: number;
-  numberFieldCount: number;
-  timeFieldCount: number;
-  stringFieldCount: number;
-  hasNumberField?: boolean;
-  hasTimeField?: boolean;
-  hasStringField?: boolean;
-  /** The first frame that set's this value */
-  preferredVisualisationType?: PreferredVisualisationType;
-}
-
-/**
- * @alpha
- */
 export class VisualizationSuggestionsBuilder {
   /** Current data */
   data?: PanelData;
@@ -293,66 +275,11 @@ export class VisualizationSuggestionsBuilder {
   constructor(data?: PanelData, panel?: PanelModel) {
     this.data = data;
     this.panel = panel;
-    this.dataSummary = this.computeDataSummary();
+    this.dataSummary = getPanelDataSummary(this.data?.series);
   }
 
   getListAppender<TOptions, TFieldConfig>(defaults: VisualizationSuggestion<TOptions, TFieldConfig>) {
     return new VisualizationSuggestionsListAppender<TOptions, TFieldConfig>(this.list, defaults);
-  }
-
-  private computeDataSummary() {
-    const frames = this.data?.series || [];
-
-    let numberFieldCount = 0;
-    let timeFieldCount = 0;
-    let stringFieldCount = 0;
-    let rowCountTotal = 0;
-    let rowCountMax = 0;
-    let fieldCount = 0;
-    let preferredVisualisationType: PreferredVisualisationType | undefined;
-
-    for (const frame of frames) {
-      rowCountTotal += frame.length;
-
-      if (frame.meta?.preferredVisualisationType) {
-        preferredVisualisationType = frame.meta.preferredVisualisationType;
-      }
-
-      for (const field of frame.fields) {
-        fieldCount++;
-
-        switch (field.type) {
-          case FieldType.number:
-            numberFieldCount += 1;
-            break;
-          case FieldType.time:
-            timeFieldCount += 1;
-            break;
-          case FieldType.string:
-            stringFieldCount += 1;
-            break;
-        }
-      }
-
-      if (frame.length > rowCountMax) {
-        rowCountMax = frame.length;
-      }
-    }
-
-    return {
-      numberFieldCount,
-      timeFieldCount,
-      stringFieldCount,
-      rowCountTotal,
-      rowCountMax,
-      fieldCount,
-      preferredVisualisationType,
-      frameCount: frames.length,
-      hasData: rowCountTotal > 0,
-      hasTimeField: timeFieldCount > 0,
-      hasNumberField: numberFieldCount > 0,
-      hasStringField: stringFieldCount > 0,
-    };
   }
 
   getList() {
