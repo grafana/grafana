@@ -84,11 +84,11 @@ func (s *Service) GetUserAuthModuleLabels(ctx context.Context, userID int64) ([]
 	return result, nil
 }
 
-func (s *Service) GetUserRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
+func (s *Service) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	if len(query.UserIDs) == 0 {
 		return map[int64]string{}, nil
 	}
-	return s.authInfoStore.GetUserRecentlyUsedLabel(ctx, query)
+	return s.authInfoStore.GetUsersRecentlyUsedLabel(ctx, query)
 }
 
 func (s *Service) setAuthInfoInCache(ctx context.Context, query *login.GetAuthInfoQuery, info *login.UserAuth) error {

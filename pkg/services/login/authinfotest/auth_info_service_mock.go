@@ -92,12 +92,12 @@ func (_m *MockAuthInfoService) GetUserAuthModuleLabels(ctx context.Context, user
 	return r0, r1
 }
 
-// GetUserRecentlyUsedLabel provides a mock function with given fields: ctx, query
-func (_m *MockAuthInfoService) GetUserRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
+// GetUsersRecentlyUsedLabel provides a mock function with given fields: ctx, query
+func (_m *MockAuthInfoService) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	ret := _m.Called(ctx, query)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetUserRecentlyUsedLabel")
+		panic("no return value specified for GetUsersRecentlyUsedLabel")
 	}
 
 	var r0 map[int64]string

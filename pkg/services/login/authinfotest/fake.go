@@ -25,7 +25,7 @@ func (a *FakeService) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQ
 	return a.ExpectedUserAuth, a.ExpectedError
 }
 
-func (a *FakeService) GetUserRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
+func (a *FakeService) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	return a.ExpectedRecentlyUsedLabel, a.ExpectedError
 }
 

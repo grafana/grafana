@@ -186,8 +186,8 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		// By default no auth labels for fake service
 	}, mock)
 
-	// Multiple historical auth labels should appear ordered by recency without duplicates
-	loggedInUserScenario(t, "When calling GET on with multiple auth labels", "/api/users/lookup", "/api/users/lookup", func(sc *scenarioContext) {
+	// Multiple historical auth labels should appear ordered by recency
+	loggedInUserScenario(t, "When calling GET returns with multiple auth labels", "/api/users/lookup", "/api/users/lookup", func(sc *scenarioContext) {
 		createUserCmd := user.CreateUserCommand{
 			Email:   fmt.Sprint("multi", "@test.com"),
 			Name:    "multi",
@@ -220,8 +220,6 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
-		// Expect labels mapped & de-duplicated preserving first occurrences order: oauth -> LDAP -> SAML (labels via GetAuthProviderLabel)
-		// Verify at least length and order as strings returned by login.GetAuthProviderLabel
 		expected := []string{login.GetAuthProviderLabel(login.OktaAuthModule), login.GetAuthProviderLabel(login.LDAPAuthModule), login.GetAuthProviderLabel(login.SAMLAuthModule)}
 		require.Equal(t, expected, resp.AuthLabels)
 	}, mock)

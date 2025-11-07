@@ -8,7 +8,7 @@ import (
 //go:generate mockery --name AuthInfoService --structname MockAuthInfoService --outpkg authinfotest --filename auth_info_service_mock.go --output ./authinfotest/
 type AuthInfoService interface {
 	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) (*UserAuth, error)
-	GetUserRecentlyUsedLabel(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
+	GetUsersRecentlyUsedLabel(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
 	GetUserAuthModuleLabels(ctx context.Context, userID int64) ([]string, error)
 	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
@@ -17,7 +17,7 @@ type AuthInfoService interface {
 
 type Store interface {
 	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) (*UserAuth, error)
-	GetUserRecentlyUsedLabel(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
+	GetUsersRecentlyUsedLabel(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
 	GetUserAuthModules(ctx context.Context, userID int64) ([]string, error)
 	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
