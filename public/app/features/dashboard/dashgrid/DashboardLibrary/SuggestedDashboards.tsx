@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
@@ -126,21 +126,6 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
         }
       }
 
-      // Track analytics
-      if (mixed.length > 0) {
-        const contentKinds: Array<'datasource_dashboard' | 'community_dashboard'> = [
-          ...new Set(mixed.map((m) => (m.type === 'provisioned' ? 'datasource_dashboard' : 'community_dashboard'))),
-        ];
-
-        DashboardLibraryInteractions.loaded({
-          numberOfItems: mixed.length,
-          contentKinds,
-          datasourceTypes: [ds.type],
-          sourceEntryPoint: 'datasource_page',
-          eventLocation: 'empty_dashboard',
-        });
-      }
-
       // Determine if there are more dashboards available beyond what we're showing
       // Show "View all" if: more than 1 provisioned exists OR we got the full page size of community dashboards
       const hasMoreDashboards = provisioned.length > 1 || community.length >= SUGGESTED_COMMUNITY_PAGE_SIZE;
@@ -164,12 +149,31 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
     return hasProvisioned ? 'datasource' : 'community';
   }, [result, loading]);
 
+  // Track analytics only once on first successful load
+  const hasTrackedRef = useRef(false);
+  useEffect(() => {
+    if (!loading && !hasTrackedRef.current && result && result.dashboards.length > 0) {
+      const contentKinds: Array<'datasource_dashboard' | 'community_dashboard'> = [
+        ...new Set(
+          result.dashboards.map((m) => (m.type === 'provisioned' ? 'datasource_dashboard' : 'community_dashboard'))
+        ),
+      ];
+      DashboardLibraryInteractions.loaded({
+        numberOfItems: result.dashboards.length,
+        contentKinds,
+        datasourceTypes: [datasourceType],
+        sourceEntryPoint: 'datasource_page',
+        eventLocation: 'empty_dashboard',
+      });
+      hasTrackedRef.current = true;
+    }
+  }, [loading, result, datasourceType]);
+
   const onModalDismiss = () => {
     // Remove modal-related query params while keeping datasourceUid
     setSearchParams((params) => {
       params.delete('dashboardLibraryModal');
       params.delete('dashboardLibraryTab');
-      params.delete('page');
       return params;
     });
     setMappingContext(null);

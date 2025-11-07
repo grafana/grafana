@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
@@ -45,19 +45,23 @@ export const DashboardLibrarySection = () => {
     }
 
     const dashboards = await fetchProvisionedDashboards(ds.type);
+    return dashboards;
+  }, [datasourceUid]);
 
-    if (dashboards.length > 0) {
+  // Track analytics only once on first successful load
+  const hasTrackedRef = useRef(false);
+  useEffect(() => {
+    if (!loading && !hasTrackedRef.current && templateDashboards && templateDashboards.length > 0) {
       DashboardLibraryInteractions.loaded({
-        numberOfItems: dashboards.length,
+        numberOfItems: templateDashboards.length,
         contentKinds: ['datasource_dashboard'],
-        datasourceTypes: [ds.type],
+        datasourceTypes: [datasourceType],
         sourceEntryPoint: 'datasource_page',
         eventLocation: 'suggested_dashboards_modal_provisioned_tab',
       });
+      hasTrackedRef.current = true;
     }
-
-    return dashboards;
-  }, [datasourceUid]);
+  }, [loading, templateDashboards, datasourceType]);
 
   // Calculate pagination
   const totalDashboards = templateDashboards?.length || 0;

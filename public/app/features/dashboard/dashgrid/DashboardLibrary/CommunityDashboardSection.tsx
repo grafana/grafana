@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync, useDebounce } from 'react-use';
 
@@ -36,9 +36,9 @@ const INCLUDE_LOGO = true;
 const INCLUDE_SCREENSHOTS = true;
 
 export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Props) => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
-  const currentPage = Number(searchParams.get('page')) || 1;
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
 
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -53,12 +53,9 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   // Reset to page 1 when debounced search query changes
   useEffect(() => {
     if (debouncedSearchQuery) {
-      setSearchParams((params) => {
-        params.set('page', '1');
-        return params;
-      });
+      setCurrentPage(1);
     }
-  }, [debouncedSearchQuery, setSearchParams]);
+  }, [debouncedSearchQuery]);
 
   const {
     value: response,
@@ -86,17 +83,6 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         filter: debouncedSearchQuery.trim() || undefined,
       });
 
-      // Track analytics on first load
-      if (currentPage === 1 && apiResponse.dashboards.length > 0) {
-        DashboardLibraryInteractions.loaded({
-          numberOfItems: apiResponse.dashboards.length,
-          contentKinds: ['community_dashboard'],
-          datasourceTypes: [ds.type],
-          sourceEntryPoint: 'datasource_page',
-          eventLocation: 'suggested_dashboards_modal_community_tab',
-        });
-      }
-
       return {
         dashboards: apiResponse.dashboards,
         pages: apiResponse.pages,
@@ -107,6 +93,27 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       throw err;
     }
   }, [datasourceUid, currentPage, debouncedSearchQuery]);
+
+  // Track analytics only once on first successful load
+  const hasTrackedRef = useRef(false);
+  useEffect(() => {
+    if (
+      !loading &&
+      !hasTrackedRef.current &&
+      currentPage === 1 &&
+      response?.dashboards &&
+      response.dashboards.length > 0
+    ) {
+      DashboardLibraryInteractions.loaded({
+        numberOfItems: response.dashboards.length,
+        contentKinds: ['community_dashboard'],
+        datasourceTypes: [response.datasourceType],
+        sourceEntryPoint: 'datasource_page',
+        eventLocation: 'suggested_dashboards_modal_community_tab',
+      });
+      hasTrackedRef.current = true;
+    }
+  }, [loading, currentPage, response]);
 
   const styles = useStyles2(getStyles);
 
@@ -209,15 +216,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                 Failed to load community dashboards. Please try again.
               </Trans>
             </Alert>
-            <Button
-              variant="secondary"
-              onClick={() =>
-                setSearchParams((params) => {
-                  params.set('page', '1');
-                  return params;
-                })
-              }
-            >
+            <Button variant="secondary" onClick={() => setCurrentPage(1)}>
               <Trans i18nKey="dashboard-library.retry">Retry</Trans>
             </Button>
           </Stack>
@@ -286,16 +285,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       </div>
       {totalPages > 1 && (
         <div className={styles.paginationWrapper}>
-          <Pagination
-            currentPage={currentPage}
-            numberOfPages={totalPages}
-            onNavigate={(page) =>
-              setSearchParams((params) => {
-                params.set('page', String(page));
-                return params;
-              })
-            }
-          />
+          <Pagination currentPage={currentPage} numberOfPages={totalPages} onNavigate={setCurrentPage} />
         </div>
       )}
     </Stack>
