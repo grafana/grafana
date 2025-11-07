@@ -79,7 +79,6 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
         app={rest.app || CoreApp.Unknown}
         displayedFields={[]}
         dedupStrategy={dedupStrategy}
-        enableLogDetails={false}
         filterLevels={filterLevels}
         fontSize="default"
         logOptionsStorageKey={logOptionsStorageKey}

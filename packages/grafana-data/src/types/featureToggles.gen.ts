@@ -560,9 +560,13 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
-  * Enable suggested dashboards when creating new dashboards
+  * Enable dashboard library experiments that are production ready
   */
   dashboardLibrary?: boolean;
+  /**
+  * Enable suggested dashboards when creating new dashboards
+  */
+  suggestedDashboards?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
@@ -1241,4 +1245,9 @@ export interface FeatureToggles {
   * Enable template dashboards
   */
   dashboardTemplates?: boolean;
+  /**
+  * Enables app platform API for annotations
+  * @default false
+  */
+  kubernetesAnnotations?: boolean;
 }
