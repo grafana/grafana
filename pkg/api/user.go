@@ -131,7 +131,7 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *contextmodel.ReqContext) response
 	}
 	// Populate AuthLabels using all historically used auth modules ordered by most recent.
 	if hs.authInfoService != nil {
-		if modules, err := hs.authInfoService.GetUserAuthModules(c.Req.Context(), usr.ID); err == nil {
+		if modules, err := hs.authInfoService.GetUserAuthModuleLabels(c.Req.Context(), usr.ID); err == nil {
 			seen := make(map[string]struct{})
 			for _, m := range modules {
 				if m == "" {

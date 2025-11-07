@@ -82,7 +82,7 @@ func (s *Store) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) 
 	return userAuth, nil
 }
 
-func (s *Store) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
+func (s *Store) GetUserRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	userAuths := []login.UserAuth{}
 	params := make([]interface{}, 0, len(query.UserIDs))
 	for _, id := range query.UserIDs {

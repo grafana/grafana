@@ -67,17 +67,28 @@ func (s *Service) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery
 	return authInfo, nil
 }
 
-// GetUserAuthModules returns all auth modules for a user ordered by most recent first.
-func (s *Service) GetUserAuthModules(ctx context.Context, userID int64) ([]string, error) {
-	// No caching for list variant (could be many & rarely needed)
-	return s.authInfoStore.GetUserAuthModules(ctx, userID)
+// GetUserAuthModuleLabels returns all auth modules for a user ordered by most recent first.
+func (s *Service) GetUserAuthModuleLabels(ctx context.Context, userID int64) ([]string, error) {
+	modules, err := s.authInfoStore.GetUserAuthModules(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]string, 0, len(modules))
+	// modules should be unique and should not contain empty strings
+	for _, m := range modules {
+		label := login.GetAuthProviderLabel(m)
+		result = append(result, label)
+	}
+
+	return result, nil
 }
 
-func (s *Service) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
+func (s *Service) GetUserRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	if len(query.UserIDs) == 0 {
 		return map[int64]string{}, nil
 	}
-	return s.authInfoStore.GetUserLabels(ctx, query)
+	return s.authInfoStore.GetUserRecentlyUsedLabel(ctx, query)
 }
 
 func (s *Service) setAuthInfoInCache(ctx context.Context, query *login.GetAuthInfoQuery, info *login.UserAuth) error {

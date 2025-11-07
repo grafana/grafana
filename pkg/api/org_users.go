@@ -314,7 +314,7 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 		filteredUsers = append(filteredUsers, user)
 	}
 
-	modules, err := hs.authInfoService.GetUserLabels(c.Req.Context(), login.GetUserLabelsQuery{
+	modules, err := hs.authInfoService.GetUserRecentlyUsedLabel(c.Req.Context(), login.GetUserLabelsQuery{
 		UserIDs: authLabelsUserIDs,
 	})
 

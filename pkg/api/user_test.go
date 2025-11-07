@@ -186,8 +186,8 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		// By default no auth labels for fake service
 	}, mock)
 
-	// New test: multiple historical auth modules should appear ordered by recency without duplicates
-	loggedInUserScenario(t, "When calling GET on with multiple auth modules", "/api/users/lookup", "/api/users/lookup", func(sc *scenarioContext) {
+	// Multiple historical auth labels should appear ordered by recency without duplicates
+	loggedInUserScenario(t, "When calling GET on with multiple auth labels", "/api/users/lookup", "/api/users/lookup", func(sc *scenarioContext) {
 		createUserCmd := user.CreateUserCommand{
 			Email:   fmt.Sprint("multi", "@test.com"),
 			Name:    "multi",
@@ -211,9 +211,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		sc.userService = userMock
 		hs.userService = userMock
 
-		// Provide authInfoService fake with expected modules (descending recency already provided by store logic).
-		// We'll simulate modules: oauth (latest), ldap (older), oauth (duplicate older), saml (oldest)
-		fakeAuth := &authinfotest.FakeService{ExpectedModules: []string{"oauth", "ldap", "oauth", "saml"}}
+		fakeAuth := &authinfotest.FakeService{ExpectedAuthModuleLabels: []string{login.OktaAuthModule, login.LDAPAuthModule, login.SAMLAuthModule}}
 		hs.authInfoService = fakeAuth
 
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": usr.Email}).exec()
@@ -224,7 +222,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.NoError(t, err)
 		// Expect labels mapped & de-duplicated preserving first occurrences order: oauth -> LDAP -> SAML (labels via GetAuthProviderLabel)
 		// Verify at least length and order as strings returned by login.GetAuthProviderLabel
-		expected := []string{login.GetAuthProviderLabel("oauth"), login.GetAuthProviderLabel("ldap"), login.GetAuthProviderLabel("saml")}
+		expected := []string{login.GetAuthProviderLabel(login.OktaAuthModule), login.GetAuthProviderLabel(login.LDAPAuthModule), login.GetAuthProviderLabel(login.SAMLAuthModule)}
 		require.Equal(t, expected, resp.AuthLabels)
 	}, mock)
 
