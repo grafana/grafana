@@ -43,9 +43,10 @@ func getEnv(key, defaultValue string) string {
 }
 
 type Config struct {
-	Scopes      map[string]ScopeConfig      `yaml:"scopes"`
-	Tree        map[string]TreeNode         `yaml:"tree"`
-	Navigations map[string]NavigationConfig `yaml:"navigations"`
+	Scopes           map[string]ScopeConfig           `yaml:"scopes"`
+	Tree             map[string]TreeNode              `yaml:"tree"`
+	Navigations      map[string]NavigationConfig      `yaml:"navigations"`
+	NavigationTree   []NavigationTreeNode             `yaml:"navigationTree"`
 }
 
 // ScopeConfig is used for YAML parsing - converts to v0alpha1.ScopeSpec
@@ -64,16 +65,32 @@ type ScopeFilterConfig struct {
 
 // TreeNode is used for YAML parsing - converts to v0alpha1.ScopeNodeSpec
 type TreeNode struct {
-	Title    string              `yaml:"title"`
-	NodeType string              `yaml:"nodeType"`
-	LinkID   string              `yaml:"linkId,omitempty"`
-	LinkType string              `yaml:"linkType,omitempty"`
-	Children map[string]TreeNode `yaml:"children,omitempty"`
+	Title              string              `yaml:"title"`
+	SubTitle           string              `yaml:"subTitle,omitempty"`
+	NodeType           string              `yaml:"nodeType"`
+	LinkID             string              `yaml:"linkId,omitempty"`
+	LinkType           string              `yaml:"linkType,omitempty"`
+	DisableMultiSelect bool                `yaml:"disableMultiSelect,omitempty"`
+	Children           map[string]TreeNode `yaml:"children,omitempty"`
 }
 
 type NavigationConfig struct {
-	URL   string `yaml:"url"` // URL path (e.g., /d/abc123 or /explore)
-	Scope string `yaml:"scope"`
+	URL      string   `yaml:"url"`      // URL path (e.g., /d/abc123 or /explore)
+	Scope    string   `yaml:"scope"`    // Required scope
+	SubScope string   `yaml:"subScope"` // Optional subScope for hierarchical navigation
+	Title    string   `yaml:"title"`   // Display title
+	Groups   []string `yaml:"groups"`   // Optional groups for categorization
+}
+
+// NavigationTreeNode represents a node in the navigation tree structure
+type NavigationTreeNode struct {
+	Name     string                `yaml:"name"`
+	Title    string                `yaml:"title"`
+	URL      string                `yaml:"url"`
+	Scope    string                `yaml:"scope"`
+	SubScope string                `yaml:"subScope,omitempty"`
+	Groups   []string              `yaml:"groups,omitempty"`
+	Children []NavigationTreeNode  `yaml:"children,omitempty"`
 }
 
 // Helper function to convert ScopeFilterConfig to v0alpha1.ScopeFilter
@@ -156,6 +173,41 @@ func (c *Client) makeRequest(method, endpoint string, body []byte) error {
 	return nil
 }
 
+func (c *Client) getScopeNavigation(name string) (*v0alpha1.ScopeNavigation, error) {
+	url := fmt.Sprintf("%s/apis/%s/namespaces/%s/scopenavigations/%s", c.baseURL, apiVersion, c.namespace, name)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.SetBasicAuth(strings.Split(c.auth, ":")[0], strings.Split(c.auth, ":")[1])
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API request failed: HTTP %d - %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var navigation v0alpha1.ScopeNavigation
+	if err := json.Unmarshal(bodyBytes, &navigation); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return &navigation, nil
+}
+
 func (c *Client) createScope(name string, cfg ScopeConfig) error {
 	prefixedName := prefix + "-" + name
 
@@ -206,8 +258,9 @@ func (c *Client) createScopeNode(name string, node TreeNode, parentName string) 
 
 	spec := v0alpha1.ScopeNodeSpec{
 		Title:              node.Title,
+		SubTitle:           node.SubTitle,
 		NodeType:           nodeType,
-		DisableMultiSelect: false,
+		DisableMultiSelect: node.DisableMultiSelect,
 	}
 
 	if prefixedParent != "" {
@@ -241,15 +294,32 @@ func (c *Client) createScopeNode(name string, node TreeNode, parentName string) 
 
 func (c *Client) createScopeNavigation(name string, nav NavigationConfig) error {
 	prefixedName := prefix + "-" + name
-	prefixedScope := prefix + "-" + nav.Scope
 
 	if nav.URL == "" {
 		return fmt.Errorf("navigation %s must have 'url' specified", name)
 	}
 
+	if nav.Scope == "" {
+		return fmt.Errorf("navigation %s must have 'scope' specified", name)
+	}
+
+	prefixedScope := prefix + "-" + nav.Scope
+
 	spec := v0alpha1.ScopeNavigationSpec{
 		URL:   nav.URL,
 		Scope: prefixedScope,
+	}
+
+	if nav.SubScope != "" {
+		prefixedSubScope := prefix + "-" + nav.SubScope
+		spec.SubScope = prefixedSubScope
+	}
+
+	status := v0alpha1.ScopeNavigationStatus{
+		Title: nav.Title,
+	}
+	if len(nav.Groups) > 0 {
+		status.Groups = nav.Groups
 	}
 
 	resource := v0alpha1.ScopeNavigation{
@@ -269,7 +339,99 @@ func (c *Client) createScopeNavigation(name string, nav NavigationConfig) error 
 	}
 
 	fmt.Printf("✓ Creating scope navigation: %s\n", prefixedName)
-	return c.makeRequest("POST", "/scopenavigations", body)
+	if err := c.makeRequest("POST", "/scopenavigations", body); err != nil {
+		return err
+	}
+
+	// Update status in a second request (status is a subresource)
+	if nav.Title != "" || len(nav.Groups) > 0 {
+		// Get the created resource to retrieve its resourceVersion and existing spec
+		createdNav, err := c.getScopeNavigation(prefixedName)
+		if err != nil {
+			return fmt.Errorf("failed to get created navigation: %w", err)
+		}
+
+		statusResource := v0alpha1.ScopeNavigation{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: apiVersion,
+				Kind:       "ScopeNavigation",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            prefixedName,
+				ResourceVersion: createdNav.ObjectMeta.ResourceVersion,
+			},
+			Spec:   createdNav.Spec, // Include existing spec to prevent it from being cleared
+			Status: status,
+		}
+
+		statusBody, err := json.Marshal(statusResource)
+		if err != nil {
+			return fmt.Errorf("failed to marshal scope navigation status: %w", err)
+		}
+
+		fmt.Printf("  Updating status for: %s\n", prefixedName)
+		return c.makeRequest("PUT", fmt.Sprintf("/scopenavigations/%s/status", prefixedName), statusBody)
+	}
+
+	return nil
+}
+
+// NavigationWithName pairs a navigation config with its name and title
+type NavigationWithName struct {
+	Name  string
+	Title string
+	Nav   NavigationConfig
+}
+
+// Convert navigation tree to flat navigations (similar to mock's treeToNavigations)
+func treeToNavigations(node NavigationTreeNode, parentPath []string, dashboardCounter *int) []NavigationWithName {
+	navigations := []NavigationWithName{}
+	currentPath := append(parentPath, node.Name)
+
+	// Generate URL if not provided (cycle through dash-1, dash-2, etc.)
+	url := node.URL
+	if url == "" {
+		*dashboardCounter++
+		url = fmt.Sprintf("/d/dash-%d", *dashboardCounter)
+	}
+
+	// Create navigation for this node
+	nav := NavigationConfig{
+		URL:   url,
+		Scope: node.Scope,
+		Title: node.Title,
+	}
+	if node.SubScope != "" {
+		nav.SubScope = node.SubScope
+	}
+	if len(node.Groups) > 0 {
+		nav.Groups = node.Groups
+	}
+	navigations = append(navigations, NavigationWithName{
+		Name:  node.Name,
+		Title: node.Title,
+		Nav:   nav,
+	})
+
+	// Process children - they inherit the parent's subScope as their scope, or use parent's scope if no subScope
+	if len(node.Children) > 0 {
+		for _, child := range node.Children {
+			// Children inherit the parent's subScope as their scope, or use parent's scope if no subScope
+			childScope := node.SubScope
+			if childScope == "" {
+				childScope = node.Scope
+			}
+			// Override with child's scope if explicitly set
+			if child.Scope != "" {
+				childScope = child.Scope
+			} else {
+				child.Scope = childScope
+			}
+			navigations = append(navigations, treeToNavigations(child, currentPath, dashboardCounter)...)
+		}
+	}
+
+	return navigations
 }
 
 func (c *Client) createTreeNodes(children map[string]TreeNode, parentName string) error {
@@ -418,6 +580,27 @@ func main() {
 	}
 
 	// Create scope navigations
+	// First, process navigation tree if provided
+	if len(config.NavigationTree) > 0 {
+		fmt.Println("Creating scope navigations from tree...")
+		dashboardCounter := 0
+		for _, rootNode := range config.NavigationTree {
+			flatNavigations := treeToNavigations(rootNode, []string{}, &dashboardCounter)
+			for _, navWithName := range flatNavigations {
+				// Use the title from navWithName if Nav.Title is empty
+				if navWithName.Nav.Title == "" && navWithName.Title != "" {
+					navWithName.Nav.Title = navWithName.Title
+				}
+				if err := client.createScopeNavigation(navWithName.Name, navWithName.Nav); err != nil {
+					fmt.Fprintf(os.Stderr, "Error creating scope navigation %s: %v\n", navWithName.Name, err)
+					os.Exit(1)
+				}
+			}
+		}
+		fmt.Println()
+	}
+
+	// Also support flat navigations format for backward compatibility
 	if len(config.Navigations) > 0 {
 		fmt.Println("Creating scope navigations...")
 		for name, nav := range config.Navigations {
