@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 
+import { GrafanaTheme2 } from '@grafana/data/';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Card, Grid, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
@@ -92,7 +93,7 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
   );
 }
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     spanTwo: css({
       gridColumn: 'span 2',
@@ -101,6 +102,7 @@ const getStyles = () => {
       gridColumn: '1 / -1',
       display: 'grid',
       gridTemplateColumns: 'subgrid',
+      gap: theme.spacing(1),
     }),
     historicalDataOverlay: css({
       opacity: 0.6,
