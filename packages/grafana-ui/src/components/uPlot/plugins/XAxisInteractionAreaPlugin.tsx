@@ -7,33 +7,59 @@ import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 const MIN_PAN_DIST = 5;
 
 /**
+ * Calculates the new time range after a pan operation.
+ *
+ * @returns Object containing the new from and to time values
+ * @internal - exported for testing only
+ */
+export const calculatePanRange = (
+  timeFrom: number,
+  timeTo: number,
+  dragPixels: number,
+  plotWidth: number
+): { from: number; to: number } => {
+  const unitsPerPx = (timeTo - timeFrom) / (plotWidth / uPlot.pxRatio);
+  const timeShift = dragPixels * unitsPerPx;
+
+  return {
+    from: timeFrom - timeShift,
+    to: timeTo - timeShift,
+  };
+};
+
+/**
  * Enables panning the time range by click and dragging x-axis labels with the mouse.
  * Provides visual feedback (grab/grabbing cursor) and real-time grid updates during drag.
+ *
+ * @returns Cleanup function to remove event listeners
  * @internal - exported for testing only
  */
 export const setupXAxisPan = (
   u: uPlot,
   config: UPlotConfigBuilder,
   queryZoom: (range: { from: number; to: number }) => void
-) => {
+): (() => void) => {
   let xAxes = u.root.querySelectorAll('.u-axis');
   let xAxis = xAxes[0];
 
   if (!xAxis || !(xAxis instanceof HTMLElement)) {
-    return;
+    return () => {};
   }
 
   const xAxisEl = xAxis;
 
-  xAxisEl.addEventListener('mouseenter', () => {
+  let activeMoveListener: ((e: MouseEvent) => void) | null = null;
+  let activeUpListener: ((e: MouseEvent) => void) | null = null;
+
+  const handleMouseEnter = () => {
     xAxisEl.style.cursor = 'grab';
-  });
+  };
 
-  xAxisEl.addEventListener('mouseleave', () => {
+  const handleMouseLeave = () => {
     xAxisEl.style.cursor = '';
-  });
+  };
 
-  xAxisEl.addEventListener('mousedown', (e: Event) => {
+  const handleMouseDown = (e: Event) => {
     if (!(e instanceof MouseEvent)) {
       return;
     }
@@ -47,50 +73,65 @@ export const setupXAxisPan = (
     let startX = e.clientX - rect.left;
     let startMin = xScale.min!;
     let startMax = xScale.max!;
-    let unitsPerPx = (startMax - startMin) / (u.bbox.width / uPlot.pxRatio);
 
-    let onMove = (e: MouseEvent) => {
+    const onMove = (e: MouseEvent) => {
       e.preventDefault();
 
       let currentX = e.clientX - rect.left;
-      let dx = currentX - startX;
-      let shiftBy = dx * unitsPerPx;
+      let dragPixels = currentX - startX;
 
-      let panMin = startMin - shiftBy;
-      let panMax = startMax - shiftBy;
+      const { from, to } = calculatePanRange(startMin, startMax, dragPixels, u.bbox.width);
 
-      config.setState({ isPanning: true, min: panMin, max: panMax });
+      config.setState({ isPanning: true, min: from, max: to });
 
       u.setScale('x', {
-        min: panMin,
-        max: panMax,
+        min: from,
+        max: to,
       });
     };
 
-    let onUp = (e: MouseEvent) => {
+    const onUp = (e: MouseEvent) => {
       let endX = e.clientX - rect.left;
-      let dx = endX - startX;
+      let dragPixels = endX - startX;
 
       xAxisEl.style.cursor = 'grab';
 
       config.setState({ isPanning: false });
 
-      if (Math.abs(dx) >= MIN_PAN_DIST) {
-        let shiftBy = dx * unitsPerPx;
-
-        queryZoom({
-          from: startMin - shiftBy,
-          to: startMax - shiftBy,
-        });
+      if (Math.abs(dragPixels) >= MIN_PAN_DIST) {
+        const newRange = calculatePanRange(startMin, startMax, dragPixels, u.bbox.width);
+        queryZoom(newRange);
       }
 
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
+      activeMoveListener = null;
+      activeUpListener = null;
     };
+
+    activeMoveListener = onMove;
+    activeUpListener = onUp;
 
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
-  });
+  };
+
+  xAxisEl.addEventListener('mouseenter', handleMouseEnter);
+  xAxisEl.addEventListener('mouseleave', handleMouseLeave);
+  xAxisEl.addEventListener('mousedown', handleMouseDown);
+
+  return () => {
+    xAxisEl.removeEventListener('mouseenter', handleMouseEnter);
+    xAxisEl.removeEventListener('mouseleave', handleMouseLeave);
+    xAxisEl.removeEventListener('mousedown', handleMouseDown);
+
+    if (activeMoveListener) {
+      document.removeEventListener('mousemove', activeMoveListener);
+    }
+    if (activeUpListener) {
+      document.removeEventListener('mouseup', activeUpListener);
+    }
+  };
 };
 
 export interface XAxisInteractionAreaPluginProps {
@@ -100,14 +141,23 @@ export interface XAxisInteractionAreaPluginProps {
 
 /**
  * Plugin for handling x-axis area interactions, such as time range panning.
+ * Properly manages event listener lifecycle to prevent memory leaks.
  */
 export const XAxisInteractionAreaPlugin = ({ config, queryZoom }: XAxisInteractionAreaPluginProps) => {
   useLayoutEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     config.addHook('init', (u) => {
       if (queryZoom != null && getFeatureToggle('timeRangePan')) {
-        setupXAxisPan(u, config, queryZoom);
+        cleanup = setupXAxisPan(u, config, queryZoom);
       }
     });
+
+    return () => {
+      if (cleanup) {
+        cleanup();
+      }
+    };
   }, [config, queryZoom]);
 
   return null;

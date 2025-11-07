@@ -2,7 +2,7 @@ import uPlot from 'uplot';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
-import { setupXAxisPan } from './XAxisInteractionAreaPlugin';
+import { calculatePanRange, setupXAxisPan } from './XAxisInteractionAreaPlugin';
 
 const asUPlot = (partial: Partial<uPlot>) => partial as uPlot;
 const asConfigBuilder = (partial: Partial<UPlotConfigBuilder>) => partial as UPlotConfigBuilder;
@@ -49,6 +49,28 @@ describe('XAxisInteractionAreaPlugin', () => {
     jest.clearAllMocks();
   });
 
+  describe('calculatePanRange', () => {
+    it('should calculate pan range correctly for positive and negative drag', () => {
+      const timeFrom = 1000;
+      const timeTo = 2000;
+      const plotWidth = 800;
+
+      const dragRight100px = calculatePanRange(timeFrom, timeTo, 100, plotWidth);
+      expect(dragRight100px.from).toBeCloseTo(875, 1);
+      expect(dragRight100px.to).toBeCloseTo(1875, 1);
+
+      const dragLeft100px = calculatePanRange(timeFrom, timeTo, -100, plotWidth);
+      expect(dragLeft100px.from).toBeCloseTo(1125, 1);
+      expect(dragLeft100px.to).toBeCloseTo(2125, 1);
+    });
+
+    it('should return original range when not dragged', () => {
+      const noDrag = calculatePanRange(1000, 2000, 0, 800);
+      expect(noDrag.from).toBe(1000);
+      expect(noDrag.to).toBe(2000);
+    });
+  });
+
   describe('setupXAxisPan', () => {
     let mockQueryZoom: jest.Mock;
     let mockConfigBuilder: ReturnType<typeof createMockConfigBuilder>;
@@ -68,94 +90,70 @@ describe('XAxisInteractionAreaPlugin', () => {
       jest.clearAllMocks();
     });
 
-    describe('Initialization', () => {
-      it('should set up x-axis panning when called', () => {
-        setupXAxisPan(asUPlot(mockUPlot), asConfigBuilder(mockConfigBuilder), mockQueryZoom);
+    it('should handle missing x-axis element gracefully', () => {
+      const emptyRoot = document.createElement('div');
+      const emptyUPlot = { ...mockUPlot, root: emptyRoot };
 
-        xAxisElement.dispatchEvent(new MouseEvent('mouseenter'));
-        expect(xAxisElement).toHaveStyle({ cursor: 'grab' });
-      });
-
-      it('should handle missing x-axis element gracefully', () => {
-        const emptyRoot = document.createElement('div');
-        const emptyUPlot = { ...mockUPlot, root: emptyRoot };
-
-        expect(() =>
-          setupXAxisPan(asUPlot(emptyUPlot), asConfigBuilder(mockConfigBuilder), mockQueryZoom)
-        ).not.toThrow();
-      });
+      expect(() => setupXAxisPan(asUPlot(emptyUPlot), asConfigBuilder(mockConfigBuilder), mockQueryZoom)).not.toThrow();
     });
 
-    describe('Cursor States', () => {
-      it('should transition through hover, drag, and leave states', () => {
-        setupXAxisPan(asUPlot(mockUPlot), asConfigBuilder(mockConfigBuilder), mockQueryZoom);
+    it('should show grab cursor on hover and grabbing during drag', () => {
+      setupXAxisPan(asUPlot(mockUPlot), asConfigBuilder(mockConfigBuilder), mockQueryZoom);
 
-        xAxisElement.dispatchEvent(new MouseEvent('mouseenter'));
-        expect(xAxisElement).toHaveStyle({ cursor: 'grab' });
+      xAxisElement.dispatchEvent(new MouseEvent('mouseenter'));
+      expect(xAxisElement).toHaveStyle({ cursor: 'grab' });
 
-        xAxisElement.dispatchEvent(new MouseEvent('mousedown', { clientX: 400, bubbles: true }));
-        expect(xAxisElement).toHaveStyle({ cursor: 'grabbing' });
+      xAxisElement.dispatchEvent(new MouseEvent('mousedown', { clientX: 400, bubbles: true }));
+      expect(xAxisElement).toHaveStyle({ cursor: 'grabbing' });
 
-        document.dispatchEvent(new MouseEvent('mouseup', { clientX: 350, bubbles: true }));
-        expect(xAxisElement).toHaveStyle({ cursor: 'grab' });
-
-        xAxisElement.dispatchEvent(new MouseEvent('mouseleave'));
-        expect(xAxisElement).toHaveStyle({ cursor: '' });
-      });
+      document.dispatchEvent(new MouseEvent('mouseup', { clientX: 350, bubbles: true }));
+      expect(xAxisElement).toHaveStyle({ cursor: 'grab' });
     });
 
-    describe('Drag Interaction', () => {
-      it('should update scale in real-time and call queryZoom on completion', () => {
-        setupXAxisPan(asUPlot(mockUPlot), asConfigBuilder(mockConfigBuilder), mockQueryZoom);
+    it('should update scale during drag and call queryZoom on completion', () => {
+      setupXAxisPan(asUPlot(mockUPlot), asConfigBuilder(mockConfigBuilder), mockQueryZoom);
 
-        xAxisElement.dispatchEvent(new MouseEvent('mousedown', { clientX: 400, bubbles: true }));
-        document.dispatchEvent(new MouseEvent('mousemove', { clientX: 350, bubbles: true }));
+      xAxisElement.dispatchEvent(new MouseEvent('mousedown', { clientX: 400, bubbles: true }));
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 350, bubbles: true }));
 
-        expect(mockUPlot.setScale).toHaveBeenCalledWith(
-          'x',
-          expect.objectContaining({
-            min: expect.any(Number),
-            max: expect.any(Number),
-          })
-        );
+      const expectedRange = calculatePanRange(1000, 2000, -50, 800);
 
-        document.dispatchEvent(new MouseEvent('mouseup', { clientX: 350, bubbles: true }));
-
-        expect(mockQueryZoom).toHaveBeenCalledWith(
-          expect.objectContaining({
-            from: expect.any(Number),
-            to: expect.any(Number),
-          })
-        );
+      expect(mockUPlot.setScale).toHaveBeenCalledWith('x', {
+        min: expectedRange.from,
+        max: expectedRange.to,
       });
 
-      it('should not call queryZoom when drag distance is below MIN_ZOOM_DIST threshold', () => {
-        setupXAxisPan(asUPlot(mockUPlot), asConfigBuilder(mockConfigBuilder), mockQueryZoom);
+      document.dispatchEvent(new MouseEvent('mouseup', { clientX: 350, bubbles: true }));
 
-        xAxisElement.dispatchEvent(new MouseEvent('mousedown', { clientX: 400, bubbles: true }));
-        document.dispatchEvent(new MouseEvent('mouseup', { clientX: 402, bubbles: true }));
-
-        expect(mockQueryZoom).not.toHaveBeenCalled();
-      });
+      expect(mockQueryZoom).toHaveBeenCalledWith(expectedRange);
     });
 
-    describe('State Management', () => {
-      it('should call setState during drag and restore on mouseup', () => {
-        setupXAxisPan(asUPlot(mockUPlot), asConfigBuilder(mockConfigBuilder), mockQueryZoom);
+    it('should not call queryZoom when drag distance is below threshold', () => {
+      setupXAxisPan(asUPlot(mockUPlot), asConfigBuilder(mockConfigBuilder), mockQueryZoom);
 
-        xAxisElement.dispatchEvent(new MouseEvent('mousedown', { clientX: 400, bubbles: true }));
-        document.dispatchEvent(new MouseEvent('mousemove', { clientX: 350, bubbles: true }));
+      xAxisElement.dispatchEvent(new MouseEvent('mousedown', { clientX: 400, bubbles: true }));
+      document.dispatchEvent(new MouseEvent('mouseup', { clientX: 402, bubbles: true }));
 
-        expect(mockConfigBuilder.setState).toHaveBeenCalledWith({
-          isPanning: true,
-          min: expect.any(Number),
-          max: expect.any(Number),
-        });
+      expect(mockQueryZoom).not.toHaveBeenCalled();
+    });
 
-        document.dispatchEvent(new MouseEvent('mouseup', { clientX: 350, bubbles: true }));
+    it('should set isPanning state during drag and clear on mouseup', () => {
+      setupXAxisPan(asUPlot(mockUPlot), asConfigBuilder(mockConfigBuilder), mockQueryZoom);
 
-        expect(mockConfigBuilder.setState).toHaveBeenCalledWith({ isPanning: false });
+      xAxisElement.dispatchEvent(new MouseEvent('mousedown', { clientX: 400, bubbles: true }));
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 350, bubbles: true }));
+
+      const expectedRange = calculatePanRange(1000, 2000, -50, 800);
+
+      expect(mockConfigBuilder.setState).toHaveBeenCalledWith({
+        isPanning: true,
+        min: expectedRange.from,
+        max: expectedRange.to,
       });
+
+      document.dispatchEvent(new MouseEvent('mouseup', { clientX: 350, bubbles: true }));
+
+      expect(mockConfigBuilder.setState).toHaveBeenCalledWith({ isPanning: false });
     });
   });
 });
