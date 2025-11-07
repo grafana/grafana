@@ -115,6 +115,7 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *contextmodel.ReqContext) response
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}
+
 	result := user.UserProfileDTO{
 		ID:             usr.ID,
 		UID:            usr.UID,
@@ -128,6 +129,11 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *contextmodel.ReqContext) response
 		UpdatedAt:      usr.Updated,
 		CreatedAt:      usr.Created,
 	}
+	// Populate AuthLabels using all historically used auth modules ordered by most recent.
+	if modules, err := hs.authInfoService.GetUserAuthModuleLabels(c.Req.Context(), usr.ID); err == nil {
+		result.AuthLabels = modules
+	}
+
 	return response.JSON(http.StatusOK, &result)
 }
 

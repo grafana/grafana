@@ -45,7 +45,7 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 			UserId:     2,
 		}))
 
-		labels, err := store.GetUserLabels(ctx, login.GetUserLabelsQuery{UserIDs: []int64{1, 2}})
+		labels, err := store.GetUsersRecentlyUsedLabel(ctx, login.GetUserLabelsQuery{UserIDs: []int64{1, 2}})
 		require.NoError(t, err)
 		require.Len(t, labels, 2)
 
