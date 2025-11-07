@@ -70,8 +70,8 @@ func TestAlertRuleValidation_Errors(t *testing.T) {
 	if err := mk(func(r *v1.AlertRule) { r.Labels[v1.GroupLabelKey] = "grp" }); err == nil {
 		t.Errorf("want group set on create error")
 	}
-	if err := mk(func(r *v1.AlertRule) { r.Spec.For = strPtr("0s") }); err == nil {
-		t.Errorf("want for>0 error")
+	if err := mk(func(r *v1.AlertRule) { r.Spec.For = strPtr("-10s") }); err == nil {
+		t.Errorf("want for>=0 error")
 	}
 	if err := mk(func(r *v1.AlertRule) {
 		if r.Spec.Labels == nil {

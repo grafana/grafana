@@ -97,14 +97,14 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 				}
 			}
 
-			// 8) For and KeepFiringFor must be > 0 if set
+			// 8) For and KeepFiringFor must be >= 0 if set
 			if r.Spec.For != nil {
 				d, err := prom_model.ParseDuration(*r.Spec.For)
 				if err != nil {
 					return fmt.Errorf("invalid 'for' duration: %w", err)
 				}
-				if time.Duration(d) <= 0 {
-					return fmt.Errorf("'for' duration must be greater than 0")
+				if time.Duration(d) < 0 {
+					return fmt.Errorf("'for' cannot be less than 0")
 				}
 			}
 			if r.Spec.KeepFiringFor != nil {
@@ -112,8 +112,8 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 				if err != nil {
 					return fmt.Errorf("invalid 'keepFiringFor' duration: %w", err)
 				}
-				if time.Duration(d) <= 0 {
-					return fmt.Errorf("'keepFiringFor' duration must be greater than 0")
+				if time.Duration(d) < 0 {
+					return fmt.Errorf("'keepFiringFor' cannot be less than 0")
 				}
 			}
 
