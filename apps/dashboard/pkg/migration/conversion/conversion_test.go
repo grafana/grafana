@@ -229,10 +229,7 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 							t.Skipf("V2→V0/V1 conversions not yet fully implemented - data loss expected")
 							return
 						}
-					}
-
-					// For non-V2-downgrade conversions, data loss is a real error
-					if !isV2Downgrade {
+						// For non-V2-downgrade conversions, data loss is a real error
 						require.NoError(t, err, "Conversion failed for %s", filename)
 					}
 
