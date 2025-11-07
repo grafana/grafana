@@ -15,6 +15,7 @@ type AuthInfoService interface {
 	DeleteUserAuthInfo(ctx context.Context, userID int64) error
 }
 
+//go:generate mockery --name Store --structname MockAuthInfoStore --outpkg authinfotest --filename auth_info_store_mock.go --output ./authinfotest/
 type Store interface {
 	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) (*UserAuth, error)
 	GetUsersRecentlyUsedLabel(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)

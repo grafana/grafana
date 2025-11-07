@@ -211,7 +211,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		sc.userService = userMock
 		hs.userService = userMock
 
-		fakeAuth := &authinfotest.FakeService{ExpectedAuthModuleLabels: []string{login.OktaAuthModule, login.LDAPAuthModule, login.SAMLAuthModule}}
+		fakeAuth := &authinfotest.FakeService{ExpectedAuthModuleLabels: []string{login.GetAuthProviderLabel(login.OktaAuthModule), login.GetAuthProviderLabel(login.LDAPAuthModule), login.GetAuthProviderLabel(login.SAMLAuthModule)}}
 		hs.authInfoService = fakeAuth
 
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": usr.Email}).exec()
