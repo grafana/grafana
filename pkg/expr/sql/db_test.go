@@ -61,6 +61,28 @@ func TestQueryFrames(t *testing.T) {
 				data.NewField("OSS Projects with Typos", nil, []string{"Garfana"}),
 			).SetRefID("sqlExpressionRefId"),
 		},
+		{
+			name: "disabling only_full_group_by mode allows GROUP BY without aggregate functions (we are not sure if this is a good idea)",
+			query: `SELECT
+  g,
+  SUM(v) * 100 * t.total AS pct_of_total
+FROM A
+CROSS JOIN (SELECT SUM(v) AS total FROM A) t
+GROUP BY g;
+`,
+			input_frames: []*data.Frame{
+				data.NewFrame(
+					"",
+					data.NewField("g", nil, []int64{1}),
+					data.NewField("v", nil, []int64{1}),
+				).SetRefID("A"),
+			},
+			expected: data.NewFrame(
+				"sqlExpressionRefId",
+				data.NewField("g", nil, []int64{1}),
+				data.NewField("pct_of_total", nil, []*float64{p(100.0)}),
+			).SetRefID("sqlExpressionRefId"),
+		},
 	}
 
 	for _, tt := range tests {
