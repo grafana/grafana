@@ -259,7 +259,7 @@ The Log Anomalies query editor fetches the list of anomalies detected in your Cl
 The log trend cell shows the number of occurrences of the pattern over the selected query time range.
 The table shows 50 log anomalies at a time. If you would like to narrow down the list, you can filter anomalies by their ARN and suppressed state.
 
-In addition to this, you can use the Logs Insights QL editor and the `anomaly` command together with the `patterns` command to define and display log anomalies in real time. See [CloudWatch Logs Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/LogsAnomalyDetection-Insights.html) for more info.
+In addition to this, you can use the Logs Insights QL editor and the `anomaly` command together with the `patterns` command to define and display log anomalies in real time. See the [CloudWatch Logs Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/LogsAnomalyDetection-Insights.html) documentation for more info.
 
 **Logs Insights**
 
