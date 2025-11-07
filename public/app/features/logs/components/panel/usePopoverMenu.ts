@@ -1,7 +1,5 @@
 import { useCallback, useRef, useState, MouseEvent } from 'react';
 
-import { config } from '@grafana/runtime';
-
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled, targetIsElement } from '../../utils';
 import { PopoverStateType } from '../LogRows';
 
