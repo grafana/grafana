@@ -197,7 +197,6 @@ func (e *ConversionDataLossError) GetTargetAPIVersion() string {
 type dashboardStats struct {
 	panelCount      int
 	queryCount      int
-	datasourceCount int
 	annotationCount int
 	linkCount       int
 	variableCount   int
