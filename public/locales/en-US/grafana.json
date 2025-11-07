@@ -11565,6 +11565,8 @@
     "empty-state": {
       "no-jobs": "No jobs..."
     },
+    "enable-push-to-configured-branch-description": "Allow direct commits to the configured branch.",
+    "enable-push-to-configured-branch-label": "Enable push to configured branch",
     "enhanced-features": {
       "description": "Get the most out of your GitHub integration with these optional add-ons",
       "description-instant-updates": "Get instant updates in Grafana as soon as changes are committed. Review and approve changes using pull requests before they go live.",

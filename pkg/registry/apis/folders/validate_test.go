@@ -264,6 +264,71 @@ func TestValidateUpdate(t *testing.T) {
 			maxDepth:    folder.MaxNestedFolderDepth,
 			expectedErr: "[folder.maximum-depth-reached]",
 		},
+		{
+			name: "error when moving folder under its own descendant (direct child)",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "parent",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "child",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "parent folder",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "parent",
+				},
+				Spec: folders.FolderSpec{
+					Title: "parent folder",
+				},
+			},
+			// When querying parents of "child", we get the chain: child -> parent -> root
+			// This means "parent" is an ancestor of "child", so we can't move "parent" under "child"
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "child", Parent: "parent"},
+					{Name: "parent", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+			expectedErr: "cannot move folder under its own descendant",
+		},
+		{
+			name: "error when moving folder under its grandchild",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "grandparent",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "grandchild",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "grandparent folder",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "grandparent",
+				},
+				Spec: folders.FolderSpec{
+					Title: "grandparent folder",
+				},
+			},
+			// When querying parents of "grandchild", we get: grandchild -> child -> grandparent -> root
+			// This means "grandparent" is in the ancestry, so we can't move it under "grandchild"
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "grandchild", Parent: "child"},
+					{Name: "child", Parent: "grandparent"},
+					{Name: "grandparent", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+			expectedErr: "cannot move folder under its own descendant",
+		},
 	}
 
 	for _, tt := range tests {
