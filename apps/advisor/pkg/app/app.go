@@ -24,6 +24,8 @@ import (
 )
 
 func New(cfg app.Config) (app.App, error) {
+	// TODO: Verify ST value for APIPath
+	cfg.KubeConfig.APIPath = "apis"
 	// Read config
 	specificConfig, ok := cfg.SpecificConfig.(checkregistry.AdvisorAppConfig)
 	if !ok {
