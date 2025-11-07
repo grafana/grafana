@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
 import { DataFrame, GrafanaTheme2, Labels, LoadingState, TimeRange } from '@grafana/data';
@@ -11,7 +11,6 @@ import { GraphDrawStyle, VisibilityMode } from '@grafana/schema';
 import {
   AxisPlacement,
   BarAlignment,
-  IconButton,
   LegendDisplayMode,
   StackingMode,
   Text,
@@ -23,6 +22,7 @@ import { overrideToFixedColor } from '../../home/Insights';
 import { InstanceDetailsDrawer } from '../instance-details/InstanceDetailsDrawer';
 
 import { GenericRow } from './GenericRow';
+import { OpenDrawerIconButton } from './OpenDrawerIconButton';
 
 interface Instance {
   labels: Labels;
@@ -75,13 +75,13 @@ export function InstanceRow({
   const styles = useStyles2(getStyles);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const handleDrawerOpen = () => {
+  const handleDrawerOpen = useCallback(() => {
     setIsDrawerOpen(true);
-  };
+  }, []);
 
-  const handleDrawerClose = () => {
+  const handleDrawerClose = useCallback(() => {
     setIsDrawerOpen(false);
-  };
+  }, []);
 
   const dataProvider = useMemo(
     () =>
@@ -117,9 +117,7 @@ export function InstanceRow({
           )
         }
         actions={
-          <IconButton
-            style={{ transform: 'rotate(180deg)' }}
-            name="web-section-alt"
+          <OpenDrawerIconButton
             aria-label={t('alerting.triage.open-in-sidebar', 'Open in sidebar')}
             onClick={handleDrawerOpen}
           />
