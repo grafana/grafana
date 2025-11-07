@@ -40,33 +40,7 @@ v1alpha1: {
     // served indicates whether this particular version is served by the API server.
     // served should be set to false before a version is removed from the manifest entirely.
     // served defaults to true if not present.
-    served: true
-    // routes contains resource routes for the version, which are split into 'namespaced' and 'cluster' scoped routes.
-    routes: {
-        // cluster contains cluster-scoped resource routes for the version, 
-        // which are exposed as HTTP handlers on '<version>/<route>'.
-        cluster: {
-            "/defaultFields": {
-                "GET": {
-                    response: {
-                        defaultFields: [...string]
-                    }
-                    responseMetadata: typeMeta: false // Don't generate or return kubernetes type metadata for this object
-                }
-                "PUT": {
-                    request: {
-                        body: {
-                            defaultFields: [...string]
-                        }
-                    }
-                    response: {
-                        defaultFields: [...string]
-                    }
-                    responseMetadata: typeMeta: false
-                }
-            }
-        }
-    }
+    served: true 
     // [OPTIONAL]
     // Codegen is a trait that tells the grafana-app-sdk, or other code generation tooling, how to process this kind.
     // If not present, default values within the codegen trait are used.

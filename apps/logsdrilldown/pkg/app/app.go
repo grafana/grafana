@@ -32,21 +32,6 @@ func New(cfg app.Config) (app.App, error) {
 				Kind: logsdrilldownv1alpha1.LogsDrilldownDefaultsKind(),
 			},
 		},
-		// VersionedCustomRoutes are the custom route handlers for routes defined at the version level of the manifest
-		VersionedCustomRoutes: map[string]simple.AppVersionRouteHandlers{
-			"v1alpha1": {
-				{
-					Namespaced: false,
-					Path:       "defaultFields",
-					Method:     "GET",
-				}: GetDefaultFieldsHandler,
-				{
-					Namespaced: false,
-					Path:       "defaultFields",
-					Method:     "PUT",
-				}: UpdateDefaultFieldsHandler,
-			},
-		},
 	}
 
 	a, err := simple.NewApp(simpleConfig)

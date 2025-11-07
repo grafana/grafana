@@ -2,9 +2,7 @@ package logsdrilldown
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/grafana/grafana/apps/logsdrilldown/pkg/apis/logsdrilldown/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 
@@ -26,21 +24,18 @@ func GetAuthorizer() authorizer.Authorizer {
 			return authorizer.DecisionDeny, "valid user is required", err
 		}
 
-		// Handle the defaultFields route
-		if attr.GetPath() == fmt.Sprintf("/apis/%s/%s/defaultFields", v1alpha1.APIGroup, v1alpha1.APIVersion) {
-			// Allow GET or LIST for everyone
-			if attr.GetVerb() == "get" || attr.GetVerb() == "list" {
+		// Auth handling for LogsDrilldownDefaults resource
+		if attr.GetResource() == "logsdrilldowndefaults" {
+			// Allow list and get for everyone
+			if attr.GetVerb() == "list" || attr.GetVerb() == "get" {
 				return authorizer.DecisionAllow, "", nil
 			}
-			// Only allow PUT for admins
-			if attr.GetVerb() == "update" || attr.GetVerb() == "put" {
-				if u.GetIsGrafanaAdmin() {
-					return authorizer.DecisionAllow, "", nil
-				}
-				return authorizer.DecisionDeny, "admin access required", nil
+			// Only allow admins to update (create, update, patch, delete)
+			if u.GetIsGrafanaAdmin() {
+				return authorizer.DecisionAllow, "", nil
 			}
-			// Deny other methods
-			return authorizer.DecisionDeny, "method not allowed", nil
+			// Deny all other operations for non-admins
+			return authorizer.DecisionDeny, "admin access required", nil
 		}
 
 		// check if is admin
