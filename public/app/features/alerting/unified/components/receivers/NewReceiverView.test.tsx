@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render, screen } from 'test/test-utils';
-import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
+import { byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -122,7 +122,7 @@ const ui = {
   inputs: {
     name: byPlaceholderText('Name'),
     email: {
-      addresses: byLabelText(/Addresses/),
+      addresses: byRole('textbox', { name: /^Addresses/ }),
     },
   },
 };

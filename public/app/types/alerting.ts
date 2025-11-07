@@ -149,6 +149,12 @@ export interface NotificationChannelOption {
   required: boolean;
   secure: boolean;
   secureFieldKey?: string;
+  /**
+   * protected indicates that only administrators or users with
+   * "alert.notifications.receivers.protected:write" permission
+   * are allowed to update this field
+   * */
+  protected?: boolean;
   selectOptions?: Array<SelectableValue<string>> | null;
   defaultValue?: SelectableValue<string>;
   showWhen: { field: string; is: string | boolean };

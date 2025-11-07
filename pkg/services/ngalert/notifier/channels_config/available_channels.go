@@ -285,6 +285,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "url",
 					Required:     true,
 					Secure:       true,
+					Protected:    true,
 				},
 				{
 					Label:        "Message Type",
@@ -331,6 +332,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "http://localhost:8082",
 					PropertyName: "kafkaRestProxy",
 					Required:     true,
+					Protected:    true,
 				},
 				{
 					Label:        "Topic",
@@ -531,6 +533,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Placeholder:  alertingPagerduty.DefaultURL,
 					PropertyName: "url",
+					Protected:    true,
 				},
 			},
 		},
@@ -548,6 +551,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "url",
 					Required:     true,
 					Secure:       true,
+					Protected:    true,
 				},
 				{ // New in 8.0.
 					Label:        "Message Type",
@@ -593,6 +597,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					PropertyName: "url",
 					Required:     true,
+					Protected:    true,
 				},
 				{
 					Label:   "HTTP Method",
@@ -842,6 +847,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Secure:       true,
 					Required:     true,
 					DependsOn:    "token",
+					Protected:    true,
 				},
 				{ // New in 8.4.
 					Label:        "Endpoint URL",
@@ -850,6 +856,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "Optionally provide a custom Slack message API endpoint for non-webhook requests, default is https://slack.com/api/chat.postMessage",
 					Placeholder:  "Slack endpoint url",
 					PropertyName: "endpointUrl",
+					Protected:    true,
 				},
 				{
 					Label:        "Color",
@@ -889,6 +896,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "http://sensu-api.local:8080",
 					PropertyName: "url",
 					Required:     true,
+					Protected:    true,
 				},
 				{
 					Label:        "API Key",
@@ -947,6 +955,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "Teams incoming webhook url",
 					PropertyName: "url",
 					Required:     true,
+					Protected:    true,
 				},
 				{
 					Label:        "Title",
@@ -1065,6 +1074,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					PropertyName: "url",
 					Required:     true,
+					Protected:    true,
 				},
 				{
 					Label:   "HTTP Method",
@@ -1225,6 +1235,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Secure:       true,
 					Required:     true,
 					DependsOn:    "secret",
+					Protected:    true,
 				},
 				{
 					Label:        "Agent ID",
@@ -1310,6 +1321,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "http://localhost:9093",
 					PropertyName: "url",
 					Required:     true,
+					Protected:    true,
 				},
 				{
 					Label:        "Basic Auth User",
@@ -1356,6 +1368,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "url",
 					Required:     true,
 					Secure:       true,
+					Protected:    true,
 				},
 				{
 					Label:        "Avatar URL",
@@ -1385,6 +1398,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "url",
 					Required:     true,
 					Secure:       true,
+					Protected:    true,
 				},
 				{
 					Label:        "Title",
@@ -1505,6 +1519,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "The URL of the MQTT broker.",
 					PropertyName: "brokerUrl",
 					Required:     true,
+					Protected:    true,
 				},
 				{
 					Label:        "Topic",
@@ -1663,6 +1678,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "https://api.opsgenie.com/v2/alerts",
 					PropertyName: "apiUrl",
 					Required:     true,
+					Protected:    true,
 				},
 				{
 					Label:        "Message",
@@ -1759,6 +1775,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "https://api.ciscospark.com/v1/messages",
 					Description:  "API endpoint at which we'll send webhooks to.",
 					PropertyName: "api_url",
+					Protected:    true,
 				},
 				{
 					Label:        "Room ID",
@@ -1793,7 +1810,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			Type:        "sns",
 			Name:        "AWS SNS",
 			Description: "Sends notifications to AWS Simple Notification Service",
-			Heading:     "Webex settings",
+			Heading:     "AWS SNS settings",
 			Options: []NotifierOption{
 				{
 					Label:        "The Amazon SNS API URL",
@@ -1915,6 +1932,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "api_url",
 					Description:  "Supported v2 or v3 APIs",
 					Required:     true,
+					Protected:    true,
 				},
 				{
 					Label:        "HTTP Basic Authentication - Username",
