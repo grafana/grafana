@@ -16,7 +16,7 @@ const createMockXAxis = () => {
 const createMockConfigBuilder = () => {
   return {
     setState: jest.fn(),
-    getState: jest.fn(() => ({ isPanning: false, min: 0, max: 0 })),
+    getState: jest.fn(() => ({ isPanning: false })),
   } satisfies Partial<UPlotConfigBuilder>;
 };
 
