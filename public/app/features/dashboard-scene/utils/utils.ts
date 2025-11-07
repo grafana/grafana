@@ -150,7 +150,6 @@ export function getMultiVariableValues(variable: MultiValueVariable | CustomVari
 
 // used to transform old interval model to new interval model from scenes
 export function getIntervalsFromQueryString(query: string | undefined): string[] {
-  // Handle undefined/null query
   if (!query) {
     return initialIntervalVariableModelState.query?.split(',') ?? [];
   }
