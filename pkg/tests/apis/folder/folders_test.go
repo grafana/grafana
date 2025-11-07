@@ -1246,8 +1246,6 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 		},
 	}
 
-	// PERFORMANCE: Create ONE helper per mode, not per test case
-	// This reduces helper creation from 20 (5 modes × 4 test cases) to just 5
 	for mode := 0; mode <= 4; mode++ {
 		t.Run(fmt.Sprintf("Mode_%d", mode), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
