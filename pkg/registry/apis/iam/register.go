@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
@@ -111,16 +112,18 @@ func NewAPIService(
 	store := legacy.NewLegacySQLStores(dbProvider)
 	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
+	noopStorage := noopstorage.ProvideStorageBackend()
 	registerMetrics(reg)
 	return &IdentityAccessManagementAPIBuilder{
-		store:                      store,
-		display:                    user.NewLegacyDisplayREST(store),
-		resourcePermissionsStorage: resourcePermissionsStorage,
-		logger:                     log.New("iam.apis"),
-		features:                   features,
-		zClient:                    zClient,
-		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
-		reg:                        reg,
+		store:                       store,
+		display:                     user.NewLegacyDisplayREST(store),
+		resourcePermissionsStorage:  resourcePermissionsStorage,
+		externalGroupMappingStorage: noopStorage,
+		logger:                      log.New("iam.apis"),
+		features:                    features,
+		zClient:                     zClient,
+		zTickets:                    make(chan bool, MaxConcurrentZanzanaWrites),
+		reg:                         reg,
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				// For now only authorize resourcepermissions resource
