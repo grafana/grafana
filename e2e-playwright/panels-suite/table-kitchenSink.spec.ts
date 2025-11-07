@@ -144,11 +144,11 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await stateColumnHeader.getByText('Info').click();
     await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'ascending');
-    expect(getCell(page, 1, 1)).resolves.toContainText('down'); // down or down fast
+    await expect(getCell(page, 1, 1)).toContainText('down'); // down or down fast
 
     await stateColumnHeader.getByText('Info').click();
     await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'descending');
-    expect(getCell(page, 1, 1)).resolves.toContainText('up'); // up or up fast
+    await expect(getCell(page, 1, 1)).toContainText('up'); // up or up fast
 
     await stateColumnHeader.getByText('Info').click();
     await expect(stateColumnHeader).not.toHaveAttribute('aria-sort');
@@ -188,7 +188,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(filterContainer).not.toBeVisible();
 
     // did it actually filter out our value?
-    await expect(getCell(page, 1, infoColumnIdx)).resolves.not.toHaveText(firstStateValue);
+    await expect(getCell(page, 1, infoColumnIdx)).not.toHaveText(firstStateValue);
   });
 
   test('Tests pagination, row height adjustment', async ({ gotoDashboardPage, selectors, page }) => {
