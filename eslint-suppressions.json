@@ -625,11 +625,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/DataSourceSettings/AlertingSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "packages/grafana-ui/src/components/DataSourceSettings/CustomHeadersSettings.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
