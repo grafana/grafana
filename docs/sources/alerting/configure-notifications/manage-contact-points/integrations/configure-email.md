@@ -85,6 +85,7 @@ To set up email integration, complete the following steps.
 
    E-mail addresses are case sensitive. Ensure that the e-mail address entered is correct.
 
+   An email will be send individually to each email address you enter. To send a single email to all recipients, select the **Single email** toggle in the **Optional Email settings** section. 
 1. Click **Test** to check that your integration works.
 
    ** For Grafana Alertmanager only.**
