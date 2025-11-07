@@ -104,7 +104,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 	return obj, err
 }
 
-func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, _ rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -113,6 +113,11 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, _ rest.V
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if createValidation != nil {
+		if err := createValidation(ctx, obj); err != nil {
+			return nil, err
+		}
 	}
 
 	p, ok := obj.(*model.RecordingRule)
