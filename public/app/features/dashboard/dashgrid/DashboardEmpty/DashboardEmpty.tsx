@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -11,7 +11,6 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { SuggestedDashboards } from '../DashboardLibrary/SuggestedDashboards';
-import { SuggestedDashboardsModal, MappingContext } from '../DashboardLibrary/SuggestedDashboardsModal';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
@@ -29,40 +28,8 @@ interface InternalProps {
 
 const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImportDashboard }: InternalProps) => {
   const styles = useStyles2(getStyles);
-
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const dashboardLibraryDatasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
-  const showLibraryModal = searchParams.get('dashboardLibraryModal') === 'open';
-
-  // Validate and get default tab from URL params
-  const tabParam = searchParams.get('dashboardLibraryTab');
-  const defaultTab: 'datasource' | 'community' = tabParam === 'community' ? 'community' : 'datasource';
-
-  const [mappingContext, setMappingContext] = useState<MappingContext | null>(null);
-
-  const onModalDismiss = () => {
-    // Remove modal-related query params while keeping datasourceUid
-    setSearchParams((params) => {
-      params.delete('dashboardLibraryModal');
-      params.delete('dashboardLibraryTab');
-      return params;
-    });
-    setMappingContext(null);
-  };
-
-  const onOpenModal = (tab: 'datasource' | 'community') => {
-    setSearchParams((params) => {
-      const newParams = new URLSearchParams(params);
-      newParams.set('dashboardLibraryModal', 'open');
-      newParams.set('dashboardLibraryTab', tab);
-      return newParams;
-    });
-  };
-
-  const onShowMapping = (context: MappingContext) => {
-    setMappingContext(context);
-    onOpenModal(defaultTab);
-  };
 
   return (
     <>
@@ -102,19 +69,7 @@ const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImpor
 
             {/* Suggested Dashboards Section */}
             {config.featureToggles.dashboardLibrary && dashboardLibraryDatasourceUid && (
-              <>
-                <SuggestedDashboards
-                  datasourceUid={dashboardLibraryDatasourceUid}
-                  onOpenModal={onOpenModal}
-                  onShowMapping={onShowMapping}
-                />
-                <SuggestedDashboardsModal
-                  isOpen={showLibraryModal}
-                  onDismiss={onModalDismiss}
-                  initialMappingContext={mappingContext}
-                  defaultTab={defaultTab}
-                />
-              </>
+              <SuggestedDashboards datasourceUid={dashboardLibraryDatasourceUid} />
             )}
             <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
               <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={3} flex={1}>

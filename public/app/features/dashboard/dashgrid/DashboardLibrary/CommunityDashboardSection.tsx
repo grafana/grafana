@@ -169,7 +169,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   };
 
   return (
-    <Stack direction="column" gap={2} justifyContent="space-between">
+    <Stack direction="column" gap={2} height="100%">
       <FilterInput
         className={styles.searchInput}
         placeholder={
@@ -285,17 +285,18 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         )}
       </div>
       {totalPages > 1 && (
-        <Pagination
-          currentPage={currentPage}
-          numberOfPages={totalPages}
-          onNavigate={(page) =>
-            setSearchParams((params) => {
-              params.set('page', String(page));
-              return params;
-            })
-          }
-          className={styles.pagination}
-        />
+        <div className={styles.paginationWrapper}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={totalPages}
+            onNavigate={(page) =>
+              setSearchParams((params) => {
+                params.set('page', String(page));
+                return params;
+              })
+            }
+          />
+        </div>
       )}
     </Stack>
   );
@@ -305,14 +306,18 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     resultsContainer: css({
       width: '100%',
-      minHeight: '600px',
       position: 'relative',
+      flex: 1,
+      overflow: 'auto',
     }),
-    pagination: css({
+    paginationWrapper: css({
+      position: 'sticky',
+      bottom: 0,
       backgroundColor: theme.colors.background.primary,
       padding: theme.spacing(2),
-      alignItems: 'center',
+      display: 'flex',
       justifyContent: 'flex-end',
+      zIndex: 2,
     }),
     searchInput: css({
       paddingLeft: theme.spacing(2),
