@@ -1263,13 +1263,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "preinstallAutoUpdate",
-			Description: "Enables automatic updates for pre-installed plugins",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaPluginsPlatformSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:            "playlistsReconciler",
 			Description:     "Enables experimental reconciler for playlists",
 			Stage:           FeatureStageExperimental,

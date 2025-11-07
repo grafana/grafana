@@ -3157,7 +3157,8 @@
       "metadata": {
         "name": "preinstallAutoUpdate",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-11-07T12:14:25Z"
+        "creationTimestamp": "2024-11-07T12:14:25Z",
+        "deletionTimestamp": "2025-11-07T10:10:01Z"
       },
       "spec": {
         "description": "Enables automatic updates for pre-installed plugins",
