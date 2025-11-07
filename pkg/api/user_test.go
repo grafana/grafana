@@ -183,7 +183,6 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
-		// By default no auth labels for fake service
 	}, mock)
 
 	// Multiple historical auth labels should appear ordered by recency
