@@ -10,6 +10,7 @@ import { Button, useStyles2, Text, Box, Stack, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
+import { BasicProvisionedDashboardsEmptyPage } from '../DashboardLibrary/BasicProvisionedDashboardsEmptyPage';
 import { SuggestedDashboards } from '../DashboardLibrary/SuggestedDashboards';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
@@ -68,9 +69,17 @@ const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImpor
             </Box>
 
             {/* Suggested Dashboards Section */}
-            {config.featureToggles.dashboardLibrary && dashboardLibraryDatasourceUid && (
-              <SuggestedDashboards datasourceUid={dashboardLibraryDatasourceUid} />
-            )}
+            {config.featureToggles.dashboardLibrary &&
+              config.featureToggles.suggestedDashboards &&
+              dashboardLibraryDatasourceUid && <SuggestedDashboards datasourceUid={dashboardLibraryDatasourceUid} />}
+
+            {/* Basic Provisioned Dashboards Section that don't include community dashboards */}
+            {config.featureToggles.dashboardLibrary &&
+              !config.featureToggles.suggestedDashboards &&
+              dashboardLibraryDatasourceUid && (
+                <BasicProvisionedDashboardsEmptyPage datasourceUid={dashboardLibraryDatasourceUid} />
+              )}
+
             <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
               <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
                 <Stack direction="column" alignItems="center" gap={1}>
