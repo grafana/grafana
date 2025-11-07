@@ -77,7 +77,8 @@ type IdentityAccessManagementAPIBuilder struct {
 	sso ssosettings.Service
 
 	// Toggle for enabling authz management apis
-	features featuremgmt.FeatureToggles
+	features    featuremgmt.FeatureToggles
+	enabledAPIs map[string]bool
 
 	// Toggle for enabling dual writer
 	enableDualWriter bool
