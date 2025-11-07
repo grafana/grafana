@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -24,6 +25,7 @@ import (
 type DashboardStorage struct {
 	Access           legacy.DashboardAccess
 	DashboardService dashboards.DashboardService
+	Tracer           trace.Tracer
 }
 
 func (s *DashboardStorage) NewStore(dash utils.ResourceInfo, scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter, reg prometheus.Registerer, permissions dashboards.PermissionsRegistrationService, ac types.AccessClient) (grafanarest.Storage, error) {
@@ -31,6 +33,7 @@ func (s *DashboardStorage) NewStore(dash utils.ResourceInfo, scheme *runtime.Sch
 		Backend:      s.Access,
 		Reg:          reg,
 		AccessClient: ac,
+		Tracer:       s.Tracer,
 	})
 	if err != nil {
 		return nil, err

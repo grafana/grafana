@@ -171,6 +171,7 @@ func RegisterAPIService(
 		legacy: &DashboardStorage{
 			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
 			DashboardService: dashboardService,
+			Tracer:           tracing,
 		},
 	}
 
