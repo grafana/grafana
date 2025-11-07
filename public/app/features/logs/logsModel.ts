@@ -41,7 +41,6 @@ import {
 } from '@grafana/data';
 import { SIPrefix } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
