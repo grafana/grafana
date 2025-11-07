@@ -130,21 +130,8 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *contextmodel.ReqContext) response
 		CreatedAt:      usr.Created,
 	}
 	// Populate AuthLabels using all historically used auth modules ordered by most recent.
-	if hs.authInfoService != nil {
-		if modules, err := hs.authInfoService.GetUserAuthModuleLabels(c.Req.Context(), usr.ID); err == nil {
-			seen := make(map[string]struct{})
-			for _, m := range modules {
-				if m == "" {
-					continue
-				}
-				label := login.GetAuthProviderLabel(m)
-				if _, exists := seen[label]; exists {
-					continue
-				}
-				seen[label] = struct{}{}
-				result.AuthLabels = append(result.AuthLabels, label)
-			}
-		}
+	if modules, err := hs.authInfoService.GetUserAuthModuleLabels(c.Req.Context(), usr.ID); err == nil {
+		result.AuthLabels = modules
 	}
 
 	return response.JSON(http.StatusOK, &result)
