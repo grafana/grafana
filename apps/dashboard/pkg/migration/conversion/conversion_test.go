@@ -218,12 +218,10 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 
 					// Check if this is a V2→V0/V1 downgrade conversion (not yet implemented)
 					var dataLossErr *ConversionDataLossError
-					isV2Downgrade := false
 					if err != nil && errors.As(err, &dataLossErr) {
 						// Check if this is a V2 downgrade
 						if strings.HasPrefix(gv.Version, "v2") &&
 							(strings.Contains(filename, "v0alpha1") || strings.Contains(filename, "v1beta1")) {
-							isV2Downgrade = true
 							// Write output file anyway for V2 downgrades (even with data loss)
 							// This helps with debugging and understanding what data is preserved
 							t.Logf("V2→V0/V1 conversion has expected data loss: %v", err)

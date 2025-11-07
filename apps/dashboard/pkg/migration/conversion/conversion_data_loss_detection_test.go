@@ -848,6 +848,8 @@ func TestDataLossDetectionOnAllInputFiles(t *testing.T) {
 		t.Run(file.Name(), func(t *testing.T) {
 			// Read input dashboard file
 			inputFile := filepath.Join("testdata", "input", file.Name())
+			// ignore gosec G304 as this function is only used in the test process
+			//nolint:gosec
 			inputData, err := os.ReadFile(inputFile)
 			require.NoError(t, err, "Failed to read input file")
 
