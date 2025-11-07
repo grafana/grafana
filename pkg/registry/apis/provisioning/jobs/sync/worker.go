@@ -114,44 +114,31 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	lastRef := repo.Config().Status.Sync.LastRef
 	syncStatus.LastRef = lastRef
 
-	if syncStatus.State == "" {
-		syncStatus.State = provisioning.JobStateWorking
-	}
+	// Ensure the sync state is set to 'working' if not already set or still pending.
+	// FIXME: This should not be needed as the progress recorder should have set it to 'working' by now.
+	syncStatus.State = provisioning.JobStateWorking
 
 	// Update sync status at start using granular JSON patch operations
 	// Only patch fields that are actually being set to avoid overwriting with zero values
-	patchOperations := []map[string]interface{}{}
-	if syncStatus.State != "" {
-		patchOperations = append(patchOperations, map[string]interface{}{
+	patchOperations := []map[string]interface{}{
+		{
 			"op":    "replace",
 			"path":  "/status/sync/state",
 			"value": syncStatus.State,
-		})
-	}
-	if syncStatus.JobID != "" {
-		patchOperations = append(patchOperations, map[string]interface{}{
+		},
+		{
 			"op":    "replace",
 			"path":  "/status/sync/job",
 			"value": syncStatus.JobID,
-		})
-	}
-	if syncStatus.Started != 0 {
-		patchOperations = append(patchOperations, map[string]interface{}{
+		},
+		{
 			"op":    "replace",
 			"path":  "/status/sync/started",
 			"value": syncStatus.Started,
-		})
-	}
-	if syncStatus.LastRef != "" {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/sync/lastRef",
-			"value": syncStatus.LastRef,
-		})
+		},
 	}
 
 	progress.SetMessage(ctx, "update sync status at start")
-
 	statusCtx, statusSpan := r.tracer.Start(ctx, "provisioning.sync.update_start_status")
 	if err := r.patchStatus(statusCtx, cfg, patchOperations...); err != nil {
 		statusSpan.End()
@@ -197,58 +184,20 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 	syncSpan.End()
 
-	// Create sync status and set hash if successful
-	if syncStatus.State == provisioning.JobStateSuccess {
+	if syncStatus.State != provisioning.JobStateError {
 		syncStatus.LastRef = currentRef
 	} else {
+		// Preserve the original lastRef on error
 		syncStatus.LastRef = lastRef
 	}
 
-	// Update final status using granular JSON patch operations
-	// Only patch fields that are actually being set to avoid overwriting with zero values
 	progress.SetMessage(ctx, "update status and stats")
-	patchOperations = []map[string]interface{}{}
-	if syncStatus.State != "" {
-		patchOperations = append(patchOperations, map[string]interface{}{
+	patchOperations = []map[string]interface{}{
+		{
 			"op":    "replace",
-			"path":  "/status/sync/state",
-			"value": syncStatus.State,
-		})
-	}
-	if syncStatus.JobID != "" {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/sync/job",
-			"value": syncStatus.JobID,
-		})
-	}
-	if syncStatus.Started != 0 {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/sync/started",
-			"value": syncStatus.Started,
-		})
-	}
-	if syncStatus.Finished != 0 {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/sync/finished",
-			"value": syncStatus.Finished,
-		})
-	}
-	if syncStatus.Message != nil {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/sync/message",
-			"value": syncStatus.Message,
-		})
-	}
-	if syncStatus.LastRef != "" {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/sync/lastRef",
-			"value": syncStatus.LastRef,
-		})
+			"path":  "/status/sync",
+			"value": syncStatus,
+		},
 	}
 
 	finalCtx, finalSpan := r.tracer.Start(ctx, "provisioning.sync.update_final_status")

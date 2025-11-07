@@ -132,8 +132,15 @@ func (c *jobsConnector) Connect(
 		}
 		spec.Repository = name
 
-		// If a sync job is being created, we should update its status to pending.
-		// Use granular patches to preserve other fields like 'scheduled', 'message', etc.
+		job, err := c.jobs.GetJobQueue().Insert(ctx, cfg.Namespace, spec)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+
+		// For pull jobs update the sync status
+		// patch the sync status 'state' to 'pending', and reset the 'started' field, leaving other fields unchanged.
+		// Intentionally maintain the previous job name until the jobs is picked up.
 		if spec.Pull != nil {
 			err = c.statusPatcherProvider.GetStatusPatcher().Patch(ctx, cfg,
 				map[string]interface{}{
@@ -142,14 +149,8 @@ func (c *jobsConnector) Connect(
 					"value": provisioning.JobStatePending,
 				},
 				map[string]interface{}{
-					"op":    "replace",
-					"path":  "/status/sync/lastRef",
-					"value": cfg.Status.Sync.LastRef,
-				},
-				map[string]interface{}{
-					"op":    "replace",
-					"path":  "/status/sync/started",
-					"value": time.Now().UnixMilli(),
+					"op":   "remove",
+					"path": "/status/sync/started",
 				},
 			)
 			if err != nil {
@@ -158,11 +159,6 @@ func (c *jobsConnector) Connect(
 			}
 		}
 
-		job, err := c.jobs.GetJobQueue().Insert(ctx, cfg.Namespace, spec)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
 		responder.Object(http.StatusAccepted, job)
 	}), 30*time.Second), nil
 }
