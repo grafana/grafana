@@ -86,6 +86,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingCreate(obj runtime.
 				"name", tb.Name,
 				"subject", tb.Spec.Subject.Name,
 				"teamRef", tb.Spec.TeamRef.Name,
+				"permission", tb.Spec.Permission,
 				"err", err,
 			)
 			status = "failure"
@@ -117,6 +118,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamBindingCreate(obj runtime.
 				"name", tb.Name,
 				"subject", tb.Spec.Subject.Name,
 				"teamRef", tb.Spec.TeamRef.Name,
+				"permission", tb.Spec.Permission,
 			)
 		} else {
 			// Record successful tuple write
@@ -143,6 +145,20 @@ func (b *IdentityAccessManagementAPIBuilder) BeginTeamBindingUpdate(ctx context.
 		return nil, nil
 	}
 
+	if oldTB.Spec.Subject.Name == newTB.Spec.Subject.Name && oldTB.Spec.TeamRef.Name == newTB.Spec.TeamRef.Name && oldTB.Spec.Permission == newTB.Spec.Permission {
+		return nil, nil // No changes to the team binding
+	}
+
+	if newTB.Spec.Subject.Name == "" || newTB.Spec.TeamRef.Name == "" {
+		b.logger.Error("invalid team binding",
+			"namespace", newTB.Namespace,
+			"name", newTB.Name,
+			"subject", newTB.Spec.Subject.Name,
+			"teamRef", newTB.Spec.TeamRef.Name,
+		)
+		return nil, nil
+	}
+
 	// Convert old team binding to tuple for deletion
 	var oldTuple *v1.TupleKey
 	var oldErr error
@@ -154,6 +170,7 @@ func (b *IdentityAccessManagementAPIBuilder) BeginTeamBindingUpdate(ctx context.
 				"name", oldTB.Name,
 				"err", oldErr,
 			)
+			return nil, nil
 		}
 	}
 
@@ -168,18 +185,16 @@ func (b *IdentityAccessManagementAPIBuilder) BeginTeamBindingUpdate(ctx context.
 				"name", newTB.Name,
 				"err", newErr,
 			)
+			return nil, nil
 		}
 	}
 
 	// Return a finish function that performs the zanzana write only on success
 	return func(ctx context.Context, success bool) {
 		if !success {
-			// Update failed, don't write to zanzana
 			return
 		}
 
-		// Grab a ticket to write to Zanzana
-		// This limits the amount of concurrent connections to Zanzana
 		wait := time.Now()
 		b.zTickets <- true
 		hooksWaitHistogram.WithLabelValues("teambinding", "update").Observe(time.Since(wait).Seconds())

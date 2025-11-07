@@ -265,12 +265,6 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
-			Name:        "pluginsFrontendSandbox",
-			Description: "Enables the plugins frontend sandbox",
-			Stage:       FeatureStagePrivatePreview,
-			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:           "recordedQueriesMulti",
 			Description:    "Enables writing multiple items from a single query within Recorded Queries",
 			Stage:          FeatureStageGeneralAvailability,
@@ -1255,6 +1249,13 @@ var (
 			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
+			Name:         "timeRangePan",
+			Description:  "Enables time range panning functionality",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
 			Name:        "azureMonitorDisableLogLimit",
 			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2157,6 +2158,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
+		},
+		{
+			Name:        "kubernetesAnnotations",
+			Description: "Enables app platform API for annotations",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaBackendServicesSquad,
+			Expression:  "false",
 		},
 	}
 )

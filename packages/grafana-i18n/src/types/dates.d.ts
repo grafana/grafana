@@ -1,4 +1,4 @@
-import {
+import type {
   DurationFormatConstructor,
   DurationFormatOptions as _DurationFormatOptions,
   DurationInput as _DurationInput,

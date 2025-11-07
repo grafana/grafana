@@ -90,3 +90,10 @@ func (c *Client) Mutate(ctx context.Context, req *authzextv1.MutateRequest) erro
 	_, err := c.authzext.Mutate(ctx, req)
 	return err
 }
+
+func (c *Client) Query(ctx context.Context, req *authzextv1.QueryRequest) (*authzextv1.QueryResponse, error) {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Query")
+	defer span.End()
+
+	return c.authzext.Query(ctx, req)
+}

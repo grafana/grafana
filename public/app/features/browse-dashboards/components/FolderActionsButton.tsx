@@ -131,7 +131,9 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
 
   const menu = (
     <Menu>
-      {canViewPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />}
+      {canViewPermissions && !isProvisionedFolder && (
+        <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />
+      )}
       {canMoveFolder && !isReadOnlyRepo && (
         <MenuItem
           onClick={isProvisionedFolder ? handleShowMoveProvisionedFolderDrawer : showMoveModal}
