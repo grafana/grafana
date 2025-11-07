@@ -392,6 +392,22 @@ func TestValidateJob(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "migrate action without migrate options",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.migrate: Required value")
+			},
+		},
+		{
 			name: "valid pr job",
 			job: &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{
@@ -403,6 +419,157 @@ func TestValidateJob(t *testing.T) {
 					PullRequest: &provisioning.PullRequestJobOptions{
 						PR:  123,
 						Ref: "refs/pull/123/head",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "delete action with resource missing kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionDelete,
+					Repository: "test-repo",
+					Delete: &provisioning.DeleteJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{
+								Name: "my-dashboard",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.delete.resources[0].kind")
+			},
+		},
+		{
+			name: "move action with valid resources",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMove,
+					Repository: "test-repo",
+					Move: &provisioning.MoveJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{
+								Name: "my-dashboard",
+								Kind: "Dashboard",
+							},
+						},
+						TargetPath: "new-location/",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "move action with resource missing kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMove,
+					Repository: "test-repo",
+					Move: &provisioning.MoveJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{
+								Name: "my-dashboard",
+							},
+						},
+						TargetPath: "new-location/",
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.move.resources[0].kind")
+			},
+		},
+		{
+			name: "move action with both paths and resources",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMove,
+					Repository: "test-repo",
+					Move: &provisioning.MoveJobOptions{
+						Paths: []string{"dashboard.json"},
+						Resources: []provisioning.ResourceRef{
+							{
+								Name: "my-dashboard",
+								Kind: "Dashboard",
+							},
+						},
+						TargetPath: "new-location/",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "move action with invalid source path",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMove,
+					Repository: "test-repo",
+					Move: &provisioning.MoveJobOptions{
+						Paths:      []string{"../invalid/path"},
+						TargetPath: "valid/target/",
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.move.paths[0]")
+			},
+		},
+		{
+			name: "delete action with both paths and resources",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionDelete,
+					Repository: "test-repo",
+					Delete: &provisioning.DeleteJobOptions{
+						Paths: []string{"dashboard.json"},
+						Resources: []provisioning.ResourceRef{
+							{
+								Name: "my-dashboard",
+								Kind: "Dashboard",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "push action with valid path",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Path:    "some/valid/path",
+						Message: "Test commit",
 					},
 				},
 			},
