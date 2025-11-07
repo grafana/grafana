@@ -143,10 +143,6 @@ const (
 	// Enables extra themes
 	FlagExtraThemes = "extraThemes"
 
-	// FlagPluginsFrontendSandbox
-	// Enables the plugins frontend sandbox
-	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
-
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
@@ -520,8 +516,12 @@ const (
 	FlagQueryLibrary = "queryLibrary"
 
 	// FlagDashboardLibrary
-	// Enable suggested dashboards when creating new dashboards
+	// Enable dashboard library experiments that are production ready
 	FlagDashboardLibrary = "dashboardLibrary"
+
+	// FlagSuggestedDashboards
+	// Enable suggested dashboards when creating new dashboards
+	FlagSuggestedDashboards = "suggestedDashboards"
 
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
@@ -1121,4 +1121,8 @@ const (
 	// FlagDashboardTemplates
 	// Enable template dashboards
 	FlagDashboardTemplates = "dashboardTemplates"
+
+	// FlagKubernetesAnnotations
+	// Enables app platform API for annotations
+	FlagKubernetesAnnotations = "kubernetesAnnotations"
 )

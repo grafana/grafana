@@ -265,12 +265,6 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
-			Name:        "pluginsFrontendSandbox",
-			Description: "Enables the plugins frontend sandbox",
-			Stage:       FeatureStagePrivatePreview,
-			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:           "recordedQueriesMulti",
 			Description:    "Enables writing multiple items from a single query within Recorded Queries",
 			Stage:          FeatureStageGeneralAvailability,
@@ -977,6 +971,13 @@ var (
 		},
 		{
 			Name:         "dashboardLibrary",
+			Description:  "Enable dashboard library experiments that are production ready",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+		},
+		{
+			Name:         "suggestedDashboards",
 			Description:  "Enable suggested dashboards when creating new dashboards",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
@@ -2164,6 +2165,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
+		},
+		{
+			Name:        "kubernetesAnnotations",
+			Description: "Enables app platform API for annotations",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaBackendServicesSquad,
+			Expression:  "false",
 		},
 	}
 )

@@ -219,6 +219,7 @@ export function DataSourceModal({
             dashboard={dashboard}
             mixed={mixed}
             dataSources={dataSources}
+            favoriteDataSources={favoriteDataSources}
           />
           <BuiltInList className={styles.appendBuiltInDataSourcesList} />
         </ScrollContainer>
