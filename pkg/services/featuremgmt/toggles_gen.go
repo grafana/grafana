@@ -516,8 +516,12 @@ const (
 	FlagQueryLibrary = "queryLibrary"
 
 	// FlagDashboardLibrary
-	// Enable suggested dashboards when creating new dashboards
+	// Enable dashboard library experiments that are production ready
 	FlagDashboardLibrary = "dashboardLibrary"
+
+	// FlagSuggestedDashboards
+	// Enable suggested dashboards when creating new dashboards
+	FlagSuggestedDashboards = "suggestedDashboards"
 
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
