@@ -4,6 +4,7 @@ import { CSSProperties, FC } from 'react';
 import {
   StandardEditorProps,
   FieldColorModeId,
+  SelectableValue,
   FieldColor,
   fieldColorModeRegistry,
   FieldColorMode,
@@ -14,7 +15,7 @@ import {
   fieldReducers,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useStyles2, useTheme2, Field, Combobox, type ComboboxOption } from '@grafana/ui';
+import { useStyles2, useTheme2, Field, Select, Combobox, type ComboboxOption } from '@grafana/ui';
 
 import { ColorValueEditor } from './color';
 
@@ -46,13 +47,11 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
       };
     });
 
-  const onModeChange = (option: ComboboxOption<string> | null) => {
-    if (option?.value) {
-      onChange({
-        ...value,
-        mode: option.value,
-      });
-    }
+  const onModeChange = (newMode: SelectableValue<string>) => {
+    onChange({
+      ...value,
+      mode: newMode.value!,
+    });
   };
 
   const onColorChange = (color?: string) => {
@@ -76,7 +75,14 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   if (mode === FieldColorModeId.Fixed || mode === FieldColorModeId.Shades) {
     return (
       <div className={styles.group}>
-        <Combobox options={options} value={mode} onChange={onModeChange} width="auto" minWidth={16} id={id} />
+        <Select
+          minMenuHeight={200}
+          options={options}
+          value={mode}
+          onChange={onModeChange}
+          className={styles.select}
+          inputId={id}
+        />
         <ColorValueEditor value={value?.fixedColor} onChange={onColorChange} />
       </div>
     );
@@ -105,7 +111,7 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
     return (
       <>
         <div style={{ marginBottom: theme.spacing(2) }}>
-          <Combobox options={options} value={mode} onChange={onModeChange} id={id} />
+          <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} inputId={id} />
         </div>
         <Field label={t('options-ui.field-color.color-by-label', 'Color series by')} noMargin>
           <Combobox
@@ -126,7 +132,7 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
     );
   }
 
-  return <Combobox options={options} value={mode} onChange={onModeChange} id={id} />;
+  return <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} inputId={id} />;
 };
 
 interface ModeProps {
