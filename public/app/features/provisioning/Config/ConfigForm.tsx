@@ -304,6 +304,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
               onChange: (e) => {
                 if (e.target.checked) {
                   setValue('prWorkflow', false);
+                  setValue('enablePushToConfiguredBranch', false);
                 }
               },
             })}

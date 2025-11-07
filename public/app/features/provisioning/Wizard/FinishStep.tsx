@@ -69,6 +69,7 @@ export const FinishStep = memo(function FinishStep() {
             onChange: (e) => {
               if (e.target.checked) {
                 setValue('repository.prWorkflow', false);
+                setValue('repository.enablePushToConfiguredBranch', false);
               }
             },
           })}
