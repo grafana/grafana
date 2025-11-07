@@ -92,7 +92,7 @@
     "@emotion/eslint-plugin": "11.12.0",
     "@grafana/eslint-config": "8.2.0",
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
-    "@grafana/plugin-e2e": "2.1.7",
+    "@grafana/plugin-e2e": "^3.0.1",
     "@grafana/test-utils": "workspace:*",
     "@manypkg/get-packages": "^3.0.0",
     "@npmcli/package-json": "^6.0.0",
