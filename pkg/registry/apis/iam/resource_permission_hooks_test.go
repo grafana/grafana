@@ -16,8 +16,9 @@ import (
 
 type FakeZanzanaClient struct {
 	zanzana.Client
-	writeCallback func(context.Context, *v1.WriteRequest) error
-	readCallback  func(context.Context, *v1.ReadRequest) (*v1.ReadResponse, error)
+	writeCallback  func(context.Context, *v1.WriteRequest) error
+	readCallback   func(context.Context, *v1.ReadRequest) (*v1.ReadResponse, error)
+	mutateCallback func(context.Context, *v1.MutateRequest) error
 }
 
 // Read implements zanzana.Client.
@@ -31,6 +32,14 @@ func (f *FakeZanzanaClient) Read(ctx context.Context, req *v1.ReadRequest) (*v1.
 // Write implements zanzana.Client.
 func (f *FakeZanzanaClient) Write(ctx context.Context, req *v1.WriteRequest) error {
 	return f.writeCallback(ctx, req)
+}
+
+// Mutate implements zanzana.Client.
+func (f *FakeZanzanaClient) Mutate(ctx context.Context, req *v1.MutateRequest) error {
+	if f.mutateCallback != nil {
+		return f.mutateCallback(ctx, req)
+	}
+	return nil
 }
 
 func requireTuplesMatch(t *testing.T, actual []*v1.TupleKey, expected []*v1.TupleKey, msgAndArgs ...interface{}) {
