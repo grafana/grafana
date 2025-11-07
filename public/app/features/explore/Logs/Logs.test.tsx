@@ -479,8 +479,6 @@ describe('Logs', () => {
     });
 
     it('should call createAndCopyShortLink on permalinkClick - with infinite scrolling', async () => {
-      const featureToggleValue = config.featureToggles.logsInfiniteScrolling;
-      config.featureToggles.logsInfiniteScrolling = true;
       const rows = [
         makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
         makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 1 }),
@@ -503,7 +501,6 @@ describe('Logs', () => {
         )
       );
       expect(createAndCopyShortLink).toHaveBeenCalledWith(expect.stringMatching('visualisationType%22:%22logs'));
-      config.featureToggles.logsInfiniteScrolling = featureToggleValue;
     });
   });
 

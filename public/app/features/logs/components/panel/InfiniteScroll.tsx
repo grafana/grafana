@@ -139,7 +139,7 @@ export const InfiniteScroll = ({
   );
 
   useEffect(() => {
-    if (!scrollElement || !loadMore || !config.featureToggles.logsInfiniteScrolling) {
+    if (!scrollElement || !loadMore) {
       return;
     }
 

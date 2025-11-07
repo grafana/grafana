@@ -365,29 +365,17 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [props.eventBus]
   );
 
-  const scrollIntoView = useCallback(
-    (element: HTMLElement) => {
-      if (config.featureToggles.logsInfiniteScrolling) {
-        if (logsContainerRef.current) {
-          topLogsRef.current?.scrollIntoView();
-          logsContainerRef.current.scroll({
-            behavior: 'smooth',
-            top: logsContainerRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
-          });
-        }
+  const scrollIntoView = useCallback((element: HTMLElement) => {
+    if (logsContainerRef.current) {
+      topLogsRef.current?.scrollIntoView();
+      logsContainerRef.current.scroll({
+        behavior: 'smooth',
+        top: logsContainerRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+      });
+    }
 
-        return;
-      }
-
-      if (scrollElement) {
-        scrollElement.scroll({
-          behavior: 'smooth',
-          top: scrollElement.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
-        });
-      }
-    },
-    [scrollElement]
-  );
+    return;
+  }, []);
 
   const sortOrderChanged = useCallback(
     (newSortOrder: LogsSortOrder) => {
@@ -626,13 +614,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
 
   const scrollToTopLogs = useCallback(() => {
-    if (config.featureToggles.logsInfiniteScrolling) {
-      if (logsContainerRef.current) {
-        logsContainerRef.current.scroll({
-          behavior: 'auto',
-          top: 0,
-        });
-      }
+    if (logsContainerRef.current) {
+      logsContainerRef.current.scroll({
+        behavior: 'auto',
+        top: 0,
+      });
     }
     topLogsRef.current?.scrollIntoView();
   }, []);
@@ -1060,11 +1046,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             visualisationType === 'logs' &&
             hasData && (
               <>
-                <div
-                  className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
-                  data-testid="logRows"
-                  ref={logsContainerRef}
-                >
+                <div className={styles.scrollableLogRows} data-testid="logRows" ref={logsContainerRef}>
                   <InfiniteScroll
                     loading={loading}
                     loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
@@ -1277,7 +1259,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     }),
     stickyNavigation: css({
       overflow: 'visible',
-      ...(config.featureToggles.logsInfiniteScrolling && { marginBottom: '0px' }),
+      marginBottom: '0px',
     }),
     logsVolumePanel: css({
       marginBottom: theme.spacing(1.5),

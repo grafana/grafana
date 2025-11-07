@@ -86,7 +86,7 @@ export const InfiniteScroll = ({
     }
 
     function handleScroll(event: Event | WheelEvent) {
-      if (!scrollElement || !loadMoreLogs || !rows.length || loading || !config.featureToggles.logsInfiniteScrolling) {
+      if (!scrollElement || !loadMoreLogs || !rows.length || loading) {
         return;
       }
       const scrollDirection = shouldLoadMore(event, lastEvent.current, countRef, scrollElement, lastScroll.current);

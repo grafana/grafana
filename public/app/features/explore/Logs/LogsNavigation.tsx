@@ -190,20 +190,6 @@ function LogsNavigation({
 
   return (
     <div className={styles.navContainer}>
-      {!config.featureToggles.logsInfiniteScrolling && (
-        <>
-          {oldestLogsFirst ? olderLogsButton : newerLogsButton}
-          <LogsNavigationPages
-            pages={pages}
-            currentPageIndex={currentPageIndex}
-            oldestLogsFirst={oldestLogsFirst}
-            timeZone={timeZone}
-            loading={loading}
-            onClick={onPageClick}
-          />
-          {oldestLogsFirst ? newerLogsButton : olderLogsButton}
-        </>
-      )}
       {scrollToBottomLogs && (
         <Button
           data-testid="scrollToBottom"
@@ -239,11 +225,7 @@ const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean) => {
       width: oldestLogsFirst && !config.featureToggles.newLogsPanel ? '58px' : 'auto',
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: config.featureToggles.logsInfiniteScrolling
-        ? 'flex-end'
-        : oldestLogsFirst
-          ? 'flex-start'
-          : 'space-between',
+      justifyContent: 'flex-end',
       position: 'sticky',
       top: theme.spacing(2),
       right: 0,

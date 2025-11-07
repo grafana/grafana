@@ -150,7 +150,7 @@ const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps
       if (ref) {
         return styles.forwardedScrollableLogRows;
       }
-      return config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows;
+      return styles.scrollableLogRows;
     }, [ref]);
 
     const scrollIntoView = useCallback(

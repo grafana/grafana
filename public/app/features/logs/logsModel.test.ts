@@ -387,8 +387,6 @@ describe('dataFrameToLogsModel', () => {
   });
 
   it('with infinite scrolling enabled it should return expected logs model', () => {
-    config.featureToggles.logsInfiniteScrolling = true;
-
     const series: DataFrame[] = [
       createDataFrame({
         fields: [
@@ -421,8 +419,6 @@ describe('dataFrameToLogsModel', () => {
       value: `1 line displayed`,
       kind: LogsMetaKind.String,
     });
-
-    config.featureToggles.logsInfiniteScrolling = false;
   });
 
   it('given one series with limit as custom meta property should return correct limit', () => {

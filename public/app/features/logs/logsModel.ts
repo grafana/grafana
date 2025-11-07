@@ -576,8 +576,7 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
         metaLimitValue = `${limit} lines shown — ${coverage}% (${rangeUtil.msRangeToTimeString(visibleRangeMs)}) of ${rangeUtil.msRangeToTimeString(requestedRangeMs)}`;
       }
     } else {
-      const description = config.featureToggles.logsInfiniteScrolling ? 'displayed' : 'returned';
-      metaLimitValue = `${logsModel.rows.length} ${logsModel.rows.length > 1 ? 'lines' : 'line'} ${description}`;
+      metaLimitValue = `${logsModel.rows.length} ${logsModel.rows.length > 1 ? 'lines' : 'line'} displayed`;
     }
 
     logsModelMeta[limitIndex] = {
