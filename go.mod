@@ -172,7 +172,7 @@ require (
 	github.com/stretchr/testify v1.11.1 // @grafana/grafana-backend-group
 	github.com/testcontainers/testcontainers-go v0.36.0 //@grafana/grafana-app-platform-squad
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // @grafana/grafana-backend-group
-	github.com/tjhop/slog-gokit v0.1.3 // @grafana/grafana-app-platform-squad
+	github.com/tjhop/slog-gokit v0.1.5 // @grafana/grafana-app-platform-squad
 	github.com/ua-parser/uap-go v0.0.0-20250213224047-9c035f085b90 // @grafana/grafana-backend-group
 	github.com/urfave/cli v1.22.17 // indirect; @grafana/grafana-backend-group
 	github.com/urfave/cli/v2 v2.27.7 // @grafana/grafana-backend-group
@@ -701,9 +701,6 @@ replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
 // Use our fork of dolthub/go-mysql-server which makes non-cgo the default
 // since using a build tag is not sufficient for some use cases (e.g. developers tests in IDE).
 replace github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.1-grafana1
-
-// Use fork of slog-gokit with fix for data race in handler
-replace github.com/tjhop/slog-gokit => github.com/MissingRoberto/slog-gokit v0.0.0-20251105092822-783f72952ce4
 
 // v1.* versions were retracted, we need to stick with v0.*. This should work
 // without the exclude, but this otherwise gets pulled in as a transitive
