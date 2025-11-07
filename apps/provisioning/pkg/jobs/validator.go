@@ -1,6 +1,8 @@
 package jobs
 
 import (
+	"slices"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -8,6 +10,15 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 )
+
+var validActions = []provisioning.JobAction{
+	provisioning.JobActionPull,
+	provisioning.JobActionPush,
+	provisioning.JobActionPullRequest,
+	provisioning.JobActionMigrate,
+	provisioning.JobActionDelete,
+	provisioning.JobActionMove,
+}
 
 // ValidateJob performs validation on the Job specification and returns an error if validation fails
 func ValidateJob(job *provisioning.Job) error {
@@ -20,22 +31,7 @@ func ValidateJob(job *provisioning.Job) error {
 	}
 
 	// Validate action is a valid JobAction
-	validActions := []provisioning.JobAction{
-		provisioning.JobActionPull,
-		provisioning.JobActionPush,
-		provisioning.JobActionPullRequest,
-		provisioning.JobActionMigrate,
-		provisioning.JobActionDelete,
-		provisioning.JobActionMove,
-	}
-	actionValid := false
-	for _, va := range validActions {
-		if job.Spec.Action == va {
-			actionValid = true
-			break
-		}
-	}
-	if !actionValid {
+	if !slices.Contains(validActions, job.Spec.Action) {
 		list = append(list, field.Invalid(field.NewPath("spec", "action"), job.Spec.Action, "invalid action"))
 	}
 
