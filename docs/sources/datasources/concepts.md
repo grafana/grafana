@@ -26,11 +26,11 @@ refs:
 
 # Data sources, plugins, and integrations
 
-When working with Grafana, you'll encounter three key concepts: data sources, plugins and integrations.  Each one is essential in building effective monitoring solutions, but they serve distinct purposes, and are often confused with one another. This document clarifies the meaning of each concept and what each one does, when to use it, and how they work together to create observability solutions in Grafana.
+When working with Grafana, you'll encounter three key concepts: data sources, plugins, and integrations.  Each one is essential in building effective monitoring solutions, but they serve distinct purposes, and are often confused with one another. This document clarifies the meaning of each concept and what each one does, when to use it, and how they work together to create observability solutions in Grafana.
 
-## Data source
+## Data sources
 
-A data source is a connection to a specific database, monitoring system, service, or other external location that stores data, metrics, logs, or traces. Examples include Prometheus, InfluxDB, PostgreSQL, or CloudWatch. When you configure a data source in Grafana, you're basically telling it where to fetch data from, providing connection details, credentials, and endpoints. Data sources are the foundation for working with Grafana. Without them, Grafana has nothing to visualize. Once configured, you can query your Prometheus data source to display CPU metrics, or query CloudWatch to visualize AWS infrastructure performance
+A data source is a connection to a specific database, monitoring system, service, or other external location that stores data, metrics, logs, or traces. Examples include Prometheus, InfluxDB, PostgreSQL, or CloudWatch. When you configure a data source in Grafana, you're telling it where to fetch data from, providing connection details, credentials, and endpoints. Data sources are the foundation for working with Grafana. Without them, Grafana has nothing to visualize. Once configured, you can query your Prometheus data source to display CPU metrics, or query CloudWatch to visualize AWS infrastructure performance.
 
 ## Plugins
 
@@ -42,7 +42,7 @@ Plugins come in three types:
 
 - **App plugins** allow you to bundle data sources and panel plugins within a single package. They also enable you to create custom pages within Grafana, providing a dedicated space for documentation, sign-up forms, and integration with other services via HTTP. Examples include Grafana Metrics Drilldown, Azure Cloud Native Monitoring, and Redis Application.
 
-- **Panel plugins** control how data is visualized in Grafana dashboards. Examples of panel plugins include pie chart, candlestick, and Plotly. 
+- **Panel plugins** control how data appears in Grafana dashboards. Examples of panel plugins include pie chart, candlestick, and Plotly. 
 
 ## Integrations
 
@@ -113,9 +113,9 @@ No, integrations are much more than just dashboards. While dashboards are part o
 
 A panel plugin in Grafana is an extension that allows you to add new and custom visualizations to your Grafana dashboards. While Grafana comes with several built-in panel types (like graphs, single stats, and tables), panel plugins extend this functionality by providing specialized ways to display data. 
 
-An app plugin in Grafana is a type of plugin that provides a comprehensive, integrated, and often out-of-the-box experience within Grafana. Unlike data source plugins (which connect to external data sources) or panel plugins (which provide new visualization types), app plugins can combine various functionalities to create a more complete application-like experience. 
+An app plugin in Grafana is a type of plugin that provides a comprehensive, integrated, and often out-of-the-box experience within Grafana. Unlike data source plugins, which connect to external data sources, or panel plugins, which provide new visualization types, app plugins can combine various functionalities to create a more complete application-like experience. 
 
-A data source plugin in Grafana is a software component that enables Grafana to connect to and retrieve data from various external data sources. Once the plugin is installed, you can use it to configure one or more data sources. Each data source defines the actual connection details, like the server URL, authentication method, and query options.
+A data source plugin in Grafana is a software component that enables Grafana to connect to and retrieve data from various external data sources. Once you install the plugin, you can use it to configure one or more data sources. Each data source defines the actual connection details, like the server URL, authentication method, and query options.
 
 ## Summary reference
 
