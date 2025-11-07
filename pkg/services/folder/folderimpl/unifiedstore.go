@@ -559,15 +559,21 @@ func computeFullPath(parents []*folder.Folder) (string, string) {
 	return strings.Join(fullpath, "/"), strings.Join(fullpathUIDs, "/")
 }
 
-func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderMap map[string]*folder.Folder) {
+func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderMap map[string]*folder.Folder) error {
 	titles := make([]string, 0)
 	uids := make([]string, 0)
 
 	titles = append(titles, f.Title)
 	uids = append(uids, f.UID)
 
+	i := 0
 	currentUID := f.UID
 	for currentUID != "" {
+		// This is just a circut breaker to prevent infinite loops. We should never reach this limit.
+		if i > 1000 {
+			return fmt.Errorf("folder depth exceeds the maximum allowed depth, You might have a circular reference")
+		}
+		i++
 		parentUID, exists := relations[currentUID]
 		if !exists {
 			break
@@ -588,6 +594,7 @@ func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderM
 
 	f.Fullpath = strings.Join(util.Reverse(titles), "/")
 	f.FullpathUIDs = strings.Join(util.Reverse(uids), "/")
+	return nil
 }
 
 func shouldSkipFolder(f *folder.Folder, filterUIDs map[string]struct{}) bool {
