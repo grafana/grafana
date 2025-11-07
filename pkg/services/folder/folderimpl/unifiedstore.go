@@ -388,7 +388,9 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 		}
 
 		if (q.WithFullpath || q.WithFullpathUIDs) && f.Fullpath == "" {
-			buildFolderFullPaths(f, relations, folderMap)
+			if err := buildFolderFullPaths(f, relations, folderMap); err != nil {
+				return nil, err
+			}
 		}
 
 		hits = append(hits, f)
@@ -569,7 +571,7 @@ func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderM
 	i := 0
 	currentUID := f.UID
 	for currentUID != "" {
-		// This is just a circut breaker to prevent infinite loops. We should never reach this limit.
+		// This is just a circuit breaker to prevent infinite loops. We should never reach this limit.
 		if i > 1000 {
 			return fmt.Errorf("folder depth exceeds the maximum allowed depth, You might have a circular reference")
 		}
