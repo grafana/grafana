@@ -52,7 +52,6 @@ reportingRetries,preview,@grafana/grafana-operator-experience-squad,false,true,f
 sseGroupByDatasource,experimental,@grafana/observability-metrics,false,false,false
 lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,false,false,false
 externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
-panelMonitoring,GA,@grafana/dataviz-squad,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 disableClassicHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 formatString,GA,@grafana/dataviz-squad,false,false,true
