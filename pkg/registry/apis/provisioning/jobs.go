@@ -149,8 +149,11 @@ func (c *jobsConnector) Connect(
 					"value": provisioning.JobStatePending,
 				},
 				map[string]interface{}{
-					"op":   "remove",
-					"path": "/status/sync/started",
+					// Use "replace" instead of "remove" since "remove" fails if the path does not exist (RFC 6902).
+					// "started" field uses "omitempty", so it may be missing in the JSON.
+					"op":    "replace",
+					"path":  "/status/sync/started",
+					"value": int64(0),
 				},
 			)
 			if err != nil {

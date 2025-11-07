@@ -419,15 +419,17 @@ func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Reposit
 			"value": provisioning.JobStatePending,
 		})
 		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":   "remove",
-			"path": "/status/sync/started",
+			"op":    "replace",
+			"path":  "/status/sync/started",
+			"value": int64(0),
 		})
 	case healthStatus.Healthy && hasUnhealthyMessage: // if the repository is healthy and the message is set, clear it
 		// FIXME: is this the clearest way to do this? Should we introduce another status or way of way of handling more
 		// specific errors?
 		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":   "remove",
-			"path": "/status/sync/message",
+			"op":    "replace",
+			"path":  "/status/sync/message",
+			"value": []string{},
 		})
 	case !healthStatus.Healthy && !hasUnhealthyMessage: // if the repository is unhealthy and the message is not already set, set it
 		patchOperations = append(patchOperations, map[string]interface{}{
