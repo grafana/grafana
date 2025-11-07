@@ -3,7 +3,7 @@ import { SyntheticEvent, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Button, Text, useStyles2 } from '@grafana/ui';
+import { Text, useStyles2 } from '@grafana/ui';
 
 interface MessageListProps {
   messages: string[];
@@ -37,15 +37,9 @@ export function MessageList({ messages, variant }: MessageListProps) {
               <>
                 {' '}
                 <Trans i18nKey="logs.log-row-message.ellipsis">… </Trans>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  fill="outline"
-                  onClick={handleExpand}
-                  className={styles.showMoreInline}
-                >
-                  <Trans i18nKey="logs.log-row-message.more">more</Trans>
-                </Button>
+                <button className={styles.showMoreInline} onClick={handleExpand}>
+                  <Trans i18nKey="logs.log-row-message.more">show more</Trans>
+                </button>
               </>
             )}
           </li>
@@ -53,9 +47,9 @@ export function MessageList({ messages, variant }: MessageListProps) {
       </ul>
       {showFull && hasMultipleMessages && (
         <div className={styles.showMoreContainer}>
-          <Button variant="secondary" size="sm" fill="outline" onClick={handleCollapse}>
+          <button className={styles.showMore} onClick={handleCollapse}>
             <Trans i18nKey="logs.log-line.show-less">show less</Trans>
-          </Button>
+          </button>
         </div>
       )}
     </>
@@ -69,12 +63,29 @@ const getStyles = (theme: GrafanaTheme2) => ({
     listStyle: 'disc',
   }),
   showMoreInline: css({
-    display: 'inline-flex',
+    backgroundColor: 'transparent',
+    border: 'none',
+    padding: 0,
+    margin: 0,
     marginLeft: theme.spacing(0.5),
-    verticalAlign: 'middle',
+    textDecoration: 'underline',
+    cursor: 'pointer',
+    color: theme.colors.text.primary,
+    fontFamily: 'inherit',
+    fontSize: 'inherit',
   }),
   showMoreContainer: css({
     paddingLeft: theme.spacing(3),
     marginTop: theme.spacing(0.5),
+  }),
+  showMore: css({
+    backgroundColor: 'transparent',
+    border: 'none',
+    padding: 0,
+    margin: 0,
+    textDecoration: 'underline',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    color: theme.colors.text.primary,
   }),
 });

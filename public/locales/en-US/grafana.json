@@ -9776,7 +9776,7 @@
     },
     "log-row-message": {
       "ellipsis": "…",
-      "more": "more",
+      "more": "show more",
       "see-details": "See log details",
       "tooltip-error": "Error: {{errorMessage}}"
     },
