@@ -1,11 +1,11 @@
-import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { VisualizationSuggestionsBuilder, VisualizationSuggestionsSupplier } from '@grafana/data';
 import { checkFields } from '@grafana/flamegraph';
-import { SuggestionName } from 'app/types/suggestions';
+import { t } from '@grafana/i18n';
 
-export class FlameGraphSuggestionsSupplier {
-  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
-    return builder.getListAppender<{}, {}>({
-      name: SuggestionName.FlameGraph,
+export class FlameGraphSuggestionsSupplier implements VisualizationSuggestionsSupplier<{}> {
+  getListAppender(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<{}>({
+      name: t('flamegraph.suggestions.name', 'Flame graph'),
       pluginId: 'flamegraph',
     });
   }
@@ -24,8 +24,6 @@ export class FlameGraphSuggestionsSupplier {
       return;
     }
 
-    this.getListWithDefaults(builder).append({
-      name: SuggestionName.FlameGraph,
-    });
+    this.getListAppender(builder).append({});
   }
 }

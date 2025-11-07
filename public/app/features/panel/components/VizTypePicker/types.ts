@@ -1,8 +1,8 @@
 import { FieldConfigSource } from '@grafana/data';
 
-export interface VizTypeChangeDetails {
+export interface VizTypeChangeDetails<Options extends {} = {}, TFieldConfig extends {} = {}> {
   pluginId: string;
-  options?: Record<string, unknown>;
-  fieldConfig?: FieldConfigSource;
+  options?: Partial<Options>;
+  fieldConfig?: FieldConfigSource<Partial<TFieldConfig>>;
   withModKey?: boolean;
 }

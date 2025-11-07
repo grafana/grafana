@@ -1,3 +1,5 @@
+import { glob } from 'glob';
+
 import {
   DataFrame,
   FieldType,
@@ -8,31 +10,53 @@ import {
   toDataFrame,
   VisualizationSuggestion,
 } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test';
 import { config } from 'app/core/config';
-import { SuggestionName } from 'app/types/suggestions';
 
-import { getAllSuggestions, panelsToCheckFirst } from './getAllSuggestions';
+import { getAllSuggestions } from './getAllSuggestions';
 
-for (const pluginId of panelsToCheckFirst) {
-  config.panels[pluginId] = {
-    module: `core:plugin/${pluginId}`,
-    id: pluginId,
-  } as PanelPluginMeta;
+let cachedPanelConfig: typeof config.panels | null = null;
+
+async function setupConfig() {
+  if (!cachedPanelConfig) {
+    cachedPanelConfig = {};
+
+    const files = await glob('**/public/app/plugins/panel/**/suggestions.ts');
+    const sort: Record<string, number> = {
+      timeseries: 1,
+      barchart: 2,
+      gauge: 3,
+      stat: 4,
+      piechart: 5,
+      bargauge: 6,
+      table: 8,
+      'state-timeline': 10,
+      'status-history': 11,
+      text: 100,
+    };
+
+    const omittedPlugins = ['radialbar'];
+
+    for (const file of files) {
+      const pluginIdMatch = file.match(/public\/app\/plugins\/panel\/([^\/]+)\/suggestions.ts/);
+      if (pluginIdMatch && !omittedPlugins.includes(pluginIdMatch[1])) {
+        const pluginId = pluginIdMatch[1];
+        cachedPanelConfig[pluginId] = getPanelPlugin({
+          module: `core:plugin/${pluginId}`,
+          id: pluginId,
+          sort: sort[pluginId] ?? 200,
+        }).meta;
+      }
+    }
+  }
+
+  config.panels = cachedPanelConfig;
 }
-
-config.panels['text'] = {
-  id: 'text',
-  name: 'Text',
-  skipDataQuery: true,
-  info: {
-    description: 'pretty decent plugin',
-    logos: { small: 'small/logo', large: 'large/logo' },
-  },
-} as PanelPluginMeta;
 
 class ScenarioContext {
   data: DataFrame[] = [];
-  suggestions: VisualizationSuggestion[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  suggestions: Array<VisualizationSuggestion<any>> = [];
 
   setData(scenarioData: DataFrame[]) {
     this.data = scenarioData;
@@ -60,6 +84,17 @@ class ScenarioContext {
 function scenario(name: string, setup: (ctx: ScenarioContext) => void) {
   describe(name, () => {
     const ctx = new ScenarioContext();
+    let origPanelConfig: Record<string, PanelPluginMeta>;
+
+    beforeAll(async () => {
+      origPanelConfig = config.panels;
+      await setupConfig();
+    });
+
+    afterAll(() => {
+      config.panels = origPanelConfig;
+    });
+
     setup(ctx);
   });
 }
@@ -68,7 +103,7 @@ scenario('No series', (ctx) => {
   ctx.setData([]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([SuggestionName.Table, SuggestionName.TextPanel]);
+    expect(ctx.names()).toEqual(['Table', 'Text']);
   });
 });
 
@@ -83,7 +118,7 @@ scenario('No rows', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([SuggestionName.Table]);
+    expect(ctx.names()).toEqual(['Table']);
   });
 });
 
@@ -99,26 +134,28 @@ scenario('Single frame with time and number field', (ctx) => {
 
   it('should return correct suggestions', () => {
     expect(ctx.names()).toEqual([
-      SuggestionName.LineChart,
-      SuggestionName.LineChartSmooth,
-      SuggestionName.AreaChart,
-      SuggestionName.LineChartGradientColorScheme,
-      SuggestionName.BarChart,
-      SuggestionName.BarChartGradientColorScheme,
-      SuggestionName.Gauge,
-      SuggestionName.GaugeNoThresholds,
-      SuggestionName.Stat,
-      SuggestionName.StatColoredBackground,
-      SuggestionName.BarGaugeBasic,
-      SuggestionName.BarGaugeLCD,
-      SuggestionName.Table,
-      SuggestionName.StateTimeline,
-      SuggestionName.StatusHistory,
+      'Line chart',
+      'Line chart (smooth)',
+      'Area chart',
+      'Line chart (with gradient color scheme)',
+      'Bar chart',
+      'Bar chart (with gradient color scheme)',
+      'Gauge',
+      'Gauge (no thresholds)',
+      'Stat',
+      'Stat (colored background)',
+      'Bar gauge',
+      'Bar gauge (LCD)',
+      'Table',
+      'State timeline',
+      'Status history',
     ]);
   });
 
-  it('Bar chart suggestion should be using timeseries panel', () => {
-    expect(ctx.suggestions.find((x) => x.name === SuggestionName.BarChart)?.pluginId).toBe('timeseries');
+  it('Bar chart suggestions should use timeseries panel', () => {
+    expect(new Set(ctx.suggestions.filter((s) => s.name.startsWith('Bar chart')).map((s) => s.pluginId))).toEqual(
+      new Set(['timeseries'])
+    );
   });
 
   it('Stat panels have reduce values disabled', () => {
@@ -143,23 +180,23 @@ scenario('Single frame with time 2 number fields', (ctx) => {
 
   it('should return correct suggestions', () => {
     expect(ctx.names()).toEqual([
-      SuggestionName.LineChart,
-      SuggestionName.LineChartSmooth,
-      SuggestionName.AreaChartStacked,
-      SuggestionName.AreaChartStackedPercent,
-      SuggestionName.BarChartStacked,
-      SuggestionName.BarChartStackedPercent,
-      SuggestionName.Gauge,
-      SuggestionName.GaugeNoThresholds,
-      SuggestionName.Stat,
-      SuggestionName.StatColoredBackground,
-      SuggestionName.PieChart,
-      SuggestionName.PieChartDonut,
-      SuggestionName.BarGaugeBasic,
-      SuggestionName.BarGaugeLCD,
-      SuggestionName.Table,
-      SuggestionName.StateTimeline,
-      SuggestionName.StatusHistory,
+      'Line chart',
+      'Line chart (smooth)',
+      'Area chart (stacked)',
+      'Area chart (100%, stacked)',
+      'Bar chart (stacked)',
+      'Bar chart (100%, stacked)',
+      'Gauge',
+      'Gauge (no thresholds)',
+      'Stat',
+      'Stat (colored background)',
+      'Pie chart',
+      'Pie chart (donut)',
+      'Bar gauge',
+      'Bar gauge (LCD)',
+      'Table',
+      'State timeline',
+      'Status history',
     ]);
   });
 
@@ -183,7 +220,7 @@ scenario('Single time series with 100 data points', (ctx) => {
   ]);
 
   it('should not suggest bar chart', () => {
-    expect(ctx.suggestions.find((x) => x.name === SuggestionName.BarChart)).toBe(undefined);
+    expect(ctx.suggestions.find((x) => x.name === 'Bar Chart')).toBe(undefined);
   });
 });
 
@@ -235,17 +272,17 @@ scenario('Single frame with string and number field', (ctx) => {
 
   it('should return correct suggestions', () => {
     expect(ctx.names()).toEqual([
-      SuggestionName.BarChart,
-      SuggestionName.BarChartHorizontal,
-      SuggestionName.Gauge,
-      SuggestionName.GaugeNoThresholds,
-      SuggestionName.Stat,
-      SuggestionName.StatColoredBackground,
-      SuggestionName.PieChart,
-      SuggestionName.PieChartDonut,
-      SuggestionName.BarGaugeBasic,
-      SuggestionName.BarGaugeLCD,
-      SuggestionName.Table,
+      'Bar chart',
+      'Bar chart (horizontal)',
+      'Gauge',
+      'Gauge (no thresholds)',
+      'Stat',
+      'Stat (colored background)',
+      'Pie chart',
+      'Pie chart (donut)',
+      'Bar gauge',
+      'Bar gauge (LCD)',
+      'Table',
     ]);
   });
 
@@ -271,21 +308,22 @@ scenario('Single frame with string and 2 number field', (ctx) => {
 
   it('should return correct suggestions', () => {
     expect(ctx.names()).toEqual([
-      SuggestionName.BarChart,
-      SuggestionName.BarChartStacked,
-      SuggestionName.BarChartStackedPercent,
-      SuggestionName.BarChartHorizontal,
-      SuggestionName.BarChartHorizontalStacked,
-      SuggestionName.BarChartHorizontalStackedPercent,
-      SuggestionName.Gauge,
-      SuggestionName.GaugeNoThresholds,
-      SuggestionName.Stat,
-      SuggestionName.StatColoredBackground,
-      SuggestionName.PieChart,
-      SuggestionName.PieChartDonut,
-      SuggestionName.BarGaugeBasic,
-      SuggestionName.BarGaugeLCD,
-      SuggestionName.Table,
+      'Bar chart',
+      'Bar chart (stacked)',
+      'Bar chart (100%, stacked)',
+      'Bar chart (horizontal)',
+      'Bar chart (horizontal, stacked)',
+      'Bar chart (100%, horizontal, stacked)',
+      'Gauge',
+      'Gauge (no thresholds)',
+      'Stat',
+      'Stat (colored background)',
+      'Pie chart',
+      'Pie chart (donut)',
+      'Bar gauge',
+      'Bar gauge (LCD)',
+      'Table',
+      'Trend chart',
     ]);
   });
 });
@@ -298,7 +336,7 @@ scenario('Single frame with only string field', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([SuggestionName.Stat, SuggestionName.Table]);
+    expect(ctx.names()).toEqual(['Stat', 'Table']);
   });
 
   it('Stat panels have reduceOptions.fields set to show all fields', () => {
@@ -332,7 +370,7 @@ scenario('Given default loki logs data', (ctx) => {
   ]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.names()).toEqual([SuggestionName.Logs, SuggestionName.Table]);
+    expect(ctx.names()).toEqual(['Logs', 'Table']);
   });
 });
 
@@ -355,7 +393,7 @@ scenario('Given a preferredVisualisationType', (ctx) => {
   ]);
 
   it('should return the preferred visualization first', () => {
-    expect(ctx.names()[0]).toEqual(SuggestionName.Table);
+    expect(ctx.names()[0]).toEqual('Table');
   });
 });
 

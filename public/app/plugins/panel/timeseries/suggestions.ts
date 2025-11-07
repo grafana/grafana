@@ -1,32 +1,26 @@
 import {
-  FieldColorModeId,
   VisualizationSuggestionsBuilder,
   VisualizationSuggestion,
   DataTransformerID,
+  VisualizationSuggestionsSupplier,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
+  FieldColorModeId,
   GraphDrawStyle,
-  GraphFieldConfig,
   GraphGradientMode,
   LegendDisplayMode,
   LineInterpolation,
   StackingMode,
 } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { SuggestionName } from 'app/types/suggestions';
 
-import { Options } from './panelcfg.gen';
+import { Options, FieldConfig } from './panelcfg.gen';
 
-export class TimeSeriesSuggestionsSupplier {
-  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const { dataSummary } = builder;
-
-    if (!dataSummary.hasTimeField || !dataSummary.hasNumberField || dataSummary.rowCountTotal < 2) {
-      return;
-    }
-
-    const list = builder.getListAppender<Options, GraphFieldConfig>({
-      name: SuggestionName.LineChart,
+export class TimeSeriesSuggestionsSupplier implements VisualizationSuggestionsSupplier<Options, FieldConfig> {
+  getListAppender(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options, FieldConfig>({
+      name: t('timeseries.suggestions.name', 'Line chart'),
       pluginId: 'timeseries',
       options: {
         legend: {
@@ -50,16 +44,24 @@ export class TimeSeriesSuggestionsSupplier {
         },
       },
     });
+  }
+
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
+    const { dataSummary } = builder;
+
+    if (!dataSummary.hasTimeField || !dataSummary.hasNumberField || dataSummary.rowCountTotal < 2) {
+      return;
+    }
+
+    const list = this.getListAppender(builder);
 
     const maxBarsCount = 100;
 
-    list.append({
-      name: SuggestionName.LineChart,
-    });
+    list.append({});
 
     if (dataSummary.rowCountMax < 200) {
       list.append({
-        name: SuggestionName.LineChartSmooth,
+        name: t('timeseries.suggestions.line-smooth', 'Line chart (smooth)'),
         fieldConfig: {
           defaults: {
             custom: {
@@ -74,7 +76,7 @@ export class TimeSeriesSuggestionsSupplier {
     // Single series suggestions
     if (dataSummary.numberFieldCount === 1) {
       list.append({
-        name: SuggestionName.AreaChart,
+        name: t('timeseries.suggestions.area', 'Area chart'),
         fieldConfig: {
           defaults: {
             custom: {
@@ -86,7 +88,7 @@ export class TimeSeriesSuggestionsSupplier {
       });
 
       list.append({
-        name: SuggestionName.LineChartGradientColorScheme,
+        name: t('timeseries.suggestions.line-gradient', 'Line chart (with gradient color scheme)'),
         fieldConfig: {
           defaults: {
             color: {
@@ -105,7 +107,7 @@ export class TimeSeriesSuggestionsSupplier {
 
       if (dataSummary.rowCountMax < maxBarsCount) {
         list.append({
-          name: SuggestionName.BarChart,
+          name: t('timeseries.suggestions.bar', 'Bar chart'),
           fieldConfig: {
             defaults: {
               custom: {
@@ -120,7 +122,7 @@ export class TimeSeriesSuggestionsSupplier {
         });
 
         list.append({
-          name: SuggestionName.BarChartGradientColorScheme,
+          name: t('timeseries.suggestions.bar-gradient', 'Bar chart (with gradient color scheme)'),
           fieldConfig: {
             defaults: {
               color: {
@@ -144,7 +146,7 @@ export class TimeSeriesSuggestionsSupplier {
     // Multiple series suggestions
 
     list.append({
-      name: SuggestionName.AreaChartStacked,
+      name: t('timeseries.suggestions.area-stacked', 'Area chart (stacked)'),
       fieldConfig: {
         defaults: {
           custom: {
@@ -160,7 +162,7 @@ export class TimeSeriesSuggestionsSupplier {
     });
 
     list.append({
-      name: SuggestionName.AreaChartStackedPercent,
+      name: t('timeseries.suggestions.area-stacked-percent', 'Area chart (100%, stacked)'),
       fieldConfig: {
         defaults: {
           custom: {
@@ -177,7 +179,7 @@ export class TimeSeriesSuggestionsSupplier {
 
     if (dataSummary.rowCountTotal / dataSummary.numberFieldCount < maxBarsCount) {
       list.append({
-        name: SuggestionName.BarChartStacked,
+        name: t('timeseries.suggestions.area-stacked-percent', 'Bar chart (stacked)'),
         fieldConfig: {
           defaults: {
             custom: {
@@ -196,7 +198,7 @@ export class TimeSeriesSuggestionsSupplier {
       });
 
       list.append({
-        name: SuggestionName.BarChartStackedPercent,
+        name: t('timeseries.suggestions.bar-stacked-percent', 'Bar chart (100%, stacked)'),
         fieldConfig: {
           defaults: {
             custom: {
@@ -230,7 +232,7 @@ export function getPrepareTimeseriesSuggestion(panelId: number): VisualizationSu
     });
 
     return {
-      name: 'Transform to wide time series format',
+      name: t('timeseries.suggestions.wide-timeseries', 'Transform to wide time series format'),
       pluginId: 'timeseries',
       transformations,
     };

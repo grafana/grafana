@@ -1,20 +1,14 @@
-import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { VisualizationSuggestionsBuilder, VisualizationSuggestionsSupplier } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { GraphDrawStyle, GraphFieldConfig, LegendDisplayMode } from '@grafana/schema';
-import { SuggestionName } from 'app/types/suggestions';
 
 import { Options } from './panelcfg.gen';
+import { validateSeries } from './utils';
 
-export class TrendSuggestionsSupplier {
-  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const { dataSummary } = builder;
-
-    if (dataSummary.numberFieldCount < 2 || dataSummary.rowCountTotal < 2 || dataSummary.rowCountTotal < 2) {
-      return;
-    }
-
-    // Super basic
-    const list = builder.getListAppender<Options, GraphFieldConfig>({
-      name: SuggestionName.LineChart,
+export class TrendSuggestionsSupplier implements VisualizationSuggestionsSupplier<Options, GraphFieldConfig> {
+  getListAppender(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options, GraphFieldConfig>({
+      name: t('trend.suggestions.name', 'Trend chart'),
       pluginId: 'trend',
       options: {
         legend: {
@@ -38,6 +32,18 @@ export class TrendSuggestionsSupplier {
         },
       },
     });
-    return list;
+  }
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
+    const { dataSummary } = builder;
+
+    if (dataSummary.numberFieldCount < 2 || dataSummary.rowCountTotal < 2 || dataSummary.hasTimeField) {
+      return;
+    }
+
+    if (validateSeries(builder.data?.series ?? []).warning) {
+      return;
+    }
+
+    this.getListAppender(builder).append({});
   }
 }
