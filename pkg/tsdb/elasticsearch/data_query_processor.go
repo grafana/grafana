@@ -12,11 +12,6 @@ import (
 
 // processQuery processes a single query and adds it to the multi-search request builder
 func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
-	// Handle raw DSL queries
-	if q.RawDSLQuery.Query != nil {
-		return e.processRawDSLQuery(q, ms, from, to)
-	}
-
 	err := isQueryWithError(q)
 	if err != nil {
 		return backend.DownstreamError(fmt.Errorf("received invalid query. %w", err))
@@ -28,6 +23,12 @@ func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchReques
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(defaultTimeField, to, from, es.DateFormatEpochMS)
 	filters.AddQueryStringFilter(q.RawQuery, true)
+
+	// Handle raw DSL queries
+	if q.RawDSLQuery.Query != nil {
+		//TODO handle error
+		_ = e.processRawDSLQuery(q, b)
+	}
 
 	if isLogsQuery(q) {
 		processLogsQuery(q, b, from, to, defaultTimeField)
@@ -190,7 +191,7 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64
 	}
 }
 
-func (e *elasticsearchDataQuery) processRawDSLQuery(q *Query, ms *es.MultiSearchRequestBuilder, _ /* from */, _ /* to */ int64) error {
+func (e *elasticsearchDataQuery) processRawDSLQuery(q *Query, b *es.SearchRequestBuilder) error {
 	if *q.RawDSLQuery.Query == "" {
 		return backend.DownstreamError(fmt.Errorf("raw DSL query is empty"))
 	}
@@ -203,7 +204,7 @@ func (e *elasticsearchDataQuery) processRawDSLQuery(q *Query, ms *es.MultiSearch
 
 	// Create a search request builder and set the raw body directly
 	// This will bypass all builder logic and send the query as-is to Elasticsearch
-	b := ms.Search(q.Interval, q.TimeRange)
+	//b := ms.Search(q.Interval, q.TimeRange)
 	b.SetRawBody(queryBody)
 
 	return nil

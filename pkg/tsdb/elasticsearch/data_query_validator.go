@@ -8,6 +8,10 @@ import (
 
 // isQueryWithError validates the query and returns an error if invalid
 func isQueryWithError(query *Query) error {
+	// TODO might want to check stuff here
+	if query.RawDSLQuery.Query != nil {
+		return nil
+	}
 	if len(query.BucketAggs) == 0 {
 		// If no aggregations, only document and logs queries are valid
 		if len(query.Metrics) == 0 || (!isLogsQuery(query) && !isDocumentQuery(query)) {

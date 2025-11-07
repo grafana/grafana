@@ -3,6 +3,7 @@ package es
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -25,6 +26,9 @@ func newRequestEncoder(logger log.Logger) *requestEncoder {
 // encodeBatchRequests encodes multiple requests into NDJSON format
 func (e *requestEncoder) encodeBatchRequests(requests []*multiRequest) ([]byte, error) {
 	start := time.Now()
+	defer func() {
+		e.logger.Debug("Completed encoding of batch requests to json", "duration", time.Since(start))
+	}()
 
 	payload := bytes.Buffer{}
 	for _, r := range requests {
@@ -34,20 +38,26 @@ func (e *requestEncoder) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 		}
 		payload.WriteString(string(reqHeader) + "\n")
 
-		reqBody, err := json.Marshal(r.body)
-		if err != nil {
-			return nil, err
+		reqBody := []byte{}
+		body := ""
+		switch r.body.(type) {
+		case *SearchRequest:
+			reqBody, err = json.Marshal(r.body)
+			if err != nil {
+				return nil, err
+			}
+			body = string(reqBody)
+		case string:
+			body = r.body.(string)
+		default:
+			return nil, fmt.Errorf("unknown request type: %T", r.body)
 		}
 
-		body := string(reqBody)
 		body = strings.ReplaceAll(body, "$__interval_ms", strconv.FormatInt(r.interval.Milliseconds(), 10))
 		body = strings.ReplaceAll(body, "$__interval", r.interval.String())
 
 		payload.WriteString(body + "\n")
 	}
-
-	elapsed := time.Since(start)
-	e.logger.Debug("Completed encoding of batch requests to json", "duration", elapsed)
 
 	return payload.Bytes(), nil
 }
