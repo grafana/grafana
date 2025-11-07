@@ -44,7 +44,7 @@ describe('CommandPalette', () => {
     // Check if empty state message is rendered
     expect(await screen.findByText('No results found')).toBeInTheDocument();
     // Check if AI Assistant button is rendered with correct props
-    expect(screen.getByRole('button', { name: 'Try searching with Grafana Assistant' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Search with Grafana Assistant' })).toBeInTheDocument();
   });
 
   it('should render empty state without AI Assistant button when assistant is not available', async () => {
@@ -55,6 +55,6 @@ describe('CommandPalette', () => {
     // Check if empty state message is rendered
     expect(await screen.findByText('No results found')).toBeInTheDocument();
     // Check that AI Assistant button is not rendered
-    expect(screen.queryByRole('button', { name: 'Try searching with Grafana Assistant' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Search with Grafana Assistant' })).not.toBeInTheDocument();
   });
 });
