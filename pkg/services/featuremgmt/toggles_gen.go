@@ -143,10 +143,6 @@ const (
 	// Enables extra themes
 	FlagExtraThemes = "extraThemes"
 
-	// FlagRecordedQueriesMulti
-	// Enables writing multiple items from a single query within Recorded Queries
-	FlagRecordedQueriesMulti = "recordedQueriesMulti"
-
 	// FlagLogsExploreTableVisualisation
 	// A table visualisation for logs in Explore
 	FlagLogsExploreTableVisualisation = "logsExploreTableVisualisation"

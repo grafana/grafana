@@ -3408,7 +3408,8 @@
       "metadata": {
         "name": "recordedQueriesMulti",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-06-14T12:34:22Z"
+        "creationTimestamp": "2023-06-14T12:34:22Z",
+        "deletionTimestamp": "2025-11-07T17:31:39Z"
       },
       "spec": {
         "description": "Enables writing multiple items from a single query within Recorded Queries",
