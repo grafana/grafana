@@ -19,7 +19,7 @@ export const usePopoverMenu = (containerElement: HTMLDivElement | null) => {
   const { onClickFilterOutString, onClickFilterString } = useLogListContext();
 
   const popoverMenuSupported = useCallback(() => {
-    if (!config.featureToggles.logRowsPopoverMenu || isPopoverMenuDisabled()) {
+    if (isPopoverMenuDisabled()) {
       return false;
     }
     return Boolean(onClickFilterOutString || onClickFilterString);

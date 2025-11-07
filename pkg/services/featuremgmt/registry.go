@@ -664,12 +664,11 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "logRowsPopoverMenu",
-			Description:  "Enable filtering menu displayed when text of a log line is selected",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true",
-			Owner:        grafanaObservabilityLogsSquad,
+			Name:         "pluginsSkipHostEnvVars",
+			Description:  "Disables passing host environment variable to plugin processes",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:         "tableSharedCrosshair",
