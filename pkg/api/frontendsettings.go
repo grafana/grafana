@@ -322,7 +322,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		},
 
 		Caching: dtos.FrontendSettingsCachingDTO{
-			Enabled: hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
+			Enabled:           hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
+			CleanCacheEnabled: hs.Cfg.SectionWithEnvOverrides("caching").Key("clean_cache_enabled").MustBool(true),
 		},
 		RecordedQueries: dtos.FrontendSettingsRecordedQueriesDTO{
 			Enabled: hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),

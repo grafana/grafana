@@ -182,6 +182,7 @@ export class GrafanaBootConfig {
   };
   caching = {
     enabled: false,
+    cleanCacheEnabled: true,
   };
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
