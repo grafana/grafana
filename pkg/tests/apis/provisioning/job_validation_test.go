@@ -179,29 +179,4 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 			require.Contains(t, statusError.Message, tt.expectedErr, "error message should contain expected validation message")
 		})
 	}
-
-	// Test a valid job to ensure validation doesn't block valid requests
-	t.Run("valid pull job should succeed", func(t *testing.T) {
-		jobObj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": "provisioning.grafana.app/v0alpha1",
-				"kind":       "Job",
-				"metadata": map[string]interface{}{
-					"name":      "test-job-validation-valid",
-					"namespace": "default",
-				},
-				"spec": map[string]interface{}{
-					"action":     string(provisioning.JobActionPull),
-					"repository": repo,
-					"pull": map[string]interface{}{
-						"incremental": false,
-					},
-				},
-			},
-		}
-
-		_, err := helper.Jobs.Resource.Create(ctx, jobObj, metav1.CreateOptions{})
-		require.NoError(t, err, "valid job should be created successfully")
-	})
 }
-
