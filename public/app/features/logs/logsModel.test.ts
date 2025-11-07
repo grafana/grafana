@@ -291,7 +291,7 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta![0]).toMatchObject({
       label: '',
-      value: `2 lines returned`,
+      value: `2 lines displayed`,
       kind: LogsMetaKind.String,
     });
     expect(logsModel.meta![1]).toMatchObject({
@@ -373,7 +373,7 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta![0]).toMatchObject({
       label: '',
-      value: `2 lines returned`,
+      value: `2 lines displayed`,
       kind: LogsMetaKind.String,
     });
     expect(logsModel.meta![1]).toMatchObject({
@@ -385,7 +385,7 @@ describe('dataFrameToLogsModel', () => {
     });
   });
 
-  it('with infinite scrolling enabled it should return expected logs model', () => {
+  it('it should return expected logs model', () => {
     const series: DataFrame[] = [
       createDataFrame({
         fields: [
@@ -425,7 +425,7 @@ describe('dataFrameToLogsModel', () => {
     const logsModel = dataFrameToLogsModel(series, 1);
     expect(logsModel.meta![0]).toMatchObject({
       label: '',
-      value: `2 lines returned`,
+      value: `2 lines displayed`,
       kind: LogsMetaKind.String,
     });
   });
@@ -634,7 +634,7 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta![0]).toMatchObject({
       label: '',
-      value: `2 lines returned`,
+      value: `2 lines displayed`,
       kind: LogsMetaKind.String,
     });
     expect(logsModel.meta![1]).toMatchObject({
@@ -753,7 +753,7 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.meta).toHaveLength(3);
     expect(logsModel.meta![0]).toMatchObject({
       label: '',
-      value: `2 lines returned`,
+      value: `2 lines displayed`,
       kind: LogsMetaKind.String,
     });
     expect(logsModel.meta![1]).toMatchObject({
