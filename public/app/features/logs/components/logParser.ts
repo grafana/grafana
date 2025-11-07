@@ -147,10 +147,20 @@ export function separateVisibleFields(
   return { visible, hidden };
 }
 
+// Memoization cache for getVisibleFieldIndices results to avoid re-processing the same DataFrame structure
+// WeakMap ensures automatic garbage collection when DataFrames are no longer referenced
+const visibleFieldIndicesCache = new WeakMap<DataFrame, Set<number> | null>();
+function getCachedVisibleFieldIndices(frame: DataFrame): Set<number> {
+  if (!visibleFieldIndicesCache.has(frame)) {
+    visibleFieldIndicesCache.set(frame, getVisibleFieldIndices(frame, {}));
+  }
+  return visibleFieldIndicesCache.get(frame)!;
+}
+
 // Optimized version of separateVisibleFields() to only return visible fields for getAllFields()
 function getNonEmptyVisibleFields(row: LogRowModel, opts?: VisOptions): FieldWithIndex[] {
   const frame = row.dataFrame;
-  const visibleFieldIndices = getVisibleFieldIndices(frame, opts ?? {});
+  const visibleFieldIndices = opts === undefined ? getCachedVisibleFieldIndices(frame) : getVisibleFieldIndices(frame, opts ?? {});
   const visibleFields: FieldWithIndex[] = [];
   for (let index = 0; index < frame.fields.length; index++) {
     const field = frame.fields[index];
