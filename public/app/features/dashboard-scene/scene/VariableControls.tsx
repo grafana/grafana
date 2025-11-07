@@ -105,7 +105,7 @@ export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectP
       onPointerDown={onPointerDown}
       data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
     >
-      <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable)} />
+      <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
       <variable.Component model={variable} />
     </div>
   );
@@ -145,12 +145,16 @@ function VariableLabel({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    display: 'flex',
+    display: 'inline-flex',
+    alignItems: 'center',
+    verticalAlign: 'middle',
     // No border for second element (inputs) as label and input border is shared
     '> :nth-child(2)': css({
       borderTopLeftRadius: 'unset',
       borderBottomLeftRadius: 'unset',
     }),
+    marginTop: theme.spacing(1),
+    marginRight: theme.spacing(1),
   }),
   verticalContainer: css({
     display: 'flex',
@@ -175,5 +179,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   labelSelectable: css({
     cursor: 'pointer',
+  }),
+  label: css({
+    display: 'flex',
+    alignItems: 'center',
   }),
 });
