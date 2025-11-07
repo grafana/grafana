@@ -1,8 +1,6 @@
 package jobs
 
 import (
-	"slices"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -10,15 +8,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 )
-
-var validActions = []provisioning.JobAction{
-	provisioning.JobActionPull,
-	provisioning.JobActionPush,
-	provisioning.JobActionPullRequest,
-	provisioning.JobActionMigrate,
-	provisioning.JobActionDelete,
-	provisioning.JobActionMove,
-}
 
 // ValidateJob performs validation on the Job specification and returns an error if validation fails
 func ValidateJob(job *provisioning.Job) error {
@@ -28,11 +17,6 @@ func ValidateJob(job *provisioning.Job) error {
 	if job.Spec.Action == "" {
 		list = append(list, field.Required(field.NewPath("spec", "action"), "action must be specified"))
 		return toError(job.Name, list) // Early return since we can't validate further without knowing the action
-	}
-
-	// Validate action is a valid JobAction
-	if !slices.Contains(validActions, job.Spec.Action) {
-		list = append(list, field.Invalid(field.NewPath("spec", "action"), job.Spec.Action, "invalid action"))
 	}
 
 	// Validate repository is specified
@@ -80,6 +64,8 @@ func ValidateJob(job *provisioning.Job) error {
 		} else {
 			list = append(list, validateMoveJobOptions(job.Spec.Move)...)
 		}
+	default:
+		list = append(list, field.Invalid(field.NewPath("spec", "action"), job.Spec.Action, "invalid action"))
 	}
 
 	return toError(job.Name, list)
