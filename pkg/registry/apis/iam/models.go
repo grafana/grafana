@@ -8,6 +8,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -42,7 +46,13 @@ type ExternalGroupMappingStorageBackend interface{ resource.StorageBackend }
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
 	// Stores
-	store                       legacy.LegacyIdentityStore
+	store legacy.LegacyIdentityStore
+
+	userStore                   *user.LegacyStore
+	serviceAccountStore         *serviceaccount.LegacyStore
+	legacyTeamStore             *team.LegacyStore
+	teamBindingStore            *teambinding.LegacyBindingStore
+	ssoStore                    *sso.LegacyStore
 	coreRolesStorage            CoreRoleStorageBackend
 	rolesStorage                RoleStorageBackend
 	resourcePermissionsStorage  resource.StorageBackend

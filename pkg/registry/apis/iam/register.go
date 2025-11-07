@@ -75,8 +75,16 @@ func RegisterAPIService(
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
 	registerMetrics(reg)
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	enableAuthnMutation := features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation)
+
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                       store,
+		userStore:                   user.NewLegacyStore(store, legacyAccessClient, enableAuthnMutation),
+		serviceAccountStore:         serviceaccount.NewLegacyStore(store, legacyAccessClient, enableAuthnMutation),
+		legacyTeamStore:             team.NewLegacyStore(store, legacyAccessClient, enableAuthnMutation),
+		teamBindingStore:            teambinding.NewLegacyBindingStore(store, enableAuthnMutation),
+		ssoStore:                    sso.NewLegacyStore(ssoService),
 		coreRolesStorage:            coreRolesStorage,
 		rolesStorage:                rolesStorage,
 		resourcePermissionsStorage:  resourcepermission.ProvideStorageBackend(dbProvider),
@@ -196,17 +204,17 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	})
 
 	teamResource := iamv0.TeamResourceInfo
-	teamLegacyStore := team.NewLegacyStore(b.store, b.legacyAccessClient, enableAuthnMutation)
-	storage[teamResource.StoragePath()] = teamLegacyStore
-	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
+	teamUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	storage[teamResource.StoragePath()] = teamUniStore
 
-	if b.enableDualWriter {
-		teamStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
+	if b.legacyTeamStore != nil {
+		// TODO: why is this not dual write?
+		storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
 
-		teamDW, err := opts.DualWriteBuilder(teamResource.GroupResource(), teamLegacyStore, teamStore)
+		teamDW, err := opts.DualWriteBuilder(teamResource.GroupResource(), b.legacyTeamStore, teamUniStore)
 		if err != nil {
 			return err
 		}
