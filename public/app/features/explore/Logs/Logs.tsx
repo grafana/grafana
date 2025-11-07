@@ -1095,18 +1095,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     />
                   </InfiniteScroll>
                 </div>
-                <LogsNavigation
-                  logsSortOrder={logsSortOrder}
-                  visibleRange={navigationRange ?? absoluteRange}
-                  absoluteRange={absoluteRange}
-                  timeZone={timeZone}
-                  onChangeTime={onChangeTime}
-                  loading={loading}
-                  queries={logsQueries ?? []}
-                  scrollToTopLogs={scrollToTopLogs}
-                  addResultsToCache={addResultsToCache}
-                  clearCache={clearCache}
-                />
+                <LogsNavigation logsSortOrder={logsSortOrder} scrollToTopLogs={scrollToTopLogs} />
               </>
             )}
           {config.featureToggles.newLogsPanel && visualisationType === 'logs' && (
