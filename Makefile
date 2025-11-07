@@ -150,19 +150,7 @@ i18n-extract: i18n-extract-enterprise
 
 ##@ Building
 .PHONY: gen-cue
-gen-cue: do-gen-cue
-	@if [ -n "$$CODEGEN_VERIFY" ]; then \
-		echo "Verifying generated code is up to date..."; \
-		if ! git diff --quiet; then \
-			echo "Error: Generated cue files are not up to date. Please run 'make gen-cue' to regenerate."; \
-			git diff --name-only; \
-			exit 1; \
-		fi; \
-		echo "Generated cue files are up to date."; \
-	fi
-
-.PHONY: do-gen-cue
-do-gen-cue: ## Do all CUE/Thema code generation
+gen-cue: ## Do all CUE/Thema code generation
 	@echo "generate code from .cue files"
 	go generate ./kinds/gen.go
 	go generate ./public/app/plugins/gen.go
@@ -190,7 +178,7 @@ gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run go
 	@if [ -n "$$CODEGEN_VERIFY" ]; then \
 		echo "Verifying generated code is up to date..."; \
 		if ! git diff --quiet; then \
-			echo "Error: Generated apps code is not up to date. Please run 'make gen-apps' to regenerate."; \
+			echo "Error: Generated code is not up to date. Please run 'make gen-apps', 'make gen-cue', and 'make gen-jsonnet' to regenerate."; \
 			git diff --name-only; \
 			exit 1; \
 		fi; \
@@ -235,23 +223,9 @@ fix-cue:
 	$(cue) fix kinds/**/*.cue
 	$(cue) fix public/app/plugins/**/**/*.cue
 
-
 .PHONY: gen-jsonnet
-gen-jsonnet: do-gen-jsonnet
-	@if [ -n "$$CODEGEN_VERIFY" ]; then \
-		echo "Verifying generated code is up to date..."; \
-		if ! git diff --quiet; then \
-			echo "Error: Generated jsonnet files are not up to date. Please run 'make gen-jsonnet' to regenerate."; \
-			git diff --name-only; \
-			exit 1; \
-		fi; \
-		echo "Generated jsonnet files are up to date."; \
-	fi
-
-.PHONY: do-gen-jsonnet
-do-gen-jsonnet:
+gen-jsonnet:
 	go generate ./devenv/jsonnet
-
 
 .PHONY: update-workspace
 update-workspace: gen-go

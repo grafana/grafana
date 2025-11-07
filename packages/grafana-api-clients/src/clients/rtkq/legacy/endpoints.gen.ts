@@ -5481,6 +5481,8 @@ export type AnnotationQuery = {
   iconColor?: string;
   /** Name of annotation. */
   name?: string;
+  /** Placement can be used to display the annotation query somewhere else on the dashboard other than the default location. */
+  placement?: string;
   target?: AnnotationTarget;
   /** TODO -- this should not exist here, it is based on the --grafana-- datasource */
   type?: string;

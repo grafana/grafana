@@ -1657,9 +1657,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1717,9 +1714,6 @@
       },
       "placeholder-key": "key",
       "placeholder-value": "值"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "檢視或建立聯絡點",
@@ -2879,6 +2873,8 @@
       "notification-message": "通知訊息",
       "predefined-notification-message": "",
       "send-test-notification": "傳送測試通知",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "測試聯絡點"
     },
     "threshold": {
@@ -2937,13 +2933,15 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
-      "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
-      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -4112,6 +4110,7 @@
       "scopes": "範圍"
     },
     "empty-state": {
+      "button-title": "",
       "message": "未找到結果"
     },
     "scopes": {
@@ -6246,6 +6245,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -7169,7 +7169,8 @@
     "logs-table-multi-select": {
       "fields": "欄位",
       "reset": "重設",
-      "selected-fields": "選取的欄位"
+      "selected-fields": "選取的欄位",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "按名稱選取查詢項目",
@@ -8007,26 +8008,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "前天",
+          "previousFiscalQuarter": "上一個會計季度",
+          "previousFiscalYear": "上一個會計年度",
+          "previousMonth": "上個月",
+          "previousWeek": "上一週",
+          "previousYear": "上一年",
+          "thisDayLastWeek": "上週的這一天",
+          "thisFiscalQuarter": "本會計季度",
+          "thisFiscalQuarterSoFar": "本會計季度迄今",
+          "thisFiscalYear": "本會計年度",
+          "thisFiscalYearSoFar": "本會計年度迄今",
+          "thisMonth": "本月",
+          "thisMonthSoFar": "本月迄今",
+          "thisWeek": "本週",
+          "thisWeekSoFar": "本週迄今",
+          "thisYear": "今年",
+          "thisYearSoFar": "今年迄今",
+          "today": "今天",
+          "todaySoFar": "今天迄今",
+          "yesterday": "昨天"
         },
         "lastNDays_other": "",
         "lastNHours_other": "",
@@ -8745,6 +8746,9 @@
     },
     "drawer": {
       "close": "關閉"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "實驗性",
@@ -10554,7 +10558,12 @@
       }
     },
     "help": {
-      "aria-label": "說明"
+      "aria-label": "說明",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "邀請",
@@ -11318,12 +11327,15 @@
       "label-workflow": "工作流程",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "此資源位於 {{repoType}} 的分支後方。",
+      "branch-text": "",
       "not-saved": "在合併此分支之前，您組織中的其他 Grafana 使用者仍會看到儲存到已設定預設分支的目前版本",
       "open-in-repo-button": "在 {{repoType}} 中開啟",
       "open-pull-request-in-repo": "在 {{repoType}} 中開啟拉取請求",
