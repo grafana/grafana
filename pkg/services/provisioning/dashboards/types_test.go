@@ -40,7 +40,7 @@ func TestCreateDashboardJSON(t *testing.T) {
 			assert.Equal(t, "Test Dashboard", result.Dashboard.Title)
 			assert.Equal(t, int64(1), result.OrgID)
 			assert.Equal(t, int64(1), result.Dashboard.OrgID)
-			assert.Equal(t, folderID, result.Dashboard.FolderID)
+			assert.Equal(t, folderID, result.Dashboard.FolderID) // nolint:staticcheck
 			assert.Equal(t, folderUID, result.Dashboard.FolderUID)
 			assert.True(t, result.Overwrite)
 			assert.Equal(t, lastModified, result.UpdatedAt)
@@ -93,7 +93,6 @@ func TestCreateDashboardJSON(t *testing.T) {
 			assert.Nil(t, result)
 			assert.Contains(t, err.Error(), "dashboard orgID")
 		})
-
 	})
 
 	t.Run("folderUID check", func(t *testing.T) {

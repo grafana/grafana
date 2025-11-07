@@ -376,6 +376,7 @@ providers:
 
 When Grafana starts, it updates or creates all dashboards found in the configured path.
 These files can define the dashboard using the dashboard JSON:
+
 ```json
 {
   "dashboard": {
@@ -424,7 +425,7 @@ Or using a Kubernetes format, for example `kubernetes-dashboard.json`:
 }
 ```
 
-You *must* use the Kubernetes resource format to provision dashboards v2 / dynamic dashboards.
+You _must_ use the Kubernetes resource format to provision dashboards v2 / dynamic dashboards.
 
 It later polls that path every `updateIntervalSeconds` for updates to the dashboard files and updates its database.
 
