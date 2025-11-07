@@ -54,9 +54,16 @@ type xormRepositoryImpl struct {
 }
 
 func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Service, reg prometheus.Registerer) *xormRepositoryImpl {
+<<<<<<< HEAD
 	xormMigrationTrigger.Do(func() {
 		triggerAlwaysOnMigrations(cfg, l, db)
 	})
+=======
+	err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetEngine().DriverName(), l)
+	if err != nil {
+		l.Error("failed to populate dashboard_uid for annotations", "error", err)
+	}
+>>>>>>> 7c791552d70 (run annotation data migration in batches)
 
 	repo := &xormRepositoryImpl{
 		cfg:        cfg,
