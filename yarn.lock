@@ -3655,7 +3655,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.10.10"
     "@grafana/runtime": "npm:12.4.0-pre"
     "@grafana/ui": "npm:12.4.0-pre"
-    "@react-awesome-query-builder/ui": "npm:6.6.15"
+    "@react-awesome-query-builder/core": "npm:^6.7.0-alpha.0"
+    "@react-awesome-query-builder/ui": "npm:^6.7.0-alpha.0"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:^6.1.2"
     "@testing-library/react": "npm:16.3.0"
@@ -6936,7 +6937,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/ui@npm:6.6.15, @react-awesome-query-builder/ui@npm:^6.6.4":
+"@react-awesome-query-builder/core@npm:^6.7.0-alpha.0":
+  version: 6.7.0-alpha.0
+  resolution: "@react-awesome-query-builder/core@npm:6.7.0-alpha.0"
+  dependencies:
+    "@babel/runtime": "npm:^7.27.0"
+    clone: "npm:^2.1.2"
+    i18next: "npm:^23.11.5"
+    immutable: "npm:^4.3.6"
+    json-logic-js: "npm:^2.0.2"
+    lodash: "npm:^4.17.21"
+    moment: "npm:^2.30.1"
+    spel2js: "npm:^0.2.8"
+    sqlstring: "npm:^2.3.3"
+  checksum: 10/2039cc283204567864a01ee49b44fae52e7ddc5f14cdf9e5e5f0728c483a7afa0d4c05d364a4e50413045d2dd0f5c713508dadc34e0f98ad371fcd5cfde86862
+  languageName: node
+  linkType: hard
+
+"@react-awesome-query-builder/ui@npm:^6.6.4":
   version: 6.6.15
   resolution: "@react-awesome-query-builder/ui@npm:6.6.15"
   dependencies:
@@ -6951,6 +6969,26 @@ __metadata:
     react: ^16.8.4 || ^17.0.1 || ^18.0.0 || ^19.0.0
     react-dom: ^16.8.4 || ^17.0.1 || ^18.0.0 || ^19.0.0
   checksum: 10/f72edd782cf5b8d6ee4c3f648e6bf97ce5ba0483de29bc11ba8ca5ae7680afdcf8f51dc2420490be4c85b94fa122b29daf99c57d0ac7248ff60ab179ea24d065
+  languageName: node
+  linkType: hard
+
+"@react-awesome-query-builder/ui@npm:^6.7.0-alpha.0":
+  version: 6.7.0-alpha.0
+  resolution: "@react-awesome-query-builder/ui@npm:6.7.0-alpha.0"
+  dependencies:
+    "@babel/runtime": "npm:^7.27.0"
+    "@react-awesome-query-builder/core": "npm:^6.7.0-alpha.0"
+    chroma-js: "npm:^3.1.2"
+    classnames: "npm:^2.5.1"
+    lodash: "npm:^4.17.21"
+    prop-types: "npm:^15.8.1"
+    react-number-format: "npm:^5.0.0"
+    react-redux: "npm:^8.1.3"
+    redux: "npm:^4.2.1"
+  peerDependencies:
+    react: ^16.8.4 || ^17.0.1 || ^18.0.0 || ^19.0.0
+    react-dom: ^16.8.4 || ^17.0.1 || ^18.0.0 || ^19.0.0
+  checksum: 10/1f39a807672a94af219c58638f67b5cf9b0e43523c0c5718a12cba677e86d1b669c5715fe8920448139d35bc17b73b168cd581fd4d5bbbf0aaeec1780c58bceb
   languageName: node
   linkType: hard
 
@@ -13410,6 +13448,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chroma-js@npm:^3.1.2":
+  version: 3.1.2
+  resolution: "chroma-js@npm:3.1.2"
+  checksum: 10/ea09b27d04b477a8fdc3314bfa6dc8de05feab47999ff1acdeba6cf3c32c76338baa5b4562d949d33d8adeca57754e5ea591c15b9985d65583c8771e7e07c2ef
+  languageName: node
+  linkType: hard
+
 "chrome-remote-interface@npm:0.33.3":
   version: 0.33.3
   resolution: "chrome-remote-interface@npm:0.33.3"
@@ -18896,7 +18941,8 @@ __metadata:
     "@react-aria/focus": "npm:3.21.2"
     "@react-aria/overlays": "npm:3.30.0"
     "@react-aria/utils": "npm:3.31.0"
-    "@react-awesome-query-builder/ui": "npm:6.6.15"
+    "@react-awesome-query-builder/core": "npm:^6.7.0-alpha.0"
+    "@react-awesome-query-builder/ui": "npm:^6.7.0-alpha.0"
     "@react-types/button": "npm:3.13.0"
     "@react-types/menu": "npm:3.10.3"
     "@react-types/overlays": "npm:3.9.0"
