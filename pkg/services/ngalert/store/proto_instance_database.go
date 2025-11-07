@@ -120,6 +120,10 @@ func (st ProtoInstanceDBStore) DeleteAlertInstancesByRule(ctx context.Context, k
 }
 
 func (st ProtoInstanceDBStore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int, jitterFunc func(int) time.Duration) error {
+	if len(instances) == 0 {
+		return nil
+	}
+
 	logger := st.Logger.FromContext(ctx)
 	logger.Debug("FullSync called", "total_instances", len(instances))
 
