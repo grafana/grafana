@@ -146,11 +146,15 @@ describe('XAxisInteractionAreaPlugin', () => {
         xAxisElement.dispatchEvent(new MouseEvent('mousedown', { clientX: 400, bubbles: true }));
         document.dispatchEvent(new MouseEvent('mousemove', { clientX: 350, bubbles: true }));
 
-        expect(mockConfigBuilder.setState).toHaveBeenCalledWith(true, expect.any(Number), expect.any(Number));
+        expect(mockConfigBuilder.setState).toHaveBeenCalledWith({
+          isPanning: true,
+          min: expect.any(Number),
+          max: expect.any(Number),
+        });
 
         document.dispatchEvent(new MouseEvent('mouseup', { clientX: 350, bubbles: true }));
 
-        expect(mockConfigBuilder.setState).toHaveBeenCalledWith(false);
+        expect(mockConfigBuilder.setState).toHaveBeenCalledWith({ isPanning: false });
       });
     });
   });

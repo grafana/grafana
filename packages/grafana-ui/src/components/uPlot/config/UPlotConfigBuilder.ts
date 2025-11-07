@@ -29,6 +29,12 @@ const cursorDefaults: Cursor = {
 type PrepData = (frames: DataFrame[]) => AlignedData | FacetedData;
 type PreDataStacked = (frames: DataFrame[], stackingGroups: StackingGroup[]) => AlignedData | FacetedData;
 
+type PlotState = {
+  isPanning: boolean;
+  min?: number;
+  max?: number;
+};
+
 export class UPlotConfigBuilder {
   readonly uid = Math.random().toString(36).slice(2);
 
@@ -60,14 +66,8 @@ export class UPlotConfigBuilder {
   // Exposed to let the container know the primary scale keys
   scaleKeys: [string, string] = ['', ''];
 
-  setState(isPanning: boolean, min?: number, max?: number) {
-    this.state.isPanning = isPanning;
-    if (min !== undefined) {
-      this.state.min = min;
-    }
-    if (max !== undefined) {
-      this.state.max = max;
-    }
+  setState(state: PlotState) {
+    this.state = merge({}, this.state, state);
   }
 
   getState() {

@@ -59,7 +59,7 @@ export const setupXAxisPan = (
       let panMin = startMin - shiftBy;
       let panMax = startMax - shiftBy;
 
-      config.setState(true, panMin, panMax);
+      config.setState({ isPanning: true, min: panMin, max: panMax });
 
       u.setScale('x', {
         min: panMin,
@@ -73,7 +73,7 @@ export const setupXAxisPan = (
 
       xAxisEl.style.cursor = 'grab';
 
-      config.setState(false);
+      config.setState({ isPanning: false });
 
       if (Math.abs(dx) >= MIN_PAN_DIST) {
         let shiftBy = dx * unitsPerPx;
