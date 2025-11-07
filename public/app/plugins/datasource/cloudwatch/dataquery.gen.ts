@@ -245,7 +245,7 @@ export interface CloudWatchLogsQuery extends common.DataQuery {
    */
   logGroups?: Array<LogGroup>;
   /**
-   * Whether a query is a Logs Insights or Logs Anomalies query
+   * Whether a query is a Logs Insights or Log Anomalies query
    */
   logsMode?: LogsMode;
   /**
@@ -273,7 +273,7 @@ export const defaultCloudWatchLogsQuery: Partial<CloudWatchLogsQuery> = {
 };
 
 /**
- * Shape of a Cloudwatch Logs Anomalies query
+ * Shape of a Cloudwatch Log Anomalies query
  */
 export interface CloudWatchLogsAnomaliesQuery extends common.DataQuery {
   /**
@@ -282,7 +282,7 @@ export interface CloudWatchLogsAnomaliesQuery extends common.DataQuery {
   anomalyDetectionARN?: string;
   id: string;
   /**
-   * Whether a query is a Logs Insights or Logs Anomalies query
+   * Whether a query is a Logs Insights or Log Anomalies query
    */
   logsMode?: LogsMode;
   /**
