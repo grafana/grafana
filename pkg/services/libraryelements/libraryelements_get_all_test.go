@@ -1343,4 +1343,161 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 			require.NotEmpty(t, element.UID, "Should have a UID")
 			require.Equal(t, int64(0), element.Meta.ConnectedDashboards, "Should have no connected dashboards")
 		})
+
+	// Non-admin user permission tests
+	scenarioWithPanel(t, "When a non-admin user has folders but none of the library elements are in those folders, it should return empty result",
+		func(t *testing.T, sc scenarioContext) {
+			// Create library panels in the scenario folder
+			// nolint:staticcheck
+			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel2")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Create a different folder that the non-admin user has access to (but has no panels)
+			differentFolder := &folder.Folder{
+				ID:    2,
+				OrgID: 1,
+				UID:   "uid_for_DifferentFolder",
+				Title: "DifferentFolder",
+			}
+
+			// Change user to non-admin and set their accessible folders to only the different folder
+			// This simulates a user who can see a folder but that folder doesn't contain any of the library elements
+			sc.reqContext.OrgRole = org.RoleViewer
+			sc.folderSvc.ExpectedFolders = []*folder.Folder{differentFolder}
+			sc.folderSvc.AddFolder(differentFolder)
+
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementsSearch
+			err := json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+
+			// TotalCount should be 0 for non-admin users since they can't access the folders with panels
+			require.Equal(t, int64(0), result.Result.TotalCount, "TotalCount should be 0 since user has no access to folders with panels")
+			require.Equal(t, 0, len(result.Result.Elements), "Elements should be empty since user has no access to folders with panels")
+			require.Equal(t, 1, result.Result.Page, "Should be on page 1")
+			require.Equal(t, 100, result.Result.PerPage, "Should have perPage 100")
+		})
+
+	scenarioWithPanel(t, "When a non-admin user has folders and some library elements are in those folders, it should return only accessible elements",
+		func(t *testing.T, sc scenarioContext) {
+			// Create a second folder that the non-admin user will have access to
+			accessibleFolder := &folder.Folder{
+				ID:    2,
+				OrgID: 1,
+				UID:   "uid_for_AccessibleFolder",
+				Title: "AccessibleFolder",
+			}
+
+			// Create a library panel in the accessible folder (need to add it to fake service first)
+			sc.folderSvc.ExpectedFolder = accessibleFolder
+			sc.folderSvc.AddFolder(accessibleFolder)
+			// nolint:staticcheck
+			command := getCreatePanelCommand(accessibleFolder.ID, accessibleFolder.UID, "Accessible Panel")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Create another panel in a folder the user won't have access to
+			inaccessibleFolder := &folder.Folder{
+				ID:    3,
+				OrgID: 1,
+				UID:   "uid_for_InaccessibleFolder",
+				Title: "InaccessibleFolder",
+			}
+			sc.folderSvc.ExpectedFolder = inaccessibleFolder
+			sc.folderSvc.AddFolder(inaccessibleFolder)
+			// nolint:staticcheck
+			command = getCreatePanelCommand(inaccessibleFolder.ID, inaccessibleFolder.UID, "Inaccessible Panel")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp = sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Change user to non-admin and set their accessible folders to only the accessible folder and scenario folder
+			// This will filter out the inaccessible folder
+			sc.reqContext.OrgRole = org.RoleViewer
+			sc.folderSvc.ExpectedFolders = []*folder.Folder{sc.folder, accessibleFolder}
+
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementsSearch
+			err := json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+
+			// TotalCount should match the number of accessible elements (2) for non-admin users
+			require.Equal(t, int64(2), result.Result.TotalCount, "TotalCount should be 2 (only accessible panels)")
+			require.Equal(t, 2, len(result.Result.Elements), "Elements should contain only 2 accessible panels")
+			require.Equal(t, 1, result.Result.Page, "Should be on page 1")
+			require.Equal(t, 100, result.Result.PerPage, "Should have perPage 100")
+
+			// Verify the returned panels are from accessible folders only
+			folderUIDs := make(map[string]bool)
+			for _, element := range result.Result.Elements {
+				folderUIDs[element.FolderUID] = true
+				require.Contains(t, []string{sc.folder.UID, accessibleFolder.UID}, element.FolderUID, "Element should be in accessible folder")
+				require.NotEqual(t, inaccessibleFolder.UID, element.FolderUID, "Element should not be from inaccessible folder")
+			}
+			require.True(t, folderUIDs[sc.folder.UID], "Should include panel from scenario folder")
+			require.True(t, folderUIDs[accessibleFolder.UID], "Should include panel from accessible folder")
+		})
+
+	scenarioWithPanel(t, "When a non-admin user has access to all folders containing library elements, it should return all elements",
+		func(t *testing.T, sc scenarioContext) {
+			// Create a second folder that the non-admin user will have access to
+			folder2 := &folder.Folder{
+				ID:    2,
+				OrgID: 1,
+				UID:   "uid_for_Folder2",
+				Title: "Folder2",
+			}
+			sc.folderSvc.ExpectedFolder = folder2
+			sc.folderSvc.AddFolder(folder2)
+
+			// Create a library panel in folder2
+			// nolint:staticcheck
+			command := getCreatePanelCommand(folder2.ID, folder2.UID, "Panel in Folder2")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Create another panel in the original scenario folder
+			sc.folderSvc.ExpectedFolder = sc.folder
+			// nolint:staticcheck
+			command = getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Panel in ScenarioFolder")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp = sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Change user to non-admin and set their accessible folders to include all folders with panels
+			sc.reqContext.OrgRole = org.RoleViewer
+			sc.folderSvc.ExpectedFolders = []*folder.Folder{sc.folder, folder2}
+
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementsSearch
+			err := json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+
+			// Should return all 3 panels (1 from initial setup + 2 created in this test)
+			require.Equal(t, int64(3), result.Result.TotalCount, "Should return all 3 panels")
+			require.Equal(t, 3, len(result.Result.Elements), "Should have 3 elements")
+			require.Equal(t, 1, result.Result.Page, "Should be on page 1")
+			require.Equal(t, 100, result.Result.PerPage, "Should have perPage 100")
+
+			// Verify all panels are from the accessible folders
+			folderUIDs := make(map[string]int)
+			for _, element := range result.Result.Elements {
+				folderUIDs[element.FolderUID]++
+				require.Contains(t, []string{sc.folder.UID, folder2.UID}, element.FolderUID, "All elements should be in accessible folders")
+				require.Equal(t, int64(model.PanelElement), element.Kind, "Should be a panel element")
+				require.Equal(t, "text", element.Type, "Should be text panel")
+			}
+			require.Equal(t, 2, folderUIDs[sc.folder.UID], "Should have 2 panels in scenario folder")
+			require.Equal(t, 1, folderUIDs[folder2.UID], "Should have 1 panel in folder2")
+		})
 }
