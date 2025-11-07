@@ -4617,7 +4617,7 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "Ce tableau de bord est fourni par un plugin. Toutes les modifications que vous apportez ici seront écrasées lors de la mise à jour du plugin. Pour conserver vos modifications de façon permanente, utilisez <strong>Enregistrer sous</strong> pour créer une copie personnalisée à la place.",
+      "body-plugin-dashboard": "Ce tableau de bord est fourni par un plugin. Toutes les modifications que vous apportez ici seront écrasées lors de la mise à jour du plugin. Pour conserver vos modifications de façon permanente, utilisez <strong>Enregistrer sous</strong> pour créer une copie personnalisée.",
       "cancel": "Annuler",
       "overwrite": "Enregistrer et écraser quand même",
       "title-plugin-dashboard": "Tableau de bord du plugin - les modifications peuvent être perdues"
@@ -5995,7 +5995,7 @@
         "cancel": "Annuler"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "Ce tableau de bord est fourni par un plugin. Toutes les modifications que vous apportez ici seront écrasées lors de la mise à jour du plugin. Pour conserver vos modifications de façon permanente, utilisez <strong>Enregistrer sous</strong> pour créer une copie personnalisée à la place.",
+        "body-plugin-dashboard": "Ce tableau de bord est fourni par un plugin. Toutes les modifications que vous apportez ici seront écrasées lors de la mise à jour du plugin. Pour conserver vos modifications de façon permanente, utilisez <strong>Enregistrer sous</strong> pour créer une copie personnalisée.",
         "title-failed-to-save-dashboard": "Échec de l'enregistrement du tableau de bord",
         "title-plugin-dashboard": "Tableau de bord du plugin - les modifications peuvent être perdues",
         "title-someone-else-has-updated-this-dashboard": "Quelqu'un d'autre a mis à jour ce tableau de bord",
@@ -6184,7 +6184,7 @@
       "label-message": "Message",
       "placeholder-describe-changes-optional": "Ajoutez une note pour décrire vos modifications (facultatif).",
       "render-footer": {
-        "body-plugin-dashboard": "Ce tableau de bord est fourni par un plugin. Toutes les modifications que vous apportez ici seront écrasées lors de la mise à jour du plugin. Pour conserver vos modifications de façon permanente, utilisez <strong>Enregistrer sous</strong> pour créer une copie personnalisée à la place.",
+        "body-plugin-dashboard": "Ce tableau de bord est fourni par un plugin. Toutes les modifications que vous apportez ici seront écrasées lors de la mise à jour du plugin. Pour conserver vos modifications de façon permanente, utilisez <strong>Enregistrer sous</strong> pour créer une copie personnalisée.",
         "no-changes-to-save": "Aucun changement à enregistrer",
         "title-failed-to-save-dashboard": "Échec de l'enregistrement du tableau de bord",
         "title-plugin-dashboard": "Tableau de bord du plugin - les modifications peuvent être perdues",

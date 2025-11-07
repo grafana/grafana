@@ -4597,7 +4597,7 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "このダッシュボードはプラグインによって提供されています。ここで行った変更は、プラグインが更新されると上書きされます。変更を永続的に保持するには、代わりにカスタムコピーを作成するために<strong>名前を付けて保存</strong>を使用してください。",
+      "body-plugin-dashboard": "このダッシュボードはプラグインによって提供されています。ここで行った変更は、プラグインが更新されると上書きされます。変更を永続的に保持するには、<strong>名前を付けて保存</strong>でカスタムコピーを作成してください。",
       "cancel": "キャンセル",
       "overwrite": "それでも保存して上書き",
       "title-plugin-dashboard": "プラグインダッシュボード - 変更が失われる可能性があります"
@@ -5974,7 +5974,7 @@
         "cancel": "キャンセル"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "このダッシュボードはプラグインによって提供されています。ここで行った変更は、プラグインが更新されると上書きされます。変更を永続的に保持するには、代わりにカスタムコピーを作成するために<strong>名前を付けて保存</strong>を使用してください。",
+        "body-plugin-dashboard": "このダッシュボードはプラグインによって提供されています。ここで行った変更は、プラグインが更新されると上書きされます。変更を永続的に保持するには、<strong>名前を付けて保存</strong>でカスタムコピーを作成してください。",
         "title-failed-to-save-dashboard": "ダッシュボードを保存できませんでした",
         "title-plugin-dashboard": "プラグインダッシュボード - 変更が失われる可能性があります",
         "title-someone-else-has-updated-this-dashboard": "他のユーザーがこのダッシュボードを更新しました",
@@ -6162,7 +6162,7 @@
       "label-message": "メッセージ",
       "placeholder-describe-changes-optional": "変更内容を説明するメモを追加してください（任意）。",
       "render-footer": {
-        "body-plugin-dashboard": "このダッシュボードはプラグインによって提供されています。ここで行った変更は、プラグインが更新されると上書きされます。変更を永続的に保持するには、代わりにカスタムコピーを作成するために<strong>名前を付けて保存</strong>を使用してください。",
+        "body-plugin-dashboard": "このダッシュボードはプラグインによって提供されています。ここで行った変更は、プラグインが更新されると上書きされます。変更を永続的に保持するには、<strong>名前を付けて保存</strong>でカスタムコピーを作成してください。",
         "no-changes-to-save": "保存する変更はありません",
         "title-failed-to-save-dashboard": "ダッシュボードを保存できませんでした",
         "title-plugin-dashboard": "プラグインダッシュボード - 変更が失われる可能性があります",

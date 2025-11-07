@@ -4597,7 +4597,7 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "Dasbor ini disediakan oleh plugin. Perubahan apa pun yang Anda buat di sini akan ditimpa saat plugin diperbarui. Untuk mempertahankan modifikasi Anda secara permanen, gunakan <strong>Simpan sebagai</strong> untuk membuat salinan kustom sebagai gantinya.",
+      "body-plugin-dashboard": "Dasbor ini disediakan oleh plugin. Perubahan apa pun yang Anda buat di sini akan ditimpa saat plugin diperbarui. Untuk mempertahankan modifikasi Anda secara permanen, gunakan <strong>Simpan sebagai</strong> untuk membuat salinan kustom.",
       "cancel": "Batalkan",
       "overwrite": "Tetap simpan dan timpa",
       "title-plugin-dashboard": "Dasbor plugin - perubahan mungkin hilang"
@@ -5974,7 +5974,7 @@
         "cancel": "Batalkan"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "Dasbor ini disediakan oleh plugin. Perubahan apa pun yang Anda buat di sini akan ditimpa saat plugin diperbarui. Untuk mempertahankan modifikasi Anda secara permanen, gunakan <strong>Simpan sebagai</strong> untuk membuat salinan kustom sebagai gantinya.",
+        "body-plugin-dashboard": "Dasbor ini disediakan oleh plugin. Perubahan apa pun yang Anda buat di sini akan ditimpa saat plugin diperbarui. Untuk mempertahankan modifikasi Anda secara permanen, gunakan <strong>Simpan sebagai</strong> untuk membuat salinan kustom.",
         "title-failed-to-save-dashboard": "Gagal menyimpan dasbor",
         "title-plugin-dashboard": "Dasbor plugin - perubahan mungkin hilang",
         "title-someone-else-has-updated-this-dashboard": "Orang lain telah memperbarui dasbor ini",
@@ -6162,7 +6162,7 @@
       "label-message": "Pesan",
       "placeholder-describe-changes-optional": "Tambahkan catatan untuk menjelaskan perubahan Anda (opsional).",
       "render-footer": {
-        "body-plugin-dashboard": "Dasbor ini disediakan oleh plugin. Perubahan apa pun yang Anda buat di sini akan ditimpa saat plugin diperbarui. Untuk mempertahankan modifikasi Anda secara permanen, gunakan <strong>Simpan sebagai</strong> untuk membuat salinan kustom sebagai gantinya.",
+        "body-plugin-dashboard": "Dasbor ini disediakan oleh plugin. Perubahan apa pun yang Anda buat di sini akan ditimpa saat plugin diperbarui. Untuk mempertahankan modifikasi Anda secara permanen, gunakan <strong>Simpan sebagai</strong> untuk membuat salinan kustom.",
         "no-changes-to-save": "Tidak ada perubahan untuk disimpan",
         "title-failed-to-save-dashboard": "Gagal menyimpan dasbor",
         "title-plugin-dashboard": "Dasbor plugin - perubahan mungkin hilang",

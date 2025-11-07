@@ -4617,7 +4617,7 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "Dieses Dashboard wird von einem Plugin bereitgestellt. Alle Änderungen, die Sie hier vornehmen, werden überschrieben, wenn das Plugin aktualisiert wird. Um Ihre Änderungen dauerhaft zu behalten, verwenden Sie <strong>Speichern unter</strong>, um stattdessen eine benutzerdefinierte Kopie zu erstellen.",
+      "body-plugin-dashboard": "Dieses Dashboard wird von einem Plugin bereitgestellt. Alle Änderungen, die Sie hier vornehmen, werden überschrieben, wenn das Plugin aktualisiert wird. Um Ihre Änderungen dauerhaft zu behalten, verwenden Sie <strong>Speichern unter</strong>, um eine benutzerdefinierte Kopie zu erstellen.",
       "cancel": "Abbrechen",
       "overwrite": "Trotzdem speichern und überschreiben",
       "title-plugin-dashboard": "Plugin-Dashboard - Änderungen können verloren gehen"
@@ -5995,7 +5995,7 @@
         "cancel": "Abbrechen"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "Dieses Dashboard wird von einem Plugin bereitgestellt. Alle Änderungen, die Sie hier vornehmen, werden überschrieben, wenn das Plugin aktualisiert wird. Um Ihre Änderungen dauerhaft zu behalten, verwenden Sie <strong>Speichern unter</strong>, um stattdessen eine benutzerdefinierte Kopie zu erstellen.",
+        "body-plugin-dashboard": "Dieses Dashboard wird von einem Plugin bereitgestellt. Alle Änderungen, die Sie hier vornehmen, werden überschrieben, wenn das Plugin aktualisiert wird. Um Ihre Änderungen dauerhaft zu behalten, verwenden Sie <strong>Speichern unter</strong>, um eine benutzerdefinierte Kopie zu erstellen.",
         "title-failed-to-save-dashboard": "Dashboard konnte nicht gespeichert werden",
         "title-plugin-dashboard": "Plugin-Dashboard - Änderungen können verloren gehen",
         "title-someone-else-has-updated-this-dashboard": "Eine andere Person hat dieses Dashboard aktualisiert",
@@ -6184,7 +6184,7 @@
       "label-message": "Nachricht",
       "placeholder-describe-changes-optional": "Fügen Sie eine Notiz hinzu, um Ihre Änderungen zu beschreiben (optional).",
       "render-footer": {
-        "body-plugin-dashboard": "Dieses Dashboard wird von einem Plugin bereitgestellt. Alle Änderungen, die Sie hier vornehmen, werden überschrieben, wenn das Plugin aktualisiert wird. Um Ihre Änderungen dauerhaft zu behalten, verwenden Sie <strong>Speichern unter</strong>, um stattdessen eine benutzerdefinierte Kopie zu erstellen.",
+        "body-plugin-dashboard": "Dieses Dashboard wird von einem Plugin bereitgestellt. Alle Änderungen, die Sie hier vornehmen, werden überschrieben, wenn das Plugin aktualisiert wird. Um Ihre Änderungen dauerhaft zu behalten, verwenden Sie <strong>Speichern unter</strong>, um eine benutzerdefinierte Kopie zu erstellen.",
         "no-changes-to-save": "Keine Änderungen speicherbar",
         "title-failed-to-save-dashboard": "Dashboard konnte nicht gespeichert werden",
         "title-plugin-dashboard": "Plugin-Dashboard - Änderungen können verloren gehen",
