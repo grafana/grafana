@@ -4617,10 +4617,10 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "",
+      "body-plugin-dashboard": "Este painel é fornecido por um plug-in. Quaisquer alterações feitas aqui serão sobrescritas quando o plug-in for atualizado. Para manter suas modificações permanentemente, use <strong>Salvar como</strong> para criar uma cópia personalizada.",
       "cancel": "Cancelar",
-      "overwrite": "Sobrescrever",
-      "title-plugin-dashboard": "Painel de plug-ins"
+      "overwrite": "Salvar e sobrescrever mesmo assim",
+      "title-plugin-dashboard": "Painel de plug-ins - alterações podem ser perdidas"
     },
     "controls": {
       "menu": {
@@ -5995,13 +5995,13 @@
         "cancel": "Cancelar"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Este painel é fornecido por um plug-in. Quaisquer alterações feitas aqui serão sobrescritas quando o plug-in for atualizado. Para manter suas modificações permanentemente, use <strong>Salvar como</strong> para criar uma cópia personalizada.",
         "title-failed-to-save-dashboard": "Falha ao salvar o painel",
-        "title-plugin-dashboard": "Painel de plug-ins",
+        "title-plugin-dashboard": "Painel de plug-ins - alterações podem ser perdidas",
         "title-someone-else-has-updated-this-dashboard": "Outra pessoa atualizou este painel",
         "would-still-dashboard": "Deseja salvar este painel mesmo assim?"
       },
-      "save-and-overwrite": "\"Salvar e substituir\""
+      "save-and-overwrite": "\"Salvar e sobrescrever mesmo assim\""
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6184,10 +6184,10 @@
       "label-message": "Mensagem",
       "placeholder-describe-changes-optional": "Adicione uma observação para descrever suas alterações (opcional).",
       "render-footer": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Este painel é fornecido por um plug-in. Quaisquer alterações feitas aqui serão sobrescritas quando o plug-in for atualizado. Para manter suas modificações permanentemente, use <strong>Salvar como</strong> para criar uma cópia personalizada.",
         "no-changes-to-save": "Nenhuma alteração a ser salva",
         "title-failed-to-save-dashboard": "Falha ao salvar o painel",
-        "title-plugin-dashboard": "Painel de plug-ins",
+        "title-plugin-dashboard": "Painel de plug-ins - alterações podem ser perdidas",
         "title-someone-else-has-updated-this-dashboard": "Outra pessoa atualizou este painel",
         "would-still-dashboard": "Deseja salvar este painel mesmo assim?"
       },

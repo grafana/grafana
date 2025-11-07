@@ -4657,10 +4657,10 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "",
+      "body-plugin-dashboard": "Этот дашборд предоставляется плагином. Любые изменения, внесенные здесь, будут перезаписаны при обновлении плагина. Чтобы сохранить ваши изменения навсегда, используйте <strong>Сохранить как</strong> для создания пользовательской копии.",
       "cancel": "Отмена",
-      "overwrite": "Перезаписать",
-      "title-plugin-dashboard": "Дашборд плагинов"
+      "overwrite": "Сохранить и перезаписать в любом случае",
+      "title-plugin-dashboard": "Дашборд плагинов - изменения могут быть потеряны"
     },
     "controls": {
       "menu": {
@@ -6037,13 +6037,13 @@
         "cancel": "Отмена"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Этот дашборд предоставляется плагином. Любые изменения, внесенные здесь, будут перезаписаны при обновлении плагина. Чтобы сохранить ваши изменения навсегда, используйте <strong>Сохранить как</strong> для создания пользовательской копии.",
         "title-failed-to-save-dashboard": "Не удалось сохранить дашборд",
-        "title-plugin-dashboard": "Дашборд плагинов",
+        "title-plugin-dashboard": "Дашборд плагинов - изменения могут быть потеряны",
         "title-someone-else-has-updated-this-dashboard": "Дашборд обновлен другим пользователем",
         "would-still-dashboard": "Все равно сохранить дашборд?"
       },
-      "save-and-overwrite": "'Сохранить и перезаписать'"
+      "save-and-overwrite": "'Сохранить и перезаписать в любом случае'"
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6228,10 +6228,10 @@
       "label-message": "Сообщение",
       "placeholder-describe-changes-optional": "Добавьте примечание с описанием изменений (необязательно).",
       "render-footer": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Этот дашборд предоставляется плагином. Любые изменения, внесенные здесь, будут перезаписаны при обновлении плагина. Чтобы сохранить ваши изменения навсегда, используйте <strong>Сохранить как</strong> для создания пользовательской копии.",
         "no-changes-to-save": "Нет изменений для сохранения",
         "title-failed-to-save-dashboard": "Не удалось сохранить дашборд",
-        "title-plugin-dashboard": "Дашборд плагинов",
+        "title-plugin-dashboard": "Дашборд плагинов - изменения могут быть потеряны",
         "title-someone-else-has-updated-this-dashboard": "Дашборд обновлен другим пользователем",
         "would-still-dashboard": "Все равно сохранить дашборд?"
       },

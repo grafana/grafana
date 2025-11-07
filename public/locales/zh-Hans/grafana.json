@@ -4597,10 +4597,10 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "",
+      "body-plugin-dashboard": "此数据面板由插件提供。您在此处所做的任何更改在插件更新时将被覆盖。要永久保留您的修改，请使用<strong>另存为</strong>创建自定义副本。",
       "cancel": "取消",
-      "overwrite": "覆盖",
-      "title-plugin-dashboard": "插件数据面板"
+      "overwrite": "仍然保存并覆盖",
+      "title-plugin-dashboard": "插件数据面板 - 更改可能会丢失"
     },
     "controls": {
       "menu": {
@@ -5974,13 +5974,13 @@
         "cancel": "取消"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "此数据面板由插件提供。您在此处所做的任何更改在插件更新时将被覆盖。要永久保留您的修改，请使用<strong>另存为</strong>创建自定义副本。",
         "title-failed-to-save-dashboard": "保存数据面板失败",
-        "title-plugin-dashboard": "插件数据面板",
+        "title-plugin-dashboard": "插件数据面板 - 更改可能会丢失",
         "title-someone-else-has-updated-this-dashboard": "其他人已更新此数据面板",
         "would-still-dashboard": "您仍然要保存此数据面板吗？"
       },
-      "save-and-overwrite": "‘保存并覆盖’"
+      "save-and-overwrite": "'仍然保存并覆盖'"
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6162,10 +6162,10 @@
       "label-message": "消息",
       "placeholder-describe-changes-optional": "添加备注以描述您的更改（可选）。",
       "render-footer": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "此数据面板由插件提供。您在此处所做的任何更改在插件更新时将被覆盖。要永久保留您的修改，请使用<strong>另存为</strong>创建自定义副本。",
         "no-changes-to-save": "没有要保存的更改",
         "title-failed-to-save-dashboard": "保存数据面板失败",
-        "title-plugin-dashboard": "插件数据面板",
+        "title-plugin-dashboard": "插件数据面板 - 更改可能会丢失",
         "title-someone-else-has-updated-this-dashboard": "其他人已更新此数据面板",
         "would-still-dashboard": "您仍然要保存此数据面板吗？"
       },

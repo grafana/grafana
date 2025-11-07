@@ -4617,10 +4617,10 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "",
+      "body-plugin-dashboard": "Denna instrumentpanel tillhandahålls av ett tillägg. Alla ändringar du gör här kommer att skrivas över när tillägget uppdateras. För att behålla dina ändringar permanent, använd <strong>Spara som</strong> för att skapa en anpassad kopia i stället.",
       "cancel": "Avbryt",
-      "overwrite": "Skriv över",
-      "title-plugin-dashboard": "Tilläggsinstrumentpanel"
+      "overwrite": "Spara och skriv över ändå",
+      "title-plugin-dashboard": "Tilläggsinstrumentpanel - ändringar kan gå förlorade"
     },
     "controls": {
       "menu": {
@@ -5995,13 +5995,13 @@
         "cancel": "Avbryt"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Denna instrumentpanel tillhandahålls av ett tillägg. Alla ändringar du gör här kommer att skrivas över när tillägget uppdateras. För att behålla dina ändringar permanent, använd <strong>Spara som</strong> för att skapa en anpassad kopia i stället.",
         "title-failed-to-save-dashboard": "Det gick inte att spara instrumentpanel",
-        "title-plugin-dashboard": "Tilläggsinstrumentpanel",
+        "title-plugin-dashboard": "Tilläggsinstrumentpanel - ändringar kan gå förlorade",
         "title-someone-else-has-updated-this-dashboard": "Någon annan har uppdaterat denna instrumentpanel",
         "would-still-dashboard": "Vill du fortfarande spara denna instrumentpanel?"
       },
-      "save-and-overwrite": "”Spara och skriv över”"
+      "save-and-overwrite": ""Spara och skriv över ändå""
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6184,10 +6184,10 @@
       "label-message": "Meddelande",
       "placeholder-describe-changes-optional": "Lägg till en anteckning för att beskriva dina ändringar (valfritt).",
       "render-footer": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Denna instrumentpanel tillhandahålls av ett tillägg. Alla ändringar du gör här kommer att skrivas över när tillägget uppdateras. För att behålla dina ändringar permanent, använd <strong>Spara som</strong> för att skapa en anpassad kopia i stället.",
         "no-changes-to-save": "Inga ändringar att spara",
         "title-failed-to-save-dashboard": "Det gick inte att spara instrumentpanel",
-        "title-plugin-dashboard": "Tilläggsinstrumentpanel",
+        "title-plugin-dashboard": "Tilläggsinstrumentpanel - ändringar kan gå förlorade",
         "title-someone-else-has-updated-this-dashboard": "Någon annan har uppdaterat denna instrumentpanel",
         "would-still-dashboard": "Vill du fortfarande spara denna instrumentpanel?"
       },

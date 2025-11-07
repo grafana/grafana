@@ -4617,10 +4617,10 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "",
+      "body-plugin-dashboard": "Ezt az irányítópultot egy bővítmény biztosítja. Az itt végrehajtott módosítások felülírásra kerülnek, amikor a bővítmény frissül. A módosítások végleges megtartásához használja a <strong>Mentés másként</strong> funkciót egyéni másolat létrehozásához.",
       "cancel": "Mégse",
-      "overwrite": "Felülírás",
-      "title-plugin-dashboard": "Bővítmény-irányítópult"
+      "overwrite": "Mégis mentés és felülírás",
+      "title-plugin-dashboard": "Bővítmény-irányítópult - a módosítások elveszhetnek"
     },
     "controls": {
       "menu": {
@@ -5995,13 +5995,13 @@
         "cancel": "Mégse"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Ezt az irányítópultot egy bővítmény biztosítja. Az itt végrehajtott módosítások felülírásra kerülnek, amikor a bővítmény frissül. A módosítások végleges megtartásához használja a <strong>Mentés másként</strong> funkciót egyéni másolat létrehozásához.",
         "title-failed-to-save-dashboard": "Az irányítópult mentése sikertelen volt",
-        "title-plugin-dashboard": "Bővítmény-irányítópult",
+        "title-plugin-dashboard": "Bővítmény-irányítópult - a módosítások elveszhetnek",
         "title-someone-else-has-updated-this-dashboard": "Valaki más frissítette ezt az irányítópultot",
         "would-still-dashboard": "Biztosan menti ezt az irányítópultot?"
       },
-      "save-and-overwrite": "„Mentés és felülírás”"
+      "save-and-overwrite": "„Mégis mentés és felülírás""
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6184,10 +6184,10 @@
       "label-message": "Üzenet",
       "placeholder-describe-changes-optional": "Megjegyzés hozzáadása a módosítások leírásához (nem kötelező).",
       "render-footer": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Ezt az irányítópultot egy bővítmény biztosítja. Az itt végrehajtott módosítások felülírásra kerülnek, amikor a bővítmény frissül. A módosítások végleges megtartásához használja a <strong>Mentés másként</strong> funkciót egyéni másolat létrehozásához.",
         "no-changes-to-save": "Nincs menthető módosítás",
         "title-failed-to-save-dashboard": "Az irányítópult mentése sikertelen volt",
-        "title-plugin-dashboard": "Bővítmény-irányítópult",
+        "title-plugin-dashboard": "Bővítmény-irányítópult - a módosítások elveszhetnek",
         "title-someone-else-has-updated-this-dashboard": "Valaki más frissítette ezt az irányítópultot",
         "would-still-dashboard": "Biztosan menti ezt az irányítópultot?"
       },

@@ -4597,10 +4597,10 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "",
+      "body-plugin-dashboard": "此儀表板由外掛程式提供。您在此處所做的任何變更在外掛程式更新時將被覆寫。要永久保留您的修改，請使用<strong>另存為</strong>建立自訂副本。",
       "cancel": "取消",
-      "overwrite": "覆寫",
-      "title-plugin-dashboard": "外掛程式儀表板"
+      "overwrite": "仍然儲存並覆寫",
+      "title-plugin-dashboard": "外掛程式儀表板 - 變更可能會遺失"
     },
     "controls": {
       "menu": {
@@ -5974,13 +5974,13 @@
         "cancel": "取消"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "此儀表板由外掛程式提供。您在此處所做的任何變更在外掛程式更新時將被覆寫。要永久保留您的修改，請使用<strong>另存為</strong>建立自訂副本。",
         "title-failed-to-save-dashboard": "無法儲存儀表板",
-        "title-plugin-dashboard": "外掛程式儀表板",
+        "title-plugin-dashboard": "外掛程式儀表板 - 變更可能會遺失",
         "title-someone-else-has-updated-this-dashboard": "其他人已更新此儀表板",
         "would-still-dashboard": "仍要儲存此儀表板嗎？"
       },
-      "save-and-overwrite": "「儲存並覆寫」"
+      "save-and-overwrite": "「仍然儲存並覆寫」"
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6162,10 +6162,10 @@
       "label-message": "訊息",
       "placeholder-describe-changes-optional": "新增備註以描述您的變更（選填）。",
       "render-footer": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "此儀表板由外掛程式提供。您在此處所做的任何變更在外掛程式更新時將被覆寫。要永久保留您的修改，請使用<strong>另存為</strong>建立自訂副本。",
         "no-changes-to-save": "沒有要儲存的變更",
         "title-failed-to-save-dashboard": "無法儲存儀表板",
-        "title-plugin-dashboard": "外掛程式儀表板",
+        "title-plugin-dashboard": "外掛程式儀表板 - 變更可能會遺失",
         "title-someone-else-has-updated-this-dashboard": "其他人已更新此儀表板",
         "would-still-dashboard": "仍要儲存此儀表板嗎？"
       },

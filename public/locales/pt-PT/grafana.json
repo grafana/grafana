@@ -4617,10 +4617,10 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "",
+      "body-plugin-dashboard": "Este painel de controlo é fornecido por um plugin. Quaisquer alterações feitas aqui serão substituídas quando o plugin for atualizado. Para manter as suas modificações permanentemente, utilize <strong>Guardar como</strong> para criar uma cópia personalizada.",
       "cancel": "Cancelar",
-      "overwrite": "Substituir",
-      "title-plugin-dashboard": "Painel de controlo do plugin"
+      "overwrite": "Guardar e substituir mesmo assim",
+      "title-plugin-dashboard": "Painel de controlo do plugin - as alterações podem ser perdidas"
     },
     "controls": {
       "menu": {
@@ -5995,13 +5995,13 @@
         "cancel": "Cancelar"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Este painel de controlo é fornecido por um plugin. Quaisquer alterações feitas aqui serão substituídas quando o plugin for atualizado. Para manter as suas modificações permanentemente, utilize <strong>Guardar como</strong> para criar uma cópia personalizada.",
         "title-failed-to-save-dashboard": "Não foi possível guardar o painel de controlo",
-        "title-plugin-dashboard": "Painel de controlo do plugin",
+        "title-plugin-dashboard": "Painel de controlo do plugin - as alterações podem ser perdidas",
         "title-someone-else-has-updated-this-dashboard": "Outra pessoa atualizou este painel de controlo",
         "would-still-dashboard": "Ainda pretende guardar este painel de controlo?"
       },
-      "save-and-overwrite": "\"Guardar e substituir\""
+      "save-and-overwrite": "\"Guardar e substituir mesmo assim\""
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6184,10 +6184,10 @@
       "label-message": "Mensagem",
       "placeholder-describe-changes-optional": "Adicione uma nota para descrever as suas alterações (opcional).",
       "render-footer": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Este painel de controlo é fornecido por um plugin. Quaisquer alterações feitas aqui serão substituídas quando o plugin for atualizado. Para manter as suas modificações permanentemente, utilize <strong>Guardar como</strong> para criar uma cópia personalizada.",
         "no-changes-to-save": "Não existem alterações para guardar",
         "title-failed-to-save-dashboard": "Não foi possível guardar o painel de controlo",
-        "title-plugin-dashboard": "Painel de controlo do plugin",
+        "title-plugin-dashboard": "Painel de controlo do plugin - as alterações podem ser perdidas",
         "title-someone-else-has-updated-this-dashboard": "Outra pessoa atualizou este painel de controlo",
         "would-still-dashboard": "Ainda pretende guardar este painel de controlo?"
       },

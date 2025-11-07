@@ -4597,10 +4597,10 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "",
+      "body-plugin-dashboard": "이 대시보드는 플러그인에서 제공됩니다. 여기서 변경한 내용은 플러그인이 업데이트되면 덮어쓰여집니다. 변경 사항을 영구적으로 유지하려면 <strong>다른 이름으로 저장</strong>을 사용하여 사용자 정의 복사본을 만드세요.",
       "cancel": "취소",
-      "overwrite": "덮어쓰기",
-      "title-plugin-dashboard": "플러그인 대시보드"
+      "overwrite": "그래도 저장하고 덮어쓰기",
+      "title-plugin-dashboard": "플러그인 대시보드 - 변경 사항이 손실될 수 있음"
     },
     "controls": {
       "menu": {
@@ -5974,13 +5974,13 @@
         "cancel": "취소"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "이 대시보드는 플러그인에서 제공됩니다. 여기서 변경한 내용은 플러그인이 업데이트되면 덮어쓰여집니다. 변경 사항을 영구적으로 유지하려면 <strong>다른 이름으로 저장</strong>을 사용하여 사용자 정의 복사본을 만드세요.",
         "title-failed-to-save-dashboard": "대시보드 저장 실패",
-        "title-plugin-dashboard": "플러그인 대시보드",
+        "title-plugin-dashboard": "플러그인 대시보드 - 변경 사항이 손실될 수 있음",
         "title-someone-else-has-updated-this-dashboard": "다른 사람이 이 대시보드를 업데이트했습니다",
         "would-still-dashboard": "그래도 이 대시보드를 저장하시겠어요?"
       },
-      "save-and-overwrite": "'저장 및 덮어쓰기'"
+      "save-and-overwrite": "'그래도 저장하고 덮어쓰기'"
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6162,10 +6162,10 @@
       "label-message": "메시지",
       "placeholder-describe-changes-optional": "변경 사항을 설명하는 메모를 추가하세요(선택 사항).",
       "render-footer": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "이 대시보드는 플러그인에서 제공됩니다. 여기서 변경한 내용은 플러그인이 업데이트되면 덮어쓰여집니다. 변경 사항을 영구적으로 유지하려면 <strong>다른 이름으로 저장</strong>을 사용하여 사용자 정의 복사본을 만드세요.",
         "no-changes-to-save": "저장할 변경 사항이 없습니다",
         "title-failed-to-save-dashboard": "대시보드 저장 실패",
-        "title-plugin-dashboard": "플러그인 대시보드",
+        "title-plugin-dashboard": "플러그인 대시보드 - 변경 사항이 손실될 수 있음",
         "title-someone-else-has-updated-this-dashboard": "다른 사람이 이 대시보드를 업데이트했습니다",
         "would-still-dashboard": "그래도 이 대시보드를 저장하시겠어요?"
       },

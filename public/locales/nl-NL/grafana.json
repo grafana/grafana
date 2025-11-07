@@ -4617,10 +4617,10 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "",
+      "body-plugin-dashboard": "Dit dashboard wordt geleverd door een plug-in. Wijzigingen die u hier aanbrengt, worden overschreven wanneer de plug-in wordt bijgewerkt. Om uw wijzigingen permanent te behouden, gebruikt u <strong>Opslaan als</strong> om in plaats daarvan een aangepaste kopie te maken.",
       "cancel": "Annuleren",
-      "overwrite": "Overschrijven",
-      "title-plugin-dashboard": "Plug-indashboard"
+      "overwrite": "Opslaan en toch overschrijven",
+      "title-plugin-dashboard": "Plug-indashboard - wijzigingen kunnen verloren gaan"
     },
     "controls": {
       "menu": {
@@ -5995,13 +5995,13 @@
         "cancel": "Annuleren"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Dit dashboard wordt geleverd door een plug-in. Wijzigingen die u hier aanbrengt, worden overschreven wanneer de plug-in wordt bijgewerkt. Om uw wijzigingen permanent te behouden, gebruikt u <strong>Opslaan als</strong> om in plaats daarvan een aangepaste kopie te maken.",
         "title-failed-to-save-dashboard": "Kan dashboard niet opslaan",
-        "title-plugin-dashboard": "Plug-indashboard",
+        "title-plugin-dashboard": "Plug-indashboard - wijzigingen kunnen verloren gaan",
         "title-someone-else-has-updated-this-dashboard": "Iemand anders heeft dit dashboard bijgewerkt",
         "would-still-dashboard": "Wil je dit dashboard nog steeds opslaan?"
       },
-      "save-and-overwrite": "'Opslaan en overschrijven'"
+      "save-and-overwrite": "'Opslaan en toch overschrijven'"
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6184,10 +6184,10 @@
       "label-message": "Bericht",
       "placeholder-describe-changes-optional": "Een opmerking toevoegen om je wijzigingen te beschrijven (optioneel).",
       "render-footer": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Dit dashboard wordt geleverd door een plug-in. Wijzigingen die u hier aanbrengt, worden overschreven wanneer de plug-in wordt bijgewerkt. Om uw wijzigingen permanent te behouden, gebruikt u <strong>Opslaan als</strong> om in plaats daarvan een aangepaste kopie te maken.",
         "no-changes-to-save": "Geen wijzigingen om op te slaan",
         "title-failed-to-save-dashboard": "Kan dashboard niet opslaan",
-        "title-plugin-dashboard": "Plug-indashboard",
+        "title-plugin-dashboard": "Plug-indashboard - wijzigingen kunnen verloren gaan",
         "title-someone-else-has-updated-this-dashboard": "Iemand anders heeft dit dashboard bijgewerkt",
         "would-still-dashboard": "Wil je dit dashboard nog steeds opslaan?"
       },

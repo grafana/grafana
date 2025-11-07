@@ -4657,10 +4657,10 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "",
+      "body-plugin-dashboard": "Tuto nástěnku poskytuje plugin. Jakékoli změny, které zde provedete, budou přepsány při aktualizaci pluginu. Chcete-li své úpravy trvale zachovat, použijte <strong>Uložit jako</strong> pro vytvoření vlastní kopie.",
       "cancel": "Zrušit",
-      "overwrite": "Přepsat",
-      "title-plugin-dashboard": "Plugin nástěnky"
+      "overwrite": "Přesto uložit a přepsat",
+      "title-plugin-dashboard": "Plugin nástěnky - změny mohou být ztraceny"
     },
     "controls": {
       "menu": {
@@ -6037,13 +6037,13 @@
         "cancel": "Zrušit"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Tuto nástěnku poskytuje plugin. Jakékoli změny, které zde provedete, budou přepsány při aktualizaci pluginu. Chcete-li své úpravy trvale zachovat, použijte <strong>Uložit jako</strong> pro vytvoření vlastní kopie.",
         "title-failed-to-save-dashboard": "Nástěnku se nepodařilo uložit",
-        "title-plugin-dashboard": "Plugin nástěnky",
+        "title-plugin-dashboard": "Plugin nástěnky - změny mohou být ztraceny",
         "title-someone-else-has-updated-this-dashboard": "Tuto nástěnku aktualizoval jiný uživatel",
         "would-still-dashboard": "Chcete přesto tuto nástěnku uložit?"
       },
-      "save-and-overwrite": "Uložit a přepsat"
+      "save-and-overwrite": "Přesto uložit a přepsat"
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6228,10 +6228,10 @@
       "label-message": "Zpráva",
       "placeholder-describe-changes-optional": "Přidat poznámku k popisu změn (nepovinné).",
       "render-footer": {
-        "body-plugin-dashboard": "",
-        "no-changes-to-save": "Žádné změny k uložení",
+        "body-plugin-dashboard": "Tuto nástěnku poskytuje plugin. Jakékoli změny, které zde provedete, budou přepsány při aktualizaci pluginu. Chcete-li své úpravy trvale zachovat, použijte <strong>Uložit jako</strong> pro vytvoření vlastní kopie.",
+        "no-changes-to-save": "Žádné změny k uložení",
         "title-failed-to-save-dashboard": "Nástěnku se nepodařilo uložit",
-        "title-plugin-dashboard": "Plugin nástěnky",
+        "title-plugin-dashboard": "Plugin nástěnky - změny mohou být ztraceny",
         "title-someone-else-has-updated-this-dashboard": "Tuto nástěnku aktualizoval jiný uživatel",
         "would-still-dashboard": "Chcete přesto tuto nástěnku uložit?"
       },

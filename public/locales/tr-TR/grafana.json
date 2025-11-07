@@ -4617,10 +4617,10 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "",
+      "body-plugin-dashboard": "Bu pano bir eklenti tarafından sağlanmaktadır. Burada yaptığınız değişiklikler eklenti güncellendiğinde üzerine yazılacaktır. Değişikliklerinizi kalıcı olarak tutmak için bunun yerine özel bir kopya oluşturmak üzere <strong>Farklı kaydet</strong> kullanın.",
       "cancel": "İptal",
-      "overwrite": "Üzerine yaz",
-      "title-plugin-dashboard": "Eklenti panosu"
+      "overwrite": "Yine de kaydet ve üzerine yaz",
+      "title-plugin-dashboard": "Eklenti panosu - değişiklikler kaybolabilir"
     },
     "controls": {
       "menu": {
@@ -5995,13 +5995,13 @@
         "cancel": "İptal"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Bu pano bir eklenti tarafından sağlanmaktadır. Burada yaptığınız değişiklikler eklenti güncellendiğinde üzerine yazılacaktır. Değişikliklerinizi kalıcı olarak tutmak için bunun yerine özel bir kopya oluşturmak üzere <strong>Farklı kaydet</strong> kullanın.",
         "title-failed-to-save-dashboard": "Pano kaydedilemedi",
-        "title-plugin-dashboard": "Eklenti panosu",
+        "title-plugin-dashboard": "Eklenti panosu - değişiklikler kaybolabilir",
         "title-someone-else-has-updated-this-dashboard": "Başka biri bu panoyu güncelledi",
         "would-still-dashboard": "Yine de bu panoyu kaydetmek istiyor musunuz?"
       },
-      "save-and-overwrite": "\"Kaydet ve üzerine yaz\""
+      "save-and-overwrite": "\"Yine de kaydet ve üzerine yaz\""
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6184,10 +6184,10 @@
       "label-message": "Mesaj",
       "placeholder-describe-changes-optional": "Değişikliklerinizi açıklamak için bir not ekleyin (isteğe bağlı).",
       "render-footer": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Bu pano bir eklenti tarafından sağlanmaktadır. Burada yaptığınız değişiklikler eklenti güncellendiğinde üzerine yazılacaktır. Değişikliklerinizi kalıcı olarak tutmak için bunun yerine özel bir kopya oluşturmak üzere <strong>Farklı kaydet</strong> kullanın.",
         "no-changes-to-save": "Kaydedilecek değişiklik yok",
         "title-failed-to-save-dashboard": "Pano kaydedilemedi",
-        "title-plugin-dashboard": "Eklenti panosu",
+        "title-plugin-dashboard": "Eklenti panosu - değişiklikler kaybolabilir",
         "title-someone-else-has-updated-this-dashboard": "Başka biri bu panoyu güncelledi",
         "would-still-dashboard": "Yine de bu panoyu kaydetmek istiyor musunuz?"
       },

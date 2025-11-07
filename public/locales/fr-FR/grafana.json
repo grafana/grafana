@@ -4617,10 +4617,10 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "",
+      "body-plugin-dashboard": "Ce tableau de bord est fourni par un plugin. Toutes les modifications que vous apportez ici seront écrasées lors de la mise à jour du plugin. Pour conserver vos modifications de façon permanente, utilisez <strong>Enregistrer sous</strong> pour créer une copie personnalisée à la place.",
       "cancel": "Annuler",
-      "overwrite": "Écraser",
-      "title-plugin-dashboard": "Tableau de bord du plugin"
+      "overwrite": "Enregistrer et écraser quand même",
+      "title-plugin-dashboard": "Tableau de bord du plugin - les modifications peuvent être perdues"
     },
     "controls": {
       "menu": {
@@ -5995,13 +5995,13 @@
         "cancel": "Annuler"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "",
-        "title-failed-to-save-dashboard": "Échec de l’enregistrement du tableau de bord",
-        "title-plugin-dashboard": "Tableau de bord du plugin",
-        "title-someone-else-has-updated-this-dashboard": "Quelqu’un d’autre a mis à jour ce tableau de bord",
-        "would-still-dashboard": "Voulez-vous toujours enregistrer ce tableau de bord ?"
+        "body-plugin-dashboard": "Ce tableau de bord est fourni par un plugin. Toutes les modifications que vous apportez ici seront écrasées lors de la mise à jour du plugin. Pour conserver vos modifications de façon permanente, utilisez <strong>Enregistrer sous</strong> pour créer une copie personnalisée à la place.",
+        "title-failed-to-save-dashboard": "Échec de l'enregistrement du tableau de bord",
+        "title-plugin-dashboard": "Tableau de bord du plugin - les modifications peuvent être perdues",
+        "title-someone-else-has-updated-this-dashboard": "Quelqu'un d'autre a mis à jour ce tableau de bord",
+        "would-still-dashboard": "Voulez-vous toujours enregistrer ce tableau de bord ?"
       },
-      "save-and-overwrite": "« Enregistrer et écraser »"
+      "save-and-overwrite": "« Enregistrer et écraser quand même »"
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6184,12 +6184,12 @@
       "label-message": "Message",
       "placeholder-describe-changes-optional": "Ajoutez une note pour décrire vos modifications (facultatif).",
       "render-footer": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Ce tableau de bord est fourni par un plugin. Toutes les modifications que vous apportez ici seront écrasées lors de la mise à jour du plugin. Pour conserver vos modifications de façon permanente, utilisez <strong>Enregistrer sous</strong> pour créer une copie personnalisée à la place.",
         "no-changes-to-save": "Aucun changement à enregistrer",
-        "title-failed-to-save-dashboard": "Échec de l’enregistrement du tableau de bord",
-        "title-plugin-dashboard": "Tableau de bord du plugin",
-        "title-someone-else-has-updated-this-dashboard": "Quelqu’un d’autre a mis à jour ce tableau de bord",
-        "would-still-dashboard": "Voulez-vous toujours enregistrer ce tableau de bord ?"
+        "title-failed-to-save-dashboard": "Échec de l'enregistrement du tableau de bord",
+        "title-plugin-dashboard": "Tableau de bord du plugin - les modifications peuvent être perdues",
+        "title-someone-else-has-updated-this-dashboard": "Quelqu'un d'autre a mis à jour ce tableau de bord",
+        "would-still-dashboard": "Voulez-vous toujours enregistrer ce tableau de bord ?"
       },
       "schema-v2-library-panels-export": "En raison des limitations du nouveau schéma de tableau de bord (V2), les panneaux issus de la bibliothèque seront convertis en panneaux classiques avec contenu intégré lors de l’exportation externe.",
       "schema-v2-library-panels-export-title": "Les panneaux de bibliothèque seront convertis en panneaux classiques",

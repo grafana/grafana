@@ -4617,10 +4617,10 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "",
+      "body-plugin-dashboard": "Este dashboard lo proporciona un plugin. Cualquier cambio que realice aquí se sobrescribirá cuando se actualice el plugin. Para mantener sus modificaciones de forma permanente, use <strong>Guardar como</strong> para crear una copia personalizada en su lugar.",
       "cancel": "Cancelar",
-      "overwrite": "Sobrescribir",
-      "title-plugin-dashboard": "Dashboard del plugin"
+      "overwrite": "Guardar y sobrescribir de todas formas",
+      "title-plugin-dashboard": "Dashboard del plugin - los cambios pueden perderse"
     },
     "controls": {
       "menu": {
@@ -5995,13 +5995,13 @@
         "cancel": "Cancelar"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Este dashboard lo proporciona un plugin. Cualquier cambio que realice aquí se sobrescribirá cuando se actualice el plugin. Para mantener sus modificaciones de forma permanente, use <strong>Guardar como</strong> para crear una copia personalizada en su lugar.",
         "title-failed-to-save-dashboard": "Error al guardar el dashboard",
-        "title-plugin-dashboard": "Dashboard del plugin",
+        "title-plugin-dashboard": "Dashboard del plugin - los cambios pueden perderse",
         "title-someone-else-has-updated-this-dashboard": "Otra persona ha actualizado este dashboard",
         "would-still-dashboard": "¿Seguro que quieres guardar este dashboard?"
       },
-      "save-and-overwrite": "«Guardar y sobrescribir»"
+      "save-and-overwrite": "«Guardar y sobrescribir de todas formas»"
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6184,10 +6184,10 @@
       "label-message": "Mensaje",
       "placeholder-describe-changes-optional": "Añade una nota para describir tus cambios (opcional).",
       "render-footer": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Este dashboard lo proporciona un plugin. Cualquier cambio que realice aquí se sobrescribirá cuando se actualice el plugin. Para mantener sus modificaciones de forma permanente, use <strong>Guardar como</strong> para crear una copia personalizada en su lugar.",
         "no-changes-to-save": "Sin cambios para guardar",
         "title-failed-to-save-dashboard": "Error al guardar el dashboard",
-        "title-plugin-dashboard": "Dashboard del plugin",
+        "title-plugin-dashboard": "Dashboard del plugin - los cambios pueden perderse",
         "title-someone-else-has-updated-this-dashboard": "Otra persona ha actualizado este dashboard",
         "would-still-dashboard": "¿Seguro que quieres guardar este dashboard?"
       },

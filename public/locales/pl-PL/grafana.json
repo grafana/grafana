@@ -4657,10 +4657,10 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "",
+      "body-plugin-dashboard": "Ten pulpit jest dostarczany przez wtyczkę. Wszelkie zmiany wprowadzone tutaj zostaną nadpisane po zaktualizowaniu wtyczki. Aby trwale zachować swoje modyfikacje, użyj <strong>Zapisz jako</strong>, aby utworzyć niestandardową kopię.",
       "cancel": "Anuluj",
-      "overwrite": "Zastąp",
-      "title-plugin-dashboard": "Pulpit wtyczek"
+      "overwrite": "Zapisz i zastąp mimo to",
+      "title-plugin-dashboard": "Pulpit wtyczek - zmiany mogą zostać utracone"
     },
     "controls": {
       "menu": {
@@ -6037,13 +6037,13 @@
         "cancel": "Anuluj"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Ten pulpit jest dostarczany przez wtyczkę. Wszelkie zmiany wprowadzone tutaj zostaną nadpisane po zaktualizowaniu wtyczki. Aby trwale zachować swoje modyfikacje, użyj <strong>Zapisz jako</strong>, aby utworzyć niestandardową kopię.",
         "title-failed-to-save-dashboard": "Nie udało się zapisać pulpitu",
-        "title-plugin-dashboard": "Pulpit wtyczek",
+        "title-plugin-dashboard": "Pulpit wtyczek - zmiany mogą zostać utracone",
         "title-someone-else-has-updated-this-dashboard": "Ktoś inny zaktualizował ten pulpit",
         "would-still-dashboard": "Czy nadal chcesz zapisać ten pulpit?"
       },
-      "save-and-overwrite": "„Zapisz i zastąp”"
+      "save-and-overwrite": "„Zapisz i zastąp mimo to""
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6228,10 +6228,10 @@
       "label-message": "Wiadomość",
       "placeholder-describe-changes-optional": "Dodaj notatkę, aby opisać zmiany (opcjonalnie).",
       "render-footer": {
-        "body-plugin-dashboard": "",
+        "body-plugin-dashboard": "Ten pulpit jest dostarczany przez wtyczkę. Wszelkie zmiany wprowadzone tutaj zostaną nadpisane po zaktualizowaniu wtyczki. Aby trwale zachować swoje modyfikacje, użyj <strong>Zapisz jako</strong>, aby utworzyć niestandardową kopię.",
         "no-changes-to-save": "Brak zmian do zapisania",
         "title-failed-to-save-dashboard": "Nie udało się zapisać pulpitu",
-        "title-plugin-dashboard": "Pulpit wtyczek",
+        "title-plugin-dashboard": "Pulpit wtyczek - zmiany mogą zostać utracone",
         "title-someone-else-has-updated-this-dashboard": "Ktoś inny zaktualizował ten pulpit",
         "would-still-dashboard": "Czy nadal chcesz zapisać ten pulpit?"
       },
