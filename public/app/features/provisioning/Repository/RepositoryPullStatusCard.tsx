@@ -52,9 +52,9 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
             <div className={styles.spanTwo}>
               {hasUrl && lastCommitUrl ? (
                 <TextLink href={lastCommitUrl} external>
-                    {status?.sync.lastRef
-                      ? status.sync.lastRef.substring(0, 7)
-                      : t('provisioning.repository-overview.not-available', 'N/A')}
+                  {status?.sync.lastRef
+                    ? status.sync.lastRef.substring(0, 7)
+                    : t('provisioning.repository-overview.not-available', 'N/A')}
                 </TextLink>
               ) : (
                 <Text variant="body">
