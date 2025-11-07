@@ -105,6 +105,29 @@ func (s *Store) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuer
 	return labelMap, nil
 }
 
+// GetUserAuthModules returns all auth modules a user has used ordered by most recently used first.
+func (s *Store) GetUserAuthModules(ctx context.Context, userID int64) ([]string, error) {
+	rows := make([]struct {
+		AuthModule string `xorm:"auth_module"`
+	}, 0)
+	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table("user_auth").Where("user_id = ?", userID).Desc("created").Cols("auth_module").Find(&rows)
+	})
+	if err != nil {
+		return nil, err
+	}
+	modules := make([]string, 0, len(rows))
+	seen := make(map[string]struct{}, len(rows))
+	for _, r := range rows {
+		if _, ok := seen[r.AuthModule]; ok {
+			continue
+		}
+		seen[r.AuthModule] = struct{}{}
+		modules = append(modules, r.AuthModule)
+	}
+	return modules, nil
+}
+
 func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 	authUser := &login.UserAuth{
 		UserId:      cmd.UserId,

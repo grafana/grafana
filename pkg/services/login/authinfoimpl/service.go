@@ -67,6 +67,12 @@ func (s *Service) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery
 	return authInfo, nil
 }
 
+// GetUserAuthModules returns all auth modules for a user ordered by most recent first.
+func (s *Service) GetUserAuthModules(ctx context.Context, userID int64) ([]string, error) {
+	// No caching for list variant (could be many & rarely needed)
+	return s.authInfoStore.GetUserAuthModules(ctx, userID)
+}
+
 func (s *Service) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	if len(query.UserIDs) == 0 {
 		return map[int64]string{}, nil

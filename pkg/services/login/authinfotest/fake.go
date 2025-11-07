@@ -13,6 +13,7 @@ type FakeService struct {
 	ExpectedExternalUser *login.ExternalUserInfo
 	ExpectedError        error
 	ExpectedLabels       map[int64]string
+	ExpectedModules      []string
 
 	SetAuthInfoFn        func(ctx context.Context, cmd *login.SetAuthInfoCommand) error
 	UpdateAuthInfoFn     func(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error
@@ -26,6 +27,10 @@ func (a *FakeService) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQ
 
 func (a *FakeService) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	return a.ExpectedLabels, a.ExpectedError
+}
+
+func (a *FakeService) GetUserAuthModules(ctx context.Context, userID int64) ([]string, error) {
+	return a.ExpectedModules, a.ExpectedError
 }
 
 func (a *FakeService) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {

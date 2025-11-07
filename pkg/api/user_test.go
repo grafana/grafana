@@ -183,6 +183,49 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
+		// By default no auth labels for fake service
+	}, mock)
+
+	// New test: multiple historical auth modules should appear ordered by recency without duplicates
+	loggedInUserScenario(t, "When calling GET on with multiple auth modules", "/api/users/lookup", "/api/users/lookup", func(sc *scenarioContext) {
+		createUserCmd := user.CreateUserCommand{
+			Email:   fmt.Sprint("multi", "@test.com"),
+			Name:    "multi",
+			Login:   "multi",
+			IsAdmin: true,
+		}
+		orgSvc, err := orgimpl.ProvideService(sqlStore, sc.cfg, quotatest.New(false, nil))
+		require.NoError(t, err)
+		userSvc, err := userimpl.ProvideService(
+			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
+			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+		)
+		require.NoError(t, err)
+		usr, err := userSvc.Create(context.Background(), &createUserCmd)
+		require.Nil(t, err)
+
+		sc.handlerFunc = hs.GetUserByLoginOrEmail
+
+		userMock := usertest.NewUserServiceFake()
+		userMock.ExpectedUser = &user.User{ID: usr.ID, Email: usr.Email, Login: usr.Login, Name: usr.Name}
+		sc.userService = userMock
+		hs.userService = userMock
+
+		// Provide authInfoService fake with expected modules (descending recency already provided by store logic).
+		// We'll simulate modules: oauth (latest), ldap (older), oauth (duplicate older), saml (oldest)
+		fakeAuth := &authinfotest.FakeService{ExpectedModules: []string{"oauth", "ldap", "oauth", "saml"}}
+		hs.authInfoService = fakeAuth
+
+		sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": usr.Email}).exec()
+
+		var resp user.UserProfileDTO
+		require.Equal(t, http.StatusOK, sc.resp.Code)
+		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
+		require.NoError(t, err)
+		// Expect labels mapped & de-duplicated preserving first occurrences order: oauth -> LDAP -> SAML (labels via GetAuthProviderLabel)
+		// Verify at least length and order as strings returned by login.GetAuthProviderLabel
+		expected := []string{login.GetAuthProviderLabel("oauth"), login.GetAuthProviderLabel("ldap"), login.GetAuthProviderLabel("saml")}
+		require.Equal(t, expected, resp.AuthLabels)
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users", "/api/users", func(sc *scenarioContext) {
