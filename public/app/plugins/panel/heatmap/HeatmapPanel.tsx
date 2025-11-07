@@ -19,8 +19,10 @@ import { FacetedData, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal'
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
+import { getXAxisConfig } from '../../../core/components/TimeSeries/utils';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 
 import { HeatmapTooltip } from './HeatmapTooltip';
 import { HeatmapData, prepareHeatmapData } from './fields';
@@ -132,6 +134,8 @@ const HeatmapPanelViz = ({
   const dataRef = useRef(info);
   dataRef.current = info;
 
+  const annotationsLength = options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined;
+
   const builder = useMemo(() => {
     const scaleConfig: ScaleDistributionConfig = dataRef.current?.heatmap?.fields[1].config?.custom?.scaleDistribution;
 
@@ -147,10 +151,11 @@ const HeatmapPanelViz = ({
       yAxisConfig: options.yAxis,
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
       selectionMode: options.selectionMode,
+      xAxisConfig: getXAxisConfig(annotationsLength),
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, timeZone, data.structureRev, cursorSync]);
+  }, [options, timeZone, data.structureRev, cursorSync, annotationsLength]);
 
   const renderLegend = () => {
     if (!options.legend.show) {
@@ -242,6 +247,7 @@ const HeatmapPanelViz = ({
             )}
             <AnnotationsPlugin2
               replaceVariables={replaceVariables}
+              multiLane={options.annotations?.multiLane}
               annotations={data.annotations ?? []}
               config={builder}
               timeZone={timeZone}

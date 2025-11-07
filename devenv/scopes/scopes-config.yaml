@@ -1,0 +1,84 @@
+scopes:
+  app1:
+    title: Application 1
+    filters:
+      - key: app
+        operator: equals
+        value: app1
+
+  app2:
+    title: Application 2
+    filters:
+      - key: app
+        operator: equals
+        value: app2
+
+  cluster1:
+    title: Cluster 1
+    filters:
+      - key: cluster
+        operator: equals
+        value: cluster1
+
+tree:
+  gdev-scopes:
+    title: gdev-scopes
+    nodeType: container
+    children:
+      production:
+        title: Production
+        nodeType: container
+        children:
+          app1-prod:
+            title: Application 1
+            nodeType: leaf
+            linkId: app1
+            linkType: scope
+          app2-prod:
+            title: Application 2
+            nodeType: leaf
+            linkId: app2
+            linkType: scope
+      test-cases:
+        title: Test cases
+        nodeType: container
+        disableMultiSelect: true
+        children:
+          test-case-1:
+            title: Test case 1
+            nodeType: leaf
+            linkId: test-case-1
+            linkType: scope
+          test-case-2:
+            title: Test case 2
+            nodeType: leaf
+            linkId: test-case-2
+            linkType: scope
+
+      clusters:
+        title: Clusters
+        nodeType: container
+        linkId: cluster1
+        linkType: scope
+        children:
+          cluster1-node:
+            title: Cluster 1
+            nodeType: leaf
+            linkId: cluster1
+            linkType: scope
+
+navigations:
+  # Example: Link to a dashboard
+  app1-nav:
+    url: /d/86Js1xRmk
+    scope: app1
+
+  # Example: Link to a dashboard with full URL (already has /d/)
+  app2-nav:
+    url: /d/GlAqcPgmz
+    scope: app2
+
+  # Example: Custom URL path
+  custom-nav:
+    url: /explore
+    scope: app1
