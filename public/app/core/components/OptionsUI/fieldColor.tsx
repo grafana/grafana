@@ -4,7 +4,6 @@ import { CSSProperties, FC } from 'react';
 import {
   StandardEditorProps,
   FieldColorModeId,
-  SelectableValue,
   FieldColor,
   fieldColorModeRegistry,
   FieldColorMode,
@@ -12,9 +11,10 @@ import {
   FieldColorConfigSettings,
   FieldColorSeriesByMode,
   getFieldColorMode,
+  fieldReducers,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useStyles2, useTheme2, Field, RadioButtonGroup, Select } from '@grafana/ui';
+import { useStyles2, useTheme2, Field, Combobox, type ComboboxOption } from '@grafana/ui';
 
 import { ColorValueEditor } from './color';
 
@@ -46,11 +46,13 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
       };
     });
 
-  const onModeChange = (newMode: SelectableValue<string>) => {
-    onChange({
-      ...value,
-      mode: newMode.value!,
-    });
+  const onModeChange = (option: ComboboxOption<string> | null) => {
+    if (option?.value) {
+      onChange({
+        ...value,
+        mode: option.value,
+      });
+    }
   };
 
   const onColorChange = (color?: string) => {
@@ -74,39 +76,57 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   if (mode === FieldColorModeId.Fixed || mode === FieldColorModeId.Shades) {
     return (
       <div className={styles.group}>
-        <Select
-          minMenuHeight={200}
-          options={options}
-          value={mode}
-          onChange={onModeChange}
-          className={styles.select}
-          inputId={id}
-        />
+        <Combobox options={options} value={mode} onChange={onModeChange} width="auto" minWidth={16} id={id} />
         <ColorValueEditor value={value?.fixedColor} onChange={onColorChange} />
       </div>
     );
   }
 
   if (item.settings?.bySeriesSupport && colorMode.isByValue) {
-    const seriesModes: Array<SelectableValue<FieldColorSeriesByMode>> = [
-      { label: 'Last', value: 'last' },
-      { label: 'Min', value: 'min' },
-      { label: 'Max', value: 'max' },
-    ];
+    // Get all available reducers and filter to those that make sense for color calculation
+    const allReducers = fieldReducers.list();
+    const seriesModes: Array<ComboboxOption<string>> = allReducers
+      .filter((reducer) => {
+        // Exclude reducers that don't preserve units or don't make sense for color calculation
+        return (
+          reducer.preservesUnits &&
+          reducer.id !== 'allIsZero' &&
+          reducer.id !== 'allIsNull' &&
+          reducer.id !== 'allValues' &&
+          reducer.id !== 'uniqueValues'
+        );
+      })
+      .map((reducer) => ({
+        label: reducer.name,
+        value: reducer.id,
+        description: reducer.description,
+      }));
 
     return (
       <>
         <div style={{ marginBottom: theme.spacing(2) }}>
-          <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} inputId={id} />
+          <Combobox options={options} value={mode} onChange={onModeChange} id={id} />
         </div>
-        <Field label={t('options-ui.field-color.color-by-label', 'Color series by')}>
-          <RadioButtonGroup value={value?.seriesBy ?? 'last'} options={seriesModes} onChange={onSeriesModeChange} />
+        <Field label={t('options-ui.field-color.color-by-label', 'Color series by')} noMargin>
+          <Combobox
+            options={seriesModes}
+            value={value?.seriesBy ?? 'last'}
+            onChange={(option) => {
+              const selectedValue = option?.value;
+              if (selectedValue) {
+                // Type assertion is safe here because we filter to only valid reducer IDs
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                onSeriesModeChange(selectedValue as FieldColorSeriesByMode);
+              }
+            }}
+            id={id}
+          />
         </Field>
       </>
     );
   }
 
-  return <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} inputId={id} />;
+  return <Combobox options={options} value={mode} onChange={onModeChange} id={id} />;
 };
 
 interface ModeProps {

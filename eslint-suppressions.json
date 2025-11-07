@@ -1228,11 +1228,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/OptionsUI/fieldColor.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/core/components/OptionsUI/multiSelect.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
