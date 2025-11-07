@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
+	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
@@ -21,6 +22,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	rulesInstaller := &rules.AlertingRulesAppInstaller{}
 	correlationsAppInstaller := &correlations.AppInstaller{}
 	notificationsAppInstaller := &notifications.AlertingNotificationsAppInstaller{}
+	annotationAppInstaller := &annotation.AnnotationAppInstaller{}
 	exampleAppInstaller := &example.ExampleAppInstaller{}
 	advisorAppInstaller := &advisor.AdvisorAppInstaller{}
 	tests := []struct {
@@ -38,7 +40,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			features := featuremgmt.WithFeatures(tt.flags...)
-			got := ProvideAppInstallers(features, playlistInstaller, pluginsInstaller, nil, tt.rulesInst, correlationsAppInstaller, notificationsAppInstaller, nil, exampleAppInstaller, advisorAppInstaller)
+			got := ProvideAppInstallers(features, playlistInstaller, pluginsInstaller, nil, tt.rulesInst, correlationsAppInstaller, notificationsAppInstaller, nil, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller)
 			if tt.expectRulesApp {
 				require.Contains(t, got, tt.rulesInst)
 			} else {

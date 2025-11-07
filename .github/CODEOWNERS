@@ -98,6 +98,7 @@
 /apps/correlations @grafana/datapro
 /apps/example/ @grafana/grafana-app-platform-squad
 /apps/logsdrilldown/ @grafana/observability-logs
+/apps/annotation/ @grafana/grafana-backend-services-squad
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/query @grafana/grafana-datasources-core-services
@@ -226,6 +227,7 @@
 /devenv/datasources.yaml @grafana/grafana-backend-group
 /devenv/datasources_docker.yaml @grafana/grafana-backend-group
 /devenv/dev-dashboards-without-uid/ @grafana/dashboards-squad
+/devenv/scopes/ @grafana/grafana-operator-experience-squad
 
 /devenv/dev-dashboards/annotations @grafana/dataviz-squad
 /devenv/dev-dashboards/migrations @grafana/dataviz-squad
