@@ -165,10 +165,6 @@ export interface FeatureToggles {
   */
   extraThemes?: boolean;
   /**
-  * Enables the plugins frontend sandbox
-  */
-  pluginsFrontendSandbox?: boolean;
-  /**
   * Enables writing multiple items from a single query within Recorded Queries
   * @default true
   */
@@ -729,6 +725,10 @@ export interface FeatureToggles {
   */
   timeRangeProvider?: boolean;
   /**
+  * Enables time range panning functionality
+  */
+  timeRangePan?: boolean;
+  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */
@@ -1246,4 +1246,9 @@ export interface FeatureToggles {
   * Enable template dashboards
   */
   dashboardTemplates?: boolean;
+  /**
+  * Enables app platform API for annotations
+  * @default false
+  */
+  kubernetesAnnotations?: boolean;
 }
