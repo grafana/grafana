@@ -119,6 +119,7 @@ func NewAPIService(
 		display:                     user.NewLegacyDisplayREST(store),
 		resourcePermissionsStorage:  resourcePermissionsStorage,
 		externalGroupMappingStorage: noopStorage,
+		enableDualWriter:            true,
 		logger:                      log.New("iam.apis"),
 		features:                    features,
 		zClient:                     zClient,

@@ -329,6 +329,19 @@ func InstallAPIs(
 				return storage, nil
 			}
 
+			syncEnabled := !dualWriterMigrationDataSyncDisabled || dualWriterPeriodicDataSyncJobEnabled
+			if !syncEnabled {
+				builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode, mode)
+				switch mode {
+				case grafanarest.Mode0:
+					return legacy, nil
+				case grafanarest.Mode4, grafanarest.Mode5:
+					return storage, nil
+				default:
+					return dualwrite.NewDualWriter(gr, mode, legacy, storage)
+				}
+			}
+
 			// TODO: inherited context from main Grafana process
 			ctx := context.Background()
 
