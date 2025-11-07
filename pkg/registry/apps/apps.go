@@ -42,35 +42,36 @@ func ProvideAppInstallers(
 	logsdrilldownAppInstaller *logsdrilldown.LogsDrilldownAppInstaller,
 	annotationAppInstaller *annotation.AnnotationAppInstaller,
 	exampleAppInstaller *example.ExampleAppInstaller,
-) []appsdkapiserver.AppInstaller {
-	installers := []appsdkapiserver.AppInstaller{
-		playlistAppInstaller,
-		pluginsApplInstaller,
-		exampleAppInstaller,
+) map[string]appsdkapiserver.AppInstaller {
+	installers := map[string]appsdkapiserver.AppInstaller{
+		"ENABLED_PLAYLISTS":   playlistAppInstaller,
+		"ENABLED_PLUGINS":     pluginsApplInstaller,
+		"ENABLED_EXAMPLE_APP": exampleAppInstaller,
 	}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
-		installers = append(installers, shorturlAppInstaller)
-	}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAlertingRules) && rulesAppInstaller != nil {
-		installers = append(installers, rulesAppInstaller)
-	}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesCorrelations) {
-		installers = append(installers, correlationsAppInstaller)
-	}
+
+	//if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
+	installers[featuremgmt.FlagKubernetesShortURLs] = shorturlAppInstaller
+	// }
+
+	// if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAlertingRules) && rulesAppInstaller != nil {
+	installers[featuremgmt.FlagKubernetesAlertingRules] = rulesAppInstaller
+	//	}
+	// if features.IsEnabledGlobally(featuremgmt.FlagKubernetesCorrelations) {
+	installers[featuremgmt.FlagKubernetesCorrelations] = correlationsAppInstaller
+	// }
+
+	// TODO: what to do about an installer that is not dynamic, maybe they should be on a different map than the one I made
 	if alertingNotificationAppInstaller != nil {
-		installers = append(installers, alertingNotificationAppInstaller)
+		installers["ENABLED_ALERTING_NOTIFICATIONS"] = alertingNotificationAppInstaller
 	}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesLogsDrilldown) {
-		installers = append(installers, logsdrilldownAppInstaller)
-	}
-	//nolint:staticcheck
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
-		installers = append(installers, annotationAppInstaller)
-	}
+
+	// if features.IsEnabledGlobally(featuremgmt.FlagKubernetesLogsDrilldown) {
+	installers[featuremgmt.FlagKubernetesLogsDrilldown] = logsdrilldownAppInstaller
+	// }
+
+	// if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
+	installers[featuremgmt.FlagKubernetesAnnotations] = annotationAppInstaller
+	// }
 
 	return installers
 }

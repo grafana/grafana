@@ -100,7 +100,7 @@ type AuthorizerRegistrar interface {
 
 func RegisterAuthorizers(
 	ctx context.Context,
-	appInstallers []appsdkapiserver.AppInstaller,
+	appInstallers map[string]appsdkapiserver.AppInstaller,
 	registrar AuthorizerRegistrar,
 ) {
 	logger := logging.FromContext(ctx)
