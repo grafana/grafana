@@ -17,9 +17,9 @@ export function EnablePushToConfiguredBranchOption<T extends FieldValues>({
       <Checkbox
         disabled={readOnly}
         {...register(registerName)}
-        label={t('provisioning.finish-step.enable-push-to-configured-branch-label', 'Enable push to configured branch')}
+        label={t('provisioning.enable-push-to-configured-branch-label', 'Enable push to configured branch')}
         description={t(
-          'provisioning.config-form.description-enable-push-to-configured-branch',
+          'provisioning.enable-push-to-configured-branch-description',
           'Allow direct commits to the configured branch.'
         )}
       />
