@@ -496,11 +496,11 @@ func TestConversionMetrics(t *testing.T) {
 			}
 
 			if tt.expectAPISuccess && tt.expectMetricsSuccess {
-				require.GreaterOrEqual(t, successTotal, float64(1), "success metric should be incremented")
+				require.Equal(t, float64(1), successTotal, "success metric should be incremented")
 				require.Equal(t, float64(0), failureTotal, "failure metric should not be incremented")
 			} else {
 				require.Equal(t, float64(0), successTotal, "success metric should not be incremented")
-				require.GreaterOrEqual(t, failureTotal, float64(1), "failure metric should be incremented")
+				require.Equal(t, float64(1), failureTotal, "failure metric should be incremented")
 			}
 		})
 	}
@@ -569,8 +569,8 @@ func TestConversionMetricsWrapper(t *testing.T) {
 				// Simulate conversion failure
 				return fmt.Errorf("conversion failed")
 			},
-			expectAPISuccess:     false, // FIXED: wrapper should propagate errors
-			expectMetricsSuccess: false,
+			expectAPISuccess:     true,  // wrapper returns nil to avoid 500 response
+			expectMetricsSuccess: false, // but still records failure metrics
 			expectedSourceUID:    "test-wrapper-2",
 			expectedSourceAPI:    dashv1.APIVERSION,
 			expectedTargetAPI:    dashv0.APIVERSION,
@@ -866,8 +866,7 @@ func TestConversionLogLevels(t *testing.T) {
 		target2 := &dashv0.Dashboard{}
 
 		err = failureWrapper(source2, target2, nil)
-		require.Error(t, err, "conversion wrapper should propagate errors from the conversion function")
-		require.Equal(t, "simulated conversion failure", err.Error(), "error should match the simulated failure")
+		require.NoError(t, err, "conversion wrapper returns nil to avoid 500 response, but logs error and records metrics")
 
 		// The logging code paths are executed in both cases above
 		// Success case logs at Debug level with fields:
@@ -880,7 +879,7 @@ func TestConversionLogLevels(t *testing.T) {
 		t.Log("✓ Failure logging uses Error level")
 		t.Log("✓ All structured fields included in log messages")
 		t.Log("✓ Dashboard UID extraction works for different dashboard types")
-		t.Log("✓ Errors are properly propagated (bug fix: previously returned nil)")
+		t.Log("✓ Wrapper returns nil to avoid 500 response even on errors")
 		t.Log("✓ Schema version extraction handles various formats")
 	})
 }

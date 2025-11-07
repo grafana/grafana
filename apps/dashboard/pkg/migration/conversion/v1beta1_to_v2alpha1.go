@@ -1740,13 +1740,6 @@ func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *das
 		Query:  buildDataQueryKind(querySpec, queryDatasourceType),
 	}
 
-	// // if panelQuerySpec.Query.Datasource is not set, set it to default datasource
-	// if panelQuerySpec.Query.Spec["datasource"] == nil {
-	// 	panelQuerySpec.Query.Spec["datasource"] = map[string]interface{}{
-	// 		"name": queryDatasourceUID,
-	// 	}
-	// }
-
 	// Only include datasource reference if UID is provided
 	if queryDatasourceUID != "" {
 		panelQuerySpec.Datasource = &dashv2alpha1.DashboardDataSourceRef{
