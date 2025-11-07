@@ -74,7 +74,21 @@
     "layout": {
       "kind": "GridLayout",
       "spec": {
-        "items": null
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          }
+        ]
       }
     },
     "links": [

@@ -36,11 +36,13 @@ func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboa
 	}
 
 	// We need to make sure the layout is set to some value, otherwise the JSON marshaling will fail.
-	out.Spec.Layout = dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
-		GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
-			Kind: "GridLayout",
-			Spec: dashv2alpha1.DashboardGridLayoutSpec{},
-		},
+	if out.Spec.Layout.GridLayoutKind == nil && out.Spec.Layout.RowsLayoutKind == nil {
+		out.Spec.Layout = dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+			GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
+				Kind: "GridLayout",
+				Spec: dashv2alpha1.DashboardGridLayoutSpec{},
+			},
+		}
 	}
 
 	return nil
