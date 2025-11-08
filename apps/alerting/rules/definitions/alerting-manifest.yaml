@@ -8,7 +8,16 @@ spec:
   preferredVersion: v0alpha1
   versions:
   - kinds:
-    - conversion: false
+    - admission:
+        mutation:
+          operations:
+          - CREATE
+          - UPDATE
+        validation:
+          operations:
+          - CREATE
+          - UPDATE
+      conversion: false
       kind: AlertRule
       plural: AlertRules
       schemas:
@@ -214,7 +223,16 @@ spec:
       - spec.panelRef.dashboardUID
       - spec.panelRef.panelID
       - spec.notificationSettings.receiver
-    - conversion: false
+    - admission:
+        mutation:
+          operations:
+          - CREATE
+          - UPDATE
+        validation:
+          operations:
+          - CREATE
+          - UPDATE
+      conversion: false
       kind: RecordingRule
       plural: RecordingRules
       schemas:
