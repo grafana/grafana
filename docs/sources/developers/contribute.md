@@ -20,7 +20,7 @@ This page lists resources for developers who want to contribute to the Grafana s
 
 Choose how you want to contribute to Grafana, from code to plugins to community support.
 
-### Contribute Code to Grafana
+### Contribute code to Grafana
 
 - [Contributing to Grafana](https://github.com/grafana/grafana/blob/main/CONTRIBUTING.md) introduces the contribution process and community resources.
 - [Developer guide](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md) shows how to set up your environment and run Grafana in development.
@@ -41,7 +41,7 @@ Choose how you want to contribute to Grafana, from code to plugins to community 
 - Help with [issue triage](https://github.com/grafana/grafana/blob/main/contribute/triage-issues.md) by reviewing, labeling, and clarifying open issues.
 - Report security vulnerabilities following our [security policy](https://github.com/grafana/grafana/security/policy).
 
-## Choose the right channel
+## Communicate with Grafana
 
 Use the right place to ask questions, report problems, and propose changes.
 
