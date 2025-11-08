@@ -11510,6 +11510,8 @@
     "empty-state": {
       "no-jobs": "Sem serviços..."
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "Tire o máximo partido da sua integração no GitHub com estes suplementos opcionais",
       "description-instant-updates": "Obtenha atualizações instantâneas na Grafana assim que as alterações forem efetuadas. Reveja e aprove as alterações com pedidos de extração antes da sua publicação.",
@@ -11729,14 +11731,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "trabalhos ativos",
       "column-action": "Ação",
       "column-duration": "Duração",
       "column-job-id": "",
       "column-message": "Mensagem",
       "column-started": "Iniciado",
       "column-status": "Estado",
-      "error-loading": "Erro ao carregar {{type}}",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "Trabalhos"
     },
     "repository-actions": {

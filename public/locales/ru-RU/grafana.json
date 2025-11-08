@@ -11610,6 +11610,8 @@
     "empty-state": {
       "no-jobs": "Нет заданий..."
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "Получите максимум от интеграции с GitHub с помощью этих дополнительных надстроек.",
       "description-instant-updates": "Получайте мгновенные обновления в Grafana сразу после фиксации изменений. Просматривайте и утверждайте изменения с помощью соответствующих запросов перед их внедрением.",
@@ -11833,14 +11835,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "активные задания",
       "column-action": "Действие",
       "column-duration": "Длительность",
       "column-job-id": "",
       "column-message": "Сообщение",
       "column-started": "Запущено",
       "column-status": "Статус",
-      "error-loading": "Ошибка при загрузке {{type}}",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "Задания"
     },
     "repository-actions": {

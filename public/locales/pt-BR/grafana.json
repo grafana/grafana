@@ -11510,6 +11510,8 @@
     "empty-state": {
       "no-jobs": "Sem tarefas…"
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "Aproveite ao máximo sua integração com o GitHub usando estes complementos opcionais",
       "description-instant-updates": "Receba atualizações instantâneas na Grafana assim que as alterações forem confirmadas. Revise e aprove as alterações por meio de solicitações de extração antes que elas sejam implementadas.",
@@ -11729,14 +11731,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "tarefas ativas",
       "column-action": "Ação",
       "column-duration": "Duração",
       "column-job-id": "",
       "column-message": "Mensagem",
       "column-started": "Iniciado",
       "column-status": "Status",
-      "error-loading": "Erro ao carregar {{type}}",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "Tarefas"
     },
     "repository-actions": {

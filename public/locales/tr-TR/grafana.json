@@ -11510,6 +11510,8 @@
     "empty-state": {
       "no-jobs": "İş yok..."
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "GitHub entegrasyonunuzdan en iyi şekilde yararlanmak için bu isteğe bağlı eklentileri kullanın",
       "description-instant-updates": "Değişiklikler gönderildiği anda Grafana'da anlık güncellemeler alın. Değişiklikleri kullanıma sunmadan önce çekme isteklerini kullanarak gözden geçirip onaylayın.",
@@ -11729,14 +11731,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "etkin işler",
       "column-action": "Eylem",
       "column-duration": "Süre",
       "column-job-id": "",
       "column-message": "Mesaj",
       "column-started": "Başlatıldı",
       "column-status": "Durum",
-      "error-loading": "{{type}} yüklenirken hata oluştu",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "İşler"
     },
     "repository-actions": {
