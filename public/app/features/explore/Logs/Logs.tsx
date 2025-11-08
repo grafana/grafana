@@ -364,7 +364,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const scrollIntoView = useCallback((element: HTMLElement) => {
     if (logsContainerRef.current) {
-      topLogsRef.current?.scrollIntoView();
+      topLogsRef.current?.scrollIntoView?.();
       logsContainerRef.current.scroll({
         behavior: 'smooth',
         top: logsContainerRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,

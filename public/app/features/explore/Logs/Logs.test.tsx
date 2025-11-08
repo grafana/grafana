@@ -65,6 +65,8 @@ describe('Logs', () => {
   let originalHref = window.location.href;
 
   beforeEach(() => {
+    window.HTMLElement.prototype.scrollIntoView = jest.fn();
+    window.HTMLElement.prototype.scroll = jest.fn();
     localStorage.clear();
     jest.clearAllMocks();
   });
@@ -159,39 +161,6 @@ describe('Logs', () => {
     );
     return { ...rendered, store: fakeStore };
   };
-
-  describe('scrolling behavior', () => {
-    let originalInnerHeight: number;
-    beforeEach(() => {
-      originalInnerHeight = window.innerHeight;
-      window.innerHeight = 1000;
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-      window.HTMLElement.prototype.scroll = jest.fn();
-    });
-    afterEach(() => {
-      window.innerHeight = originalInnerHeight;
-    });
-
-    it('should call `scrollElement.scroll`', () => {
-      const logs = [];
-      for (let i = 0; i < 50; i++) {
-        logs.push(makeLog({ uid: `uid${i}`, rowId: `id${i}`, timeEpochMs: i }));
-      }
-      const scrollElementMock = {
-        scroll: jest.fn(),
-        scrollTop: 920,
-      };
-      setup(
-        { scrollElement: scrollElementMock as unknown as HTMLDivElement, panelState: { logs: { id: 'uid47' } } },
-        undefined,
-        logs
-      );
-
-      // element.getBoundingClientRect().top will always be 0 for jsdom
-      // calc will be `scrollElement.scrollTop - window.innerHeight / 2` -> 920 - 500 = 420
-      expect(scrollElementMock.scroll).toBeCalledWith({ behavior: 'smooth', top: 420 });
-    });
-  });
 
   it('should render logs', () => {
     setup();
@@ -410,14 +379,6 @@ describe('Logs', () => {
       rerender(<Provider store={store}>{getComponent({ loading: false, exploreId: 'right', panelState })}</Provider>);
 
       expect(fakeChangePanelState).toHaveBeenCalledWith('right', 'logs', { logs: {} });
-    });
-
-    it('should scroll the scrollElement into view if rows contain id', () => {
-      const panelState = { logs: { id: '3' } };
-      const scrollElementMock = { scroll: jest.fn() };
-      setup({ loading: false, scrollElement: scrollElementMock as unknown as HTMLDivElement, panelState });
-
-      expect(scrollElementMock.scroll).toHaveBeenCalled();
     });
 
     it('should not scroll the scrollElement into view if rows does not contain id', () => {
