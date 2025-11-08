@@ -248,11 +248,6 @@ export interface FeatureToggles {
   */
   externalServiceAccounts?: boolean;
   /**
-  * Enables panel monitoring through logs and measurements
-  * @default true
-  */
-  panelMonitoring?: boolean;
-  /**
   * Enables native HTTP Histograms
   */
   enableNativeHTTPHistogram?: boolean;
