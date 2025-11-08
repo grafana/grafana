@@ -11510,6 +11510,8 @@
     "empty-state": {
       "no-jobs": "Keine Aufträge ..."
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "Nutzen Sie mit diesen optionalen Add-ons Ihre GitHub-Integration optimal",
       "description-instant-updates": "Erhalten Sie sofortige Updates in Grafana, sobald Änderungen übernommen werden. Überprüfen und genehmigen Sie Änderungen mithilfe von Pull-Requests, bevor sie übernommen werden.",
@@ -11729,14 +11731,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "Aktive Aufträge",
       "column-action": "Aktion",
       "column-duration": "Dauer",
       "column-job-id": "",
       "column-message": "Nachricht",
       "column-started": "Gestartet",
       "column-status": "Status",
-      "error-loading": "Fehler beim Laden von {{type}}",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "Aufträge"
     },
     "repository-actions": {

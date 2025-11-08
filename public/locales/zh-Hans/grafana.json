@@ -11460,6 +11460,8 @@
     "empty-state": {
       "no-jobs": "无作业..."
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "使用这些可选附加组件，充分利用 GitHub 集成功能",
       "description-instant-updates": "在提交更改后立即在 Grafana 中获取更新。使用拉取请求审核和批准更改，然后再发布。",
@@ -11677,14 +11679,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "活跃的作业",
       "column-action": "操作",
       "column-duration": "持续时间",
       "column-job-id": "",
       "column-message": "消息",
       "column-started": "已启动",
       "column-status": "状态",
-      "error-loading": "加载 {{type}} 时出错",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "作业"
     },
     "repository-actions": {
