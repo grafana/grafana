@@ -13,7 +13,6 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { LogsVisualisationType } from '../../explore/Logs/Logs';
 

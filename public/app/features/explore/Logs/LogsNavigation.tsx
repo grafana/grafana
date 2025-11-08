@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { memo, useCallback } from 'react';
 
-import { AbsoluteTimeRange, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
+import { GrafanaTheme2, LogsSortOrder } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Icon, useTheme2 } from '@grafana/ui';

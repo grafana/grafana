@@ -183,8 +183,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     getFieldLinks,
     theme,
     logsQueries,
-    clearCache,
-    addResultsToCache,
     exploreId,
     getRowContext,
     getLogRowContextUi,
@@ -193,7 +191,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     panelState,
     eventBus,
     onPinLineCallback,
-    scrollElement,
   } = props;
   const [showLabels, setShowLabels] = useState<boolean>(store.getBool(SETTINGS_KEYS.showLabels, false));
   const [showTime, setShowTime] = useState<boolean>(store.getBool(SETTINGS_KEYS.showTime, true));
@@ -670,7 +667,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
 
   const { dedupedRows, dedupCount } = useMemo(() => dedupRows(logRows, dedupStrategy), [dedupStrategy, logRows]);
-  const navigationRange = useMemo(() => createNavigationRange(logRows), [logRows]);
   const infiniteScrollAvailable = useMemo(
     () => !logsQueries?.some((query) => 'direction' in query && query.direction === LokiQueryDirection.Scan),
     [logsQueries]
@@ -1260,18 +1256,4 @@ const dedupRows = (logRows: LogRowModel[], dedupStrategy: LogsDedupStrategy) => 
   const dedupedRows = dedupLogRows(logRows, dedupStrategy);
   const dedupCount = dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0);
   return { dedupedRows, dedupCount };
-};
-
-const createNavigationRange = (logRows: LogRowModel[]): { from: number; to: number } | undefined => {
-  if (!logRows || logRows.length === 0) {
-    return undefined;
-  }
-  const firstTimeStamp = logRows[0].timeEpochMs;
-  const lastTimeStamp = logRows[logRows.length - 1].timeEpochMs;
-
-  if (lastTimeStamp < firstTimeStamp) {
-    return { from: lastTimeStamp, to: firstTimeStamp };
-  }
-
-  return { from: firstTimeStamp, to: lastTimeStamp };
 };
