@@ -131,7 +131,7 @@ describe('TimePickerContent', () => {
       expect(screen.getByText('Last 30 minutes')).toBeInTheDocument();
     });
 
-    it('shows custom time option for compound durations', async () => {
+    it('does not show custom time option for compound durations', async () => {
       const user = userEvent.setup();
       renderComponent({ value: relativeValue });
 
@@ -139,7 +139,7 @@ describe('TimePickerContent', () => {
       await user.type(searchInput, '1h30m');
 
       await waitFor(() => {
-        expect(screen.getByText('Last 1 hour 30 minutes')).toBeInTheDocument();
+        expect(screen.queryByText(/Last 1 hour 30 minutes/i)).not.toBeInTheDocument();
       });
     });
 

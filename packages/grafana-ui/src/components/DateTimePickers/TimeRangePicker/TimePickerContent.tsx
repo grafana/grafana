@@ -5,10 +5,8 @@ import {
   GrafanaTheme2,
   isDateTime,
   isValidGrafanaDuration,
-  parseDuration,
   rangeUtil,
   RawTimeRange,
-  reverseParseDuration,
   TimeOption,
   TimeRange,
   TimeZone,
@@ -57,48 +55,58 @@ interface FormProps extends Omit<Props, 'history'> {
   historyOptions?: TimeOption[];
 }
 
+// Map for converting short time units to full words (singular/plural)
+const TIME_UNIT_LABELS: Record<string, [string, string]> = {
+  s: ['second', 'seconds'],
+  m: ['minute', 'minutes'],
+  h: ['hour', 'hours'],
+  d: ['day', 'days'],
+  w: ['week', 'weeks'],
+  M: ['month', 'months'],
+  y: ['year', 'years'],
+};
+
 /**
- * Parses a time shortcut string (e.g., "30m", "1h", "1h32m") into a TimeOption.
- * Normalizes compound durations like "90m" to "1 hour 30 minutes" for better readability.
+ * Gets the appropriate label for a time unit based on value (singular/plural).
+ */
+function getUnitLabel(unit: string, value: number): string {
+  const labels = TIME_UNIT_LABELS[unit];
+  return labels ? labels[value === 1 ? 0 : 1] : unit;
+}
+
+/**
+ * Parses a time shortcut string (e.g., "30m", "1h", "2d") into a TimeOption.
+ * Only accepts single-unit durations as Grafana doesn't support compound durations like "1h30m".
  */
 function parseTimeShortcut(searchTerm: string): TimeOption | undefined {
-  if (!searchTerm.trim()) {
+  const trimmedTerm = searchTerm.trim();
+  if (!trimmedTerm) {
     return undefined;
   }
 
-  const normalizedTerm = searchTerm.replace(/(\d+)([a-zA-Z]+)/g, '$1$2 ').trim();
+  // Match single-unit duration pattern: number followed by unit (e.g., "30m", "2h")
+  const singleUnitPattern = /^(\d+)([smhdwMy])$/;
+  const match = trimmedTerm.match(singleUnitPattern);
 
-  if (!isValidGrafanaDuration(normalizedTerm)) {
+  if (!match) {
     return undefined;
   }
 
-  try {
-    const duration = parseDuration(normalizedTerm);
-    const durationStr = reverseParseDuration(duration, true);
-    const compactDurationStr = durationStr.replace(/\s+/g, '');
+  const [, value, unit] = match;
+  const numValue = parseInt(value, 10);
 
-    const displayStr = durationStr.replace(/(\d+)([a-zA-Z]+)/g, (_, num, unit) => {
-      const value = parseInt(num, 10);
-      const unitMap: Record<string, string> = {
-        s: value === 1 ? 'second' : 'seconds',
-        m: value === 1 ? 'minute' : 'minutes',
-        h: value === 1 ? 'hour' : 'hours',
-        d: value === 1 ? 'day' : 'days',
-        w: value === 1 ? 'week' : 'weeks',
-        M: value === 1 ? 'month' : 'months',
-        y: value === 1 ? 'year' : 'years',
-      };
-      return `${num} ${unitMap[unit] || unit}`;
-    });
-
-    return {
-      from: `now-${compactDurationStr}`,
-      to: 'now',
-      display: `Last ${displayStr}`,
-    };
-  } catch (e) {
+  // Validate using Grafana's duration validator
+  if (!isValidGrafanaDuration(trimmedTerm)) {
     return undefined;
   }
+
+  const displayLabel = `${value} ${getUnitLabel(unit, numValue)}`;
+
+  return {
+    from: `now-${trimmedTerm}`,
+    to: 'now',
+    display: `Last ${displayLabel}`,
+  };
 }
 
 export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
@@ -131,9 +139,7 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
     const customTimeOption = parseTimeShortcut(searchTerm);
 
     if (customTimeOption) {
-      const alreadyExists = filtered.some(
-        (o) => o.from === customTimeOption.from && o.to === customTimeOption.to
-      );
+      const alreadyExists = filtered.some((o) => o.from === customTimeOption.from && o.to === customTimeOption.to);
 
       if (!alreadyExists) {
         return { filteredQuickOptions: [customTimeOption, ...filtered], customTimeOption };
