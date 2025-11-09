@@ -1,0 +1,16 @@
+version: '3.0'
+
+services:
+  grafana:
+    container_name: 'datasource-mongodbatlas-datasource'
+    platform: 'linux/amd64'
+    build:
+      context: ./.config
+      args:
+        grafana_image: ${GRAFANA_IMAGE:-grafana-enterprise}
+        grafana_version: ${GRAFANA_VERSION:-10.0.3}
+    ports:
+      - 3000:3000/tcp
+    volumes:
+      - ./dist:/var/lib/grafana/plugins/datasource-mongodbatlas-datasource
+      - ./provisioning:/etc/grafana/provisioning
