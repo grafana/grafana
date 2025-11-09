@@ -1,7 +1,18 @@
 import { css, cx } from '@emotion/css';
 import { memo, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, isDateTime, rangeUtil, RawTimeRange, TimeOption, TimeRange, TimeZone } from '@grafana/data';
+import {
+  GrafanaTheme2,
+  isDateTime,
+  isValidGrafanaDuration,
+  parseDuration,
+  rangeUtil,
+  RawTimeRange,
+  reverseParseDuration,
+  TimeOption,
+  TimeRange,
+  TimeZone,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
@@ -46,6 +57,36 @@ interface FormProps extends Omit<Props, 'history'> {
   historyOptions?: TimeOption[];
 }
 
+/**
+ * Parses a time shortcut string (e.g., "30m", "1h", "1h32m") into a TimeOption.
+ * Normalizes compound durations like "90m" to "1h 30m" for better readability.
+ */
+function parseTimeShortcut(searchTerm: string): TimeOption | undefined {
+  if (!searchTerm.trim()) {
+    return undefined;
+  }
+
+  const normalizedTerm = searchTerm.replace(/(\d+)([a-zA-Z]+)/g, '$1$2 ').trim();
+
+  if (!isValidGrafanaDuration(normalizedTerm)) {
+    return undefined;
+  }
+
+  try {
+    const duration = parseDuration(normalizedTerm);
+    const durationStr = reverseParseDuration(duration, true);
+    const compactDurationStr = durationStr.replace(/\s+/g, '');
+
+    return {
+      from: `now-${compactDurationStr}`,
+      to: 'now',
+      display: `Last ${durationStr}`,
+    };
+  } catch (e) {
+    return undefined;
+  }
+}
+
 export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   const {
     quickOptions = [],
@@ -68,10 +109,27 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
     (isFullscreen && showHistory) || (!isFullscreen && ((showHistory && !isHistoryEmpty) || !hideQuickRanges));
   const styles = useStyles2(getStyles, isReversed, hideQuickRanges, isContainerTall, isFullscreen);
   const historyOptions = mapToHistoryOptions(history, timeZone);
-  const timeOption = useTimeOption(value.raw, quickOptions);
+  const baseTimeOption = useTimeOption(value.raw, quickOptions);
   const [searchTerm, setSearchQuery] = useState('');
 
-  const filteredQuickOptions = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
+  const { filteredQuickOptions, customTimeOption } = useMemo(() => {
+    const filtered = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
+    const customTimeOption = parseTimeShortcut(searchTerm);
+
+    if (customTimeOption) {
+      const alreadyExists = filtered.some(
+        (o) => o.from === customTimeOption.from && o.to === customTimeOption.to
+      );
+
+      if (!alreadyExists) {
+        return { filteredQuickOptions: [customTimeOption, ...filtered], customTimeOption };
+      }
+    }
+
+    return { filteredQuickOptions: filtered, customTimeOption: undefined };
+  }, [searchTerm, quickOptions]);
+
+  const timeOption = customTimeOption || baseTimeOption;
 
   const onChangeTimeOption = (timeOption: TimeOption) => {
     return onChange(mapOptionToTimeRange(timeOption));
