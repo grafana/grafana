@@ -59,7 +59,7 @@ interface FormProps extends Omit<Props, 'history'> {
 
 /**
  * Parses a time shortcut string (e.g., "30m", "1h", "1h32m") into a TimeOption.
- * Normalizes compound durations like "90m" to "1h 30m" for better readability.
+ * Normalizes compound durations like "90m" to "1 hour 30 minutes" for better readability.
  */
 function parseTimeShortcut(searchTerm: string): TimeOption | undefined {
   if (!searchTerm.trim()) {
@@ -77,10 +77,24 @@ function parseTimeShortcut(searchTerm: string): TimeOption | undefined {
     const durationStr = reverseParseDuration(duration, true);
     const compactDurationStr = durationStr.replace(/\s+/g, '');
 
+    const displayStr = durationStr.replace(/(\d+)([a-zA-Z]+)/g, (_, num, unit) => {
+      const value = parseInt(num, 10);
+      const unitMap: Record<string, string> = {
+        s: value === 1 ? 'second' : 'seconds',
+        m: value === 1 ? 'minute' : 'minutes',
+        h: value === 1 ? 'hour' : 'hours',
+        d: value === 1 ? 'day' : 'days',
+        w: value === 1 ? 'week' : 'weeks',
+        M: value === 1 ? 'month' : 'months',
+        y: value === 1 ? 'year' : 'years',
+      };
+      return `${num} ${unitMap[unit] || unit}`;
+    });
+
     return {
       from: `now-${compactDurationStr}`,
       to: 'now',
-      display: `Last ${durationStr}`,
+      display: `Last ${displayStr}`,
     };
   } catch (e) {
     return undefined;
