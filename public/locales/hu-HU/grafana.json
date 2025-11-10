@@ -11510,6 +11510,8 @@
     "empty-state": {
       "no-jobs": "Nincsenek feladatok…"
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "Hozza ki a legtöbbet a GitHub-integrációból ezekkel az opcionális kiegészítőkkel",
       "description-instant-updates": "Azonnali frissítéseket kaphat a Grafanában, amint a változások végrehajtása megtörtént. Tekintse át és hagyja jóvá a módosításokat a lekérések használatával, mielőtt életbe lépnének.",
@@ -11729,14 +11731,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "aktív feladatok",
       "column-action": "Művelet",
       "column-duration": "Időtartam",
       "column-job-id": "",
       "column-message": "Üzenet",
       "column-started": "Elindítva",
       "column-status": "Állapot",
-      "error-loading": "Hiba történt a(z) {{type}} betöltése során",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "Feladatok"
     },
     "repository-actions": {

@@ -435,6 +435,7 @@ export {
   isStandardFieldProp,
   type OptionDefaults,
 } from './panel/getPanelOptionsWithDefaults';
+export { type PanelDataSummary, getPanelDataSummary } from './panel/suggestions/getPanelDataSummary';
 export { createFieldConfigRegistry } from './panel/registryFactories';
 export { type QueryRunner, type QueryRunnerOptions } from './types/queryRunner';
 export { type GroupingToMatrixTransformerOptions } from './transformations/transformers/groupingToMatrix';
@@ -651,7 +652,6 @@ export {
   type AngularPanelMenuItem,
   type PanelPluginDataSupport,
   type VisualizationSuggestion,
-  type PanelDataSummary,
   type VisualizationSuggestionsSupplier,
   VizOrientation,
   VisualizationSuggestionScore,
