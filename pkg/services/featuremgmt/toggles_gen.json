@@ -2905,7 +2905,8 @@
       "metadata": {
         "name": "panelMonitoring",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-10-09T05:19:08Z"
+        "creationTimestamp": "2023-10-09T05:19:08Z",
+        "deletionTimestamp": "2025-11-06T15:46:51Z"
       },
       "spec": {
         "description": "Enables panel monitoring through logs and measurements",
