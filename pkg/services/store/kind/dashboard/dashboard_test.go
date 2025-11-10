@@ -126,3 +126,31 @@ func sortDatasources(dash *DashboardSummaryInfo) {
 		})
 	}
 }
+
+// TestReadDashboardWithMalformedJSON tests that the parser handles malformed JSON gracefully
+// This test specifically addresses the issue where panels have empty string keys instead of proper field names
+func TestReadDashboardWithMalformedJSON(t *testing.T) {
+	// nolint:gosec
+	// We can ignore the gosec G304 warning because this is a test with hardcoded input values
+	f, err := os.Open(filepath.Join("testdata", "malformed-empty-key.json"))
+	require.NoError(t, err)
+	defer f.Close()
+
+	dash, err := ReadDashboard(f, dsLookupForTests())
+
+	// The parser should handle the malformed JSON gracefully
+	// It should return an error but not panic
+	if err != nil {
+		// Expected: the parser detects the malformed JSON and returns an error
+		t.Logf("Parser correctly detected malformed JSON: %v", err)
+		// The error should be a parsing error (ReadArray or ReadObject)
+		assert.True(t, strings.Contains(err.Error(), "ReadArray") || strings.Contains(err.Error(), "ReadObject"),
+			"Expected parsing error, got: %v", err)
+	} else {
+		// If no error, verify that the parser at least extracted some valid data
+		assert.NotNil(t, dash)
+		assert.Equal(t, "Malformed Dashboard with Empty Keys", dash.Title)
+		// The parser should have processed at least the valid panels
+		t.Logf("Parser processed dashboard with %d panels", len(dash.Panels))
+	}
+}

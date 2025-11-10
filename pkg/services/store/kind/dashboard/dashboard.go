@@ -125,6 +125,11 @@ func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*Dashb
 	datasourceVariablesLookup := newDatasourceVariableLookup(lookup)
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+		// Check for iterator errors after each ReadObject call
+		if iter.Error != nil {
+			break
+		}
+
 		// Skip null values so we don't need special int handling
 		if iter.WhatIsNext() == jsoniter.NilValue {
 			iter.Skip()
@@ -399,6 +404,11 @@ func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) PanelSummar
 	targets := newTargetInfo(lookup)
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+		// Check for iterator errors after each ReadObject call
+		if iter.Error != nil {
+			break
+		}
+
 		if iter.WhatIsNext() == jsoniter.NilValue {
 			if l1Field == "datasource" {
 				targets.addDatasource(iter)
