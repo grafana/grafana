@@ -891,6 +891,10 @@ export const versionedComponents = {
       '10.1.0': 'data-testid add transformation button',
       [MIN_GRAFANA_VERSION]: 'add transformation button',
     },
+    goToQueriesButton: {
+      '10.4.0': 'data-testid go to queries button',
+      [MIN_GRAFANA_VERSION]: 'go to queries button',
+    },
     removeAllTransformationsButton: {
       '10.4.0': 'data-testid remove all transformations button',
     },

@@ -16,10 +16,13 @@ import {
 } from '@grafana/scenes';
 import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../utils/utils';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
+import { PanelDataPane } from './PanelDataPane';
+import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
 
@@ -66,8 +69,12 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   const styles = useStyles2(getStyles);
   const sourceData = model.getQueryRunner().useState();
   const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const transformations: DataTransformerConfig[] = transformsWrongType as unknown as DataTransformerConfig[];
+  // Type guard to ensure transformations are DataTransformerConfig[]
+  const transformations: DataTransformerConfig[] = Array.isArray(transformsWrongType)
+    ? transformsWrongType.filter(
+        (t): t is DataTransformerConfig => t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
+      )
+    : [];
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
@@ -95,9 +102,38 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   );
 
   if (transformations.length < 1) {
+    const onGoToQueries = () => {
+      const parent = model.parent;
+      if (parent instanceof PanelDataPane) {
+        const queriesTab = parent.state.tabs.find((tab) => tab.tabId === TabId.Queries);
+        if (queriesTab && queriesTab instanceof PanelDataQueriesTab) {
+          // Add a new SQL expression query only if there are no existing SQL expressions
+          const existingQueries = queriesTab.getQueries();
+          const hasSqlExpression = existingQueries.some(
+            (query) =>
+              query.type === ExpressionQueryType.sql ||
+              (typeof query === 'object' && query !== null && 'type' in query && query.type === 'sql')
+          );
+          if (!hasSqlExpression) {
+            queriesTab.onAddExpressionOfType(ExpressionQueryType.sql);
+          }
+          // Navigate to the Queries tab
+          parent.onChangeTab(queriesTab);
+        }
+      }
+    };
+
+    const onAddTransformation = (transformationId: string) => {
+      model.onChangeTransformations([...transformations, { id: transformationId, options: {} }]);
+    };
+
     return (
       <>
-        <EmptyTransformationsMessage onShowPicker={openDrawer}></EmptyTransformationsMessage>
+        <EmptyTransformationsMessage
+          onShowPicker={openDrawer}
+          onGoToQueries={onGoToQueries}
+          onAddTransformation={onAddTransformation}
+        ></EmptyTransformationsMessage>
         {transformationsDrawer}
       </>
     );
