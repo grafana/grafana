@@ -7,7 +7,7 @@ const injectedRtkApi = api
   .injectEndpoints({
     endpoints: (build) => ({
       getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
-        query: () => ({ url: `/apis/shorturl.grafana.app/v1alpha1/` }),
+        query: () => ({ url: `/` }),
         providesTags: ['API Discovery'],
       }),
       listShortUrl: build.query<ListShortUrlApiResponse, ListShortUrlApiArg>({

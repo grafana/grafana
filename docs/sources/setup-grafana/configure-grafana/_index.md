@@ -1969,6 +1969,12 @@ If a rule frequency is lower than this value, then this value is enforced.
 
 <hr>
 
+#### `rule_version_record_limit`
+
+Defines the limits for how many alert rule versions are stored in the database per alert rule.
+
+The default `0` value means there's no limit.
+
 ### `[unified_alerting.screenshots]`
 
 For more information about screenshots, refer to [Images in notifications](../../alerting/configure-notifications/template-notifications/images-in-notifications/).
@@ -2615,6 +2621,15 @@ These will be installed before starting Grafana. Useful when used with provision
 #### `preinstall_disabled`
 
 This option disables all preinstalled plugins. The default is `false`. To disable a specific plugin from being preinstalled, use the `disable_plugins` option.
+
+#### `preinstall_auto_update`
+
+Enable automatic updates for preinstalled plugins on start-up.
+When enabled, preinstalled plugins without a pinned version are automatically updated to the latest version when Grafana starts.
+
+The default is `true`.
+
+To prevent automatic updates for specific plugins, pin them to a specific version using the format `plugin_id@version` in the `preinstall` setting.
 
 <hr>
 

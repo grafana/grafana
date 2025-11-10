@@ -248,11 +248,6 @@ export interface FeatureToggles {
   */
   externalServiceAccounts?: boolean;
   /**
-  * Enables panel monitoring through logs and measurements
-  * @default true
-  */
-  panelMonitoring?: boolean;
-  /**
   * Enables native HTTP Histograms
   */
   enableNativeHTTPHistogram?: boolean;
@@ -565,9 +560,13 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
-  * Enable suggested dashboards when creating new dashboards
+  * Enable dashboard library experiments that are production ready
   */
   dashboardLibrary?: boolean;
+  /**
+  * Enable suggested dashboards when creating new dashboards
+  */
+  suggestedDashboards?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
@@ -733,11 +732,6 @@ export interface FeatureToggles {
   * @default false
   */
   azureMonitorDisableLogLimit?: boolean;
-  /**
-  * Enables automatic updates for pre-installed plugins
-  * @default true
-  */
-  preinstallAutoUpdate?: boolean;
   /**
   * Enables experimental reconciler for playlists
   */
@@ -1124,11 +1118,6 @@ export interface FeatureToggles {
   * Enable dual reader for unified storage search
   */
   unifiedStorageSearchDualReaderEnabled?: boolean;
-  /**
-  * Enables adhoc filtering support for the dashboard datasource
-  * @default true
-  */
-  dashboardDsAdHocFiltering?: boolean;
   /**
   * Supports __from and __to macros that always use the dashboard level time range
   */
