@@ -362,7 +362,7 @@ func InstallAPIs(
 					klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
 				}
 
-				if dualWriterPeriodicDataSyncJobEnabled {
+				if dualWriterPeriodicDataSyncJobEnabled && (currentMode >= grafanarest.Mode1 && currentMode <= grafanarest.Mode3) {
 					// The mode might have changed in SetDualWritingMode, so apply current mode first.
 					syncerCfg.Mode = currentMode
 					if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg, dualWriterMetrics); err != nil {
