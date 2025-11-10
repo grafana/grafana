@@ -3,12 +3,11 @@ import { memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, useExtensionSidebarContext } from '@grafana/runtime';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { OpenExtensionSidebarEvent } from 'app/types/events';
 
 import {
-  useExtensionSidebarContext,
   getComponentIdFromComponentMeta,
   getInteractiveLearningPluginId,
 } from '../ExtensionSidebar/ExtensionSidebarProvider';

@@ -1,13 +1,12 @@
 import { render, screen, act } from '@testing-library/react';
 
 import { store, EventBusSrv, EventBus, ExtensionInfo } from '@grafana/data';
-import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
+import { getAppEvents, setAppEvents, locationService, useExtensionSidebarContext } from '@grafana/runtime';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
 import {
   ExtensionSidebarContextProvider,
-  useExtensionSidebarContext,
   getComponentIdFromComponentMeta,
   getComponentMetaFromComponentId,
   EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,

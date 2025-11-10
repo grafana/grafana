@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 
-import { config, useScopes } from '@grafana/runtime';
+import { config, useScopes, useExtensionSidebarContext } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
 import { AppChromeState } from '../AppChromeService';
-import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
 
 /**
  * Returns the current header levels given current app chrome state, scopes and screen size.

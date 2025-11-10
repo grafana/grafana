@@ -1,12 +1,20 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState, useMemo } from 'react';
+import { ReactNode, useCallback, useEffect, useState, useMemo } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { PluginExtensionPoints, store } from '@grafana/data';
-import { getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
-import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
+import {
+  getAppEvents,
+  reportInteraction,
+  usePluginLinks,
+  locationService,
+  ExtensionSidebarContext,
+  type ExtensionPointPluginMeta,
+  DEFAULT_EXTENSION_SIDEBAR_WIDTH,
+} from '@grafana/runtime';
+import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
-import { DEFAULT_EXTENSION_SIDEBAR_WIDTH, MAX_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
+import { MAX_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
 
 export const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
 export const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
@@ -19,48 +27,6 @@ const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-grafanadocsplugin-app',
   'grafana-pathfinder-app',
 ];
-
-export type ExtensionSidebarContextType = {
-  /**
-   * Whether the extension sidebar is open.
-   */
-  isOpen: boolean;
-  /**
-   * The id of the component that is currently docked in the sidebar. If the id is undefined, nothing will be rendered.
-   */
-  dockedComponentId: string | undefined;
-  /**
-   * Sest the id of the component that will be rendered in the extension sidebar.
-   */
-  setDockedComponentId: (componentId: string | undefined) => void;
-  /**
-   * A map of all components that are available for the extension point.
-   */
-  availableComponents: ExtensionPointPluginMeta;
-  /**
-   * The width of the extension sidebar.
-   */
-  extensionSidebarWidth: number;
-  /**
-   * Set the width of the extension sidebar.
-   */
-  setExtensionSidebarWidth: (width: number) => void;
-
-  props?: Record<string, unknown>;
-};
-
-export const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
-  isOpen: false,
-  dockedComponentId: undefined,
-  setDockedComponentId: () => {},
-  availableComponents: new Map(),
-  extensionSidebarWidth: DEFAULT_EXTENSION_SIDEBAR_WIDTH,
-  setExtensionSidebarWidth: () => {},
-});
-
-export function useExtensionSidebarContext() {
-  return useContext(ExtensionSidebarContext);
-}
 
 interface ExtensionSidebarContextProps {
   children: ReactNode;
