@@ -5,7 +5,7 @@ import { autoMigrateAngular, PanelModel } from 'app/features/dashboard/state/Pan
 
 export function getAngularPanelMigrationHandler(oldModel: PanelModel) {
   return function handleAngularPanelMigrations(panel: PanelModelFromData, plugin: PanelPlugin) {
-    if (plugin.angularPanelCtrl) {
+    if ('angularPanelCtrl' in plugin && plugin.angularPanelCtrl) {
       panel.options = { angularOptions: oldModel.getOptionsToRemember() };
       return;
     }

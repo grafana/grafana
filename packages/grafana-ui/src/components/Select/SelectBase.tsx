@@ -195,9 +195,9 @@ export function SelectBase<T, Rest = {}>({
 
   const creatableProps: ComponentProps<typeof Creatable<SelectableValue<T>>> = {};
   let asyncSelectProps: any = {};
-  let selectedValue;
+  let selectedValue: any;
   if (isMulti && loadOptions) {
-    selectedValue = value as any;
+    selectedValue = value;
   } else {
     // If option is passed as a plain value (value property from SelectableValue property)
     // we are selecting the corresponding value from the options
