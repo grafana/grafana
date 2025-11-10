@@ -265,14 +265,6 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
-			Name:           "recordedQueriesMulti",
-			Description:    "Enables writing multiple items from a single query within Recorded Queries",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true",
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: false,
-		},
-		{
 			Name:         "logsExploreTableVisualisation",
 			Description:  "A table visualisation for logs in Explore",
 			Stage:        FeatureStageGeneralAvailability,

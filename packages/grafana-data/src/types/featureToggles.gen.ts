@@ -165,11 +165,6 @@ export interface FeatureToggles {
   */
   extraThemes?: boolean;
   /**
-  * Enables writing multiple items from a single query within Recorded Queries
-  * @default true
-  */
-  recordedQueriesMulti?: boolean;
-  /**
   * A table visualisation for logs in Explore
   * @default true
   */
