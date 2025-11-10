@@ -1118,6 +1118,10 @@ const (
 	// Enable template dashboards
 	FlagDashboardTemplates = "dashboardTemplates"
 
+	// FlagGrafanaAdvisorAppInstaller
+	// Enables Advisor app installer
+	FlagGrafanaAdvisorAppInstaller = "grafanaAdvisorAppInstaller"
+
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations
 	FlagKubernetesAnnotations = "kubernetesAnnotations"

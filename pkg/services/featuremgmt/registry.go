@@ -2159,6 +2159,12 @@ var (
 			FrontendOnly: false,
 		},
 		{
+			Name:        "grafanaAdvisorAppInstaller",
+			Description: "Enables Advisor app installer",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:        "kubernetesAnnotations",
 			Description: "Enables app platform API for annotations",
 			Stage:       FeatureStageExperimental,

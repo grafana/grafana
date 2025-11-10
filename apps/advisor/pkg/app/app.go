@@ -6,26 +6,24 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
-	advisorapi "github.com/grafana/grafana/apps/advisor/pkg/apis"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
-	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry/mockchecks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkscheduler"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	restclient "k8s.io/client-go/rest"
 )
 
 func New(cfg app.Config) (app.App, error) {
-	// TODO: Verify ST value for APIPath
-	cfg.KubeConfig.APIPath = "apis"
+	// Needed until https://github.com/grafana/grafana-app-sdk/pull/1077
+	if cfg.KubeConfig.APIPath == "" {
+		cfg.KubeConfig.APIPath = "apis"
+	}
 	// Read config
 	specificConfig, ok := cfg.SpecificConfig.(checkregistry.AdvisorAppConfig)
 	if !ok {
@@ -153,22 +151,4 @@ func GetKinds() map[schema.GroupVersion][]resource.Kind {
 			advisorv0alpha1.CheckTypeKind(),
 		},
 	}
-}
-
-func ProvideAppInstaller(specificConfig any) (appsdkapiserver.AppInstaller, error) {
-	provider := simple.NewAppProvider(advisorapi.LocalManifest(), specificConfig, New)
-	if specificConfig == nil {
-		specificConfig = checkregistry.AdvisorAppConfig{
-			CheckRegistry: mockchecks.New(),
-			PluginConfig:  map[string]string{},
-			StackID:       "11", // Numeric stack ID for standalone mode
-			OrgService:    nil,  // Not needed when StackID is set
-		}
-	}
-	appConfig := app.Config{
-		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
-		ManifestData:   *advisorapi.LocalManifest().ManifestData,
-		SpecificConfig: specificConfig,
-	}
-	return appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, advisorapi.NewGoTypeAssociator())
 }

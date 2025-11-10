@@ -1788,6 +1788,18 @@
     },
     {
       "metadata": {
+        "name": "grafanaAdvisorAppInstaller",
+        "resourceVersion": "1762790554324",
+        "creationTimestamp": "2025-11-10T16:02:34Z"
+      },
+      "spec": {
+        "description": "Enables Advisor app installer",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaAssistantInProfilesDrilldown",
         "resourceVersion": "1754572610001",
         "creationTimestamp": "2025-08-19T07:54:00Z",

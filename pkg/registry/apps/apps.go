@@ -2,6 +2,7 @@ package appregistry
 
 import (
 	"context"
+	"slices"
 
 	"k8s.io/client-go/rest"
 
@@ -47,7 +48,6 @@ func ProvideAppInstallers(
 		playlistAppInstaller,
 		pluginsApplInstaller,
 		exampleAppInstaller,
-		advisorAppInstaller,
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
@@ -72,6 +72,10 @@ func ProvideAppInstallers(
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
 		installers = append(installers, annotationAppInstaller)
 	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) && features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisorAppInstaller) {
+		installers = append(installers, advisorAppInstaller)
+	}
 
 	return installers
 }
@@ -92,7 +96,7 @@ func ProvideBuilderRunners(
 	restConfigProvider apiserver.RestConfigProvider,
 	features featuremgmt.FeatureToggles,
 	investigationAppProvider *investigations.InvestigationsAppProvider,
-	// advisorAppProvider *advisor.AdvisorAppProvider,
+	advisorAppProvider *advisor.AdvisorAppProvider,
 	grafanaCfg *setting.Cfg,
 ) (*Service, error) {
 	cfgWrapper := func(ctx context.Context) (*rest.Config, error) {
@@ -118,10 +122,11 @@ func ProvideBuilderRunners(
 		providers = append(providers, investigationAppProvider)
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	// if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) &&
-	// 	!slices.Contains(grafanaCfg.DisablePlugins, "grafana-advisor-app") {
-	// 	providers = append(providers, advisorAppProvider)
-	// }
+	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) &&
+		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisorAppInstaller) &&
+		!slices.Contains(grafanaCfg.DisablePlugins, "grafana-advisor-app") {
+		providers = append(providers, advisorAppProvider)
+	}
 	apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, providers...)
 
 	if err != nil {
