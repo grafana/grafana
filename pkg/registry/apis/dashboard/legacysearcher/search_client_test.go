@@ -645,6 +645,54 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.Contains(t, err.Error(), "only one library panel uid is supported")
 		require.Nil(t, resp)
 	})
+
+	t.Run("Should reject library panel query when combined with explicit dashboard names", func(t *testing.T) {
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: dashboardKey,
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+						Operator: "=",
+						Values:   []string{"test-library-panel"},
+					},
+					{
+						Key:      resource.SEARCH_FIELD_NAME,
+						Operator: "=",
+						Values:   []string{"dashboard-uid"},
+					},
+				},
+			},
+		}
+		resp, err := client.Search(ctx, req)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "libraryPanel query must not include explicit names")
+		require.Nil(t, resp)
+		// Note: mockStore should NOT be called since validation happens before any store calls
+	})
+
+	t.Run("Should return empty results when library panel has no connected dashboards", func(t *testing.T) {
+		mockStore.On("GetDashboardsByLibraryPanelUID", mock.Anything, "unused-library-panel", int64(2)).Return([]*dashboards.DashboardRef{}, nil).Once()
+
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: dashboardKey,
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+						Operator: "=",
+						Values:   []string{"unused-library-panel"},
+					},
+				},
+			},
+		}
+		resp, err := client.Search(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Equal(t, int64(0), resp.TotalHits)
+		require.Empty(t, resp.Results.Rows)
+		mockStore.AssertExpectations(t)
+	})
 }
 
 func TestParseSortName(t *testing.T) {
