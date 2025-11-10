@@ -120,9 +120,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
     }),
     correlationsEditorIndicator: css({
-      borderLeft: `4px solid ${theme.colors.primary.main}`,
-      borderRight: `4px solid ${theme.colors.primary.main}`,
-      borderBottom: `4px solid ${theme.colors.primary.main}`,
       overflow: 'scroll',
     }),
   };

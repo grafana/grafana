@@ -1,11 +1,9 @@
-import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { useBeforeUnload, useUnmount } from 'react-use';
 
-import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, Button, Stack, Text } from '@grafana/ui';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { CORRELATION_EDITOR_POST_CONFIRM_ACTION, ExploreItemState } from 'app/types/explore';
 import { useDispatch, useSelector } from 'app/types/store';
@@ -21,7 +19,6 @@ import { selectCorrelationDetails, selectIsHelperShowing } from './state/selecto
 
 export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, ExploreItemState]> }) => {
   const dispatch = useDispatch();
-  const styles = useStyles2(getStyles);
   const correlationDetails = useSelector(selectCorrelationDetails);
   const isHelperShowing = useSelector(selectIsHelperShowing);
   const [saveMessage, setSaveMessage] = useState<string | undefined>(undefined); // undefined means do not show
@@ -230,74 +227,68 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
           message={saveMessage}
         />
       )}
-      <div className={styles.correlationEditorTop}>
-        <Stack gap={2} justifyContent="flex-end" alignItems="center">
-          <Tooltip
-            content={t(
-              'explore.correlation-editor-mode-bar.content-correlations-editor-explore-experimental-feature',
-              'Correlations editor in Explore is an experimental feature.'
-            )}
-          >
-            <Icon className={styles.iconColor} name="info-circle" size="xl" />
-          </Tooltip>
-          <Button
-            variant="secondary"
-            disabled={!correlationDetails?.canSave}
-            fill="outline"
-            className={correlationDetails?.canSave ? styles.buttonColor : styles.disabledButtonColor}
-            onClick={() => {
-              saveCorrelationPostAction(true);
-            }}
-          >
-            <Trans i18nKey="explore.correlation-editor-mode-bar.save">Save</Trans>
-          </Button>
-          <Button
-            variant="secondary"
-            fill="outline"
-            className={styles.buttonColor}
-            icon="times"
-            onClick={() => {
-              dispatch(changeCorrelationEditorDetails({ isExiting: true }));
-              reportInteraction('grafana_explore_correlation_editor_exit_pressed');
-            }}
-          >
-            <Trans i18nKey="explore.correlation-editor-mode-bar.exit-correlation-editor">Exit correlation editor</Trans>
-          </Button>
+      <Alert title="" severity="info" bottomSpacing={0} topSpacing={0}>
+        <Stack width="100%" alignItems="start" justifyContent="space-between">
+          <Stack gap={1} direction="column">
+            <Stack gap={2} alignItems="center" direction="row">
+              <Text variant="h4">
+                <Trans i18nKey="explore.correlation-editor-mode-bar.edit-mode-title">Correlation Editor Mode</Trans>
+              </Text>
+              <Badge
+                color="orange"
+                text={t('explore.correlation-editor-mode-bar.experimental', 'Experimental')}
+                tooltip={t(
+                  'explore.correlation-editor-mode-bar.content-correlations-editor-explore-experimental-feature',
+                  'Correlations editor in Explore is an experimental feature.'
+                )}
+              />
+            </Stack>
+            <Stack gap={0} direction="column">
+              <Text variant="bodySmall">
+                <Trans i18nKey="explore.correlation-editor-mode-bar.instructions">
+                  Step 1: In the left pane, run a query and click a table cell link or a &quot;🔗 Correlate with&quot;
+                  button.
+                </Trans>
+              </Text>
+              <Text variant="bodySmall">
+                <Trans i18nKey="explore.correlation-editor-mode-bar.instructions-2">
+                  Step 2: In the right pane (Target Query Builder), build and test your correlation query.
+                </Trans>
+              </Text>
+              <Text variant="bodySmall">
+                <Trans i18nKey="explore.correlation-editor-mode-bar.instructions-3">
+                  Step 3: Click Save to create the correlation.
+                </Trans>
+              </Text>
+            </Stack>
+          </Stack>
+          <Stack gap={1} alignItems="center">
+            <Button
+              size="sm"
+              disabled={!correlationDetails?.canSave}
+              variant="secondary"
+              onClick={() => {
+                saveCorrelationPostAction(true);
+              }}
+            >
+              <Trans i18nKey="explore.correlation-editor-mode-bar.save">Save</Trans>
+            </Button>
+            <Button
+              size="sm"
+              icon="times"
+              variant="secondary"
+              onClick={() => {
+                dispatch(changeCorrelationEditorDetails({ isExiting: true }));
+                reportInteraction('grafana_explore_correlation_editor_exit_pressed');
+              }}
+            >
+              <Trans i18nKey="explore.correlation-editor-mode-bar.exit-correlation-editor">
+                Exit correlation editor
+              </Trans>
+            </Button>
+          </Stack>
         </Stack>
-      </div>
+      </Alert>
     </>
   );
-};
-
-const getStyles = (theme: GrafanaTheme2) => {
-  const contrastColor = theme.colors.getContrastText(theme.colors.primary.main);
-  const lighterBackgroundColor = colorManipulator.lighten(theme.colors.primary.main, 0.1);
-  const darkerBackgroundColor = colorManipulator.darken(theme.colors.primary.main, 0.2);
-
-  const disabledColor = colorManipulator.darken(contrastColor, 0.2);
-
-  return {
-    correlationEditorTop: css({
-      backgroundColor: theme.colors.primary.main,
-      marginTop: '3px',
-      padding: theme.spacing(1),
-    }),
-    iconColor: css({
-      color: contrastColor,
-    }),
-    buttonColor: css({
-      color: contrastColor,
-      borderColor: contrastColor,
-      '&:hover': {
-        color: contrastColor,
-        borderColor: contrastColor,
-        backgroundColor: lighterBackgroundColor,
-      },
-    }),
-    // important needed to override disabled state styling
-    disabledButtonColor: css({
-      color: `${disabledColor} !important`,
-      backgroundColor: `${darkerBackgroundColor} !important`,
-    }),
-  };
 };

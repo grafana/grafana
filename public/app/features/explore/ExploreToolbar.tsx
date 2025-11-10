@@ -16,6 +16,8 @@ import {
   ButtonGroup,
   useStyles2,
   Button,
+  Badge,
+  Tooltip,
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -56,6 +58,10 @@ const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
     justifyContent: 'center',
     marginRight: theme.spacing(0.5),
     width: splitted && theme.spacing(6),
+  }),
+  badgeWrapper: css({
+    marginTop: theme.spacing(2),
+    marginLeft: theme.spacing(2),
   }),
 });
 
@@ -219,10 +225,34 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     <ShortLinkButtonMenu key="share" />,
   ];
 
+  const showBuilderIndicator = isCorrelationsEditorMode && !isLeftPane;
+  const showSourceIndicator = isCorrelationsEditorMode && isLeftPane && splitted;
+
   return (
     <div>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
       <AppChromeUpdate actions={navBarActions} />
+      {showSourceIndicator && (
+        <div className={styles.badgeWrapper}>
+          <Tooltip
+            content={t(
+              'explore.toolbar.source-correlation-query',
+              'Run a query and click a correlation link to start building your correlation'
+            )}
+          >
+            <Badge color="blue" icon="arrow-from-right" text={t('explore.toolbar.source-query', 'Source query')} />
+          </Tooltip>
+        </div>
+      )}
+      {showBuilderIndicator && (
+        <div className={styles.badgeWrapper}>
+          <Tooltip
+            content={t('explore.toolbar.build-correlation-query', 'Build and test your correlation target query here')}
+          >
+            <Badge color="orange" icon="crosshair" text={t('explore.toolbar.target-query-builder', 'Target query')} />
+          </Tooltip>
+        </div>
+      )}
       <PageToolbar
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
         leftItems={[

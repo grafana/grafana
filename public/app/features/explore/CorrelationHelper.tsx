@@ -157,19 +157,37 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
           }
         />
       )}
-      <Alert title={t('explore.correlation-helper.title-correlation-details', 'Correlation details')} severity="info">
-        <Trans
-          i18nKey="explore.correlation-helper.body-correlation-details"
-          values={{ resultField: correlations.resultField }}
-        >
-          The correlation link will appear by the <code>{'{{resultField}}'}</code> field. You can use the following
-          variables to set up your correlations:
-        </Trans>
-        <pre>
-          {Object.entries(correlations.vars).map((entry) => {
-            return `\$\{${entry[0]}\} = ${entry[1]}\n`;
-          })}
-        </pre>
+      <Alert
+        className={styles.alertWrapper}
+        title={t('explore.correlation-helper.title-correlation-details', 'Correlation details')}
+        severity="info"
+      >
+        <div className={styles.alertContent}>
+          <div>
+            <Trans
+              i18nKey="explore.correlation-helper.body-correlation-details"
+              values={{ resultField: correlations.resultField }}
+            >
+              When saved, the <code>{'{{resultField}}'}</code> field will have a clickable link that runs your target
+              query below. Use the below variables in your query. When clicked, they're replaced with values from that
+              row.
+            </Trans>
+          </div>
+          <div className={styles.variableList}>
+            {Object.entries(correlations.vars).map(([name, value]) => (
+              <div key={name} className={styles.variableRow}>
+                <div className={styles.variableNameCell}>
+                  <code className={styles.variableName}>${`{${name}}`}</code>
+                </div>
+                <div className={styles.variableValueCell}>
+                  <Tooltip content={value} placement="auto-start">
+                    <span className={styles.variableValue}>{value}</span>
+                  </Tooltip>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
         <Collapse
           isOpen={isLabelDescOpen}
           onToggle={() => {
@@ -177,7 +195,9 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
           }}
           label={
             <Stack gap={1} direction="row" wrap="wrap" alignItems="center">
-              <Trans i18nKey="explore.correlation-helper.label-description-header">Label / Description</Trans>
+              <Trans i18nKey="explore.correlation-helper.label-description-header">
+                Correlation Label / Description
+              </Trans>
               {!isLabelDescOpen && !loadingLabel && (
                 <span className={styles.labelCollapseDetails}>{`Label: ${getValues('label') || defaultLabel}`}</span>
               )}
@@ -286,6 +306,70 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     transformationMeta: css({
       alignItems: 'baseline',
+    }),
+    alertWrapper: css({
+      '& > div': {
+        minWidth: 0,
+        maxWidth: '100%',
+        overflow: 'hidden',
+      },
+    }),
+    alertContent: css({
+      minWidth: 0,
+      maxWidth: '100%',
+      overflow: 'hidden',
+      width: '100%',
+    }),
+    variableList: css({
+      marginTop: theme.spacing(1.5),
+      marginBottom: theme.spacing(2),
+      display: 'table',
+      width: '100%',
+      tableLayout: 'auto',
+      borderCollapse: 'collapse',
+    }),
+    variableRow: css({
+      display: 'table-row',
+    }),
+    variableNameCell: css({
+      display: 'table-cell',
+      width: '1%',
+      paddingBottom: theme.spacing(0.5),
+      paddingRight: theme.spacing(1),
+      verticalAlign: 'top',
+      whiteSpace: 'nowrap',
+    }),
+    variableName: css({
+      display: 'inline-block',
+      backgroundColor: theme.colors.background.secondary,
+      padding: theme.spacing(0.5, 1),
+      borderRadius: theme.shape.radius.default,
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.primary.text,
+      fontWeight: theme.typography.fontWeightMedium,
+      whiteSpace: 'nowrap',
+    }),
+    variableValueCell: css({
+      display: 'table-cell',
+      width: '100%',
+      maxWidth: 0,
+      paddingBottom: theme.spacing(0.5),
+      verticalAlign: 'top',
+    }),
+    variableValue: css({
+      display: 'inline-block',
+      backgroundColor: theme.colors.background.secondary,
+      padding: theme.spacing(0.5, 1),
+      borderRadius: theme.shape.radius.default,
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.primary,
+      maxWidth: '100%',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      verticalAlign: 'top',
     }),
   };
 };
