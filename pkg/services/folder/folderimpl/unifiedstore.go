@@ -572,7 +572,7 @@ func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderM
 	currentUID := f.UID
 	for currentUID != "" {
 		if seen[currentUID] {
-			return folder.ErrCircularReference.Errorf("circular reference detected")
+			return folder.ErrCircularReference.Errorf("circular reference detected for folder %s", currentUID)
 		}
 		seen[currentUID] = true
 		parentUID, exists := relations[currentUID]
