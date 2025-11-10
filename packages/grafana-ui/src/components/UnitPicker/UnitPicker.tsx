@@ -16,6 +16,9 @@ function formatCreateLabel(input: string) {
   return `Custom unit: ${input}`;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/pickers-unitpicker--docs
+ */
 export class UnitPicker extends PureComponent<UnitPickerProps> {
   onChange = (value: SelectableValue<string>) => {
     this.props.onChange(value.value);

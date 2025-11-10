@@ -438,7 +438,6 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	}
 
 	ctx = c.Req.Context()
-	var err error
 
 	var userID int64
 	if id, err := identity.UserIdentifier(c.GetID()); err == nil {
@@ -516,12 +515,6 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	if saveErr != nil {
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, saveErr)
-	}
-
-	// connect library panels for this dashboard after the dashboard is stored and has an ID
-	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(ctx, c.SignedInUser, dashboard)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Error while connecting library panels", err)
 	}
 
 	c.TimeRequest(metrics.MApiDashboardSave)
@@ -1262,7 +1255,7 @@ type GetHomeDashboardResponseBody struct {
 // swagger:response dashboardVersionsResponse
 type DashboardVersionsResponse struct {
 	// in: body
-	Body []dashver.DashboardVersionMeta `json:"body"`
+	Body *dashver.DashboardVersionResponseMeta `json:"body"`
 }
 
 // swagger:response dashboardVersionResponse

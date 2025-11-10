@@ -450,7 +450,10 @@ func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.
 		sqlHelper, _ := backend.dbProvider(ctx)
 		backend.identityStore = NewFakeIdentityStore(t)
 
-		mapper, grn, err := backend.splitResourceName(resourcePerm.Name)
+		grn, err := splitResourceName(resourcePerm.Name)
+		require.NoError(t, err)
+
+		mapper, err := backend.getResourceMapper(grn.Group, grn.Resource)
 		require.NoError(t, err)
 
 		rv, err := backend.createResourcePermission(ctx, sqlHelper, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, resourcePerm)
@@ -544,7 +547,10 @@ func TestIntegration_ResourcePermSqlBackend_UpdateResourcePermission(t *testing.
 			},
 		}
 
-		mapper, grn, err := backend.splitResourceName(resourcePerm.Name)
+		grn, err := splitResourceName(resourcePerm.Name)
+		require.NoError(t, err)
+
+		mapper, err := backend.getResourceMapper(grn.Group, grn.Resource)
 		require.NoError(t, err)
 
 		_, err = backend.updateResourcePermission(ctx, sql, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, resourcePerm)
@@ -583,7 +589,10 @@ func TestIntegration_ResourcePermSqlBackend_UpdateResourcePermission(t *testing.
 			},
 		}
 
-		mapper, grn, err := backend.splitResourceName(resourcePerm.Name)
+		grn, err := splitResourceName(resourcePerm.Name)
+		require.NoError(t, err)
+
+		mapper, err := backend.getResourceMapper(grn.Group, grn.Resource)
 		require.NoError(t, err)
 
 		rv, err := backend.updateResourcePermission(ctx, sql, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, resourcePerm)
@@ -668,104 +677,6 @@ func (f *fakeIdentityStore) GetUserInternalID(ctx context.Context, ns types.Name
 		return nil, errors.New("not found")
 	}
 	return &legacy.GetUserInternalIDResult{ID: id}, nil
-}
-
-func TestValidateCreateAndUpdateInput(t *testing.T) {
-	grn := &groupResourceName{
-		Group:    "dashboard.grafana.app",
-		Resource: "dashboards",
-		Name:     "test-dashboard",
-	}
-
-	t.Run("Should pass validation with valid permissions", func(t *testing.T) {
-		resourcePerm := &v0alpha1.ResourcePermission{
-			Spec: v0alpha1.ResourcePermissionSpec{
-				Resource: v0alpha1.ResourcePermissionspecResource{
-					ApiGroup: "dashboard.grafana.app",
-					Resource: "dashboards",
-					Name:     "test-dashboard",
-				},
-				Permissions: []v0alpha1.ResourcePermissionspecPermission{
-					{
-						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
-						Name: "Editor",
-						Verb: "edit",
-					},
-					{
-						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
-						Name: "Viewer", // Different entity name - should be allowed
-						Verb: "view",
-					},
-					{
-						Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
-						Name: "user-1",
-						Verb: "edit", // Different kind - should be allowed
-					},
-				},
-			},
-		}
-
-		err := validateCreateAndUpdateInput(resourcePerm, grn)
-		require.NoError(t, err)
-	})
-
-	t.Run("Should fail validation with duplicate entities", func(t *testing.T) {
-		resourcePerm := &v0alpha1.ResourcePermission{
-			Spec: v0alpha1.ResourcePermissionSpec{
-				Resource: v0alpha1.ResourcePermissionspecResource{
-					ApiGroup: "dashboard.grafana.app",
-					Resource: "dashboards",
-					Name:     "test-dashboard",
-				},
-				Permissions: []v0alpha1.ResourcePermissionspecPermission{
-					{
-						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
-						Name: "Editor",
-						Verb: "edit",
-					},
-					{
-						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
-						Name: "Editor",
-						Verb: "view", // Same entity, different verb - should fail
-					},
-				},
-			},
-		}
-
-		err := validateCreateAndUpdateInput(resourcePerm, grn)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "duplicate entity found")
-		require.Contains(t, err.Error(), "kind=BasicRole")
-		require.Contains(t, err.Error(), "name=Editor")
-		require.Contains(t, err.Error(), "each entity can only appear once per resource")
-	})
-
-	t.Run("Should pass validation with same name but different kinds", func(t *testing.T) {
-		resourcePerm := &v0alpha1.ResourcePermission{
-			Spec: v0alpha1.ResourcePermissionSpec{
-				Resource: v0alpha1.ResourcePermissionspecResource{
-					ApiGroup: "dashboard.grafana.app",
-					Resource: "dashboards",
-					Name:     "test-dashboard",
-				},
-				Permissions: []v0alpha1.ResourcePermissionspecPermission{
-					{
-						Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
-						Name: "editor", // Same name but different kind
-						Verb: "edit",
-					},
-					{
-						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
-						Name: "editor", // Same name but different kind
-						Verb: "view",
-					},
-				},
-			},
-		}
-
-		err := validateCreateAndUpdateInput(resourcePerm, grn)
-		require.NoError(t, err)
-	})
 }
 
 func TestIntegration_UpdateResourcePermission_VerbChange(t *testing.T) {

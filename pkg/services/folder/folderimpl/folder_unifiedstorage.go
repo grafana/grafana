@@ -618,12 +618,14 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 	if err != nil {
 		return err
 	}
+	descFolders = folder.SortByPostorder(descFolders)
 
 	folders := []string{}
 	for _, f := range descFolders {
 		folders = append(folders, f.UID)
 	}
 	// must delete children first, then the parent folder
+	s.log.InfoContext(ctx, "deleting folder with descendants", "org_id", cmd.OrgID, "uid", cmd.UID, "folderUIDs", strings.Join(folders, ","))
 	folders = append(folders, cmd.UID)
 
 	if cmd.ForceDeleteRules {
@@ -644,6 +646,21 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 			return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
 		}
 
+		libraryPanelSrv, ok := s.registry[entity.StandardKindLibraryPanel]
+		if !ok {
+			return folder.ErrInternal.Errorf("no library panel service found in registry")
+		}
+		//	/* TODO: after a decision regarding folder deletion permissions has been made
+		//	(https://github.com/grafana/grafana-enterprise/issues/5144),
+		//	remove the following call to DeleteInFolders
+		//	and remove "user" from the signature of DeleteInFolder in the folder RegistryService.
+		//	Context: https://github.com/grafana/grafana/pull/69149#discussion_r1235057903
+		//	*/
+		// Obs: DeleteInFolders only deletes dangling library panels (not linked to any dashboard) and throws errors if there are connections
+		if err := libraryPanelSrv.DeleteInFolders(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {
+			s.log.Error("failed to delete dangling library panels in folders", "error", err, "folders", strings.Join(folders, ","))
+			return err
+		}
 		// We need a list of dashboard uids inside the folder to delete related dashboards & public dashboards -
 		// we cannot use the dashboard service directly due to circular dependencies, so use the search client to get the dashboards
 		request := &resourcepb.ResourceSearchRequest{
@@ -881,6 +898,7 @@ func (s *Service) getDescendantCountsFromApiServer(ctx context.Context, q *folde
 		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabledGlobally(featuremgmt.FlagK8SFolderCounts) {
 		return s.unifiedStore.(*FolderUnifiedStoreImpl).CountFolderContent(ctx, q.OrgID, *q.UID)
 	}

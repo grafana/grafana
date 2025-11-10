@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,37 +14,38 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/utils/strings/slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/log"
+	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
-var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
+)
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
-	connectionResourceInfo utils.ResourceInfo
+	datasourceResourceInfo utils.ResourceInfo
 
-	pluginJSON      plugins.JSONData
-	client          PluginClient // will only ever be called with the same pluginid!
-	datasources     PluginDatasourceProvider
-	contextProvider PluginContextWrapper
-	accessControl   accesscontrol.AccessControl
-	queryTypes      *query.QueryTypeDefinitionList
-	log             log.Logger
+	pluginJSON           plugins.JSONData
+	client               PluginClient // will only ever be called with the same plugin id!
+	datasources          PluginDatasourceProvider
+	contextProvider      PluginContextWrapper
+	accessControl        accesscontrol.AccessControl
+	queryTypes           *queryV0.QueryTypeDefinitionList
+	configCrudUseNewApis bool
 }
 
 func RegisterAPIService(
@@ -52,46 +54,65 @@ func RegisterAPIService(
 	pluginClient plugins.Client, // access to everything
 	datasources ScopedPluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
-	pluginStore pluginstore.Store,
 	accessControl accesscontrol.AccessControl,
 	reg prometheus.Registerer,
+	pluginSources sources.Registry,
 ) (*DataSourceAPIBuilder, error) {
 	// We want to expose just a limited set of plugins
-	explictPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	explicitPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
 
 	// This requires devmode!
-	if !explictPluginList && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !explicitPluginList && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
 	var err error
 	var builder *DataSourceAPIBuilder
-	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
+
+	pluginJSONs, err := getDatasourcePlugins(pluginSources)
+	if err != nil {
+		return nil, fmt.Errorf("error getting list of datasource plugins: %s", err)
+	}
+
 	ids := []string{
 		"grafana-testdata-datasource",
 		"prometheus",
 		"graphite",
 	}
 
-	for _, ds := range all {
-		if explictPluginList && !slices.Contains(ids, ds.ID) {
+	for _, pluginJSON := range pluginJSONs {
+		if explicitPluginList && !slices.Contains(ids, pluginJSON.ID) {
 			continue // skip this one
 		}
 
-		if !ds.Backend {
+		if !pluginJSON.Backend {
 			continue // skip frontend only plugins
 		}
 
-		builder, err = NewDataSourceAPIBuilder(ds.JSONData,
-			pluginClient,
-			datasources.GetDatasourceProvider(ds.JSONData),
+		if pluginJSON.Type != plugins.TypeDataSource {
+			continue // skip non-datasource plugins
+		}
+
+		client, ok := pluginClient.(PluginClient)
+		if !ok {
+			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
+		}
+
+		builder, err = NewDataSourceAPIBuilder(pluginJSON,
+			client,
+			datasources.GetDatasourceProvider(pluginJSON),
 			contextProvider,
 			accessControl,
+			//nolint:staticcheck // not yet migrated to OpenFeature
 			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
+			false,
 		)
 		if err != nil {
 			return nil, err
 		}
+
 		apiRegistrar.RegisterAPI(builder)
 	}
 	return builder, nil // only used for wire
@@ -113,30 +134,31 @@ func NewDataSourceAPIBuilder(
 	contextProvider PluginContextWrapper,
 	accessControl accesscontrol.AccessControl,
 	loadQueryTypes bool,
+	configCrudUseNewApis bool,
 ) (*DataSourceAPIBuilder, error) {
-	ri, err := resourceFromPluginID(plugin.ID)
+	group, err := plugins.GetDatasourceGroupNameFromPluginID(plugin.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	builder := &DataSourceAPIBuilder{
-		connectionResourceInfo: ri,
+		datasourceResourceInfo: datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(group, plugin.ID),
 		pluginJSON:             plugin,
 		client:                 client,
 		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
-		log:                    log.New("grafana-apiserver.datasource"),
+		configCrudUseNewApis:   configCrudUseNewApis,
 	}
 	if loadQueryTypes {
 		// In the future, this will somehow come from the plugin
-		builder.queryTypes, err = getHardcodedQueryTypes(ri.GroupResource().Group)
+		builder.queryTypes, err = getHardcodedQueryTypes(group)
 	}
 	return builder, err
 }
 
 // TODO -- somehow get the list from the plugin -- not hardcoded
-func getHardcodedQueryTypes(group string) (*query.QueryTypeDefinitionList, error) {
+func getHardcodedQueryTypes(group string) (*queryV0.QueryTypeDefinitionList, error) {
 	var err error
 	var raw json.RawMessage
 	switch group {
@@ -149,7 +171,7 @@ func getHardcodedQueryTypes(group string) (*query.QueryTypeDefinitionList, error
 		return nil, err
 	}
 	if raw != nil {
-		types := &query.QueryTypeDefinitionList{}
+		types := &queryV0.QueryTypeDefinitionList{}
 		err = json.Unmarshal(raw, types)
 		return types, err
 	}
@@ -157,26 +179,27 @@ func getHardcodedQueryTypes(group string) (*query.QueryTypeDefinitionList, error
 }
 
 func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return b.connectionResourceInfo.GroupVersion()
+	return b.datasourceResourceInfo.GroupVersion()
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&datasource.DataSourceConnection{},
-		&datasource.DataSourceConnectionList{},
-		&datasource.HealthCheckResult{},
+		&datasourceV0.DataSource{},
+		&datasourceV0.DataSourceList{},
+		&datasourceV0.HealthCheckResult{},
 		&unstructured.Unstructured{},
+
 		// Query handler
-		&query.QueryDataRequest{},
-		&query.QueryDataResponse{},
-		&query.QueryTypeDefinition{},
-		&query.QueryTypeDefinitionList{},
+		&queryV0.QueryDataRequest{},
+		&queryV0.QueryDataResponse{},
+		&queryV0.QueryTypeDefinition{},
+		&queryV0.QueryTypeDefinitionList{},
 		&metav1.Status{},
 	)
 }
 
 func (b *DataSourceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	gv := b.connectionResourceInfo.GroupVersion()
+	gv := b.datasourceResourceInfo.GroupVersion()
 	addKnownTypes(scheme, gv)
 
 	// Link this version to the internal representation.
@@ -199,32 +222,45 @@ func (b *DataSourceAPIBuilder) AllowedV0Alpha1Resources() []string {
 	return []string{builder.AllResourcesAllowed}
 }
 
-func resourceFromPluginID(pluginID string) (utils.ResourceInfo, error) {
-	group, err := plugins.GetDatasourceGroupNameFromPluginID(pluginID)
-	if err != nil {
-		return utils.ResourceInfo{}, err
-	}
-	return datasource.GenericConnectionResourceInfo.WithGroupAndShortName(group, pluginID+"-connection"), nil
-}
-
-func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
+func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
-	conn := b.connectionResourceInfo
-	storage[conn.StoragePath()] = &connectionAccess{
-		datasources:    b.datasources,
-		resourceInfo:   conn,
-		tableConverter: conn.TableConverter(),
-	}
-	storage[conn.StoragePath("query")] = &subQueryREST{builder: b}
-	storage[conn.StoragePath("health")] = &subHealthREST{builder: b}
+	// Register the raw datasource connection
+	ds := b.datasourceResourceInfo
+	storage[ds.StoragePath("query")] = &subQueryREST{builder: b}
+	storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
+	storage[ds.StoragePath("resource")] = &subResourceREST{builder: b}
 
-	// TODO! only setup this endpoint if it is implemented
-	storage[conn.StoragePath("resource")] = &subResourceREST{builder: b}
+	// FIXME: temporarily register both "datasources" and "connections" query paths
+	// This lets us deploy both datasources/{uid}/query and connections/{uid}/query
+	// while we transition requests to the new path
+	storage["connections"] = &noopREST{}                            // hidden from openapi
+	storage["connections/query"] = storage[ds.StoragePath("query")] // deprecated in openapi
+
+	if b.configCrudUseNewApis {
+		legacyStore := &legacyStorage{
+			datasources:  b.datasources,
+			resourceInfo: &ds,
+		}
+		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+		storage[ds.StoragePath()], err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
+		if err != nil {
+			return err
+		}
+	} else {
+		storage[ds.StoragePath()] = &connectionAccess{
+			datasources:    b.datasources,
+			resourceInfo:   ds,
+			tableConverter: ds.TableConverter(),
+		}
+	}
 
 	// Frontend proxy
 	if len(b.pluginJSON.Routes) > 0 {
-		storage[conn.StoragePath("proxy")] = &subProxyREST{pluginJSON: b.pluginJSON}
+		storage[ds.StoragePath("proxy")] = &subProxyREST{pluginJSON: b.pluginJSON}
 	}
 
 	// Register hardcoded query schemas
@@ -235,7 +271,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	registerQueryConvert(b.client, b.contextProvider, storage)
 
-	apiGroupInfo.VersionedResourcesStorageMap[conn.GroupVersion().Version] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[ds.GroupVersion().Version] = storage
 	return err
 }
 
@@ -249,31 +285,35 @@ func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string)
 
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {
 	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
-		defs := query.GetOpenAPIDefinitions(ref) // required when running standalone
-		for k, v := range datasource.GetOpenAPIDefinitions(ref) {
-			defs[k] = v
-		}
+		defs := queryV0.GetOpenAPIDefinitions(ref) // required when running standalone
+		maps.Copy(defs, datasourceV0.GetOpenAPIDefinitions(ref))
 		return defs
 	}
 }
 
-func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
-	// The plugin description
-	oas.Info.Description = b.pluginJSON.Info.Description
+func getDatasourcePlugins(pluginSources sources.Registry) ([]plugins.JSONData, error) {
+	var pluginJSONs []plugins.JSONData
 
-	// The root api URL
-	root := "/apis/" + b.connectionResourceInfo.GroupVersion().String() + "/"
+	// It's possible that the same plugin will be found in different sources.
+	// Registering the same plugin twice in the API is Probably A Bad Thing,
+	// so this map keeps track of uniques, so we can skip duplicates.
+	var uniquePlugins = map[string]bool{}
 
-	// Add queries to the request properties
-	// Add queries to the request properties
-	err := queryschema.AddQueriesToOpenAPI(queryschema.OASQueryOptions{
-		Swagger:          oas,
-		PluginJSON:       &b.pluginJSON,
-		QueryTypes:       b.queryTypes,
-		Root:             root,
-		QueryPath:        "namespaces/{namespace}/connections/{name}/query",
-		QueryDescription: fmt.Sprintf("Query the %s datasources", b.pluginJSON.Name),
-	})
-
-	return oas, err
+	for _, pluginSource := range pluginSources.List(context.Background()) {
+		res, err := pluginSource.Discover(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		for _, p := range res {
+			if p.Primary.JSONData.Type == plugins.TypeDataSource {
+				if _, found := uniquePlugins[p.Primary.JSONData.ID]; found {
+					backend.Logger.Info("Found duplicate plugin %s when registering API groups.", p.Primary.JSONData.ID)
+					continue
+				}
+				uniquePlugins[p.Primary.JSONData.ID] = true
+				pluginJSONs = append(pluginJSONs, p.Primary.JSONData)
+			}
+		}
+	}
+	return pluginJSONs, nil
 }

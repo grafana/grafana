@@ -14,10 +14,9 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
+	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -28,11 +27,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/shorturls"
+	"github.com/grafana/grafana/pkg/services/team"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -58,12 +59,14 @@ type CleanUpService struct {
 	alertRuleService          AlertRuleService
 	clientConfigProvider      grafanaapiserver.RestConfigProvider
 	orgService                org.Service
+	teamService               team.Service
+	dataSourceService         datasources.DataSourceService
 }
 
 func ProvideService(cfg *setting.Cfg, Features featuremgmt.FeatureToggles, serverLockService *serverlock.ServerLockService,
 	shortURLService shorturls.Service, sqlstore db.DB, queryHistoryService queryhistory.Service,
 	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service, deleteExpiredImageService *image.DeleteExpiredService,
-	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner, service AlertRuleService, clientConfigProvider grafanaapiserver.RestConfigProvider, orgService org.Service) *CleanUpService {
+	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner, service AlertRuleService, clientConfigProvider grafanaapiserver.RestConfigProvider, orgService org.Service, teamService team.Service, dataSourceService datasources.DataSourceService) *CleanUpService {
 	s := &CleanUpService{
 		Cfg:                       cfg,
 		Features:                  Features,
@@ -81,6 +84,8 @@ func ProvideService(cfg *setting.Cfg, Features featuremgmt.FeatureToggles, serve
 		alertRuleService:          service,
 		clientConfigProvider:      clientConfigProvider,
 		orgService:                orgService,
+		teamService:               teamService,
+		dataSourceService:         dataSourceService,
 	}
 	return s
 }
@@ -125,6 +130,7 @@ func (srv *CleanUpService) clean(ctx context.Context) {
 		{"expire old user invites", srv.expireOldUserInvites},
 		{"delete stale query history", srv.deleteStaleQueryHistory},
 		{"expire old email verifications", srv.expireOldVerifications},
+		{"cleanup stale LBAC rules", srv.cleanupStaleLBACRules},
 	}
 
 	if srv.Cfg.ShortLinkExpiration > 0 {
@@ -286,6 +292,7 @@ func (srv *CleanUpService) expireOldVerifications(ctx context.Context) {
 
 func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if srv.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
 		srv.deleteStaleKubernetesShortURLs(ctx)
 	} else {
@@ -318,11 +325,7 @@ func (srv *CleanUpService) deleteStaleKubernetesShortURLs(ctx context.Context) {
 	}
 
 	// Set up the GroupVersionResource for shortURLs
-	gvr := schema.GroupVersionResource{
-		Group:    v1alpha1.ShortURLKind().Group(),
-		Version:  v1alpha1.ShortURLKind().Version(),
-		Resource: v1alpha1.ShortURLKind().Plural(),
-	}
+	gvr := v1beta1.ShortURLKind().GroupVersionResource()
 
 	// Calculate the expiration time
 	expirationTime := time.Now().Add(-time.Duration(srv.Cfg.ShortLinkExpiration*24) * time.Hour)
@@ -347,7 +350,7 @@ func (srv *CleanUpService) deleteStaleKubernetesShortURLs(ctx context.Context) {
 		// Check each shortURL for expiration
 		for _, item := range shortURLs.Items {
 			// Convert unstructured object to ShortURL struct
-			var shortURL v1alpha1.ShortURL
+			var shortURL v1beta1.ShortURL
 			err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &shortURL)
 			if err != nil {
 				logger.Error("Failed to convert unstructured object to ShortURL", "name", item.GetName(), "namespace", item.GetNamespace(), "error", err.Error())
@@ -417,4 +420,145 @@ func (srv *CleanUpService) cleanUpTrashAlertRules(ctx context.Context) {
 	} else {
 		logger.Debug("Cleaned up deleted alert rules", "rows affected", affected)
 	}
+}
+
+// cleanupStaleLBACRules exists to clean up lbac rules that are stale from teams getting deleted as we do not have
+// cascading deletions on teams to delete existing lbac rules
+func (srv *CleanUpService) cleanupStaleLBACRules(ctx context.Context) {
+	logger := srv.log.FromContext(ctx)
+
+	// Get all datasources
+	allDataSources, err := srv.dataSourceService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
+	if err != nil {
+		logger.Error("Failed to get datasources for LBAC cleanup", "error", err)
+		return
+	}
+
+	var totalCleaned int
+	var totalDataSources int
+
+	for _, ds := range allDataSources {
+		if ds.JsonData == nil {
+			continue
+		}
+
+		// Check if datasource has team LBAC rules
+		teamHTTPHeaders, err := datasources.GetTeamHTTPHeaders(ds.JsonData)
+		if err != nil || teamHTTPHeaders == nil {
+			continue
+		}
+
+		totalDataSources++
+
+		// needed for permissions to search teams and update data source
+		// msg="Failed to get teams for LBAC cleanup" error="missing permissions"
+		ctx, systemIdentity := identity.WithServiceIdentity(ctx, ds.OrgID)
+		// Extract team UIDs and check if teams still exist
+		cleanedRules, removedCount := srv.getLBACRulesForTeamsStillExisting(ctx, teamHTTPHeaders, ds.OrgID, systemIdentity)
+
+		if removedCount > 0 {
+			// Update the datasource with cleaned rules
+			err := srv.updateDataSourceLBACRules(ctx, ds, cleanedRules)
+			if err != nil {
+				logger.Error("Failed to update datasource LBAC rules",
+					"datasource", ds.UID, "error", err)
+			} else {
+				totalCleaned += removedCount
+				logger.Debug("Cleaned stale LBAC rules",
+					"datasource", ds.UID, "removed", removedCount)
+			}
+		}
+	}
+
+	if totalCleaned > 0 {
+		logger.Info("Cleaned up stale team LBAC rules",
+			"datasources_processed", totalDataSources,
+			"total_rules_removed", totalCleaned)
+	}
+}
+
+func (srv *CleanUpService) getLBACRulesForTeamsStillExisting(ctx context.Context, teamHeaders *datasources.TeamHTTPHeaders, orgID int64, systemIdentity identity.Requester) (*datasources.TeamHTTPHeaders, int) {
+	logger := srv.log.FromContext(ctx)
+	cleanedHeaders := &datasources.TeamHTTPHeaders{Headers: make(map[string][]datasources.AccessRule)}
+	removedCount := 0
+
+	// needed for permissions to search for teams
+	allTeams, err := srv.teamService.SearchTeams(ctx, &team.SearchTeamsQuery{
+		OrgID:        orgID,
+		SignedInUser: systemIdentity,
+	})
+	if err != nil {
+		logger.Error("Failed to get teams for LBAC cleanup", "error", err)
+		return nil, removedCount
+	}
+
+	teamUIDs := make(map[string]bool)
+	for _, team := range allTeams.Teams {
+		teamUIDs[team.UID] = true
+	}
+	teamIDs := make(map[int64]bool)
+	for _, team := range allTeams.Teams {
+		teamIDs[team.ID] = true
+	}
+
+	for teamIdentifier, headers := range teamHeaders.Headers {
+		// Determine if this is a UID or ID
+		teamID, err := strconv.ParseInt(teamIdentifier, 10, 64)
+
+		if err != nil {
+			// It's a UID
+			if _, ok := teamUIDs[teamIdentifier]; !ok {
+				logger.Debug("Team UID no longer exists, removing LBAC rules",
+					"teamUID", teamIdentifier, "orgID", orgID)
+				removedCount++
+				continue
+			}
+		} else {
+			if _, ok := teamIDs[teamID]; !ok {
+				logger.Debug("Team ID no longer exists, removing LBAC rules",
+					"teamID", teamIdentifier, "orgID", orgID)
+				removedCount++
+				continue
+			}
+			// team exists in lbac and exists in teams
+			// lbac rule has team.ID and team exists
+			// update the rule with the UID instead
+			// TODO: we could replace the ID for the UID here we want
+		}
+
+		// Team exists, keep the rules
+		cleanedHeaders.Headers[teamIdentifier] = headers
+	}
+
+	return cleanedHeaders, removedCount
+}
+
+func (srv *CleanUpService) updateDataSourceLBACRules(ctx context.Context, ds *datasources.DataSource, cleanedHeaders *datasources.TeamHTTPHeaders) error {
+	// Update JsonData with cleaned rules
+	jsonData := ds.JsonData
+	jsonData.Set("teamHttpHeaders", cleanedHeaders)
+
+	updateCmd := &datasources.UpdateDataSourceCommand{
+		ID:                   ds.ID,
+		OrgID:                ds.OrgID,
+		UID:                  ds.UID,
+		Name:                 ds.Name,
+		Type:                 ds.Type,
+		Access:               ds.Access,
+		URL:                  ds.URL,
+		User:                 ds.User,
+		Database:             ds.Database,
+		BasicAuth:            ds.BasicAuth,
+		BasicAuthUser:        ds.BasicAuthUser,
+		WithCredentials:      ds.WithCredentials,
+		IsDefault:            ds.IsDefault,
+		JsonData:             jsonData,
+		AllowLBACRuleUpdates: true,
+		Version:              ds.Version,
+		ReadOnly:             ds.ReadOnly,
+		APIVersion:           ds.APIVersion,
+	}
+
+	_, err := srv.dataSourceService.UpdateDataSource(ctx, updateCmd)
+	return err
 }

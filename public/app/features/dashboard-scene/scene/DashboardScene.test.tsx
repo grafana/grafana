@@ -22,6 +22,7 @@ import {
   LocalValueVariable,
 } from '@grafana/scenes';
 import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import appEvents from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
@@ -42,10 +43,10 @@ import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../u
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { PanelTimeRange } from './PanelTimeRange';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowActions } from './layout-default/row-actions/RowActions';
+import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
@@ -905,7 +906,228 @@ describe('DashboardScene', () => {
       expect(scene.managedResourceCannotBeEdited()).toBe(false);
     });
   });
+
+  describe('getExpressionTypes', () => {
+    it('should extract SQL expression type from V1 and V2 dashboards', () => {
+      const scene = buildTestScene();
+      const saveModel = createV1DashboardWithExpressions(['sql']);
+      const saveModelV2 = createV2DashboardWithExpressions(['sql']);
+
+      const result = scene.getExpressionTypes(saveModel);
+      const resultV2 = scene.getExpressionTypes(saveModelV2);
+
+      expect(result).toEqual(['sql']);
+      expect(resultV2).toEqual(['sql']);
+    });
+
+    it('should extract multiple expression types from V1 and V2 dashboards', () => {
+      const scene = buildTestScene();
+      const saveModel = createV1DashboardWithExpressions(['sql', 'reduce', 'math']);
+      const saveModelV2 = createV2DashboardWithExpressions(['sql', 'reduce', 'math']);
+
+      const result = scene.getExpressionTypes(saveModel);
+      const resultV2 = scene.getExpressionTypes(saveModelV2);
+
+      expect(result).toEqual(['sql', 'reduce', 'math']);
+      expect(resultV2).toEqual(['sql', 'reduce', 'math']);
+    });
+
+    it('should deduplicate expression types', () => {
+      const scene = buildTestScene();
+      const saveModel = createV1DashboardWithExpressions(['sql', 'sql', 'reduce']);
+      const saveModelV2 = createV2DashboardWithExpressions(['sql', 'sql', 'reduce']);
+
+      const result = scene.getExpressionTypes(saveModel);
+      const resultV2 = scene.getExpressionTypes(saveModelV2);
+
+      expect(result).toEqual(['sql', 'reduce']);
+      expect(resultV2).toEqual(['sql', 'reduce']);
+    });
+
+    it('should return undefined when no expressions exist for V1 and V2 dashboards', () => {
+      const scene = buildTestScene();
+      const saveModel = createV1DashboardWithExpressions([]);
+      const saveModelV2 = createV2DashboardWithExpressions([]);
+
+      const result = scene.getExpressionTypes(saveModel);
+      const resultV2 = scene.getExpressionTypes(saveModelV2);
+
+      expect(result).toBeUndefined();
+      expect(resultV2).toBeUndefined();
+    });
+
+    it('should return undefined for empty dashboard', () => {
+      const scene = buildTestScene();
+      const saveModel = { panels: [] } as unknown as Dashboard;
+
+      const result = scene.getExpressionTypes(saveModel);
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should skip non-expression datasources', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        panels: [
+          {
+            type: 'timeseries',
+            targets: [
+              {
+                datasource: { type: 'prometheus', uid: 'prometheus-uid' },
+                type: 'instant',
+              },
+            ],
+          },
+        ],
+      } as unknown as Dashboard;
+
+      const result = scene.getExpressionTypes(saveModel);
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should skip LibraryPanel elements in V2', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        elements: {
+          'lib-panel-1': {
+            kind: 'LibraryPanel',
+            spec: {
+              id: 1,
+              title: 'Library Panel',
+              libraryPanel: {
+                uid: 'some-library-panel',
+                name: 'Some Library Panel',
+              },
+            },
+          },
+        },
+      } as unknown as DashboardV2Spec;
+
+      const result = scene.getExpressionTypes(saveModel);
+
+      expect(result).toBeUndefined();
+    });
+  });
 });
+
+function createV1DashboardWithExpressions(expressionTypes: string[]): Dashboard {
+  return {
+    title: 'Test Dashboard',
+    schemaVersion: 30,
+    panels: [
+      {
+        id: 1,
+        type: 'timeseries',
+        targets: [
+          {
+            refId: 'A',
+            datasource: { type: 'prometheus', uid: 'prometheus-uid' },
+          },
+          ...expressionTypes.map((type, i) => ({
+            refId: String.fromCharCode(66 + i), // B, C, D...
+            datasource: { type: '__expr__', uid: '__expr__' },
+            type,
+          })),
+        ],
+      },
+    ],
+  };
+}
+
+function createV2DashboardWithExpressions(expressionTypes: string[]): DashboardV2Spec {
+  return {
+    title: 'Test Dashboard V2',
+    annotations: [],
+    cursorSync: 'Off',
+    editable: true,
+    links: [],
+    preload: false,
+    tags: [],
+    timeSettings: {
+      timezone: 'browser',
+      from: 'now-6h',
+      to: 'now',
+      autoRefresh: '',
+      autoRefreshIntervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'],
+      hideTimepicker: false,
+      fiscalYearStartMonth: 0,
+    },
+    variables: [],
+    layout: {
+      kind: 'GridLayout',
+      spec: {
+        items: [],
+      },
+    },
+    elements: {
+      'panel-1': {
+        kind: 'Panel',
+        spec: {
+          id: 1,
+          title: 'Panel',
+          description: '',
+          links: [],
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries: [
+                {
+                  kind: 'PanelQuery',
+                  spec: {
+                    hidden: false,
+                    query: {
+                      kind: 'DataQuery',
+                      group: 'prometheus',
+                      version: 'v0',
+                      datasource: {
+                        name: 'prometheus-uid',
+                      },
+                      spec: {},
+                    },
+                    refId: 'A',
+                  },
+                },
+                ...expressionTypes.map((type, i) => ({
+                  kind: 'PanelQuery' as const,
+                  spec: {
+                    hidden: false,
+                    query: {
+                      kind: 'DataQuery' as const,
+                      group: '__expr__',
+                      version: 'v0' as const,
+                      datasource: {
+                        name: '__expr__',
+                      },
+                      spec: {
+                        type,
+                      },
+                    },
+                    refId: String.fromCharCode(66 + i), // B, C, D...
+                  },
+                })),
+              ],
+              queryOptions: {},
+              transformations: [],
+            },
+          },
+          vizConfig: {
+            kind: 'VizConfig',
+            version: '1.0.0',
+            group: 'timeseries',
+            spec: {
+              options: {},
+              fieldConfig: {
+                defaults: {},
+                overrides: [],
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+}
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   const scene = new DashboardScene({

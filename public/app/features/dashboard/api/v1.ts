@@ -4,7 +4,6 @@ import { Dashboard } from '@grafana/schema';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
-import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   ResourceClient,
@@ -91,7 +90,8 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardDataDTO>): SaveDashboardResponseDTO {
-    const slug = kbn.slugifyForUrl(v.spec.title.trim());
+    //TODO: use slug from response once implemented
+    const slug = '';
 
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
@@ -131,13 +131,13 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       const result: DashboardDTO = {
         meta: {
           ...dash.access,
-          slug: kbn.slugifyForUrl(dash.spec.title.trim()),
           isNew: false,
           isFolder: false,
           uid: dash.metadata.name,
           k8s: dash.metadata,
           version: dash.metadata.generation,
           created: dash.metadata.creationTimestamp,
+          publicDashboardEnabled: dash.access.isPublic,
         },
         dashboard: {
           ...dash.spec,

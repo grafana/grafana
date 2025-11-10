@@ -6,6 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
@@ -17,6 +18,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -27,16 +29,17 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
-var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder  = (*APIBuilder)(nil)
+	_ builder.APIGroupMutation = (*APIBuilder)(nil)
+)
 
 type APIBuilder struct {
-	namespacer request.NamespaceMapper
-	sql        *legacy.LegacySQL
+	authorizer  authorizer.Authorizer
+	legacyStars *legacy.DashboardStarsStorage
+	legacyPrefs rest.Storage
 
-	stars      star.Service
-	prefs      pref.Service
-	users      user.Service
-	calculator *calculator // joins all preferences
+	merger *merger // joins all preferences
 }
 
 func RegisterAPIService(
@@ -49,19 +52,36 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 ) *APIBuilder {
 	// Requires development settings and clearly experimental
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil
 	}
 
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		prefs:      prefs, // for writing
-		stars:      stars, // for writing
-		users:      users, // for writing
-		namespacer: request.GetNamespaceMapper(cfg),
-		sql:        sql,
-		calculator: newCalculator(cfg, sql),
+		merger: newMerger(cfg, sql),
+		authorizer: &authorizeFromName{
+			oknames: []string{"merged"},
+			teams:   sql, // should be from the IAM service
+			resource: map[string][]utils.ResourceOwner{
+				"stars": {utils.UserResourceOwner},
+				"preferences": {
+					utils.NamespaceResourceOwner,
+					utils.TeamResourceOwner,
+					utils.UserResourceOwner,
+				},
+			},
+		},
 	}
+
+	namespacer := request.GetNamespaceMapper(cfg)
+	if prefs != nil {
+		builder.legacyPrefs = legacy.NewPreferencesStorage(prefs, namespacer, sql)
+	}
+	if stars != nil {
+		builder.legacyStars = legacy.NewDashboardStarsStorage(stars, users, namespacer, sql)
+	}
+
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -92,29 +112,30 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// Configure Stars Dual writer
 	resource := preferences.StarsResourceInfo
 	var stars grafanarest.Storage
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, resource, opts.OptsGetter)
+	stars, err := grafanaregistry.NewRegistryStore(opts.Scheme, resource, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
-	stars = unified
-	if b.stars != nil && opts.DualWriteBuilder != nil {
-		legacy := legacy.NewDashboardStarsStorage(b.stars, b.users, b.namespacer, b.sql)
-		stars, err = opts.DualWriteBuilder(resource.GroupResource(), legacy, unified)
+	stars = &starStorage{Storage: stars} // wrap List so we only return one value
+	if b.legacyStars != nil && opts.DualWriteBuilder != nil {
+		stars, err = opts.DualWriteBuilder(resource.GroupResource(), b.legacyStars, stars)
 		if err != nil {
 			return err
 		}
 	}
 	storage[resource.StoragePath()] = stars
-	storage[resource.StoragePath("write")] = &starsREST{
-		store: stars,
-	}
+	storage[resource.StoragePath("update")] = &starsREST{store: stars}
 
 	// Configure Preferences
 	prefs := preferences.PreferencesResourceInfo
-	storage[prefs.StoragePath()] = legacy.NewPreferencesStorage(b.namespacer, b.sql)
+	storage[prefs.StoragePath()] = b.legacyPrefs
 
 	apiGroupInfo.VersionedResourcesStorageMap[preferences.APIVersion] = storage
 	return nil
+}
+
+func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
+	return b.authorizer
 }
 
 func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
@@ -123,18 +144,18 @@ func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 
 func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	return b.calculator.GetAPIRoutes(defs)
+	return b.merger.GetAPIRoutes(defs)
 }
 
 func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	oas.Info.Description = "Grafana preferences"
 
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
-	writeKey := root + "namespaces/{namespace}/stars/{name}/write"
-	delete(oas.Paths.Paths, writeKey)
+	updateKey := root + "namespaces/{namespace}/stars/{name}/update"
+	delete(oas.Paths.Paths, updateKey)
 
 	// Add the group/kind/id properties to the path
-	stars, ok := oas.Paths.Paths[writeKey+"/{path}"]
+	stars, ok := oas.Paths.Paths[updateKey+"/{path}"]
 	if !ok || stars == nil {
 		return nil, fmt.Errorf("unable to find write path")
 	}
@@ -175,8 +196,8 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	stars.Delete.Description = "Remove a starred item"
 	stars.Delete.OperationId = "removeStar"
 
-	delete(oas.Paths.Paths, writeKey+"/{path}")
-	oas.Paths.Paths[writeKey+"/{group}/{kind}/{id}"] = stars
+	delete(oas.Paths.Paths, updateKey+"/{path}")
+	oas.Paths.Paths[updateKey+"/{group}/{kind}/{id}"] = stars
 
 	return oas, nil
 }

@@ -107,6 +107,10 @@ export interface AnnotationQuery {
    */
   name: string;
   /**
+   * Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+   */
+  placement?: AnnotationQueryPlacement;
+  /**
    * TODO.. this should just be a normal query target
    */
   target?: AnnotationTarget;
@@ -364,6 +368,12 @@ export type DashboardLinkType = ('link' | 'dashboards');
 export type DashboardLinkPlacement = 'inControlsMenu';
 
 /**
+ * Annotation Query placement. Defines where the annotation query should be displayed.
+ * - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+ */
+export type AnnotationQueryPlacement = 'inControlsMenu';
+
+/**
  * Dashboard action type
  */
 export type ActionType = ('fetch' | 'infinity');
@@ -454,8 +464,9 @@ export const defaultAction: Partial<Action> = {
  * `textbox`: Display a free text input field with an optional default value.
  * `custom`: Define the variable options manually using a comma-separated list.
  * `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+ * `switch`: Boolean variables rendered as a switch
  */
-export type VariableType = ('query' | 'adhoc' | 'groupby' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system' | 'snapshot');
+export type VariableType = ('query' | 'adhoc' | 'groupby' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system' | 'snapshot' | 'switch');
 
 /**
  * Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
@@ -884,6 +895,11 @@ export interface Panel {
    * Depends on the panel plugin. See the plugin documentation for details.
    */
   targets?: Array<Record<string, unknown>>;
+  /**
+   * Compare the current time range with a previous period
+   * For example "1d" to compare current period but shifted back 1 day
+   */
+  timeCompare?: string;
   /**
    * Overrides the relative time range for individual panels,
    * which causes them to be different than what is selected in

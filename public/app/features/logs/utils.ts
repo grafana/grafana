@@ -29,6 +29,7 @@ import {
   getTimeField,
   Field,
   LogsMetaItem,
+  store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getConfig } from 'app/core/config';
@@ -67,6 +68,7 @@ export function getLogLevel(line: string): LogLevel {
 }
 
 export function getLogLevelFromKey(key: string | number): LogLevel {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const level = LogLevel[key.toString().toLowerCase() as keyof typeof LogLevel];
   if (level) {
     return level;
@@ -179,7 +181,7 @@ export const checkLogsSampled = (logRow: LogRowModel): string | undefined => {
 export const escapeUnescapedString = (string: string) =>
   string.replace(/\\r\\n|\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));
 
-export function logRowsToReadableJson(logs: LogRowModel[]) {
+export function logRowsToReadableJson(logs: LogRowModel[], pickFields: string[] = []) {
   return logs.map((log) => {
     const fields = getDataframeFields(log).reduce<Record<string, string>>((acc, field) => {
       const key = field.keys[0];
@@ -187,14 +189,20 @@ export function logRowsToReadableJson(logs: LogRowModel[]) {
       return acc;
     }, {});
 
+    let logFields = {
+      ...fields,
+      ...log.labels,
+    };
+
+    if (pickFields.length) {
+      logFields = Object.fromEntries(Object.entries(logFields).filter(([key]) => pickFields.includes(key)));
+    }
+
     return {
       line: log.entry,
       timestamp: log.timeEpochNs,
       date: dateTime(log.timeEpochMs).toISOString(),
-      fields: {
-        ...fields,
-        ...log.labels,
-      },
+      fields: logFields,
     };
   });
 }
@@ -423,15 +431,15 @@ function getDataSourceLabelType(labelType: string, datasourceType: string, plura
 
 const POPOVER_STORAGE_KEY = 'logs.popover.disabled';
 export function disablePopoverMenu() {
-  localStorage.setItem(POPOVER_STORAGE_KEY, 'true');
+  store.set(POPOVER_STORAGE_KEY, 'true');
 }
 
 export function enablePopoverMenu() {
-  localStorage.removeItem(POPOVER_STORAGE_KEY);
+  store.delete(POPOVER_STORAGE_KEY);
 }
 
 export function isPopoverMenuDisabled() {
-  return Boolean(localStorage.getItem(POPOVER_STORAGE_KEY));
+  return Boolean(store.get(POPOVER_STORAGE_KEY));
 }
 
 export enum DownloadFormat {
@@ -440,13 +448,18 @@ export enum DownloadFormat {
   CSV = 'csv',
 }
 
-export const downloadLogs = async (format: DownloadFormat, logRows: LogRowModel[], meta?: LogsMetaItem[]) => {
+export const downloadLogs = async (
+  format: DownloadFormat,
+  logRows: LogRowModel[],
+  meta?: LogsMetaItem[],
+  fields: string[] = []
+) => {
   switch (format) {
     case DownloadFormat.Text:
-      downloadLogsModelAsTxt({ meta, rows: logRows });
+      downloadLogsModelAsTxt({ meta, rows: logRows }, '', fields);
       break;
     case DownloadFormat.Json:
-      const jsonLogs = logRowsToReadableJson(logRows);
+      const jsonLogs = logRowsToReadableJson(logRows, fields);
       const blob = new Blob([JSON.stringify(jsonLogs)], {
         type: 'application/json;charset=utf-8',
       });
@@ -462,18 +475,29 @@ export const downloadLogs = async (format: DownloadFormat, logRows: LogRowModel[
       });
       dataFrameMap.forEach(async (dataFrame) => {
         const transforms: Array<DataTransformerConfig | CustomTransformOperator> = getLogsExtractFields(dataFrame);
-        transforms.push(
-          {
-            id: 'organize',
+        if (fields.length) {
+          transforms.push(addISODateTransformation, {
+            id: 'filterFieldsByName',
             options: {
-              excludeByName: {
-                ['labels']: true,
-                ['labelTypes']: true,
+              include: {
+                names: ['Date', ...fields],
               },
             },
-          },
-          addISODateTransformation
-        );
+          });
+        } else {
+          transforms.push(
+            {
+              id: 'organize',
+              options: {
+                excludeByName: {
+                  ['labels']: true,
+                  ['labelTypes']: true,
+                },
+              },
+            },
+            addISODateTransformation
+          );
+        }
         const transformedDataFrame = await lastValueFrom(transformDataFrame(transforms, [dataFrame]));
         downloadDataFrameAsCsv(transformedDataFrame[0], `Logs-${dataFrame.refId}`);
       });

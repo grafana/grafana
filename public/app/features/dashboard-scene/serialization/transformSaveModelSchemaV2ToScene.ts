@@ -16,6 +16,7 @@ import {
   SceneVariable,
   SceneVariableSet,
   ScopesVariable,
+  SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
 import {
@@ -34,11 +35,13 @@ import {
   defaultIntervalVariableKind,
   defaultQueryVariableKind,
   defaultTextVariableKind,
+  defaultSwitchVariableKind,
   GroupByVariableKind,
   IntervalVariableKind,
   LibraryPanelKind,
   PanelKind,
   QueryVariableKind,
+  SwitchVariableKind,
   TextVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
@@ -53,12 +56,14 @@ import {
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
-  getDashboardInteractionCallback,
-  getDashboardSceneProfiler,
+  getDashboardSceneProfilerWithMetadata,
+  enablePanelProfilingForDashboard,
+  getDashboardComponentInteractionCallback,
 } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
+import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -91,7 +96,8 @@ export type TypedVariableModelV2 =
   | IntervalVariableKind
   | CustomVariableKind
   | GroupByVariableKind
-  | AdhocVariableKind;
+  | AdhocVariableKind
+  | SwitchVariableKind;
 
 export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<DashboardV2Spec>): DashboardScene {
   const { spec: dashboard, metadata, apiVersion } = dto;
@@ -111,6 +117,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       name: annotation.spec.name,
       isEnabled: Boolean(annotation.spec.enable),
       isHidden: Boolean(annotation.spec.hide),
+      placement: annotation.spec.placement,
     };
 
     return new DashboardAnnotationsDataLayer(layerState);
@@ -141,6 +148,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     folderUid: metadata.annotations?.[AnnoKeyFolder],
     isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
     isEmbedded: Boolean(metadata.annotations?.[AnnoKeyEmbedded]),
+    publicDashboardEnabled: dto.access.isPublic,
 
     // UI-only metadata, ref: DashboardModel.initMeta
     showSettings: Boolean(dto.access.canEdit),
@@ -163,22 +171,24 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 
   //createLayoutManager(dashboard);
 
+  // Create profiler once and reuse to avoid duplicate metadata setting
+  const dashboardProfiler = getDashboardSceneProfilerWithMetadata(metadata.name, dashboard.title);
+
+  const enableProfiling =
+    config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1;
   const queryController = new behaviors.SceneQueryController(
     {
-      enableProfiling:
-        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
-      onProfileComplete: getDashboardInteractionCallback(metadata.name, dashboard.title),
+      enableProfiling,
     },
-    getDashboardSceneProfiler()
+    dashboardProfiler
   );
 
   const interactionTracker = new behaviors.SceneInteractionTracker(
     {
-      enableInteractionTracking:
-        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
-      onInteractionComplete: getDashboardInteractionCallback(metadata.name, dashboard.title),
+      enableInteractionTracking: enableProfiling,
+      onInteractionComplete: getDashboardComponentInteractionCallback(metadata.name, dashboard.title),
     },
-    getDashboardSceneProfiler()
+    dashboardProfiler
   );
 
   const dashboardScene = new DashboardScene(
@@ -218,6 +228,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
           reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
           uid: dashboardId?.toString(),
         }),
+        ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),
       ],
       $data: new DashboardDataLayerSet({
         annotationLayers,
@@ -239,6 +250,9 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   );
 
   dashboardScene.setInitialSaveModel(dto.spec, dto.metadata, apiVersion);
+
+  // Enable panel profiling for this dashboard using the composed SceneRenderProfiler
+  enablePanelProfilingForDashboard(dashboardScene, metadata.name);
 
   return dashboardScene;
 }
@@ -269,7 +283,8 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
 
-  if (config.featureToggles.scopeFilters) {
+  // Explicitly disable scopes for public dashboards
+  if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
 
@@ -414,6 +429,15 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       // @ts-expect-error
       defaultOptions: variable.options,
     });
+  } else if (variable.kind === defaultSwitchVariableKind().kind) {
+    return new SwitchVariable({
+      ...commonProperties,
+      value: variable.spec.current ?? 'false',
+      enabledValue: variable.spec.enabledValue ?? 'true',
+      disabledValue: variable.spec.disabledValue ?? 'false',
+      skipUrlSync: variable.spec.skipUrlSync,
+      hide: transformVariableHideToEnumV1(variable.spec.hide),
+    });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.kind}`);
   }
@@ -518,6 +542,11 @@ export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVar
     current = {
       value: '',
       text: '',
+    };
+  } else if (variable.kind === 'SwitchVariable') {
+    current = {
+      value: variable.spec.current ?? 'false',
+      text: variable.spec.current ?? 'false',
     };
   } else {
     current = {

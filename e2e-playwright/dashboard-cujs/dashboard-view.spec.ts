@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { getConfigDashboards } from './utils';
+import { getConfigDashboards, trackDashboardReloadRequests, checkDashboardReloadBehavior } from './utils';
 
 test.use({
   featureToggles: {
@@ -27,7 +27,13 @@ test.describe(
 
       for (const db of dashboards) {
         await test.step('1.Loads dashboard successfully - ' + db, async () => {
+          const { getRequests, waitForExpectedRequests } = await trackDashboardReloadRequests(page);
           const dashboardPage = await gotoDashboardPage({ uid: db });
+          await waitForExpectedRequests();
+          await page.waitForLoadState('networkidle');
+
+          const requests = getRequests();
+          expect(checkDashboardReloadBehavior(requests)).toBe(true);
 
           const panelTitle = dashboardPage.getByGrafanaSelector(
             selectors.components.Panels.Panel.title(PANEL_UNDER_TEST)

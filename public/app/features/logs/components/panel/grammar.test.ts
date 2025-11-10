@@ -2,7 +2,7 @@ import Prism, { Token } from 'prismjs';
 
 import { createLogLine } from '../mocks/logRow';
 
-import { generateLogGrammar } from './grammar';
+import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
 
 describe('generateLogGrammar', () => {
   function generateScenario(entry: string) {
@@ -86,4 +86,42 @@ describe('generateLogGrammar', () => {
       expect.assertions(3);
     }
   );
+});
+
+describe('generateTextMatchGrammar', () => {
+  const originalErr = console.error;
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+  afterAll(() => {
+    console.error = originalErr;
+  });
+
+  test('Generates text match grammars for search words', () => {
+    expect(generateTextMatchGrammar(['search', 'word'])).toEqual({
+      'log-search-match': [/(?:search)/g, /(?:word)/g],
+    });
+  });
+
+  test('Generates text match grammars for search words and search', () => {
+    expect(generateTextMatchGrammar(['search', 'word'], 'search text')).toEqual({
+      'log-search-match': [/(?:search)/g, /(?:word)/g, /search text/gi],
+    });
+  });
+
+  test('Generates text match grammars for regex search words', () => {
+    expect(generateTextMatchGrammar(['(?i)(TRACE|DEBUG|INFO|WARN|ERROR|OTHER)'])).toEqual({
+      'log-search-match': [/(?:(TRACE|DEBUG|INFO|WARN|ERROR|OTHER))/gi],
+    });
+  });
+
+  test('Does not throw when the regular expression cannot be parsed correctly', () => {
+    expect(generateTextMatchGrammar(['(?i)(?P<filtered_log_level>TRACE|DEBUG|INFO|WARN|ERROR|OTHER)'])).toEqual({});
+  });
+
+  test('Handles mixed situations', () => {
+    expect(generateTextMatchGrammar(['search', '(?i)(TRACE|DEBUG|INFO|WARN|ERROR|OTHER)'], 'word')).toEqual({
+      'log-search-match': [/(?:search)/g, /(?:(TRACE|DEBUG|INFO|WARN|ERROR|OTHER))/gi, /word/gi],
+    });
+  });
 });

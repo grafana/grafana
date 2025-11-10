@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 )
@@ -28,8 +29,9 @@ var (
 )
 
 var appManifestData = app.ManifestData{
-	AppName: "alerting",
-	Group:   "rules.alerting.grafana.app",
+	AppName:          "alerting",
+	Group:            "rules.alerting.grafana.app",
+	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v0alpha1",
@@ -40,7 +42,21 @@ var appManifestData = app.ManifestData{
 					Plural:     "AlertRules",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaAlertRulev0alpha1,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+						Mutation: &app.MutationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaAlertRulev0alpha1,
 					SelectableFields: []string{
 						"spec.title",
 						"spec.paused",
@@ -55,7 +71,21 @@ var appManifestData = app.ManifestData{
 					Plural:     "RecordingRules",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaRecordingRulev0alpha1,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+						Mutation: &app.MutationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaRecordingRulev0alpha1,
 					SelectableFields: []string{
 						"spec.title",
 						"spec.paused",
@@ -65,6 +95,7 @@ var appManifestData = app.ManifestData{
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{},
 				Cluster:    map[string]spec3.PathProps{},
+				Schemas:    map[string]spec.Schema{},
 			},
 		},
 	},

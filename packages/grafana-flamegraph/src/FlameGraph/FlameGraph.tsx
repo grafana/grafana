@@ -18,7 +18,6 @@
 // THIS SOFTWARE.
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import * as React from 'react';
 
 import { Icon } from '@grafana/ui';
 
@@ -37,7 +36,6 @@ type Props = {
   matchedLabels?: Set<string>;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
-  style?: React.CSSProperties;
   onItemFocused: (data: ClickedItemData) => void;
   focusedItemData?: ClickedItemData;
   textAlign: TextAlign;

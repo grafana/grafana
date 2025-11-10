@@ -40,7 +40,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `transformationsRedesign`              | Enables the transformations redesign                                                                                                                          | Yes                |
 | `awsAsyncQueryCaching`                 | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled                            | Yes                |
 | `dashgpt`                              | Enable AI powered features in dashboards                                                                                                                      | Yes                |
-| `panelMonitoring`                      | Enables panel monitoring through logs and measurements                                                                                                        | Yes                |
 | `formatString`                         | Enable format string transformer                                                                                                                              | Yes                |
 | `kubernetesDashboards`                 | Use the kubernetes API in the frontend for dashboards                                                                                                         | Yes                |
 | `addFieldFromCalculationStatFunctions` | Add cumulative and window functions to the add field from calculation transformation                                                                          | Yes                |
@@ -67,17 +66,18 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `useSessionStorageForRedirection`      | Use session storage for handling the redirection after login                                                                                                  | Yes                |
 | `pluginsSriChecks`                     | Enables SRI checks for plugin assets                                                                                                                          |                    |
 | `azureMonitorDisableLogLimit`          | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                                              |                    |
-| `preinstallAutoUpdate`                 | Enables automatic updates for pre-installed plugins                                                                                                           | Yes                |
 | `alertingUIOptimizeReducer`            | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                                                      | Yes                |
 | `azureMonitorEnableUserAuth`           | Enables user auth for Azure Monitor datasource only                                                                                                           | Yes                |
 | `alertingNotificationsStepMode`        | Enables simplified step mode in the notifications section                                                                                                     | Yes                |
 | `elasticsearchCrossClusterSearch`      | Enables cross cluster search in the Elasticsearch data source                                                                                                 |                    |
 | `lokiLabelNamesQueryApi`               | Defaults to using the Loki `/labels` API instead of `/series`                                                                                                 | Yes                |
 | `improvedExternalSessionHandlingSAML`  | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. | Yes                |
+| `newLogsPanel`                         | Enables the new logs panel                                                                                                                                    | Yes                |
 | `alertingMigrationUI`                  | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                                              | Yes                |
 | `alertingImportYAMLUI`                 | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                       | Enables unified navbars                                                                                                                                       |                    |
 | `grafanaAssistantInProfilesDrilldown`  | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
+| `sharingDashboardImage`                | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
 | `dashboardDsAdHocFiltering`            | Enables adhoc filtering support for the dashboard datasource                                                                                                  | Yes                |
 | `adhocFiltersInTooltips`               | Enable adhoc filter buttons in visualization tooltips                                                                                                         | Yes                |
@@ -101,15 +101,17 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `pdfTables`                     | Enables generating table data as PDF in reporting                                                      |
 | `canvasPanelPanZoom`            | Allow pan and zoom in canvas panel                                                                     |
 | `regressionTransformation`      | Enables regression analysis transformation                                                             |
-| `alertingSaveStateCompressed`   | Enables the compressed protobuf-based alert state storage                                              |
+| `alertingSaveStateCompressed`   | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |
 | `sqlExpressions`                | Enables SQL Expressions, which can execute SQL queries against data source results.                    |
-| `savedQueries`                  | Enables Saved Queries feature                                                                          |
+| `queryLibrary`                  | Enables Saved queries (query library) feature                                                          |
 | `enableSCIM`                    | Enables SCIM support for user and group management                                                     |
 | `alertRuleRestore`              | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor` | Enables the logs builder mode for the Azure Monitor data source                                        |
 | `localeFormatPreference`        | Specifies the locale so the correct format for numbers and dates can be shown                          |
 | `logsPanelControls`             | Enables a control component for the logs panel in Explore                                              |
+| `interactiveLearning`           | Enables the interactive learning app                                                                   |
 | `azureResourcePickerUpdates`    | Enables the updated Azure Monitor resource picker                                                      |
+| `preventPanelChromeOverflow`    | Restrict PanelChrome contents with overflow: hidden;                                                   |
 
 ## Development feature toggles
 

@@ -33,14 +33,18 @@ on:
         type: string
         required: false
         default: github-prerelease-writer@grafanalabs-workload-identity.iam.gserviceaccount.com
+      runs-on:
+        type: string
+        required: false
+        default: github-hosted-ubuntu-x64-small
 jobs:
   publish:
-    runs-on: github-hosted-ubuntu-x64-small
+    runs-on: ${{ inputs.runs-on }}
     name: Publish
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: ${{ inputs.name }}
           pattern: ${{ inputs.pattern }}

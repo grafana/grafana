@@ -12,10 +12,16 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tracer trace.Tracer, docs resource.DocumentBuilderSupplier, indexMetrics *resource.BleveIndexMetrics) (resource.SearchOptions, error) {
-	// Setup the search server
-	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) ||
-		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+func NewSearchOptions(
+	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	tracer trace.Tracer,
+	docs resource.DocumentBuilderSupplier,
+	indexMetrics *resource.BleveIndexMetrics,
+	ownsIndexFn func(key resource.NamespacedResource) (bool, error),
+) (resource.SearchOptions, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) || features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		root := cfg.IndexPath
 		if root == "" {
 			root = filepath.Join(cfg.DataPath, "unified-search", "bleve")
@@ -36,14 +42,12 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 		}
 
 		bleve, err := NewBleveBackend(BleveOptions{
-			Root:            root,
-			FileThreshold:   int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
-			BatchSize:       cfg.IndexMaxBatchSize,         // This is the batch size for how many objects to add to the index at once
-			IndexCacheTTL:   cfg.IndexCacheTTL,             // How long to keep the index cache in memory
-			BuildVersion:    cfg.BuildVersion,
-			MaxFileIndexAge: cfg.MaxFileIndexAge,
-			MinBuildVersion: minVersion,
-			UseFullNgram:    features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageUseFullNgram),
+			Root:                   root,
+			FileThreshold:          int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
+			IndexCacheTTL:          cfg.IndexCacheTTL,             // How long to keep the index cache in memory
+			BuildVersion:           cfg.BuildVersion,
+			OwnsIndex:              ownsIndexFn,
+			IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
 		}, tracer, indexMetrics)
 
 		if err != nil {
@@ -51,11 +55,15 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 		}
 
 		return resource.SearchOptions{
-			Backend:         bleve,
-			Resources:       docs,
-			WorkerThreads:   cfg.IndexWorkers,
-			InitMinCount:    cfg.IndexMinCount,
-			RebuildInterval: cfg.IndexRebuildInterval,
+			Backend:                bleve,
+			Resources:              docs,
+			InitWorkerThreads:      cfg.IndexWorkers,
+			IndexRebuildWorkers:    cfg.IndexRebuildWorkers,
+			InitMinCount:           cfg.IndexMinCount,
+			DashboardIndexMaxAge:   cfg.IndexRebuildInterval,
+			MaxIndexAge:            cfg.MaxFileIndexAge,
+			MinBuildVersion:        minVersion,
+			IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
 		}, nil
 	}
 	return resource.SearchOptions{}, nil

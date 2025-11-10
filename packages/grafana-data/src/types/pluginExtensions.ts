@@ -165,6 +165,8 @@ export type PluginExtensionOpenModalOptions = {
 
 export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
+  // The ID of the extension point that triggered this event
+  extensionPointId: string;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
   /**
@@ -179,6 +181,15 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
    * Closes the extension sidebar.
    */
   closeSidebar: () => void;
+  /**
+   * @internal
+   * Toggles the extension sidebar with the registered component.
+   * If the sidebar is open with the same component, it will be closed.
+   * If the sidebar is closed or open with a different component, it will be opened with the specified component.
+   * @param componentTitle The title of the component to be toggled in the sidebar.
+   * @param props The props to be passed to the component.
+   */
+  toggleSidebar: (componentTitle: string, props?: Record<string, unknown>) => void;
 };
 
 // Extension Points & Contexts
@@ -193,6 +204,7 @@ export enum PluginExtensionPoints {
   AlertingRuleQueryEditor = 'grafana/alerting/alertingrule/queryeditor',
   CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
+  DashboardEmpty = 'grafana/dashboard/empty',
   DataSourceConfig = 'grafana/datasources/config',
   DataSourceConfigActions = 'grafana/datasources/config/actions',
   DataSourceConfigErrorStatus = 'grafana/datasources/config/error-status',
@@ -218,6 +230,7 @@ export enum PluginExtensionPointPatterns {
 // Extension Points available in plugins
 export enum PluginExtensionExposedComponents {
   CentralAlertHistorySceneV1 = 'grafana/central-alert-history-scene/v1',
+  AddToDashboardFormV1 = 'grafana/add-to-dashboard-form/v1',
 }
 
 export type PluginExtensionPanelContext = {

@@ -204,6 +204,8 @@ var (
 
 	grafanaPluginFileSystemInfoDesc *prometheus.GaugeVec
 
+	grafanaPluginAssetInfoDesc *prometheus.GaugeVec
+
 	grafanaPluginProvisioningInfoDesc *prometheus.GaugeVec
 
 	// StatsTotalLibraryPanels is a metric of total number of library panels stored in Grafana.
@@ -588,6 +590,12 @@ func init() {
 		Namespace: ExporterName,
 	}, []string{"plugin_id", "filesystem_type"})
 
+	grafanaPluginAssetInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "plugin_asset_info",
+		Help:      "A metric with a constant '1' value labeled by pluginId and asset source",
+		Namespace: ExporterName,
+	}, []string{"plugin_id", "asset_source"})
+
 	grafanaPluginProvisioningInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "plugin_provisioning_info",
 		Help:      "A metric with a constant '1' value labeled by pluginId and cloud provisioning method",
@@ -742,6 +750,10 @@ func SetPluginFSInformation(pluginID, fsType string) {
 	grafanaPluginFileSystemInfoDesc.WithLabelValues(pluginID, fsType).Set(1)
 }
 
+func SetPluginAssetInformation(pluginID, assetSrc string) {
+	grafanaPluginAssetInfoDesc.WithLabelValues(pluginID, assetSrc).Set(1)
+}
+
 func SetPluginProvisioningInformation(pluginID, provisioningMethod string) {
 	grafanaPluginProvisioningInfoDesc.WithLabelValues(pluginID, provisioningMethod).Set(1)
 }
@@ -802,6 +814,7 @@ func initMetricVars(reg prometheus.Registerer) {
 		grafanaPluginBuildInfoDesc,
 		grafanaPluginTargetInfoDesc,
 		grafanaPluginFileSystemInfoDesc,
+		grafanaPluginAssetInfoDesc,
 		grafanaPluginProvisioningInfoDesc,
 		StatsTotalDashboardVersions,
 		StatsTotalAnnotations,

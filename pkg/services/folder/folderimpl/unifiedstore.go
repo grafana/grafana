@@ -276,12 +276,8 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 			UID:       item.Name,
 			Title:     item.Title,
 			ParentUID: item.Folder,
+			ManagedBy: item.ManagedBy.Kind,
 		}
-
-		if item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND) != "" {
-			f.ManagedBy = utils.ParseManagerKindString(item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND))
-		}
-
 		hits = append(hits, f)
 	}
 
@@ -302,7 +298,7 @@ func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string
 			ele := queue[0]
 			queue = queue[1:]
 			if parentUID != nil && *parentUID == ele {
-				return 0, folder.ErrCircularReference
+				return 0, folder.ErrCircularReference.Errorf("circular reference detected")
 			}
 			folders, err := ss.GetChildren(ctx, folder.GetChildrenQuery{UID: ele, OrgID: orgID})
 			if err != nil {
@@ -392,7 +388,9 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 		}
 
 		if (q.WithFullpath || q.WithFullpathUIDs) && f.Fullpath == "" {
-			buildFolderFullPaths(f, relations, folderMap)
+			if err := buildFolderFullPaths(f, relations, folderMap); err != nil {
+				return nil, err
+			}
 		}
 
 		hits = append(hits, f)
@@ -563,15 +561,21 @@ func computeFullPath(parents []*folder.Folder) (string, string) {
 	return strings.Join(fullpath, "/"), strings.Join(fullpathUIDs, "/")
 }
 
-func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderMap map[string]*folder.Folder) {
+func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderMap map[string]*folder.Folder) error {
 	titles := make([]string, 0)
 	uids := make([]string, 0)
 
 	titles = append(titles, f.Title)
 	uids = append(uids, f.UID)
 
+	i := 0
 	currentUID := f.UID
 	for currentUID != "" {
+		// This is just a circuit breaker to prevent infinite loops. We should never reach this limit.
+		if i > 1000 {
+			return fmt.Errorf("folder depth exceeds the maximum allowed depth, You might have a circular reference")
+		}
+		i++
 		parentUID, exists := relations[currentUID]
 		if !exists {
 			break
@@ -592,6 +596,7 @@ func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderM
 
 	f.Fullpath = strings.Join(util.Reverse(titles), "/")
 	f.FullpathUIDs = strings.Join(util.Reverse(uids), "/")
+	return nil
 }
 
 func shouldSkipFolder(f *folder.Folder, filterUIDs map[string]struct{}) bool {

@@ -1,11 +1,16 @@
 import { isEmpty } from 'lodash';
 
+import { BASE_URL as v0alphaBaseURL } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/user';
 import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
+import { generatedAPI, ListStarsApiResponse } from 'app/api/clients/preferences/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { contextSrv } from 'app/core/core';
 import kbn from 'app/core/utils/kbn';
+import { dispatch } from 'app/store/store';
 
 import { deletedDashboardsCache } from './deletedDashboardsCache';
 import {
@@ -16,14 +21,13 @@ import {
   SearchQuery,
   SearchResultMeta,
 } from './types';
-import { replaceCurrentFolderQuery, filterSearchResults } from './utils';
+import { filterSearchResults, replaceCurrentFolderQuery } from './utils';
 
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
 const loadingFrameName = 'Loading';
 
-const baseURL = getAPIBaseURL('dashboard.grafana.app', 'v0alpha1');
-const searchURI = `${baseURL}/search`;
+const searchURI = `${v0alphaBaseURL}/search`;
 
 export type SearchHit = {
   resource: string; // dashboards | folders
@@ -73,7 +77,22 @@ export class UnifiedSearcher implements GrafanaSearcher {
       throw new Error('facets not supported!');
     }
     // get the starred dashboards
-    const starsIds = await getBackendSrv().get('api/user/stars');
+    let starsIds: string[] | undefined = [];
+    if (config.featureToggles.starsFromAPIServer) {
+      const name = `user-${contextSrv.user.uid}`;
+      const result: { data: ListStarsApiResponse } = await dispatch(
+        generatedAPI.endpoints.listStars.initiate({
+          fieldSelector: `metadata.name=${name}`,
+        })
+      );
+      starsIds =
+        result.data.items?.[0].spec.resource.find(
+          (info) => info.group === 'dashboard.grafana.app' && info.kind === 'Dashboard'
+        )?.names || [];
+    } else {
+      starsIds = await dispatch(legacyUserAPI.endpoints.getStars.initiate()).unwrap();
+    }
+
     if (starsIds?.length) {
       return this.doSearchQuery({
         ...query,

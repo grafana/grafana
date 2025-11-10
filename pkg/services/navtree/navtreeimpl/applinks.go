@@ -4,6 +4,7 @@ import (
 	"path"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -260,10 +261,22 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 		}
 	}
 
+	sectionChildren := []*navtree.NavLink{appLink}
+	// asserts pages expand to root Observability section instead of it's own node
+	if plugin.ID == "grafana-asserts-app" {
+		sectionChildren = appLink.Children
+
+		// keep current sorting if the pages, but above all the other apps
+		for _, child := range sectionChildren {
+			child.SortWeight = -100 + child.SortWeight
+			child.Id = "standalone-plugin-page-" + strings.ReplaceAll(strings.ToLower(child.Text), " ", "-")
+		}
+	}
+
 	if sectionID == navtree.NavIDRoot {
 		treeRoot.AddSection(appLink)
 	} else if navNode := treeRoot.FindById(sectionID); navNode != nil {
-		navNode.Children = append(navNode.Children, appLink)
+		navNode.Children = append(navNode.Children, sectionChildren...)
 	} else {
 		switch sectionID {
 		case navtree.NavIDApps:
@@ -272,7 +285,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Icon:       "layer-group",
 				SubTitle:   "App plugins that extend the Grafana experience",
 				Id:         navtree.NavIDApps,
-				Children:   []*navtree.NavLink{appLink},
+				Children:   sectionChildren,
 				SortWeight: navtree.WeightApps,
 				Url:        s.cfg.AppSubURL + "/apps",
 			})
@@ -283,7 +296,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				SubTitle:   "Monitor infrastructure and applications in real time with Grafana Cloud's fully managed observability suite",
 				Icon:       "heart-rate",
 				SortWeight: navtree.WeightObservability,
-				Children:   []*navtree.NavLink{appLink},
+				Children:   sectionChildren,
 				Url:        s.cfg.AppSubURL + "/observability",
 			})
 		case navtree.NavIDInfrastructure:
@@ -293,18 +306,8 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				SubTitle:   "Understand your infrastructure's health",
 				Icon:       "heart-rate",
 				SortWeight: navtree.WeightInfrastructure,
-				Children:   []*navtree.NavLink{appLink},
+				Children:   sectionChildren,
 				Url:        s.cfg.AppSubURL + "/infrastructure",
-			})
-		case navtree.NavIDFrontend:
-			treeRoot.AddSection(&navtree.NavLink{
-				Text:       "Frontend",
-				Id:         navtree.NavIDFrontend,
-				SubTitle:   "Gain real user monitoring insights",
-				Icon:       "frontend-observability",
-				SortWeight: navtree.WeightFrontend,
-				Children:   []*navtree.NavLink{appLink},
-				Url:        s.cfg.AppSubURL + "/frontend",
 			})
 		case navtree.NavIDAlertsAndIncidents:
 			alertsAndIncidentsChildren := []*navtree.NavLink{}
@@ -332,7 +335,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				SubTitle:   "Optimize performance with k6 and Synthetic Monitoring insights",
 				Icon:       "k6",
 				SortWeight: navtree.WeightTestingAndSynthetics,
-				Children:   []*navtree.NavLink{appLink},
+				Children:   sectionChildren,
 				Url:        s.cfg.AppSubURL + "/testing-and-synthetics",
 			})
 		case navtree.NavIDAdaptiveTelemetry:
@@ -341,8 +344,8 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Id:         navtree.NavIDAdaptiveTelemetry,
 				SubTitle:   "Reduce noise, cut costs, and accelerate troubleshooting by intelligently ingesting only the telemetry data that matters most.",
 				Icon:       "adaptive-telemetry",
-				SortWeight: navtree.WeightAIAndML + 1, // Place under "AI & Machine Learning"
-				Children:   []*navtree.NavLink{appLink},
+				SortWeight: navtree.WeightAdaptiveTelemetry,
+				Children:   sectionChildren,
 				Url:        "adaptive-telemetry",
 				// Use the icon URL from the first "Adaptive Telemetry" plugin in the list (they will all be the same)
 				Img:   s.cfg.AppSubURL + plugin.Info.Logos.Large,
@@ -372,11 +375,11 @@ func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID st
 func (s *ServiceImpl) readNavigationSettings() {
 	s.navigationAppConfig = map[string]NavigationAppConfig{
 		"grafana-asserts-app":              {SectionID: navtree.NavIDObservability, SortWeight: 1, Icon: "asserts"},
-		"grafana-app-observability-app":    {SectionID: navtree.NavIDObservability, SortWeight: 2, Text: "Application"},
-		"grafana-csp-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 3, Icon: "cloud-provider"},
-		"grafana-k8s-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Kubernetes"},
-		"grafana-dbo11y-app":               {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Databases"},
-		"grafana-kowalski-app":             {SectionID: navtree.NavIDObservability, SortWeight: 6, Text: "Frontend"},
+		"grafana-kowalski-app":             {SectionID: navtree.NavIDObservability, SortWeight: 2, Text: "Frontend"},
+		"grafana-app-observability-app":    {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Application"},
+		"grafana-dbo11y-app":               {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Database", IsNew: true},
+		"grafana-k8s-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Kubernetes"},
+		"grafana-csp-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 6, Icon: "cloud-provider"},
 		"grafana-metricsdrilldown-app":     {SectionID: navtree.NavIDDrilldown, SortWeight: 1, Text: "Metrics"},
 		"grafana-lokiexplore-app":          {SectionID: navtree.NavIDDrilldown, SortWeight: 2, Text: "Logs"},
 		"grafana-exploretraces-app":        {SectionID: navtree.NavIDDrilldown, SortWeight: 3, Text: "Traces"},
@@ -389,17 +392,16 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
 		"grafana-slo-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 7},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
-		"grafana-costmanagementui-app":     {SectionID: navtree.NavIDCfg, Text: "Cost management"},
-		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1, Text: "Adaptive Metrics", SubTitle: "Analyzes and reduces unused metrics and cardinality to help you focus on your most valuable performance data."},
-		"grafana-adaptivelogs-app":         {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 2, Text: "Adaptive Logs", SubTitle: "Analyzes log patterns to drop repetitive lines and accelerate troubleshooting."},
-		"grafana-adaptivetraces-app":       {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 3, Text: "Adaptive Traces", SubTitle: "Analyzes and retains the most valuable traces, providing the performance insights needed to resolve issues faster."},
-		"grafana-adaptiveprofiles-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 4, Text: "Adaptive Profiles", SubTitle: "Analyzes application profiles to pinpoint the root cause of performance issues and accelerate resolution."},
-		"grafana-attributions-app":         {SectionID: navtree.NavIDCfg, Text: "Attributions"},
-		"grafana-logvolumeexplorer-app":    {SectionID: navtree.NavIDCfg, Text: "Log Volume Explorer"},
+		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1},
+		"grafana-adaptivelogs-app":         {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 2},
+		"grafana-adaptivetraces-app":       {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 3},
+		"grafana-adaptiveprofiles-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 4},
+		"grafana-cmab-app":                 {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightCMAB, Icon: "cmab-logo", IsNew: true},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
 		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Performance"},
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
 		s.navigationAppConfig["grafana-advisor-app"] = NavigationAppConfig{
 			SectionID: navtree.NavIDCfg,

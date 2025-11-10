@@ -59,12 +59,11 @@ func runTestSearchBackendBuildIndex(t *testing.T, backend resource.SearchBackend
 	}
 
 	// Get the index should return nil if the index does not exist
-	index, err := backend.GetIndex(ctx, ns)
-	require.NoError(t, err)
+	index := backend.GetIndex(ns)
 	require.Nil(t, index)
 
 	// Build the index
-	index, err = backend.BuildIndex(ctx, ns, 0, nil, "test", func(index resource.ResourceIndex) (int64, error) {
+	index, err := backend.BuildIndex(ctx, ns, 0, nil, "test", func(index resource.ResourceIndex) (int64, error) {
 		// Write a test document
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
@@ -91,8 +90,7 @@ func runTestSearchBackendBuildIndex(t *testing.T, backend resource.SearchBackend
 	require.NotNil(t, index)
 
 	// Get the index should now return the index
-	index, err = backend.GetIndex(ctx, ns)
-	require.NoError(t, err)
+	index = backend.GetIndex(ns)
 	require.NotNil(t, index)
 }
 
@@ -164,14 +162,18 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 					Group:     ns.Group,
 					Resource:  ns.Resource,
 				},
+				Fields: []*resourcepb.Requirement{{
+					Key:      "tags",
+					Operator: "=",
+					Values:   []string{"tag3"},
+				}},
 			},
 			Fields: []string{"title", "folder", "tags"},
-			Query:  "tag3",
 			Limit:  10,
 		}, nil)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		require.Equal(t, int64(1), resp.TotalHits) // Only doc3 should have tag3 now
+		require.Equal(t, int64(1), resp.TotalHits) // Only doc2 should have tag3 now
 
 		// Search for Document
 		resp, err = index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{

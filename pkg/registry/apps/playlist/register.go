@@ -44,6 +44,7 @@ func RegisterAppInstaller(
 		service: p,
 	}
 	specificConfig := any(&playlistapp.PlaylistConfig{
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		EnableReconcilers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsReconciler),
 	})
 	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, playlistapp.New)
@@ -64,11 +65,7 @@ func RegisterAppInstaller(
 
 // GetLegacyStorage returns the legacy storage for the playlist app.
 func (p *PlaylistAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
-	gvr := schema.GroupVersionResource{
-		Group:    playlistv0alpha1.PlaylistKind().Group(),
-		Version:  playlistv0alpha1.PlaylistKind().Version(),
-		Resource: playlistv0alpha1.PlaylistKind().Plural(),
-	}
+	gvr := playlistv0alpha1.PlaylistKind().GroupVersionResource()
 	if requested.String() != gvr.String() {
 		return nil
 	}

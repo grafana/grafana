@@ -1,16 +1,9 @@
-import { Page, Locator } from '@playwright/test';
-
 import { test, expect } from '@grafana/plugin-e2e';
 
 import testDashboard from '../dashboards/AdHocFilterTest.json';
+import { getCell } from '../panels-suite/table-utils';
 
-// Helper function to get a specific cell in a table
-const getCell = async (loc: Page | Locator, rowIdx: number, colIdx: number) =>
-  loc
-    .getByRole('row')
-    .nth(rowIdx)
-    .getByRole(rowIdx === 0 ? 'columnheader' : 'gridcell')
-    .nth(colIdx);
+const fixture = require('../fixtures/prometheus-response.json');
 
 test.describe(
   'Dashboard with Table powered by Prometheus data source',
@@ -46,61 +39,90 @@ test.describe(
       gotoDashboardPage,
       selectors,
     }) => {
-      // Handle query and query_range API calls
+      // Handle query and query_range API calls. Ideally, this would instead be directly tested against gdev-prometheus.
       await page.route(/\/api\/ds\/query/, async (route) => {
+        const response = JSON.parse(JSON.stringify(fixture));
+
+        // This simulates the behavior of prometheus applying a filter and removing dataframes from the response where
+        // the label matches the selected filter. We check for either the slice being applied inline into the prometheus
+        // query or the adhoc filter being present in the request body of prometheus applying that filter and removing
+        // dataframes from the response.
+        const postData = route.request().postData();
+        const match =
+          postData?.match(/{slice=\\\"([\w_]+)\\\"}/) ??
+          postData?.match(/"adhocFilters":\[{"key":"slice","operator":"equals","value":"([\w_]+)"}\]/);
+        if (match) {
+          response.results.A.frames = response.results.A.frames.filter((frame) =>
+            frame.schema.fields.every((field) => !field.labels || field.labels.slice === match[1])
+          );
+        }
+
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify(require('../fixtures/prometheus-response.json')),
+          body: JSON.stringify(response),
         });
       });
 
       const dashboardPage = await gotoDashboardPage({ uid: dashboardUID });
 
-      const panel = dashboardPage.getByGrafanaSelector(
+      let panel = dashboardPage.getByGrafanaSelector(
         selectors.components.Panels.Panel.title('Table powered by Prometheus')
       );
-      await expect(panel).toBeVisible();
+      await expect(panel, 'panel is rendered').toBeVisible();
 
       // Wait for the table to load completely
-      await expect(panel.locator('.rdg')).toBeVisible();
+      const table = panel.locator('.rdg');
+      await expect(table, 'table is rendered').toBeVisible();
 
-      // Get the first data cell in the third column (row 1, column 2)
-      const labelValueCell = await getCell(panel, 1, 1);
-      await expect(labelValueCell).toBeVisible();
+      const firstValue = (await getCell(table, 1, 1).textContent())!;
+      const secondValue = (await getCell(table, 2, 1).textContent())!;
+      expect(firstValue, `first cell is "${firstValue}"`).toBeTruthy();
+      expect(secondValue, `second cell is "${secondValue}"`).toBeTruthy();
+      expect(firstValue, 'first and second cell values are different').not.toBe(secondValue);
 
-      // Get the cell value before clicking the filter button
-      const labelValue = await labelValueCell.textContent();
-      expect(labelValue).toBeTruthy();
+      async function performTest(labelValue: string) {
+        // Confirm both cells are rendered before we proceed
+        const otherValue = labelValue === firstValue ? secondValue : firstValue;
+        await expect(table.getByText(labelValue), `"${labelValue}" is rendered`).toContainText(labelValue);
+        await expect(table.getByText(otherValue), `"${otherValue}" is rendered`).toContainText(otherValue);
 
-      // Hover over the first cell to trigger the appearance of filter actions
-      await labelValueCell.hover();
+        // click the "Filter for value" button on the cell with the specified labelValue
+        await table.getByText(labelValue).hover();
+        table.getByText(labelValue).getByRole('button', { name: 'Filter for value' }).click();
 
-      // Check if the "Filter for value" button appears on hover
-      const filterForValueButton = labelValueCell.getByRole('button', { name: 'Filter for value' });
-      await expect(filterForValueButton).toBeVisible();
+        // Look for submenu items that contain the filtered value
+        // The adhoc filter should appear as a filter chip or within the variable controls
+        const submenuItems = dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItem);
+        await expect(submenuItems.filter({ hasText: labelValue }), `submenu contains "${labelValue}"`).toBeVisible();
+        await expect(
+          submenuItems.filter({ hasText: otherValue }),
+          `submenu does not contain "${otherValue}"`
+        ).toBeHidden();
 
-      // Click on the "Filter for value" button
-      await filterForValueButton.click();
+        // The URL parameter should contain the filter in format like: var-PromAdHoc=["columnName","=","value"]
+        const currentUrl = page.url();
+        const urlParams = new URLSearchParams(new URL(currentUrl).search);
+        const promAdHocParam = urlParams.get('var-PromAdHoc');
+        expect(promAdHocParam, `url contains "${labelValue}"`).toContain(labelValue);
+        expect(promAdHocParam, `url does not contain "${otherValue}"`).not.toContain(otherValue);
 
-      // Check if the adhoc filter appears in the dashboard submenu
-      const submenuItems = dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItem);
-      await expect(submenuItems.first()).toBeVisible();
+        // finally, let's check that the table was updated and that the value was filtered out when the query was re-run
+        await expect(table.getByText(labelValue), `"${labelValue}" is still visible`).toHaveText(labelValue);
+        await expect(table.getByText(otherValue), `"${otherValue}" is filtered out`).toBeHidden();
 
-      // Look for submenu items that contain the filtered value
-      // The adhoc filter should appear as a filter chip or within the variable controls
-      const hasFilterValue = await submenuItems.filter({ hasText: labelValue! }).count();
-      expect(hasFilterValue).toBeGreaterThan(0);
+        // Remove the adhoc filter by clicking the submenu item again
+        const filterChip = submenuItems.filter({ hasText: labelValue });
+        await filterChip.getByLabel(/Remove filter with key/).click();
+        await page.click('body', { position: { x: 0, y: 0 } }); // click outside to close the open menu from ad-hoc filters
 
-      // Check if the URL contains the var-PromAdHoc parameter with the filtered value
-      const currentUrl = page.url();
-      expect(currentUrl).toContain('var-PromAdHoc');
+        // the "first" and "second" cells locators don't work here for some reason.
+        await expect(table.getByText(labelValue), `"${labelValue}" is still rendered`).toContainText(labelValue);
+        await expect(table.getByText(otherValue), `"${otherValue}" is rendered again`).toContainText(otherValue);
+      }
 
-      // The URL parameter should contain the filter in format like: var-PromAdHoc=["columnName","=","value"]
-      const urlParams = new URLSearchParams(new URL(currentUrl).search);
-      const promAdHocParam = urlParams.get('var-PromAdHoc');
-      expect(promAdHocParam).toBeTruthy();
-      expect(promAdHocParam).toContain(labelValue!);
+      await performTest(firstValue);
+      await performTest(secondValue);
     });
   }
 );

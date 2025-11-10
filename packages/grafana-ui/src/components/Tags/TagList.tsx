@@ -73,6 +73,11 @@ const TagListSkeleton: SkeletonComponent = ({ rootProps }) => {
   );
 };
 
+/**
+ * List of tags with predefined margins and positioning.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-taglist--docs
+ */
 export const TagList = attachSkeleton(TagListComponent, TagListSkeleton);
 
 const getSkeletonStyles = (theme: GrafanaTheme2) => ({
