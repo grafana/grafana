@@ -204,7 +204,7 @@ const DropDownMenu = ({ links }: { links: SpanLinkModel[] }) => {
         className={styles}
         aria-label={t('explore.drop-down-menu.aria-label-links', 'Links')}
       >
-        <Trans i18nKey="explore.drop-down-menu.aria-label-links">Links</Trans>
+        <Trans i18nKey="explore.drop-down-menu.links">Links</Trans>
       </Button>
     </Dropdown>
   );
