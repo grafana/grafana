@@ -401,8 +401,8 @@ func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
 
 // RouteExportFromManagedRoute creates a definitions.RouteExport DTO from legacy_storage.ManagedRoute.
 func RouteExportFromManagedRoute(route *legacy_storage.ManagedRoute) *definitions.RouteExport {
-	amRoute := route.AsAMRoute()
-	export := RouteExportFromRoute(&amRoute)
+	apiRoute := route.AsRoute()
+	export := RouteExportFromRoute(&apiRoute)
 	if route.Name == legacy_storage.UserDefinedRoutingTreeName {
 		export.Name = nil // Functionally this shouldn't matter, aesthetically this prefers an empty name over "user-defined".
 	} else {

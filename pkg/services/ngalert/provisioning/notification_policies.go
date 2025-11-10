@@ -277,7 +277,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 	if err != nil {
 		return definitions.Route{}, "", err
 	}
-	return r.AsAMRoute(), r.Version, nil
+	return r.AsRoute(), r.Version, nil
 }
 
 // TODO: Remove this method once the all callers support named routes.
@@ -286,7 +286,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	if err != nil {
 		return definitions.Route{}, "", err
 	}
-	return r.AsAMRoute(), r.Version, nil
+	return r.AsRoute(), r.Version, nil
 }
 
 // TODO: Remove this method once the all callers support named routes.

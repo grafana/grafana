@@ -36,7 +36,7 @@ type ManagedRoute struct {
 	Provenance models.Provenance
 }
 
-func (r *ManagedRoute) AsAMRoute() definition.Route {
+func (r *ManagedRoute) AsRoute() definition.Route {
 	// Only need to copy the fields that are valid for a root route.
 	return definition.Route{
 		Receiver:       r.Receiver,
@@ -50,7 +50,7 @@ func (r *ManagedRoute) AsAMRoute() definition.Route {
 }
 
 func (r *ManagedRoute) GeneratedSubRoute() *definition.Route {
-	amRoute := r.AsAMRoute()
+	amRoute := r.AsRoute()
 
 	// It's important that the generated sub-route is fully defined so that they will never rely on the values of the root.
 	defaultOpts := dispatch.DefaultRouteOpts
@@ -190,7 +190,7 @@ func (rev *ConfigRevision) CreateManagedRoute(name string, subtree definitions.R
 	}
 
 	managedRoute := NewManagedRoute(name, &subtree)
-	amRoute := managedRoute.AsAMRoute()
+	amRoute := managedRoute.AsRoute()
 
 	err := rev.ValidateRoute(amRoute)
 	if err != nil {
@@ -215,7 +215,7 @@ func (rev *ConfigRevision) UpdateNamedRoute(name string, subtree definitions.Rou
 	}
 
 	managedRoute := NewManagedRoute(name, &subtree)
-	amRoute := managedRoute.AsAMRoute()
+	amRoute := managedRoute.AsRoute()
 
 	err := rev.ValidateRoute(amRoute)
 	if err != nil {
