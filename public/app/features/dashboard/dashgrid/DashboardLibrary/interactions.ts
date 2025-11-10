@@ -18,7 +18,8 @@ type SourceEntryPoint = 'datasource_page' | TemplateDashboardSourceEntryPoint | 
 type EventLocation =
   | 'empty_dashboard'
   | 'suggested_dashboards_modal_provisioned_tab'
-  | 'suggested_dashboards_modal_community_tab';
+  | 'suggested_dashboards_modal_community_tab'
+  | 'browse_dashboards_page';
 
 export const DashboardLibraryInteractions = {
   loaded: (properties: {

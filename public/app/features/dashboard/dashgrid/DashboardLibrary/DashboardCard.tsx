@@ -175,7 +175,7 @@ function getStyles(theme: GrafanaTheme2) {
     thumbnail: css({
       width: '100%',
       height: '100%',
-      objectFit: 'cover',
+      objectFit: 'contain',
     }),
     logoContainer: css({
       gridArea: 'Thumbnail',
@@ -215,12 +215,11 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     description: css({
       display: '-webkit-box',
-      WebkitLineClamp: 1,
+      WebkitLineClamp: 2,
       WebkitBoxOrient: 'vertical',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       margin: 0,
-      height: `calc(${theme.typography.body.lineHeight} * 1em)`, // Fixed height for 1 line
     }),
     actionsContainer: css({
       marginTop: 0,

@@ -12,10 +12,7 @@ import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { DashboardCard } from './DashboardCard';
 import { DashboardLibraryInteractions, TemplateDashboardSourceEntryPoint } from './interactions';
-import { GnetDashboard, Link } from './types';
-
-const TEMPLATE_DASHBOARD_COMMUNITY_UIDS = [24279, 24280, 24281, 24282];
-const DEV_TEMPLATE_DASHBOARD_COMMUNITY_UIDS = [71, 72, 73, 74];
+import { GnetDashboard, GnetDashboardsDTO, Link } from './types';
 
 const SourceEntryPointMap: Record<string, TemplateDashboardSourceEntryPoint> = {
   quickAdd: 'quick_add_button',
@@ -45,6 +42,7 @@ export const TemplateDashboardModal = () => {
       libraryItemId: String(dashboard.id),
       libraryItemTitle: dashboard.name,
       sourceEntryPoint,
+      eventLocation: 'browse_dashboards_page',
     });
 
     const params = new URLSearchParams({
@@ -66,20 +64,22 @@ export const TemplateDashboardModal = () => {
     if (!isOpen) {
       return [];
     }
-    const dashboards = await Promise.all(
-      [...TEMPLATE_DASHBOARD_COMMUNITY_UIDS, ...DEV_TEMPLATE_DASHBOARD_COMMUNITY_UIDS].map(async (uid) => {
-        try {
-          return await getBackendSrv().get(`/api/gnet/dashboards/${uid}`, undefined, undefined, {
-            showErrorAlert: false,
-          });
-        } catch (error) {
-          console.error('Error loading template dashboard', uid, error);
-          return null;
-        }
-      })
-    );
 
-    return dashboards;
+    try {
+      const response = await getBackendSrv().get<GnetDashboardsDTO>(
+        `/api/gnet/dashboards?orgSlug=raintank&categorySlug=templates&includeScreenshots=true`,
+        undefined,
+        undefined,
+        {
+          showErrorAlert: false,
+        }
+      );
+
+      return response.items;
+    } catch (error) {
+      console.error('Error loading template dashboards ', error);
+      return [];
+    }
   }, [isOpen]);
 
   const dashboards = useMemo(
@@ -94,6 +94,7 @@ export const TemplateDashboardModal = () => {
         contentKinds: ['template_dashboard'],
         datasourceTypes: [String(testDataSource?.type)],
         sourceEntryPoint: SourceEntryPointMap[entryPoint] || 'unknown',
+        eventLocation: 'browse_dashboards_page',
       });
     }
   }, [isOpen, dashboards, entryPoint, testDataSource?.type, loading]);
