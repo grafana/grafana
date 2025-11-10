@@ -13,7 +13,7 @@ export type MutableField<T = any> = Field<T>;
 /** @deprecated */
 type MutableVectorCreator = (buffer?: unknown[]) => unknown[];
 
-type Parser = (v: string) => any;
+type Parser = (v: string) => unknown;
 
 export const MISSING_VALUE = undefined; // Treated as connected in new graph panel
 
@@ -224,7 +224,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
    */
   add(value: T): void {
     // Will add one value for every field
-    const obj = value as any;
+    const obj: any = value;
     for (const field of this.fields) {
       let val = obj[field.name];
 
