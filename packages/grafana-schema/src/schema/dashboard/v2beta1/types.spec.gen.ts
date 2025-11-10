@@ -18,6 +18,8 @@ export interface AnnotationQuerySpec {
 	name: string;
 	builtIn?: boolean;
 	filter?: AnnotationPanelFilter;
+	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+	placement?: "inControlsMenu";
 	// Catch-all field for datasource-specific properties. Should not be available in as code tooling.
 	legacyOptions?: Record<string, any>;
 }
@@ -29,6 +31,7 @@ export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
 	iconColor: "",
 	name: "",
 	builtIn: false,
+	placement: AnnotationQueryPlacement,
 });
 
 export interface DataQueryKind {
@@ -61,6 +64,10 @@ export const defaultAnnotationPanelFilter = (): AnnotationPanelFilter => ({
 	exclude: false,
 	ids: [],
 });
+
+// Annotation Query placement. Defines where the annotation query should be displayed.
+// - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+export const AnnotationQueryPlacement = "inControlsMenu";
 
 // "Off" for no shared crosshair or tooltip (default).
 // "Crosshair" for shared crosshair.
@@ -219,6 +226,7 @@ export interface QueryOptionsSpec {
 	interval?: string;
 	cacheTimeout?: string;
 	hideTimeOverride?: boolean;
+	timeCompare?: string;
 }
 
 export const defaultQueryOptionsSpec = (): QueryOptionsSpec => ({
@@ -976,6 +984,7 @@ export const defaultDashboardLink = (): DashboardLink => ({
 	targetBlank: false,
 	includeVars: false,
 	keepTime: false,
+	placement: DashboardLinkPlacement,
 });
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
@@ -1427,6 +1436,7 @@ export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
 	key: "",
 	operator: "",
 	value: "",
+	origin: FilterOrigin,
 });
 
 // Determine the origin of the adhoc variable filter

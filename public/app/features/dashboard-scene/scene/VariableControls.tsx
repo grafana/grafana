@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { VariableHide, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import {
   sceneGraph,
   useSceneObjectState,
@@ -14,6 +15,7 @@ import {
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
+import { AddVariableButton } from './VariableControlsAddButton';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
@@ -25,6 +27,7 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
         .map((variable) => (
           <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
         ))}
+      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
     </>
   );
 }
@@ -53,10 +56,16 @@ export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectP
     }
 
     // Ignore click if it's inside the value control
-    if (evt.target instanceof Element && !evt.target.closest(`label`)) {
-      // Prevent clearing selection when clicking inside value
-      evt.stopPropagation();
-      return;
+    if (evt.target instanceof Element) {
+      // multi variable options contain label element so we need a more specific
+      //  condition to target variable label to prevent edit pane selection on option click
+      const forAttribute = evt.target.closest('label[for]')?.getAttribute('for');
+
+      if (!(forAttribute === `var-${variable.state.key || ''}`)) {
+        // Prevent clearing selection when clicking inside value
+        evt.stopPropagation();
+        return;
+      }
     }
 
     if (isSelectable && onSelect) {
@@ -157,14 +166,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
       border: 'none',
       background: 'transparent',
       paddingRight: theme.spacing(0.5),
+      height: theme.spacing(2),
     },
   }),
   switchLabel: css({
-    marginTop: theme.spacing(0.5),
-  }),
-  labelWrapper: css({
-    display: 'flex',
-    alignItems: 'center',
+    marginTop: 0,
+    marginBottom: 0,
   }),
   labelSelectable: css({
     cursor: 'pointer',

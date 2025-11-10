@@ -158,7 +158,7 @@ module.exports = [
       '@grafana/no-border-radius-literal': 'error',
       '@grafana/no-unreduced-motion': 'error',
       '@grafana/no-restricted-img-srcs': 'error',
-      'react-prefer-function-component/react-prefer-function-component': 'error',
+      'react-prefer-function-component/react-prefer-function-component': ['error', { allowJsxUtilityClass: true }],
       'react/prop-types': 'off',
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
       'react/no-unknown-property': ['error', { ignore: ['css'] }],
@@ -275,10 +275,11 @@ module.exports = [
   {
     // No NPM package should import from @grafana/*/internal because it does not exist
     // outside of this repo - they're not published to NPM.
-    name: 'grafana/packages-overrides',
+    name: 'grafana/packages',
     files: ['packages/**/*.{ts,tsx}'],
     ignores: [],
     rules: {
+      'import/no-extraneous-dependencies': ['error', { includeInternal: true }],
       'no-restricted-imports': [
         'error',
         withBaseRestrictedImportsConfig({
@@ -485,6 +486,25 @@ module.exports = [
     },
   },
 
+  // dataviz prefers to use `clsx` over `cx` to compose classes as a rule for performance reasons
+  {
+    files: ['public/app/plugins/panel/state-timeline/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['@emotion/css'],
+              importNames: ['cx'],
+              message: 'Do not use "cx" from @emotion/css. Instead, use `clsx` and compose together only strings.',
+            },
+          ],
+        }),
+      ],
+    },
+  },
+
   // Old betterer rules config:
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
@@ -580,4 +600,17 @@ module.exports = [
       ],
     },
   },
+
+  // {
+  //   name: 'grafana/plugin-external-import-paths',
+  //   files: [
+  //     'public/app/plugins/panel/histogram/**/*.{ts,tsx}',
+  //   ],
+  //   plugins: {
+  //     '@grafana': grafanaPlugin,
+  //   },
+  //   rules: {
+  //     '@grafana/no-plugin-external-import-paths': 'error',
+  //   },
+  // },
 ];

@@ -454,10 +454,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/DashboardVersionMeta"
-              },
-              "type": "array"
+              "$ref": "#/components/schemas/DashboardVersionResponseMeta"
             }
           }
         },
@@ -1404,6 +1401,14 @@
           }
         },
         "description": "InternalServerPublicError is a general error indicating something went wrong internally."
+      },
+      "interpolateDashboardResponse": {
+        "content": {
+          "application/json": {
+            "schema": {}
+          }
+        },
+        "description": "(empty)"
       },
       "jwksResponse": {
         "content": {
@@ -3236,6 +3241,10 @@
             "description": "Name of annotation.",
             "type": "string"
           },
+          "placement": {
+            "description": "Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.",
+            "type": "string"
+          },
           "target": {
             "$ref": "#/components/schemas/AnnotationTarget"
           },
@@ -4794,6 +4803,20 @@
           "version": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "DashboardVersionResponseMeta": {
+        "properties": {
+          "continueToken": {
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardVersionMeta"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -11499,6 +11522,9 @@
           "teamUID": {
             "type": "string"
           },
+          "uid": {
+            "type": "string"
+          },
           "userId": {
             "format": "int64",
             "type": "integer"
@@ -17737,6 +17763,32 @@
           }
         },
         "summary": "Import dashboard.",
+        "tags": [
+          "dashboards"
+        ]
+      }
+    },
+    "/dashboards/interpolate": {
+      "post": {
+        "operationId": "interpolateDashboard",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/interpolateDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/unprocessableEntityError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Interpolate dashboard. This is an experimental endpoint under dashboardLibrary FF and is subject to change.",
         "tags": [
           "dashboards"
         ]

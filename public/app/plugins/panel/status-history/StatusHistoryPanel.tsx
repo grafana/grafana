@@ -19,10 +19,12 @@ import {
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
 
-import { StateTimelineTooltip2 } from '../state-timeline/StateTimelineTooltip2';
-import { containerStyles, usePagination } from '../state-timeline/utils';
+import { StateTimelineTooltip } from '../state-timeline/StateTimelineTooltip';
+import { usePagination } from '../state-timeline/hooks';
+import { containerStyles } from '../state-timeline/styles';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 import { getTimezones } from '../timeseries/utils';
 
 import { Options } from './panelcfg.gen';
@@ -91,7 +93,7 @@ export const StatusHistoryPanel = ({
   }
 
   return (
-    <div className={containerStyles.container}>
+    <div className={containerStyles}>
       <TimelineChart
         theme={theme}
         frames={paginatedFrames}
@@ -107,6 +109,7 @@ export const StatusHistoryPanel = ({
         replaceVariables={replaceVariables}
         dataLinkPostProcessor={dataLinkPostProcessor}
         cursorSync={cursorSync}
+        annotationLanes={options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined}
       >
         {(builder, alignedFrame) => {
           return (
@@ -141,7 +144,7 @@ export const StatusHistoryPanel = ({
                     };
 
                     return (
-                      <StateTimelineTooltip2
+                      <StateTimelineTooltip
                         series={alignedFrame}
                         dataIdxs={dataIdxs}
                         seriesIdx={seriesIdx}
@@ -163,6 +166,8 @@ export const StatusHistoryPanel = ({
               )}
               {alignedFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
                 <AnnotationsPlugin2
+                  replaceVariables={replaceVariables}
+                  multiLane={options.annotations?.multiLane}
                   annotations={data.annotations ?? []}
                   config={builder}
                   timeZone={timeZone}

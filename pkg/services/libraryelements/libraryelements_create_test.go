@@ -14,13 +14,13 @@ import (
 func TestIntegration_CreateLibraryElement(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	scenarioWithPanel(t, "When an admin tries to create a library panel that already exists, it should fail",
+	scenarioWithPanel(t, "When an admin tries to create a library panel with the same name, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
 			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
-			require.Equal(t, 400, resp.Status())
+			require.Equal(t, 200, resp.Status())
 		})
 
 	scenarioWithPanel(t, "When an admin tries to create a library panel that does not exists, it should succeed",

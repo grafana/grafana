@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type ReceiverClient struct {
@@ -74,24 +73,6 @@ func (c *ReceiverClient) Update(ctx context.Context, obj *Receiver, opts resourc
 
 func (c *ReceiverClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*Receiver, error) {
 	return c.client.Patch(ctx, identifier, req, opts)
-}
-
-func (c *ReceiverClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus ReceiverStatus, opts resource.UpdateOptions) (*Receiver, error) {
-	return c.client.Update(ctx, &Receiver{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       ReceiverKind().Kind(),
-			APIVersion: GroupVersion.Identifier(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			ResourceVersion: opts.ResourceVersion,
-			Namespace:       identifier.Namespace,
-			Name:            identifier.Name,
-		},
-		Status: newStatus,
-	}, resource.UpdateOptions{
-		Subresource:     "status",
-		ResourceVersion: opts.ResourceVersion,
-	})
 }
 
 func (c *ReceiverClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {

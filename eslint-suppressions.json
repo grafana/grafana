@@ -420,11 +420,6 @@
       "count": 1
     }
   },
-  "packages/grafana-prometheus/src/querybuilder/QueryPattern.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-prometheus/src/querybuilder/components/LabelFilterItem.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 4
@@ -544,11 +539,6 @@
       "count": 2
     }
   },
-  "packages/grafana-sql/src/components/ErrorBoundary.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-sql/src/components/configuration/ConnectionLimits.tsx": {
     "no-restricted-syntax": {
       "count": 2
@@ -579,19 +569,14 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/BigValue/BigValue.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/BigValue/BigValueLayout.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Cascader/Cascader.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
+    }
+  },
+  "packages/grafana-ui/src/components/Cascader/styles.ts": {
+    "@grafana/no-unreduced-motion": {
+      "count": 17
     }
   },
   "packages/grafana-ui/src/components/ColorPicker/ColorPicker.tsx": {
@@ -608,14 +593,6 @@
     }
   },
   "packages/grafana-ui/src/components/Combobox/Combobox.story.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 5
-    }
-  },
-  "packages/grafana-ui/src/components/Combobox/MultiCombobox.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    },
     "react-hooks/rules-of-hooks": {
       "count": 5
     }
@@ -676,16 +653,6 @@
       "count": 3
     }
   },
-  "packages/grafana-ui/src/components/ErrorBoundary/ErrorBoundary.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/FileDropzone/FileDropzone.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/FormField/FormField.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -694,11 +661,6 @@
   "packages/grafana-ui/src/components/FormLabel/FormLabel.tsx": {
     "no-restricted-syntax": {
       "count": 3
-    }
-  },
-  "packages/grafana-ui/src/components/Forms/Checkbox.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Forms/Form.story.tsx": {
@@ -790,26 +752,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/Layout/Stack/Stack.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/List/AbstractList.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/List/InlineList.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/List/List.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/MatchersUI/FieldValueMatcher.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -821,11 +763,6 @@
     }
   },
   "packages/grafana-ui/src/components/Menu/Menu.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Modal/Modal.story.tsx": {
     "no-restricted-syntax": {
       "count": 1
     }
@@ -969,11 +906,6 @@
   },
   "packages/grafana-ui/src/components/Table/Table.story.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Table/TableCellInspector.tsx": {
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },
@@ -1234,21 +1166,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/AccessControl/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
-  "public/app/core/components/AppChrome/History/HistoryWrapper.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/core/components/AppNotifications/StoredNotificationItem.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/core/components/DynamicImports/SafeDynamicImport.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -1291,11 +1208,6 @@
     }
   },
   "public/app/core/components/Login/PasswordlessLoginForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/core/components/NavLandingPage/NavLandingPageCard.tsx": {
     "no-restricted-syntax": {
       "count": 1
     }
@@ -1348,17 +1260,7 @@
       "count": 1
     }
   },
-  "public/app/core/components/Select/ServiceAccountPicker.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/core/components/Select/TeamPicker.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/core/components/Select/UserPicker.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
@@ -1410,11 +1312,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "public/app/core/components/TimelineChart/TimelineChart.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/core/config.ts": {
@@ -1517,11 +1414,6 @@
       "count": 1
     }
   },
-  "public/app/core/utils/richHistory.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 3
-    }
-  },
   "public/app/core/utils/ticks.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
@@ -1550,11 +1442,6 @@
       "count": 1
     }
   },
-  "public/app/features/admin/ServerStatsCard.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/admin/UserCreatePage.tsx": {
     "no-restricted-syntax": {
       "count": 4
@@ -1563,9 +1450,6 @@
   "public/app/features/admin/UserLdapSyncInfo.tsx": {
     "no-restricted-syntax": {
       "count": 3
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/admin/UserOrgs.tsx": {
@@ -1573,15 +1457,10 @@
       "count": 2
     },
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 3
-    }
-  },
-  "public/app/features/admin/UserProfile.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
-  "public/app/features/admin/UserSessions.tsx": {
+  "public/app/features/admin/UserProfile.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
@@ -1634,16 +1513,6 @@
       "count": 2
     }
   },
-  "public/app/features/alerting/unified/AlertsFolderView.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/RedirectToRuleViewer.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/AlertLabelDropdown.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -1680,11 +1549,6 @@
     }
   },
   "public/app/features/alerting/unified/components/contact-points/components/ContactPointsFilter.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/contact-points/utils.ts": {
     "no-restricted-syntax": {
       "count": 1
     }
@@ -1755,11 +1619,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/receivers/form/GenerateAlertDataModal.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/receivers/form/GrafanaCommonChannelSettings.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -1812,11 +1671,6 @@
       "count": 2
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/DashboardPicker.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/ExpressionEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -1844,9 +1698,6 @@
   },
   "public/app/features/alerting/unified/components/rule-editor/QueryRows.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "no-restricted-syntax": {
       "count": 1
     },
     "react-prefer-function-component/react-prefer-function-component": {
@@ -1893,11 +1744,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/rule-types/RuleType.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rules/Filter/RulesFilter.v1.tsx": {
     "no-restricted-syntax": {
       "count": 4
@@ -1919,11 +1765,6 @@
     }
   },
   "public/app/features/alerting/unified/components/rules/state-history/StateHistory.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/settings/AlertmanagerCard.tsx": {
     "no-restricted-syntax": {
       "count": 1
     }
@@ -1992,11 +1833,6 @@
   "public/app/features/alerting/unified/rule-editor/formDefaults.ts": {
     "no-restricted-syntax": {
       "count": 6
-    }
-  },
-  "public/app/features/alerting/unified/rule-list/FilterViewStatus.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/types/alerting.ts": {
@@ -2086,11 +1922,6 @@
       "count": 1
     }
   },
-  "public/app/features/auth-config/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/auth-config/utils/data.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2098,16 +1929,6 @@
   },
   "public/app/features/browse-dashboards/components/NewFolderForm.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/canvas/elements/notFound.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/canvas/elements/rectangle.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2141,26 +1962,6 @@
       "count": 1
     }
   },
-  "public/app/features/connections/components/ConnectionsRedirectNotice/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
-  "public/app/features/connections/tabs/ConnectData/CardGrid/CardGrid.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/connections/tabs/ConnectData/CardGrid/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
-  "public/app/features/connections/tabs/ConnectData/CategoryHeader/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/connections/tabs/ConnectData/ConnectData.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2172,21 +1973,6 @@
       "count": 2
     }
   },
-  "public/app/features/connections/tabs/ConnectData/NoAccessModal/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
-  "public/app/features/connections/tabs/ConnectData/Search/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
-  "public/app/features/connections/tabs/ConnectData/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/correlations/CorrelationsPage.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -2195,11 +1981,6 @@
   "public/app/features/correlations/Forms/ConfigureCorrelationBasicInfoForm.tsx": {
     "no-restricted-syntax": {
       "count": 2
-    }
-  },
-  "public/app/features/correlations/Forms/ConfigureCorrelationSourceForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "public/app/features/correlations/Forms/ConfigureCorrelationTargetForm.tsx": {
@@ -2220,11 +2001,6 @@
       "count": 4
     }
   },
-  "public/app/features/correlations/components/EmptyCorrelationsCTA.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/correlations/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -2235,21 +2011,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/conditional-rendering/conditions/ConditionalRenderingData.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/conditional-rendering/conditions/ConditionalRenderingTimeRangeSize.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/conditional-rendering/conditions/ConditionalRenderingVariable.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/edit-pane/DashboardEditPaneRenderer.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2258,11 +2019,6 @@
   "public/app/features/dashboard-scene/edit-pane/DashboardEditPaneSplitter.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 4
-    }
-  },
-  "public/app/features/dashboard-scene/edit-pane/DashboardEditableElement.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/edit-pane/DashboardOutline.tsx": {
@@ -2280,28 +2036,8 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/inspect/InspectDataTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/inspect/InspectJsonTab.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/inspect/InspectMetaDataTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/inspect/InspectQueryTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/inspect/InspectStatsTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2318,23 +2054,8 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataAlertingTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataPane.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataQueriesTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataTransformationsTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2346,11 +2067,6 @@
   "public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.tsx": {
     "no-restricted-syntax": {
       "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/saving/SaveDashboardAsForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 4
     }
   },
   "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx": {
@@ -2366,21 +2082,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/AddLibraryPanelDrawer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/CustomTimeRangeCompare.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/DashboardDataLayerSet.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2388,11 +2089,6 @@
   },
   "public/app/features/dashboard-scene/scene/PanelSearchLayout.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/ViewPanelScene.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2455,11 +2151,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/serialization/custom-variables/SnapshotVariable.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/serialization/transformSceneToSaveModel.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -2499,11 +2190,6 @@
     },
     "react-hooks/rules-of-hooks": {
       "count": 4
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/VariableSetEditableElement.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/settings/variables/components/AdHocVariableForm.tsx": {
@@ -2613,11 +2299,6 @@
       "count": 3
     }
   },
-  "public/app/features/dashboard/components/AddLibraryPanelWidget/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/AnnotationSettings/AnnotationSettingsEdit.tsx": {
     "no-restricted-syntax": {
       "count": 7
@@ -2636,18 +2317,8 @@
       "count": 7
     }
   },
-  "public/app/features/dashboard/components/DashExportModal/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/DashNav/index.ts": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -2674,11 +2345,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/DashboardRow/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/DashboardSettings/AutoRefreshIntervals.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -2692,18 +2358,10 @@
   "public/app/features/dashboard/components/DashboardSettings/TimePickerSettings.tsx": {
     "no-restricted-syntax": {
       "count": 5
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/dashboard/components/DashboardSettings/VersionsSettings.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/DashboardSettings/index.ts": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -2890,11 +2548,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/TransformationsEditor/TransformationPicker.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/TransformationsEditor/TransformationsEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
@@ -2908,11 +2561,6 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/containers/DashboardPage.test.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2937,11 +2585,6 @@
   },
   "public/app/features/dashboard/containers/PublicDashboardPage.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/containers/SoloPanelPage.test.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2980,7 +2623,7 @@
       "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 17
+      "count": 16
     }
   },
   "public/app/features/dashboard/state/DashboardModel.repeat.test.ts": {
@@ -3055,11 +2698,6 @@
       "count": 2
     }
   },
-  "public/app/features/datasources/components/BasicSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "public/app/features/datasources/components/ButtonRow.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -3067,11 +2705,6 @@
   },
   "public/app/features/datasources/components/DataSourceLoadError.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/datasources/components/DataSourcePluginSettings.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -3087,19 +2720,6 @@
   },
   "public/app/features/datasources/components/DataSourceTypeCard.tsx": {
     "@grafana/no-aria-label-selectors": {
-      "count": 1
-    },
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/datasources/components/DataSourcesListCard.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/features/datasources/components/picker/DataSourceCard.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -3168,11 +2788,6 @@
       "count": 1
     }
   },
-  "public/app/features/dimensions/editors/ThresholdsEditor/thresholds.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dimensions/editors/URLPickerTab.tsx": {
     "no-restricted-syntax": {
       "count": 2
@@ -3195,7 +2810,7 @@
   },
   "public/app/features/explore/CorrelationHelper.tsx": {
     "no-restricted-syntax": {
-      "count": 3
+      "count": 2
     }
   },
   "public/app/features/explore/CorrelationTransformationAddModal.tsx": {
@@ -3204,11 +2819,6 @@
     }
   },
   "public/app/features/explore/Explore.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/ExploreTimeControls.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
@@ -3258,18 +2868,8 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TracePageHeader/SpanGraph/index.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/TracePageHeader/TracePageHeader.tsx": {
     "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TracePageHeader/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -3278,28 +2878,8 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanBarRow.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/SpanDetailLinkButtons.tsx": {
     "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetailRow.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanLinks.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanTreeOffset.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -3313,11 +2893,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/TimelineHeaderRow/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/TraceTimelineViewer/VirtualizedTraceView.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -3328,23 +2903,8 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/utils.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/common/SearchBarInput.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/demo/trace-generators.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/model/ddg/types.tsx": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -3373,11 +2933,6 @@
   },
   "public/app/features/explore/TraceView/components/utils/DraggableManager/demo/RegionDemo.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/utils/DraggableManager/demo/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -3417,11 +2972,6 @@
   "public/app/features/expressions/ExpressionDatasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
-    }
-  },
-  "public/app/features/expressions/ExpressionQueryEditor.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 4
     }
   },
   "public/app/features/expressions/guards.ts": {
@@ -3479,16 +3029,6 @@
       "count": 1
     }
   },
-  "public/app/features/invites/InviteeRow.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/invites/InviteesTable.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/invites/SignupInvited.tsx": {
     "no-restricted-syntax": {
       "count": 4
@@ -3497,11 +3037,6 @@
   "public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx": {
     "no-restricted-syntax": {
       "count": 2
-    }
-  },
-  "public/app/features/live/LiveConnectionWarning.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/live/centrifuge/LiveDataStream.ts": {
@@ -3534,14 +3069,6 @@
       "count": 1
     }
   },
-  "public/app/features/logs/utils.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "no-restricted-syntax": {
-      "count": 6
-    }
-  },
   "public/app/features/manage-dashboards/DashboardImportPage.tsx": {
     "no-restricted-syntax": {
       "count": 2
@@ -3568,11 +3095,6 @@
       "count": 1
     }
   },
-  "public/app/features/manage-dashboards/components/PublicDashboardListTable/PublicDashboardListTable.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/manage-dashboards/state/actions.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -3587,11 +3109,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 4
-    }
-  },
-  "public/app/features/migrate-to-cloud/api/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
     }
   },
   "public/app/features/migrate-to-cloud/cloud/MigrationTokenPane/CreateTokenModal.tsx": {
@@ -3644,11 +3161,6 @@
       "count": 1
     }
   },
-  "public/app/features/panel/components/PanelPluginError.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 3
-    }
-  },
   "public/app/features/panel/components/VizTypePicker/PanelTypeCard.tsx": {
     "@grafana/no-aria-label-selectors": {
       "count": 1
@@ -3657,11 +3169,6 @@
   "public/app/features/panel/panellinks/linkSuppliers.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/app/features/playlist/PlaylistCard.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
     }
   },
   "public/app/features/playlist/PlaylistForm.tsx": {
@@ -3684,11 +3191,6 @@
   },
   "public/app/features/plugins/admin/components/GetStartedWithPlugin/GetStartedWithDataSource.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/plugins/admin/components/GetStartedWithPlugin/index.ts": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -3778,39 +3280,9 @@
       "count": 3
     }
   },
-  "public/app/features/profile/UserOrganizations.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/profile/UserProfileEditForm.tsx": {
     "no-restricted-syntax": {
       "count": 3
-    }
-  },
-  "public/app/features/profile/UserSessions.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/profile/UserTeams.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/provisioning/Config/ConfigFormGithubCollapse.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/features/provisioning/File/FileHistoryPage.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/provisioning/File/FileStatusPage.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
     }
   },
   "public/app/features/provisioning/Shared/BranchValidationError.tsx": {
@@ -3949,11 +3421,6 @@
       "count": 1
     }
   },
-  "public/app/features/teams/TeamSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 4
-    }
-  },
   "public/app/features/teams/state/reducers.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -4019,11 +3486,6 @@
   },
   "public/app/features/transformers/editors/CalculateFieldTransformerEditor/WindowOptionsEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/transformers/editors/ConcatenateTransformerEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -4144,11 +3606,6 @@
       "count": 2
     }
   },
-  "public/app/features/variables/constant/ConstantVariableEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/constant/reducer.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -4228,16 +3685,8 @@
       "count": 1
     }
   },
-  "public/app/features/variables/pickers/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/pickers/shared/VariableInput.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -4365,11 +3814,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/azuremonitor/components/ArgQueryEditor/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/AppRegistrationCredentials.tsx": {
     "no-restricted-syntax": {
       "count": 5
@@ -4402,11 +3846,6 @@
   },
   "public/app/plugins/datasource/azuremonitor/components/LogsQueryEditor/AzureCheatSheet.tsx": {
     "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/components/LogsQueryEditor/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -4415,28 +3854,8 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/azuremonitor/components/QueryEditor/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/components/ResourceField/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/components/ResourcePicker/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/azuremonitor/components/TracesQueryEditor/Filters.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/components/TracesQueryEditor/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -4480,16 +3899,6 @@
   },
   "public/app/plugins/datasource/cloud-monitoring/components/Aggregation.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloud-monitoring/components/CloudMonitoringCheatSheet.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloud-monitoring/components/ConfigEditor/ConfigEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -4544,18 +3953,8 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/cloudwatch/components/QueryEditor/MetricsQueryEditor/SQLBuilderEditor/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/cloudwatch/components/shared/LogGroups/LegacyLogGroupNamesSelection.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/components/shared/MetricStatEditor/index.ts": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -4690,11 +4089,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/grafana-testdata-datasource/ConfigEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/grafana-testdata-datasource/QueryEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 3
@@ -4703,16 +4097,6 @@
       "count": 2
     },
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/grafana-testdata-datasource/TestInfoTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/grafana-testdata-datasource/components/CSVWaveEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -4980,11 +4364,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/loki/querybuilder/components/QueryPattern.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/loki/querybuilder/state.ts": {
     "no-restricted-syntax": {
       "count": 2
@@ -5158,11 +4537,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/annolist/AnnotationListItem.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/barchart/bars.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -5233,11 +4607,6 @@
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/debug/DebugPanel.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
@@ -5349,14 +4718,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/heatmap/HeatmapPanel.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/heatmap/migrations.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -5380,7 +4741,7 @@
   },
   "public/app/plugins/panel/heatmap/utils.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 17
+      "count": 16
     }
   },
   "public/app/plugins/panel/histogram/Histogram.tsx": {
@@ -5419,11 +4780,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/nodeGraph/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/nodeGraph/layout.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -5441,11 +4797,6 @@
   },
   "public/app/plugins/panel/stat/StatMigrations.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/stat/StatPanel.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
