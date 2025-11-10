@@ -383,8 +383,7 @@ type ConversionError struct {
     targetAPIVersion  string
 }
 
-// Data loss errors (NEW)
-// Detected when dashboard components (panels, queries, annotations, links, variables) 
+// Data loss errors are detected when dashboard components (panels, queries, annotations, links, variables) 
 // are lost during conversion
 type ConversionDataLossError struct {
     functionName     string  // Function where data loss was detected (e.g., "V1_to_V2alpha1")
