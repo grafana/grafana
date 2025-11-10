@@ -355,6 +355,9 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
 
               // Add the navigation item directly to the group folder
               addNavigationToTarget(rootNode.folders[group].suggestedNavigations);
+            } else {
+              // Empty string group means add to root folder
+              addNavigationToTarget(rootNode.suggestedNavigations);
             }
           });
         } else {
