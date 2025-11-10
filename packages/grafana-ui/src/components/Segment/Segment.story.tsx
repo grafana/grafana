@@ -8,6 +8,7 @@ import { SelectableValue } from '@grafana/data';
 import { useStyles2 } from '../..//themes/ThemeContext';
 import { InlineLabel } from '../Forms/InlineLabel';
 import { Icon } from '../Icon/Icon';
+import { Box } from '../Layout/Box/Box';
 
 import { Segment, SegmentSyncProps } from './Segment';
 import { SegmentSection } from './SegmentSection';
@@ -137,7 +138,9 @@ export const CustomOptionsAllowed = () => {
 };
 
 const CustomLabelComponent = ({ value }: SelectableValue<string | number>) => (
-  <InlineLabel>custom({String(value)})</InlineLabel>
+  <Box marginRight={0.5}>
+    <InlineLabel>custom({String(value)})</InlineLabel>
+  </Box>
 );
 
 export const CustomLabelField = () => {
