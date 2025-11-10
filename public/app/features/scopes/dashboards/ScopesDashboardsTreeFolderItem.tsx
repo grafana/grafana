@@ -29,42 +29,43 @@ export function ScopesDashboardsTreeFolderItem({
 
   return (
     <div className={styles.container} role="treeitem" aria-selected={folder.expanded}>
-      <button
-        className={styles.expand}
-        data-testid={`scopes-dashboards-${folder.title}-expand`}
-        aria-label={
-          folder.expanded ? t('scopes.dashboards.collapse', 'Collapse') : t('scopes.dashboards.expand', 'Expand')
-        }
-        onClick={() => {
-          onFolderUpdate(folderPath, !folder.expanded);
-        }}
-      >
-        <Icon name={!folder.expanded ? 'angle-right' : 'angle-down'} className={styles.icon} />
+      <div className={styles.row}>
+        <button
+          className={styles.expand}
+          data-testid={`scopes-dashboards-${folder.title}-expand`}
+          aria-label={
+            folder.expanded ? t('scopes.dashboards.collapse', 'Collapse') : t('scopes.dashboards.expand', 'Expand')
+          }
+          onClick={() => {
+            onFolderUpdate(folderPath, !folder.expanded);
+          }}
+        >
+          <Icon name={!folder.expanded ? 'angle-right' : 'angle-down'} className={styles.icon} />
 
-        <span className={styles.titleContainer}>
-          <span>{folder.title}</span>
+          <span className={styles.titleContainer}>{folder.title}</span>
+        </button>
 
-          {folder.isSubScope && (
-            <Tooltip
-              content={t('scopes.dashboards.exchange', 'Change root scope to {{scope}}', {
-                scope: folder.subScopeName || '',
-              })}
-            >
-              <IconButton
-                aria-label={t('scopes.dashboards.exchange', 'Change root scope')}
-                name="exchange-alt"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (folder.subScopeName && scopesSelectorService) {
-                    scopesSelectorService.changeScopes([folder.subScopeName]);
-                  }
-                }}
-              />
-            </Tooltip>
-          )}
-        </span>
-      </button>
+        {folder.isSubScope && (
+          <Tooltip
+            content={t('scopes.dashboards.exchange', 'Change root scope to {{scope}}', {
+              scope: folder.subScopeName || '',
+            })}
+          >
+            <IconButton
+              className={styles.exchangeIcon}
+              aria-label={t('scopes.dashboards.exchange', 'Change root scope')}
+              name="exchange-alt"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (folder.subScopeName && scopesSelectorService) {
+                  scopesSelectorService.changeScopes([folder.subScopeName]);
+                }
+              }}
+            />
+          </Tooltip>
+        )}
+      </div>
 
       {folder.expanded && (
         <div className={styles.children}>
@@ -82,6 +83,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       padding: theme.spacing(0.5, 0),
     }),
+    row: css({
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: theme.spacing(1),
+      width: '100%',
+    }),
     expand: css({
       alignItems: 'flex-start',
       background: 'none',
@@ -92,7 +99,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: 0,
       textAlign: 'left',
       wordBreak: 'break-word',
-      width: '100%',
+      flex: 1,
     }),
     icon: css({
       marginTop: theme.spacing(0.25),
@@ -100,17 +107,17 @@ const getStyles = (theme: GrafanaTheme2) => {
     titleContainer: css({
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'space-between',
       flex: 1,
-      gap: theme.spacing(1),
     }),
     exchangeIcon: css({
-      marginLeft: 'auto',
       opacity: 0.7,
       flexShrink: 0,
+      marginTop: theme.spacing(0.25),
     }),
     children: css({
-      paddingLeft: theme.spacing(3),
+      paddingLeft: theme.spacing(2),
+      marginLeft: theme.spacing(1),
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
     }),
   };
 };
