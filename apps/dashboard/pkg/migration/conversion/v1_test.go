@@ -19,7 +19,7 @@ func TestV1ConversionErrorHandling(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
+	SetTestDataSourceProvider(dsProvider)
 
 	t.Run("Convert_V1beta1_to_V2alpha1 sets status on conversion error", func(t *testing.T) {
 		// Create a dashboard that will cause conversion to fail

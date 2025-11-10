@@ -34,7 +34,7 @@ func TestConversionMatrixExist(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
+	SetTestDataSourceProvider(dsProvider)
 
 	versions := []metav1.Object{
 		&dashv0.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
@@ -87,7 +87,7 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
+	SetTestDataSourceProvider(dsProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
@@ -247,7 +247,7 @@ func TestMigratedDashboardsConversion(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
+	SetTestDataSourceProvider(dsProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
@@ -382,7 +382,7 @@ func TestConversionMetrics(t *testing.T) {
 	// Initialize migration with test providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
+	SetTestDataSourceProvider(dsProvider)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -510,7 +510,7 @@ func TestConversionMetrics(t *testing.T) {
 func TestConversionMetricsWrapper(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
+	SetTestDataSourceProvider(dsProvider)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -679,7 +679,7 @@ func TestSchemaVersionExtraction(t *testing.T) {
 			// Test the schema version extraction logic by creating a wrapper and checking the metrics labels
 			dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 			migration.Initialize(dsProvider)
-			SetDataSourceProvider(dsProvider)
+			SetTestDataSourceProvider(dsProvider)
 
 			// Create a test registry for metrics
 			registry := prometheus.NewRegistry()
@@ -724,7 +724,7 @@ func TestSchemaVersionExtraction(t *testing.T) {
 func TestConversionLogging(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
+	SetTestDataSourceProvider(dsProvider)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -816,7 +816,7 @@ func TestConversionLogging(t *testing.T) {
 func TestConversionLogLevels(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
+	SetTestDataSourceProvider(dsProvider)
 
 	t.Run("log levels and structured fields verification", func(t *testing.T) {
 		// Create test wrapper to verify logging behavior
@@ -888,7 +888,7 @@ func TestConversionLogLevels(t *testing.T) {
 func TestConversionLoggingFields(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
+	SetTestDataSourceProvider(dsProvider)
 
 	t.Run("verify all log fields are present", func(t *testing.T) {
 		// Test that the conversion wrapper includes all expected structured fields

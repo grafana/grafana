@@ -7,127 +7,102 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
-// DataSourceProvider interface for getting datasource information
-type DataSourceProvider interface {
-	GetDataSourceByUID(uid string) *DataSourceInfo
-	GetDefaultDataSource() DataSourceInfo
+type contextKey string
+
+const datasourceProviderKey contextKey = "datasourceProvider"
+
+// WithDataSourceProvider adds the datasource provider to the context
+// This is the same provider instance initialized in register.go
+func WithDataSourceProvider(ctx context.Context, provider schemaversion.DataSourceInfoProvider) context.Context {
+	return context.WithValue(ctx, datasourceProviderKey, provider)
 }
 
-// DataSourceInfo contains information about a datasource
-type DataSourceInfo struct {
-	UID  string
-	Type string
-}
-
-// DataSourceProviderAdapter adapts the schemaversion.DataSourceInfoProvider to the conversion DataSourceProvider
-type DataSourceProviderAdapter struct {
-	provider  schemaversion.DataSourceInfoProvider
-	dsMap     map[string]schemaversion.DataSourceInfo
-	defaultDS *schemaversion.DataSourceInfo
-}
-
-// NewDataSourceProviderAdapter creates a new adapter
-func NewDataSourceProviderAdapter(provider schemaversion.DataSourceInfoProvider) *DataSourceProviderAdapter {
-	dsMap := make(map[string]schemaversion.DataSourceInfo)
-	var defaultDS *schemaversion.DataSourceInfo
-
-	// Pre-load all datasources into a map for quick lookup
-	datasources := provider.GetDataSourceInfo(context.Background())
-	for _, ds := range datasources {
-		dsMap[ds.UID] = ds
-		if ds.Default {
-			dsRef := ds
-			defaultDS = &dsRef
-		}
+// getDataSourceProvider returns the datasource provider from context
+// Matches the migration pattern where provider is always available (captured in closure)
+// The provider should be set in context by prepareV1beta1ConversionContext
+func getDataSourceProvider(ctx context.Context) schemaversion.DataSourceInfoProvider {
+	// Get provider from context (set by prepareV1beta1ConversionContext)
+	// This matches migrations where provider is captured in closure
+	if provider, ok := ctx.Value(datasourceProviderKey).(schemaversion.DataSourceInfoProvider); ok {
+		return provider
 	}
 
-	// If no default was found, fallback to Grafana
-	if defaultDS == nil {
-		defaultDS = &schemaversion.DataSourceInfo{
-			UID:  "-- Grafana --",
-			Type: "grafana",
-		}
+	// Fallback to test provider (for tests only)
+	if testProvider != nil {
+		return testProvider
 	}
 
-	return &DataSourceProviderAdapter{
-		provider:  provider,
-		dsMap:     dsMap,
-		defaultDS: defaultDS,
-	}
-}
-
-// GetDataSourceByUID returns datasource info for a given UID
-func (a *DataSourceProviderAdapter) GetDataSourceByUID(uid string) *DataSourceInfo {
-	if ds, ok := a.dsMap[uid]; ok {
-		return &DataSourceInfo{
-			UID:  ds.UID,
-			Type: ds.Type,
-		}
-	}
 	return nil
 }
 
-// GetDefaultDataSource returns the default datasource info
-func (a *DataSourceProviderAdapter) GetDefaultDataSource() DataSourceInfo {
-	return DataSourceInfo{
-		UID:  a.defaultDS.UID,
-		Type: a.defaultDS.Type,
-	}
+// SetTestDataSourceProvider sets a test datasource provider for use in tests
+// This is a workaround for tests where context cannot be easily passed through conversion.Scope
+var testProvider schemaversion.DataSourceInfoProvider
+
+// SetTestDataSourceProvider sets the test datasource provider
+// This should only be used in tests
+func SetTestDataSourceProvider(provider schemaversion.DataSourceInfoProvider) {
+	testProvider = provider
 }
 
-var globalDataSourceProvider DataSourceProvider
-
-// SetDataSourceProvider sets the global datasource provider
-func SetDataSourceProvider(provider schemaversion.DataSourceInfoProvider) {
-	globalDataSourceProvider = NewDataSourceProviderAdapter(provider)
-}
-
-// GetDataSourceProvider returns the datasource provider for the conversion module
-func GetDataSourceProvider() DataSourceProvider {
-	return globalDataSourceProvider
-}
-
-// getDefaultDatasourceType gets the default datasource type using the conversion module's datasource provider
-func getDefaultDatasourceRef() dashv2alpha1.DashboardDataSourceRef {
+// getDefaultDatasourceRef gets the default datasource type using the datasource provider
+// Matches migration pattern: provider is always available (captured in closure for migrations, in context for conversions)
+// Uses the same provider instance as migrations (initialized in register.go)
+func getDefaultDatasourceRef(ctx context.Context) dashv2alpha1.DashboardDataSourceRef {
 	defaultGrafanaUID := "-- Grafana --"
 	defaultGrafanaType := "grafana"
-	// Get the datasource info from the conversion module's provider
-	dsProvider := GetDataSourceProvider()
-	if dsProvider == nil {
+
+	provider := getDataSourceProvider(ctx)
+	if provider == nil {
+		// Should not happen in normal flow (provider set by prepareV1beta1ConversionContext)
+		// Fallback for safety (matches migration pattern where provider is always available)
 		return dashv2alpha1.DashboardDataSourceRef{
 			Uid:  &defaultGrafanaUID,
 			Type: &defaultGrafanaType,
 		}
 	}
 
-	dsInfo := dsProvider.GetDefaultDataSource()
+	// Use GetDataSourceInfo directly, same as migrations do: datasources := dsInfo.GetDataSourceInfo(ctx)
+	datasources := provider.GetDataSourceInfo(ctx)
+	for _, ds := range datasources {
+		if ds.Default {
+			return dashv2alpha1.DashboardDataSourceRef{
+				Uid:  &ds.UID,
+				Type: &ds.Type,
+			}
+		}
+	}
 
-	// Return the datasource info
+	// If no default was found, fallback to Grafana
 	return dashv2alpha1.DashboardDataSourceRef{
-		Uid:  &dsInfo.UID,
-		Type: &dsInfo.Type,
+		Uid:  &defaultGrafanaUID,
+		Type: &defaultGrafanaType,
 	}
 }
 
-// getDatasourceTypeByUID gets the datasource type by UID using the conversion module's datasource provider
-func getDatasourceTypeByUID(uid string) string {
+// getDatasourceTypeByUID gets the datasource type by UID using the datasource provider
+// Matches migration pattern: provider is always available (captured in closure for migrations, in context for conversions)
+// Uses the same provider instance as migrations (initialized in register.go)
+func getDatasourceTypeByUID(ctx context.Context, uid string) string {
 	if uid == "" {
-		return *getDefaultDatasourceRef().Type
+		return *getDefaultDatasourceRef(ctx).Type
 	}
 
-	// Get the datasource info from the conversion module's provider
-	dsProvider := GetDataSourceProvider()
-	if dsProvider == nil {
+	provider := getDataSourceProvider(ctx)
+	if provider == nil {
+		// Should not happen in normal flow (provider set by prepareV1beta1ConversionContext)
+		// Fallback for safety (matches migration pattern where provider is always available)
 		return "grafana"
 	}
 
-	dsInfo := dsProvider.GetDataSourceByUID(uid)
-
-	// Check if the datasource was found
-	if dsInfo != nil {
-		return dsInfo.Type
+	// Use GetDataSourceInfo directly, same as migrations do: datasources := dsInfo.GetDataSourceInfo(ctx)
+	datasources := provider.GetDataSourceInfo(ctx)
+	for _, ds := range datasources {
+		if ds.UID == uid {
+			return ds.Type
+		}
 	}
 
 	// If not found, return the default type
-	return *getDefaultDatasourceRef().Type
+	return *getDefaultDatasourceRef(ctx).Type
 }

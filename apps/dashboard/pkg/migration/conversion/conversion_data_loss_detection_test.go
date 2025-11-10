@@ -829,7 +829,7 @@ func TestDataLossDetectionOnAllInputFiles(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := testutil.NewDataSourceProvider(testutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
+	SetTestDataSourceProvider(dsProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()

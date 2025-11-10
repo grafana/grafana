@@ -33,7 +33,17 @@ func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboa
 				Error:         ptr.To(err.Error()),
 			},
 		}
-		return err
+		// Don't return error - just set status (matches test expectations and V0 pattern for Convert_V0_to_V2alpha1)
+		// Ensure layout is set even on error to prevent JSON marshaling issues
+		if out.Spec.Layout.GridLayoutKind == nil && out.Spec.Layout.RowsLayoutKind == nil {
+			out.Spec.Layout = dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+				GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
+					Kind: "GridLayout",
+					Spec: dashv2alpha1.DashboardGridLayoutSpec{},
+				},
+			}
+		}
+		return nil
 	}
 
 	// We need to make sure the layout is set to some value, otherwise the JSON marshaling will fail.

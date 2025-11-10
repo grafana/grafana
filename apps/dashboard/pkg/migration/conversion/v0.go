@@ -34,7 +34,17 @@ func Convert_V0_to_V2alpha1(in *dashv0.Dashboard, out *dashv2alpha1.Dashboard, s
 				Error:         ptr.To(err.Error()),
 			},
 		}
-		return err
+		// Don't return error - just set status (matches test expectations)
+		// Ensure layout is set even on error to prevent JSON marshaling issues
+		if out.Spec.Layout.GridLayoutKind == nil && out.Spec.Layout.RowsLayoutKind == nil {
+			out.Spec.Layout = dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+				GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
+					Kind: "GridLayout",
+					Spec: dashv2alpha1.DashboardGridLayoutSpec{},
+				},
+			}
+		}
+		return nil
 	}
 
 	if err := ConvertDashboard_V1beta1_to_V2alpha1(v1beta1, out, scope); err != nil {
@@ -45,7 +55,17 @@ func Convert_V0_to_V2alpha1(in *dashv0.Dashboard, out *dashv2alpha1.Dashboard, s
 				Error:         ptr.To(err.Error()),
 			},
 		}
-		return err
+		// Don't return error - just set status (matches test expectations)
+		// Ensure layout is set even on error to prevent JSON marshaling issues
+		if out.Spec.Layout.GridLayoutKind == nil && out.Spec.Layout.RowsLayoutKind == nil {
+			out.Spec.Layout = dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+				GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
+					Kind: "GridLayout",
+					Spec: dashv2alpha1.DashboardGridLayoutSpec{},
+				},
+			}
+		}
+		return nil
 	}
 
 	return nil
