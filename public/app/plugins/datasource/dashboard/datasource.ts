@@ -20,7 +20,6 @@ import {
   DataSourceGetDrilldownsApplicabilityOptions,
   DrilldownsApplicability,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { isSceneObject, SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
   activateSceneObjectAndParentTree,
@@ -140,11 +139,10 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
             ...field,
             config: {
               ...field.config,
-              // Enable AdHoc filtering for string and numeric fields only when feature toggle and per-panel setting are enabled
-              filterable:
-                config.featureToggles.dashboardDsAdHocFiltering && query.adHocFiltersEnabled
-                  ? field.type === FieldType.string || field.type === FieldType.number
-                  : field.config.filterable,
+              // Enable AdHoc filtering for string and numeric fields only when per-panel setting is enabled
+              filterable: query.adHocFiltersEnabled
+                ? field.type === FieldType.string || field.type === FieldType.number
+                : field.config.filterable,
             },
             state: {
               ...field.state,
@@ -153,7 +151,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         };
       });
 
-      if (!config.featureToggles.dashboardDsAdHocFiltering || !query.adHocFiltersEnabled || filters.length === 0) {
+      if (!query.adHocFiltersEnabled || filters.length === 0) {
         return [...series, ...annotations];
       }
 
@@ -247,11 +245,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
     const field = frame.fields[fieldIndex];
 
-    // Only support string and numeric fields when feature toggle is enabled
-    if (config.featureToggles.dashboardDsAdHocFiltering) {
-      if (field.type !== FieldType.string && field.type !== FieldType.number) {
-        return null;
-      }
+    // Only support string and numeric fields
+    if (field.type !== FieldType.string && field.type !== FieldType.number) {
+      return null;
     }
 
     // Map operator to matcher ID
@@ -357,10 +353,6 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   async getDrilldownsApplicability(
     options?: DataSourceGetDrilldownsApplicabilityOptions<DashboardQuery>
   ): Promise<DrilldownsApplicability[]> {
-    if (!config.featureToggles.dashboardDsAdHocFiltering) {
-      return [];
-    }
-
     // Check if any query has adhoc filters enabled
     const hasAdHocFiltersEnabled = options?.queries?.some((query) => query.adHocFiltersEnabled);
 
