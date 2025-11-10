@@ -4130,7 +4130,7 @@
       "scopes": "Scopes"
     },
     "empty-state": {
-      "button-title": "Try searching with Grafana Assistant",
+      "button-title": "Search with Grafana Assistant",
       "message": "No results found"
     },
     "scopes": {
@@ -11510,6 +11510,8 @@
     "empty-state": {
       "no-jobs": "No jobs..."
     },
+    "enable-push-to-configured-branch-description": "Allow direct commits to the configured branch.",
+    "enable-push-to-configured-branch-label": "Enable push to configured branch",
     "enhanced-features": {
       "description": "Get the most out of your GitHub integration with these optional add-ons",
       "description-instant-updates": "Get instant updates in Grafana as soon as changes are committed. Review and approve changes using pull requests before they go live.",
@@ -11729,14 +11731,14 @@
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "recent-jobs": {
-      "active-jobs": "active jobs",
       "column-action": "Action",
       "column-duration": "Duration",
       "column-job-id": "Job ID",
       "column-message": "Message",
       "column-started": "Started",
       "column-status": "Status",
-      "error-loading": "Error loading {{type}}",
+      "error-loading-active-jobs": "Error loading active jobs",
+      "error-loading-historic-jobs": "Error loading historic jobs",
       "jobs": "Jobs"
     },
     "repository-actions": {
