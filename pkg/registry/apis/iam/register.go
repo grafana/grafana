@@ -99,7 +99,6 @@ func RegisterAPIService(
 		reg:                         reg,
 		logger:                      log.New("iam.apis"),
 		features:                    features,
-		enableDualWriter:            true,
 		dual:                        dual,
 		unified:                     unified,
 		userSearchClient:            resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), unified, user.NewUserLegacySearchClient(userService), features),
@@ -344,7 +343,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
-		if err := b.UpdateResourcePermissionsAPIGroup(apiGroupInfo, opts, storage, b.enableDualWriter, enableZanzanaSync); err != nil {
+		if err := b.UpdateResourcePermissionsAPIGroup(apiGroupInfo, opts, storage, enableZanzanaSync); err != nil {
 			return err
 		}
 	}
@@ -357,7 +356,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 	apiGroupInfo *genericapiserver.APIGroupInfo,
 	opts builder.APIGroupOptions,
 	storage map[string]rest.Storage,
-	enableDualWriter bool,
 	enableZanzanaSync bool,
 ) error {
 	uniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, iamv0.ResourcePermissionInfo, opts.OptsGetter)

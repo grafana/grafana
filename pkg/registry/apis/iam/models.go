@@ -88,7 +88,4 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	// Toggle for enabling authz management apis
 	features featuremgmt.FeatureToggles
-
-	// Toggle for enabling dual writer
-	enableDualWriter bool
 }
