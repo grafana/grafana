@@ -615,6 +615,7 @@ type Cfg struct {
 	SecretsManagement SecretsManagerSettings
 }
 
+// Enforce values here based on EnableUnifiedStorageMigrations
 type UnifiedStorageConfig struct {
 	DualWriterMode                       rest.DualWriterMode
 	DualWriterPeriodicDataSyncJobEnabled bool
