@@ -605,14 +605,6 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
-			Name:            "annotationPermissionUpdate",
-			Description:     "Change the way annotation permissions work by scoping them to folders and dashboards.",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresDevMode: false,
-			Expression:      "true", // enabled by default
-			Owner:           identityAccessTeam,
-		},
-		{
 			Name:         "extractFieldsNameDeduplication",
 			Description:  "Make sure extracted field names are unique in the dataframe",
 			Stage:        FeatureStageExperimental,
