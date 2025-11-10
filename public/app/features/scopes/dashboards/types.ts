@@ -40,6 +40,7 @@ export interface SuggestedNavigationsFolder {
   suggestedNavigations: SuggestedNavigationsMap;
   isSubScope?: boolean;
   subScopeName?: string;
+  loading?: boolean;
 }
 
 export type SuggestedNavigationsFoldersMap = Record<string, SuggestedNavigationsFolder>;

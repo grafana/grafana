@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
@@ -43,6 +43,7 @@ export function ScopesDashboardsTreeFolderItem({
           <Icon name={!folder.expanded ? 'angle-right' : 'angle-down'} className={styles.icon} />
 
           <span className={styles.titleContainer}>{folder.title}</span>
+          {folder.loading && <Spinner inline size="sm" className={styles.loadingIcon} />}
         </button>
 
         {folder.isSubScope && (
@@ -112,6 +113,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     exchangeIcon: css({
       opacity: 0.7,
       flexShrink: 0,
+      marginTop: theme.spacing(0.25),
+    }),
+    loadingIcon: css({
+      flexShrink: 0,
+      marginLeft: theme.spacing(0.5),
       marginTop: theme.spacing(0.25),
     }),
     children: css({
