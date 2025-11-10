@@ -33,6 +33,7 @@ func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboa
 				Error:         ptr.To(err.Error()),
 			},
 		}
+		return err
 	}
 
 	// We need to make sure the layout is set to some value, otherwise the JSON marshaling will fail.

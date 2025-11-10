@@ -216,7 +216,7 @@ The `error_type` label classifies failures into four categories:
 - Indicates dashboards that cannot be migrated automatically
 
 #### 4. `conversion_data_loss_error`
-- **NEW**: Data loss detected during conversion
+- Data loss detected during conversion
 - Automatically checks that panels, queries, annotations, and links are preserved
 - Triggered when target has fewer items than source
 - Includes detailed loss metrics in logs (see [Data Loss Detection](#data-loss-detection))
@@ -243,7 +243,7 @@ All migration logs use structured logging with consistent field names:
 - `error` - The actual error message
 
 **Data Loss Fields (conversion_data_loss_error only):**
-- `panelsLost` - Number of panels lost (0 if none lost)
+- `panelsLost` - Number of panels lost
 - `queriesLost` - Number of queries lost
 - `annotationsLost` - Number of annotations lost
 - `linksLost` - Number of links lost

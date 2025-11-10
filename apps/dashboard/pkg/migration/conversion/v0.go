@@ -34,6 +34,7 @@ func Convert_V0_to_V2alpha1(in *dashv0.Dashboard, out *dashv2alpha1.Dashboard, s
 				Error:         ptr.To(err.Error()),
 			},
 		}
+		return err
 	}
 
 	if err := ConvertDashboard_V1beta1_to_V2alpha1(v1beta1, out, scope); err != nil {
@@ -44,6 +45,7 @@ func Convert_V0_to_V2alpha1(in *dashv0.Dashboard, out *dashv2alpha1.Dashboard, s
 				Error:         ptr.To(err.Error()),
 			},
 		}
+		return err
 	}
 
 	return nil
