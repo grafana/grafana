@@ -52,6 +52,21 @@ export class PanelGroupByAction extends SceneObjectBase {
     return this._groupByVariable;
   }
 
+  public doesPanelSupportGroupByVariable() {
+    const panel = this.parent;
+    if (!panel || !(panel instanceof VizPanel)) {
+      throw new Error('PanelGroupByAction can be used only for VizPanel');
+    }
+
+    const dsUid = sceneGraph.getData(panel).state.data?.request?.targets?.[0]?.datasource?.uid;
+
+    if (!this._groupByVariable) {
+      return false;
+    }
+
+    return sceneGraph.interpolate(this._groupByVariable, this._groupByVariable.state.datasource?.uid) === dsUid;
+  }
+
   public async getGroupByOptions() {
     if (
       this._groupByVariable &&
@@ -88,6 +103,7 @@ function PanelGroupByActionRenderer({ model }: SceneComponentProps<PanelGroupByA
   const groupByState = model.getGroupByVariable()?.useState();
   const dataState = sceneGraph.getData(model).useState();
   const styles = useStyles2(getStyles);
+  const panelHasGroupBy = model.doesPanelSupportGroupByVariable();
 
   const [options, setOptions] = useState<OptionWithChecked[]>([]);
   const [searchValue, setSearchValue] = useState('');
@@ -113,8 +129,13 @@ function PanelGroupByActionRenderer({ model }: SceneComponentProps<PanelGroupByA
   }, []);
 
   const handleApply = () => {
-    const groupByVariable = model.getGroupByVariable();
     const checkedOptions = options.filter((opt) => opt.checked);
+
+    if (!checkedOptions.length) {
+      return;
+    }
+
+    const groupByVariable = model.getGroupByVariable();
     const selectedValues = checkedOptions.map((item) => item.value);
     const selectedLabels = checkedOptions.map((item) => item.label);
 
@@ -150,7 +171,7 @@ function PanelGroupByActionRenderer({ model }: SceneComponentProps<PanelGroupByA
     };
 
     fetchOptions();
-  }, [model, groupByState?.value, dataState.data?.request?.targets]);
+  }, [model, groupByState?.value, dataState.data?.request?.targets, isOpen]);
 
   const filteredOptions = useMemo(() => {
     if (!searchValue) {
@@ -162,7 +183,7 @@ function PanelGroupByActionRenderer({ model }: SceneComponentProps<PanelGroupByA
     return indices.map((idx) => options[idx]);
   }, [options, searchValue]);
 
-  if (!groupByState) {
+  if (!groupByState || !panelHasGroupBy) {
     return null;
   }
 
@@ -247,7 +268,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
     boxShadow: theme.shadows.z3,
-    zIndex: theme.zIndex.dropdown,
+    zIndex: theme.zIndex.portal,
   }),
   searchContainer: css({
     padding: theme.spacing(1),
