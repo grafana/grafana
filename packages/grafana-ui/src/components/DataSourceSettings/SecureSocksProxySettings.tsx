@@ -3,6 +3,8 @@ import { t, Trans } from '@grafana/i18n';
 
 import { InlineSwitch } from '../../components/Switch/Switch';
 import { InlineField } from '../Forms/InlineField';
+import { Box } from '../Layout/Box/Box';
+import { Stack } from '../Layout/Stack/Stack';
 
 export interface Props<T extends DataSourceJsonData>
   extends Pick<DataSourcePluginOptionsEditorProps<T>, 'options' | 'onOptionsChange'> {}
@@ -20,8 +22,8 @@ export function SecureSocksProxySettings<T extends SecureSocksProxyConfig>({
       <h3 className="page-heading">
         <Trans i18nKey="grafana-ui.data-source-settings.secure-socks-heading">Secure Socks Proxy</Trans>
       </h3>
-      <div className="gf-form-group">
-        <div className="gf-form-inline">
+      <Box marginBottom={5}>
+        <Stack direction="row" alignItems="flex-start" wrap>
           <div className="gf-form">
             <InlineField
               labelWidth={26}
@@ -42,8 +44,8 @@ export function SecureSocksProxySettings<T extends SecureSocksProxyConfig>({
               />
             </InlineField>
           </div>
-        </div>
-      </div>
+        </Stack>
+      </Box>
     </div>
   );
 }
