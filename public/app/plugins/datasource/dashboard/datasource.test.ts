@@ -12,7 +12,7 @@ import {
   AdHocVariableFilter,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils, config } from '@grafana/runtime';
+import { setPluginImportUtils } from '@grafana/runtime';
 import {
   SafeSerializableSceneObject,
   SceneDataNode,

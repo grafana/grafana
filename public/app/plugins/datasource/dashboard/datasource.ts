@@ -20,7 +20,6 @@ import {
   DataSourceGetDrilldownsApplicabilityOptions,
   DrilldownsApplicability,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { isSceneObject, SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
   activateSceneObjectAndParentTree,
