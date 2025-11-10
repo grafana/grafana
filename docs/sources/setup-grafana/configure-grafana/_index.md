@@ -2624,7 +2624,7 @@ This option disables all preinstalled plugins. The default is `false`. To disabl
 
 #### `preinstall_auto_update`
 
-Enable automatic updates for preinstalled plugins on startup.
+Enable automatic updates for preinstalled plugins on start-up.
 When enabled, preinstalled plugins without a pinned version are automatically updated to the latest version when Grafana starts.
 
 The default is `true`.
