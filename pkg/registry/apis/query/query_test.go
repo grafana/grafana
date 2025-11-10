@@ -274,6 +274,10 @@ func (m mockClient) GetInstance(ctx context.Context, logger log.Logger, headers 
 	return mclient, nil
 }
 
+func (m mockClient) GetMode() string {
+	return "testing"
+}
+
 func (m mockClient) ReportMetrics() {
 }
 
