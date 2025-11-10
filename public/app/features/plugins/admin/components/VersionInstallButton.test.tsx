@@ -15,7 +15,7 @@ describe('VersionInstallButton', () => {
       ...originalConfig.featureToggles,
     };
     config.pluginCatalogPreinstalledPlugins = originalConfig.pluginCatalogPreinstalledPlugins;
-    config.pluginCatalogPreinstalledPluginsAutoUpdate = originalConfig.pluginCatalogPreinstalledPluginsAutoUpdate;
+    config.pluginCatalogPreinstalledAutoUpdate = originalConfig.pluginCatalogPreinstalledAutoUpdate;
   });
   it('should show install when no version is installed', () => {
     const version: Version = {
@@ -121,7 +121,7 @@ describe('VersionInstallButton', () => {
       grafanaDependency: null,
     };
     const installedVersion = '1.0.0';
-    config.pluginCatalogPreinstalledPluginsAutoUpdate = true;
+    config.pluginCatalogPreinstalledAutoUpdate = true;
     config.pluginCatalogPreinstalledPlugins = [{ id: 'test', version: '1.0.0' }];
     renderWithStore(
       <VersionInstallButton
@@ -143,7 +143,7 @@ describe('VersionInstallButton', () => {
       grafanaDependency: null,
     };
     const installedVersion = '1.0.1';
-    config.pluginCatalogPreinstalledPluginsAutoUpdate = true;
+    config.pluginCatalogPreinstalledAutoUpdate = true;
     config.pluginCatalogPreinstalledPlugins = [{ id: 'test', version: '1.0.1' }];
     renderWithStore(
       <VersionInstallButton
@@ -165,7 +165,7 @@ describe('VersionInstallButton', () => {
       grafanaDependency: null,
     };
     const installedVersion = '1.0.1';
-    config.pluginCatalogPreinstalledPluginsAutoUpdate = true;
+    config.pluginCatalogPreinstalledAutoUpdate = true;
     config.pluginCatalogPreinstalledPlugins = [{ id: 'test', version: '' }];
     renderWithStore(
       <VersionInstallButton
