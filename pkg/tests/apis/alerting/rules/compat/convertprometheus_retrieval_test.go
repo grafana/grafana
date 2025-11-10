@@ -214,3 +214,14 @@ func TestIntegrationConvertPrometheusRecordingRuleRetrieval(t *testing.T) {
 		require.NotEmpty(t, tmp)
 	}
 }
+
+// If this test fails, it indicates that the accepted provenance statuses
+// in v0alpha1/ext.go are out of sync with the known provenances in ngalert models.
+// Make sure to keep them in sync.
+func TestProvenancesMatch(t *testing.T) {
+	modelProvenances := make([]string, 0, len(ngmodels.KnownProvenances))
+	for _, p := range ngmodels.KnownProvenances {
+		modelProvenances = append(modelProvenances, string(p))
+	}
+	require.ElementsMatch(t, v0alpha1.AcceptedProvenanceStatuses, modelProvenances)
+}
