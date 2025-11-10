@@ -11,7 +11,7 @@ import { PanelData } from './panel';
 /**
  * @alpha
  */
-export interface VisualizationSuggestion<TOptions extends {} = {}, TFieldConfig extends {} = {}> {
+export interface VisualizationSuggestion<TOptions extends unknown = {}, TFieldConfig extends {} = {}> {
   /** Name of suggestion */
   name: string;
   /** Description */
@@ -64,7 +64,7 @@ export class VisualizationSuggestionsBuilder {
     this.dataSummary = getPanelDataSummary(data?.series);
   }
 
-  getListAppender<TOptions extends {}, TFieldConfig extends {} = {}>(
+  getListAppender<TOptions extends unknown, TFieldConfig extends {} = {}>(
     defaults: VisualizationSuggestion<TOptions, TFieldConfig>
   ) {
     return new VisualizationSuggestionsListAppender<TOptions, TFieldConfig>(this.list, defaults);
@@ -89,7 +89,7 @@ export type VisualizationSuggestionsSupplier = {
  * Helps with typings and defaults
  * @alpha
  */
-export class VisualizationSuggestionsListAppender<TOptions extends {}, TFieldConfig extends {} = {}> {
+export class VisualizationSuggestionsListAppender<TOptions extends unknown, TFieldConfig extends {} = {}> {
   constructor(
     private list: VisualizationSuggestion[],
     private defaults: VisualizationSuggestion<TOptions, TFieldConfig>
