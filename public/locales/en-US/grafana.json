@@ -9776,7 +9776,7 @@
     },
     "log-row-message": {
       "ellipsis": "…",
-      "more": "show more",
+      "more": "more",
       "see-details": "See log details",
       "tooltip-error": "Error: {{errorMessage}}"
     },
@@ -11707,6 +11707,10 @@
       "path-description": "Local file system path to the repository",
       "path-label": "Repository Path",
       "path-required": "Repository path is required"
+    },
+    "message": {
+      "show-less": "show less",
+      "show-more": "show more"
     },
     "mode-options": {
       "folder": {

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { SyntheticEvent, useState } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -15,13 +15,11 @@ export function MessageList({ messages, variant }: MessageListProps) {
   const [showFull, setShowFull] = useState(false);
   const hasMultipleMessages = messages.length > 1;
 
-  const handleExpand = (e: SyntheticEvent) => {
-    e.stopPropagation();
+  const handleExpand = () => {
     setShowFull(true);
   };
 
-  const handleCollapse = (e: SyntheticEvent) => {
-    e.stopPropagation();
+  const handleCollapse = () => {
     setShowFull(false);
   };
 
@@ -29,7 +27,7 @@ export function MessageList({ messages, variant }: MessageListProps) {
 
   return (
     <>
-      <div className={cx(styles.messageListWrapper, showFull && styles.messageListWrapperExpanded)}>
+      <div className={cx(styles.messageListWrapper, { [styles.messageListWrapperExpanded]: showFull })}>
         <ul className={styles.messageList}>
           {displayMessages.map((msg, index) => (
             <li key={index}>
@@ -38,8 +36,8 @@ export function MessageList({ messages, variant }: MessageListProps) {
                 <>
                   {' '}
                   <Trans i18nKey="logs.log-row-message.ellipsis">… </Trans>
-                  <button className={cx(styles.showMore, styles.showMoreInline)} onClick={handleExpand}>
-                    <Trans i18nKey="logs.log-row-message.more">show more</Trans>
+                  <button type="button" className={cx(styles.showMore, styles.showMoreInline)} onClick={handleExpand}>
+                    <Trans i18nKey="provisioning.message.show-more">show more</Trans>
                   </button>
                 </>
               )}
@@ -49,8 +47,8 @@ export function MessageList({ messages, variant }: MessageListProps) {
       </div>
       {showFull && hasMultipleMessages && (
         <Box paddingLeft={3} paddingTop={0.5}>
-          <button className={styles.showMore} onClick={handleCollapse}>
-            <Trans i18nKey="logs.log-line.show-less">show less</Trans>
+          <button type="button" className={styles.showMore} onClick={handleCollapse}>
+            <Trans i18nKey="provisioning.message.show-less">show less</Trans>
           </button>
         </Box>
       )}
