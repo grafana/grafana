@@ -1,4 +1,4 @@
-import { set } from 'lodash';
+import { defaultsDeep, set } from 'lodash';
 import { ComponentClass, ComponentType } from 'react';
 
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
@@ -14,7 +14,11 @@ import {
   PanelPluginDataSupport,
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
-import { VisualizationSuggestionsSupplier } from '../types/suggestions';
+import {
+  VisualizationSuggestionsConfig,
+  VisualizationSuggestionsHandler,
+  VisualizationSuggestionsSupplier,
+} from '../types/suggestions';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
@@ -110,6 +114,7 @@ export class PanelPlugin<
 
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
   private suggestionsSupplier?: VisualizationSuggestionsSupplier;
+  private suggestionsConfig?: VisualizationSuggestionsConfig<TOptions, TFieldConfigOptions>;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -364,7 +369,7 @@ export class PanelPlugin<
 
   /**
    * Sets function that can return visualization examples and suggestions.
-   * @alpha
+   * @deprecated use setSuggestionsHandler and useSuggestionsConfig instead
    */
   setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier) {
     this.suggestionsSupplier = supplier;
@@ -372,11 +377,62 @@ export class PanelPlugin<
   }
 
   /**
-   * Returns the suggestions supplier
    * @alpha
+   * Allows specifying default suggestion options and presets
+   */
+  useSuggestionsConfig(config: VisualizationSuggestionsConfig<TOptions, TFieldConfigOptions>) {
+    this.suggestionsConfig = config;
+    return this;
+  }
+
+  /**
+   * @alpha
+   * Sets function that returns visualization suggestions based on the current panel data summary
+   */
+  setSuggestionsHandler(handler: VisualizationSuggestionsHandler<TOptions, TFieldConfigOptions>) {
+    this.suggestionsSupplier = {
+      getSuggestionsForData: (builder) => {
+        const appender = builder.getListAppender<TOptions, TFieldConfigOptions>(
+          defaultsDeep(this.suggestionsConfig?.defaults ?? {}, {
+            pluginId: this.meta.id,
+            name: this.meta.name,
+            options: {},
+            fieldConfig: {
+              defaults: {
+                custom: {},
+              },
+              overrides: [],
+            },
+          })
+        );
+
+        const result = handler(builder.dataSummary, this.suggestionsConfig?.presets);
+
+        if (Array.isArray(result)) {
+          appender.appendAll(result);
+        } else if (result === true) {
+          appender.append({});
+        }
+      },
+    };
+
+    return this;
+  }
+
+  /**
+   * Returns the suggestions supplier
+   * @deprecated use hasSuggestionsSupplier
    */
   getSuggestionsSupplier(): VisualizationSuggestionsSupplier | undefined {
     return this.suggestionsSupplier;
+  }
+
+  /**
+   * @alpha
+   * returns whether the plugin has configured suggestions
+   */
+  hasSuggestions(): boolean {
+    return this.suggestionsSupplier !== undefined;
   }
 
   hasPluginId(pluginId: string) {
