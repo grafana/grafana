@@ -99,7 +99,7 @@ func (v *unifiedStorageConfigValue) String() string {
 	if v.config == nil || len(*v.config) == 0 {
 		return ""
 	}
-	var parts []string
+	parts := make([]string, 0, len(*v.config))
 	for key, cfg := range *v.config {
 		parts = append(parts, fmt.Sprintf("%s=%d", key, cfg.DualWriterMode))
 	}

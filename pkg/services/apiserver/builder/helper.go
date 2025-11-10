@@ -308,6 +308,7 @@ func InstallAPIs(
 			var mode = grafanarest.DualWriterMode(0)
 
 			var (
+				err                                  error
 				dualWriterPeriodicDataSyncJobEnabled bool
 				dualWriterMigrationDataSyncDisabled  bool
 				dataSyncerInterval                   = time.Hour
@@ -329,42 +330,45 @@ func InstallAPIs(
 				return storage, nil
 			}
 
-			syncEnabled := !dualWriterMigrationDataSyncDisabled || dualWriterPeriodicDataSyncJobEnabled
-			if !syncEnabled {
-				builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode, mode)
-				switch mode {
-				case grafanarest.Mode0:
-					return legacy, nil
-				case grafanarest.Mode4, grafanarest.Mode5:
-					return storage, nil
-				default:
-					return dualwrite.NewDualWriter(gr, mode, legacy, storage)
+			currentMode := mode
+			if !dualWriterMigrationDataSyncDisabled || dualWriterPeriodicDataSyncJobEnabled {
+				// TODO: inherited context from main Grafana process
+				ctx := context.Background()
+
+				// Moving from one version to the next can only happen after the previous step has
+				// successfully synchronized.
+				requestInfo := getRequestInfo(gr, namespaceMapper)
+
+				syncerCfg := &grafanarest.SyncerConfig{
+					Kind:                   key,
+					RequestInfo:            requestInfo,
+					Mode:                   mode,
+					SkipDataSync:           dualWriterMigrationDataSyncDisabled,
+					LegacyStorage:          legacy,
+					Storage:                storage,
+					ServerLockService:      serverLock,
+					DataSyncerInterval:     dataSyncerInterval,
+					DataSyncerRecordsLimit: dataSyncerRecordsLimit,
 				}
-			}
 
-			// TODO: inherited context from main Grafana process
-			ctx := context.Background()
+				// This also sets the currentMode on the syncer config.
+				currentMode, err = grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg, dualWriterMetrics)
+				if err != nil {
+					return nil, err
+				}
 
-			// Moving from one version to the next can only happen after the previous step has
-			// successfully synchronized.
-			requestInfo := getRequestInfo(gr, namespaceMapper)
+				// when unable to use
+				if currentMode != mode {
+					klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
+				}
 
-			syncerCfg := &grafanarest.SyncerConfig{
-				Kind:                   key,
-				RequestInfo:            requestInfo,
-				Mode:                   mode,
-				SkipDataSync:           dualWriterMigrationDataSyncDisabled,
-				LegacyStorage:          legacy,
-				Storage:                storage,
-				ServerLockService:      serverLock,
-				DataSyncerInterval:     dataSyncerInterval,
-				DataSyncerRecordsLimit: dataSyncerRecordsLimit,
-			}
-
-			// This also sets the currentMode on the syncer config.
-			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg, dualWriterMetrics)
-			if err != nil {
-				return nil, err
+				if dualWriterPeriodicDataSyncJobEnabled {
+					// The mode might have changed in SetDualWritingMode, so apply current mode first.
+					syncerCfg.Mode = currentMode
+					if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg, dualWriterMetrics); err != nil {
+						return nil, err
+					}
+				}
 			}
 
 			builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode, currentMode)
@@ -375,21 +379,8 @@ func InstallAPIs(
 			case grafanarest.Mode4, grafanarest.Mode5:
 				return storage, nil
 			default:
+				return dualwrite.NewDualWriter(gr, currentMode, legacy, storage)
 			}
-
-			if dualWriterPeriodicDataSyncJobEnabled {
-				// The mode might have changed in SetDualWritingMode, so apply current mode first.
-				syncerCfg.Mode = currentMode
-				if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg, dualWriterMetrics); err != nil {
-					return nil, err
-				}
-			}
-
-			// when unable to use
-			if currentMode != mode {
-				klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
-			}
-			return dualwrite.NewDualWriter(gr, currentMode, legacy, storage)
 		}
 	}
 
