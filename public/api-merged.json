@@ -3676,7 +3676,7 @@
         "tags": [
           "dashboards"
         ],
-        "summary": "Interpolate dashboard. This is an experimental endpoint under dashboardLibrary FF and is subject to change.",
+        "summary": "Interpolate dashboard. This is an experimental endpoint under dashboardLibrary or suggestedDashboards feature flags and is subject to change.",
         "operationId": "interpolateDashboard",
         "responses": {
           "200": {

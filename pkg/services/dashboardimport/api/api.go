@@ -59,7 +59,7 @@ func (api *ImportDashboardAPI) RegisterAPIEndpoints(routeRegister routing.RouteR
 
 // swagger:route POST /dashboards/interpolate dashboards interpolateDashboard
 //
-// Interpolate dashboard. This is an experimental endpoint under dashboardLibrary FF and is subject to change.
+// Interpolate dashboard. This is an experimental endpoint under dashboardLibrary or suggestedDashboards feature flags and is subject to change.
 //
 // Responses:
 // 200: interpolateDashboardResponse
