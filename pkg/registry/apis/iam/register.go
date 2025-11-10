@@ -79,8 +79,8 @@ func RegisterAPIService(
 
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                       store,
-		userLegacyStore:             user.NewLegacyStore(store, legacyAccessClient, enableAuthnMutation),
-		saLegacyStore:               serviceaccount.NewLegacyStore(store, legacyAccessClient, enableAuthnMutation),
+		userLegacyStore:             user.NewLegacyStore(store, accessClient, enableAuthnMutation),
+		saLegacyStore:               serviceaccount.NewLegacyStore(store, accessClient, enableAuthnMutation),
 		legacyTeamStore:             team.NewLegacyStore(store, legacyAccessClient, enableAuthnMutation),
 		teamBindingLegacyStore:      teambinding.NewLegacyBindingStore(store, enableAuthnMutation),
 		ssoLegacyStore:              sso.NewLegacyStore(ssoService),
@@ -212,9 +212,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		}
 
 		storage[teamResource.StoragePath()] = dw
-		// TODO: why is this not dual write?
-		storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
 	}
+
+	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
 	teamBindingUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamBindingResource, opts.OptsGetter)
@@ -261,9 +261,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		}
 
 		storage[userResource.StoragePath()] = dw
-		// TODO: why is this not dual write?
-		storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 	}
+
+	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
 	// Service Accounts store registration
 	saResource := iamv0.ServiceAccountResourceInfo
@@ -279,9 +279,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 		storage[saResource.StoragePath()] = dw
-		// TODO: why is this not dual write?
-		storage[saResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
 	}
+
+	storage[saResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
 
 	if b.ssoLegacyStore != nil {
 		ssoResource := legacyiamv0.SSOSettingResourceInfo
