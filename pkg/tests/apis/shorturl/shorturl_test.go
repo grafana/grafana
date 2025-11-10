@@ -211,6 +211,7 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.Equal(t, uid, found.GetName())
+		assert.LessOrEqual(t, time.Since(found.GetCreationTimestamp().Time).Seconds(), 30.0, "creation timestamp should be within last 30 seconds")
 
 		// Verify cross-API consistency
 		getFromBothAPIs(t, helper, client, uid)
