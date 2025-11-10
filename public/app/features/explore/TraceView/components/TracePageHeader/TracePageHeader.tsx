@@ -134,6 +134,11 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
   });
 
+  // Memoize service count to avoid recomputing on every render
+  const serviceCount = useMemo(() => {
+    return new Set(trace?.spans.map((span) => span.process?.serviceName)).size;
+  }, [trace?.spans]);
+
   if (!trace) {
     return null;
   }
@@ -143,11 +148,6 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
 
   // Convert date from micro to milli seconds
   const formattedTimestamp = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
-
-  // Memoize service count to avoid recomputing on every render
-  const serviceCount = useMemo(() => {
-    return new Set(trace.spans.map((span) => span.process?.serviceName)).size;
-  }, [trace.spans]);
 
   let statusColor: BadgeColor = 'green';
   if (status && status.length > 0) {
@@ -471,7 +471,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       columnGap: theme.spacing(3),
-      marginBottom: theme.spacing(1),
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
       flexWrap: 'wrap',
@@ -548,13 +547,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(0.5),
     }),
     overviewCollapsableSectionContent: css({
-      padding: 0,
+      padding: theme.spacing(0, 1, 2, 1),
     }),
     filtersContainer: css({
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(0.5),
-      marginTop: theme.spacing(2),
     }),
     adhocFiltersRow: css({
       display: 'flex',

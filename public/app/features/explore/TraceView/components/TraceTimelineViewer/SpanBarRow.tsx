@@ -198,11 +198,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     }),
     rowFocused: css({
       label: 'rowFocused',
-      backgroundColor: autoColor(theme, '#cbe7ff'),
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         animation: `${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0)`,
       },
-      [`& .${nameWrapperClassName}, .${viewClassName}, .${nameWrapperMatchingFilterClassName}`]: {
+      [`& .${viewClassName}`]: {
         backgroundColor: autoColor(theme, '#cbe7ff'),
         [theme.transitions.handleMotion('no-preference')]: {
           animation: `${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0)`,
@@ -218,14 +217,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
 
     rowError: css({
       label: 'rowError',
-      backgroundColor: theme.colors.error.transparent,
 
       [`&:hover .${nameWrapperClassName}`]: {
         background: theme.colors.error.borderTransparent,
-      },
-      [`&:hover .${viewClassName}`]: {
-        backgroundColor: theme.colors.error.borderTransparent,
-        outline: `1px solid ${theme.colors.error.borderTransparent}`,
       },
 
       [`& .${nameWrapperClassName} > *`]: {
