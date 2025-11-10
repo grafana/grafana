@@ -140,10 +140,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
             config: {
               ...field.config,
               // Enable AdHoc filtering for string and numeric fields only when per-panel setting is enabled
-              filterable:
-                query.adHocFiltersEnabled
-                  ? field.type === FieldType.string || field.type === FieldType.number
-                  : field.config.filterable,
+              filterable: query.adHocFiltersEnabled
+                ? field.type === FieldType.string || field.type === FieldType.number
+                : field.config.filterable,
             },
             state: {
               ...field.state,

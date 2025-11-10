@@ -178,7 +178,6 @@ describe('DashboardDatasource', () => {
 
     // Test AdHoc filtering via the Public API first, to ensure Integration
     describe('Integration (Public API)', () => {
-
       it('should apply basic filtering end-to-end through public query method', async () => {
         const testFrame = createTestFrame([
           { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
@@ -214,7 +213,6 @@ describe('DashboardDatasource', () => {
         expect(result?.data[0].fields[1].values).toEqual([25]);
         expect(result?.data[0].length).toBe(1);
       });
-
 
       it('should respect per-panel adHocFiltersEnabled setting and not filter when disabled', async () => {
         const testFrame = createTestFrame([
