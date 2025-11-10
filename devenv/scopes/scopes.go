@@ -43,10 +43,10 @@ func getEnv(key, defaultValue string) string {
 }
 
 type Config struct {
-	Scopes           map[string]ScopeConfig           `yaml:"scopes"`
-	Tree             map[string]TreeNode              `yaml:"tree"`
-	Navigations      map[string]NavigationConfig      `yaml:"navigations"`
-	NavigationTree   []NavigationTreeNode             `yaml:"navigationTree"`
+	Scopes         map[string]ScopeConfig      `yaml:"scopes"`
+	Tree           map[string]TreeNode         `yaml:"tree"`
+	Navigations    map[string]NavigationConfig `yaml:"navigations"`
+	NavigationTree []NavigationTreeNode        `yaml:"navigationTree"`
 }
 
 // ScopeConfig is used for YAML parsing - converts to v0alpha1.ScopeSpec
@@ -78,19 +78,19 @@ type NavigationConfig struct {
 	URL      string   `yaml:"url"`      // URL path (e.g., /d/abc123 or /explore)
 	Scope    string   `yaml:"scope"`    // Required scope
 	SubScope string   `yaml:"subScope"` // Optional subScope for hierarchical navigation
-	Title    string   `yaml:"title"`   // Display title
+	Title    string   `yaml:"title"`    // Display title
 	Groups   []string `yaml:"groups"`   // Optional groups for categorization
 }
 
 // NavigationTreeNode represents a node in the navigation tree structure
 type NavigationTreeNode struct {
-	Name     string                `yaml:"name"`
-	Title    string                `yaml:"title"`
-	URL      string                `yaml:"url"`
-	Scope    string                `yaml:"scope"`
-	SubScope string                `yaml:"subScope,omitempty"`
-	Groups   []string              `yaml:"groups,omitempty"`
-	Children []NavigationTreeNode  `yaml:"children,omitempty"`
+	Name     string               `yaml:"name"`
+	Title    string               `yaml:"title"`
+	URL      string               `yaml:"url"`
+	Scope    string               `yaml:"scope"`
+	SubScope string               `yaml:"subScope,omitempty"`
+	Groups   []string             `yaml:"groups,omitempty"`
+	Children []NavigationTreeNode `yaml:"children,omitempty"`
 }
 
 // Helper function to convert ScopeFilterConfig to v0alpha1.ScopeFilter
