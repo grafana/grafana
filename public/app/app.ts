@@ -1,7 +1,6 @@
 import 'symbol-observable';
 import 'regenerator-runtime/runtime';
 
-import '@formatjs/intl-durationformat/polyfill';
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';

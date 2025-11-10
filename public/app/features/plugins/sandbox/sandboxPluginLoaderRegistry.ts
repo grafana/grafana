@@ -35,11 +35,6 @@ export async function shouldLoadPluginInFrontendSandbox({ pluginId }: SandboxEli
  * It does not check if the plugin is actually enabled for the sandbox.
  */
 export async function isPluginFrontendSandboxEligible({ pluginId }: SandboxEligibilityCheckParams): Promise<boolean> {
-  // Only if the feature is not enabled no support for sandbox
-  if (!Boolean(config.featureToggles.pluginsFrontendSandbox)) {
-    return false;
-  }
-
   // To fast-test and debug the sandbox in the browser (dev mode only).
   const sandboxDisableQueryParam =
     window.location.search.includes('nosandbox') && config.buildInfo.env === 'development';

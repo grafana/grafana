@@ -404,32 +404,47 @@ func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisionin
 	return nil
 }
 
-func (rc *RepositoryController) determineSyncStatus(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions, healthStatus provisioning.HealthStatus) *provisioning.SyncStatus {
+func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions, healthStatus provisioning.HealthStatus) []map[string]interface{} {
 	const unhealthyMessage = "Repository is unhealthy"
 
 	hasUnhealthyMessage := len(obj.Status.Sync.Message) > 0 && obj.Status.Sync.Message[0] == unhealthyMessage
+	var patchOperations []map[string]interface{}
+
 	switch {
 	case syncOptions != nil:
-		return &provisioning.SyncStatus{
-			State:   provisioning.JobStatePending,
-			LastRef: obj.Status.Sync.LastRef,
-			Started: time.Now().UnixMilli(),
-		}
+		// We will try to trigger a new sync job if we have sync options
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/sync/state",
+			"value": provisioning.JobStatePending,
+		})
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/sync/started",
+			"value": int64(0),
+		})
 	case healthStatus.Healthy && hasUnhealthyMessage: // if the repository is healthy and the message is set, clear it
 		// FIXME: is this the clearest way to do this? Should we introduce another status or way of way of handling more
 		// specific errors?
-		return &provisioning.SyncStatus{
-			LastRef: obj.Status.Sync.LastRef,
-		}
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/sync/message",
+			"value": []string{},
+		})
 	case !healthStatus.Healthy && !hasUnhealthyMessage: // if the repository is unhealthy and the message is not already set, set it
-		return &provisioning.SyncStatus{
-			State:   provisioning.JobStateError,
-			Message: []string{unhealthyMessage},
-			LastRef: obj.Status.Sync.LastRef,
-		}
-	default:
-		return nil
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/sync/state",
+			"value": provisioning.JobStateError,
+		})
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/sync/message",
+			"value": []string{unhealthyMessage},
+		})
 	}
+
+	return patchOperations
 }
 
 //nolint:gocyclo
@@ -509,13 +524,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	// determine the sync strategy and sync status to apply
 	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, healthStatus)
-	if syncStatus := rc.determineSyncStatus(obj, syncOptions, healthStatus); syncStatus != nil {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/sync",
-			"value": syncStatus,
-		})
-	}
+	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus)...)
 
 	// Apply all patch operations
 	if len(patchOperations) > 0 {
@@ -525,6 +534,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		}
 	}
 
+	// QUESTION: should we trigger the sync job after we have applied all patch operations or before?
+	// Is there are risk of race condition here?
 	// Trigger sync job after we have applied all patch operations
 	if syncOptions != nil {
 		if err := rc.addSyncJob(ctx, obj, syncOptions); err != nil {

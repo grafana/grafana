@@ -2933,15 +2933,15 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
-      "firing-instances-count": "",
       "instance-details-drawer": {
         "instance-details": ""
       },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
-      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -4110,6 +4110,7 @@
       "scopes": "範圍"
     },
     "empty-state": {
+      "button-title": "",
       "message": "未找到結果"
     },
     "scopes": {
@@ -11459,6 +11460,8 @@
     "empty-state": {
       "no-jobs": "沒有作業…"
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "使用這些可選附加元件，充分利用 GitHub 整合",
       "description-instant-updates": "在 Grafana 中，一旦提交變更，就能即時取得更新。在變更上線之前，使用拉取請求來檢查並核准變更。",
@@ -11676,14 +11679,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "進行中的作業",
       "column-action": "動作",
       "column-duration": "持續時間",
       "column-job-id": "",
       "column-message": "訊息",
       "column-started": "已開始",
       "column-status": "狀態",
-      "error-loading": "載入{{type}}時發生錯誤",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "作業"
     },
     "repository-actions": {
