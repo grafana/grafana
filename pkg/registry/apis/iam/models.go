@@ -48,11 +48,11 @@ type IdentityAccessManagementAPIBuilder struct {
 	// Stores
 	store legacy.LegacyIdentityStore
 
-	userStore                   *user.LegacyStore
-	serviceAccountStore         *serviceaccount.LegacyStore
+	userLegacyStore             *user.LegacyStore
+	saLegacyStore               *serviceaccount.LegacyStore
 	legacyTeamStore             *team.LegacyStore
-	teamBindingStore            *teambinding.LegacyBindingStore
-	ssoStore                    *sso.LegacyStore
+	teamBindingLegacyStore      *teambinding.LegacyBindingStore
+	ssoLegacyStore              *sso.LegacyStore
 	coreRolesStorage            CoreRoleStorageBackend
 	rolesStorage                RoleStorageBackend
 	resourcePermissionsStorage  resource.StorageBackend
