@@ -8,7 +8,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { DashboardInput, DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 
 import { ContentKind, DashboardLibraryInteractions, EventLocation, SOURCE_ENTRY_POINTS } from './interactions';
-import { InputMapping, mapConstantInputs } from './utils/autoMapDatasources';
+import { InputMapping, mapConstantInputs, mapUserSelectedDatasources } from './utils/autoMapDatasources';
 
 interface Props {
   unmappedDsInputs: DataSourceInput[];
@@ -114,12 +114,7 @@ export const CommunityDashboardMappingForm = ({
     // 2. User-selected datasources
     // 3. Constant values (user-edited or defaults)
 
-    const userSelectedDatasources: InputMapping[] = unmappedDsInputs.map((input) => ({
-      name: input.name,
-      type: 'datasource',
-      pluginId: input.pluginId,
-      value: userSelectedDsMappings[input.name]?.datasource?.uid || '',
-    }));
+    const userSelectedDatasources = mapUserSelectedDatasources(unmappedDsInputs, userSelectedDsMappings);
 
     const constantMappings = mapConstantInputs(constantInputs, constantValues);
 

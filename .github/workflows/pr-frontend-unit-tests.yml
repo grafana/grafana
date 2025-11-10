@@ -18,6 +18,7 @@ jobs:
       contents: read
     outputs:
       changed: ${{ steps.detect-changes.outputs.frontend }}
+      devenv-changed: ${{ steps.detect-changes.outputs.devenv }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -169,3 +170,26 @@ jobs:
           needs: ${{ toJson(needs) }}
           failure-message: "One or more unit test jobs have failed"
           success-message: "All unit tests completed successfully"
+
+  devenv:
+    needs:
+      - detect-changes
+    if: needs.detect-changes.outputs.devenv-changed == 'true'
+    runs-on: ubuntu-x64-large
+    name: "Devenv frontend-service build"
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Setup Docker
+      uses: docker/setup-docker-action@3fb92d6d9c634363128c8cce4bc3b2826526370a # v4
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Install Tilt
+      run: curl -fsSL https://raw.githubusercontent.com/tilt-dev/tilt/master/scripts/install.sh | bash
+    - name: Create empty config files # TODO: the tiltfile should conditionally mount these only if they exist, like the enterprise license
+      run: |
+        touch devenv/frontend-service/configs/grafana-api.local.ini
+        touch devenv/frontend-service/configs/frontend-service.local.ini
+    - name: Test frontend-service Tiltfile
+      run: tilt ci --file devenv/frontend-service/Tiltfile

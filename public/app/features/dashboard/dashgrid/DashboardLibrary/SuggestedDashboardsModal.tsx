@@ -15,7 +15,7 @@ import { DashboardLibrarySection } from './DashboardLibrarySection';
 import { ContentKind, EventLocation } from './interactions';
 import { InputMapping } from './utils/autoMapDatasources';
 
-interface DashboardLibraryModalProps {
+interface SuggestedDashboardsModalProps {
   isOpen: boolean;
   onDismiss: () => void;
   initialMappingContext?: MappingContext | null;
@@ -36,12 +36,12 @@ export interface MappingContext {
   contentKind: ContentKind;
 }
 
-export const DashboardLibraryModal = ({
+export const SuggestedDashboardsModal = ({
   isOpen,
   onDismiss,
   initialMappingContext,
   defaultTab = 'datasource',
-}: DashboardLibraryModalProps) => {
+}: SuggestedDashboardsModalProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
 

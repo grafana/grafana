@@ -1,36 +1,29 @@
 import { css } from '@emotion/css';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Button, useStyles2, Grid } from '@grafana/ui';
-import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { DashboardCard } from './DashboardCard';
-import { MappingContext } from './DashboardLibraryModal';
-import {
-  fetchCommunityDashboard,
-  fetchCommunityDashboards,
-  fetchProvisionedDashboards,
-} from './api/dashboardLibraryApi';
+import { MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
+import { fetchCommunityDashboards, fetchProvisionedDashboards } from './api/dashboardLibraryApi';
 import { CONTENT_KINDS, DashboardLibraryInteractions, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './interactions';
 import { GnetDashboard } from './types';
-import { tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './utils/autoMapDatasources';
 import {
   getThumbnailUrl,
   getLogoUrl,
   buildDashboardDetails,
-  navigateToTemplate,
+  onUseCommunityDashboard,
 } from './utils/communityDashboardHelpers';
 import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
 
 interface Props {
   datasourceUid?: string;
-  onOpenModal: (defaultTab: 'datasource' | 'community') => void;
-  onShowMapping: (context: MappingContext) => void;
 }
 
 type MixedDashboard =
@@ -49,9 +42,17 @@ const DEFAULT_SORT_DIRECTION = 'desc';
 const INCLUDE_SCREENSHOTS = true;
 const INCLUDE_LOGO = true;
 
-export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping }: Props) => {
+export const SuggestedDashboards = ({ datasourceUid }: Props) => {
   const styles = useStyles2(getStyles);
   const hasTrackedLoaded = useRef(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const showLibraryModal = searchParams.get('dashboardLibraryModal') === 'open';
+
+  // Validate and get default tab from URL params
+  const tabParam = searchParams.get('dashboardLibraryTab');
+  const defaultTab: 'datasource' | 'community' = tabParam === 'community' ? 'community' : 'datasource';
+
+  const [mappingContext, setMappingContext] = useState<MappingContext | null>(null);
 
   // Get datasource type for dynamic title
   const datasourceType = useMemo(() => {
@@ -120,26 +121,6 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
         }
       }
 
-      // Track analytics on first load only (once per component lifetime)
-      if (!hasTrackedLoaded.current && mixed.length > 0) {
-        const contentKinds = [
-          ...new Set(
-            mixed.map((m) =>
-              m.type === 'provisioned' ? CONTENT_KINDS.DATASOURCE_DASHBOARD : CONTENT_KINDS.COMMUNITY_DASHBOARD
-            )
-          ),
-        ];
-
-        DashboardLibraryInteractions.loaded({
-          numberOfItems: mixed.length,
-          contentKinds,
-          datasourceTypes: [ds.type],
-          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-          eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
-        });
-        hasTrackedLoaded.current = true;
-      }
-
       // Determine if there are more dashboards available beyond what we're showing
       // Show "View all" if: more than 1 provisioned exists OR we got the full page size of community dashboards
       const hasMoreDashboards = provisioned.length > 1 || community.length >= SUGGESTED_COMMUNITY_PAGE_SIZE;
@@ -151,8 +132,8 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
     }
   }, [datasourceUid]);
 
-  // Determine default tab based on what data is available
-  const defaultTab = useMemo((): 'datasource' | 'community' => {
+  // Determine which tab should be default based on available data
+  const computedDefaultTab = useMemo((): 'datasource' | 'community' => {
     if (!result || loading) {
       return 'datasource'; // Default while loading
     }
@@ -162,6 +143,52 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
     // Prefer datasource tab if it has data, otherwise community
     return hasProvisioned ? 'datasource' : 'community';
   }, [result, loading]);
+
+  // Track analytics only once on first successful load
+  useEffect(() => {
+    if (!loading && !hasTrackedLoaded.current && result && result.dashboards.length > 0) {
+      const contentKinds = [
+        ...new Set(
+          result.dashboards.map((m) =>
+            m.type === 'provisioned' ? CONTENT_KINDS.DATASOURCE_DASHBOARD : CONTENT_KINDS.COMMUNITY_DASHBOARD
+          )
+        ),
+      ];
+
+      DashboardLibraryInteractions.loaded({
+        numberOfItems: result.dashboards.length,
+        contentKinds,
+        datasourceTypes: [datasourceType],
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+        eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+      });
+      hasTrackedLoaded.current = true;
+    }
+  }, [loading, result, datasourceType]);
+
+  const onModalDismiss = () => {
+    // Remove modal-related query params while keeping datasourceUid
+    setSearchParams((params) => {
+      params.delete('dashboardLibraryModal');
+      params.delete('dashboardLibraryTab');
+      return params;
+    });
+    setMappingContext(null);
+  };
+
+  const onOpenModal = (tab: 'datasource' | 'community') => {
+    setSearchParams((params) => {
+      const newParams = new URLSearchParams(params);
+      newParams.set('dashboardLibraryModal', 'open');
+      newParams.set('dashboardLibraryTab', tab);
+      return newParams;
+    });
+  };
+
+  const onShowMapping = (context: MappingContext) => {
+    setMappingContext(context);
+    onOpenModal(computedDefaultTab);
+  };
 
   const onUseProvisionedDashboard = (dashboard: PluginDashboard) => {
     if (!datasourceUid) {
@@ -200,7 +227,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
     locationService.push(`/dashboard/template?${params.toString()}`);
   };
 
-  const onUseCommunityDashboard = async (dashboard: GnetDashboard) => {
+  const onPreviewCommunityDashboard = (dashboard: GnetDashboard) => {
     if (!datasourceUid) {
       return;
     }
@@ -210,6 +237,7 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
       return;
     }
 
+    // Track item click
     DashboardLibraryInteractions.itemClicked({
       contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
       datasourceTypes: [ds.type],
@@ -221,59 +249,13 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
       discoveryMethod: 'browse',
     });
 
-    try {
-      // Fetch full dashboard from Gcom, this is the JSON with __inputs
-      const fullDashboard = await fetchCommunityDashboard(dashboard.id);
-      const dashboardJson = fullDashboard.json;
-
-      // Parse datasource requirements from __inputs
-      const dsInputs: DataSourceInput[] = dashboardJson.__inputs?.filter(isDataSourceInput) || [];
-
-      // Parse constant inputs - these always need user review
-      const constantInputs = parseConstantInputs(dashboardJson.__inputs || []);
-
-      // Try auto-mapping datasources
-      const mappingResult = tryAutoMapDatasources(dsInputs, datasourceUid || '');
-
-      // Decide whether to show mapping form or navigate directly
-      // Show mapping form if: (a) there are unmapped datasources OR (b) there are constants
-      const needsMapping = mappingResult.unmappedDsInputs.length > 0 || constantInputs.length > 0;
-
-      if (!needsMapping) {
-        // No mapping needed - all datasources auto-mapped, no constants
-        navigateToTemplate(
-          dashboard.name,
-          dashboard.id,
-          datasourceUid || '',
-          mappingResult.mappings,
-          EVENT_LOCATIONS.EMPTY_DASHBOARD,
-          CONTENT_KINDS.COMMUNITY_DASHBOARD
-        );
-      } else {
-        // Show mapping form for unmapped datasources and/or constants
-        onShowMapping({
-          dashboardName: dashboard.name,
-          dashboardJson,
-          unmappedDsInputs: mappingResult.unmappedDsInputs,
-          constantInputs,
-          existingMappings: mappingResult.mappings,
-          eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
-          contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
-          onInterpolateAndNavigate: (mappings) =>
-            navigateToTemplate(
-              dashboard.name,
-              dashboard.id,
-              datasourceUid || '',
-              mappings,
-              EVENT_LOCATIONS.EMPTY_DASHBOARD,
-              CONTENT_KINDS.COMMUNITY_DASHBOARD
-            ),
-        });
-      }
-    } catch (err) {
-      console.error('Error loading community dashboard:', err);
-      // TODO: Show error notification
-    }
+    onUseCommunityDashboard({
+      dashboard,
+      datasourceUid,
+      datasourceType: ds.type,
+      eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+      onShowMapping: onShowMapping,
+    });
   };
 
   // Don't render if no dashboards or still loading
@@ -282,80 +264,88 @@ export const SuggestedDashboards = ({ datasourceUid, onOpenModal, onShowMapping 
   }
 
   return (
-    <div className={styles.container} data-testid="suggested-dashboards">
-      <div className={styles.header}>
-        <div className={styles.headerText}>
-          <h1 className={styles.title}>
-            {datasourceType
-              ? t(
-                  'dashboard-library.suggested-dashboards-title-with-datasource',
-                  'Build a dashboard using suggested options for your {{datasourceType}} data source',
-                  { datasourceType }
-                )
-              : t(
-                  'dashboard-library.suggested-dashboards-title',
-                  'Build a dashboard using suggested options for your selected data source'
-                )}
-          </h1>
-          <p className={styles.subtitle}>
-            <Trans i18nKey="dashboard-library.suggested-dashboards-subtitle">
-              Browse and select from data-source provided or community dashboards
-            </Trans>
-          </p>
+    <>
+      <div className={styles.container} data-testid="suggested-dashboards">
+        <div className={styles.header}>
+          <div className={styles.headerText}>
+            <h1 className={styles.title}>
+              {datasourceType
+                ? t(
+                    'dashboard-library.suggested-dashboards-title-with-datasource',
+                    'Build a dashboard using suggested options for your {{datasourceType}} data source',
+                    { datasourceType }
+                  )
+                : t(
+                    'dashboard-library.suggested-dashboards-title',
+                    'Build a dashboard using suggested options for your selected data source'
+                  )}
+            </h1>
+            <p className={styles.subtitle}>
+              <Trans i18nKey="dashboard-library.suggested-dashboards-subtitle">
+                Browse and select from data-source provided or community dashboards
+              </Trans>
+            </p>
+          </div>
+          {result?.hasMoreDashboards && (
+            <Button variant="secondary" fill="outline" onClick={() => onOpenModal(computedDefaultTab)} size="sm">
+              <Trans i18nKey="dashboard-library.view-all">View all</Trans>
+            </Button>
+          )}
         </div>
-        {result?.hasMoreDashboards && (
-          <Button variant="secondary" fill="outline" onClick={() => onOpenModal(defaultTab)} size="sm">
-            <Trans i18nKey="dashboard-library.view-all">View all</Trans>
-          </Button>
-        )}
+
+        <Grid
+          gap={4}
+          columns={{
+            xs: 1,
+            sm: 2,
+            lg: 3,
+          }}
+        >
+          {loading
+            ? Array.from({ length: 3 }).map((_, i) => <DashboardCard.Skeleton key={`skeleton-${i}`} />)
+            : result?.dashboards.map((item, idx) => {
+                if (item.type === 'provisioned') {
+                  return (
+                    <DashboardCard
+                      key={`provisioned-${item.dashboard.uid}-${idx}`}
+                      title={item.dashboard.title}
+                      imageUrl={getProvisionedDashboardImageUrl(item.index)}
+                      dashboard={item.dashboard}
+                      onClick={() => onUseProvisionedDashboard(item.dashboard)}
+                      showDatasourceProvidedBadge={true}
+                      dimThumbnail={true}
+                      buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}
+                    />
+                  );
+                } else {
+                  const thumbnailUrl = getThumbnailUrl(item.dashboard);
+                  const imageUrl = thumbnailUrl || getLogoUrl(item.dashboard);
+                  const isLogo = !thumbnailUrl;
+                  const details = buildDashboardDetails(item.dashboard);
+
+                  return (
+                    <DashboardCard
+                      key={`community-${item.dashboard.id}-${idx}`}
+                      title={item.dashboard.name}
+                      imageUrl={imageUrl}
+                      dashboard={item.dashboard}
+                      onClick={() => onPreviewCommunityDashboard(item.dashboard)}
+                      isLogo={isLogo}
+                      details={details}
+                      buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}
+                    />
+                  );
+                }
+              }) || []}
+        </Grid>
       </div>
-
-      <Grid
-        gap={4}
-        columns={{
-          xs: 1,
-          sm: 2,
-          lg: 3,
-        }}
-      >
-        {loading
-          ? Array.from({ length: 3 }).map((_, i) => <DashboardCard.Skeleton key={`skeleton-${i}`} />)
-          : result?.dashboards.map((item, idx) => {
-              if (item.type === 'provisioned') {
-                return (
-                  <DashboardCard
-                    key={`provisioned-${item.dashboard.uid}-${idx}`}
-                    title={item.dashboard.title}
-                    imageUrl={getProvisionedDashboardImageUrl(item.index)}
-                    dashboard={item.dashboard}
-                    onClick={() => onUseProvisionedDashboard(item.dashboard)}
-                    showDatasourceProvidedBadge={true}
-                    dimThumbnail={true}
-                    buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}
-                  />
-                );
-              } else {
-                const thumbnailUrl = getThumbnailUrl(item.dashboard);
-                const imageUrl = thumbnailUrl || getLogoUrl(item.dashboard);
-                const isLogo = !thumbnailUrl;
-                const details = buildDashboardDetails(item.dashboard);
-
-                return (
-                  <DashboardCard
-                    key={`community-${item.dashboard.id}-${idx}`}
-                    title={item.dashboard.name}
-                    imageUrl={imageUrl}
-                    dashboard={item.dashboard}
-                    onClick={() => onUseCommunityDashboard(item.dashboard)}
-                    isLogo={isLogo}
-                    details={details}
-                    buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}
-                  />
-                );
-              }
-            }) || []}
-      </Grid>
-    </div>
+      <SuggestedDashboardsModal
+        isOpen={showLibraryModal}
+        onDismiss={onModalDismiss}
+        initialMappingContext={mappingContext}
+        defaultTab={defaultTab}
+      />
+    </>
   );
 };
 

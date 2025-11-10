@@ -330,7 +330,9 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			params = append(params, query.AnnotationID)
 		}
 
-		if query.AlertID != 0 {
+		if query.AlertID < 0 {
+			sql.WriteString(` AND a.alert_id = 0`)
+		} else if query.AlertID > 0 {
 			sql.WriteString(` AND a.alert_id = ?`)
 			params = append(params, query.AlertID)
 		} else if query.AlertUID != "" {

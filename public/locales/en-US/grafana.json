@@ -2948,8 +2948,10 @@
       "instance-details-drawer": {
         "instance-details": "Instance details"
       },
+      "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
       "no-instances-found": "No alert instances found for rule: {{ruleUID}}",
       "no-labels": "No labels",
+      "no-matching-instances-with-filters": "No alert instances match your current set of filters for the selected time range.",
       "open-in-sidebar": "Open in sidebar",
       "open-rule-details": "Open rule details",
       "rule-details": {
@@ -4128,6 +4130,7 @@
       "scopes": "Scopes"
     },
     "empty-state": {
+      "button-title": "Search with Grafana Assistant",
       "message": "No results found"
     },
     "scopes": {
@@ -4833,7 +4836,11 @@
       "add-visualization-header": "Start your new dashboard by adding a visualization",
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2> .",
       "import-a-dashboard-header": "Import a dashboard",
-      "import-dashboard-button": "Import dashboard"
+      "import-dashboard-button": "Import dashboard",
+      "show-less-dashboards": "Show less",
+      "show-more-dashboards": "Show more",
+      "start-with-suggested-dashboards": "Start with a pre-made dashboard from your data source",
+      "use-template-button": "Use this dashboard"
     },
     "errors": {
       "failed-to-load": "Failed to load dashboard"
@@ -11558,6 +11565,8 @@
     "empty-state": {
       "no-jobs": "No jobs..."
     },
+    "enable-push-to-configured-branch-description": "Allow direct commits to the configured branch.",
+    "enable-push-to-configured-branch-label": "Enable push to configured branch",
     "enhanced-features": {
       "description": "Get the most out of your GitHub integration with these optional add-ons",
       "description-instant-updates": "Get instant updates in Grafana as soon as changes are committed. Review and approve changes using pull requests before they go live.",
@@ -11777,14 +11786,14 @@
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "recent-jobs": {
-      "active-jobs": "active jobs",
       "column-action": "Action",
       "column-duration": "Duration",
       "column-job-id": "Job ID",
       "column-message": "Message",
       "column-started": "Started",
       "column-status": "Status",
-      "error-loading": "Error loading {{type}}",
+      "error-loading-active-jobs": "Error loading active jobs",
+      "error-loading-historic-jobs": "Error loading historic jobs",
       "jobs": "Jobs"
     },
     "repository-actions": {

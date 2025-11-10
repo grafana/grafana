@@ -41,3 +41,7 @@ func (nc NoopClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckR
 func (nc NoopClient) Mutate(ctx context.Context, req *authzextv1.MutateRequest) error {
 	return nil
 }
+
+func (nc NoopClient) Query(ctx context.Context, req *authzextv1.QueryRequest) (*authzextv1.QueryResponse, error) {
+	return nil, nil
+}

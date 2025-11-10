@@ -7,19 +7,17 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, useStyles2, Stack, Grid, EmptyState, Alert, Pagination, FilterInput } from '@grafana/ui';
-import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 
 import { DashboardCard } from './DashboardCard';
-import { MappingContext } from './DashboardLibraryModal';
-import { fetchCommunityDashboard, fetchCommunityDashboards } from './api/dashboardLibraryApi';
+import { MappingContext } from './SuggestedDashboardsModal';
+import { fetchCommunityDashboards } from './api/dashboardLibraryApi';
 import { CONTENT_KINDS, DashboardLibraryInteractions, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './interactions';
 import { GnetDashboard } from './types';
-import { tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './utils/autoMapDatasources';
 import {
   getThumbnailUrl,
   getLogoUrl,
   buildDashboardDetails,
-  navigateToTemplate,
+  onUseCommunityDashboard,
 } from './utils/communityDashboardHelpers';
 
 interface Props {
@@ -53,7 +51,9 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
 
   // Reset to page 1 when debounced search query changes
   useEffect(() => {
-    setCurrentPage(1);
+    if (debouncedSearchQuery) {
+      setCurrentPage(1);
+    }
   }, [debouncedSearchQuery]);
 
   const {
@@ -93,18 +93,6 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         });
       }
 
-      // Track analytics on first load only (once per component lifetime)
-      if (!hasTrackedLoaded.current && currentPage === 1 && apiResponse.dashboards.length > 0) {
-        DashboardLibraryInteractions.loaded({
-          numberOfItems: apiResponse.dashboards.length,
-          contentKinds: [CONTENT_KINDS.COMMUNITY_DASHBOARD],
-          datasourceTypes: [ds.type],
-          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-        });
-        hasTrackedLoaded.current = true;
-      }
-
       return {
         dashboards: apiResponse.dashboards,
         pages: apiResponse.pages,
@@ -116,6 +104,26 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
     }
   }, [datasourceUid, currentPage, debouncedSearchQuery]);
 
+  // Track analytics only once on first successful load
+  useEffect(() => {
+    if (
+      !loading &&
+      !hasTrackedLoaded.current &&
+      currentPage === 1 &&
+      response?.dashboards &&
+      response.dashboards.length > 0
+    ) {
+      DashboardLibraryInteractions.loaded({
+        numberOfItems: response.dashboards.length,
+        contentKinds: [CONTENT_KINDS.COMMUNITY_DASHBOARD],
+        datasourceTypes: [response.datasourceType],
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+        eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+      });
+      hasTrackedLoaded.current = true;
+    }
+  }, [loading, currentPage, response]);
+
   const styles = useStyles2(getStyles);
 
   // Determine what to show in results area
@@ -124,78 +132,34 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   const showEmptyState = !loading && (!response?.dashboards || response.dashboards.length === 0);
   const showError = !loading && error;
 
-  const onUseCommunityDashboard = async (dashboard: GnetDashboard) => {
-    if (response) {
-      DashboardLibraryInteractions.itemClicked({
-        contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
-        datasourceTypes: [response.datasourceType],
-        libraryItemId: String(dashboard.id),
-        libraryItemTitle: dashboard.name,
-        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-        eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-        clickedAt: Date.now(),
-        discoveryMethod: debouncedSearchQuery.trim() ? 'search' : 'browse',
-      });
+  const onPreviewCommunityDashboard = (dashboard: GnetDashboard) => {
+    if (!response) {
+      return;
     }
 
-    try {
-      // Fetch full dashboard from Gcom, this is the JSON with __inputs
-      const fullDashboard = await fetchCommunityDashboard(dashboard.id);
-      const dashboardJson = fullDashboard.json;
+    // Track item click
+    DashboardLibraryInteractions.itemClicked({
+      contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+      datasourceTypes: [response.datasourceType],
+      libraryItemId: String(dashboard.id),
+      libraryItemTitle: dashboard.name,
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+      eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+      clickedAt: Date.now(),
+      discoveryMethod: debouncedSearchQuery.trim() ? 'search' : 'browse',
+    });
 
-      // Parse datasource requirements from __inputs
-      const dsInputs: DataSourceInput[] = dashboardJson.__inputs?.filter(isDataSourceInput) || [];
-
-      // Parse constant inputs - these always need user review
-      const constantInputs = parseConstantInputs(dashboardJson.__inputs || []);
-
-      // Try auto-mapping datasources, considering we could come from "build dashhoard" there should be a datasource
-      // instance selected
-      const mappingResult = tryAutoMapDatasources(dsInputs, datasourceUid || '');
-
-      // Decide whether to show mapping form or navigate directly
-      // Show mapping form if: (a) there are unmapped datasources OR (b) there are constants
-      const needsMapping = !mappingResult.allMapped || constantInputs.length > 0;
-
-      if (!needsMapping) {
-        // No mapping needed - all datasources auto-mapped, no constants
-        navigateToTemplate(
-          dashboard.name,
-          dashboard.id,
-          datasourceUid || '',
-          mappingResult.mappings,
-          EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-          CONTENT_KINDS.COMMUNITY_DASHBOARD
-        );
-      } else {
-        // Show mapping form for unmapped datasources and/or constants
-        onShowMapping({
-          dashboardName: dashboard.name,
-          dashboardJson,
-          unmappedDsInputs: mappingResult.unmappedDsInputs,
-          constantInputs,
-          existingMappings: mappingResult.mappings,
-          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-          contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
-          onInterpolateAndNavigate: (mappings) =>
-            navigateToTemplate(
-              dashboard.name,
-              dashboard.id,
-              datasourceUid || '',
-              mappings,
-              EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-              CONTENT_KINDS.COMMUNITY_DASHBOARD
-            ),
-        });
-      }
-    } catch (err) {
-      console.error('Error loading community dashboard:', err);
-      // TODO: Show error notification
-    }
+    onUseCommunityDashboard({
+      dashboard,
+      datasourceUid: datasourceUid || '',
+      datasourceType: response.datasourceType,
+      eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+      onShowMapping,
+    });
   };
 
   return (
-    <Stack direction="column" gap={2} justifyContent="space-between" height="100%">
+    <Stack direction="column" gap={2} height="100%">
       <FilterInput
         className={styles.searchInput}
         placeholder={
@@ -292,7 +256,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                   title={dashboard.name}
                   imageUrl={imageUrl}
                   dashboard={dashboard}
-                  onClick={() => onUseCommunityDashboard(dashboard)}
+                  onClick={() => onPreviewCommunityDashboard(dashboard)}
                   isLogo={isLogo}
                   details={details}
                   buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}
@@ -303,12 +267,9 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         )}
       </div>
       {totalPages > 1 && (
-        <Pagination
-          currentPage={currentPage}
-          numberOfPages={totalPages}
-          onNavigate={(page) => setCurrentPage(page)}
-          className={styles.pagination}
-        />
+        <div className={styles.paginationWrapper}>
+          <Pagination currentPage={currentPage} numberOfPages={totalPages} onNavigate={setCurrentPage} />
+        </div>
       )}
     </Stack>
   );
@@ -318,15 +279,17 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     resultsContainer: css({
       width: '100%',
-      minHeight: '600px',
       position: 'relative',
+      flex: 1,
+      overflow: 'auto',
     }),
-    pagination: css({
+    paginationWrapper: css({
       position: 'sticky',
       bottom: 0,
       backgroundColor: theme.colors.background.primary,
       padding: theme.spacing(2),
-      alignItems: 'center',
+      display: 'flex',
+      justifyContent: 'flex-end',
       zIndex: 2,
     }),
     searchInput: css({

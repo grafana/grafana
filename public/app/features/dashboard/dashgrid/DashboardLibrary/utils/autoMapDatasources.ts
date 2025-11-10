@@ -124,3 +124,29 @@ export function mapConstantInputs(
     value: userValues[input.name] !== undefined ? userValues[input.name] : input.value,
   }));
 }
+
+interface UserSelectedDatasourceMappings {
+  name: string;
+  pluginId: string;
+  datasource: { uid: string } | undefined;
+}
+
+/**
+ * Maps user-selected datasources to InputMapping format.
+ * Used in the mapping form to convert user selections into the format required for dashboard interpolation.
+ *
+ * @param unmappedInputs - The datasource inputs that need mapping
+ * @param userSelectedDsMappings - Record of user selections keyed by input name
+ * @returns Array of InputMapping objects for user-selected datasources
+ */
+export function mapUserSelectedDatasources(
+  unmappedInputs: DataSourceInput[],
+  userSelectedDsMappings: Record<string, UserSelectedDatasourceMappings>
+): InputMapping[] {
+  return unmappedInputs.map((input) => ({
+    name: input.name,
+    type: 'datasource',
+    pluginId: input.pluginId,
+    value: userSelectedDsMappings[input.name]?.datasource?.uid || '',
+  }));
+}
