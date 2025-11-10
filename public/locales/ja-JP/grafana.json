@@ -11460,6 +11460,8 @@
     "empty-state": {
       "no-jobs": "ジョブはありません…"
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "これらのオプションのアドオンを使って、GitHub連携を最大限に活用しましょう",
       "description-instant-updates": "変更がコミットされるとすぐに、Grafanaでリアルタイムに更新を受け取ります。変更が公開される前に、プルリクエストを使用して変更を確認・承認します。",
@@ -11677,14 +11679,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "アクティブなジョブ",
       "column-action": "操作",
       "column-duration": "継続時間",
       "column-job-id": "",
       "column-message": "メッセージ",
       "column-started": "開始済み",
       "column-status": "ステータス",
-      "error-loading": "{{type}}の読み込みエラー",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "ジョブ"
     },
     "repository-actions": {

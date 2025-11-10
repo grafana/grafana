@@ -406,14 +406,6 @@ var (
 			Owner:             identityAccessTeam,
 		},
 		{
-			Name:         "panelMonitoring",
-			Description:  "Enables panel monitoring through logs and measurements",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true", // enabled by default
-			Owner:        grafanaDatavizSquad,
-			FrontendOnly: true,
-		},
-		{
 			Name:              "enableNativeHTTPHistogram",
 			Description:       "Enables native HTTP Histograms",
 			Stage:             FeatureStageExperimental,
@@ -971,6 +963,13 @@ var (
 		},
 		{
 			Name:         "dashboardLibrary",
+			Description:  "Enable dashboard library experiments that are production ready",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+		},
+		{
+			Name:         "suggestedDashboards",
 			Description:  "Enable suggested dashboards when creating new dashboards",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
@@ -2158,6 +2157,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
+		},
+		{
+			Name:        "kubernetesAnnotations",
+			Description: "Enables app platform API for annotations",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaBackendServicesSquad,
+			Expression:  "false",
 		},
 	}
 )
