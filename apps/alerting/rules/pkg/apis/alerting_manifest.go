@@ -42,7 +42,21 @@ var appManifestData = app.ManifestData{
 					Plural:     "AlertRules",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaAlertRulev0alpha1,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+						Mutation: &app.MutationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaAlertRulev0alpha1,
 					SelectableFields: []string{
 						"spec.title",
 						"spec.paused",
@@ -57,7 +71,21 @@ var appManifestData = app.ManifestData{
 					Plural:     "RecordingRules",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaRecordingRulev0alpha1,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+						Mutation: &app.MutationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaRecordingRulev0alpha1,
 					SelectableFields: []string{
 						"spec.title",
 						"spec.paused",

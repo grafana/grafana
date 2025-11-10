@@ -75,7 +75,7 @@ services:
       GF_TRACING_OPENTELEMETRY_OTLP_PROPAGATION: jaeger,w3c
 
   postgres:
-    image: postgres:16.1-alpine3.19
+    image: postgres:16.1-alpine3.19@sha256:17eb369d9330fe7fbdb2f705418c18823d66322584c77c2b43cc0e1851d01de7
     environment:
       POSTGRES_USER: grafana
       POSTGRES_PASSWORD: grafana
@@ -86,7 +86,7 @@ services:
       - 'alloy.logs=true'
 
   alloy:
-    image: grafana/alloy:latest
+    image: grafana/alloy:v1.11.2@sha256:6ab34b8201f0e8b0c4346be4934c9965723af3f7f21dd9a65fd73f270f69b451
     volumes:
       - ./configs/alloy:/alloy-config
       - /var/run/docker.sock:/var/run/docker.sock # To scrape Docker container logs
@@ -104,7 +104,7 @@ services:
       - 'alloy.logs=true'
 
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:v3.7.2@sha256:23031bfe0e74a13004252caaa74eccd0d62b6c6e7a04711d5b8bf5b7e113adc7
     volumes:
       - prometheus-data:/prometheus
     command:
@@ -116,7 +116,7 @@ services:
       - 'alloy.logs=true'
 
   loki:
-    image: grafana/loki
+    image: grafana/loki:3.5.7@sha256:0eaee7bf39cc83aaef46914fb58f287d4f4c4be6ec96b86c2ed55719a75e49c8
     volumes:
       - loki-data:/loki
     command: -config.file=/etc/loki/local-config.yaml
@@ -124,7 +124,7 @@ services:
       - 'alloy.logs=true'
 
   tempo-init:
-    image: grafana/tempo
+    image: busybox:1.37.0@sha256:e3652a00a2fabd16ce889f0aa32c38eec347b997e73bd09e69c962ec7f8732ee
     user: root
     entrypoint:
       - 'chown'
@@ -134,7 +134,7 @@ services:
       - tempo-data:/var/tempo
 
   tempo:
-    image: grafana/tempo
+    image: grafana/tempo:2.9.0@sha256:65a5789759435f1ef696f1953258b9bbdb18eb571d5ce711ff812d2e128288a4
     volumes:
       - tempo-data:/var/lib/tempo
       - ./configs/tempo.yaml:/etc/tempo/tempo.yaml

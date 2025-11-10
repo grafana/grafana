@@ -62,7 +62,6 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 	}
 
 	serverOptions := resource.ResourceServerOptions{
-		Tracer: opts.Tracer,
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
@@ -99,6 +98,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 
 		isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
 			opts.Cfg.SectionWithEnvOverrides("resource_api"))
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		withPruner := opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageHistoryPruner)
 
 		backend, err := NewBackend(BackendOptions{

@@ -9,10 +9,9 @@ export function gaugePanelMigrationHandler(panel: PanelModel<Options>): Partial<
   const sharedOptions = sharedSingleStatMigrationHandler(panel);
   const newOptions: Partial<Options> = { ...sharedOptions };
 
-  const previousVersion = parseFloat(panel.pluginVersion || '8');
-  const fieldConfig = panel.fieldConfig;
+  if (shouldMigrateGauge(panel)) {
+    const fieldConfig = panel.fieldConfig;
 
-  if (previousVersion <= 12.3) {
     // This option had no effect in old gauge unless color mode was 'From thresholds'
     if (newOptions.showThresholdMarkers && fieldConfig?.defaults?.color?.mode !== FieldColorModeId.Thresholds) {
       newOptions.showThresholdMarkers = false;
@@ -40,8 +39,13 @@ export function gaugePanelMigrationHandler(panel: PanelModel<Options>): Partial<
 }
 
 export function shouldMigrateGauge(panel: PanelModel): boolean {
+  // Test for new gauge option
+  if (panel.options?.shape) {
+    return false;
+  }
+
   const previousVersion = parseFloat(panel.pluginVersion ?? '8');
-  return previousVersion <= 12.3;
+  return previousVersion < 13;
 }
 
 // This is called when the panel changes from another panel

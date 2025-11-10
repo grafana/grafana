@@ -28,6 +28,7 @@ var WireSetExts = wire.NewSet(
 	wire.Bind(new(iam.CoreRoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
 	wire.Bind(new(iam.RoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
 	wire.Bind(new(iam.RoleBindingStorageBackend), new(*noopstorage.StorageBackendImpl)),
+	wire.Bind(new(iam.ExternalGroupMappingStorageBackend), new(*noopstorage.StorageBackendImpl)),
 )
 
 var provisioningExtras = wire.NewSet(
@@ -49,6 +50,7 @@ var WireSet = wire.NewSet(
 	// Secrets
 	secret.RegisterDependencies,
 	// Provisioning
+	provisioning.RegisterDependencies,
 	provisioningExtras,
 
 	// Each must be added here *and* in the ServiceSink above

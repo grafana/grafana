@@ -1969,6 +1969,12 @@ If a rule frequency is lower than this value, then this value is enforced.
 
 <hr>
 
+#### `rule_version_record_limit`
+
+Defines the limits for how many alert rule versions are stored in the database per alert rule.
+
+The default `0` value means there's no limit.
+
 ### `[unified_alerting.screenshots]`
 
 For more information about screenshots, refer to [Images in notifications](../../alerting/configure-notifications/template-notifications/images-in-notifications/).
@@ -2559,7 +2565,7 @@ Available to Grafana administrators only, enables installing, uninstalling, and 
 Set to `true` by default.
 Setting it to `false` hides the controls.
 
-For more information, refer to [Plugin catalog](../../administration/plugin-management/#plugin-catalog).
+For more information, refer to [Plugin catalog](../../administration/plugin-management/#access-the-plugin-catalog).
 
 #### `plugin_admin_external_manage_enabled`
 

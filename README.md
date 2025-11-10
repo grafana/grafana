@@ -6,7 +6,6 @@ test
 The open-source platform for monitoring and observability
 
 [![License](https://img.shields.io/github/license/grafana/grafana)](LICENSE)
-[![Drone](https://drone.grafana.net/api/badges/grafana/grafana/status.svg)](https://drone.grafana.net/grafana/grafana)
 [![Go Report Card](https://goreportcard.com/badge/github.com/grafana/grafana)](https://goreportcard.com/report/github.com/grafana/grafana)
 
 Grafana allows you to query, visualize, alert on and understand your metrics no matter where they are stored. Create, explore, and share dashboards with your team and foster a data-driven culture:
@@ -37,6 +36,8 @@ If you're interested in contributing to the Grafana project:
 - Learn how to set up your local environment, in our [Developer guide](https://github.com/grafana/grafana/blob/HEAD/contribute/developer-guide.md).
 - Explore our [beginner-friendly issues](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22).
 - Look through our [style guide and Storybook](https://developers.grafana.com/ui/latest/index.html).
+
+> Share your contributor experience in our [feedback survey](https://gra.fan/ome) to help us improve.
 
 ## Get involved
 
