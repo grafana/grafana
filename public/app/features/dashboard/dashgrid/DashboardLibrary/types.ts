@@ -5,17 +5,17 @@ export interface Link {
   href: string;
 }
 
-interface Screenshot {
+export interface Screenshot {
   links: Link[];
 }
 
-interface LogoImage {
+export interface LogoImage {
   content: string;
   filename: string;
   type: string;
 }
 
-interface Logo {
+export interface Logo {
   small?: LogoImage;
   large?: LogoImage;
 }
@@ -30,4 +30,19 @@ export interface GnetDashboard {
   screenshots?: Screenshot[];
   logos?: Logo;
   json?: DashboardJson; // Full dashboard JSON from detail API
+  createdAt?: string; // ISO date string if available
+  updatedAt?: string; // ISO date string if available
+  publishedAt?: string; // ISO date string if available
+  // Author/organization information
+  orgId?: number;
+  orgName?: string;
+  orgSlug?: string;
+  userId?: number;
+  userName?: string;
+}
+
+export interface GnetDashboardsResponse {
+  page: number;
+  pages: number;
+  dashboards: GnetDashboard[];
 }
