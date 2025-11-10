@@ -1352,6 +1352,7 @@
         "name": "editPanelCSVDragAndDrop",
         "resourceVersion": "1762783224740",
         "creationTimestamp": "2023-01-24T09:43:44Z",
+        "deletionTimestamp": "2025-11-10T16:31:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-10 14:00:24.740459 +0000 UTC"
         }
