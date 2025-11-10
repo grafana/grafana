@@ -311,6 +311,7 @@ export interface GrafanaConfig {
   pluginCatalogHiddenPlugins: string[];
   pluginCatalogManagedPlugins: string[];
   pluginCatalogPreinstalledPlugins: PreinstalledPlugin[];
+  pluginCatalogPreinstalledAutoUpdate?: boolean;
   pluginsCDNBaseURL: string;
   tokenExpirationDayLimit: number;
   listDashboardScopesEndpoint: string;

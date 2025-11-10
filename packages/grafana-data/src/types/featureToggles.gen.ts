@@ -733,11 +733,6 @@ export interface FeatureToggles {
   */
   azureMonitorDisableLogLimit?: boolean;
   /**
-  * Enables automatic updates for pre-installed plugins
-  * @default true
-  */
-  preinstallAutoUpdate?: boolean;
-  /**
   * Enables experimental reconciler for playlists
   */
   playlistsReconciler?: boolean;

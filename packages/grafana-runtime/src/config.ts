@@ -169,6 +169,7 @@ export class GrafanaBootConfig {
   pluginCatalogHiddenPlugins: string[] = [];
   pluginCatalogManagedPlugins: string[] = [];
   pluginCatalogPreinstalledPlugins: PreinstalledPluginGrafanaData[] = [];
+  pluginCatalogPreinstalledAutoUpdate?: boolean;
   pluginsCDNBaseURL = '';
   expressionsEnabled = false;
   awsAllowedAuthProviders: string[] = [];

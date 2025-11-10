@@ -174,7 +174,7 @@ function getButtonHiddenState(installState: PluginStatus, isPreinstalled: { foun
 
   // Handle downgrade case
   if (installState === PluginStatus.DOWNGRADE) {
-    return isPreinstalled.found && Boolean(config.featureToggles.preinstallAutoUpdate);
+    return isPreinstalled.found && Boolean(config.pluginCatalogPreinstalledAutoUpdate);
   }
 
   // Handle upgrade case
