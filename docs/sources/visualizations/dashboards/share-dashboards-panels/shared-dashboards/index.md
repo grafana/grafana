@@ -249,6 +249,7 @@ guaranteed because plugin developers can override this functionality. The follow
 - Dynatrace
 - Graphite
 - Google Sheets
+- Tempo
 
 ### Unconfirmed
 
