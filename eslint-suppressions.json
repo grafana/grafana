@@ -597,14 +597,6 @@
       "count": 5
     }
   },
-  "packages/grafana-ui/src/components/Combobox/MultiCombobox.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    },
-    "react-hooks/rules-of-hooks": {
-      "count": 5
-    }
-  },
   "packages/grafana-ui/src/components/Combobox/MultiCombobox.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
