@@ -143,10 +143,6 @@ const (
 	// Enables extra themes
 	FlagExtraThemes = "extraThemes"
 
-	// FlagRecordedQueriesMulti
-	// Enables writing multiple items from a single query within Recorded Queries
-	FlagRecordedQueriesMulti = "recordedQueriesMulti"
-
 	// FlagLogsExploreTableVisualisation
 	// A table visualisation for logs in Explore
 	FlagLogsExploreTableVisualisation = "logsExploreTableVisualisation"
@@ -218,10 +214,6 @@ const (
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
-
-	// FlagPanelMonitoring
-	// Enables panel monitoring through logs and measurements
-	FlagPanelMonitoring = "panelMonitoring"
 
 	// FlagEnableNativeHTTPHistogram
 	// Enables native HTTP Histograms
@@ -516,8 +508,12 @@ const (
 	FlagQueryLibrary = "queryLibrary"
 
 	// FlagDashboardLibrary
-	// Enable suggested dashboards when creating new dashboards
+	// Enable dashboard library experiments that are production ready
 	FlagDashboardLibrary = "dashboardLibrary"
+
+	// FlagSuggestedDashboards
+	// Enable suggested dashboards when creating new dashboards
+	FlagSuggestedDashboards = "suggestedDashboards"
 
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
@@ -670,10 +666,6 @@ const (
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
-
-	// FlagPreinstallAutoUpdate
-	// Enables automatic updates for pre-installed plugins
-	FlagPreinstallAutoUpdate = "preinstallAutoUpdate"
 
 	// FlagPlaylistsReconciler
 	// Enables experimental reconciler for playlists
@@ -1013,10 +1005,6 @@ const (
 	// FlagUnifiedStorageSearchDualReaderEnabled
 	// Enable dual reader for unified storage search
 	FlagUnifiedStorageSearchDualReaderEnabled = "unifiedStorageSearchDualReaderEnabled"
-
-	// FlagDashboardDsAdHocFiltering
-	// Enables adhoc filtering support for the dashboard datasource
-	FlagDashboardDsAdHocFiltering = "dashboardDsAdHocFiltering"
 
 	// FlagDashboardLevelTimeMacros
 	// Supports __from and __to macros that always use the dashboard level time range

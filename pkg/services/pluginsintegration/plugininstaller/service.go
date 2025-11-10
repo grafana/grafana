@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -45,7 +44,6 @@ type Service struct {
 	pluginInstaller plugins.Installer
 	pluginStore     pluginstore.Store
 	pluginRepo      repo.Service
-	features        featuremgmt.FeatureToggles
 	updateChecker   pluginchecker.PluginUpdateChecker
 	installComplete chan struct{} // closed when all plugins are installed (used for testing)
 }
@@ -56,7 +54,6 @@ func ProvideService(
 	pluginInstaller plugins.Installer,
 	promReg prometheus.Registerer,
 	pluginRepo repo.Service,
-	features featuremgmt.FeatureToggles,
 	updateChecker pluginchecker.PluginUpdateChecker,
 ) (*Service, error) {
 	once.Do(func() {
@@ -70,7 +67,6 @@ func ProvideService(
 		pluginInstaller: pluginInstaller,
 		pluginStore:     pluginStore,
 		pluginRepo:      pluginRepo,
-		features:        features,
 		updateChecker:   updateChecker,
 		installComplete: make(chan struct{}),
 	}
@@ -111,8 +107,8 @@ func (s *Service) installPlugins(ctx context.Context, pluginsToInstall []setting
 				continue
 			}
 			if installPlugin.Version == "" {
-				if !s.features.IsEnabled(ctx, featuremgmt.FlagPreinstallAutoUpdate) {
-					// Skip updating the plugin if the feature flag is disabled
+				if !s.cfg.PreinstallAutoUpdate {
+					// Skip updating the plugin if auto-update is disabled
 					continue
 				}
 				// The plugin is installed but it's not pinned to a specific version

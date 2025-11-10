@@ -881,12 +881,147 @@ func TestBuildFolderFullPaths(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			buildFolderFullPaths(tt.args.f, tt.args.relations, tt.args.folderMap)
+			require.NoError(t, buildFolderFullPaths(tt.args.f, tt.args.relations, tt.args.folderMap))
 			require.Equal(t, tt.want.Fullpath, tt.args.f.Fullpath, "BuildFolderFullPaths() = %v, want %v", tt.args.f.Fullpath, tt.want.Fullpath)
 			require.Equal(t, tt.want.FullpathUIDs, tt.args.f.FullpathUIDs, "BuildFolderFullPaths() = %v, want %v", tt.args.f.FullpathUIDs, tt.want.FullpathUIDs)
 			require.Equal(t, tt.want.Title, tt.args.f.Title, "BuildFolderFullPaths() = %v, want %v", tt.args.f.Title, tt.want.Title)
 			require.Equal(t, tt.want.UID, tt.args.f.UID, "BuildFolderFullPaths() = %v, want %v", tt.args.f.UID, tt.want.UID)
 			require.Equal(t, tt.want.ParentUID, tt.args.f.ParentUID, "BuildFolderFullPaths() = %v, want %v", tt.args.f.ParentUID, tt.want.ParentUID)
+		})
+	}
+}
+
+func TestBuildFolderFullPaths_CircularReference(t *testing.T) {
+	type args struct {
+		f         *folder.Folder
+		relations map[string]string
+		folderMap map[string]*folder.Folder
+	}
+	tests := []struct {
+		name        string
+		args        args
+		expectedErr string
+	}{
+		{
+			name: "should detect direct circular reference (A -> B -> A)",
+			args: args{
+				f: &folder.Folder{
+					Title:     "FolderA",
+					UID:       "folder-a",
+					ParentUID: "folder-b",
+				},
+				relations: map[string]string{
+					"folder-a": "folder-b",
+					"folder-b": "folder-a", // circular: B points back to A
+				},
+				folderMap: map[string]*folder.Folder{
+					"folder-a": {
+						Title:     "FolderA",
+						UID:       "folder-a",
+						ParentUID: "folder-b",
+					},
+					"folder-b": {
+						Title:     "FolderB",
+						UID:       "folder-b",
+						ParentUID: "folder-a",
+					},
+				},
+			},
+			expectedErr: "circular reference detected",
+		},
+		{
+			name: "should detect self-reference (A -> A)",
+			args: args{
+				f: &folder.Folder{
+					Title:     "FolderA",
+					UID:       "folder-a",
+					ParentUID: "folder-a", // points to itself
+				},
+				relations: map[string]string{
+					"folder-a": "folder-a",
+				},
+				folderMap: map[string]*folder.Folder{
+					"folder-a": {
+						Title:     "FolderA",
+						UID:       "folder-a",
+						ParentUID: "folder-a",
+					},
+				},
+			},
+			expectedErr: "circular reference detected",
+		},
+		{
+			name: "should detect longer circular reference (A -> B -> C -> A)",
+			args: args{
+				f: &folder.Folder{
+					Title:     "FolderA",
+					UID:       "folder-a",
+					ParentUID: "folder-b",
+				},
+				relations: map[string]string{
+					"folder-a": "folder-b",
+					"folder-b": "folder-c",
+					"folder-c": "folder-a", // circular: C points back to A
+				},
+				folderMap: map[string]*folder.Folder{
+					"folder-a": {
+						Title:     "FolderA",
+						UID:       "folder-a",
+						ParentUID: "folder-b",
+					},
+					"folder-b": {
+						Title:     "FolderB",
+						UID:       "folder-b",
+						ParentUID: "folder-c",
+					},
+					"folder-c": {
+						Title:     "FolderC",
+						UID:       "folder-c",
+						ParentUID: "folder-a",
+					},
+				},
+			},
+			expectedErr: "circular reference detected",
+		},
+		{
+			name: "should detect circular reference starting from middle (B in A -> B -> C -> A)",
+			args: args{
+				f: &folder.Folder{
+					Title:     "FolderB",
+					UID:       "folder-b",
+					ParentUID: "folder-c",
+				},
+				relations: map[string]string{
+					"folder-a": "folder-b",
+					"folder-b": "folder-c",
+					"folder-c": "folder-a",
+				},
+				folderMap: map[string]*folder.Folder{
+					"folder-a": {
+						Title:     "FolderA",
+						UID:       "folder-a",
+						ParentUID: "folder-b",
+					},
+					"folder-b": {
+						Title:     "FolderB",
+						UID:       "folder-b",
+						ParentUID: "folder-c",
+					},
+					"folder-c": {
+						Title:     "FolderC",
+						UID:       "folder-c",
+						ParentUID: "folder-a",
+					},
+				},
+			},
+			expectedErr: "circular reference detected",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := buildFolderFullPaths(tt.args.f, tt.args.relations, tt.args.folderMap)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tt.expectedErr)
 		})
 	}
 }

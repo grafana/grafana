@@ -73,7 +73,7 @@ var (
 			Name:           "correlations",
 			Description:    "Correlations page",
 			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaDatavizSquad,
+			Owner:          grafanaDataProSquad,
 			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
 		},
@@ -219,7 +219,7 @@ var (
 			Name:        "disableSSEDataplane",
 			Description: "Disables dataplane specific processing in server side expressions.",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityMetricsSquad,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
 		},
 		{
 			Name:              "unifiedRequestLog",
@@ -263,14 +263,6 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
-		},
-		{
-			Name:           "recordedQueriesMulti",
-			Description:    "Enables writing multiple items from a single query within Recorded Queries",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true",
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: false,
 		},
 		{
 			Name:         "logsExploreTableVisualisation",
@@ -389,7 +381,7 @@ var (
 			Name:        "sseGroupByDatasource",
 			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityMetricsSquad,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
 		},
 		{
 			Name:         "lokiRunQueriesInParallel",
@@ -404,14 +396,6 @@ var (
 			HideFromAdminPage: true,
 			Stage:             FeatureStagePublicPreview,
 			Owner:             identityAccessTeam,
-		},
-		{
-			Name:         "panelMonitoring",
-			Description:  "Enables panel monitoring through logs and measurements",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true", // enabled by default
-			Owner:        grafanaDatavizSquad,
-			FrontendOnly: true,
 		},
 		{
 			Name:              "enableNativeHTTPHistogram",
@@ -438,7 +422,7 @@ var (
 			Description:  "Enable format string transformer",
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
+			Owner:        grafanaDataProSquad,
 			Expression:   "true", // enabled by default
 		},
 		{
@@ -589,7 +573,7 @@ var (
 			Description:  "Add cumulative and window functions to the add field from calculation transformation",
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
+			Owner:        grafanaDataProSquad,
 			Expression:   "true", // enabled by default
 		},
 		{
@@ -625,7 +609,7 @@ var (
 			Description:  "Make sure extracted field names are unique in the dataframe",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
+			Owner:        grafanaDataProSquad,
 		},
 		{
 			Name:         "dashboardSceneForViewers",
@@ -736,7 +720,7 @@ var (
 			Description:  "Enables regression analysis transformation",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
+			Owner:        grafanaDataProSquad,
 		},
 		{
 			Name:              "kubernetesFeatureToggles",
@@ -866,7 +850,7 @@ var (
 			Description:  "Enables the group to nested table transformation",
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
+			Owner:        grafanaDataProSquad,
 			Expression:   "true", // enabled by default,
 		},
 		{
@@ -971,6 +955,13 @@ var (
 		},
 		{
 			Name:         "dashboardLibrary",
+			Description:  "Enable dashboard library experiments that are production ready",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+		},
+		{
+			Name:         "suggestedDashboards",
 			Description:  "Enable suggested dashboards when creating new dashboards",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
@@ -1261,13 +1252,6 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "preinstallAutoUpdate",
-			Description: "Enables automatic updates for pre-installed plugins",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaPluginsPlatformSquad,
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:            "playlistsReconciler",
@@ -1949,14 +1933,6 @@ var (
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
-		},
-		{
-			Name:         "dashboardDsAdHocFiltering",
-			Description:  "Enables adhoc filtering support for the dashboard datasource",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaDataProSquad,
-			FrontendOnly: true,
-			Expression:   "true",
 		},
 		{
 			Name:         "dashboardLevelTimeMacros",

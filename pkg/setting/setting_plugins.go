@@ -185,6 +185,8 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 			}
 			cfg.PreinstallPluginsAsync = nil
 		}
+
+		cfg.PreinstallAutoUpdate = pluginsSection.Key("preinstall_auto_update").MustBool(true)
 	}
 
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")

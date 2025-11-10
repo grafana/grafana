@@ -388,7 +388,9 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 		}
 
 		if (q.WithFullpath || q.WithFullpathUIDs) && f.Fullpath == "" {
-			buildFolderFullPaths(f, relations, folderMap)
+			if err := buildFolderFullPaths(f, relations, folderMap); err != nil {
+				return nil, err
+			}
 		}
 
 		hits = append(hits, f)
@@ -559,15 +561,20 @@ func computeFullPath(parents []*folder.Folder) (string, string) {
 	return strings.Join(fullpath, "/"), strings.Join(fullpathUIDs, "/")
 }
 
-func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderMap map[string]*folder.Folder) {
+func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderMap map[string]*folder.Folder) error {
 	titles := make([]string, 0)
 	uids := make([]string, 0)
 
 	titles = append(titles, f.Title)
 	uids = append(uids, f.UID)
 
+	seen := make(map[string]bool)
 	currentUID := f.UID
 	for currentUID != "" {
+		if seen[currentUID] {
+			return folder.ErrCircularReference.Errorf("circular reference detected for folder %s", currentUID)
+		}
+		seen[currentUID] = true
 		parentUID, exists := relations[currentUID]
 		if !exists {
 			break
@@ -588,6 +595,7 @@ func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderM
 
 	f.Fullpath = strings.Join(util.Reverse(titles), "/")
 	f.FullpathUIDs = strings.Join(util.Reverse(uids), "/")
+	return nil
 }
 
 func shouldSkipFolder(f *folder.Folder, filterUIDs map[string]struct{}) bool {

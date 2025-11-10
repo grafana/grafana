@@ -2262,6 +2262,9 @@
             "type": "integer"
           }
         },
+        "required": [
+          "userId"
+        ],
         "type": "object"
       },
       "AddTeamRoleCommand": {
@@ -4460,6 +4463,9 @@
             "type": "string"
           }
         },
+        "required": [
+          "name"
+        ],
         "type": "object"
       },
       "DashboardACLInfoDTO": {
@@ -8158,6 +8164,7 @@
         "type": "object"
       },
       "Permission": {
+        "description": "Permission is the model for access control permissions",
         "properties": {
           "action": {
             "type": "string"
@@ -8174,7 +8181,6 @@
             "type": "string"
           }
         },
-        "title": "Permission is the model for access control permissions.",
         "type": "object"
       },
       "PermissionDenied": {
@@ -10115,6 +10121,16 @@
             "type": "integer"
           }
         },
+        "required": [
+          "version",
+          "uid",
+          "name",
+          "displayName",
+          "description",
+          "group",
+          "updated",
+          "created"
+        ],
         "type": "object"
       },
       "RolesSearchQuery": {
@@ -10955,6 +10971,20 @@
         },
         "type": "object"
       },
+      "SetTeamRolesCommand": {
+        "properties": {
+          "includeHidden": {
+            "type": "boolean"
+          },
+          "roleUids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "SetUserRolesCommand": {
         "properties": {
           "global": {
@@ -11407,6 +11437,7 @@
             "type": "string"
           },
           "id": {
+            "description": "@deprecated Use UID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -11431,6 +11462,14 @@
             "type": "string"
           }
         },
+        "required": [
+          "id",
+          "uid",
+          "orgId",
+          "name",
+          "isProvisioned",
+          "memberCount"
+        ],
         "type": "object"
       },
       "TeamGroupDTO": {
@@ -14207,6 +14246,17 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTeamRolesCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
         "responses": {
           "200": {
             "$ref": "#/components/responses/okResponse"
@@ -24512,6 +24562,21 @@
             "description": "If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.",
             "in": "query",
             "name": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "accesscontrol",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
             "schema": {
               "type": "string"
             }
