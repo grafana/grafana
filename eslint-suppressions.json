@@ -24,11 +24,6 @@
       "count": 1
     }
   },
-  "packages/grafana-data/src/dataframe/ArrayDataFrame.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "packages/grafana-data/src/dataframe/CircularDataFrame.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -36,7 +31,7 @@
   },
   "packages/grafana-data/src/dataframe/DataFrameView.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
+      "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -44,28 +39,23 @@
   },
   "packages/grafana-data/src/dataframe/MutableDataFrame.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 3
+      "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 9
+      "count": 6
     }
   },
   "packages/grafana-data/src/dataframe/StreamingDataFrame.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 4
-    }
-  },
-  "packages/grafana-data/src/dataframe/processDataFrame.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
+      "count": 3
     }
   },
   "packages/grafana-data/src/dataframe/processDataFrame.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 15
+      "count": 11
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 5
+      "count": 4
     }
   },
   "packages/grafana-data/src/datetime/moment_wrapper.ts": {
@@ -106,7 +96,7 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 5
+      "count": 4
     }
   },
   "packages/grafana-data/src/panel/registryFactories.ts": {
@@ -305,7 +295,7 @@
   },
   "packages/grafana-data/src/utils/csv.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 3
+      "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -345,11 +335,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 3
-    }
-  },
-  "packages/grafana-data/src/vector/CircularVector.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "packages/grafana-data/src/vector/FunctionalVector.ts": {
@@ -597,14 +582,6 @@
       "count": 5
     }
   },
-  "packages/grafana-ui/src/components/Combobox/MultiCombobox.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    },
-    "react-hooks/rules-of-hooks": {
-      "count": 5
-    }
-  },
   "packages/grafana-ui/src/components/Combobox/MultiCombobox.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -777,7 +754,7 @@
   },
   "packages/grafana-ui/src/components/Modal/ModalsContext.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 4
+      "count": 2
     },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -855,7 +832,7 @@
   },
   "packages/grafana-ui/src/components/Select/SelectBase.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
+      "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 4
@@ -868,7 +845,7 @@
   },
   "packages/grafana-ui/src/components/Select/resetSelectStyles.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 4
+      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Select/types.ts": {
@@ -883,7 +860,7 @@
   },
   "packages/grafana-ui/src/components/SingleStatShared/SingleStatBaseOptions.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 3
+      "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 13
@@ -2886,28 +2863,8 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanBarRow.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/SpanDetailLinkButtons.tsx": {
     "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetailRow.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanLinks.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanTreeOffset.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -3311,11 +3268,6 @@
   "public/app/features/profile/UserProfileEditForm.tsx": {
     "no-restricted-syntax": {
       "count": 3
-    }
-  },
-  "public/app/features/provisioning/Config/ConfigFormGithubCollapse.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
     }
   },
   "public/app/features/provisioning/Shared/BranchValidationError.tsx": {
@@ -4784,7 +4736,7 @@
   },
   "public/app/plugins/panel/live/LiveChannelEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
+      "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 1

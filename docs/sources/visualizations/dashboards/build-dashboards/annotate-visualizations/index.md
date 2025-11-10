@@ -29,6 +29,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/annotations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/annotations/
+  saved-queries:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#saved-queries
+  save-query:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#save-a-query
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#save-a-query
 ---
 
 # Annotate visualizations
@@ -148,18 +158,18 @@ To add a new annotation query to a dashboard, follow these steps:
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-filtering-10-v2.png" max-width="600px" caption="Annotation filtering" >}}
 
-1. To add a query, do one of the following:
+1. To create a query, do one of the following:
    - Write or construct a query in the query language of your data source. The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](ref:data-source) topic.
-   - Click **+ Add from saved queries** to reuse a saved query.
-   - Click the **Replace with saved query** button (or icon) to reuse a saved query.
+   - Click **Replace with saved query** to reuse a [saved query](ref:saved-queries).
 
 1. (Optional) To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
+1. (Optional) Click **Test annotation query** to ensure that the query is working properly.
+1. (Optional) To add subsequent queries, click **+ Add query** or **+ Add from saved queries**, and test them as many times as needed.
 
    {{< admonition type="note" >}}
-   [Saved queries](ref:saved-queries) is in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Cloud only.
+   [Saved queries](ref:saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
    {{< /admonition >}}
 
-1. (Optional) Click **Test annotation query** to ensure that the query is working properly.
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 

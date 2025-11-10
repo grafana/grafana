@@ -2885,6 +2885,8 @@
       "notification-message": "Melding",
       "predefined-notification-message": "",
       "send-test-notification": "Testmelding verzenden",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Contactpunt testen"
     },
     "threshold": {
@@ -2943,15 +2945,15 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
-      "firing-instances-count": "",
       "instance-details-drawer": {
         "instance-details": ""
       },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
-      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -4128,6 +4130,7 @@
       "scopes": "Bereik"
     },
     "empty-state": {
+      "button-title": "",
       "message": "Geen resultaten gevonden"
     },
     "scopes": {
@@ -11507,6 +11510,8 @@
     "empty-state": {
       "no-jobs": "Geen taken..."
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "Haal het meeste uit je GitHub-integratie met deze optionele add-ons",
       "description-instant-updates": "Krijg directe updates in Grafana zodra wijzigingen zijn doorgevoerd. Bekijk en keur wijzigingen goed met pull requests voordat ze live gaan.",
@@ -11726,14 +11731,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "actieve taken",
       "column-action": "Actie",
       "column-duration": "Duur",
       "column-job-id": "",
       "column-message": "Bericht",
       "column-started": "Gestart",
       "column-status": "Status",
-      "error-loading": "Er is een fout opgetreden bij het laden van {{type}}",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "Taken"
     },
     "repository-actions": {
