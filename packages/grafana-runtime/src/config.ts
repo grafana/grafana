@@ -169,6 +169,7 @@ export class GrafanaBootConfig {
   pluginCatalogHiddenPlugins: string[] = [];
   pluginCatalogManagedPlugins: string[] = [];
   pluginCatalogPreinstalledPlugins: PreinstalledPluginGrafanaData[] = [];
+  pluginCatalogPreinstalledAutoUpdate?: boolean;
   pluginsCDNBaseURL = '';
   expressionsEnabled = false;
   awsAllowedAuthProviders: string[] = [];
@@ -182,6 +183,7 @@ export class GrafanaBootConfig {
   };
   caching = {
     enabled: false,
+    cleanCacheEnabled: true,
   };
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
