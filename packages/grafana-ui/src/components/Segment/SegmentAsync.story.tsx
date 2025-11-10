@@ -6,16 +6,23 @@ import { type AsyncState } from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
 
+import { useStyles2 } from '../../themes/ThemeContext';
+import { InlineLabel } from '../Forms/InlineLabel';
 import { Icon } from '../Icon/Icon';
+import { Box } from '../Layout/Box/Box';
 
 import { SegmentAsync, SegmentAsyncProps } from './SegmentAsync';
 import { SegmentSection } from './SegmentSection';
+import { getSegmentStyles } from './styles';
 
-const AddButton = (
-  <span className="gf-form-label query-part">
-    <Icon aria-label="Add" name="plus" />
-  </span>
-);
+const AddButton = () => {
+  const styles = useStyles2(getSegmentStyles);
+  return (
+    <span className={styles.addButton}>
+      <Icon aria-label="Add" name="plus" />
+    </span>
+  );
+};
 
 const toOption = <T,>(value: T): SelectableValue<T> => ({ label: String(value), value: value });
 const options = ['Option1', 'Option2', 'OptionWithLooongLabel', 'Option4'].map(toOption);
@@ -35,7 +42,7 @@ const SegmentFrame = ({
     <SegmentSection label="Segment">
       {children}
       <SegmentAsync
-        Component={AddButton}
+        Component={AddButton()}
         onChange={(value) => action('New value added')(value)}
         loadOptions={() => loadOptions(options)}
         inputMinWidth={100}
@@ -123,7 +130,9 @@ export const CustomOptionsAllowed = () => {
 };
 
 const CustomLabelComponent = ({ value }: { value: unknown }) => (
-  <div className="gf-form-label">custom({String(value)})</div>
+  <Box marginRight={0.5}>
+    <InlineLabel>custom({String(value)})</InlineLabel>
+  </Box>
 );
 
 export const CustomLabel = () => {

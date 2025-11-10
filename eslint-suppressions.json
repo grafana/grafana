@@ -815,26 +815,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/Segment/Segment.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "packages/grafana-ui/src/components/Segment/SegmentAsync.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "packages/grafana-ui/src/components/Segment/SegmentInput.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Segment/SegmentInput.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Segment/SegmentSelect.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1

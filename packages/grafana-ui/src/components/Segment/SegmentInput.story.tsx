@@ -1,12 +1,15 @@
+import { cx } from '@emotion/css';
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 import * as React from 'react';
 
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 
 import { SegmentInput, SegmentInputProps } from './SegmentInput';
 import { SegmentSection } from './SegmentSection';
+import { getSegmentStyles } from './styles';
 
 const SegmentFrame = ({ children }: React.PropsWithChildren) => (
   <>
@@ -88,6 +91,7 @@ const InputComponent = ({ initialValue }: InputComponentProps) => {
 
 export const InputWithAutoFocus = () => {
   const [inputComponents, setInputComponents] = useState<Array<(props: InputComponentProps) => JSX.Element>>([]);
+  const styles = useStyles2(getSegmentStyles);
   return (
     <SegmentFrame>
       {inputComponents.map((InputComponent, i) => (
@@ -96,7 +100,7 @@ export const InputWithAutoFocus = () => {
       <button
         aria-label="Add"
         type="button"
-        className="gf-form-label query-part"
+        className={cx(styles.addButton, 'query-part')}
         onClick={() => {
           setInputComponents([...inputComponents, InputComponent]);
         }}
