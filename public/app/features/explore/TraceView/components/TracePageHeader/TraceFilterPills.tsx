@@ -18,7 +18,7 @@ export function TraceFilterPills({ trace, search, setSearch }: TraceFilterPillsP
     return trace.spans.map((span) => span.duration).sort((a, b) => a - b);
   }, [trace.spans]);
 
-  const highLatencyThreshold = Math.floor(sortedDurations[Math.floor(sortedDurations.length * 0.8)]);
+  const highLatencyThreshold = Math.floor(sortedDurations[Math.floor(sortedDurations.length * 0.9)]);
 
   return (
     <Stack gap={1} direction="row">
@@ -67,7 +67,10 @@ export function TraceFilterPills({ trace, search, setSearch }: TraceFilterPillsP
         </div>
       </Tooltip>
       <Tooltip
-        content={t('explore.trace-page-header.high-latency-tooltip', 'Selects the 20% longest spans in the trace.')}
+        content={t(
+          'explore.trace-page-header.high-latency-tooltip',
+          'Selects the 10% longest spans in the trace (p90).'
+        )}
       >
         <div>
           <FilterPill
