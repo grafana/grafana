@@ -199,6 +199,7 @@ func ProvideUnifiedStorageGrpcService(
 	}
 
 	// This will be used when running as a dskit service
+	// Hook Data migration on start
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.StorageServer)
 
 	return s, nil

@@ -39,6 +39,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		// parse dataSyncerInterval from resource section
 		dataSyncerInterval := section.Key("dataSyncerInterval").MustDuration(time.Hour)
 
+		//enableUnifiedStorageMigrations := section.Key("enableUnifiedStorageMigrations").MustBool(false)
+		// Investigate how to enforce this at a higher level (e.g. feature toggles)
+		// Enforce values here based on EnableUnifiedStorageMigrations
 		storageConfig[resourceName] = UnifiedStorageConfig{
 			DualWriterMode:                       rest.DualWriterMode(dualWriterMode),
 			DualWriterPeriodicDataSyncJobEnabled: dualWriterPeriodicDataSyncJobEnabled,
