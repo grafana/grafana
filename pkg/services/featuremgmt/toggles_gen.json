@@ -1350,16 +1350,16 @@
     {
       "metadata": {
         "name": "editPanelCSVDragAndDrop",
-        "resourceVersion": "1762442850745",
+        "resourceVersion": "1762783224740",
         "creationTimestamp": "2023-01-24T09:43:44Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-11-06 15:27:30.745587 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-11-10 14:00:24.740459 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables drag and drop for CSV and Excel files",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform",
+        "codeowner": "@grafana/dataviz-squad",
         "frontend": true
       }
     },

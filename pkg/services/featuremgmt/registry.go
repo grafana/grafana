@@ -129,7 +129,7 @@ var (
 			Description:  "Enables drag and drop for CSV and Excel files",
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:           "logsContextDatasourceUi",
