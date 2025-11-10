@@ -80,7 +80,6 @@ addFieldFromCalculationStatFunctions,GA,@grafana/datapro,false,false,true
 alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
 alertingProvenanceLockWrites,experimental,@grafana/alerting-squad,false,false,false
 alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
-annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
 extractFieldsNameDeduplication,experimental,@grafana/datapro,false,false,true
 dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true
 dashboardSceneSolo,GA,@grafana/dashboards-squad,false,false,true
