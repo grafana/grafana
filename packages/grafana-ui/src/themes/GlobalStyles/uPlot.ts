@@ -13,7 +13,7 @@ export function getUplotStyles(theme: GrafanaTheme2) {
     },
 
     '.u-over.zoom-drag': {
-      cursor: 'zoom-in !important',
+      cursor: 'zoom-in',
     },
 
     '.u-hz .u-cursor-x, .u-vt .u-cursor-y': {
