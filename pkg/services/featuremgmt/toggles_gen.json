@@ -2924,7 +2924,8 @@
       "metadata": {
         "name": "panelMonitoring",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-10-09T05:19:08Z"
+        "creationTimestamp": "2023-10-09T05:19:08Z",
+        "deletionTimestamp": "2025-11-06T15:46:51Z"
       },
       "spec": {
         "description": "Enables panel monitoring through logs and measurements",
@@ -3176,7 +3177,8 @@
       "metadata": {
         "name": "preinstallAutoUpdate",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-11-07T12:14:25Z"
+        "creationTimestamp": "2024-11-07T12:14:25Z",
+        "deletionTimestamp": "2025-11-07T10:10:01Z"
       },
       "spec": {
         "description": "Enables automatic updates for pre-installed plugins",

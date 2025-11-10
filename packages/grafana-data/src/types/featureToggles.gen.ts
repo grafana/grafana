@@ -248,11 +248,6 @@ export interface FeatureToggles {
   */
   externalServiceAccounts?: boolean;
   /**
-  * Enables panel monitoring through logs and measurements
-  * @default true
-  */
-  panelMonitoring?: boolean;
-  /**
   * Enables native HTTP Histograms
   */
   enableNativeHTTPHistogram?: boolean;
@@ -737,11 +732,6 @@ export interface FeatureToggles {
   * @default false
   */
   azureMonitorDisableLogLimit?: boolean;
-  /**
-  * Enables automatic updates for pre-installed plugins
-  * @default true
-  */
-  preinstallAutoUpdate?: boolean;
   /**
   * Enables experimental reconciler for playlists
   */

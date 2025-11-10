@@ -4130,7 +4130,7 @@
       "scopes": "Scopes"
     },
     "empty-state": {
-      "button-title": "Try searching with Grafana Assistant",
+      "button-title": "Search with Grafana Assistant",
       "message": "No results found"
     },
     "scopes": {
