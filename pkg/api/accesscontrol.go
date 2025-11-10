@@ -1,14 +1,12 @@
 package api
 
 import (
-	"context"
 	"fmt"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -268,19 +266,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	annotationsReaderRole := ac.RoleRegistration{
-		Role: ac.RoleDTO{
-			Name:        "fixed:annotations:reader",
-			DisplayName: "Reader",
-			Description: "Read annotations and tags",
-			Group:       "Annotations",
-			Permissions: []ac.Permission{
-				{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsAll},
-			},
-		},
-		Grants: []string{string(org.RoleViewer)},
-	}
-
 	// TODO this role can be removed once we have rolled out FlagAnnotationPermissionUpdate to all users
 	// keeping it in for now for backwards compatibility
 	dashboardAnnotationsWriterRole := ac.RoleRegistration{
@@ -298,13 +283,34 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(org.RoleViewer)},
 	}
 
+	// Keeping the name to avoid breaking changes (for users who have assigned this role to grant permissions on organization annotations)
+	annotationsReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:annotations:reader",
+			DisplayName: "Reader (organization)",
+			Description: "Read organization annotations and annotation tags",
+			Group:       "Annotations",
+			Permissions: []ac.Permission{
+				// Need to leave the permissions as they are, so that the seeder doesn't replace permissions when they have been removed from the basic role by the user
+				// Otherwise we could split this into ac.ScopeAnnotationsTypeOrganization and ac.ScopeAnnotationsTypeDashboard scopes and eventually remove the dashboard scope.
+				// https://github.com/grafana/identity-access-team/issues/524
+				{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsAll},
+			},
+		},
+		Grants: []string{string(org.RoleViewer)},
+	}
+
+	// Keeping the name to avoid breaking changes (for users who have assigned this role to grant permissions on organization annotations)
 	annotationsWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:annotations:writer",
-			DisplayName: "Writer",
-			Description: "Update all annotations.",
+			DisplayName: "Writer (organization)",
+			Description: "Update organization annotations.",
 			Group:       "Annotations",
 			Permissions: []ac.Permission{
+				// Need to leave the permissions as they are, so that the seeder doesn't replace permissions when they have been removed from the basic role by the user
+				// Otherwise we could split this into ac.ScopeAnnotationsTypeOrganization and ac.ScopeAnnotationsTypeDashboard scopes and eventually remove the dashboard scope.
+				// https://github.com/grafana/identity-access-team/issues/524
 				{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsAll},
 				{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsAll},
 				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsAll},
@@ -313,42 +319,36 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(org.RoleEditor)},
 	}
 
-	if hs.Features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
-		// Keeping the name to avoid breaking changes (for users who have assigned this role to grant permissions on organization annotations)
-		annotationsReaderRole = ac.RoleRegistration{
-			Role: ac.RoleDTO{
-				Name:        "fixed:annotations:reader",
-				DisplayName: "Reader (organization)",
-				Description: "Read organization annotations and annotation tags",
-				Group:       "Annotations",
-				Permissions: []ac.Permission{
-					// Need to leave the permissions as they are, so that the seeder doesn't replace permissions when they have been removed from the basic role by the user
-					// Otherwise we could split this into ac.ScopeAnnotationsTypeOrganization and ac.ScopeAnnotationsTypeDashboard scopes and eventually remove the dashboard scope.
-					// https://github.com/grafana/identity-access-team/issues/524
-					{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsAll},
-				},
+	allAnnotationsReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:annotations.all:reader",
+			DisplayName: "Reader (all)",
+			Description: "Read all annotations and tags",
+			Group:       "Annotations",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsTypeOrganization},
+				{Action: ac.ActionAnnotationsRead, Scope: dashboards.ScopeFoldersAll},
 			},
-			Grants: []string{string(org.RoleViewer)},
-		}
+		},
+		Grants: []string{string(org.RoleAdmin)},
+	}
 
-		// Keeping the name to avoid breaking changes (for users who have assigned this role to grant permissions on organization annotations)
-		annotationsWriterRole = ac.RoleRegistration{
-			Role: ac.RoleDTO{
-				Name:        "fixed:annotations:writer",
-				DisplayName: "Writer (organization)",
-				Description: "Update organization annotations.",
-				Group:       "Annotations",
-				Permissions: []ac.Permission{
-					// Need to leave the permissions as they are, so that the seeder doesn't replace permissions when they have been removed from the basic role by the user
-					// Otherwise we could split this into ac.ScopeAnnotationsTypeOrganization and ac.ScopeAnnotationsTypeDashboard scopes and eventually remove the dashboard scope.
-					// https://github.com/grafana/identity-access-team/issues/524
-					{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsAll},
-					{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsAll},
-					{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsAll},
-				},
+	allAnnotationsWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:annotations.all:writer",
+			DisplayName: "Writer (all)",
+			Description: "Update all annotations.",
+			Group:       "Annotations",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsTypeOrganization},
+				{Action: ac.ActionAnnotationsCreate, Scope: dashboards.ScopeFoldersAll},
+				{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeOrganization},
+				{Action: ac.ActionAnnotationsDelete, Scope: dashboards.ScopeFoldersAll},
+				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeOrganization},
+				{Action: ac.ActionAnnotationsWrite, Scope: dashboards.ScopeFoldersAll},
 			},
-			Grants: []string{string(org.RoleEditor)},
-		}
+		},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	dashboardsCreatorRole := ac.RoleRegistration{
@@ -617,43 +617,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		foldersCreatorRole, foldersReaderRole, generalFolderReaderRole, foldersWriterRole,
 		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole, libraryPanelsCreatorRole,
 		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole,
-		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole}
-
-	if hs.Features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
-		allAnnotationsReaderRole := ac.RoleRegistration{
-			Role: ac.RoleDTO{
-				Name:        "fixed:annotations.all:reader",
-				DisplayName: "Reader (all)",
-				Description: "Read all annotations and tags",
-				Group:       "Annotations",
-				Permissions: []ac.Permission{
-					{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsTypeOrganization},
-					{Action: ac.ActionAnnotationsRead, Scope: dashboards.ScopeFoldersAll},
-				},
-			},
-			Grants: []string{string(org.RoleAdmin)},
-		}
-
-		allAnnotationsWriterRole := ac.RoleRegistration{
-			Role: ac.RoleDTO{
-				Name:        "fixed:annotations.all:writer",
-				DisplayName: "Writer (all)",
-				Description: "Update all annotations.",
-				Group:       "Annotations",
-				Permissions: []ac.Permission{
-					{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsTypeOrganization},
-					{Action: ac.ActionAnnotationsCreate, Scope: dashboards.ScopeFoldersAll},
-					{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeOrganization},
-					{Action: ac.ActionAnnotationsDelete, Scope: dashboards.ScopeFoldersAll},
-					{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeOrganization},
-					{Action: ac.ActionAnnotationsWrite, Scope: dashboards.ScopeFoldersAll},
-				},
-			},
-			Grants: []string{string(org.RoleAdmin)},
-		}
-
-		roles = append(roles, allAnnotationsReaderRole, allAnnotationsWriterRole)
-	}
+		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole, allAnnotationsReaderRole, allAnnotationsWriterRole}
 
 	return hs.accesscontrolService.DeclareFixedRoles(roles...)
 }

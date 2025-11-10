@@ -476,18 +476,16 @@ func (r *xormRepositoryImpl) getAccessControlFilter(accessResources *accesscontr
 		filters = append(filters, "a.dashboard_id = 0")
 	}
 
-	if accessResources.CanAccessDashAnnotations {
-		if len(accessResources.Dashboards) == 0 {
-			filters = append(filters, "1=0") // empty set
+	if len(accessResources.Dashboards) == 0 {
+		filters = append(filters, "1=0") // empty set
+	} else {
+		if dashboardUID != "" {
+			filters = append(filters, "a.dashboard_uid = ?")
+			params = append(params, dashboardUID)
 		} else {
-			if dashboardUID != "" {
-				filters = append(filters, "a.dashboard_uid = ?")
-				params = append(params, dashboardUID)
-			} else {
-				filters = append(filters, fmt.Sprintf("a.dashboard_uid IN (%s)", strings.Repeat("?,", len(accessResources.Dashboards)-1)+"?"))
-				for uid := range accessResources.Dashboards {
-					params = append(params, uid)
-				}
+			filters = append(filters, fmt.Sprintf("a.dashboard_uid IN (%s)", strings.Repeat("?,", len(accessResources.Dashboards)-1)+"?"))
+			for uid := range accessResources.Dashboards {
+				params = append(params, uid)
 			}
 		}
 	}

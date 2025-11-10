@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -303,7 +302,7 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 			apiClient := newAlertingApiClient(grafanaListedAddr, randomLogin, randomLogin)
 
 			// Set permissions.
-			permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
+			permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore)
 			for _, cmd := range tt.permissions {
 				_, err := permissionsStore.SetUserResourcePermission(
 					context.Background(),

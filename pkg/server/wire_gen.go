@@ -627,7 +627,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
+	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, sqlStore)
 	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
 	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
 	service15, err := service9.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider)
@@ -1259,7 +1259,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
+	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, sqlStore)
 	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
 	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
 	service15, err := service9.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider)

@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -268,7 +267,7 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		})
 
 		// access control permissions store
-		permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
+		permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore)
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(),
 			accesscontrol.GlobalOrgID,
 			accesscontrol.User{ID: testUserId},

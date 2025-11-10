@@ -705,7 +705,7 @@ func (c *K8sTestHelper) SetPermissions(user User, permissions []resourcepermissi
 	id, err := user.Identity.GetInternalID()
 	require.NoError(c.t, err)
 
-	permissionsStore := resourcepermissions.NewStore(c.env.Cfg, c.env.SQLStore, featuremgmt.WithFeatures())
+	permissionsStore := resourcepermissions.NewStore(c.env.Cfg, c.env.SQLStore)
 
 	for _, permission := range permissions {
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(),

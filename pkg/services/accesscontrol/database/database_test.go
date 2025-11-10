@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	rs "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -483,7 +482,7 @@ func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Se
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
 	acstore := database.ProvideService(sql)
-	permissionStore := rs.NewStore(cfg, sql, featuremgmt.WithFeatures())
+	permissionStore := rs.NewStore(cfg, sql)
 	teamService, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
