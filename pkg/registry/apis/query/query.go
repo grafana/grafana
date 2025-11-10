@@ -3,12 +3,9 @@ package query
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"slices"
-	"strconv"
-	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
@@ -18,12 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/setting"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -31,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	ds_service "github.com/grafana/grafana/pkg/services/datasources/service"
 	service "github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 type queryREST struct {
@@ -119,125 +112,11 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		r.logger.Debug("Connect name is not name")
 		return nil, errorsK8s.NewNotFound(schema.GroupResource{}, name)
 	}
-	b := r.builder
 
 	return http.HandlerFunc(func(w http.ResponseWriter, httpreq *http.Request) {
-		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
-		defer span.End()
-		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
-		traceId := span.SpanContext().TraceID()
-		connectLogger := b.log.New("traceId", traceId.String(), "rule_uid", httpreq.Header.Get("X-Rule-Uid"))
-		responder := newResponderWrapper(incomingResponder,
-			func(statusCode *int, obj runtime.Object) {
-				if *statusCode/100 == 4 {
-					span.SetStatus(codes.Error, strconv.Itoa(*statusCode))
-				}
-
-				if *statusCode >= 500 {
-					o, ok := obj.(*query.QueryDataResponse)
-					if ok && o.Responses != nil {
-						for refId, response := range o.Responses {
-							if response.ErrorSource == backend.ErrorSourceDownstream {
-								*statusCode = http.StatusBadRequest //force this to be a 400 since it's downstream
-								span.SetStatus(codes.Error, strconv.Itoa(*statusCode))
-								span.SetAttributes(attribute.String("error.source", "downstream"))
-								break
-							} else if response.Error != nil {
-								connectLogger.Debug("500 error without downstream error source", "error", response.Error, "errorSource", response.ErrorSource, "refId", refId)
-								span.SetStatus(codes.Error, "500 error without downstream error source")
-							} else {
-								span.SetStatus(codes.Error, "500 error without downstream error source and no Error message")
-								span.SetAttributes(attribute.String("error.ref_id", refId))
-							}
-						}
-					}
-				}
-				connectLogger.Debug("responder sending status code", "statusCode", statusCode)
-			},
-
-			func(err error) {
-				connectLogger.Error("error caught in handler", "err", err)
-				span.SetStatus(codes.Error, "query error")
-
-				if err == nil {
-					return
-				}
-
-				span.RecordError(err)
-			})
-
-		raw := &query.QueryDataRequest{}
-		err := web.Bind(httpreq, raw)
-		if err != nil {
-			connectLogger.Error("Hit unexpected error when reading query", "err", err)
-			err = errorsK8s.NewBadRequest("error reading query")
-			// TODO: can we wrap the error so details are not lost?!
-			// errutil.BadRequest(
-			// 	"query.bind",
-			// 	errutil.WithPublicMessage("Error reading query")).
-			// 	Errorf("error reading: %w", err)
-			responder.Error(err)
-			return
-		}
-
-		qdr, err := handleQuery(ctx, *raw, *b, httpreq, *responder, connectLogger)
-
-		if err != nil {
-			connectLogger.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
-			logEmptyRefids(raw.Queries, connectLogger)
-			if qdr != nil { // if we have a response, we assume the err is set in the response
-				responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
-					QueryDataResponse: *qdr,
-				})
-				return
-			} else {
-				var errorDataResponse backend.DataResponse
-
-				badRequestErrors := []error{
-					service.ErrInvalidDatasourceID,
-					service.ErrNoQueriesFound,
-					service.ErrMissingDataSourceInfo,
-					service.ErrQueryParamMismatch,
-					service.ErrDuplicateRefId,
-					datasources.ErrDataSourceNotFound,
-				}
-				isTypedBadRequestError := false
-				for _, badRequestError := range badRequestErrors {
-					if errors.Is(err, badRequestError) {
-						isTypedBadRequestError = true
-					}
-				}
-				if isTypedBadRequestError {
-					errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
-				} else if strings.Contains(err.Error(), "expression request error") {
-					connectLogger.Error("Error calling TransformData in an expression", "err", err)
-					errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
-				} else {
-					connectLogger.Error("unknown error, treated as a 500", "err", err)
-					responder.Error(err)
-					return
-				}
-				// TODO ensure errors also return the refId wherever possible
-				errorRefId := raw.Queries[0].RefID
-				if errorRefId == "" {
-					errorRefId = "A"
-				}
-
-				qdr = &backend.QueryDataResponse{
-					Responses: map[string]backend.DataResponse{
-						errorRefId: errorDataResponse,
-					},
-				}
-				responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
-					QueryDataResponse: *qdr,
-				})
-				return
-			}
-		}
-
-		responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
-			QueryDataResponse: *qdr, // wrap the backend response as a QueryDataResponse
-		})
+		w.Header().Set("Location", "/api/ds/query")
+		w.WriteHeader(http.StatusTemporaryRedirect)
+		fmt.Fprintln(w, "go away")
 	}), nil
 }
 
