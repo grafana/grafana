@@ -3,6 +3,7 @@ package v0alpha1
 import (
 	"fmt"
 	"slices"
+	"time"
 )
 
 func (o *AlertRule) GetProvenanceStatus() string {
@@ -48,4 +49,78 @@ func (s *AlertRuleSpec) ExecErrStateOrDefault() string {
 	return s.ExecErrState
 }
 
-// TODO: add duration clamping for the field types AlertRulePromDuration, AlertRulePromDurationWMillis, and the For and KeepFiringFor string pointers
+func (d *AlertRulePromDuration) ToDuration() (time.Duration, error) {
+	return ToDuration(string(*d))
+}
+
+func (d *AlertRulePromDurationWMillis) ToDuration() (time.Duration, error) {
+	return ToDuration(string(*d))
+}
+
+func (d *AlertRulePromDuration) Clamp() error {
+	clampedDuration, err := ClampDuration(string(*d))
+	if err != nil {
+		return err
+	}
+	*d = AlertRulePromDuration(clampedDuration)
+	return nil
+}
+
+func (d *AlertRulePromDurationWMillis) Clamp() error {
+	clampedDuration, err := ClampDuration(string(*d))
+	if err != nil {
+		return err
+	}
+	*d = AlertRulePromDurationWMillis(clampedDuration)
+	return nil
+}
+
+func (spec *AlertRuleSpec) ClampDurations() error {
+	// clamp all duration fields
+	if err := spec.Trigger.Interval.Clamp(); err != nil {
+		return err
+	}
+	if spec.For != nil {
+		clamped, err := ClampDuration(*spec.For)
+		if err != nil {
+			return err
+		}
+		spec.For = &clamped
+	}
+	if spec.KeepFiringFor != nil {
+		clamped, err := ClampDuration(*spec.KeepFiringFor)
+		if err != nil {
+			return err
+		}
+		spec.KeepFiringFor = &clamped
+	}
+	if spec.NotificationSettings != nil {
+		if spec.NotificationSettings.GroupWait != nil {
+			if err := spec.NotificationSettings.GroupWait.Clamp(); err != nil {
+				return err
+			}
+		}
+		if spec.NotificationSettings.GroupInterval != nil {
+			if err := spec.NotificationSettings.GroupInterval.Clamp(); err != nil {
+				return err
+			}
+		}
+		if spec.NotificationSettings.RepeatInterval != nil {
+			if err := spec.NotificationSettings.RepeatInterval.Clamp(); err != nil {
+				return err
+			}
+		}
+	}
+	for k, expr := range spec.Expressions {
+		if expr.RelativeTimeRange != nil {
+			if err := expr.RelativeTimeRange.From.Clamp(); err != nil {
+				return err
+			}
+			if err := expr.RelativeTimeRange.To.Clamp(); err != nil {
+				return err
+			}
+			spec.Expressions[k] = expr
+		}
+	}
+	return nil
+}

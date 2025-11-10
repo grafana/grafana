@@ -1082,14 +1082,14 @@
     {
       "metadata": {
         "name": "dashboardLibrary",
-        "resourceVersion": "1760051989635",
+        "resourceVersion": "1762521182817",
         "creationTimestamp": "2025-09-26T16:02:12Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-10-09 23:19:49.635811 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-11-07 13:13:02.817210943 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Enable suggested dashboards when creating new dashboards",
+        "description": "Enable dashboard library experiments that are production ready",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad"
       }
@@ -2155,6 +2155,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAnnotations",
+        "resourceVersion": "1761142826172",
+        "creationTimestamp": "2025-10-22T14:20:26Z"
+      },
+      "spec": {
+        "description": "Enables app platform API for annotations",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthZHandlerRedirect",
         "resourceVersion": "1758820248165",
         "creationTimestamp": "2025-09-25T17:10:48Z"
@@ -2892,7 +2905,8 @@
       "metadata": {
         "name": "panelMonitoring",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-10-09T05:19:08Z"
+        "creationTimestamp": "2023-10-09T05:19:08Z",
+        "deletionTimestamp": "2025-11-06T15:46:51Z"
       },
       "spec": {
         "description": "Enables panel monitoring through logs and measurements",
@@ -3080,7 +3094,8 @@
       "metadata": {
         "name": "pluginsFrontendSandbox",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-06-05T08:51:36Z"
+        "creationTimestamp": "2023-06-05T08:51:36Z",
+        "deletionTimestamp": "2025-11-05T10:06:22Z"
       },
       "spec": {
         "description": "Enables the plugins frontend sandbox",
@@ -3143,7 +3158,8 @@
       "metadata": {
         "name": "preinstallAutoUpdate",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-11-07T12:14:25Z"
+        "creationTimestamp": "2024-11-07T12:14:25Z",
+        "deletionTimestamp": "2025-11-07T10:10:01Z"
       },
       "spec": {
         "description": "Enables automatic updates for pre-installed plugins",
@@ -3763,6 +3779,18 @@
         "description": "Configurable storage for dashboards, datasources, and resources",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "suggestedDashboards",
+        "resourceVersion": "1762521182817",
+        "creationTimestamp": "2025-11-07T13:13:02Z"
+      },
+      "spec": {
+        "description": "Enable suggested dashboards when creating new dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad"
       }
     },
     {

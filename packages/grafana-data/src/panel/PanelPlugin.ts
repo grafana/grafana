@@ -122,11 +122,6 @@ export class PanelPlugin<
     alertStates: false,
   };
 
-  /**
-   * Legacy angular ctrl. If this exists it will be used instead of the panel
-   */
-  angularPanelCtrl?: any;
-
   constructor(panel: ComponentType<PanelProps<TOptions>> | null) {
     super();
     this.panel = panel;

@@ -122,6 +122,8 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 	b := r.builder
 
 	return http.HandlerFunc(func(w http.ResponseWriter, httpreq *http.Request) {
+		w.Header().Set("X-Ds-Querier", b.instanceProvider.GetMode())
+
 		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
 		defer span.End()
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
