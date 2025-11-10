@@ -19,13 +19,17 @@ const (
 	FolderLabelKey      = FolderAnnotationKey
 )
 
+// NOTE: This is a copy of the constants from the alertrule package to avoid circular imports.
+// Keep in sync with pkg/services/ngalert/models/provisioning.go
 const (
-	ProvenanceStatusNone = ""
-	ProvenanceStatusAPI  = "api"
+	ProvenanceStatusNone                = ""
+	ProvenanceStatusAPI                 = "api"
+	ProvenanceStatusFile                = "file"
+	ProvenanceStatusConvertedPrometheus = "converted_prometheus"
 )
 
 var (
-	AcceptedProvenanceStatuses = []string{ProvenanceStatusNone, ProvenanceStatusAPI}
+	AcceptedProvenanceStatuses = []string{ProvenanceStatusNone, ProvenanceStatusAPI, ProvenanceStatusFile, ProvenanceStatusConvertedPrometheus}
 )
 
 func ToDuration(s string) (time.Duration, error) {
