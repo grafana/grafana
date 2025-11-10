@@ -162,11 +162,6 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		return nil, false, err
 	}
 
-	current, ok := old.(*model.RecordingRule)
-	if !ok {
-		return nil, false, k8serrors.NewBadRequest("expected valid recording rule object")
-	}
-
 	obj, err := objInfo.UpdatedObject(ctx, old)
 	if err != nil {
 		return old, false, err
@@ -184,10 +179,6 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 	// FIXME(@rwwiv): this shouldn't be necessary
 	if new.Name != "" {
 		new.UID = types.UID(new.Name)
-	}
-	// TODO: move to validation function
-	if current.Labels[model.GroupLabelKey] == "" && new.Labels[model.GroupLabelKey] != "" {
-		return nil, false, k8serrors.NewBadRequest("cannot set group label when updating un-grouped recording rule")
 	}
 
 	model, provenance, err := convertToDomainModel(info.OrgID, new)

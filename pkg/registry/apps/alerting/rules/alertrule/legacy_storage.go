@@ -126,11 +126,6 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	if p.GenerateName != "" {
 		return nil, fmt.Errorf("generate-name is not supported in legacy storage mode")
 	}
-	// TODO: move this to the validation function
-	if p.Labels[model.GroupLabelKey] != "" || p.Labels[model.GroupIndexLabelKey] != "" {
-		return nil, k8serrors.NewBadRequest("cannot set group when creating alert rule")
-	}
-
 	model, provenance, err := convertToDomainModel(info.OrgID, p)
 	if err != nil {
 		return nil, err
@@ -160,12 +155,6 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		return old, false, err
 	}
 
-	current, ok := old.(*model.AlertRule)
-	if !ok {
-		// this shouldn't really be possible
-		return nil, false, k8serrors.NewBadRequest("expected valid alert rule object")
-	}
-
 	obj, err := objInfo.UpdatedObject(ctx, old)
 	if err != nil {
 		return old, false, err
@@ -179,9 +168,6 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 	new, ok := obj.(*model.AlertRule)
 	if !ok {
 		return nil, false, k8serrors.NewBadRequest("expected valid alert rule object")
-	}
-	if current.Labels[model.GroupLabelKey] == "" && new.Labels[model.GroupLabelKey] != "" {
-		return nil, false, k8serrors.NewBadRequest("cannot set group label when updating un-grouped alert rule")
 	}
 
 	model, provenance, err := convertToDomainModel(info.OrgID, new)
