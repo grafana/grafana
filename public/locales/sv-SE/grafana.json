@@ -2885,6 +2885,8 @@
       "notification-message": "Aviseringsmeddelande",
       "predefined-notification-message": "",
       "send-test-notification": "Skicka testavisering",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Testa kontaktpunkt"
     },
     "threshold": {
@@ -2943,15 +2945,15 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
-      "firing-instances-count": "",
       "instance-details-drawer": {
         "instance-details": ""
       },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
-      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -4128,6 +4130,7 @@
       "scopes": "Omfattningar"
     },
     "empty-state": {
+      "button-title": "",
       "message": "Inga resultat hittades"
     },
     "scopes": {
@@ -11507,6 +11510,8 @@
     "empty-state": {
       "no-jobs": "Inga jobb …"
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "Få ut mesta möjliga av GitHub-integrationen med dessa valfria tillägg",
       "description-instant-updates": "Få omedelbara uppdateringar i Grafana så snart ändringar görs. Granska och godkänn ändringar med hjälp av pull-förfrågningar innan de publiceras.",
@@ -11726,14 +11731,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "aktiva jobb",
       "column-action": "Åtgärd",
       "column-duration": "Varaktighet",
       "column-job-id": "",
       "column-message": "Meddelande",
       "column-started": "Startat",
       "column-status": "Status",
-      "error-loading": "Fel vid laddning av {{type}}",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "Jobb"
     },
     "repository-actions": {

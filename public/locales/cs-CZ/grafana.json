@@ -2909,6 +2909,8 @@
       "notification-message": "Oznamovací zpráva",
       "predefined-notification-message": "",
       "send-test-notification": "Odeslat testovací oznámení",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Otestovat kontaktní bod"
     },
     "threshold": {
@@ -2967,15 +2969,15 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
-      "firing-instances-count": "",
       "instance-details-drawer": {
         "instance-details": ""
       },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
-      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -4168,6 +4170,7 @@
       "scopes": "Rozsahy"
     },
     "empty-state": {
+      "button-title": "",
       "message": "Nebyly nalezeny žádné výsledky"
     },
     "scopes": {
@@ -11607,6 +11610,8 @@
     "empty-state": {
       "no-jobs": "Žádné úlohy…"
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "Využijte integraci GitHubu naplno s těmito volitelnými doplňky",
       "description-instant-updates": "Získejte okamžité aktualizace v Grafaně ihned po potvrzení změn. Před zveřejněním zkontrolujte a schvalte změny pomocí pull requestů.",
@@ -11830,14 +11835,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "aktivní práce",
       "column-action": "Akce",
       "column-duration": "Doba trvání",
       "column-job-id": "",
       "column-message": "Zpráva",
       "column-started": "Zahájeno",
       "column-status": "Stav",
-      "error-loading": "Chyba při načítání {{type}}",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "Práce"
     },
     "repository-actions": {

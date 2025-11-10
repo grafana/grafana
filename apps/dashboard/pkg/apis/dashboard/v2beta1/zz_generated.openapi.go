@@ -269,6 +269,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAccess(ref common.ReferenceCallb
 							Format: "",
 						},
 					},
+					"isPublic": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
 					"canSave": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The permissions part",
@@ -311,7 +318,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAccess(ref common.ReferenceCallb
 						},
 					},
 				},
-				Required: []string{"canSave", "canEdit", "canAdmin", "canStar", "canDelete", "annotationsPermissions"},
+				Required: []string{"isPublic", "canSave", "canEdit", "canAdmin", "canStar", "canDelete", "annotationsPermissions"},
 			},
 		},
 		Dependencies: []string{
@@ -758,6 +765,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAnnotationQuerySpec(ref common.R
 					"filter": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAnnotationPanelFilter"),
+						},
+					},
+					"placement": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"legacyOptions": {

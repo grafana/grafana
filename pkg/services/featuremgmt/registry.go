@@ -265,12 +265,6 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
-			Name:        "pluginsFrontendSandbox",
-			Description: "Enables the plugins frontend sandbox",
-			Stage:       FeatureStagePrivatePreview,
-			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:           "recordedQueriesMulti",
 			Description:    "Enables writing multiple items from a single query within Recorded Queries",
 			Stage:          FeatureStageGeneralAvailability,
@@ -410,14 +404,6 @@ var (
 			HideFromAdminPage: true,
 			Stage:             FeatureStagePublicPreview,
 			Owner:             identityAccessTeam,
-		},
-		{
-			Name:         "panelMonitoring",
-			Description:  "Enables panel monitoring through logs and measurements",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true", // enabled by default
-			Owner:        grafanaDatavizSquad,
-			FrontendOnly: true,
 		},
 		{
 			Name:              "enableNativeHTTPHistogram",
@@ -977,6 +963,13 @@ var (
 		},
 		{
 			Name:         "dashboardLibrary",
+			Description:  "Enable dashboard library experiments that are production ready",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+		},
+		{
+			Name:         "suggestedDashboards",
 			Description:  "Enable suggested dashboards when creating new dashboards",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
@@ -1255,6 +1248,13 @@ var (
 			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
+			Name:         "timeRangePan",
+			Description:  "Enables time range panning functionality",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
 			Name:        "azureMonitorDisableLogLimit",
 			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1516,10 +1516,11 @@ var (
 		},
 		{
 			Name:         "newLogsPanel",
-			Description:  "Enables the new logs panel in Explore",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables the new logs panel",
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "true",
 		},
 		{
 			Name:              "grafanaconThemes",
@@ -2116,6 +2117,12 @@ var (
 			Expression:   "true",
 		},
 		{
+			Name:        "jaegerEnableGrpcEndpoint",
+			Description: "Enable querying trace data through Jaeger's gRPC endpoint (HTTP)",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOSSBigTent,
+		},
+		{
 			Name:         "pluginStoreServiceLoading",
 			Description:  "Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded",
 			Stage:        FeatureStageExperimental,
@@ -2150,6 +2157,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
+		},
+		{
+			Name:        "kubernetesAnnotations",
+			Description: "Enables app platform API for annotations",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaBackendServicesSquad,
+			Expression:  "false",
 		},
 	}
 )

@@ -597,14 +597,6 @@
       "count": 5
     }
   },
-  "packages/grafana-ui/src/components/Combobox/MultiCombobox.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    },
-    "react-hooks/rules-of-hooks": {
-      "count": 5
-    }
-  },
   "packages/grafana-ui/src/components/Combobox/MultiCombobox.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2886,28 +2878,8 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanBarRow.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/SpanDetailLinkButtons.tsx": {
     "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetailRow.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanLinks.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanTreeOffset.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -3311,11 +3283,6 @@
   "public/app/features/profile/UserProfileEditForm.tsx": {
     "no-restricted-syntax": {
       "count": 3
-    }
-  },
-  "public/app/features/provisioning/Config/ConfigFormGithubCollapse.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
     }
   },
   "public/app/features/provisioning/Shared/BranchValidationError.tsx": {
@@ -4751,14 +4718,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/heatmap/HeatmapPanel.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/heatmap/migrations.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -4782,7 +4741,7 @@
   },
   "public/app/plugins/panel/heatmap/utils.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 17
+      "count": 16
     }
   },
   "public/app/plugins/panel/histogram/Histogram.tsx": {
