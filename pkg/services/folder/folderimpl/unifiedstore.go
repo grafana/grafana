@@ -568,14 +568,13 @@ func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderM
 	titles = append(titles, f.Title)
 	uids = append(uids, f.UID)
 
-	i := 0
+	seen := make(map[string]bool)
 	currentUID := f.UID
 	for currentUID != "" {
-		// This is just a circuit breaker to prevent infinite loops. We should never reach this limit.
-		if i > 1000 {
-			return fmt.Errorf("folder depth exceeds the maximum allowed depth, You might have a circular reference")
+		if seen[currentUID] {
+			return folder.ErrCircularReference.Errorf("circular reference detected")
 		}
-		i++
+		seen[currentUID] = true
 		parentUID, exists := relations[currentUID]
 		if !exists {
 			break
