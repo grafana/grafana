@@ -902,10 +902,6 @@ const (
 	// Enables integration with Grafana Assistant in Profiles Drilldown
 	FlagGrafanaAssistantInProfilesDrilldown = "grafanaAssistantInProfilesDrilldown"
 
-	// FlagPostgresDSUsePGX
-	// Enables using PGX instead of libpq for PostgreSQL datasource
-	FlagPostgresDSUsePGX = "postgresDSUsePGX"
-
 	// FlagTempoAlerting
 	// Enables creating alerts from Tempo data source
 	FlagTempoAlerting = "tempoAlerting"

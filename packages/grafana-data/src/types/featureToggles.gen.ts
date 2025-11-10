@@ -995,10 +995,6 @@ export interface FeatureToggles {
   */
   grafanaAssistantInProfilesDrilldown?: boolean;
   /**
-  * Enables using PGX instead of libpq for PostgreSQL datasource
-  */
-  postgresDSUsePGX?: boolean;
-  /**
   * Enables creating alerts from Tempo data source
   */
   tempoAlerting?: boolean;

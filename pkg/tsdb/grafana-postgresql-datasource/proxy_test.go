@@ -27,9 +27,9 @@ func TestPostgresProxyDriver(t *testing.T) {
 	t.Run("Connector should use dialer context that routes through the socks proxy to db", func(t *testing.T) {
 		connector, err := pq.NewConnector(cnnstr)
 		require.NoError(t, err)
-		dialer := newPostgresProxyDialer(&testDialer{})
+		dialer := newDialFunc(&testDialer{})
 
-		connector.Dialer(dialer)
+		connector.Dialer = dialer
 
 		db := sql.OpenDB(connector)
 		err = db.Ping()
