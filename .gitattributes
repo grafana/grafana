@@ -4,3 +4,6 @@
 *_gen.go linguist-generated
 **/openapi_snapshots/*.json linguist-generated
 apps/**/pkg/apis/*_manifest.go linguist-generated
+public/openapi3.json linguist-generated
+public/api-merged.json linguist-generated
+public/api-enterprise-spec.json linguist-generated
