@@ -439,7 +439,11 @@ func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int6
 	}
 
 	descendantsMap := map[string]*folder.Folder{}
-	getDescendants(nodes, tree, ancestor_uid, descendantsMap)
+	seen := map[string]struct{}{}
+	err = getDescendants(nodes, tree, ancestor_uid, descendantsMap, seen)
+	if err != nil {
+		return nil, err
+	}
 
 	descendants := []*folder.Folder{}
 	for _, f := range descendantsMap {
@@ -449,11 +453,24 @@ func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int6
 	return descendants, nil
 }
 
-func getDescendants(nodes map[string]*folder.Folder, tree map[string]map[string]*folder.Folder, ancestor_uid string, descendantsMap map[string]*folder.Folder) {
-	for uid := range tree[ancestor_uid] {
-		descendantsMap[uid] = nodes[uid]
-		getDescendants(nodes, tree, uid, descendantsMap)
+func getDescendants(
+	nodes map[string]*folder.Folder,
+	tree map[string]map[string]*folder.Folder,
+	ancestorUID string,
+	descendantsMap map[string]*folder.Folder,
+	seen map[string]struct{},
+) error {
+	if _, exists := seen[ancestorUID]; exists {
+		return folder.ErrCircularReference.Errorf("circular reference detected at folder uid: %s", ancestorUID)
 	}
+	seen[ancestorUID] = struct{}{}
+	for uid := range tree[ancestorUID] {
+		descendantsMap[uid] = nodes[uid]
+		if err := getDescendants(nodes, tree, uid, descendantsMap, seen); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID int64, ancestor_uid string) (folder.DescendantCounts, error) {
