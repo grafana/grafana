@@ -1,6 +1,6 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-package v1alpha1
+package v1beta1
 
 import (
 	time "time"

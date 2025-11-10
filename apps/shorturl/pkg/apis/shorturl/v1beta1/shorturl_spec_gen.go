@@ -1,6 +1,6 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-package v1alpha1
+package v1beta1
 
 // +k8s:openapi-gen=true
 type ShortURLSpec struct {

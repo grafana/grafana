@@ -1,6 +1,6 @@
-import { generatedAPI } from '@grafana/api-clients/rtkq/shorturl/v1alpha1';
+import { generatedAPI } from '@grafana/api-clients/rtkq/shorturl/v1beta1';
 
-export const shortURLAPIv1alpha1 = generatedAPI.enhanceEndpoints({
+export const shortURLAPIv1beta1 = generatedAPI.enhanceEndpoints({
   endpoints: {
     createShortUrl: (endpointDefinition) => {
       const originalQuery = endpointDefinition.query;
