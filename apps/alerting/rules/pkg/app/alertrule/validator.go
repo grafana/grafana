@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -16,6 +15,19 @@ import (
 	prom_model "github.com/prometheus/common/model"
 )
 
+// validateGroupLabels now delegates to util.ValidateGroupLabels for shared logic.
+func validateGroupLabels(r *model.AlertRule, oldObject resource.Object, action resource.AdmissionAction) error {
+	var oldLabels map[string]string
+	if oldObject != nil {
+		if oldRule, ok := oldObject.(*model.AlertRule); ok {
+			oldLabels = oldRule.Labels
+		} else {
+			return fmt.Errorf("old object is not of type *v0alpha1.AlertRule")
+		}
+	}
+	return util.ValidateGroupLabels(r.Labels, oldLabels, action)
+}
+
 func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 	return &simple.Validator{
 		ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
@@ -24,7 +36,6 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 			if !ok {
 				return fmt.Errorf("object is not of type *v0alpha1.AlertRule")
 			}
-
 			// 1) Validate provenance status annotation
 			sourceProv := r.GetProvenanceStatus()
 			if !slices.Contains(model.AcceptedProvenanceStatuses, sourceProv) {
@@ -32,20 +43,8 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 			}
 
 			// 2) Validate group labels rules
-			group := r.Labels[model.GroupLabelKey]
-			groupIndexStr := r.Labels[model.GroupIndexLabelKey]
-			if req.Action == resource.AdmissionActionCreate {
-				if group != "" || groupIndexStr != "" {
-					return fmt.Errorf("cannot set group when creating alert rule")
-				}
-			}
-			if group != "" { // if group is set, group-index must be set and numeric
-				if groupIndexStr == "" {
-					return fmt.Errorf("%s must be set when %s is set", model.GroupIndexLabelKey, model.GroupLabelKey)
-				}
-				if _, err := strconv.Atoi(groupIndexStr); err != nil {
-					return fmt.Errorf("invalid %s: %w", model.GroupIndexLabelKey, err)
-				}
+			if err := validateGroupLabels(r, req.OldObject, req.Action); err != nil {
+				return err
 			}
 
 			// 3) Validate folder is set and exists
