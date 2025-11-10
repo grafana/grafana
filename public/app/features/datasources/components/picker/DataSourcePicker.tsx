@@ -334,7 +334,7 @@ export interface PickerContentProps extends DataSourcePickerProps {
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
-  const { filterTerm, onChange, onClose, current, filter, dataSources, favoriteDataSources } = props;
+  const { filterTerm, onChange, current, filter, dataSources, favoriteDataSources } = props;
 
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings) => {
