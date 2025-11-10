@@ -13,7 +13,14 @@ import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { DashboardCard } from './DashboardCard';
 import { fetchProvisionedDashboards } from './api/dashboardLibraryApi';
-import { CONTENT_KINDS, DashboardLibraryInteractions, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './interactions';
+import {
+  CONTENT_KINDS,
+  CREATION_ORIGINS,
+  DashboardLibraryInteractions,
+  DISCOVERY_METHODS,
+  EVENT_LOCATIONS,
+  SOURCE_ENTRY_POINTS,
+} from './interactions';
 import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
 
 // Constants for datasource-provided dashboards pagination
@@ -83,8 +90,7 @@ export const DashboardLibrarySection = () => {
       libraryItemTitle: dashboard.title,
       sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       eventLocation: EVENT_LOCATIONS.MODAL_PROVISIONED_TAB,
-      clickedAt: Date.now(),
-      discoveryMethod: 'browse',
+      discoveryMethod: DISCOVERY_METHODS.BROWSE,
     });
 
     const params = new URLSearchParams({
@@ -95,7 +101,7 @@ export const DashboardLibrarySection = () => {
       // tracking event purpose values
       sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       libraryItemId: dashboard.uid,
-      creationOrigin: 'dashboard_library_datasource_dashboard',
+      creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_DATASOURCE_DASHBOARD,
       eventLocation: EVENT_LOCATIONS.MODAL_PROVISIONED_TAB,
       contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
     });

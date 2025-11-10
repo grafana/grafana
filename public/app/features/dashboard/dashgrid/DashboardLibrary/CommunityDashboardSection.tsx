@@ -11,7 +11,13 @@ import { Button, useStyles2, Stack, Grid, EmptyState, Alert, Pagination, FilterI
 import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './SuggestedDashboardsModal';
 import { fetchCommunityDashboards } from './api/dashboardLibraryApi';
-import { CONTENT_KINDS, DashboardLibraryInteractions, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './interactions';
+import {
+  CONTENT_KINDS,
+  DashboardLibraryInteractions,
+  DISCOVERY_METHODS,
+  EVENT_LOCATIONS,
+  SOURCE_ENTRY_POINTS,
+} from './interactions';
 import { GnetDashboard } from './types';
 import {
   getThumbnailUrl,
@@ -106,13 +112,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
 
   // Track analytics only once on first successful load
   useEffect(() => {
-    if (
-      !loading &&
-      !hasTrackedLoaded.current &&
-      currentPage === 1 &&
-      response?.dashboards &&
-      response.dashboards.length > 0
-    ) {
+    if (!loading && !hasTrackedLoaded.current && response?.dashboards && response.dashboards.length > 0) {
       DashboardLibraryInteractions.loaded({
         numberOfItems: response.dashboards.length,
         contentKinds: [CONTENT_KINDS.COMMUNITY_DASHBOARD],
@@ -122,7 +122,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       });
       hasTrackedLoaded.current = true;
     }
-  }, [loading, currentPage, response]);
+  }, [loading, response]);
 
   const styles = useStyles2(getStyles);
 
@@ -145,8 +145,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       libraryItemTitle: dashboard.name,
       sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-      clickedAt: Date.now(),
-      discoveryMethod: debouncedSearchQuery.trim() ? 'search' : 'browse',
+      discoveryMethod: debouncedSearchQuery.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
     });
 
     onUseCommunityDashboard({

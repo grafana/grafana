@@ -12,7 +12,14 @@ import { PluginDashboard } from 'app/types/plugins';
 import { DashboardCard } from './DashboardCard';
 import { MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
 import { fetchCommunityDashboards, fetchProvisionedDashboards } from './api/dashboardLibraryApi';
-import { CONTENT_KINDS, DashboardLibraryInteractions, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './interactions';
+import {
+  CONTENT_KINDS,
+  CREATION_ORIGINS,
+  DashboardLibraryInteractions,
+  DISCOVERY_METHODS,
+  EVENT_LOCATIONS,
+  SOURCE_ENTRY_POINTS,
+} from './interactions';
 import { GnetDashboard } from './types';
 import {
   getThumbnailUrl,
@@ -207,8 +214,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
       libraryItemTitle: dashboard.title,
       sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
-      clickedAt: Date.now(),
-      discoveryMethod: 'browse',
+      discoveryMethod: DISCOVERY_METHODS.BROWSE,
     });
 
     // Navigate to template route (existing flow)
@@ -219,7 +225,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
       path: dashboard.path,
       sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       libraryItemId: dashboard.uid,
-      creationOrigin: 'dashboard_library_datasource_dashboard',
+      creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_DATASOURCE_DASHBOARD,
       eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
       contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
     });
@@ -245,8 +251,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
       libraryItemTitle: dashboard.name,
       sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
-      clickedAt: Date.now(),
-      discoveryMethod: 'browse',
+      discoveryMethod: DISCOVERY_METHODS.BROWSE,
     });
 
     onUseCommunityDashboard({
