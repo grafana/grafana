@@ -1010,10 +1010,6 @@ const (
 	// Enable dual reader for unified storage search
 	FlagUnifiedStorageSearchDualReaderEnabled = "unifiedStorageSearchDualReaderEnabled"
 
-	// FlagDashboardDsAdHocFiltering
-	// Enables adhoc filtering support for the dashboard datasource
-	FlagDashboardDsAdHocFiltering = "dashboardDsAdHocFiltering"
-
 	// FlagDashboardLevelTimeMacros
 	// Supports __from and __to macros that always use the dashboard level time range
 	FlagDashboardLevelTimeMacros = "dashboardLevelTimeMacros"
