@@ -206,12 +206,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	storage[teamResource.StoragePath()] = teamUniStore
 
 	if b.legacyTeamStore != nil {
-		teamDW, err := opts.DualWriteBuilder(teamResource.GroupResource(), b.legacyTeamStore, teamUniStore)
+		dw, err := opts.DualWriteBuilder(teamResource.GroupResource(), b.legacyTeamStore, teamUniStore)
 		if err != nil {
 			return err
 		}
 
-		storage[teamResource.StoragePath()] = teamDW
+		storage[teamResource.StoragePath()] = dw
 		// TODO: why is this not dual write?
 		storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
 	}
@@ -232,11 +232,11 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	if b.teamBindingLegacyStore != nil {
-		teamBindingDW, err := opts.DualWriteBuilder(teamBindingResource.GroupResource(), b.teamBindingLegacyStore, teamBindingUniStore)
+		dw, err := opts.DualWriteBuilder(teamBindingResource.GroupResource(), b.teamBindingLegacyStore, teamBindingUniStore)
 		if err != nil {
 			return err
 		}
-		storage[teamBindingResource.StoragePath()] = teamBindingDW
+		storage[teamBindingResource.StoragePath()] = dw
 	}
 
 	// User store registration
@@ -274,11 +274,11 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	storage[saResource.StoragePath()] = saUniStore
 
 	if b.saLegacyStore != nil {
-		saDW, err := opts.DualWriteBuilder(saResource.GroupResource(), b.saLegacyStore, saUniStore)
+		dw, err := opts.DualWriteBuilder(saResource.GroupResource(), b.saLegacyStore, saUniStore)
 		if err != nil {
 			return err
 		}
-		storage[saResource.StoragePath()] = saDW
+		storage[saResource.StoragePath()] = dw
 		// TODO: why is this not dual write?
 		storage[saResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
 	}
@@ -301,11 +301,11 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 
-		extGroupMappingDW, err := opts.DualWriteBuilder(extGroupMappingResource.GroupResource(), extGroupMappingLegacyStore, extGroupMappingUniStore)
+		dw, err := opts.DualWriteBuilder(extGroupMappingResource.GroupResource(), extGroupMappingLegacyStore, extGroupMappingUniStore)
 		if err != nil {
 			return err
 		}
-		storage[extGroupMappingResource.StoragePath()] = extGroupMappingDW
+		storage[extGroupMappingResource.StoragePath()] = dw
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -384,12 +384,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 		legacyStore.AfterDelete = b.AfterResourcePermissionDelete
 	}
 
-	dwStore, err := opts.DualWriteBuilder(iamv0.ResourcePermissionInfo.GroupResource(), legacyStore, uniStore)
+	dw, err := opts.DualWriteBuilder(iamv0.ResourcePermissionInfo.GroupResource(), legacyStore, uniStore)
 	if err != nil {
 		return err
 	}
 
-	storage[iamv0.ResourcePermissionInfo.StoragePath()] = dwStore
+	storage[iamv0.ResourcePermissionInfo.StoragePath()] = dw
 	return nil
 }
 
