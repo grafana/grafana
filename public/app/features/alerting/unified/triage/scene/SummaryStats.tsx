@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { DataFrameView, GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -99,14 +99,15 @@ interface StatBoxProps {
   value: number;
   color: 'error' | 'warning';
   children: React.ReactNode;
+  fullHeight?: boolean;
 }
 
-function StatBox({ i18nKey, value, color, children }: StatBoxProps) {
+function StatBox({ i18nKey, value, color, children, fullHeight }: StatBoxProps) {
   const styles = useStyles2(getStatBoxStyles);
   const colorClass = color === 'error' ? styles.errorColor : styles.warningColor;
 
   return (
-    <div className={styles.statBox}>
+    <div className={cx(styles.statBox, fullHeight && styles.fullHeight)}>
       <div className={styles.label}>{children}</div>
       <div className={`${styles.value} ${colorClass}`}>{value}</div>
     </div>
@@ -127,6 +128,9 @@ const getStatBoxStyles = (theme: GrafanaTheme2) => ({
     minWidth: 0,
     width: '100%',
     alignSelf: 'stretch',
+  }),
+  fullHeight: css({
+    height: '100%',
   }),
   label: css({
     fontSize: theme.typography.bodySmall.fontSize,
@@ -202,21 +206,31 @@ function SummaryStatsContent() {
   return (
     <Stack direction="column" gap={2}>
       {alertstateFilter === PromAlertingRuleState.Firing && (
-        <Stack direction={{ xs: 'column', md: 'row' }} gap={2} wrap>
-          <StatBox i18nKey="alerting.triage.firing-instances-count" value={instances.firing} color="error">
+        <Stack direction={{ xs: 'column', md: 'row' }} gap={2} wrap height="100%">
+          <StatBox i18nKey="alerting.triage.firing-instances-count" value={instances.firing} color="error" fullHeight>
             <Trans i18nKey="alerting.triage.firing-instances-count">Firing alert instances</Trans>
           </StatBox>
-          <StatBox i18nKey="alerting.triage.firing-rules-count" value={rules.firing} color="error">
+          <StatBox i18nKey="alerting.triage.firing-rules-count" value={rules.firing} color="error" fullHeight>
             <Trans i18nKey="alerting.triage.firing-rules-count">Firing alert rules</Trans>
           </StatBox>
         </Stack>
       )}
       {alertstateFilter === PromAlertingRuleState.Pending && (
-        <Stack direction={{ xs: 'column', md: 'row' }} gap={2} wrap>
-          <StatBox i18nKey="alerting.triage.pending-instances-count" value={instances.pending} color="warning">
+        <Stack direction={{ xs: 'column', md: 'row' }} gap={2} wrap height="100%">
+          <StatBox
+            i18nKey="alerting.triage.pending-instances-count"
+            value={instances.pending}
+            color="warning"
+            fullHeight
+          >
             <Trans i18nKey="alerting.triage.pending-instances-count">Pending alert instances</Trans>
           </StatBox>
-          <StatBox i18nKey="alerting.triage.rules-with-pending-instances" value={rules.pending} color="warning">
+          <StatBox
+            i18nKey="alerting.triage.rules-with-pending-instances"
+            value={rules.pending}
+            color="warning"
+            fullHeight
+          >
             <Trans i18nKey="alerting.triage.rules-with-pending-instances">Alert rules with pending instances</Trans>
           </StatBox>
         </Stack>
