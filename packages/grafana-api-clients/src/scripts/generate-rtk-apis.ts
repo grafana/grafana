@@ -53,6 +53,12 @@ const config: ConfigFile = {
       tag: true,
       apiFile: '../clients/rtkq/legacy/baseAPI.ts',
       filterEndpoints: (_name, operation) => !operation.operation.deprecated,
+      endpointOverrides: [
+        {
+          pattern: 'listTeamsRoles',
+          type: 'query',
+        },
+      ],
     },
     '../clients/rtkq/migrate-to-cloud/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
