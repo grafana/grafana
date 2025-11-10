@@ -633,11 +633,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/DataSourceSettings/SecureSocksProxySettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/DataSourceSettings/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2

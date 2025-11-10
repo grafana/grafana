@@ -24,26 +24,28 @@ export function SecureSocksProxySettings<T extends SecureSocksProxyConfig>({
       </h3>
       <Box marginBottom={5}>
         <Stack direction="row" alignItems="flex-start" wrap>
-          <div className="gf-form">
-            <InlineField
-              labelWidth={26}
-              label={t('grafana-ui.data-source-settings.secure-socks-label', 'Enabled')}
-              tooltip={t(
-                'grafana-ui.data-source-settings.secure-socks-tooltip',
-                'Connect to this datasource via the secure socks proxy.'
-              )}
-            >
-              <InlineSwitch
-                value={options.jsonData.enableSecureSocksProxy ?? false}
-                onChange={(event) =>
-                  onOptionsChange({
-                    ...options,
-                    jsonData: { ...options.jsonData, enableSecureSocksProxy: event!.currentTarget.checked },
-                  })
-                }
-              />
-            </InlineField>
-          </div>
+          <Box position="relative" marginBottom={0.5}>
+            <Stack direction="row" alignItems="flex-start">
+              <InlineField
+                labelWidth={26}
+                label={t('grafana-ui.data-source-settings.secure-socks-label', 'Enabled')}
+                tooltip={t(
+                  'grafana-ui.data-source-settings.secure-socks-tooltip',
+                  'Connect to this datasource via the secure socks proxy.'
+                )}
+              >
+                <InlineSwitch
+                  value={options.jsonData.enableSecureSocksProxy ?? false}
+                  onChange={(event) =>
+                    onOptionsChange({
+                      ...options,
+                      jsonData: { ...options.jsonData, enableSecureSocksProxy: event!.currentTarget.checked },
+                    })
+                  }
+                />
+              </InlineField>
+            </Stack>
+          </Box>
         </Stack>
       </Box>
     </div>
