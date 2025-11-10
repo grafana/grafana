@@ -165,7 +165,6 @@ unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,f
 timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
 timeRangePan,experimental,@grafana/dataviz-squad,false,false,true
 azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
-preinstallAutoUpdate,GA,@grafana/plugins-platform-backend,false,false,false
 playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
 passwordlessMagicLinkAuthentication,experimental,@grafana/identity-access-team,false,false,false
 exploreMetricsRelatedLogs,experimental,@grafana/observability-metrics,false,false,true
