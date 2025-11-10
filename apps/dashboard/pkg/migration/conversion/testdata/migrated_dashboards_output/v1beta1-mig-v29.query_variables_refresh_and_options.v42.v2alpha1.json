@@ -394,7 +394,7 @@
         "kind": "DatasourceVariable",
         "spec": {
           "name": "datasource_variable",
-          "pluginId": "default-ds-uid",
+          "pluginId": "prometheus",
           "refresh": "never",
           "regex": "",
           "current": {

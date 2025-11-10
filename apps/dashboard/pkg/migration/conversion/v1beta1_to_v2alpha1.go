@@ -1133,7 +1133,7 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 
 // Datasource Variable
 func buildDatasourceVariable(ctx context.Context, varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
-	pluginId := *getDefaultDatasourceRef(ctx).Uid
+	pluginId := *getDefaultDatasourceRef(ctx).Type
 	if query := varMap["query"]; query != nil {
 		if queryStr, ok := query.(string); ok {
 			pluginId = queryStr
