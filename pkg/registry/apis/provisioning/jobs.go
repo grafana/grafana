@@ -132,28 +132,36 @@ func (c *jobsConnector) Connect(
 		}
 		spec.Repository = name
 
-		// If a sync job is being created, we should update its status to pending.
+		job, err := c.jobs.GetJobQueue().Insert(ctx, cfg.Namespace, spec)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+
+		// For pull jobs update the sync status
+		// patch the sync status 'state' to 'pending', and reset the 'started' field, leaving other fields unchanged.
+		// Intentionally maintain the previous job name until the jobs is picked up.
 		if spec.Pull != nil {
-			err = c.statusPatcherProvider.GetStatusPatcher().Patch(ctx, cfg, map[string]interface{}{
-				"op":   "replace",
-				"path": "/status/sync",
-				"value": &provisioning.SyncStatus{
-					State:   provisioning.JobStatePending,
-					LastRef: cfg.Status.Sync.LastRef,
-					Started: time.Now().UnixMilli(),
+			err = c.statusPatcherProvider.GetStatusPatcher().Patch(ctx, cfg,
+				map[string]interface{}{
+					"op":    "replace",
+					"path":  "/status/sync/state",
+					"value": provisioning.JobStatePending,
 				},
-			})
+				map[string]interface{}{
+					// Use "replace" instead of "remove" since "remove" fails if the path does not exist (RFC 6902).
+					// "started" field uses "omitempty", so it may be missing in the JSON.
+					"op":    "replace",
+					"path":  "/status/sync/started",
+					"value": int64(0),
+				},
+			)
 			if err != nil {
 				responder.Error(err)
 				return
 			}
 		}
 
-		job, err := c.jobs.GetJobQueue().Insert(ctx, cfg.Namespace, spec)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
 		responder.Object(http.StatusAccepted, job)
 	}), 30*time.Second), nil
 }
