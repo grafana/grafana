@@ -27,7 +27,7 @@ const timeRange = {
   to: new Date(1000),
 } as unknown as TimeRange;
 
-function getContent(result: React.Element) {
+function getContent(result: React.ReactElement) {
   return result.props.children.props.children[0];
 }
 
