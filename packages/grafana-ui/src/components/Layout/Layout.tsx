@@ -33,6 +33,8 @@ export interface ContainerProps {
 
 /**
  * @deprecated use Stack component instead
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-deprecated-groups--docs
  */
 export const Layout = ({
   children,

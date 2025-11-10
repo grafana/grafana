@@ -186,7 +186,6 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
                 return (
                   <Collapse
                     label={category + ' ' + `(${visibleQueries[category]!.length})`}
-                    collapsible={true}
                     isOpen={areDropdownsOpen[category]}
                     onToggle={(isOpen) => setAreDropdownsOpen({ ...areDropdownsOpen, [category]: isOpen })}
                     key={category}

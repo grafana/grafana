@@ -176,6 +176,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	if userInfo.Id == "" {
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if c.features.IsEnabledGlobally(featuremgmt.FlagOauthRequireSubClaim) {
 			return nil, errOAuthUserInfo.Errorf("missing required sub claims")
 		} else {

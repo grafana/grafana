@@ -1082,14 +1082,14 @@
     {
       "metadata": {
         "name": "dashboardLibrary",
-        "resourceVersion": "1760051989635",
+        "resourceVersion": "1762521182817",
         "creationTimestamp": "2025-09-26T16:02:12Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-10-09 23:19:49.635811 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-11-07 13:13:02.817210943 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Enable suggested dashboards when creating new dashboards",
+        "description": "Enable dashboard library experiments that are production ready",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad"
       }
@@ -1159,6 +1159,18 @@
         "description": "Log schema validation errors so they can be analyzed later",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardTemplates",
+        "resourceVersion": "1761575312733",
+        "creationTimestamp": "2025-10-27T14:28:32Z"
+      },
+      "spec": {
+        "description": "Enable template dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad"
       }
     },
     {
@@ -2052,6 +2064,18 @@
     },
     {
       "metadata": {
+        "name": "jaegerEnableGrpcEndpoint",
+        "resourceVersion": "1760451551713",
+        "creationTimestamp": "2025-10-14T14:19:11Z"
+      },
+      "spec": {
+        "description": "Enable querying trace data through Jaeger's gRPC endpoint (HTTP)",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent"
+      }
+    },
+    {
+      "metadata": {
         "name": "jitterAlertRulesWithinGroups",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-01-18T18:48:11Z"
@@ -2127,6 +2151,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAnnotations",
+        "resourceVersion": "1761142826172",
+        "creationTimestamp": "2025-10-22T14:20:26Z"
+      },
+      "spec": {
+        "description": "Enables app platform API for annotations",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "expression": "false"
       }
     },
     {
@@ -2751,14 +2788,18 @@
     {
       "metadata": {
         "name": "newLogsPanel",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-02-04T17:40:17Z"
+        "resourceVersion": "1762166984808",
+        "creationTimestamp": "2025-02-04T17:40:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-03 10:49:44.808226 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables the new logs panel in Explore",
-        "stage": "experimental",
+        "description": "Enables the new logs panel",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -2864,7 +2905,8 @@
       "metadata": {
         "name": "panelMonitoring",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-10-09T05:19:08Z"
+        "creationTimestamp": "2023-10-09T05:19:08Z",
+        "deletionTimestamp": "2025-11-06T15:46:51Z"
       },
       "spec": {
         "description": "Enables panel monitoring through logs and measurements",
@@ -2872,6 +2914,18 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "panelTimeSettings",
+        "resourceVersion": "1761555646368",
+        "creationTimestamp": "2025-10-27T09:00:46Z"
+      },
+      "spec": {
+        "description": "Enables a new panel time settings drawer",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
       }
     },
     {
@@ -3040,7 +3094,8 @@
       "metadata": {
         "name": "pluginsFrontendSandbox",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-06-05T08:51:36Z"
+        "creationTimestamp": "2023-06-05T08:51:36Z",
+        "deletionTimestamp": "2025-11-05T10:06:22Z"
       },
       "spec": {
         "description": "Enables the plugins frontend sandbox",
@@ -3587,15 +3642,18 @@
     {
       "metadata": {
         "name": "sharingDashboardImage",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-15T21:07:39Z"
+        "resourceVersion": "1761782859498",
+        "creationTimestamp": "2025-07-15T21:07:39Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-30 00:07:39.498343 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables image sharing functionality for dashboards",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
-        "hideFromDocs": true
+        "expression": "true"
       }
     },
     {
@@ -3720,6 +3778,18 @@
         "description": "Configurable storage for dashboards, datasources, and resources",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "suggestedDashboards",
+        "resourceVersion": "1762521182817",
+        "creationTimestamp": "2025-11-07T13:13:02Z"
+      },
+      "spec": {
+        "description": "Enable suggested dashboards when creating new dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad"
       }
     },
     {
@@ -3867,6 +3937,22 @@
       },
       "spec": {
         "description": "Enables time comparison option in supported panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "timeRangePan",
+        "resourceVersion": "1762290731154",
+        "creationTimestamp": "2025-10-24T19:49:53Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-04 21:12:11.154822 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables time range panning functionality",
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true

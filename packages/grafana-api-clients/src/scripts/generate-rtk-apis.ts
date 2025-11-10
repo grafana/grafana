@@ -17,6 +17,12 @@ type OperationDefinition = {
 };
 type EndpointMatcher = string[] | ((operationName: string, operationDefinition: OperationDefinition) => boolean);
 
+const defaultHooksOptions = {
+  queries: true,
+  lazyQueries: true,
+  mutations: true,
+};
+
 /**
  * Helper to return consistent base API generation config
  */
@@ -28,6 +34,7 @@ const createAPIConfig = (app: string, version: string, filterEndpoints?: Endpoin
       apiFile: `../clients/rtkq/${app}/${version}/baseAPI.ts`,
       filterEndpoints,
       tag: true,
+      hooks: defaultHooksOptions,
       ...additional,
     },
   };
@@ -39,10 +46,18 @@ const config: ConfigFile = {
   exportName: 'generatedAPI',
 
   outputFiles: {
+    // OpenAPI3 client with all endpoints
+    '../clients/rtkq/legacy/endpoints.gen.ts': {
+      schemaFile: path.join(basePath, 'public/openapi3.json'),
+      hooks: defaultHooksOptions,
+      tag: true,
+      apiFile: '../clients/rtkq/legacy/baseAPI.ts',
+      filterEndpoints: (_name, operation) => !operation.operation.deprecated,
+    },
     '../clients/rtkq/migrate-to-cloud/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
       apiFile: '../clients/rtkq/migrate-to-cloud/baseAPI.ts',
-      hooks: true,
+      hooks: defaultHooksOptions,
       filterEndpoints: [
         'getSessionList',
         'getSession',
@@ -67,45 +82,29 @@ const config: ConfigFile = {
     },
     '../clients/rtkq/preferences/user/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
-      hooks: true,
+      hooks: defaultHooksOptions,
       apiFile: '../clients/rtkq/preferences/user/baseAPI.ts',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
     '../clients/rtkq/user/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
-      hooks: true,
+      hooks: defaultHooksOptions,
       apiFile: '../clients/rtkq/user/baseAPI.ts',
       filterEndpoints: ['starDashboardByUid', 'unstarDashboardByUid'],
     },
-    ...createAPIConfig('iam', 'v0alpha1', ['getDisplayMapping']),
-    ...createAPIConfig('provisioning', 'v0alpha1', filterEndpoints, { hooks: true }),
-    ...createAPIConfig('folder', 'v1beta1', undefined),
-    ...createAPIConfig('advisor', 'v0alpha1', [
-      'createCheck',
-      'getCheck',
-      'listCheck',
-      'deleteCheck',
-      'updateCheck',
-      'listCheckType',
-      'updateCheckType',
-    ]),
-    ...createAPIConfig('playlist', 'v0alpha1', [
-      'listPlaylist',
-      'getPlaylist',
-      'createPlaylist',
-      'deletePlaylist',
-      'replacePlaylist',
-    ]),
-    ...createAPIConfig('shorturl', 'v1alpha1'),
-    ...createAPIConfig('preferences', 'v1alpha1', undefined, { hooks: true }),
-    ...createAPIConfig('dashboard', 'v0alpha1', ['getSearch']),
+    ...createAPIConfig('advisor', 'v0alpha1'),
     ...createAPIConfig('correlations', 'v0alpha1'),
+    ...createAPIConfig('dashboard', 'v0alpha1'),
+    ...createAPIConfig('folder', 'v1beta1'),
+    ...createAPIConfig('iam', 'v0alpha1'),
+    ...createAPIConfig('playlist', 'v0alpha1'),
+    ...createAPIConfig('preferences', 'v1alpha1'),
+    ...createAPIConfig('provisioning', 'v0alpha1'),
+    ...createAPIConfig('shorturl', 'v1beta1'),
+    ...createAPIConfig('shorturl', 'v1beta1'),
+    ...createAPIConfig('shorturl', 'v1beta1'),
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };
-
-function filterEndpoints(name: string) {
-  return !name.toLowerCase().includes('getapiresources') && !name.toLowerCase().includes('update');
-}
 
 export default config;
