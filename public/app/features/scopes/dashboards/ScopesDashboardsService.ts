@@ -57,7 +57,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
   }
 
   // Expand the group that matches the current path, if it is not already expanded
-  private onLocationChange = async (pathname: string) => {
+  private onLocationChange = (pathname: string) => {
     if (!this.state.drawerOpened) {
       return;
     }
@@ -84,11 +84,11 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
 
     // Expand the first group, as we don't know which one to prioritize
     if (activeScopeNavigation.status.groups) {
-      await this.updateFolder(['', activeScopeNavigation.status.groups[0]], true);
+      this.updateFolder(['', activeScopeNavigation.status.groups[0]], true);
     }
   };
 
-  public updateFolder = async (path: string[], expanded: boolean) => {
+  public updateFolder = (path: string[], expanded: boolean) => {
     let folders = { ...this.state.folders };
     let filteredFolders = { ...this.state.filteredFolders };
     let currentLevelFolders: SuggestedNavigationsFoldersMap = folders;
@@ -106,7 +106,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     currentFolder.expanded = expanded;
     currentFilteredFolder.expanded = expanded;
 
-    // If expanding a subScope folder, fetch items for that subScope
+    // If expanding a subScope folder, fetch items for that subScope asynchronously
     if (expanded && currentFolder.isSubScope) {
       // Only fetch if folder is empty (hasn't been loaded yet)
       const isEmpty =
@@ -115,34 +115,55 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       if (isEmpty) {
         // Extract the subScope name from the folder (stored when folder was created)
         const subScopeName = currentFolder.subScopeName || name;
-
-        // Fetch navigations for this subScope
-        const fetchNavigations = config.featureToggles.useScopesNavigationEndpoint
-          ? this.apiClient.fetchScopeNavigations
-          : this.apiClient.fetchDashboards;
-
-        const subScopeItems = await fetchNavigations([subScopeName]);
-
-        // Group the items and add them to the subScope folder
-        const subScopeFolders = this.groupSuggestedItems(subScopeItems);
-
-        // Merge the subScope folder's content with the fetched items
-        // Take items from the root of the grouped structure
-        const rootSubScopeFolder = subScopeFolders[''];
-        currentFolder.folders = { ...currentFolder.folders, ...rootSubScopeFolder.folders };
-        currentFolder.suggestedNavigations = {
-          ...currentFolder.suggestedNavigations,
-          ...rootSubScopeFolder.suggestedNavigations,
-        };
-
-        // Also update filtered folders
-        currentFilteredFolder.folders = { ...currentFilteredFolder.folders, ...rootSubScopeFolder.folders };
-        currentFilteredFolder.suggestedNavigations = {
-          ...currentFilteredFolder.suggestedNavigations,
-          ...rootSubScopeFolder.suggestedNavigations,
-        };
+        // Fetch asynchronously without blocking the state update
+        this.fetchSubScopeItems(path, subScopeName);
       }
     }
+
+    this.updateState({ folders, filteredFolders });
+  };
+
+  private fetchSubScopeItems = async (path: string[], subScopeName: string) => {
+    // Fetch navigations for this subScope
+    const fetchNavigations = config.featureToggles.useScopesNavigationEndpoint
+      ? this.apiClient.fetchScopeNavigations
+      : this.apiClient.fetchDashboards;
+
+    const subScopeItems = await fetchNavigations([subScopeName]);
+
+    // Group the items and add them to the subScope folder
+    const subScopeFolders = this.groupSuggestedItems(subScopeItems);
+
+    // Get the current state and navigate to the target folder
+    let folders = { ...this.state.folders };
+    let filteredFolders = { ...this.state.filteredFolders };
+    let currentLevelFolders: SuggestedNavigationsFoldersMap = folders;
+    let currentLevelFilteredFolders: SuggestedNavigationsFoldersMap = filteredFolders;
+
+    for (let idx = 0; idx < path.length - 1; idx++) {
+      currentLevelFolders = currentLevelFolders[path[idx]].folders;
+      currentLevelFilteredFolders = currentLevelFilteredFolders[path[idx]].folders;
+    }
+
+    const name = path[path.length - 1];
+    const currentFolder = currentLevelFolders[name];
+    const currentFilteredFolder = currentLevelFilteredFolders[name];
+
+    // Merge the subScope folder's content with the fetched items
+    // Take items from the root of the grouped structure
+    const rootSubScopeFolder = subScopeFolders[''];
+    currentFolder.folders = { ...currentFolder.folders, ...rootSubScopeFolder.folders };
+    currentFolder.suggestedNavigations = {
+      ...currentFolder.suggestedNavigations,
+      ...rootSubScopeFolder.suggestedNavigations,
+    };
+
+    // Also update filtered folders
+    currentFilteredFolder.folders = { ...currentFilteredFolder.folders, ...rootSubScopeFolder.folders };
+    currentFilteredFolder.suggestedNavigations = {
+      ...currentFilteredFolder.suggestedNavigations,
+      ...rootSubScopeFolder.suggestedNavigations,
+    };
 
     this.updateState({ folders, filteredFolders });
   };
