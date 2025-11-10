@@ -116,7 +116,7 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, backend.DownstreamError(fmt.Errorf("received error from client while getting series: %w", err))
+		return nil, backend.DownstreamErrorf("received error from client while getting series: %w", err)
 	}
 
 	series := make([]*Series, len(resp.Msg.Series))
