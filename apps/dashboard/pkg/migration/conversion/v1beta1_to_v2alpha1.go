@@ -668,6 +668,10 @@ func yOffsetInRows(panelMap map[string]interface{}, rowY int64) int64 {
 	return 0
 }
 
+// LEGACY_STRING_VALUE_KEY is used for QueryVariableKind's query prop. Historically, queries
+// could be defined as strings, but in schema V2 we've deprecated the string type and support
+// only DataQuery objects. When a query is a simple string (legacy format), it's stored under
+// this key in a map structure to preserve the value during migration from v1beta1 to v2alpha1.
 const LEGACY_STRING_VALUE_KEY = "__legacyStringValue"
 
 // Variable enum transformation functions
