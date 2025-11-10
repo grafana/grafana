@@ -113,9 +113,12 @@ export default function plopGenerator(plop: NodePlopAPI) {
       : path.join(basePath, 'pkg/tests/apis/openapi_snapshots');
 
     try {
-      return fs.readdirSync(openapiDir).filter((file: string) => file.endsWith('.json'));
+      const files = fs.readdirSync(openapiDir).filter((file: string) => file.endsWith('.json'));
+      return files;
     } catch (e) {
-      return [];
+      throw new Error(
+        "No OpenAPI specs found! Are you trying to generate an API client for enterprise but haven't linked your local environment?"
+      );
     }
   };
 
