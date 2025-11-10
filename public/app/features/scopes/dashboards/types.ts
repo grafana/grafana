@@ -31,7 +31,6 @@ export interface SuggestedNavigation {
   url: string;
   // Used for testid and keys
   id: string;
-  hasSubScope?: boolean;
 }
 
 export interface SuggestedNavigationsFolder {

@@ -11,19 +11,15 @@ export interface ScopesNavigationTreeLinkProps {
   to: string;
   title: string;
   id: string;
-  hasSubScope?: boolean;
 }
 
-export function ScopesNavigationTreeLink({ to, title, id, hasSubScope }: ScopesNavigationTreeLinkProps) {
+export function ScopesNavigationTreeLink({ to, title, id }: ScopesNavigationTreeLinkProps) {
   const styles = useStyles2(getStyles);
   const linkIcon = useMemo(() => getLinkIcon(to), [to]);
   const locPathname = useLocation().pathname;
 
   // Ignore query params
   const isCurrent = isCurrentPath(locPathname, to);
-
-  // Use exchange-alt icon for subScope items
-  const iconName = hasSubScope ? 'exchange-alt' : linkIcon;
 
   return (
     <Link
@@ -34,7 +30,7 @@ export function ScopesNavigationTreeLink({ to, title, id, hasSubScope }: ScopesN
       role="treeitem"
       key={id}
     >
-      <Icon name={iconName} /> {title}
+      <Icon name={linkIcon} /> {title}
     </Link>
   );
 }
