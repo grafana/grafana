@@ -31,7 +31,7 @@ export function FilesView({ repo }: FilesViewProps) {
       sortType: 'string',
       cell: ({ row: { original } }: FileCell<'path'>) => {
         const { path } = original;
-        const isDotKeepFile = isGenerateDotKeepFile(path);
+        const isDotKeepFile = getIsDotKeepFile(path);
         if (isDotKeepFile) {
           return path;
         }
@@ -48,7 +48,7 @@ export function FilesView({ repo }: FilesViewProps) {
       header: '',
       cell: ({ row: { original } }: FileCell<'path'>) => {
         const { path } = original;
-        const isDotKeepFile = isGenerateDotKeepFile(path);
+        const isDotKeepFile = getIsDotKeepFile(path);
         if (isDotKeepFile) {
           return null;
         }
@@ -93,7 +93,7 @@ export function FilesView({ repo }: FilesViewProps) {
   );
 }
 
-function isGenerateDotKeepFile(path: string): boolean {
+function getIsDotKeepFile(path: string): boolean {
   // e.g. 'dashboards/.keep' → true, 'dashboards/example.keep.json' → false
   return path.split('/').pop() === '.keep';
 }
