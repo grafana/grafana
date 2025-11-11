@@ -78,7 +78,7 @@ func ProvideAppInstallers(
 		installers = append(installers, logsdrilldownAppInstaller)
 	}
 
-	if cfg.AppRegistry.KubernetesAnnotationsAppEnabled {
+	if cfg.StartupSettings.KubernetesAnnotationsAppEnabled {
 		installers = append(installers, annotationAppInstaller)
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature

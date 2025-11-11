@@ -1,14 +1,14 @@
 package setting
 
-type AppRegistrySettings struct {
+type StartupSettings struct {
 	KubernetesAnnotationsAppEnabled bool
 }
 
-func (cfg *Cfg) readAppPlatformSection() {
-	settings := AppRegistrySettings{}
+func (cfg *Cfg) readStartupSettingsSection() {
+	settings := StartupSettings{}
 
-	appPlatformSection := cfg.Raw.Section("app_registry")
-	settings.KubernetesAnnotationsAppEnabled = appPlatformSection.Key("annotations_app_enabled").MustBool(false)
+	startupSettingsSection := cfg.Raw.Section("startup_settings")
+	settings.KubernetesAnnotationsAppEnabled = startupSettingsSection.Key("annotations_app_enabled").MustBool(false)
 
-	cfg.AppRegistry = settings
+	cfg.StartupSettings = settings
 }
