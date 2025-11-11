@@ -30,10 +30,16 @@ interface MultiComboboxBaseProps<T extends string | number>
   onChange: (option: Array<ComboboxOption<T>>) => void;
   isClearable?: boolean;
   enableAllOption?: boolean;
+  portalContainer?: HTMLElement;
 }
 
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
+/**
+ * The behavior of the MultiCombobox is similar to that of the Combobox, but it allows you to select multiple options. For all non-multi behaviors, see the Combobox documentation.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-multicombobox--docs
+ */
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
   const {
     placeholder,
@@ -49,6 +55,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     createCustomValue = false,
     'aria-labelledby': ariaLabelledBy,
     'data-testid': dataTestId,
+    portalContainer,
+    prefixIcon,
   } = props;
 
   const styles = useStyles2(getComboboxStyles);
@@ -197,6 +205,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
+          // Don't allow selection of info options
+          if (newSelectedItem?.infoOption) {
+            break;
+          }
+
           // Handle All functionality
           if (newSelectedItem?.value === ALL_OPTION_VALUE) {
             // TODO: fix bug where if the search filtered items list is the
@@ -204,12 +217,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             const isAllFilteredSelected = selectedItems.length === options.length - 1;
 
             // if every option is already selected, clear the selection.
-            // otherwise, select all the options (excluding the first ALL_OTION)
-            const realOptions = options.slice(1);
+            // otherwise, select all the options (excluding the first ALL_OPTION and info options)
+            const realOptions = options.slice(1).filter((option) => !option.infoOption);
             let newSelectedItems = isAllFilteredSelected && inputValue === '' ? [] : realOptions;
 
             if (!isAllFilteredSelected && inputValue !== '') {
-              // Select all currently filtered items and deduplicate
               newSelectedItems = [...new Set([...selectedItems, ...realOptions])];
             }
 
@@ -261,6 +273,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   return (
     <div className={multiStyles.container} ref={containerRef}>
       <div className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })} ref={measureRef}>
+        {prefixIcon && (
+          <Box marginLeft={0.5}>
+            <Text color="secondary">
+              <Icon name={prefixIcon} />
+            </Text>
+          </Box>
+        )}
         <span className={multiStyles.pillWrapper}>
           {visibleItems.map((item, index) => (
             <ValuePill
@@ -329,17 +348,19 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           </div>
         </span>
       </div>
-      <Portal>
+      <Portal root={portalContainer}>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
           style={{
             ...floatStyles,
             width: floatStyles.width + 24, // account for checkbox
+            pointerEvents: 'auto', // Override container's pointer-events: none
           }}
           {...getMenuProps({ ref: floatingRef })}
         >
           {isOpen && (
             <ComboboxList
+              loading={loading}
               options={options}
               highlightedIndex={highlightedIndex}
               selectedItems={selectedItems}

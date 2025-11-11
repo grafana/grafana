@@ -15,16 +15,15 @@ import {
 } from '@grafana/scenes';
 import { createWorker } from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 
-import { ConditionalRenderingData } from '../conditional-rendering/ConditionalRenderingData';
-import { ConditionalRenderingGroup } from '../conditional-rendering/ConditionalRenderingGroup';
-import { ConditionalRenderingTimeRangeSize } from '../conditional-rendering/ConditionalRenderingTimeRangeSize';
-import { ConditionalRenderingVariable } from '../conditional-rendering/ConditionalRenderingVariable';
+import { ConditionalRenderingData } from '../conditional-rendering/conditions/ConditionalRenderingData';
+import { ConditionalRenderingTimeRangeSize } from '../conditional-rendering/conditions/ConditionalRenderingTimeRangeSize';
+import { ConditionalRenderingVariable } from '../conditional-rendering/conditions/ConditionalRenderingVariable';
+import { ConditionalRenderingGroup } from '../conditional-rendering/group/ConditionalRenderingGroup';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene, PERSISTED_PROPS } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks } from '../scene/PanelLinks';
-import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -32,6 +31,7 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 
 import { DashboardChangeInfo } from './shared';

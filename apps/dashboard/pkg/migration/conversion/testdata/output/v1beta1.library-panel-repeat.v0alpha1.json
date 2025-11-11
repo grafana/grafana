@@ -1,7 +1,8 @@
 {
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
   "metadata": {
-    "name": "library-panel-repeat-test",
-    "creationTimestamp": null
+    "name": "library-panel-repeat-test"
   },
   "spec": {
     "annotations": {
@@ -37,8 +38,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1",
-      "error": ""
+      "storedVersion": "v1beta1"
     }
   }
 }

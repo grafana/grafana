@@ -1,5 +1,6 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { SortOrder } from '@grafana/schema/dist/esm/index';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
 
@@ -47,6 +48,19 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
           ],
         },
         defaultValue: PieChartType.Pie,
+      })
+      .addSelect({
+        name: 'Slice sorting',
+        description: 'Select how to sort the pie slices',
+        path: 'sort',
+        settings: {
+          options: [
+            { value: SortOrder.Descending, label: 'Descending' },
+            { value: SortOrder.Ascending, label: 'Ascending' },
+            { value: SortOrder.None, label: 'None' },
+          ],
+        },
+        defaultValue: SortOrder.Descending,
       })
       .addMultiSelect({
         name: t('piechart.name-labels', 'Labels'),

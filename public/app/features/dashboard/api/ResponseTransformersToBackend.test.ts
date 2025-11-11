@@ -8,55 +8,46 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { ensureV2Response } from './ResponseTransformers';
 
 // Mock the config to provide datasource information
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    bootData: {
-      user: {
-        orgId: 1,
-        timezone: 'browser',
-        weekStart: 'monday',
+jest.mock('@grafana/runtime', () => {
+  const mockConfig = {
+    ...jest.requireActual('@grafana/runtime').config,
+    defaultDatasource: 'default-ds-uid',
+    datasources: {
+      'default-ds-uid': {
+        meta: { id: 'prometheus' },
+        name: 'default-ds-uid',
       },
-      settings: {
-        defaultDatasource: 'default-ds-uid',
-        datasources: {
-          'default-ds-uid': {
-            meta: { id: 'prometheus' },
-            name: 'default-ds-uid',
-          },
-          'non-default-test-ds-uid': {
-            meta: { id: 'loki' },
-            name: 'non-default-test-ds-uid',
-          },
-          'existing-ref-uid': {
-            meta: { id: 'prometheus' },
-            name: 'existing-ref-uid',
-          },
-          'existing-target-uid': {
-            meta: { id: 'elasticsearch' },
-            name: 'existing-target-uid',
-          },
-          'existing-ref': {
-            meta: { id: 'prometheus' },
-            name: 'existing-ref',
-          },
-          '-- Mixed --': {
-            meta: { id: 'mixed' },
-            name: '-- Mixed --',
-          },
-          'influx-uid': {
-            meta: { id: 'influxdb' },
-            name: 'influx-uid',
-          },
-          'cloudwatch-uid': {
-            meta: { id: 'cloudwatch' },
-            name: 'cloudwatch-uid',
-          },
-          '-- Grafana --': {
-            meta: { id: 'grafana' },
-            name: '-- Grafana --',
-          },
-        },
+      'non-default-test-ds-uid': {
+        meta: { id: 'loki' },
+        name: 'non-default-test-ds-uid',
+      },
+      'existing-ref-uid': {
+        meta: { id: 'prometheus' },
+        name: 'existing-ref-uid',
+      },
+      'existing-target-uid': {
+        meta: { id: 'elasticsearch' },
+        name: 'existing-target-uid',
+      },
+      'existing-ref': {
+        meta: { id: 'prometheus' },
+        name: 'existing-ref',
+      },
+      '-- Mixed --': {
+        meta: { id: 'mixed' },
+        name: '-- Mixed --',
+      },
+      'influx-uid': {
+        meta: { id: 'influxdb' },
+        name: 'influx-uid',
+      },
+      'cloudwatch-uid': {
+        meta: { id: 'cloudwatch' },
+        name: 'cloudwatch-uid',
+      },
+      '-- Grafana --': {
+        meta: { id: 'grafana' },
+        name: '-- Grafana --',
       },
     },
     apps: {},
@@ -64,8 +55,13 @@ jest.mock('@grafana/runtime', () => ({
       dashboardScene: true,
       kubernetesDashboards: true,
     },
-  },
-}));
+  };
+
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    config: mockConfig,
+  };
+});
 
 /*
  * Frontend Conversion Test Design Explanation:
@@ -82,7 +78,7 @@ jest.mock('@grafana/runtime', () => ({
 // Set up the same datasources as backend test provider to ensure consistency
 const dataSources = {
   default: mockDataSource({
-    name: 'Default Test Datasource Name',
+    name: 'default-ds-uid',
     uid: 'default-ds-uid',
     type: 'prometheus',
     isDefault: true,
@@ -113,18 +109,18 @@ const dataSources = {
   }),
   mixed: mockDataSource({
     name: MIXED_DATASOURCE_NAME,
+    uid: '-- Mixed --',
     type: 'mixed',
-    uid: MIXED_DATASOURCE_NAME,
     isDefault: false,
   }),
   influx: mockDataSource({
-    name: 'InfluxDB Test Datasource',
+    name: 'InfluxDB Test',
     uid: 'influx-uid',
     type: 'influxdb',
     isDefault: false,
   }),
   cloudwatch: mockDataSource({
-    name: 'CloudWatch Test Datasource',
+    name: 'CloudWatch Test',
     uid: 'cloudwatch-uid',
     type: 'cloudwatch',
     isDefault: false,
@@ -210,7 +206,7 @@ describe('Backend / Frontend result comparison', () => {
         expect(backendOutput.spec).toBeDefined();
 
         // Compare the spec structures
-        expect(backendOutput.spec).toMatchObject(frontendOutput.spec);
+        expect(backendOutput.spec).toEqual(frontendOutput.spec);
 
         // Verify the conversion doesn't throw errors and produces a valid structure
         expect(() => JSON.stringify(frontendOutput)).not.toThrow();

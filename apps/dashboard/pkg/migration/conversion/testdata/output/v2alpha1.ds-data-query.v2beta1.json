@@ -2,8 +2,7 @@
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v2beta1",
   "metadata": {
-    "name": "test-v2alpha1-annotations",
-    "creationTimestamp": null
+    "name": "test-v2alpha1-annotations"
   },
   "spec": {
     "annotations": [
@@ -59,7 +58,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
             "spec": {
               "lines": 10,
@@ -104,7 +103,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
             "spec": {
               "expr": "{action=\"add_client\"}",
@@ -214,7 +213,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "gdev-testdata"
@@ -325,7 +324,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "scenarioId": "random_walk",
@@ -404,7 +403,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "disableTextWrap": false,
@@ -519,7 +518,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "gdev-prometheus"
@@ -637,7 +636,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "gdev-prometheus"
@@ -662,7 +661,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "gdev-testdata"
@@ -770,7 +769,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "disableTextWrap": false,
@@ -792,7 +791,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {}
                     },
@@ -985,7 +984,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
             "datasource": {
               "name": "gdev-prometheus"
@@ -1015,7 +1014,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "grafana-testdata-datasource",
+            "group": "",
             "version": "v0",
             "spec": {
               "csv": "1,2,3,4",
@@ -1043,7 +1042,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "grafana-testdata-datasource",
+            "group": "",
             "version": "v0",
             "spec": {}
           },
@@ -1068,7 +1067,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
             "spec": {
               "expr": "up"
@@ -1087,8 +1086,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v2alpha1",
-      "error": ""
+      "storedVersion": "v2alpha1"
     }
   }
 }

@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	ErrKeeperNotFound = errors.New("keeper not found")
+	ErrKeeperNotFound      = errors.New("keeper not found")
+	ErrKeeperAlreadyExists = errors.New("keeper already exists")
 )
 
 // KeeperMetadataStorage is the interface for wiring and dependency injection.
@@ -95,10 +96,10 @@ func (s ExternalID) String() string {
 
 // Keeper is the interface for secret keepers.
 type Keeper interface {
-	Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64, exposedValueOrRef string) (ExternalID, error)
-	Update(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64, exposedValueOrRef string) error
-	Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64) (secretv1beta1.ExposedSecureValue, error)
-	Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64) error
+	Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) (ExternalID, error)
+	Update(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) error
+	Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (secretv1beta1.ExposedSecureValue, error)
+	Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) error
 }
 
 // Service is the interface for secret keeper services.

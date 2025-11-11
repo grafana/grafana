@@ -7,7 +7,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
 
 	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -22,11 +21,17 @@ func convertToK8sResource(v *shorturls.ShortUrl, namespacer request.NamespaceMap
 	status := shorturl.ShortURLStatus{
 		LastSeenAt: v.LastSeenAt,
 	}
+
+	// resourceVersion can't be 0, since we are using the lastSeenAt value, when it's zero we default to current time
+	resourceVersion := fmt.Sprintf("%d", v.LastSeenAt)
+	if v.LastSeenAt == 0 {
+		resourceVersion = fmt.Sprintf("%d", time.Now().UnixMilli())
+	}
+
 	p := &shorturl.ShortURL{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Uid,
-			UID:               types.UID(v.Uid),
-			ResourceVersion:   fmt.Sprintf("%d", v.LastSeenAt),
+			ResourceVersion:   resourceVersion,
 			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.CreatedAt)),
 			Namespace:         namespacer(v.OrgId),
 		},

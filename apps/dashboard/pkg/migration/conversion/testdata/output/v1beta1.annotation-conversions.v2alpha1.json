@@ -3,7 +3,6 @@
   "apiVersion": "dashboard.grafana.app/v2alpha1",
   "metadata": {
     "name": "annotation-conversions-test",
-    "creationTimestamp": null,
     "labels": {
       "test": "annotation-conversions"
     }
@@ -18,7 +17,7 @@
             "uid": "-- Grafana --"
           },
           "query": {
-            "kind": "grafana",
+            "kind": "DataQuery",
             "spec": {
               "limit": 100,
               "matchAny": false,
@@ -44,7 +43,7 @@
             "uid": "existing-ref-uid"
           },
           "query": {
-            "kind": "prometheus",
+            "kind": "DataQuery",
             "spec": {
               "expr": "ALERTS{alertstate=\"firing\"}",
               "interval": "1m",
@@ -70,7 +69,7 @@
             "uid": "default-ds-uid"
           },
           "query": {
-            "kind": "prometheus",
+            "kind": "DataQuery",
             "spec": {
               "lines": 10,
               "refId": "Anno",
@@ -95,7 +94,7 @@
             "uid": "existing-target-uid"
           },
           "query": {
-            "kind": "elasticsearch",
+            "kind": "DataQuery",
             "spec": {
               "query": "tags:deployment",
               "refId": "Anno",
@@ -124,7 +123,7 @@
             "uid": "non-default-test-ds-uid"
           },
           "query": {
-            "kind": "loki",
+            "kind": "DataQuery",
             "spec": {
               "format": "table",
               "rawSql": "SELECT time, title, text, tags FROM annotations WHERE $__timeFilter(time)",
@@ -149,7 +148,7 @@
         "kind": "AnnotationQuery",
         "spec": {
           "query": {
-            "kind": "prometheus",
+            "kind": "DataQuery",
             "spec": {
               "expr": "static_annotation_query",
               "refId": "Anno"
@@ -173,7 +172,7 @@
             "uid": "existing-ref-uid"
           },
           "query": {
-            "kind": "prometheus",
+            "kind": "DataQuery",
             "spec": {
               "expr": "disabled_query",
               "refId": "Anno"
@@ -197,7 +196,7 @@
             "uid": "influx-uid"
           },
           "query": {
-            "kind": "influxdb",
+            "kind": "DataQuery",
             "spec": {
               "query": "from(bucket: \"events\") |\u003e range(start: $__timeFrom, stop: $__timeTo) |\u003e filter(fn: (r) =\u003e r._measurement == \"deployments\")",
               "refId": "Anno"
@@ -235,7 +234,7 @@
             "uid": "cloudwatch-uid"
           },
           "query": {
-            "kind": "cloudwatch",
+            "kind": "DataQuery",
             "spec": {
               "dimensions": {
                 "InstanceId": "i-1234567890abcdef"
@@ -260,9 +259,18 @@
       {
         "kind": "AnnotationQuery",
         "spec": {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "query": {
-            "kind": "prometheus",
-            "spec": {}
+            "kind": "DataQuery",
+            "spec": {
+              "expr": "ALERTS{alertstate=\"firing\"}",
+              "interval": "1m",
+              "refId": "Anno",
+              "step": 60
+            }
           },
           "enable": false,
           "hide": true,
@@ -270,14 +278,14 @@
           "name": "Disabled Built-in Annotation",
           "builtIn": true,
           "legacyOptions": {
-            "type": "builtin"
+            "type": "prometheus"
           }
         }
       }
     ],
     "cursorSync": "Off",
     "description": "Testing annotation transformations",
-    "editable": false,
+    "editable": true,
     "elements": {},
     "layout": {
       "kind": "GridLayout",
@@ -288,7 +296,6 @@
     "links": [],
     "liveNow": false,
     "preload": false,
-    "revision": 0,
     "tags": [
       "test",
       "annotations"
@@ -311,9 +318,7 @@
         "1d"
       ],
       "hideTimepicker": false,
-      "weekStart": "monday",
-      "fiscalYearStartMonth": 0,
-      "nowDelay": ""
+      "fiscalYearStartMonth": 0
     },
     "title": "Annotation Conversions Test Dashboard",
     "variables": []

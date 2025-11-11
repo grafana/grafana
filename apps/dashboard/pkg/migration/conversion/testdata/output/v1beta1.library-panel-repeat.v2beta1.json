@@ -2,20 +2,22 @@
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v2beta1",
   "metadata": {
-    "name": "library-panel-repeat-test",
-    "creationTimestamp": null
+    "name": "library-panel-repeat-test"
   },
   "spec": {
     "annotations": [],
     "cursorSync": "Off",
-    "editable": false,
+    "editable": true,
     "elements": {
       "panel-1": {
         "kind": "LibraryPanel",
         "spec": {
           "id": 1,
           "title": "Library ref",
-          "libraryPanel": { "uid": "lib-uid-snap", "name": "Shared stat" }
+          "libraryPanel": {
+            "name": "Shared stat",
+            "uid": "lib-uid-snap"
+          }
         }
       }
     },
@@ -30,8 +32,16 @@
               "y": 0,
               "width": 8,
               "height": 6,
-              "element": { "kind": "ElementReference", "name": "panel-1" },
-              "repeat": { "mode": "variable", "value": "server", "direction": "h", "maxPerRow": 3 }
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              },
+              "repeat": {
+                "mode": "variable",
+                "value": "server",
+                "direction": "h",
+                "maxPerRow": 3
+              }
             }
           }
         ]
@@ -40,7 +50,6 @@
     "links": [],
     "liveNow": false,
     "preload": false,
-    "revision": 0,
     "tags": [],
     "timeSettings": {
       "timezone": "browser",
@@ -60,9 +69,7 @@
         "1d"
       ],
       "hideTimepicker": false,
-      "weekStart": "monday",
-      "fiscalYearStartMonth": 0,
-      "nowDelay": ""
+      "fiscalYearStartMonth": 0
     },
     "title": "Library Panel Repeat Test",
     "variables": []

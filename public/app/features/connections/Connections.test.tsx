@@ -2,7 +2,6 @@ import { RenderResult, screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
-import { GrafanaEdition } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import * as api from 'app/features/datasources/api';
@@ -46,12 +45,12 @@ describe('Connections', () => {
   });
 
   test('shows the "Connections Homepage" page by default when edition is Cloud', async () => {
-    config.buildInfo.edition = GrafanaEdition.Enterprise;
+    config.pluginAdminExternalManageEnabled = true;
     renderPage();
 
     // Add new connection card
     expect(await screen.findByText('Add new connection')).toBeVisible();
-    expect(await screen.findByText('Collector:')).toBeVisible();
+    expect(await screen.findByText('Collector')).toBeVisible();
     expect(await screen.findByText('Data sources')).toBeVisible();
     expect(await screen.findByText('Integrations')).toBeVisible();
     expect(await screen.findByText('Private data source connect')).toBeVisible();
@@ -66,7 +65,7 @@ describe('Connections', () => {
   });
 
   test('shows the OSS "Connections Homepage" page by default when edition is OpenSource', async () => {
-    config.buildInfo.edition = GrafanaEdition.OpenSource;
+    config.pluginAdminExternalManageEnabled = false;
     renderPage();
 
     // Add new connection card
@@ -95,8 +94,6 @@ describe('Connections', () => {
   test('renders the core "Add new connection" page in case there is no standalone plugin page override for it', async () => {
     renderPage(ROUTES.AddNewConnection);
 
-    // We expect to see no results and "Data sources" as a header (we only have data sources in OSS Grafana at this point)
-    expect(await screen.findByText('Data sources')).toBeVisible();
     expect(await screen.findByText('No results matching your query were found')).toBeVisible();
   });
 

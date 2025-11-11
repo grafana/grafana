@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -14,12 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationAnnotationCleanUp(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	fakeSQL := db.InitTestDB(t)
 
@@ -150,9 +150,7 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 }
 
 func TestIntegrationOldAnnotationsAreDeletedFirst(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	fakeSQL := db.InitTestDB(t)
 
@@ -188,7 +186,7 @@ func TestIntegrationOldAnnotationsAreDeletedFirst(t *testing.T) {
 		// run the clean up task to keep one annotation.
 		cfg := setting.NewCfg()
 		cfg.AnnotationCleanupJobBatchSize = 1
-		cleaner := NewXormStore(cfg, log.New("annotation.test"), fakeSQL, nil)
+		cleaner := NewXormStore(cfg, log.New("annotation.test"), fakeSQL, nil, prometheus.NewRegistry())
 		_, err = cleaner.CleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
 		require.NoError(t, err)
 

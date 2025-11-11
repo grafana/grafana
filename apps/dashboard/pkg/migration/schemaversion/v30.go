@@ -1,6 +1,7 @@
 package schemaversion
 
 import (
+	"context"
 	"strconv"
 )
 
@@ -89,7 +90,7 @@ import (
 //	    "tooltip": { "mode": "multi" }
 //	  }
 //	}
-func V30(dashboard map[string]interface{}) error {
+func V30(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 30
 
 	panels, ok := dashboard["panels"].([]interface{})
@@ -268,8 +269,8 @@ func processLegacyMapping(mappingMap map[string]interface{}, thresholds map[stri
 	color := getColorFromThresholds(mappingMap, thresholds)
 
 	// Convert legacy type numbers to new format
-	if mappingType, ok := mappingMap["type"].(float64); ok {
-		switch int(mappingType) {
+	if mappingType := GetIntValue(mappingMap, "type", -1); mappingType != -1 {
+		switch mappingType {
 		case 1: // ValueToText
 			hasValueMappings = processValueToTextMapping(mappingMap, color, thresholds, valueMaps, newMappings, hasValueMappings)
 		case 2: // RangeToText
@@ -280,25 +281,16 @@ func processLegacyMapping(mappingMap map[string]interface{}, thresholds map[stri
 	return hasValueMappings
 }
 
-// getColorFromThresholds extracts color from thresholds based on mapping values
+// getColorFromThresholds extracts color from thresholds based on mapping text (matches frontend behavior)
 func getColorFromThresholds(mappingMap map[string]interface{}, thresholds map[string]interface{}) interface{} {
 	if thresholds == nil {
 		return nil
 	}
 
-	// Try to get color from threshold based on the mapping value
-	if value, ok := mappingMap["value"]; ok {
-		if valueStr, ok := value.(string); ok {
-			if numeric, err := strconv.ParseFloat(valueStr, 64); err == nil {
-				return getActiveThresholdColor(numeric, thresholds)
-			}
-		}
-	}
-
-	// For range mappings, use the 'from' value to determine color
-	if fromVal, ok := mappingMap["from"]; ok {
-		if fromStr, ok := fromVal.(string); ok {
-			if numeric, err := strconv.ParseFloat(fromStr, 64); err == nil {
+	// Try to get color from threshold based on the mapping text (matches frontend behavior)
+	if text, ok := mappingMap["text"]; ok {
+		if textStr, ok := text.(string); ok {
+			if numeric, err := strconv.ParseFloat(textStr, 64); err == nil {
 				return getActiveThresholdColor(numeric, thresholds)
 			}
 		}
@@ -324,19 +316,18 @@ func processValueToTextMapping(mappingMap map[string]interface{}, color interfac
 
 // processNullValueMapping creates a special value mapping for null values
 func processNullValueMapping(mappingMap map[string]interface{}, color interface{}, thresholds map[string]interface{}, newMappings *[]interface{}) {
-	// For null values, use the base threshold color (lowest step)
-	if thresholds != nil && color == nil {
-		color = getBaseThresholdColor(thresholds)
+	result := map[string]interface{}{
+		"text": mappingMap["text"],
+	}
+	if color != nil {
+		result["color"] = color
 	}
 
 	*newMappings = append(*newMappings, map[string]interface{}{
 		"type": "special",
 		"options": map[string]interface{}{
-			"match": "null",
-			"result": map[string]interface{}{
-				"text":  mappingMap["text"],
-				"color": color,
-			},
+			"match":  "null",
+			"result": result,
 		},
 	})
 }
@@ -375,9 +366,13 @@ func processRangeToTextMapping(mappingMap map[string]interface{}, color interfac
 	})
 }
 
-// getActiveThresholdColor returns the color for a value based on thresholds
+// getActiveThresholdColor returns the color for a value based on thresholds (matches frontend getActiveThreshold)
 func getActiveThresholdColor(value float64, thresholds map[string]interface{}) interface{} {
 	if steps, ok := thresholds["steps"].([]interface{}); ok {
+		if len(steps) == 0 {
+			return nil
+		}
+
 		var activeStep map[string]interface{}
 
 		for _, step := range steps {
@@ -389,9 +384,11 @@ func getActiveThresholdColor(value float64, thresholds map[string]interface{}) i
 						continue
 					}
 
-					if stepNum, ok := stepValue.(float64); ok {
+					if stepNum := GetFloatValue(stepMap, "value", -1); stepNum != -1 {
 						if value >= stepNum {
 							activeStep = stepMap
+						} else {
+							break
 						}
 					}
 				}
@@ -400,24 +397,6 @@ func getActiveThresholdColor(value float64, thresholds map[string]interface{}) i
 
 		if activeStep != nil {
 			return activeStep["color"]
-		}
-	}
-
-	return nil
-}
-
-// getBaseThresholdColor returns the base threshold color (first step with null value)
-func getBaseThresholdColor(thresholds map[string]interface{}) interface{} {
-	if steps, ok := thresholds["steps"].([]interface{}); ok {
-		for _, step := range steps {
-			if stepMap, ok := step.(map[string]interface{}); ok {
-				if stepValue, ok := stepMap["value"]; ok {
-					if stepValue == nil {
-						// This is the base color (null value step)
-						return stepMap["color"]
-					}
-				}
-			}
 		}
 	}
 

@@ -85,9 +85,9 @@
         "tooltip-classic-query": "Původní implementace editoru proměnných dotazů Prometheus. Zadejte řetězec se správným typem dotazu a parametry, jak je popsáno v těchto dokumentech. Například {{exampleQuery}}.",
         "tooltip-label": "Vrátí seznam hodnot štítků pro název štítku ve všech metrikách, pokud není metrika zadána.",
         "tooltip-metric-regex": "Vrátí seznam názvů štítků, volitelně filtrování podle zadaného metrického regulárního výrazu.",
-        "tooltip-query": "Vrátí seznam výsledků dotazu Prometheus pro daný dotaz. To může zahrnovat funkce Prometheus, tj. {{exampleQuery}}.",
+        "tooltip-query": "",
         "tooltip-query-type": "Zásuvný modul zdroje dat Prometheus poskytuje následující typy dotazů pro proměnné šablony.",
-        "tooltip-series-query": "Zadejte metriku se štítky, pouze metriku nebo pouze štítky, tj. {{example1}}, {{example2}} nebo {{example3}}. Vrátí seznam časových řad spojených se zadanými daty."
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "volič",
@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Zakázat pravidla nahrávání (beta)",
         "label-http-method": "Metoda HTTP",
         "label-incremental-querying-beta": "Přírůstkové dotazování (beta)",
-        "label-metric-names-suggestion-limit": "Limit návrhů názvů metriky",
         "label-prom-type-version": "{{promType}} verze",
         "label-prometheus-type": "Typ Prometheus",
         "label-query-overlap-window": "Okno překrytí dotazu",
@@ -176,20 +175,19 @@
         "label-scrape-interval": "Interval scrapingu",
         "label-series-limit": "Limit řady",
         "label-use-series-endpoint": "Použít koncový bod řady",
-        "more-info": "Další informace o konfiguraci typu a verze Prometheus ve zdrojích dat najdete v <2>dokumentaci k zajišťování</2>.",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "Příklad: {{example}}",
         "title-interval-behaviour": "Chování intervalu",
         "title-other": "Ostatní",
         "title-performance": "Výkon",
         "title-query-editor": "Editor dotazů",
         "tooltip-cache-level": "Nastaví úroveň ukládání do vyrovnávací paměti prohlížeče pro dotazy editoru. Pro zdroje dat s vysokou kardinalitou se doporučuje nastavit vyšší úroveň vyrovnávací paměti.",
-        "tooltip-custom-query-parameters": "Přidejte vlastní parametry do adresy URL dotazu Prometheus. Například {{example1}}, {{example2}}, {{example3}} nebo {{example4}}. Více parametrů by mělo být pospojováno pomocí {{concatenationChar}}.",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "Nastavit výchozí možnost editoru pro všechny uživatele tohoto zdroje dat.",
-        "tooltip-disable-metrics-lookup": "Zaškrtnutím této možnosti zakážete výběr metrik a podporu metrik/štítků v automatickém doplňování pole dotazu. Užitečné, pokud máte problémy s výkonem u větších instancí Prometheus. ",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "Tato funkce zakáže pravidla nahrávání. Zapněte tuto možnost pro zlepšení výkonu nástěnky",
         "tooltip-http-method": "K dotazu na zdroj dat Prometheus můžete použít metodu POST nebo GET HTTP. Doporučenou metodou je POST, protože umožňuje větší dotazy. Změňte na GET, pokud máte verzi Prometheus starší než 2.1 nebo pokud jsou požadavky POST ve vaší síti omezeny.",
         "tooltip-incremental-querying-beta": "Tato funkce změní výchozí chování relativních dotazů tak, aby vždy požadovaly aktuální data z instance Prometheus. Místo toho budou výsledky dotazů uloženy do vyrovnávací paměti a budou požadovány pouze nové záznamy. Povolte tuto možnost pro snížení zatížení databáze a sítě.",
-        "tooltip-metric-names-suggestion-limit": "Maximální počet názvů metrik, které se mohou zobrazit jako návrhy automatického doplňování v režimu kódu editoru dotazů.",
         "tooltip-prom-type-version": "Tímto nastavíte verzi své instance {{promType}}, pokud není automaticky nakonfigurována.",
         "tooltip-prometheus-type": "Nastavte hodnotu na typ databáze Prometheus, např. Prometheus, Cortex, Mimir nebo Thanos. Změna tohoto pole uloží aktuální nastavení. Některé typy Prometheus podporují nebo nepodporují různá rozhraní API. Některé typy například podporují shodu regex pro dotazy na štítky za účelem zlepšení výkonu. Některé typy mají API pro metadata. Pokud toto nastavíte nesprávně, při dotazování na metriky a štítky můžete zaznamenat neobvyklé chování. Zkontrolujte dokumentaci Prometheus a ujistěte se, že zadáváte správný typ.",
         "tooltip-query-overlap-window": "Nastavte dobu trvání, například {{example1}} nebo {{example2}} nebo {{example3}}. Výchozí hodnota: {{default}}. Tato doba trvání bude přidána k době trvání každého přírůstkového požadavku.",
@@ -415,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Nastavit dolní limit pro parametr kroku",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "Vyberte rozlišení",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "Teplotní mapa",
           "label-table": "Tabulka",
@@ -431,10 +432,6 @@
         "title-options": "Možnosti",
         "tooltip-min-step": "Dodatečný dolní limit pro parametr kroku dotazu Prometheus a pro proměnné <2>{{interval}}</2> a <4>{{rateInterval}}</4>."
       },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Návrhy automatického doplňování jsou omezeny",
-        "tooltip-autocomplete-suggestions-limited": "Počet názvů metrik překračuje limit automatického doplňování. Zobrazuje se pouze {{autocompleteLimit}} nejrelevantnější/ch metrik. Prahovou hodnotu můžete upravit v nastavení zdroje dat."
-      },
       "prom-query-editor-selector": {
         "body-syntax-error": "Došlo k syntaktické chybě nebo nelze vizualizovat strukturu dotazu při přepnutí do režimu nástroje pro tvorbu. Části dotazu mohou být ztraceny.",
         "confirmText-continue": "Pokračovat",
@@ -444,6 +441,7 @@
         "title-parsing-error-switch-builder": "Chyba analýzy: Přepnout do režimu nástroje pro tvorbu?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "Legenda",
         "placeholder-select-legend-mode": "Vyberte režim legendy",
         "tooltip-legend": "Přepsání názvu řady nebo šablony. Např. {{templateExample}} bude nahrazeno hodnotou štítku pro {{labelName}}."
@@ -481,18 +479,13 @@
         "aria-label-selector": "volič"
       },
       "results-table": {
-        "content-descriptive-type": "Při vytváření {{descriptiveType}} Prometheus zobrazí více řad s počítadlem typů. ",
+        "content-descriptive-type": "",
         "description": "Popis",
         "message-expand-label-filters": "Nebyly nalezeny žádné metriky. Zkuste rozšířit filtry štítků.",
         "message-expand-search": "Nebyly nalezeny žádné metriky. Zkuste rozšířit vyhledávání a filtry.",
         "message-no-metrics-found": "Ve zdroji dat nebyly nalezeny žádné metriky.",
         "name": "Název",
         "type": "Typ"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Analýza dotazu je nejednoznačná."
-        }
       }
     }
   }

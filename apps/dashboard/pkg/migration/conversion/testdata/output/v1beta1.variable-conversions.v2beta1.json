@@ -3,7 +3,6 @@
   "apiVersion": "dashboard.grafana.app/v2beta1",
   "metadata": {
     "name": "variable-conversions-test",
-    "creationTimestamp": null,
     "labels": {
       "test": "variable-conversions"
     }
@@ -12,7 +11,7 @@
     "annotations": [],
     "cursorSync": "Off",
     "description": "Testing all variable types and transformations",
-    "editable": false,
+    "editable": true,
     "elements": {},
     "layout": {
       "kind": "GridLayout",
@@ -23,7 +22,6 @@
     "links": [],
     "liveNow": false,
     "preload": false,
-    "revision": 0,
     "tags": [
       "test",
       "variables"
@@ -46,9 +44,7 @@
         "1d"
       ],
       "hideTimepicker": false,
-      "weekStart": "monday",
-      "fiscalYearStartMonth": 0,
-      "nowDelay": ""
+      "fiscalYearStartMonth": 0
     },
     "title": "Variable Conversions Test Dashboard",
     "variables": [
@@ -116,6 +112,7 @@
           },
           "regex": "/.*9090.*/",
           "sort": "alphabeticalAsc",
+          "definition": "label_values(up, instance)",
           "options": [
             {
               "selected": false,
@@ -211,6 +208,21 @@
           "skipUrlSync": false,
           "description": "Add filters",
           "allowCustomValue": true
+        }
+      },
+      {
+        "kind": "ConstantVariable",
+        "spec": {
+          "name": "constant_var",
+          "query": "my-application",
+          "current": {
+            "text": "my-application",
+            "value": "my-application"
+          },
+          "label": "App Name",
+          "hide": "hideVariable",
+          "skipUrlSync": true,
+          "description": "Application name constant"
         }
       },
       {
@@ -316,7 +328,7 @@
           },
           "label": "Legacy Variable",
           "hide": "dontHide",
-          "refresh": "never",
+          "refresh": "onDashboardLoad",
           "skipUrlSync": false,
           "description": "Variable with legacy string value",
           "query": {
@@ -380,6 +392,7 @@
           },
           "regex": "/host[0-9]+/",
           "sort": "alphabeticalDesc",
+          "definition": "terms field:@host size:100",
           "options": [],
           "multi": true,
           "includeAll": true,

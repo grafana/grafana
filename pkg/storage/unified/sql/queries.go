@@ -30,24 +30,25 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlResourceDelete              = mustTemplate("resource_delete.sql")
-	sqlResourceInsert              = mustTemplate("resource_insert.sql")
-	sqlResourceUpdate              = mustTemplate("resource_update.sql")
-	sqlResourceRead                = mustTemplate("resource_read.sql")
-	sqlResourceStats               = mustTemplate("resource_stats.sql")
-	sqlResourceList                = mustTemplate("resource_list.sql")
-	sqlResourceHistoryList         = mustTemplate("resource_history_list.sql")
-	sqlResourceUpdateRV            = mustTemplate("resource_update_rv.sql")
-	sqlResourceHistoryRead         = mustTemplate("resource_history_read.sql")
-	sqlResourceHistoryReadLatestRV = mustTemplate("resource_history_read_latest_rv.sql")
-	sqlResourceHistoryUpdateRV     = mustTemplate("resource_history_update_rv.sql")
-	sqlResourceHistoryInsert       = mustTemplate("resource_history_insert.sql")
-	sqlResourceHistoryPoll         = mustTemplate("resource_history_poll.sql")
-	sqlResourceHistoryGet          = mustTemplate("resource_history_get.sql")
-	sqlResourceHistoryDelete       = mustTemplate("resource_history_delete.sql")
-	sqlResourceHistoryPrune        = mustTemplate("resource_history_prune.sql")
-	sqlResourceTrash               = mustTemplate("resource_trash.sql")
-	sqlResourceInsertFromHistory   = mustTemplate("resource_insert_from_history.sql")
+	sqlResourceDelete                   = mustTemplate("resource_delete.sql")
+	sqlResourceInsert                   = mustTemplate("resource_insert.sql")
+	sqlResourceUpdate                   = mustTemplate("resource_update.sql")
+	sqlResourceRead                     = mustTemplate("resource_read.sql")
+	sqlResourceStats                    = mustTemplate("resource_stats.sql")
+	sqlResourceList                     = mustTemplate("resource_list.sql")
+	sqlResourceHistoryList              = mustTemplate("resource_history_list.sql")
+	sqlResourceHistoryListModifiedSince = mustTemplate("resource_history_list_since_modified.sql")
+	sqlResourceUpdateRV                 = mustTemplate("resource_update_rv.sql")
+	sqlResourceHistoryRead              = mustTemplate("resource_history_read.sql")
+	sqlResourceHistoryReadLatestRV      = mustTemplate("resource_history_read_latest_rv.sql")
+	sqlResourceHistoryUpdateRV          = mustTemplate("resource_history_update_rv.sql")
+	sqlResourceHistoryInsert            = mustTemplate("resource_history_insert.sql")
+	sqlResourceHistoryPoll              = mustTemplate("resource_history_poll.sql")
+	sqlResourceHistoryGet               = mustTemplate("resource_history_get.sql")
+	sqlResourceHistoryDelete            = mustTemplate("resource_history_delete.sql")
+	sqlResourceHistoryPrune             = mustTemplate("resource_history_prune.sql")
+	sqlResourceTrash                    = mustTemplate("resource_trash.sql")
+	sqlResourceInsertFromHistory        = mustTemplate("resource_insert_from_history.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
 	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
@@ -57,6 +58,10 @@ var (
 
 	sqlResourceBlobInsert = mustTemplate("resource_blob_insert.sql")
 	sqlResourceBlobQuery  = mustTemplate("resource_blob_query.sql")
+
+	sqlResourceLastImportTimeInsert = mustTemplate("resource_last_import_time_insert.sql")
+	sqlResourceLastImportTimeQuery  = mustTemplate("resource_last_import_time_query.sql")
+	sqlResourceLastImportTimeDelete = mustTemplate("resource_last_import_time_delete.sql")
 )
 
 // TxOptions.
@@ -424,4 +429,73 @@ func (r *sqlResourceVersionListRequest) Validate() error {
 func (r *sqlResourceVersionListRequest) Results() (*groupResourceVersion, error) {
 	x := *r.groupResourceVersion
 	return &x, nil
+}
+
+type sqlResourceListModifiedSinceRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Group     string
+	Resource  string
+	SinceRv   int64 // Exclusive
+	LatestRv  int64 // Inclusive
+}
+
+func (r sqlResourceListModifiedSinceRequest) Validate() error {
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.SinceRv < 0 {
+		return fmt.Errorf("since resource version must be greater than or equal to zero")
+	}
+	if r.LatestRv < r.SinceRv {
+		return fmt.Errorf("latest resource version must be greater or equal to since resource version")
+	}
+	return nil
+}
+
+type sqlResourceLastImportTimeInsertRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace      string
+	Group          string
+	Resource       string
+	LastImportTime time.Time
+}
+
+func (r sqlResourceLastImportTimeInsertRequest) Validate() error {
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.LastImportTime.IsZero() {
+		return fmt.Errorf("last import time cannot be zero")
+	}
+	return nil
+}
+
+type sqlResourceLastImportTimeQueryRequest struct {
+	sqltemplate.SQLTemplate
+}
+
+func (r *sqlResourceLastImportTimeQueryRequest) Validate() error {
+	return nil
+}
+
+type sqlResourceLastImportTimeDeleteRequest struct {
+	sqltemplate.SQLTemplate
+	Threshold time.Time
+}
+
+func (r *sqlResourceLastImportTimeDeleteRequest) Validate() error {
+	return nil
 }

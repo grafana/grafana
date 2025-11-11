@@ -1,25 +1,78 @@
 package conversion
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/conversion"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/authlib/types"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
+	schemaversion "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
+
+// prepareV1beta1ConversionContext sets up the context with namespace and service identity
+// for v1beta1 dashboard conversions. This context is needed to retrieve datasources for
+// converting dashboard datasource references.
+// A background service identity is used because the user who is reading the specific dashboard
+// may not have access to all the datasources in the dashboard, but the conversion still needs to take place
+// in order to be able to convert between k8s versions.
+func prepareV1beta1ConversionContext(in *dashv1.Dashboard) (context.Context, *types.NamespaceInfo, error) {
+	// Get the datasource provider instance (matches migration pattern where provider is always available)
+	dsInfoProvider := migration.GetDataSourceInfoProvider()
+	if dsInfoProvider == nil {
+		return nil, nil, fmt.Errorf("datasource provider not initialized")
+	}
+
+	namespace := in.GetNamespace()
+	if namespace == "" {
+		// If no namespace, still set up provider (matches migration pattern where provider is always available)
+		ctx := context.Background()
+		ctx = WithDataSourceProvider(ctx, dsInfoProvider)
+		return ctx, nil, nil
+	}
+
+	// Try to parse namespace and set up tenant-aware context
+	ctx := request.WithNamespace(context.Background(), namespace)
+	nsInfo, err := types.ParseNamespace(namespace)
+	if err != nil {
+		// If namespace parsing fails, still proceed with provider but without tenant info
+		// This allows conversion to continue with fallback behavior
+		ctx = WithDataSourceProvider(ctx, dsInfoProvider)
+		return ctx, nil, nil
+	}
+
+	ctx, _ = identity.WithServiceIdentity(ctx, nsInfo.OrgID)
+	ctx = WithDataSourceProvider(ctx, dsInfoProvider)
+
+	return ctx, &nsInfo, nil
+}
 
 func ConvertDashboard_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.APIVersion = dashv2alpha1.APIVERSION
 	out.Kind = in.Kind
 
-	return convertDashboardSpec_V1beta1_to_V2alpha1(&in.Spec, &out.Spec, scope)
+	// Prepare context with namespace and service identity (following V0 pattern)
+	// Matches migration pattern: provider is always available (captured in closure for migrations, in context for conversions)
+	ctx, _, err := prepareV1beta1ConversionContext(in)
+	if err != nil {
+		// If context preparation fails, return error to be handled by wrapper
+		// The wrapper will set status and handle gracefully
+		return fmt.Errorf("failed to prepare conversion context: %w", err)
+	}
+
+	return convertDashboardSpec_V1beta1_to_V2alpha1(&in.Spec, &out.Spec, scope, ctx)
 }
 
-func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope) error {
+func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope, ctx context.Context) error {
 	// Parse the unstructured spec into a dashboard JSON structure
 	dashboardJSON, ok := in.Object["dashboard"]
 	if !ok {
@@ -39,23 +92,42 @@ func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *das
 	}
 
 	// Get defaults
-	timeSettingsDefaults := getDefaultTimeSettingsSpec()
+	timeSettingsDefaults := dashv2alpha1.NewDashboardTimeSettingsSpec()
 	dashboardDefaults := getDefaultDashboardV2Spec()
 
 	// Transform basic fields
-	out.Title = getStringField(dashboard, "title", "")
+	out.Title = schemaversion.GetStringValue(dashboard, "title")
 	out.Description = getStringPtr(dashboard, "description")
 	out.Tags = getStringSlice(dashboard, "tags")
 	out.CursorSync = transformCursorSyncToEnum(getIntField(dashboard, "graphTooltip", 0))
 	out.Preload = getBoolField(dashboard, "preload", dashboardDefaults.Preload)
 
-	// Always include these fields to match frontend behavior
-	liveNow := getBoolField(dashboard, "liveNow", false)
-	out.LiveNow = &liveNow
-	editable := getBoolField(dashboard, "editable", false)
-	out.Editable = &editable
-	revision := getUInt16Field(dashboard, "revision", 0)
-	out.Revision = &revision
+	// Add frontend-style default values
+	// Set default editable: true to match frontend behavior
+	defaultEditable := true
+	out.Editable = &defaultEditable
+
+	// Set default liveNow: false to match frontend behavior
+	defaultLiveNow := false
+	out.LiveNow = &defaultLiveNow
+
+	// Override with input values if they exist
+	if liveNow, exists := dashboard["liveNow"]; exists {
+		if liveNowBool, ok := liveNow.(bool); ok {
+			out.LiveNow = &liveNowBool
+		}
+	}
+	if editable, exists := dashboard["editable"]; exists {
+		if editableBool, ok := editable.(bool); ok {
+			out.Editable = &editableBool
+		}
+	}
+	if revision, exists := dashboard["revision"]; exists {
+		if revisionInt, ok := revision.(float64); ok {
+			revisionUint := uint16(revisionInt)
+			out.Revision = &revisionUint
+		}
+	}
 
 	// Transform time settings
 	out.TimeSettings = transformTimeSettings(dashboard, timeSettingsDefaults)
@@ -64,7 +136,7 @@ func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *das
 	out.Links = transformLinks(dashboard)
 
 	// Transform panels to elements and layout
-	elements, layout, err := transformPanelsToElementsAndLayout(dashboard)
+	elements, layout, err := transformPanelsToElementsAndLayout(ctx, dashboard)
 	if err != nil {
 		return fmt.Errorf("failed to transform panels: %w", err)
 	}
@@ -72,7 +144,7 @@ func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *das
 	out.Layout = layout
 
 	// Transform variables
-	variables, err := transformVariables(dashboard)
+	variables, err := transformVariables(ctx, dashboard)
 	if err != nil {
 		return fmt.Errorf("failed to transform variables: %w", err)
 	}
@@ -86,16 +158,6 @@ func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *das
 	out.Annotations = annotations
 
 	return nil
-}
-
-// Helper functions for extracting values from maps
-func getStringField(m map[string]interface{}, key string, defaultValue string) string {
-	if val, ok := m[key]; ok {
-		if str, ok := val.(string); ok {
-			return str
-		}
-	}
-	return defaultValue
 }
 
 func getStringPtr(m map[string]interface{}, key string) *string {
@@ -136,6 +198,15 @@ func int64Ptr(i int64) *int64 {
 	return &i
 }
 
+// isTemplateVariable checks if a string is a Grafana template variable reference
+// Template variables can be in the form: $varname or ${varname}
+func isTemplateVariable(s string) bool {
+	if s == "" {
+		return false
+	}
+	return strings.HasPrefix(s, "$") || strings.HasPrefix(s, "${")
+}
+
 func getIntField(m map[string]interface{}, key string, defaultValue int) int {
 	if val, ok := m[key]; ok {
 		switch v := val.(type) {
@@ -146,26 +217,6 @@ func getIntField(m map[string]interface{}, key string, defaultValue int) int {
 		case string:
 			if i, err := strconv.Atoi(v); err == nil {
 				return i
-			}
-		}
-	}
-	return defaultValue
-}
-
-func getUInt16Field(m map[string]interface{}, key string, defaultValue uint16) uint16 {
-	if val, ok := m[key]; ok {
-		switch v := val.(type) {
-		case int:
-			if v >= 0 && v <= 65535 {
-				return uint16(v)
-			}
-		case float64:
-			if v >= 0 && v <= 65535 {
-				return uint16(v)
-			}
-		case string:
-			if i, err := strconv.Atoi(v); err == nil && i >= 0 && i <= 65535 {
-				return uint16(i)
 			}
 		}
 	}
@@ -186,24 +237,6 @@ func transformCursorSyncToEnum(cursorSync int) dashv2alpha1.DashboardDashboardCu
 	}
 }
 
-// Default value functions
-func getDefaultTimeSettingsSpec() dashv2alpha1.DashboardTimeSettingsSpec {
-	browser := "browser"
-	monday := dashv2alpha1.DashboardTimeSettingsSpecWeekStartMonday
-	nowDelay := ""
-	return dashv2alpha1.DashboardTimeSettingsSpec{
-		From:                 "now-6h",
-		To:                   "now",
-		Timezone:             &browser,
-		AutoRefresh:          "",
-		AutoRefreshIntervals: []string{"5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"},
-		FiscalYearStartMonth: 0,
-		HideTimepicker:       false,
-		WeekStart:            &monday,
-		NowDelay:             &nowDelay,
-	}
-}
-
 func getDefaultDashboardV2Spec() dashv2alpha1.DashboardSpec {
 	return dashv2alpha1.DashboardSpec{
 		Preload: false,
@@ -211,7 +244,7 @@ func getDefaultDashboardV2Spec() dashv2alpha1.DashboardSpec {
 }
 
 // Transform time settings
-func transformTimeSettings(dashboard map[string]interface{}, defaults dashv2alpha1.DashboardTimeSettingsSpec) dashv2alpha1.DashboardTimeSettingsSpec {
+func transformTimeSettings(dashboard map[string]interface{}, defaults *dashv2alpha1.DashboardTimeSettingsSpec) dashv2alpha1.DashboardTimeSettingsSpec {
 	timeSettings := dashv2alpha1.DashboardTimeSettingsSpec{
 		From:                 defaults.From,
 		To:                   defaults.To,
@@ -220,33 +253,36 @@ func transformTimeSettings(dashboard map[string]interface{}, defaults dashv2alph
 		AutoRefreshIntervals: defaults.AutoRefreshIntervals,
 		FiscalYearStartMonth: defaults.FiscalYearStartMonth,
 		HideTimepicker:       defaults.HideTimepicker,
-		WeekStart:            defaults.WeekStart,
-		NowDelay:             defaults.NowDelay,
+		// Don't initialize optional fields with defaults - only set them if present in input
 	}
 
 	// Extract time range
 	if timeRange, ok := dashboard["time"].(map[string]interface{}); ok {
-		if from := getStringField(timeRange, "from", ""); from != "" {
+		if from := schemaversion.GetStringValue(timeRange, "from"); from != "" {
 			timeSettings.From = from
 		}
-		if to := getStringField(timeRange, "to", ""); to != "" {
+		if to := schemaversion.GetStringValue(timeRange, "to"); to != "" {
 			timeSettings.To = to
 		}
 	}
 
 	// Extract other time-related fields
-	if timezone := getStringField(dashboard, "timezone", ""); timezone != "" {
-		timeSettings.Timezone = &timezone
+	if timezone, exists := dashboard["timezone"]; exists {
+		if timezoneStr, ok := timezone.(string); ok {
+			timeSettings.Timezone = &timezoneStr
+		}
 	}
-	if refresh := getStringField(dashboard, "refresh", ""); refresh != "" {
+	if refresh := schemaversion.GetStringValue(dashboard, "refresh"); refresh != "" {
 		timeSettings.AutoRefresh = refresh
 	}
 
 	timeSettings.FiscalYearStartMonth = int64(getIntField(dashboard, "fiscalYearStartMonth", int(defaults.FiscalYearStartMonth)))
 
-	if weekStart := getStringField(dashboard, "weekStart", ""); weekStart != "" {
-		weekStartEnum := dashv2alpha1.DashboardTimeSettingsSpecWeekStart(weekStart)
-		timeSettings.WeekStart = &weekStartEnum
+	if weekStart, exists := dashboard["weekStart"]; exists {
+		if weekStartStr, ok := weekStart.(string); ok && weekStartStr != "" {
+			weekStartEnum := dashv2alpha1.DashboardTimeSettingsSpecWeekStart(weekStartStr)
+			timeSettings.WeekStart = &weekStartEnum
+		}
 	}
 
 	// Extract timepicker settings
@@ -263,8 +299,10 @@ func transformTimeSettings(dashboard map[string]interface{}, defaults dashv2alph
 			}
 		}
 		timeSettings.HideTimepicker = getBoolField(timepicker, "hidden", defaults.HideTimepicker)
-		if nowDelay := getStringField(timepicker, "nowDelay", ""); nowDelay != "" {
-			timeSettings.NowDelay = &nowDelay
+		if nowDelay, exists := timepicker["nowDelay"]; exists {
+			if nowDelayStr, ok := nowDelay.(string); ok && nowDelayStr != "" {
+				timeSettings.NowDelay = &nowDelayStr
+			}
 		}
 
 		// Handle quick_ranges
@@ -273,9 +311,9 @@ func transformTimeSettings(dashboard map[string]interface{}, defaults dashv2alph
 			for _, qr := range quickRanges {
 				if qrMap, ok := qr.(map[string]interface{}); ok {
 					quickRange := dashv2alpha1.DashboardTimeRangeOption{
-						Display: getStringField(qrMap, "display", ""),
-						From:    getStringField(qrMap, "from", ""),
-						To:      getStringField(qrMap, "to", ""),
+						Display: schemaversion.GetStringValue(qrMap, "display"),
+						From:    schemaversion.GetStringValue(qrMap, "from"),
+						To:      schemaversion.GetStringValue(qrMap, "to"),
 					}
 					ranges = append(ranges, quickRange)
 				}
@@ -295,10 +333,10 @@ func transformLinks(dashboard map[string]interface{}) []dashv2alpha1.DashboardDa
 			if linkMap, ok := link.(map[string]interface{}); ok {
 				// Required fields with defaults
 				dashLink := dashv2alpha1.DashboardDashboardLink{
-					Title:       getStringField(linkMap, "title", ""),
-					Type:        dashv2alpha1.DashboardDashboardLinkType(getStringField(linkMap, "type", "link")),
-					Icon:        getStringField(linkMap, "icon", ""),
-					Tooltip:     getStringField(linkMap, "tooltip", ""),
+					Title:       schemaversion.GetStringValue(linkMap, "title"),
+					Type:        dashv2alpha1.DashboardDashboardLinkType(schemaversion.GetStringValue(linkMap, "type", "link")),
+					Icon:        schemaversion.GetStringValue(linkMap, "icon"),
+					Tooltip:     schemaversion.GetStringValue(linkMap, "tooltip"),
 					Tags:        getStringSlice(linkMap, "tags"),
 					AsDropdown:  getBoolField(linkMap, "asDropdown", false),
 					TargetBlank: getBoolField(linkMap, "targetBlank", false),
@@ -324,7 +362,7 @@ func transformLinks(dashboard map[string]interface{}) []dashv2alpha1.DashboardDa
 // Panel transformation constants
 const GRID_ROW_HEIGHT = 1
 
-func transformPanelsToElementsAndLayout(dashboard map[string]interface{}) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
+func transformPanelsToElementsAndLayout(ctx context.Context, dashboard map[string]interface{}) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
 	panels, ok := dashboard["panels"].([]interface{})
 	if !ok {
 		// Return empty elements and default grid layout
@@ -344,7 +382,7 @@ func transformPanelsToElementsAndLayout(dashboard map[string]interface{}) (map[s
 	hasRowPanels := false
 	for _, p := range panels {
 		if panelMap, ok := p.(map[string]interface{}); ok {
-			if getStringField(panelMap, "type", "") == "row" {
+			if schemaversion.GetStringValue(panelMap, "type") == "row" {
 				hasRowPanels = true
 				break
 			}
@@ -352,13 +390,13 @@ func transformPanelsToElementsAndLayout(dashboard map[string]interface{}) (map[s
 	}
 
 	if hasRowPanels {
-		return convertToRowsLayout(panels)
+		return convertToRowsLayout(ctx, panels)
 	}
 
-	return convertToGridLayout(panels)
+	return convertToGridLayout(ctx, panels)
 }
 
-func convertToGridLayout(panels []interface{}) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
+func convertToGridLayout(ctx context.Context, panels []interface{}) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
 	elements := make(map[string]dashv2alpha1.DashboardElement)
 	items := make([]dashv2alpha1.DashboardGridLayoutItemKind, 0, len(panels))
 
@@ -368,7 +406,7 @@ func convertToGridLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 			continue
 		}
 
-		element, elementName, err := buildElement(panelMap)
+		element, elementName, err := buildElement(ctx, panelMap)
 		if err != nil {
 			continue // Skip invalid panels
 		}
@@ -389,7 +427,7 @@ func convertToGridLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 	return elements, layout, nil
 }
 
-func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
+func convertToRowsLayout(ctx context.Context, panels []interface{}) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
 	elements := make(map[string]dashv2alpha1.DashboardElement)
 	rows := make([]dashv2alpha1.DashboardRowsLayoutRowKind, 0)
 
@@ -402,13 +440,20 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 			continue
 		}
 
-		if getStringField(panelMap, "type", "") == "row" {
+		if schemaversion.GetStringValue(panelMap, "type") == "row" {
 			// This is a row panel
 			if gridPos, ok := panelMap["gridPos"].(map[string]interface{}); ok {
 				legacyRowY = int64(getIntField(gridPos, "y", 0))
 			}
 
 			if currentRow != nil {
+				// If currentRow is a hidden-header row (panels before first explicit row),
+				// set its collapse to match the first explicit row's collapsed value
+				// This matches frontend behavior: collapse: panel.collapsed
+				if currentRow.Spec.HideHeader != nil && *currentRow.Spec.HideHeader {
+					rowCollapsed := getBoolField(panelMap, "collapsed", false)
+					currentRow.Spec.Collapse = &rowCollapsed
+				}
 				// Flush current row to layout
 				rows = append(rows, *currentRow)
 			}
@@ -418,7 +463,7 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 			if collapsedPanels, ok := panelMap["panels"].([]interface{}); ok {
 				for _, panel := range collapsedPanels {
 					if collapsedPanelMap, ok := panel.(map[string]interface{}); ok {
-						element, name, err := buildElement(collapsedPanelMap)
+						element, name, err := buildElement(ctx, collapsedPanelMap)
 						if err == nil {
 							elements[name] = element
 							rowElements = append(rowElements, buildGridItemKind(collapsedPanelMap, name, int64Ptr(yOffsetInRows(collapsedPanelMap, legacyRowY))))
@@ -430,7 +475,7 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 			currentRow = buildRowKind(panelMap, rowElements)
 		} else {
 			// Regular panel
-			element, elementName, err := buildElement(panelMap)
+			element, elementName, err := buildElement(ctx, panelMap)
 			if err != nil {
 				continue // Skip invalid panels
 			}
@@ -447,6 +492,8 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 				}
 			} else {
 				// Create first row (hidden header)
+				// Since this row does not exist in V1, we simulate it being outside of the grid above the first panel
+				// The Y position does not matter for the rows layout, but it's used to calculate the position of the panels in the grid layout in the row.
 				legacyRowY = -1
 				gridItems := []dashv2alpha1.DashboardGridLayoutItemKind{
 					buildGridItemKind(panelMap, elementName, int64Ptr(0)),
@@ -490,7 +537,7 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 	return elements, layout, nil
 }
 
-func buildElement(panelMap map[string]interface{}) (dashv2alpha1.DashboardElement, string, error) {
+func buildElement(ctx context.Context, panelMap map[string]interface{}) (dashv2alpha1.DashboardElement, string, error) {
 	panelID := getIntField(panelMap, "id", 0)
 	elementName := fmt.Sprintf("panel-%d", panelID)
 
@@ -500,11 +547,11 @@ func buildElement(panelMap map[string]interface{}) (dashv2alpha1.DashboardElemen
 			Kind: "LibraryPanel",
 			Spec: dashv2alpha1.DashboardLibraryPanelKindSpec{
 				LibraryPanel: dashv2alpha1.DashboardLibraryPanelRef{
-					Uid:  getStringField(libraryPanel, "uid", ""),
-					Name: getStringField(libraryPanel, "name", ""),
+					Uid:  schemaversion.GetStringValue(libraryPanel, "uid"),
+					Name: schemaversion.GetStringValue(libraryPanel, "name"),
 				},
 				Id:    float64(panelID),
-				Title: getStringField(panelMap, "title", ""),
+				Title: schemaversion.GetStringValue(panelMap, "title"),
 			},
 		}
 
@@ -516,7 +563,7 @@ func buildElement(panelMap map[string]interface{}) (dashv2alpha1.DashboardElemen
 	}
 
 	// Regular panel
-	panelKind, err := buildPanelKind(panelMap)
+	panelKind, err := buildPanelKind(ctx, panelMap)
 	if err != nil {
 		return dashv2alpha1.DashboardElement{}, "", err
 	}
@@ -528,11 +575,11 @@ func buildElement(panelMap map[string]interface{}) (dashv2alpha1.DashboardElemen
 	return element, elementName, nil
 }
 
-func buildPanelKind(panelMap map[string]interface{}) (*dashv2alpha1.DashboardPanelKind, error) {
+func buildPanelKind(ctx context.Context, panelMap map[string]interface{}) (*dashv2alpha1.DashboardPanelKind, error) {
 	panelID := float64(getIntField(panelMap, "id", 0))
 
 	// Transform queries
-	queries := transformPanelQueries(panelMap)
+	queries := transformPanelQueries(ctx, panelMap)
 
 	// Transform transformations
 	transformations := transformPanelTransformations(panelMap)
@@ -550,8 +597,8 @@ func buildPanelKind(panelMap map[string]interface{}) (*dashv2alpha1.DashboardPan
 		Kind: "Panel",
 		Spec: dashv2alpha1.DashboardPanelSpec{
 			Id:          panelID,
-			Title:       getStringField(panelMap, "title", ""),
-			Description: getStringField(panelMap, "description", ""),
+			Title:       schemaversion.GetStringValue(panelMap, "title"),
+			Description: schemaversion.GetStringValue(panelMap, "description"),
 			Links:       links,
 			Data: dashv2alpha1.DashboardQueryGroupKind{
 				Kind: "QueryGroup",
@@ -574,17 +621,18 @@ func buildPanelKind(panelMap map[string]interface{}) (*dashv2alpha1.DashboardPan
 }
 
 func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOverride *int64) dashv2alpha1.DashboardGridLayoutItemKind {
-	// Default grid position
-	x, y, width, height := int64(0), int64(0), int64(12), int64(8)
+	// Default grid position (matches frontend PanelModel defaults: w=6, h=3)
+	x, y, width, height := int64(0), int64(0), int64(6), int64(3)
 
 	if gridPos, ok := panelMap["gridPos"].(map[string]interface{}); ok {
 		x = int64(getIntField(gridPos, "x", 0))
 		y = int64(getIntField(gridPos, "y", 0))
-		width = int64(getIntField(gridPos, "w", 12))
-		height = int64(getIntField(gridPos, "h", 8))
+		width = int64(getIntField(gridPos, "w", 6))
+		height = int64(getIntField(gridPos, "h", 3))
 	}
 
-	// Use yOverride when explicitly provided (including when it's 0)
+	// Apply frontend-style grid position calculations
+	// Frontend recalculates positions based on row structure
 	if yOverride != nil {
 		y = *yOverride
 	}
@@ -604,13 +652,13 @@ func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOve
 	}
 
 	// Handle repeat options
-	if repeat := getStringField(panelMap, "repeat", ""); repeat != "" {
+	if repeat := schemaversion.GetStringValue(panelMap, "repeat"); repeat != "" {
 		repeatOptions := &dashv2alpha1.DashboardRepeatOptions{
 			Mode:  "variable",
 			Value: repeat,
 		}
 
-		if repeatDirection := getStringField(panelMap, "repeatDirection", ""); repeatDirection != "" {
+		if repeatDirection := schemaversion.GetStringValue(panelMap, "repeatDirection"); repeatDirection != "" {
 			switch repeatDirection {
 			case "h":
 				direction := dashv2alpha1.DashboardRepeatOptionsDirectionH
@@ -634,7 +682,7 @@ func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOve
 
 func buildRowKind(rowPanelMap map[string]interface{}, elements []dashv2alpha1.DashboardGridLayoutItemKind) *dashv2alpha1.DashboardRowsLayoutRowKind {
 	collapsed := getBoolField(rowPanelMap, "collapsed", false)
-	title := getStringField(rowPanelMap, "title", "")
+	title := schemaversion.GetStringValue(rowPanelMap, "title")
 
 	row := &dashv2alpha1.DashboardRowsLayoutRowKind{
 		Kind: "RowsLayoutRow",
@@ -653,7 +701,7 @@ func buildRowKind(rowPanelMap map[string]interface{}, elements []dashv2alpha1.Da
 	}
 
 	// Handle repeat options for rows
-	if repeat := getStringField(rowPanelMap, "repeat", ""); repeat != "" {
+	if repeat := schemaversion.GetStringValue(rowPanelMap, "repeat"); repeat != "" {
 		row.Spec.Repeat = &dashv2alpha1.DashboardRowRepeatOptions{
 			Mode:  "variable",
 			Value: repeat,
@@ -671,6 +719,10 @@ func yOffsetInRows(panelMap map[string]interface{}, rowY int64) int64 {
 	return 0
 }
 
+// LEGACY_STRING_VALUE_KEY is used for QueryVariableKind's query prop. Historically, queries
+// could be defined as strings, but in schema V2 we've deprecated the string type and support
+// only DataQuery objects. When a query is a simple string (legacy format), it's stored under
+// this key in a map structure to preserve the value during migration from v1beta1 to v2alpha1.
 const LEGACY_STRING_VALUE_KEY = "__legacyStringValue"
 
 // Variable enum transformation functions
@@ -783,7 +835,7 @@ func transformVariableSortToEnum(sort interface{}) dashv2alpha1.DashboardVariabl
 	}
 }
 
-func transformVariables(dashboard map[string]interface{}) ([]dashv2alpha1.DashboardVariableKind, error) {
+func transformVariables(ctx context.Context, dashboard map[string]interface{}) ([]dashv2alpha1.DashboardVariableKind, error) {
 	templating, ok := dashboard["templating"].(map[string]interface{})
 	if !ok {
 		return []dashv2alpha1.DashboardVariableKind{}, nil
@@ -804,15 +856,15 @@ func transformVariables(dashboard map[string]interface{}) ([]dashv2alpha1.Dashbo
 
 		// Extract common properties
 		commonProps := extractCommonVariableProperties(varMap)
-		varType := getStringField(varMap, "type", "")
+		varType := schemaversion.GetStringValue(varMap, "type")
 
 		switch varType {
 		case "query":
-			if queryVar, err := buildQueryVariable(varMap, commonProps); err == nil {
+			if queryVar, err := buildQueryVariable(ctx, varMap, commonProps); err == nil {
 				variables = append(variables, queryVar)
 			}
 		case "datasource":
-			if dsVar, err := buildDatasourceVariable(varMap, commonProps); err == nil {
+			if dsVar, err := buildDatasourceVariable(ctx, varMap, commonProps); err == nil {
 				variables = append(variables, dsVar)
 			}
 		case "custom":
@@ -820,7 +872,7 @@ func transformVariables(dashboard map[string]interface{}) ([]dashv2alpha1.Dashbo
 				variables = append(variables, customVar)
 			}
 		case "adhoc":
-			if adhocVar, err := buildAdhocVariable(varMap, commonProps); err == nil {
+			if adhocVar, err := buildAdhocVariable(ctx, varMap, commonProps); err == nil {
 				variables = append(variables, adhocVar)
 			}
 		case "constant":
@@ -836,7 +888,7 @@ func transformVariables(dashboard map[string]interface{}) ([]dashv2alpha1.Dashbo
 				variables = append(variables, textVar)
 			}
 		case "groupby":
-			if groupByVar, err := buildGroupByVariable(varMap, commonProps); err == nil {
+			if groupByVar, err := buildGroupByVariable(ctx, varMap, commonProps); err == nil {
 				variables = append(variables, groupByVar)
 			}
 		default:
@@ -859,16 +911,16 @@ type CommonVariableProperties struct {
 
 func extractCommonVariableProperties(varMap map[string]interface{}) CommonVariableProperties {
 	props := CommonVariableProperties{
-		Name:        getStringField(varMap, "name", ""),
+		Name:        schemaversion.GetStringValue(varMap, "name"),
 		Hide:        transformVariableHideToEnum(varMap["hide"]),
 		SkipUrlSync: getBoolField(varMap, "skipUrlSync", false),
 	}
 
-	if label := getStringField(varMap, "label", ""); label != "" {
+	if label := schemaversion.GetStringValue(varMap, "label"); label != "" {
 		props.Label = &label
 	}
 
-	if description := getStringField(varMap, "description", ""); description != "" {
+	if description := schemaversion.GetStringValue(varMap, "description"); description != "" {
 		props.Description = &description
 	}
 
@@ -969,40 +1021,67 @@ func buildDataQueryKind(query interface{}, datasourceType string) dashv2alpha1.D
 
 	switch q := query.(type) {
 	case string:
-		// Handle legacy string queries
-		querySpec = map[string]interface{}{
-			LEGACY_STRING_VALUE_KEY: q,
+		// Only include LEGACY_STRING_VALUE_KEY if query is a non-empty string
+		querySpec = make(map[string]interface{})
+		if q != "" {
+			querySpec[LEGACY_STRING_VALUE_KEY] = q
 		}
 	case map[string]interface{}:
+		// Use query directly to match frontend behavior
 		querySpec = q
 	default:
 		querySpec = make(map[string]interface{})
 	}
 
 	return dashv2alpha1.DashboardDataQueryKind{
-		Kind: datasourceType,
+		Kind: "DataQuery",
+		Spec: querySpec,
+	}
+}
+
+// Helper function to build DataQuery kind for variables (filters out refId)
+func buildDataQueryKindForVariable(query interface{}, datasourceType string) dashv2alpha1.DashboardDataQueryKind {
+	var querySpec map[string]interface{}
+
+	switch q := query.(type) {
+	case string:
+		// Only include LEGACY_STRING_VALUE_KEY if query is a non-empty string
+		querySpec = make(map[string]interface{})
+		if q != "" {
+			querySpec[LEGACY_STRING_VALUE_KEY] = q
+		}
+	case map[string]interface{}:
+		// Filter out refId for variables (refId should only be in panel queries)
+		querySpec = q
+	default:
+		querySpec = make(map[string]interface{})
+	}
+
+	return dashv2alpha1.DashboardDataQueryKind{
+		Kind: "DataQuery",
 		Spec: querySpec,
 	}
 }
 
 // Query Variable
-func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
+func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
 	datasource := varMap["datasource"]
 	var datasourceType, datasourceUID string
 
 	if ds, ok := datasource.(map[string]interface{}); ok {
-		datasourceUID = getStringField(ds, "uid", "")
-		datasourceType = getStringField(ds, "type", "")
+		datasourceUID = schemaversion.GetStringValue(ds, "uid")
+		datasourceType = schemaversion.GetStringValue(ds, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
-		if datasourceUID != "" {
-			datasourceType = getDatasourceTypeByUID(datasourceUID)
-		} else if datasourceType == "" {
+		// BUT: Don't try to resolve types for template variables
+		if datasourceUID != "" && datasourceType == "" && !isTemplateVariable(datasourceUID) {
+			datasourceType = getDatasourceTypeByUID(ctx, datasourceUID)
+		} else if datasourceUID == "" && datasourceType == "" {
 			// If no UID and no type, use default
-			datasourceType = *getDefaultDatasourceRef().Type
+			datasourceType = *getDefaultDatasourceRef(ctx).Type
 		}
 	} else {
-		datasourceType = *getDefaultDatasourceRef().Type
+		datasourceType = *getDefaultDatasourceRef(ctx).Type
 	}
 
 	queryVar := &dashv2alpha1.DashboardQueryVariableKind{
@@ -1018,10 +1097,17 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 			IncludeAll:       getBoolField(varMap, "includeAll", false),
 			Refresh:          transformVariableRefreshToEnum(varMap["refresh"]),
 			Sort:             transformVariableSortToEnum(varMap["sort"]),
-			Regex:            getStringField(varMap, "regex", ""),
-			Query:            buildDataQueryKind(varMap["query"], datasourceType),
+			Regex:            schemaversion.GetStringValue(varMap, "regex"),
+			Query:            buildDataQueryKindForVariable(varMap["query"], datasourceType),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
 		},
+	}
+
+	// Only set definition if it exists in the input (match frontend behavior)
+	if def, exists := varMap["definition"]; exists && def != nil {
+		if defStr, ok := def.(string); ok {
+			queryVar.Spec.Definition = &defStr
+		}
 	}
 
 	// Only include datasource if datasourceUID exists (matching frontend behavior)
@@ -1036,7 +1122,7 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 	// Always set options (matching frontend behavior)
 	queryVar.Spec.Options = buildVariableOptions(varMap["options"])
 
-	if allValue := getStringField(varMap, "allValue", ""); allValue != "" {
+	if allValue := schemaversion.GetStringValue(varMap, "allValue"); allValue != "" {
 		queryVar.Spec.AllValue = &allValue
 	}
 
@@ -1046,8 +1132,8 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 }
 
 // Datasource Variable
-func buildDatasourceVariable(varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
-	pluginId := *getDefaultDatasourceRef().Uid
+func buildDatasourceVariable(ctx context.Context, varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
+	pluginId := *getDefaultDatasourceRef(ctx).Type
 	if query := varMap["query"]; query != nil {
 		if queryStr, ok := query.(string); ok {
 			pluginId = queryStr
@@ -1067,7 +1153,7 @@ func buildDatasourceVariable(varMap map[string]interface{}, commonProps CommonVa
 			Multi:            getBoolField(varMap, "multi", false),
 			IncludeAll:       getBoolField(varMap, "includeAll", false),
 			Refresh:          transformVariableRefreshToEnum(varMap["refresh"]),
-			Regex:            getStringField(varMap, "regex", ""),
+			Regex:            schemaversion.GetStringValue(varMap, "regex"),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
 		},
 	}
@@ -1075,7 +1161,7 @@ func buildDatasourceVariable(varMap map[string]interface{}, commonProps CommonVa
 	// Always set options (matching frontend behavior)
 	dsVar.Spec.Options = buildVariableOptions(varMap["options"])
 
-	if allValue := getStringField(varMap, "allValue", ""); allValue != "" {
+	if allValue := schemaversion.GetStringValue(varMap, "allValue"); allValue != "" {
 		dsVar.Spec.AllValue = &allValue
 	}
 
@@ -1094,7 +1180,7 @@ func buildCustomVariable(varMap map[string]interface{}, commonProps CommonVariab
 			Description:      commonProps.Description,
 			Hide:             commonProps.Hide,
 			SkipUrlSync:      commonProps.SkipUrlSync,
-			Query:            getStringField(varMap, "query", ""),
+			Query:            schemaversion.GetStringValue(varMap, "query"),
 			Current:          buildVariableCurrent(varMap["current"]),
 			Multi:            getBoolField(varMap, "multi", false),
 			IncludeAll:       getBoolField(varMap, "includeAll", false),
@@ -1105,7 +1191,7 @@ func buildCustomVariable(varMap map[string]interface{}, commonProps CommonVariab
 	// Always set options (matching frontend behavior)
 	customVar.Spec.Options = buildVariableOptions(varMap["options"])
 
-	if allValue := getStringField(varMap, "allValue", ""); allValue != "" {
+	if allValue := schemaversion.GetStringValue(varMap, "allValue"); allValue != "" {
 		customVar.Spec.AllValue = &allValue
 	}
 
@@ -1116,6 +1202,53 @@ func buildCustomVariable(varMap map[string]interface{}, commonProps CommonVariab
 
 // Constant Variable
 func buildConstantVariable(varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
+	// Get query value - if missing, it should be undefined (not empty string)
+	// Frontend uses variable.query for value, so if query is missing, value is undefined
+	var queryValue interface{}
+	if query, exists := varMap["query"]; exists {
+		if queryStr, ok := query.(string); ok {
+			queryValue = queryStr
+		} else {
+			queryValue = query
+		}
+	}
+
+	// Build current from query value (matching frontend: value: variable.query, text: String(variable.state.value))
+	// If query is undefined, frontend produces: text: "undefined", value: undefined (removed), query: undefined (removed)
+	var current dashv2alpha1.DashboardVariableOption
+	if currentVal, exists := varMap["current"]; exists && currentVal != nil {
+		// Use provided current if it exists
+		current = buildVariableCurrent(currentVal)
+	} else if queryValue != nil {
+		// Build current from query value (matching frontend behavior)
+		queryStr := ""
+		if str, ok := queryValue.(string); ok {
+			queryStr = str
+		}
+		current = dashv2alpha1.DashboardVariableOption{
+			Text:  dashv2alpha1.DashboardStringOrArrayOfString{String: &queryStr},
+			Value: dashv2alpha1.DashboardStringOrArrayOfString{String: &queryStr},
+		}
+	} else {
+		// query is undefined - match frontend: value ? String(value) : '' (defaults to empty string, not "undefined")
+		emptyStr := ""
+		current = dashv2alpha1.DashboardVariableOption{
+			Text:  dashv2alpha1.DashboardStringOrArrayOfString{String: &emptyStr},
+			Value: dashv2alpha1.DashboardStringOrArrayOfString{String: &emptyStr},
+		}
+	}
+
+	// Get query value - frontend sets query: variable.state.value which can be undefined
+	// Since Query is a required string field, we must set it, but when query is missing from v1,
+	// we set it to empty string (frontend would have undefined which gets removed by sortedDeepCloneWithoutNulls)
+	var query string
+	if queryValue != nil {
+		if queryStr, ok := queryValue.(string); ok {
+			query = queryStr
+		}
+	}
+	// If queryValue is nil, query remains empty string ""
+
 	constantVar := &dashv2alpha1.DashboardConstantVariableKind{
 		Kind: "ConstantVariable",
 		Spec: dashv2alpha1.DashboardConstantVariableSpec{
@@ -1124,8 +1257,8 @@ func buildConstantVariable(varMap map[string]interface{}, commonProps CommonVari
 			Description: commonProps.Description,
 			Hide:        commonProps.Hide,
 			SkipUrlSync: commonProps.SkipUrlSync,
-			Query:       getStringField(varMap, "query", ""),
-			Current:     buildVariableCurrent(varMap["current"]),
+			Query:       query,
+			Current:     current,
 		},
 	}
 
@@ -1136,6 +1269,32 @@ func buildConstantVariable(varMap map[string]interface{}, commonProps CommonVari
 
 // Interval Variable
 func buildIntervalVariable(varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
+	query := schemaversion.GetStringValue(varMap, "query")
+
+	// If query is missing/empty but options exist, generate query from options (matches frontend behavior)
+	if query == "" {
+		if options, ok := varMap["options"].([]interface{}); ok && len(options) > 0 {
+			queryValues := make([]string, 0, len(options))
+			for _, opt := range options {
+				if optMap, ok := opt.(map[string]interface{}); ok {
+					if value, exists := optMap["value"]; exists {
+						if valueStr, ok := value.(string); ok && valueStr != "" {
+							queryValues = append(queryValues, valueStr)
+						}
+					} else if text, exists := optMap["text"]; exists {
+						if textStr, ok := text.(string); ok && textStr != "" {
+							queryValues = append(queryValues, textStr)
+						}
+					}
+				}
+			}
+			if len(queryValues) > 0 {
+				// Join interval values with comma, matching frontend getIntervalsQueryFromNewIntervalModel
+				query = strings.Join(queryValues, ",")
+			}
+		}
+	}
+
 	intervalVar := &dashv2alpha1.DashboardIntervalVariableKind{
 		Kind: "IntervalVariable",
 		Spec: dashv2alpha1.DashboardIntervalVariableSpec{
@@ -1144,11 +1303,11 @@ func buildIntervalVariable(varMap map[string]interface{}, commonProps CommonVari
 			Description: commonProps.Description,
 			Hide:        commonProps.Hide,
 			SkipUrlSync: commonProps.SkipUrlSync,
-			Query:       getStringField(varMap, "query", ""),
+			Query:       query,
 			Current:     buildVariableCurrent(varMap["current"]),
 			Refresh:     dashv2alpha1.DashboardVariableRefreshOnTimeRangeChanged, // Always onTimeRangeChanged for interval
 			Auto:        getBoolField(varMap, "auto", false),
-			AutoMin:     getStringField(varMap, "auto_min", ""),
+			AutoMin:     schemaversion.GetStringValue(varMap, "auto_min"),
 			AutoCount:   int64(getIntField(varMap, "auto_count", 0)),
 		},
 	}
@@ -1171,7 +1330,7 @@ func buildTextVariable(varMap map[string]interface{}, commonProps CommonVariable
 			Description: commonProps.Description,
 			Hide:        commonProps.Hide,
 			SkipUrlSync: commonProps.SkipUrlSync,
-			Query:       getStringField(varMap, "query", ""),
+			Query:       schemaversion.GetStringValue(varMap, "query"),
 			Current:     buildVariableCurrent(varMap["current"]),
 		},
 	}
@@ -1182,23 +1341,24 @@ func buildTextVariable(varMap map[string]interface{}, commonProps CommonVariable
 }
 
 // Adhoc Variable
-func buildAdhocVariable(varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
+func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
 	datasource := varMap["datasource"]
 	var datasourceType, datasourceUID string
 
 	if ds, ok := datasource.(map[string]interface{}); ok {
-		datasourceUID = getStringField(ds, "uid", "")
-		datasourceType = getStringField(ds, "type", "")
+		datasourceUID = schemaversion.GetStringValue(ds, "uid")
+		datasourceType = schemaversion.GetStringValue(ds, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
-		if datasourceUID != "" {
-			datasourceType = getDatasourceTypeByUID(datasourceUID)
-		} else if datasourceType == "" {
+		// BUT: Don't try to resolve types for template variables
+		if datasourceUID != "" && datasourceType == "" && !isTemplateVariable(datasourceUID) {
+			datasourceType = getDatasourceTypeByUID(ctx, datasourceUID)
+		} else if datasourceUID == "" && datasourceType == "" {
 			// If no UID and no type, use default
-			datasourceType = *getDefaultDatasourceRef().Type
+			datasourceType = *getDefaultDatasourceRef(ctx).Type
 		}
 	} else {
-		datasourceType = *getDefaultDatasourceRef().Type
+		datasourceType = *getDefaultDatasourceRef(ctx).Type
 	}
 
 	adhocVar := &dashv2alpha1.DashboardAdhocVariableKind{
@@ -1258,16 +1418,16 @@ func transformAdHocFilters(filters []interface{}) []dashv2alpha1.DashboardAdHocF
 			// This matches the frontend validateFiltersOrigin logic
 			if origin, exists := filterMap["origin"]; !exists || origin == "dashboard" {
 				adhocFilter := dashv2alpha1.DashboardAdHocFilterWithLabels{
-					Key:      getStringField(filterMap, "key", ""),
-					Operator: getStringField(filterMap, "operator", "="),
-					Value:    getStringField(filterMap, "value", ""),
+					Key:      schemaversion.GetStringValue(filterMap, "key"),
+					Operator: schemaversion.GetStringValue(filterMap, "operator", "="),
+					Value:    schemaversion.GetStringValue(filterMap, "value"),
 				}
 
 				// Handle optional fields
-				if keyLabel := getStringField(filterMap, "keyLabel", ""); keyLabel != "" {
+				if keyLabel := schemaversion.GetStringValue(filterMap, "keyLabel"); keyLabel != "" {
 					adhocFilter.KeyLabel = &keyLabel
 				}
-				if condition := getStringField(filterMap, "condition", ""); condition != "" {
+				if condition := schemaversion.GetStringValue(filterMap, "condition"); condition != "" {
 					adhocFilter.Condition = &condition
 				}
 
@@ -1315,19 +1475,18 @@ func transformMetricFindValues(values []interface{}) []dashv2alpha1.DashboardMet
 
 	for _, value := range values {
 		if valueMap, ok := value.(map[string]interface{}); ok {
-			// Handle object format with text and value properties
-			metricFindValue := dashv2alpha1.DashboardMetricFindValue{
-				Text: getStringField(valueMap, "text", ""),
-			}
-
-			// Handle value field - it can be string or float64
-			if valueStr := getStringField(valueMap, "value", ""); valueStr != "" {
-				metricFindValue.Value = &dashv2alpha1.DashboardStringOrFloat64{
-					String: &valueStr,
+			// Convert object format to string format to match frontend behavior
+			text := schemaversion.GetStringValue(valueMap, "text")
+			if text != "" {
+				// Use text as the string value to match frontend behavior
+				metricFindValue := dashv2alpha1.DashboardMetricFindValue{
+					Text: text,
+					Value: &dashv2alpha1.DashboardStringOrFloat64{
+						String: &text,
+					},
 				}
+				result = append(result, metricFindValue)
 			}
-
-			result = append(result, metricFindValue)
 		} else if str, ok := value.(string); ok {
 			// Handle simple string values - convert to object format with text and value
 			metricFindValue := dashv2alpha1.DashboardMetricFindValue{
@@ -1344,23 +1503,24 @@ func transformMetricFindValues(values []interface{}) []dashv2alpha1.DashboardMet
 }
 
 // GroupBy Variable
-func buildGroupByVariable(varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
+func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, commonProps CommonVariableProperties) (dashv2alpha1.DashboardVariableKind, error) {
 	datasource := varMap["datasource"]
 	var datasourceType, datasourceUID string
 
 	if ds, ok := datasource.(map[string]interface{}); ok {
-		datasourceUID = getStringField(ds, "uid", "")
-		datasourceType = getStringField(ds, "type", "")
+		datasourceUID = schemaversion.GetStringValue(ds, "uid")
+		datasourceType = schemaversion.GetStringValue(ds, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
-		if datasourceUID != "" {
-			datasourceType = getDatasourceTypeByUID(datasourceUID)
-		} else if datasourceType == "" {
+		// BUT: Don't try to resolve types for template variables
+		if datasourceUID != "" && datasourceType == "" && !isTemplateVariable(datasourceUID) {
+			datasourceType = getDatasourceTypeByUID(ctx, datasourceUID)
+		} else if datasourceUID == "" && datasourceType == "" {
 			// If no UID and no type, use default
-			datasourceType = *getDefaultDatasourceRef().Type
+			datasourceType = *getDefaultDatasourceRef(ctx).Type
 		}
 	} else {
-		datasourceType = *getDefaultDatasourceRef().Type
+		datasourceType = *getDefaultDatasourceRef(ctx).Type
 	}
 
 	groupByVar := &dashv2alpha1.DashboardGroupByVariableKind{
@@ -1396,11 +1556,13 @@ func buildGroupByVariable(varMap map[string]interface{}, commonProps CommonVaria
 func transformAnnotations(dashboard map[string]interface{}) ([]dashv2alpha1.DashboardAnnotationQueryKind, error) {
 	annotations, ok := dashboard["annotations"].(map[string]interface{})
 	if !ok {
+		// Return empty array to match frontend behavior
 		return []dashv2alpha1.DashboardAnnotationQueryKind{}, nil
 	}
 
 	list, ok := annotations["list"].([]interface{})
-	if !ok {
+	if !ok || len(list) == 0 {
+		// Return empty array to match frontend behavior
 		return []dashv2alpha1.DashboardAnnotationQueryKind{}, nil
 	}
 
@@ -1426,34 +1588,36 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 	var datasourceType, datasourceUID string
 
 	if datasource, ok := annotationMap["datasource"].(map[string]interface{}); ok {
-		datasourceUID = getStringField(datasource, "uid", "")
-		datasourceType = getStringField(datasource, "type", "")
+		datasourceUID = schemaversion.GetStringValue(datasource, "uid")
+		datasourceType = schemaversion.GetStringValue(datasource, "type")
 
-		// If we have a UID, use it to get the correct type from the datasource service
-		if datasourceUID != "" {
-			datasourceType = getDatasourceTypeByUID(datasourceUID)
-		} else if datasourceType == "" {
-			// If no UID and no type, use default
-			datasourceType = *getDefaultDatasourceRef().Type
-		}
-
-		if datasourceUID != "" {
+		// Only create datasource ref if the annotation actually has a valid datasource type in the original input
+		// This matches frontend behavior: if (dsUID && annotation.datasource && annotation.datasource.type)
+		// We don't try to resolve datasources that are missing a type - they should be resolved at runtime
+		if datasourceUID != "" && datasourceType != "" {
 			datasourceRef = &dashv2alpha1.DashboardDataSourceRef{
 				Type: &datasourceType,
 				Uid:  &datasourceUID,
 			}
 		}
-	} else {
-		datasourceType = *getDefaultDatasourceRef().Type
 	}
 
 	// Build the query from target
 	var query *dashv2alpha1.DashboardDataQueryKind
 	if target, ok := annotationMap["target"].(map[string]interface{}); ok && target != nil {
 		queryKind := dashv2alpha1.DashboardDataQueryKind{
-			Kind: datasourceType,
+			Kind: "DataQuery",
 			Spec: target,
 		}
+		// Group field is not available in v2alpha1 DashboardDataQueryKind
+		query = &queryKind
+	} else {
+		// Always provide a query to match frontend behavior
+		queryKind := dashv2alpha1.DashboardDataQueryKind{
+			Kind: "DataQuery",
+			Spec: map[string]interface{}{},
+		}
+		// Group field is not available in v2alpha1 DashboardDataQueryKind
 		query = &queryKind
 	}
 
@@ -1464,34 +1628,35 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 	}
 
 	// Transform builtIn from float64 to bool
-	var builtIn *bool
+	var builtInPtr *bool
 	if builtInVal, ok := annotationMap["builtIn"]; ok && builtInVal != nil {
 		switch v := builtInVal.(type) {
 		case float64:
 			val := v != 0
-			builtIn = &val
+			builtInPtr = &val
 		case int:
 			val := v != 0
-			builtIn = &val
+			builtInPtr = &val
 		case bool:
-			builtIn = &v
+			builtInPtr = &v
 		}
 	}
 
+	defaultAnnotationQuerySpec := dashv2alpha1.NewDashboardAnnotationQuerySpec()
 	spec := dashv2alpha1.DashboardAnnotationQuerySpec{
-		Name:       getStringField(annotationMap, "name", ""),
+		Name:       schemaversion.GetStringValue(annotationMap, "name"),
 		Datasource: datasourceRef,
 		Query:      query,
-		Enable:     getBoolField(annotationMap, "enable", true),
-		Hide:       getBoolField(annotationMap, "hide", false),
-		IconColor:  getStringField(annotationMap, "iconColor", ""),
-		BuiltIn:    builtIn,
+		Enable:     getBoolField(annotationMap, "enable", defaultAnnotationQuerySpec.Enable), // Default to false to match frontend: Boolean(annotation.enable) || Boolean(override?.enable)
+		Hide:       getBoolField(annotationMap, "hide", defaultAnnotationQuerySpec.Hide),
+		IconColor:  schemaversion.GetStringValue(annotationMap, "iconColor", defaultAnnotationQuerySpec.IconColor),
+		BuiltIn:    builtInPtr,
 		Filter:     filter,
 	}
 
 	// Handle any additional properties in LegacyOptions
 	legacyOptions := make(map[string]interface{})
-	if annotationType := getStringField(annotationMap, "type", ""); annotationType != "" {
+	if annotationType := schemaversion.GetStringValue(annotationMap, "type"); annotationType != "" {
 		legacyOptions["type"] = annotationType
 	}
 
@@ -1546,7 +1711,7 @@ func buildAnnotationFilter(filterMap map[string]interface{}) *dashv2alpha1.Dashb
 
 // Panel helper functions
 
-func transformPanelQueries(panelMap map[string]interface{}) []dashv2alpha1.DashboardPanelQueryKind {
+func transformPanelQueries(ctx context.Context, panelMap map[string]interface{}) []dashv2alpha1.DashboardPanelQueryKind {
 	targets, ok := panelMap["targets"].([]interface{})
 	if !ok {
 		return []dashv2alpha1.DashboardPanelQueryKind{}
@@ -1555,15 +1720,16 @@ func transformPanelQueries(panelMap map[string]interface{}) []dashv2alpha1.Dashb
 	// Get panel datasource
 	var panelDatasource *dashv2alpha1.DashboardDataSourceRef
 	if ds, ok := panelMap["datasource"].(map[string]interface{}); ok {
-		dsUID := getStringField(ds, "uid", "")
-		dsType := getStringField(ds, "type", "")
+		dsUID := schemaversion.GetStringValue(ds, "uid")
+		dsType := schemaversion.GetStringValue(ds, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
-		if dsUID != "" {
-			dsType = getDatasourceTypeByUID(dsUID)
-		} else if dsType == "" {
+		// BUT: Don't try to resolve types for template variables
+		if dsUID != "" && dsType == "" && !isTemplateVariable(dsUID) {
+			dsType = getDatasourceTypeByUID(ctx, dsUID)
+		} else if dsUID == "" && dsType == "" {
 			// If no UID and no type, use default
-			dsType = *getDefaultDatasourceRef().Type
+			dsType = *getDefaultDatasourceRef(ctx).Type
 		}
 
 		panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
@@ -1573,9 +1739,10 @@ func transformPanelQueries(panelMap map[string]interface{}) []dashv2alpha1.Dashb
 	}
 
 	queries := make([]dashv2alpha1.DashboardPanelQueryKind, 0, len(targets))
+
 	for _, target := range targets {
 		if targetMap, ok := target.(map[string]interface{}); ok {
-			query := transformSingleQuery(targetMap, panelDatasource)
+			query := transformSingleQuery(ctx, targetMap, panelDatasource)
 			queries = append(queries, query)
 		}
 	}
@@ -1583,34 +1750,31 @@ func transformPanelQueries(panelMap map[string]interface{}) []dashv2alpha1.Dashb
 	return queries
 }
 
-func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *dashv2alpha1.DashboardDataSourceRef) dashv2alpha1.DashboardPanelQueryKind {
-	refId := getStringField(targetMap, "refId", "A")
+func transformSingleQuery(ctx context.Context, targetMap map[string]interface{}, panelDatasource *dashv2alpha1.DashboardDataSourceRef) dashv2alpha1.DashboardPanelQueryKind {
+	refId := schemaversion.GetStringValue(targetMap, "refId", "A")
 	hidden := getBoolField(targetMap, "hide", false)
 
 	// Extract datasource from query or use panel datasource
 	var queryDatasourceType string
 	var queryDatasourceUID string
 	if ds, ok := targetMap["datasource"].(map[string]interface{}); ok {
-		queryDatasourceUID = getStringField(ds, "uid", "")
-		queryDatasourceType = getStringField(ds, "type", "")
+		queryDatasourceUID = schemaversion.GetStringValue(ds, "uid")
+		queryDatasourceType = schemaversion.GetStringValue(ds, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
-		if queryDatasourceUID != "" {
-			queryDatasourceType = *getDefaultDatasourceRef().Type
-		} else if queryDatasourceType == "" {
-			// If no UID and no type, use default
-			queryDatasourceType = *getDefaultDatasourceRef().Type
+		// BUT: Don't try to resolve types for template variables
+		if queryDatasourceUID != "" && queryDatasourceType == "" && !isTemplateVariable(queryDatasourceUID) {
+			queryDatasourceType = getDatasourceTypeByUID(ctx, queryDatasourceUID)
 		}
 	} else if panelDatasource != nil {
-		if panelDatasource.Type != nil {
-			queryDatasourceType = *panelDatasource.Type
-		}
-		if panelDatasource.Uid != nil {
+		// Only use panel datasource if it's not a mixed datasource
+		// Mixed datasources should not be propagated to individual queries
+		if panelDatasource.Uid != nil && *panelDatasource.Uid != "-- Mixed --" {
+			if panelDatasource.Type != nil {
+				queryDatasourceType = *panelDatasource.Type
+			}
 			queryDatasourceUID = *panelDatasource.Uid
 		}
-	} else {
-		queryDatasourceType = *getDefaultDatasourceRef().Type
-		queryDatasourceUID = *getDefaultDatasourceRef().Uid
 	}
 
 	// Build query spec by excluding known fields
@@ -1630,13 +1794,6 @@ func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *das
 		Hidden: hidden,
 		Query:  buildDataQueryKind(querySpec, queryDatasourceType),
 	}
-
-	// // if panelQuerySpec.Query.Datasource is not set, set it to default datasource
-	// if panelQuerySpec.Query.Spec["datasource"] == nil {
-	// 	panelQuerySpec.Query.Spec["datasource"] = map[string]interface{}{
-	// 		"name": queryDatasourceUID,
-	// 	}
-	// }
 
 	// Only include datasource reference if UID is provided
 	if queryDatasourceUID != "" {
@@ -1662,7 +1819,7 @@ func transformPanelTransformations(panelMap map[string]interface{}) []dashv2alph
 	for _, t := range transformations {
 		if tMap, ok := t.(map[string]interface{}); ok {
 			// Extract the transformation ID
-			transformationId := getStringField(tMap, "id", "")
+			transformationId := schemaversion.GetStringValue(tMap, "id")
 
 			// Extract the options field specifically
 			var options interface{}
@@ -1687,14 +1844,14 @@ func transformPanelTransformations(panelMap map[string]interface{}) []dashv2alph
 func buildQueryOptions(panelMap map[string]interface{}) dashv2alpha1.DashboardQueryOptionsSpec {
 	queryOptions := dashv2alpha1.DashboardQueryOptionsSpec{}
 
-	if cacheTimeout := getStringField(panelMap, "cacheTimeout", ""); cacheTimeout != "" {
+	if cacheTimeout := schemaversion.GetStringValue(panelMap, "cacheTimeout"); cacheTimeout != "" {
 		queryOptions.CacheTimeout = &cacheTimeout
 	}
 	if maxDataPoints := getIntField(panelMap, "maxDataPoints", 0); maxDataPoints > 0 {
 		maxDP := int64(maxDataPoints)
 		queryOptions.MaxDataPoints = &maxDP
 	}
-	if interval := getStringField(panelMap, "interval", ""); interval != "" {
+	if interval := schemaversion.GetStringValue(panelMap, "interval"); interval != "" {
 		queryOptions.Interval = &interval
 	}
 	if hideTimeOverride := getBoolField(panelMap, "hideTimeOverride", false); hideTimeOverride {
@@ -1717,10 +1874,10 @@ func buildQueryOptions(panelMap map[string]interface{}) dashv2alpha1.DashboardQu
 			queryOptions.QueryCachingTTL = &ttl
 		}
 	}
-	if timeFrom := getStringField(panelMap, "timeFrom", ""); timeFrom != "" {
+	if timeFrom := schemaversion.GetStringValue(panelMap, "timeFrom"); timeFrom != "" {
 		queryOptions.TimeFrom = &timeFrom
 	}
-	if timeShift := getStringField(panelMap, "timeShift", ""); timeShift != "" {
+	if timeShift := schemaversion.GetStringValue(panelMap, "timeShift"); timeShift != "" {
 		queryOptions.TimeShift = &timeShift
 	}
 
@@ -1737,8 +1894,8 @@ func transformDataLinks(panelMap map[string]interface{}) []dashv2alpha1.Dashboar
 	for _, link := range links {
 		if linkMap, ok := link.(map[string]interface{}); ok {
 			dataLink := dashv2alpha1.DashboardDataLink{
-				Title: getStringField(linkMap, "title", ""),
-				Url:   getStringField(linkMap, "url", ""),
+				Title: schemaversion.GetStringValue(linkMap, "title"),
+				Url:   schemaversion.GetStringValue(linkMap, "url"),
 			}
 			if _, exists := linkMap["targetBlank"]; exists {
 				targetBlank := getBoolField(linkMap, "targetBlank", false)
@@ -1753,8 +1910,8 @@ func transformDataLinks(panelMap map[string]interface{}) []dashv2alpha1.Dashboar
 }
 
 func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizConfigKind {
-	panelType := getStringField(panelMap, "type", "graph")
-	pluginVersion := getStringField(panelMap, "pluginVersion", "")
+	panelType := schemaversion.GetStringValue(panelMap, "type", "timeseries")
+	pluginVersion := schemaversion.GetStringValue(panelMap, "pluginVersion")
 
 	// Extract field config and options
 	fieldConfig := make(map[string]interface{})
@@ -1767,16 +1924,463 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 		options = opts
 	}
 
+	// Add frontend-style default options to match frontend behavior
+	if legend, ok := options["legend"].(map[string]interface{}); ok {
+		// Add showLegend: true to match frontend behavior
+		showLegend := getBoolField(legend, "showLegend", true)
+		legend["showLegend"] = showLegend
+		options["legend"] = legend
+	}
+
+	// Build field config by mapping each field individually
+	fieldConfigSource := extractFieldConfigSource(fieldConfig)
+
 	return dashv2alpha1.DashboardVizConfigKind{
-		Kind: panelType,
+		Kind: panelType, // Use panelType as Kind (plugin ID) to match schema comment
 		Spec: dashv2alpha1.DashboardVizConfigSpec{
 			PluginVersion: pluginVersion,
-			FieldConfig: dashv2alpha1.DashboardFieldConfigSource{
-				Defaults: dashv2alpha1.DashboardFieldConfig{
-					Custom: fieldConfig,
-				},
-			},
-			Options: options,
+			FieldConfig:   fieldConfigSource,
+			Options:       options,
 		},
 	}
+}
+
+func extractFieldConfigSource(fieldConfig map[string]interface{}) dashv2alpha1.DashboardFieldConfigSource {
+	// Always initialize with empty defaults to match frontend behavior
+	fieldConfigSource := dashv2alpha1.DashboardFieldConfigSource{
+		Defaults:  dashv2alpha1.DashboardFieldConfig{},
+		Overrides: []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides{},
+	}
+
+	if defaults, ok := fieldConfig["defaults"].(map[string]interface{}); ok {
+		fieldConfigDefaults := extractFieldConfigDefaults(defaults)
+		fieldConfigSource.Defaults = fieldConfigDefaults
+	}
+
+	// Handle overrides
+	fieldConfigSource.Overrides = extractFieldConfigOverrides(fieldConfig)
+
+	return fieldConfigSource
+}
+
+// Helper functions for extracting field config values
+func extractFloat64Field(defaults map[string]interface{}, key string) (*float64, bool) {
+	if val, exists := defaults[key]; exists {
+		if floatVal, ok := val.(float64); ok {
+			return &floatVal, true
+		}
+	}
+	return nil, false
+}
+
+func extractStringField(defaults map[string]interface{}, key string) (*string, bool) {
+	if val, exists := defaults[key]; exists {
+		if strVal, ok := val.(string); ok {
+			return &strVal, true
+		}
+	}
+	return nil, false
+}
+
+func extractBoolField(defaults map[string]interface{}, key string) (*bool, bool) {
+	if val, exists := defaults[key]; exists {
+		if boolVal, ok := val.(bool); ok {
+			return &boolVal, true
+		}
+	}
+	return nil, false
+}
+
+func extractArrayField(defaults map[string]interface{}, key string) ([]interface{}, bool) {
+	if val, exists := defaults[key]; exists {
+		if arrayVal, ok := val.([]interface{}); ok {
+			return arrayVal, true
+		}
+	}
+	return nil, false
+}
+
+func extractMapField(defaults map[string]interface{}, key string) (map[string]interface{}, bool) {
+	if val, exists := defaults[key]; exists {
+		if mapVal, ok := val.(map[string]interface{}); ok {
+			return mapVal, true
+		}
+	}
+	return nil, false
+}
+
+func extractFieldConfigDefaults(defaults map[string]interface{}) dashv2alpha1.DashboardFieldConfig {
+	fieldConfigDefaults := dashv2alpha1.DashboardFieldConfig{}
+	hasDefaults := false
+
+	// Extract color
+	if colorMap, ok := extractMapField(defaults, "color"); ok {
+		fieldConfigDefaults.Color = buildFieldColor(colorMap)
+		hasDefaults = true
+	}
+
+	// Extract custom
+	if customMap, ok := extractMapField(defaults, "custom"); ok {
+		fieldConfigDefaults.Custom = customMap
+		hasDefaults = true
+	}
+
+	// Extract numeric fields
+	if val, ok := extractFloat64Field(defaults, "decimals"); ok {
+		fieldConfigDefaults.Decimals = val
+		hasDefaults = true
+	}
+	if val, ok := extractFloat64Field(defaults, "max"); ok {
+		fieldConfigDefaults.Max = val
+		hasDefaults = true
+	}
+	if val, ok := extractFloat64Field(defaults, "min"); ok {
+		fieldConfigDefaults.Min = val
+		hasDefaults = true
+	}
+
+	// Extract string fields
+	if val, ok := extractStringField(defaults, "description"); ok {
+		fieldConfigDefaults.Description = val
+		hasDefaults = true
+	}
+	if val, ok := extractStringField(defaults, "displayName"); ok {
+		fieldConfigDefaults.DisplayName = val
+		hasDefaults = true
+	}
+	if val, ok := extractStringField(defaults, "displayNameFromDS"); ok {
+		fieldConfigDefaults.DisplayNameFromDS = val
+		hasDefaults = true
+	}
+	if val, ok := extractStringField(defaults, "noValue"); ok {
+		fieldConfigDefaults.NoValue = val
+		hasDefaults = true
+	}
+	if val, ok := extractStringField(defaults, "path"); ok {
+		fieldConfigDefaults.Path = val
+		hasDefaults = true
+	}
+	if val, ok := extractStringField(defaults, "unit"); ok {
+		fieldConfigDefaults.Unit = val
+		hasDefaults = true
+	}
+
+	// Extract bool fields
+	if val, ok := extractBoolField(defaults, "filterable"); ok {
+		fieldConfigDefaults.Filterable = val
+		hasDefaults = true
+	}
+	if val, ok := extractBoolField(defaults, "writeable"); ok {
+		fieldConfigDefaults.Writeable = val
+		hasDefaults = true
+	}
+
+	// Extract array field
+	if linksArray, ok := extractArrayField(defaults, "links"); ok {
+		fieldConfigDefaults.Links = linksArray
+		hasDefaults = true
+	}
+
+	// Extract mappings
+	if mappings, exists := defaults["mappings"]; exists {
+		resultMappings := buildValueMappings(mappings)
+		fieldConfigDefaults.Mappings = resultMappings
+		hasDefaults = true
+	}
+
+	// Extract thresholds
+	if thresholdsMap, ok := extractMapField(defaults, "thresholds"); ok {
+		thresholdsConfig := buildThresholdsConfig(thresholdsMap)
+		fieldConfigDefaults.Thresholds = thresholdsConfig
+		hasDefaults = true
+	}
+
+	// Add frontend-style default custom field to match frontend behavior
+	if !hasDefaults {
+		fieldConfigDefaults.Custom = map[string]interface{}{}
+	}
+
+	return fieldConfigDefaults
+}
+
+func buildFieldColor(colorMap map[string]interface{}) *dashv2alpha1.DashboardFieldColor {
+	var fieldColor dashv2alpha1.DashboardFieldColor
+
+	// mode (required)
+	if mode, ok := colorMap["mode"].(string); ok {
+		fieldColor.Mode = dashv2alpha1.DashboardFieldColorModeId(mode)
+	}
+
+	// fixedColor (optional)
+	if fixedColor, ok := colorMap["fixedColor"].(string); ok {
+		fieldColor.FixedColor = &fixedColor
+	}
+
+	// seriesBy (optional)
+	if seriesBy, ok := colorMap["seriesBy"].(string); ok {
+		sb := dashv2alpha1.DashboardFieldColorSeriesByMode(seriesBy)
+		fieldColor.SeriesBy = &sb
+	}
+
+	return &fieldColor
+}
+
+func buildValueMappings(mappings interface{}) []dashv2alpha1.DashboardValueMapping {
+	var resultMappings []dashv2alpha1.DashboardValueMapping
+
+	mappingsArr, ok := mappings.([]interface{})
+	if !ok || len(mappingsArr) == 0 {
+		return resultMappings
+	}
+
+	for _, mapping := range mappingsArr {
+		mappingMap, ok := mapping.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		typ, ok := mappingMap["type"].(string)
+		if !ok {
+			continue
+		}
+
+		switch typ {
+		case "value":
+			if valueMapping := buildValueMap(mappingMap); valueMapping != nil {
+				resultMappings = append(resultMappings, dashv2alpha1.DashboardValueMapping{
+					ValueMap: valueMapping,
+				})
+			}
+		case "range":
+			if rangeMapping := buildRangeMap(mappingMap); rangeMapping != nil {
+				resultMappings = append(resultMappings, dashv2alpha1.DashboardValueMapping{
+					RangeMap: rangeMapping,
+				})
+			}
+		case "regex":
+			if regexMapping := buildRegexMap(mappingMap); regexMapping != nil {
+				resultMappings = append(resultMappings, dashv2alpha1.DashboardValueMapping{
+					RegexMap: regexMapping,
+				})
+			}
+		case "special":
+			if specialMapping := buildSpecialValueMap(mappingMap); specialMapping != nil {
+				resultMappings = append(resultMappings, dashv2alpha1.DashboardValueMapping{
+					SpecialValueMap: specialMapping,
+				})
+			}
+		}
+	}
+
+	return resultMappings
+}
+
+func buildValueMap(mappingMap map[string]interface{}) *dashv2alpha1.DashboardValueMap {
+	valMap := &dashv2alpha1.DashboardValueMap{}
+	valMap.Type = dashv2alpha1.DashboardMappingTypeValue
+
+	opts, ok := mappingMap["options"].(map[string]interface{})
+	if !ok {
+		return valMap
+	}
+
+	valMap.Options = make(map[string]dashv2alpha1.DashboardValueMappingResult)
+	for k, v := range opts {
+		resMap, ok := v.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		res := buildValueMappingResult(resMap)
+		valMap.Options[k] = res
+	}
+
+	return valMap
+}
+
+func buildRangeMap(mappingMap map[string]interface{}) *dashv2alpha1.DashboardRangeMap {
+	rangeMap := &dashv2alpha1.DashboardRangeMap{}
+	rangeMap.Type = dashv2alpha1.DashboardMappingTypeRange
+
+	opts, ok := mappingMap["options"].(map[string]interface{})
+	if !ok || len(opts) == 0 {
+		return nil
+	}
+
+	// Return nil only if both "from" and "to" are missing
+	if opts["from"] == nil && opts["to"] == nil {
+		return nil
+	}
+
+	r := dashv2alpha1.DashboardV2alpha1RangeMapOptions{}
+	if from, ok := opts["from"].(float64); ok {
+		r.From = &from
+	}
+	if to, ok := opts["to"].(float64); ok {
+		r.To = &to
+	}
+
+	// Result is a DashboardValueMappingResult
+	if resMap, ok := opts["result"].(map[string]interface{}); ok {
+		r.Result = buildValueMappingResult(resMap)
+	}
+
+	rangeMap.Options = r
+	return rangeMap
+}
+
+func buildRegexMap(mappingMap map[string]interface{}) *dashv2alpha1.DashboardRegexMap {
+	regexMap := &dashv2alpha1.DashboardRegexMap{}
+	regexMap.Type = dashv2alpha1.DashboardMappingTypeRegex
+
+	opts, ok := mappingMap["options"].([]interface{})
+	if !ok || len(opts) == 0 {
+		return nil
+	}
+
+	optMap, ok := opts[0].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := dashv2alpha1.DashboardV2alpha1RegexMapOptions{}
+	if pattern, ok := optMap["regex"].(string); ok {
+		r.Pattern = pattern
+	}
+
+	// Result is a DashboardValueMappingResult
+	if resMap, ok := optMap["result"].(map[string]interface{}); ok {
+		r.Result = buildValueMappingResult(resMap)
+	}
+
+	regexMap.Options = r
+	return regexMap
+}
+
+func buildSpecialValueMap(mappingMap map[string]interface{}) *dashv2alpha1.DashboardSpecialValueMap {
+	specialMap := &dashv2alpha1.DashboardSpecialValueMap{}
+	specialMap.Type = dashv2alpha1.DashboardMappingTypeSpecial
+
+	opts, ok := mappingMap["options"].(map[string]interface{})
+	if !ok || len(opts) == 0 {
+		return nil
+	}
+
+	r := dashv2alpha1.DashboardV2alpha1SpecialValueMapOptions{}
+	if match, ok := opts["match"].(string); ok {
+		r.Match = dashv2alpha1.DashboardSpecialValueMatch(match)
+	}
+
+	// Result is a DashboardValueMappingResult
+	if resMap, ok := opts["result"].(map[string]interface{}); ok {
+		r.Result = buildValueMappingResult(resMap)
+	}
+
+	specialMap.Options = r
+	return specialMap
+}
+
+func buildValueMappingResult(resMap map[string]interface{}) dashv2alpha1.DashboardValueMappingResult {
+	res := dashv2alpha1.DashboardValueMappingResult{}
+
+	if text, ok := resMap["text"].(string); ok {
+		res.Text = &text
+	}
+	if color, ok := resMap["color"].(string); ok {
+		res.Color = &color
+	}
+	if icon, ok := resMap["icon"].(string); ok {
+		res.Icon = &icon
+	}
+	if idx, ok := resMap["index"].(float64); ok {
+		idx32 := int32(idx)
+		res.Index = &idx32
+	}
+
+	return res
+}
+
+func buildThresholdsConfig(thresholdsMap map[string]interface{}) *dashv2alpha1.DashboardThresholdsConfig {
+	thresholdsConfig := &dashv2alpha1.DashboardThresholdsConfig{}
+
+	// Convert mode
+	if mode, ok := thresholdsMap["mode"].(string); ok {
+		thresholdsConfig.Mode = dashv2alpha1.DashboardThresholdsMode(mode)
+	}
+
+	// Convert steps
+	if steps, ok := thresholdsMap["steps"].([]interface{}); ok {
+		thresholdsConfig.Steps = make([]dashv2alpha1.DashboardThreshold, 0, len(steps))
+		for _, step := range steps {
+			if stepMap, ok := step.(map[string]interface{}); ok {
+				threshold := dashv2alpha1.DashboardThreshold{}
+				// Handle threshold value: null means -Infinity
+				if value, exists := stepMap["value"]; exists {
+					if value == nil {
+						// null means -Infinity
+						threshold.Value = nil
+					} else if floatVal, ok := value.(float64); ok {
+						threshold.Value = &floatVal
+					}
+				} else {
+					// Value not present, leave as nil (represents -Infinity)
+					threshold.Value = nil
+				}
+				if color, ok := stepMap["color"].(string); ok {
+					threshold.Color = color
+				}
+				thresholdsConfig.Steps = append(thresholdsConfig.Steps, threshold)
+			}
+		}
+	}
+
+	return thresholdsConfig
+}
+
+func extractFieldConfigOverrides(fieldConfig map[string]interface{}) []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides {
+	overrides, ok := fieldConfig["overrides"].([]interface{})
+	if !ok || len(overrides) == 0 {
+		// Use empty array to match frontend behavior
+		return []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides{}
+	}
+
+	result := make([]dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides, 0, len(overrides))
+	for _, override := range overrides {
+		overrideMap, ok := override.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		fieldOverride := dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides{}
+
+		if systemRef, ok := overrideMap["__systemRef"].(string); ok {
+			fieldOverride.SystemRef = &systemRef
+		}
+
+		// Map override fields individually
+		if matcher, exists := overrideMap["matcher"]; exists {
+			if matcherMap, ok := matcher.(map[string]interface{}); ok {
+				fieldOverride.Matcher = dashv2alpha1.DashboardMatcherConfig{
+					Id:      schemaversion.GetStringValue(matcherMap, "id"),
+					Options: matcherMap["options"],
+				}
+			}
+		}
+		if properties, exists := overrideMap["properties"]; exists {
+			if propertiesArray, ok := properties.([]interface{}); ok {
+				fieldOverride.Properties = make([]dashv2alpha1.DashboardDynamicConfigValue, 0, len(propertiesArray))
+				for _, property := range propertiesArray {
+					if propertyMap, ok := property.(map[string]interface{}); ok {
+						fieldOverride.Properties = append(fieldOverride.Properties, dashv2alpha1.DashboardDynamicConfigValue{
+							Id:    schemaversion.GetStringValue(propertyMap, "id"),
+							Value: propertyMap["value"],
+						})
+					}
+				}
+			}
+		}
+
+		result = append(result, fieldOverride)
+	}
+
+	return result
 }

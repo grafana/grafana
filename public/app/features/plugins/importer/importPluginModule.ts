@@ -3,7 +3,7 @@ import { getResolvedLanguage } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 
 import builtInPlugins from '../built_in_plugins';
-import { registerPluginInCache } from '../loader/cache';
+import { registerPluginInfoInCache } from '../loader/pluginInfoCache';
 import { SystemJS } from '../loader/systemjs';
 import { resolveModulePath } from '../loader/utils';
 import { importPluginModuleInSandbox } from '../sandbox/sandboxPluginLoader';
@@ -22,11 +22,11 @@ export async function importPluginModule({
   translations,
 }: PluginImportInfo): Promise<System.Module> {
   if (version) {
-    registerPluginInCache({ path, version, loadingStrategy });
+    registerPluginInfoInCache({ path, version, loadingStrategy });
   }
 
   // Add locales to i18n for a plugin if the feature toggle is enabled and the plugin has locales
-  if (config.featureToggles.localizationForPlugins && translations) {
+  if (translations) {
     await addTranslationsToI18n({
       resolvedLanguage: getResolvedLanguage(),
       fallbackLanguage: DEFAULT_LANGUAGE,
@@ -67,7 +67,7 @@ export async function importPluginModule({
   }
 
   return SystemJS.import(modulePath).catch((e) => {
-    let error = new Error('Could not load plugin: ' + e);
+    let error = new Error('Could not load plugin', { cause: e });
     console.error(error);
     pluginsLogger.logError(error, {
       path,
@@ -76,7 +76,9 @@ export async function importPluginModule({
       expectedHash: moduleHash ?? '',
       loadingStrategy: loadingStrategy.toString(),
       sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
-      newPluginLoadingEnabled: String(Boolean(config.featureToggles.enablePluginImporter)),
+      originalErrorMessage: e.originalErr?.message || '',
+      originalErrorStack: e.originalErr?.stack || '',
+      systemJSOriginalErr: e.originalErr?.message || '',
     });
     throw error;
   });

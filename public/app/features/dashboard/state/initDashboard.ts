@@ -15,8 +15,8 @@ import {
   HOME_DASHBOARD_CACHE_KEY,
   getDashboardScenePageStateManager,
 } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
+import { updateNavModel } from 'app/features/dashboard-scene/pages/utils';
 import { buildNewDashboardSaveModel } from 'app/features/dashboard-scene/serialization/buildNewDashboardSaveModel';
-import { getFolderByUid } from 'app/features/folders/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { toStateKey } from 'app/features/variables/utils';
@@ -30,6 +30,7 @@ import {
 } from 'app/types/dashboard';
 import { StoreState, ThunkDispatch, ThunkResult } from 'app/types/store';
 
+import { contextSrv } from '../../../core/services/context_srv';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { getIfExistsLastKey } from '../../variables/state/selectors';
@@ -95,11 +96,7 @@ async function fetchDashboard(
         // get parent folder (if it exists) and put it in the store
         // this will be used to populate the full breadcrumb trail
         if (dashDTO.meta.folderUid) {
-          try {
-            await dispatch(getFolderByUid(dashDTO.meta.folderUid));
-          } catch (err) {
-            console.warn('Error fetching parent folder', dashDTO.meta.folderUid, 'for dashboard', err);
-          }
+          await updateNavModel(dashDTO.meta.folderUid);
         }
 
         if (args.fixUrl && dashDTO.meta.url && !playlistSrv.state.isPlaying) {
@@ -123,7 +120,7 @@ async function fetchDashboard(
         // get parent folder (if it exists) and put it in the store
         // this will be used to populate the full breadcrumb trail
         if (args.urlFolderUid) {
-          await dispatch(getFolderByUid(args.urlFolderUid));
+          await updateNavModel(args.urlFolderUid);
         }
         return await buildNewDashboardSaveModel(args.urlFolderUid);
       }
@@ -285,7 +282,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     if (dashboard.weekStart !== '' && dashboard.weekStart !== undefined) {
       setWeekStart(dashboard.weekStart);
     } else {
-      setWeekStart(config.bootData.user.weekStart);
+      setWeekStart(contextSrv.user.weekStart);
     }
 
     // Propagate an app-wide event about the dashboard being loaded

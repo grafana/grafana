@@ -30,6 +30,8 @@ type DashboardAnnotationQuerySpec struct {
 	Name      string                          `json:"name"`
 	BuiltIn   *bool                           `json:"builtIn,omitempty"`
 	Filter    *DashboardAnnotationPanelFilter `json:"filter,omitempty"`
+	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+	Placement *string `json:"placement,omitempty"`
 	// Catch-all field for datasource-specific properties. Should not be available in as code tooling.
 	LegacyOptions map[string]interface{} `json:"legacyOptions,omitempty"`
 }
@@ -37,8 +39,9 @@ type DashboardAnnotationQuerySpec struct {
 // NewDashboardAnnotationQuerySpec creates a new DashboardAnnotationQuerySpec object.
 func NewDashboardAnnotationQuerySpec() *DashboardAnnotationQuerySpec {
 	return &DashboardAnnotationQuerySpec{
-		Query:   *NewDashboardDataQueryKind(),
-		BuiltIn: (func(input bool) *bool { return &input })(false),
+		Query:     *NewDashboardDataQueryKind(),
+		BuiltIn:   (func(input bool) *bool { return &input })(false),
+		Placement: (func(input string) *string { return &input })(DashboardAnnotationQueryPlacement),
 	}
 }
 
@@ -77,6 +80,11 @@ func NewDashboardAnnotationPanelFilter() *DashboardAnnotationPanelFilter {
 		Ids:     []uint32{},
 	}
 }
+
+// Annotation Query placement. Defines where the annotation query should be displayed.
+// - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+// +k8s:openapi-gen=true
+const DashboardAnnotationQueryPlacement = "inControlsMenu"
 
 // "Off" for no shared crosshair or tooltip (default).
 // "Crosshair" for shared crosshair.
@@ -201,6 +209,7 @@ type DashboardPanelQuerySpec struct {
 func NewDashboardPanelQuerySpec() *DashboardPanelQuerySpec {
 	return &DashboardPanelQuerySpec{
 		Query: *NewDashboardDataQueryKind(),
+		RefId: "A",
 	}
 }
 
@@ -278,6 +287,7 @@ type DashboardQueryOptionsSpec struct {
 	Interval         *string `json:"interval,omitempty"`
 	CacheTimeout     *string `json:"cacheTimeout,omitempty"`
 	HideTimeOverride *bool   `json:"hideTimeOverride,omitempty"`
+	TimeCompare      *string `json:"timeCompare,omitempty"`
 }
 
 // NewDashboardQueryOptionsSpec creates a new DashboardQueryOptionsSpec object.
@@ -386,6 +396,8 @@ type DashboardFieldConfig struct {
 	Color *DashboardFieldColor `json:"color,omitempty"`
 	// The behavior when clicking on a result
 	Links []interface{} `json:"links,omitempty"`
+	// Define interactive HTTP requests that can be triggered from data visualizations.
+	Actions []DashboardAction `json:"actions,omitempty"`
 	// Alternative to empty string
 	NoValue *string `json:"noValue,omitempty"`
 	// custom is specified by the FieldConfig field
@@ -543,8 +555,9 @@ const (
 
 // +k8s:openapi-gen=true
 type DashboardThreshold struct {
-	Value float64 `json:"value"`
-	Color string  `json:"color"`
+	// Value null means -Infinity
+	Value *float64 `json:"value"`
+	Color string   `json:"color"`
 }
 
 // NewDashboardThreshold creates a new DashboardThreshold object.
@@ -616,6 +629,95 @@ const (
 	DashboardFieldColorSeriesByModeMax  DashboardFieldColorSeriesByMode = "max"
 	DashboardFieldColorSeriesByModeLast DashboardFieldColorSeriesByMode = "last"
 )
+
+// +k8s:openapi-gen=true
+type DashboardAction struct {
+	Type         DashboardActionType          `json:"type"`
+	Title        string                       `json:"title"`
+	Fetch        *DashboardFetchOptions       `json:"fetch,omitempty"`
+	Infinity     *DashboardInfinityOptions    `json:"infinity,omitempty"`
+	Confirmation *string                      `json:"confirmation,omitempty"`
+	OneClick     *bool                        `json:"oneClick,omitempty"`
+	Variables    []DashboardActionVariable    `json:"variables,omitempty"`
+	Style        *DashboardV2beta1ActionStyle `json:"style,omitempty"`
+}
+
+// NewDashboardAction creates a new DashboardAction object.
+func NewDashboardAction() *DashboardAction {
+	return &DashboardAction{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardActionType string
+
+const (
+	DashboardActionTypeFetch    DashboardActionType = "fetch"
+	DashboardActionTypeInfinity DashboardActionType = "infinity"
+)
+
+// +k8s:openapi-gen=true
+type DashboardFetchOptions struct {
+	Method DashboardHttpRequestMethod `json:"method"`
+	Url    string                     `json:"url"`
+	Body   *string                    `json:"body,omitempty"`
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	QueryParams [][]string `json:"queryParams,omitempty"`
+	Headers     [][]string `json:"headers,omitempty"`
+}
+
+// NewDashboardFetchOptions creates a new DashboardFetchOptions object.
+func NewDashboardFetchOptions() *DashboardFetchOptions {
+	return &DashboardFetchOptions{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardHttpRequestMethod string
+
+const (
+	DashboardHttpRequestMethodGET    DashboardHttpRequestMethod = "GET"
+	DashboardHttpRequestMethodPUT    DashboardHttpRequestMethod = "PUT"
+	DashboardHttpRequestMethodPOST   DashboardHttpRequestMethod = "POST"
+	DashboardHttpRequestMethodDELETE DashboardHttpRequestMethod = "DELETE"
+	DashboardHttpRequestMethodPATCH  DashboardHttpRequestMethod = "PATCH"
+)
+
+// +k8s:openapi-gen=true
+type DashboardInfinityOptions struct {
+	Method DashboardHttpRequestMethod `json:"method"`
+	Url    string                     `json:"url"`
+	Body   *string                    `json:"body,omitempty"`
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	QueryParams   [][]string `json:"queryParams,omitempty"`
+	DatasourceUid string     `json:"datasourceUid"`
+	Headers       [][]string `json:"headers,omitempty"`
+}
+
+// NewDashboardInfinityOptions creates a new DashboardInfinityOptions object.
+func NewDashboardInfinityOptions() *DashboardInfinityOptions {
+	return &DashboardInfinityOptions{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardActionVariable struct {
+	Key  string `json:"key"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+// NewDashboardActionVariable creates a new DashboardActionVariable object.
+func NewDashboardActionVariable() *DashboardActionVariable {
+	return &DashboardActionVariable{
+		Type: DashboardActionVariableType,
+	}
+}
+
+// Action variable type
+// +k8s:openapi-gen=true
+const DashboardActionVariableType = "string"
 
 // +k8s:openapi-gen=true
 type DashboardDynamicConfigValue struct {
@@ -967,9 +1069,11 @@ type DashboardAutoGridLayoutSpec struct {
 // NewDashboardAutoGridLayoutSpec creates a new DashboardAutoGridLayoutSpec object.
 func NewDashboardAutoGridLayoutSpec() *DashboardAutoGridLayoutSpec {
 	return &DashboardAutoGridLayoutSpec{
-		MaxColumnCount: (func(input float64) *float64 { return &input })(3),
-		FillScreen:     (func(input bool) *bool { return &input })(false),
-		Items:          []DashboardAutoGridLayoutItemKind{},
+		MaxColumnCount:  (func(input float64) *float64 { return &input })(3),
+		ColumnWidthMode: DashboardAutoGridLayoutSpecColumnWidthModeStandard,
+		RowHeightMode:   DashboardAutoGridLayoutSpecRowHeightModeStandard,
+		FillScreen:      (func(input bool) *bool { return &input })(false),
+		Items:           []DashboardAutoGridLayoutItemKind{},
 	}
 }
 
@@ -1106,6 +1210,8 @@ type DashboardDashboardLink struct {
 	IncludeVars bool `json:"includeVars"`
 	// If true, includes current time range in the link as query params
 	KeepTime bool `json:"keepTime"`
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	Placement *string `json:"placement,omitempty"`
 }
 
 // NewDashboardDashboardLink creates a new DashboardDashboardLink object.
@@ -1116,6 +1222,7 @@ func NewDashboardDashboardLink() *DashboardDashboardLink {
 		TargetBlank: false,
 		IncludeVars: false,
 		KeepTime:    false,
+		Placement:   (func(input string) *string { return &input })(DashboardDashboardLinkPlacement),
 	}
 }
 
@@ -1127,6 +1234,11 @@ const (
 	DashboardDashboardLinkTypeLink       DashboardDashboardLinkType = "link"
 	DashboardDashboardLinkTypeDashboards DashboardDashboardLinkType = "dashboards"
 )
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+// +k8s:openapi-gen=true
+const DashboardDashboardLinkPlacement = "inControlsMenu"
 
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.
@@ -1191,11 +1303,11 @@ func NewDashboardTimeRangeOption() *DashboardTimeRangeOption {
 }
 
 // +k8s:openapi-gen=true
-type DashboardVariableKind = DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind
+type DashboardVariableKind = DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind
 
 // NewDashboardVariableKind creates a new DashboardVariableKind object.
 func NewDashboardVariableKind() *DashboardVariableKind {
-	return NewDashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind()
+	return NewDashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind()
 }
 
 // Query variable kind
@@ -1281,14 +1393,15 @@ func NewDashboardVariableOption() *DashboardVariableOption {
 }
 
 // Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
 // +k8s:openapi-gen=true
 type DashboardVariableHide string
 
 const (
-	DashboardVariableHideDontHide     DashboardVariableHide = "dontHide"
-	DashboardVariableHideHideLabel    DashboardVariableHide = "hideLabel"
-	DashboardVariableHideHideVariable DashboardVariableHide = "hideVariable"
+	DashboardVariableHideDontHide       DashboardVariableHide = "dontHide"
+	DashboardVariableHideHideLabel      DashboardVariableHide = "hideLabel"
+	DashboardVariableHideHideVariable   DashboardVariableHide = "hideVariable"
+	DashboardVariableHideInControlsMenu DashboardVariableHide = "inControlsMenu"
 )
 
 // Options to config when to refresh a variable
@@ -1504,7 +1617,7 @@ type DashboardIntervalVariableSpec struct {
 	Auto        bool                      `json:"auto"`
 	AutoMin     string                    `json:"auto_min"`
 	AutoCount   int64                     `json:"auto_count"`
-	Refresh     DashboardVariableRefresh  `json:"refresh"`
+	Refresh     string                    `json:"refresh"`
 	Label       *string                   `json:"label,omitempty"`
 	Hide        DashboardVariableHide     `json:"hide"`
 	SkipUrlSync bool                      `json:"skipUrlSync"`
@@ -1528,7 +1641,7 @@ func NewDashboardIntervalVariableSpec() *DashboardIntervalVariableSpec {
 		Auto:        false,
 		AutoMin:     "",
 		AutoCount:   0,
-		Refresh:     DashboardVariableRefreshNever,
+		Refresh:     "onTimeRangeChanged",
 		Hide:        DashboardVariableHideDontHide,
 		SkipUrlSync: false,
 	}
@@ -1685,7 +1798,7 @@ type DashboardAdHocFilterWithLabels struct {
 	KeyLabel    *string  `json:"keyLabel,omitempty"`
 	ValueLabels []string `json:"valueLabels,omitempty"`
 	ForceEdit   *bool    `json:"forceEdit,omitempty"`
-	Origin      string   `json:"origin,omitempty"`
+	Origin      *string  `json:"origin,omitempty"`
 	// @deprecated
 	Condition *string `json:"condition,omitempty"`
 }
@@ -1693,7 +1806,7 @@ type DashboardAdHocFilterWithLabels struct {
 // NewDashboardAdHocFilterWithLabels creates a new DashboardAdHocFilterWithLabels object.
 func NewDashboardAdHocFilterWithLabels() *DashboardAdHocFilterWithLabels {
 	return &DashboardAdHocFilterWithLabels{
-		Origin: DashboardFilterOrigin,
+		Origin: (func(input string) *string { return &input })(DashboardFilterOrigin),
 	}
 }
 
@@ -1713,6 +1826,44 @@ type DashboardMetricFindValue struct {
 // NewDashboardMetricFindValue creates a new DashboardMetricFindValue object.
 func NewDashboardMetricFindValue() *DashboardMetricFindValue {
 	return &DashboardMetricFindValue{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardSwitchVariableKind struct {
+	Kind string                      `json:"kind"`
+	Spec DashboardSwitchVariableSpec `json:"spec"`
+}
+
+// NewDashboardSwitchVariableKind creates a new DashboardSwitchVariableKind object.
+func NewDashboardSwitchVariableKind() *DashboardSwitchVariableKind {
+	return &DashboardSwitchVariableKind{
+		Kind: "SwitchVariable",
+		Spec: *NewDashboardSwitchVariableSpec(),
+	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardSwitchVariableSpec struct {
+	Name          string                `json:"name"`
+	Current       string                `json:"current"`
+	EnabledValue  string                `json:"enabledValue"`
+	DisabledValue string                `json:"disabledValue"`
+	Label         *string               `json:"label,omitempty"`
+	Hide          DashboardVariableHide `json:"hide"`
+	SkipUrlSync   bool                  `json:"skipUrlSync"`
+	Description   *string               `json:"description,omitempty"`
+}
+
+// NewDashboardSwitchVariableSpec creates a new DashboardSwitchVariableSpec object.
+func NewDashboardSwitchVariableSpec() *DashboardSwitchVariableSpec {
+	return &DashboardSwitchVariableSpec{
+		Name:          "",
+		Current:       "false",
+		EnabledValue:  "true",
+		DisabledValue: "false",
+		Hide:          DashboardVariableHideDontHide,
+		SkipUrlSync:   false,
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -1777,6 +1928,8 @@ func NewDashboardV2beta1DataQueryKindDatasource() *DashboardV2beta1DataQueryKind
 
 // +k8s:openapi-gen=true
 type DashboardV2beta1FieldConfigSourceOverrides struct {
+	// Describes config override rules created when interacting with Grafana.
+	SystemRef  *string                       `json:"__systemRef,omitempty"`
 	Matcher    DashboardMatcherConfig        `json:"matcher"`
 	Properties []DashboardDynamicConfigValue `json:"properties"`
 }
@@ -1834,6 +1987,16 @@ func NewDashboardV2beta1SpecialValueMapOptions() *DashboardV2beta1SpecialValueMa
 	return &DashboardV2beta1SpecialValueMapOptions{
 		Result: *NewDashboardValueMappingResult(),
 	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardV2beta1ActionStyle struct {
+	BackgroundColor *string `json:"backgroundColor,omitempty"`
+}
+
+// NewDashboardV2beta1ActionStyle creates a new DashboardV2beta1ActionStyle object.
+func NewDashboardV2beta1ActionStyle() *DashboardV2beta1ActionStyle {
+	return &DashboardV2beta1ActionStyle{}
 }
 
 // +k8s:openapi-gen=true
@@ -2323,7 +2486,7 @@ func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTab
 }
 
 // +k8s:openapi-gen=true
-type DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind struct {
+type DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind struct {
 	QueryVariableKind      *DashboardQueryVariableKind      `json:"QueryVariableKind,omitempty"`
 	TextVariableKind       *DashboardTextVariableKind       `json:"TextVariableKind,omitempty"`
 	ConstantVariableKind   *DashboardConstantVariableKind   `json:"ConstantVariableKind,omitempty"`
@@ -2332,15 +2495,16 @@ type DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasou
 	CustomVariableKind     *DashboardCustomVariableKind     `json:"CustomVariableKind,omitempty"`
 	GroupByVariableKind    *DashboardGroupByVariableKind    `json:"GroupByVariableKind,omitempty"`
 	AdhocVariableKind      *DashboardAdhocVariableKind      `json:"AdhocVariableKind,omitempty"`
+	SwitchVariableKind     *DashboardSwitchVariableKind     `json:"SwitchVariableKind,omitempty"`
 }
 
-// NewDashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind creates a new DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind object.
-func NewDashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind() *DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind {
-	return &DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind{}
+// NewDashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind creates a new DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind object.
+func NewDashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind() *DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind {
+	return &DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}
 }
 
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind` as JSON.
-func (resource DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind` as JSON.
+func (resource DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind) MarshalJSON() ([]byte, error) {
 	if resource.QueryVariableKind != nil {
 		return json.Marshal(resource.QueryVariableKind)
 	}
@@ -2365,12 +2529,15 @@ func (resource DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKin
 	if resource.AdhocVariableKind != nil {
 		return json.Marshal(resource.AdhocVariableKind)
 	}
+	if resource.SwitchVariableKind != nil {
+		return json.Marshal(resource.SwitchVariableKind)
+	}
 
 	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind` from JSON.
-func (resource *DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind) UnmarshalJSON(raw []byte) error {
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind` from JSON.
+func (resource *DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
@@ -2442,6 +2609,14 @@ func (resource *DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKi
 		}
 
 		resource.QueryVariableKind = &dashboardQueryVariableKind
+		return nil
+	case "SwitchVariable":
+		var dashboardSwitchVariableKind DashboardSwitchVariableKind
+		if err := json.Unmarshal(raw, &dashboardSwitchVariableKind); err != nil {
+			return err
+		}
+
+		resource.SwitchVariableKind = &dashboardSwitchVariableKind
 		return nil
 	case "TextVariable":
 		var dashboardTextVariableKind DashboardTextVariableKind

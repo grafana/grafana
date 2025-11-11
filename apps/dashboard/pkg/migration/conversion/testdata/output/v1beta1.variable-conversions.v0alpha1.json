@@ -1,7 +1,8 @@
 {
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
   "metadata": {
     "name": "variable-conversions-test",
-    "creationTimestamp": null,
     "labels": {
       "test": "variable-conversions"
     }
@@ -148,8 +149,14 @@
             "uid": "existing-ref-uid"
           },
           "defaultKeys": [
-            "job",
-            "instance"
+            {
+              "text": "job",
+              "value": "job"
+            },
+            {
+              "text": "instance",
+              "value": "instance"
+            }
           ],
           "description": "Add filters",
           "filters": [
@@ -177,7 +184,7 @@
           "name": "constant_var",
           "query": "my-application",
           "skipUrlSync": true,
-          "type": "const"
+          "type": "constant"
         },
         {
           "auto": true,
@@ -285,6 +292,7 @@
           "label": "Legacy Variable",
           "name": "legacy_string_var",
           "query": "up",
+          "refresh": 1,
           "skipUrlSync": false,
           "type": "query"
         },
@@ -346,8 +354,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1",
-      "error": ""
+      "storedVersion": "v1beta1"
     }
   }
 }

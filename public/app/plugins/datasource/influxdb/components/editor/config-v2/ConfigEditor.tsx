@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Box, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Stack, TextLink, Text, useStyles2 } from '@grafana/ui';
 
 import { DatabaseConnectionSection } from './DatabaseConnectionSection';
 import { LeftSideBar } from './LeftSideBar';
@@ -15,14 +15,18 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
   const styles = useStyles2(getStyles);
   return (
     <Stack justifyContent="space-between">
-      <div className={styles.hideOnSmallScreen}>
+      <div className={`${styles.hideOnSmallScreen} ${styles.leftSticky}`}>
         <Box width="100%" flex="1 1 auto">
           <LeftSideBar pdcInjected={options?.jsonData?.pdcInjected!!} />
         </Box>
       </div>
       <Box width="60%" flex="1 1 auto" minWidth={CONTAINER_MIN_WIDTH}>
         <Stack direction="column">
-          <Alert severity="info" title="You are viewing a new design for the InfluxDB configuration settings.">
+          <Alert
+            severity="info"
+            title="You are viewing a new design for the InfluxDB configuration settings."
+            className={styles.alertHeight}
+          >
             <>
               <TextLink
                 href="https://docs.google.com/forms/d/e/1FAIpQLSdi-zyX3c51vh937UKhNYYxhljUnFi6dQSlZv50mES9NrK-ig/viewform"
@@ -34,6 +38,9 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
               to help us make it even better.
             </>
           </Alert>
+          <Text variant="bodySmall" color="secondary">
+            Fields marked with * are required
+          </Text>
           <UrlAndAuthenticationSection options={options} onOptionsChange={onOptionsChange} />
           <DatabaseConnectionSection options={options} onOptionsChange={onOptionsChange} />
         </Stack>
@@ -53,6 +60,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       [theme.breakpoints.down('sm')]: {
         display: 'none',
       },
+    }),
+    leftSticky: css({
+      position: 'sticky',
+      top: '100px',
+      alignSelf: 'flex-start',
+      maxHeight: 'calc(100vh - 100px)',
+      overflow: 'hidden',
+    }),
+    alertHeight: css({
+      height: '100px',
     }),
   };
 };

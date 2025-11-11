@@ -3,7 +3,6 @@
   "apiVersion": "dashboard.grafana.app/v2beta1",
   "metadata": {
     "name": "dashboard-properties-test",
-    "creationTimestamp": null,
     "labels": {
       "test": "dashboard-properties"
     }
@@ -15,7 +14,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
             "spec": {
               "refId": "Anno"
@@ -49,11 +48,8 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
-                      "datasource": {
-                        "name": "default-ds-uid"
-                      },
                       "spec": {}
                     },
                     "refId": "A",
@@ -72,12 +68,7 @@
             "spec": {
               "options": {},
               "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "defaults": {},
-                    "overrides": []
-                  }
-                },
+                "defaults": {},
                 "overrides": []
               }
             }
@@ -165,7 +156,6 @@
     ],
     "liveNow": true,
     "preload": true,
-    "revision": 0,
     "tags": [
       "test",
       "properties",

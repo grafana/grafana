@@ -3,7 +3,6 @@
   "apiVersion": "dashboard.grafana.app/v2beta1",
   "metadata": {
     "name": "annotation-conversions-test",
-    "creationTimestamp": null,
     "labels": {
       "test": "annotation-conversions"
     }
@@ -155,7 +154,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
             "spec": {
               "expr": "static_annotation_query",
@@ -274,7 +273,15 @@
             "kind": "DataQuery",
             "group": "prometheus",
             "version": "v0",
-            "spec": {}
+            "datasource": {
+              "name": "default-ds-uid"
+            },
+            "spec": {
+              "expr": "ALERTS{alertstate=\"firing\"}",
+              "interval": "1m",
+              "refId": "Anno",
+              "step": 60
+            }
           },
           "enable": false,
           "hide": true,
@@ -282,14 +289,14 @@
           "name": "Disabled Built-in Annotation",
           "builtIn": true,
           "legacyOptions": {
-            "type": "builtin"
+            "type": "prometheus"
           }
         }
       }
     ],
     "cursorSync": "Off",
     "description": "Testing annotation transformations",
-    "editable": false,
+    "editable": true,
     "elements": {},
     "layout": {
       "kind": "GridLayout",
@@ -300,7 +307,6 @@
     "links": [],
     "liveNow": false,
     "preload": false,
-    "revision": 0,
     "tags": [
       "test",
       "annotations"
@@ -323,9 +329,7 @@
         "1d"
       ],
       "hideTimepicker": false,
-      "weekStart": "monday",
-      "fiscalYearStartMonth": 0,
-      "nowDelay": ""
+      "fiscalYearStartMonth": 0
     },
     "title": "Annotation Conversions Test Dashboard",
     "variables": []

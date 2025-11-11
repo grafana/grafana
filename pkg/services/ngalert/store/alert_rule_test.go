@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -36,12 +35,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationUpdateAlertRules(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
 	sqlStore := db.InitTestDB(t)
@@ -232,9 +231,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 }
 
 func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
@@ -389,9 +386,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 }
 
 func TestIntegration_CountAlertRules(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
@@ -456,9 +451,7 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 }
 
 func TestIntegration_DeleteInFolder(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
@@ -488,9 +481,7 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 }
 
 func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
@@ -739,9 +730,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 }
 
 func TestIntegrationInsertAlertRules(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	orgID := int64(1)
 	usr := models.UserUID("test")
@@ -908,9 +897,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 }
 
 func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	usr := models.UserUID("test")
 
@@ -1199,9 +1186,8 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 }
 
 func TestIntegrationListNotificationSettings(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	usr := models.UserUID("test")
 	sqlStore := db.InitTestDB(t)
 	folderService := setupFolderService(t, sqlStore, setting.NewCfg(), featuremgmt.WithFeatures())
@@ -1320,9 +1306,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 }
 
 func TestIntegrationGetNamespacesByRuleUID(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	usr := models.UserUID("test")
 
@@ -1371,9 +1355,8 @@ func TestIntegrationGetNamespacesByRuleUID(t *testing.T) {
 }
 
 func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	usr := models.UserUID("test")
 
 	sqlStore := db.InitTestDB(t)
@@ -1477,10 +1460,151 @@ func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
 	})
 }
 
+// To address issues arising from case-insensitive collations in some databases (e.g., MySQL/MariaDB),
+func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	usr := models.UserUID("test")
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+	store.FeatureToggles = featuremgmt.WithFeatures()
+
+	gen := models.RuleGen.With(models.RuleMuts.WithOrgID(1))
+
+	// Create namespace and base group key
+	groupKey := models.GenerateGroupKey(1)
+
+	// Create groups with case-sensitive names: "TEST", "Test", "test"
+	groupKeyUpper := groupKey
+	groupKeyUpper.RuleGroup = "TEST"
+
+	groupKeyMixed := groupKey
+	groupKeyMixed.RuleGroup = "Test"
+
+	groupKeyLower := groupKey
+	groupKeyLower.RuleGroup = "test"
+
+	// Generate rules for each group
+	groupUpper := gen.With(gen.WithGroupKey(groupKeyUpper)).GenerateMany(2)
+	groupMixed := gen.With(gen.WithGroupKey(groupKeyMixed)).GenerateMany(2)
+	groupLower := gen.With(gen.WithGroupKey(groupKeyLower)).GenerateMany(2)
+
+	// Insert all rules
+	allRules := append(append(groupUpper, groupMixed...), groupLower...)
+	_, err := store.InsertAlertRules(context.Background(), &usr, allRules)
+	require.NoError(t, err)
+
+	t.Run("should order groups case-sensitively", func(t *testing.T) {
+		result, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: 1},
+		})
+		require.NoError(t, err)
+		require.Len(t, result, 6, "should return all 6 rules")
+
+		// Extract group names in order
+		var groupOrder []string
+		for _, rule := range result {
+			if len(groupOrder) == 0 || groupOrder[len(groupOrder)-1] != rule.RuleGroup {
+				groupOrder = append(groupOrder, rule.RuleGroup)
+			}
+		}
+
+		// Verify case-sensitive alphabetical ordering
+		// different databases may sort uppercase before lowercase or vice versa depending on character set, the important part is that the order is consistent and case-sensitive
+		expectedOrder := []string{"test", "Test", "TEST"}
+		alternateExpectedOrder := []string{"TEST", "Test", "test"}
+		if !slices.Equal(groupOrder, expectedOrder) && !slices.Equal(groupOrder, alternateExpectedOrder) {
+			t.Fatalf("groups are not ordered case-sensitively as expected. got: %v, want: %v or %v", groupOrder, expectedOrder, alternateExpectedOrder)
+		}
+
+		// Verify each group contains the correct rules
+		groupRules := make(map[string][]*models.AlertRule)
+		for _, rule := range result {
+			groupRules[rule.RuleGroup] = append(groupRules[rule.RuleGroup], rule)
+		}
+
+		require.Len(t, groupRules["TEST"], 2, "TEST group should have 2 rules")
+		require.Len(t, groupRules["Test"], 2, "Test group should have 2 rules")
+		require.Len(t, groupRules["test"], 2, "test group should have 2 rules")
+	})
+
+	t.Run("should respect group limit with case-sensitive ordering", func(t *testing.T) {
+		// Test with limit of 2 groups - should get first 2 groups in case-sensitive order
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: 1},
+			Limit:               2,
+		})
+		require.NoError(t, err)
+		require.Len(t, result, 4, "should return 4 rules (2 rules from first 2 groups)")
+		require.NotEmpty(t, continueToken, "should have continue token when limit is reached")
+
+		// Extract group names from limited result
+		var limitedGroupOrder []string
+		for _, rule := range result {
+			if len(limitedGroupOrder) == 0 || limitedGroupOrder[len(limitedGroupOrder)-1] != rule.RuleGroup {
+				limitedGroupOrder = append(limitedGroupOrder, rule.RuleGroup)
+			}
+		}
+
+		// Should get first 2 groups in case-sensitive order: "TEST", "Test" or "test", "Test"
+		expectedLimitedOrder := []string{"TEST", "Test"}
+		alternateExpectedOrder := []string{"test", "Test"}
+		matchesDescLexOrder := slices.Equal(limitedGroupOrder, expectedLimitedOrder)
+		matchesAscLexOrder := slices.Equal(limitedGroupOrder, alternateExpectedOrder)
+		if !matchesDescLexOrder && !matchesAscLexOrder {
+			t.Fatalf("limited groups are not ordered case-sensitively as expected. got: %v, want: %v or %v", limitedGroupOrder, expectedLimitedOrder, alternateExpectedOrder)
+		}
+
+		// Continue from token to get remaining groups
+		remainingResult, nextToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: 1},
+			ContinueToken:       continueToken,
+		})
+		require.NoError(t, err)
+		require.Len(t, remainingResult, 2, "should return 2 rules from remaining group")
+		require.Empty(t, nextToken, "should not have continue token when all groups are fetched")
+
+		lastGroup := "test"
+		if matchesAscLexOrder {
+			lastGroup = "TEST"
+		}
+
+		// Verify the remaining group is "test"
+		for _, rule := range remainingResult {
+			require.Equal(t, lastGroup, rule.RuleGroup, "remaining group should be 'test'")
+		}
+	})
+
+	t.Run("should handle group limit of 1 correctly", func(t *testing.T) {
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: 1},
+			Limit:               1,
+		})
+		require.NoError(t, err)
+		require.Len(t, result, 2, "should return 2 rules from first group")
+		require.NotEmpty(t, continueToken, "should have continue token")
+
+		// Should only get the first group which can be "TEST" or "test" depending on charset
+		expectedGroup := "TEST"
+		if result[0].RuleGroup == "test" {
+			expectedGroup = "test"
+		}
+
+		for _, rule := range result {
+			require.Equal(t, expectedGroup, rule.RuleGroup, "all rules should be from the first group")
+		}
+	})
+}
+
 func TestIntegrationIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
 	sqlStore := db.InitTestDB(t)
@@ -1527,9 +1651,8 @@ func TestIntegrationIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 }
 
 func TestIntegrationGetRuleVersions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
 	sqlStore := db.InitTestDB(t)
@@ -1596,14 +1719,14 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
-func createRule(t *testing.T, store *DBstore, generator *models.AlertRuleGenerator) *models.AlertRule {
-	t.Helper()
+func createRule(tb testing.TB, store *DBstore, generator *models.AlertRuleGenerator) *models.AlertRule {
+	tb.Helper()
 	if generator == nil {
 		generator = models.RuleGen.With(models.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval))
 	}
 	rule := generator.GenerateRef()
 	converted, err := alertRuleFromModelsAlertRule(*rule)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 	err = store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		converted.ID = 0
 		_, err := sess.Table(alertRule{}).InsertOne(&converted)
@@ -1622,24 +1745,22 @@ func createRule(t *testing.T, store *DBstore, generator *models.AlertRuleGenerat
 		rule = &r
 		return err
 	})
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	return rule
 }
 
-func setupFolderService(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
+func setupFolderService(t testing.TB, sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
+	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, cfg)
 
-	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, folderStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true})
+	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true})
 }
 
 func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	usr := models.UserUID("test")
 	cfg := setting.UnifiedAlertingSettings{
 		BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second,
@@ -1735,10 +1856,170 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 	})
 }
 
-func TestIntegration_ListAlertRules(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
+func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second,
 	}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	bus := &fakeBus{}
+	orgID := int64(1)
+	ruleGen := models.RuleGen.With(
+		models.RuleMuts.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+		models.RuleMuts.WithOrgID(orgID),
+	)
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, bus)
+
+	// set test params
+	numFolders := 10
+	numRules := 50
+	rulesPerGroup := 5
+	totalGroups := numRules / rulesPerGroup // 10
+
+	// create rules with different group names
+	rules, _ := createManyRules(t,
+		store,
+		ruleGen,
+		numFolders,
+		numRules,
+		rulesPerGroup,
+	)
+	// sort rules by folder, then group, then group index
+	slices.SortStableFunc(rules, func(a, b *models.AlertRule) int {
+		if a.NamespaceUID != b.NamespaceUID {
+			return strings.Compare(a.NamespaceUID, b.NamespaceUID)
+		}
+		if a.RuleGroup != b.RuleGroup {
+			return strings.Compare(a.RuleGroup, b.RuleGroup)
+		}
+		return a.RuleGroupIndex - b.RuleGroupIndex
+	})
+
+	t.Run("should return all rules when no limit passed", func(t *testing.T) {
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+		})
+		require.NoError(t, err)
+		require.Len(t, result, 50, "should return all rules when no limit is set")
+		require.Empty(t, continueToken, "continue token should be empty when no limit is set")
+	})
+
+	t.Run("should return paginated results when group limit is set", func(t *testing.T) {
+		// random number from 1 to totalGroups - 1 (to ensure we always receive less than totalGroups)
+		groupLimit := rand.Int64N(int64(totalGroups)-1) + 1
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			Limit:               groupLimit,
+		})
+		require.NoError(t, err)
+		expectedRuleCount := groupLimit * int64(rulesPerGroup)
+		require.Len(t, result, int(expectedRuleCount), fmt.Sprintf("should return %d rules when group limit is set", expectedRuleCount))
+		require.NotEmpty(t, continueToken, "continue token should not be empty when limit is set")
+	})
+
+	t.Run("pagination should all for continuation", func(t *testing.T) {
+		groupLimit := int64(2) // fixed group limit for this test
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			Limit:               groupLimit,
+		})
+		require.NoError(t, err)
+		require.Len(t, result, int(groupLimit*int64(rulesPerGroup)), "should return rules for the first two groups")
+		require.NotEmpty(t, continueToken, "continue token should not be empty")
+
+		for i, rule := range result {
+			expected := rules[i].RuleGroup
+			actual := rule.RuleGroup
+			require.Equal(t, expected, actual, "rules should be ordered by group name")
+		}
+
+		resultRules := make([]*models.AlertRule, 0, len(result))
+		resultRules = append(resultRules, result...)
+
+		// Continue from previous, fetching the rest of the rules
+		result, continueToken, err = store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			ContinueToken:       continueToken,
+		})
+		require.NoError(t, err)
+		resultRules = append(resultRules, result...)
+		require.Len(t, resultRules, numRules, "should return all rules when continuing from the last token")
+		require.Empty(t, continueToken, "continue token should be empty when all rules are fetched")
+		for i, rule := range resultRules {
+			expected := rules[i].RuleGroup
+			actual := rule.RuleGroup
+			require.Equal(t, expected, actual, "rules should be ordered by group name")
+		}
+	})
+}
+
+func Benchmark_ListAlertRules(b *testing.B) {
+	orgID := int64(1)
+	ruleGen := models.RuleGen
+
+	// init
+	sqlStore := db.InitTestDB(b)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval: time.Duration(rand.Int64N(100)) * time.Second,
+	}
+	folderService := setupFolderService(b, sqlStore, cfg, featuremgmt.WithFeatures())
+	bus := &fakeBus{}
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, bus)
+
+	ruleGen = ruleGen.With(
+		ruleGen.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+		ruleGen.WithOrgID(orgID),
+	)
+
+	// define benchmark parameters
+	numFolders := 5
+	numRules := 10000
+	rulesPerGroup := 100
+	assert.Greater(b, numRules, rulesPerGroup, "n must be greater than rulesPerGroup")
+	assert.Equal(b, 0, numRules%rulesPerGroup, "n % rulesPerGroup must be zero to create equal groups")
+
+	// create rules and folders (5 folders, each with n/rulesPerGroup rules)
+	_, _ = createManyRules(b,
+		store,
+		ruleGen,
+		numFolders,    // number of folders
+		numRules,      // total number of rules
+		rulesPerGroup, // rules per group
+	)
+
+	b.Run(fmt.Sprintf("list %d rules unpaginated", numRules), func(b *testing.B) {
+		for b.Loop() {
+			_, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+				OrgID: orgID,
+			})
+			if err != nil {
+				b.Fatal(err)
+			}
+		}
+	})
+
+	for _, groupLimit := range []int{1, 2, 5, 10, 50, 100} {
+		b.Run(fmt.Sprintf("list %d groups paginated", groupLimit), func(b *testing.B) {
+			for b.Loop() {
+				_, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+					ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+					Limit:               int64(groupLimit),
+				})
+				if err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+	}
+}
+
+func TestIntegration_ListAlertRules(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
@@ -1793,10 +2074,148 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 	})
 }
 
-func TestIntegration_ListDeletedRules(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
+func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval: time.Duration(rand.Int64N(100)) * time.Second,
 	}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	orgID := int64(1)
+	ruleGen := models.RuleGen
+	ruleGen = ruleGen.With(
+		ruleGen.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+		ruleGen.WithOrgID(orgID),
+	)
+	t.Run("filter by RuleType", func(t *testing.T) {
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+		alertingGen := ruleGen
+		recordingGen := ruleGen.With(models.RuleMuts.WithAllRecordingRules(), models.RuleMuts.WithMetric("metric1"), models.RuleMuts.WithRecordFrom("A"))
+
+		alertingRules := []*models.AlertRule{
+			createRule(t, store, alertingGen),
+			createRule(t, store, alertingGen),
+		}
+		recordingRules := []*models.AlertRule{
+			createRule(t, store, recordingGen),
+			createRule(t, store, recordingGen),
+		}
+
+		t.Run("should return only alerting rules", func(t *testing.T) {
+			query := &models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{
+					OrgID: orgID,
+				},
+				RuleType: models.RuleTypeFilterAlerting,
+			}
+			result, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
+			require.NoError(t, err)
+			require.Empty(t, continueToken, "continue token should be empty when no pagination is applied")
+			require.NotEmpty(t, result)
+			for _, rule := range result {
+				require.Equal(t, models.RuleTypeAlerting, rule.Type())
+			}
+		})
+
+		t.Run("should return only recording rules", func(t *testing.T) {
+			query := &models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{
+					OrgID: orgID,
+				},
+				RuleType: models.RuleTypeFilterRecording,
+			}
+			result, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
+			require.NoError(t, err)
+			require.Empty(t, continueToken, "continue token should be empty when no pagination is applied")
+			require.NotEmpty(t, result)
+			for _, rule := range result {
+				require.Equal(t, models.RuleTypeRecording, rule.Type())
+			}
+		})
+
+		t.Run("should return both alerting and recording rules when RuleType is not set", func(t *testing.T) {
+			query := &models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{
+					OrgID: orgID,
+				},
+			}
+			result, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
+			require.NoError(t, err)
+			require.Empty(t, continueToken, "continue token should be empty when no pagination is applied")
+			require.NotEmpty(t, result)
+			var alertingCount, recordingCount int
+			for _, rule := range result {
+				switch rule.Type() {
+				case models.RuleTypeAlerting:
+					alertingCount++
+				case models.RuleTypeRecording:
+					recordingCount++
+				}
+			}
+			require.GreaterOrEqual(t, alertingCount, len(alertingRules))
+			require.GreaterOrEqual(t, recordingCount, len(recordingRules))
+		})
+		t.Run("should return both alerting and recording rules when RuleType is all", func(t *testing.T) {
+			query := &models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{
+					OrgID: orgID,
+				},
+				RuleType: models.RuleTypeFilterAll,
+			}
+			result, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
+			require.NoError(t, err)
+			require.Empty(t, continueToken, "continue token should be empty when no pagination is applied")
+			require.NotEmpty(t, result)
+			var alertingCount, recordingCount int
+			for _, rule := range result {
+				switch rule.Type() {
+				case models.RuleTypeAlerting:
+					alertingCount++
+				case models.RuleTypeRecording:
+					recordingCount++
+				}
+			}
+			require.GreaterOrEqual(t, alertingCount, len(alertingRules))
+			require.GreaterOrEqual(t, recordingCount, len(recordingRules))
+		})
+	})
+	t.Run("list rules with pagination", func(t *testing.T) {
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+		alertingGen := ruleGen.With(ruleGen.WithNamespaceUID("paginate-test"))
+		for i := 0; i < 10; i++ {
+			createRule(t, store, alertingGen)
+		}
+		t.Run("should return paginated results", func(t *testing.T) {
+			query := &models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{
+					OrgID:         orgID,
+					NamespaceUIDs: []string{"paginate-test"},
+				},
+				Limit: 5, // set page size to 5
+			}
+			result, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
+			require.NoError(t, err)
+			require.Len(t, result, 5, "should return 5 rules as per page size")
+			require.NotEmpty(t, continueToken, "continue token should not be empty for paginated results")
+
+			// continue with the next page
+			query.ContinueToken = continueToken
+			result2, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
+			require.NoError(t, err)
+			require.Len(t, result2, 5, "should return next 5 rules")
+			require.Empty(t, continueToken, "continue token should be empty when all rules are fetched")
+
+			require.NotElementsMatch(t, result, result2, "should not have same rules in both pages")
+		})
+	})
+}
+
+func TestIntegration_ListDeletedRules(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
 		BaseInterval:           1 * time.Second,
@@ -1880,9 +2299,7 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 }
 
 func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	oldClk := TimeNow
 	t.Cleanup(func() {
@@ -1974,4 +2391,28 @@ func (f *fakeBus) Publish(ctx context.Context, msg bus.Msg) error {
 	}
 
 	return nil
+}
+
+func createManyRules(tb testing.TB, store *DBstore, ruleGen *models.AlertRuleGenerator, numFolders, numRules, rulesPerGroup int) ([]*models.AlertRule, []string) {
+	tb.Helper()
+
+	require.Greater(tb, numRules, 0, "numRules must be greater than 0")
+	require.Greater(tb, numFolders, 0, "numFolders must be greater than 0")
+	require.Greater(tb, numRules, rulesPerGroup, "numRules must be greater than rulesPerGroup")
+	require.Greater(tb, rulesPerGroup, 0, "rulesPerGroup must be greater than 0")
+	require.Equal(tb, numRules%rulesPerGroup, 0, "numRules % rulesPerGroup must be zero to create equal groups")
+
+	rules := make([]*models.AlertRule, 0, numRules)
+	namespaceUIDs := make([]string, numFolders)
+	for i := range namespaceUIDs {
+		namespaceUIDs[i] = fmt.Sprintf("ns-%d", i)
+	}
+	for i := 0; i < numRules; i++ {
+		gen := ruleGen.With(
+			ruleGen.WithNamespaceUID(namespaceUIDs[i%numFolders]),
+			ruleGen.WithGroupName(fmt.Sprintf("group_%d", i%(numRules/rulesPerGroup))),
+		)
+		rules = append(rules, createRule(tb, store, gen))
+	}
+	return rules, namespaceUIDs
 }

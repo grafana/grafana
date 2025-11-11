@@ -2,8 +2,7 @@
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v2beta1",
   "metadata": {
-    "name": "test-v2alpha1-viz-config",
-    "creationTimestamp": null
+    "name": "test-v2alpha1-viz-config"
   },
   "spec": {
     "annotations": [],
@@ -25,7 +24,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "gdev-testdata"
@@ -215,8 +214,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v2alpha1",
-      "error": ""
+      "storedVersion": "v2alpha1"
     }
   }
 }

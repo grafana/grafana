@@ -157,7 +157,10 @@ func TestMetaAccessor(t *testing.T) {
 	}
 
 	t.Run("fails for non resource objects", func(t *testing.T) {
-		_, err := utils.MetaAccessor("hello")
+		_, err := utils.MetaAccessor(nil)
+		require.Error(t, err)
+
+		_, err = utils.MetaAccessor("hello")
 		require.Error(t, err)
 
 		_, err = utils.MetaAccessor(unstructured.Unstructured{})
@@ -172,6 +175,45 @@ func TestMetaAccessor(t *testing.T) {
 			},
 		})
 		require.NoError(t, err) // Must be a pointer
+	})
+
+	t.Run("get and set properties", func(t *testing.T) {
+		obj, err := utils.MetaAccessor(&unstructured.Unstructured{
+			Object: map[string]any{},
+		})
+		require.NoError(t, err)
+		rv := obj.GetResourceVersion()
+		require.Equal(t, "", rv)
+
+		_, ok := obj.GetRuntimeObject()
+		require.True(t, ok)
+		anno := obj.GetAnnotations()
+		require.Nil(t, anno)
+
+		rvInt, err := obj.GetResourceVersionInt64()
+		require.NoError(t, err)
+		require.Equal(t, int64(0), rvInt)
+
+		obj.SetResourceVersion("not a number")
+		rv = obj.GetResourceVersion()
+		require.Equal(t, "not a number", rv)
+		rvInt, err = obj.GetResourceVersionInt64()
+		require.Error(t, err)
+		require.Equal(t, int64(0), rvInt)
+
+		obj.SetUpdatedBy("updatedBy")
+		require.Equal(t, "updatedBy", obj.GetUpdatedBy())
+		anno = obj.GetAnnotations()
+		require.Len(t, anno, 1) // One key
+		obj.SetAnnotation(utils.AnnoKeyUpdatedBy, "")
+		anno = obj.GetAnnotations()
+		require.Empty(t, anno) // removed the key
+
+		obj.SetCreatedBy("createdBy")
+		require.Equal(t, "createdBy", obj.GetCreatedBy())
+
+		obj.SetFolder("folder")
+		require.Equal(t, "folder", obj.GetFolder())
 	})
 
 	t.Run("get and set grafana labels (unstructured)", func(t *testing.T) {
@@ -591,6 +633,32 @@ func TestMetaAccessor(t *testing.T) {
 				require.Equal(t, tt.wantProperties, mp)
 			})
 		}
+	})
+
+	t.Run("manage secure values", func(t *testing.T) {
+		raw := &unstructured.Unstructured{
+			Object: map[string]any{},
+		}
+		obj, _ := utils.MetaAccessor(raw)
+		sv, err := obj.GetSecureValues()
+		require.NoError(t, err)
+		require.Nil(t, sv)
+
+		err = obj.SetSecureValues(common.InlineSecureValues{
+			"A": common.InlineSecureValue{Name: "NameForA"},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, raw.Object["secure"])
+		sv, err = obj.GetSecureValues()
+		require.NoError(t, err)
+		require.Equal(t, "NameForA", sv["A"].Name)
+
+		// Manually set secure to an invalid property:
+		raw.Object["secure"] = t
+		sv, err = obj.GetSecureValues()
+		require.Error(t, err)
+		require.Nil(t, sv)
+		delete(raw.Object, "secure")
 	})
 
 	t.Run("SourceProperties", func(t *testing.T) {

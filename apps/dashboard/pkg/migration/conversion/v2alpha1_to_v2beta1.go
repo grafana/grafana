@@ -2,11 +2,15 @@ package conversion
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/conversion"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
+	authlib "github.com/grafana/authlib/types"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -46,12 +50,46 @@ import (
 // The conversion preserves all dashboard functionality while restructuring
 // the data model to consolidate datasource references into the DataQueryKind.
 
+// prepareV2alpha1ConversionContext sets up the context with namespace and service identity
+// for v2alpha1 dashboard conversions. This context is needed for datasource lookups.
+// Library panel service is available via package-level fallback (set in register.go).
+func prepareV2alpha1ConversionContext(in *dashv2alpha1.Dashboard) (context.Context, *authlib.NamespaceInfo, error) {
+	// Get the datasource provider instance (matches migration pattern where provider is always available)
+	dsInfoProvider := migration.GetDataSourceInfoProvider()
+	if dsInfoProvider == nil {
+		return nil, nil, fmt.Errorf("datasource provider not initialized")
+	}
+
+	namespace := in.GetNamespace()
+	if namespace == "" {
+		// If no namespace, still set up provider (matches migration pattern where provider is always available)
+		ctx := context.Background()
+		ctx = WithDataSourceProvider(ctx, dsInfoProvider)
+		return ctx, nil, nil
+	}
+
+	// Try to parse namespace and set up tenant-aware context
+	ctx := request.WithNamespace(context.Background(), namespace)
+	nsInfo, err := authlib.ParseNamespace(namespace)
+	if err != nil {
+		// If namespace parsing fails, still proceed with provider but without tenant info
+		// This allows conversion to continue with fallback behavior
+		ctx = WithDataSourceProvider(ctx, dsInfoProvider)
+		return ctx, nil, nil
+	}
+
+	ctx, _ = identity.WithServiceIdentity(ctx, nsInfo.OrgID)
+	ctx = WithDataSourceProvider(ctx, dsInfoProvider)
+
+	return ctx, &nsInfo, nil
+}
+
 // getLibraryPanelModelByUID loads a library panel's saved panel model JSON and returns it as map[string]any.
-// It uses the registered library panel service via the converter singleton. If the service
+// It uses the library panel service from context or test fallback. If the service
 // is unavailable or the element cannot be found, it returns nil. This is a best-effort helper
 // used to extract repeat settings for library panels during conversion.
-func getLibraryPanelModelByUID(uid string) map[string]interface{} {
-	svc := GetLibraryPanelService()
+func getLibraryPanelModelByUID(ctx context.Context, uid string) map[string]interface{} {
+	svc := getLibraryPanelService(ctx)
 	if svc == nil || uid == "" {
 		return nil
 	}
@@ -60,7 +98,12 @@ func getLibraryPanelModelByUID(uid string) map[string]interface{} {
 		GetPanelModelByUID(c context.Context, signedInUser identity.Requester, uid string) (map[string]interface{}, error)
 	}
 	if mg, ok := any(svc).(modelGetter); ok {
-		ctx, ident := identity.WithServiceIdentity(context.Background(), 1) // Default orgID to 1, not sure how to get the correct orgID when doing conversions.
+		// Use the context's identity if available, otherwise create a service identity
+		ident, err := identity.GetRequester(ctx)
+		if err != nil {
+			// Default orgID to 1 if we can't determine it from context
+			ctx, ident = identity.WithServiceIdentity(ctx, 1)
+		}
 		if m, err := mg.GetPanelModelByUID(ctx, ident, uid); err == nil {
 			return m
 		}
@@ -73,10 +116,19 @@ func ConvertDashboard_V2alpha1_to_V2beta1(in *dashv2alpha1.Dashboard, out *dashv
 	out.APIVersion = dashv2beta1.APIVERSION
 	out.Kind = in.Kind
 
-	return convertDashboardSpec_V2alpha1_to_V2beta1(&in.Spec, &out.Spec, scope)
+	// Prepare context with namespace and service identity (following V1beta1 pattern)
+	// Matches migration pattern: provider is always available (captured in closure for migrations, in context for conversions)
+	ctx, _, err := prepareV2alpha1ConversionContext(in)
+	if err != nil {
+		// If context preparation fails, return error to be handled by wrapper
+		// The wrapper will set status and handle gracefully
+		return fmt.Errorf("failed to prepare conversion context: %w", err)
+	}
+
+	return convertDashboardSpec_V2alpha1_to_V2beta1(&in.Spec, &out.Spec, scope, ctx)
 }
 
-func convertDashboardSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardSpec, out *dashv2beta1.DashboardSpec, scope conversion.Scope) error {
+func convertDashboardSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardSpec, out *dashv2beta1.DashboardSpec, scope conversion.Scope, ctx context.Context) error {
 	// Convert annotations
 	out.Annotations = make([]dashv2beta1.DashboardAnnotationQueryKind, len(in.Annotations))
 	for i, annotation := range in.Annotations {
@@ -106,7 +158,7 @@ func convertDashboardSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardSpec, ou
 	}
 
 	// Convert layout
-	if err := convertLayout_V2alpha1_to_V2beta1(&in.Layout, &out.Layout, scope, out.Elements); err != nil {
+	if err := convertLayout_V2alpha1_to_V2beta1(&in.Layout, &out.Layout, scope, out.Elements, ctx); err != nil {
 		return err
 	}
 
@@ -156,21 +208,26 @@ func convertDataQuery_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardDataQueryKin
 	if in == nil {
 		// v2beta1 requires a query even if v2alpha1 had none, so create a default
 		out.Kind = "DataQuery"
-		out.Group = ""
 		out.Version = "v0"
 		out.Spec = make(map[string]interface{})
+		// Don't set group field for manual annotations (no datasource)
 	} else {
 		out.Kind = "DataQuery"
-		out.Group = in.Kind
 		out.Version = "v0"
 		out.Spec = in.Spec
+		// Don't set group field by default - only set if datasource is present
 	}
 
-	// Convert datasource reference
+	// Convert datasource reference and set group from datasource type
 	if datasource != nil {
 		out.Datasource = &dashv2beta1.DashboardV2beta1DataQueryKindDatasource{}
 		if datasource.Uid != nil {
 			out.Datasource.Name = datasource.Uid
+		}
+		// Set group to datasource type to match frontend behavior
+		// Only set group if datasource type is not empty (matches frontend logic)
+		if datasource.Type != nil && *datasource.Type != "" {
+			out.Group = *datasource.Type
 		}
 	}
 
@@ -287,7 +344,7 @@ func convertQueryOptions_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardQueryOpti
 
 func convertVizConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVizConfigKind, out *dashv2beta1.DashboardVizConfigKind) error {
 	out.Kind = "VizConfig"
-	out.Group = in.Kind
+	out.Group = in.Kind // in.Kind is the panel type (e.g., "timeseries", "graph")
 	out.Version = in.Spec.PluginVersion
 	out.Spec = dashv2beta1.DashboardVizConfigSpec{
 		Options: in.Spec.Options,
@@ -334,6 +391,7 @@ func convertFieldConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFieldConfi
 			Steps: make([]dashv2beta1.DashboardThreshold, len(in.Thresholds.Steps)),
 		}
 		for i, step := range in.Thresholds.Steps {
+			// Convert threshold values: preserve null values from v2alpha1
 			out.Thresholds.Steps[i] = dashv2beta1.DashboardThreshold{
 				Value: step.Value,
 				Color: step.Color,
@@ -360,6 +418,8 @@ func convertFieldConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFieldConfi
 }
 
 func convertFieldConfigOverride_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides, out *dashv2beta1.DashboardV2beta1FieldConfigSourceOverrides) {
+	out.SystemRef = in.SystemRef
+
 	out.Matcher = dashv2beta1.DashboardMatcherConfig{
 		Id:      in.Matcher.Id,
 		Options: in.Matcher.Options,
@@ -437,39 +497,39 @@ func convertValueMapping_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardValueMapp
 	}
 }
 
-func convertLayout_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, out *dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, scope conversion.Scope, elements map[string]dashv2beta1.DashboardElement) error {
+func convertLayout_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, out *dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, scope conversion.Scope, elements map[string]dashv2beta1.DashboardElement, ctx context.Context) error {
 	if in.GridLayoutKind != nil {
 		out.GridLayoutKind = &dashv2beta1.DashboardGridLayoutKind{
 			Kind: in.GridLayoutKind.Kind,
 		}
-		return convertGridLayoutSpec_V2alpha1_to_V2beta1(&in.GridLayoutKind.Spec, &out.GridLayoutKind.Spec, scope, elements)
+		return convertGridLayoutSpec_V2alpha1_to_V2beta1(&in.GridLayoutKind.Spec, &out.GridLayoutKind.Spec, scope, elements, ctx)
 	}
 
 	if in.RowsLayoutKind != nil {
 		out.RowsLayoutKind = &dashv2beta1.DashboardRowsLayoutKind{
 			Kind: in.RowsLayoutKind.Kind,
 		}
-		return convertRowsLayoutSpec_V2alpha1_to_V2beta1(&in.RowsLayoutKind.Spec, &out.RowsLayoutKind.Spec, scope, elements)
+		return convertRowsLayoutSpec_V2alpha1_to_V2beta1(&in.RowsLayoutKind.Spec, &out.RowsLayoutKind.Spec, scope, elements, ctx)
 	}
 
 	if in.AutoGridLayoutKind != nil {
 		out.AutoGridLayoutKind = &dashv2beta1.DashboardAutoGridLayoutKind{
 			Kind: in.AutoGridLayoutKind.Kind,
 		}
-		return convertAutoGridLayoutSpec_V2alpha1_to_V2beta1(&in.AutoGridLayoutKind.Spec, &out.AutoGridLayoutKind.Spec, scope, elements)
+		return convertAutoGridLayoutSpec_V2alpha1_to_V2beta1(&in.AutoGridLayoutKind.Spec, &out.AutoGridLayoutKind.Spec, scope, elements, ctx)
 	}
 
 	if in.TabsLayoutKind != nil {
 		out.TabsLayoutKind = &dashv2beta1.DashboardTabsLayoutKind{
 			Kind: in.TabsLayoutKind.Kind,
 		}
-		return convertTabsLayoutSpec_V2alpha1_to_V2beta1(&in.TabsLayoutKind.Spec, &out.TabsLayoutKind.Spec, scope, elements)
+		return convertTabsLayoutSpec_V2alpha1_to_V2beta1(&in.TabsLayoutKind.Spec, &out.TabsLayoutKind.Spec, scope, elements, ctx)
 	}
 
 	return nil
 }
 
-func convertGridLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutSpec, out *dashv2beta1.DashboardGridLayoutSpec, scope conversion.Scope, elements map[string]dashv2beta1.DashboardElement) error {
+func convertGridLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutSpec, out *dashv2beta1.DashboardGridLayoutSpec, scope conversion.Scope, elements map[string]dashv2beta1.DashboardElement, ctx context.Context) error {
 	out.Items = make([]dashv2beta1.DashboardGridLayoutItemKind, len(in.Items))
 	for i, item := range in.Items {
 		out.Items[i] = dashv2beta1.DashboardGridLayoutItemKind{
@@ -493,11 +553,11 @@ func convertGridLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLay
 			if el, ok := elements[name]; ok && el.LibraryPanelKind != nil {
 				uid := el.LibraryPanelKind.Spec.LibraryPanel.Uid
 				if uid != "" {
-					if model := getLibraryPanelModelByUID(uid); model != nil {
-						if repeat := getStringField(model, "repeat", ""); repeat != "" {
-							opts := &dashv2beta1.DashboardRepeatOptions{Mode: "variable", Value: repeat}
-							if dir := getStringField(model, "repeatDirection", ""); dir != "" {
-								switch dir {
+					if model := getLibraryPanelModelByUID(ctx, uid); model != nil {
+						if repeatVal, ok := model["repeat"].(string); ok && repeatVal != "" {
+							opts := &dashv2beta1.DashboardRepeatOptions{Mode: "variable", Value: repeatVal}
+							if dirVal, ok := model["repeatDirection"].(string); ok && dirVal != "" {
+								switch dirVal {
 								case "h":
 									d := dashv2beta1.DashboardRepeatOptionsDirectionH
 									opts.Direction = &d
@@ -506,9 +566,20 @@ func convertGridLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLay
 									opts.Direction = &d
 								}
 							}
-							if mpr := getIntField(model, "maxPerRow", 0); mpr > 0 {
-								v := int64(mpr)
-								opts.MaxPerRow = &v
+							if mprVal, ok := model["maxPerRow"]; ok {
+								var mpr int
+								switch v := mprVal.(type) {
+								case int:
+									mpr = v
+								case int64:
+									mpr = int(v)
+								case float64:
+									mpr = int(v)
+								}
+								if mpr > 0 {
+									v := int64(mpr)
+									opts.MaxPerRow = &v
+								}
 							}
 							out.Items[i].Spec.Repeat = opts
 						}
@@ -520,7 +591,7 @@ func convertGridLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLay
 	return nil
 }
 
-func convertRowsLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardRowsLayoutSpec, out *dashv2beta1.DashboardRowsLayoutSpec, scope conversion.Scope, elements map[string]dashv2beta1.DashboardElement) error {
+func convertRowsLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardRowsLayoutSpec, out *dashv2beta1.DashboardRowsLayoutSpec, scope conversion.Scope, elements map[string]dashv2beta1.DashboardElement, ctx context.Context) error {
 	out.Rows = make([]dashv2beta1.DashboardRowsLayoutRowKind, len(in.Rows))
 	for i, row := range in.Rows {
 		out.Rows[i] = dashv2beta1.DashboardRowsLayoutRowKind{
@@ -534,14 +605,14 @@ func convertRowsLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardRowsLay
 				Repeat:               convertRowRepeatOptions_V2alpha1_to_V2beta1(row.Spec.Repeat),
 			},
 		}
-		if err := convertRowLayout_V2alpha1_to_V2beta1(&row.Spec.Layout, &out.Rows[i].Spec.Layout, scope, elements); err != nil {
+		if err := convertRowLayout_V2alpha1_to_V2beta1(&row.Spec.Layout, &out.Rows[i].Spec.Layout, scope, elements, ctx); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func convertAutoGridLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardAutoGridLayoutSpec, out *dashv2beta1.DashboardAutoGridLayoutSpec, scope conversion.Scope, elements map[string]dashv2beta1.DashboardElement) error {
+func convertAutoGridLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardAutoGridLayoutSpec, out *dashv2beta1.DashboardAutoGridLayoutSpec, scope conversion.Scope, elements map[string]dashv2beta1.DashboardElement, ctx context.Context) error {
 	out.MaxColumnCount = in.MaxColumnCount
 	out.ColumnWidthMode = dashv2beta1.DashboardAutoGridLayoutSpecColumnWidthMode(in.ColumnWidthMode)
 	out.ColumnWidth = in.ColumnWidth
@@ -569,9 +640,9 @@ func convertAutoGridLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardAut
 			if el, ok := elements[name]; ok && el.LibraryPanelKind != nil {
 				uid := el.LibraryPanelKind.Spec.LibraryPanel.Uid
 				if uid != "" {
-					if model := getLibraryPanelModelByUID(uid); model != nil {
-						if repeat := getStringField(model, "repeat", ""); repeat != "" {
-							out.Items[i].Spec.Repeat = &dashv2beta1.DashboardAutoGridRepeatOptions{Mode: "variable", Value: repeat}
+					if model := getLibraryPanelModelByUID(ctx, uid); model != nil {
+						if repeatVal, ok := model["repeat"].(string); ok && repeatVal != "" {
+							out.Items[i].Spec.Repeat = &dashv2beta1.DashboardAutoGridRepeatOptions{Mode: "variable", Value: repeatVal}
 						}
 					}
 				}
@@ -581,7 +652,7 @@ func convertAutoGridLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardAut
 	return nil
 }
 
-func convertTabsLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardTabsLayoutSpec, out *dashv2beta1.DashboardTabsLayoutSpec, scope conversion.Scope, elements map[string]dashv2beta1.DashboardElement) error {
+func convertTabsLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardTabsLayoutSpec, out *dashv2beta1.DashboardTabsLayoutSpec, scope conversion.Scope, elements map[string]dashv2beta1.DashboardElement, ctx context.Context) error {
 	out.Tabs = make([]dashv2beta1.DashboardTabsLayoutTabKind, len(in.Tabs))
 	for i, tab := range in.Tabs {
 		out.Tabs[i] = dashv2beta1.DashboardTabsLayoutTabKind{
@@ -592,7 +663,7 @@ func convertTabsLayoutSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardTabsLay
 				Repeat:               convertTabRepeatOptions_V2alpha1_to_V2beta1(tab.Spec.Repeat),
 			},
 		}
-		if err := convertTabLayout_V2alpha1_to_V2beta1(&tab.Spec.Layout, &out.Tabs[i].Spec.Layout, scope, elements); err != nil {
+		if err := convertTabLayout_V2alpha1_to_V2beta1(&tab.Spec.Layout, &out.Tabs[i].Spec.Layout, scope, elements, ctx); err != nil {
 			return err
 		}
 	}
@@ -705,6 +776,7 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 	}
 
 	if in.IntervalVariableKind != nil {
+		defaultIntervalVariableSpec := dashv2beta1.NewDashboardIntervalVariableSpec()
 		out.IntervalVariableKind = &dashv2beta1.DashboardIntervalVariableKind{
 			Kind: in.IntervalVariableKind.Kind,
 			Spec: dashv2beta1.DashboardIntervalVariableSpec{
@@ -715,7 +787,7 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 				Auto:        in.IntervalVariableKind.Spec.Auto,
 				AutoMin:     in.IntervalVariableKind.Spec.AutoMin,
 				AutoCount:   in.IntervalVariableKind.Spec.AutoCount,
-				Refresh:     dashv2beta1.DashboardVariableRefresh(in.IntervalVariableKind.Spec.Refresh),
+				Refresh:     defaultIntervalVariableSpec.Refresh,
 				Label:       in.IntervalVariableKind.Spec.Label,
 				Hide:        dashv2beta1.DashboardVariableHide(in.IntervalVariableKind.Spec.Hide),
 				SkipUrlSync: in.IntervalVariableKind.Spec.SkipUrlSync,
@@ -766,11 +838,19 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 	}
 
 	if in.AdhocVariableKind != nil {
+		group := ""
+		var uid *string
+		if in.AdhocVariableKind.Spec.Datasource != nil {
+			if in.AdhocVariableKind.Spec.Datasource.Type != nil {
+				group = *in.AdhocVariableKind.Spec.Datasource.Type
+			}
+			uid = in.AdhocVariableKind.Spec.Datasource.Uid
+		}
 		out.AdhocVariableKind = &dashv2beta1.DashboardAdhocVariableKind{
 			Kind:  in.AdhocVariableKind.Kind,
-			Group: *in.AdhocVariableKind.Spec.Datasource.Type,
+			Group: group,
 			Datasource: &dashv2beta1.DashboardV2beta1AdhocVariableKindDatasource{
-				Name: in.AdhocVariableKind.Spec.Datasource.Uid,
+				Name: uid,
 			},
 			Spec: dashv2beta1.DashboardAdhocVariableSpec{
 				Name:             in.AdhocVariableKind.Spec.Name,
@@ -974,7 +1054,7 @@ func convertConditionalRenderingGroupKind_V2alpha1_to_V2beta1(in *dashv2alpha1.D
 	return out
 }
 
-func convertRowLayout_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, out *dashv2beta1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, scope conversion.Scope, elements map[string]dashv2beta1.DashboardElement) error {
+func convertRowLayout_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, out *dashv2beta1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, scope conversion.Scope, elements map[string]dashv2beta1.DashboardElement, ctx context.Context) error {
 	// Handle the different union type orderings by converting through the main layout function
 	// Create a temporary variable with the correct type ordering
 	var tempIn dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind
@@ -994,7 +1074,7 @@ func convertRowLayout_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutKi
 		tempIn.TabsLayoutKind = in.TabsLayoutKind
 	}
 
-	if err := convertLayout_V2alpha1_to_V2beta1(&tempIn, &tempOut, scope, elements); err != nil {
+	if err := convertLayout_V2alpha1_to_V2beta1(&tempIn, &tempOut, scope, elements, ctx); err != nil {
 		return err
 	}
 
@@ -1015,7 +1095,7 @@ func convertRowLayout_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutKi
 	return nil
 }
 
-func convertTabLayout_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, out *dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, scope conversion.Scope, elements map[string]dashv2beta1.DashboardElement) error {
+func convertTabLayout_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, out *dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, scope conversion.Scope, elements map[string]dashv2beta1.DashboardElement, ctx context.Context) error {
 	// Handle the different union type orderings by converting through the main layout function
 	// Create a temporary variable with the correct type ordering
 	var tempIn dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind
@@ -1035,7 +1115,7 @@ func convertTabLayout_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutKi
 		tempIn.TabsLayoutKind = in.TabsLayoutKind
 	}
 
-	if err := convertLayout_V2alpha1_to_V2beta1(&tempIn, &tempOut, scope, elements); err != nil {
+	if err := convertLayout_V2alpha1_to_V2beta1(&tempIn, &tempOut, scope, elements, ctx); err != nil {
 		return err
 	}
 

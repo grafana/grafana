@@ -24,7 +24,7 @@ type PartialTempoQuery struct {
 	MetricsQueryType *dataquery.MetricsQueryType
 }
 
-func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *Datasource) error {
+func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *DatasourceInfo) error {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.runMetricsStream")
 	defer span.End()
 
@@ -36,7 +36,7 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 		response.Error = fmt.Errorf("error unmarshaling backend query model: %v", err)
 		span.RecordError(response.Error)
 		span.SetStatus(codes.Error, response.Error.Error())
-		return err
+		return backend.DownstreamErrorf("error unmarshaling backend query model: %v", err)
 	}
 
 	tempoQuery := &PartialTempoQuery{}
@@ -45,7 +45,7 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 		response.Error = fmt.Errorf("error unmarshaling Tempo query model: %v", err)
 		span.RecordError(response.Error)
 		span.SetStatus(codes.Error, response.Error.Error())
-		return err
+		return backend.DownstreamErrorf("failed to unmarshall Tempo query model: %w", err)
 	}
 
 	var qrr *tempopb.QueryRangeRequest
@@ -54,11 +54,11 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 		response.Error = fmt.Errorf("error unmarshaling Tempo query model: %v", err)
 		span.RecordError(response.Error)
 		span.SetStatus(codes.Error, response.Error.Error())
-		return err
+		return backend.DownstreamErrorf("failed to unmarshall Tempo query model: %w", err)
 	}
 
 	if qrr.GetQuery() == "" {
-		return fmt.Errorf("query is empty")
+		return backend.DownstreamErrorf("tempo search query cannot be empty")
 	}
 
 	qrr.Start = uint64(backendQuery.TimeRange.From.UnixNano())
@@ -81,6 +81,9 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 			s.logger.Error("Error Search()", "err", err)
+			if backend.IsDownstreamHTTPError(err) {
+				return backend.DownstreamError(err)
+			}
 			return err
 		}
 
@@ -92,6 +95,9 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		s.logger.Error("Error Search()", "err", err)
+		if backend.IsDownstreamHTTPError(err) {
+			return backend.DownstreamError(err)
+		}
 		return err
 	}
 

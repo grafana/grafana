@@ -33,6 +33,7 @@ export interface DashboardWithAccessInfo<T> extends Resource<T, Status, 'Dashboa
     canStar?: boolean;
     canAdmin?: boolean;
     annotationsPermissions?: AnnotationsPermissions;
+    isPublic?: boolean;
   }; // TODO...
 }
 
@@ -47,12 +48,12 @@ export interface DashboardVersionError extends Error {
 }
 
 export class DashboardVersionError extends Error {
-  constructor(storedVersion: string, message = 'Dashboard version mismatch') {
+  constructor(storedVersion: string | undefined, message = 'Dashboard version mismatch') {
     super(message);
     this.name = 'DashboardVersionError';
     this.status = 200;
     this.data = {
-      storedVersion,
+      storedVersion: storedVersion ?? 'unknown',
       message,
     };
   }

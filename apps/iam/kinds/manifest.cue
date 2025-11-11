@@ -10,7 +10,7 @@ manifest: {
 
 v0alpha1: {
     kinds: [
-		globalrolev0alpha1, 
+		globalrolev0alpha1,
 		globalrolebindingv0alpha1,
 		corerolev0alpha1,
 		rolev0alpha1,
@@ -20,5 +20,6 @@ v0alpha1: {
 		teamv0alpha1,
 		teambindingv0alpha1,
 		serviceaccountv0alpha1,
+		externalGroupMappingv0alpha1
 	]
 }

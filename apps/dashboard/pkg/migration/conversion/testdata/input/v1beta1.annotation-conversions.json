@@ -190,8 +190,17 @@
           "enable": false,
           "hide": true,
           "iconColor": "transparent",
-          "target": {},
-          "type": "builtin"
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "target": {
+            "expr": "ALERTS{alertstate=\"firing\"}",
+            "refId": "Anno",
+            "interval": "1m",
+            "step": 60
+          },
+          "type": "prometheus"
         }
       ]
     },

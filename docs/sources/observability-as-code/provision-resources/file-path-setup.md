@@ -16,13 +16,12 @@ weight: 200
 # Set up file provisioning
 
 {{< admonition type="caution" >}}
-Local file provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana to use this feature. This feature is not publicly available in Grafana Cloud yet. Only the cloud-hosted version of GitHub (GitHub.com) is supported at this time. GitHub Enterprise is not yet compatible.
 
-Sign up for Grafana Cloud Git Sync early access using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9).
+Local file provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions, but it's **not available in Grafana Cloud**. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
 
 {{< /admonition >}}
 
-File provisioning in Grafana lets you include resources, including folders and dashboard JSON files, that are stored in a local file system.
+Use local file provisioning to include in your Grafana instance resources (such as folders and dashboard JSON files) that are stored in a local file system.
 
 This page explains how to set up local file provisioning.
 
@@ -41,16 +40,19 @@ To set up file sync with local with local files, you need to:
 Local file provisioning using **Administration** > **Provisioning** will eventually replace the traditional methods Grafana has used for referencing local file systems for dashboard files.
 
 {{< admonition type="note" >}}
-For production system, we recommend using the `folderFromFilesStructure` capability instead of **Administration** > **Provisioning** to include dashboards from a local file system in your Grafana instance.
-Refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#provision-folders-structure-from-filesystem-to-grafana) for more information.
+For production systems, use the `folderFromFilesStructure` capability instead of **Administration** > **Provisioning** to include dashboards from a local file system in your Grafana instance. Refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#provision-folders-structure-from-filesystem-to-grafana) for more information.
 {{< /admonition >}}
 
 ### Limitations
 
 - A provisioned dashboard can't be deleted from within Grafana UI. The dashboard has to be deleted at the local file system and those changes synced to Grafana.
-- Changes from the local file system are one way: you can't save changes from
+- Changes from the local file system are one way: you can't save changes from the Grafana UI to GitHub.
 
 ## Before you begin
+
+{{< admonition type="note" >}}
+Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana to use this feature.
+{{< /admonition >}}
 
 To set up file provisioning, you need:
 
@@ -122,15 +124,27 @@ The set up process verifies the path and provides an error message if a problem 
 
 ### Choose what to synchronize
 
-In this section, you determine the actions taken with the storage you selected.
+#### Synchronization limitations
 
-1. Select how resources should be handled in Grafana.
+Full instance sync is not available in Grafana Cloud.
 
-- Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. You can only have one provisioned connection with this selection.
-- Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 folders. - Enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
-<!--  - Select **Migrate instance to repository** to migrate the Grafana instance to the repository. This option is not available during the first time you set up remote provisioning. -->
+In Grafana OSS/Enterprise:
 
-1. Select **Synchronize** to continue.
+- If you try to perform a full instance sync with resources that contain alerts or panels, the connection will be blocked.
+- You won't be able to create new alerts or library panels after setup is completed.
+- If you opted for full instance sync and want to use alerts and library panels, you'll have to delete the provisioned repository and connect again with folder sync.
+
+#### Set up synchronization
+
+Choose to either sync your entire organization resources with external storage, or to sync certain resources to a new Grafana folder (with up to 10 connections).
+
+- Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. With this option, all of your dashboards are synced to that one repository. You can only have one provisioned connection with this selection, and you won't have the option of setting up additional repositories to connect to.
+
+- Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
+
+Next, enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
+
+Click **Synchronize** to continue.
 
 ### Synchronize with external storage
 

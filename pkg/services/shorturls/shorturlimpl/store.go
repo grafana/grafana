@@ -3,26 +3,27 @@ package shorturlimpl
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/shorturls"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type store interface {
-	Get(ctx context.Context, user *user.SignedInUser, uid string) (*shorturls.ShortUrl, error)
+	Get(ctx context.Context, user identity.Requester, uid string) (*shorturls.ShortUrl, error)
 	Update(ctx context.Context, shortURL *shorturls.ShortUrl) error
 	Insert(ctx context.Context, shortURL *shorturls.ShortUrl) error
 	Delete(ctx context.Context, cmd *shorturls.DeleteShortUrlCommand) error
+	List(ctx context.Context, orgID int64) ([]*shorturls.ShortUrl, error)
 }
 
 type sqlStore struct {
 	db db.DB
 }
 
-func (s sqlStore) Get(ctx context.Context, user *user.SignedInUser, uid string) (*shorturls.ShortUrl, error) {
+func (s sqlStore) Get(ctx context.Context, user identity.Requester, uid string) (*shorturls.ShortUrl, error) {
 	var shortURL shorturls.ShortUrl
 	err := s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
-		exists, err := dbSession.Where("org_id=? AND uid=?", user.OrgID, uid).Get(&shortURL)
+		exists, err := dbSession.Where("org_id=? AND uid=?", user.GetOrgID(), uid).Get(&shortURL)
 		if err != nil {
 			return err
 		}
@@ -83,4 +84,20 @@ func (s sqlStore) Delete(ctx context.Context, cmd *shorturls.DeleteShortUrlComma
 		}
 		return nil
 	})
+}
+
+func (s sqlStore) List(ctx context.Context, orgID int64) ([]*shorturls.ShortUrl, error) {
+	var shortURLs []*shorturls.ShortUrl
+	err := s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		err := dbSession.Where("org_id = ?", orgID).Find(&shortURLs)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return shortURLs, nil
 }

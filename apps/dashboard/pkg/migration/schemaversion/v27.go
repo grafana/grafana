@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V27 migrates repeated panels and constant variables.
 //
 // The migration performs two main tasks:
@@ -73,7 +75,7 @@ package schemaversion
 //	    }
 //	  ]
 //	}
-func V27(dashboard map[string]interface{}) error {
+func V27(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 27
 
 	// Remove repeated panels
@@ -117,7 +119,7 @@ func removeRepeatedPanels(panels []interface{}) []interface{} {
 		// Filter out repeats in collapsed rows
 		if p["type"] == "row" {
 			if nestedPanels, ok := p["panels"].([]interface{}); ok {
-				var filteredNestedPanels []interface{}
+				filteredNestedPanels := []interface{}{}
 				for _, nestedPanel := range nestedPanels {
 					if np, ok := nestedPanel.(map[string]interface{}); ok {
 						if _, hasRepeatPanelId := np["repeatPanelId"]; !hasRepeatPanelId {
@@ -159,9 +161,8 @@ func migrateConstantVariable(variable map[string]interface{}) {
 	variable["options"] = options
 
 	// Convert to textbox if hide is 0 (dontHide) or 1 (hideLabel)
-	if hide, ok := variable["hide"].(float64); ok {
-		if hide == 0 || hide == 1 {
-			variable["type"] = "textbox"
-		}
+	hide := GetIntValue(variable, "hide", -1)
+	if hide == 0 || hide == 1 {
+		variable["type"] = "textbox"
 	}
 }

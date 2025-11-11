@@ -154,6 +154,8 @@ FieldConfigSource: {
 	defaults: FieldConfig
 	// Overrides are the options applied to specific fields overriding the defaults.
 	overrides: [...{
+		// Describes config override rules created when interacting with Grafana.
+		"__systemRef"?: string
 		matcher: MatcherConfig
 		properties: [...DynamicConfigValue]
 	}]
@@ -221,6 +223,9 @@ FieldConfig: {
 	// The behavior when clicking on a result
 	links?: [...]
 
+	// Define interactive HTTP requests that can be triggered from data visualizations.
+	actions?: [...Action]
+
 	// Alternative to empty string
 	noValue?: string
 
@@ -244,7 +249,8 @@ MatcherConfig: {
 }
 
 Threshold: {
-	value: number
+	// Value null means -Infinity
+	value: number | null
 	color: string
 }
 
@@ -363,6 +369,47 @@ FieldColor: {
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 DashboardLinkType: "link" | "dashboards"
+
+ActionType: "fetch" | "infinity"
+
+FetchOptions: {
+	method: HttpRequestMethod
+	url: string
+	body?: string
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that 
+	// that would have exactly two strings in each sub-array
+	queryParams?: [...[...string]]
+	headers?: [...[...string]]
+}
+
+InfinityOptions: FetchOptions & {
+	datasourceUid: string
+}
+
+HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH" 
+
+// Action variable type
+ActionVariableType: "string"
+
+ActionVariable: {
+	key: string
+	name: string
+	type: ActionVariableType
+}
+
+Action: {
+	type: ActionType
+	title: string
+	fetch?: FetchOptions
+	infinity?: InfinityOptions
+	confirmation?: string
+	oneClick?: bool
+	variables?: [...ActionVariable]
+	style?: {
+		backgroundColor?: string
+	}
+}
 
 // --- Common types ---
 Kind: {

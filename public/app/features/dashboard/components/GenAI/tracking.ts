@@ -9,6 +9,7 @@ export enum EventTrackingSrc {
   dashboardChanges = 'dashboard-changes',
   dashboardTitle = 'dashboard-title',
   dashboardDescription = 'dashboard-description',
+  sqlExpressions = 'sql-expressions',
   unknown = 'unknown',
 }
 

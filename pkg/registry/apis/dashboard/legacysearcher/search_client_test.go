@@ -454,7 +454,9 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 	t.Run("Should retrieve dashboards by provisioner name through a different function", func(t *testing.T) {
 		mockStore.On("GetProvisionedDashboardsByName", mock.Anything, "test", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{
 			{
-				Dashboard:   dashboards.Dashboard{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+				UID:         "uid",
+				Title:       "Test Dashboard",
+				FolderUID:   "folder1",
 				ExternalID:  "test",
 				Provisioner: string(utils.ManagerKindClassicFP), // nolint:staticcheck
 			},
@@ -575,6 +577,11 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 
 	t.Run("Should search dashboards based on what is connected to a library panel", func(t *testing.T) {
 		mockStore.On("GetDashboardsByLibraryPanelUID", mock.Anything, "test-library-panel", int64(2)).Return([]*dashboards.DashboardRef{
+			{UID: "dashboard1", FolderUID: "folder1", ID: 1},
+			{UID: "dashboard2", FolderUID: "folder2", ID: 2},
+		}, nil).Once()
+
+		mockStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
 			{UID: "dashboard1", FolderUID: "folder1", ID: 1},
 			{UID: "dashboard2", FolderUID: "folder2", ID: 2},
 		}, nil).Once()

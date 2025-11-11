@@ -85,9 +85,9 @@
         "tooltip-classic-query": "Implementasi awal dari editor kueri variabel Prometheus. Masukkan string dengan jenis kueri dan parameter yang benar seperti yang dijelaskan dalam dokumen ini. Misalnya, {{exampleQuery}}.",
         "tooltip-label": "Mengembalikan daftar nilai label untuk nama label di semua metrik kecuali metrik tersebut ditentukan.",
         "tooltip-metric-regex": "Mengembalikan daftar nama label, secara opsional menyaring berdasarkan regex metrik yang ditentukan.",
-        "tooltip-query": "Mengembalikan daftar hasil kueri Prometheus untuk kueri tersebut. Ini dapat mencakup fungsi Prometheus, yaitu {{exampleQuery}}.",
+        "tooltip-query": "",
         "tooltip-query-type": "Plugin sumber data Prometheus menyediakan jenis kueri berikut untuk variabel templat.",
-        "tooltip-series-query": "Masukkan metrik dengan label, hanya metrik atau hanya label, yaitu {{example1}}, {{example2}}, atau {{example3}}. Mengembalikan daftar deret waktu yang terkait dengan data yang dimasukkan."
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "selektor",
@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Nonaktifkan aturan perekaman (beta)",
         "label-http-method": "Metode HTTP",
         "label-incremental-querying-beta": "Kueri inkremental (beta)",
-        "label-metric-names-suggestion-limit": "Batas saran nama metrik",
         "label-prom-type-version": "Versi {{promType}}",
         "label-prometheus-type": "Jenis Prometheus",
         "label-query-overlap-window": "Jendela kueri tumpang tindih",
@@ -176,20 +175,19 @@
         "label-scrape-interval": "Interval scrape",
         "label-series-limit": "Batas data seri",
         "label-use-series-endpoint": "Gunakan titik akhir data seri",
-        "more-info": "Untuk informasi lengkap tentang mengonfigurasi jenis dan versi prometheus dalam sumber data, lihat <2>dokumentasi penyediaan</2>.",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "Contoh: {{example}}",
         "title-interval-behaviour": "Perilaku interval",
         "title-other": "Lainnya",
         "title-performance": "Kinerja",
         "title-query-editor": "Editor kueri",
         "tooltip-cache-level": "Mengatur level cache peramban untuk kueri editor. Pengaturan cache yang lebih tinggi disarankan untuk sumber data dengan kardinalitas tinggi.",
-        "tooltip-custom-query-parameters": "Tambahkan parameter kustom ke URL kueri Prometheus. Misalnya {{example1}}, {{example2}}, {{example3}}, atau {{example4}}. Beberapa parameter harus digabungkan bersama dengan {{concatenationChar}}.",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "Atur opsi editor default untuk semua pengguna sumber data ini.",
-        "tooltip-disable-metrics-lookup": "Memeriksa opsi ini akan menonaktifkan pemilih metrik dan dukungan metrik/label dalam pelengkapan otomatis bidang kueri. Ini membantu jika Anda memiliki masalah kinerja dengan instans Prometheus yang lebih besar. ",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "Fitur ini akan menonaktifkan aturan perekaman. Aktifkan ini untuk meningkatkan kinerja dasbor",
         "tooltip-http-method": "Anda dapat menggunakan metode HTTP POST atau GET untuk melakukan kueri sumber data Prometheus Anda. POST adalah metode yang disarankan karena memungkinkan kueri yang lebih besar. Ubah ini menjadi GET jika Anda memiliki versi Prometheus yang lebih lama dari 2.1 atau jika permintaan POST dibatasi di jaringan Anda.",
         "tooltip-incremental-querying-beta": "Fitur ini akan mengubah perilaku default kueri relatif: alih-alih selalu meminta data terbaru dari instans Prometheus, hasil kueri akan disimpan sementara, dan hanya data baru yang akan diminta. Aktifkan ini untuk mengurangi beban basis data dan jaringan.",
-        "tooltip-metric-names-suggestion-limit": "Jumlah maksimum nama metrik yang mungkin muncul sebagai saran pelengkapan otomatis dalam mode Kode editor kueri.",
         "tooltip-prom-type-version": "Gunakan ini untuk mengatur versi instans {{promType}} Anda jika tidak dikonfigurasi secara otomatis.",
         "tooltip-prometheus-type": "Atur ini ke jenis basis data prometheus Anda, misalnya Prometheus, Cortex, Mimir, atau Thanos. Mengubah bidang ini akan menyimpan pengaturan Anda saat ini. Jenis Prometheus tertentu mendukung atau tidak mendukung berbagai API. Misalnya, beberapa jenis mendukung pencocokan regex bagi kueri label untuk meningkatkan kinerja. Beberapa jenis memiliki API untuk metadata. Jika Anda mengatur ini secara tidak benar, Anda mungkin mengalami perilaku tidak biasa saat melakukan kueri metrik dan label. Periksa dokumentasi Prometheus Anda untuk memastikan Anda memasukkan jenis yang benar.",
         "tooltip-query-overlap-window": "Tetapkan durasi seperti {{example1}} atau {{example2}} atau {{example3}}. Default {{default}}. Durasi ini akan ditambahkan ke durasi setiap permintaan tambahan.",
@@ -415,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Tetapkan batas bawah untuk parameter langkah",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "Pilih resolusi",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "Peta panas",
           "label-table": "Tabel",
@@ -431,10 +432,6 @@
         "title-options": "Opsi",
         "tooltip-min-step": "Batas bawah tambahan untuk parameter langkah kueri Prometheus dan untuk variabel <2>{{interval}}</2> dan <4>{{rateInterval}}</4>."
       },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Saran pelengkapan otomatis dibatasi",
-        "tooltip-autocomplete-suggestions-limited": "Jumlah nama metrik melebihi batas pelengkapan otomatis. Hanya {{autocompleteLimit}} metrik yang paling relevan yang ditampilkan. Anda dapat menyesuaikan ambang batas dalam pengaturan sumber data."
-      },
       "prom-query-editor-selector": {
         "body-syntax-error": "Ada kesalahan sintaksis, atau struktur kueri tidak dapat divisualisasikan saat beralih ke mode pembuat. Bagian dari kueri mungkin hilang.",
         "confirmText-continue": "Lanjutkan",
@@ -444,6 +441,7 @@
         "title-parsing-error-switch-builder": "Terjadi kesalahan penguraian: Beralih ke mode pembuat?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "Legenda",
         "placeholder-select-legend-mode": "Pilih mode legenda",
         "tooltip-legend": "Mengganti nama seri atau templat. Misalnya, {{templateExample}} akan diganti dengan nilai label untuk {{labelName}}."
@@ -481,18 +479,13 @@
         "aria-label-selector": "selektor"
       },
       "results-table": {
-        "content-descriptive-type": "Saat membuat {{descriptiveType}}, Prometheus mengekspos beberapa data seri dengan penghitung jenis. ",
+        "content-descriptive-type": "",
         "description": "Deskripsi",
         "message-expand-label-filters": "Tidak ada metrik yang ditemukan. Coba perluas filter label Anda.",
         "message-expand-search": "Tidak ada metrik yang ditemukan. Coba perluas pencarian dan filter Anda.",
         "message-no-metrics-found": "Tidak ada metrik yang ditemukan di sumber data.",
         "name": "Nama",
         "type": "Jenis"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Penguraian kueri mengalami masalah ketidakjelasan."
-        }
       }
     }
   }

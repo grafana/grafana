@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/utils/ptr"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -25,6 +26,19 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 	if op != admission.Create && op != admission.Update {
 		return nil
 	}
+
+	switch a.GetResource().Resource {
+	case dashboardV0.DASHBOARD_RESOURCE:
+		return b.mutateDashboard(ctx, a)
+
+	case dashboardV0.LIBRARY_PANEL_RESOURCE:
+		return nil // nothing needed
+	}
+
+	return fmt.Errorf("unexpected resource: %+v", a.GetResource())
+}
+
+func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.Attributes) (err error) {
 	var internalID int64
 	obj := a.GetObject()
 	meta, err := utils.MetaAccessor(obj)
@@ -43,6 +57,7 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 			internalID = int64(id)
 		}
 		resourceInfo = dashboardV0.DashboardResourceInfo
+
 	case *dashboardV1.Dashboard:
 		delete(v.Spec.Object, "uid")
 		delete(v.Spec.Object, "version")
@@ -51,11 +66,11 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 			internalID = int64(id)
 		}
 		resourceInfo = dashboardV1.DashboardResourceInfo
-		migrationErr = migration.Migrate(v.Spec.Object, schemaversion.LATEST_VERSION)
+		migrationErr = migration.Migrate(ctx, v.Spec.Object, schemaversion.LATEST_VERSION)
 		if migrationErr != nil {
 			v.Status.Conversion = &dashboardV1.DashboardConversionStatus{
 				Failed: true,
-				Error:  migrationErr.Error(),
+				Error:  ptr.To(migrationErr.Error()),
 			}
 		}
 
@@ -68,7 +83,6 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 				Spec: dashboardV2alpha1.DashboardGridLayoutSpec{},
 			}
 		}
-
 		resourceInfo = dashboardV2alpha1.DashboardResourceInfo
 
 	case *dashboardV2beta1.Dashboard:
@@ -80,7 +94,6 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 				Spec: dashboardV2beta1.DashboardGridLayoutSpec{},
 			}
 		}
-
 		resourceInfo = dashboardV2beta1.DashboardResourceInfo
 
 		// Noop for V2

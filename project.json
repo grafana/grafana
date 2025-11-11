@@ -5,6 +5,7 @@
   "targets": {
     "start": {
       "dependsOn": [
+        "check-frontend-dev",
         "themes-generate",
         {
           "projects": ["tag:scope:plugin"],
@@ -13,6 +14,17 @@
       ]
     },
     "build": {
+      "dependsOn": [
+        "themes-generate",
+        {
+          "projects": ["tag:scope:plugin"],
+          "target": "build"
+        }
+      ],
+      "outputs": ["{workspaceRoot}/public/build"],
+      "cache": true
+    },
+    "dev": {
       "dependsOn": [
         "themes-generate",
         {
@@ -32,7 +44,8 @@
       "outputs": [
         "{workspaceRoot}/public/sass/_variables.generated.scss",
         "{workspaceRoot}/public/sass/_variables.dark.generated.scss",
-        "{workspaceRoot}/public/sass/_variables.light.generated.scss"
+        "{workspaceRoot}/public/sass/_variables.light.generated.scss",
+        "{workspaceRoot}/public/app/features/theme-playground/schema.json"
       ],
       "cache": true
     }

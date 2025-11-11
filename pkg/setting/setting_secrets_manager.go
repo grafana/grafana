@@ -2,6 +2,7 @@ package setting
 
 import (
 	"strings"
+	"time"
 )
 
 const (
@@ -17,11 +18,30 @@ type SecretsManagerSettings struct {
 	ConfiguredKMSProviders map[string]map[string]string
 
 	GrpcClientEnable        bool   // Whether to enable the gRPC client. If disabled, it will use the in-process services implementations.
+	GrpcClientLoadBalancing bool   // Whether to enable gRPC client-side load balancing
 	GrpcServerUseTLS        bool   // Whether to use TLS when communicating with the gRPC server
 	GrpcServerTLSSkipVerify bool   // Whether to skip TLS verification when communicating with the gRPC server
 	GrpcServerTLSServerName string // Server name to use for TLS verification
 	GrpcServerAddress       string // Address for gRPC secrets server
 	GrpcGrafanaServiceName  string // Service name to use for background grafana decryption/inline
+
+	// Used for testing. Set to false to disable the control loop.
+	GCWorkerEnabled bool
+	// Max number of inactive secure values to fetch from the database.
+	GCWorkerMaxBatchSize uint16
+	// Max number of tasks to delete secure values that can be inflight at a time.
+	GCWorkerMaxConcurrentCleanups uint16
+	// How long to wait for between fetching inactive secure values for cleanup.
+	GCWorkerPollInterval time.Duration
+	// How long to wait for the process to clean up a secure value to complete.
+	GCWorkerPerSecureValueCleanupTimeout time.Duration
+
+	// Whether to register the MT CRUD API
+	RegisterAPIServer bool
+	// Whether to create the MT secrets management database
+	RunSecretsDBMigrations bool
+	// Whether to run the data key id migration. Requires that RunSecretsDBMigrations is also true.
+	RunDataKeyMigration bool
 }
 
 func (cfg *Cfg) readSecretsManagerSettings() {
@@ -29,11 +49,22 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.CurrentEncryptionProvider = secretsMgmt.Key("encryption_provider").MustString(MisconfiguredProvider)
 
 	cfg.SecretsManagement.GrpcClientEnable = secretsMgmt.Key("grpc_client_enable").MustBool(false)
+	cfg.SecretsManagement.GrpcClientLoadBalancing = secretsMgmt.Key("grpc_client_load_balancing").MustBool(false)
 	cfg.SecretsManagement.GrpcServerUseTLS = secretsMgmt.Key("grpc_server_use_tls").MustBool(false)
 	cfg.SecretsManagement.GrpcServerTLSSkipVerify = secretsMgmt.Key("grpc_server_tls_skip_verify").MustBool(false)
 	cfg.SecretsManagement.GrpcServerTLSServerName = valueAsString(secretsMgmt, "grpc_server_tls_server_name", "")
 	cfg.SecretsManagement.GrpcServerAddress = valueAsString(secretsMgmt, "grpc_server_address", "")
 	cfg.SecretsManagement.GrpcGrafanaServiceName = valueAsString(secretsMgmt, "grpc_grafana_service_name", "")
+
+	cfg.SecretsManagement.GCWorkerEnabled = secretsMgmt.Key("gc_worker_enabled").MustBool(true)
+	cfg.SecretsManagement.GCWorkerMaxBatchSize = uint16(secretsMgmt.Key("gc_worker_batch_size").MustUint(16))
+	cfg.SecretsManagement.GCWorkerMaxConcurrentCleanups = uint16(secretsMgmt.Key("gc_worker_max_concurrency").MustUint(16))
+	cfg.SecretsManagement.GCWorkerPollInterval = secretsMgmt.Key("gc_worker_poll_interval").MustDuration(1 * time.Minute)
+	cfg.SecretsManagement.GCWorkerPerSecureValueCleanupTimeout = secretsMgmt.Key("gc_worker_per_request_timeout").MustDuration(5 * time.Second)
+
+	cfg.SecretsManagement.RegisterAPIServer = secretsMgmt.Key("register_api_server").MustBool(true)
+	cfg.SecretsManagement.RunSecretsDBMigrations = secretsMgmt.Key("run_secrets_db_migrations").MustBool(true)
+	cfg.SecretsManagement.RunDataKeyMigration = secretsMgmt.Key("run_data_key_migration").MustBool(true)
 
 	// Extract available KMS providers from configuration sections
 	providers := make(map[string]map[string]string)

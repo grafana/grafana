@@ -6,9 +6,9 @@ import { getDefaultTimeRange } from '@grafana/data';
 import { setupMswServer } from '../../../mockApi';
 import { captureRequests } from '../../../mocks/server/events';
 
-import { StateFilterValues } from './CentralAlertHistoryScene';
 import { getHistory } from './CentralHistoryRuntimeDataSource';
 import { HistoryEventsList } from './EventListSceneObject';
+import { StateFilterValues } from './constants';
 
 setupMswServer();
 // msw server is setup to intercept the history api call and return the mocked data by default

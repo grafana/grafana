@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -355,9 +354,23 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 		return []string{}, nil
 	}
 
+	var actions []string
+
+	// Write action sets for folders and dashboards
+	if s.options.Resource == dashboards.ScopeFoldersRoot || s.options.Resource == dashboards.ScopeDashboardsRoot {
+		actions = append(actions, GetActionSetName(s.options.Resource, permission))
+
+		// If we only want to store action sets, return now
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabledGlobally(featuremgmt.FlagOnlyStoreActionSets) {
+			return actions, nil
+		}
+	}
+
 	for k, v := range s.options.PermissionsToActions {
 		if permission == k {
-			return v, nil
+			actions = append(actions, v...)
+			return actions, nil
 		}
 	}
 	return nil, ErrInvalidPermission.Build(ErrInvalidPermissionData(permission))

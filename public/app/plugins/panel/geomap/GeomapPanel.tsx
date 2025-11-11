@@ -394,7 +394,7 @@ export class GeomapPanel extends Component<Props, State> {
       );
     }
 
-    this.mouseWheelZoom!.setActive(Boolean(options.mouseWheelZoom));
+    this.mouseWheelZoom?.setActive(Boolean(options.mouseWheelZoom));
 
     if (options.showAttribution) {
       this.map.addControl(new Attribution({ collapsed: true, collapsible: true }));

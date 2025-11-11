@@ -247,8 +247,9 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
 
       const dataQuery = updatedQueries.at(0);
       const isInstantDataQuery = dataQuery ? getInstantFromDataQuery(dataQuery) : false;
+      const hasReducer = expressionQueries.some((q) => isReducerExpression(q.model));
+      const shouldRemoveReducer = isInstantDataQuery && expressionQueries.length === 2 && hasReducer;
 
-      const shouldRemoveReducer = isInstantDataQuery && expressionQueries.length === 2;
       if (shouldRemoveReducer) {
         const reduceExpressionIndex = state.queries.findIndex(
           (query) =>

@@ -19,10 +19,13 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
+	common_config "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/require"
 
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
@@ -38,7 +41,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -48,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 //go:embed test-data/*.*
@@ -148,7 +151,7 @@ func TestGetRemoteState(t *testing.T) {
 
 	// getOkHandler allows us to specify a full state the test server is going to respond with.
 	getOkHandler := func(state string) http.HandlerFunc {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		return func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
 			require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
 
@@ -160,7 +163,7 @@ func TestGetRemoteState(t *testing.T) {
 			}
 			w.Header().Add("content-type", "application/json")
 			require.NoError(t, json.NewEncoder(w).Encode(res))
-		})
+		}
 	}
 
 	// errorHandler makes the test server return a 500 status code and a non-JSON response.
@@ -182,8 +185,8 @@ func TestGetRemoteState(t *testing.T) {
 
 	state := alertingClusterPB.FullState{
 		Parts: []alertingClusterPB.Part{
-			{Key: "nfl:test", Data: []byte("test-nflog")},
-			{Key: "sil:test", Data: []byte("test-silences")},
+			{Key: "nfl:otherID", Data: []byte("test-nflog")},
+			{Key: "sil:otherID", Data: []byte("test-silences")},
 		},
 	}
 	rawState, err := state.Marshal()
@@ -257,11 +260,10 @@ func TestGetRemoteState(t *testing.T) {
 }
 
 func TestIntegrationApplyConfig(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
+	testutil.SkipIntegrationTestInShortMode(t)
 
-		// errorHandler returns an error response for the readiness check and state sync.
-	}
+	// errorHandler returns an error response for the readiness check and state sync.
+
 	const tenantID = "test"
 
 	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -299,7 +301,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	var c apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
-	encryptedReceivers, err := legacy_storage.EncryptedReceivers(c.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
+	encryptedReceivers, err := notifier.EncryptedReceivers(c.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
 		encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
 		if err != nil {
 			return "", err
@@ -378,7 +380,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	// should result in us sending the configuration but not the state.
 	am.syncInterval = 0
 	config = &ngmodels.AlertConfiguration{
-		AlertmanagerConfiguration: string(testGrafanaConfig),
+		AlertmanagerConfiguration: testGrafanaConfig,
 	}
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.Equal(t, 2, configSyncs)
@@ -451,7 +453,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		DefaultConfig: defaultGrafanaConfig,
 	}
 
-	testAutogenFn := func(_ context.Context, _ log.Logger, _ int64, config *apimodels.PostableApiAlertingConfig, _ bool) error {
+	testAutogenFn := func(_ context.Context, _ log.Logger, _ int64, config *apimodels.PostableApiAlertingConfig, _ notifier.InvalidReceiversAction) error {
 		newRoute := definition.Route{
 			Receiver: config.Receivers[0].Name,
 			Match:    map[string]string{"auto-gen-test": "true"},
@@ -464,7 +466,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	// Create a config with correctly encrypted and encoded secrets.
 	var inputCfg apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &inputCfg))
-	encryptedReceivers, err := legacy_storage.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
+	encryptedReceivers, err := notifier.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
 		encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
 		if err != nil {
 			return "", err
@@ -495,20 +497,11 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 
 	testAutogenRoutes, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 	require.NoError(t, err)
-	require.NoError(t, testAutogenFn(nil, nil, 0, &testAutogenRoutes.AlertmanagerConfig, false))
+	require.NoError(t, testAutogenFn(nil, nil, 0, &testAutogenRoutes.AlertmanagerConfig, notifier.ErrorOnInvalidReceivers))
 	cfgWithAutogenRoutes := client.GrafanaAlertmanagerConfig{
 		TemplateFiles:      testAutogenRoutes.TemplateFiles,
 		AlertmanagerConfig: testAutogenRoutes.AlertmanagerConfig,
 	}
-
-	// Calculate hashes for expected configurations
-	cfgWithDecryptedSecretBytes, err := json.Marshal(cfgWithDecryptedSecret)
-	require.NoError(t, err)
-	cfgWithDecryptedSecretHash := fmt.Sprintf("%x", md5.Sum(cfgWithDecryptedSecretBytes))
-
-	cfgWithAutogenRoutesBytes, err := json.Marshal(cfgWithAutogenRoutes)
-	require.NoError(t, err)
-	cfgWithAutogenRoutesHash := fmt.Sprintf("%x", md5.Sum(cfgWithAutogenRoutesBytes))
 
 	cfgWithExtraUnmergedBytes, err := testData.ReadFile(path.Join("test-data", "config-with-extra.json"))
 	require.NoError(t, err)
@@ -521,9 +514,6 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		AlertmanagerConfig: r.Config,
 		Templates:          definition.TemplatesMapToPostableAPITemplates(cfgWithExtraUnmerged.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind),
 	}
-	cfgWithExtraMergedBytes, err := json.Marshal(cfgWithExtraMerged)
-	require.NoError(t, err)
-	cfgWithExtraMergedHash := fmt.Sprintf("%x", md5.Sum(cfgWithExtraMergedBytes))
 
 	tests := []struct {
 		name           string
@@ -566,7 +556,6 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			NoopAutogenFn,
 			&client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithDecryptedSecret,
-				Hash:                      cfgWithDecryptedSecretHash,
 			},
 			nil,
 		},
@@ -576,7 +565,6 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			testAutogenFn,
 			&client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithAutogenRoutes,
-				Hash:                      cfgWithAutogenRoutesHash,
 			},
 			nil,
 		},
@@ -586,7 +574,6 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			autogenFn: NoopAutogenFn,
 			expCfg: &client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithExtraMerged,
-				Hash:                      cfgWithExtraMergedHash,
 			},
 		},
 	}
@@ -614,9 +601,26 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			err = am.CompareAndSendConfiguration(ctx, &cfg)
 			if len(test.expErrContains) == 0 {
 				require.NoError(tt, err)
-				rawCfg, err := json.Marshal(test.expCfg)
+
+				var gotCfg client.UserGrafanaConfig
+				require.NoError(tt, json.Unmarshal([]byte(got), &gotCfg))
+
+				require.NotEmpty(tt, gotCfg.Hash)
+				require.Empty(tt, cmp.Diff(test.expCfg, &gotCfg,
+					cmpopts.IgnoreFields(client.UserGrafanaConfig{}, "Hash"), // do not compare hashes because the config is processed slightly different: empty maps are nils.
+					cmpopts.EquateEmpty(),
+					cmpopts.IgnoreUnexported(
+						time.Location{},
+						labels.Matcher{},
+						common_config.ProxyConfig{})))
+
+				got1 := got
+				got = ""
+				err = am.CompareAndSendConfiguration(ctx, &cfg)
 				require.NoError(tt, err)
-				require.JSONEq(tt, string(rawCfg), got)
+
+				got2 := got
+				require.Equalf(tt, got1, got2, "Configuration is not idempotent")
 				return
 			}
 			for _, expErr := range test.expErrContains {
@@ -664,7 +668,7 @@ func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 
 	var inputCfg apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &inputCfg))
-	encryptedReceivers, err := legacy_storage.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
+	encryptedReceivers, err := notifier.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
 		encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
 		if err != nil {
 			return "", err
@@ -815,12 +819,7 @@ receivers:
 	require.NotNil(t, extraReceiver)
 	require.Len(t, extraReceiver.EmailConfigs, 1)
 	require.Equal(t, "alerts@grafana.com", extraReceiver.EmailConfigs[0].To)
-
-	// Verify the config hash
-	expectedConfigBytes, err := json.Marshal(configSent.GrafanaAlertmanagerConfig)
-	require.NoError(t, err)
-	expectedHash := fmt.Sprintf("%x", md5.Sum(expectedConfigBytes))
-	require.Equal(t, expectedHash, configSent.Hash)
+	require.NotEmpty(t, configSent.Hash)
 }
 
 func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
@@ -934,16 +933,11 @@ receivers:
 	require.True(t, found)
 
 	// Verify the config hash
-	expectedConfigBytes, err := json.Marshal(configSent.GrafanaAlertmanagerConfig)
-	require.NoError(t, err)
-	expectedHash := fmt.Sprintf("%x", md5.Sum(expectedConfigBytes))
-	require.Equal(t, expectedHash, configSent.Hash)
+	require.NotEmpty(t, configSent.Hash)
 }
 
 func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -961,11 +955,10 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		DefaultConfig:     defaultGrafanaConfig,
 	}
 
-	testConfigHash := fmt.Sprintf("%x", md5.Sum([]byte(testGrafanaConfig)))
 	testConfigCreatedAt := time.Now().Unix()
 	testConfig := &ngmodels.AlertConfiguration{
 		AlertmanagerConfiguration: testGrafanaConfig,
-		ConfigurationHash:         testConfigHash,
+		ConfigurationHash:         "",
 		ConfigurationVersion:      "v2",
 		CreatedAt:                 testConfigCreatedAt,
 		OrgID:                     1,
@@ -1012,7 +1005,6 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		rawCfg, err := json.Marshal(config.GrafanaAlertmanagerConfig)
 		require.NoError(t, err)
 		require.JSONEq(t, testGrafanaConfig, string(rawCfg))
-		require.Equal(t, testConfigHash, config.Hash)
 		require.Equal(t, testConfigCreatedAt, config.CreatedAt)
 		require.Equal(t, testConfig.Default, config.Default)
 
@@ -1038,7 +1030,6 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		rawCfg, err := json.Marshal(config.GrafanaAlertmanagerConfig)
 		require.NoError(t, err)
 		require.JSONEq(t, testGrafanaConfig, string(rawCfg))
-		require.Equal(t, testConfigHash, config.Hash)
 		require.Equal(t, testConfigCreatedAt, config.CreatedAt)
 		require.False(t, config.Default)
 
@@ -1053,7 +1044,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	{
 		postableCfg, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 		require.NoError(t, err)
-		encryptedReceivers, err := legacy_storage.EncryptedReceivers(postableCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
+		encryptedReceivers, err := notifier.EncryptedReceivers(postableCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
 			encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
 			if err != nil {
 				return "", err
@@ -1085,9 +1076,6 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 
 		require.JSONEq(t, testGrafanaConfigWithSecret, string(got))
 
-		// Verify that the hash is calculated from the final configuration, including simplified routing
-		expectedHash := fmt.Sprintf("%x", md5.Sum(got))
-		require.Equal(t, expectedHash, config.Hash, "Hash should be calculated from the final processed configuration")
 		require.False(t, config.Default)
 
 		// An error while adding auto-generated rutes should be returned.
@@ -1114,7 +1102,6 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		require.NoError(t, err)
 
 		require.JSONEq(t, string(want), string(got))
-		require.Equal(t, fmt.Sprintf("%x", md5.Sum(want)), config.Hash)
 		require.True(t, config.Default)
 
 		// An error while adding auto-generated rutes should be returned.
@@ -1129,9 +1116,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -1163,9 +1148,7 @@ func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -1249,9 +1232,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -1326,9 +1307,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -1365,9 +1344,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 }
 
 func TestIntegrationRemoteAlertmanagerTestTemplates(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -1443,7 +1420,7 @@ func genAlert(active bool, labels map[string]string) amv2.PostableAlert {
 }
 
 // errAutogenFn is an AutogenFn that always returns an error.
-func errAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *definition.PostableApiAlertingConfig, _ bool) error {
+func errAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *definition.PostableApiAlertingConfig, _ notifier.InvalidReceiversAction) error {
 	return errTest
 }
 

@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-test.use({ viewport: { width: 1280, height: 1080 }, featureToggles: { tableNextGen: true } });
+test.use({ viewport: { width: 1280, height: 1080 } });
 
 test.describe('Panels test: Table - Sparkline', { tag: ['@panels', '@table'] }, () => {
   test('Tests sparkline tables are successfully rendered', async ({ gotoDashboardPage, selectors, page }) => {

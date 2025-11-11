@@ -1,16 +1,16 @@
 import { ReactNode } from 'react';
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
-import { GrafanaConfig } from '@grafana/data';
 import * as runtime from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { ManagerKind } from 'app/features/apiserver/types';
 
 import { DashboardViewItem } from '../../../features/search/types';
 
 import { useFoldersQuery } from './useFoldersQuery';
-import { getRootFolderItem } from './utils';
+import { getCustomRootFolderItem, getRootFolderItem } from './utils';
 
 const [_, { folderA, folderB, folderC }] = getFolderFixtures();
 
@@ -23,7 +23,7 @@ const wrapper = ({ children }: { children: ReactNode }) => {
 };
 
 describe('useFoldersQuery', () => {
-  let configBackup: GrafanaConfig;
+  let configBackup: runtime.GrafanaBootConfig;
 
   beforeAll(() => {
     configBackup = { ...runtime.config };
@@ -48,11 +48,42 @@ describe('useFoldersQuery', () => {
 
       expect(sortedItemTitles).toEqual(expectedTitles);
     });
+
+    it('uses custom root folder display name when rootFolderItem is provided', async () => {
+      runtime.config.featureToggles.foldersAppPlatformAPI = featureToggleState;
+      const { result } = renderHook(
+        () =>
+          useFoldersQuery({
+            isBrowsing: true,
+            openFolders: {},
+            rootFolderItem: getCustomRootFolderItem({
+              title: 'Test Repo',
+              managedBy: ManagerKind.Repo,
+            }),
+          }),
+        { wrapper }
+      );
+
+      // Test that root folder item uses the custom display name
+      expect(result.current.items[0]).toEqual(
+        getCustomRootFolderItem({
+          title: 'Test Repo',
+          managedBy: ManagerKind.Repo,
+        })
+      );
+    });
   });
 });
 
 async function testFn() {
-  const { result } = renderHook(() => useFoldersQuery(true, {}), { wrapper });
+  const { result } = renderHook(
+    () =>
+      useFoldersQuery({
+        isBrowsing: true,
+        openFolders: {},
+      }),
+    { wrapper }
+  );
 
   expect(result.current.items[0]).toEqual(getRootFolderItem());
   expect(result.current.isLoading).toBe(false);

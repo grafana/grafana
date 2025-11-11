@@ -1,10 +1,9 @@
-import { locationUtil } from '@grafana/data';
+import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
-import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   ResourceClient,
@@ -18,6 +17,7 @@ import {
   AnnoKeySourcePath,
   AnnoKeyManagerAllowsEdits,
   ManagerKind,
+  AnnoReloadOnParamsChange,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -63,30 +63,35 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       delete obj.metadata.annotations[AnnoKeyMessage];
     }
 
-    if (options.folderUid) {
+    if (options.folderUid !== undefined) {
       obj.metadata.annotations = {
         ...obj.metadata.annotations,
         [AnnoKeyFolder]: options.folderUid,
       };
     }
 
+    // remove resource version because it's not allowed to be set
+    // and the api server will throw an error
+    delete obj.metadata.resourceVersion;
+
     // for v1 in g12, we will ignore the schema version validation from all default clients,
     // as we implement the necessary backend conversions, we will drop this query param
     if (dashboard.uid) {
       obj.metadata.name = dashboard.uid;
-      // remove resource version when updating
-      delete obj.metadata.resourceVersion;
       return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     obj.metadata.annotations = {
       ...obj.metadata.annotations,
       [AnnoKeyGrantPermissions]: 'default',
     };
+    // non-scene dashboard will have obj.metadata.name when trying to save a dashboard copy
+    delete obj.metadata.name;
     return this.client.create(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardDataDTO>): SaveDashboardResponseDTO {
-    const slug = kbn.slugifyForUrl(v.spec.title.trim());
+    //TODO: use slug from response once implemented
+    const slug = '';
 
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
@@ -114,9 +119,9 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     }));
   }
 
-  async getDashboardDTO(uid: string) {
+  async getDashboardDTO(uid: string, params?: UrlQueryMap) {
     try {
-      const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto');
+      const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto', params);
 
       // This could come as conversion error from v0 or v2 to V1.
       if (dash.status?.conversion?.failed && isV2StoredVersion(dash.status.conversion.storedVersion)) {
@@ -126,13 +131,13 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       const result: DashboardDTO = {
         meta: {
           ...dash.access,
-          slug: kbn.slugifyForUrl(dash.spec.title.trim()),
           isNew: false,
           isFolder: false,
           uid: dash.metadata.name,
           k8s: dash.metadata,
           version: dash.metadata.generation,
           created: dash.metadata.creationTimestamp,
+          publicDashboardEnabled: dash.access.isPublic,
         },
         dashboard: {
           ...dash.spec,
@@ -140,6 +145,12 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           uid: dash.metadata.name,
         },
       };
+
+      /** @experimental only provided by proxies for setup with reloadDashboardsOnParamsChange toggle on */
+      /** Not intended to be used in production, we will be removing this in short-term future */
+      if (dash.metadata.annotations?.[AnnoReloadOnParamsChange]) {
+        result.meta.reloadOnParamsChange = true;
+      }
 
       const annotations = dash.metadata.annotations ?? {};
       const managerKind = annotations[AnnoKeyManagerKind];

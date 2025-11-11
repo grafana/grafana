@@ -50,6 +50,8 @@ export {
   isTimeSeriesField,
   getRowUniqueId,
   addRow,
+  alignTimeRangeCompareData,
+  shouldAlignTimeCompare,
 } from './dataframe/utils';
 export {
   StreamingDataFrame,
@@ -148,6 +150,8 @@ export {
   applyRawFieldOverrides,
   useFieldOverrides,
   getFieldDataContextClone,
+  DataLinksContext,
+  useDataLinksContext,
 } from './field/fieldOverrides';
 export { getFieldDisplayValuesProxy } from './field/getFieldDisplayValuesProxy';
 export {
@@ -439,6 +443,13 @@ export {
   type DataSourcePluginContextType,
   PluginContext,
 } from './context/plugins/PluginContext';
+export {
+  type RestrictedGrafanaApisContextType,
+  type RestrictedGrafanaApisAllowList,
+  RestrictedGrafanaApisContext,
+  RestrictedGrafanaApisContextProvider,
+  useRestrictedGrafanaApis,
+} from './context/plugins/RestrictedGrafanaApis';
 export { type PluginContextProviderProps, PluginContextProvider } from './context/plugins/PluginContextProvider';
 export {
   type DataSourcePluginContextProviderProps,
@@ -451,8 +462,11 @@ export { getLinksSupplier } from './field/fieldOverrides';
 // Types
 export { isUnsignedPluginSignature } from './types/pluginSignature';
 export type {
+  AzureSettings,
+  AzureCloudInfo,
   CurrentUserDTO,
   AnalyticsSettings,
+  AppPluginConfig,
   BootData,
   OAuth,
   OAuthSettings,
@@ -460,6 +474,8 @@ export type {
   GrafanaConfig,
   BuildInfo,
   LicenseInfo,
+  PreinstalledPlugin,
+  UnifiedAlertingConfig,
 } from './types/config';
 export { availableIconsIndex, type IconName, isIconName, toIconName } from './types/icon';
 export type { WithAccessControlMetadata } from './types/accesscontrol';
@@ -517,6 +533,7 @@ export {
   type QueryVariableModel,
   type TextBoxVariableModel,
   type ConstantVariableModel,
+  type SwitchVariableModel,
   type VariableWithMultiSupport,
   type VariableWithOptions,
   type DashboardProps,
@@ -556,6 +573,8 @@ export type { FeatureToggles } from './types/featureToggles.gen';
 export {
   PluginExtensionTypes,
   PluginExtensionPoints,
+  PluginExtensionExposedComponents,
+  PluginExtensionPointPatterns,
   type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,
@@ -576,9 +595,11 @@ export {
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedFunctionConfig,
   type PluginExtensionResourceAttributesContext,
+  type CentralAlertHistorySceneV1Props,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
+  type ScopeDashboardBindingStatus,
   type ScopeDashboardBinding,
   type ScopeFilterOperator,
   type ScopeSpecFilter,
@@ -646,6 +667,7 @@ export {
   type DataSourceConstructor,
   type DataSourceGetTagKeysOptions,
   type DataSourceGetTagValuesOptions,
+  type DataSourceGetDrilldownsApplicabilityOptions,
   type MetadataInspectorProps,
   type LegacyMetricFindQueryOptions,
   type QueryEditorProps,
@@ -662,7 +684,7 @@ export {
   type QueryFixAction,
   type QueryHint,
   type MetricFindValue,
-  type FiltersApplicability,
+  type DrilldownsApplicability,
   type DataSourceJsonData,
   type DataSourceSettings,
   type DataSourceInstanceSettings,
@@ -836,6 +858,8 @@ export {
   defaultActionConfig,
   contentTypeOptions,
   httpMethodOptions,
+  type FetchOptions,
+  type InfinityOptions,
 } from './types/action';
 export { DataFrameType } from './types/dataFrameTypes';
 export {

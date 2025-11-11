@@ -24,6 +24,8 @@ refs:
   grafana-enterprise:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
   organization-roles:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles
@@ -69,9 +71,8 @@ After you add and configure a data source, you can use it as an input for many o
 
 This documentation describes how to manage data sources in general,
 and how to configure or query the built-in data sources.
-For other data sources, refer to the list of [datasource plugins](/grafana/plugins/).
 
-To develop a custom plugin, refer to [Create a data source plugin](#create-a-data-source-plugin).
+For other available plugins, refer to the list of [documented plugins](https://grafana.com/docs/plugins/) or browse the [Plugin catalog](/grafana/plugins/). To develop a custom plugin, refer to [Create a data source plugin](#create-a-data-source-plugin).
 
 ## Manage data sources
 

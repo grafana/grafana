@@ -15,10 +15,29 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
+type JobQueueGetter interface {
+	GetJobQueue() jobs.Queue
+}
+
 type jobsConnector struct {
-	repoGetter RepoGetter
-	jobs       jobs.Queue
-	historic   jobs.History
+	repoGetter            RepoGetter
+	statusPatcherProvider StatusPatcherProvider
+	jobs                  JobQueueGetter
+	historic              jobs.HistoryReader
+}
+
+func NewJobsConnector(
+	repoGetter RepoGetter,
+	statusPatcherProvider StatusPatcherProvider,
+	jobs JobQueueGetter,
+	historic jobs.HistoryReader,
+) *jobsConnector {
+	return &jobsConnector{
+		repoGetter:            repoGetter,
+		statusPatcherProvider: statusPatcherProvider,
+		jobs:                  jobs,
+		historic:              historic,
+	}
 }
 
 func (*jobsConnector) New() runtime.Object {
@@ -49,17 +68,17 @@ func (c *jobsConnector) Connect(
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
-	repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-	cfg := repo.Config()
-
 	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx = r.Context()
 		prefix := fmt.Sprintf("/%s/jobs/", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if r.Method == http.MethodGet {
+			// GET operations: allow even for unhealthy repositories
+			repo, err := c.repoGetter.GetRepository(ctx, name)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+			cfg := repo.Config()
 			if idx > 0 {
 				jobUID := r.URL.Path[idx+len(prefix):]
 				if !ValidUUID(jobUID) {
@@ -82,6 +101,25 @@ func (c *jobsConnector) Connect(
 			responder.Object(http.StatusOK, recent)
 			return
 		}
+
+		// POST operations: require healthy repository
+		repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+
+		cfg := repo.Config()
+
+		if cfg.DeletionTimestamp != nil && !cfg.DeletionTimestamp.IsZero() {
+			responder.Error(apierrors.NewConflict(
+				provisioning.RepositoryResourceInfo.GroupResource(),
+				"cannot create jobs for a repository marked for deletion",
+				fmt.Errorf("cannot create jobs for a repository marked for deletion"),
+			))
+			return
+		}
+
 		if idx > 0 {
 			responder.Error(apierrors.NewBadRequest("can not post to a job UID"))
 			return
@@ -94,11 +132,36 @@ func (c *jobsConnector) Connect(
 		}
 		spec.Repository = name
 
-		job, err := c.jobs.Insert(ctx, cfg.Namespace, spec)
+		job, err := c.jobs.GetJobQueue().Insert(ctx, cfg.Namespace, spec)
 		if err != nil {
 			responder.Error(err)
 			return
 		}
+
+		// For pull jobs update the sync status
+		// patch the sync status 'state' to 'pending', and reset the 'started' field, leaving other fields unchanged.
+		// Intentionally maintain the previous job name until the jobs is picked up.
+		if spec.Pull != nil {
+			err = c.statusPatcherProvider.GetStatusPatcher().Patch(ctx, cfg,
+				map[string]interface{}{
+					"op":    "replace",
+					"path":  "/status/sync/state",
+					"value": provisioning.JobStatePending,
+				},
+				map[string]interface{}{
+					// Use "replace" instead of "remove" since "remove" fails if the path does not exist (RFC 6902).
+					// "started" field uses "omitempty", so it may be missing in the JSON.
+					"op":    "replace",
+					"path":  "/status/sync/started",
+					"value": int64(0),
+				},
+			)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+		}
+
 		responder.Object(http.StatusAccepted, job)
 	}), 30*time.Second), nil
 }

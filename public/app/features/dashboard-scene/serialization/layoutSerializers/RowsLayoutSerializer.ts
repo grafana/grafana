@@ -2,7 +2,6 @@ import { Spec as DashboardV2Spec, RowsLayoutRowKind } from '@grafana/schema/dist
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
-import { isClonedKey } from '../../utils/clone';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 import { getConditionalRendering } from './utils';
@@ -11,18 +10,35 @@ export function serializeRowsLayout(layoutManager: RowsLayoutManager): Dashboard
   return {
     kind: 'RowsLayout',
     spec: {
-      rows: layoutManager.state.rows.filter((row) => !isClonedKey(row.state.key!)).map(serializeRow),
+      rows: layoutManager.state.rows.filter((row) => !row.state.repeatSourceKey).map(serializeRow),
     },
   };
 }
 
 export function serializeRow(row: RowItem): RowsLayoutRowKind {
   const layout = row.state.layout.serialize();
+
+  // Normalize Y coordinates to be relative within the row
+  // Panels in the scene have absolute Y coordinates, but in V2 schema they should be relative to the row
+  if (layout.kind === 'GridLayout' && layout.spec.items.length > 0) {
+    // Find the minimum Y coordinate among all items in this row
+    const minY = Math.min(...layout.spec.items.map((item) => item.spec.y));
+
+    // Subtract minY from each item's Y to make coordinates relative to the row start
+    layout.spec.items = layout.spec.items.map((item) => ({
+      ...item,
+      spec: {
+        ...item.spec,
+        y: item.spec.y - minY,
+      },
+    }));
+  }
+
   const rowKind: RowsLayoutRowKind = {
     kind: 'RowsLayoutRow',
     spec: {
       title: row.state.title,
-      collapse: row.state.collapse,
+      collapse: row.state.collapse ?? false,
       layout: layout,
       fillScreen: row.state.fillScreen,
       hideHeader: row.state.hideHeader,

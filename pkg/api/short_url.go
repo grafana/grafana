@@ -1,16 +1,15 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
-
-	"github.com/teris-io/shortid"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -31,6 +30,8 @@ import (
 
 func (hs *HTTPServer) registerShortURLAPI(apiRoute routing.RouteRegister) {
 	reqSignedIn := middleware.ReqSignedIn
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
 		handler := newShortURLK8sHandler(hs)
 		apiRoute.Post("/api/short-urls", reqSignedIn, handler.createKubernetesShortURLsHandler)
@@ -118,13 +119,8 @@ type shortURLK8sHandler struct {
 }
 
 func newShortURLK8sHandler(hs *HTTPServer) *shortURLK8sHandler {
-	gvr := schema.GroupVersionResource{
-		Group:    v1alpha1.ShortURLKind().Group(),
-		Version:  v1alpha1.ShortURLKind().Version(),
-		Resource: v1alpha1.ShortURLKind().Plural(),
-	}
 	return &shortURLK8sHandler{
-		gvr:                  gvr,
+		gvr:                  v1alpha1.ShortURLKind().GroupVersionResource(),
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
 		cfg:                  hs.Cfg,
@@ -154,47 +150,51 @@ func (sk8s *shortURLK8sHandler) getKubernetesShortURLsHandler(c *contextmodel.Re
 }
 
 func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmodel.ReqContext) {
-	client, ok := sk8s.getClient(c)
-	if !ok {
-		return
-	}
-
-	shortURLUID := web.Params(c.Req)[":uid"]
-	if !util.IsValidShortUID(shortURLUID) {
-		c.Logger.Warn("Invalid short URL UID format", "uid", shortURLUID)
+	uid := web.Params(c.Req)[":uid"]
+	if !util.IsValidShortUID(uid) {
+		c.Logger.Warn("Invalid short URL UID format", "uid", uid)
 		c.Redirect(sk8s.cfg.AppURL, http.StatusFound)
 		return
 	}
 
-	// Get Object
-	obj, err := client.Get(c.Req.Context(), shortURLUID, v1.GetOptions{})
+	client, err := kubernetes.NewForConfig(sk8s.clientConfigProvider.GetDirectRestConfig(c))
 	if err != nil {
-		sk8s.writeError(c, err)
+		c.JsonApiErr(500, "client", err)
 		return
 	}
 
-	// Modify status
-	status := obj.Object["status"].(map[string]interface{})
-	newTimestamp := time.Now().Unix()
-	status["lastSeenAt"] = newTimestamp
+	result := client.RESTClient().Get().
+		Prefix("apis", v1alpha1.APIGroup, v1alpha1.APIVersion).
+		Namespace(sk8s.namespacer(c.OrgID)).
+		Resource(v1alpha1.ShortURLKind().Plural()).
+		Name(uid).
+		SubResource("goto").
+		Param("redirect", "false"). // returns the URL and then we will do the redirect
+		Do(c.Req.Context())
 
-	// Try status subresource first (works in Mode 5), fallback to main resource (works in Mode 0)
-	out, err := client.Update(c.Req.Context(), obj, v1.UpdateOptions{}, "status")
-	if err != nil {
-		c.Logger.Debug("Status subresource update failed, trying main resource", "error", err)
-		// Fallback to main resource update (for Mode 0)
-		out, err = client.Update(c.Req.Context(), obj, v1.UpdateOptions{})
-		if err != nil {
-			c.Logger.Error("Both status and main resource updates failed", "error", err)
-			sk8s.writeError(c, err)
-			return
-		}
+	if err = result.Error(); err != nil {
+		c.JsonApiErr(500, "goto", err)
+		return
 	}
 
-	spec := out.Object["spec"].(map[string]any)
-	path := spec["path"].(string)
-	c.Logger.Debug("Redirecting short URL", "uid", shortURLUID, "path", path)
-	c.Redirect(setting.ToAbsUrl(path), http.StatusFound)
+	body, err := result.Raw()
+	if err != nil {
+		c.JsonApiErr(500, "body", err)
+		return
+	}
+
+	value := &v1alpha1.GetGoto{}
+	if err = json.Unmarshal(body, value); err != nil {
+		c.JsonApiErr(500, "unmarshal", err)
+		return
+	}
+	if value.Url == "" {
+		c.JsonApiErr(500, "invalid", fmt.Errorf("expected url"))
+		return
+	}
+
+	c.Resp.Header().Add("Location", value.Url)
+	c.Resp.WriteHeader(http.StatusFound)
 }
 
 func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel.ReqContext) {
@@ -212,13 +212,7 @@ func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel
 
 	c.Logger.Debug("Creating short URL", "path", cmd.Path)
 	obj := shorturl.LegacyCreateCommandToUnstructured(cmd)
-
-	uid, err := shortid.Generate()
-	if err != nil {
-		c.JsonApiErr(http.StatusInternalServerError, "failed to generate uid", err)
-		return
-	}
-	obj.SetGenerateName(uid)
+	obj.SetGenerateName("s") // becomes a prefix
 
 	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
 	if err != nil {

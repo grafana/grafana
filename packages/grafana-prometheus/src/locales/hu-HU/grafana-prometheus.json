@@ -85,9 +85,9 @@
         "tooltip-classic-query": "A Prometheus változólekérdezés-szerkesztő eredeti implementációja. Adjon meg egy karakterláncot a megfelelő lekérdezéstípussal és paraméterekkel, a jelen dokumentumokban leírtak szerint. Például: {{exampleQuery}}.",
         "tooltip-label": "A címke nevéhez tartozó címkeértékek listáját adja vissza az összes metrikában, kivéve, ha a metrika meg van adva.",
         "tooltip-metric-regex": "A címkenevek listáját adja vissza, opcionálisan a megadott metrikai reguláris kifejezés szerint szűrve.",
-        "tooltip-query": "A lekérdezéshez a Prometheus-lekérdezési eredmények listáját adja vissza. Ez magában foglalhatja a Prometheus-funkciókat, azaz {{exampleQuery}}.",
+        "tooltip-query": "",
         "tooltip-query-type": "A Prometheus adatforrás-beépülőmodul a következő lekérdezéstípusokat biztosítja a sablonváltozókhoz.",
-        "tooltip-series-query": "Adjon meg egy metrikát címkékkel, csak egy metrikát vagy csak címkéket: {{example1}}, {{example2}} vagy {{example3}}. A bevitt adatokhoz társított idősorok listáját adja vissza."
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "választó",
@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Felvételkészítési szabályok letiltása (béta)",
         "label-http-method": "HTTP-metódus",
         "label-incremental-querying-beta": "Növekményes lekérdezés (béta)",
-        "label-metric-names-suggestion-limit": "Metrikanevek javaslatának korlátja",
         "label-prom-type-version": "{{promType}} verziója",
         "label-prometheus-type": "Prometheus-típus",
         "label-query-overlap-window": "Lekérdezésátfedési ablak",
@@ -176,20 +175,19 @@
         "label-scrape-interval": "Adatgyűjtési intervallum",
         "label-series-limit": "Sorozatkorlát",
         "label-use-series-endpoint": "Sorozat végpontjának használata",
-        "more-info": "A Prometheus-típus és -verzió adatforrásokban történő konfigurálásával kapcsolatos további információkért tekintse meg a <2>kiépítési dokumentációt</2>.",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "Példa: {{example}}",
         "title-interval-behaviour": "Intervallum viselkedése",
         "title-other": "Egyéb",
         "title-performance": "Teljesítmény",
         "title-query-editor": "Lekérdezésszerkesztő",
         "tooltip-cache-level": "Beállítja a böngésző gyorsítótárának szintjét a szerkesztői lekérdezésekhez. A magasabb számossági adatforrásokhoz magasabb gyorsítótár-beállítások ajánlottak.",
-        "tooltip-custom-query-parameters": "Egyéni paraméterek hozzáadása a Prometheus lekérdezési URL-jéhez. Például: {{example1}}, {{example2}}, {{example3}} vagy {{example4}}. Több paramétert a következővel kell összefűzni: {{concatenationChar}}.",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "Beállítja az alapértelmezett szerkesztőopciót az adatforrás minden felhasználója számára.",
-        "tooltip-disable-metrics-lookup": "Ennek az opciónak a bejelölése letiltja a metrikaválasztót és a metrika-/címketámogatást a lekérdezési mező automatikus kitöltésében. Ez segít, ha a nagyobb Prometheus-példányokkal teljesítményproblémái vannak. ",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "Ez a funkció letiltja a felvételkészítési szabályokat. Kapcsolja be az irányítópult teljesítményének javítása érdekében",
         "tooltip-http-method": "A Prometheus-adatforrás lekérdezéséhez használhatja a POST- vagy a GET HTTP-metódust. A POST az ajánlott metódus, mivel nagyobb lekérdezéseket tesz lehetővé. Módosítsa ezt GET-re, ha a Prometheus-verziója régebbi, mint a 2.1-es, vagy ha a POST-kérések korlátozva vannak a hálózatában.",
         "tooltip-incremental-querying-beta": "Ez a funkció megváltoztatja a relatív lekérdezések azon alapértelmezett viselkedését, hogy mindig friss adatokat kérjenek le a Prometheus-példányból, ehelyett a lekérdezési eredményeket a rendszer gyorsítótárazza, és csak új rekordok lesznek lekérve. Kapcsolja be az adatbázis és a hálózat terhelésének csökkentése érdekében.",
-        "tooltip-metric-names-suggestion-limit": "Azon metrikanevek maximális száma, amelyek automatikus kitöltési javaslatként jelenhetnek meg a lekérdezésszerkesztő Kód módjában.",
         "tooltip-prom-type-version": "Ezzel állíthatja be a(z) {{promType}}-példány verzióját, ha nincs automatikusan konfigurálva.",
         "tooltip-prometheus-type": "Állítsa be a Prometheus-adatbázis típusára, pl.: Prometheus, Cortex, Mimir vagy Thanos. A mező módosításával menti az aktuális beállításokat. A Prometheus bizonyos típusai támogatják vagy nem támogatják a különböző API-kat. Például egyes típusok támogatják a reguláris kifejezéses egyeztetést a címkelekérdezésekhez a teljesítmény javítása érdekében. Egyes típusok rendelkeznek API-val a metaadatokhoz. Ha ezt helytelenül állítja be, furcsa viselkedést tapasztalhat a metrikák és címkék lekérdezésekor. Ellenőrizze a Prometheus dokumentációját, hogy biztosan a megfelelő típust adja meg.",
         "tooltip-query-overlap-window": "Állítson be egy időtartamot, például: {{example1}}, vagy {{example2}}, vagy {{example3}}. A(z) {{default}} alapértelmezése. Ez az időtartam hozzáadódik az egyes növekményes kérések időtartamához.",
@@ -415,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Állítsa be a léptékparaméter alsó határát",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "Felbontás kiválasztása",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "Hőtérkép",
           "label-table": "Táblázat",
@@ -431,10 +432,6 @@
         "title-options": "Beállítások",
         "tooltip-min-step": "További alsó határérték a Prometheus-lekérdezés léptékparaméteréhez, valamint a(z) <2>{{interval}}</2> és <4>{{rateInterval}}</4> változóhoz."
       },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Automatikus kitöltési javaslatok korlátozva",
-        "tooltip-autocomplete-suggestions-limited": "A metrikanevek száma meghaladja az automatikus kitöltés korlátját. Csak a(z) {{autocompleteLimit}} legrelevánsabb metrika jelenik meg. A küszöbértéket az adatforrás beállításai között módosíthatja."
-      },
       "prom-query-editor-selector": {
         "body-syntax-error": "Szintaktikai hiba történt, vagy a lekérdezési struktúra nem jeleníthető meg szerkesztő módra való váltáskor. A lekérdezés egyes részei elveszhetnek.",
         "confirmText-continue": "Folytatás",
@@ -444,6 +441,7 @@
         "title-parsing-error-switch-builder": "Elemzési hiba: Váltás építő módba?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "Jelmagyarázat",
         "placeholder-select-legend-mode": "Jelmagyarázat mód kiválasztása",
         "tooltip-legend": "Sorozatnév felülbírálása vagy sablon. Például a(z) {{templateExample}} helyébe a(z) {{labelName}} címkeértéke lép."
@@ -481,18 +479,13 @@
         "aria-label-selector": "választó"
       },
       "results-table": {
-        "content-descriptive-type": "{{descriptiveType}} létrehozásakor a Prometheus több, számláló típusú sorozatot jelenít meg. ",
+        "content-descriptive-type": "",
         "description": "Leírás",
         "message-expand-label-filters": "Nem található metrika. Próbálja meg kibővíteni a címkeszűrőket.",
         "message-expand-search": "Nem található metrika. Próbálja meg kibővíteni a keresést és a szűrőket.",
         "message-no-metrics-found": "Nem található metrika az adatforrásban.",
         "name": "Név",
         "type": "Típus"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "A lekérdezés elemzése nem egyértelmű."
-        }
       }
     }
   }

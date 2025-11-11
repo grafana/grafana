@@ -85,9 +85,9 @@
         "tooltip-classic-query": "De oorspronkelijke implementatie van de Prometheus-variabele queryeditor. Voer een tekenreeks in met het juiste querytype en de juiste parameters zoals beschreven in deze documenten. Bijvoorbeeld, {{exampleQuery}}.",
         "tooltip-label": "Retourneert een lijst met labelwaarden voor de labelnaam in alle metriek, tenzij de metriek is opgegeven.",
         "tooltip-metric-regex": "Retourneert een lijst met labelnamen, optioneel gefilterd op opgegeven metriekregex.",
-        "tooltip-query": "Retourneert een lijst met Prometheus-zoekresultaten voor de zoekopdracht. Dit kan Prometheus-functies omvatten, bijv. {{exampleQuery}}.",
+        "tooltip-query": "",
         "tooltip-query-type": "De Prometheus-gegevensbronplugin biedt de volgende querytypes voor sjabloonvariabelen.",
-        "tooltip-series-query": "Voer een metriek in met labels, alleen een metriek of alleen labels, bijv. {{example1}}, {{example2}} of {{example3}}. Retourneert een lijst met tijdreeksen die zijn gekoppeld aan de ingevoerde gegevens."
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "kiezer",
@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Opnameregels uitschakelen (bèta)",
         "label-http-method": "HTTP-methode",
         "label-incremental-querying-beta": "Incrementeel zoeken (bèta)",
-        "label-metric-names-suggestion-limit": "Suggestielimiet voor metrische namen",
         "label-prom-type-version": "{{promType}}-versie",
         "label-prometheus-type": "Prometheus-type",
         "label-query-overlap-window": "Venster voor overlap van query",
@@ -176,20 +175,19 @@
         "label-scrape-interval": "Scrape-interval",
         "label-series-limit": "Reekslimiet",
         "label-use-series-endpoint": "Serie-eindpunt gebruiken",
-        "more-info": "Zie de <2>provisioning-documentatie</2> voor meer informatie over het configureren van het Prometheus-type en de versie in gegevensbronnen.",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "Voorbeeld: {{example}}",
         "title-interval-behaviour": "Intervalgedrag",
         "title-other": "Overige",
         "title-performance": "Prestaties",
         "title-query-editor": "Query-editor",
         "tooltip-cache-level": "Stelt het cacheniveau van de browser in voor editor-query's. Hogere cache-instellingen worden aanbevolen voor gegevensbronnen met een hoge kardinaliteit.",
-        "tooltip-custom-query-parameters": "Voeg aangepaste parameters toe aan de Prometheus-query-URL. Bijvoorbeeld {{example1}}, {{example2}}, {{example3}}, of{{example4}}. Meerdere parameters moeten worden samengevoegd met {{concatenationChar}}.",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "Stel de standaard editoroptie in voor alle gebruikers van deze gegevensbron.",
-        "tooltip-disable-metrics-lookup": "Als je deze optie aanvinkt, worden de metriekkiezer en de metriek/label-ondersteuning in de auto-aanvulling van het query-veld uitgeschakeld. Dit helpt als je prestatieproblemen hebt met grotere Prometheus-instanties. ",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "Deze functie schakelt opnameregels uit. Schakel dit in om de prestaties van het dashboard te verbeteren",
         "tooltip-http-method": "Je kunt de HTTP-methode POST of GET gebruiken om je Prometheus-gegevensbron op te vragen. POST is de aanbevolen methode omdat het grotere query's toestaat. Wijzig dit in GET als je een Prometheus-versie ouder dan 2.1 hebt of als POST-verzoeken in je netwerk zijn beperkt.",
         "tooltip-incremental-querying-beta": "Deze functie zal het standaardgedrag van relatieve query's veranderen om altijd nieuwe gegevens van de Prometheus-instantie op te vragen, in plaats daarvan worden query-resultaten in de cache opgeslagen en worden alleen nieuwe records opgevraagd. Schakel dit in om de database- en netwerkbelasting te verminderen.",
-        "tooltip-metric-names-suggestion-limit": "Het maximale aantal metrische namen dat kan verschijnen als suggesties voor automatisch aanvullen in de codemodus van de query-editor.",
         "tooltip-prom-type-version": "Gebruik dit om de versie van je {{promType}}-instantie in te stellen als deze niet automatisch is geconfigureerd.",
         "tooltip-prometheus-type": "Stel dit in op het type van je Prometheus-database, bijvoorbeeld Prometheus, Cortex, Mimir of Thanos. Als je dit veld wijzigt, worden je huidige instellingen opgeslagen. Bepaalde soorten Prometheus ondersteunen of ondersteunen geen verschillende API's. Sommige typen ondersteunen bijvoorbeeld regex-matching voor label-query's om de prestaties te verbeteren. Sommige typen hebben een API voor metadata. Als je dit verkeerd instelt, kun je afwijkend gedrag ervaren bij het opvragen van metriek en labels. Controleer je Prometheus-documentatie om er zeker van te zijn dat je het juiste type invoert.",
         "tooltip-query-overlap-window": "Stel een duur in zoals {{example1}} of {{example2}} of {{example3}}. Standaard van {{default}}. Deze duur wordt toegevoegd aan de duur van elk incrementeel verzoek.",
@@ -415,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Ondergrens instellen voor de stapparameter",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "Resolutie selecteren",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "Heatmap",
           "label-table": "Tabel",
@@ -431,10 +432,6 @@
         "title-options": "Opties",
         "tooltip-min-step": "Een extra ondergrens voor de stapparameter van de Prometheus-query en voor de variabelen <2>{{interval}}</2> en <4>{{rateInterval}}</4>."
       },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Automatisch aanvullen van suggesties beperkt",
-        "tooltip-autocomplete-suggestions-limited": "Het aantal metrische namen overschrijdt de limiet voor automatisch aanvullen. Alleen de meest relevante metriek voor {{autocompleteLimit}} worden weergegeven. Je kunt de drempelwaarde aanpassen in de instellingen van de gegevensbron."
-      },
       "prom-query-editor-selector": {
         "body-syntax-error": "Er is een syntaxisfout of de querystructuur kan niet worden gevisualiseerd bij het overschakelen naar de bouwmodus. Delen van de query kunnen verloren gaan.",
         "confirmText-continue": "Doorgaan",
@@ -444,6 +441,7 @@
         "title-parsing-error-switch-builder": "Parsingfout: overschakelen naar de bouwmodus?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "Legenda",
         "placeholder-select-legend-mode": "Legenda-modus selecteren",
         "tooltip-legend": "Reeksnaam overschrijven of sjabloon. Bijv. {{templateExample}} wordt vervangen door labelwaarde voor {{labelName}}."
@@ -481,18 +479,13 @@
         "aria-label-selector": "kiezer"
       },
       "results-table": {
-        "content-descriptive-type": "Bij het maken van een {{descriptiveType}} stelt Prometheus meerdere series bloot met de typeteller. ",
+        "content-descriptive-type": "",
         "description": "Beschrijving",
         "message-expand-label-filters": "Er zijn geen statistieken gevonden. Probeer uw labelfilters uit te breiden.",
         "message-expand-search": "Er zijn geen statistieken gevonden. Probeer uw zoekopdracht en filters uit te breiden.",
         "message-no-metrics-found": "Er zijn geen statistieken gevonden in de gegevensbron.",
         "name": "Naam",
         "type": "Type"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Query-parsing is dubbelzinnig."
-        }
       }
     }
   }

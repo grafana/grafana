@@ -42,6 +42,8 @@ import {
   GridLayoutKind,
   defaultDashboardLinkType,
   defaultDashboardLink,
+  defaultFieldConfigSource,
+  defaultPanelQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
@@ -79,7 +81,7 @@ import {
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { DashboardWithAccessInfo } from './types';
-import { isDashboardResource, isDashboardV0Spec, isDashboardV2Resource } from './utils';
+import { isDashboardResource, isDashboardV0Spec, isDashboardV2Resource, isDashboardV2Spec } from './utils';
 
 export function ensureV2Response(
   dto: DashboardDTO | DashboardWithAccessInfo<DashboardDataDTO> | DashboardWithAccessInfo<DashboardV2Spec>
@@ -94,14 +96,6 @@ export function ensureV2Response(
   } else {
     dashboard = dto.dashboard;
   }
-
-  const timeSettingsDefaults = defaultTimeSettingsSpec();
-  const dashboardDefaults = defaultDashboardV2Spec();
-  const [elements, layout] = getElementsFromPanels(dashboard.panels || []);
-  // @ts-expect-error - dashboard.templating.list is VariableModel[] and we need TypedVariableModel[] here
-  // that would allow accessing unique properties for each variable type that the API returns
-  const variables = getVariables(dashboard.templating?.list || []);
-  const annotations = getAnnotations(dashboard.annotations?.list || []);
 
   let accessMeta: DashboardWithAccessInfo<DashboardV2Spec>['access'];
   let annotationsMeta: DashboardWithAccessInfo<DashboardV2Spec>['metadata']['annotations'];
@@ -155,14 +149,46 @@ export function ensureV2Response(
     annotationsMeta[AnnoKeyDashboardSnapshotOriginalUrl] = dashboard.snapshot?.originalUrl;
   }
 
+  const metadata = {
+    creationTimestamp: creationTimestamp || '', // TODO verify this empty string is valid
+    name: dashboard.uid,
+    resourceVersion: dashboard.version?.toString() || '0',
+    annotations: annotationsMeta,
+    labels: labelsMeta,
+  };
+
+  if (!isDashboardResource(dto)) {
+    if (isDashboardV2Spec(dto.dashboard)) {
+      // sometimes we can have a v2 spec returned through legacy api like public dashboard
+      // in that case we need to return dashboard as it is, since the conversion is not needed
+      return {
+        apiVersion: 'v2beta1',
+        kind: 'DashboardWithAccessInfo',
+        metadata,
+        spec: dto.dashboard,
+        access: accessMeta,
+      };
+    }
+  }
+
+  const timeSettingsDefaults = defaultTimeSettingsSpec();
+  const dashboardDefaults = defaultDashboardV2Spec();
+  const [elements, layout] = getElementsFromPanels(dashboard.panels || []);
+  // @ts-expect-error - dashboard.templating.list is VariableModel[] and we need TypedVariableModel[] here
+  // that would allow accessing unique properties for each variable type that the API returns
+  const variables = getVariables(dashboard.templating?.list || []);
+  const annotations = getAnnotations(dashboard.annotations?.list || []);
+
   const spec: DashboardV2Spec = {
     title: dashboard.title,
     description: dashboard.description,
     tags: dashboard.tags ?? [],
     cursorSync: transformCursorSynctoEnum(dashboard.graphTooltip),
     preload: dashboard.preload || dashboardDefaults.preload,
-    ...(dashboard.liveNow !== undefined && { liveNow: dashboard.liveNow }),
-    ...(dashboard.editable !== undefined && { editable: dashboard.editable }),
+    // transformSceneToSaveModelSchemaV2.ts sets liveNow and editable to default values if they are not set
+    // so we are matching that behavior here so conversion pipeline tests like ResponseTransformersToBackend.test.ts pass
+    liveNow: dashboard.liveNow ?? Boolean(dashboardDefaults.liveNow),
+    editable: dashboard.editable ?? dashboardDefaults.editable,
     ...(dashboard.revision !== undefined && { revision: dashboard.revision }),
     timeSettings: {
       from: dashboard.time?.from || timeSettingsDefaults.from,
@@ -199,13 +225,7 @@ export function ensureV2Response(
   return {
     apiVersion: 'v2beta1',
     kind: 'DashboardWithAccessInfo',
-    metadata: {
-      creationTimestamp: creationTimestamp || '', // TODO verify this empty string is valid
-      name: dashboard.uid,
-      resourceVersion: dashboard.version?.toString() || '0',
-      annotations: annotationsMeta,
-      labels: labelsMeta,
-    },
+    metadata,
     spec,
     access: accessMeta,
   };
@@ -230,6 +250,7 @@ export function ensureV1Response(
         uid: dashboard.metadata.name,
         k8s: dashboard.metadata,
         version: dashboard.metadata.generation,
+        publicDashboardEnabled: dashboard.access.isPublic,
       },
       dashboard: spec,
     };
@@ -251,6 +272,7 @@ export function ensureV1Response(
         canShare: dashboard.access.canShare,
         canStar: dashboard.access.canStar,
         annotationsPermissions: dashboard.access.annotationsPermissions,
+        publicDashboardEnabled: dashboard.access.isPublic,
       },
       dashboard: transformDashboardV2SpecToV1(spec, dashboard.metadata),
     };
@@ -457,22 +479,23 @@ function getDefaultDatasourceType() {
 }
 
 export function getDefaultDatasource(): DataSourceRef {
-  const configDefaultDS = getDefaultDataSourceRef() ?? { type: 'grafana', uid: '-- Grafana --' };
+  const defaultDataSourceRef = getDefaultDataSourceRef() ?? { type: 'grafana', uid: '-- Grafana --' };
 
-  if (configDefaultDS.uid && !configDefaultDS.apiVersion) {
+  if (defaultDataSourceRef.uid && !defaultDataSourceRef.apiVersion) {
     // get api version from config
-    const dsInstance = config.bootData.settings.datasources[configDefaultDS.uid];
-    configDefaultDS.apiVersion = dsInstance.apiVersion ?? undefined;
+    const defaultDatasource = config.defaultDatasource;
+    const dsInstance = config.datasources[defaultDatasource];
+    defaultDataSourceRef.apiVersion = dsInstance.apiVersion ?? undefined;
   }
 
   return {
-    apiVersion: configDefaultDS.apiVersion,
-    type: configDefaultDS.type,
-    uid: configDefaultDS.uid,
+    apiVersion: defaultDataSourceRef.apiVersion,
+    type: defaultDataSourceRef.type,
+    uid: defaultDataSourceRef.uid,
   };
 }
 
-export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] {
+export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] | undefined {
   return targets.map((t) => {
     const { refId, hide, datasource, ...query } = t;
     const ds = t.datasource || panelDatasource;
@@ -484,7 +507,7 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
         query: {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
-          group: ds.type!,
+          group: ds.type ?? '',
           ...(ds.uid && {
             datasource: {
               name: ds.uid,
@@ -501,27 +524,43 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
 }
 
 export function buildPanelKind(p: Panel): PanelKind {
-  const queries = getPanelQueries((p.targets as unknown as DataQuery[]) || [], p.datasource || getDefaultDatasource());
+  const queries = getPanelQueries((p.targets as unknown as DataQuery[]) || [], p.datasource ?? { type: '', uid: '' });
 
   const transformations = getPanelTransformations(p.transformations || []);
+
+  const fieldConfig = p.fieldConfig || defaultFieldConfigSource();
+
+  // match backend conversion behavior
+  if (fieldConfig.defaults.mappings && fieldConfig.defaults.mappings.length === 0) {
+    delete fieldConfig.defaults.mappings;
+  }
+  // match backend conversion behavior
+  if (fieldConfig.defaults.custom && Object.keys(fieldConfig.defaults.custom).length === 0) {
+    delete fieldConfig.defaults.custom;
+  }
+
+  // match backend conversion behavior
+  if (
+    fieldConfig.defaults.thresholds?.steps &&
+    fieldConfig.defaults.thresholds.steps.length > 0 &&
+    !fieldConfig.defaults.thresholds.steps[0]?.value
+  ) {
+    fieldConfig.defaults.thresholds.steps[0]!.value = null;
+  }
 
   const panelKind: PanelKind = {
     kind: 'Panel',
     spec: {
       title: p.title || '',
       description: p.description || '',
+      ...(p.transparent !== undefined && { transparent: p.transparent }),
       vizConfig: {
         kind: 'VizConfig',
         group: p.type,
         version: p.pluginVersion ?? '',
         spec: {
-          fieldConfig: {
-            defaults: {
-              custom: (p.fieldConfig as any) || {},
-            },
-            overrides: [],
-          },
-          options: p.options as any,
+          fieldConfig: p.fieldConfig || defaultFieldConfigSource(),
+          options: p.options ?? {},
         },
       },
       links:
@@ -534,7 +573,7 @@ export function buildPanelKind(p: Panel): PanelKind {
       data: {
         kind: 'QueryGroup',
         spec: {
-          queries,
+          queries: queries || [defaultPanelQueryKind()],
           transformations,
           queryOptions: {
             ...(p.cacheTimeout !== undefined && { cacheTimeout: p.cacheTimeout }),
@@ -603,6 +642,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
               text: v.current?.text,
             },
             options: v.options ?? [],
+            ...(v.definition && { definition: v.definition }),
             refresh: transformVariableRefreshToEnum(v.refresh),
             regex: v.regex ?? '',
             sort: v.sort ? transformSortVariableToEnum(v.sort) : 'disabled',
@@ -779,28 +819,34 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
 
 function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annotations'] {
   return annotations.map((a) => {
+    // Extract properties that are explicitly handled
+    const { name, enable, hide, iconColor, builtIn, datasource, target, filter, ...legacyOptions } = a;
+
     const aq: AnnotationQueryKind = {
       kind: 'AnnotationQuery',
       spec: {
-        name: a.name,
-        enable: a.enable,
-        hide: Boolean(a.hide),
-        iconColor: a.iconColor,
-        builtIn: Boolean(a.builtIn),
+        name,
+        enable,
+        hide: Boolean(hide),
+        iconColor: iconColor,
+        builtIn: Boolean(builtIn),
         query: {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
-          group: a.datasource?.type || getDefaultDatasourceType(),
-          ...(a.datasource?.uid && {
+          group: datasource?.type || (builtIn ? 'grafana' : ''),
+          ...(datasource?.uid && {
             datasource: {
-              name: a.datasource.uid,
+              name: datasource.uid,
             },
           }),
           spec: {
-            ...a.target,
+            ...target,
           },
         },
-        ...(a.filter !== undefined && { filter: a.filter }),
+        ...(filter !== undefined && { filter }),
+
+        // Include any additional properties as legacyOptions
+        ...(Object.keys(legacyOptions).length > 0 && { legacyOptions }),
       },
     };
     return aq;
@@ -1083,7 +1129,7 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
     ...fieldConfig.defaults,
   };
 
-  if (fieldConfig.defaults.mappings) {
+  if (fieldConfig.defaults.mappings && fieldConfig.defaults.mappings.length > 0) {
     transformedDefaults.mappings = fieldConfig.defaults.mappings.map((mapping) => {
       switch (mapping.type) {
         case 'value':

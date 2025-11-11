@@ -116,6 +116,18 @@ func initResourceTables(mg *migrator.Migrator) string {
 		},
 	})
 
+	resource_last_import_time := migrator.Table{
+		Name: "resource_last_import_time",
+		Columns: []*migrator.Column{
+			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
+			{Name: "last_import_time", Type: migrator.DB_DateTime, Nullable: false},
+		},
+		PrimaryKeys: []string{"group", "resource", "namespace"},
+	}
+	tables = append(tables, resource_last_import_time)
+
 	// Initialize all tables
 	for t := range tables {
 		mg.AddMigration("drop table "+tables[t].Name, migrator.NewDropTableMigration(tables[t].Name))
@@ -165,6 +177,12 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Cols: []string{"namespace", "group", "resource", "name", "generation"},
 		Type: migrator.IndexType,
 		Name: "IDX_resource_history_namespace_group_resource_name_generation",
+	}))
+
+	mg.AddMigration("Add UQE_resource_last_import_time_last_import_time index", migrator.NewAddIndexMigration(resource_last_import_time, &migrator.Index{
+		Cols: []string{"last_import_time"},
+		Type: migrator.IndexType,
+		Name: "UQE_resource_last_import_time_last_import_time",
 	}))
 
 	return marker

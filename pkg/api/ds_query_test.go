@@ -16,13 +16,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -81,11 +82,12 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 			),
 			pluginconfig.NewFakePluginRequestConfigProvider(),
 		),
-		mtdsclient.NewNullMTDatasourceClientBuilder(),
+		dsquerierclient.NewNullQSDatasourceClientBuilder(),
 	)
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
 		hs.QuotaService = quotatest.New(false, nil)
+		hs.log = log.New("test-logger")
 	})
 
 	t.Run("Status code is 400 when data source response has an error", func(t *testing.T) {
@@ -252,6 +254,7 @@ func TestDataSourceQueryError(t *testing.T) {
 				err := r.Add(context.Background(), p)
 				require.NoError(t, err)
 				ds := &fakeDatasources.FakeDataSourceService{}
+				hs.log = log.New("test-logger")
 				hs.queryDataService = query.ProvideService(
 					cfg,
 					&fakeDatasources.FakeCacheService{},
@@ -264,7 +267,7 @@ func TestDataSourceQueryError(t *testing.T) {
 						&fakeDatasources.FakeCacheService{}, ds,
 						pluginSettings.ProvideService(dbtest.NewFakeDB(),
 							secretstest.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider()),
-					mtdsclient.NewNullMTDatasourceClientBuilder(),
+					dsquerierclient.NewNullQSDatasourceClientBuilder(),
 				)
 				hs.QuotaService = quotatest.New(false, nil)
 			})

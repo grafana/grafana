@@ -85,9 +85,9 @@
         "tooltip-classic-query": "La implementación original del editor de consultas de variables de Prometheus. Introduzca una cadena con el tipo de consulta y los parámetros correctos como se describe en estos documentos. Por ejemplo, {{exampleQuery}}.",
         "tooltip-label": "Devuelve una lista de valores de etiqueta para el nombre de etiqueta en todas las métricas, a menos que se especifique la métrica.",
         "tooltip-metric-regex": "Devuelve una lista de nombres de etiquetas, filtrando opcionalmente por la expresión regular de métrica especificada.",
-        "tooltip-query": "Devuelve una lista de resultados de la consulta de Prometheus para la consulta. Esto puede incluir funciones de Prometheus, es decir, {{exampleQuery}}.",
+        "tooltip-query": "",
         "tooltip-query-type": "El plugin de fuente de datos de Prometheus proporciona los siguientes tipos de consulta para las variables de plantilla.",
-        "tooltip-series-query": "Introduzca una métrica con etiquetas, solo una métrica o solo etiquetas, es decir, {{example1}}, {{example2}} o {{example3}}. Devuelve una lista de series temporales asociadas con los datos introducidos."
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "selector",
@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Deshabilitar reglas de registro (beta)",
         "label-http-method": "Método HTTP",
         "label-incremental-querying-beta": "Consulta incremental (beta)",
-        "label-metric-names-suggestion-limit": "Límite de sugerencia de nombres de métricas",
         "label-prom-type-version": "Versión de {{promType}}",
         "label-prometheus-type": "Tipo de Prometheus",
         "label-query-overlap-window": "Ventana de superposición de consultas",
@@ -176,20 +175,19 @@
         "label-scrape-interval": "Intervalo de recuperación de datos",
         "label-series-limit": "Límite de series",
         "label-use-series-endpoint": "Utilizar punto de conexión de la serie",
-        "more-info": "Para obtener más información sobre cómo configurar el tipo y la versión de Prometheus en las fuentes de datos, consulte la <2>documentación de aprovisionamiento</2>.",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "Ejemplo: {{example}}",
         "title-interval-behaviour": "Comportamiento del intervalo",
         "title-other": "Otro",
         "title-performance": "Rendimiento",
         "title-query-editor": "Editor de consultas",
         "tooltip-cache-level": "Establece el nivel de caché del navegador para las consultas del editor. Se recomienda una configuración de caché más alta para fuentes de datos de alta cardinalidad.",
-        "tooltip-custom-query-parameters": "Añada parámetros personalizados a la URL de la consulta de Prometheus. Por ejemplo, {{example1}}, {{example2}}, {{example3}} o{{example4}}. Deben concatenarse varios parámetros junto con {{concatenationChar}}.",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "Establece la opción de editor predeterminada para todos los usuarios de esta fuente de datos.",
-        "tooltip-disable-metrics-lookup": "Al marcar esta opción, se desactivará el selector de métricas y la compatibilidad con métricas/etiquetas en el autocompletado del campo de consulta. Esto es útil si tienes problemas de rendimiento con instancias de Prometheus de mayor tamaño. ",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "Esta función deshabilitará las reglas de registro. Actívelo para mejorar el rendimiento del dashboard",
         "tooltip-http-method": "Puede utilizar el método HTTP POST o GET para consultar su fuente de datos de Prometheus. POST es el método recomendado, ya que permite consultas de mayor tamaño. Cámbielo a GET si tiene una versión de Prometheus anterior a la 2.1 o si las solicitudes POST están restringidas en su red.",
         "tooltip-incremental-querying-beta": "Esta función cambiará el comportamiento predeterminado de las consultas relativas para solicitar siempre datos nuevos de la instancia de Prometheus, en lugar de almacenar en caché los resultados de las consultas y solo se solicitarán nuevos registros. Actívelo para disminuir la carga de la base de datos y de la red.",
-        "tooltip-metric-names-suggestion-limit": "El número máximo de nombres de métricas que pueden aparecer como sugerencias de autocompletado en el modo de código del editor de consultas.",
         "tooltip-prom-type-version": "Utilice esta opción para establecer la versión de su instancia {{promType}} si no se configura automáticamente.",
         "tooltip-prometheus-type": "Defina este valor en el tipo de su base de datos de Prometheus, por ejemplo, Prometheus, Cortex, Mimir o Thanos. Si cambia este campo, se guardarán sus ajustes actuales. Ciertos tipos de Prometheus admiten o no admiten varias API. Por ejemplo, algunos tipos admiten la coincidencia de expresiones regulares para consultas de etiquetas para mejorar el rendimiento. Algunos tipos tienen una API para metadatos. Si configuraseste valor incorrectamente, puede experimentar un comportamiento extraño al consultar métricas y etiquetas. Consulte la documentación de Prometheus para asegurarse de introducir el tipo correcto.",
         "tooltip-query-overlap-window": "Establezca una duración como {{example1}}, {{example2}} o {{example3}}. El valor predeterminado es {{default}}. Esta duración se añadirá a la duración de cada solicitud incremental.",
@@ -415,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Establecer límite inferior para el parámetro de paso",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "Seleccionar resolución",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "Mapa de calor",
           "label-table": "Tabla",
@@ -431,10 +432,6 @@
         "title-options": "Opciones",
         "tooltip-min-step": "Un límite inferior adicional para el parámetro de paso de la consulta de Prometheus y para las variables <2>{{interval}}</2> y <4>{{rateInterval}}</4>."
       },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Sugerencias de autocompletado limitadas",
-        "tooltip-autocomplete-suggestions-limited": "El número de nombres de métricas supera el límite de autocompletado. Solo se muestran las {{autocompleteLimit}} métricas más relevantes. Puede ajustar el umbral en la configuración de la fuente de datos."
-      },
       "prom-query-editor-selector": {
         "body-syntax-error": "Hay un error de sintaxis o la estructura de la consulta no se puede visualizar al cambiar al modo constructor. Es posible que se pierdan partes de la consulta.",
         "confirmText-continue": "Continuar",
@@ -444,6 +441,7 @@
         "title-parsing-error-switch-builder": "Error de análisis: ¿cambiar al modo Creador?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "Leyenda",
         "placeholder-select-legend-mode": "Seleccionar modo de leyenda",
         "tooltip-legend": "Anulación o plantilla del nombre de la serie. Por ejemplo, {{templateExample}} se reemplazará con el valor de etiqueta para {{labelName}}."
@@ -481,18 +479,13 @@
         "aria-label-selector": "selector"
       },
       "results-table": {
-        "content-descriptive-type": "Al crear un {{descriptiveType}}, Prometheus expone varias series con el contador de tipos. ",
+        "content-descriptive-type": "",
         "description": "Descripción",
         "message-expand-label-filters": "No se han encontrado métricas. Intenta ampliar los filtros de etiquetas.",
         "message-expand-search": "No se han encontrado métricas. Intenta ampliar la búsqueda y los filtros.",
         "message-no-metrics-found": "No se han encontrado métricas en la fuente de datos.",
         "name": "Nombre",
         "type": "Tipo"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "El análisis de la consulta es ambiguo."
-        }
       }
     }
   }

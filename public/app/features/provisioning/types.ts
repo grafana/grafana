@@ -14,6 +14,7 @@ import {
 
 // Repository type definition - extracted from API client
 export type RepositoryType = RepositorySpec['type'];
+export type RepoWorkflows = RepositorySpec['workflows'];
 
 // Field configuration interface
 export interface RepositoryFieldData {
@@ -43,6 +44,9 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySp
   LocalRepositoryConfig & {
     readOnly: boolean;
     prWorkflow: boolean;
+    enablePushToConfiguredBranch: boolean;
+    // top-level inline secure value
+    token?: string;
   };
 
 export type RepositorySettingsField = Path<RepositoryFormData>;

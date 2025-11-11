@@ -392,6 +392,8 @@ type DashboardFieldConfig struct {
 	Color *DashboardFieldColor `json:"color,omitempty"`
 	// The behavior when clicking on a result
 	Links []interface{} `json:"links,omitempty"`
+	// Define interactive HTTP requests that can be triggered from data visualizations.
+	Actions []DashboardAction `json:"actions,omitempty"`
 	// Alternative to empty string
 	NoValue *string `json:"noValue,omitempty"`
 	// custom is specified by the FieldConfig field
@@ -549,8 +551,9 @@ const (
 
 // +k8s:openapi-gen=true
 type DashboardThreshold struct {
-	Value float64 `json:"value"`
-	Color string  `json:"color"`
+	// Value null means -Infinity
+	Value *float64 `json:"value"`
+	Color string   `json:"color"`
 }
 
 // NewDashboardThreshold creates a new DashboardThreshold object.
@@ -622,6 +625,95 @@ const (
 	DashboardFieldColorSeriesByModeMax  DashboardFieldColorSeriesByMode = "max"
 	DashboardFieldColorSeriesByModeLast DashboardFieldColorSeriesByMode = "last"
 )
+
+// +k8s:openapi-gen=true
+type DashboardAction struct {
+	Type         DashboardActionType           `json:"type"`
+	Title        string                        `json:"title"`
+	Fetch        *DashboardFetchOptions        `json:"fetch,omitempty"`
+	Infinity     *DashboardInfinityOptions     `json:"infinity,omitempty"`
+	Confirmation *string                       `json:"confirmation,omitempty"`
+	OneClick     *bool                         `json:"oneClick,omitempty"`
+	Variables    []DashboardActionVariable     `json:"variables,omitempty"`
+	Style        *DashboardV2alpha1ActionStyle `json:"style,omitempty"`
+}
+
+// NewDashboardAction creates a new DashboardAction object.
+func NewDashboardAction() *DashboardAction {
+	return &DashboardAction{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardActionType string
+
+const (
+	DashboardActionTypeFetch    DashboardActionType = "fetch"
+	DashboardActionTypeInfinity DashboardActionType = "infinity"
+)
+
+// +k8s:openapi-gen=true
+type DashboardFetchOptions struct {
+	Method DashboardHttpRequestMethod `json:"method"`
+	Url    string                     `json:"url"`
+	Body   *string                    `json:"body,omitempty"`
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	QueryParams [][]string `json:"queryParams,omitempty"`
+	Headers     [][]string `json:"headers,omitempty"`
+}
+
+// NewDashboardFetchOptions creates a new DashboardFetchOptions object.
+func NewDashboardFetchOptions() *DashboardFetchOptions {
+	return &DashboardFetchOptions{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardHttpRequestMethod string
+
+const (
+	DashboardHttpRequestMethodGET    DashboardHttpRequestMethod = "GET"
+	DashboardHttpRequestMethodPUT    DashboardHttpRequestMethod = "PUT"
+	DashboardHttpRequestMethodPOST   DashboardHttpRequestMethod = "POST"
+	DashboardHttpRequestMethodDELETE DashboardHttpRequestMethod = "DELETE"
+	DashboardHttpRequestMethodPATCH  DashboardHttpRequestMethod = "PATCH"
+)
+
+// +k8s:openapi-gen=true
+type DashboardInfinityOptions struct {
+	Method DashboardHttpRequestMethod `json:"method"`
+	Url    string                     `json:"url"`
+	Body   *string                    `json:"body,omitempty"`
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	QueryParams   [][]string `json:"queryParams,omitempty"`
+	DatasourceUid string     `json:"datasourceUid"`
+	Headers       [][]string `json:"headers,omitempty"`
+}
+
+// NewDashboardInfinityOptions creates a new DashboardInfinityOptions object.
+func NewDashboardInfinityOptions() *DashboardInfinityOptions {
+	return &DashboardInfinityOptions{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardActionVariable struct {
+	Key  string `json:"key"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+// NewDashboardActionVariable creates a new DashboardActionVariable object.
+func NewDashboardActionVariable() *DashboardActionVariable {
+	return &DashboardActionVariable{
+		Type: DashboardActionVariableType,
+	}
+}
+
+// Action variable type
+// +k8s:openapi-gen=true
+const DashboardActionVariableType = "string"
 
 // +k8s:openapi-gen=true
 type DashboardDynamicConfigValue struct {
@@ -973,9 +1065,11 @@ type DashboardAutoGridLayoutSpec struct {
 // NewDashboardAutoGridLayoutSpec creates a new DashboardAutoGridLayoutSpec object.
 func NewDashboardAutoGridLayoutSpec() *DashboardAutoGridLayoutSpec {
 	return &DashboardAutoGridLayoutSpec{
-		MaxColumnCount: (func(input float64) *float64 { return &input })(3),
-		FillScreen:     (func(input bool) *bool { return &input })(false),
-		Items:          []DashboardAutoGridLayoutItemKind{},
+		MaxColumnCount:  (func(input float64) *float64 { return &input })(3),
+		ColumnWidthMode: DashboardAutoGridLayoutSpecColumnWidthModeStandard,
+		RowHeightMode:   DashboardAutoGridLayoutSpecRowHeightModeStandard,
+		FillScreen:      (func(input bool) *bool { return &input })(false),
+		Items:           []DashboardAutoGridLayoutItemKind{},
 	}
 }
 
@@ -1690,7 +1784,7 @@ type DashboardAdHocFilterWithLabels struct {
 	KeyLabel    *string  `json:"keyLabel,omitempty"`
 	ValueLabels []string `json:"valueLabels,omitempty"`
 	ForceEdit   *bool    `json:"forceEdit,omitempty"`
-	Origin      string   `json:"origin,omitempty"`
+	Origin      *string  `json:"origin,omitempty"`
 	// @deprecated
 	Condition *string `json:"condition,omitempty"`
 }
@@ -1698,7 +1792,7 @@ type DashboardAdHocFilterWithLabels struct {
 // NewDashboardAdHocFilterWithLabels creates a new DashboardAdHocFilterWithLabels object.
 func NewDashboardAdHocFilterWithLabels() *DashboardAdHocFilterWithLabels {
 	return &DashboardAdHocFilterWithLabels{
-		Origin: DashboardFilterOrigin,
+		Origin: (func(input string) *string { return &input })(DashboardFilterOrigin),
 	}
 }
 
@@ -1772,6 +1866,8 @@ func NewDashboardSpec() *DashboardSpec {
 
 // +k8s:openapi-gen=true
 type DashboardV2alpha1FieldConfigSourceOverrides struct {
+	// Describes config override rules created when interacting with Grafana.
+	SystemRef  *string                       `json:"__systemRef,omitempty"`
 	Matcher    DashboardMatcherConfig        `json:"matcher"`
 	Properties []DashboardDynamicConfigValue `json:"properties"`
 }
@@ -1829,6 +1925,16 @@ func NewDashboardV2alpha1SpecialValueMapOptions() *DashboardV2alpha1SpecialValue
 	return &DashboardV2alpha1SpecialValueMapOptions{
 		Result: *NewDashboardValueMappingResult(),
 	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardV2alpha1ActionStyle struct {
+	BackgroundColor *string `json:"backgroundColor,omitempty"`
+}
+
+// NewDashboardV2alpha1ActionStyle creates a new DashboardV2alpha1ActionStyle object.
+func NewDashboardV2alpha1ActionStyle() *DashboardV2alpha1ActionStyle {
+	return &DashboardV2alpha1ActionStyle{}
 }
 
 // +k8s:openapi-gen=true

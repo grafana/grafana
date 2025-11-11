@@ -74,6 +74,12 @@ type SavePreferenceCommand struct {
 	Navbar            *NavbarPreference       `json:"navbar,omitempty"`
 }
 
+// One (and only one) of the values must be non-zero
+type DeleteCommand struct {
+	OrgID  int64
+	UserID int64
+	TeamID int64
+}
 type PatchPreferenceCommand struct {
 	UserID int64
 	OrgID  int64

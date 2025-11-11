@@ -12,20 +12,44 @@ import { ExtensionToolbarItemButton } from './ExtensionToolbarItemButton';
 
 type ComponentWithPluginId = ExtensionInfo & { pluginId: string };
 
-export function ExtensionToolbarItem() {
-  const { availableComponents, dockedComponentId, setDockedComponentId, isEnabled } = useExtensionSidebarContext();
+type Props = {
+  compact?: boolean;
+};
 
-  if (!isEnabled || availableComponents.size === 0) {
+const compactAllowedComponents = ['grafana-assistant-app'];
+const interactiveLearningPluginIds = ['grafana-pathfinder-app', 'grafana-grafanadocsplugin-app'];
+
+export function ExtensionToolbarItem({ compact }: Props) {
+  const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
+
+  // Don't render the toolbar if the only available plugins are interactive learning plugins.
+  // They're opened by the interactive learning menu.
+  const nonInteractiveLearningPlugins = Array.from(availableComponents.keys()).filter(
+    (pluginId) => !interactiveLearningPluginIds.includes(pluginId)
+  );
+  if (nonInteractiveLearningPlugins.length === 0) {
     return null;
   }
 
   const dockedMeta = dockedComponentId ? getComponentMetaFromComponentId(dockedComponentId) : null;
 
   const renderPluginButton = (pluginId: string, components: ComponentWithPluginId[]) => {
+    // Don't render any button for the interactive learning plugins.
+    // They're opened by the interactive learning button.
+    if (interactiveLearningPluginIds.includes(pluginId)) {
+      return null;
+    }
+
     if (components.length === 1) {
       const component = components[0];
-      const componentId = getComponentIdFromComponentMeta(pluginId, component);
+      const componentId = getComponentIdFromComponentMeta(pluginId, component.title);
       const isActive = dockedComponentId === componentId;
+
+      // we now allow more components in the extension sidebar
+      // in compact mode we only want to allow the Assistant app right now
+      if (compact && !compactAllowedComponents.includes(pluginId)) {
+        return null;
+      }
 
       return (
         <ExtensionToolbarItemButton
@@ -42,7 +66,7 @@ export function ExtensionToolbarItem() {
     const MenuItems = (
       <Menu>
         {components.map((c) => {
-          const id = getComponentIdFromComponentMeta(pluginId, c);
+          const id = getComponentIdFromComponentMeta(pluginId, c.title);
           return (
             <Menu.Item
               key={id}

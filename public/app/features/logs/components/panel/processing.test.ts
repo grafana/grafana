@@ -3,6 +3,7 @@ import { config } from '@grafana/runtime';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine, createLogRow } from '../mocks/logRow';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME, OTEL_PROBE_FIELD } from '../otel/formats';
 
 import { LogListFontSize } from './LogList';
 import { LogListModel, preProcessLogs } from './processing';
@@ -142,7 +143,7 @@ describe('preProcessLogs', () => {
       expect(logListModel.getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME, true)).toBe('log message 1');
     });
 
-    test('Prettifies JSON', () => {
+    test('Does not modify unwrapped JSON', () => {
       const entry = '{"key": "value", "otherKey": "otherValue"}';
       const logListModel = createLogLine(
         { entry },
@@ -151,6 +152,38 @@ describe('preProcessLogs', () => {
           order: LogsSortOrder.Descending,
           timeZone: 'browser',
           wrapLogMessage: false, // unwrapped
+        }
+      );
+      expect(logListModel.entry).toBe(entry);
+      expect(logListModel.body).toBe(entry);
+    });
+
+    test('Does not modify wrapped JSON', () => {
+      const entry = '{"key": "value", "otherKey": "otherValue"}';
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: false, // unwrapped
+          prettifyJSON: false,
+        }
+      );
+      expect(logListModel.entry).toBe(entry);
+      expect(logListModel.body).toBe(entry);
+    });
+
+    test('Prettifies wrapped JSON', () => {
+      const entry = '{"key": "value", "otherKey": "otherValue"}';
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: true, // wrapped
+          prettifyJSON: true,
         }
       );
       expect(logListModel.entry).toBe(entry);
@@ -170,6 +203,101 @@ describe('preProcessLogs', () => {
       );
       expect(logListModel.entry).toBe(entry);
       expect(logListModel.body).toContain('90071992547409911');
+    });
+
+    test.each([
+      '{"timestamp":"2025-08-19T12:34:56Z","level":"INFO","message":"User logged in","user_id":1234}',
+      '{"time":"2025-08-19T12:35:10Z","level":"ERROR","service":"payment","error":"Insufficient funds","transaction_id":"tx-98765"}',
+      '{"ts":1692444912,"lvl":"WARN","component":"auth","msg":"Token expired","session_id":"abcd1234"}',
+      '{"@timestamp":"2025-08-19T12:36:00Z","severity":"DEBUG","event":"cache_hit","key":"user_profile:1234","duration_ms":3}',
+      '{}',
+    ])('Detects JSON logs', (entry: string) => {
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: false,
+        }
+      );
+      expect(logListModel.body).toBeDefined(); // Triggers parsing
+      expect(logListModel.isJSON).toBe(true);
+    });
+
+    test.each(['1', '"1"', 'true', 'null', 'false', 'not json', '"nope"'])('Detects non-JSON logs', (entry: string) => {
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: false,
+        }
+      );
+      expect(logListModel.body).toBeDefined(); // Triggers parsing
+      expect(logListModel.isJSON).toBe(false);
+    });
+
+    describe('OTel logs', () => {
+      const originalState = config.featureToggles.otelLogsFormatting;
+
+      test('Does not create the OTel attribute field when not enabled', () => {
+        config.featureToggles.otelLogsFormatting = false;
+
+        const logListModel = createLogLine(
+          { entry: 'the log' },
+          {
+            escape: false,
+            order: LogsSortOrder.Descending,
+            timeZone: 'browser',
+            wrapLogMessage: true, // wrapped
+            prettifyJSON: true,
+          }
+        );
+        expect(logListModel.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]).toBeUndefined();
+        expect(logListModel.highlightedLogAttributesTokens).toHaveLength(0);
+
+        config.featureToggles.otelLogsFormatting = originalState;
+      });
+
+      test('Does not create the OTel attribute field when is not an OTel log', () => {
+        config.featureToggles.otelLogsFormatting = false;
+
+        const logListModel = createLogLine(
+          { entry: 'the log', labels: {} },
+          {
+            escape: false,
+            order: LogsSortOrder.Descending,
+            timeZone: 'browser',
+            wrapLogMessage: true, // wrapped
+            prettifyJSON: true,
+          }
+        );
+        expect(logListModel.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]).toBeUndefined();
+        expect(logListModel.highlightedLogAttributesTokens).toHaveLength(0);
+
+        config.featureToggles.otelLogsFormatting = originalState;
+      });
+
+      test('Generates and highlights an OTel log line attributes field', () => {
+        config.featureToggles.otelLogsFormatting = true;
+
+        const logListModel = createLogLine(
+          { entry: 'the log', labels: { [OTEL_PROBE_FIELD]: '1', field: 'value' } },
+          {
+            escape: false,
+            order: LogsSortOrder.Descending,
+            timeZone: 'browser',
+            wrapLogMessage: true, // wrapped
+            prettifyJSON: true,
+          }
+        );
+        expect(logListModel.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]).toEqual('field=value');
+        expect(logListModel.highlightedLogAttributesTokens).toHaveLength(2);
+
+        config.featureToggles.otelLogsFormatting = originalState;
+      });
     });
   });
 
@@ -217,21 +345,98 @@ describe('preProcessLogs', () => {
   });
 
   test('Highlights tokens in log lines', () => {
-    expect(processedLogs[0].highlightedBody).toContain('log-token-label');
-    expect(processedLogs[0].highlightedBody).toContain('log-token-key');
-    expect(processedLogs[0].highlightedBody).toContain('log-token-string');
-    expect(processedLogs[0].highlightedBody).toContain('log-token-uuid');
-    expect(processedLogs[0].highlightedBody).not.toContain('log-token-method');
-    expect(processedLogs[0].highlightedBody).not.toContain('log-token-json-key');
+    expect(processedLogs[0].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-label' })])
+    );
+    expect(processedLogs[0].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-key' })])
+    );
+    expect(processedLogs[0].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-string' })])
+    );
+    expect(processedLogs[0].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-uuid' })])
+    );
+    expect(processedLogs[0].highlightedBodyTokens).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-method' })])
+    );
+    expect(processedLogs[0].highlightedBodyTokens).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-json-key' })])
+    );
 
-    expect(processedLogs[1].highlightedBody).toContain('log-token-method');
-    expect(processedLogs[1].highlightedBody).toContain('log-token-key');
-    expect(processedLogs[1].highlightedBody).toContain('log-token-string');
-    expect(processedLogs[1].highlightedBody).not.toContain('log-token-json-key');
+    expect(processedLogs[1].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-method' })])
+    );
+    expect(processedLogs[1].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-key' })])
+    );
+    expect(processedLogs[1].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-string' })])
+    );
+    expect(processedLogs[1].highlightedBodyTokens).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-json-key' })])
+    );
 
-    expect(processedLogs[2].highlightedBody).toContain('log-token-json-key');
-    expect(processedLogs[2].highlightedBody).toContain('log-token-string');
-    expect(processedLogs[2].highlightedBody).not.toContain('log-token-method');
+    expect(processedLogs[2].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-json-key' })])
+    );
+    expect(processedLogs[2].highlightedBodyTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-string' })])
+    );
+    expect(processedLogs[2].highlightedBodyTokens).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'log-token-method' })])
+    );
+  });
+
+  test('Highlights search strings within JSON logs', () => {
+    const jsonLogWithSearch = createLogRow({
+      labels: { kind: 'Event', stage: 'ResponseComplete' },
+      entry: `{"kind":"Event","key":"value"}`,
+      logLevel: LogLevel.error,
+      // Search words
+      searchWords: ['ven'],
+    });
+    const jsonLogWithoutSearch = createLogRow({
+      labels: { kind: 'Event', stage: 'ResponseComplete' },
+      entry: `{"kind":"Event","key":"value"}`,
+    });
+
+    const [processedLogWithSearch, processedLogWithoutSearch] = preProcessLogs(
+      [jsonLogWithSearch, jsonLogWithoutSearch],
+      {
+        escape: false,
+        order: LogsSortOrder.Descending,
+        timeZone: 'browser',
+        wrapLogMessage: true,
+      }
+    );
+
+    // Current search
+    processedLogWithSearch.setCurrentSearch('alu');
+
+    // Search matches
+    expect(processedLogWithSearch.highlightedBodyTokens).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ content: '"kind"' }),
+        // Search words
+        expect.objectContaining({ content: 'ven' }),
+        expect.objectContaining({ content: '"key"' }),
+        // Current search
+        expect.objectContaining({ content: 'alu' }),
+      ])
+    );
+
+    // Original JSON highlight
+    expect(processedLogWithoutSearch.highlightedBodyTokens).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ content: '"kind"' }),
+        // Search words
+        expect.objectContaining({ content: ['"Event"'] }),
+        expect.objectContaining({ content: '"key"' }),
+        // Current search
+        expect.objectContaining({ content: ['"value"'] }),
+      ])
+    );
   });
 
   test('Returns displayed field values', () => {
@@ -346,45 +551,5 @@ describe('preProcessLogs', () => {
       expect(longLog.collapsed).toBe(false);
       expect(longLog.body).toBe(entry);
     });
-  });
-});
-
-describe('OTel logs', () => {
-  let originalOtelLogsFormatting = config.featureToggles.otelLogsFormatting;
-  afterAll(() => {
-    config.featureToggles.otelLogsFormatting = originalOtelLogsFormatting;
-  });
-
-  test('Requires a feature flag', () => {
-    const log = createLogLine({
-      labels: {
-        severity_number: '1',
-        telemetry_sdk_language: 'php',
-        scope_name: 'scope',
-        aws_ignore: 'ignored',
-        key: 'value',
-        otel: 'otel',
-      },
-      entry: `place="luna" 1ms 3 KB`,
-    });
-    expect(log.otelLanguage).toBeDefined();
-    expect(log.body).toEqual(`place="luna" 1ms 3 KB`);
-  });
-
-  test('Augments OTel log lines', () => {
-    config.featureToggles.otelLogsFormatting = true;
-    const log = createLogLine({
-      labels: {
-        severity_number: '1',
-        telemetry_sdk_language: 'php',
-        scope_name: 'scope',
-        aws_ignore: 'ignored',
-        key: 'value',
-        otel: 'otel',
-      },
-      entry: `place="luna" 1ms 3 KB`,
-    });
-    expect(log.otelLanguage).toBeDefined();
-    expect(log.body).toEqual(`place="luna" 1ms 3 KB key=value otel=otel`);
   });
 });

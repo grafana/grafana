@@ -1,13 +1,15 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
 import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { Alert, Badge, Box, Card, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
-import { Job, Repository, SyncStatus } from 'app/api/clients/provisioning/v0alpha1';
+import { t, Trans } from '@grafana/i18n';
+import { Badge, Box, Card, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
+import { Job, Repository } from 'app/api/clients/provisioning/v0alpha1';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
+import { getErrorMessage } from '../utils/httpUtils';
+import { getStatusColor } from '../utils/repositoryStatus';
 import { formatTimestamp } from '../utils/time';
 
 import { JobSummary } from './JobSummary';
@@ -22,24 +24,27 @@ type JobCell = {
   };
 };
 
-const getStatusColor = (state?: SyncStatus['state']) => {
-  switch (state) {
-    case 'success':
-      return 'green';
-    case 'working':
-      return 'blue';
-    case 'warning':
-      return 'orange';
-    case 'pending':
-      return 'darkgrey';
-    case 'error':
-      return 'red';
-    default:
-      return 'darkgrey';
+function formatJobDuration(job: Job): string | null {
+  const interval = {
+    start: job.status?.started ?? 0,
+    end: job.status?.finished ?? Date.now(),
+  };
+  if (!interval.start) {
+    return null;
   }
-};
+  const elapsed = interval.end - interval.start;
+  if (elapsed < 1000) {
+    return `${elapsed}ms`;
+  }
+  return intervalToAbbreviatedDurationString(interval, true);
+}
 
 const getJobColumns = () => [
+  {
+    id: 'jobId',
+    header: t('provisioning.recent-jobs.column-job-id', 'Job ID'),
+    cell: ({ row: { original: job } }: JobCell) => <Text variant="body">{job.metadata?.name || ''}</Text>,
+  },
   {
     id: 'status',
     header: t('provisioning.recent-jobs.column-status', 'Status'),
@@ -64,20 +69,7 @@ const getJobColumns = () => [
   {
     id: 'duration',
     header: t('provisioning.recent-jobs.column-duration', 'Duration'),
-    cell: ({ row: { original: job } }: JobCell) => {
-      const interval = {
-        start: job.status?.started ?? 0,
-        end: job.status?.finished ?? Date.now(),
-      };
-      if (!interval.start) {
-        return null;
-      }
-      const elapsed = interval.end - interval.start;
-      if (elapsed < 1000) {
-        return `${elapsed}ms`;
-      }
-      return intervalToAbbreviatedDurationString(interval, true);
-    },
+    cell: ({ row: { original: job } }: JobCell) => formatJobDuration(job),
   },
   {
     id: 'message',
@@ -94,10 +86,6 @@ function ExpandedRow({ row }: ExpandedRowProps) {
   const hasSummary = Boolean(row.status?.summary?.length);
   const hasErrors = Boolean(row.status?.errors?.length);
   const hasSpec = Boolean(row.spec);
-
-  if (!hasSummary && !hasErrors && !hasSpec) {
-    return null;
-  }
 
   // the action is already showing
   const data = useMemo(() => {
@@ -116,6 +104,18 @@ function ExpandedRow({ row }: ExpandedRowProps) {
     return v;
   }, [row.spec]);
 
+  if (!hasSummary && !hasErrors && !hasSpec) {
+    return null;
+  }
+
+  const state = row.status?.state;
+  const isValidState = state && ['success', 'warning', 'error'].includes(state);
+  const alertProps = isValidState
+    ? {
+        [state]: { message: row.status?.errors },
+      }
+    : null;
+
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
@@ -127,13 +127,13 @@ function ExpandedRow({ row }: ExpandedRowProps) {
             <KeyValuesTable data={data} />
           </Stack>
         )}
-        {hasErrors && <ProvisioningAlert error={{ message: row.status?.errors }} />}
-        {hasSummary && (
+        {alertProps && <ProvisioningAlert {...alertProps} />}
+        {hasSummary && row.status?.summary && (
           <Stack direction="column" gap={2}>
             <Text variant="body" color="secondary">
               <Trans i18nKey="provisioning.expanded-row.summary">Summary</Trans>
             </Text>
-            <JobSummary summary={row.status!.summary!} />
+            <JobSummary summary={row.status.summary} />
           </Stack>
         )}
       </Stack>
@@ -151,43 +151,55 @@ function EmptyState() {
   );
 }
 
-function ErrorLoading(typ: string, error: string) {
-  return (
-    <Alert
-      title={t('provisioning.recent-jobs.error-loading', 'Error loading {{type}}', { type: typ })}
-      severity="error"
-    >
-      <pre>{JSON.stringify(error)}</pre>
-    </Alert>
-  );
-}
-
-function Loading() {
-  return (
-    <Stack direction={'column'} alignItems={'center'}>
-      <Spinner />
-    </Stack>
-  );
-}
-
 export function RecentJobs({ repo }: Props) {
-  // TODO: Decide on whether we want to wait on historic jobs to show the current ones.
-  //   Gut feeling is that current jobs are far more important to show than historic ones.
   const [jobs, activeQuery, historicQuery] = useRepositoryAllJobs({
     repositoryName: repo.metadata?.name ?? 'x',
   });
   const jobColumns = useMemo(() => getJobColumns(), []);
+  const hasLoadedDataRef = useRef(false);
 
-  let description: JSX.Element;
-  if (activeQuery.isLoading || historicQuery.isLoading) {
-    description = Loading();
-  } else if (activeQuery.isError) {
-    description = ErrorLoading(t('provisioning.recent-jobs.active-jobs', 'active jobs'), activeQuery.error);
-    // TODO: Figure out what to do if historic fails. Maybe a separate card?
-  } else if (!jobs?.length) {
-    description = <EmptyState />;
-  } else {
-    description = (
+  if (activeQuery.data || historicQuery.data) {
+    hasLoadedDataRef.current = true;
+  }
+
+  const renderContent = () => {
+    const isInitialLoading = !hasLoadedDataRef.current && (activeQuery.isLoading || historicQuery.isLoading);
+
+    if (isInitialLoading) {
+      return (
+        <Stack direction="column" alignItems="center">
+          <Spinner />
+        </Stack>
+      );
+    }
+
+    if (activeQuery.isError) {
+      return (
+        <ProvisioningAlert
+          error={{
+            title: t('provisioning.recent-jobs.error-loading-active-jobs', 'Error loading active jobs'),
+            message: getErrorMessage(activeQuery.error),
+          }}
+        />
+      );
+    }
+
+    if (historicQuery.isError) {
+      return (
+        <ProvisioningAlert
+          error={{
+            title: t('provisioning.recent-jobs.error-loading-historic-jobs', 'Error loading historic jobs'),
+            message: getErrorMessage(historicQuery.error),
+          }}
+        />
+      );
+    }
+
+    if (!jobs?.length) {
+      return <EmptyState />;
+    }
+
+    return (
       <InteractiveTable
         data={jobs}
         columns={jobColumns}
@@ -196,14 +208,14 @@ export function RecentJobs({ repo }: Props) {
         pageSize={10}
       />
     );
-  }
+  };
 
   return (
     <Card noMargin>
       <Card.Heading>
         <Trans i18nKey="provisioning.recent-jobs.jobs">Jobs</Trans>
       </Card.Heading>
-      <Card.Description>{description}</Card.Description>
+      <Card.Description>{renderContent()}</Card.Description>
     </Card>
   );
 }

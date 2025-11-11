@@ -9,19 +9,23 @@ export interface UnitPickerProps {
   onChange: (item?: string) => void;
   value?: string;
   width?: number;
+  id?: string;
 }
 
 function formatCreateLabel(input: string) {
   return `Custom unit: ${input}`;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/pickers-unitpicker--docs
+ */
 export class UnitPicker extends PureComponent<UnitPickerProps> {
   onChange = (value: SelectableValue<string>) => {
     this.props.onChange(value.value);
   };
 
   render() {
-    const { value, width } = this.props;
+    const { value, width, id } = this.props;
 
     // Set the current selection
     let current: SelectableValue<string> | undefined = undefined;
@@ -56,6 +60,7 @@ export class UnitPicker extends PureComponent<UnitPickerProps> {
 
     return (
       <Cascader
+        id={id}
         width={width}
         initialValue={current && current.label}
         allowCustomValue

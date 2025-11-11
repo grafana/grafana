@@ -13,6 +13,7 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
+import { Stack } from '../Layout/Stack/Stack';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
 
@@ -61,6 +62,11 @@ const drawerSizes = {
   lg: { width: '75vw', minWidth: 744 },
 };
 
+/**
+ * Drawer is a slide in overlay that can be used to display additional information without hiding the main page content. It can be anchored to the left or right edge of the screen.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-drawer--docs
+ */
 export function Drawer({
   children,
   onClose,
@@ -154,8 +160,8 @@ export function Drawer({
               />
             </div>
             {typeof title === 'string' ? (
-              <div className={styles.titleWrapper}>
-                <Text element="h3" {...titleProps}>
+              <Stack direction="column">
+                <Text element="h3" truncate {...titleProps}>
                   {title}
                 </Text>
                 {subtitle && (
@@ -163,7 +169,7 @@ export function Drawer({
                     {subtitle}
                   </div>
                 )}
-              </div>
+              </Stack>
             ) : (
               title
             )}
@@ -272,12 +278,22 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     drawerMotion: css({
       '&-appear': {
-        transform: 'translateX(100%)',
-        transition: 'none !important',
-
+        [theme.transitions.handleMotion('no-preference')]: {
+          transform: 'translateX(100%)',
+          transition: 'none !important',
+        },
+        [theme.transitions.handleMotion('reduce')]: {
+          opacity: 0,
+        },
         '&-active': {
-          transition: `${theme.transitions.create('transform')} !important`,
-          transform: 'translateX(0)',
+          [theme.transitions.handleMotion('no-preference')]: {
+            transform: 'translateX(0)',
+            transition: `${theme.transitions.create('transform')} !important`,
+          },
+          [theme.transitions.handleMotion('reduce')]: {
+            transition: `opacity 0.2s ease-in-out`,
+            opacity: 1,
+          },
         },
       },
     }),
@@ -307,7 +323,9 @@ const getStyles = (theme: GrafanaTheme2) => {
 
         '&-active': {
           opacity: 1,
-          transition: theme.transitions.create('opacity'),
+          [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+            transition: theme.transitions.create('opacity'),
+          },
         },
       },
     }),
@@ -325,14 +343,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: theme.spacing(1),
       top: theme.spacing(1),
     }),
-    titleWrapper: css({
-      label: 'drawer-title',
-      overflowWrap: 'break-word',
-    }),
     subtitle: css({
       label: 'drawer-subtitle',
       color: theme.colors.text.secondary,
-      paddingTop: theme.spacing(1),
     }),
     content: css({
       padding: theme.spacing(theme.components.drawer?.padding ?? 2),

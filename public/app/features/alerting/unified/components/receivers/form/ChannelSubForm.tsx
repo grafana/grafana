@@ -7,9 +7,8 @@ import { Controller, FieldErrors, useFormContext } from 'react-hook-form';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
-import { NotificationChannelOption } from 'app/types/alerting';
+import { NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 
-import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import {
   ChannelValues,
   CloudChannelValues,
@@ -62,10 +61,10 @@ export function ChannelSubForm<R extends ChannelValues>({
   const channelFieldPath = `items.${integrationIndex}` as const;
   const typeFieldPath = `${channelFieldPath}.type` as const;
   const settingsFieldPath = `${channelFieldPath}.settings` as const;
+  const secureFieldsPath = `${channelFieldPath}.secureFields` as const;
 
   const selectedType = watch(typeFieldPath) ?? defaultValues.type;
   const parse_mode = watch(`${settingsFieldPath}.parse_mode`);
-  const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
 
   // TODO I don't like integration specific code here but other ways require a bigger refactoring
   const onCallIntegrationType = watch(`${settingsFieldPath}.integration_type`);
@@ -83,10 +82,28 @@ export function ChannelSubForm<R extends ChannelValues>({
     // Restore values when switching back from a changed integration to the default one
     const subscription = watch((formValues, { name, type }) => {
       // @ts-expect-error name is valid key for formValues
-      const value = name ? formValues[name] : '';
+      const value = name ? getValues(name, formValues) : '';
       if (initialValues && name === typeFieldPath && value === initialValues.type && type === 'change') {
         setValue(settingsFieldPath, initialValues.settings);
+        setValue(secureFieldsPath, initialValues.secureFields);
+      } else if (name === typeFieldPath && type === 'change') {
+        // When switching to a new notifier, set the default settings to remove all existing settings
+        // from the previous notifier
+        const newNotifier = notifiers.find(({ dto: { type } }) => type === value);
+        const defaultNotifierSettings = newNotifier ? getDefaultNotifierSettings(newNotifier) : {};
+
+        // Not sure why, but verriding settingsFieldPath is not enough if notifiers have the same settings fields, like url, title
+        const currentSettings = getValues(settingsFieldPath) ?? {};
+        Object.keys(currentSettings).forEach((key) => {
+          if (!defaultNotifierSettings[key]) {
+            setValue(`${settingsFieldPath}.${key}`, defaultNotifierSettings[key]);
+          }
+        });
+
+        setValue(settingsFieldPath, defaultNotifierSettings);
+        setValue(secureFieldsPath, {});
       }
+
       // Restore initial value of an existing oncall integration
       if (
         initialValues &&
@@ -98,7 +115,19 @@ export function ChannelSubForm<R extends ChannelValues>({
     });
 
     return () => subscription.unsubscribe();
-  }, [selectedType, initialValues, setValue, settingsFieldPath, typeFieldPath, watch]);
+  }, [
+    selectedType,
+    initialValues,
+    setValue,
+    settingsFieldPath,
+    typeFieldPath,
+    secureFieldsPath,
+    getValues,
+    watch,
+    defaultValues.settings,
+    defaultValues.secureFields,
+    notifiers,
+  ]);
 
   const onResetSecureField = (key: string) => {
     // formSecureFields might not be up to date if this function is called multiple times in a row
@@ -201,14 +230,7 @@ export function ChannelSubForm<R extends ChannelValues>({
         </div>
         <div className={styles.buttons}>
           {isTestable && onTest && isTestAvailable && (
-            <Button
-              disabled={testingReceiver}
-              size="xs"
-              variant="secondary"
-              type="button"
-              onClick={() => handleTest()}
-              icon={testingReceiver ? 'spinner' : 'message'}
-            >
+            <Button size="xs" variant="secondary" type="button" onClick={() => handleTest()} icon="message">
               <Trans i18nKey="alerting.channel-sub-form.test">Test</Trans>
             </Button>
           )}
@@ -292,6 +314,16 @@ export function ChannelSubForm<R extends ChannelValues>({
       )}
     </div>
   );
+}
+
+function getDefaultNotifierSettings(notifier: Notifier): Record<string, string> {
+  const defaultSettings: Record<string, string> = {};
+  notifier.dto.options.forEach((option) => {
+    if (option.defaultValue?.value) {
+      defaultSettings[option.propertyName] = option.defaultValue?.value;
+    }
+  });
+  return defaultSettings;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,10 +14,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 var (
@@ -24,6 +26,19 @@ var (
 	ErrDuplicateName       = errors.New("duplicate name in repository")
 	ErrMissingName         = field.Required(field.NewPath("name", "metadata", "name"), "missing name in resource")
 )
+
+// NewResourceOwnershipConflictError creates a BadRequest error for when a resource
+// is owned by a different repository or manager and cannot be modified
+func NewResourceOwnershipConflictError(resourceName string, currentManager utils.ManagerProperties, requestingManager utils.ManagerProperties) error {
+	message := fmt.Sprintf("resource '%s' is managed by %s '%s' and cannot be modified by %s '%s'",
+		resourceName,
+		currentManager.Kind,
+		currentManager.Identity,
+		requestingManager.Kind,
+		requestingManager.Identity)
+
+	return apierrors.NewBadRequest(message)
+}
 
 type WriteOptions struct {
 	Path string
@@ -42,6 +57,7 @@ type ResourcesManager struct {
 	parser          Parser
 	clients         ResourceClients
 	resourcesLookup map[resourceID]string // the path with this k8s name
+	mu              sync.RWMutex
 }
 
 func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser Parser, clients ResourceClients) *ResourcesManager {
@@ -52,6 +68,64 @@ func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, p
 		clients:         clients,
 		resourcesLookup: map[resourceID]string{},
 	}
+}
+
+// findResource checks if a resource exists in the lookup map (read operation)
+func (r *ResourcesManager) findResource(id resourceID) (string, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	path, found := r.resourcesLookup[id]
+	return path, found
+}
+
+func (r *ResourcesManager) addResource(id resourceID, path string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, found := r.resourcesLookup[id]; found {
+		return
+	}
+
+	r.resourcesLookup[id] = path
+}
+
+// CheckResourceOwnership validates that the requesting manager can modify the existing resource
+// Returns an error if the existing resource is owned by a different manager that doesn't allow edits
+// If existingResource is nil, no ownership conflict exists (new resource)
+// This is a package-level function that can be used without a ResourcesManager instance
+func CheckResourceOwnership(existingResource *unstructured.Unstructured, resourceName string, requestingManager utils.ManagerProperties) error {
+	if existingResource == nil {
+		// Resource doesn't exist, so no ownership conflict
+		return nil
+	}
+
+	// Check if the existing resource has manager properties
+	existingMeta, err := utils.MetaAccessor(existingResource)
+	if err != nil {
+		// If we can't get metadata, allow the operation
+		return nil
+	}
+
+	currentManager, hasManager := existingMeta.GetManagerProperties()
+	if !hasManager {
+		// No manager information, so no ownership conflict
+		return nil
+	}
+
+	// Check if this is the same manager
+	if currentManager.Kind == requestingManager.Kind && currentManager.Identity == requestingManager.Identity {
+		// Same manager, no conflict
+		return nil
+	}
+
+	// Check if the current manager allows edits
+	if currentManager.AllowsEdits {
+		// Manager allows edits from others, no conflict
+		return nil
+	}
+
+	// Different manager and edits not allowed - return ownership conflict error
+	return NewResourceOwnershipConflictError(resourceName, currentManager, requestingManager)
 }
 
 // CreateResource writes an object to the repository
@@ -141,15 +215,23 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 
 func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path string, ref string) (string, schema.GroupVersionKind, error) {
 	// Read the referenced file
-	fileInfo, err := r.repo.Read(ctx, path, ref)
+	readCtx, readSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.read_file")
+	fileInfo, err := r.repo.Read(readCtx, path, ref)
 	if err != nil {
+		readSpan.RecordError(err)
+		readSpan.End()
 		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
 	}
+	readSpan.End()
 
-	parsed, err := r.parser.Parse(ctx, fileInfo)
+	parseCtx, parseSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.parse_file")
+	parsed, err := r.parser.Parse(parseCtx, fileInfo)
 	if err != nil {
+		parseSpan.RecordError(err)
+		parseSpan.End()
 		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse file: %w", err)
 	}
+	parseSpan.End()
 
 	if parsed.Obj.GetName() == "" {
 		return "", schema.GroupVersionKind{}, ErrMissingName
@@ -161,69 +243,97 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 		Resource: parsed.GVR.Resource,
 		Group:    parsed.GVK.Group,
 	}
-	existing, found := r.resourcesLookup[id]
-	if found {
+
+	if existing, found := r.findResource(id); found {
 		return "", parsed.GVK, fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, existing, ErrDuplicateName)
 	}
-	r.resourcesLookup[id] = path
+	r.addResource(id, path)
 
 	// For resources that exist in folders, set the header annotation
 	if slices.Contains(SupportsFolderAnnotation, parsed.GVR.GroupResource()) {
 		// Make sure the parent folders exist
-		folder, err := r.folders.EnsureFolderPathExist(ctx, path)
+		folderCtx, folderSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.ensure_folder")
+		folder, err := r.folders.EnsureFolderPathExist(folderCtx, path)
 		if err != nil {
+			folderSpan.RecordError(err)
+			folderSpan.End()
 			return "", parsed.GVK, fmt.Errorf("failed to ensure folder path exists: %w", err)
 		}
 		parsed.Meta.SetFolder(folder)
+		folderSpan.End()
 	}
 
 	// Clear any saved identifiers
 	parsed.Meta.SetUID("")
 	parsed.Meta.SetResourceVersion("")
 
-	err = parsed.Run(ctx)
+	runCtx, runSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.run_resource")
+	err = parsed.Run(runCtx)
+	if err != nil {
+		runSpan.RecordError(err)
+	}
+	runSpan.End()
 
 	return parsed.Obj.GetName(), parsed.GVK, err
 }
 
-func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, schema.GroupVersionKind, error) {
-	name, gvk, err := r.RemoveResourceFromFile(ctx, previousPath, previousRef)
+func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, string, schema.GroupVersionKind, error) {
+	name, oldFolderName, gvk, err := r.RemoveResourceFromFile(ctx, previousPath, previousRef)
 	if err != nil {
-		return name, gvk, fmt.Errorf("failed to remove resource: %w", err)
+		return name, oldFolderName, gvk, fmt.Errorf("failed to remove resource: %w", err)
 	}
 
-	return r.WriteResourceFromFile(ctx, newPath, newRef)
+	newName, gvk, err := r.WriteResourceFromFile(ctx, newPath, newRef)
+	if err != nil {
+		return name, oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
+	}
+
+	return newName, oldFolderName, gvk, nil
 }
 
-func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, schema.GroupVersionKind, error) {
+func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, string, schema.GroupVersionKind, error) {
 	info, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
-		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	obj, gvk, _ := DecodeYAMLObject(bytes.NewBuffer(info.Data))
 	if obj == nil {
-		return "", schema.GroupVersionKind{}, fmt.Errorf("no object found")
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("no object found")
 	}
 
 	objName := obj.GetName()
 	if objName == "" {
-		return "", schema.GroupVersionKind{}, ErrMissingName
+		return "", "", schema.GroupVersionKind{}, ErrMissingName
 	}
 
-	client, _, err := r.clients.ForKind(*gvk)
+	client, _, err := r.clients.ForKind(ctx, *gvk)
 	if err != nil {
-		return "", schema.GroupVersionKind{}, fmt.Errorf("unable to get client for deleted object: %w", err)
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("unable to get client for deleted object: %w", err)
 	}
+
+	// the folder annotation is not stored in the git file, so we need to get it from grafana
+	grafanaObj, err := client.Get(ctx, objName, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return objName, "", schema.GroupVersionKind{}, nil // Already deleted or simply non-existing, nothing to do
+		}
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("unable to get grafana object: %w", err)
+	}
+	meta, err := utils.MetaAccessor(grafanaObj)
+	if err != nil {
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("unable to get meta accessor: %w", err)
+	}
+	folderName := meta.GetFolder()
 
 	err = client.Delete(ctx, objName, metav1.DeleteOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return objName, schema.GroupVersionKind{}, nil // Already deleted or simply non-existing, nothing to do
+			return objName, folderName, schema.GroupVersionKind{}, nil // Already deleted or simply non-existing, nothing to do
 		}
 
-		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to delete: %w", err)
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to delete: %w", err)
 	}
 
-	return objName, schema.GroupVersionKind{}, nil
+	return objName, folderName, schema.GroupVersionKind{}, nil
 }

@@ -36,6 +36,20 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
       }, 1000);
     }
 
+    if (retryFailed) {
+      onStatusChange?.({
+        status: 'error',
+        error: {
+          title: t('provisioning.job-status.no-job-found', 'No job found'),
+          message: t(
+            'provisioning.job-status.no-job-found-message',
+            'The job may have been deleted or could not be retrieved. Cancel the current process and start again.'
+          ),
+        },
+      });
+      return;
+    }
+
     if (finishedQuery.isSuccess && job?.status) {
       const { state, message, errors } = job.status;
 
@@ -70,21 +84,7 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
         clearTimeout(timeoutId);
       }
     };
-  }, [finishedQuery, job, onStatusChange]);
-
-  if (retryFailed) {
-    onStatusChange?.({
-      status: 'error',
-      error: {
-        title: t('provisioning.job-status.no-job-found', 'No job found'),
-        message: t(
-          'provisioning.job-status.no-job-found-message',
-          'The job may have been deleted or could not be retrieved. Cancel the current process and start again.'
-        ),
-      },
-    });
-    return null;
-  }
+  }, [finishedQuery, job, onStatusChange, retryFailed]);
 
   if (!job || finishedQuery.isLoading || finishedQuery.isFetching) {
     return (

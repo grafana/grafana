@@ -111,6 +111,14 @@ export interface FeatureToggles {
   */
   influxdbBackendMigration?: boolean;
   /**
+  * populate star status from apiserver
+  */
+  starsFromAPIServer?: boolean;
+  /**
+  * Routes stars requests from /api to the /apis endpoint
+  */
+  kubernetesStars?: boolean;
+  /**
   * Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
   */
   influxqlStreamingParser?: boolean;
@@ -157,10 +165,6 @@ export interface FeatureToggles {
   */
   extraThemes?: boolean;
   /**
-  * Enables the plugins frontend sandbox
-  */
-  pluginsFrontendSandbox?: boolean;
-  /**
   * Enables writing multiple items from a single query within Recorded Queries
   * @default true
   */
@@ -197,22 +201,19 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
-  * Experimental feature to use the secrets service for provisioning instead of the legacy secrets
-  */
-  provisioningSecretsService?: boolean;
-  /**
   * Start an additional https handler and write kubectl options
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
-  /**
-  * Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.
-  */
-  featureToggleAdminPage?: boolean;
   /**
   * Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
   * @default true
   */
   awsAsyncQueryCaching?: boolean;
+  /**
+  * Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
+  * @default false
+  */
+  queryCacheRequestDeduplication?: boolean;
   /**
   * Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
   */
@@ -274,12 +275,33 @@ export interface FeatureToggles {
   kubernetesLibraryPanels?: boolean;
   /**
   * Use the kubernetes API in the frontend for dashboards
+  * @default true
   */
   kubernetesDashboards?: boolean;
   /**
-  * Routes short url requests from /api to the /apis endpoint
+  * Enables k8s short url api and uses it under the hood when handling legacy /api
   */
   kubernetesShortURLs?: boolean;
+  /**
+  * Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+  */
+  useKubernetesShortURLsAPI?: boolean;
+  /**
+  * Adds support for Kubernetes alerting and recording rules
+  */
+  kubernetesAlertingRules?: boolean;
+  /**
+  * Adds support for Kubernetes correlations
+  */
+  kubernetesCorrelations?: boolean;
+  /**
+  * Adds support for Kubernetes logs drilldown
+  */
+  kubernetesLogsDrilldown?: boolean;
+  /**
+  * Adds support for Kubernetes querycaching
+  */
+  kubernetesQueryCaching?: boolean;
   /**
   * Disable schema validation for dashboards/v1
   */
@@ -305,6 +327,10 @@ export interface FeatureToggles {
   */
   queryService?: boolean;
   /**
+  * Adds datasource connections to the query service
+  */
+  queryServiceWithConnections?: boolean;
+  /**
   * Rewrite requests targeting /ds/query to the query service
   */
   queryServiceRewrite?: boolean;
@@ -324,10 +350,6 @@ export interface FeatureToggles {
   * If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
   */
   cachingOptimizeSerializationMemoryUsage?: boolean;
-  /**
-  * Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names
-  */
-  prometheusCodeModeMetricNamesSearch?: boolean;
   /**
   * Add cumulative and window functions to the add field from calculation transformation
   * @default true
@@ -373,6 +395,14 @@ export interface FeatureToggles {
   * Enables experimental new dashboard layouts
   */
   dashboardNewLayouts?: boolean;
+  /**
+  * Enables undo/redo in dynamic dashboards
+  */
+  dashboardUndoRedo?: boolean;
+  /**
+  * Enables unlimited dashboard panel grouping
+  */
+  unlimitedLayoutsNesting?: boolean;
   /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
@@ -438,11 +468,15 @@ export interface FeatureToggles {
   */
   secretsManagementAppPlatform?: boolean;
   /**
+  * Enable the secrets management app platform UI
+  */
+  secretsManagementAppPlatformUI?: boolean;
+  /**
   * Writes the state periodically to the database, asynchronous to rule evaluation
   */
   alertingSaveStatePeriodic?: boolean;
   /**
-  * Enables the compressed protobuf-based alert state storage
+  * Enables the compressed protobuf-based alert state storage. Default is enabled.
   * @default true
   */
   alertingSaveStateCompressed?: boolean;
@@ -457,10 +491,10 @@ export interface FeatureToggles {
   */
   useScopeSingleNodeEndpoint?: boolean;
   /**
-  * In-development feature that will allow injection of labels into prometheus queries.
-  * @default true
+  * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
+  * @default false
   */
-  promQLScope?: boolean;
+  useMultipleScopeNodesEndpoint?: boolean;
   /**
   * In-development feature that will allow injection of labels into loki queries.
   * @default false
@@ -498,10 +532,6 @@ export interface FeatureToggles {
   */
   kubernetesAggregatorCapTokenAuth?: boolean;
   /**
-  * Enable new expression parser
-  */
-  expressionParser?: boolean;
-  /**
   * Enable groupBy variable support in scenes dashboards
   */
   groupByVariable?: boolean;
@@ -531,18 +561,21 @@ export interface FeatureToggles {
   */
   grafanaManagedRecordingRules?: boolean;
   /**
-  * Enables Query Library feature in Explore
+  * Enables Saved queries (query library) feature
   */
   queryLibrary?: boolean;
+  /**
+  * Enable dashboard library experiments that are production ready
+  */
+  dashboardLibrary?: boolean;
+  /**
+  * Enable suggested dashboards when creating new dashboards
+  */
+  suggestedDashboards?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
   logsExploreTableDefaultVisualization?: boolean;
-  /**
-  * Enables the new sharing drawer design
-  * @default true
-  */
-  newDashboardSharingComponent?: boolean;
   /**
   * Enables the new alert list view design
   */
@@ -588,6 +621,10 @@ export interface FeatureToggles {
   */
   zanzana?: boolean;
   /**
+  * Use openFGA as main authorization engine and disable legacy RBAC clietn.
+  */
+  zanzanaNoLegacyClient?: boolean;
+  /**
   * Enables reload of dashboards on scopes, time range and variables changes
   */
   reloadDashboardsOnParamsChange?: boolean;
@@ -620,9 +657,9 @@ export interface FeatureToggles {
   */
   newFiltersUI?: boolean;
   /**
-  * Allows access to the new react-data-grid based table component.
+  * Allows authenticated API calls in actions
   */
-  tableNextGen?: boolean;
+  vizActionsAuth?: boolean;
   /**
   * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
   */
@@ -692,6 +729,10 @@ export interface FeatureToggles {
   */
   timeRangeProvider?: boolean;
   /**
+  * Enables time range panning functionality
+  */
+  timeRangePan?: boolean;
+  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */
@@ -760,6 +801,16 @@ export interface FeatureToggles {
   */
   alertingAIGenTemplates?: boolean;
   /**
+  * Enable enrichment per rule in the alerting UI.
+  * @default false
+  */
+  alertingEnrichmentPerRule?: boolean;
+  /**
+  * Enable Assistant Investigations enrichment type.
+  * @default false
+  */
+  alertingEnrichmentAssistantInvestigations?: boolean;
+  /**
   * Enable AI-analyze central state history.
   * @default false
   */
@@ -778,7 +829,8 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchUI?: boolean;
   /**
-  * Enables cross cluster search in the Elasticsearch datasource
+  * Enables cross cluster search in the Elasticsearch data source
+  * @default false
   */
   elasticsearchCrossClusterSearch?: boolean;
   /**
@@ -835,7 +887,8 @@ export interface FeatureToggles {
   */
   fetchRulesUsingPost?: boolean;
   /**
-  * Enables the new logs panel in Explore
+  * Enables the new logs panel
+  * @default true
   */
   newLogsPanel?: boolean;
   /**
@@ -847,6 +900,11 @@ export interface FeatureToggles {
   * Enables the new Jira integration for contact points in cloud alert managers.
   */
   alertingJiraIntegration?: boolean;
+  /**
+  * 
+  * @default true
+  */
+  alertingUseNewSimplifiedRoutingHashAlgorithm?: boolean;
   /**
   * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
   */
@@ -914,10 +972,6 @@ export interface FeatureToggles {
   */
   unifiedStorageGrpcConnectionPool?: boolean;
   /**
-  * Enables the extension sidebar
-  */
-  extensionSidebar?: boolean;
-  /**
   * Enables UI functionality to permanently delete alert rules
   * @default true
   */
@@ -931,10 +985,6 @@ export interface FeatureToggles {
   * use multi-tenant path for awsTempCredentials
   */
   multiTenantTempCredentials?: boolean;
-  /**
-  * Enables localization for plugins
-  */
-  localizationForPlugins?: boolean;
   /**
   * Enables unified navbars
   * @default false
@@ -950,6 +1000,11 @@ export interface FeatureToggles {
   */
   metricsFromProfiles?: boolean;
   /**
+  * Enables integration with Grafana Assistant in Profiles Drilldown
+  * @default true
+  */
+  grafanaAssistantInProfilesDrilldown?: boolean;
+  /**
   * Enables using PGX instead of libpq for PostgreSQL datasource
   */
   postgresDSUsePGX?: boolean;
@@ -961,10 +1016,6 @@ export interface FeatureToggles {
   * Enables auto-updating of users installed plugins
   */
   pluginsAutoUpdate?: boolean;
-  /**
-  * Register MT frontend
-  */
-  multiTenantFrontend?: boolean;
   /**
   * Enables the alerting list view v2 preview toggle
   */
@@ -984,9 +1035,17 @@ export interface FeatureToggles {
   */
   kubernetesAuthzApis?: boolean;
   /**
+  * Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
+  */
+  kubernetesAuthZHandlerRedirect?: boolean;
+  /**
   * Registers AuthZ resource permission /apis endpoints
   */
   kubernetesAuthzResourcePermissionApis?: boolean;
+  /**
+  * Enable sync of Zanzana authorization store on AuthZ CRD mutations
+  */
+  kubernetesAuthzZanzanaSync?: boolean;
   /**
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
@@ -997,22 +1056,33 @@ export interface FeatureToggles {
   */
   restoreDashboards?: boolean;
   /**
-  * Skip token rotation if it was already rotated less than 5 seconds ago
-  * @default true
-  */
-  skipTokenRotationIfRecent?: boolean;
-  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
   alertEnrichment?: boolean;
+  /**
+  * Allow multiple steps per enrichment.
+  * @default false
+  */
+  alertEnrichmentMultiStep?: boolean;
+  /**
+  * Enable conditional alert enrichment steps.
+  * @default false
+  */
+  alertEnrichmentConditional?: boolean;
   /**
   * Enables the API to import Alertmanager configuration
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
   /**
+  * Enables the UI to see imported Alertmanager configuration
+  * @default false
+  */
+  alertingImportAlertmanagerUI?: boolean;
+  /**
   * Enables image sharing functionality for dashboards
+  * @default true
   */
   sharingDashboardImage?: boolean;
   /**
@@ -1036,15 +1106,15 @@ export interface FeatureToggles {
   */
   enableAppChromeExtensions?: boolean;
   /**
+  * Set this to true to enable all dashboard empty state extensions registered by plugins.
+  * @default false
+  */
+  enableDashboardEmptyExtensions?: boolean;
+  /**
   * Enables use of app platform API for folders
   * @default false
   */
   foldersAppPlatformAPI?: boolean;
-  /**
-  * Set this to true to use the new PluginImporter functionality
-  * @default false
-  */
-  enablePluginImporter?: boolean;
   /**
   * Applies OTel formatting templates to displayed logs
   */
@@ -1055,16 +1125,12 @@ export interface FeatureToggles {
   */
   alertingNotificationHistory?: boolean;
   /**
-  * Allows decoupled core plugins to load from the Grafana CDN
-  * @default false
-  */
-  pluginAssetProvider?: boolean;
-  /**
   * Enable dual reader for unified storage search
   */
   unifiedStorageSearchDualReaderEnabled?: boolean;
   /**
   * Enables adhoc filtering support for the dashboard datasource
+  * @default true
   */
   dashboardDsAdHocFiltering?: boolean;
   /**
@@ -1073,11 +1139,16 @@ export interface FeatureToggles {
   dashboardLevelTimeMacros?: boolean;
   /**
   * Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
-  * @default false
   */
   alertmanagerRemoteSecondaryWithRemoteState?: boolean;
   /**
+  * Enables sharing a list of APIs with a list of plugins
+  * @default false
+  */
+  restrictedPluginApis?: boolean;
+  /**
   * Enable adhoc filter buttons in visualization tooltips
+  * @default true
   */
   adhocFiltersInTooltips?: boolean;
   /**
@@ -1093,4 +1164,95 @@ export interface FeatureToggles {
   * @default false
   */
   newClickhouseConfigPageDesign?: boolean;
+  /**
+  * Enables team folders functionality
+  * @default false
+  */
+  teamFolders?: boolean;
+  /**
+  * Enables the interactive learning app
+  */
+  interactiveLearning?: boolean;
+  /**
+  * Enables the alerting triage feature
+  * @default false
+  */
+  alertingTriage?: boolean;
+  /**
+  * Enables the Graphite data source full backend mode
+  * @default false
+  */
+  graphiteBackendMode?: boolean;
+  /**
+  * Enables the updated Azure Monitor resource picker
+  * @default false
+  */
+  azureResourcePickerUpdates?: boolean;
+  /**
+  * Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
+  * @default false
+  */
+  prometheusTypeMigration?: boolean;
+  /**
+  * Enables running plugins in containers
+  * @default false
+  */
+  pluginContainers?: boolean;
+  /**
+  * Run search queries through the tempo backend
+  * @default false
+  */
+  tempoSearchBackendMigration?: boolean;
+  /**
+  * Prioritize loading plugins from the CDN before other sources
+  * @default false
+  */
+  cdnPluginsLoadFirst?: boolean;
+  /**
+  * Enable loading plugins via declarative URLs
+  * @default false
+  */
+  cdnPluginsUrls?: boolean;
+  /**
+  * Enable syncing plugin installations to the installs API
+  * @default false
+  */
+  pluginInstallAPISync?: boolean;
+  /**
+  * Enable new gauge visualization
+  * @default false
+  */
+  newGauge?: boolean;
+  /**
+  * Restrict PanelChrome contents with overflow: hidden;
+  * @default true
+  */
+  preventPanelChromeOverflow?: boolean;
+  /**
+  * Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
+  */
+  jaegerEnableGrpcEndpoint?: boolean;
+  /**
+  * Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
+  * @default false
+  */
+  pluginStoreServiceLoading?: boolean;
+  /**
+  * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
+  * @default true
+  */
+  onlyStoreActionSets?: boolean;
+  /**
+  * Enables a new panel time settings drawer
+  */
+  panelTimeSettings?: boolean;
+  /**
+  * Enable template dashboards
+  */
+  dashboardTemplates?: boolean;
+  /**
+  * Enables app platform API for annotations
+  * @default false
+  */
+  kubernetesAnnotations?: boolean;
 }

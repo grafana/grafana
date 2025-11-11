@@ -31,8 +31,8 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -51,9 +52,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationParseMetricRequest(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("Test a simple single datasource query", func(t *testing.T) {
 		tc := setup(t, false, nil)
 		mr := metricRequestWithQueries(t, `{
@@ -334,7 +334,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 			assert.Equal(t, int64(1753944629000), q.query.TimeRange.To.UnixMilli())
 		}
 	})
-	t.Run("Test a datasource query with local time range", func(t *testing.T) {
+	t.Run("Test a datasource query with local time range, old attribute-name", func(t *testing.T) {
 		tc := setup(t, false, nil)
 		mr := metricRequestWithQueries(t, `{
 			"refId": "A",
@@ -390,6 +390,62 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 
 		verifyTimestamps(parsedReq2, int64(0), int64(0), int64(0), int64(0))
 	})
+	t.Run("Test a datasource query with local time range", func(t *testing.T) {
+		tc := setup(t, false, nil)
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			},
+			"timeRange": {
+				"from": "1753944618000",
+				"to": "1753944619000"
+			}
+		}`, `{
+			"refId": "B",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			},
+			"_timeRange": {
+				"from": "1753944628000",
+				"to": "1753944629000"
+			}
+		}`)
+		mr.From = ""
+		mr.To = ""
+
+		verifyTimestamps := func(parsedReq *parsedRequest, ts1 int64, ts2 int64, ts3 int64, ts4 int64) {
+			require.NotNil(t, parsedReq)
+			assert.Len(t, parsedReq.parsedQueries, 1)
+			assert.Contains(t, parsedReq.parsedQueries, "gIEkMvIVz")
+			queries := parsedReq.getFlattenedQueries()
+			assert.Len(t, queries, 2)
+
+			assert.Equal(t, ts1, queries[0].query.TimeRange.From.UnixMilli())
+			assert.Equal(t, ts2, queries[0].query.TimeRange.To.UnixMilli())
+
+			assert.Equal(t, ts3, queries[1].query.TimeRange.From.UnixMilli())
+			assert.Equal(t, ts4, queries[1].query.TimeRange.To.UnixMilli())
+		}
+
+		// with flag enabled
+		parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr, true)
+		require.NoError(t, err)
+
+		verifyTimestamps(parsedReq,
+			int64(1753944618000),
+			int64(1753944619000),
+			int64(1753944628000),
+			int64(1753944629000))
+
+		// with flag disabled
+		parsedReq2, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr, false)
+		require.NoError(t, err)
+
+		verifyTimestamps(parsedReq2, int64(0), int64(0), int64(0), int64(0))
+	})
 
 	t.Run("Test a datasource query with local time range, malformed to-value", func(t *testing.T) {
 		tc := setup(t, false, nil)
@@ -399,7 +455,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 				"uid": "gIEkMvIVz",
 				"type": "postgres"
 			},
-			"timeRange": {
+			"_timeRange": {
 				"from": "1753944618000",
 				"to": 1753944619000
 			}
@@ -418,7 +474,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 				"uid": "gIEkMvIVz",
 				"type": "postgres"
 			},
-			"timeRange": {
+			"_timeRange": {
 				"from": "1753944618000"
 			}
 		}`)
@@ -436,7 +492,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 				"uid": "gIEkMvIVz",
 				"type": "postgres"
 			},
-			"timeRange": {
+			"_timeRange": {
 				"from": 1753944618000,
 				"to": "1753944619000"
 			}
@@ -455,7 +511,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 				"uid": "gIEkMvIVz",
 				"type": "postgres"
 			},
-			"timeRange": {
+			"_timeRange": {
 				"to": "1753944619000"
 			}
 		}`)
@@ -468,9 +524,8 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 }
 
 func TestIntegrationQueryDataMultipleSources(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("can query multiple datasources", func(t *testing.T) {
 		tc := setup(t, false, nil)
 		query1, err := simplejson.NewJson([]byte(`
@@ -653,10 +708,9 @@ func TestIntegrationQueryDataMultipleSources(t *testing.T) {
 	})
 }
 
-func TestIntegrationQueryDataWithMTDSClient(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+func TestIntegrationQueryDataWithQSDSClient(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("can run a simple datasource query with a mt ds client", func(t *testing.T) {
 		stubbedResponse := &backend.QueryDataResponse{Responses: make(backend.Responses)}
 		testClient := &testClient{
@@ -758,11 +812,11 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		pluginconfig.NewFakePluginRequestConfigProvider(),
 	)
 
-	var mtdsClientBuilder mtdsclient.MTDatasourceClientBuilder
+	var qsdsClientBuilder dsquerierclient.QSDatasourceClientBuilder
 	if isMultiTenant {
-		mtdsClientBuilder = mtdsclient.NewTestMTDSClientBuilder(isMultiTenant, mockClient)
+		qsdsClientBuilder = dsquerierclient.NewTestQSDSClientBuilder(isMultiTenant, mockClient)
 	} else {
-		mtdsClientBuilder = mtdsclient.NewTestMTDSClientBuilder(false, nil)
+		qsdsClientBuilder = dsquerierclient.NewTestQSDSClientBuilder(false, nil)
 	}
 
 	exprService := expr.ProvideService(
@@ -772,7 +826,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		featuremgmt.WithFeatures(),
 		nil,
 		tracing.InitializeTracerForTest(),
-		mtdsClientBuilder,
+		qsdsClientBuilder,
 	)
 
 	queryService := ProvideService(
@@ -782,7 +836,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		rv,
 		pc,
 		pCtxProvider,
-		mtdsClientBuilder,
+		qsdsClientBuilder,
 	)
 
 	return &testContext{
@@ -790,7 +844,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		secretStore:            ss,
 		pluginRequestValidator: rv,
 		queryService:           queryService,
-		signedInUser:           &user.SignedInUser{OrgID: 1, Login: "login", Name: "name", Email: "email", OrgRole: identity.RoleAdmin},
+		signedInUser:           &user.SignedInUser{OrgID: 1, Login: "login", Name: "name", Email: "email", OrgRole: identity.RoleAdmin, Namespace: "ns1"},
 	}
 }
 
@@ -874,12 +928,15 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 }
 
 type testClient struct {
-	queryDataLastCalledWith  data.QueryDataRequest
+	queryDataLastCalledWith data.QueryDataRequest
+	// The number of times the QueryData method has been called
+	queryDataCalls           int
 	queryDataStubbedResponse *backend.QueryDataResponse
 	queryDataStubbedError    error
 }
 
 func (c *testClient) QueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	c.queryDataCalls++
 	c.queryDataLastCalledWith = req
 	if c.queryDataStubbedError != nil {
 		return nil, c.queryDataStubbedError

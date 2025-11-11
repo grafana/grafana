@@ -10,6 +10,7 @@ import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { useStyles2, Stack, Button, EmptyState, TextLink } from '@grafana/ui';
 
 import { isVariableEditable } from '../../serialization/sceneVariablesSetToVariables';
+import { DashboardInteractions } from '../../utils/interactions';
 import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
 import { UsagesToNetwork, VariableUsageTree } from '../../variables/utils';
 
@@ -47,10 +48,15 @@ export function VariableEditorList({
     onChangeOrder(result.source.index, result.destination.index);
   };
 
+  const onVariableAdd = () => {
+    onAdd();
+    DashboardInteractions.addVariableButtonClicked({ source: 'settings_pane' });
+  };
+
   const editableVariables = variables.filter(isVariableEditable);
 
   return editableVariables.length <= 0 ? (
-    <EmptyVariablesList onAdd={onAdd} />
+    <EmptyVariablesList onAdd={onVariableAdd} />
   ) : (
     <Stack direction="column" gap={3}>
       <table
@@ -100,7 +106,11 @@ export function VariableEditorList({
       </table>
       <Stack>
         <VariablesDependenciesButton variables={variables} />
-        <Button data-testid={selectors.pages.Dashboard.Settings.Variables.List.newButton} onClick={onAdd} icon="plus">
+        <Button
+          data-testid={selectors.pages.Dashboard.Settings.Variables.List.newButton}
+          onClick={onVariableAdd}
+          icon="plus"
+        >
           <Trans i18nKey="dashboard-scene.variable-editor-list.new-variable">New variable</Trans>
         </Button>
       </Stack>

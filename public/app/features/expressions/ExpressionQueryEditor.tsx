@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef } from 'react';
 
-import { DataSourceApi, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { DataSourceApi, FeatureState, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, IconButton, InlineField, PopoverContent, useStyles2 } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+import { Button, FeatureBadge, IconButton, InlineField, PopoverContent, useStyles2 } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
 import { ExpressionTypeDropdown } from './components/ExpressionTypeDropdown';
@@ -15,28 +16,40 @@ import { Threshold } from './components/Threshold';
 import { ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
 import { getDefaults } from './utils/expressionTypes';
 
-type Props = QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>;
+export type ExpressionQueryEditorProps = QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>;
 
 const labelWidth = 15;
 
 type NonClassicExpressionType = Exclude<ExpressionQueryType, ExpressionQueryType.classic>;
 type ExpressionTypeConfigStorage = Partial<Record<NonClassicExpressionType, string>>;
 
-// Help text for each expression type - can be expanded with more detailed content
-const getExpressionHelpText = (type: ExpressionQueryType): PopoverContent | string => {
+/**
+ * Get the configuration for an expression type (helper text and feature state).
+ * @param type - The expression type.
+ * @returns The configuration for the expression type.
+ */
+const getExpressionTypeConfig = (
+  type: ExpressionQueryType
+): { helperText: PopoverContent; featureState: FeatureState | undefined } => {
   const description = expressionTypes.find(({ value }) => value === type)?.description;
 
   switch (type) {
     case ExpressionQueryType.sql:
-      return (
-        <Trans i18nKey="expressions.expression-query-editor.helper-text-sql">
-          Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie "A", "B")
-          are available as tables and referenced by query-name. Fields are available as columns, as returned from the
-          data source.
-        </Trans>
-      );
+      return {
+        helperText: (
+          <Trans i18nKey="expressions.expression-query-editor.helper-text-sql">
+            Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie
+            &quot;A&quot;, &quot;B&quot;) are available as tables and referenced by query-name. Fields are available as
+            columns, as returned from the data source.
+          </Trans>
+        ),
+        featureState: FeatureState.preview,
+      };
     default:
-      return description ?? '';
+      return {
+        helperText: description ?? '',
+        featureState: undefined,
+      };
   }
 };
 
@@ -78,11 +91,27 @@ function useExpressionsCache() {
   return { getCachedExpression, setCachedExpression };
 }
 
-export function ExpressionQueryEditor(props: Props) {
+export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
   const { query, queries, onRunQuery, onChange, app } = props;
   const { getCachedExpression, setCachedExpression } = useExpressionsCache();
 
   const styles = useStyles2(getStyles);
+
+  const initialExpressionRef = useRef(query.expression);
+  const hasTrackedAddExpression = useRef(false);
+
+  useEffect(() => {
+    // Only track if 1) query has a type, and 2) we haven't tracked yet for this component instance, and
+    // 3) initial expression was empty (indicating a new expression, not editing existing)
+    if (query.type && !hasTrackedAddExpression.current && !initialExpressionRef.current) {
+      reportInteraction('dashboards_expression_interaction', {
+        action: 'add_expression',
+        expression_type: query.type,
+        context: 'panel_query_section',
+      });
+      hasTrackedAddExpression.current = true;
+    }
+  }, [query.type, query.refId]);
 
   useEffect(() => {
     setCachedExpression(query.type, query.expression);
@@ -118,11 +147,20 @@ export function ExpressionQueryEditor(props: Props) {
         return <Threshold onChange={onChange} query={query} labelWidth={labelWidth} refIds={refIds} />;
 
       case ExpressionQueryType.sql:
-        return <SqlExpr onChange={onChange} query={query} refIds={refIds} queries={queries} />;
+        return (
+          <SqlExpr
+            onChange={onChange}
+            query={query}
+            refIds={refIds}
+            queries={queries}
+            metadata={props}
+            onRunQuery={onRunQuery}
+          />
+        );
     }
   };
 
-  const helperText = getExpressionHelpText(query.type);
+  const { helperText, featureState } = getExpressionTypeConfig(query.type);
 
   return (
     <div>
@@ -137,7 +175,10 @@ export function ExpressionQueryEditor(props: Props) {
             </Button>
           </ExpressionTypeDropdown>
         </InlineField>
-        {helperText && <IconButton className={styles.infoIcon} name="info-circle" tooltip={helperText} />}
+        <div className={styles.fieldContainer}>
+          {featureState && <FeatureBadge featureState={featureState} />}
+          {helperText && <IconButton name="info-circle" tooltip={helperText} />}
+        </div>
       </div>
       {renderExpressionType()}
     </div>
@@ -150,7 +191,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(1),
   }),
-  infoIcon: css({
+  fieldContainer: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
     marginBottom: theme.spacing(0.5), // Align with the select field
   }),
 });

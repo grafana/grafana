@@ -233,6 +233,7 @@ type DeleteDashboardCommand struct {
 	UID                    string
 	OrgID                  int64
 	ForceDeleteFolderRules bool
+	RemovePermissions      bool
 }
 
 type DeleteOrphanedProvisionedDashboardsCommand struct {
@@ -240,11 +241,15 @@ type DeleteOrphanedProvisionedDashboardsCommand struct {
 }
 
 type DashboardProvisioningSearchResults struct {
-	Dashboard       Dashboard `xorm:"extends"`
-	Provisioner     string    `xorm:"name"`
-	ExternalID      string    `xorm:"external_id"`
-	CheckSum        string    `xorm:"check_sum"`
-	ProvisionUpdate int64     `xorm:"provisioning_updated"`
+	ID              int64  `xorm:"id"`
+	UID             string `xorm:"uid"`
+	Title           string `xorm:"title"`
+	FolderUID       string `xorm:"folder_uid"`
+	OrgID           int64  `xorm:"org_id"`
+	Provisioner     string `xorm:"name"`
+	ExternalID      string `xorm:"external_id"`
+	CheckSum        string `xorm:"check_sum"`
+	ProvisionUpdate int64  `xorm:"provisioning_updated"`
 }
 
 //
@@ -317,13 +322,14 @@ type SaveDashboardDTO struct {
 }
 
 type DashboardSearchProjection struct {
-	ID       int64  `xorm:"id"`
-	UID      string `xorm:"uid"`
-	OrgID    int64  `xorm:"org_id"`
-	Title    string
-	Slug     string
-	Term     string
-	IsFolder bool
+	ID          int64  `xorm:"id"`
+	UID         string `xorm:"uid"`
+	OrgID       int64  `xorm:"org_id"`
+	Title       string
+	Slug        string
+	Term        string
+	Description string
+	IsFolder    bool
 	// Deprecated: use FolderUID instead
 	FolderID    int64  `xorm:"folder_id"`
 	FolderUID   string `xorm:"folder_uid"`

@@ -39,39 +39,35 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    bootData: {
-      ...jest.requireActual('@grafana/runtime').config.bootData,
-      settings: {
-        ...jest.requireActual('@grafana/runtime').config.bootData.settings,
-        datasources: {
-          PromTest: {
-            uid: 'xyz-abc',
-            name: 'PromTest',
-            id: 'prometheus',
-            meta: {
-              id: 'prometheus',
-              name: 'PromTest',
-              type: 'datasource',
-            },
-            isDefault: true,
-            apiVersion: 'v2',
-          },
-          '-- Grafana --': {
-            uid: 'grafana',
-            name: '-- Grafana --',
-            id: 'grafana',
-            meta: {
-              id: 'grafana',
-              name: '-- Grafana --',
-              type: 'datasource',
-            },
-            isDefault: false,
-          },
+    datasources: {
+      PromTest: {
+        uid: 'xyz-abc',
+        name: 'PromTest',
+        id: 'prometheus',
+        meta: {
+          id: 'prometheus',
+          name: 'PromTest',
+          type: 'datasource',
         },
-
-        defaultDatasource: 'PromTest',
+        isDefault: true,
+        apiVersion: 'v2',
+        type: 'prometheus',
+      },
+      '-- Grafana --': {
+        uid: 'grafana',
+        name: '-- Grafana --',
+        id: 'grafana',
+        meta: {
+          id: 'grafana',
+          name: '-- Grafana --',
+          type: 'datasource',
+        },
+        isDefault: false,
+        type: 'datasource',
       },
     },
+
+    defaultDatasource: 'PromTest',
   },
 }));
 
@@ -80,7 +76,7 @@ describe('ResponseTransformers', () => {
     it('should return prometheus as default', () => {
       expect(getDefaultDatasource()).toEqual({
         apiVersion: 'v2',
-        uid: 'PromTest',
+        uid: 'xyz-abc',
         type: 'prometheus',
       });
     });
@@ -89,7 +85,7 @@ describe('ResponseTransformers', () => {
   describe('getDefaultDataSourceRef', () => {
     it('should return prometheus as default', () => {
       expect(getDefaultDataSourceRef()).toEqual({
-        uid: 'PromTest',
+        uid: 'xyz-abc',
         type: 'prometheus',
       });
     });
@@ -326,7 +322,10 @@ describe('ResponseTransformers', () => {
             targets: [
               {
                 refId: 'A',
-                datasource: 'datasource1',
+                datasource: {
+                  uid: 'datasource1',
+                  type: 'prometheus',
+                },
                 expr: 'test-query',
                 hide: false,
               },
@@ -449,6 +448,7 @@ describe('ResponseTransformers', () => {
           description: '',
           id: 1,
           links: [],
+          transparent: false,
           vizConfig: {
             kind: 'VizConfig',
             group: 'timeseries',
@@ -580,7 +580,10 @@ describe('ResponseTransformers', () => {
             targets: [
               {
                 refId: 'A',
-                datasource: 'datasource1',
+                datasource: {
+                  type: 'prometheus',
+                  uid: 'datasource1',
+                },
                 expr: 'test-query',
                 hide: false,
               },
@@ -625,7 +628,10 @@ describe('ResponseTransformers', () => {
             targets: [
               {
                 refId: 'A',
-                datasource: 'datasource1',
+                datasource: {
+                  type: 'prometheus',
+                  uid: 'datasource1',
+                },
                 expr: 'test-query',
                 hide: false,
               },
@@ -654,7 +660,10 @@ describe('ResponseTransformers', () => {
                 targets: [
                   {
                     refId: 'A',
-                    datasource: 'datasource1',
+                    datasource: {
+                      type: 'prometheus',
+                      uid: 'datasource1',
+                    },
                     expr: 'test-query',
                     hide: false,
                   },
@@ -966,9 +975,12 @@ describe('ResponseTransformers', () => {
         const result = getPanelQueries(targets, panelDs);
 
         expect(result).toHaveLength(targets.length);
+        // @ts-expect-error
         expect(result[0].spec.refId).toBe('A');
+        // @ts-expect-error
         expect(result[1].spec.refId).toBe('B');
 
+        // @ts-expect-error
         result.forEach((query) => {
           expect(query.kind).toBe('PanelQuery');
           expect(query.spec.query.group).toEqual('theoretical-ds');
@@ -994,9 +1006,12 @@ describe('ResponseTransformers', () => {
         const result = getPanelQueries(targets, panelDs);
 
         expect(result).toHaveLength(targets.length);
+        // @ts-expect-error
         expect(result[0].spec.refId).toBe('A');
+        // @ts-expect-error
         expect(result[1].spec.refId).toBe('B');
 
+        // @ts-expect-error
         result.forEach((query) => {
           expect(query.kind).toBe('PanelQuery');
           expect(query.spec.query.group).toEqual('theoretical-ds');

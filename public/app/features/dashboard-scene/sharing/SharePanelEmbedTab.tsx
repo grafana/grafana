@@ -1,14 +1,13 @@
 import { TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { ShareEmbed } from 'app/features/dashboard/components/ShareModal/ShareEmbed';
 import { buildParams, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { SceneShareTabState } from './types';
 
@@ -25,9 +24,7 @@ export class SharePanelEmbedTab extends SceneObjectBase<SharePanelEmbedTabState>
   }
 
   public getTabLabel() {
-    return config.featureToggles.newDashboardSharingComponent
-      ? t('share-panel.drawer.share-embed-title', 'Share embed')
-      : t('share-modal.tab-title.panel-embed', 'Embed');
+    return t('share-panel.drawer.share-embed-title', 'Share embed');
   }
 }
 
@@ -37,17 +34,14 @@ function SharePanelEmbedTabRenderer({ model }: SceneComponentProps<SharePanelEmb
 
   const dash = getDashboardSceneFor(model);
   const { uid: dashUid } = dash.useState();
-  const id = getPanelIdForVizPanel(p);
   const timeRangeState = sceneGraph.getTimeRange(p);
 
   const timeFrom = timeRangeState instanceof PanelTimeRange ? timeRangeState.state.timeFrom : undefined;
 
   return (
     <ShareEmbed
-      panel={{
-        id,
-        timeFrom,
-      }}
+      panelId={p.getPathId()}
+      timeFrom={timeFrom}
       range={timeRangeState.state.value}
       dashboard={{ uid: dashUid ?? '', time: timeRangeState.state.value }}
       buildIframe={getIframeBuilder(dash)}
@@ -62,12 +56,13 @@ const getIframeBuilder =
     useCurrentTimeRange: boolean,
     _dashboardUid: string,
     selectedTheme?: string,
-    panel?: { timeFrom?: string; id: number },
+    panelId?: string,
+    timeFrom?: string,
     range?: TimeRange
   ) => {
-    const params = buildParams({ useCurrentTimeRange, selectedTheme, panel, range });
-    const panelId = params.get('editPanel') ?? params.get('viewPanel') ?? '';
-    params.set('panelId', panelId);
+    const params = buildParams({ useCurrentTimeRange, selectedTheme, panelId, timeFrom, range });
+    const editOrViewPanel = params.get('editPanel') ?? params.get('viewPanel') ?? '';
+    params.set('panelId', editOrViewPanel);
     params.delete('editPanel');
     params.delete('viewPanel');
     params.set('__feature.dashboardSceneSolo', 'true');

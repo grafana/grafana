@@ -20,8 +20,6 @@ title: Datasource LBAC rules HTTP API
 
 # Data Source LBAC rules API
 
-> The Data Source LBAC rules are only available in Grafana Cloud. Only cloud loki data sources are supported.
-
 LBAC (Label-Based Access Control) rules can be set for teams.
 
 ## Get LBAC rules for a data source

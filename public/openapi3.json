@@ -454,10 +454,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/DashboardVersionMeta"
-              },
-              "type": "array"
+              "$ref": "#/components/schemas/DashboardVersionResponseMeta"
             }
           }
         },
@@ -1405,6 +1402,14 @@
         },
         "description": "InternalServerPublicError is a general error indicating something went wrong internally."
       },
+      "interpolateDashboardResponse": {
+        "content": {
+          "application/json": {
+            "schema": {}
+          }
+        },
+        "description": "(empty)"
+      },
       "jwksResponse": {
         "content": {
           "application/json": {
@@ -2144,27 +2149,6 @@
             "type": "integer"
           },
           "active_viewers": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "AddAPIKeyCommand": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "role": {
-            "enum": [
-              "None",
-              "Viewer",
-              "Editor",
-              "Admin"
-            ],
-            "type": "string"
-          },
-          "secondsToLive": {
             "format": "int64",
             "type": "integer"
           }
@@ -3255,6 +3239,10 @@
           },
           "name": {
             "description": "Name of annotation.",
+            "type": "string"
+          },
+          "placement": {
+            "description": "Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.",
             "type": "string"
           },
           "target": {
@@ -4815,6 +4803,20 @@
           "version": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "DashboardVersionResponseMeta": {
+        "properties": {
+          "continueToken": {
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardVersionMeta"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -6572,6 +6574,9 @@
       },
       "Hit": {
         "properties": {
+          "description": {
+            "type": "string"
+          },
           "folderId": {
             "format": "int64",
             "type": "integer"
@@ -11517,6 +11522,9 @@
           "teamUID": {
             "type": "string"
           },
+          "uid": {
+            "type": "string"
+          },
           "userId": {
             "format": "int64",
             "type": "integer"
@@ -15532,6 +15540,7 @@
         ],
         "summary": "Fetch user quota.",
         "tags": [
+          "quota",
           "admin_users"
         ]
       }
@@ -15594,6 +15603,7 @@
         ],
         "summary": "Update user quota.",
         "tags": [
+          "quota",
           "admin_users"
         ]
       }
@@ -17415,6 +17425,7 @@
         },
         "summary": "List snapshots.",
         "tags": [
+          "dashboards",
           "snapshots"
         ]
       }
@@ -17539,7 +17550,7 @@
     "/dashboards/id/{DashboardID}/permissions": {
       "get": {
         "deprecated": true,
-        "description": "Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsListByUID) instead",
+        "description": "Please refer to [updated API](#/dashboards/getDashboardPermissionsListByUID) instead",
         "operationId": "getDashboardPermissionsListByID",
         "parameters": [
           {
@@ -17571,12 +17582,13 @@
         },
         "summary": "Gets all existing permissions for the given dashboard.",
         "tags": [
-          "dashboard_permissions"
+          "dashboards",
+          "permissions"
         ]
       },
       "post": {
         "deprecated": true,
-        "description": "Please refer to [updated API](#/dashboard_permissions/updateDashboardPermissionsByUID) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
+        "description": "Please refer to [updated API](#/dashboards/updateDashboardPermissionsByUID) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
         "operationId": "updateDashboardPermissionsByID",
         "parameters": [
           {
@@ -17622,64 +17634,15 @@
         },
         "summary": "Updates permissions for a dashboard.",
         "tags": [
-          "dashboard_permissions"
-        ]
-      }
-    },
-    "/dashboards/id/{DashboardID}/restore": {
-      "post": {
-        "deprecated": true,
-        "description": "Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID) instead",
-        "operationId": "restoreDashboardVersionByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "DashboardID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RestoreDashboardVersionCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/postDashboardResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Restore a dashboard to a given dashboard version.",
-        "tags": [
-          "dashboard_versions"
+          "dashboards",
+          "permissions"
         ]
       }
     },
     "/dashboards/id/{DashboardID}/versions": {
       "get": {
         "deprecated": true,
-        "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) instead",
+        "description": "Please refer to [updated API](#/dashboards/getDashboardVersionsByUID) instead",
         "operationId": "getDashboardVersionsByID",
         "parameters": [
           {
@@ -17711,14 +17674,15 @@
         },
         "summary": "Gets all existing versions for the dashboard.",
         "tags": [
-          "dashboard_versions"
+          "dashboards",
+          "versions"
         ]
       }
     },
     "/dashboards/id/{DashboardID}/versions/{DashboardVersionID}": {
       "get": {
         "deprecated": true,
-        "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionByUID) instead",
+        "description": "Please refer to [updated API](#/dashboards/getDashboardVersionByUID) instead",
         "operationId": "getDashboardVersionByID",
         "parameters": [
           {
@@ -17759,7 +17723,8 @@
         },
         "summary": "Get a specific dashboard version.",
         "tags": [
-          "dashboard_versions"
+          "dashboards",
+          "versions"
         ]
       }
     },
@@ -17803,6 +17768,32 @@
         ]
       }
     },
+    "/dashboards/interpolate": {
+      "post": {
+        "operationId": "interpolateDashboard",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/interpolateDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/unprocessableEntityError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Interpolate dashboard. This is an experimental endpoint under dashboardLibrary FF and is subject to change.",
+        "tags": [
+          "dashboards"
+        ]
+      }
+    },
     "/dashboards/public-dashboards": {
       "get": {
         "description": "Get list of public dashboards",
@@ -17822,6 +17813,7 @@
           }
         },
         "tags": [
+          "dashboards",
           "dashboard_public"
         ]
       }
@@ -17881,6 +17873,7 @@
           }
         },
         "tags": [
+          "dashboards",
           "dashboard_public"
         ]
       },
@@ -17926,6 +17919,7 @@
           }
         },
         "tags": [
+          "dashboards",
           "dashboard_public"
         ]
       }
@@ -17970,6 +17964,7 @@
           }
         },
         "tags": [
+          "dashboards",
           "dashboard_public"
         ]
       },
@@ -18023,6 +18018,7 @@
           }
         },
         "tags": [
+          "dashboards",
           "dashboard_public"
         ]
       }
@@ -18134,7 +18130,8 @@
         },
         "summary": "Gets all existing permissions for the given dashboard.",
         "tags": [
-          "dashboard_permissions"
+          "dashboards",
+          "permissions"
         ]
       },
       "post": {
@@ -18183,7 +18180,8 @@
         },
         "summary": "Updates permissions for a dashboard.",
         "tags": [
-          "dashboard_permissions"
+          "dashboards",
+          "permissions"
         ]
       }
     },
@@ -18215,6 +18213,9 @@
           "200": {
             "$ref": "#/components/responses/postDashboardResponse"
           },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
           },
@@ -18230,7 +18231,8 @@
         },
         "summary": "Restore a dashboard to a given dashboard version using UID.",
         "tags": [
-          "dashboard_versions"
+          "dashboards",
+          "versions"
         ]
       }
     },
@@ -18286,7 +18288,8 @@
         },
         "summary": "Gets all existing versions for the dashboard using UID.",
         "tags": [
-          "dashboard_versions"
+          "dashboards",
+          "versions"
         ]
       }
     },
@@ -18331,7 +18334,8 @@
         },
         "summary": "Get a specific dashboard version using UID.",
         "tags": [
-          "dashboard_versions"
+          "dashboards",
+          "versions"
         ]
       }
     },
@@ -18448,6 +18452,7 @@
         },
         "summary": "Gets all correlations.",
         "tags": [
+          "datasources",
           "correlations"
         ]
       }
@@ -18894,6 +18899,7 @@
         },
         "summary": "Gets all correlations originating from the given data source.",
         "tags": [
+          "datasources",
           "correlations"
         ]
       },
@@ -18942,6 +18948,7 @@
         },
         "summary": "Add correlation.",
         "tags": [
+          "datasources",
           "correlations"
         ]
       }
@@ -18983,6 +18990,7 @@
         },
         "summary": "Gets a correlation.",
         "tags": [
+          "datasources",
           "correlations"
         ]
       },
@@ -19038,6 +19046,7 @@
         },
         "summary": "Updates a correlation.",
         "tags": [
+          "datasources",
           "correlations"
         ]
       }
@@ -19203,6 +19212,7 @@
         },
         "summary": "Delete a correlation.",
         "tags": [
+          "datasources",
           "correlations"
         ]
       }
@@ -19239,7 +19249,8 @@
         },
         "summary": "Sends a health check request to the plugin datasource identified by the UID.",
         "tags": [
-          "datasources"
+          "datasources",
+          "health"
         ]
       }
     },
@@ -19713,7 +19724,8 @@
         },
         "summary": "Sends a health check request to the plugin datasource identified by the ID.",
         "tags": [
-          "datasources"
+          "datasources",
+          "health"
         ]
       }
     },
@@ -19803,7 +19815,7 @@
         },
         "summary": "DataSource query metrics with expressions.",
         "tags": [
-          "ds"
+          "datasources"
         ]
       }
     },
@@ -20202,7 +20214,8 @@
         },
         "summary": "Gets all existing permissions for the folder with the given `uid`.",
         "tags": [
-          "folder_permissions"
+          "folders",
+          "permissions"
         ]
       },
       "post": {
@@ -20247,7 +20260,8 @@
         },
         "summary": "Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request.",
         "tags": [
-          "folder_permissions"
+          "folders",
+          "permissions"
         ]
       }
     },
@@ -21127,7 +21141,8 @@
         },
         "summary": "Get pending invites.",
         "tags": [
-          "org_invites"
+          "org",
+          "invites"
         ]
       },
       "post": {
@@ -21165,7 +21180,8 @@
         },
         "summary": "Add invite.",
         "tags": [
-          "org_invites"
+          "org",
+          "invites"
         ]
       }
     },
@@ -21201,7 +21217,8 @@
         },
         "summary": "Revoke invite.",
         "tags": [
-          "org_invites"
+          "org",
+          "invites"
         ]
       }
     },
@@ -21224,7 +21241,8 @@
         },
         "summary": "Get Current Org Prefs.",
         "tags": [
-          "org_preferences"
+          "org",
+          "preferences"
         ]
       },
       "patch": {
@@ -21259,7 +21277,8 @@
         },
         "summary": "Patch Current Org Prefs.",
         "tags": [
-          "org_preferences"
+          "org",
+          "preferences"
         ]
       },
       "put": {
@@ -21294,7 +21313,8 @@
         },
         "summary": "Update Current Org Prefs.",
         "tags": [
-          "org_preferences"
+          "org",
+          "preferences"
         ]
       }
     },
@@ -21321,7 +21341,8 @@
         },
         "summary": "Fetch Organization quota.",
         "tags": [
-          "getCurrentOrg"
+          "quota",
+          "org"
         ]
       }
     },
@@ -21660,7 +21681,7 @@
             "basic": []
           }
         ],
-        "summary": "Get Organization by ID.",
+        "summary": "Get Organization by Name.",
         "tags": [
           "orgs"
         ]
@@ -21881,6 +21902,7 @@
         },
         "summary": "Fetch Organization quota.",
         "tags": [
+          "quota",
           "orgs"
         ]
       }
@@ -21943,6 +21965,7 @@
         ],
         "summary": "Update user quota.",
         "tags": [
+          "quota",
           "orgs"
         ]
       }
@@ -22430,6 +22453,7 @@
           }
         },
         "tags": [
+          "dashboards",
           "dashboard_public"
         ]
       }
@@ -22469,6 +22493,8 @@
           }
         },
         "tags": [
+          "dashboards",
+          "annotations",
           "dashboard_public"
         ]
       }
@@ -22517,6 +22543,7 @@
           }
         },
         "tags": [
+          "dashboards",
           "dashboard_public"
         ]
       }
@@ -24305,6 +24332,7 @@
         },
         "summary": "When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI.",
         "tags": [
+          "dashboards",
           "snapshots"
         ]
       }
@@ -24342,6 +24370,7 @@
         },
         "summary": "Delete Snapshot by deleteKey.",
         "tags": [
+          "dashboards",
           "snapshots"
         ]
       }
@@ -24375,6 +24404,7 @@
         },
         "summary": "Delete Snapshot by Key.",
         "tags": [
+          "dashboards",
           "snapshots"
         ]
       },
@@ -24406,6 +24436,7 @@
         },
         "summary": "Get Snapshot by Key.",
         "tags": [
+          "dashboards",
           "snapshots"
         ]
       }
@@ -25086,7 +25117,8 @@
         },
         "summary": "Get Team Preferences.",
         "tags": [
-          "teams"
+          "teams",
+          "preferences"
         ]
       },
       "put": {
@@ -25128,7 +25160,8 @@
         },
         "summary": "Update Team Preferences.",
         "tags": [
-          "teams"
+          "teams",
+          "preferences"
         ]
       }
     },
@@ -25378,7 +25411,8 @@
         },
         "summary": "Get user preferences.",
         "tags": [
-          "user_preferences"
+          "signed_in_user",
+          "preferences"
         ]
       },
       "patch": {
@@ -25410,7 +25444,8 @@
         },
         "summary": "Patch user preferences.",
         "tags": [
-          "user_preferences"
+          "signed_in_user",
+          "preferences"
         ]
       },
       "put": {
@@ -25443,7 +25478,8 @@
         },
         "summary": "Update user preferences.",
         "tags": [
-          "user_preferences"
+          "signed_in_user",
+          "preferences"
         ]
       }
     },
@@ -25469,6 +25505,7 @@
         },
         "summary": "Fetch user quota.",
         "tags": [
+          "quota",
           "signed_in_user"
         ]
       }
@@ -25554,80 +25591,6 @@
           {
             "in": "path",
             "name": "dashboard_uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Star a dashboard.",
-        "tags": [
-          "signed_in_user"
-        ]
-      }
-    },
-    "/user/stars/dashboard/{dashboard_id}": {
-      "delete": {
-        "deprecated": true,
-        "description": "Deletes the starring of the given Dashboard for the actual user.",
-        "operationId": "unstarDashboard",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "dashboard_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Unstar a dashboard.",
-        "tags": [
-          "signed_in_user"
-        ]
-      },
-      "post": {
-        "deprecated": true,
-        "description": "Stars the given Dashboard for the actual user.",
-        "operationId": "starDashboard",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "dashboard_id",
             "required": true,
             "schema": {
               "type": "string"
@@ -27805,19 +27768,11 @@
     },
     {
       "description": "Permissions with `folderId=-1` are the default permissions for users with the Viewer and Editor roles. Permissions can be set for a user, a team or a role (Viewer or Editor). Permissions cannot be set for Admins - they always have access to everything.",
-      "name": "folder_permissions"
+      "name": "permissions"
     },
     {
       "description": "The Admin HTTP API does not currently work with an API Token. API Tokens are currently only linked to an organization and an organization role. They cannot be given the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user must have the Grafana Admin permission. (The default admin user is called admin and has permission to use this API.)",
       "name": "admin"
-    },
-    {
-      "description": "You can use the Alerting API to get information about legacy dashboard alerts and their states but this API cannot be used to modify the alert. To create new alerts or modify them you need to update the dashboard JSON that contains the alerts.\nThis topic is relevant for the legacy dashboard alerts only.\nYou can find Grafana 8 alerts API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json).",
-      "name": "legacy_alerts"
-    },
-    {
-      "description": "The identifier (id) of a notification channel is an auto-incrementing numeric value and is only unique per Grafana install.\nThe unique identifier (uid) of a notification channel can be used for uniquely identify a notification channel between multiple Grafana installs. It’s automatically generated if not provided when creating a notification channel. The uid allows having consistent URLs for accessing notification channels and when syncing notification channels between multiple Grafana installations, refer to alert notification channel provisioning.\nThe uid can have a maximum length of 40 characters.",
-      "name": "legacy_alerts_notification_channels"
     },
     {
       "description": "Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.",
@@ -27844,10 +27799,6 @@
       "name": "teams"
     },
     {
-      "description": "This API can be used to enable, disable, list, add and remove permissions for a data source.\nPermissions can be set for a user or a team. Permissions cannot be set for Admins - they always have access to everything.\nThis is only available in Grafana Enterprise\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
-      "name": "datasource_permissions"
-    },
-    {
       "description": "These are only available in Grafana Enterprise",
       "name": "enterprise"
     },
@@ -27862,22 +27813,6 @@
     {
       "description": "This API allows you to interact programmatically with the Reporting feature.\nReporting is only available in Grafana Enterprise. Read more about Grafana Enterprise.\nIf you have Fine-grained access Control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
       "name": "reports"
-    },
-    {
-      "description": "Grafana Alerting Alertmanager-compatible endpoints",
-      "name": "alertmanager"
-    },
-    {
-      "description": "Grafana Alerting endpoints for managing rules",
-      "name": "ruler"
-    },
-    {
-      "description": "Grafana Alerting testing endpoints",
-      "name": "testing"
-    },
-    {
-      "description": "Grafana Alerting Prometheus-compatible endpoints",
-      "name": "prometheus"
     },
     {
       "description": "If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.",

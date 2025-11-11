@@ -1,4 +1,16 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+const backendSrv = {
+  fetch: jest.fn(),
+} as unknown as BackendSrv;
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
+
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { of } from 'rxjs';
+
+import { BackendSrv } from '@grafana/runtime';
 
 import { InfluxVersion } from '../../../types';
 
@@ -7,9 +19,11 @@ import { createTestProps } from './helpers';
 
 describe('UrlAndAuthenticationSection', () => {
   const onOptionsChangeMock = jest.fn();
+  let consoleSpy: jest.SpyInstance;
 
   const defaultProps = createTestProps({
     options: {
+      id: 1234,
       jsonData: {
         url: 'http://localhost:8086',
         product: '',
@@ -23,8 +37,37 @@ describe('UrlAndAuthenticationSection', () => {
     },
   });
 
+  const mockFetchPing = ({ build, version, status = 204 }: { build?: string; version?: string; status?: number }) => {
+    backendSrv.fetch = jest.fn().mockReturnValue(
+      of({
+        status,
+        ok: status >= 200 && status < 300,
+        data: status === 204 ? '' : {},
+        headers: {
+          get: (k: string) => {
+            const key = k.toLowerCase();
+            if (key === 'x-influxdb-build') {
+              return build ?? null;
+            }
+            if (key === 'x-influxdb-version') {
+              return version ?? null;
+            }
+            return null;
+          },
+        },
+        url: '/api/datasources/proxy/1234/ping',
+      })
+    );
+  };
+
   beforeEach(() => {
+    // Mock console.error to suppress React act() warnings
+    consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    consoleSpy.mockRestore();
   });
 
   it('calls onOptionsChange when URL is changed', () => {
@@ -86,5 +129,268 @@ describe('UrlAndAuthenticationSection', () => {
 
     render(<UrlAndAuthenticationSection {...props} />);
     expect(screen.queryByText(/requires DBRP mapping/i)).not.toBeInTheDocument();
+  });
+
+  it('leaves product and version undefined when URL does not match any product', async () => {
+    const props = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { ...defaultProps.options.jsonData, url: undefined },
+      },
+    };
+
+    render(<UrlAndAuthenticationSection {...props} />);
+
+    const input = screen.getByTestId('influxdb-v2-config-url-input');
+    onOptionsChangeMock.mockClear();
+    fireEvent.blur(input, { target: { value: 'https://some-random-host.example.com' } });
+
+    await waitFor(() => {
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jsonData: expect.objectContaining({
+            product: undefined,
+            version: undefined,
+          }),
+        })
+      );
+    });
+  });
+
+  it('auto-detects InfluxDB Cloud Dedicated from url', async () => {
+    const props = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { ...defaultProps.options.jsonData, url: '' },
+      },
+    };
+
+    render(<UrlAndAuthenticationSection {...props} />);
+
+    const input = screen.getByTestId('influxdb-v2-config-url-input');
+    onOptionsChangeMock.mockClear();
+    fireEvent.blur(input, { target: { value: 'influxdb.io' } });
+
+    await waitFor(() => {
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jsonData: expect.objectContaining({
+            product: 'InfluxDB Cloud Dedicated',
+            version: undefined,
+          }),
+        })
+      );
+    });
+  });
+
+  it('auto-detects InfluxDB Cloud Serverless from url', async () => {
+    const props = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { ...defaultProps.options.jsonData, url: '' },
+      },
+    };
+
+    render(<UrlAndAuthenticationSection {...props} />);
+    const input = screen.getByTestId('influxdb-v2-config-url-input');
+
+    onOptionsChangeMock.mockClear();
+    fireEvent.blur(input, { target: { value: 'https://us-east-1-1.aws.cloud2.influxdata.com' } });
+
+    await waitFor(() => {
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jsonData: expect.objectContaining({
+            product: 'InfluxDB Cloud Serverless',
+            version: undefined,
+          }),
+        })
+      );
+    });
+  });
+
+  it('auto-detects InfluxDB Cloud (TSM) from url', async () => {
+    const props = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { ...defaultProps.options.jsonData, url: '' },
+      },
+    };
+
+    render(<UrlAndAuthenticationSection {...props} />);
+    const input = screen.getByTestId('influxdb-v2-config-url-input');
+
+    onOptionsChangeMock.mockClear();
+    fireEvent.blur(input, { target: { value: 'https://us-west-2-1.aws.cloud2.influxdata.com' } });
+
+    await waitFor(() => {
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jsonData: expect.objectContaining({
+            product: 'InfluxDB Cloud (TSM)',
+            version: undefined,
+          }),
+        })
+      );
+    });
+  });
+
+  it('auto-detects InfluxDB Cloud 1 from url', async () => {
+    const props = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { ...defaultProps.options.jsonData, url: '' },
+      },
+    };
+
+    render(<UrlAndAuthenticationSection {...props} />);
+    const input = screen.getByTestId('influxdb-v2-config-url-input');
+
+    onOptionsChangeMock.mockClear();
+    fireEvent.blur(input, { target: { value: 'https://influxcloud.net' } });
+
+    await waitFor(() => {
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jsonData: expect.objectContaining({
+            product: 'InfluxDB Cloud 1',
+            version: undefined,
+          }),
+        })
+      );
+    });
+  });
+
+  it('sets product to OSS 1.x when ping returns a match for OSS 1.x', async () => {
+    const props = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { ...defaultProps.options.jsonData, url: '' },
+      },
+    };
+
+    mockFetchPing({ build: 'OSS', version: '1.8.10' });
+
+    render(<UrlAndAuthenticationSection {...props} />);
+    const input = screen.getByTestId('influxdb-v2-config-url-input');
+
+    onOptionsChangeMock.mockClear();
+    fireEvent.blur(input, { target: { value: 'https://someinfluxoss1url.com' } });
+
+    await waitFor(() => {
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jsonData: expect.objectContaining({
+            product: 'InfluxDB OSS 1.x',
+            version: undefined,
+          }),
+        })
+      );
+    });
+  });
+
+  it('sets product to OSS 2.x when ping returns a match for OSS 2.x', async () => {
+    const props = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { ...defaultProps.options.jsonData, url: '' },
+      },
+    };
+
+    mockFetchPing({ build: 'OSS', version: '2.7.1' });
+
+    render(<UrlAndAuthenticationSection {...props} />);
+    const input = screen.getByTestId('influxdb-v2-config-url-input');
+
+    onOptionsChangeMock.mockClear();
+    fireEvent.blur(input, { target: { value: 'https://someinfluxoss2url.com' } });
+
+    await waitFor(() => {
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jsonData: expect.objectContaining({
+            product: 'InfluxDB OSS 2.x',
+            version: undefined,
+          }),
+        })
+      );
+    });
+  });
+
+  it('sets product as undefined if ping does not return a match', async () => {
+    const props = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { ...defaultProps.options.jsonData, url: '' },
+      },
+    };
+
+    mockFetchPing({ build: undefined, version: undefined });
+
+    render(<UrlAndAuthenticationSection {...props} />);
+    const input = screen.getByTestId('influxdb-v2-config-url-input');
+
+    onOptionsChangeMock.mockClear();
+    fireEvent.blur(input, { target: { value: 'https://no-known-pattern.example.com' } });
+
+    await waitFor(() => {
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jsonData: expect.objectContaining({
+            product: undefined,
+            version: undefined,
+          }),
+        })
+      );
+    });
+  });
+
+  it('clears product and version when URL changes to one without a match', async () => {
+    const props = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { ...defaultProps.options.jsonData, url: '' },
+      },
+    };
+
+    render(<UrlAndAuthenticationSection {...props} />);
+    const input = screen.getByTestId('influxdb-v2-config-url-input');
+
+    onOptionsChangeMock.mockClear();
+    fireEvent.blur(input, { target: { value: 'https://us-east-1-1.aws.cloud2.influxdata.com' } });
+
+    await waitFor(() => {
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jsonData: expect.objectContaining({
+            product: 'InfluxDB Cloud Serverless',
+            version: undefined,
+          }),
+        })
+      );
+    });
+
+    onOptionsChangeMock.mockClear();
+    fireEvent.blur(input, { target: { value: 'https://influxdb.example.com' } });
+
+    await waitFor(() => {
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jsonData: expect.objectContaining({
+            product: undefined,
+            version: undefined,
+          }),
+        })
+      );
+    });
   });
 });

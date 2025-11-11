@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -27,7 +28,7 @@ import { ToolbarActionProps } from './types';
 import { getDynamicActions, renderActionElements } from './utils';
 
 export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
-  const { editPanel, editable, editview, isEditing, uid, meta, viewPanelScene } = dashboard.useState();
+  const { editPanel, editable, editview, isEditing, uid, meta, viewPanel } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const styles = useStyles2(getStyles);
 
@@ -37,16 +38,18 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
   const isEditingDashboard = Boolean(isEditing);
   const hasEditView = Boolean(editview);
   const isEditingPanel = Boolean(editPanel);
-  const isViewingPanel = Boolean(viewPanelScene);
+  const isViewingPanel = Boolean(viewPanel);
   const isEditingLibraryPanel = isEditingPanel && isLibraryPanel(editPanel!.state.panelRef.resolve());
   const isShowingDashboard = !hasEditView && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditingDashboard && isShowingDashboard;
   const isSnapshot = Boolean(meta.isSnapshot);
   const canSaveInFolder = contextSrv.hasEditPermissionInFolders;
+  const canEditDashboard = dashboard.canEditDashboard();
 
   const showPanelButtons = isEditingPanel && !hasEditView && !isViewingPanel;
   const showPlayButtons = isPlaying && isShowingDashboard && !isEditingDashboard;
   const showShareButton = hasUid && !isSnapshot && !isPlaying && !isEditingPanel;
+  const showUndoRedoButtons = isEditingAndShowingDashboard && !!config.featureToggles.dashboardUndoRedo;
 
   return (
     <ToolbarButtonRow alignment="right" className={styles.container}>
@@ -107,19 +110,19 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             key: 'dashboard-undo',
             component: UndoButton,
             group: 'dashboard',
-            condition: isEditingAndShowingDashboard && dashboard.canEditDashboard(),
+            condition: showUndoRedoButtons,
           },
           {
             key: 'dashboard-redo',
             component: RedoButton,
             group: 'dashboard',
-            condition: isEditingAndShowingDashboard && dashboard.canEditDashboard(),
+            condition: showUndoRedoButtons,
           },
           {
             key: 'dashboard-settings',
             component: DashboardSettingsButton,
             group: 'dashboard',
-            condition: isEditingAndShowingDashboard && dashboard.canEditDashboard(),
+            condition: isEditingAndShowingDashboard && canEditDashboard,
           },
           {
             key: 'save-dashboard',
@@ -131,14 +134,14 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             key: 'make-dashboard-editable-button',
             component: MakeDashboardEditableButton,
             group: 'save-edit',
-            condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isEditable && !isPlaying,
+            condition: !isEditing && canEditDashboard && !isViewingPanel && !isEditable && !isPlaying,
           },
           {
             key: 'edit-dashboard-switch',
             component: EditDashboardSwitch,
             group: 'save-edit',
             condition:
-              dashboard.canEditDashboard() &&
+              canEditDashboard &&
               !isEditingPanel &&
               !isEditingLibraryPanel &&
               !isViewingPanel &&

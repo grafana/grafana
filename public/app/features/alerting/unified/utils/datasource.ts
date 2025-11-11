@@ -27,6 +27,7 @@ import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
 import { instancesPermissions, notificationsPermissions, silencesPermissions } from './access-control';
+import { isExtraConfig } from './alertmanager/extraConfigs';
 import { getAllDataSources } from './config';
 import { isGrafanaRuleIdentifier } from './rules';
 
@@ -52,6 +53,7 @@ export enum DataSourceType {
 
 export interface AlertManagerDataSource {
   name: string;
+  displayName?: string;
   imgUrl: string;
   meta?: DataSourceInstanceSettings['meta'];
   hasConfigurationAPI?: boolean;
@@ -300,6 +302,11 @@ export function getDatasourceAPIUid(dataSourceName: string) {
   if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
     return GRAFANA_RULES_SOURCE_NAME;
   }
+
+  if (isExtraConfig(dataSourceName)) {
+    return dataSourceName;
+  }
+
   const ds = getDataSourceByName(dataSourceName);
   if (!ds) {
     throw new Error(`Datasource "${dataSourceName}" not found`);

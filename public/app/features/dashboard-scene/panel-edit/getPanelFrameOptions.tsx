@@ -14,8 +14,8 @@ import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/
 
 import { dashboardEditActions } from '../edit-pane/shared';
 import { VizPanelLinks } from '../scene/PanelLinks';
-import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { useEditPaneInputAutoFocus } from '../scene/layouts-shared/utils';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -37,7 +37,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard-scene.get-panel-frame-options.title.title', 'Title'),
-        id: 'PanelFrameTitle',
+        id: 'panel-frame-options-title',
         value: panel.state.title,
         popularRank: 1,
         render: function renderTitle(descriptor) {
@@ -55,7 +55,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard-scene.get-panel-frame-options.title.description', 'Description'),
-        id: 'description-text-area',
+        id: 'panel-frame-options-description',
         value: panel.state.description,
         render: function renderDescription(descriptor) {
           return <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />;
@@ -71,7 +71,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard-scene.get-panel-frame-options.title.transparent-background', 'Transparent background'),
-        id: 'transparent-background',
+        id: 'panel-frame-options-transparent-bg',
         render: function renderTransparent(descriptor) {
           return <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />;
         },
@@ -86,6 +86,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
+          id: 'panel-frame-options-panel-links',
           render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
         })
       )

@@ -1,23 +1,29 @@
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps, SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneObject,
+  SceneObjectBase,
+  SceneObjectState,
+  VizPanel,
+  SceneGridItemLike,
+} from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { dashboardEditActions, NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
-import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
   forceRenderChildren,
   getDashboardSceneFor,
   getGridItemKeyForPanelId,
-  getPanelIdForVizPanel,
   getVizPanelKeyForPanelId,
 } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
+import { DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -40,10 +46,7 @@ export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
 export const AUTO_GRID_DEFAULT_COLUMN_WIDTH = 'standard';
 export const AUTO_GRID_DEFAULT_ROW_HEIGHT = 'standard';
 
-export class AutoGridLayoutManager
-  extends SceneObjectBase<AutoGridLayoutManagerState>
-  implements DashboardLayoutManager
-{
+export class AutoGridLayoutManager extends SceneObjectBase<AutoGridLayoutManagerState> implements DashboardLayoutGrid {
   public static Component = AutoGridLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;
@@ -90,8 +93,13 @@ export class AutoGridLayoutManager
   }
 
   public getOutlineChildren(): SceneObject[] {
-    const outlineChildren = this.state.layout.state.children.map((gridItem) => gridItem.state.body);
-    return outlineChildren;
+    const children: SceneObject[] = [];
+
+    for (const child of this.state.layout.state.children) {
+      children.push(child.state.body, ...(child.state.repeatedPanels || []));
+    }
+
+    return children;
   }
 
   public addPanel(vizPanel: VizPanel) {
@@ -197,6 +205,21 @@ export class AutoGridLayoutManager
     });
   }
 
+  public mergeGrid(other: DashboardLayoutGrid) {
+    const sourceLayout =
+      other instanceof AutoGridLayoutManager
+        ? other.state.layout
+        : AutoGridLayoutManager.createFromLayout(other).state.layout;
+    const movedChildren = [...sourceLayout.state.children];
+
+    // Remove from source and append to destination
+    sourceLayout.setState({ children: [] });
+    movedChildren.forEach((child) => {
+      child.clearParent();
+    });
+    this.state.layout.setState({ children: [...this.state.layout.state.children, ...movedChildren] });
+  }
+
   public duplicatePanel(panel: VizPanel) {
     const gridItem = panel.parent;
     if (!(gridItem instanceof AutoGridItem)) {
@@ -245,26 +268,7 @@ export class AutoGridLayoutManager
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
-    return this.clone({
-      layout: this.state.layout.clone({
-        isDraggable: isSource && this.state.layout.state.isDraggable,
-        children: this.state.layout.state.children.map((gridItem) => {
-          if (gridItem instanceof AutoGridItem) {
-            // Get the original panel ID from the gridItem's key
-            const panelId = getPanelIdForVizPanel(gridItem.state.body);
-            const gridItemKey = joinCloneKeys(ancestorKey, getGridItemKeyForPanelId(panelId));
-
-            return gridItem.clone({
-              key: gridItemKey,
-              body: gridItem.state.body.clone({
-                key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(panelId)),
-              }),
-            });
-          }
-          throw new Error('Unexpected child type');
-        }),
-      }),
-    });
+    return this.clone({});
   }
 
   public getOptions(): OptionsPaneItemDescriptor[] {
@@ -327,6 +331,33 @@ export class AutoGridLayoutManager
     });
 
     return layoutManager;
+  }
+
+  public addGridItem(gridItem: SceneGridItemLike): void {
+    if (!(gridItem instanceof AutoGridItem)) {
+      // If it's a DashboardGridItem, convert it to AutoGridItem
+      if (gridItem instanceof DashboardGridItem) {
+        if (!(gridItem.state.body instanceof VizPanel)) {
+          throw new Error('DashboardGridItem body is not a VizPanel');
+        }
+        const panel = gridItem.state.body;
+        panel.clearParent();
+
+        const newGridItem = new AutoGridItem({
+          body: panel,
+          variableName: gridItem.state.variableName,
+        });
+
+        this.state.layout.setState({ children: [...this.state.layout.state.children, newGridItem] });
+        return;
+      }
+      throw new Error('Grid item must be an AutoGridItem or DashboardGridItem');
+    }
+
+    // Clear parent before moving
+    gridItem.clearParent();
+
+    this.state.layout.setState({ children: [...this.state.layout.state.children, gridItem] });
   }
 }
 

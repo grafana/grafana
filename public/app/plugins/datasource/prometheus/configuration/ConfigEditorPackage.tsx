@@ -39,7 +39,7 @@ export const ConfigEditor = (props: Props) => {
       )}
       <DataSourceDescription
         dataSourceName="Prometheus"
-        docsLink="https://grafana.com/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/prometheus/configure/"
       />
       <hr className={`${styles.hrTopSpace} ${styles.hrBottomSpace}`} />
       <DataSourcehttpSettingsOverhaul

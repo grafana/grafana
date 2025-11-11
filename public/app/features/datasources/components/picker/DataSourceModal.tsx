@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { once } from 'lodash';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   Modal,
@@ -19,7 +19,7 @@ import { acceptedFiles, maxFileSize } from 'app/features/dataframe-import/consta
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { getFileDropToQueryHandler } from 'app/plugins/datasource/grafana/utils';
 
-import { useDatasource } from '../../hooks';
+import { useDatasource, useDatasources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { BuiltInDataSourceList } from './BuiltInDataSourceList';
@@ -34,6 +34,7 @@ const INTERACTION_ITEM = {
   CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
   SEARCH: 'search',
   DISMISS: 'dismiss',
+  OPEN_MODAL: 'open_modal',
 };
 
 export interface DataSourceModalProps {
@@ -79,6 +80,7 @@ export function DataSourceModal({
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
   const analyticsInteractionSrc = reportedInteractionFrom || 'modal';
+  const favoriteDataSources = useFavoriteDatasources();
 
   const onDismissModal = () => {
     onDismiss();
@@ -90,8 +92,39 @@ export function DataSourceModal({
       item: INTERACTION_ITEM.SELECT_DS,
       ds_type: ds.type,
       src: analyticsInteractionSrc,
+      is_favorite: favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined,
     });
   };
+
+  const grafanaDS = useDatasource('-- Grafana --');
+
+  // Get all datasources to report total_configured count
+  const dataSources = useDatasources({
+    tracing,
+    dashboard,
+    mixed,
+    metrics,
+    type,
+    annotations,
+    variables,
+    alerting,
+    pluginId,
+    logs,
+  });
+
+  // Report interaction when modal is opened
+  useEffect(() => {
+    if (dataSources.length > 0) {
+      reportInteraction(INTERACTION_EVENT_NAME, {
+        item: INTERACTION_ITEM.OPEN_MODAL,
+        src: analyticsInteractionSrc,
+        creator_team: 'grafana_plugins_catalog',
+        schema_version: '1.0.0',
+        total_configured: dataSources.length,
+      });
+    }
+  }, [analyticsInteractionSrc, dataSources.length]);
+
   // Memoizing to keep once() cached so it avoids reporting multiple times
   const reportSearchUsageOnce = useMemo(
     () =>
@@ -100,8 +133,6 @@ export function DataSourceModal({
       }),
     [analyticsInteractionSrc]
   );
-
-  const grafanaDS = useDatasource('-- Grafana --');
 
   const onFileDrop = getFileDropToQueryHandler((query, fileRejections) => {
     if (!grafanaDS) {
@@ -187,6 +218,8 @@ export function DataSourceModal({
             logs={logs}
             dashboard={dashboard}
             mixed={mixed}
+            dataSources={dataSources}
+            favoriteDataSources={favoriteDataSources}
           />
           <BuiltInList className={styles.appendBuiltInDataSourcesList} />
         </ScrollContainer>
@@ -288,10 +321,9 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
     }),
     builtInDataSources: css({
       flex: '1 1',
-      marginBottom: theme.spacing(4),
 
       [theme.breakpoints.down('md')]: {
-        flex: 0,
+        display: 'none',
       },
     }),
     builtInDataSourcesList: css({
@@ -313,6 +345,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       width: '100%',
       justifyContent: 'space-between',
       alignItems: 'center',
+      paddingTop: theme.spacing(1),
     }),
     newDSDescription: css({
       flex: '1 0',
@@ -320,6 +353,9 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       overflow: 'hidden',
       whiteSpace: 'nowrap',
       color: theme.colors.text.secondary,
+      [theme.breakpoints.down('sm')]: {
+        visibility: 'hidden',
+      },
     }),
     searchInput: css({
       width: '100%',

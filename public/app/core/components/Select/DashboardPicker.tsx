@@ -3,11 +3,11 @@ import { forwardRef, useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
-import { DashboardSearchItem } from 'app/features/search/types';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { DashboardQueryResult } from 'app/features/search/service/types';
 import { DashboardDTO } from 'app/types/dashboard';
 
 interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'onChange' | 'loadOptions' | ''> {
@@ -15,23 +15,26 @@ interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'on
   onChange?: (value?: DashboardPickerDTO) => void;
 }
 
-export type DashboardPickerDTO = Pick<DashboardDTO['dashboard'], 'uid' | 'title'> &
+export type DashboardPickerDTO = Pick<DashboardQueryResult, 'uid' | 'name'> &
   Pick<DashboardDTO['meta'], 'folderUid' | 'folderTitle'>;
 
 const formatLabel = (folderTitle = 'Dashboards', dashboardTitle: string) => `${folderTitle}/${dashboardTitle}`;
 
 async function findDashboards(query = '') {
-  return backendSrv.search({ type: 'dash-db', query, limit: 100 }).then((result: DashboardSearchItem[]) => {
-    return result.map((item: DashboardSearchItem) => ({
+  const result = await getGrafanaSearcher().search({ query, kind: ['dashboard'], limit: 100 });
+  const locationInfo = await getGrafanaSearcher().getLocationInfo();
+
+  return result.view.toArray().map((item) => {
+    const folderTitle = locationInfo[item.location]?.name;
+    return {
       value: {
-        // dashboards uid here is always defined as this endpoint does not return the default home dashboard
-        uid: item.uid!,
-        title: item.title,
-        folderTitle: item.folderTitle,
-        folderUid: item.folderUid,
+        uid: item.uid,
+        name: item.name,
+        folderTitle,
+        folderUid: item.location,
       },
-      label: formatLabel(item?.folderTitle, item.title),
-    }));
+      label: formatLabel(folderTitle, item.name),
+    };
   });
 }
 
@@ -58,7 +61,7 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
           setCurrent({
             value: {
               uid: dto.metadata.name,
-              title: dto.spec.title,
+              name: dto.spec.title,
               folderTitle: dto.metadata.annotations?.[AnnoKeyFolderTitle],
               folderUid: dto.metadata.annotations?.[AnnoKeyFolder],
             },
@@ -69,7 +72,7 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
             setCurrent({
               value: {
                 uid: dto.dashboard.uid,
-                title: dto.dashboard.title,
+                name: dto.dashboard.title,
                 folderTitle: dto.meta.folderTitle,
                 folderUid: dto.meta.folderUid,
               },
@@ -104,3 +107,4 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
     );
   }
 );
+DashboardPicker.displayName = 'DashboardPicker';

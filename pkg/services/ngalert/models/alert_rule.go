@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,8 +18,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	prommodels "github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	alertingModels "github.com/grafana/alerting/models"
 
@@ -278,6 +280,55 @@ func NewUserUID(requester interface{ GetIdentifier() string }) *UserUID {
 	}
 	userUID := UserUID(identifier)
 	return &userUID
+}
+
+const (
+	NoGroupPrefix     = "no_group_for_rule_"
+	NoGroupNameLength = 200
+)
+
+// NoGroupRuleGroup is a special rule group that is used to represent rules that do not belong to any group.
+type NoGroupRuleGroup struct {
+	ruleUID string
+}
+
+func NewNoGroupRuleGroup(ruleUID string) (*NoGroupRuleGroup, error) {
+	// Generate a "no group" string that exceeds 190 char limit to fail validation
+	// This is to ensure that the rule group is not created in the database.
+	if len(ruleUID) > NoGroupNameLength-len(NoGroupPrefix) {
+		return nil, fmt.Errorf("rule UID is too long: %s", ruleUID)
+	}
+	return &NoGroupRuleGroup{ruleUID: ruleUID}, nil
+}
+
+func (ruleGroup *NoGroupRuleGroup) String() string {
+	sb := strings.Builder{}
+	sb.WriteString(NoGroupPrefix)
+	sb.WriteString(ruleGroup.ruleUID)
+	for sb.Len() < NoGroupNameLength {
+		sb.WriteRune('*')
+	}
+	return sb.String()
+}
+
+func (ruleGroup *NoGroupRuleGroup) GetRuleUID() string {
+	return ruleGroup.ruleUID
+}
+
+func IsNoGroupRuleGroup(ruleGroup string) bool {
+	return strings.HasPrefix(ruleGroup, NoGroupPrefix) && len(ruleGroup) == NoGroupNameLength &&
+		strings.Count(ruleGroup, "*") >= (NoGroupNameLength-len(NoGroupPrefix)-util.MaxUIDLength)
+}
+
+func ParseNoRuleGroup(ruleGroup string) (*NoGroupRuleGroup, error) {
+	if !IsNoGroupRuleGroup(ruleGroup) {
+		return nil, fmt.Errorf("rule group %s is not a no group rule group", ruleGroup)
+	}
+	ruleUID := strings.TrimRight(strings.TrimPrefix(ruleGroup, NoGroupPrefix), "*")
+	if err := util.ValidateUID(ruleUID); err != nil {
+		return nil, fmt.Errorf("rule group %s is not a no group rule group, rule uid could not be parsed: %w", ruleGroup, err)
+	}
+	return &NoGroupRuleGroup{ruleUID: ruleUID}, nil
 }
 
 // AlertRule is the model for alert rules in unified alerting.
@@ -641,7 +692,7 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time, userUID *UserUID) 
 	for i, q := range alertRule.Data {
 		err := q.PreSave()
 		if err != nil {
-			return fmt.Errorf("invalid alert query %s: %w", q.RefID, err)
+			return errors.Join(ErrAlertRuleFailedValidation, fmt.Errorf("invalid alert query %s: %w", q.RefID, err))
 		}
 		alertRule.Data[i] = q
 	}
@@ -733,7 +784,7 @@ func validateRecordingRuleFields(rule *AlertRule) error {
 	if !metricName.IsValid() {
 		return errors.New("metric name for recording rule must be a valid utf8 string")
 	}
-	if !prommodels.IsValidMetricName(metricName) {
+	if !prommodels.IsValidMetricName(metricName) { // nolint:staticcheck
 		return errors.New("metric name for recording rule must be a valid Prometheus metric name")
 	}
 
@@ -834,8 +885,9 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 
 	if alertRule.Record != nil {
 		result.Record = &Record{
-			From:   alertRule.Record.From,
-			Metric: alertRule.Record.Metric,
+			From:                alertRule.Record.From,
+			Metric:              alertRule.Record.Metric,
+			TargetDatasourceUID: alertRule.Record.TargetDatasourceUID,
 		}
 	}
 
@@ -879,6 +931,38 @@ type GetAlertRulesGroupByRuleUIDQuery struct {
 	OrgID int64
 }
 
+type RuleTypeFilter int
+
+const (
+	RuleTypeFilterAll RuleTypeFilter = iota
+	RuleTypeFilterAlerting
+	RuleTypeFilterRecording
+)
+
+type GroupCursor struct {
+	NamespaceUID string `json:"n"`
+	RuleGroup    string `json:"g"`
+}
+
+func EncodeGroupCursor(c GroupCursor) string {
+	data, _ := json.Marshal(c)
+	return base64.URLEncoding.EncodeToString(data)
+}
+
+func DecodeGroupCursor(token string) (GroupCursor, error) {
+	var c GroupCursor
+	data, err := base64.URLEncoding.DecodeString(token)
+	if err != nil {
+		return c, fmt.Errorf("failed to decode group token: %w", err)
+	}
+
+	if err := json.Unmarshal(data, &c); err != nil {
+		return c, fmt.Errorf("failed to unmarshal group cursor: %w", err)
+	}
+
+	return c, nil
+}
+
 // ListAlertRulesQuery is the query for listing alert rules
 type ListAlertRulesQuery struct {
 	OrgID         int64
@@ -896,6 +980,15 @@ type ListAlertRulesQuery struct {
 	TimeIntervalName string
 
 	HasPrometheusRuleDefinition *bool
+}
+
+type ListAlertRulesExtendedQuery struct {
+	ListAlertRulesQuery
+
+	RuleType RuleTypeFilter
+
+	Limit         int64
+	ContinueToken string
 }
 
 // CountAlertRulesQuery is the query for counting alert rules

@@ -19,6 +19,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.AnnotationPermission":      schema_pkg_apis_dashboard_v1beta1_AnnotationPermission(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.Dashboard":                 schema_pkg_apis_dashboard_v1beta1_Dashboard(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardAccess":           schema_pkg_apis_dashboard_v1beta1_DashboardAccess(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardClient":           schema_pkg_apis_dashboard_v1beta1_DashboardClient(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardConversionStatus": schema_pkg_apis_dashboard_v1beta1_DashboardConversionStatus(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardJSONCodec":        schema_pkg_apis_dashboard_v1beta1_DashboardJSONCodec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.DashboardList":             schema_pkg_apis_dashboard_v1beta1_DashboardList(ref),
@@ -164,6 +165,13 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardAccess(ref common.ReferenceCallb
 							Format: "",
 						},
 					},
+					"isPublic": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
 					"canSave": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The permissions part",
@@ -206,11 +214,31 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardAccess(ref common.ReferenceCallb
 						},
 					},
 				},
-				Required: []string{"canSave", "canEdit", "canAdmin", "canStar", "canDelete", "annotationsPermissions"},
+				Required: []string{"isPublic", "canSave", "canEdit", "canAdmin", "canStar", "canDelete", "annotationsPermissions"},
 			},
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1.AnnotationPermission"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v1beta1_DashboardClient(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"client": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana-app-sdk/resource.TypedClient[T,L]"),
+						},
+					},
+				},
+				Required: []string{"client"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana-app-sdk/resource.TypedClient[T,L]"},
 	}
 }
 
@@ -229,24 +257,29 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardConversionStatus(ref common.Refe
 							Format:      "",
 						},
 					},
-					"storedVersion": {
+					"error": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
-							Default:     "",
+							Description: "The error message from the conversion. Empty if the conversion has not failed.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"error": {
+					"storedVersion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The error message from the conversion. Empty if the conversion has not failed.",
-							Default:     "",
+							Description: "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
 							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"source": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The original value map[string]any",
+							Type:        []string{"object"},
 							Format:      "",
 						},
 					},
 				},
-				Required: []string{"failed", "storedVersion", "error"},
+				Required: []string{"failed"},
 			},
 		},
 	}

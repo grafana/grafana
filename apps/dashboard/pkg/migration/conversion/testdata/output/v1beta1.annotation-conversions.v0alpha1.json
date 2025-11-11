@@ -1,7 +1,8 @@
 {
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
   "metadata": {
     "name": "annotation-conversions-test",
-    "creationTimestamp": null,
     "labels": {
       "test": "annotation-conversions"
     }
@@ -186,12 +187,21 @@
         },
         {
           "builtIn": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "enable": false,
           "hide": true,
           "iconColor": "transparent",
           "name": "Disabled Built-in Annotation",
-          "target": {},
-          "type": "builtin"
+          "target": {
+            "expr": "ALERTS{alertstate=\"firing\"}",
+            "interval": "1m",
+            "refId": "Anno",
+            "step": 60
+          },
+          "type": "prometheus"
         }
       ]
     },
@@ -214,8 +224,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1",
-      "error": ""
+      "storedVersion": "v1beta1"
     }
   }
 }

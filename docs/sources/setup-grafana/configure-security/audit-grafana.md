@@ -371,6 +371,10 @@ enabled = false
 loggers = file
 # Keep dashboard content in the logs (request or response fields); this can significantly increase the size of your logs.
 log_dashboard_content = false
+# Whether to record data source queries' request body. This can significantly increase the size of your logs. Enabled by default.
+log_datasource_query_request_body = true
+# Whether to record data source queries' response body. This can significantly increase the size of your logs. Enabled by default.
+log_datasource_query_response_body = true
 # Keep requests and responses body; this can significantly increase the size of your logs.
 verbose = false
 # Write an audit log for every status code.

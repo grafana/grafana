@@ -158,6 +158,16 @@ ReduceDataOptions: {
 // TODO docs
 VizOrientation: "auto" | "vertical" | "horizontal" @cuetsy(kind="enum")
 
+// Breaks out each annotation frame into multiple lanes on the x-axis
+VizAnnotations: {
+	multiLane?: bool
+} @cuetsy(kind="interface")
+
+// TODO docs
+OptionsWithAnnotations: {
+	annotations?: VizAnnotations
+} @cuetsy(kind="interface")
+
 // TODO docs
 OptionsWithTooltip: {
 	tooltip: VizTooltipOptions
@@ -229,6 +239,7 @@ GraphFieldConfig: {
 	gradientMode?:    GraphGradientMode
 	thresholdsStyle?: GraphThresholdsStyleConfig
 	transform?:       GraphTransform
+	showValues?:      bool
 	insertNulls?:     bool | number
 } @cuetsy(kind="interface")
 

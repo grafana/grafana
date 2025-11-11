@@ -810,11 +810,11 @@ func genTestAlertmanagers(t *testing.T, mode int, options ...func(RemoteSecondar
 			cfg = opt(cfg)
 		}
 
-		forked, err := NewRemoteSecondaryForkedAlertmanager(cfg, internal, remote)
+		forked, err := newRemoteSecondaryForkedAlertmanager(cfg, internal, remote)
 		require.NoError(t, err)
 		return internal, remote, forked
 	}
-	return internal, remote, NewRemotePrimaryForkedAlertmanager(log.NewNopLogger(), internal, remote)
+	return internal, remote, newRemotePrimaryForkedAlertmanager(log.NewNopLogger(), internal, remote)
 }
 
 // errConfigStore returns an error when a method is called.

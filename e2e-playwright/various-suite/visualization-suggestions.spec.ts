@@ -1,11 +1,5 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-test.use({
-  featureToggles: {
-    tableNextGen: true,
-  },
-});
-
 test.describe(
   'Visualization suggestions',
   {

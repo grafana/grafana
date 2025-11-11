@@ -6,16 +6,19 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestSyncWorker_IsSupported(t *testing.T) {
+	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
 	tests := []struct {
 		name     string
 		job      provisioning.Job
@@ -43,7 +46,7 @@ func TestSyncWorker_IsSupported(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			worker := NewSyncWorker(nil, nil, nil, nil, nil)
+			worker := NewSyncWorker(nil, nil, nil, nil, nil, metrics, tracing.NewNoopTracerService(), 10)
 			result := worker.IsSupported(context.Background(), tt.job)
 			require.Equal(t, tt.expected, result)
 		})
@@ -62,9 +65,9 @@ func TestSyncWorker_ProcessNotReaderWriter(t *testing.T) {
 	})
 	fakeDualwrite := dualwrite.NewMockService(t)
 	fakeDualwrite.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
-	worker := NewSyncWorker(nil, nil, fakeDualwrite, nil, nil)
+	worker := NewSyncWorker(nil, nil, fakeDualwrite, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracing.NewNoopTracerService(), 10)
 	err := worker.Process(context.Background(), repo, provisioning.Job{}, jobs.NewMockJobProgressRecorder(t))
-	require.EqualError(t, err, "sync job submitted for repository that does not support read-write -- this is a bug")
+	require.EqualError(t, err, "sync job submitted for repository that does not support read-write")
 }
 
 func TestSyncWorker_Process(t *testing.T) {
@@ -112,17 +115,18 @@ func TestSyncWorker_Process(t *testing.T) {
 				rw.MockRepository.On("Config").Return(repoConfig)
 				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
 
-				rpf.On("Execute", mock.Anything, repoConfig, mock.MatchedBy(func(patch map[string]interface{}) bool {
-					if patch["op"] != "replace" || patch["path"] != "/status/sync" {
-						return false
-					}
-
-					if patch["value"].(provisioning.SyncStatus).LastRef != "existing-ref" || patch["value"].(provisioning.SyncStatus).JobID != "test-job" {
-						return false
-					}
-
-					return true
-				})).Return(errors.New("failed to patch status"))
+				// Expect granular patches for state, job, and started fields
+				rpf.On("Execute", mock.Anything, repoConfig,
+					mock.MatchedBy(func(patch map[string]interface{}) bool {
+						return patch["op"] == "replace" && patch["path"] == "/status/sync/state"
+					}),
+					mock.MatchedBy(func(patch map[string]interface{}) bool {
+						return patch["op"] == "replace" && patch["path"] == "/status/sync/job"
+					}),
+					mock.MatchedBy(func(patch map[string]interface{}) bool {
+						return patch["op"] == "replace" && patch["path"] == "/status/sync/started"
+					}),
+				).Return(errors.New("failed to patch status"))
 			},
 			expectedError: "update repo with job status at start: failed to patch status",
 		},
@@ -148,12 +152,17 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Storage is migrated
 				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
 
-				// Initial status update succeeds
+				// Initial status update succeeds - expect granular patches
 				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
-				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil)
+				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				// Repository resources creation fails
 				rrf.On("Client", mock.Anything, mock.Anything).Return(nil, errors.New("failed to create repository resources client"))
+
+				// Progress.Complete should be called with the error
+				pr.On("Complete", mock.Anything, mock.MatchedBy(func(err error) bool {
+					return err != nil && err.Error() == "create repository resources client: failed to create repository resources client"
+				})).Return(provisioning.JobStatus{State: provisioning.JobStateError})
 			},
 			expectedError: "create repository resources client: failed to create repository resources client",
 		},
@@ -180,15 +189,20 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Storage is migrated
 				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
 
-				// Initial status update succeeds
+				// Initial status update succeeds - expect granular patches
 				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
-				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil)
+				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				// Repository resources creation succeeds
 				rrf.On("Client", mock.Anything, mock.Anything).Return(&resources.MockRepositoryResources{}, nil)
 
 				// Getting clients for namespace fails
 				cf.On("Clients", mock.Anything, "test-namespace").Return(nil, errors.New("failed to get clients"))
+
+				// Progress.Complete should be called with the error
+				pr.On("Complete", mock.Anything, mock.MatchedBy(func(err error) bool {
+					return err != nil && err.Error() == "get clients for test-repo: failed to get clients"
+				})).Return(provisioning.JobStatus{State: provisioning.JobStateError})
 			},
 			expectedError: "get clients for test-repo: failed to get clients",
 		},
@@ -211,9 +225,9 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Storage is migrated
 				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
 
-				// Initial status update
+				// Initial status update - expect granular patches
 				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
-				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil)
+				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				// Setup resources and clients
 				mockRepoResources := resources.NewMockRepositoryResources(t)
@@ -241,7 +255,7 @@ func TestSyncWorker_Process(t *testing.T) {
 					}
 					syncStatus := patch["value"].(provisioning.SyncStatus)
 					return syncStatus.LastRef == "new-ref" && syncStatus.State == provisioning.JobStateSuccess
-				})).Return(nil)
+				})).Return(nil).Once()
 			},
 			expectedError: "",
 		},
@@ -264,9 +278,9 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Storage is migrated
 				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
 
-				// Initial status update
+				// Initial status update - expect granular patches
 				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
-				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything).Return(nil)
+				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				// Setup resources and clients
 				mockRepoResources := resources.NewMockRepositoryResources(t)
@@ -295,7 +309,7 @@ func TestSyncWorker_Process(t *testing.T) {
 						patch["path"] == "/status/sync" &&
 						syncStatus.LastRef == "existing-ref" && // LastRef should not change on failure
 						syncStatus.State == provisioning.JobStateError
-				})).Return(nil)
+				})).Return(nil).Once()
 			},
 			expectedError: "sync operation failed",
 		},
@@ -321,7 +335,9 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 				pr.On("StrictMaxErrors", 20).Return()
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
-				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				// Initial patch with granular updates, final patch with full sync status
+				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 			},
 			expectedError: "",
@@ -342,10 +358,13 @@ func TestSyncWorker_Process(t *testing.T) {
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
 				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
-				// Verify only sync status is patched
+				// Initial patch with granular updates
+				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
+				// Verify only sync status is patched for final update
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.MatchedBy(func(patch map[string]interface{}) bool {
 					return patch["path"] == "/status/sync"
-				})).Return(nil)
+				})).Return(nil).Once()
 
 				// Simple mocks for other calls
 				mockClients := resources.NewMockResourceClients(t)
@@ -368,7 +387,8 @@ func TestSyncWorker_Process(t *testing.T) {
 				}
 				rw.MockRepository.On("Config").Return(repoConfig)
 				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
-				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+				// Initial patch with granular updates
+				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				mockRepoResources := resources.NewMockRepositoryResources(t)
 				stats := &provisioning.ResourceStats{
@@ -455,10 +475,13 @@ func TestSyncWorker_Process(t *testing.T) {
 				mockRepoResources.On("Stats", mock.Anything).Return(stats, nil)
 				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
+				// Initial patch with granular updates
+				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
 				// Verify only sync status is patched (multiple stats should be ignored)
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.MatchedBy(func(patch map[string]interface{}) bool {
 					return patch["path"] == "/status/sync"
-				})).Return(nil)
+				})).Return(nil).Once()
 
 				// Simple mocks for other calls
 				mockClients := resources.NewMockResourceClients(t)
@@ -482,8 +505,8 @@ func TestSyncWorker_Process(t *testing.T) {
 				rw.MockRepository.On("Config").Return(repoConfig)
 				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil).Twice()
 
-				// Initial status patch succeeds
-				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+				// Initial status patch succeeds - expect granular patches
+				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				// Setup resources and clients
 				mockRepoResources := resources.NewMockRepositoryResources(t)
@@ -530,6 +553,9 @@ func TestSyncWorker_Process(t *testing.T) {
 				dualwriteService,
 				repositoryPatchFn.Execute,
 				syncer,
+				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
+				tracing.NewNoopTracerService(),
+				10,
 			)
 
 			// Create test job

@@ -3,7 +3,6 @@
   "apiVersion": "dashboard.grafana.app/v2beta1",
   "metadata": {
     "name": "panel-conversions-test",
-    "creationTimestamp": null,
     "labels": {
       "test": "panel-conversions"
     }
@@ -99,7 +98,8 @@
                 "legend": {
                   "calcs": [],
                   "displayMode": "list",
-                  "placement": "bottom"
+                  "placement": "bottom",
+                  "showLegend": true
                 },
                 "tooltip": {
                   "mode": "single"
@@ -107,32 +107,26 @@
               },
               "fieldConfig": {
                 "defaults": {
-                  "custom": {
-                    "defaults": {
-                      "color": {
-                        "mode": "palette-classic"
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
                       },
-                      "custom": {
-                        "drawStyle": "line",
-                        "fillOpacity": 10,
-                        "lineWidth": 1
-                      },
-                      "mappings": [],
-                      "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                          {
-                            "color": "green",
-                            "value": null
-                          },
-                          {
-                            "color": "red",
-                            "value": 80
-                          }
-                        ]
+                      {
+                        "value": 80,
+                        "color": "red"
                       }
-                    },
-                    "overrides": []
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "fillOpacity": 10,
+                    "lineWidth": 1
                   }
                 },
                 "overrides": []
@@ -189,18 +183,12 @@
           },
           "vizConfig": {
             "kind": "VizConfig",
-            "group": "graph",
+            "group": "timeseries",
             "version": "",
             "spec": {
               "options": {},
               "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "defaults": {
-                      "custom": {}
-                    }
-                  }
-                },
+                "defaults": {},
                 "overrides": []
               }
             }
@@ -251,12 +239,7 @@
                 "showHeader": true
               },
               "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "defaults": {},
-                    "overrides": []
-                  }
-                },
+                "defaults": {},
                 "overrides": []
               }
             }
@@ -272,8 +255,7 @@
           "links": [
             {
               "title": "Drill Down",
-              "url": "/d/detailed-view",
-              "targetBlank": false
+              "url": "/d/detailed-view"
             }
           ],
           "data": {
@@ -359,15 +341,11 @@
               },
               "fieldConfig": {
                 "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  },
                   "custom": {
-                    "defaults": {
-                      "color": {
-                        "mode": "continuous-GrYlRd"
-                      },
-                      "custom": {
-                        "orientation": "horizontal"
-                      }
-                    }
+                    "orientation": "horizontal"
                   }
                 },
                 "overrides": []
@@ -453,6 +431,19 @@
                           "maxPerRow": 4
                         }
                       }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 8,
+                        "y": 0,
+                        "width": 16,
+                        "height": 6,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-7"
+                        }
+                      }
                     }
                   ]
                 }
@@ -480,19 +471,6 @@
                           "name": "panel-6"
                         }
                       }
-                    },
-                    {
-                      "kind": "GridLayoutItem",
-                      "spec": {
-                        "x": 8,
-                        "y": -7,
-                        "width": 16,
-                        "height": 6,
-                        "element": {
-                          "kind": "ElementReference",
-                          "name": "panel-7"
-                        }
-                      }
                     }
                   ]
                 }
@@ -505,7 +483,6 @@
     "links": [],
     "liveNow": false,
     "preload": false,
-    "revision": 0,
     "tags": [
       "test",
       "panels"
@@ -528,9 +505,7 @@
         "1d"
       ],
       "hideTimepicker": false,
-      "weekStart": "monday",
-      "fiscalYearStartMonth": 0,
-      "nowDelay": ""
+      "fiscalYearStartMonth": 0
     },
     "title": "Panel Conversions Test Dashboard",
     "variables": []

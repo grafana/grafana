@@ -12,19 +12,26 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v1alpha1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 )
 
 var (
-	rawSchemaPreferencesv1alpha1     = []byte(`{"spec":{"properties":{"cookiePreferences":{"description":"Cookie preferences","properties":{"analytics":{"type":"object"},"functional":{"type":"object"},"performance":{"type":"object"}},"type":"object"},"homeDashboardUID":{"description":"UID for the home dashboard","type":"string"},"language":{"description":"Selected language (beta)","type":"string"},"navbar":{"description":"Navigation preferences","properties":{"bookmarkUrls":{"items":{"type":"string"},"type":"array"}},"required":["bookmarkUrls"],"type":"object"},"queryHistory":{"description":"Explore query history preferences","properties":{"homeTab":{"description":"one of: '' | 'query' | 'starred';","type":"string"}},"type":"object"},"regionalFormat":{"description":"Selected locale (beta)","type":"string"},"theme":{"description":"light, dark, empty is default","type":"string"},"timezone":{"description":"The timezone selection\nTODO: this should use the timezone defined in common","type":"string"},"weekStart":{"description":"day of the week (sunday, monday, etc)","type":"string"}},"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	rawSchemaPreferencesv1alpha1     = []byte(`{"CookiePreferences":{"additionalProperties":false,"properties":{"analytics":{"additionalProperties":{},"type":"object"},"functional":{"additionalProperties":{},"type":"object"},"performance":{"additionalProperties":{},"type":"object"}},"type":"object"},"NavbarPreference":{"additionalProperties":false,"properties":{"bookmarkUrls":{"items":{"type":"string"},"type":"array"}},"required":["bookmarkUrls"],"type":"object"},"Preferences":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"QueryHistoryPreference":{"additionalProperties":false,"properties":{"homeTab":{"description":"one of: '' | 'query' | 'starred';","type":"string"}},"type":"object"},"spec":{"additionalProperties":false,"properties":{"cookiePreferences":{"$ref":"#/components/schemas/CookiePreferences","description":"Cookie preferences"},"homeDashboardUID":{"description":"UID for the home dashboard","type":"string"},"language":{"description":"Selected language (beta)","type":"string"},"navbar":{"$ref":"#/components/schemas/NavbarPreference","description":"Navigation preferences"},"queryHistory":{"$ref":"#/components/schemas/QueryHistoryPreference","description":"Explore query history preferences"},"regionalFormat":{"description":"Selected locale (beta)","type":"string"},"theme":{"description":"light, dark, empty is default","type":"string"},"timezone":{"description":"The timezone selection\nTODO: this should use the timezone defined in common","type":"string"},"weekStart":{"description":"day of the week (sunday, monday, etc)","type":"string"}},"type":"object"}}`)
 	versionSchemaPreferencesv1alpha1 app.VersionSchema
 	_                                = json.Unmarshal(rawSchemaPreferencesv1alpha1, &versionSchemaPreferencesv1alpha1)
+	rawSchemaStarsv1alpha1           = []byte(`{"Resource":{"additionalProperties":false,"properties":{"group":{"type":"string"},"kind":{"type":"string"},"names":{"description":"The set of resources\n+listType=set","items":{"type":"string"},"type":"array"}},"required":["group","kind","names"],"type":"object"},"Stars":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"resource":{"items":{"$ref":"#/components/schemas/Resource"},"type":"array"}},"required":["resource"],"type":"object"}}`)
+	versionSchemaStarsv1alpha1       app.VersionSchema
+	_                                = json.Unmarshal(rawSchemaStarsv1alpha1, &versionSchemaStarsv1alpha1)
 )
 
 var appManifestData = app.ManifestData{
-	AppName: "preferences",
-	Group:   "preferences.grafana.app",
+	AppName:          "preferences",
+	Group:            "preferences.grafana.app",
+	PreferredVersion: "v1alpha1",
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v1alpha1",
@@ -35,8 +42,37 @@ var appManifestData = app.ManifestData{
 					Plural:     "Preferences",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaPreferencesv1alpha1,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaPreferencesv1alpha1,
 				},
+
+				{
+					Kind:       "Stars",
+					Plural:     "Stars",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaStarsv1alpha1,
+				},
+			},
+			Routes: app.ManifestVersionRoutes{
+				Namespaced: map[string]spec3.PathProps{},
+				Cluster:    map[string]spec3.PathProps{},
+				Schemas:    map[string]spec.Schema{},
 			},
 		},
 	},
@@ -52,6 +88,7 @@ func RemoteManifest() app.Manifest {
 
 var kindVersionToGoType = map[string]resource.Kind{
 	"Preferences/v1alpha1": v1alpha1.PreferencesKind(),
+	"Stars/v1alpha1":       v1alpha1.StarsKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
@@ -66,10 +103,50 @@ var customRouteToGoResponseType = map[string]any{}
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
 // kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.
 // If there is no association for the provided kind, version, custom route path, and method, exists will return false.
+// Resource routes (those without a kind) should prefix their route with "<namespace>/" if the route is namespaced (otherwise the route is assumed to be cluster-scope)
 func ManifestCustomRouteResponsesAssociator(kind, version, path, verb string) (goType any, exists bool) {
 	if len(path) > 0 && path[0] == '/' {
 		path = path[1:]
 	}
 	goType, exists = customRouteToGoResponseType[fmt.Sprintf("%s|%s|%s|%s", version, kind, path, strings.ToUpper(verb))]
 	return goType, exists
+}
+
+var customRouteToGoParamsType = map[string]runtime.Object{}
+
+func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goType runtime.Object, exists bool) {
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	goType, exists = customRouteToGoParamsType[fmt.Sprintf("%s|%s|%s|%s", version, kind, path, strings.ToUpper(verb))]
+	return goType, exists
+}
+
+var customRouteToGoRequestBodyType = map[string]any{}
+
+func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	goType, exists = customRouteToGoRequestBodyType[fmt.Sprintf("%s|%s|%s|%s", version, kind, path, strings.ToUpper(verb))]
+	return goType, exists
+}
+
+type GoTypeAssociator struct{}
+
+func NewGoTypeAssociator() *GoTypeAssociator {
+	return &GoTypeAssociator{}
+}
+
+func (g *GoTypeAssociator) KindToGoType(kind, version string) (goType resource.Kind, exists bool) {
+	return ManifestGoTypeAssociator(kind, version)
+}
+func (g *GoTypeAssociator) CustomRouteReturnGoType(kind, version, path, verb string) (goType any, exists bool) {
+	return ManifestCustomRouteResponsesAssociator(kind, version, path, verb)
+}
+func (g *GoTypeAssociator) CustomRouteQueryGoType(kind, version, path, verb string) (goType runtime.Object, exists bool) {
+	return ManifestCustomRouteQueryAssociator(kind, version, path, verb)
+}
+func (g *GoTypeAssociator) CustomRouteRequestBodyGoType(kind, version, path, verb string) (goType any, exists bool) {
+	return ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb)
 }

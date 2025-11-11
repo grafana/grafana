@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { css as cssReact, Global } from '@emotion/react';
 
 import { GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
@@ -16,12 +17,12 @@ type ExtensionSidebarComponentProps = {
 
 export function ExtensionSidebar() {
   const styles = getStyles(useTheme2());
-  const { dockedComponentId, isEnabled, props = {} } = useExtensionSidebarContext();
+  const { dockedComponentId, props = {} } = useExtensionSidebarContext();
   const { components, isLoading } = usePluginComponents<ExtensionSidebarComponentProps>({
     extensionPointId: PluginExtensionPoints.ExtensionSidebar,
   });
 
-  if (isLoading || !dockedComponentId || !isEnabled) {
+  if (isLoading || !dockedComponentId) {
     return null;
   }
 
@@ -41,6 +42,11 @@ export function ExtensionSidebar() {
   return (
     <div className={styles.sidebarWrapper}>
       <div className={styles.content}>
+        {/* When the sidebar is open, we don't want the body to scroll */}
+        {/* Need type assertion here due to the use of !important */}
+        {/* see https://github.com/frenic/csstype/issues/114#issuecomment-697201978 */}
+        {/* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */}
+        <Global styles={[cssReact({ body: { overflowY: 'unset !important' as 'unset' } })]} />
         <ExtensionComponent {...props} />
       </div>
     </div>

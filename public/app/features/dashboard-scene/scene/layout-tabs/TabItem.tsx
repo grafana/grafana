@@ -1,31 +1,36 @@
 import React from 'react';
 
 import { t } from '@grafana/i18n';
+import { logWarning } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneObjectBase,
   sceneGraph,
   VariableDependencyConfig,
   SceneObject,
-  VizPanel,
+  SceneGridItemLike,
+  SceneGridLayout,
 } from '@grafana/scenes';
 import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import { appEvents } from 'app/core/core';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
-import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
+import { getDashboardSceneFor } from '../../utils/utils';
+import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
+import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
 import { DashboardDropTarget } from '../types/DashboardDropTarget';
+import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { LayoutParent } from '../types/LayoutParent';
@@ -39,9 +44,11 @@ export interface TabItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
   title?: string;
   isDropTarget?: boolean;
-  conditionalRendering?: ConditionalRendering;
+  conditionalRendering?: ConditionalRenderingGroup;
   repeatByVariable?: string;
   repeatedTabs?: TabItem[];
+  /** Marks object as a repeated object and a key pointer to source object */
+  repeatSourceKey?: string;
 }
 
 export class TabItem
@@ -64,7 +71,7 @@ export class TabItem
       ...state,
       title: state?.title ?? t('dashboard.tabs-layout.tab.new', 'New tab'),
       layout: state?.layout ?? AutoGridLayoutManager.createEmpty(),
-      conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty(),
+      conditionalRendering: state?.conditionalRendering ?? ConditionalRenderingGroup.createEmpty(),
     });
 
     this.addActivationHandler(() => this._activationHandler());
@@ -104,9 +111,7 @@ export class TabItem
     this.setState({ layout });
   }
 
-  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
-    return useEditOptions(this, isNewElement);
-  }
+  public useEditPaneOptions = useEditOptions.bind(this);
 
   public onDelete() {
     const layout = this.getParentLayout();
@@ -163,16 +168,10 @@ export class TabItem
     return this.clone({ key: undefined, layout: this.getLayout().duplicate() });
   }
 
-  public onAddPanel(panel = getDefaultVizPanel()) {
-    this.getLayout().addPanel(panel);
-  }
-
-  public onAddTab() {
-    this.getParentLayout().addNewTab();
-  }
-
   public onChangeTitle(title: string) {
     this.setState({ title });
+    const currentTabSlug = this.getSlug();
+    this.getParentLayout().setState({ currentTabSlug });
   }
 
   public onChangeName(name: string): void {
@@ -193,20 +192,40 @@ export class TabItem
     }
   }
 
-  public draggedPanelOutside(panel: VizPanel) {
-    this.getLayout().removePanel?.(panel);
+  public draggedGridItemOutside?(gridItem: SceneGridItemLike): void {
+    // Remove from source layout
+    if (gridItem instanceof DashboardGridItem || gridItem instanceof AutoGridItem) {
+      const layout = gridItem.parent;
+      if (gridItem instanceof DashboardGridItem && layout instanceof SceneGridLayout) {
+        const newChildren = layout.state.children.filter((child) => child !== gridItem);
+        layout.setState({ children: newChildren });
+      } else if (gridItem instanceof AutoGridItem && layout instanceof AutoGridLayout) {
+        const newChildren = layout.state.children.filter((child) => child !== gridItem);
+        layout.setState({ children: newChildren });
+      } else {
+        const warningMessage = 'Grid item has unexpected parent type';
+        console.warn(warningMessage);
+        logWarning(warningMessage);
+      }
+    }
     this.setIsDropTarget(false);
   }
 
-  public draggedPanelInside(panel: VizPanel) {
-    panel.clearParent();
-    this.getLayout().addPanel(panel);
+  public draggedGridItemInside(gridItem: SceneGridItemLike): void {
+    const layout = this.getLayout();
+
+    if (isDashboardLayoutGrid(layout)) {
+      layout.addGridItem(gridItem);
+    } else {
+      const warningMessage = 'Layout manager does not support addGridItem';
+      console.warn(warningMessage);
+      logWarning(warningMessage);
+    }
     this.setIsDropTarget(false);
 
     const parentLayout = this.getParentLayout();
-    const tabIndex = parentLayout.state.tabs.findIndex((tab) => tab === this);
-    if (tabIndex !== parentLayout.state.currentTabIndex) {
-      parentLayout.setState({ currentTabIndex: tabIndex });
+    if (parentLayout.state.currentTabSlug !== this.getSlug()) {
+      parentLayout.setState({ currentTabSlug: this.getSlug() });
     }
   }
 

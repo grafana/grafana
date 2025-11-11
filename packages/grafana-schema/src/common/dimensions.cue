@@ -35,7 +35,7 @@ TextDimensionMode: "fixed" | "field" | "template" @cuetsy(kind="enum")
 TextDimensionConfig: {
   BaseDimensionConfig
   mode: TextDimensionMode
-  fixed?: string 
+  fixed?: string
 }@cuetsy(kind="interface")
 
 ResourceDimensionMode: "fixed" | "field" | "mapping" @cuetsy(kind="enum")
@@ -44,6 +44,15 @@ ResourceDimensionMode: "fixed" | "field" | "mapping" @cuetsy(kind="enum")
 ResourceDimensionConfig: {
   BaseDimensionConfig
   mode: ResourceDimensionMode
-  fixed?: string 
+  fixed?: string
 }@cuetsy(kind="interface")
 
+ConnectionDirection: "forward" | "reverse" | "both" | "none" @cuetsy(kind="enum", memberNames="Forward|Reverse|Both|None")
+
+DirectionDimensionMode: "fixed" | "field" @cuetsy(kind="enum")
+
+DirectionDimensionConfig: {
+	BaseDimensionConfig
+	mode: DirectionDimensionMode
+	fixed?: ConnectionDirection
+}@cuetsy(kind="interface")

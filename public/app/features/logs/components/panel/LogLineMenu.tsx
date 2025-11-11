@@ -7,6 +7,7 @@ import { Dropdown, IconButton, Menu } from '@grafana/ui';
 
 import { copyText, handleOpenLogsContextClick } from '../../utils';
 
+import { useLogDetailsContext } from './LogDetailsContext';
 import { LogLineStyles } from './LogLine';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
@@ -29,14 +30,13 @@ type MenuItemDivider = {
 export type LogLineMenuCustomItem = MenuItem | MenuItemDivider;
 
 interface Props {
+  active?: boolean;
   log: LogListModel;
   styles: LogLineStyles;
 }
 
-export const LogLineMenu = ({ log, styles }: Props) => {
+export const LogLineMenu = ({ active, log, styles }: Props) => {
   const {
-    enableLogDetails,
-    detailsDisplayed,
     getRowContextQuery,
     onOpenContext,
     onPermalinkClick,
@@ -44,10 +44,10 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     onUnpinLine,
     logLineMenuCustomItems = [],
     logSupportsContext,
-    toggleDetails,
     isAssistantAvailable,
     openAssistantByLog,
   } = useLogListContext();
+  const { enableLogDetails, detailsDisplayed, toggleDetails } = useLogDetailsContext();
   const pinned = useLogIsPinned(log);
   const menuRef = useRef(null);
 
@@ -127,7 +127,7 @@ export const LogLineMenu = ({ log, styles }: Props) => {
             <Menu.Item
               onClick={() => openAssistantByLog?.(log)}
               icon="ai-sparkle"
-              label={t('logs.log-line-menu.open-assistant', 'Explain this log line in Assistant')}
+              label={t('logs.log-line-menu.open-assistant', 'Explain log line in Assistant')}
             />
           </>
         )}
@@ -158,8 +158,10 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     <Dropdown overlay={menu} placement="bottom-start">
       <IconButton
         className={styles.menuIcon}
-        name="ellipsis-v"
+        name={active ? 'angle-right' : 'ellipsis-v'}
         aria-label={t('logs.log-line-menu.icon-label', 'Log menu')}
+        role="button"
+        variant={active ? 'primary' : undefined}
       />
     </Dropdown>
   );

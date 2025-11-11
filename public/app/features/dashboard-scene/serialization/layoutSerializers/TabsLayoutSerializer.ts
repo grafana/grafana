@@ -2,7 +2,6 @@ import { Spec as DashboardV2Spec, TabsLayoutTabKind } from '@grafana/schema/dist
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
-import { isClonedKey } from '../../utils/clone';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 import { getConditionalRendering } from './utils';
@@ -11,7 +10,7 @@ export function serializeTabsLayout(layoutManager: TabsLayoutManager): Dashboard
   return {
     kind: 'TabsLayout',
     spec: {
-      tabs: layoutManager.state.tabs.filter((tab) => !isClonedKey(tab.state.key!)).map(serializeTab),
+      tabs: layoutManager.state.tabs.filter((tab) => !tab.state.repeatSourceKey).map(serializeTab),
     },
   };
 }

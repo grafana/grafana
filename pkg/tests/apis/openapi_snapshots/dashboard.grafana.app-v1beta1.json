@@ -1018,6 +1018,7 @@
         "description": "Information about how the requesting user can use a given dashboard",
         "type": "object",
         "required": [
+          "isPublic",
           "canSave",
           "canEdit",
           "canAdmin",
@@ -1050,6 +1051,10 @@
             "type": "boolean",
             "default": false
           },
+          "isPublic": {
+            "type": "boolean",
+            "default": false
+          },
           "slug": {
             "description": "Metadata fields",
             "type": "string"
@@ -1063,25 +1068,25 @@
         "description": "ConversionStatus is the status of the conversion of the dashboard.",
         "type": "object",
         "required": [
-          "failed",
-          "storedVersion",
-          "error"
+          "failed"
         ],
         "properties": {
           "error": {
             "description": "The error message from the conversion. Empty if the conversion has not failed.",
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "failed": {
             "description": "Whether from another version has failed. If true, means that the dashboard is not valid, and the caller should instead fetch the stored version.",
             "type": "boolean",
             "default": false
           },
+          "source": {
+            "description": "The original value map[string]any",
+            "type": "object"
+          },
           "storedVersion": {
             "description": "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
-            "type": "string",
-            "default": ""
+            "type": "string"
           }
         }
       },

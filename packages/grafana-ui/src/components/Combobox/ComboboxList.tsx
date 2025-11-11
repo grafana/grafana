@@ -7,7 +7,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { Checkbox } from '../Forms/Checkbox';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
-import { AsyncError, NotFoundError } from './MessageRows';
+import { AsyncError, LoadingOptions, NotFoundError } from './MessageRows';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { ALL_OPTION_VALUE, ComboboxOption } from './types';
 import { isNewGroup } from './utils';
@@ -23,6 +23,7 @@ interface ComboboxListProps<T extends string | number> {
   enableAllOption?: boolean;
   isMultiSelect?: boolean;
   error?: boolean;
+  loading?: boolean;
 }
 
 export const ComboboxList = <T extends string | number>({
@@ -34,6 +35,7 @@ export const ComboboxList = <T extends string | number>({
   enableAllOption,
   isMultiSelect = false,
   error = false,
+  loading = false,
 }: ComboboxListProps<T>) => {
   const styles = useStyles2(getComboboxStyles);
 
@@ -67,7 +69,7 @@ export const ComboboxList = <T extends string | number>({
     [selectedItems]
   );
 
-  const allItemsSelected = enableAllOption && selectedItems.length === options.length - 1;
+  const allItemsSelected = enableAllOption && options.length > 1 && selectedItems.length === options.length - 1;
 
   return (
     <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef} padding={0.5}>
@@ -120,26 +122,31 @@ export const ComboboxList = <T extends string | number>({
                 className={cx(
                   styles.option,
                   !isMultiSelect && isOptionSelected(item) && styles.optionSelected,
-                  highlightedIndex === virtualRow.index && styles.optionFocused
+                  highlightedIndex === virtualRow.index && !item.infoOption && styles.optionFocused,
+                  item.infoOption && styles.optionInfo
                 )}
                 {...getItemProps({
                   item: item,
                   index: virtualRow.index,
                   id: itemId,
                   'aria-describedby': groupHeaderId,
+                  disabled: item.infoOption,
                 })}
               >
                 {isMultiSelect && (
                   <div className={styles.optionAccessory}>
-                    <Checkbox
-                      key={itemId}
-                      value={allItemsSelected || isOptionSelected(item)}
-                      indeterminate={item.value === ALL_OPTION_VALUE && selectedItems.length > 0 && !allItemsSelected}
-                      aria-labelledby={itemId}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                    />
+                    {!item.infoOption && (
+                      <Checkbox
+                        key={itemId}
+                        value={allItemsSelected || isOptionSelected(item)}
+                        indeterminate={item.value === ALL_OPTION_VALUE && selectedItems.length > 0 && !allItemsSelected}
+                        aria-labelledby={itemId}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        data-testid={`${itemId}-checkbox`}
+                      />
+                    )}
                   </div>
                 )}
 
@@ -156,7 +163,8 @@ export const ComboboxList = <T extends string | number>({
 
       <div aria-live="polite">
         {error && <AsyncError />}
-        {options.length === 0 && !error && <NotFoundError />}
+        {!loading && options.length === 0 && !error && <NotFoundError />}
+        {loading && options.length === 0 && <LoadingOptions />}
       </div>
     </ScrollContainer>
   );

@@ -8,18 +8,17 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestIntegration_GetLibraryElement(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	scenarioWithPanel(t, "When an admin tries to get a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			// by uid
@@ -61,12 +60,12 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 							ConnectedDashboards: 0,
 							Created:             res.Result.Meta.Created,
 							Updated:             res.Result.Meta.Updated,
-							CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+							CreatedBy: model.LibraryElementDTOMetaUser{
 								Id:        1,
 								Name:      userInDbName,
 								AvatarUrl: userInDbAvatar,
 							},
-							UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+							UpdatedBy: model.LibraryElementDTOMetaUser{
 								Id:        1,
 								Name:      userInDbName,
 								AvatarUrl: userInDbAvatar,
@@ -104,7 +103,7 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 			newFolder := createFolder(t, sc, "NewFolder", sc.folderSvc)
 			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
 			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersDelete] = []string{dashboards.ScopeFoldersAll}
-			result, err := sc.service.createLibraryElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, model.CreateLibraryElementCommand{
+			result, err := sc.service.CreateElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, model.CreateLibraryElementCommand{
 				FolderID:  newFolder.ID, // nolint:staticcheck
 				FolderUID: &newFolder.UID,
 				Name:      "Testing Library Panel With Deleted Folder",
@@ -161,12 +160,12 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 							ConnectedDashboards: 1,
 							Created:             res.Result.Meta.Created,
 							Updated:             res.Result.Meta.Updated,
-							CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+							CreatedBy: model.LibraryElementDTOMetaUser{
 								Id:        1,
 								Name:      userInDbName,
 								AvatarUrl: userInDbAvatar,
 							},
-							UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+							UpdatedBy: model.LibraryElementDTOMetaUser{
 								Id:        1,
 								Name:      userInDbName,
 								AvatarUrl: userInDbAvatar,

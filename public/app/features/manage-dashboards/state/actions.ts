@@ -10,7 +10,6 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PermissionLevelString, SearchQueryType } from 'app/types/acl';
 import { ThunkResult } from 'app/types/store';
 
 import {
@@ -21,7 +20,6 @@ import {
 } from '../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
-import { DashboardSearchHit } from '../../search/types';
 import { DashboardJson } from '../types';
 
 import {
@@ -308,53 +306,24 @@ const getDataSourceDescription = (input: { usage?: InputUsage }): string | undef
   return undefined;
 };
 
-/** @deprecated Use RTK Query methods from features/browse-dashboards/api/browseDashboardsAPI.ts instead */
-export function createFolder(payload: any) {
-  return getBackendSrv().post('/api/folders', payload);
-}
-
-export const SLICE_FOLDER_RESULTS_TO = 1000;
-
-export async function searchFolders(
-  query: string,
-  permission?: PermissionLevelString,
-  type: SearchQueryType = SearchQueryType.Folder
-): Promise<DashboardSearchHit[]> {
-  return getBackendSrv().get('/api/search', {
-    query,
-    type: type,
-    permission,
-    limit: SLICE_FOLDER_RESULTS_TO,
-  });
-}
-
-export function getFolderByUid(uid: string): Promise<{ uid: string; title: string }> {
-  return getBackendSrv().get(`/api/folders/${uid}`);
-}
-
 export async function processV2DatasourceInput(
   spec: PanelQueryKind['spec'] | QueryVariableKind['spec'] | AnnotationQueryKind['spec'],
   inputs: Record<string, DataSourceInput> = {}
 ) {
-  const datasourceRef = spec.query.datasource;
   let dataSourceInput: DataSourceInput | undefined;
   const dsType = spec.query.group;
 
-  if (!datasourceRef) {
-    // if dsType is grafana, it means we are using a built-in annotation or default grafana datasource, in those
-    // cases we don't need to map it
-    // "datasource" type is what we call "--Dashboard--" datasource <.-.>
-    if (dsType === 'grafana' || dsType === 'datasource') {
-      return inputs;
-    }
+  const datasource = await getDatasourceSrv().get({ type: dsType });
+
+  if (datasource.meta?.builtIn) {
+    return inputs;
   }
 
-  const datasource = await getDatasourceSrv().get({ type: dsType });
   if (datasource) {
     dataSourceInput = {
       name: datasource.name,
       label: datasource.name,
-      info: `Select a ${datasource.name} data source`,
+      info: `Select a ${datasource.type} data source`,
       value: datasource.uid,
       type: InputType.DataSource,
       pluginId: datasource.meta?.id,

@@ -445,7 +445,9 @@ func Test_executeStartQuery(t *testing.T) {
 
 	t.Run("attaches logGroupIdentifiers if the crossAccount feature is enabled", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
-		ds := newTestDatasource()
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.monitoringAccountCache.Store("us-east-1", true)
+		})
 
 		_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -459,7 +461,8 @@ func Test_executeStartQuery(t *testing.T) {
 						"limit":   12,
 						"queryLanguage": "CWLI",
 						"queryString":"fields @message",
-						"logGroups":[{"arn": "fakeARN"}]
+						"logGroups":[{"arn": "fakeARN"}],
+						"region": "us-east-1"
 					}`),
 				},
 			},
@@ -480,7 +483,9 @@ func Test_executeStartQuery(t *testing.T) {
 
 	t.Run("attaches logGroupIdentifiers if the crossAccount feature is enabled and strips out trailing *", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
-		ds := newTestDatasource()
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.monitoringAccountCache.Store("us-east-1", true)
+		})
 
 		_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -493,7 +498,8 @@ func Test_executeStartQuery(t *testing.T) {
 						"subtype": "StartQuery",
 						"limit":   12,
 						"queryString":"fields @message",
-						"logGroups":[{"arn": "*fake**ARN*"}]
+						"logGroups":[{"arn": "*fake**ARN*"}],
+						"region": "us-east-1"
 					}`),
 				},
 			},
@@ -508,6 +514,44 @@ func Test_executeStartQuery(t *testing.T) {
 				QueryString:         aws.String("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
 				LogGroupIdentifiers: []string{"*fake**ARN"},
 				QueryLanguage:       cloudwatchlogstypes.QueryLanguageCwli,
+			},
+		}, cli.calls.startQuery)
+	})
+
+	t.Run("queries by LogGroupNames on StartQueryInput when queried region is not a monitoring account region for the data source", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource(func(ds *DataSource) {
+			// note that the query's region is set to us-east-2, but the data source is only a monitoring account in us-east-1 so it should query by LogGroupNames
+			ds.monitoringAccountCache.Store("us-east-1", true)
+		})
+
+		_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"limit":   12,
+						"queryString":"fields @message",
+						"logGroups":[{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group","name":"/log-group"}],
+						"region": "us-east-2"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, []*cloudwatchlogs.StartQueryInput{
+			{
+				StartTime:     aws.Int64(0),
+				EndTime:       aws.Int64(1),
+				Limit:         aws.Int32(12),
+				QueryString:   aws.String("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
+				LogGroupNames: []string{"/log-group"},
+				QueryLanguage: cloudwatchlogstypes.QueryLanguageCwli,
 			},
 		}, cli.calls.startQuery)
 	})
@@ -540,6 +584,42 @@ func Test_executeStartQuery(t *testing.T) {
 				Limit:         aws.Int32(12),
 				QueryString:   aws.String("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
 				LogGroupNames: []string{"/log-group-name"},
+				QueryLanguage: cloudwatchlogstypes.QueryLanguageCwli,
+			},
+		}, cli.calls.startQuery)
+	})
+
+	t.Run("deduplicates log group names when derived from logGroups", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"limit":   12,
+						"queryString":"fields @message",
+						"logGroups":[
+							{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group1","name":"/log-group"},
+							{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group2","name":"/log-group"}
+						]
+					}`),
+				},
+			},
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, []*cloudwatchlogs.StartQueryInput{
+			{
+				StartTime:     aws.Int64(0),
+				EndTime:       aws.Int64(1),
+				Limit:         aws.Int32(12),
+				QueryString:   aws.String("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
+				LogGroupNames: []string{"/log-group"},
 				QueryLanguage: cloudwatchlogstypes.QueryLanguageCwli,
 			},
 		}, cli.calls.startQuery)
@@ -600,12 +680,12 @@ func Test_executeStartQuery(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, []*cloudwatchlogs.StartQueryInput{
 			{
-				StartTime:           aws.Int64(0),
-				EndTime:             aws.Int64(1),
-				Limit:               aws.Int32(12),
-				QueryString:         aws.String("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
-				LogGroupIdentifiers: []string{"*fake**ARN"},
-				QueryLanguage:       cloudwatchlogstypes.QueryLanguageCwli,
+				StartTime:     aws.Int64(0),
+				EndTime:       aws.Int64(1),
+				Limit:         aws.Int32(12),
+				QueryString:   aws.String("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
+				LogGroupNames: []string{"/log-group"},
+				QueryLanguage: cloudwatchlogstypes.QueryLanguageCwli,
 			},
 		}, cli.calls.startQuery)
 	})

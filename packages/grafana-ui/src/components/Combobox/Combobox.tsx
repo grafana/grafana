@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import React, { useCallback, useId, useMemo } from 'react';
+import React, { ComponentProps, useCallback, useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -32,6 +32,10 @@ interface ComboboxStaticProps<T extends string | number>
    * Allows the user to set a value which is not in the list of options.
    */
   createCustomValue?: boolean;
+  /**
+   * Custom container for rendering the dropdown menu via Portal
+   */
+  portalContainer?: HTMLElement;
 
   /**
    * An array of options, or a function that returns a promise resolving to an array of options.
@@ -56,6 +60,11 @@ interface ComboboxStaticProps<T extends string | number>
    * Called when the input loses focus.
    */
   onBlur?: () => void;
+
+  /**
+   * Icon to display at the start of the ComboBox input
+   */
+  prefixIcon?: ComponentProps<typeof Icon>['name'];
 }
 
 interface ClearableProps<T extends string | number> {
@@ -110,8 +119,10 @@ const noop = () => {};
 export const VIRTUAL_OVERSCAN_ITEMS = 4;
 
 /**
- * A performant Select replacement.
+ * A performant and accessible combobox component that supports both synchronous and asynchronous options loading. It provides type-ahead filtering, keyboard navigation, and virtual scrolling for handling large datasets efficiently.
+ * Replaces the Select component, and has better performance.
  *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-combobox--docs
  * @alpha
  */
 export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => {
@@ -131,7 +142,9 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     autoFocus,
     onBlur,
     disabled,
+    portalContainer,
     invalid,
+    prefixIcon,
   } = props;
 
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
@@ -371,6 +384,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         {...(isAutoSize ? { minWidth, maxWidth } : {})}
         autoFocus={autoFocus}
         onBlur={onBlur}
+        prefix={prefixIcon && <Icon name={prefixIcon} />}
         disabled={disabled}
         invalid={invalid}
         className={styles.input}
@@ -383,10 +397,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           'data-testid': dataTestId,
         })}
       />
-      <Portal>
+      <Portal root={portalContainer}>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
-          style={floatStyles}
+          style={{
+            ...floatStyles,
+            pointerEvents: 'auto', // Override container's pointer-events: none
+          }}
           {...getMenuProps({
             ref: floatingRef,
             'aria-labelledby': ariaLabelledBy,
@@ -394,6 +411,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         >
           {isOpen && (
             <ComboboxList
+              loading={loading}
               options={filteredOptions}
               highlightedIndex={highlightedIndex}
               selectedItems={selectedItem ? [selectedItem] : []}

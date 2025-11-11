@@ -2,22 +2,24 @@ package jobs
 
 import (
 	"context"
+	"time"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 // RepoGetter is a function that can be called to get a repository by name
 //
 //go:generate mockery --name RepoGetter --structname MockRepoGetter --inpackage --filename repo_getter_mock.go --with-expecter
 type RepoGetter interface {
-	GetRepository(ctx context.Context, name string) (repository.Repository, error)
+	GetRepository(ctx context.Context, namespace, name string) (repository.Repository, error)
 }
 
 // JobProgressRecorder is a function that can be called to record the progress of a job
 //
 //go:generate mockery --name JobProgressRecorder --structname MockJobProgressRecorder --inpackage --filename job_progress_recorder_mock.go --with-expecter
 type JobProgressRecorder interface {
+	Started() time.Time
 	Record(ctx context.Context, result JobResourceResult)
 	ResetResults()
 	SetFinalMessage(ctx context.Context, msg string)

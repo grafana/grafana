@@ -1,15 +1,24 @@
-import { readdirSync, readFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import path from 'path';
 
-import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
-import { plugin as tablePanelPlugin } from 'app/plugins/panel/table/module';
+import { variableAdapters } from 'app/features/variables/adapters';
+import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
+import { createCustomVariableAdapter } from 'app/features/variables/custom/adapter';
+import { createDataSourceVariableAdapter } from 'app/features/variables/datasource/adapter';
+import { createIntervalVariableAdapter } from 'app/features/variables/interval/adapter';
+import { createQueryVariableAdapter } from 'app/features/variables/query/adapter';
+import { createTextBoxVariableAdapter } from 'app/features/variables/textbox/adapter';
 
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 import { DashboardModel } from './DashboardModel';
+import {
+  setupTestDataSources,
+  getTestDirectories,
+  getOutputDirectory,
+  getJsonInputFiles,
+  constructLatestVersionOutputFilename,
+} from './__tests__/migrationTestUtils';
+import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
 
 /*
  * Backend / Frontend Migration Comparison Test Design Explanation:
@@ -25,7 +34,7 @@ import { DashboardModel } from './DashboardModel';
  *
  * 3. Why DashboardMigrator doesn't run on backendOutput:
  *    - DashboardMigrator.updateSchema() has an early return: `if (oldVersion === this.dashboard.schemaVersion) return;`
- *    - Since backendOutput.schemaVersion is already 41 (latest), no migration occurs
+ *    - Since backendOutput.schemaVersion is already 42 (latest), no migration occurs
  *    - This ensures we compare the final migrated state from both paths
  *
  * 4. Benefits of this approach:
@@ -35,201 +44,65 @@ import { DashboardModel } from './DashboardModel';
  *    - Avoids test brittleness from comparing raw JSON with different default value representations
  */
 
-// Set up the same datasources as backend test provider to ensure consistency
-const dataSources = {
-  default: mockDataSource({
-    name: 'Default Test Datasource Name',
-    uid: 'default-ds-uid',
-    type: 'prometheus',
-    isDefault: true,
-  }),
-  nonDefault: mockDataSource({
-    name: 'Non Default Test Datasource Name',
-    uid: 'non-default-test-ds-uid',
-    type: 'loki',
-    isDefault: false,
-  }),
-  existingRef: mockDataSource({
-    name: 'Existing Ref Name',
-    uid: 'existing-ref-uid',
-    type: 'prometheus',
-    isDefault: false,
-  }),
-  existingTarget: mockDataSource({
-    name: 'Existing Target Name',
-    uid: 'existing-target-uid',
-    type: 'elasticsearch',
-    isDefault: false,
-  }),
-  existingRefAlt: mockDataSource({
-    name: 'Existing Ref Name',
-    uid: 'existing-ref',
-    type: 'prometheus',
-    isDefault: false,
-  }),
-  mixed: mockDataSource({
-    name: MIXED_DATASOURCE_NAME,
-    type: 'mixed',
-    uid: MIXED_DATASOURCE_NAME,
-    isDefault: false,
-  }),
-  influx: mockDataSource({
-    name: 'InfluxDB Test Datasource',
-    uid: 'influx-uid',
-    type: 'influxdb',
-    isDefault: false,
-  }),
-  cloudwatch: mockDataSource({
-    name: 'CloudWatch Test Datasource',
-    uid: 'cloudwatch-uid',
-    type: 'cloudwatch',
-    isDefault: false,
-  }),
-  grafana: mockDataSource({
-    name: '-- Grafana --',
-    uid: '-- Grafana --',
-    type: 'grafana',
-    isDefault: false,
-  }),
-};
+variableAdapters.register(createQueryVariableAdapter());
+variableAdapters.register(createDataSourceVariableAdapter());
+variableAdapters.register(createConstantVariableAdapter());
+variableAdapters.register(createIntervalVariableAdapter());
+variableAdapters.register(createCustomVariableAdapter());
+variableAdapters.register(createTextBoxVariableAdapter());
 
 describe('Backend / Frontend result comparison', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    setupDataSources(...Object.values(dataSources));
+    setupTestDataSources();
   });
 
-  const inputDir = path.join(
-    __dirname,
-    '..',
-    '..',
-    '..',
-    '..',
-    '..',
-    'apps',
-    'dashboard',
-    'pkg',
-    'migration',
-    'testdata',
-    'input'
-  );
-  const outputDir = path.join(
-    __dirname,
-    '..',
-    '..',
-    '..',
-    '..',
-    '..',
-    'apps',
-    'dashboard',
-    'pkg',
-    'migration',
-    'testdata',
-    'output'
-  );
-
-  const jsonInputs = readdirSync(inputDir);
+  const { inputDir } = getTestDirectories();
+  const outputDir = getOutputDirectory('latest_version');
+  const jsonInputs = getJsonInputFiles(inputDir);
 
   jsonInputs.forEach((inputFile) => {
     it(`should migrate ${inputFile} correctly`, async () => {
       const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
-      const backendOutput = JSON.parse(readFileSync(path.join(outputDir, inputFile), 'utf8'));
 
-      expect(backendOutput.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
+      // Construct the backend output filename: v30.something.json -> v30.something.v41.json
+      const backendOutputFilename = constructLatestVersionOutputFilename(inputFile, DASHBOARD_SCHEMA_VERSION);
+      const backendMigrationResult = JSON.parse(readFileSync(path.join(outputDir, backendOutputFilename), 'utf8'));
 
-      // Create dashboard models
-      const frontendModel = new DashboardModel(jsonInput);
-      const backendModel = new DashboardModel(backendOutput);
+      expect(backendMigrationResult.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
 
-      /* 
-      Migration from schema V27 involves migrating angular singlestat panels to stat panels
-      These panels are auto migrated where PanelModel.restoreModel() is called in the constructor,
-      and the autoMigrateFrom is set and type is set to "stat". So this logic will not run.
-      if (oldVersion < 28) {
-        panelUpgrades.push((panel: PanelModel) => {
-          if (panel.type === 'singlestat') {
-            return migrateSinglestat(panel);
-          }
-        });
-      }
-    
-      Furthermore, the PanelModel.pluginLoaded is run in the old architecture through a redux action so it will not run in this test.
-      In the scenes architecture the angular migration logic runs through a migration handler inside transformSaveModelToScene.ts
-       _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
-      We need to manually run the pluginLoaded logic to ensure the panels are migrated correctly. 
-      which means that the actual migration logic is not run.
-      We need to manually run the pluginLoaded logic to ensure the panels are migrated correctly.
-      */
-      if (jsonInput.schemaVersion <= 27) {
-        for (const panel of frontendModel.panels) {
-          if (panel.type === 'stat' && panel.autoMigrateFrom) {
-            // Set the plugin version if it doesn't exist
-            if (!statPanelPlugin.meta.info) {
-              statPanelPlugin.meta.info = {
-                author: {
-                  name: 'Grafana Labs',
-                  url: 'url/to/GrafanaLabs',
-                },
-                description: 'stat plugin',
-                links: [{ name: 'project', url: 'one link' }],
-                logos: { small: 'small/logo', large: 'large/logo' },
-                screenshots: [],
-                updated: '2024-01-01',
-                version: '1.0.0',
-              };
+      // Migrate dashboard in Frontend.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let migratedTemplatingList: any[] = jsonInput?.templating?.list ?? [];
+      const frontendModel = new DashboardModel(jsonInput, undefined, {
+        getVariablesFromState: () => migratedTemplatingList,
+      });
+      // Update the templating list reference after migration
+      migratedTemplatingList = frontendModel.templating?.list ?? [];
+
+      const frontendMigrationResult = frontendModel.getSaveModelClone();
+
+      // version in the backend is never added because it is returned from the backend as metadata
+      delete frontendMigrationResult.version;
+
+      // since we are initializing panels inside collapsed rows with PanelModel in transformSceneToSaveModel (see createRowItemFromLegacyRow)
+      // and not in DashboardModel, this means that these panels will have automigratedFrom and panel type changed to the new panel type
+      // backend matches this behaviour by setting up autoMigrateFrom and type for nested panels too
+      // @ts-expect-error - we are using the type from the frontend migration result
+      for (const panel of frontendMigrationResult.panels) {
+        if (panel.type === 'row' && 'panels' in panel) {
+          for (const nestedPanel of panel.panels) {
+            const panelPluginToMigrateTo = getPanelPluginToMigrateTo(nestedPanel);
+            if (panelPluginToMigrateTo) {
+              // @ts-expect-error - we are using the type from the frontend migration result
+              nestedPanel.autoMigrateFrom = nestedPanel.type;
+              nestedPanel.type = panelPluginToMigrateTo;
             }
-            if (!statPanelPlugin.meta.info.version) {
-              statPanelPlugin.meta.info.version = '1.0.0';
-            }
-
-            await panel.pluginLoaded(statPanelPlugin);
-          }
-          if (panel.type === 'table' && panel.autoMigrateFrom === 'table-old') {
-            // Set the plugin version if it doesn't exist
-            if (!tablePanelPlugin.meta.info) {
-              tablePanelPlugin.meta.info = {
-                author: {
-                  name: 'Grafana Labs',
-                  url: 'url/to/GrafanaLabs',
-                },
-                description: 'table plugin',
-                links: [{ name: 'project', url: 'one link' }],
-                logos: { small: 'small/logo', large: 'large/logo' },
-                screenshots: [],
-                updated: '2024-01-01',
-                version: '1.0.0',
-              };
-            }
-            if (!tablePanelPlugin.meta.info.version) {
-              tablePanelPlugin.meta.info.version = '1.0.0';
-            }
-
-            await panel.pluginLoaded(tablePanelPlugin as any);
           }
         }
       }
 
-      const frontendMigrationResult = frontendModel.getSaveModelClone();
-      const backendMigrationResult = backendModel.getSaveModelClone();
-
-      // Although getSaveModelClone() runs sortedDeepCloneWithoutNulls() internally,
-      // we run it again to ensure consistent handling of null values (like threshold -Infinity values)
-      // Because Go and TS handle -Infinity differently.
-      const cleanedFrontendResult = sortedDeepCloneWithoutNulls(frontendMigrationResult);
-
-      // Remove deprecated angular properties that backend shouldn't return, but DashboardModel will still set them
-      for (const panel of cleanedFrontendResult.panels ?? []) {
-        // @ts-expect-error
-        delete panel.autoMigrateFrom;
-        // @ts-expect-error
-        delete panel.styles;
-        // @ts-expect-error - Backend removes these deprecated table properties
-        delete panel.transform;
-        // @ts-expect-error - Backend removes these deprecated table properties
-        delete panel.columns;
-      }
-
-      expect(backendMigrationResult).toMatchObject(cleanedFrontendResult);
+      expect(backendMigrationResult).toEqual(frontendMigrationResult);
     });
   });
 });

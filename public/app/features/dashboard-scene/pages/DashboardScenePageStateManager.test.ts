@@ -1,10 +1,15 @@
+import { configureStore } from '@reduxjs/toolkit';
 import { advanceBy } from 'jest-date-mock';
+import { UnknownAction } from 'redux';
+import { of } from 'rxjs';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import { BackendSrv, config, locationService, setBackendSrv } from '@grafana/runtime';
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import store from 'app/core/store';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -14,6 +19,7 @@ import {
   setDashboardLoaderSrv,
 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/SnapshotSrv';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DASHBOARD_FROM_LS_KEY, DashboardDataDTO, DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -25,51 +31,53 @@ import {
   UnifiedDashboardScenePageStateManager,
   DASHBOARD_CACHE_TTL,
 } from './DashboardScenePageStateManager';
+const fetchMock = jest.fn();
 
-// Mock the config module
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
+  const originalGetBackendSrv = original.getBackendSrv;
   return {
     ...original,
+    getBackendSrv: () => {
+      const originalSrv = originalGetBackendSrv();
+      return {
+        ...originalSrv,
+        fetch: fetchMock,
+      };
+    },
     config: {
       ...original.config,
       featureToggles: {
         ...original.config.featureToggles,
-        dashboardNewLayouts: false, // Default value
+        dashboardNewLayouts: false,
+        reloadDashboardsOnParamsChange: false,
       },
-
-      bootData: {
-        ...original.config.bootData,
-        settings: {
-          ...original.config.bootData.settings,
-          datasources: {
-            'gdev-testdata': {
-              id: 7,
-              uid: 'abc',
-              type: 'grafana-testdata-datasource',
-              name: 'gdev-testdata',
-              meta: {
-                id: 'grafana-testdata-datasource',
-                type: 'datasource',
-                name: 'TestData',
-                aliasIDs: ['testdata'],
-              },
-            },
-            '-- Grafana --': {
-              id: -1,
-              uid: 'grafana',
-              type: 'datasource',
-              name: '-- Grafana --',
-              meta: {
-                id: 'grafana',
-                type: 'datasource',
-                name: '-- Grafana --',
-              },
-            },
+      datasources: {
+        'gdev-testdata': {
+          id: 7,
+          uid: 'abc',
+          type: 'grafana-testdata-datasource',
+          name: 'gdev-testdata',
+          meta: {
+            id: 'grafana-testdata-datasource',
+            type: 'datasource',
+            name: 'TestData',
+            aliasIDs: ['testdata'],
           },
-          defaultDatasource: 'gdev-testdata',
+        },
+        '-- Grafana --': {
+          id: -1,
+          uid: 'grafana',
+          type: 'datasource',
+          name: '-- Grafana --',
+          meta: {
+            id: 'grafana',
+            type: 'datasource',
+            name: '-- Grafana --',
+          },
         },
       },
+      defaultDatasource: 'gdev-testdata',
     },
   };
 });
@@ -77,6 +85,37 @@ jest.mock('@grafana/runtime', () => {
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: jest.fn(),
 }));
+
+jest.mock('app/features/playlist/PlaylistSrv', () => ({
+  playlistSrv: {
+    state: {
+      isPlaying: false,
+    },
+  },
+}));
+
+const createTestStore = () =>
+  configureStore({
+    reducer: {
+      [provisioningAPIv0alpha1.reducerPath]: provisioningAPIv0alpha1.reducer,
+    },
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(provisioningAPIv0alpha1.middleware),
+  });
+
+let testStore: ReturnType<typeof createTestStore>;
+
+jest.mock('app/store/store', () => {
+  const actual = jest.requireActual('app/store/store');
+  return {
+    ...actual,
+    dispatch: jest.fn((action: UnknownAction) => {
+      if (testStore) {
+        return testStore.dispatch(action);
+      }
+      return action;
+    }),
+  };
+});
 
 const setupDashboardAPI = (
   d: DashboardWithAccessInfo<DashboardV2Spec> | undefined,
@@ -122,11 +161,49 @@ const mockDashboardLoader = {
 // Set the mock loader
 setDashboardLoaderSrv(mockDashboardLoader as unknown as DashboardLoaderSrv);
 
+// Test helpers for query parameter processing tests
+const mockTimeAndLocation = (mockNow: Date, queryParams: Record<string, string>) => {
+  const originalDateNow = Date.now;
+  Date.now = jest.fn(() => mockNow.getTime());
+
+  const mockGetSearch = jest.fn().mockReturnValue(new URLSearchParams());
+  const mockGetSearchObject = jest.fn().mockReturnValue(queryParams);
+
+  locationService.getSearch = mockGetSearch;
+  locationService.getSearchObject = mockGetSearchObject;
+
+  return () => {
+    Date.now = originalDateNow;
+  };
+};
+
+const withFeatureToggle = (enabled: boolean, testFn: () => Promise<void>) => async () => {
+  const originalValue = config.featureToggles.reloadDashboardsOnParamsChange;
+  config.featureToggles.reloadDashboardsOnParamsChange = enabled;
+
+  try {
+    await testFn();
+  } finally {
+    config.featureToggles.reloadDashboardsOnParamsChange = originalValue;
+  }
+};
+
+// Test constants
+const MOCK_DASHBOARD = { dashboard: { uid: 'fake-dash', editable: true }, meta: {} };
+const MOCK_NOW = new Date('2023-10-01T12:00:00.000Z');
+
 // Reset the mock between tests
 beforeEach(() => {
   jest.clearAllMocks();
   mockDashboardLoader.loadDashboard.mockReset();
   mockDashboardLoader.loadSnapshot.mockReset();
+  fetchMock.mockReset();
+
+  // Reset locationService mocks
+  locationService.getSearch = jest.fn().mockReturnValue(new URLSearchParams());
+  locationService.getSearchObject = jest.fn().mockReturnValue({});
+
+  testStore = createTestStore();
 });
 
 describe('DashboardScenePageStateManager v1', () => {
@@ -150,6 +227,109 @@ describe('DashboardScenePageStateManager v1', () => {
       // should use cache second time
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
       expect(loadDashboardMock.mock.calls.length).toBe(1);
+    });
+
+    describe('reloadDashboardsOnParamsChange feature toggle', () => {
+      it(
+        'should process query params when enabled',
+        withFeatureToggle(true, async () => {
+          const cleanup = mockTimeAndLocation(MOCK_NOW, {
+            from: 'now-1h',
+            to: 'now',
+            timezone: 'UTC',
+            extraParam: 'shouldBeRemoved',
+          });
+
+          const expectedFromISO = '2023-10-01T06:00:00.000Z'; // now-1h (calculated by dateMath)
+          const expectedToISO = '2023-10-01T12:00:00.000Z'; // now
+
+          const loadDashboardMock = setupLoadDashboardMock(MOCK_DASHBOARD);
+
+          const loader = new DashboardScenePageStateManager({});
+          await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+          // Verify that loadDashboard was called with processed query params
+          expect(loadDashboardMock).toHaveBeenCalledWith(
+            'db',
+            '',
+            'fake-dash',
+            expect.objectContaining({
+              from: expectedFromISO,
+              to: expectedToISO,
+            })
+          );
+
+          // Verify that extra parameters were filtered out (including timezone)
+          const callArgs = loadDashboardMock.mock.calls[0][3];
+          expect(callArgs).not.toHaveProperty('extraParam');
+          expect(callArgs).not.toHaveProperty('timezone'); // timezone is filtered out by design
+
+          cleanup();
+        })
+      );
+
+      it(
+        'should pass undefined query params when disabled',
+        withFeatureToggle(false, async () => {
+          const loadDashboardMock = setupLoadDashboardMock(MOCK_DASHBOARD);
+
+          const loader = new DashboardScenePageStateManager({});
+          await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+          // Verify that loadDashboard was called without query params (3 parameters only)
+          expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+        })
+      );
+
+      it(
+        'should filter parameters correctly when enabled',
+        withFeatureToggle(true, async () => {
+          const cleanup = mockTimeAndLocation(MOCK_NOW, {
+            from: 'now-6h',
+            to: 'now',
+            'var-server': 'web-01',
+            'var-env': 'production',
+            scopes: 'scope1,scope2',
+            version: '2',
+            refresh: '5s', // should be filtered out
+            theme: 'dark', // should be filtered out
+            kiosk: 'true', // should be filtered out
+          });
+
+          const expectedFromISO = '2023-10-01T06:00:00.000Z'; // now-6h
+          const expectedToISO = '2023-10-01T12:00:00.000Z'; // now
+
+          const loadDashboardMock = setupLoadDashboardMock(MOCK_DASHBOARD);
+
+          const loader = new DashboardScenePageStateManager({});
+          await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+          const callArgs = loadDashboardMock.mock.calls[0][3];
+
+          // Should keep allowed parameters with specific expected values
+          expect(callArgs).toEqual(
+            expect.objectContaining({
+              from: expectedFromISO,
+              to: expectedToISO,
+              'var-server': 'web-01',
+              'var-env': 'production',
+              scopes: 'scope1,scope2',
+              version: '2',
+            })
+          );
+
+          // Should filter out disallowed parameters
+          expect(callArgs).toEqual(
+            expect.not.objectContaining({
+              refresh: expect.anything(),
+              theme: expect.anything(),
+              kiosk: expect.anything(),
+            })
+          );
+
+          cleanup();
+        })
+      );
     });
 
     it("should error when the dashboard doesn't exist", async () => {
@@ -348,6 +528,123 @@ describe('DashboardScenePageStateManager v1', () => {
         advanceBy(DASHBOARD_CACHE_TTL / 2 + 1);
         await loader.fetchDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
         expect(loadDashSpy).toHaveBeenCalledTimes(2);
+      });
+    });
+    describe('URL correction during playlist navigation', () => {
+      const mockLocationService = locationService as jest.Mocked<typeof locationService>;
+      let originalReplace: typeof locationService.replace;
+      let originalGetLocation: typeof locationService.getLocation;
+
+      beforeEach(() => {
+        // Store original methods
+        originalReplace = locationService.replace;
+        originalGetLocation = locationService.getLocation;
+
+        // Mock location service methods
+        mockLocationService.replace = jest.fn();
+        mockLocationService.getLocation = jest.fn().mockReturnValue({
+          pathname: '/d/fake-uid/-warehouse-dashboard-test',
+        });
+
+        // Reset playlist service state
+        playlistSrv.state.isPlaying = false;
+        // Mock console.log to prevent test failures
+        jest.spyOn(console, 'log').mockImplementation(() => {});
+      });
+
+      afterEach(() => {
+        // Restore original location service methods
+        locationService.replace = originalReplace;
+        locationService.getLocation = originalGetLocation;
+        // Restore console.log
+        jest.restoreAllMocks();
+      });
+
+      it('should perform URL correction when playlist is not active', async () => {
+        // Setup dashboard with mismatched URL (simulates emoji hex encoding scenario)
+        const dashboardWithUrl = {
+          dashboard: { uid: 'fake-uid', title: '📦 Warehouse Dashboard Test' },
+          meta: { url: '/d/fake-uid/f09f93a6-warehouse-dashboard-test' }, // hex-encoded emoji
+        };
+        setupLoadDashboardMock(dashboardWithUrl);
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+        // URL correction should happen because playlist is not active
+        expect(mockLocationService.replace).toHaveBeenCalledWith({
+          pathname: '/d/fake-uid/f09f93a6-warehouse-dashboard-test',
+        });
+      });
+
+      it('should skip URL correction when playlist is active', async () => {
+        // Set playlist as playing
+        playlistSrv.state.isPlaying = true;
+
+        // Setup dashboard with mismatched URL (same scenario as above)
+        const dashboardWithUrl = {
+          dashboard: { uid: 'fake-uid', title: '📦 Warehouse Dashboard Test' },
+          meta: { url: '/d/fake-uid/f09f93a6-warehouse-dashboard-test' }, // hex-encoded emoji
+        };
+        setupLoadDashboardMock(dashboardWithUrl);
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+        // URL correction should NOT happen because playlist is active
+        expect(mockLocationService.replace).not.toHaveBeenCalled();
+      });
+
+      it('should not perform URL correction when URLs match', async () => {
+        // Setup dashboard with matching URL
+        const dashboardWithMatchingUrl = {
+          dashboard: { uid: 'fake-uid', title: 'Regular Dashboard' },
+          meta: { url: '/d/fake-uid/regular-dashboard' },
+        };
+        setupLoadDashboardMock(dashboardWithMatchingUrl);
+
+        // Set current location to match meta.url
+        mockLocationService.getLocation = jest.fn().mockReturnValue({
+          pathname: '/d/fake-uid/regular-dashboard',
+        });
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+        // No URL correction needed since they match
+        expect(mockLocationService.replace).not.toHaveBeenCalled();
+      });
+
+      it('should handle dashboard without meta.url', async () => {
+        // Setup dashboard without URL metadata
+        const dashboardWithoutUrl = {
+          dashboard: { uid: 'fake-uid', title: 'Dashboard Without URL' },
+          meta: {}, // No url property
+        };
+        setupLoadDashboardMock(dashboardWithoutUrl);
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+        // No URL correction should happen since meta.url doesn't exist
+        expect(mockLocationService.replace).not.toHaveBeenCalled();
+      });
+
+      it('should only perform URL correction for Normal route', async () => {
+        // Setup dashboard with mismatched URL
+        const dashboardWithUrl = {
+          dashboard: { uid: 'fake-uid', title: 'Test Dashboard' },
+          meta: { url: '/d/fake-uid/different-path' },
+        };
+        setupLoadDashboardMock(dashboardWithUrl);
+
+        const loader = new DashboardScenePageStateManager({});
+
+        // Test with non-Normal route (e.g., New route)
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.New });
+
+        // URL correction should NOT happen for non-Normal routes
+        expect(mockLocationService.replace).not.toHaveBeenCalled();
       });
     });
   });
@@ -685,6 +982,169 @@ describe('DashboardScenePageStateManager v2', () => {
         advanceBy(DASHBOARD_CACHE_TTL / 2 + 1);
         await loader.fetchDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
         expect(getDashSpy).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    describe('URL correction during playlist navigation', () => {
+      const mockLocationService = locationService as jest.Mocked<typeof locationService>;
+      let originalReplace: typeof locationService.replace;
+      let originalGetLocation: typeof locationService.getLocation;
+
+      beforeEach(() => {
+        originalReplace = locationService.replace;
+        originalGetLocation = locationService.getLocation;
+
+        mockLocationService.replace = jest.fn();
+        mockLocationService.getLocation = jest.fn().mockReturnValue({
+          pathname: '/d/fake-uid/-warehouse-dashboard-test',
+        });
+
+        // Reset playlist service state
+        playlistSrv.state.isPlaying = false;
+        jest.spyOn(console, 'log').mockImplementation(() => {});
+      });
+
+      afterEach(() => {
+        locationService.replace = originalReplace;
+        locationService.getLocation = originalGetLocation;
+        jest.restoreAllMocks();
+      });
+
+      it('should perform URL correction when playlist is not active', async () => {
+        // Setup v2 dashboard with mismatched URL (simulates emoji hex encoding scenario)
+        const getDashSpy = jest.fn();
+        setupDashboardAPI(
+          {
+            access: { url: '/d/fake-uid/f09f93a6-warehouse-dashboard-test' }, // v2 uses access.url
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              name: 'fake-uid',
+              creationTimestamp: '',
+              resourceVersion: '1',
+            },
+            spec: { ...defaultDashboardV2Spec(), title: '📦 Warehouse Dashboard Test' },
+          },
+          getDashSpy
+        );
+
+        const loader = new DashboardScenePageStateManagerV2({});
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+        // URL correction should happen because playlist is not active
+        expect(mockLocationService.replace).toHaveBeenCalledWith({
+          pathname: '/d/fake-uid/f09f93a6-warehouse-dashboard-test',
+        });
+      });
+
+      it('should skip URL correction when playlist is active', async () => {
+        // Set playlist as playing
+        playlistSrv.state.isPlaying = true;
+
+        // Setup v2 dashboard with mismatched URL
+        const getDashSpy = jest.fn();
+        setupDashboardAPI(
+          {
+            access: { url: '/d/fake-uid/f09f93a6-warehouse-dashboard-test' }, // v2 uses access.url
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              name: 'fake-uid',
+              creationTimestamp: '',
+              resourceVersion: '1',
+            },
+            spec: { ...defaultDashboardV2Spec(), title: '📦 Warehouse Dashboard Test' },
+          },
+          getDashSpy
+        );
+
+        const loader = new DashboardScenePageStateManagerV2({});
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+        // URL correction should NOT happen because playlist is active
+        expect(mockLocationService.replace).not.toHaveBeenCalled();
+      });
+
+      it('should not perform URL correction when URLs match', async () => {
+        // Setup v2 dashboard with matching URL
+        const getDashSpy = jest.fn();
+        setupDashboardAPI(
+          {
+            access: { url: '/d/fake-uid/regular-dashboard' }, // v2 uses access.url
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              name: 'fake-uid',
+              creationTimestamp: '',
+              resourceVersion: '1',
+            },
+            spec: { ...defaultDashboardV2Spec(), title: 'Regular Dashboard' },
+          },
+          getDashSpy
+        );
+
+        // Mock matching URLs
+        mockLocationService.getLocation = jest.fn().mockReturnValue({
+          pathname: '/d/fake-uid/regular-dashboard',
+        });
+
+        const loader = new DashboardScenePageStateManagerV2({});
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+        // No URL correction needed since they match
+        expect(mockLocationService.replace).not.toHaveBeenCalled();
+      });
+
+      it('should handle v2 dashboard without access.url', async () => {
+        // Setup v2 dashboard without URL metadata
+        const getDashSpy = jest.fn();
+        setupDashboardAPI(
+          {
+            access: {}, // No url property for v2
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              name: 'fake-uid',
+              creationTimestamp: '',
+              resourceVersion: '1',
+            },
+            spec: { ...defaultDashboardV2Spec(), title: 'Dashboard Without URL' },
+          },
+          getDashSpy
+        );
+
+        const loader = new DashboardScenePageStateManagerV2({});
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+        // No URL correction should happen since access.url doesn't exist
+        expect(mockLocationService.replace).not.toHaveBeenCalled();
+      });
+
+      it('should only perform URL correction for Normal route', async () => {
+        // Setup v2 dashboard with mismatched URL
+        const getDashSpy = jest.fn();
+        setupDashboardAPI(
+          {
+            access: { url: '/d/fake-uid/different-path' }, // v2 uses access.url
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              name: 'fake-uid',
+              creationTimestamp: '',
+              resourceVersion: '1',
+            },
+            spec: { ...defaultDashboardV2Spec(), title: 'Test Dashboard' },
+          },
+          getDashSpy
+        );
+
+        const loader = new DashboardScenePageStateManagerV2({});
+
+        // Test with non-Normal route (e.g., New route)
+        await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.New });
+
+        // URL correction should NOT happen for non-Normal routes
+        expect(mockLocationService.replace).not.toHaveBeenCalled();
       });
     });
 
@@ -1137,23 +1597,22 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
   describe('Provisioned dashboard', () => {
     it('should load a provisioned v1 dashboard', async () => {
+      fetchMock.mockImplementation(() => of(createFetchResponse(v1ProvisionedDashboardResource)));
+
       const loader = new UnifiedDashboardScenePageStateManager({});
-      setBackendSrv({
-        get: () => Promise.resolve(v1ProvisionedDashboardResource),
-      } as unknown as BackendSrv);
       await loader.loadDashboard({ uid: 'blah-blah', route: DashboardRoutes.Provisioning });
 
       expect(loader.state.dashboard).toBeDefined();
-      expect(loader.state.dashboard!.serializer.initialSaveModel).toEqual(
-        v1ProvisionedDashboardResource.resource.dryRun.spec
-      );
+      expect(loader.state.dashboard!.serializer.initialSaveModel).toEqual({
+        ...v1ProvisionedDashboardResource.resource.dryRun.spec,
+        version: v1ProvisionedDashboardResource.resource.dryRun.metadata.generation || 0,
+      });
     });
 
     it('should load a provisioned v2 dashboard', async () => {
+      fetchMock.mockImplementation(() => of(createFetchResponse(v2ProvisionedDashboardResource)));
+
       const loader = new UnifiedDashboardScenePageStateManager({});
-      setBackendSrv({
-        get: () => Promise.resolve(v2ProvisionedDashboardResource),
-      } as unknown as BackendSrv);
       await loader.loadDashboard({ uid: 'blah-blah', route: DashboardRoutes.Provisioning });
 
       expect(loader.state.dashboard).toBeDefined();
@@ -1549,7 +2008,7 @@ const v1ProvisionedDashboardResource = {
           },
         ],
         preload: false,
-        schemaVersion: 41,
+        schemaVersion: 42,
         tags: [],
         templating: {
           list: [],

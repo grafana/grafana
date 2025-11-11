@@ -147,12 +147,21 @@
           ],
           "hide": 0,
           "skipUrlSync": false,
-          "defaultKeys": ["job", "instance"],
+          "defaultKeys": [
+            {
+              "text": "job",
+              "value": "job"
+            },
+            {
+              "text": "instance",
+              "value": "instance"
+            }
+          ],
           "allowCustomValue": true
         },
         {
           "name": "constant_var",
-          "type": "const",
+          "type": "constant",
           "label": "App Name",
           "description": "Application name constant",
           "query": "my-application",
@@ -265,6 +274,7 @@
             "value": "legacy_string_content"
           },
           "hide": 0,
+          "refresh": 1,
           "skipUrlSync": false
         },
         {

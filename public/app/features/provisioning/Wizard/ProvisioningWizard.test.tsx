@@ -7,9 +7,11 @@ import {
   useCreateRepositoryJobsMutation,
   useGetFrontendSettingsQuery,
   useGetRepositoryFilesQuery,
+  useGetRepositoryStatusQuery,
   useGetResourceStatsQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 
+import { useBranchOptions } from '../hooks/useBranchOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 
 import { ProvisioningWizard } from './ProvisioningWizard';
@@ -22,34 +24,29 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getAppEvents: () => ({
-    publish: jest.fn(),
-  }),
-}));
-
 jest.mock('../hooks/useCreateOrUpdateRepository');
+jest.mock('../hooks/useBranchOptions');
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
   useGetFrontendSettingsQuery: jest.fn(),
   useGetRepositoryFilesQuery: jest.fn(),
+  useGetRepositoryStatusQuery: jest.fn(),
   useGetResourceStatsQuery: jest.fn(),
   useCreateRepositoryJobsMutation: jest.fn(),
-}));
-
-jest.mock('app/features/browse-dashboards/api/services', () => ({
-  PAGE_SIZE: 20,
 }));
 
 const mockUseCreateOrUpdateRepository = useCreateOrUpdateRepository as jest.MockedFunction<
   typeof useCreateOrUpdateRepository
 >;
+const mockUseBranchOptions = useBranchOptions as jest.MockedFunction<typeof useBranchOptions>;
 const mockUseGetFrontendSettingsQuery = useGetFrontendSettingsQuery as jest.MockedFunction<
   typeof useGetFrontendSettingsQuery
 >;
 const mockUseGetRepositoryFilesQuery = useGetRepositoryFilesQuery as jest.MockedFunction<
   typeof useGetRepositoryFilesQuery
+>;
+const mockUseGetRepositoryStatusQuery = useGetRepositoryStatusQuery as jest.MockedFunction<
+  typeof useGetRepositoryStatusQuery
 >;
 const mockUseGetResourceStatsQuery = useGetResourceStatsQuery as jest.MockedFunction<typeof useGetResourceStatsQuery>;
 const mockUseCreateRepositoryJobsMutation = useCreateRepositoryJobsMutation as jest.MockedFunction<
@@ -98,7 +95,7 @@ async function fillConnectionForm(
   }
 
   if (type !== 'local' && data.branch) {
-    await user.type(screen.getByRole('textbox', { name: /Branch/i }), data.branch);
+    await user.type(screen.getByRole('combobox'), data.branch);
   }
 
   if (data.path) {
@@ -110,10 +107,21 @@ describe('ProvisioningWizard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    // Mock useBranchOptions to prevent real API calls
+    mockUseBranchOptions.mockReturnValue({
+      options: [
+        { label: 'main', value: 'main' },
+        { label: 'develop', value: 'develop' },
+      ],
+      loading: false,
+      error: null,
+    });
+
     mockUseGetFrontendSettingsQuery.mockReturnValue({
       data: {
         items: [],
         legacyStorage: false,
+        allowImageRendering: true,
         availableRepositoryTypes: ['github', 'gitlab', 'bitbucket', 'git', 'local'],
       },
       isLoading: false,
@@ -124,6 +132,23 @@ describe('ProvisioningWizard', () => {
     mockUseGetRepositoryFilesQuery.mockReturnValue({
       data: [],
       isLoading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    mockUseGetRepositoryStatusQuery.mockReturnValue({
+      data: {
+        status: {
+          health: {
+            healthy: true,
+            checked: true,
+            message: '',
+          },
+        },
+      },
+      isLoading: false,
+      isFetching: false,
+      isError: false,
       error: null,
       refetch: jest.fn(),
     });
@@ -189,7 +214,7 @@ describe('ProvisioningWizard', () => {
       expect(screen.getByRole('heading', { name: /1\. Connect to external storage/i })).toBeInTheDocument();
       expect(screen.getByText('Personal Access Token *')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Repository URL/i })).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /Branch/i })).toBeInTheDocument();
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
     });
 
@@ -510,7 +535,7 @@ describe('ProvisioningWizard', () => {
 
       expect(screen.getByText('Project Access Token *')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Repository URL/i })).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /Branch/i })).toBeInTheDocument();
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
     });
 
@@ -520,7 +545,7 @@ describe('ProvisioningWizard', () => {
       expect(screen.getByText('App Password *')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Username/ })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Repository URL/i })).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /Branch/i })).toBeInTheDocument();
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
     });
 
@@ -530,7 +555,7 @@ describe('ProvisioningWizard', () => {
       expect(screen.getByText('Access Token *')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Username/ })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Repository URL/i })).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /Branch/i })).toBeInTheDocument();
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
     });
 
@@ -542,7 +567,7 @@ describe('ProvisioningWizard', () => {
       expect(screen.queryByPlaceholderText('glpat-xxxxxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
       expect(screen.queryByPlaceholderText('ATBBxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: /Repository URL/i })).not.toBeInTheDocument();
-      expect(screen.queryByRole('textbox', { name: /Branch/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     });
 
     it('should accept tokenUser input for Bitbucket provider', async () => {

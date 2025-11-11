@@ -229,12 +229,32 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 				return nil, fmt.Errorf("only one repo name is supported")
 			}
 			query.ManagerIdentity = vals[0]
+
 		case unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE:
 			if len(vals) != 1 {
 				return nil, fmt.Errorf("only one library panel uid is supported")
 			}
 
-			return c.getLibraryPanelConnections(ctx, user, vals[0], req.Options.Key.Namespace)
+			// Make sure the query does not include incompatible combinations
+			for _, f := range req.Options.Fields {
+				switch f.Key {
+				case resource.SEARCH_FIELD_NAME:
+					return nil, fmt.Errorf("libraryPanel query must not include explicit names")
+				}
+			}
+
+			query.DashboardUIDs, err = c.getLibraryPanelConnections(ctx, user, vals[0])
+			if err != nil {
+				return nil, err
+			}
+			if len(query.DashboardUIDs) == 0 {
+				// Empty results
+				return &resourcepb.ResourceSearchResponse{
+					TotalHits: 0,
+					Results:   &resourcepb.ResourceTable{},
+				}, nil
+			}
+
 		case resource.SEARCH_FIELD_TITLE_PHRASE:
 			if len(vals) != 1 {
 				return nil, fmt.Errorf("only one title supported")
@@ -312,7 +332,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 		for _, dashboard := range provisioningData {
 			list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
 				Key: getResourceKey(&dashboards.DashboardSearchProjection{
-					UID: dashboard.Dashboard.UID,
+					UID: dashboard.UID,
 				}, req.Options.Key.Namespace),
 				Cells: c.createDetailedProvisioningCells(dashboard, query),
 			})
@@ -362,32 +382,18 @@ func getResourceKey(item *dashboards.DashboardSearchProjection, namespace string
 	}
 }
 
-// retrieves all the dashboards that are connected to the given library panel
-func (c *DashboardSearchClient) getLibraryPanelConnections(ctx context.Context, user identity.Requester, libraryElementUID, namespace string) (*resourcepb.ResourceSearchResponse, error) {
+// retrieves all dashboard UIDs connected to a given library panel
+func (c *DashboardSearchClient) getLibraryPanelConnections(ctx context.Context, user identity.Requester, libraryElementUID string) ([]string, error) {
 	connections, err := c.dashboardStore.GetDashboardsByLibraryPanelUID(ctx, libraryElementUID, user.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
 
-	columns := c.getColumns("", &dashboards.FindPersistedDashboardsQuery{})
-	list := &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: columns,
-		},
+	uids := make([]string, len(connections))
+	for i, dashboard := range connections {
+		uids[i] = dashboard.UID
 	}
-
-	for _, dashboard := range connections {
-		cells := c.createCommonCells("", dashboard.FolderUID, dashboard.ID, nil) // nolint:staticcheck
-		list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
-			Key: getResourceKey(&dashboards.DashboardSearchProjection{
-				UID: dashboard.UID,
-			}, namespace),
-			Cells: cells,
-		})
-	}
-
-	list.TotalHits = int64(len(list.Results.Rows))
-	return list, nil
+	return uids, nil
 }
 
 func (c *DashboardSearchClient) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
@@ -512,7 +518,7 @@ func (c *DashboardSearchClient) createProvisioningCells(dashboard *dashboards.Da
 }
 
 func (c *DashboardSearchClient) createDetailedProvisioningCells(dashboard *dashboards.DashboardProvisioningSearchResults, query *dashboards.FindPersistedDashboardsQuery) [][]byte {
-	cells := c.createCommonCells(dashboard.Dashboard.Title, dashboard.Dashboard.FolderUID, dashboard.Dashboard.ID, []byte("[]"))
+	cells := c.createCommonCells(dashboard.Title, dashboard.FolderUID, dashboard.ID, []byte("[]"))
 	return append(cells,
 		[]byte(query.ManagedBy),
 		[]byte(dashboard.Provisioner),

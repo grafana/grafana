@@ -12,6 +12,12 @@ import {
   TestVariable,
   VizPanel,
 } from '@grafana/scenes';
+import {
+  defaultTimeSettingsSpec,
+  defaultPanelSpec,
+  Spec as DashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { DashboardDTO } from 'app/types/dashboard';
@@ -20,6 +26,8 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
+import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 
 export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jest.Mock) {
   const loadDashboardMock = (spy || jest.fn()).mockResolvedValue(rsp);
@@ -143,6 +151,7 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
       new VizPanel({
         title: 'Panel $server',
         pluginId: 'timeseries',
+        key: 'panel-1',
       }),
     x: options.x || 0,
     y: options.y || 0,
@@ -215,4 +224,90 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
   });
 
   return { scene, repeater: withRepeat, row, variable: panelRepeatVariable };
+}
+
+export function getTestDashboardSceneFromSaveModel(spec?: Partial<DashboardV2Spec>) {
+  const dashboard = transformSaveModelSchemaV2ToScene({
+    kind: 'DashboardWithAccessInfo',
+    spec: {
+      ...defaultDashboardV2Spec(),
+      title: 'hello',
+      timeSettings: {
+        ...defaultTimeSettingsSpec(),
+        autoRefresh: '10s',
+        from: 'now-1h',
+        to: 'now',
+      },
+      elements: {
+        'panel-1': {
+          kind: 'Panel',
+          spec: {
+            ...defaultPanelSpec(),
+            id: 1,
+            title: 'Panel 1',
+          },
+        },
+      },
+      layout: {
+        kind: 'GridLayout',
+        spec: {
+          items: [
+            {
+              kind: 'GridLayoutItem',
+              spec: {
+                x: 0,
+                y: 0,
+                width: 12,
+                height: 8,
+                element: {
+                  kind: 'ElementReference',
+                  name: 'panel-1',
+                },
+              },
+            },
+          ],
+        },
+      },
+      variables: [
+        {
+          kind: 'CustomVariable',
+          spec: {
+            name: 'app',
+            label: 'Query Variable',
+            description: 'A query variable',
+            skipUrlSync: false,
+            hide: 'dontHide',
+            options: [],
+            multi: false,
+            current: {
+              text: 'app1',
+              value: 'app1',
+            },
+            query: 'app1',
+            allValue: '',
+            includeAll: false,
+            allowCustomValue: true,
+          },
+        },
+      ],
+      ...spec,
+    },
+    apiVersion: 'v1',
+    metadata: {
+      name: 'dashboard-test',
+      resourceVersion: '1',
+      creationTimestamp: '2023-01-01T00:00:00Z',
+    },
+    access: {
+      canEdit: true,
+      canSave: true,
+      canStar: true,
+      canShare: true,
+    },
+  });
+
+  const initialSaveModel = transformSceneToSaveModelSchemaV2(dashboard);
+  dashboard.setInitialSaveModel(initialSaveModel);
+
+  return dashboard;
 }
