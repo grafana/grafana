@@ -52,7 +52,15 @@ function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHea
         const datasourceSrv = getDataSourceSrv();
         const ds = await datasourceSrv.get(datasourceRef);
 
-        setShouldRenderFilters(Boolean(ds && ds.getDrilldownsApplicability));
+        // only render if datasource supports applicability and we have either adhoc filters or group by variable
+        setShouldRenderFilters(
+          Boolean(
+            ds &&
+              ds.getDrilldownsApplicability &&
+              (nonApplicableFiltersSubHeader.getAdHocFiltersVariable() ||
+                nonApplicableFiltersSubHeader.getGroupByVariable())
+          )
+        );
       } catch (error) {
         console.error('Error checking datasource for getDrilldownsApplicability:', error);
         setShouldRenderFilters(false);
@@ -60,7 +68,7 @@ function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHea
     };
 
     checkDatasourceDrilldownsApplicability();
-  }, [panel, data, model]);
+  }, [panel, data, model, nonApplicableFiltersSubHeader]);
 
   if (!shouldRenderFilters) {
     return null;
