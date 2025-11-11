@@ -19,17 +19,21 @@ export const QuickAdd = ({}: Props) => {
   const createActions = useMemo(() => {
     const createActions = findCreateActions(navBarTree);
 
-    const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
-    const renderPreBuiltDashboardAction = testDataSources.length > 0 && config.featureToggles.dashboardTemplates;
-    if (renderPreBuiltDashboardAction) {
-      createActions.splice(1, 0, {
-        id: 'browse-template-dashboard',
-        text: 'Dashboard from template',
-        url: '/dashboards?templateDashboards=true&source=quickAdd',
-        onClick: () => {
-          DashboardLibraryInteractions.entryPointClicked({ entryPoint: 'quick_add_button' });
-        },
-      });
+    if (config.featureToggles.dashboardTemplates) {
+      const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
+      if (testDataSources.length > 0) {
+        createActions.splice(1, 0, {
+          id: 'browse-template-dashboard',
+          text: 'Dashboard from template',
+          url: '/dashboards?templateDashboards=true&source=quickAdd',
+          onClick: () => {
+            DashboardLibraryInteractions.entryPointClicked({
+              entryPoint: 'quick_add_button',
+              contentKind: 'template_dashboard',
+            });
+          },
+        });
+      }
     }
 
     return createActions;

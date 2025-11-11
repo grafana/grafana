@@ -44,9 +44,5 @@ export interface GnetDashboard {
 export interface GnetDashboardsResponse {
   page: number;
   pages: number;
-  dashboards: GnetDashboard[];
-}
-
-export interface GnetDashboardsDTO extends Omit<GnetDashboardsResponse, 'dashboards'> {
   items: GnetDashboard[];
 }

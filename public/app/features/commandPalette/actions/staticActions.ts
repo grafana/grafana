@@ -142,21 +142,30 @@ function getGlobalActions(): CommandPaletteAction[] {
 export function useStaticActions(): CommandPaletteAction[] {
   const navBarTree = useSelector((state) => state.navBarTree);
   return useMemo(() => {
-    const navBarActions = navTreeToActions(navBarTree);
+    let navBarActions = navTreeToActions(navBarTree);
 
-    const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
-    const renderPreBuiltDashboardAction = testDataSources.length > 0 && config.featureToggles.dashboardTemplates;
-    if (renderPreBuiltDashboardAction) {
-      navBarActions.splice(1, 0, {
-        id: 'browse-template-dashboard',
-        name: t('command-palette.action.dashboard-from-template', 'Dashboard from template'),
-        section: t('command-palette.section.actions', 'Actions'),
-        priority: ACTIONS_PRIORITY,
-        perform: () => {
-          DashboardLibraryInteractions.entryPointClicked({ entryPoint: 'command_palette' });
-          locationService.push('/dashboards?templateDashboards=true&source=commandPalette');
-        },
-      });
+    if (config.featureToggles.dashboardTemplates) {
+      const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
+      if (testDataSources.length > 0) {
+        const navBarActionsWithoutActions = navBarActions.filter((action) => action.priority !== ACTIONS_PRIORITY);
+        const navBarActionsWithActions = navBarActions.filter((action) => action.priority === ACTIONS_PRIORITY);
+
+        navBarActionsWithActions.splice(1, 0, {
+          id: 'browse-template-dashboard',
+          name: t('command-palette.action.dashboard-from-template', 'Dashboard from template'),
+          section: t('command-palette.section.actions', 'Actions'),
+          priority: ACTIONS_PRIORITY,
+          perform: () => {
+            DashboardLibraryInteractions.entryPointClicked({
+              entryPoint: 'command_palette',
+              contentKind: 'template_dashboard',
+            });
+            locationService.push('/dashboards?templateDashboards=true&source=commandPalette');
+          },
+        });
+
+        navBarActions = [...navBarActionsWithoutActions, ...navBarActionsWithActions];
+      }
     }
 
     if (shouldRenderInviteUserButton()) {

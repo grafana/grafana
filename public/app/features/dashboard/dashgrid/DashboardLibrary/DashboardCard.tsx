@@ -27,7 +27,7 @@ interface Props {
   isLogo?: boolean; // Indicates if imageUrl is a small logo vs full screenshot
   showDatasourceProvidedBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
-  buttonText?: React.ReactNode; // Optional custom button text, defaults to "Use template"
+  kind: 'template_dashboard' | 'suggested_dashboard';
 }
 
 function DashboardCardComponent({
@@ -39,7 +39,7 @@ function DashboardCardComponent({
   isLogo,
   showDatasourceProvidedBadge,
   dimThumbnail,
-  buttonText,
+  kind,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -53,7 +53,8 @@ function DashboardCardComponent({
             alt={title}
             className={cx(
               isLogo ? styles.logo : styles.thumbnail,
-              dimThumbnail && showDatasourceProvidedBadge && styles.dimmedImage
+              dimThumbnail && showDatasourceProvidedBadge && styles.dimmedImage,
+              kind === 'suggested_dashboard' ? styles.thumbnailCoverImage : styles.thumbnailContainImage
             )}
             onError={(e) => {
               console.error('Failed to load image for:', title, 'URL:', imageUrl);
@@ -81,7 +82,11 @@ function DashboardCardComponent({
       </div>
       <Card.Actions className={styles.actionsContainer}>
         <Button variant="secondary" onClick={onClick}>
-          {buttonText || <Trans i18nKey="dashboard-library.card.use-template-button">Use template</Trans>}
+          {kind === 'template_dashboard' ? (
+            <Trans i18nKey="dashboard-library.card.use-template-button">Use template</Trans>
+          ) : (
+            <Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>
+          )}
         </Button>
         {details && (
           <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
@@ -155,6 +160,8 @@ function getStyles(theme: GrafanaTheme2) {
       width: '350px',
       background: 'transparent',
       gridGap: theme.spacing(1),
+      paddingLeft: 0,
+      paddingRight: 0,
     }),
     thumbnailContainer: css({
       gridArea: 'Thumbnail',
@@ -175,6 +182,11 @@ function getStyles(theme: GrafanaTheme2) {
     thumbnail: css({
       width: '100%',
       height: '100%',
+    }),
+    thumbnailCoverImage: css({
+      objectFit: 'cover',
+    }),
+    thumbnailContainImage: css({
       objectFit: 'contain',
     }),
     logoContainer: css({

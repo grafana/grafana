@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
@@ -12,7 +12,7 @@ import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { DashboardCard } from './DashboardCard';
 import { DashboardLibraryInteractions, TemplateDashboardSourceEntryPoint } from './interactions';
-import { GnetDashboard, GnetDashboardsDTO, Link } from './types';
+import { GnetDashboard, GnetDashboardsResponse, Link } from './types';
 
 const SourceEntryPointMap: Record<string, TemplateDashboardSourceEntryPoint> = {
   quickAdd: 'quick_add_button',
@@ -60,13 +60,13 @@ export const TemplateDashboardModal = () => {
     locationService.push(templateUrl);
   };
 
-  const { value: templateDashboards, loading } = useAsync(async () => {
+  const { value: dashboards = [], loading } = useAsync(async () => {
     if (!isOpen) {
       return [];
     }
 
     try {
-      const response = await getBackendSrv().get<GnetDashboardsDTO>(
+      const response = await getBackendSrv().get<GnetDashboardsResponse>(
         `/api/gnet/dashboards?orgSlug=raintank&categorySlug=templates&includeScreenshots=true`,
         undefined,
         undefined,
@@ -82,13 +82,8 @@ export const TemplateDashboardModal = () => {
     }
   }, [isOpen]);
 
-  const dashboards = useMemo(
-    () => templateDashboards?.filter((dashboard) => dashboard !== null) ?? [],
-    [templateDashboards]
-  );
-
   useEffect(() => {
-    if (isOpen && !loading) {
+    if (isOpen && !loading && dashboards.length > 0) {
       DashboardLibraryInteractions.loaded({
         numberOfItems: dashboards.length,
         contentKinds: ['template_dashboard'],
@@ -140,6 +135,7 @@ export const TemplateDashboardModal = () => {
                     imageUrl={thumbnailUrl}
                     onClick={() => onImportDashboardClick(dashboard)}
                     dashboard={dashboard}
+                    kind="template_dashboard"
                   />
                 );
               })}

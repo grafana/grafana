@@ -39,7 +39,7 @@ export const DashboardLibraryInteractions = {
   }) => {
     reportDashboardLibraryInteraction('item_clicked', properties);
   },
-  entryPointClicked: (properties: { entryPoint: SourceEntryPoint }) => {
+  entryPointClicked: (properties: { entryPoint: SourceEntryPoint; contentKind: ContentKind }) => {
     reportDashboardLibraryInteraction('entry_point_clicked', properties);
   },
 };

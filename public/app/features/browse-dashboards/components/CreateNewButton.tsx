@@ -46,8 +46,11 @@ export default function CreateNewButton({
   const notifyApp = useAppNotification();
   const isProvisionedInstance = useIsProvisionedInstance();
 
-  const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
-  const renderPreBuiltDashboardAction = testDataSources.length > 0 && config.featureToggles.dashboardTemplates;
+  let renderPreBuiltDashboardAction = false;
+  if (config.featureToggles.dashboardTemplates) {
+    const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
+    renderPreBuiltDashboardAction = testDataSources.length > 0;
+  }
 
   const onCreateFolder = async (folderName: string) => {
     try {
@@ -94,7 +97,10 @@ export default function CreateNewButton({
             <MenuItem
               label={getNewTemplateDashboardPhrase()}
               onClick={() =>
-                DashboardLibraryInteractions.entryPointClicked({ entryPoint: 'dashboard_list_page_create_new_button' })
+                DashboardLibraryInteractions.entryPointClicked({
+                  entryPoint: 'dashboard_list_page_create_new_button',
+                  contentKind: 'template_dashboard',
+                })
               }
               url={buildUrl('/dashboards?templateDashboards=true&source=createNewButton', parentFolder?.uid)}
             />

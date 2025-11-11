@@ -147,7 +147,7 @@ export const DashboardLibrarySection = () => {
                     imageUrl={imageUrl}
                     dashboard={dashboard}
                     onClick={() => onUseProvisionedDashboard(dashboard)}
-                    buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}
+                    kind="suggested_dashboard"
                   />
                 );
               }) || []}

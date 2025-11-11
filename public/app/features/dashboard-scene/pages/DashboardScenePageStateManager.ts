@@ -6,7 +6,6 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/core';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
-import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import {
@@ -499,7 +498,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     };
   }
 
-  private async loadSuggestedDashboard(): Promise<DashboardDTO> {
+  private async loadDashboardLibrary(): Promise<DashboardDTO> {
     // Extract template parameters from URL
     const searchParams = new URLSearchParams(window.location.search);
     const datasource = searchParams.get('datasource');
@@ -508,7 +507,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
     const path = searchParams.get('path');
 
-    // Check if this is a community dashboard (has gnetId) or plugin dashboard
+    // Check if this is a template dashboard (has gnetId)
     if (gnetId && datasource && pluginId) {
       return this.loadTemplateDashboard(gnetId, datasource, pluginId);
     }
@@ -642,7 +641,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           rsp = await buildNewDashboardSaveModel(urlFolderUid);
           break;
         case DashboardRoutes.Template:
-          rsp = await this.loadSuggestedDashboard();
+          rsp = await this.loadDashboardLibrary();
           break;
         case DashboardRoutes.Provisioning:
           return this.loadProvisioningDashboard(slug || '', uid);

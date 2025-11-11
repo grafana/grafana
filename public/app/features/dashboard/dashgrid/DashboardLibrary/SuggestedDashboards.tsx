@@ -90,7 +90,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
         }),
       ]);
 
-      const community = communityResponse.dashboards;
+      const community = communityResponse.items;
 
       // Mix: 1 provisioned + 2 community
       const mixed: MixedDashboard[] = [];
@@ -295,7 +295,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
                       onClick={() => onUseProvisionedDashboard(item.dashboard)}
                       showDatasourceProvidedBadge={true}
                       dimThumbnail={true}
-                      buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}
+                      kind="suggested_dashboard"
                     />
                   );
                 } else {
@@ -313,7 +313,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
                       onClick={() => onPreviewCommunityDashboard(item.dashboard)}
                       isLogo={isLogo}
                       details={details}
-                      buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}
+                      kind="suggested_dashboard"
                     />
                   );
                 }
