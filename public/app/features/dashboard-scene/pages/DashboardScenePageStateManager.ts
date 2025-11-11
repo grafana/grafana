@@ -4,6 +4,7 @@ import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService 
 import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
+import { contextSrv } from 'app/core/core';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
@@ -442,7 +443,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       const scene = transformSaveModelToScene(rsp);
 
       // Special handling for Template route - set up edit mode and dirty state
-      if (config.featureToggles.dashboardLibrary && options.route === DashboardRoutes.Template) {
+      if (
+        (config.featureToggles.dashboardLibrary || config.featureToggles.dashboardTemplates) &&
+        options.route === DashboardRoutes.Template
+      ) {
         scene.setInitialSaveModel(rsp.dashboard, rsp.meta);
         scene.onEnterEditMode();
         scene.setState({ isDirty: true });
@@ -474,13 +478,45 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     throw new Error('Snapshot not found');
   }
 
-  private async loadTemplateDashboard(): Promise<DashboardDTO> {
+  private buildDashboardDTOFromInterpolated(interpolatedDashboard: DashboardDataDTO): DashboardDTO {
+    return {
+      dashboard: {
+        ...interpolatedDashboard,
+        uid: '',
+        version: 0,
+        id: null,
+      },
+      meta: {
+        canSave: contextSrv.hasEditPermissionInFolders,
+        canEdit: contextSrv.hasEditPermissionInFolders,
+        canStar: false,
+        canShare: false,
+        canDelete: false,
+        isNew: true,
+        folderUid: '',
+      },
+    };
+  }
+
+  private async loadSuggestedDashboard(): Promise<DashboardDTO> {
     // Extract template parameters from URL
     const searchParams = new URLSearchParams(window.location.search);
     const datasource = searchParams.get('datasource');
     const pluginId = searchParams.get('pluginId');
+    const gnetId = searchParams.get('gnetId');
+
     const path = searchParams.get('path');
 
+    if (gnetId && datasource && pluginId) {
+      return this.loadTemplateDashboard(gnetId, datasource, pluginId);
+    }
+
+    // Check if this is a community dashboard (has gnetId) or plugin dashboard
+    if (gnetId) {
+      return this.loadCommunityTemplateDashboard(gnetId);
+    }
+
+    // Original plugin dashboard flow
     if (!datasource || !pluginId || !path) {
       throw new Error('Missing required parameters for template dashboard');
     }
@@ -505,24 +541,69 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     };
 
     const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
+  }
 
-    return {
-      dashboard: {
-        ...interpolatedDashboard,
-        uid: '',
-        version: 0,
-        id: null,
-      },
-      meta: {
-        canSave: true,
-        canEdit: true,
-        canStar: false,
-        canShare: false,
-        canDelete: false,
-        isNew: true,
-        folderUid: '',
-      },
+  private async loadCommunityTemplateDashboard(gnetId: string): Promise<DashboardDTO> {
+    // Extract mappings from URL params
+    const location = locationService.getLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const mappingsJson = searchParams.get('mappings');
+
+    if (!mappingsJson) {
+      throw new Error('Missing mappings parameter for community dashboard');
+    }
+
+    let mappings;
+    try {
+      mappings = JSON.parse(mappingsJson);
+    } catch (err) {
+      throw new Error('Invalid mappings parameter: ' + err);
+    }
+
+    // Fetch the community dashboard from grafana.com
+    const gnetDashboard = await getBackendSrv().get(`/api/gnet/dashboards/${gnetId}`);
+
+    // The dashboard JSON is in the 'json' property
+    const dashboardJson = gnetDashboard.json;
+
+    // Call interpolate endpoint with the dashboard JSON and mappings
+    const data = {
+      dashboard: dashboardJson,
+      overwrite: true,
+      inputs: mappings,
     };
+
+    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
+  }
+
+  private async loadTemplateDashboard(
+    gnetId: string,
+    datasource: string | null,
+    pluginId: string | null
+  ): Promise<DashboardDTO> {
+    // Fetch the community dashboard from grafana.com
+    const gnetDashboard = await getBackendSrv().get(`/api/gnet/dashboards/${gnetId}`);
+
+    // The dashboard JSON is in the 'json' property
+    const dashboardJson = gnetDashboard.json;
+
+    const data = {
+      dashboard: dashboardJson,
+      overwrite: true,
+      inputs: [
+        {
+          name: '*',
+          type: 'datasource',
+          pluginId: pluginId,
+          value: datasource,
+        },
+      ],
+    };
+
+    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
   }
 
   public async fetchDashboard({
@@ -559,7 +640,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           rsp = await buildNewDashboardSaveModel(urlFolderUid);
           break;
         case DashboardRoutes.Template:
-          rsp = await this.loadTemplateDashboard();
+          rsp = await this.loadSuggestedDashboard();
           break;
         case DashboardRoutes.Provisioning:
           return this.loadProvisioningDashboard(slug || '', uid);
