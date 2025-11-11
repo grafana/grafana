@@ -262,13 +262,13 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
     selectedKey
   );
 
-  const values = useMemo(() => {
-    return getValuesForLabel(selectedKey);
-  }, [selectedKey, getValuesForLabel]);
-
   return (
     <Stack direction="column" gap={2} alignItems="flex-start">
       {fields.map((field, index) => {
+        // Get the values for this specific row's key directly without memoization
+        const currentKey = labelsInSubform[index]?.key || '';
+        const valuesForCurrentKey = getValuesForLabel(currentKey);
+
         return (
           <div key={field.id} className={cx(styles.flexRow, styles.centerAlignRow)} id="hola">
             <Field
@@ -320,7 +320,7 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
                     <AlertLabelDropdown
                       {...rest}
                       defaultValue={value ? { label: value, value: value } : undefined}
-                      options={values}
+                      options={valuesForCurrentKey}
                       isLoading={loading}
                       onChange={(newValue: SelectableValue) => {
                         if (newValue) {
