@@ -404,7 +404,6 @@ describe('ScopesDashboardsService', () => {
         expanded: false,
         folders: {},
         suggestedNavigations: {},
-        isSubScope: true,
         subScopeName: 'mimir',
       });
     });
@@ -426,7 +425,7 @@ describe('ScopesDashboardsService', () => {
 
       // Should create folder, not add to group folders
       expect(result[''].folders).toHaveProperty('mimir-subscope-nav-groups');
-      expect(result[''].folders['mimir-subscope-nav-groups'].isSubScope).toBe(true);
+      expect(result[''].folders['mimir-subscope-nav-groups'].subScopeName).toBe('mimir');
 
       // Should not add to any group folders
       expect(Object.keys(result[''].folders).length).toBe(1);
@@ -458,11 +457,11 @@ describe('ScopesDashboardsService', () => {
 
       // Should have subScope folder
       expect(result[''].folders).toHaveProperty('mimir-subscope-nav-1');
-      expect(result[''].folders['mimir-subscope-nav-1'].isSubScope).toBe(true);
+      expect(result[''].folders['mimir-subscope-nav-1'].subScopeName).toBe('mimir');
 
       // Should have regular group folder
       expect(result[''].folders).toHaveProperty('General');
-      expect(result[''].folders['General'].isSubScope).toBeUndefined();
+      expect(result[''].folders['General'].subScopeName).toBeUndefined();
 
       // Regular item should be in group folder
       expect(result[''].folders['General'].suggestedNavigations).toHaveProperty('/d/regular-dashboard');

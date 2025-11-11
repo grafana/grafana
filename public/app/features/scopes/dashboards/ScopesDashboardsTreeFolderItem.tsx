@@ -46,7 +46,7 @@ export function ScopesDashboardsTreeFolderItem({
           {folder.loading && <Spinner inline size="sm" className={styles.loadingIcon} />}
         </button>
 
-        {folder.isSubScope && (
+        {folder.subScopeName && (
           <IconButton
             className={styles.exchangeIcon}
             tooltip={t('scopes.dashboards.exchange', 'Change root scope to {{scope}}', {
