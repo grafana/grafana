@@ -5777,6 +5777,7 @@
       }
     },
     "empty-transformations-message": {
+      "add-transformation": "Add transformation",
       "see-more": "See more",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
     },
@@ -13107,6 +13108,12 @@
     "name-tags": "Tags",
     "traces-panel": {
       "no-data-found-in-response": "No data found in response"
+    }
+  },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<1></1>This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
+      "add-transformation-header": "Start transforming data"
     }
   },
   "transformers": {
