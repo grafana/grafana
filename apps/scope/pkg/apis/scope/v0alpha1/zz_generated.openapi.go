@@ -635,6 +635,13 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigationSpec(ref common.ReferenceCall
 							Format:  "",
 						},
 					},
+					"subScope": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Used to navigate to a sub-scope of the main scope. URL will not be used if this is set.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"url", "scope"},
 			},
