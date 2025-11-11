@@ -7,7 +7,6 @@ import {
   GroupByVariable,
   SceneComponentProps,
   SceneObjectBase,
-  VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
 import { Tooltip, useStyles2 } from '@grafana/ui';
@@ -18,18 +17,6 @@ const GAP_SIZE = 8;
 
 export class PanelNonApplicableFiltersSubHeader extends SceneObjectBase {
   static Component = PanelNonApplicableFiltersSubHeaderRenderer;
-
-  constructor() {
-    super({});
-    this.addActivationHandler(this.onActivate);
-  }
-
-  private onActivate = () => {
-    const panel = this.parent;
-    if (!panel || !(panel instanceof VizPanel)) {
-      throw new Error('PanelNonApplicableFiltersSubHeader can be used only for VizPanel');
-    }
-  };
 
   public getAdHocFiltersVariable(): AdHocFiltersVariable | undefined {
     return sceneGraph.getVariables(this).state.variables.find((variable) => variable instanceof AdHocFiltersVariable);
