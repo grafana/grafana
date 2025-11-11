@@ -127,6 +127,26 @@ const createTeamHandler = () =>
     return HttpResponse.json({ message: 'Team created', teamId: 10, uid: 'aethyfifmhwcgd' }, { status: 200 });
   });
 
+const updateTeamHandler = () =>
+  http.put<{ uid: string }, { name: string; email: string }>('/api/teams/:uid', async ({ params, request }) => {
+    const teamData = mockTeamsMap.get(params.uid);
+    const body = await request.json();
+    if (!teamData) {
+      return HttpResponse.json({ message: 'Not found' }, { status: 404 });
+    }
+    const updatedTeam = {
+      ...teamData,
+      team: {
+        ...teamData.team,
+        name: body.name,
+        email: body.email,
+      },
+    };
+    mockTeamsMap.set(params.uid, updatedTeam);
+
+    return HttpResponse.json({ message: 'Team updated' });
+  });
+
 const handlers = [
   teamsPreferencesHandler(),
   teamsGroupsHandler(),
@@ -135,6 +155,7 @@ const handlers = [
   getTeamHandler(),
   deleteTeamHandler(),
   createTeamHandler(),
+  updateTeamHandler(),
 ];
 
 export default handlers;

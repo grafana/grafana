@@ -1,5 +1,6 @@
 import { HttpHandler } from 'msw';
 
+import accessControlHandlers from './api/access-control/handlers';
 import dashboardsHandlers from './api/dashboards/handlers';
 import folderHandlers from './api/folders/handlers';
 import pluginsHandlers from './api/plugins/handlers';
@@ -14,11 +15,12 @@ import appPlatformPreferencesv1alpha1Handlers from './apis/preferences.grafana.a
 
 const allHandlers: HttpHandler[] = [
   // Legacy handlers
-  ...teamsHandlers,
+  ...accessControlHandlers,
   ...dashboardsHandlers,
   ...folderHandlers,
-  ...searchHandlers,
   ...pluginsHandlers,
+  ...searchHandlers,
+  ...teamsHandlers,
   ...userHandlers,
 
   // App platform handlers
