@@ -4,15 +4,7 @@ import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
 import { MappingContext } from '../SuggestedDashboardsModal';
 import { fetchCommunityDashboard } from '../api/dashboardLibraryApi';
-import {
-  CONTENT_KINDS,
-  ContentKind,
-  CREATION_ORIGINS,
-  DashboardLibraryInteractions,
-  DISCOVERY_METHODS,
-  EventLocation,
-  SOURCE_ENTRY_POINTS,
-} from '../interactions';
+import { CONTENT_KINDS, ContentKind, CREATION_ORIGINS, EventLocation, SOURCE_ENTRY_POINTS } from '../interactions';
 import { GnetDashboard, Link } from '../types';
 
 import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
@@ -137,17 +129,8 @@ export async function onUseCommunityDashboard({
   eventLocation,
   onShowMapping,
 }: UseCommunityDashboardParams): Promise<void> {
-  // Track analytics
-  DashboardLibraryInteractions.itemClicked({
-    contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
-    datasourceTypes: [datasourceType],
-    libraryItemId: String(dashboard.id),
-    libraryItemTitle: dashboard.name,
-    sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-    eventLocation,
-    discoveryMethod: DISCOVERY_METHODS.BROWSE,
-  });
-
+  // Note: item_clicked tracking is done by the caller (CommunityDashboardSection or SuggestedDashboards)
+  // with the correct discoveryMethod before calling this function
   try {
     // Fetch full dashboard from Gcom, this is the JSON with __inputs
     const fullDashboard = await fetchCommunityDashboard(dashboard.id);
