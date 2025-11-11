@@ -471,3 +471,11 @@ export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrc
 }
 
 export const dashboardLog = createLogger('Dashboard');
+
+/**
+ * Checks if there are save changes but not counting time range, refresh rate and default variable value change
+ */
+export function hasActualSaveChanges(dashboard: DashboardScene) {
+  const changes = dashboard.getDashboardChanges();
+  return !!changes.diffCount;
+}
