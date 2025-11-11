@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { DataTransformerID, GrafanaTheme2, standardTransformersRegistry, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Box, Button, Card, Grid, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 
 interface EmptyTransformationsProps {
@@ -40,7 +40,10 @@ export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
   const sqlTransformationTile: SQLTransformationTile = {
     id: 'sql-transformation',
     name: 'SQL Transformation',
-    description: 'Manipulate your data using MySQL-like syntax',
+    description: t(
+      'dashboard-scene.empty-transformations-message.sql-transformation-description',
+      'Manipulate your data using MySQL-like syntax'
+    ),
     isSQL: true,
   };
 
@@ -112,8 +115,8 @@ export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
             onClick={props.onShowPicker}
             data-testid={selectors.components.Transforms.addTransformationButton}
           >
-            {/* <Trans i18nKey="dashboard-scene.empty-transformations-message.add-transformation">See more</Trans> */}
-            See more
+            <Trans i18nKey="dashboard-scene.empty-transformations-message.see-more">See more</Trans>
+            {/* See more */}
           </Button>
         </Stack>
       </Stack>
