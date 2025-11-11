@@ -770,11 +770,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/PanelChrome/PanelChrome.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/PanelChrome/PanelContext.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
