@@ -298,6 +298,7 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	writeString(rule.NamespaceUID)
 	writeString(r.folderTitle)
 	writeLabels(rule.Labels)
+	writeLabels(rule.Annotations)
 	writeString(rule.Condition)
 	writeQuery()
 
