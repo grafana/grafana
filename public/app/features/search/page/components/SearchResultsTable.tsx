@@ -8,6 +8,7 @@ import { Observable } from 'rxjs';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { TableCellHeight } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useTableStyles, TableCell } from '@grafana/ui/internal';
@@ -141,6 +142,32 @@ export const SearchResultsTable = React.memo(
         return (
           <div key={key} {...rowProps} className={className}>
             {row.cells.map((cell: Cell, index: number) => {
+              const href = onClickItem ? url : undefined;
+              const fieldName = (cell.column as any)?.field?.name;
+
+              let userProps: any = { href, onClick: onClickItem };
+
+              if (fieldName === 'name' && href) {
+                const parent = response.view.dataFrame.fields[5].values[rowIndex];
+                const kind = response.view.dataFrame.fields[0].values[rowIndex];
+                const existingOnClick = onClickItem;
+
+                userProps.onClick = (evt: React.MouseEvent<HTMLElement>) => {
+                  try {
+                    reportInteraction('grafana_browse_dashboards_page_click_list_item', {
+                      itemKind: kind,
+                      parent: !parent ? 'general': parent === 'general' ? 'general' : 'folder',
+                      view: 'search view',
+                    });
+                  } catch (e) {
+                    // ignore analytics errors
+                  }
+                  if (typeof existingOnClick === 'function') {
+                    existingOnClick(evt);
+                  }
+                };
+              }
+
               return (
                 <TableCell
                   key={index}
@@ -148,7 +175,7 @@ export const SearchResultsTable = React.memo(
                   cell={cell}
                   columnIndex={index}
                   columnCount={row.cells.length}
-                  userProps={{ href: onClickItem ? url : undefined, onClick: onClickItem }}
+                  userProps={userProps}
                   frame={response.view.dataFrame}
                 />
               );
