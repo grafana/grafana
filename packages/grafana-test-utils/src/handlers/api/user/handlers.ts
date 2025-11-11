@@ -1,26 +1,53 @@
 import { HttpResponse, http } from 'msw';
 
 import { wellFormedTree } from '../../../fixtures/folders';
-
-const [_, { folderA_dashbdD, dashbdD }] = wellFormedTree();
-
-export const mockStarredDashboards = [dashbdD.item.uid, folderA_dashbdD.item.uid];
+import { mockStarredDashboardsMap } from '../../../fixtures/starred';
+const [_, { dashbdD }] = wellFormedTree();
 
 const getStarsHandler = () =>
   http.get('/api/user/stars', async () => {
-    return HttpResponse.json(mockStarredDashboards);
+    return HttpResponse.json(Array.from(mockStarredDashboardsMap.keys()));
   });
 
 const deleteDashboardStarHandler = () =>
-  http.delete('/api/user/stars/dashboard/uid/:uid', async () => {
+  http.delete<{ uid: string }>('/api/user/stars/dashboard/uid/:uid', async ({ params }) => {
+    const { uid } = params;
+    mockStarredDashboardsMap.delete(uid);
     return HttpResponse.json({ message: 'Dashboard unstarred' });
   });
 
 const addDashboardStarHandler = () =>
-  http.post('/api/user/stars/dashboard/uid/:uid', async () => {
+  http.post<{ uid: string }>('/api/user/stars/dashboard/uid/:uid', async ({ params }) => {
+    const { uid } = params;
+    mockStarredDashboardsMap.set(uid, true);
     return HttpResponse.json({ message: 'Dashboard starred!' });
   });
 
-const handlers = [getStarsHandler(), deleteDashboardStarHandler(), addDashboardStarHandler()];
+const getPreferencesHandler = () =>
+  http.get('/api/user/preferences', async () => {
+    return HttpResponse.json({
+      homeDashboardUID: dashbdD.item.uid,
+      theme: 'light',
+      timezone: 'browser',
+      weekStart: 'monday',
+      queryHistory: {
+        homeTab: '',
+      },
+      language: '',
+    });
+  });
+
+const updatePreferencesHandler = () =>
+  http.put('/api/user/preferences', async () => {
+    return HttpResponse.json({ message: 'Preferences updated' });
+  });
+
+const handlers = [
+  getPreferencesHandler(),
+  updatePreferencesHandler(),
+  getStarsHandler(),
+  deleteDashboardStarHandler(),
+  addDashboardStarHandler(),
+];
 
 export default handlers;

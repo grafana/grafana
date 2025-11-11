@@ -1,4 +1,5 @@
-import { PanelPlugin, PluginMeta, PluginType } from '@grafana/data';
+import { PanelPlugin } from '../panel/PanelPlugin';
+import { PluginMeta, PluginType } from '../types/plugin';
 
 import { throwIfAngular } from './throwIfAngular';
 
@@ -32,6 +33,7 @@ describe('throwIfAngular', () => {
 
   it('should throw if angular panel', () => {
     const underTest = new PanelPlugin(null);
+    // @ts-expect-error
     underTest.angularPanelCtrl = {};
     expect(() => throwIfAngular(underTest)).toThrow('Angular plugins are not supported');
   });

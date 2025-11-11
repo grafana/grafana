@@ -165,15 +165,6 @@ export interface FeatureToggles {
   */
   extraThemes?: boolean;
   /**
-  * Enables the plugins frontend sandbox
-  */
-  pluginsFrontendSandbox?: boolean;
-  /**
-  * Enables writing multiple items from a single query within Recorded Queries
-  * @default true
-  */
-  recordedQueriesMulti?: boolean;
-  /**
   * A table visualisation for logs in Explore
   * @default true
   */
@@ -252,11 +243,6 @@ export interface FeatureToggles {
   */
   externalServiceAccounts?: boolean;
   /**
-  * Enables panel monitoring through logs and measurements
-  * @default true
-  */
-  panelMonitoring?: boolean;
-  /**
   * Enables native HTTP Histograms
   */
   enableNativeHTTPHistogram?: boolean;
@@ -302,6 +288,10 @@ export interface FeatureToggles {
   * Adds support for Kubernetes logs drilldown
   */
   kubernetesLogsDrilldown?: boolean;
+  /**
+  * Adds support for Kubernetes querycaching
+  */
+  kubernetesQueryCaching?: boolean;
   /**
   * Disable schema validation for dashboards/v1
   */
@@ -565,9 +555,13 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
-  * Enable suggested dashboards when creating new dashboards
+  * Enable dashboard library experiments that are production ready
   */
   dashboardLibrary?: boolean;
+  /**
+  * Enable suggested dashboards when creating new dashboards
+  */
+  suggestedDashboards?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
@@ -616,6 +610,10 @@ export interface FeatureToggles {
   * Use openFGA as authorization engine.
   */
   zanzana?: boolean;
+  /**
+  * Use openFGA as main authorization engine and disable legacy RBAC clietn.
+  */
+  zanzanaNoLegacyClient?: boolean;
   /**
   * Enables reload of dashboards on scopes, time range and variables changes
   */
@@ -704,10 +702,6 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchSprinkles?: boolean;
   /**
-  * Use full n-gram indexing instead of edge n-gram for unified storage search
-  */
-  unifiedStorageUseFullNgram?: boolean;
-  /**
   * Pick the dual write mode from database configs
   */
   managedDualWriter?: boolean;
@@ -725,15 +719,14 @@ export interface FeatureToggles {
   */
   timeRangeProvider?: boolean;
   /**
+  * Enables time range panning functionality
+  */
+  timeRangePan?: boolean;
+  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */
   azureMonitorDisableLogLimit?: boolean;
-  /**
-  * Enables automatic updates for pre-installed plugins
-  * @default true
-  */
-  preinstallAutoUpdate?: boolean;
   /**
   * Enables experimental reconciler for playlists
   */
@@ -879,7 +872,8 @@ export interface FeatureToggles {
   */
   fetchRulesUsingPost?: boolean;
   /**
-  * Enables the new logs panel in Explore
+  * Enables the new logs panel
+  * @default true
   */
   newLogsPanel?: boolean;
   /**
@@ -1047,11 +1041,6 @@ export interface FeatureToggles {
   */
   restoreDashboards?: boolean;
   /**
-  * Skip token rotation if it was already rotated less than 5 seconds ago
-  * @default true
-  */
-  skipTokenRotationIfRecent?: boolean;
-  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
@@ -1078,6 +1067,7 @@ export interface FeatureToggles {
   alertingImportAlertmanagerUI?: boolean;
   /**
   * Enables image sharing functionality for dashboards
+  * @default true
   */
   sharingDashboardImage?: boolean;
   /**
@@ -1111,11 +1101,6 @@ export interface FeatureToggles {
   */
   foldersAppPlatformAPI?: boolean;
   /**
-  * Set this to true to use the new PluginImporter functionality
-  * @default false
-  */
-  enablePluginImporter?: boolean;
-  /**
   * Applies OTel formatting templates to displayed logs
   */
   otelLogsFormatting?: boolean;
@@ -1128,11 +1113,6 @@ export interface FeatureToggles {
   * Enable dual reader for unified storage search
   */
   unifiedStorageSearchDualReaderEnabled?: boolean;
-  /**
-  * Enables adhoc filtering support for the dashboard datasource
-  * @default true
-  */
-  dashboardDsAdHocFiltering?: boolean;
   /**
   * Supports __from and __to macros that always use the dashboard level time range
   */
@@ -1170,9 +1150,9 @@ export interface FeatureToggles {
   */
   teamFolders?: boolean;
   /**
-  * Enables Pathfinder app
+  * Enables the interactive learning app
   */
-  grafanaPathfinder?: boolean;
+  interactiveLearning?: boolean;
   /**
   * Enables the alerting triage feature
   * @default false
@@ -1214,12 +1194,26 @@ export interface FeatureToggles {
   */
   cdnPluginsUrls?: boolean;
   /**
+  * Enable syncing plugin installations to the installs API
+  * @default false
+  */
+  pluginInstallAPISync?: boolean;
+  /**
+  * Enable new gauge visualization
+  * @default false
+  */
+  newGauge?: boolean;
+  /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
   */
   preventPanelChromeOverflow?: boolean;
   /**
-  * Load plugins during store service startup instead of wire provider
+  * Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
+  */
+  jaegerEnableGrpcEndpoint?: boolean;
+  /**
+  * Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
   * @default false
   */
   pluginStoreServiceLoading?: boolean;
@@ -1228,4 +1222,22 @@ export interface FeatureToggles {
   * @default false
   */
   newPanelPadding?: boolean;
+  /**
+  * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
+  * @default true
+  */
+  onlyStoreActionSets?: boolean;
+  /**
+  * Enables a new panel time settings drawer
+  */
+  panelTimeSettings?: boolean;
+  /**
+  * Enable template dashboards
+  */
+  dashboardTemplates?: boolean;
+  /**
+  * Enables app platform API for annotations
+  * @default false
+  */
+  kubernetesAnnotations?: boolean;
 }

@@ -18,6 +18,7 @@ type SecretsManagerSettings struct {
 	ConfiguredKMSProviders map[string]map[string]string
 
 	GrpcClientEnable        bool   // Whether to enable the gRPC client. If disabled, it will use the in-process services implementations.
+	GrpcClientLoadBalancing bool   // Whether to enable gRPC client-side load balancing
 	GrpcServerUseTLS        bool   // Whether to use TLS when communicating with the gRPC server
 	GrpcServerTLSSkipVerify bool   // Whether to skip TLS verification when communicating with the gRPC server
 	GrpcServerTLSServerName string // Server name to use for TLS verification
@@ -34,8 +35,13 @@ type SecretsManagerSettings struct {
 	GCWorkerPollInterval time.Duration
 	// How long to wait for the process to clean up a secure value to complete.
 	GCWorkerPerSecureValueCleanupTimeout time.Duration
-	// Whether the secrets management is running in developer mode.
-	IsDeveloperMode bool
+
+	// Whether to register the MT CRUD API
+	RegisterAPIServer bool
+	// Whether to create the MT secrets management database
+	RunSecretsDBMigrations bool
+	// Whether to run the data key id migration. Requires that RunSecretsDBMigrations is also true.
+	RunDataKeyMigration bool
 }
 
 func (cfg *Cfg) readSecretsManagerSettings() {
@@ -43,6 +49,7 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.CurrentEncryptionProvider = secretsMgmt.Key("encryption_provider").MustString(MisconfiguredProvider)
 
 	cfg.SecretsManagement.GrpcClientEnable = secretsMgmt.Key("grpc_client_enable").MustBool(false)
+	cfg.SecretsManagement.GrpcClientLoadBalancing = secretsMgmt.Key("grpc_client_load_balancing").MustBool(false)
 	cfg.SecretsManagement.GrpcServerUseTLS = secretsMgmt.Key("grpc_server_use_tls").MustBool(false)
 	cfg.SecretsManagement.GrpcServerTLSSkipVerify = secretsMgmt.Key("grpc_server_tls_skip_verify").MustBool(false)
 	cfg.SecretsManagement.GrpcServerTLSServerName = valueAsString(secretsMgmt, "grpc_server_tls_server_name", "")
@@ -55,7 +62,9 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.GCWorkerPollInterval = secretsMgmt.Key("gc_worker_poll_interval").MustDuration(1 * time.Minute)
 	cfg.SecretsManagement.GCWorkerPerSecureValueCleanupTimeout = secretsMgmt.Key("gc_worker_per_request_timeout").MustDuration(5 * time.Second)
 
-	cfg.SecretsManagement.IsDeveloperMode = secretsMgmt.Key("developer_mode").MustBool(false)
+	cfg.SecretsManagement.RegisterAPIServer = secretsMgmt.Key("register_api_server").MustBool(true)
+	cfg.SecretsManagement.RunSecretsDBMigrations = secretsMgmt.Key("run_secrets_db_migrations").MustBool(true)
+	cfg.SecretsManagement.RunDataKeyMigration = secretsMgmt.Key("run_data_key_migration").MustBool(true)
 
 	// Extract available KMS providers from configuration sections
 	providers := make(map[string]map[string]string)

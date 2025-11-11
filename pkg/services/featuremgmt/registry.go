@@ -73,7 +73,7 @@ var (
 			Name:           "correlations",
 			Description:    "Correlations page",
 			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaDatavizSquad,
+			Owner:          grafanaDataProSquad,
 			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
 		},
@@ -219,7 +219,7 @@ var (
 			Name:        "disableSSEDataplane",
 			Description: "Disables dataplane specific processing in server side expressions.",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityMetricsSquad,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
 		},
 		{
 			Name:              "unifiedRequestLog",
@@ -263,20 +263,6 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
-		},
-		{
-			Name:        "pluginsFrontendSandbox",
-			Description: "Enables the plugins frontend sandbox",
-			Stage:       FeatureStagePrivatePreview,
-			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
-			Name:           "recordedQueriesMulti",
-			Description:    "Enables writing multiple items from a single query within Recorded Queries",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true",
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: false,
 		},
 		{
 			Name:         "logsExploreTableVisualisation",
@@ -395,7 +381,7 @@ var (
 			Name:        "sseGroupByDatasource",
 			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityMetricsSquad,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
 		},
 		{
 			Name:         "lokiRunQueriesInParallel",
@@ -410,14 +396,6 @@ var (
 			HideFromAdminPage: true,
 			Stage:             FeatureStagePublicPreview,
 			Owner:             identityAccessTeam,
-		},
-		{
-			Name:         "panelMonitoring",
-			Description:  "Enables panel monitoring through logs and measurements",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true", // enabled by default
-			Owner:        grafanaDatavizSquad,
-			FrontendOnly: true,
 		},
 		{
 			Name:              "enableNativeHTTPHistogram",
@@ -444,7 +422,7 @@ var (
 			Description:  "Enable format string transformer",
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
+			Owner:        grafanaDataProSquad,
 			Expression:   "true", // enabled by default
 		},
 		{
@@ -502,6 +480,13 @@ var (
 			Description:     "Adds support for Kubernetes logs drilldown",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaObservabilityLogsSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:            "kubernetesQueryCaching",
+			Description:     "Adds support for Kubernetes querycaching",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
 		},
 		{
@@ -588,7 +573,7 @@ var (
 			Description:  "Add cumulative and window functions to the add field from calculation transformation",
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
+			Owner:        grafanaDataProSquad,
 			Expression:   "true", // enabled by default
 		},
 		{
@@ -624,7 +609,7 @@ var (
 			Description:  "Make sure extracted field names are unique in the dataframe",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
+			Owner:        grafanaDataProSquad,
 		},
 		{
 			Name:         "dashboardSceneForViewers",
@@ -735,7 +720,7 @@ var (
 			Description:  "Enables regression analysis transformation",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
+			Owner:        grafanaDataProSquad,
 		},
 		{
 			Name:              "kubernetesFeatureToggles",
@@ -865,7 +850,7 @@ var (
 			Description:  "Enables the group to nested table transformation",
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
+			Owner:        grafanaDataProSquad,
 			Expression:   "true", // enabled by default,
 		},
 		{
@@ -970,6 +955,13 @@ var (
 		},
 		{
 			Name:         "dashboardLibrary",
+			Description:  "Enable dashboard library experiments that are production ready",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+		},
+		{
+			Name:         "suggestedDashboards",
 			Description:  "Enable suggested dashboards when creating new dashboards",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
@@ -1054,6 +1046,14 @@ var (
 		{
 			Name:              "zanzana",
 			Description:       "Use openFGA as authorization engine.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "zanzanaNoLegacyClient",
+			Description:       "Use openFGA as main authorization engine and disable legacy RBAC clietn.",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
@@ -1213,14 +1213,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "unifiedStorageUseFullNgram",
-			Description:       "Use full n-gram indexing instead of edge n-gram for unified storage search",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaSearchAndStorageSquad,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:              "managedDualWriter",
 			Description:       "Pick the dual write mode from database configs",
 			Stage:             FeatureStageExperimental,
@@ -1248,18 +1240,18 @@ var (
 			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
+			Name:         "timeRangePan",
+			Description:  "Enables time range panning functionality",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
 			Name:        "azureMonitorDisableLogLimit",
 			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "preinstallAutoUpdate",
-			Description: "Enables automatic updates for pre-installed plugins",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaPluginsPlatformSquad,
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:            "playlistsReconciler",
@@ -1509,10 +1501,11 @@ var (
 		},
 		{
 			Name:         "newLogsPanel",
-			Description:  "Enables the new logs panel in Explore",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables the new logs panel",
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "true",
 		},
 		{
 			Name:              "grafanaconThemes",
@@ -1813,15 +1806,6 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:              "skipTokenRotationIfRecent",
-			Description:       "Skip token rotation if it was already rotated less than 5 seconds ago",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             identityAccessTeam,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			Expression:        "true", // enabled by default
-		},
-		{
 			Name:              "alertEnrichment",
 			Description:       "Enable configuration of alert enrichments in Grafana Cloud.",
 			Stage:             FeatureStageExperimental,
@@ -1869,10 +1853,10 @@ var (
 		{
 			Name:         "sharingDashboardImage",
 			Description:  "Enables image sharing functionality for dashboards",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSharingSquad,
-			HideFromDocs: true,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:        "preferLibraryPanelTitle",
@@ -1927,16 +1911,6 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:              "enablePluginImporter",
-			Description:       "Set this to true to use the new PluginImporter functionality",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaPluginsPlatformSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			FrontendOnly:      true,
-			Expression:        "false",
-		},
-		{
 			Name:         "otelLogsFormatting",
 			Description:  "Applies OTel formatting templates to displayed logs",
 			Stage:        FeatureStageExperimental,
@@ -1959,14 +1933,6 @@ var (
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
-		},
-		{
-			Name:         "dashboardDsAdHocFiltering",
-			Description:  "Enables adhoc filtering support for the dashboard datasource",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaDataProSquad,
-			FrontendOnly: true,
-			Expression:   "true",
 		},
 		{
 			Name:         "dashboardLevelTimeMacros",
@@ -2032,8 +1998,8 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "grafanaPathfinder",
-			Description: "Enables Pathfinder app",
+			Name:        "interactiveLearning",
+			Description: "Enables the interactive learning app",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaPathfinderSquad,
 		},
@@ -2104,6 +2070,22 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "pluginInstallAPISync",
+			Description:  "Enable syncing plugin installations to the installs API",
+			FrontendOnly: false,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "newGauge",
+			Description:  "Enable new gauge visualization",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "preventPanelChromeOverflow",
 			Description:  "Restrict PanelChrome contents with overflow: hidden;",
 			Stage:        FeatureStagePublicPreview,
@@ -2112,8 +2094,14 @@ var (
 			Expression:   "true",
 		},
 		{
+			Name:        "jaegerEnableGrpcEndpoint",
+			Description: "Enable querying trace data through Jaeger's gRPC endpoint (HTTP)",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOSSBigTent,
+		},
+		{
 			Name:         "pluginStoreServiceLoading",
-			Description:  "Load plugins during store service startup instead of wire provider",
+			Description:  "Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
@@ -2126,6 +2114,41 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaDashboardsSquad,
 			Expression:   "false",
+		},
+		{
+			Name:              "onlyStoreActionSets",
+			Description:       "When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission",
+			Stage:             FeatureStageGeneralAvailability,
+			FrontendOnly:      false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true, // this should not be a user facing change
+			Owner:             identityAccessTeam,
+			Expression:        "true",
+		},
+		{
+			Name:              "panelTimeSettings",
+			Description:       "Enables a new panel time settings drawer",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			RequiresRestart:   false,
+			AllowSelfServe:    false,
+			HideFromDocs:      false,
+			HideFromAdminPage: false,
+		},
+		{
+			Name:         "dashboardTemplates",
+			Description:  "Enable template dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+		},
+		{
+			Name:        "kubernetesAnnotations",
+			Description: "Enables app platform API for annotations",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaBackendServicesSquad,
+			Expression:  "false",
 		},
 	}
 )

@@ -46,7 +46,8 @@ func (api *ImportDashboardAPI) RegisterAPIEndpoints(routeRegister routing.RouteR
 			authorize(accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate)),
 			routing.Wrap(api.ImportDashboard),
 		)
-		if api.features.IsEnabledGlobally(featuremgmt.FlagDashboardLibrary) {
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if api.features.IsEnabledGlobally(featuremgmt.FlagDashboardLibrary) || api.features.IsEnabledGlobally(featuremgmt.FlagSuggestedDashboards) {
 			route.Post(
 				"/interpolate",
 				authorize(accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate)),
@@ -58,7 +59,7 @@ func (api *ImportDashboardAPI) RegisterAPIEndpoints(routeRegister routing.RouteR
 
 // swagger:route POST /dashboards/interpolate dashboards interpolateDashboard
 //
-// Interpolate dashboard. This is an experimental endpoint under dashboardLibrary FF and is subject to change.
+// Interpolate dashboard. This is an experimental endpoint under dashboardLibrary or suggestedDashboards feature flags and is subject to change.
 //
 // Responses:
 // 200: interpolateDashboardResponse
@@ -72,8 +73,8 @@ func (api *ImportDashboardAPI) InterpolateDashboard(c *contextmodel.ReqContext) 
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	if req.PluginId == "" {
-		return response.Error(http.StatusUnprocessableEntity, "pluginId must be set", nil)
+	if req.PluginId == "" && req.Dashboard == nil {
+		return response.Error(http.StatusUnprocessableEntity, "pluginId or dashboard must be set", nil)
 	}
 
 	resp, err := api.dashboardImportService.InterpolateDashboard(c.Req.Context(), &req)

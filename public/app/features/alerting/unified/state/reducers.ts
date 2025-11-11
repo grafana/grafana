@@ -8,7 +8,6 @@ import {
   fetchGrafanaAnnotationsAction,
   fetchPromRulesAction,
   fetchRulerRulesAction,
-  testReceiversAction,
   updateAlertManagerConfigAction,
 } from './actions';
 
@@ -23,7 +22,6 @@ export const reducer = combineReducers({
     fetchAlertGroupsAction,
     (alertManagerSourceName) => alertManagerSourceName
   ).reducer,
-  testReceivers: createAsyncSlice('testReceivers', testReceiversAction).reducer,
   managedAlertStateHistory: createAsyncSlice('managedAlertStateHistory', fetchGrafanaAnnotationsAction).reducer,
 });
 

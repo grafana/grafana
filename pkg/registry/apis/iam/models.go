@@ -13,7 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
@@ -33,14 +35,19 @@ type RoleStorageBackend interface{ resource.StorageBackend }
 // Used by wire to identify the storage backend for role bindings.
 type RoleBindingStorageBackend interface{ resource.StorageBackend }
 
+// ExternalGroupMappingStorageBackend uses the resource.StorageBackend interface to provide storage for external group mappings.
+// Used by wire to identify the storage backend for external group mappings.
+type ExternalGroupMappingStorageBackend interface{ resource.StorageBackend }
+
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
 	// Stores
-	store                      legacy.LegacyIdentityStore
-	coreRolesStorage           CoreRoleStorageBackend
-	rolesStorage               RoleStorageBackend
-	resourcePermissionsStorage resource.StorageBackend
-	roleBindingsStorage        RoleBindingStorageBackend
+	store                       legacy.LegacyIdentityStore
+	coreRolesStorage            CoreRoleStorageBackend
+	rolesStorage                RoleStorageBackend
+	resourcePermissionsStorage  resource.StorageBackend
+	roleBindingsStorage         RoleBindingStorageBackend
+	externalGroupMappingStorage ExternalGroupMappingStorageBackend
 
 	// Access Control
 	authorizer authorizer.Authorizer
@@ -58,6 +65,10 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	reg    prometheus.Registerer
 	logger log.Logger
+
+	dual             dualwrite.Service
+	unified          resource.ResourceClient
+	userSearchClient resourcepb.ResourceIndexClient
 
 	// non-k8s api route
 	display *user.LegacyDisplayREST

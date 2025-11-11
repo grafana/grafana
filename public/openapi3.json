@@ -454,10 +454,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/DashboardVersionMeta"
-              },
-              "type": "array"
+              "$ref": "#/components/schemas/DashboardVersionResponseMeta"
             }
           }
         },
@@ -2265,6 +2262,9 @@
             "type": "integer"
           }
         },
+        "required": [
+          "userId"
+        ],
         "type": "object"
       },
       "AddTeamRoleCommand": {
@@ -3242,6 +3242,10 @@
           },
           "name": {
             "description": "Name of annotation.",
+            "type": "string"
+          },
+          "placement": {
+            "description": "Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.",
             "type": "string"
           },
           "target": {
@@ -4459,6 +4463,9 @@
             "type": "string"
           }
         },
+        "required": [
+          "name"
+        ],
         "type": "object"
       },
       "DashboardACLInfoDTO": {
@@ -4802,6 +4809,20 @@
           "version": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "DashboardVersionResponseMeta": {
+        "properties": {
+          "continueToken": {
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardVersionMeta"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -8143,6 +8164,7 @@
         "type": "object"
       },
       "Permission": {
+        "description": "Permission is the model for access control permissions",
         "properties": {
           "action": {
             "type": "string"
@@ -8159,7 +8181,6 @@
             "type": "string"
           }
         },
-        "title": "Permission is the model for access control permissions.",
         "type": "object"
       },
       "PermissionDenied": {
@@ -10100,6 +10121,16 @@
             "type": "integer"
           }
         },
+        "required": [
+          "version",
+          "uid",
+          "name",
+          "displayName",
+          "description",
+          "group",
+          "updated",
+          "created"
+        ],
         "type": "object"
       },
       "RolesSearchQuery": {
@@ -10940,6 +10971,20 @@
         },
         "type": "object"
       },
+      "SetTeamRolesCommand": {
+        "properties": {
+          "includeHidden": {
+            "type": "boolean"
+          },
+          "roleUids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "SetUserRolesCommand": {
         "properties": {
           "global": {
@@ -11392,6 +11437,7 @@
             "type": "string"
           },
           "id": {
+            "description": "@deprecated Use UID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -11416,6 +11462,14 @@
             "type": "string"
           }
         },
+        "required": [
+          "id",
+          "uid",
+          "orgId",
+          "name",
+          "isProvisioned",
+          "memberCount"
+        ],
         "type": "object"
       },
       "TeamGroupDTO": {
@@ -14192,6 +14246,17 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTeamRolesCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
         "responses": {
           "200": {
             "$ref": "#/components/responses/okResponse"
@@ -17773,7 +17838,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Interpolate dashboard. This is an experimental endpoint under dashboardLibrary FF and is subject to change.",
+        "summary": "Interpolate dashboard. This is an experimental endpoint under dashboardLibrary or suggestedDashboards feature flags and is subject to change.",
         "tags": [
           "dashboards"
         ]
@@ -24497,6 +24562,21 @@
             "description": "If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.",
             "in": "query",
             "name": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "accesscontrol",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
             "schema": {
               "type": "string"
             }

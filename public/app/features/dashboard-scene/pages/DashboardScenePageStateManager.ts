@@ -5,6 +5,7 @@ import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import {
@@ -17,8 +18,11 @@ import {
 import { ensureV2Response, transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource, isDashboardV2Spec, isV2StoredVersion } from 'app/features/dashboard/api/utils';
+import { initializeDashboardAnalyticsAggregator } from 'app/features/dashboard/services/DashboardAnalyticsAggregator';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -40,6 +44,14 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
+
+/**
+ * Initialize both performance services to ensure they're ready before profiling starts
+ */
+function initializeDashboardPerformanceServices(): void {
+  initializeScenePerformanceLogger();
+  initializeDashboardAnalyticsAggregator();
+}
 
 export interface LoadError {
   status?: number;
@@ -296,6 +308,16 @@ abstract class DashboardScenePageStateManagerBase<T>
       const queryController = sceneGraph.getQueryController(dashboard);
 
       trackDashboardSceneLoaded(dashboard, measure?.duration);
+
+      const enableProfiling =
+        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === options.uid) !== -1;
+
+      if (enableProfiling) {
+        // Initialize both performance services before starting profiling to ensure observers are registered
+        initializeDashboardPerformanceServices();
+      }
+
+      // Start dashboard_view profiling (both services are now guaranteed to be listening)
       queryController?.startProfile('dashboard_view');
 
       if (options.route !== DashboardRoutes.New) {
@@ -409,6 +431,11 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       fromCache.state.version === rsp?.dashboard.version &&
       fromCache.state.meta.created === rsp?.meta.created
     ) {
+      const profiler = getDashboardSceneProfiler();
+      profiler.setMetadata({
+        dashboardUID: fromCache.state.uid,
+        dashboardTitle: fromCache.state.title,
+      });
       return fromCache;
     }
 
@@ -448,13 +475,40 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     throw new Error('Snapshot not found');
   }
 
-  private async loadTemplateDashboard(): Promise<DashboardDTO> {
+  private buildDashboardDTOFromInterpolated(interpolatedDashboard: DashboardDataDTO): DashboardDTO {
+    return {
+      dashboard: {
+        ...interpolatedDashboard,
+        uid: '',
+        version: 0,
+        id: null,
+      },
+      meta: {
+        canSave: contextSrv.hasEditPermissionInFolders,
+        canEdit: contextSrv.hasEditPermissionInFolders,
+        canStar: false,
+        canShare: false,
+        canDelete: false,
+        isNew: true,
+        folderUid: '',
+      },
+    };
+  }
+
+  private async loadSuggestedDashboard(): Promise<DashboardDTO> {
     // Extract template parameters from URL
     const searchParams = new URLSearchParams(window.location.search);
     const datasource = searchParams.get('datasource');
+    const gnetId = searchParams.get('gnetId');
     const pluginId = searchParams.get('pluginId');
     const path = searchParams.get('path');
 
+    // Check if this is a community dashboard (has gnetId) or plugin dashboard
+    if (gnetId) {
+      return this.loadCommunityTemplateDashboard(gnetId);
+    }
+
+    // Original plugin dashboard flow
     if (!datasource || !pluginId || !path) {
       throw new Error('Missing required parameters for template dashboard');
     }
@@ -479,24 +533,41 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     };
 
     const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
+  }
 
-    return {
-      dashboard: {
-        ...interpolatedDashboard,
-        uid: '',
-        version: 0,
-        id: null,
-      },
-      meta: {
-        canSave: true,
-        canEdit: true,
-        canStar: false,
-        canShare: false,
-        canDelete: false,
-        isNew: true,
-        folderUid: '',
-      },
+  private async loadCommunityTemplateDashboard(gnetId: string): Promise<DashboardDTO> {
+    // Extract mappings from URL params
+    const location = locationService.getLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const mappingsJson = searchParams.get('mappings');
+
+    if (!mappingsJson) {
+      throw new Error('Missing mappings parameter for community dashboard');
+    }
+
+    let mappings;
+    try {
+      mappings = JSON.parse(mappingsJson);
+    } catch (err) {
+      throw new Error('Invalid mappings parameter: ' + err);
+    }
+
+    // Fetch the community dashboard from grafana.com
+    const gnetDashboard = await getBackendSrv().get(`/api/gnet/dashboards/${gnetId}`);
+
+    // The dashboard JSON is in the 'json' property
+    const dashboardJson = gnetDashboard.json;
+
+    // Call interpolate endpoint with the dashboard JSON and mappings
+    const data = {
+      dashboard: dashboardJson,
+      overwrite: true,
+      inputs: mappings,
     };
+
+    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
   }
 
   public async fetchDashboard({
@@ -533,7 +604,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           rsp = await buildNewDashboardSaveModel(urlFolderUid);
           break;
         case DashboardRoutes.Template:
-          rsp = await this.loadTemplateDashboard();
+          rsp = await this.loadSuggestedDashboard();
           break;
         case DashboardRoutes.Provisioning:
           return this.loadProvisioningDashboard(slug || '', uid);
@@ -696,6 +767,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     const fromCache = this.getSceneFromCache(options.uid);
 
     if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
+      const profiler = getDashboardSceneProfiler();
+      profiler.setMetadata({
+        dashboardUID: fromCache.state.uid,
+        dashboardTitle: fromCache.state.title,
+      });
       return fromCache;
     }
 

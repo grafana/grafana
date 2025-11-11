@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "12.3.0-pre";
+export const pluginVersion = "12.4.0-pre";
 
 export interface GaugePanelEffects {
   barGlow?: boolean;
@@ -21,7 +21,7 @@ export interface GaugePanelEffects {
 
 export const defaultGaugePanelEffects: Partial<GaugePanelEffects> = {
   barGlow: false,
-  centerGlow: true,
+  centerGlow: false,
   rounded: false,
   spotlight: false,
 };
@@ -39,13 +39,13 @@ export interface Options extends common.SingleStatBaseOptions {
 }
 
 export const defaultOptions: Partial<Options> = {
-  barWidthFactor: 0.4,
+  barWidthFactor: 0.5,
   effects: {},
-  gradient: 'none',
+  gradient: 'auto',
   segmentCount: 1,
   segmentSpacing: 0.3,
   shape: 'gauge',
   showThresholdLabels: false,
   showThresholdMarkers: true,
-  sparkline: false,
+  sparkline: true,
 };

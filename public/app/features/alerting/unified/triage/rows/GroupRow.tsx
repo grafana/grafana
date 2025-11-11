@@ -5,9 +5,10 @@ import { AlertLabel } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { GenericGroupedRow } from '../types';
+import { EmptyLabelValue, GenericGroupedRow } from '../types';
 
 import { GenericRow } from './GenericRow';
+import { formatLabelValue } from './utils';
 
 interface GroupRowProps {
   row: GenericGroupedRow;
@@ -19,13 +20,21 @@ interface GroupRowProps {
 
 export const GroupRow = ({ row, leftColumnWidth, rowKey, depth = 0, children }: GroupRowProps) => {
   const styles = useStyles2(getStyles);
+  const isEmptyValue = row.metadata.value === EmptyLabelValue;
 
   return (
     <GenericRow
       key={rowKey}
       width={leftColumnWidth}
-      title={<AlertLabel size="sm" labelKey={row.metadata.label} value={row.metadata.value} colorBy="key" />}
-      isOpenByDefault={true}
+      title={
+        <AlertLabel
+          size="sm"
+          labelKey={row.metadata.label}
+          value={formatLabelValue(row.metadata.value)}
+          colorBy="key"
+        />
+      }
+      isOpenByDefault={!isEmptyValue}
       leftColumnClassName={styles.groupRow}
       rightColumnClassName={styles.groupRow}
       depth={depth}

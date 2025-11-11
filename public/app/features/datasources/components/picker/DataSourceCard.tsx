@@ -41,6 +41,7 @@ export function DataSourceCard({
             <small className={styles.type}>{description || ds.meta.name}</small>
             {onToggleFavorite && !ds.meta.builtIn && (
               <Icon
+                key={(isFavorite ? 'favorite' : 'star') + '-' + ds.uid}
                 name={isFavorite ? 'favorite' : 'star'}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -87,7 +88,14 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       whiteSpace: 'nowrap',
       display: 'flex',
       justifyContent: 'space-between',
+      columnGap: theme.spacing(1),
       alignItems: 'center',
+
+      [theme.breakpoints.down('sm')]: {
+        display: 'grid',
+        gridTemplateColumns: '1fr',
+        gridTemplateRows: 'repeat(2, 1fr)',
+      },
     }),
     rightSection: css({
       display: 'flex',
@@ -98,6 +106,9 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       justifyContent: 'flex-end',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
+      [theme.breakpoints.down('sm')]: {
+        justifyContent: 'flex-start',
+      },
     }),
     logo: css({
       width: '32px',
@@ -143,7 +154,6 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
         display: 'block',
         height: '100%',
         position: 'absolute',
-        transform: 'translateX(-50%)',
         width: theme.spacing(0.5),
         left: 0,
       },
