@@ -4,7 +4,6 @@ import { byTestId } from 'testing-library-selector';
 
 import { PromOptions } from '@grafana/prometheus';
 import { config, locationService, setPluginLinksHook } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruler from 'app/features/alerting/unified/api/ruler';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as alertingAbilities from 'app/features/alerting/unified/hooks/useAbilities';
@@ -12,7 +11,6 @@ import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/
 import {
   grantUserPermissions,
   mockDataSource,
-  mockFolder,
   mockPromAlert,
   mockPromAlertingRule,
   mockRulerAlertingRule,
@@ -190,7 +188,6 @@ describe('PanelAlertTabContent', () => {
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
 
-    jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue(mockFolder());
     setupDataSources(...Object.values(dataSources));
 
     mocks.rulerBuilderMock.mockReturnValue({

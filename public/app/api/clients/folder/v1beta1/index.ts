@@ -80,9 +80,4 @@ export const {
 } = folderAPIv1beta1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export {
-  type Folder,
-  type FolderList,
-  type CreateFolderApiArg,
-  type ReplaceFolderApiArg,
-} from '@grafana/api-clients/rtkq/folder/v1beta1';
+export * from '@grafana/api-clients/rtkq/folder/v1beta1';
