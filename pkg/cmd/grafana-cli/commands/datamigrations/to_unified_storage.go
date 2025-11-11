@@ -74,6 +74,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		return err
 	}
 
+	// Reuse this migrator logic, refactor if needed
 	migrator := legacy.NewDashboardAccess(
 		legacysql.NewDatabaseProvider(sqlStore),
 		authlib.OrgNamespaceFormatter,

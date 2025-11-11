@@ -576,27 +576,20 @@ type Cfg struct {
 
 	// Unified Storage
 	UnifiedStorage map[string]UnifiedStorageConfig
-	// EnableUnifiedStorageMigrations migrates resources to unified storage at startup
+	// SkipDataMigrations migrates resources to unified storage at startup
 	// Requires:
 	// [feature_toggles]
 	// unifiedStorage = true
-
-	// Maybe required
-	// grafanaAPIServerWithExperimentalAPIs = true
-
-	// For easier consumption, it enforces other flags and configurations:
+	// unifiedStorageSearchUI = true
+	// unifiedStorageSearch = true
+	// [unified_storage]
 	// - DualWriterMode to rest.Mode5
 	// - DualWriterMigrationDataSyncDisabled to true
 	// - DualWriterPeriodicDataSyncJobEnabled to false
-
-	// - kubernetesFoldersServiceV2 = true
-	// - kubernetesCliDashboards = true
-	// - kubernetesPlaylists = true
-	// - kubernetesClientDashboardsFolders = true
-	// - kubernetesSnapshots = true
-	// - unifiedStorageSearchUI = true
-	// - unifiedStorageSearch = true
-	EnableUnifiedStorageMigrations             bool
+	// Maybe:
+	// unifiedStorageHistoryPruner=true // ask JP
+	// grafanaAPIServerWithExperimentalAPIs = true
+	SkipDataMigrations                         bool
 	MaxPageSizeBytes                           int
 	IndexPath                                  string
 	IndexWorkers                               int
@@ -631,7 +624,6 @@ type Cfg struct {
 	SecretsManagement SecretsManagerSettings
 }
 
-// Enforce values here based on EnableUnifiedStorageMigrations
 type UnifiedStorageConfig struct {
 	DualWriterMode                       rest.DualWriterMode
 	DualWriterPeriodicDataSyncJobEnabled bool
