@@ -45,4 +45,4 @@ export interface SuggestedNavigationsFolder {
 
 export type SuggestedNavigationsFoldersMap = Record<string, SuggestedNavigationsFolder>;
 export type SuggestedNavigationsMap = Record<string, SuggestedNavigation>;
-export type OnFolderUpdate = (path: string[], expanded: boolean) => void | Promise<void>;
+export type OnFolderUpdate = (path: string[], expanded: boolean) => void;
