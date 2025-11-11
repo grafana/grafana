@@ -16,4 +16,4 @@ For example, if the original time range is from 9:00 to 9:59, the time range cha
 - Next range: 8:30 - 10:29
 - Next range: 7:30 - 11:29
 
-For screen recordings showing these interactions, refer to the [Panel overview documentation](https://grafana.com/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#zoom-panel-time-range).
+For screen recordings showing these interactions, refer to the [Panel overview documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#zoom-panel-time-range).

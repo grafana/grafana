@@ -182,12 +182,13 @@ You can zoom the panel time range in and out, which in turn, changes the dashboa
 This feature is supported for the following visualizations:
 
 - Time series
+TBD
 
 ### Zoom in
 
 Click and drag on the panel to zoom in on a particular time range.
 
-The following screen recordings show this action in the time series and x visualizations:
+The following screen recordings show this interaction in the time series and x visualizations:
 
 {{< video-embed src="panel-time-zoom-in-mouse.mp4" >}}
 
