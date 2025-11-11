@@ -145,7 +145,10 @@ export const SearchResultsTable = React.memo(
               const href = onClickItem ? url : undefined;
               const fieldName = (cell.column as any)?.field?.name;
 
-              let userProps: any = { href, onClick: onClickItem };
+              let userProps: { href?: string; onClick?: (event: React.MouseEvent<HTMLElement>) => void } = {
+                href,
+                onClick: onClickItem,
+              };
 
               if (fieldName === 'name' && href) {
                 const parent = response.view.dataFrame.fields[5].values[rowIndex];
