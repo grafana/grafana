@@ -25,6 +25,11 @@ export function useNamespaceAndGroupOptions(): {
   const [fetchGrafanaGroups] = prometheusApi.useLazyGetGrafanaGroupsQuery();
   const [fetchExternalGroups] = prometheusApi.useLazyGetGroupsQuery();
 
+  const { data: grafanaData, isLoading: isLoadingGrafana } = prometheusApi.useGetGrafanaGroupsQuery({
+    limitAlerts: 0,
+    groupLimit: 1000,
+  });
+
   // Formats a raw namespace string into a user-friendly combobox option.
   const formatNamespaceOption = useCallback((namespaceName: string): ComboboxOption<string> => {
     if (namespaceName.includes('/') && (namespaceName.endsWith('.yml') || namespaceName.endsWith('.yaml'))) {
@@ -89,8 +94,14 @@ export function useNamespaceAndGroupOptions(): {
     [fetchGrafanaGroups, fetchExternalGroups, formatNamespaceOption]
   );
 
-  const allGroupNames: string[] = [];
-  const isLoadingNamespaces = false;
+  // Extract all unique group names from Grafana data
+  const allGroupNames: string[] = grafanaData?.data.groups
+    ? Array.from(new Set(grafanaData.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.name))).sort((a, b) =>
+        collator.compare(a, b)
+      )
+    : [];
+
+  const isLoadingNamespaces = isLoadingGrafana;
   const namespacePlaceholder = t('alerting.rules-filter.filter-options.placeholder-namespace', 'Select namespace');
   const groupPlaceholder = t('grafana.select-group', 'Select group');
 
