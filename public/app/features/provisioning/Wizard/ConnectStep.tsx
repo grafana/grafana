@@ -3,6 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { Combobox, Field, Input, SecretInput, Stack } from '@grafana/ui';
 
+import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { useBranchOptions } from '../hooks/useBranchOptions';
 import { getHasTokenInstructions } from '../utils/git';
@@ -173,6 +174,8 @@ export const ConnectStep = memo(function ConnectStep() {
           />
         </Field>
       )}
+
+      <FreeTierLimitNote />
     </Stack>
   );
 });

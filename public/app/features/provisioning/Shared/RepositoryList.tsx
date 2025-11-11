@@ -8,6 +8,7 @@ import { RepositoryCard } from '../Repository/RepositoryCard';
 import { useResourceStats } from '../Wizard/hooks/useResourceStats';
 import { useIsProvisionedInstance } from '../hooks/useIsProvisionedInstance';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
+import { isFreeTierLicense } from '../utils/isFreeTierLicense';
 
 interface Props {
   items: Repository[];
@@ -50,6 +51,14 @@ export function RepositoryList({ items }: Props) {
                 {' '}
                 <Trans i18nKey="provisioning.folder-repository-list.unmanaged-resources" count={unmanagedCount}>
                   {{ count: unmanagedCount }} resources aren&apos;t managed by Git sync.
+                </Trans>
+              </>
+            )}
+            {isFreeTierLicense() && (
+              <>
+                {' '}
+                <Trans i18nKey="provisioning.free-tier-limit.message">
+                  Free-tier accounts are capped to 1 connection, and 20 resources per folder
                 </Trans>
               </>
             )}

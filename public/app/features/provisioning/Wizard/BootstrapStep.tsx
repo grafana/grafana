@@ -8,6 +8,8 @@ import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text, useStyles2 } 
 import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
+import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
+
 import { BootstrapStepCardIcons } from './BootstrapStepCardIcons';
 import { BootstrapStepResourceCounting } from './BootstrapStepResourceCounting';
 import { useStepStatus } from './StepStatusContext';
@@ -93,6 +95,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
                     <Stack direction="column" gap={3}>
                       {action.description}
                       <Text color="primary">{action.subtitle}</Text>
+                      <FreeTierLimitNote />
                     </Stack>
 
                     <div className={styles.divider} />
