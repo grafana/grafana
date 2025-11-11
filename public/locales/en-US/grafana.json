@@ -6990,7 +6990,6 @@
         "new-panel": "New Panel"
       }
     },
-    "clear": "Clear",
     "confirm-navigation-modal": {
       "cancel": "Cancel",
       "new-tab": "Do you want to proceed in the current tab or open a new tab?",
@@ -7214,7 +7213,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
     },
-    "next": "Next",
     "next-prev-result": {
       "aria-label-next": "Next result button",
       "aria-label-prev": "Prev result button",
@@ -7235,7 +7233,6 @@
     "pane": {
       "loading-placeholder": "Loading..."
     },
-    "prev": "Prev",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Go queryless"
     },
@@ -7384,8 +7381,7 @@
       "query-inspector-button": "Query inspector",
       "query-inspector-button-aria-label": "Query inspector"
     },
-    "show-critical-path-only": "Show critical path only",
-    "show-matches-only": "Show matches only",
+    "show-all-spans": "Show all spans",
     "span-bar": {
       "tooltip-critical-path": "A segment on the <1>critical path</1> of the overall trace / request / workflow."
     },
@@ -7505,10 +7501,16 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "Open share trace options menu",
+      "critical-path": "Critical path",
+      "critical-path-tooltip": "Selects spans in the critical path—the longest sequence of dependent tasks determining the trace minimum duration.",
       "duration": "Duration",
+      "errors": "Errors",
+      "errors-tooltip": "Selects spans where status equals error.",
       "export-started": "Export started",
       "filters": "Filters",
       "give-feedback": "Feedback",
+      "high-latency": "High latency",
+      "high-latency-tooltip": "Selects the 10% longest spans in the trace (p90).",
       "link-copied": "Link copied to clipboard",
       "overview": "Overview",
       "path": "Path",
@@ -7524,11 +7526,6 @@
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
       "trace-id": "Trace ID",
       "url": "URL"
-    },
-    "trace-page-search-bar": {
-      "aria-label-clear-filters": "Clear filters button",
-      "label-show-matches": "Show matches only switch",
-      "label-show-paths": "Show critical path only switch"
     },
     "trace-view": {
       "aria-label-copy": "Copy to clipboard",
@@ -13339,16 +13336,9 @@
       "textSearchLabel": "Text search"
     },
     "category-span-filters": "Span filters",
-    "name-critical-path-only": "Show critical path only",
-    "name-find-in-trace": "Find in trace",
-    "name-max-duration": "Max duration",
-    "name-min-duration": "Min duration",
-    "name-service-name": "Service name",
-    "name-service-name-operator": "Service name operator",
+    "name-critical-path-only": "Select critical path",
+    "name-filters": "Filters",
     "name-show-matches-only": "Show matches only",
-    "name-span-name": "Span name",
-    "name-span-name-operator": "Span name operator",
-    "name-tags": "Tags",
     "traces-panel": {
       "no-data-found-in-response": "No data found in response"
     }
