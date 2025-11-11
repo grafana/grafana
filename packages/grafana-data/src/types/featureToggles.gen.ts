@@ -165,15 +165,6 @@ export interface FeatureToggles {
   */
   extraThemes?: boolean;
   /**
-  * Enables the plugins frontend sandbox
-  */
-  pluginsFrontendSandbox?: boolean;
-  /**
-  * Enables writing multiple items from a single query within Recorded Queries
-  * @default true
-  */
-  recordedQueriesMulti?: boolean;
-  /**
   * A table visualisation for logs in Explore
   * @default true
   */
@@ -251,11 +242,6 @@ export interface FeatureToggles {
   * Automatic service account and token setup for plugins
   */
   externalServiceAccounts?: boolean;
-  /**
-  * Enables panel monitoring through logs and measurements
-  * @default true
-  */
-  panelMonitoring?: boolean;
   /**
   * Enables native HTTP Histograms
   */
@@ -569,9 +555,13 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
-  * Enable suggested dashboards when creating new dashboards
+  * Enable dashboard library experiments that are production ready
   */
   dashboardLibrary?: boolean;
+  /**
+  * Enable suggested dashboards when creating new dashboards
+  */
+  suggestedDashboards?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
@@ -737,11 +727,6 @@ export interface FeatureToggles {
   * @default false
   */
   azureMonitorDisableLogLimit?: boolean;
-  /**
-  * Enables automatic updates for pre-installed plugins
-  * @default true
-  */
-  preinstallAutoUpdate?: boolean;
   /**
   * Enables experimental reconciler for playlists
   */
@@ -1129,11 +1114,6 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchDualReaderEnabled?: boolean;
   /**
-  * Enables adhoc filtering support for the dashboard datasource
-  * @default true
-  */
-  dashboardDsAdHocFiltering?: boolean;
-  /**
   * Supports __from and __to macros that always use the dashboard level time range
   */
   dashboardLevelTimeMacros?: boolean;
@@ -1250,4 +1230,9 @@ export interface FeatureToggles {
   * Enable template dashboards
   */
   dashboardTemplates?: boolean;
+  /**
+  * Enables app platform API for annotations
+  * @default false
+  */
+  kubernetesAnnotations?: boolean;
 }

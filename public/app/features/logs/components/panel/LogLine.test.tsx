@@ -8,6 +8,7 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../mocks/logRow';
 import { getDisplayedFieldsForLogs, OTEL_PROBE_FIELD } from '../otel/formats';
 
+import { emptyContextData, LogDetailsContext } from './LogDetailsContext';
 import { getGridTemplateColumns, getStyles, LogLine, Props } from './LogLine';
 import { LogListFontSize } from './LogList';
 import { LogListContextProvider, LogListContext } from './LogListContext';
@@ -551,32 +552,32 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
   describe('Inline details', () => {
     test('Details are not rendered if details mode is not inline', () => {
       render(
-        <LogListContext.Provider
+        <LogDetailsContext.Provider
           value={{
-            ...defaultValue,
+            ...emptyContextData,
             showDetails: [log],
             detailsMode: 'sidebar',
             detailsDisplayed: jest.fn().mockReturnValue(true),
           }}
         >
           <LogLine {...defaultProps} />
-        </LogListContext.Provider>
+        </LogDetailsContext.Provider>
       );
       expect(screen.queryByPlaceholderText('Search field names and values')).not.toBeInTheDocument();
     });
 
     test('Details are rendered if details mode is inline', () => {
       render(
-        <LogListContext.Provider
+        <LogDetailsContext.Provider
           value={{
-            ...defaultValue,
+            ...emptyContextData,
             showDetails: [log],
             detailsMode: 'inline',
             detailsDisplayed: jest.fn().mockReturnValue(true),
           }}
         >
           <LogLine {...defaultProps} />
-        </LogListContext.Provider>
+        </LogDetailsContext.Provider>
       );
       expect(screen.getByPlaceholderText('Search field names and values')).toBeInTheDocument();
     });

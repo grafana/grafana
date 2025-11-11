@@ -3163,6 +3163,7 @@ __metadata:
     "@typescript-eslint/types": "npm:^8.9.0"
     "@typescript-eslint/utils": "npm:^8.9.0"
     eslint: "npm:9.32.0"
+    jest: "npm:29.7.0"
     tslib: "npm:2.8.1"
   languageName: unknown
   linkType: soft
@@ -3397,17 +3398,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:2.1.7":
-  version: 2.1.7
-  resolution: "@grafana/plugin-e2e@npm:2.1.7"
+"@grafana/plugin-e2e@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "@grafana/plugin-e2e@npm:3.0.1"
   dependencies:
-    "@grafana/e2e-selectors": "npm:^12.1.0-254610"
+    "@grafana/e2e-selectors": "npm:^12.2.0-255920"
     semver: "npm:^7.5.4"
-    uuid: "npm:^11.0.2"
+    uuid: "npm:^13.0.0"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.52.0
-  checksum: 10/4e14bda1c6304c89a1ffca972dda18d3ab1fad59ee30e6735112d75f7c5c40856091e2e17f46451aec5261b6368f67c245edb112072d98c9067723f4ca2c71c3
+  checksum: 10/1cd95c1e4365f93e884d7ae4d77961e038cd4fcc235e313dd9f96bd0e21090c5aa26a765bedf45cc13cc0dc913da79007172fd9680088b356ef485672ce34681
   languageName: node
   linkType: hard
 
@@ -18861,7 +18862,7 @@ __metadata:
     "@grafana/llm": "npm:0.22.1"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:2.1.7"
+    "@grafana/plugin-e2e": "npm:^3.0.1"
     "@grafana/plugin-ui": "npm:^0.10.10"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
@@ -32996,7 +32997,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:11.1.0, uuid@npm:^11.0.0, uuid@npm:^11.0.2, uuid@npm:^11.0.5":
+"uuid@npm:11.1.0, uuid@npm:^11.0.0, uuid@npm:^11.0.5":
   version: 11.1.0
   resolution: "uuid@npm:11.1.0"
   bin:
@@ -33011,6 +33012,15 @@ __metadata:
   bin:
     uuid: dist/bin/uuid
   checksum: 10/35aa60614811a201ff90f8ca5e9ecb7076a75c3821e17f0f5ff72d44e36c2d35fcbc2ceee9c4ac7317f4cc41895da30e74f3885e30313bee48fda6338f250538
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^13.0.0":
+  version: 13.0.0
+  resolution: "uuid@npm:13.0.0"
+  bin:
+    uuid: dist-node/bin/uuid
+  checksum: 10/2742b24d1e00257e60612572e4d28679423469998cafbaf1fe9f1482e3edf9c40754b31bfdb3d08d71b29239f227a304588f75210b3b48f2609f0673f1feccef
   languageName: node
   linkType: hard
 

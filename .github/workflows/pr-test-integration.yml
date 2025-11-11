@@ -150,10 +150,16 @@ jobs:
               echo "✅ $full_pkg passed"
             fi
           done
+          # Set output for artifact upload
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "upload_artifacts=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "upload_artifacts=false" >> "$GITHUB_OUTPUT"
+          fi
           exit $EXIT_CODE
       - name: Output test profiles and traces
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4
-        if: (matrix.shard == 'profiled' && !cancelled())
+        if: matrix.shard == 'profiled' && !cancelled() && steps.run-profiled-tests.outputs.upload_artifacts == 'true'
         with:
           name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}
           path: profiles/
