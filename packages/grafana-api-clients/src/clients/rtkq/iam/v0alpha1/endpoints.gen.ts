@@ -7,6 +7,7 @@ export const addTagTypes = [
   'SSOSetting',
   'TeamBinding',
   'Team',
+  'Search',
   'User',
 ] as const;
 const injectedRtkApi = api
@@ -507,6 +508,15 @@ const injectedRtkApi = api
           },
         }),
         invalidatesTags: ['Team'],
+      }),
+      getTeamsSearch: build.query<GetTeamsSearchApiResponse, GetTeamsSearchApiArg>({
+        query: (queryArg) => ({
+          url: `/teams/search`,
+          params: {
+            query: queryArg.query,
+          },
+        }),
+        providesTags: ['Search'],
       }),
       getTeam: build.query<GetTeamApiResponse, GetTeamApiArg>({
         query: (queryArg) => ({
@@ -1407,6 +1417,11 @@ export type DeletecollectionTeamApiArg = {
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
+export type GetTeamsSearchApiResponse = /** status 200 undefined */ any;
+export type GetTeamsSearchApiArg = {
+  /** user query string */
+  query?: string;
+};
 export type GetTeamApiResponse = /** status 200 OK */ Team;
 export type GetTeamApiArg = {
   /** name of the Team */
@@ -2095,6 +2110,8 @@ export const {
   useLazyListTeamQuery,
   useCreateTeamMutation,
   useDeletecollectionTeamMutation,
+  useGetTeamsSearchQuery,
+  useLazyGetTeamsSearchQuery,
   useGetTeamQuery,
   useLazyGetTeamQuery,
   useReplaceTeamMutation,
