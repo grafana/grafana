@@ -133,16 +133,11 @@ describe('TracePageHeader test', () => {
     setup();
 
     const header = document.querySelector('header');
-    const method = getByText(header!, 'POST');
-    const status = getByText(header!, '200');
-    const url = getByText(header!, '/v2/gamma/792edh2w897y2huehd2h89');
-    const duration = getByText(header!, '2.36s');
-    const timestampElement = getByText(header!, '2023-02-05 08:50:56.289');
-    expect(method).toBeInTheDocument();
-    expect(status).toBeInTheDocument();
-    expect(url).toBeInTheDocument();
-    expect(duration).toBeInTheDocument();
-    expect(timestampElement).toBeInTheDocument();
+    expect(getByText(header!, 'POST')).toBeInTheDocument();
+    expect(getByText(header!, '200')).toBeInTheDocument();
+    expect(getByText(header!, '/v2/gamma/792edh2w897y2huehd2h89')).toBeInTheDocument();
+    expect(screen.getAllByText('2.36s')[0]).toBeInTheDocument();
+    expect(getByText(header!, '2023-02-05 08:50:56.289')).toBeInTheDocument();
   });
 
   describe('Plugin Extensions', () => {

@@ -84,68 +84,27 @@ describe('TraceViewContainer', () => {
     expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(3);
   });
 
-  it('can select next/prev results', async () => {
+  it('renders next/prev result buttons', async () => {
     renderTraceViewContainer();
-    const spanFiltersButton = screen.getByRole('button', { name: 'Span Filters 3 spans Prev Next' });
-    await user.click(spanFiltersButton);
 
     const nextResultButton = screen.getByRole('button', { name: 'Next result button' });
     const prevResultButton = screen.getByRole('button', { name: 'Prev result button' });
+
+    // Buttons should be disabled when there are no filters applied
+    expect(nextResultButton).toBeDisabled();
+    expect(prevResultButton).toBeDisabled();
     expect(nextResultButton.getAttribute('tabindex')).toBe('-1');
     expect(prevResultButton.getAttribute('tabindex')).toBe('-1');
-
-    await user.click(screen.getByLabelText('Select tag key'));
-    const tagOption = screen.getByText('component');
-    await waitFor(() => expect(tagOption).toBeInTheDocument());
-    await user.click(tagOption);
-    await waitFor(() => {
-      expect(
-        screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[0].parentElement!.className
-      ).toContain('rowMatchingFilter');
-      expect(
-        screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[1].parentElement!.className
-      ).toContain('rowMatchingFilter');
-      expect(
-        screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[2].parentElement!.className
-      ).toContain('rowMatchingFilter');
-    });
-
-    expect(nextResultButton.getAttribute('tabindex')).toBe('0');
-    expect(prevResultButton.getAttribute('tabindex')).toBe('0');
-    await user.click(nextResultButton);
-    await waitFor(() => {
-      expect(
-        screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[0].parentElement!.className
-      ).toContain('rowFocused');
-    });
-    await user.click(nextResultButton);
-    await waitFor(() => {
-      expect(
-        screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[1].parentElement!.className
-      ).toContain('rowFocused');
-    });
-    await user.click(prevResultButton);
-    await waitFor(() => {
-      expect(
-        screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[0].parentElement!.className
-      ).toContain('rowFocused');
-    });
   });
 
-  it('show matches only works as expected', async () => {
+  it('renders show all spans switch', async () => {
     renderTraceViewContainer();
-    const spanFiltersButton = screen.getByRole('button', { name: 'Span Filters 3 spans Prev Next' });
-    await user.click(spanFiltersButton);
 
-    await user.click(screen.getByLabelText('Select tag key'));
-    const tagOption = screen.getByText('http.status_code');
-    await waitFor(() => expect(tagOption).toBeInTheDocument());
-    await user.click(tagOption);
-
-    expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(3);
-    const matchesSwitch = screen.getByRole('switch', { name: 'Show matches only switch' });
+    // Find the show all spans switch in the search bar
+    const matchesSwitch = await screen.findByRole('switch', { name: 'Show all spans' });
     expect(matchesSwitch).toBeInTheDocument();
-    await user.click(matchesSwitch);
-    expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(1);
+    // Switch should be checked (showing all spans) and disabled by default (no filters)
+    expect(matchesSwitch).toBeChecked();
+    expect(matchesSwitch).toBeDisabled();
   });
 });

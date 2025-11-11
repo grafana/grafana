@@ -43,7 +43,7 @@ describe('<TracePageSearchBar>', () => {
 
   it('renders show all spans switch', async () => {
     render(<TracePageSearchBarWithProps matches={['span1']} />);
-    const matchesSwitch = screen.getByRole('switch', { name: 'Show all spans switch' });
+    const matchesSwitch = await screen.findByRole('switch', { name: 'Show all spans' });
     expect(matchesSwitch).toBeInTheDocument();
   });
 });
