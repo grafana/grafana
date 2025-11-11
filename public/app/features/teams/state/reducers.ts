@@ -12,49 +12,7 @@ export const initialTeamsState: TeamsState = {
   hasFetched: false,
 };
 
-type TeamsFetched = {
-  teams: Team[];
-  page: number;
-  perPage: number;
-  noTeams: boolean;
-  totalCount: number;
-};
-
-const teamsSlice = createSlice({
-  name: 'teams',
-  initialState: initialTeamsState,
-  reducers: {
-    teamsLoaded: (state, action: PayloadAction<TeamsFetched>): TeamsState => {
-      const { totalCount, perPage, ...rest } = action.payload;
-      const totalPages = Math.ceil(totalCount / perPage);
-      return { ...state, ...rest, totalPages, perPage, hasFetched: true };
-    },
-    queryChanged: (state, action: PayloadAction<string>): TeamsState => {
-      return { ...state, page: 1, query: action.payload };
-    },
-    pageChanged: (state, action: PayloadAction<number>): TeamsState => {
-      return { ...state, page: action.payload };
-    },
-    sortChanged: (state, action: PayloadAction<TeamsState['sort']>): TeamsState => {
-      return { ...state, sort: action.payload, page: 1 };
-    },
-    rolesFetchBegin: (state) => {
-      return { ...state, rolesLoading: true };
-    },
-    rolesFetchEnd: (state) => {
-      return { ...state, rolesLoading: false };
-    },
-  },
-});
-
-export const { teamsLoaded, queryChanged, pageChanged, sortChanged, rolesFetchBegin, rolesFetchEnd } =
-  teamsSlice.actions;
-
-export const teamsReducer = teamsSlice.reducer;
-
 export const initialTeamState: TeamState = {
-  team: {} as Team,
-  members: [],
   groups: [],
 };
 
@@ -76,6 +34,5 @@ export const { teamLoaded, teamGroupsLoaded } = teamSlice.actions;
 export const teamReducer = teamSlice.reducer;
 
 export default {
-  teams: teamsReducer,
   team: teamReducer,
 };

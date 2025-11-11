@@ -40,16 +40,16 @@ describe('TeamList', () => {
     it('should enable the new team button', async () => {
       render(<TeamList />);
 
-      expect(screen.getByRole('link', { name: /new team/i })).not.toHaveStyle('pointer-events: none');
+      expect(await screen.findByRole('link', { name: /new team/i })).not.toHaveStyle('pointer-events: none');
     });
   });
 
   describe('when user does not have access to create a team', () => {
-    it('should disable the new team button', () => {
+    it('should disable the new team button', async () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
       render(<TeamList />);
 
-      expect(screen.getByRole('link', { name: /new team/i })).toHaveStyle('pointer-events: none');
+      expect(await screen.findByRole('link', { name: /new team/i })).toHaveStyle('pointer-events: none');
     });
   });
 });

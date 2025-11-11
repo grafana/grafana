@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
-import { connect, ConnectedProps } from 'react-redux';
+import { SortingRule } from 'react-table';
 
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -14,6 +14,7 @@ import {
   InlineField,
   InteractiveTable,
   LinkButton,
+  LoadingPlaceholder,
   Pagination,
   Stack,
   Tag,
@@ -24,16 +25,13 @@ import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Role, AccessControlAction } from 'app/types/accessControl';
-import { StoreState } from 'app/types/store';
-import { TeamWithRoles } from 'app/types/teams';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
 import { EnterpriseAuthFeaturesCard } from '../admin/EnterpriseAuthFeaturesCard';
 
-import { deleteTeam, loadTeams, changePage, changeQuery, changeSort } from './state/actions';
+import { useDeleteTeam, useGetTeams, TeamWithRoles } from './hooks';
 
 type Cell<T extends keyof TeamWithRoles = keyof TeamWithRoles> = CellProps<TeamWithRoles, TeamWithRoles[T]>;
-export interface OwnProps {}
 
 export interface State {
   roleOptions: Role[];
@@ -49,35 +47,37 @@ const skeletonData: TeamWithRoles[] = new Array(3).fill(null).map((_, index) => 
   isProvisioned: false,
 }));
 
-const TeamList = ({
-  teams,
-  query,
-  noTeams,
-  hasFetched,
-  loadTeams,
-  deleteTeam,
-  changeQuery,
-  totalPages,
-  page,
-  rolesLoading,
-  changePage,
-  changeSort,
-}: Props) => {
+const TeamList = () => {
+  const canCreate = contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate);
+  const displayRolePicker = shouldDisplayRolePicker();
+  const pageSize = 20;
+
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const styles = useStyles2(getStyles);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<string>();
+  const { data, isLoading } = useGetTeams({ query, pageSize, page, sort });
+  const [deleteTeam] = useDeleteTeam();
 
-  useEffect(() => {
-    loadTeams(true);
-  }, [loadTeams]);
+  const teams = data?.teams || [];
+  const totalPages = Math.ceil((data?.totalCount || 0) / pageSize) || 0;
+  const noTeams = teams?.length === 0;
+  const changeSort = useCallback(
+    (sort: SortingRule<unknown>) => {
+      setSort(`${sort.id}-${sort.desc ? 'desc' : 'asc'}`);
+    },
+    [setSort]
+  );
+  const changePage = (page: number) => {
+    setPage(page);
+  };
 
   useEffect(() => {
     if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
       fetchRoleOptions().then((roles) => setRoleOptions(roles));
     }
   }, []);
-
-  const canCreate = contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate);
-  const displayRolePicker = shouldDisplayRolePicker();
 
   const columns: Array<Column<TeamWithRoles>> = useMemo(
     () => [
@@ -86,7 +86,7 @@ const TeamList = ({
         header: '',
         disableGrow: true,
         cell: ({ cell: { value } }: Cell<'avatarUrl'>) => {
-          if (!hasFetched) {
+          if (isLoading) {
             return <Skeleton containerClassName={styles.blockSkeleton} width={24} height={24} circle />;
           }
 
@@ -97,7 +97,7 @@ const TeamList = ({
         id: 'name',
         header: 'Name',
         cell: ({ cell: { value }, row: { original } }: Cell<'name'>) => {
-          if (!hasFetched) {
+          if (isLoading) {
             return <Skeleton width={100} />;
           }
 
@@ -123,7 +123,7 @@ const TeamList = ({
         id: 'email',
         header: 'Email',
         cell: ({ cell: { value } }: Cell<'email'>) => {
-          if (!hasFetched) {
+          if (isLoading) {
             return <Skeleton width={60} />;
           }
           return value;
@@ -135,7 +135,7 @@ const TeamList = ({
         header: 'Members',
         disableGrow: true,
         cell: ({ cell: { value } }: Cell<'memberCount'>) => {
-          if (!hasFetched) {
+          if (isLoading) {
             return <Skeleton width={40} />;
           }
           return value;
@@ -147,8 +147,8 @@ const TeamList = ({
             {
               id: 'role',
               header: 'Role',
-              cell: ({ cell: { value }, row: { original } }: Cell<'memberCount'>) => {
-                if (!hasFetched) {
+              cell: ({ row: { original } }: Cell<'memberCount'>) => {
+                if (isLoading) {
                   return <Skeleton width={320} height={32} containerClassName={styles.blockSkeleton} />;
                 }
                 const canSeeTeamRoles = contextSrv.hasPermissionInMetadata(
@@ -160,7 +160,7 @@ const TeamList = ({
                     <TeamRolePicker
                       teamId={original.id}
                       roles={original.roles || []}
-                      isLoading={rolesLoading}
+                      isLoading={isLoading}
                       roleOptions={roleOptions}
                       width={40}
                     />
@@ -174,7 +174,7 @@ const TeamList = ({
         id: 'isProvisioned',
         header: '',
         cell: ({ cell: { value } }: Cell<'isProvisioned'>) => {
-          if (!hasFetched) {
+          if (isLoading) {
             return <Skeleton width={240} />;
           }
           return !!value && <Tag colorIndex={14} name={'Provisioned'} />;
@@ -185,7 +185,7 @@ const TeamList = ({
         header: '',
         disableGrow: true,
         cell: ({ row: { original } }: Cell) => {
-          if (!hasFetched) {
+          if (isLoading) {
             return (
               <Stack direction="row" justifyContent="flex-end" alignItems="center">
                 <Skeleton containerClassName={styles.blockSkeleton} width={16} height={16} />
@@ -223,7 +223,7 @@ const TeamList = ({
         },
       },
     ],
-    [displayRolePicker, hasFetched, rolesLoading, roleOptions, deleteTeam, styles]
+    [displayRolePicker, isLoading, styles.blockSkeleton, roleOptions, deleteTeam]
   );
 
   return (
@@ -238,7 +238,7 @@ const TeamList = ({
       }
     >
       <Page.Contents>
-        {noTeams ? (
+        {!isLoading && !query && teams.length === 0 ? (
           <EmptyState
             variant="call-to-action"
             button={
@@ -262,19 +262,26 @@ const TeamList = ({
                 <FilterInput
                   placeholder={t('teams.team-list.placeholder-search-teams', 'Search teams')}
                   value={query}
-                  onChange={changeQuery}
+                  onChange={setQuery}
                 />
               </InlineField>
             </div>
-            {hasFetched && teams.length === 0 ? (
+            {!isLoading && teams.length === 0 && (
               <EmptyState variant="not-found" message={t('teams.empty-state.message', 'No teams found')} />
-            ) : (
+            )}
+            {isLoading && <LoadingPlaceholder text={t('teams.team-list.loading-teams', 'Loading teams...')} />}
+            {!isLoading && teams.length > 0 && (
               <Stack direction={'column'} gap={2}>
                 <InteractiveTable
                   columns={columns}
-                  data={hasFetched ? teams : skeletonData}
+                  data={isLoading ? skeletonData : teams}
                   getRowId={(team) => String(team.id)}
-                  fetchData={changeSort}
+                  fetchData={({ sortBy }) => {
+                    const sortingRule = sortBy.at(0);
+                    if (sortingRule) {
+                      return changeSort(sortingRule);
+                    }
+                  }}
                 />
                 <Stack justifyContent="flex-end">
                   <Pagination
@@ -302,30 +309,7 @@ function shouldDisplayRolePicker(): boolean {
   );
 }
 
-function mapStateToProps(state: StoreState) {
-  return {
-    teams: state.teams.teams,
-    query: state.teams.query,
-    perPage: state.teams.perPage,
-    page: state.teams.page,
-    noTeams: state.teams.noTeams,
-    totalPages: state.teams.totalPages,
-    hasFetched: state.teams.hasFetched,
-    rolesLoading: state.teams.rolesLoading,
-  };
-}
-
-const mapDispatchToProps = {
-  loadTeams,
-  deleteTeam,
-  changePage,
-  changeQuery,
-  changeSort,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
-export type Props = OwnProps & ConnectedProps<typeof connector>;
-export default connector(TeamList);
+export default TeamList;
 
 const getStyles = () => ({
   blockSkeleton: css({

@@ -1,3 +1,4 @@
+import { RoleDto } from 'app/api/clients/legacy';
 import { Role } from 'app/types/accessControl';
 
 export const isNotDelegatable = (role: Role) => {
@@ -23,9 +24,10 @@ export const addDisplayNameForFixedRole = (role: Role) => {
 
 // Adds a display name for use when the list of roles is filtered
 // If either group or displayName are undefined, we fall back (see RoleMenuOption.tsx)
-export const addFilteredDisplayName = (role: Role) => {
-  if (role.group && role.displayName) {
-    role.filteredDisplayName = role.group + ':' + role.displayName;
-  }
-  return role;
+export const addFilteredDisplayName = (role: RoleDto): Role => {
+  const filteredDisplayName = role.group && role.displayName ? role.group + ':' + role.displayName : '';
+  return {
+    ...role,
+    filteredDisplayName,
+  };
 };

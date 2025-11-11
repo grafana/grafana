@@ -86,7 +86,5 @@ export interface TeamsState {
 }
 
 export interface TeamState {
-  team: Team;
-  members: TeamMember[];
   groups: TeamGroup[];
 }

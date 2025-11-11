@@ -3,15 +3,18 @@ import { useForm } from 'react-hook-form';
 
 import { NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Button, Field, Input, FieldSet, Stack } from '@grafana/ui';
+import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
-import { updateTeamRoles } from 'app/core/components/RolePicker/api';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
-import { Role, AccessControlAction } from 'app/types/accessControl';
+import { Role } from 'app/types/accessControl';
 import { TeamDTO } from 'app/types/teams';
+
+import { useCreateTeam } from './hooks';
 
 const pageNav: NavModelItem = {
   icon: 'users-alt',
@@ -21,6 +24,9 @@ const pageNav: NavModelItem = {
 };
 
 export const CreateTeam = (): JSX.Element => {
+  const notifyApp = useAppNotification();
+
+  const [createTeamTrigger] = useCreateTeam();
   const currentOrgId = contextSrv.user.orgId;
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
   const [{ roleOptions }] = useRoleOptions(currentOrgId);
@@ -30,21 +36,28 @@ export const CreateTeam = (): JSX.Element => {
     formState: { errors },
   } = useForm<TeamDTO>();
 
-  const canUpdateRoles =
-    contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
-    contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
-
   const createTeam = async (formModel: TeamDTO) => {
     try {
-      const newTeam = await getBackendSrv().post('/api/teams', formModel);
-      if (newTeam.teamId) {
-        await contextSrv.fetchUserPermissions();
-        if (contextSrv.licensedAccessControlEnabled() && canUpdateRoles) {
-          await updateTeamRoles(pendingRoles, newTeam.teamId, newTeam.orgId);
-        }
-        locationService.push(`/org/teams/edit/${newTeam.uid}`);
+      const { data, error } = await createTeamTrigger(
+        {
+          email: formModel.email || '',
+          name: formModel.name,
+        },
+        pendingRoles
+      );
+
+      const errorMessage = error ? extractErrorMessage(error) : undefined;
+
+      if (errorMessage) {
+        notifyApp.error(errorMessage);
+        return;
+      }
+
+      if (data && data.uid) {
+        locationService.push(`/org/teams/edit/${data.uid}`);
       }
     } catch (e) {
+      notifyApp.error('Failed to create team');
       console.error(e);
     }
   };
@@ -85,8 +98,13 @@ export const CreateTeam = (): JSX.Element => {
                   'This is optional and is primarily used for allowing custom team avatars'
                 )}
               >
-                {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-                <Input {...register('email')} type="email" id="team-email" placeholder="email@test.com" />
+                <Input
+                  {...register('email')}
+                  type="email"
+                  id="team-email"
+                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                  placeholder="email@test.com"
+                />
               </Field>
             </Stack>
           </FieldSet>
