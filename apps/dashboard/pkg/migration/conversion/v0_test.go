@@ -20,7 +20,6 @@ func TestV0ConversionErrorHandling(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetTestDataSourceProvider(dsProvider)
 
 	tests := []struct {
 		name            string
@@ -109,9 +108,9 @@ func TestV0ConversionErrorHandling(t *testing.T) {
 			case *dashv1.Dashboard:
 				err = Convert_V0_to_V1beta1(tt.source, target, nil)
 			case *dashv2alpha1.Dashboard:
-				err = Convert_V0_to_V2alpha1(tt.source, target, nil)
+				err = Convert_V0_to_V2alpha1(tt.source, target, nil, dsProvider)
 			case *dashv2beta1.Dashboard:
-				err = Convert_V0_to_V2beta1(tt.source, target, nil)
+				err = Convert_V0_to_V2beta1(tt.source, target, nil, dsProvider)
 			default:
 				t.Fatalf("unexpected target type: %T", target)
 			}
@@ -132,7 +131,6 @@ func TestV0ConversionErrorPropagation(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetTestDataSourceProvider(dsProvider)
 
 	t.Run("ConvertDashboard_V0_to_V1beta1 returns error on migration failure", func(t *testing.T) {
 		source := &dashv0.Dashboard{
@@ -192,7 +190,7 @@ func TestV0ConversionErrorPropagation(t *testing.T) {
 		}
 		target := &dashv2beta1.Dashboard{}
 
-		err := Convert_V0_to_V2beta1(source, target, nil)
+		err := Convert_V0_to_V2beta1(source, target, nil, dsProvider)
 
 		require.Error(t, err, "expected error to be returned on first step failure")
 		require.NotNil(t, target.Status.Conversion)
@@ -206,7 +204,6 @@ func TestV0ConversionSuccessPaths(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetTestDataSourceProvider(dsProvider)
 
 	t.Run("Convert_V0_to_V1beta1 success path returns nil", func(t *testing.T) {
 		source := &dashv0.Dashboard{
@@ -243,7 +240,7 @@ func TestV0ConversionSuccessPaths(t *testing.T) {
 		}
 		target := &dashv2alpha1.Dashboard{}
 
-		err := Convert_V0_to_V2alpha1(source, target, nil)
+		err := Convert_V0_to_V2alpha1(source, target, nil, dsProvider)
 
 		require.NoError(t, err, "expected successful conversion")
 		// Layout should be set even on success
@@ -264,7 +261,7 @@ func TestV0ConversionSuccessPaths(t *testing.T) {
 		}
 		target := &dashv2beta1.Dashboard{}
 
-		err := Convert_V0_to_V2beta1(source, target, nil)
+		err := Convert_V0_to_V2beta1(source, target, nil, dsProvider)
 
 		require.NoError(t, err, "expected successful conversion")
 	})
@@ -275,7 +272,6 @@ func TestV0ConversionSecondStepErrors(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetTestDataSourceProvider(dsProvider)
 
 	t.Run("Convert_V0_to_V2alpha1 sets status on first step error", func(t *testing.T) {
 		// Create a dashboard that will fail v0->v1beta1 conversion
@@ -293,7 +289,7 @@ func TestV0ConversionSecondStepErrors(t *testing.T) {
 		}
 		target := &dashv2alpha1.Dashboard{}
 
-		err := Convert_V0_to_V2alpha1(source, target, nil)
+		err := Convert_V0_to_V2alpha1(source, target, nil, dsProvider)
 
 		// Convert_V0_to_V2alpha1 doesn't return error, just sets status
 		require.NoError(t, err, "Convert_V0_to_V2alpha1 doesn't return error")
@@ -327,7 +323,7 @@ func TestV0ConversionSecondStepErrors(t *testing.T) {
 		}
 		target := &dashv2alpha1.Dashboard{}
 
-		err := Convert_V0_to_V2alpha1(source, target, nil)
+		err := Convert_V0_to_V2alpha1(source, target, nil, dsProvider)
 
 		// Convert_V0_to_V2alpha1 doesn't return error, just sets status
 		require.NoError(t, err, "Convert_V0_to_V2alpha1 doesn't return error")
@@ -357,7 +353,7 @@ func TestV0ConversionSecondStepErrors(t *testing.T) {
 		}
 		target := &dashv2beta1.Dashboard{}
 
-		err := Convert_V0_to_V2beta1(source, target, nil)
+		err := Convert_V0_to_V2beta1(source, target, nil, dsProvider)
 
 		// May or may not error depending on dashboard content
 		// But if it does error on second step, status should be set
@@ -383,7 +379,7 @@ func TestV0ConversionSecondStepErrors(t *testing.T) {
 		}
 		target := &dashv2beta1.Dashboard{}
 
-		err := Convert_V0_to_V2beta1(source, target, nil)
+		err := Convert_V0_to_V2beta1(source, target, nil, dsProvider)
 
 		// May or may not error depending on dashboard content
 		// But if it does error on third step, status should be set

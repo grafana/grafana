@@ -829,11 +829,10 @@ func TestDataLossDetectionOnAllInputFiles(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := testutil.NewDataSourceProvider(testutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetTestDataSourceProvider(dsProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme)
+	err := RegisterConversions(scheme, dsProvider)
 	require.NoError(t, err)
 
 	// Read all files from input directory
