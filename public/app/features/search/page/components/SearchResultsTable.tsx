@@ -143,7 +143,7 @@ export const SearchResultsTable = React.memo(
           <div key={key} {...rowProps} className={className}>
             {row.cells.map((cell: Cell, index: number) => {
               const href = onClickItem ? url : undefined;
-              const fieldName = (cell.column as any)?.field?.name;
+              const fieldName = cell.column.field.name;
 
               let userProps: { href?: string; onClick?: (event: React.MouseEvent<HTMLElement>) => void } = {
                 href,
@@ -160,7 +160,7 @@ export const SearchResultsTable = React.memo(
                     reportInteraction('grafana_browse_dashboards_page_click_list_item', {
                       itemKind: kind,
                       parent: !parent ? 'general': parent === 'general' ? 'general' : 'folder',
-                      view: 'search view',
+                      source: 'search view',
                     });
                   } catch (e) {
                     // ignore analytics errors
