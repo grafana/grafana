@@ -35,34 +35,6 @@ func getDefaultDatasourceType(ctx context.Context, provider schemaversion.DataSo
 	return defaultType
 }
 
-// getDefaultDatasourceRef gets the default datasource ref using the datasource provider
-func getDefaultDatasourceRef(ctx context.Context, provider schemaversion.DataSourceInfoProvider) dashv2alpha1.DashboardDataSourceRef {
-	defaultGrafanaUID := "-- Grafana --"
-	defaultType := getDefaultDatasourceType(ctx, provider)
-
-	if provider == nil {
-		return dashv2alpha1.DashboardDataSourceRef{
-			Uid:  &defaultGrafanaUID,
-			Type: &defaultType,
-		}
-	}
-
-	datasources := provider.GetDataSourceInfo(ctx)
-	for _, ds := range datasources {
-		if ds.Default {
-			return dashv2alpha1.DashboardDataSourceRef{
-				Uid:  &ds.UID,
-				Type: &ds.Type,
-			}
-		}
-	}
-
-	return dashv2alpha1.DashboardDataSourceRef{
-		Uid:  &defaultGrafanaUID,
-		Type: &defaultType,
-	}
-}
-
 // getDatasourceTypeByUID gets the datasource type by UID using the datasource provider
 func getDatasourceTypeByUID(ctx context.Context, uid string, provider schemaversion.DataSourceInfoProvider) string {
 	if uid == "" {
