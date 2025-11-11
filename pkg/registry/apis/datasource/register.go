@@ -153,10 +153,7 @@ func NewDataSourceAPIBuilder(
 	var err error
 
 	if useShorterAPIGroupName {
-		group, err = plugins.GetShortDatasourceGroupNameFromPluginID(plugin.ID)
-		if err != nil {
-			return nil, err
-		}
+		group = plugin.ID
 	} else {
 		group, err = plugins.GetDatasourceGroupNameFromPluginID(plugin.ID)
 		if err != nil {
@@ -185,7 +182,7 @@ func getHardcodedQueryTypes(group string) (*queryV0.QueryTypeDefinitionList, err
 	var err error
 	var raw json.RawMessage
 	switch group {
-	case "testdata.datasource.grafana.app", "testdata":
+	case "testdata.datasource.grafana.app", "grafana-testdata-datasource":
 		raw, err = kinds.QueryTypeDefinitionListJSON()
 	case "prometheus.datasource.grafana.app", "prometheus":
 		raw, err = models.QueryTypeDefinitionListJSON()
