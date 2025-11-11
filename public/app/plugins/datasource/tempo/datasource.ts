@@ -629,7 +629,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     );
   }
 
-  handleTraceQlQuery = (options: DataQueryRequest<TempoQuery>, targets: { [type: string]: TempoQuery[] }) => {
+  handleTraceQlQuery(options: DataQueryRequest<TempoQuery>, targets: { [type: string]: TempoQuery[] }) {
     const startTime = performance.now();
     const traceqlSearchTargets = targets.traceqlSearch || targets.traceql;
     const appliedQuery = this.applyVariables(traceqlSearchTargets[0], options.scopedVars);
@@ -707,7 +707,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         return of({ error: { message: getErrorMessage(err?.data?.message) }, data: [] });
       })
     );
-  };
+  }
 
   // this is just a short term function, we will remove once we have rolled
   // out the backend migration and are happy with the stability of the feature
