@@ -164,12 +164,13 @@ export function LogsTable(props: Props) {
         // For the first field (time), wrap the cell to include action buttons
         const isFirstField = index === 0;
         const isBodyField = field.name === logsFrame?.bodyField.name;
+        const isTimeField = field.name === logsFrame?.timeField.name;
 
         field.config = {
           ...field.config,
           custom: {
             ...field.config.custom,
-            inspect: true,
+            inspect: !isTimeField, // Disable inspect for time field to avoid type errors
             filterable: true,
             width: isBodyField
               ? undefined
