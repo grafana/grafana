@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	"go.opentelemetry.io/otel"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,7 +47,10 @@ const (
 	LargeObjectSupportDisabled = false
 )
 
-var _ storage.Interface = (*Storage)(nil)
+var (
+	_      storage.Interface = (*Storage)(nil)
+	tracer                   = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/apistore")
+)
 
 type DefaultPermissionSetter = func(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
 
@@ -209,6 +213,8 @@ func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Obje
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
+	ctx, span := tracer.Start(ctx, "apistore.Storage.Create")
+	defer span.End()
 	v, err := s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
 		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_ADDED, key, obj, out)
@@ -274,6 +280,8 @@ func (s *Storage) Delete(
 	_ runtime.Object,
 	opts storage.DeleteOptions,
 ) error {
+	ctx, span := tracer.Start(ctx, "apistore.Storage.Delete")
+	defer span.End()
 	info, ok := authtypes.AuthInfoFrom(ctx)
 	if !ok {
 		return errors.New("missing auth info")
@@ -336,6 +344,8 @@ func (s *Storage) Delete(
 
 // This version is not yet passing the watch tests
 func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
+	ctx, span := tracer.Start(ctx, "apistore.Storage.Watch")
+	defer span.End()
 	k, err := s.getKey(key)
 	if err != nil {
 		return watch.NewEmptyWatch(), nil
@@ -379,6 +389,8 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
+	ctx, span := tracer.Start(ctx, "apistore.Storage.Get")
+	defer span.End()
 	var err error
 	req := &resourcepb.ReadRequest{}
 	req.Key, err = s.getKey(key)
@@ -424,6 +436,8 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
+	ctx, span := tracer.Start(ctx, "apistore.Storage.GetList")
+	defer span.End()
 	k, err := s.getKey(key)
 	if err != nil {
 		return err
@@ -521,6 +535,8 @@ func (s *Storage) GuaranteedUpdate(
 	tryUpdate storage.UpdateFunc,
 	cachedExistingObject runtime.Object,
 ) error {
+	ctx, span := tracer.Start(ctx, "apistore.Storage.GuaranteedUpdate")
+	defer span.End()
 	var (
 		res           storage.ResponseMeta
 		updatedObj    runtime.Object
