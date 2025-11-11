@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { handleLinkClick } from '@react-aria/utils';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -33,7 +32,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
 
   const handleLinkClick = () => {
     if (item.kind === 'dashboard') {
-      console.log('grafana_browse_dashboards_page_click_dashboard', {
+      reportInteraction('grafana_browse_dashboards_page_click_dashboard', {
         parent: item.parentUID ? 'folder' : 'root',
       });
     }
