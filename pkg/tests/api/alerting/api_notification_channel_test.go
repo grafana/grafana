@@ -137,7 +137,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 				"__dashboardUid__": "dashboard_uid",
 				"__orgId__": "1",
 				"__panelId__": "1",
-				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='reduce' value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='threshold' value=1 ]",
 				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
@@ -225,7 +225,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 				"__dashboardUid__": "dashboard_uid",
 				"__orgId__": "1",
 				"__panelId__": "1",
-				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='reduce' value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='threshold' value=1 ]",
 				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
@@ -307,7 +307,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 					"__dashboardUid__": "dashboard_uid",
 					"__orgId__": "1",
 					"__panelId__": "1",
-					"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+					"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='reduce' value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='threshold' value=1 ]",
 					"__values__": "{\"B\":22,\"C\":1}"
 				},
 				"labels": {
@@ -400,7 +400,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 				"__dashboardUid__": "dashboard_uid",
 				"__orgId__": "1",
 				"__panelId__": "1",
-				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='reduce' value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='threshold' value=1 ]",
 				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
@@ -506,7 +506,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 				"__dashboardUid__": "dashboard_uid",
 				"__orgId__": "1",
 				"__panelId__": "1",
-				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='reduce' value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='threshold' value=1 ]",
 				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
@@ -805,7 +805,7 @@ func TestIntegrationTestReceiversAlertCustomization(t *testing.T) {
 				"__dashboardUid__": "dashboard_uid",
 				"__orgId__": "1",
 				"__panelId__": "1",
-				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} value=1 ]",
+				"__value_string__": "[ var='B' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='reduce' value=22 ], [ var='C' labels={__name__=go_threads, instance=host.docker.internal:3000, job=grafana} type='threshold' value=1 ]",
 				"__values__": "{\"B\":22,\"C\":1}"
 			},
 			"labels": {
@@ -2768,10 +2768,10 @@ var expNonEmailNotifications = map[string][]string{
 			  "alertname": "AlertmanagerAlert",
 			  "grafana_folder": "default"
 			},
-			"annotations": {
-			  "__orgId__":"1",
+		"annotations": {
+		  "__orgId__":"1",
               "__values__": "{\"A\":1}",
-              "__value_string__": "[ var='A' labels={} value=1 ]"
+              "__value_string__": "[ var='A' labels={} type='math' value=1 ]"
             },
 			"startsAt": "%s",
 			"endsAt": "0001-01-01T00:00:00Z",
