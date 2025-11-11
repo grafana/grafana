@@ -3383,11 +3383,6 @@
       "count": 1
     }
   },
-  "public/app/features/teams/state/reducers.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/templating/fieldAccessorCache.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
