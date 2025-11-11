@@ -1,6 +1,7 @@
 import { DataTransformerID, standardTransformersRegistry, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Box, Button, Grid, Stack, Text } from '@grafana/ui';
 import config from 'app/core/config';
 
@@ -49,6 +50,13 @@ export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
   // Combine SQL tile with other transformations, SQL tile first
   const allTiles = hasGoToQueries ? [sqlTransformationTile, ...transformations] : transformations;
 
+  const handleSqlTransformationClick = () => {
+    reportInteraction('grafana_panel_transformations_sql_transformation_clicked', {
+      location: 'empty_transformations_placeholder',
+    });
+    props.onGoToQueries?.();
+  };
+
   return (
     <>
       {config.featureToggles.transformationsEmptyPlaceholder ? (
@@ -63,7 +71,7 @@ export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
                     <TransformationCard
                       key={tile.id}
                       transform={tile}
-                      onClick={isSQL ? () => props.onGoToQueries?.() : (id) => props.onAddTransformation?.(id)}
+                      onClick={isSQL ? handleSqlTransformationClick : (id) => props.onAddTransformation?.(id)}
                       showIllustrations={!isSQL}
                       showPluginState={false}
                       showTags={false}
