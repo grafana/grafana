@@ -11710,7 +11710,8 @@
     },
     "message": {
       "show-less": "show less",
-      "show-more": "show more"
+      "show-more": "show more",
+      "truncated": "Message truncated"
     },
     "mode-options": {
       "folder": {

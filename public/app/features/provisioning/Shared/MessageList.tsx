@@ -35,8 +35,16 @@ export function MessageList({ messages, variant }: MessageListProps) {
               {!showFull && hasMultipleMessages && index === 0 && (
                 <>
                   {' '}
-                  <Trans i18nKey="logs.log-row-message.ellipsis">… </Trans>
-                  <button type="button" className={cx(styles.showMore, styles.showMoreInline)} onClick={handleExpand}>
+                  <span aria-hidden="true">… </span>
+                  <span className="sr-only">
+                    <Trans i18nKey="provisioning.message.truncated">Message truncated</Trans>
+                  </span>
+                  <button
+                    type="button"
+                    className={cx(styles.showMore, styles.showMoreInline)}
+                    onClick={handleExpand}
+                    aria-expanded={false}
+                  >
                     <Trans i18nKey="provisioning.message.show-more">show more</Trans>
                   </button>
                 </>
@@ -47,7 +55,7 @@ export function MessageList({ messages, variant }: MessageListProps) {
       </div>
       {showFull && hasMultipleMessages && (
         <Box paddingLeft={3} paddingTop={0.5}>
-          <button type="button" className={styles.showMore} onClick={handleCollapse}>
+          <button type="button" className={styles.showMore} onClick={handleCollapse} aria-expanded={true}>
             <Trans i18nKey="provisioning.message.show-less">show less</Trans>
           </button>
         </Box>
