@@ -81,7 +81,7 @@ export function SegmentInput({
       // this needs to autofocus, but it's ok as it's only rendered by choice
       // eslint-disable-next-line jsx-a11y/no-autofocus
       autoFocus
-      className={cx(styles.input, inputWidthStyle)}
+      className={cx(`gf-form gf-form-input`, inputWidthStyle)}
       value={value}
       placeholder={inputPlaceholder}
       onChange={(item) => {

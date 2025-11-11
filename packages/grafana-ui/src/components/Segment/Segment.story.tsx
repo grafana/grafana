@@ -5,23 +5,16 @@ import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
-import { useStyles2 } from '../..//themes/ThemeContext';
-import { InlineLabel } from '../Forms/InlineLabel';
 import { Icon } from '../Icon/Icon';
-import { Box } from '../Layout/Box/Box';
 
 import { Segment, SegmentSyncProps } from './Segment';
 import { SegmentSection } from './SegmentSection';
-import { getSegmentStyles } from './styles';
 
-const AddButton = () => {
-  const styles = useStyles2(getSegmentStyles);
-  return (
-    <span className={styles.addButton}>
-      <Icon aria-label="Add" name="plus-circle" />
-    </span>
-  );
-};
+const AddButton = (
+  <span className="gf-form-label query-part">
+    <Icon aria-label="Add" name="plus-circle" />
+  </span>
+);
 
 function toOption<T>(value: T) {
   return {
@@ -45,7 +38,7 @@ const SegmentFrame = ({
   <>
     <SegmentSection label="Segment">
       {children}
-      <Segment Component={AddButton()} onChange={({ value }) => action('New value added')(value)} options={options} />
+      <Segment Component={AddButton} onChange={({ value }) => action('New value added')(value)} options={options} />
     </SegmentSection>
   </>
 );
@@ -138,9 +131,7 @@ export const CustomOptionsAllowed = () => {
 };
 
 const CustomLabelComponent = ({ value }: SelectableValue<string | number>) => (
-  <Box marginRight={0.5}>
-    <InlineLabel>custom({String(value)})</InlineLabel>
-  </Box>
+  <div className="gf-form-label">custom({value})</div>
 );
 
 export const CustomLabelField = () => {
