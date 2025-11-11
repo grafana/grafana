@@ -7,17 +7,10 @@ import (
 	advisorapi "github.com/grafana/grafana/apps/advisor/pkg/apis"
 	advisorapp "github.com/grafana/grafana/apps/advisor/pkg/app"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
-	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/client-go/rest"
 )
-
-type noopCheckRegistry struct{}
-
-func (m *noopCheckRegistry) Checks() []checks.Check {
-	return []checks.Check{}
-}
 
 var (
 	_ appsdkapiserver.AppInstaller    = (*AdvisorAppInstaller)(nil)
@@ -35,15 +28,9 @@ func (a *AdvisorAppInstaller) GetAuthorizer() authorizer.Authorizer {
 
 func ProvideAppInstaller() (*AdvisorAppInstaller, error) {
 	provider := simple.NewAppProvider(advisorapi.LocalManifest(), nil, advisorapp.New)
-	specificConfig := checkregistry.AdvisorAppConfig{
-		CheckRegistry: &noopCheckRegistry{},
-		PluginConfig:  map[string]string{},
-		StackID:       "",  // Numeric stack ID for standalone mode
-		OrgService:    nil, // Not needed when StackID is set
-	}
-
+	specificConfig := checkregistry.AdvisorAppConfig{}
 	appConfig := app.Config{
-		KubeConfig:     rest.Config{}, // this will be overridden by the installer's InitializeApp method
+		KubeConfig:     rest.Config{},
 		ManifestData:   *advisorapi.LocalManifest().ManifestData,
 		SpecificConfig: specificConfig,
 	}
