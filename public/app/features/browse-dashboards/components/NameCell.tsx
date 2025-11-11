@@ -30,14 +30,6 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
   const isLoading = isOpen && !childrenByParentUID[item.uid];
   const iconName = getIconForItem(data.item, isOpen);
 
-  const handleLinkClick = () => {
-    if (item.kind === 'dashboard') {
-      reportInteraction('grafana_browse_dashboards_page_click_dashboard', {
-        parent: item.parentUID ? 'folder' : 'root',
-      });
-    }
-  };
-
   if (item.kind === 'ui') {
     return (
       <>
@@ -99,7 +91,16 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
 
         <Text variant="body" truncate id={treeID && makeRowID(treeID, item)}>
           {item.url ? (
-            <Link onClick={handleLinkClick} href={item.url} className={styles.link}>
+            <Link
+              onClick={() => {
+                reportInteraction('grafana_browse_dashboards_page_click_list_item', {
+                  itemKind: item.kind,
+                  parent: item.parentUID ? 'folder' : 'root',
+                });
+              }}
+              href={item.url}
+              className={styles.link}
+            >
               {item.title}
             </Link>
           ) : (
