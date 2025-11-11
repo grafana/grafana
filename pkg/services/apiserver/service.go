@@ -308,6 +308,10 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig := genericapiserver.NewRecommendedConfig(s.codecs)
 	serverConfig.GoawayChance = 0
 	serverConfig.ShutdownSendRetryAfter = true
+	if serverConfig.SecureServing != nil {
+		// Disable HTTP/2 from mt-apiserver to querier (test)
+		serverConfig.SecureServing.DisableHTTP2 = true
+	}
 
 	if err := o.ApplyTo(serverConfig); err != nil {
 		return err
