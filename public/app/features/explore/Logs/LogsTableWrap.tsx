@@ -25,6 +25,7 @@ import {
 } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { reportInteractionOnce } from 'app/features/logs/components/panel/analytics';
 
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../../logs/components/otel/formats';
 import { DEFAULT_URL_COLUMNS, DETECTED_LEVEL, LEVEL, LogsFrame, parseLogsFrame } from '../../logs/logsFrame';
 
 import { LogsTable } from './LogsTable';
@@ -259,6 +260,10 @@ export function LogsTableWrap(props: Props) {
         const labelsArray = Object.keys(labels);
         // Iterate through the label values
         labelsArray.forEach((label) => {
+          // Skip OTEL attributes field
+          if (label === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME) {
+            return;
+          }
           // If it's already in our map, increment the count
           if (labelCardinality.has(label)) {
             const value = labelCardinality.get(label);
@@ -298,6 +303,10 @@ export function LogsTableWrap(props: Props) {
 
     // Normalize the other fields
     otherFields.forEach((field) => {
+      // Skip OTEL attributes field
+      if (field.name === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME) {
+        return;
+      }
       const isActive = pendingLabelState[field.name]?.active;
       const index = pendingLabelState[field.name]?.index;
       if (isActive && index !== undefined) {

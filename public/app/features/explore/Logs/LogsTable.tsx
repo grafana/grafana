@@ -26,6 +26,7 @@ import {
 import { config } from '@grafana/runtime';
 import { AdHocFilterItem, CustomCellRendererProps, Table, TableCellDisplayMode, useTheme2 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from 'app/features/logs/components/otel/formats';
 import { DETECTED_LEVEL, LEVEL, LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
@@ -373,7 +374,7 @@ function buildLabelFilters(columnsWithMeta: Record<string, FieldNameMeta>) {
   // Create object of label filters to include columns selected by the user
   let labelFilters: Record<string, number> = {};
   Object.keys(columnsWithMeta)
-    .filter((key) => columnsWithMeta[key].active)
+    .filter((key) => columnsWithMeta[key].active && key !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME)
     .forEach((key) => {
       const index = columnsWithMeta[key].index;
       // Index should always be defined for any active column

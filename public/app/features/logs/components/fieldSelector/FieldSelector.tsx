@@ -11,7 +11,7 @@ import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-import { getSuggestedFieldsForLogs } from '../otel/formats';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME, getSuggestedFieldsForLogs } from '../otel/formats';
 import { useLogListContext } from '../panel/LogListContext';
 import { reportInteractionOnce } from '../panel/analytics';
 import { LogListModel } from '../panel/processing';
@@ -392,7 +392,7 @@ function getFieldsWithStats(dataFrames: DataFrame[]): FieldWithStats[] {
     return [...labels, ...fields];
   });
 
-  const labels = [...new Set(allFields)];
+  const labels = [...new Set(allFields)].filter((label) => label !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME);
 
   return labels.map((label) => ({
     name: label,
