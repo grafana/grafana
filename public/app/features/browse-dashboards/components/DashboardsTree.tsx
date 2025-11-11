@@ -8,6 +8,7 @@ import InfiniteLoader from 'react-window-infinite-loader';
 import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { DashboardViewItem } from 'app/features/search/types';
 
@@ -249,8 +250,19 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
       {row.cells.map((cell) => {
         const { key, ...cellProps } = cell.getCellProps();
 
+        // Track clicks when users choose a dashboard
+        const dashboardClick = dashboardItem.kind === 'dashboard' && cell.column.id === 'name';
+        const handleClick = dashboardClick
+          ? reportInteraction('grafana_browse_dashboards_page_choose_dashboard')
+          : undefined;
+
         return (
-          <div key={key} {...cellProps} className={styles.cell}>
+          <div
+            key={key}
+            {...cellProps}
+            className={styles.cell}
+            onClick={handleClick}
+          >
             {cell.render('Cell', { isSelected, onItemSelectionChange, treeID, permissions })}
           </div>
         );
