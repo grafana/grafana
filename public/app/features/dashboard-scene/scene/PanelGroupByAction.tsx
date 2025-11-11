@@ -1,14 +1,4 @@
 import { css, cx } from '@emotion/css';
-import {
-  autoUpdate,
-  offset,
-  flip,
-  shift,
-  useFloating,
-  useClick,
-  useDismiss,
-  useInteractions,
-} from '@floating-ui/react';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { lastValueFrom } from 'rxjs';
 
@@ -22,7 +12,7 @@ import {
   VariableValueOption,
   VizPanel,
 } from '@grafana/scenes';
-import { Button, Icon, Input, useStyles2, Checkbox, Portal } from '@grafana/ui';
+import { Button, Icon, Input, useStyles2, Checkbox, Dropdown, Stack } from '@grafana/ui';
 
 interface OptionWithChecked extends VariableValueOption {
   checked: boolean;
@@ -110,25 +100,13 @@ function PanelGroupByActionRenderer({ model }: SceneComponentProps<PanelGroupByA
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  const { context, refs, floatingStyles } = useFloating({
-    open: isOpen,
-    onOpenChange: setIsOpen,
-    placement: 'bottom-start',
-    middleware: [offset(4), flip(), shift({ padding: 8 })],
-    whileElementsMounted: autoUpdate,
-  });
-
-  const click = useClick(context);
-  const dismiss = useDismiss(context);
-  const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss]);
-
   const handleItemClick = useCallback((item: OptionWithChecked) => {
     setOptions((prevOptions) =>
       prevOptions.map((opt) => (opt.value === item.value ? { ...opt, checked: !opt.checked } : opt))
     );
   }, []);
 
-  const handleApply = () => {
+  const handleApply = useCallback(() => {
     const checkedOptions = options.filter((opt) => opt.checked);
 
     if (!checkedOptions.length) {
@@ -142,12 +120,14 @@ function PanelGroupByActionRenderer({ model }: SceneComponentProps<PanelGroupByA
     if (groupByVariable) {
       groupByVariable.changeValueTo(selectedValues, selectedLabels, true);
     }
-    setIsOpen(false);
-  };
+  }, [model, options]);
 
-  const handleCancel = () => {
-    setIsOpen(false);
-  };
+  const handleVisibilityChange = useCallback((visible: boolean) => {
+    setIsOpen(visible);
+    if (!visible) {
+      setSearchValue('');
+    }
+  }, []);
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -170,7 +150,9 @@ function PanelGroupByActionRenderer({ model }: SceneComponentProps<PanelGroupByA
       }
     };
 
-    fetchOptions();
+    if (isOpen) {
+      fetchOptions();
+    }
   }, [model, groupByState?.value, dataState.data?.request?.targets, isOpen]);
 
   const filteredOptions = useMemo(() => {
@@ -183,78 +165,84 @@ function PanelGroupByActionRenderer({ model }: SceneComponentProps<PanelGroupByA
     return indices.map((idx) => options[idx]);
   }, [options, searchValue]);
 
+  const hasCheckedOptions = useMemo(() => {
+    return options.some((opt) => opt.checked);
+  }, [options]);
+
   if (!groupByState || !panelHasGroupBy) {
     return null;
   }
 
+  const overlayContent = () => (
+    <div className={styles.menuContainer}>
+      <Stack
+        direction="column"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === 'Tab') {
+            e.stopPropagation();
+          }
+        }}
+      >
+        <div className={styles.searchContainer}>
+          <Input
+            prefix={<Icon name="search" />}
+            placeholder={t('panel-group-by.search-placeholder', 'Search...')}
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.currentTarget.value)}
+          />
+        </div>
+        <div className={styles.listContainer}>
+          {isLoading ? (
+            <div className={styles.emptyMessage}>
+              <Trans i18nKey="panel-group-by.loading">Loading options...</Trans>
+            </div>
+          ) : filteredOptions.length === 0 ? (
+            <div className={styles.emptyMessage}>
+              <Trans i18nKey="panel-group-by.no-options">No options found</Trans>
+            </div>
+          ) : (
+            filteredOptions.map((option) => {
+              return (
+                <div
+                  key={String(option.value)}
+                  className={cx(styles.option)}
+                  onClick={() => handleItemClick(option)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      handleItemClick(option);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={option.checked}
+                >
+                  <Checkbox value={option.checked} onChange={() => handleItemClick(option)} />
+                  <span className={styles.optionLabel}>{option.label}</span>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </Stack>
+      <div className={styles.applyContainer}>
+        <Button onClick={handleApply} disabled={!hasCheckedOptions}>
+          <Trans i18nKey="panel-group-by.apply">Apply</Trans>
+        </Button>
+        <Button variant="secondary" fill="outline">
+          <Trans i18nKey="panel-group-by.cancel">Cancel</Trans>
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
-    <>
-      <Button variant="secondary" size="sm" ref={refs.setReference} {...getReferenceProps()}>
+    <Dropdown overlay={overlayContent} placement="bottom-start" onVisibleChange={handleVisibilityChange}>
+      <Button variant="secondary" size="sm">
         <Trans i18nKey="panel-group-by.button">Group by</Trans>
         <Icon name="angle-down" />
       </Button>
-
-      {isOpen && (
-        <Portal>
-          <div ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()} className={styles.menuContainer}>
-            {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-            <div className={styles.searchContainer} onClick={(e) => e.stopPropagation()}>
-              <Input
-                prefix={<Icon name="search" />}
-                placeholder={t('panel-group-by.search-placeholder', 'Search...')}
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.currentTarget.value)}
-              />
-            </div>
-            <div className={styles.listContainer}>
-              {isLoading ? (
-                <div className={styles.emptyMessage}>
-                  <Trans i18nKey="panel-group-by.loading">Loading options...</Trans>
-                </div>
-              ) : filteredOptions.length === 0 ? (
-                <div className={styles.emptyMessage}>
-                  <Trans i18nKey="panel-group-by.no-options">No options found</Trans>
-                </div>
-              ) : (
-                filteredOptions.map((option) => {
-                  return (
-                    <div
-                      key={String(option.value)}
-                      className={cx(styles.option)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleItemClick(option);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleItemClick(option);
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      aria-pressed={option.checked}
-                    >
-                      <Checkbox value={option.checked} onChange={() => handleItemClick(option)} />
-                      <span className={styles.optionLabel}>{option.label}</span>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-            <div className={styles.applyContainer}>
-              <Button onClick={handleApply}>
-                <Trans i18nKey="panel-group-by.apply">Apply</Trans>
-              </Button>
-              <Button onClick={handleCancel} variant="secondary" fill="outline">
-                <Trans i18nKey="panel-group-by.cancel">Cancel</Trans>
-              </Button>
-            </div>
-          </div>
-        </Portal>
-      )}
-    </>
+    </Dropdown>
   );
 }
 
@@ -262,13 +250,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   menuContainer: css({
     display: 'flex',
     flexDirection: 'column',
-    width: '300px',
-    maxHeight: '400px',
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
     boxShadow: theme.shadows.z3,
-    zIndex: theme.zIndex.portal,
   }),
   searchContainer: css({
     padding: theme.spacing(1),
@@ -277,7 +262,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   listContainer: css({
     flex: 1,
     overflow: 'auto',
-    minHeight: '200px',
+    minHeight: '100px',
     maxHeight: '300px',
     padding: theme.spacing(0.5),
   }),
