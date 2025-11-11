@@ -6,21 +6,24 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // NewClearAuthHeadersMiddleware creates a new backend.HandlerMiddleware
 // that will clear any outgoing HTTP headers that was part of the incoming
 // HTTP request and used when authenticating to Grafana.
-func NewClearAuthHeadersMiddleware() backend.HandlerMiddleware {
+func NewClearAuthHeadersMiddleware(cfg *setting.Cfg) backend.HandlerMiddleware {
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &ClearAuthHeadersMiddleware{
 			BaseHandler: backend.NewBaseHandler(next),
+			cfg:         cfg,
 		}
 	})
 }
 
 type ClearAuthHeadersMiddleware struct {
 	backend.BaseHandler
+	cfg *setting.Cfg
 }
 
 func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, h backend.ForwardHTTPHeaders) {
@@ -30,11 +33,9 @@ func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, h backend
 		return
 	}
 
-	list := contexthandler.AuthHTTPHeaderListFromContext(ctx)
-	if list != nil {
-		for _, k := range list.Items {
-			h.DeleteHTTPHeader(k)
-		}
+	items := contexthandler.GetAuthHTTPHeaders(m.cfg)
+	for _, k := range items {
+		h.DeleteHTTPHeader(k)
 	}
 }
 

@@ -200,7 +200,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 
 	middlewares = append(middlewares,
 		clientmiddleware.NewTracingHeaderMiddleware(),
-		clientmiddleware.NewClearAuthHeadersMiddleware(),
+		clientmiddleware.NewClearAuthHeadersMiddleware(cfg),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
 		clientmiddleware.NewCachingMiddleware(cachingServiceClient),
