@@ -602,30 +602,12 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/DataSourceSettings/AlertingSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "packages/grafana-ui/src/components/DataSourceSettings/CustomHeadersSettings.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
     },
-    "no-restricted-syntax": {
-      "count": 3
-    },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/DataSourceSettings/SecureSocksProxySettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
-  "packages/grafana-ui/src/components/DataSourceSettings/TLSAuthSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "packages/grafana-ui/src/components/DataSourceSettings/types.ts": {
