@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strconv"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -14,6 +13,19 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/util"
 	prom_model "github.com/prometheus/common/model"
 )
+
+// validateGroupLabels now delegates to util.ValidateGroupLabels for shared logic.
+func validateGroupLabels(r *model.RecordingRule, oldObject resource.Object, action resource.AdmissionAction) error {
+	var oldLabels map[string]string
+	if oldObject != nil {
+		if oldRule, ok := oldObject.(*model.RecordingRule); ok {
+			oldLabels = oldRule.Labels
+		} else {
+			return fmt.Errorf("old object is not of type *v0alpha1.RecordingRule")
+		}
+	}
+	return util.ValidateGroupLabels(r.Labels, oldLabels, action)
+}
 
 func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 	return &simple.Validator{
@@ -29,20 +41,8 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 				return fmt.Errorf("invalid provenance status: %s", sourceProv)
 			}
 
-			group := r.Labels[model.GroupLabelKey]
-			groupIndexStr := r.Labels[model.GroupIndexLabelKey]
-			if req.Action == resource.AdmissionActionCreate {
-				if group != "" || groupIndexStr != "" {
-					return fmt.Errorf("cannot set group when creating recording rule")
-				}
-			}
-			if group != "" {
-				if groupIndexStr == "" {
-					return fmt.Errorf("%s must be set when %s is set", model.GroupIndexLabelKey, model.GroupLabelKey)
-				}
-				if _, err := strconv.Atoi(groupIndexStr); err != nil {
-					return fmt.Errorf("invalid %s: %w", model.GroupIndexLabelKey, err)
-				}
+			if err := validateGroupLabels(r, req.OldObject, req.Action); err != nil {
+				return err
 			}
 
 			folderUID := ""

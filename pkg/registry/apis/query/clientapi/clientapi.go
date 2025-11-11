@@ -39,4 +39,5 @@ type Instance interface {
 
 type InstanceProvider interface {
 	GetInstance(ctx context.Context, logger log.Logger, headers map[string]string) (Instance, error)
+	GetMode() string
 }

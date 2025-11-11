@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync/installsyncfakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
@@ -31,7 +30,6 @@ func TestService_IsDisabled(t *testing.T) {
 		&pluginfakes.FakePluginInstaller{},
 		prometheus.NewRegistry(),
 		&pluginfakes.FakePluginRepo{},
-		featuremgmt.WithFeatures(),
 		&pluginchecker.FakePluginUpdateChecker{},
 	)
 	require.NoError(t, err)
@@ -167,6 +165,7 @@ func TestService_Run(t *testing.T) {
 				&setting.Cfg{
 					PreinstallPluginsAsync: tt.pluginsToInstall,
 					PreinstallPluginsSync:  tt.pluginsToInstallSync,
+					PreinstallAutoUpdate:   true,
 				},
 				store,
 				&pluginfakes.FakePluginInstaller{
@@ -199,7 +198,6 @@ func TestService_Run(t *testing.T) {
 						return tt.latestPlugin, nil
 					},
 				},
-				featuremgmt.WithFeatures(featuremgmt.FlagPreinstallAutoUpdate),
 				pluginchecker.ProvideService(
 					managedplugins.NewNoop(),
 					provisionedplugins.NewNoop(),
