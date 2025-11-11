@@ -747,11 +747,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/Menu/Menu.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Modal/ModalsContext.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2

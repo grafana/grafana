@@ -24,20 +24,18 @@ const meta: Meta<typeof Menu> = {
     actions: {
       disabled: true,
     },
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
 };
 
 export function Examples() {
   return (
-    <Stack direction="column">
+    <Stack direction="column" width="fit-content">
       <StoryExample name="Plain">
         <Menu>
           <Menu.Item label="Google" />
           <Menu.Item label="Filter" />
           <Menu.Item label="Active" active />
-          <Menu.Item label="I am a link" url="http://google.com" target="_blank" />
+          <Menu.Item label="I am a link" url="http://google.com" target="_blank" role="menuitem" />
           <Menu.Item label="With destructive prop set" destructive />
         </Menu>
       </StoryExample>
@@ -90,7 +88,14 @@ export function Examples() {
         <Menu>
           <Menu.Item label="Google" icon="search-plus" />
           <Menu.Item label="Disabled action" icon="history" disabled />
-          <Menu.Item label="Disabled link" icon="external-link-alt" url="http://google.com" target="_blank" disabled />
+          <Menu.Item
+            label="Disabled link"
+            icon="external-link-alt"
+            url="http://google.com"
+            target="_blank"
+            disabled
+            role="menuitem"
+          />
           <Menu.Item
             label="Submenu"
             icon="apps"
