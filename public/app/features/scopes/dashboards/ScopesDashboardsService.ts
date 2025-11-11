@@ -112,15 +112,19 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       const isEmpty =
         Object.keys(currentFolder.folders).length === 0 && Object.keys(currentFolder.suggestedNavigations).length === 0;
 
-      if (isEmpty) {
-        // Set loading state for this folder
-        currentFolder.loading = true;
-        currentFilteredFolder.loading = true;
-        // Extract the subScope name from the folder (stored when folder was created)
-        const subScopeName = currentFolder.subScopeName || name;
-        // Fetch asynchronously without blocking the state update
-        this.fetchSubScopeItems(path, subScopeName);
+      if (!isEmpty) {
+        // Folder already has content, skip fetching
+        this.updateState({ folders, filteredFolders });
+        return;
       }
+
+      // Set loading state for this folder
+      currentFolder.loading = true;
+      currentFilteredFolder.loading = true;
+      // Extract the subScope name from the folder (stored when folder was created)
+      const subScopeName = currentFolder.subScopeName || name;
+      // Fetch asynchronously without blocking the state update
+      this.fetchSubScopeItems(path, subScopeName);
     } else if (!expanded) {
       // Clear loading state when collapsing
       currentFolder.loading = false;
