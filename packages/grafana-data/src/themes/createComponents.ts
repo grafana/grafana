@@ -71,7 +71,7 @@ export function createComponents(
   featureToggles: FeatureToggles
 ): ThemeComponents {
   const panel = {
-    padding: featureToggles.newPanelPadding ? 2 : 1,
+    padding: 1,
     headerHeight: featureToggles.newPanelPadding ? 5 : 4,
     background: colors.background.primary,
     borderColor: colors.border.weak,
