@@ -66,7 +66,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/NewDashboardWithDS')
       ),
     },
-    {
+    (config.featureToggles.suggestedDashboards || config.featureToggles.dashboardLibrary) && {
       path: DASHBOARD_LIBRARY_ROUTES.Template,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',
