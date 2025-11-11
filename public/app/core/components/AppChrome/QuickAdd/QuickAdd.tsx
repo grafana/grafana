@@ -24,7 +24,7 @@ export const QuickAdd = ({}: Props) => {
       if (testDataSources.length > 0) {
         createActions.splice(1, 0, {
           id: 'browse-template-dashboard',
-          text: 'Dashboard from template',
+          text: t('navigation.quick-add.new-template-dashboard-button', 'Dashboard from template'),
           url: '/dashboards?templateDashboards=true&source=quickAdd',
           onClick: () => {
             DashboardLibraryInteractions.entryPointClicked({

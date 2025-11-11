@@ -444,7 +444,9 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
       // Special handling for Template route - set up edit mode and dirty state
       if (
-        (config.featureToggles.dashboardLibrary || config.featureToggles.dashboardTemplates) &&
+        (config.featureToggles.dashboardLibrary ||
+          config.featureToggles.suggestedDashboards ||
+          config.featureToggles.dashboardTemplates) &&
         options.route === DashboardRoutes.Template
       ) {
         scene.setInitialSaveModel(rsp.dashboard, rsp.meta);
@@ -507,7 +509,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
     const path = searchParams.get('path');
 
-    // Check if this is a template dashboard (has gnetId)
+    // Check if this is a template dashboard
     if (gnetId && datasource && pluginId) {
       return this.loadTemplateDashboard(gnetId, datasource, pluginId);
     }
