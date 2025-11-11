@@ -175,9 +175,12 @@ func RegisterAPIService(
 	}
 
 	migration.RegisterMetrics(reg)
-	migration.Initialize(&datasourceInfoProvider{
+	dsInfoProvider := &datasourceInfoProvider{
 		datasourceService: datasourceService,
-	})
+	}
+	migration.Initialize(dsInfoProvider)
+	// Set library panel service for conversion functions (used for library panel repeat options)
+	conversion.SetLibraryPanelService(libraryPanelSvc)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }

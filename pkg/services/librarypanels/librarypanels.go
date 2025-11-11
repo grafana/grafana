@@ -43,6 +43,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 type Service interface {
 	ConnectLibraryPanelsForDashboard(c context.Context, signedInUser identity.Requester, dash *dashboards.Dashboard) error
 	ImportLibraryPanelsForDashboard(c context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error
+	GetPanelModelByUID(c context.Context, signedInUser identity.Requester, uid string) (map[string]interface{}, error)
 }
 
 type LibraryInfo struct {
@@ -77,6 +78,28 @@ func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Conte
 	}
 
 	return lps.LibraryElementService.ConnectElementsToDashboard(c, signedInUser, elementUIDs, dash.ID)
+}
+
+// GetPanelModelByUID returns the stored panel model JSON for a library panel UID
+// as a generic map[string]any by using the library elements service.
+func (lps *LibraryPanelService) GetPanelModelByUID(c context.Context, signedInUser identity.Requester, uid string) (map[string]interface{}, error) {
+	if strings.TrimSpace(uid) == "" {
+		return nil, errors.New("library panel uid is empty")
+	}
+
+	element, err := lps.LibraryElementService.GetElement(c, signedInUser, model.GetLibraryElementCommand{UID: uid, FolderName: dashboards.RootFolderName})
+	if err != nil {
+		return nil, err
+	}
+
+	var panelModel map[string]interface{}
+	if len(element.Model) == 0 {
+		return map[string]interface{}{}, nil
+	}
+	if err := json.Unmarshal(element.Model, &panelModel); err != nil {
+		return nil, err
+	}
+	return panelModel, nil
 }
 
 func isLibraryPanelOrRow(panel *simplejson.Json, panelType string) bool {

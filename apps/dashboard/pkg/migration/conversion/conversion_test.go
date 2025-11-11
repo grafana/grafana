@@ -24,17 +24,34 @@ import (
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
+	conversiontestutil "github.com/grafana/grafana/apps/dashboard/pkg/migration/conversion/testutil"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	migrationtestutil "github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+// newFakeLibraryPanelService returns a test library panel service that
+// provides a single library panel model used by snapshot fixtures.
+func newFakeLibraryPanelService() *conversiontestutil.FakeLibraryPanelService {
+	return &conversiontestutil.FakeLibraryPanelService{UIDToModel: map[string]map[string]any{
+		"lib-uid-snap": {
+			"id":              99,
+			"title":           "Shared stat",
+			"type":            "stat",
+			"repeat":          "server",
+			"repeatDirection": "h",
+			"maxPerRow":       3,
+		},
+	}}
+}
+
 func TestConversionMatrixExist(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
 	SetTestDataSourceProvider(dsProvider)
+	SetLibraryPanelService(newFakeLibraryPanelService())
 
 	versions := []metav1.Object{
 		&dashv0.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
@@ -88,6 +105,7 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
 	SetTestDataSourceProvider(dsProvider)
+	SetLibraryPanelService(newFakeLibraryPanelService())
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
