@@ -3280,6 +3280,19 @@
     },
     {
       "metadata": {
+        "name": "transformationsEmptyPlaceholder",
+        "resourceVersion": "1762866865797",
+        "creationTimestamp": "2025-11-11T13:14:25Z"
+      },
+      "spec": {
+        "description": "Show transformation quick-start cards in empty transformations state",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "transformationsRedesign",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-07-12T16:35:49Z"

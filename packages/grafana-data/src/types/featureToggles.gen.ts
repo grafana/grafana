@@ -1116,4 +1116,8 @@ export interface FeatureToggles {
   * @default false
   */
   graphiteBackendMode?: boolean;
+  /**
+  * Show transformation quick-start cards in empty transformations state
+  */
+  transformationsEmptyPlaceholder?: boolean;
 }
