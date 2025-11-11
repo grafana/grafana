@@ -5,6 +5,8 @@ import { ScopeDashboardBinding } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 
 import { ScopesApiClient } from '../ScopesApiClient';
+// Import mock data for subScope tests
+import { navigationWithSubScope, navigationWithSubScope2, navigationWithSubScopeAndGroups } from '../tests/utils/mocks';
 
 import { ScopesDashboardsService } from './ScopesDashboardsService';
 import { ScopeNavigation } from './types';
@@ -15,6 +17,7 @@ jest.mock('@grafana/runtime', () => ({
     featureToggles: {
       useScopesNavigationEndpoint: false,
     },
+    apps: {},
   },
   locationService: {
     getLocation: jest.fn(),
@@ -388,6 +391,81 @@ describe('ScopesDashboardsService', () => {
         expect(service.state.folders[''].folders['group1'].expanded).toBe(true);
         expect(service.state.folders[''].folders['group2'].expanded).toBe(false);
       });
+    });
+  });
+
+  describe('groupSuggestedItems with subScopes', () => {
+    it('Creates subScope folders for items with subScope', () => {
+      const result = service.groupSuggestedItems([navigationWithSubScope]);
+
+      expect(result[''].folders).toHaveProperty('mimir-subscope-nav-1');
+      expect(result[''].folders['mimir-subscope-nav-1']).toEqual({
+        title: 'Mimir Dashboards',
+        expanded: false,
+        folders: {},
+        suggestedNavigations: {},
+        isSubScope: true,
+        subScopeName: 'mimir',
+      });
+    });
+
+    it('Creates separate folders for multiple items with same subScope', () => {
+      const result = service.groupSuggestedItems([navigationWithSubScope, navigationWithSubScope2]);
+
+      // Should create separate folders
+      expect(result[''].folders).toHaveProperty('mimir-subscope-nav-1');
+      expect(result[''].folders).toHaveProperty('mimir-subscope-nav-2');
+
+      // Both should reference the same subScope
+      expect(result[''].folders['mimir-subscope-nav-1'].subScopeName).toBe('mimir');
+      expect(result[''].folders['mimir-subscope-nav-2'].subScopeName).toBe('mimir');
+    });
+
+    it('Ignores groups for subScope items', () => {
+      const result = service.groupSuggestedItems([navigationWithSubScopeAndGroups]);
+
+      // Should create folder, not add to group folders
+      expect(result[''].folders).toHaveProperty('mimir-subscope-nav-groups');
+      expect(result[''].folders['mimir-subscope-nav-groups'].isSubScope).toBe(true);
+
+      // Should not add to any group folders
+      expect(Object.keys(result[''].folders).length).toBe(1);
+      expect(result[''].suggestedNavigations).toEqual({});
+    });
+
+    it('Does not add navigation items for subScope entries', () => {
+      const result = service.groupSuggestedItems([navigationWithSubScope]);
+
+      // Should only create folder, not add navigation item
+      expect(result[''].folders['mimir-subscope-nav-1'].suggestedNavigations).toEqual({});
+      expect(result[''].suggestedNavigations).toEqual({});
+    });
+
+    it('Mixes subScope and regular items correctly', () => {
+      const regularItem: ScopeNavigation = {
+        metadata: { name: 'regular-nav' },
+        spec: {
+          scope: 'grafana',
+          url: '/d/regular-dashboard',
+        },
+        status: {
+          title: 'Regular Dashboard',
+          groups: ['General'],
+        },
+      };
+
+      const result = service.groupSuggestedItems([navigationWithSubScope, regularItem]);
+
+      // Should have subScope folder
+      expect(result[''].folders).toHaveProperty('mimir-subscope-nav-1');
+      expect(result[''].folders['mimir-subscope-nav-1'].isSubScope).toBe(true);
+
+      // Should have regular group folder
+      expect(result[''].folders).toHaveProperty('General');
+      expect(result[''].folders['General'].isSubScope).toBeUndefined();
+
+      // Regular item should be in group folder
+      expect(result[''].folders['General'].suggestedNavigations).toHaveProperty('/d/regular-dashboard');
     });
   });
 });
