@@ -6,13 +6,16 @@
     {
       "metadata": {
         "name": "addFieldFromCalculationStatFunctions",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-11-03T14:39:58Z"
+        "resourceVersion": "1762442825881",
+        "creationTimestamp": "2023-11-03T14:39:58Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Add cumulative and window functions to the add field from calculation transformation",
         "stage": "GA",
-        "codeowner": "@grafana/dataviz-squad",
+        "codeowner": "@grafana/datapro",
         "frontend": true,
         "expression": "true"
       }
@@ -853,7 +856,8 @@
       "metadata": {
         "name": "canvasPanelNesting",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2022-05-31T19:03:34Z"
+        "creationTimestamp": "2022-05-31T19:03:34Z",
+        "deletionTimestamp": "2025-11-06T14:43:27Z"
       },
       "spec": {
         "description": "Allow elements nesting",
@@ -1001,13 +1005,16 @@
     {
       "metadata": {
         "name": "correlations",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2022-09-16T13:14:27Z"
+        "resourceVersion": "1762442825881",
+        "creationTimestamp": "2022-09-16T13:14:27Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Correlations page",
         "stage": "GA",
-        "codeowner": "@grafana/dataviz-squad",
+        "codeowner": "@grafana/datapro",
         "allowSelfServe": true,
         "expression": "true"
       }
@@ -1054,6 +1061,7 @@
         "name": "dashboardDsAdHocFiltering",
         "resourceVersion": "1756814786992",
         "creationTimestamp": "2025-07-23T08:12:25Z",
+        "deletionTimestamp": "2025-09-27T19:59:33Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-09-02 12:06:26.992384 +0000 UTC"
         }
@@ -1311,13 +1319,16 @@
     {
       "metadata": {
         "name": "disableSSEDataplane",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-04-12T16:24:34Z"
+        "resourceVersion": "1762552416963",
+        "creationTimestamp": "2023-04-12T16:24:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-07 21:53:36.963146843 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Disables dataplane specific processing in server side expressions.",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics"
+        "codeowner": "@grafana/grafana-datasources-core-services"
       }
     },
     {
@@ -1343,8 +1354,11 @@
     {
       "metadata": {
         "name": "editPanelCSVDragAndDrop",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-01-24T09:43:44Z"
+        "resourceVersion": "1762783224740",
+        "creationTimestamp": "2023-01-24T09:43:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-10 14:00:24.740459 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables drag and drop for CSV and Excel files",
@@ -1606,13 +1620,16 @@
     {
       "metadata": {
         "name": "extractFieldsNameDeduplication",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-11-02T15:47:42Z"
+        "resourceVersion": "1762442825881",
+        "creationTimestamp": "2023-11-02T15:47:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Make sure extracted field names are unique in the dataframe",
         "stage": "experimental",
-        "codeowner": "@grafana/dataviz-squad",
+        "codeowner": "@grafana/datapro",
         "frontend": true
       }
     },
@@ -1735,13 +1752,16 @@
     {
       "metadata": {
         "name": "formatString",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-10-13T18:17:12Z"
+        "resourceVersion": "1762442825881",
+        "creationTimestamp": "2023-10-13T18:17:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable format string transformer",
         "stage": "GA",
-        "codeowner": "@grafana/dataviz-squad",
+        "codeowner": "@grafana/datapro",
         "frontend": true,
         "expression": "true"
       }
@@ -1907,13 +1927,16 @@
     {
       "metadata": {
         "name": "groupToNestedTableTransformation",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-02-07T14:28:26Z"
+        "resourceVersion": "1762442825881",
+        "creationTimestamp": "2024-02-07T14:28:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the group to nested table transformation",
         "stage": "GA",
-        "codeowner": "@grafana/dataviz-squad",
+        "codeowner": "@grafana/datapro",
         "frontend": true,
         "expression": "true"
       }
@@ -3410,7 +3433,8 @@
       "metadata": {
         "name": "recordedQueriesMulti",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-06-14T12:34:22Z"
+        "creationTimestamp": "2023-06-14T12:34:22Z",
+        "deletionTimestamp": "2025-11-07T17:31:39Z"
       },
       "spec": {
         "description": "Enables writing multiple items from a single query within Recorded Queries",
@@ -3435,14 +3459,17 @@
     {
       "metadata": {
         "name": "regressionTransformation",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1762442825881",
         "creationTimestamp": "2023-11-24T14:49:16Z",
-        "deletionTimestamp": "2025-07-01T13:59:22Z"
+        "deletionTimestamp": "2025-07-01T13:59:22Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables regression analysis transformation",
         "stage": "preview",
-        "codeowner": "@grafana/dataviz-squad",
+        "codeowner": "@grafana/datapro",
         "frontend": true
       }
     },
@@ -3731,13 +3758,16 @@
     {
       "metadata": {
         "name": "sseGroupByDatasource",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-09-07T20:02:07Z"
+        "resourceVersion": "1762552416963",
+        "creationTimestamp": "2023-09-07T20:02:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-07 21:53:36.963146843 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics"
+        "codeowner": "@grafana/grafana-datasources-core-services"
       }
     },
     {

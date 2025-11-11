@@ -78,7 +78,8 @@ type FrontendSettingsAzureDTO struct {
 }
 
 type FrontendSettingsCachingDTO struct {
-	Enabled bool `json:"enabled"`
+	Enabled           bool `json:"enabled"`
+	CleanCacheEnabled bool `json:"cleanCacheEnabled"`
 }
 
 type FrontendSettingsRecordedQueriesDTO struct {

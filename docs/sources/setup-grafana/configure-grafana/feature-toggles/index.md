@@ -34,7 +34,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `influxdbBackendMigration`             | Query InfluxDB InfluxQL without the proxy                                                                                                                     | Yes                |
 | `dataplaneFrontendFallback`            | Support dataplane contract field name change for transformations and field name matchers where the name is different                                          | Yes                |
 | `unifiedRequestLog`                    | Writes error logs to the request logger                                                                                                                       | Yes                |
-| `recordedQueriesMulti`                 | Enables writing multiple items from a single query within Recorded Queries                                                                                    | Yes                |
 | `logsExploreTableVisualisation`        | A table visualisation for logs in Explore                                                                                                                     | Yes                |
 | `awsDatasourcesTempCredentials`        | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                             | Yes                |
 | `transformationsRedesign`              | Enables the transformations redesign                                                                                                                          | Yes                |
@@ -79,7 +78,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `grafanaAssistantInProfilesDrilldown`  | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `sharingDashboardImage`                | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
-| `dashboardDsAdHocFiltering`            | Enables adhoc filtering support for the dashboard datasource                                                                                                  | Yes                |
 | `adhocFiltersInTooltips`               | Enable adhoc filter buttons in visualization tooltips                                                                                                         | Yes                |
 | `tempoSearchBackendMigration`          | Run search queries through the tempo backend                                                                                                                  |                    |
 
