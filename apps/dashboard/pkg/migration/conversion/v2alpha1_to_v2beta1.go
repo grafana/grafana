@@ -10,7 +10,6 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -51,35 +50,27 @@ import (
 // the data model to consolidate datasource references into the DataQueryKind.
 
 // prepareV2alpha1ConversionContext sets up the context with namespace and service identity
-// for v2alpha1 dashboard conversions. This context is needed for datasource lookups.
+// for v2alpha1 dashboard conversions. This context is needed for library panel lookups.
 // Library panel service is available via package-level fallback (set in register.go).
+// Note: Unlike v1beta1→v2alpha1, this conversion doesn't need datasource provider since
+// it only moves datasource references within the schema without looking up datasource info.
 func prepareV2alpha1ConversionContext(in *dashv2alpha1.Dashboard) (context.Context, *authlib.NamespaceInfo, error) {
-	// Get the datasource provider instance (matches migration pattern where provider is always available)
-	dsInfoProvider := migration.GetDataSourceInfoProvider()
-	if dsInfoProvider == nil {
-		return nil, nil, fmt.Errorf("datasource provider not initialized")
-	}
-
 	namespace := in.GetNamespace()
 	if namespace == "" {
-		// If no namespace, still set up provider (matches migration pattern where provider is always available)
-		ctx := context.Background()
-		ctx = WithDataSourceProvider(ctx, dsInfoProvider)
-		return ctx, nil, nil
+		// If no namespace, use background context
+		return context.Background(), nil, nil
 	}
 
 	// Try to parse namespace and set up tenant-aware context
 	ctx := request.WithNamespace(context.Background(), namespace)
 	nsInfo, err := authlib.ParseNamespace(namespace)
 	if err != nil {
-		// If namespace parsing fails, still proceed with provider but without tenant info
+		// If namespace parsing fails, still proceed without tenant info
 		// This allows conversion to continue with fallback behavior
-		ctx = WithDataSourceProvider(ctx, dsInfoProvider)
 		return ctx, nil, nil
 	}
 
 	ctx, _ = identity.WithServiceIdentity(ctx, nsInfo.OrgID)
-	ctx = WithDataSourceProvider(ctx, dsInfoProvider)
 
 	return ctx, &nsInfo, nil
 }
