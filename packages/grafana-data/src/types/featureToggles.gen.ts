@@ -363,10 +363,6 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
-  * Make sure extracted field names are unique in the dataframe
-  */
-  extractFieldsNameDeduplication?: boolean;
-  /**
   * Enables dashboard rendering using Scenes for viewer roles
   * @default true
   */
