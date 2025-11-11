@@ -1,16 +1,33 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { transformDataFrames } from '../../../features/explore/TraceView/utils/transform';
+import { migrateToAdhocFilters } from '../../../features/explore/TraceView/useSearch';
 
-import { TagsEditor } from './TagsEditor';
+import { FiltersEditor } from './FiltersEditor';
 import { TracesPanel } from './TracesPanel';
 import { TracesSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin(TracesPanel)
-  .setPanelOptions((builder, context) => {
+  .setMigrationHandler((panel) => {
+    // Migrate old span filters to new adhoc filters format
+    if (panel.options?.spanFilters) {
+      return {
+        spanFilters: migrateToAdhocFilters(panel.options.spanFilters),
+      };
+    }
+    return panel.options;
+  })
+  .setPanelOptions((builder) => {
     const category = [t('traces.category-span-filters', 'Span filters')];
-    const trace = transformDataFrames(context?.data?.[0]);
+
+    builder.addCustomEditor({
+      id: 'filters',
+      name: t('traces.name-filters', 'Filters'),
+      path: 'spanFilters',
+      category,
+      editor: FiltersEditor,
+      defaultValue: undefined,
+    });
 
     // Find
     builder
@@ -22,18 +39,9 @@ export const plugin = new PanelPlugin(TracesPanel)
       })
       .addBooleanSwitch({
         path: 'spanFilters.criticalPathOnly',
-        name: t('traces.name-critical-path-only', 'Show critical path only'),
+        name: t('traces.name-critical-path-only', 'Select critical path'),
         defaultValue: false,
         category,
       });
-
-    builder.addCustomEditor({
-      id: 'tags',
-      name: t('traces.name-tags', 'Tags'),
-      path: 'spanFilters',
-      category,
-      editor: TagsEditor,
-      defaultValue: undefined,
-    });
   })
   .setSuggestionsSupplier(new TracesSuggestionsSupplier());

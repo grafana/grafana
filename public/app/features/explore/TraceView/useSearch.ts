@@ -14,7 +14,7 @@ import { filterSpans } from './components/utils/filter-spans';
  * Migrate old span filters to new adhoc filters approach.
  * Maps serviceName, spanName, tags, and query to adhoc filters.
  */
-function migrateToAdhocFilters(search: TraceSearchProps): TraceSearchProps {
+export function migrateToAdhocFilters(search: TraceSearchProps): TraceSearchProps {
   // If we already have adhoc filters, don't migrate
   if (search.adhocFilters && search.adhocFilters.length > 0) {
     return search;
