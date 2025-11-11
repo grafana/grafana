@@ -16,7 +16,6 @@ import { getUrlStateFromPaneState } from 'app/features/explore/hooks/useStateSyn
 import { LogsFrame } from 'app/features/logs/logsFrame';
 import { getState } from 'app/store/store';
 interface Props extends CustomCellRendererProps {
-  fieldIndex: number;
   logId?: string;
   logsFrame?: LogsFrame;
   exploreId?: string;
