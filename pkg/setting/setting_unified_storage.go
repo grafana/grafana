@@ -46,9 +46,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		// parse dataSyncerInterval from resource section
 		dataSyncerInterval := section.Key("dataSyncerInterval").MustDuration(time.Hour)
 
-		//enableUnifiedStorageMigrations := section.Key("enableUnifiedStorageMigrations").MustBool(false)
 		// Investigate how to enforce this at a higher level (e.g. feature toggles)
-		// Enforce values here based on EnableUnifiedStorageMigrations
 		storageConfig[resourceName] = UnifiedStorageConfig{
 			DualWriterMode:                       rest.DualWriterMode(dualWriterMode),
 			DualWriterPeriodicDataSyncJobEnabled: dualWriterPeriodicDataSyncJobEnabled,
@@ -99,6 +97,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")
+
+	// parse skip_data_migrations from resource section
+	cfg.SkipDataMigrations = section.Key("skip_data_migrations").MustBool(true)
 }
 
 // enforceMigrationToUnifiedConfigs enforces configurations required to run migrated resources in mode 5

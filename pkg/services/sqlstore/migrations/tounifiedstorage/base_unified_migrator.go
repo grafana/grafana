@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -41,30 +40,6 @@ type Dependencies struct {
 
 type ResourceClient interface {
 	resourcepb.BulkStoreClient
-}
-
-// ProvideDependencies creates the Dependencies struct for unified storage migrations
-// Returns nil if unified storage migrations are not enabled or if required services are not available
-func ProvideDependencies(
-	cfg *setting.Cfg,
-	legacyMigrator LegacyMigrator,
-	resourceClient ResourceClient,
-) *Dependencies {
-	// Only provide dependencies if migrations are enabled
-	if !cfg.EnableUnifiedStorageMigrations {
-		return nil
-	}
-
-	// Type assert to the interfaces we need
-	migrator, ok := legacyMigrator.(LegacyMigrator)
-	if !ok {
-		return nil
-	}
-
-	return &Dependencies{
-		LegacyMigrator:  migrator,
-		BulkStoreClient: resourceClient,
-	}
 }
 
 // unifiedStorageMigrator is the base for all unified storage data migrations
