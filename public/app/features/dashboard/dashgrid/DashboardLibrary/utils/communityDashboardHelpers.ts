@@ -4,7 +4,7 @@ import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
 import { MappingContext } from '../SuggestedDashboardsModal';
 import { fetchCommunityDashboard } from '../api/dashboardLibraryApi';
-import { DashboardLibraryInteractions } from '../interactions';
+import { CONTENT_KINDS, ContentKind, CREATION_ORIGINS, EventLocation, SOURCE_ENTRY_POINTS } from '../interactions';
 import { GnetDashboard, Link } from '../types';
 
 import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
@@ -86,14 +86,18 @@ export function navigateToTemplate(
   dashboardTitle: string,
   gnetId: number,
   datasourceUid: string,
-  mappings: InputMapping[]
+  mappings: InputMapping[],
+  eventLocation: EventLocation,
+  contentKind: ContentKind
 ): void {
   const searchParams = new URLSearchParams({
     datasource: datasourceUid,
     title: dashboardTitle,
     gnetId: String(gnetId),
-    sourceEntryPoint: 'datasource_page',
-    creationOrigin: 'dashboard_library_community_dashboard',
+    sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+    creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_COMMUNITY_DASHBOARD,
+    contentKind,
+    eventLocation,
     mappings: JSON.stringify(mappings),
   });
 
@@ -125,16 +129,8 @@ export async function onUseCommunityDashboard({
   eventLocation,
   onShowMapping,
 }: UseCommunityDashboardParams): Promise<void> {
-  // Track analytics
-  DashboardLibraryInteractions.itemClicked({
-    contentKind: 'community_dashboard',
-    datasourceTypes: [datasourceType],
-    libraryItemId: String(dashboard.id),
-    libraryItemTitle: dashboard.name,
-    sourceEntryPoint: 'datasource_page',
-    eventLocation,
-  });
-
+  // Note: item_clicked tracking is done by the caller (CommunityDashboardSection or SuggestedDashboards)
+  // with the correct discoveryMethod before calling this function
   try {
     // Fetch full dashboard from Gcom, this is the JSON with __inputs
     const fullDashboard = await fetchCommunityDashboard(dashboard.id);
@@ -151,22 +147,38 @@ export async function onUseCommunityDashboard({
 
     // Decide whether to show mapping form or navigate directly
     // Show mapping form if: (a) there are unmapped datasources OR (b) there are constants
-    const needsMapping = mappingResult.unmappedInputs.length > 0 || constantInputs.length > 0;
+    const needsMapping = mappingResult.unmappedDsInputs.length > 0 || constantInputs.length > 0;
 
     if (!needsMapping) {
       // No mapping needed - all datasources auto-mapped, no constants
-      navigateToTemplate(dashboard.name, dashboard.id, datasourceUid, mappingResult.mappings);
+      navigateToTemplate(
+        dashboard.name,
+        dashboard.id,
+        datasourceUid,
+        mappingResult.mappings,
+        eventLocation,
+        CONTENT_KINDS.COMMUNITY_DASHBOARD
+      );
     } else {
       // Show mapping form for unmapped datasources and/or constants
       if (onShowMapping) {
         onShowMapping({
           dashboardName: dashboard.name,
           dashboardJson,
-          unmappedInputs: mappingResult.unmappedInputs,
+          unmappedDsInputs: mappingResult.unmappedDsInputs,
           constantInputs,
           existingMappings: mappingResult.mappings,
+          eventLocation,
+          contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
           onInterpolateAndNavigate: (mappings) =>
-            navigateToTemplate(dashboard.name, dashboard.id, datasourceUid, mappings),
+            navigateToTemplate(
+              dashboard.name,
+              dashboard.id,
+              datasourceUid,
+              mappings,
+              eventLocation,
+              CONTENT_KINDS.COMMUNITY_DASHBOARD
+            ),
         });
       }
     }

@@ -2,22 +2,43 @@ import { reportInteraction } from '@grafana/runtime';
 
 const SCHEMA_VERSION = 1;
 
-type ContentKind = 'datasource_dashboard' | 'community_dashboard' | 'template_dashboard';
+// Constant values for tracking events
+export const EVENT_LOCATIONS = {
+  EMPTY_DASHBOARD: 'empty_dashboard',
+  MODAL_PROVISIONED_TAB: 'suggested_dashboards_modal_provisioned_tab',
+  MODAL_COMMUNITY_TAB: 'suggested_dashboards_modal_community_tab',
+} as const;
 
-export type TemplateDashboardSourceEntryPoint =
-  | 'quick_add_button'
-  | 'command_palette'
-  | 'dashboard_list_page_create_new_button';
+export const CONTENT_KINDS = {
+  DATASOURCE_DASHBOARD: 'datasource_dashboard',
+  COMMUNITY_DASHBOARD: 'community_dashboard',
+  // in future this could also include "TEMPLATE_DASHBOARD" if/when items become templates
+} as const;
 
-type SourceEntryPoint = 'datasource_page' | TemplateDashboardSourceEntryPoint | 'unknown';
-// possible future flows onboarding, create-dashboard, empty states
-// | 'create_dashboard' | 'empty_state';
+export const SOURCE_ENTRY_POINTS = {
+  DATASOURCE_PAGE: 'datasource_page',
+  QUICK_ADD_BUTTON: 'quick_add_button',
+  COMMAND_PALETTE: 'command_palette',
+  DASHBOARD_LIST_PAGE_CREATE_NEW_BUTTON: 'dashboard_list_page_create_new_button',
+  // possible future flows: CREATE_DASHBOARD, EMPTY_STATE
+} as const;
 
-type EventLocation =
-  | 'empty_dashboard'
-  | 'suggested_dashboards_modal_provisioned_tab'
-  | 'suggested_dashboards_modal_community_tab'
-  | 'browse_dashboards_page';
+export const DISCOVERY_METHODS = {
+  SEARCH: 'search',
+  BROWSE: 'browse',
+} as const;
+
+export const CREATION_ORIGINS = {
+  DASHBOARD_LIBRARY_DATASOURCE_DASHBOARD: 'dashboard_library_datasource_dashboard',
+  DASHBOARD_LIBRARY_COMMUNITY_DASHBOARD: 'dashboard_library_community_dashboard',
+} as const;
+
+// Derive types from constant maps for single source of truth
+export type EventLocation = (typeof EVENT_LOCATIONS)[keyof typeof EVENT_LOCATIONS];
+export type ContentKind = (typeof CONTENT_KINDS)[keyof typeof CONTENT_KINDS];
+export type SourceEntryPoint = (typeof SOURCE_ENTRY_POINTS)[keyof typeof SOURCE_ENTRY_POINTS];
+export type DiscoveryMethod = (typeof DISCOVERY_METHODS)[keyof typeof DISCOVERY_METHODS];
+export type CreationOrigin = (typeof CREATION_ORIGINS)[keyof typeof CREATION_ORIGINS];
 
 export const DashboardLibraryInteractions = {
   loaded: (properties: {
@@ -29,6 +50,15 @@ export const DashboardLibraryInteractions = {
   }) => {
     reportDashboardLibraryInteraction('loaded', properties);
   },
+  searchPerformed: (properties: {
+    datasourceTypes: string[];
+    sourceEntryPoint: SourceEntryPoint;
+    eventLocation: EventLocation;
+    hasResults: boolean;
+    resultCount: number;
+  }) => {
+    reportDashboardLibraryInteraction('search_performed', properties);
+  },
   itemClicked: (properties: {
     contentKind: ContentKind;
     datasourceTypes: string[];
@@ -36,8 +66,33 @@ export const DashboardLibraryInteractions = {
     libraryItemTitle: string;
     sourceEntryPoint: SourceEntryPoint;
     eventLocation: EventLocation;
+    discoveryMethod: DiscoveryMethod;
   }) => {
     reportDashboardLibraryInteraction('item_clicked', properties);
+  },
+  mappingFormShown: (properties: {
+    contentKind: ContentKind;
+    datasourceTypes: string[];
+    libraryItemId: string;
+    libraryItemTitle: string;
+    sourceEntryPoint: SourceEntryPoint;
+    eventLocation: EventLocation;
+    unmappedDsInputsCount: number;
+    constantInputsCount: number;
+  }) => {
+    reportDashboardLibraryInteraction('mapping_form_shown', properties);
+  },
+  mappingFormCompleted: (properties: {
+    contentKind: ContentKind;
+    datasourceTypes: string[];
+    libraryItemId: string;
+    libraryItemTitle: string;
+    sourceEntryPoint: SourceEntryPoint;
+    eventLocation: EventLocation;
+    userMappedCount: number;
+    autoMappedCount: number;
+  }) => {
+    reportDashboardLibraryInteraction('mapping_form_completed', properties);
   },
   entryPointClicked: (properties: { entryPoint: SourceEntryPoint; contentKind: ContentKind }) => {
     reportDashboardLibraryInteraction('entry_point_clicked', properties);
