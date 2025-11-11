@@ -220,6 +220,13 @@
           }
 
           const resp = await fetch(bootDataUrl);
+          if (resp.status === 204) {
+            const redirectDomain = resp.headers.get('Redirect-Domain');
+            if (redirectDomain) {
+              window.location.hostname = redirectDomain;
+              return;
+            }
+          }
           const textResponse = await resp.text();
 
           let rawBootData;

@@ -32,6 +32,11 @@ func ValidateHostHeader(cfg *setting.Cfg) web.Handler {
 		}
 
 		if !strings.EqualFold(h, cfg.Domain) {
+			if c.Req.URL.Path == "/bootdata" {
+				c.Resp.Header().Set("Redirect-Domain", cfg.Domain)
+				c.Resp.WriteHeader(204)
+				return
+			}
 			hostRedirectCounter.Inc()
 			c.Logger.Info("Enforcing Host header", "hosted", c.Req.Host, "expected", cfg.Domain)
 			c.Redirect(strings.TrimSuffix(cfg.AppURL, "/")+c.Req.RequestURI, 301)
