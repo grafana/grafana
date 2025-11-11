@@ -148,7 +148,7 @@ export function LogsTableActionButtons(props: Props) {
         >
           <pre>{lineValue}</pre>
           <Modal.ButtonRow>
-            <ClipboardButton icon="copy" getText={() => String(props.value)}>
+            <ClipboardButton icon="copy" getText={() => lineValue}>
               {t('explore.logs-table.action-buttons.copy-to-clipboard', 'Copy to Clipboard')}
             </ClipboardButton>
           </Modal.ButtonRow>
