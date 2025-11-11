@@ -12297,6 +12297,7 @@
   "scopes": {
     "dashboards": {
       "collapse": "Collapse",
+      "exchange": "Change root scope to {{scope}}",
       "expand": "Expand",
       "loading": "Loading dashboards",
       "noResultsForFilter": "No results found for your query",
