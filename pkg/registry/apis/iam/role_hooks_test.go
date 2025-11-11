@@ -7,11 +7,48 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/stretchr/testify/require"
+
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	"github.com/stretchr/testify/require"
 )
+
+func requireTuplesMatch(t *testing.T, actual []*v1.TupleKey, expected []*v1.TupleKey, msgAndArgs ...interface{}) {
+	t.Helper()
+	for _, exp := range expected {
+		found := false
+		for _, act := range actual {
+			if act.User == exp.User &&
+				act.Relation == exp.Relation &&
+				act.Object == exp.Object {
+				found = true
+				break
+			}
+		}
+		if !found {
+			require.Fail(t, "Expected tuple not found", "Tuple: %+v\n%v", exp, msgAndArgs)
+		}
+	}
+}
+
+func requireDeleteTuplesMatch(t *testing.T, actual []*v1.TupleKeyWithoutCondition, expected []*v1.TupleKeyWithoutCondition, msgAndArgs ...interface{}) {
+	t.Helper()
+	for _, exp := range expected {
+		found := false
+		for _, act := range actual {
+			if act.User == exp.User &&
+				act.Relation == exp.Relation &&
+				act.Object == exp.Object {
+				found = true
+				break
+			}
+		}
+		if !found {
+			require.Fail(t, "Expected delete tuple not found", "Tuple: %+v\n%v", exp, msgAndArgs)
+		}
+	}
+}
 
 func TestAfterCoreRoleCreate(t *testing.T) {
 	var wg sync.WaitGroup
