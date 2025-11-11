@@ -189,7 +189,7 @@ func TestInterpolateDashboardFeatureFlag(t *testing.T) {
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
-	t.Run("Feature flag enabled - interpolate endpoint should work", func(t *testing.T) {
+	t.Run("dashboardLibrary feature flag enabled - interpolate endpoint should work", func(t *testing.T) {
 		interpolateDashboardServiceCalled := false
 		service := &serviceMock{
 			interpolateDashboardFunc: func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*simplejson.Json, error) {
@@ -199,6 +199,41 @@ func TestInterpolateDashboardFeatureFlag(t *testing.T) {
 		}
 		// Create features with dashboardLibrary enabled
 		features := featuremgmt.WithFeatures(featuremgmt.FlagDashboardLibrary)
+		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true}, features)
+
+		routeRegister := routing.NewRouteRegister()
+		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
+		s := webtest.NewServer(t, routeRegister)
+
+		cmd := &dashboardimport.ImportDashboardRequest{
+			PluginId: "test-plugin",
+		}
+		jsonBytes, err := json.Marshal(cmd)
+		require.NoError(t, err)
+		req := s.NewPostRequest("/api/dashboards/interpolate", bytes.NewReader(jsonBytes))
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+			UserID: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionDashboardsCreate: {}},
+			},
+		})
+		resp, err := s.SendJSON(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.True(t, interpolateDashboardServiceCalled)
+	})
+
+	t.Run("suggestedDashboards feature flag enabled - interpolate endpoint should work", func(t *testing.T) {
+		interpolateDashboardServiceCalled := false
+		service := &serviceMock{
+			interpolateDashboardFunc: func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*simplejson.Json, error) {
+				interpolateDashboardServiceCalled = true
+				return simplejson.New(), nil
+			},
+		}
+		// Create features with suggestedDashboards enabled
+		features := featuremgmt.WithFeatures(featuremgmt.FlagSuggestedDashboards)
 		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true}, features)
 
 		routeRegister := routing.NewRouteRegister()

@@ -47,7 +47,7 @@ func (api *ImportDashboardAPI) RegisterAPIEndpoints(routeRegister routing.RouteR
 			routing.Wrap(api.ImportDashboard),
 		)
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		if api.features.IsEnabledGlobally(featuremgmt.FlagDashboardLibrary) {
+		if api.features.IsEnabledGlobally(featuremgmt.FlagDashboardLibrary) || api.features.IsEnabledGlobally(featuremgmt.FlagSuggestedDashboards) {
 			route.Post(
 				"/interpolate",
 				authorize(accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate)),
@@ -59,7 +59,7 @@ func (api *ImportDashboardAPI) RegisterAPIEndpoints(routeRegister routing.RouteR
 
 // swagger:route POST /dashboards/interpolate dashboards interpolateDashboard
 //
-// Interpolate dashboard. This is an experimental endpoint under dashboardLibrary FF and is subject to change.
+// Interpolate dashboard. This is an experimental endpoint under dashboardLibrary or suggestedDashboards feature flags and is subject to change.
 //
 // Responses:
 // 200: interpolateDashboardResponse

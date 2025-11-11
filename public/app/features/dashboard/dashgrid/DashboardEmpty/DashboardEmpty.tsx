@@ -72,7 +72,7 @@ const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImpor
 
             {/* Suggested Dashboards Section */}
             {config.featureToggles.suggestedDashboards &&
-              !config.featureToggles.dashboardLibrary &&
+              config.featureToggles.dashboardLibrary &&
               dashboardLibraryDatasourceUid && <SuggestedDashboards datasourceUid={dashboardLibraryDatasourceUid} />}
 
             {/* Basic Provisioned Dashboards Section that don't include community dashboards */}
