@@ -26,7 +26,7 @@ export function ScopesDashboardsTree({ folders, folderPath, onFolderUpdate }: Sc
   const subScopeFolders: Array<[string, (typeof folder.folders)[string]]> = [];
 
   Object.entries(folder.folders).forEach(([subFolderId, subFolder]) => {
-    if (subFolder.isSubScope) {
+    if (subFolder.subScopeName) {
       subScopeFolders.push([subFolderId, subFolder]);
     } else {
       regularFolders.push([subFolderId, subFolder]);
