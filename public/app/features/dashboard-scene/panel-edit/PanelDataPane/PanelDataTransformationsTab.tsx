@@ -14,6 +14,7 @@ import {
   VizPanel,
   SceneObjectState,
 } from '@grafana/scenes';
+import { DataQuery } from '@grafana/schema';
 import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 import { ExpressionQueryType } from 'app/features/expressions/types';
@@ -104,23 +105,34 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   if (transformations.length < 1) {
     const onGoToQueries = () => {
       const parent = model.parent;
-      if (parent instanceof PanelDataPane) {
-        const queriesTab = parent.state.tabs.find((tab) => tab.tabId === TabId.Queries);
-        if (queriesTab && queriesTab instanceof PanelDataQueriesTab) {
-          // Add a new SQL expression query only if there are no existing SQL expressions
-          const existingQueries = queriesTab.getQueries();
-          const hasSqlExpression = existingQueries.some(
-            (query) =>
-              query.type === ExpressionQueryType.sql ||
-              (typeof query === 'object' && query !== null && 'type' in query && query.type === 'sql')
-          );
-          if (!hasSqlExpression) {
-            queriesTab.onAddExpressionOfType(ExpressionQueryType.sql);
-          }
-          // Navigate to the Queries tab
-          parent.onChangeTab(queriesTab);
-        }
+      if (!(parent instanceof PanelDataPane)) {
+        return;
       }
+
+      const queriesTab = parent.state.tabs.find((tab) => tab.tabId === TabId.Queries);
+      if (!(queriesTab instanceof PanelDataQueriesTab)) {
+        return;
+      }
+
+      const existingQueries = queriesTab.getQueries();
+      const sqlQuery = findSqlExpression(existingQueries);
+
+      if (!sqlQuery) {
+        // Create new SQL expression and scroll to it after creation
+        queriesTab.onAddExpressionOfType(ExpressionQueryType.sql);
+      }
+
+      // Navigate to the Queries tab
+      parent.onChangeTab(queriesTab);
+
+      // Scroll to SQL query after tab renders
+      setTimeout(() => {
+        const queries = queriesTab.getQueries();
+        const targetQuery = sqlQuery || findSqlExpression(queries);
+        if (targetQuery) {
+          scrollToQuery(targetQuery.refId);
+        }
+      }, 100);
     };
 
     const onAddTransformation = (transformationId: string) => {
@@ -246,6 +258,28 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginLeft: theme.spacing(2),
   }),
 });
+
+function findSqlExpression(queries: DataQuery[]) {
+  return queries.find((query) => {
+    return typeof query === 'object' && query !== null && 'type' in query && query.type === ExpressionQueryType.sql;
+  });
+}
+
+function scrollToQuery(refId: string) {
+  // Query rows use uniqueId(refId + '_') for their internal id
+  // The aria-controls attribute will be like "A_1" for refId "A"
+  // So we need to search for aria-controls starting with "refId_"
+  const queryRowHeader = document.querySelector(`[aria-controls^="${refId}_"]`);
+
+  if (queryRowHeader) {
+    // Find the parent query row wrapper
+    const queryRow = queryRowHeader.closest('[data-testid="query-editor-row"]');
+
+    if (queryRow instanceof HTMLElement) {
+      queryRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+}
 
 interface TransformationsTabProps extends PanelDataTabHeaderProps {
   model: PanelDataTransformationsTab;
