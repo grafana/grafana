@@ -560,7 +560,7 @@ func (s *persistentStore) cleanUpExpiredJob(ctx context.Context, job provisionin
 	if err := s.Complete(jobCtx, jobCopy); err != nil {
 		if apierrors.IsNotFound(err) {
 			// Job was already completed/deleted by another process - this is expected
-			logger.Warn("job already completed by another process")
+			logger.Warn("job already completed or deleted by another process")
 			return nil
 		}
 		jobSpan.RecordError(err)
