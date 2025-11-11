@@ -3,8 +3,6 @@ import { reportInteraction } from '@grafana/runtime';
 const SCHEMA_VERSION = 1;
 
 type ContentKind = 'datasource_dashboard' | 'community_dashboard' | 'template_dashboard';
-// in future this could also include "template_dashboard" if/when items become templates
-// | 'template_dashboard';
 
 export type TemplateDashboardSourceEntryPoint =
   | 'quick_add_button'
