@@ -257,7 +257,7 @@ describe('VizPanelSubHeader', () => {
   });
 });
 
-function buildTestPanel(subHeader: VizPanelSubHeader, withDatasource: boolean = true): VizPanel {
+function buildTestPanel(subHeader: VizPanelSubHeader, withDatasource = true): VizPanel {
   const queries = withDatasource
     ? [
         {
