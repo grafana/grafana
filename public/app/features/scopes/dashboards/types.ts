@@ -38,7 +38,6 @@ export interface SuggestedNavigationsFolder {
   expanded: boolean;
   folders: SuggestedNavigationsFoldersMap;
   suggestedNavigations: SuggestedNavigationsMap;
-  isSubScope?: boolean;
   subScopeName?: string;
   loading?: boolean;
 }

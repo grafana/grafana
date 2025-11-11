@@ -107,7 +107,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     currentFilteredFolder.expanded = expanded;
 
     // If expanding a subScope folder, fetch items for that subScope asynchronously
-    if (expanded && currentFolder.isSubScope) {
+    if (expanded && currentFolder.subScopeName) {
       // Only fetch if folder is empty (hasn't been loaded yet)
       const isEmpty =
         Object.keys(currentFolder.folders).length === 0 && Object.keys(currentFolder.suggestedNavigations).length === 0;
@@ -312,7 +312,6 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
             expanded,
             folders: {},
             suggestedNavigations: {},
-            isSubScope: true,
             subScopeName: subScope,
           };
         }
