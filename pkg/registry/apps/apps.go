@@ -4,15 +4,21 @@ import (
 	"context"
 	"slices"
 
+	"k8s.io/client-go/rest"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
+	"github.com/grafana/grafana/pkg/registry/apps/annotation"
+	"github.com/grafana/grafana/pkg/registry/apps/correlations"
+	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
+	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
@@ -30,14 +36,42 @@ func ProvideAppInstallers(
 	playlistAppInstaller *playlist.PlaylistAppInstaller,
 	pluginsApplInstaller *plugins.PluginsAppInstaller,
 	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
+	rulesAppInstaller *rules.AlertingRulesAppInstaller,
+	correlationsAppInstaller *correlations.AppInstaller,
+	alertingNotificationAppInstaller *notifications.AlertingNotificationsAppInstaller,
+	logsdrilldownAppInstaller *logsdrilldown.LogsDrilldownAppInstaller,
+	annotationAppInstaller *annotation.AnnotationAppInstaller,
+	exampleAppInstaller *example.ExampleAppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
 		pluginsApplInstaller,
+		exampleAppInstaller,
 	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
 		installers = append(installers, shorturlAppInstaller)
 	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAlertingRules) && rulesAppInstaller != nil {
+		installers = append(installers, rulesAppInstaller)
+	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesCorrelations) {
+		installers = append(installers, correlationsAppInstaller)
+	}
+	if alertingNotificationAppInstaller != nil {
+		installers = append(installers, alertingNotificationAppInstaller)
+	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesLogsDrilldown) {
+		installers = append(installers, logsdrilldownAppInstaller)
+	}
+	//nolint:staticcheck
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
+		installers = append(installers, annotationAppInstaller)
+	}
+
 	return installers
 }
 
@@ -58,7 +92,6 @@ func ProvideBuilderRunners(
 	features featuremgmt.FeatureToggles,
 	investigationAppProvider *investigations.InvestigationsAppProvider,
 	advisorAppProvider *advisor.AdvisorAppProvider,
-	alertingNotificationsAppProvider *notifications.AlertingNotificationsAppProvider,
 	grafanaCfg *setting.Cfg,
 ) (*Service, error) {
 	cfgWrapper := func(ctx context.Context) (*rest.Config, error) {
@@ -78,16 +111,15 @@ func ProvideBuilderRunners(
 	var apiGroupRunner *runner.APIGroupRunner
 	var err error
 	providers := []app.Provider{}
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagInvestigationsBackend) {
 		logger.Debug("Investigations backend is enabled")
 		providers = append(providers, investigationAppProvider)
 	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) &&
 		!slices.Contains(grafanaCfg.DisablePlugins, "grafana-advisor-app") {
 		providers = append(providers, advisorAppProvider)
-	}
-	if alertingNotificationsAppProvider != nil {
-		providers = append(providers, alertingNotificationsAppProvider)
 	}
 	apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, providers...)
 

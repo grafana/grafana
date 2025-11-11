@@ -10,7 +10,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "12.2.0-pre";
+export const pluginVersion = "12.4.0-pre";
 
 /**
  * Controls the color mode of the heatmap
@@ -188,6 +188,7 @@ export interface RowsHeatmapOptions {
 }
 
 export interface Options {
+  annotations?: ui.VizAnnotations;
   /**
    * Controls if the heatmap should be calculated from data
    */

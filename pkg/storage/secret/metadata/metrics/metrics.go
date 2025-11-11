@@ -12,8 +12,9 @@ const (
 	namespace = "grafana_secrets_manager"
 	subsystem = "storage"
 	// labels
-	successLabel = "success"
-	resultLabel  = "result"
+	successLabel   = "success"
+	resultLabel    = "result"
+	decrypterLabel = "decrypter"
 )
 
 // StorageMetrics is a struct that contains all the metrics for all operations of secrets storage.
@@ -30,6 +31,7 @@ type StorageMetrics struct {
 	SecureValueMetadataListDuration   *prometheus.HistogramVec
 	SecureValueSetExternalIDDuration  *prometheus.HistogramVec
 	SecureValueSetStatusDuration      *prometheus.HistogramVec
+	SecureValueDeleteDuration         *prometheus.HistogramVec
 
 	DecryptDuration *prometheus.HistogramVec
 }
@@ -116,6 +118,13 @@ func newStorageMetrics() *StorageMetrics {
 			Help:      "Duration of secure value set status operations",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{successLabel}),
+		SecureValueDeleteDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "secure_value_delete_duration_seconds",
+			Help:      "Duration of secure value delete operations",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{successLabel}),
 
 		// Decrypt metrics
 		DecryptDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -124,7 +133,7 @@ func newStorageMetrics() *StorageMetrics {
 			Name:      "decrypt_duration_seconds",
 			Help:      "Duration of decrypt operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{resultLabel}),
+		}, []string{resultLabel, decrypterLabel}),
 	}
 }
 
@@ -151,6 +160,7 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.SecureValueMetadataListDuration,
 				m.SecureValueSetExternalIDDuration,
 				m.SecureValueSetStatusDuration,
+				m.SecureValueDeleteDuration,
 				m.DecryptDuration,
 			)
 		}

@@ -132,6 +132,13 @@ type CreateFolderCommand struct {
 	ParentUID   string `json:"parentUid"`
 
 	SignedInUser identity.Requester `json:"-"`
+
+	// When running classic file provisioning with folders saved in kubernetes,
+	// folders will be marked with a manager of kind ManagerKindClassicFP
+	// NOTE: this is ignored when running legacy SQL storage
+	//
+	// Deprecated: this should only be used by the legacy file provisioning system
+	ManagerKindClassicFP string `json:"-"`
 }
 
 // UpdateFolderCommand captures the information required by the folder service
@@ -151,6 +158,13 @@ type UpdateFolderCommand struct {
 	Overwrite bool `json:"overwrite"`
 
 	SignedInUser identity.Requester `json:"-"`
+
+	// When running classic file provisioning with folders saved in kubernetes,
+	// folders will be marked with a manager of kind ManagerKindClassicFP
+	// NOTE: this is ignored when running legacy SQL storage
+	//
+	// Deprecated: this should only be used by the legacy file provisioning system
+	ManagerKindClassicFP string `json:"-"`
 }
 
 // MoveFolderCommand captures the information required by the folder service
@@ -264,3 +278,50 @@ type GetDescendantCountsQuery struct {
 }
 
 type DescendantCounts map[string]int64
+
+// SortByPostorder returns the folders in postorder traversal order.
+// That is, children folders appear before their parents in the returned slice.
+func SortByPostorder(folders []*Folder) []*Folder {
+	if len(folders) == 0 {
+		return folders
+	}
+
+	// Build parent-to-children map
+	tree := make(map[string][]*Folder)
+	folderMap := make(map[string]*Folder)
+	for _, f := range folders {
+		folderMap[f.UID] = f
+		tree[f.ParentUID] = append(tree[f.ParentUID], f)
+	}
+
+	// Find all roots (folders whose parents are not in the result set)
+	var roots []*Folder
+	for _, f := range folders {
+		if folderMap[f.ParentUID] == nil {
+			roots = append(roots, f)
+		}
+	}
+
+	// Traverse in postorder
+	result := make([]*Folder, 0, len(folders))
+	visited := make(map[string]bool)
+	var traverse func(f *Folder)
+	traverse = func(f *Folder) {
+		if visited[f.UID] {
+			return
+		}
+		visited[f.UID] = true
+		// First visit all children
+		for _, child := range tree[f.UID] {
+			traverse(child)
+		}
+		// Then add current folder
+		result = append(result, f)
+	}
+
+	for _, root := range roots {
+		traverse(root)
+	}
+
+	return result
+}

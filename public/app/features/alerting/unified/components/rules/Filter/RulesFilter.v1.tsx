@@ -74,7 +74,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
     });
 
     setFilterKey((key) => key + 1);
-    trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'dataSourceNames' });
+    trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'dataSourceNames', filterVariant: 'v1' });
   };
 
   type Filters = typeof filterState;
@@ -83,7 +83,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
     <K extends keyof Filters>(key: K) =>
     (value: Filters[K]) => {
       updateFilters({ ...filterState, [key]: value });
-      trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: key });
+      trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: key, filterVariant: 'v1' });
     };
 
   const clearDataSource = () => {
@@ -266,6 +266,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
               trackAlertRuleFilterEvent({
                 filterMethod: 'search-input',
                 filter: getSearchFilterFromQuery(data.searchQuery),
+                filterVariant: 'v1',
               });
             })}
           >
@@ -367,7 +368,10 @@ function SearchQueryHelp() {
         />
         <HelpRow title={t('alerting.search-query-help.title-group', 'Group')} expr="group:cpu-usage" />
         <HelpRow title={t('alerting.search-query-help.title-rule', 'Rule')} expr='rule:"cpu 80%"' />
-        <HelpRow title={t('alerting.search-query-help.title-labels', 'Labels')} expr="label:team=A label:cluster=a1" />
+        <HelpRow
+          title={t('alerting.search-query-help.title-labels', 'Labels')}
+          expr='label:team=A label:"cluster=new york"'
+        />
         <HelpRow title={t('alerting.search-query-help.title-state', 'State')} expr="state:firing|normal|pending" />
         <HelpRow title={t('alerting.search-query-help.title-type', 'Type')} expr="type:alerting|recording" />
         <HelpRow title={t('alerting.search-query-help.title-health', 'Health')} expr="health:ok|nodata|error" />

@@ -85,7 +85,7 @@ func getReceiverScopesForRules(rules models.RulesGroup) []string {
 	var result []string
 	for _, rule := range rules {
 		for _, ns := range rule.NotificationSettings {
-			scope := ScopeReceiversProvider.GetResourceScopeUID(legacy_storage.NameToUid(ns.Receiver))
+			scope := models.ScopeReceiversProvider.GetResourceScopeUID(legacy_storage.NameToUid(ns.Receiver))
 			if _, ok := scopesMap[scope]; ok {
 				continue
 			}

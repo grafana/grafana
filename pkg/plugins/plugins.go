@@ -79,8 +79,7 @@ var (
 )
 
 type AngularMeta struct {
-	Detected        bool `json:"detected"`
-	HideDeprecation bool `json:"hideDeprecation"`
+	Detected bool `json:"detected"`
 }
 
 // JSONData represents the plugin's plugin.json

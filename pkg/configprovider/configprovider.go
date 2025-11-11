@@ -8,7 +8,7 @@ import (
 )
 
 type ConfigProvider interface {
-	Get(context.Context) *setting.Cfg
+	Get(context.Context) (*setting.Cfg, error)
 }
 
 type OSSConfigProvider struct {
@@ -16,9 +16,9 @@ type OSSConfigProvider struct {
 	log log.Logger
 }
 
-func (c *OSSConfigProvider) Get(_ context.Context) *setting.Cfg {
+func (c *OSSConfigProvider) Get(_ context.Context) (*setting.Cfg, error) {
 	c.log.Debug("OSSConfigProvider Get")
-	return c.Cfg
+	return c.Cfg, nil
 }
 
 func ProvideService(cfg *setting.Cfg) (ConfigProvider, error) {

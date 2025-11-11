@@ -23,19 +23,16 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
-import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
-import { conditionalRenderingSerializerRegistry } from '../../conditional-rendering/serializers';
-import { CustomTimeRangeCompare } from '../../scene/CustomTimeRangeCompare';
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
-import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
+import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -74,10 +71,6 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     titleItems,
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
-    // _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel), //FIXME: Angular Migration
-    headerActions: config.featureToggles.timeComparison
-      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
-      : undefined,
   };
 
   if (!config.publicDashboardAccessToken) {
@@ -293,20 +286,12 @@ export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['
 
 export function getConditionalRendering(
   item: TabsLayoutTabKind | RowsLayoutRowKind | AutoGridLayoutItemKind
-): ConditionalRendering {
+): ConditionalRenderingGroup {
   if (!item.spec.conditionalRendering) {
-    return ConditionalRendering.createEmpty();
+    return ConditionalRenderingGroup.createEmpty();
   }
 
-  const rootGroup = conditionalRenderingSerializerRegistry
-    .get(item.spec.conditionalRendering.kind)
-    .deserialize(item.spec.conditionalRendering);
-
-  if (rootGroup && !(rootGroup instanceof ConditionalRenderingGroup)) {
-    throw new Error(`Conditional rendering must always start with a root group`);
-  }
-
-  return new ConditionalRendering({ rootGroup: rootGroup });
+  return ConditionalRenderingGroup.deserialize(item.spec.conditionalRendering);
 }
 
 export function getElements(layout: DashboardLayoutManager, scene: DashboardScene): DashboardV2Spec['elements'] {

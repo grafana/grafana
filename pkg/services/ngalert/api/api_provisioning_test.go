@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
 	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/timeinterval"
@@ -49,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -60,9 +61,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationProvisioningApi(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("policies", func(t *testing.T) {
 		t.Run("successful GET returns 200", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
@@ -672,6 +672,28 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				require.Equal(t, 400, response.Status())
 				require.NotEmpty(t, response.Body())
 				require.Contains(t, string(response.Body()), "invalid alert rule")
+			})
+
+			t.Run("PUT returns 400 when the alert rule has invalid queries", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				group := definitions.AlertRuleGroup{
+					Title:    "test rule group",
+					Interval: 60,
+					Rules: []definitions.ProvisionedAlertRule{
+						createTestAlertRule("rule", 1),
+					},
+				}
+				// Set an invalid query model that will fail PreSave validation
+				// Invalid JSON should trigger unmarshal error in PreSave
+				group.Rules[0].Data[0].Model = json.RawMessage(`{invalid json`)
+
+				response := sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "invalid alert rule")
+				require.Contains(t, string(response.Body()), "invalid alert query")
 			})
 		})
 
@@ -1650,9 +1672,8 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 }
 
 func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	createTestEnv := func(t *testing.T, testConfig string) testEnvironment {
 		env := createTestEnv(t, testConfig)
 		env.ac = &recordingAccessControlFake{
@@ -2011,11 +2032,11 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 			t.Run(fmt.Sprintf("exportType=%s", exportType), func(t *testing.T) {
 				for _, redacted := range []bool{true, false} {
 					t.Run(fmt.Sprintf("redacted=%t", redacted), func(t *testing.T) {
-						allIntegrations := make([]models.Integration, 0, len(alertingNotify.AllKnownConfigsForTesting))
-						for integrationType := range alertingNotify.AllKnownConfigsForTesting {
+						allIntegrations := make([]models.Integration, 0, len(notifytest.AllKnownV1ConfigsForTesting))
+						for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
 							integration := models.IntegrationGen(
 								models.IntegrationMuts.WithName(allIntegrationsName),
-								models.IntegrationMuts.WithUID(fmt.Sprintf("%s-uid", integrationType)),
+								models.IntegrationMuts.WithUID(fmt.Sprintf("%s-uid", strings.ToLower(string(integrationType)))),
 								models.IntegrationMuts.WithValidConfig(integrationType),
 							)()
 							integration.DisableResolveMessage = redacted

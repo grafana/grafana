@@ -3,5 +3,5 @@ kind: Folder
 metadata:
   generateName: x # anything is ok here... except yes or true -- they become boolean!
 spec:
-  title: Generated folder title (${RAND})
+  title: Generated folder title
   description: A description from here

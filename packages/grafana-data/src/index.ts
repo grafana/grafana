@@ -50,6 +50,8 @@ export {
   isTimeSeriesField,
   getRowUniqueId,
   addRow,
+  alignTimeRangeCompareData,
+  shouldAlignTimeCompare,
 } from './dataframe/utils';
 export {
   StreamingDataFrame,
@@ -148,6 +150,8 @@ export {
   applyRawFieldOverrides,
   useFieldOverrides,
   getFieldDataContextClone,
+  DataLinksContext,
+  useDataLinksContext,
 } from './field/fieldOverrides';
 export { getFieldDisplayValuesProxy } from './field/getFieldDisplayValuesProxy';
 export {
@@ -431,6 +435,7 @@ export {
   isStandardFieldProp,
   type OptionDefaults,
 } from './panel/getPanelOptionsWithDefaults';
+export { type PanelDataSummary, getPanelDataSummary } from './panel/suggestions/getPanelDataSummary';
 export { createFieldConfigRegistry } from './panel/registryFactories';
 export { type QueryRunner, type QueryRunnerOptions } from './types/queryRunner';
 export { type GroupingToMatrixTransformerOptions } from './transformations/transformers/groupingToMatrix';
@@ -529,6 +534,7 @@ export {
   type QueryVariableModel,
   type TextBoxVariableModel,
   type ConstantVariableModel,
+  type SwitchVariableModel,
   type VariableWithMultiSupport,
   type VariableWithOptions,
   type DashboardProps,
@@ -568,6 +574,8 @@ export type { FeatureToggles } from './types/featureToggles.gen';
 export {
   PluginExtensionTypes,
   PluginExtensionPoints,
+  PluginExtensionExposedComponents,
+  PluginExtensionPointPatterns,
   type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,
@@ -588,9 +596,11 @@ export {
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedFunctionConfig,
   type PluginExtensionResourceAttributesContext,
+  type CentralAlertHistorySceneV1Props,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
+  type ScopeDashboardBindingStatus,
   type ScopeDashboardBinding,
   type ScopeFilterOperator,
   type ScopeSpecFilter,
@@ -642,7 +652,6 @@ export {
   type AngularPanelMenuItem,
   type PanelPluginDataSupport,
   type VisualizationSuggestion,
-  type PanelDataSummary,
   type VisualizationSuggestionsSupplier,
   VizOrientation,
   VisualizationSuggestionScore,
@@ -849,6 +858,8 @@ export {
   defaultActionConfig,
   contentTypeOptions,
   httpMethodOptions,
+  type FetchOptions,
+  type InfinityOptions,
 } from './types/action';
 export { DataFrameType } from './types/dataFrameTypes';
 export {

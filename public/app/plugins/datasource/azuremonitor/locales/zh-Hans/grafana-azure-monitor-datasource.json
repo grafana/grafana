@@ -13,11 +13,11 @@
       "label-resource-group": "资源组",
       "label-resource-name": "资源名称",
       "label-resource-number": "资源 {{resourceNum}}",
-      "label-resource-uri": "资源 URI ",
+      "label-resource-uri": "",
       "label-subscription": "订阅",
       "placeholder-resource-name": "姓名",
       "tooltip-region": "资源的代码区域。对于一个资源来说是可选的，但在选择多个资源时则是必须的。",
-      "tooltip-resource-uri": "手动编辑<2>资源 uri</2>。支持使用多个模板变量（例如：/subscriptions/$subId/resourceGroups/$rg）"
+      "tooltip-resource-uri": ""
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "汇总功能",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "基本日志",
-      "description-basic-logs": "启用此功能后，在查询表配置为<2>基本日志</2>的数据面板上，Azure Monitor 会产生每次查询的费用。",
+      "description-basic-logs": "",
       "label-enable-basic-logs": "启用基本日志"
     },
     "config-editor": {
@@ -227,16 +227,26 @@
       "select-resource": "选择资源"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "应用",
       "button-cancel": "取消",
       "header-location": "位置",
+      "header-resource-group": "",
       "header-scope": "范围",
       "header-type": "类型",
       "heading-selection": "选择",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "显示最初 {{numResults}} 个结果",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "加载中...",
+      "text-no-recent-resources": "",
       "text-no-resources": "未找到资源",
-      "title-error-occurred": "从 Azure Monitor 请求资源时发生错误"
+      "title-error-occurred": "从 Azure Monitor 请求资源时发生错误",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "范围"

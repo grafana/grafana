@@ -33,8 +33,8 @@ import {
   AdHocFilterItem,
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import config from 'app/core/config';
 import { profiler } from 'app/core/profiler';
+import { annotationServer } from 'app/features/annotations/api';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
@@ -43,7 +43,6 @@ import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/ove
 import { dispatch } from 'app/store/store';
 import { RenderEvent } from 'app/types/events';
 
-import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel } from '../state/DashboardModel';
@@ -114,13 +113,14 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         canAddAnnotations: props.dashboard.canAddAnnotations.bind(props.dashboard),
         canEditAnnotations: props.dashboard.canEditAnnotations.bind(props.dashboard),
         canDeleteAnnotations: props.dashboard.canDeleteAnnotations.bind(props.dashboard),
+        canExecuteActions: props.dashboard.canExecuteActions.bind(props.dashboard),
         onAddAdHocFilter: this.onAddAdHocFilter,
         onUpdateData: this.onUpdateData,
       },
       data: this.getInitialPanelDataState(),
     };
 
-    if (config.featureToggles.panelMonitoring && this.getPanelContextApp() === CoreApp.PanelEditor) {
+    if (this.getPanelContextApp() === CoreApp.PanelEditor) {
       const panelInfo = {
         panelId: String(props.panel.id),
         panelType: props.panel.type,
@@ -394,7 +394,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   }
 
   onPanelError = (error: Error) => {
-    if (config.featureToggles.panelMonitoring && this.getPanelContextApp() === CoreApp.PanelEditor) {
+    if (this.getPanelContextApp() === CoreApp.PanelEditor) {
       this.logPanelChangesOnError();
     }
 
@@ -420,13 +420,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       tags: event.tags,
       text: event.description,
     };
-    await saveAnnotation(anno);
+    await annotationServer().save(anno);
     getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
     this.state.context.eventBus.publish(new AnnotationChangeEvent(anno));
   };
 
   onAnnotationDelete = async (id: string) => {
-    await deleteAnnotation({ id });
+    await annotationServer().delete({ id });
     getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
     this.state.context.eventBus.publish(new AnnotationChangeEvent({ id }));
   };
@@ -443,7 +443,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       tags: event.tags,
       text: event.description,
     };
-    await updateAnnotation(anno);
+    await annotationServer().update(anno);
 
     getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
     this.state.context.eventBus.publish(new AnnotationChangeEvent(anno));
@@ -542,7 +542,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
             onChangeTimeRange={this.onChangeTimeRange}
             eventBus={dashboard.events}
           />
-          {config.featureToggles.panelMonitoring && this.state.errorMessage === undefined && (
+          {this.state.errorMessage === undefined && (
             <PanelLoadTimeMonitor panelType={plugin.meta.id} panelId={panel.id} panelTitle={panel.title} />
           )}
         </PanelContextProvider>
@@ -596,6 +596,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         {(innerWidth, innerHeight) => (
           <>
             <ErrorBoundary
+              boundaryName="panel-state-wrapper"
               dependencies={[data, plugin, panel.getOptions()]}
               onError={this.onPanelError}
               onRecover={this.onPanelErrorRecover}

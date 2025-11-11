@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Stack } from '@grafana/ui';
 import { Job, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
@@ -12,7 +12,10 @@ import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
+import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { StepStatusInfo } from '../../Wizard/types';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
+import { StatusInfo } from '../../types';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getDefaultWorkflow, getWorkflowOptions } from '../defaults';
@@ -30,6 +33,7 @@ interface FormProps extends BulkActionProvisionResourceProps {
 function FormContent({ initialValues, selectedItems, repository, workflowOptions, onDismiss }: FormProps) {
   // States
   const [job, setJob] = useState<Job>();
+  const [jobError, setJobError] = useState<string | StatusInfo>();
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   // Hooks
@@ -42,6 +46,17 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
     setHasSubmitted(true);
 
     const resources = collectSelectedItems(selectedItems);
+
+    const folderCount = Object.keys(selectedItems.folder || {}).length;
+    const dashboardCount = Object.keys(selectedItems.dashboard || {}).length;
+    reportInteraction('grafana_provisioning_bulk_delete_submitted', {
+      workflow: data.workflow,
+      repositoryName: repository.name ?? 'unknown',
+      repositoryType: repository.type ?? 'unknown',
+      resourceCount: resources.length,
+      folderCount,
+      dashboardCount,
+    });
 
     // Create the delete job spec
     const jobSpec: DeleteJobSpec = {
@@ -72,21 +87,29 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const disableBtn =
     isCreatingJob || job?.status?.state === 'working' || job?.status?.state === 'pending' || hasSubmitted;
 
+  const onStatusChange = useCallback((statusInfo: StepStatusInfo) => {
+    if (statusInfo.status === 'error' && statusInfo.error) {
+      setJobError(statusInfo.error);
+    }
+  }, []);
+
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleSubmitForm)}>
         <Stack direction="column" gap={2}>
-          <Box paddingBottom={2}>
-            <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.delete-warning">
-              This will delete selected folders and their descendants. In total, this will affect:
-            </Trans>
-            <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
-          </Box>
-
           {hasSubmitted && job ? (
-            <JobStatus watch={job} jobType="delete" />
+            <>
+              <ProvisioningAlert error={jobError} />
+              <JobStatus watch={job} jobType="delete" onStatusChange={onStatusChange} />
+            </>
           ) : (
             <>
+              <Box paddingBottom={2}>
+                <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.delete-warning">
+                  This will delete selected folders and their descendants. In total, this will affect:
+                </Trans>
+                <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
+              </Box>
               <ResourceEditFormSharedFields
                 resourceType="folder"
                 isNew={false}
@@ -96,13 +119,13 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
                 hidePath
               />
               <Stack gap={2}>
+                <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
+                  <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.button-cancel">Cancel</Trans>
+                </Button>
                 <Button type="submit" disabled={disableBtn} variant="destructive">
                   {job?.status?.state === 'working' || job?.status?.state === 'pending'
                     ? t('browse-dashboards.bulk-delete-resources-form.button-deleting', 'Deleting...')
                     : t('browse-dashboards.bulk-delete-resources-form.button-delete', 'Delete')}
-                </Button>
-                <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
-                  <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.button-cancel">Cancel</Trans>
                 </Button>
               </Stack>
             </>

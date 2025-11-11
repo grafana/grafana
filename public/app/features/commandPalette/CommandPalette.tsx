@@ -5,6 +5,7 @@ import { useOverlay } from '@react-aria/overlays';
 import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, ActionImpl } from 'kbar';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
+import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -88,7 +89,11 @@ function CommandPaletteContents() {
             </div>
             {scopesRow ? <div className={styles.searchContainer}>{scopesRow}</div> : null}
             <div className={styles.resultsContainer}>
-              <RenderResults isFetchingSearchResults={isFetchingSearchResults} searchResults={searchResults} />
+              <RenderResults
+                isFetchingSearchResults={isFetchingSearchResults}
+                searchResults={searchResults}
+                searchQuery={searchQuery}
+              />
             </div>
           </div>
         </FocusScope>
@@ -131,10 +136,13 @@ function AncestorBreadcrumbs() {
 interface RenderResultsProps {
   isFetchingSearchResults: boolean;
   searchResults: CommandPaletteAction[];
+  searchQuery: string;
 }
 
-const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResultsProps) => {
+const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: RenderResultsProps) => {
   const { results: kbarResults, rootActionId } = useMatches();
+  const { query } = useKBar();
+  const { isAvailable: isAssistantAvailable } = useAssistant();
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
 
@@ -176,11 +184,16 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   }, [showEmptyState]);
 
   return showEmptyState ? (
-    <EmptyState
-      variant="not-found"
-      role="alert"
-      message={t('command-palette.empty-state.message', 'No results found')}
-    />
+    <EmptyState variant="not-found" role="alert" message={t('command-palette.empty-state.message', 'No results found')}>
+      {isAssistantAvailable && (
+        <OpenAssistantButton
+          origin="grafana/command-palette-empty-state"
+          prompt={`Search for ${searchQuery}`}
+          title={t('command-palette.empty-state.button-title', 'Search with Grafana Assistant')}
+          onClick={query.toggle}
+        />
+      )}
+    </EmptyState>
   ) : (
     <KBarResults
       items={items}
@@ -230,7 +243,7 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       maxWidth: theme.breakpoints.values.md,
       background: theme.colors.background.primary,
       color: theme.colors.text.primary,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       border: `1px solid ${theme.colors.border.weak}`,
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,

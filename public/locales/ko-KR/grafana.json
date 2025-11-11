@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "권한 추가",
+      "loading": "",
       "no-permissions": "권한 없음",
       "permissions-change-warning": "이 작업을 수행하면 이 폴더와 모든 하위 폴더에 대한 권한이 변경됩니다. 이는 전체적으로 다음에 영향을 미칩니다.",
       "role": "역할",
       "serviceaccount": "서비스 계정",
       "team": "팀",
-      "title": "권한",
       "user": "사용자"
     }
   },
@@ -81,20 +81,6 @@
         "title-access-denied": "액세스 거부됨"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "일부 기능은 안정적이며(GA 단계) 기본적으로 활성화되어 있지만, 일부 기능은 현재 예비 베타 단계에 있으며 조기 도입이 가능하도록 제공하고 있습니다.",
-      "confirm-modal-body-2": "변경 사항을 적용하기 전에 각 기능의 변경이 어떤 영향을 미칠지 파악하는 것이 좋습니다.",
-      "confirmText-save-changes": "변경 사항 저장",
-      "get-stage-cell": {
-        "beta": "베타",
-        "content-general-availability": "정식 제공",
-        "deprecated": "사용 중단됨",
-        "ga": "GA 단계"
-      },
-      "save-changes": "변경 사항 저장",
-      "saving": "저장 중...",
-      "title-apply-feature-toggle-changes": "기능 토글 변경 사항 적용"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "조직 삭제",
       "confirmText-delete": "삭제",
@@ -122,7 +108,7 @@
       "dismiss": "닫기",
       "heading": "엔터프라이즈 인증",
       "learn-more-link": "자세히 알아보기",
-      "text": "Grafana Cloud 및 Enterprise에서 사용할 수 있는 <1>SAML</1>, <3>SCIM</3>, <6>LDAP</6>, <8>RBAC</8>를 사용하여 사용자, 팀, 권한을 자동으로 관리합니다."
+      "text": ""
     },
     "feature-listing": {
       "title-auditing": "감사",
@@ -140,11 +126,6 @@
       "title-sort-dashboards-by-popularity-in-search": "검색 시 인기도에 따라 대시보드 정렬",
       "title-team-sync": "팀 동기화"
     },
-    "feature-toggles": {
-      "restart-pending": "최신 기능 토글 변경 사항을 적용하기 위해 Grafana 인스턴스의 재시작이 보류 중입니다",
-      "restart-required": "기능 토글 변경 사항을 저장하면 인스턴스가 다시 시작되며, 몇 분이 소요될 수 있습니다",
-      "sub-title": "기능 토글을 보고 편집합니다. <2>grafana.com</2>에서 기능 토글에 대해 자세히 알아보세요."
-    },
     "get-enterprise": {
       "contact-us": "무료 체험 문의하기",
       "description": "30일간 무료로 체험판을 사용하실 수 있습니다. 체험 기간이 종료되기 5일 전에 알려드립니다.",
@@ -156,8 +137,11 @@
       "title": "Grafana Enterprise 사용하기"
     },
     "ldap": {
+      "debug-subtitle": "",
+      "debug-title": "",
       "test-mapping-heading": "사용자 매핑 테스트",
-      "test-mapping-run-button": "실행"
+      "test-mapping-run-button": "실행",
+      "text-loading-ldap-status": ""
     },
     "ldap-connection-status": {
       "columns": {
@@ -225,7 +209,7 @@
       "title-delete": "삭제"
     },
     "orgs": {
-      "delete-body": "정말 '{{deleteOrgName}}'을(를) 삭제하시겠어요?<3></3> <5>이 조직의 모든 대시보드가 제거됩니다!</5>",
+      "delete-body": "",
       "id-header": "ID",
       "name-header": "이름",
       "new-org-button": "새 조직"
@@ -361,14 +345,6 @@
       "tooltip-assigned-role": "이 사용자가 로그인하면 라이선스가 부여된 역할이 할당됩니다"
     }
   },
-  "alert-labels": {
-    "button": {
-      "hide": "일반 라벨 숨기기",
-      "show": {
-        "tooltip": "일반 라벨 표시"
-      }
-    }
-  },
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "활성 타이밍"
@@ -474,15 +450,16 @@
     "alert-instance-state-filter": {
       "state": "상태"
     },
+    "alert-instances-table": {
+      "created": "",
+      "labels": "",
+      "state": ""
+    },
     "alert-label": {
       "tooltip-remove-label": "라벨 제거"
     },
     "alert-label-dropdown": {
       "placeholder-select": "{{type}} 선택"
-    },
-    "alert-labels": {
-      "aria-label-labels": "라벨",
-      "common-labels-count_other": "일반 라벨 {{count}}개 추가"
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "알림 비활성화, 그룹화 및 타이밍(선택 사항)",
@@ -500,6 +477,7 @@
       "copy-link": "링크 복사",
       "duplicate": "복제",
       "export": "내보내기",
+      "manage-enrichments": "",
       "silence-notifications": "알림 끄기에 대한 알림",
       "with-modifications": "수정 사항 포함"
     },
@@ -545,6 +523,7 @@
     },
     "alert-rules": {
       "firing-for": "발생 조건:",
+      "multiple-sources": "",
       "next-evaluation": "다음 평가",
       "next-evaluation-in": "다음 평가까지 남은 시간",
       "rule-definition": "규칙 정의"
@@ -737,6 +716,7 @@
         "title-annotations": "주석"
       },
       "link-dashboard-and-panel": "대시보드 및 패널 연결",
+      "placeholder-value-input": "",
       "placeholder-value-input-default": "사용자 지정 주석 내용을 입력하세요..."
     },
     "bulk-actions": {
@@ -1114,7 +1094,8 @@
     },
     "enrichment": {
       "error-boundary": {
-        "notification-message-section-extension": ""
+        "enrichment-drawer-extension": "",
+        "rule-viewer-section-extension": ""
       }
     },
     "error-modal": {
@@ -1159,7 +1140,7 @@
       "title-something-wrong-trying-fetch-group-details": "그룹 세부 정보를 가져오는 중에 문제가 발생했습니다"
     },
     "evaluation-interval-limit-exceeded": {
-      "body-minimum-interval": "Grafana에서 <1>{{minInterval}}</1>의 최소 평가 간격이 구성되었습니다.<3></3>간격을 더 짧게 구성하려면 관리자에게 문의하세요.",
+      "body-minimum-interval": "",
       "title-global-evaluation-interval-limit-exceeded": "전역 평가 간격 한도 초과됨"
     },
     "existing-rule-editor": {
@@ -1307,7 +1288,7 @@
           "resolved": "해결됨"
         }
       },
-      "review-alert-payload": " 페이로드에 추가할 경고 데이터 검토:",
+      "review-alert-payload": "",
       "title-add-custom-alerts": "사용자 지정 경고 추가"
     },
     "get-alert-suggestions": {
@@ -1431,7 +1412,7 @@
       "title-add-folder-and-labels": "폴더 및 라벨 추가"
     },
     "grafana-managed-rule-type": {
-      "description": "모든 종류의 여러 데이터 소스를 지원합니다.<1></1>표현식으로 데이터를 변환합니다."
+      "description": ""
     },
     "grafana-modify-export": {
       "body-invalid-rule-id": "페이지 URL의 규칙 UID가 유효하지 않습니다. URL을 확인한 후 다시 시도하세요.",
@@ -1550,6 +1531,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "그룹을 삭제하는 중입니다"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "'{{refId}}' 표현식 제거"
     },
@@ -1667,6 +1651,16 @@
     "inspector-yaml-tab": {
       "apply": "적용"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "IRM에 연결하는 방법",
       "disabled-description": "Webhook 통합을 통해 IRM 활성화",
@@ -1696,9 +1690,6 @@
       "notes": "메모",
       "returns": "반환"
     },
-    "label-picker": {
-      "no-options-message": "라벨을 찾을 수 없습니다"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "라벨 편집"
     },
@@ -1716,9 +1707,6 @@
     "labels-sub-form": {
       "description": "아래 옵션에서 라벨 키/값을 선택하거나 새 라벨 키/값을 입력하고 엔터 키를 누릅니다.",
       "save": "저장"
-    },
-    "labels-with-suggestions": {
-      "text-loading-existing-labels": "기존 라벨 로딩 중"
     },
     "labels-without-suggestions": {
       "message": {
@@ -1814,6 +1802,10 @@
         }
       }
     },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
+    },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "중괄호 없이 라벨 쿼리를 사용하여 경고를 필터링합니다. 예:",
       "filter-alerts-using-label-querying-without-spaces": "공백 없이 라벨 쿼리를 사용하여 경고를 필터링합니다. 예:",
@@ -1850,7 +1842,7 @@
       "aria-label-new": "신규"
     },
     "mimir-flavored-type": {
-      "description": "Mimir, Loki 또는 Cortex 데이터 소스를 사용합니다.<1></1>표현식은 지원되지 않습니다."
+      "description": ""
     },
     "min-interval-option": {
       "label-interval": "간격",
@@ -1920,9 +1912,6 @@
       "title-remove": "제거",
       "tooltip-remove-time-range": "시간 범위 제거"
     },
-    "namespace": {
-      "title-alert-rules": "경고 규칙"
-    },
     "namespace-and-group-filter": {
       "select-group": "그룹 선택",
       "select-namespace": "네임스페이스 선택"
@@ -1979,8 +1968,10 @@
       "label-notification-policies": "알림 정책",
       "label-time-intervals": "시간 간격"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "기본 정책",
       "no-matchers": "일치 조건 없음"
     },
     "notification-preview": {
@@ -1997,22 +1988,12 @@
     },
     "notification-route": {
       "no-labels": "라벨 없음",
-      "no-matching-labels": "일치하는 라벨 없음"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "경고 인스턴스는 다음과 같이 라우팅됩니다.",
-      "close": "닫기",
-      "contact-point": "연락처",
-      "default-policy": "기본 정책",
-      "notification-policy-path": "알림 정책 경로",
-      "see-details-link": "세부 정보 보기",
-      "title-routing-details": "라우팅 세부 정보"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "정책 라우트 펼치기",
-      "delivered-to": "@수신처",
-      "notification-policy": "알림 정책",
-      "see-details": "세부 정보 보기"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2040,11 +2021,19 @@
       "recipient-notification-fires": "경고 규칙이 발생될 때 알림을 받을 사람을 선택하세요."
     },
     "option-customfield": {
-      "label-custom-template": "사용자 정의 템플릿"
+      "label-custom-template": "사용자 정의 템플릿",
+      "placeholder": "",
+      "placeholder-with-template": ""
     },
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "선택하신 Alertmanager가 더 이상 존재하지 않거나 액세스 권한이 없습니다. 드롭다운에서 다른 Alertmanager를 선택할 수 있습니다.",
       "title-selected-alertmanager-not-found": "선택한 Alertmanager를 찾을 수 없습니다."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2053,9 +2042,6 @@
       "failed-to-load-error": "Grafana 규칙 상태 로딩 실패: {{error}}",
       "text-loading-rules": "규칙 로딩 중...",
       "title-dashboard-not-saved": "대시보드 저장되지 않음"
-    },
-    "paused-badge": {
-      "paused": "일시 중지됨"
     },
     "payload-editor": {
       "edit-payload": "페이로드 편집",
@@ -2085,7 +2071,7 @@
         "warning-1": "이 알림 정책을 삭제하면 영구적으로 제거됩니다.",
         "warning-2": "정말로 이 정책을 삭제하시겠어요?"
       },
-      "filter-description": "다음과 같이 쉼표로 구분된 일치 조건의 목록을 사용하여 알림 정책을 필터링합니다. <1>심각도=심각, 지역=EMEA</1>",
+      "filter-description": "",
       "generated-policies": "자동 생성된 정책",
       "matchers": "일치 조건",
       "metadata": {
@@ -2128,7 +2114,8 @@
         "conflict": "알림 정책 트리가 다른 사용자에 의해 업데이트되었습니다.",
         "error-code": "오류 메시지: '{{error}}'",
         "routes": {
-          "conflictingMatchers": "라우트를 추가하거나 업데이트할 수 없습니다. {{-matchers}} 일치 조건을 병합하면 일치 조건이 외부 라우팅 트리와 충돌하여 해당 라우트에 접근할 수 없게 됩니다."
+          "conflictingMatchers": "라우트를 추가하거나 업데이트할 수 없습니다. {{-matchers}} 일치 조건을 병합하면 일치 조건이 외부 라우팅 트리와 충돌하여 해당 라우트에 접근할 수 없게 됩니다.",
+          "unknownMatchers": ""
         },
         "suffix": "페이지를 새로고침한 후 다시 시도해 주세요.",
         "title": "알림 정책을 추가하거나 업데이트하지 못했습니다"
@@ -2139,10 +2126,6 @@
       "label-new-child-policy": "새 하위 정책",
       "label-new-sibling-above": "위에 형제 항목 추가",
       "label-new-sibling-below": "아래에 형제 항목 추가"
-    },
-    "policy-path": {
-      "default-policy": "기본 정책",
-      "no-matchers": "일치 조건 없음"
     },
     "preview-rule": {
       "body-preview-is-not-available": "쿼리 미리보기를 표시할 수 없습니다. 쿼리에 사용된 데이터 소스 중 일부를 사용할 수 없습니다.",
@@ -2188,7 +2171,6 @@
       "body-queries-expressions-configured": "경고할 쿼리 또는 표현식을 하나 이상 생성합니다",
       "confirmText-deactivate": "비활성화",
       "expressions": "표현식",
-      "loading-data-sources": "데이터 소스 로딩 중...",
       "manipulate-returned-queries-other-operations": "쿼리에서 반환된 데이터를 수학 및 기타 연산으로 조작합니다.",
       "message": {
         "a-valid-expression-is-required": "유효한 표현식이 필요합니다."
@@ -2206,9 +2188,6 @@
       "label-time-range": "시간 범위",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "최소 간격 = {{minInterval}}"
-    },
-    "query-preview": {
-      "relative-time-range": "<0>{{from}}</0>부터 현재까지"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2253,7 +2232,7 @@
       "error-no-query-editor": "{{errorMessage}}(으)로 인해 쿼리 편집기를 로딩할 수 없습니다"
     },
     "recording-rule-type": {
-      "description": "표현식을 미리 계산합니다.<1></1>경고 규칙과 결합해야 합니다."
+      "description": ""
     },
     "recording-rules": {
       "description-target-data-source": "기록 규칙을 저장할 Prometheus 데이터 소스",
@@ -2266,7 +2245,7 @@
     },
     "redirect-to-clone-rule": {
       "body-evaluation-group": "원본 규칙이 프로비저닝되어 UI에서 생성된 규칙에 사용할 수 없으므로 복사한 규칙에 대한 새 평가 그룹을 설정해야 합니다.",
-      "body-not-provisioned": "새 규칙은 프로비저닝된 규칙으로 표시되지 <1>않습니다</1>.",
+      "body-not-provisioned": "",
       "confirmText-copy": "복사",
       "title-copy-provisioned-alert-rule": "프로비저닝된 경고 규칙 복사"
     },
@@ -2301,13 +2280,13 @@
     "routing-settings": {
       "aria-label-group-by": "그룹화 기준",
       "description-group-by": "동일한 라벨 값을 기준으로 그룹화하여 여러 개의 경고를 하나의 알림으로 결합합니다. 비어 있는 경우 기본 알림 정책에서 상속됩니다.",
-      "group-interval": "그룹 간격: <1>{{groupIntervalValue}}</1>",
-      "group-wait": "그룹 대기: <1>{{groupWaitValue}}</1>",
-      "grouping": "그룹화: <1>{{fields}}</1>",
+      "group-interval": "",
+      "group-wait": "",
+      "grouping": "",
       "label-group-by": "그룹화 기준",
       "label-override-grouping": "그룹화 재정의",
       "label-override-timings": "타이밍 재정의",
-      "repeat-interval": "반복 간격: <1>{{repeatIntervalValue}}</1>"
+      "repeat-interval": ""
     },
     "rule-actions-buttons": {
       "title-edit": "편집",
@@ -2331,6 +2310,9 @@
     },
     "rule-details-data-sources": {
       "label-data-source": "데이터 소스"
+    },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
     },
     "rule-details-expression": {
       "label-expression": "표현식"
@@ -2551,8 +2533,12 @@
       "recovering": "{{recoveringStats}}개 복구 중",
       "error_other": "오류 {{count}}개"
     },
+    "rule-time-range-label": {
+      "relative": "",
+      "relative-with-to": ""
+    },
     "rule-type-picker": {
-      "grafana-managed": "Ruler API가 활성화된 Mimir, Loki 또는 Cortex 데이터 소스가 없는 경우 &ldquo;Grafana 관리형&rdquo;을 선택합니다."
+      "grafana-managed": ""
     },
     "rule-view": {
       "query": {
@@ -2569,6 +2555,10 @@
       "prometheus-consistency-check": {
         "alert-message": "경고 규칙이 추가되거나 업데이트되었습니다. 경고 규칙 목록 보기에 변경 사항이 표시되기까지 최대 1분이 소요될 수 있습니다.",
         "alert-title": "업데이트 진행 중"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "이 경고 규칙을 평가하는 중에 문제가 발생했습니다"
     },
@@ -2625,13 +2615,15 @@
         "show": "표시"
       },
       "manage-alerts": "이러한 데이터 소스에서 경고 UI를 통해 '경고 관리'를 선택하면 Grafana UI와 경고 규칙이 구성된 데이터 소스에서 이러한 경고 규칙을 관리할 수 있습니다.",
-      "no-groups": "사용 가능한 그룹 없음",
-      "no-namespaces": "사용 가능한 폴더 없음",
       "placeholder-all-data-sources": "모든 데이터 소스",
       "placeholder-contact-point": "연락처 선택",
       "placeholder-data-sources": "데이터 소스 선택",
       "placeholder-labels": "레이블 선택",
       "plugin-rules": "플러그인 규칙",
+      "rule-source": {
+        "datasource": "",
+        "grafana": ""
+      },
       "rule-type": "규칙 유형",
       "rulesSearchInput-placeholder-search": "검색",
       "search": "검색",
@@ -2653,6 +2645,7 @@
         "namespace": "폴더 / 네임스페이스",
         "rule-health": "상태",
         "rule-name": "규칙 이름",
+        "rule-source": "",
         "rule-type": "유형",
         "state": "상태"
       }
@@ -2878,8 +2871,10 @@
     "test-contact-point-modal": {
       "custom-notification-message": "아래에 정의된 주석을 사용하는 테스트 알림을 전송합니다. 사용자 정의 템플릿 및 메시지를 사용하는 경우 이 옵션이 좋습니다.",
       "notification-message": "알림 메시지",
-      "predefined-notification-message": "미리 정의된 경고를 사용하는 테스트 알림을 전송합니다. 정의해 둔 사용자 지정 템플릿 또는 메시지가 있다면, 위에서 <1>사용자 지정</1> 알림 메시지로 전환하여 더 나은 결과를 얻을 수 있습니다.",
+      "predefined-notification-message": "",
       "send-test-notification": "테스트 알림 전송",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "연락처 테스트"
     },
     "threshold": {
@@ -2887,7 +2882,7 @@
     },
     "threshold-expression-viewer": {
       "input": "입력",
-      "stop-alerting-when": "다음 경우 경고(또는 보류 상태) 중지 "
+      "stop-alerting-when": ""
     },
     "time-interval": {
       "add-time-interval": "시간 간격 추가",
@@ -2933,6 +2928,27 @@
         "body": "대상 폴더가 비어 있지 않습니다. 일부 규칙이 덮어쓰이거나 제거될 수 있습니다. 정말 이 경고 규칙을 Grafana 관리 규칙으로 가져오시겠어요?",
         "summary": "다음 경고 규칙을 가져옵니다.",
         "title-warning": "경고"
+      }
+    },
+    "triage": {
+      "alert-instances": "",
+      "error-loading-rule": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
+      "no-firing-or-pending-instances": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "no-matching-instances-with-filters": "",
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
       }
     },
     "type-selector-button": {
@@ -3031,6 +3047,7 @@
       "page-nav": {
         "text": {
           "details": "세부 정보",
+          "enrichment": "",
           "history": "이력",
           "instances": "인스턴스",
           "query-and-conditions": "쿼리 및 조건",
@@ -3055,7 +3072,7 @@
       "title-notification-policies": "알림 정책"
     },
     "yaml-content-info": {
-      "body": "편집기의 YAML 콘텐츠에는 경고 규칙 구성만 포함되어 있습니다. <1></1>Prometheus를 구성하려면 <4>구성 파일 콘텐츠의 나머지 부분을 제공해야 합니다.</4>"
+      "body": ""
     }
   },
   "alertlist": {
@@ -3131,7 +3148,7 @@
       "no-annotations-found": "주석을 찾을 수 없습니다."
     },
     "annotation-list-item": {
-      "tooltip-created-by": "작성자:<1></1> {{email}} "
+      "tooltip-created-by": ""
     },
     "category-annotation-query": "주석 쿼리",
     "category-display": "디스플레이",
@@ -3169,7 +3186,7 @@
     },
     "empty-state": {
       "button-title": "주석 쿼리 추가",
-      "info-box-content": "<0>주석은 이벤트 데이터를 그래프에 통합하는 방법을 제공합니다. 이는 모든 그래프 패널에서 세로 선과 아이콘으로 시각화됩니다. 주석 아이콘 위에 마우스를 갖다대면 이벤트에 대한 이벤트 텍스트와 태그를 확인할 수 있습니다. CTRL 또는 CMD를 누른 상태에서 그래프를 클릭(또는 영역을 드래그)하면 Grafana에서 바로 주석 이벤트를 추가할 수 있습니다. 이 정보는 Grafana의 주석 데이터베이스에 저장됩니다.</0>",
+      "info-box-content": "",
       "info-box-content-2": "자세한 내용은 <2>주석 문서</2>를 확인하세요.",
       "title": "아직 추가된 사용자 정의 주석 쿼리 없음"
     },
@@ -3207,7 +3224,7 @@
       "auth-settings": "인증 설정"
     },
     "auth-drawer-unconneced": {
-      "subtitle": "인증 설정을 구성합니다. 자세한 내용은 Grafana의 <2>문서</2>를 확인하세요."
+      "subtitle": ""
     },
     "auth-drawer-unconnected": {
       "advanced-auth": "고급 인증",
@@ -3241,7 +3258,7 @@
       "allowed-organizations-description": "쉼표 또는 공백으로 구분된 조직 목록입니다. 사용자가 로그인하려면 하나 이상의\n조직의 멤버여야 합니다.",
       "allowed-organizations-label": "허용된 조직",
       "allowed-organizations-placeholder": "조직(my-team, myteam...)을 입력하고 엔터 키를 눌러 추가",
-      "api-url-description": "OAuth2 제공자의 사용자 정보 엔드포인트입니다. 이 엔드포인트에서 반환되는 정보는 <2>OpenID UserInfo</2>와 호환되어야 합니다.",
+      "api-url-description": "",
       "api-url-required": "설정된 경우 이 필드는 유효한 URL이어야 합니다.",
       "auth-style-description": "\"{{ clientIDLabel }}\" 및 \"{{ clientSecretLabel }}\"이(가) Oauth2 제공자에 전송되는 방식을 결정합니다. 기본값은 AutoDetect입니다.",
       "auth-style-label": "인증 스타일",
@@ -3258,7 +3275,7 @@
       "define-allowed-teams-ids-label": "허용된 팀 ID 정의",
       "display-name-description": "로그인 페이지에 '다음으로 로그인'으로 표시됩니다. 두 개 이상의 ID 제공자 또는 SSO 프로토콜을 사용하는 경우 유용합니다.",
       "display-name-label": "표시 이름",
-      "domain-hint-description": "Azure AD/Entra ID 테넌트에서 사용자의 영역을 나타내고 로그인 프로세스를 간소화하는 매개변수입니다.",
+      "domain-hint-description": "",
       "domain-hint-label": "도메인 힌트",
       "domain-hint-valid-domain": "이 필드는 유효한 도메인이어야 합니다.",
       "email-attribute-name-description": "OAuth2 ID 토큰의 속성 맵 내에서 사용자 이메일 조회에 사용할 키의 이름입니다.",
@@ -3380,16 +3397,13 @@
       "text-badge-enabled": "활성화됨",
       "text-badge-not-enabled": "활성화되지 않음"
     },
-    "scim-banner": {
-      "message": "SCIM은 현재 개발 중인 기능으로, 프로덕션 환경에서 사용하는 것을 권장하지 않습니다. 사용 시 주의해야 하며 향후 변경 사항이 있을 수 있습니다."
-    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "사용하는 IdP의 .well-known/openid-configuration 엔드포인트",
       "title-open-id-connect-discovery-url": "OpenID Connect Discovery URL"
     }
   },
   "auth-config-auth-config-page-unconnected": {
-    "subtitle": "인증 설정을 관리하고 싱글 사인온을 구성하세요. 자세한 내용은 Grafana의 <2>문서</2>를 확인하세요."
+    "subtitle": ""
   },
   "bar-chart": {
     "warn": {
@@ -3506,7 +3520,7 @@
       "delete-button": "삭제",
       "delete-modal-invalid-text": "하나 이상의 폴더에 라이브러리 패널 또는 경고 규칙이 포함되어 있습니다. 계속하려면 먼저 이 항목들을 삭제하세요.",
       "delete-modal-invalid-title": "폴더를 삭제할 수 없음",
-      "delete-modal-restore-dashboards-text": "이 작업을 수행하면 선택한 폴더가 즉시 삭제되지만 선택한 대시보드는 30일 후에 삭제 대상으로 표시됩니다. 조직 관리자는 30일이 만료되기 전에 언제든지 대시보드를 복구할 수 있습니다. 폴더를 복구할 수 없습니다.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "이 작업을 수행하면 다음 콘텐츠가 삭제됩니다.",
       "delete-modal-title": "삭제",
       "delete-provisioned-folder": "프로비저닝된 폴더 삭제",
@@ -3517,6 +3531,7 @@
       "move-modal-field-label": "폴더 이름",
       "move-modal-text": "이 작업을 수행하면 다음 콘텐츠가 이동됩니다.",
       "move-modal-title": "이동",
+      "move-provisioned-folder": "",
       "moving": "이동 중...",
       "new-folder-name-required-phrase": "폴더 이름은 필수 입력 항목입니다.",
       "selected-mix-resources-modal-text": "프로비저닝된 리소스와 프로비저닝되지 않은 리소스를 모두 선택하셨습니다. 이 두 가지는 함께 처리할 수 없습니다. 프로비저닝된 리소스만 또는 프로비저닝되지 않은 리소스만 선택한 후 다시 시도해 주세요.",
@@ -3552,7 +3567,9 @@
       },
       "error-moving-resources": "리소스 이동 도중 오류 발생",
       "error-no-target-folder-path": "대상 폴더 경로가 잘못되었거나 비어 있습니다. 다시 선택해 주세요.",
-      "move-warning": "이렇게 하면 선택하신 폴더와 하위 폴더가 이동되며, 전체적으로 다음에 영향을 미칩니다.",
+      "move-total": "",
+      "move-warning": "",
+      "move-warning-tooltip": "",
       "target-folder": "대상 폴더"
     },
     "counts": {
@@ -3581,6 +3598,7 @@
       "button-cancel": "취소",
       "button-delete": "삭제",
       "button-deleting": "삭제 중…",
+      "commit": "",
       "delete-warning": "이 작업을 수행하면 이 폴더와 모든 하위 폴더가 삭제됩니다. 이는 전체적으로 다음에 영향을 미칩니다.",
       "success-message": "폴더가 삭제되었습니다"
     },
@@ -3645,13 +3663,18 @@
       "text": "쿼리에 대해 찾은 결과 없음"
     },
     "restore": {
-      "success": "{{name}} 대시보드 복원됨"
+      "success": "",
+      "all-failed_other": "",
+      "failed-count_other": "",
+      "success-count_other": ""
     },
     "text-this-repository-is-read-only": "대상에 직접 액세스할 수 있는 경우 JSON을 복사하여 붙여넣으세요.",
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "알파벳순(A~Z)",
-        "alphabetically-za": "알파벳순(Z~A)"
+        "alphabetically-za": "알파벳순(Z~A)",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -4075,6 +4098,7 @@
       "description": "사용자 지정 값 사용"
     },
     "options": {
+      "loading": "",
       "no-found": "옵션을 찾을 수 없습니다."
     }
   },
@@ -4086,11 +4110,12 @@
       "scopes": "범위"
     },
     "empty-state": {
+      "button-title": "",
       "message": "찾은 결과 없음"
     },
     "scopes": {
       "apply-selected-scopes": "적용",
-      "selected-scopes-label": "범위: "
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "검색 또는 다음으로 건너뛰기..."
@@ -4111,6 +4136,7 @@
     "cancel": "취소",
     "clear": "초기화",
     "collapse": "접기",
+    "disabled": "",
     "edit": "편집",
     "help": "도움말",
     "loading": "로딩 중...",
@@ -4147,6 +4173,13 @@
       "aria-label-link-to-advisor": "어드바이저 링크",
       "body": "새로운 어드바이저를 사용하여 데이터 소스와 플러그인의 잠재적인 문제를 파악하세요.",
       "go-to-advisor": "어드바이저로 이동"
+    },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "cloud": {
       "connections-home-page": {
@@ -4196,6 +4229,20 @@
         "unknown-datasource": "알 수 없는 데이터 소스"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "데이터 소스 유형 선택"
@@ -4211,7 +4258,7 @@
       "okay": "확인"
     },
     "not-found-datasource": {
-      "body": "URL을 잘못 입력했거나 ID가 <1></1>인 플러그인이 사용 불가능한 것일 수 있습니다.<3></3>사용 가능한 데이터 소스 목록을 보려면 <5>여기를 클릭</5>하세요."
+      "body": ""
     },
     "oss": {
       "connections-home-page": {
@@ -4225,6 +4272,13 @@
         },
         "subtitle": "데이터 소스 연결을 편리하게 한 곳에서 관리하세요. 이 페이지를 사용하여 새로운 데이터 소스를 추가하거나 기존 연결을 관리할 수 있습니다. "
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "모두 검색",
@@ -4247,8 +4301,8 @@
     "versionHistory": {
       "comparison": {
         "header": {
-          "hide-json-diff": "JSON 차이 숨기기 ",
-          "show-json-diff": "JSON 차이 표시 ",
+          "hide-json-diff": "",
+          "show-json-diff": "",
           "text": "{{version}} 버전이 {{createdBy}}에 의해 업데이트됨({{ageString}}) {{message}}"
         },
         "select": "비교를 시작할 두 버전을 선택하세요."
@@ -4275,7 +4329,7 @@
       "label-label": "라벨",
       "label-placeholder": "예: Tempo 추적",
       "label-required": "이 필드는 필수 입력 항목입니다.",
-      "sub-text": "<0>상관 관계를 설명하는 텍스트를 정의합니다.</0>",
+      "sub-text": "",
       "title": "상관 관계 라벨 정의(1/3단계)"
     },
     "configure-correlation-target-form": {
@@ -4319,7 +4373,7 @@
     },
     "source-form": {
       "control-required": "이 필드는 필수 입력 항목입니다.",
-      "description": "데이터 포인트가 모든 변수에 값을 필드 또는 변환 출력으로 제공해야 상관 관계 버튼이 시각화에 표시됩니다.<1></1>참고: 모든 변수를 아래에 명시적으로 정의할 필요는 없습니다. <4>logfmt</4>와 같은 변환은 모든 키/값 쌍에 대해 변수를 생성합니다.",
+      "description": "",
       "description-external-pre": "대상 URL에서 다음 변수를 사용했습니다.",
       "description-query-pre": "대상 쿼리에서 다음 변수를 사용했습니다.",
       "external-title": "URL을 사용할 데이터 소스 구성(3/3단계)",
@@ -4331,12 +4385,12 @@
       "results-required": "이 필드는 필수 입력 항목입니다.",
       "source-description": "선택한 소스 데이터 소스의 결과에 패널 내 표시된 링크가 있습니다.",
       "source-label": "소스",
-      "sub-text": "<0>상관 관계를 표시할 데이터 소스와 이전에 정의된 변수를 대체할 데이터를 정의합니다.</0>"
+      "sub-text": ""
     },
     "sub-title": "서로 다른 데이터 소스에 저장된 데이터가 서로 어떻게 관련되는지 정의합니다. 자세한 내용은 <2>문서</2>를 참조하세요.",
     "target-form": {
       "control-rules": "이 필드는 필수 입력 항목입니다.",
-      "sub-text": "<0>상관 관계가 연결될 대상을 정의합니다. 쿼리 유형을 사용하면 상관 관계가 클릭될 때 쿼리가 실행됩니다. 외부 유형의 경우 상관 관계를 클릭하면 URL이 열립니다.</0>",
+      "sub-text": "",
       "target-description-external": "링크를 클릭할 때 열릴 URL을 지정하세요.",
       "target-description-query": "링크를 클릭할 때 쿼리할 데이터 소스를 지정하세요.",
       "target-label": "대상",
@@ -4455,6 +4509,8 @@
     },
     "canvas-actions": {
       "add-panel": "패널 추가",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "행으로 그룹화",
       "group-into-tab": "탭으로 그룹화",
       "group-panels": "패널 그룹화",
@@ -4463,7 +4519,9 @@
       "paste-panel": "패널 붙여넣기",
       "paste-row": "행 붙여넣기",
       "paste-tab": "탭 붙여넣기",
-      "un-group-panels": "그룹 해제"
+      "un-group-panels": "그룹 해제",
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4485,16 +4543,11 @@
             "any": "부분 일치",
             "label": "일치 규칙"
           },
-          "label": "그룹",
           "visibility": {
             "hide": "숨기기",
             "label": "{{type}} 표시 여부",
             "show": "표시"
           }
-        },
-        "shared": {
-          "delete-condition": "조건 삭제",
-          "unsupported-item-type": "이 조건은 해당 요소에서 지원되지 않으므로 무시됩니다."
         },
         "time-range-size": {
           "info": "대시보드 시간 범위가 선택한 시간 범위보다 짧은 경우 {{type}}을(를) 표시하거나 숨깁니다.",
@@ -4524,22 +4577,27 @@
             "not-matches": "일치하지 않음"
           },
           "value": "값"
+        },
+        "wrapper": {
+          "delete-condition": "",
+          "unsupported-object-type": ""
         }
       },
       "editor": {
-        "not-supported-for-custom-grid": "맞춤형 그리드 레이아웃에서는 조건부 렌더링이 지원되지 않습니다. 조건부 렌더링을 사용하려면 자동 그리드로 전환하세요.",
-        "unsupported-item-type": "이 항목 유형에서는 조건부 렌더링이 지원되지 않습니다."
+        "info": "",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
+        "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "조건부 렌더링으로 인해 요소가 숨겨져 있습니다."
+        "tooltip": ""
       },
       "root": {
-        "info": "일부 또는 모든 규칙을 충족할 때 {{type}}의 표시 여부를 제어하는 규칙을 설정합니다.",
         "title": "규칙 표시 / 숨기기"
       }
     },
     "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "플러그인을 업데이트하면 변경 사항이 손실됩니다.<1></1><2>사용자 정의 버전을 만들려면 <1>다른 이름으로 저장</1>을 사용하세요.</2>",
+      "body-plugin-dashboard": "",
       "cancel": "취소",
       "overwrite": "덮어쓰기",
       "title-plugin-dashboard": "플러그인 대시보드"
@@ -4564,7 +4622,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "{{dashboardName}} 대시보드"
+      "aria-label-dashboard-name": "{{dashboardName}} 대시보드",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "대시보드 로딩 취소"
@@ -4667,13 +4726,16 @@
       "move": "{{typeName}} 이동",
       "panel-background": "패널 배경 변경",
       "panel-description": "패널 설명 변경",
+      "panel-edit": "",
       "panel-max-repeats-per-row": "행당 최대 반복 횟수",
       "panel-repeat-direction": "반복 방향",
       "panel-repeat-variable": "패널 반복 기준",
       "panel-title": "패널 제목 변경",
       "paste-panel": "패널 붙여넣기",
       "remove": "{{typeName}} 제거",
-      "switch-layout": "레이아웃 전환"
+      "row-title": "",
+      "switch-layout": "레이아웃 전환",
+      "tab-title": ""
     },
     "edit-pane": {
       "elements": {
@@ -4703,8 +4765,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "쉼표로 구분된 값",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped, value"
+          "close": "",
+          "modal-title": "",
+          "values": "쉼표로 구분된 값"
         },
         "datasource-options": {
           "name-filter": "이름 필터",
@@ -4751,9 +4814,13 @@
       "add-visualization-body": "데이터 소스를 선택한 다음 차트, 통계, 표를 사용하여 데이터를 쿼리하고 시각화하거나 목록, 마크다운 및 기타 위젯을 생성합니다.",
       "add-visualization-button": "시각화 추가",
       "add-visualization-header": "시각화 추가하여 새 대시보드 시작하기",
-      "import-a-dashboard-body": "파일 또는 <1>grafana.com</1>에서 대시보드 가져오기",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "대시보드 가져오기",
-      "import-dashboard-button": "대시보드 가져오기"
+      "import-dashboard-button": "대시보드 가져오기",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "대시보드 로딩에 실패했습니다."
@@ -4919,12 +4986,11 @@
       "dataframe-aria-label": "데이터 프레임 선택",
       "dataframe-label": "데이터 프레임 표시",
       "download-csv": "CSV 다운로드",
-      "download-excel-description": "CSV에 헤더 추가하여 Excel과 함께 사용",
-      "download-excel-label": "Excel용으로 다운로드",
       "download-logs": "로그 다운로드",
       "download-service": "서비스 그래프 다운로드",
       "download-traces": "추적 다운로드",
-      "excel-header": "Excel 헤더",
+      "excel-compatibility-mode-description": "",
+      "excel-compatibility-mode-label": "",
       "formatted": "형식화된 데이터",
       "formatted-data-description": "표 데이터 형식은 '필드' 및 '재정의' 탭에 정의된 옵션으로 지정됩니다.",
       "formatted-data-label": "형식화된 데이터",
@@ -4967,6 +5033,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "복사",
         "copy-or-duplicate": "복사 또는 복제",
@@ -4976,7 +5043,10 @@
         "group-layout-disabled": "이 레벨에는 그룹이 존재하지 않습니다",
         "panel-layout": "패널 레이아웃",
         "panel-layout-disabled": "패널 레이아웃 옵션을 변경하려면 행 또는 탭을 선택하세요"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5041,6 +5111,19 @@
     "override-category-title": {
       "aria-label-remove-override": "재정의 제거",
       "tooltip-remove-override": "재정의 제거"
+    },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
     },
     "panel-edit": {
       "alerting-tab": {
@@ -5124,10 +5207,15 @@
       "title-row-options": "행 옵션"
     },
     "rows-layout": {
+      "cancel": "",
+      "convert-to": "",
       "delete-row-text": "이 행을 삭제하면 패널도 모두 삭제됩니다. 정말 계속하시겠어요?",
       "delete-row-title": "행을 삭제하시겠어요?",
       "delete-row-yes": "삭제",
       "description": "헤더가 있는 접을 수 있는 패널 그룹",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "행 헤더는 편집 모드에서만 표시됩니다",
       "name": "행",
       "row": {
@@ -5157,7 +5245,9 @@
       },
       "row-warning": {
         "title-not-unique": "이 제목은 고유하지 않습니다"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "대시보드가 저장되었습니다"
@@ -5194,8 +5284,8 @@
       "title-provisioned": "프로비저닝된 대시보드"
     },
     "save-dashboard-error-proxy": {
-      "body-name-exists": "선택한 폴더에 동일한 이름의 대시보드가 이미 존재합니다.<1></1><2>그래도 이 대시보드를 저장하시겠어요?</2>",
-      "body-version-mismatch": "다른 사람이 이 대시보드를 업데이트했습니다<1></1><2>그래도 이 대시보드를 저장하시겠어요?</2>",
+      "body-name-exists": "",
+      "body-version-mismatch": "",
       "confirmText-save-and-overwrite": "저장 및 덮어쓰기",
       "title-name-exists": "충돌",
       "title-version-mismatch": "충돌"
@@ -5213,7 +5303,7 @@
       "cancel": "취소",
       "cannot-be-saved": "이 대시보드는 다른 소스에서 프로비저닝되었으므로 Grafana UI에서 저장할 수 없습니다. JSON을 복사하거나 아래 파일에 저장하면 프로비저닝 소스에서 대시보드를 업데이트할 수 있습니다.",
       "copy-json-to-clipboard": "JSON을 클립보드로 복사",
-      "file-path": "<0>파일 경로:</0> {{filePath}}",
+      "file-path": "",
       "save-json-to-file": "JSON을 파일에 저장",
       "see-docs": "프로비저닝에 대한 자세한 내용은 <2>문서</2>를 참고하세요."
     },
@@ -5247,6 +5337,9 @@
       "delete-tab-title": "탭을 삭제하시겠어요?",
       "delete-tab-yes": "삭제",
       "description": "패널을 가로 탭으로 구성",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "탭",
       "tab": {
         "new": "새 탭",
@@ -5330,7 +5423,6 @@
             "json": "JSON으로 내보내기"
           }
         },
-        "mark-favorite": "즐겨찾기로 표시",
         "more-save-options": "저장 옵션 더 보기",
         "playlist-next": "다음 대시보드로 이동",
         "playlist-previous": "이전 대시보드로 이동",
@@ -5359,8 +5451,7 @@
             "yesText": "저장"
           }
         },
-        "unlink-library-panel": "라이브러리 패널 연결 해제",
-        "unmark-favorite": "즐겨찾기 표시 취소"
+        "unlink-library-panel": "라이브러리 패널 연결 해제"
       },
       "open-original": "원래 대시보드 열기",
       "playlist-next": "다음 대시보드로 이동",
@@ -5380,11 +5471,11 @@
       "save-dashboard-short": "저장",
       "save-library-panel": "라이브러리 패널 저장",
       "settings": "대시보드 설정",
-      "share": {
-        "label": "공유",
-        "tooltip": "대시보드 공유"
-      },
       "share-button": "공유",
+      "star-add-error": "",
+      "star-added": "",
+      "star-remove-error": "",
+      "star-removed": "",
       "unlink-library-panel": "라이브러리 패널 연결 해제",
       "unmark-favorite": "즐겨찾기 표시 취소"
     },
@@ -5411,7 +5502,7 @@
     "transformation-picker": {
       "info": "변환을 사용하면 쿼리 결과를 시각화하기 전에 조인, 계산, 재정렬, 숨기기 및 이름 변경을 할 수 있습니다.",
       "info-graph-not-suitable": "그래프 시각화를 사용하는 경우 현재 시계열 데이터만 지원되므로 많은 변환이 적합하지 않습니다.",
-      "info-switch-to-table": "표 시각화로 전환하면 변환을 통해 어떤 작업이 이뤄지는지 이해하는 데 도움이 될 수 있습니다. ",
+      "info-switch-to-table": "",
       "placeholder-search-for-transformation": "변환 검색",
       "read-more": "더 읽어보기",
       "title-transformations": "변환"
@@ -5477,8 +5568,8 @@
     "version-history-comparison": {
       "button-restore": "{{version}} 버전으로 복구",
       "label-view-json-diff": "JSON 차이 보기",
-      "new-updated-by": "<0>{{version}} 버전</0>이 {{editor}}에 의해 {{timeAgo}}에 업데이트됨",
-      "old-updated-by": "<0>{{version}} 버전</0>이 {{editor}}에 의해 {{timeAgo}}에 업데이트됨"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "{{version}} 버전 선택 토글",
@@ -5589,6 +5680,11 @@
       "open-in-new-tab": "새 탭에서 열기",
       "title-error-adding-the-panel": "패널 추가 중 오류 발생"
     },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
+    },
     "annotation-settings-edit": {
       "back-to-list": "목록으로 돌아가기",
       "delete": "삭제",
@@ -5634,14 +5730,6 @@
         "title": {
           "new-dashboard": "새 대시보드"
         }
-      }
-    },
-    "config-public-dashboard": {
-      "confirmText": {
-        "revoke-public-url": "공개 URL 철회"
-      },
-      "title": {
-        "revoke-public-url": "공개 URL 철회"
       }
     },
     "constant-variable-form": {
@@ -5786,6 +5874,7 @@
         "dynamically-switch-source-multiple-panels": "여러 패널의 데이터 소스를 동적으로 전환합니다",
         "group": "실시간으로 그룹화에 사용할 키를 추가합니다",
         "hidden-constant-variable": "공유하려는 대시보드의 메트릭 접두사에 유용한, 숨겨진 상수형 변수",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "사용자는 텍스트 상자에 임의의 문자열을 입력할 수 있습니다",
         "values-are-static-and-defined-manually": "값은 정적이며 수동으로 정의됩니다",
         "values-fetched-source-query": "값은 데이터 소스 쿼리에서 가져옵니다",
@@ -5799,6 +5888,7 @@
         "group-by": "그룹화 기준",
         "interval": "간격",
         "query": "쿼리",
+        "switch": "",
         "textbox": "텍스트 상자"
       }
     },
@@ -5884,7 +5974,7 @@
         "cancel": "취소"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "플러그인을 업데이트하면 변경 사항이 손실됩니다. 사용자 정의 버전을 만들려면 <1>다른 이름으로 저장</1>을 사용하세요.",
+        "body-plugin-dashboard": "",
         "title-failed-to-save-dashboard": "대시보드 저장 실패",
         "title-plugin-dashboard": "플러그인 대시보드",
         "title-someone-else-has-updated-this-dashboard": "다른 사람이 이 대시보드를 업데이트했습니다",
@@ -5893,17 +5983,23 @@
       "save-and-overwrite": "'저장 및 덮어쓰기'"
     },
     "library-viz-panel-info": {
-      "last-edited": "<person /> 님({{timeAgo}}에)",
+      "last-edited": "",
       "usage-count_other": "{{count}}개의 대시보드에서 사용됨"
     },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
+    },
     "move-provisioned-dashboard-form": {
-      "alert-error-moving-dashboard": "대시보드 이동 중 오류 발생",
       "api-error": "대시보드를 이동하지 못했습니다",
       "cancel-action": "취소",
       "current-file-not-found": "현재 대시보드 파일을 찾을 수 없습니다",
       "drawer-title": "프로비저닝된 대시보드 이동",
       "file-load-error": "대시보드 로딩 중 오류 발생",
-      "loading-file-data": "대시보드 데이터 로딩 중",
+      "loading-dashboard-data": "",
       "move-action": "대시보드 이동",
       "move-read-only-message": "리포지토리가 읽기 전용이므로 이 대시보드를 Grafana에서 직접 이동할 수 없습니다. 이 대시보드를 이동하려면 Git 리포지토리에서 파일을 이동하세요.",
       "moving": "이동 중...",
@@ -5947,7 +6043,7 @@
     },
     "panel-data-queries-tab-rendered": {
       "add-query": "쿼리 추가",
-      "expression": "표현식 "
+      "expression": ""
     },
     "panel-data-transformations-tab": {
       "tab-label": "변환"
@@ -6005,7 +6101,7 @@
       "query": "쿼리"
     },
     "query-variable-editor-form": {
-      "description-examples": "이름을 지정한 캡처 그룹을 사용하여 표시 텍스트와 값을 분리할 수 있습니다(<1>예시 참고</1>).",
+      "description-examples": "",
       "description-optional": "선택 사항, 시리즈 이름 또는 메트릭 노드 세그먼트의 일부를 추출하려는 경우.",
       "label-data-source": "데이터 소스",
       "label-static-options-sort": "정적 옵션 정렬",
@@ -6066,7 +6162,7 @@
       "label-message": "메시지",
       "placeholder-describe-changes-optional": "변경 사항을 설명하는 메모를 추가하세요(선택 사항).",
       "render-footer": {
-        "body-plugin-dashboard": "플러그인을 업데이트하면 변경 사항이 손실됩니다. 사용자 정의 버전을 만들려면 <1>다른 이름으로 저장</1>을 사용하세요.",
+        "body-plugin-dashboard": "",
         "no-changes-to-save": "저장할 변경 사항이 없습니다",
         "title-failed-to-save-dashboard": "대시보드 저장 실패",
         "title-plugin-dashboard": "플러그인 대시보드",
@@ -6101,7 +6197,7 @@
       "cancel": "취소",
       "cannot-be-saved": "이 대시보드는 다른 소스에서 프로비저닝되었으므로 Grafana UI에서 저장할 수 없습니다. JSON을 복사하거나 아래 파일에 저장하면 프로비저닝 소스에서 대시보드를 업데이트할 수 있습니다.",
       "copy-json-to-clipboard": "JSON을 클립보드로 복사",
-      "file-path": "<0>파일 경로:</0> {{filePath}}",
+      "file-path": "",
       "label-description": "설명",
       "label-target-folder": "대상 폴더",
       "label-title": "제목",
@@ -6141,6 +6237,18 @@
       "title": {
         "copy-to-clipboard-failed": "클립보드로 복사 실패"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "same-values-error": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "기본값"
@@ -6194,6 +6302,9 @@
       "aria-label-variable-referenced-other-variables-dashboard": "이 변수는 다른 변수 또는 대시보드에서 참조됩니다.",
       "content-variable-not-referenced-other-variables-dashboard": "이 변수는 다른 변수 또는 대시보드에서 참조되지 않습니다.",
       "content-variable-referenced-other-variables-dashboard": "이 변수는 다른 변수 또는 대시보드에서 참조됩니다."
+    },
+    "variable-controls": {
+      "add-variable": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "변수 편집기 양식",
@@ -6256,8 +6367,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "JSON 차이 보기",
-      "new-version-updated": "<0>{{version}} 버전</0>이 {{editor}}에 의해 {{timeAgo}}에 업데이트됨",
-      "old-version-updated": "<0>{{version}} 버전</0>이 {{editor}}에 의해 {{timeAgo}}에 업데이트됨"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "{{baseVersion}} <3></3> {{newVersion}} 비교 중",
@@ -6335,7 +6446,7 @@
     "provisioned-delete-modal": {
       "confirm-button": "확인",
       "text-1": "이 대시보드는 Grafana 프로비저닝에서 관리하며 삭제할 수 없습니다. 대시보드를 삭제하려면 구성 파일에서 대시보드를 제거하세요.",
-      "text-2": "프로비저닝에 대한 자세한 내용은 Grafana 문서를 참조하세요. ",
+      "text-2": "",
       "text-3": "파일 경로: {{provisionedId}}",
       "text-link": "문서 페이지로 이동",
       "title": "프로비저닝된 대시보드는 삭제할 수 없습니다."
@@ -6413,7 +6524,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "이 오류에 대해 자세히 알아보려면 <2>여기</2>를 클릭하세요.",
-    "success-more-details-links": "그런 다음 <2>대시보드를 구축</2>하거나 <5>탐색 보기</5>에서 데이터를 쿼리하여 데이터 시각화를 시작할 수 있습니다."
+    "success-more-details-links": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6509,7 +6620,7 @@
       "test": "테스트"
     },
     "cloud-info-box": {
-      "body-alert": "또는 이 작업을 건너뛰고 <6>Grafana Cloud 평생 무료 플랜</6>을 통해 Grafana Labs에서 완전 관리되고 확장 가능하며 호스팅되는 데이터 소스인 {{mainDS}}(및 {{extraDS}})을(를) 받으세요.",
+      "body-alert": "",
       "title-alert": "아래에서 {{mainDS}} 데이터 소스를 구성하세요"
     },
     "dashboards-table": {
@@ -6521,7 +6632,8 @@
     },
     "data-source-load-error": {
       "back": "뒤로가기",
-      "delete": "삭제"
+      "delete": "삭제",
+      "not-found": ""
     },
     "data-source-missing-rights-message": {
       "title-missing-rights": "권한 없음"
@@ -6589,6 +6701,7 @@
         "service-now-integration-and-data-source": "ServiceNow 통합 및 데이터 소스",
         "signal-fx-integration-and-datasource": "SignalFx 통합 및 데이터 소스",
         "snowflake-integration-and-data-source": "Snowflake 통합 및 데이터 소스",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "SumoLogic 통합 및 데이터 소스",
         "visualize-and-explore-dynatrace-data": "Dynatrace 데이터 시각화 및 탐색",
         "visualize-and-explore-oracle-sql": "Oracle SQL 시각화 및 탐색",
@@ -6635,18 +6748,18 @@
       "no-events-yet": "아직 이벤트 없음"
     },
     "render-info-viewer": {
-      "data-counter": "데이터: {{numDataChanges}} ",
+      "data-counter": "",
       "elapsed-time": "시간: {{elapsed}}ms",
       "field": "필드",
       "last": "마지막",
-      "render-counter": "렌더링: {{numRenders}} ",
-      "schema-counter": "스키마: {{numSchemaChanges}} ",
+      "render-counter": "",
+      "schema-counter": "",
       "title-reset-counters": "카운터 재설정",
       "tooltip-step-back": "뒤로 가기",
       "type": "유형"
     },
     "state-view": {
-      "current-value": "현재 값: {{currentValue}} ",
+      "current-value": "",
       "label-state-name": "주 이름"
     }
   },
@@ -7050,20 +7163,14 @@
       "title-failed-sample-query": "이 쿼리에 대한 로그 샘플 로딩 실패",
       "tooltip": "시각화된 메트릭에 기여한 로그 줄 표시"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "로그 줄의 {{percentage}}%에서 {{labelName}}이(가) 등장합니다"
-    },
     "logs-table-empty-fields": {
       "no-fields": "필드 없음"
     },
     "logs-table-multi-select": {
       "fields": "필드",
       "reset": "재설정",
-      "selected-fields": "선택된 필드"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "드래그 앤 드롭 아이콘",
-      "title-drag-and-drop-to-reorder": "끌어 놓아서 순서 변경"
+      "selected-fields": "선택된 필드",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "이름으로 쿼리 선택",
@@ -7100,7 +7207,7 @@
       },
       "footer": {
         "learn-more": "자세히 알아보기",
-        "pro-tip-define-sources-through-configuration-files": " 전문가 팁: 구성 파일을 통해 데이터 소스를 정의할 수도 있습니다. "
+        "pro-tip-define-sources-through-configuration-files": ""
       }
     },
     "pane": {
@@ -7162,8 +7269,6 @@
       "query-deleted": "쿼리 삭제됨"
     },
     "rich-history-queries-tab": {
-      "displaying-partial-queries": "쿼리 {{ count }}개 표시 중",
-      "displaying-queries": "쿼리 {{ count }}개",
       "filter-aria-label": "데이터 소스에 대한 쿼리 필터링",
       "filter-history": "이력 필터링",
       "filter-placeholder": "데이터 소스에 대한 쿼리 필터링",
@@ -7173,7 +7278,9 @@
       "search-placeholder": "쿼리 검색",
       "showing-queries": "{{ shown }}/{{ total }}개 표시 중<0>더 불러오기</0>",
       "sort-aria-label": "쿼리 정렬",
-      "sort-placeholder": "쿼리 정렬 기준"
+      "sort-placeholder": "쿼리 정렬 기준",
+      "displaying-partial-queries_other": "",
+      "displaying-queries_other": ""
     },
     "rich-history-settings-tab": {
       "alert-info": "Grafana는 입력 항목을 최대 {{optionLabel}}개까지 보관합니다.별표 표시된 입력 항목은 삭제되지 않습니다.",
@@ -7365,7 +7472,7 @@
       "copy-shortened-link-menu": "링크 복사 옵션 열기",
       "refresh-picker-cancel": "취소",
       "refresh-picker-run": "쿼리 실행",
-      "split-close": "닫기 ",
+      "split-close": "",
       "split-close-tooltip": "분할 창 닫기",
       "split-narrow": "좁은 창",
       "split-title": "분할",
@@ -7495,8 +7602,8 @@
     },
     "math": {
       "available-math-functions": "사용 가능한 수학 함수",
-      "run-math-operations": "하나 이상의 쿼리에 대해 수학 연산을 실행합니다. {{refExample}}({{ref1}}, {{ref2}}, {{ref3}} 등)(으)로 쿼리를 참조합니다.<10></10>예: <12>{{example}}</12>",
-      "tooltip-footer": "<2>수식</2>에 대한 추가 문서를 참조하세요.",
+      "run-math-operations": "",
+      "tooltip-footer": "",
       "tooltip-title": "수학 연산자",
       "tooltip-trigger": "표현식"
     },
@@ -7532,8 +7639,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "폴더 비우기",
-    "noOptionsMessage-no-folders-found": "폴더를 찾을 수 없습니다",
     "select-aria-label": "폴더 필터",
     "select-placeholder": "폴더별로 필터링"
   },
@@ -7544,7 +7649,9 @@
   "folders": {
     "api": {
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "폴더 삭제됨"
+      "folder-deleted-success": "폴더 삭제됨",
+      "folder-move-error-provisioned": "",
+      "folder-moved-success": ""
     },
     "get-loading-nav": {
       "main": {
@@ -7580,6 +7687,7 @@
   },
   "gauge": {
     "category-gauge": "게이지",
+    "category-radial-bar": "",
     "description-min-height": "행 최소 높이(가로 방향)",
     "description-min-width": "열 최소 너비(세로 방향)",
     "description-neutral": "'최소'를 중립점으로 사용하려면 비워둡니다",
@@ -7595,7 +7703,8 @@
     "name-neutral": "중간임",
     "name-show-threshold-labels": "임계값 레이블 표시",
     "name-show-threshold-markers": "임계값 마커 표시",
-    "placeholder-neutral": "자동"
+    "placeholder-neutral": "자동",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "적용",
@@ -7896,6 +8005,42 @@
     "select-group": "그룹 선택"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "그저께",
+          "previousFiscalQuarter": "이전 회계 분기",
+          "previousFiscalYear": "이전 회계 연도",
+          "previousMonth": "지난 달",
+          "previousWeek": "지난주",
+          "previousYear": "작년",
+          "thisDayLastWeek": "지난주 오늘",
+          "thisFiscalQuarter": "이번 회계 분기",
+          "thisFiscalQuarterSoFar": "이번 회계 분기 현재까지",
+          "thisFiscalYear": "이번 회계 연도",
+          "thisFiscalYearSoFar": "이번 회계 연도 현재까지",
+          "thisMonth": "이번 달",
+          "thisMonthSoFar": "이번 달 현재까지",
+          "thisWeek": "이번 주",
+          "thisWeekSoFar": "이번 주 현재까지",
+          "thisYear": "올해",
+          "thisYearSoFar": "올해 현재까지",
+          "today": "오늘",
+          "todaySoFar": "오늘 현재까지",
+          "yesterday": "어제"
+        },
+        "lastNDays_other": "",
+        "lastNHours_other": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_other": "",
+        "lastNYears_other": "",
+        "nextNDays_other": "",
+        "nextNHours_other": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_other": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -8320,6 +8465,10 @@
         "action-title": "제목",
         "action-title-placeholder": "작업 제목",
         "action-variables": "변수",
+        "connection": "",
+        "connection-direct-description": "",
+        "connection-direct-label": "",
+        "connection-placeholder": "",
         "one-click-description": "한 번에 하나의 링크나 작업만 원 클릭을 활성화할 수 있습니다."
       }
     },
@@ -8482,7 +8631,7 @@
     },
     "data-source-http-settings": {
       "access-help": "도움말 <1></1>",
-      "access-help-details": "액세스 모드는 데이터 소스에 대한 요청을 처리하는 방법을 제어합니다.달리 명시되어 있지 않으면 <1><1>서버</1></1>를 선택하는 것이 좋습니다.",
+      "access-help-details": "",
       "access-help-title": "액세스 권한 도움말",
       "access-label": "액세스 권한",
       "allowed-cookies": "허용된 쿠키",
@@ -8598,6 +8747,9 @@
     "drawer": {
       "close": "닫기"
     },
+    "error-boundary": {
+      "title": ""
+    },
     "feature-badge": {
       "experimental": "실험적 기능",
       "new": "새 기능!",
@@ -8703,6 +8855,9 @@
       "tooltip-hide": "비밀번호 숨기기",
       "tooltip-show": "비밀번호"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "행 펼치기",
       "collapse": "행 접기",
@@ -8731,6 +8886,9 @@
     "series-color-picker-popover": {
       "y-axis-usage": "오른쪽 y축 사용"
     },
+    "slider": {
+      "drag-handle-aria-label": ""
+    },
     "spinner": {
       "aria-label": "로딩 중"
     },
@@ -8744,8 +8902,7 @@
       "cell-inspect": "값 검사",
       "cell-inspect-tooltip": "값 검사",
       "copy": "클립보드로 복사",
-      "count": "개수",
-      "csv-counts": "행:{{rows}}, 열:{{columns}}  <5></5>",
+      "csv-counts": "",
       "csv-placeholder": "여기에 CSV를 입력하세요...",
       "filter-placeholder": "값 필터링",
       "filter-popup-apply": "확인",
@@ -8755,6 +8912,11 @@
       "filter-popup-heading": "값으로 필터링:",
       "filter-popup-input-placeholder": "값 필터링",
       "filter-popup-match-case": "대소문자 일치",
+      "footer": {
+        "reducer": {
+          "count": ""
+        }
+      },
       "inspect-drawer-title": "값 검사",
       "nested-table": {
         "no-data": "데이터 없음"
@@ -8985,6 +9147,8 @@
       "make-time-range-permanent": "시간 범위를 절대적/영구적으로 설정",
       "move-time-range-back": "과거 시간 범위로 변경",
       "move-time-range-forward": "미래 시간 범위로 변경",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "검색 열기",
       "open-share-embed-drawer": "패널 임베드 공유",
       "open-share-link-drawer": "패널 링크 공유",
@@ -9023,7 +9187,6 @@
     "name-line-width": "선 너비",
     "name-stacking": "스태킹"
   },
-  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "로딩 중",
@@ -9185,7 +9348,7 @@
       "error-fetching": "LDAP 설정을 가져오던 중 오류 발생",
       "error-saving": "LDAP 설정을 저장하던 중 오류 발생",
       "error-validate-form": "LDAP 설정 유효성 검증 중 오류 발생",
-      "feature-flag-disabled": "이 페이지는 <1>ssoSettingsLDAP</1> 기능 플래그를 활성화해야만 액세스할 수 있습니다.",
+      "feature-flag-disabled": "",
       "saved": "LDAP 설정 저장됨"
     },
     "bind-dn": {
@@ -9200,7 +9363,8 @@
       "disable-button": "비활성화",
       "discard-button": "삭제",
       "save-and-enable-button": "저장 및 활성화",
-      "save-button": "저장"
+      "save-button": "저장",
+      "test-button": ""
     },
     "documentation": "문서",
     "host": {
@@ -9225,13 +9389,11 @@
       "label": "검색 기본 DNS",
       "placeholder": "예: dc=grafana,dc=org"
     },
-    "subtitle": "Grafana에서 LDAP 통합을 사용하면 Grafana 사용자가 자신의 LDAP 자격 증명으로 로그인할 수 있습니다. 자세한 내용은 Grafana의 <2><0>문서</0></2>를 참조하세요.",
+    "subtitle": "",
     "title": "기본 설정"
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "취소",
-      "create": "라이브러리 패널 생성",
       "error": "이미 존재하는 라이브러리 패널 이름입니다.",
       "folder": "폴더에 저장",
       "folder-description": "라이브러리 패널 권한은 폴더 권한에서 파생됩니다.",
@@ -9271,7 +9433,7 @@
       "dashboard-name": "대시보드 이름"
     },
     "library-panel-info": {
-      "last-edited": "마지막 편집: <person /> 님({{timeAgo}}에)",
+      "last-edited": "",
       "usage-count_other": "{{count}}개의 대시보드에서 사용됨"
     },
     "library-panels-search": {
@@ -9322,6 +9484,7 @@
     },
     "share-panel": {
       "config-description": "다음 사용자 지정 설정을 사용하여 조직 내에서 패널을 공유할 수 있는 개인화된 직접 링크를 생성합니다.",
+      "copy-image-link": "",
       "download-image": "이미지 다운로드",
       "render-image": "이미지 생성"
     }
@@ -9407,8 +9570,18 @@
       "label-signature": "서명"
     },
     "description-enable-infinite-scrolling": "실험적. 로그 목록 하단으로 스크롤하여 더 많은 결과를 요청합니다.",
-    "description-enable-syntax-highlighting": "사전 정의된 구문 색상 문법을 사용하여 로그 라인의 관련 부분을 강조 표시합니다",
+    "description-enable-logs-highlighting": "",
     "description-show-controls": "마지막 또는 첫 번째 로그 라인으로 이동하는 컨트롤과 로그 단계별 필터를 표시합니다",
+    "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
@@ -9456,9 +9629,6 @@
       "collapse": "라벨 접기",
       "expand": "라벨 펼치기"
     },
-    "log-labels-list": {
-      "log-line": "로그 줄"
-    },
     "log-line": {
       "has-error": "오류 있음",
       "is-sampled": "샘플링됨",
@@ -9496,7 +9666,9 @@
       "fields-section": "필드",
       "hide-log-line": "로그 라인 숨기기",
       "inline-mode": "인라인 표시",
+      "link-value-tooltip": "",
       "links-section": "링크",
+      "log-attributes-field": "",
       "log-line-field": "로그 라인",
       "log-line-section": "로그 선",
       "move-displayed-field-down": "아래로 이동",
@@ -9560,7 +9732,7 @@
       "tooltip-unpin-line": "줄 고정 해제"
     },
     "log-row-message": {
-      "ellipsis": "… ",
+      "ellipsis": "",
       "more": "더 보기",
       "see-details": "로그 세부 정보 보기",
       "tooltip-error": "오류: {{errorMessage}}"
@@ -9587,10 +9759,9 @@
       }
     },
     "logs-controls": {
+      "collapse": "",
       "deduplication": "중복 제거",
-      "disable-highlighting": "강조 표시 비활성화",
       "disable-prettify-json": "JSON 로그 접기",
-      "display-level": "표시 수준",
       "display-level-all": "모든 수준",
       "download": "로그 다운로드",
       "download-logs": {
@@ -9598,13 +9769,40 @@
         "json": "json",
         "txt": "txt"
       },
-      "enable-highlighting": "강조 표시 활성화",
       "escape-newlines": "로그 줄에서 잘못된 줄 바꿈 및 탭 시퀀스 수정",
-      "font-size-default": "작은 글꼴 크기 사용",
-      "font-size-small": "기본 글꼴 크기 사용",
+      "expand": "",
+      "filter-levels": "",
+      "font-large": "",
+      "font-small": "",
       "hide-search": "검색 닫기",
       "hide-timestamps": "타임스탬프 숨기기",
       "hide-unique-labels": "고유 라벨 숨기기",
+      "label": {
+        "collapse": "",
+        "disable-highlighting": "",
+        "enable-highlighting": "",
+        "escape-newlines": "",
+        "expand": ""
+      },
+      "labels": {
+        "font-large": "",
+        "font-small": "",
+        "hide-search": "",
+        "newest-first": "",
+        "oldest-first": "",
+        "show-search": ""
+      },
+      "line-wrapping": {
+        "enable": "",
+        "enable-prettify": "",
+        "hide": "",
+        "state": {
+          "hide": "",
+          "json": "",
+          "wrap": ""
+        },
+        "tooltip": ""
+      },
       "newest-first": "최신 로그순으로 정렬 - 클릭하여 오래된 로그순으로 표시",
       "oldest-first": "오래된 로그순으로 정렬 - 클릭하여 최신 로그순으로 표시",
       "prettify-json": "JSON 로그 펼치기",
@@ -9613,13 +9811,26 @@
       "resolution-ns": "ns",
       "scroll-bottom": "맨 아래로 스크롤",
       "scroll-top": "맨 위로 스크롤",
-      "show-ms-timestamps": "타임스탬프(밀리초 단위) 표시",
-      "show-ns-timestamps": "타임스탬프(나노초 단위) 표시",
       "show-search": "로그 결과에서 검색",
       "show-timestamps": "타임스탬프 표시",
       "show-unique-labels": "고유 라벨 표시",
+      "timestamp": {
+        "hide": "",
+        "label": "",
+        "label-hide": "",
+        "label-ms": "",
+        "label-ns": "",
+        "milliseconds": "",
+        "nanoseconds": "",
+        "tooltip": ""
+      },
+      "tooltip": {
+        "disable-highlighting": "",
+        "download": "",
+        "enable-highlighting": "",
+        "filter-level": ""
+      },
       "unwrap-lines": "줄 바꿈 제거",
-      "wrap-json-lines": "",
       "wrap-lines": "줄 바꿈"
     },
     "logs-navigation": {
@@ -9636,14 +9847,14 @@
     },
     "name-common-labels": "일반 레이블",
     "name-deduplication": "중복 제거",
-    "name-details-mode": "로그 세부 정보 패널 모드",
+    "name-details-mode": "",
     "name-details-options": {
       "label-inline": "인라인",
       "label-sidebar": "사이드바"
     },
     "name-enable-infinite-scrolling": "무한 스크롤 활성화",
     "name-enable-log-details": "로그 세부 정보 활성화",
-    "name-enable-syntax-highlighting": "구문 강조 표시 활성화",
+    "name-enable-logs-highlighting": "",
     "name-font-size": "글자 크기",
     "name-order": "순서",
     "name-prettify-json": "JSON을 보기 좋게 정리",
@@ -9664,6 +9875,7 @@
       "line-contains": "라인에 포함 필터로 추가",
       "line-contains-not": "라인에 미포함 필터로 추가"
     },
+    "show-log-attributes": "",
     "timestamp-format": "타임스탬프 해상도",
     "un-themed-log-details": {
       "aria-label-data-links": "데이터 링크",
@@ -9686,30 +9898,6 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}}개의 행 중 {{rowCount}}개에 해당 필드가 있습니다",
       "label-log-stats": "{{label}}: {{total}}개의 행 중 {{rowCount}}에 해당 라벨이 있습니다"
-    }
-  },
-  "logs-new": {
-    "category-logs": "로그",
-    "deduplication-options": {
-      "label-exact": "정확한",
-      "label-none": "없음",
-      "label-numbers": "숫자",
-      "label-signature": "서명"
-    },
-    "description-infinite-scrolling": "실험적. 로그 목록 하단으로 스크롤하여 더 많은 결과를 요청합니다.",
-    "description-show-controls": "마지막 또는 첫 번째 로그 라인으로 이동하는 컨트롤과 로그 단계별 필터를 표시합니다",
-    "description-syntax-highlighting": "사전 정의된 구문 색상 문법을 사용하여 로그 라인의 관련 부분을 강조 표시합니다",
-    "name-deduplication": "중복 제거",
-    "name-enable-log-details": "로그 세부 정보 활성화",
-    "name-infinite-scrolling": "무한 스크롤 활성화",
-    "name-order": "순서",
-    "name-show-controls": "컨트롤 표시",
-    "name-syntax-highlighting": "구문 강조 표시 활성화",
-    "name-time": "시간",
-    "name-wrap-lines": "줄 바꿈",
-    "order-options": {
-      "label-newest-first": "최신순",
-      "label-oldest-first": "오래된 순"
     }
   },
   "manage-dashbaords": {
@@ -9940,7 +10128,7 @@
     },
     "resource-table": {
       "dashboard-load-error": "대시보드 로딩 불가",
-      "error-library-element-sub": "라이브러리 요소 {uid}",
+      "error-library-element-sub": "",
       "error-library-element-title": "라이브러리 요소 로딩 불가",
       "unknown-datasource-title": "{{datasourceUID}} 데이터 소스",
       "unknown-datasource-type": "알 수 없는 데이터 소스"
@@ -10145,7 +10333,7 @@
       "title": "데이터 소스"
     },
     "databases": {
-      "title": "데이터베이스"
+      "title": ""
     },
     "datasources": {
       "subtitle": "데이터 소스 추가 및 구성",
@@ -10278,11 +10466,8 @@
     "profiles": {
       "title": "프로필"
     },
-    "public": {
-      "title": "공개 대시보드"
-    },
     "recently-deleted": {
-      "subtitle": "여기에 30일 이상 기재된 모든 항목이 자동으로 삭제됩니다.",
+      "subtitle": "",
       "title": "최근에 삭제됨"
     },
     "recorded-queries": {
@@ -10373,7 +10558,12 @@
       }
     },
     "help": {
-      "aria-label": "도움말"
+      "aria-label": "도움말",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "초대",
@@ -10588,10 +10778,10 @@
       "placeholder-optional": "(선택 사항)",
       "role": "역할",
       "submit": "제출",
-      "tooltip": "이제 '기본 역할 없음' 옵션을 선택하고 사용자의 필요에 맞게 권한을 추가할 수 있습니다. 자세한 내용은 <1>문서</1>를 참조하세요."
+      "tooltip": ""
     },
     "user-invite-page": {
-      "sub-title": "초대장을 보내거나 기존 Grafana 사용자를<1> {{orgName}}</1> 조직에 추가하세요.",
+      "sub-title": "",
       "text": {
         "invite-user": "사용자 초대"
       }
@@ -10607,6 +10797,12 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -10657,6 +10853,7 @@
       "replace-library-panel": "라이브러리 패널 교체",
       "share": "공유",
       "show-legend": "범례 보기",
+      "time-settings": "",
       "unlink-library-panel": "라이브러리 패널 연결 해제",
       "view": "보기"
     },
@@ -10674,7 +10871,7 @@
       "switch-to-table": "표로 전환"
     },
     "panel-plugin-error": {
-      "text-load-error": "자세한 내용은 서버 시작 로그를 확인하세요. <1></1>이 플러그인을 Git에서 로딩한 경우 컴파일되었는지 확인하세요.",
+      "text-load-error": "",
       "title-load-error": "로딩 중 오류 발생: {{panelId}}",
       "title-not-found": "패널 플러그인을 찾을 수 없음: {{id}}"
     },
@@ -10868,7 +11065,7 @@
     },
     "details": {
       "connections-tab": {
-        "description": "현재 {{pluginName}}에 대해 다음 데이터 소스가 구성되어 있습니다. 구성 세부 정보를 보려면 타일을 클릭하세요. 모든 데이터 소스 연결은 <4><0>연결</0> - <3>데이터 소스</3>에서 찾으실 수 있습니다.</4>"
+        "description": ""
       },
       "disabled-error": {
         "angular-deprecation-link": "Angular 지원 중단에 대해 자세히 알아보기",
@@ -10885,7 +11082,7 @@
       },
       "labels": {
         "contactGrafanaLabs": "Grafana Labs에 문의",
-        "customLinks": "사용자 지정 링크 ",
+        "customLinks": "",
         "customLinksTooltip": "이러한 링크는 플러그인 개발자가 개발자 고유의 추가 리소스와 정보를 지원하기 위해 제공합니다.",
         "dependencies": "종속 관계",
         "documentation": "문서",
@@ -10896,7 +11093,7 @@
         "latestVersion": "최신 버전",
         "license": "라이선스",
         "raiseAnIssue": "문제 제기",
-        "reportAbuse": "우려 사항 신고 ",
+        "reportAbuse": "",
         "reportAbuseTooltip": "악성 또는 유해한 플러그인과 관련된 문제는 바로 Grafana Labs에 신고해 주세요.",
         "repository": "리포지토리",
         "signature": "서명",
@@ -10906,8 +11103,8 @@
       "modal": {
         "cancel": "취소",
         "copyEmail": "이메일 주소 복사",
-        "description": "이 기능은 플러그인 내의 악의적이거나 유해한 속성을 신고하기 위한 것입니다. 플러그인 관련 문제는 다음 이메일 주소로 문의해 주세요. ",
-        "node": "참고: 버그 또는 기능 요청과 같은 일반적인 플러그인 문제는 제공된 링크를 사용하여 플러그인 작성자에게 문의하세요. ",
+        "description": "",
+        "node": "",
         "title": "플러그인 우려 사항 신고"
       }
     },
@@ -10961,7 +11158,6 @@
       "body-not-published": "이 플러그인은 <2>grafana.com/plugins</2>에 게시되어 있지 않으며 카탈로그를 통해 관리할 수 없습니다.",
       "enterprise-plugin-info": "이 플러그인은 Grafana Cloud 및 Grafana Enterprise에서만 사용할 수 있습니다.",
       "learn-more": "자세히 알아보기",
-      "no-valid-grafana-enterprise-license-detected": "유효한 Grafana Enterprise 라이선스가 감지되지 않았습니다.",
       "title-dev-alert": "이것은 플러그인의 개발용 빌드이며 제거할 수 없습니다.",
       "title-plugin-doesnt-support-version-grafana": "이 플러그인은 사용자의 Grafana 버전을 지원하지 않습니다.",
       "title-remote-plugins-unavailable": "Grafana 서버가 grafana.com에 액세스할 수 없으므로 설치 제어가 비활성화되었습니다.",
@@ -10976,7 +11172,7 @@
       "message": "모든 플러그인이 최신 상태입니다."
     },
     "not-found-plugin": {
-      "body-plugin-not-found": "해당 플러그인을 찾을 수 없습니다. URL이 올바른지 확인하거나 <1></1><3>플러그인 카탈로그</3>로 이동하세요.",
+      "body-plugin-not-found": "",
       "title-plugin-not-found": "플러그인을 찾을 수 없습니다"
     },
     "plugin-actions": {
@@ -11131,12 +11327,15 @@
       "label-workflow": "워크플로",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "이 리소스는 {{repoType}}의 브랜치보다 이전 상태입니다.",
+      "branch-text": "",
       "not-saved": "이 브랜치가 머지될 때까지 조직의 다른 Grafana 사용자에게는 구성된 기본 브랜치에 저장된 현재 버전이 계속 표시됩니다",
       "open-in-repo-button": "{{repoType}}에서 열기",
       "open-pull-request-in-repo": "{{repoType}}에서 풀 요청 열기",
@@ -11184,11 +11383,11 @@
       "description-clear-repository-connection": "이 리포지토리 연결에 대해 알기 쉬운 이름 추가",
       "empty": "비어 있음",
       "error-field-required": "이 필드는 필수 입력 항목입니다.",
-      "ext-storage": "외부 스토리지",
-      "grafana": "Grafana 인스턴스",
+      "external-storage-label": "",
       "label-display-name": "표시 이름",
       "placeholder-my-repository-connection": "내 리포지토리 연결",
       "text-loading-resource-information": "리소스 정보 로딩 중...",
+      "unmanaged-resources-label": "",
       "dashboards-count_other": "대시보드 {{count}}개",
       "files-count_other": "파일 {{count}}개",
       "folders-count_other": "폴더 {{count}}개"
@@ -11233,7 +11432,8 @@
     },
     "connect-repository-button": {
       "configure": "구성",
-      "repository-limit-info-alert": "리포지토리 한도 도달({{count}}개)"
+      "instance-fully-managed-tooltip": "",
+      "repository-limit-reached-tooltip_other": ""
     },
     "delete-repository-button": {
       "button-delete": "삭제",
@@ -11260,6 +11460,8 @@
     "empty-state": {
       "no-jobs": "작업 없음..."
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "선택적 애드온으로 GitHub 통합을 최대한 활용하세요",
       "description-instant-updates": "변경 사항이 커밋되는 즉시 Grafana에서 업데이트를 받으세요. 변경 사항이 실제로 적용되기 전에 풀 요청을 사용하여 검토하고 승인하세요.",
@@ -11279,6 +11481,7 @@
       "actions": {
         "set-up-required-feature-toggles": "필수 기능 토글 설정"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Git에서 코드로 대시보드를 관리하고 업데이트를 자동으로 프로비저닝합니다",
       "manage-your-dashboards-with-remote-provisioning": "Git 동기화 시작하기",
       "store-dashboards-in-version-controlled-storage": "버전이 관리되는 스토리지에 대시보드를 저장하여 조직 및 기록 추적 기능 향상"
@@ -11316,7 +11519,10 @@
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "쿼리와 일치하는 결과가 없습니다",
-      "placeholder-search": "검색"
+      "partial-managed": "",
+      "placeholder-search": "검색",
+      "all-resources-managed_other": "",
+      "unmanaged-resources_other": ""
     },
     "get-default-values": {
       "title": {
@@ -11429,7 +11635,6 @@
       "unsupported-repository-type": ""
     },
     "inline-secure-values-warning": "",
-    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "세부 정보 보기",
       "loading-finished-job": "완료된 작업 로딩 중...",
@@ -11463,16 +11668,25 @@
         "subtitle": "외부 스토리지를 통해 전체 Grafana 인스턴스를 동기화하고 관리하려면 이 옵션을 사용하세요."
       }
     },
-    "read-only-local-tooltip": "이 폴더는 읽기 전용이며 파일 프로비저닝을 통해 프로비저닝됩니다. 폴더에 변경 사항을 적용하려면, 연결된 파일 리포지토리를 업데이트해야 합니다. 폴더 설정을 수정하려면 '관리 > 프로비저닝 > 리포지토리'로 이동하세요.",
-    "read-only-remote-tooltip": "이 폴더는 읽기 전용이며 Git을 통해 프로비저닝됩니다. 폴더에 변경 사항을 적용하려면, 연결된 파일 리포지토리를 업데이트해야 합니다. 폴더 설정을 수정하려면 관'리 > 프로비저닝 > 리포지토리'로 이동하세요.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "활성 작업",
       "column-action": "동작",
       "column-duration": "지속 시간",
+      "column-job-id": "",
       "column-message": "메시지",
       "column-started": "시작됨",
       "column-status": "상태",
-      "error-loading": "{{type}} 로딩 중 오류 발생",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "작업"
     },
     "repository-actions": {
@@ -11486,12 +11700,6 @@
       "read-only-badge": "읽기 전용",
       "settings": "설정",
       "view": "보기"
-    },
-    "repository-health": {
-      "details": "세부 정보:",
-      "no-errors-found": "오류를 찾을 수 없습니다",
-      "title-repository-is-healthy": "리포지토리 상태가 좋습니다",
-      "title-repository-is-unhealthy": "리포지토리 상태가 좋지 않습니다"
     },
     "repository-link": {
       "delete-or-move-job": {
@@ -11507,7 +11715,7 @@
     },
     "repository-overview": {
       "checked": "확인됨:",
-      "finished": "완료됨:",
+      "finished": "",
       "health": "상태",
       "healthy": "좋은 상태",
       "job-id": "작업 ID:",
@@ -11516,7 +11724,6 @@
       "not-available": "해당 없음",
       "pull-status": "풀 상태",
       "resources": "리소스",
-      "started": "시작됨:",
       "status": "상태:",
       "unhealthy": "좋지 않은 상태",
       "view-folder": "폴더 보기",
@@ -11578,6 +11785,7 @@
         "removed-from-repo-test-ui": "리포지토리 테스트 UI에서 제거됨",
         "updated-from-repo-test-ui": "리포지토리 테스트 UI에서 업데이트됨"
       },
+      "read-only-repo-tooltip": "",
       "repository": "리포지토리",
       "tab-info": {
         "label": {
@@ -11593,10 +11801,26 @@
       "next": "다음",
       "previous": "이전"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "완료된 단계",
       "label-current-step": "현재 단계",
       "label-pending-step": "보류 중인 단계"
+    },
+    "status-badge": {
+      "automatic-pulling-disabled": "",
+      "deleting": "",
+      "error": "",
+      "pending": "",
+      "pulling": "",
+      "unknown": "",
+      "up-to-date": "",
+      "waiting-for-health-check": "",
+      "warning": ""
     },
     "success-title-default": "성공",
     "sync-job": {
@@ -11614,6 +11838,9 @@
       "tooltip-unhealthy-repository": "상태가 좋지 않은 리포지토리를 가져올 수 없습니다"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
+      "repository-unhealthy": "",
       "synchronization-description": "각 과거 값에 대한 커밋을 포함합니다",
       "synchronization-options": "동기화 옵션"
     },
@@ -11637,8 +11864,12 @@
       "alert-point-3": "이 프로세스의 지속 시간은 관련된 리소스 수에 따라 달라집니다.",
       "alert-point-4": "Enterprise 인스턴스 관리자는 사용자에게 공지 배너를 표시할 수 있습니다. 단계별 지침은 <2>이 가이드</2>를 확인하세요.",
       "alert-title": "중요: 데이터나 구성은 손실되지 않지만 대시보드를 몇 분 동안 일시적으로 사용할 수 없습니다.",
+      "button-cancel": "",
+      "button-cancelling": "",
       "button-next": "완료",
       "button-start": "동기화 시작",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "이렇게 하면 리포지토리 구성이 삭제되고 지금까지의 작업 내용이 모두 사라집니다. 정말 변경 사항을 취소하시겠어요?",
         "confirm": "네, 취소해 주세요",
@@ -11661,7 +11892,8 @@
       "button-cancelling": "취소 중...",
       "button-previous": "이전",
       "button-submitting": "제출 중…",
-      "error-instance-repository-exists": "인스턴스 리포지토리가 이미 존재합니다"
+      "error-instance-repository-exists": "인스턴스 리포지토리가 이미 존재합니다",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -11685,7 +11917,6 @@
       "email-share-type-option-label": "지정된 사용자만",
       "pause-sharing-dashboard-label": "대시보드 공유 일시 중지",
       "public-share-type-option-label": "링크를 보유한 모든 사용자",
-      "revoke-body": "이 URL을 정말 철회하시겠어요? 대시보드가 더 이상 공개되지 않습니다.",
       "revoke-public-URL-button": "공개 URL 철회",
       "revoke-public-URL-button-title": "공개 URL 철회",
       "settings-title": "설정"
@@ -11699,7 +11930,6 @@
       "success-pause": "대시보드에 대한 액세스 권한이 일시 중지되었습니다.",
       "success-resume": "대시보드에 대한 액세스 권한이 재개되었습니다.",
       "success-update": "설정이 성공적으로 업데이트되었습니다.",
-      "success-update-old": "공개 대시보드가 업데이트되었습니다!",
       "time-range-label": "시간 범위",
       "time-range-tooltip": "공유 대시보드는 대시보드의 기본 시간 범위 설정을 사용합니다."
     },
@@ -11707,10 +11937,6 @@
       "generate-public-url-button": "공개 URL 생성",
       "unsupported-features-desc": "현재 템플릿 변수 또는 프런트엔드 데이터 소스는 지원하지 않습니다.",
       "welcome-title": "공개 대시보드에 오신 것을 환영합니다!"
-    },
-    "delete-modal": {
-      "revoke-body-text": "이 URL을 정말 철회하시겠어요? 대시보드가 더 이상 공개되지 않습니다.",
-      "revoke-title": "공개 URL 철회"
     },
     "email-sharing": {
       "accept-button": "수락",
@@ -11741,11 +11967,8 @@
       "success-share-type-change": "대시보드 액세스 권한이 업데이트됨: 이제 특정한 사용자만 링크를 통해 액세스할 수 있습니다."
     },
     "modal-alerts": {
-      "no-upsert-perm-alert-desc": "공개 대시보드에 대한 {{action}} 권한을 얻으려면 관리자에게 문의하세요",
-      "no-upsert-perm-alert-title": "공개 대시보드에 {{ action }}할 권한이 없습니다",
       "save-dashboard-changes-alert-title": "공개 구성을 업데이트하기 전에 대시보드 변경 사항을 저장하세요.",
       "unsupport-data-source-alert-readmore-link": "지원되는 데이터 소스에 대해 자세히 알아보기",
-      "unsupported-data-source-alert-desc": "이 대시보드에는 공개 대시보드에서 지원되지 않는 데이터 소스가 있습니다. 다음과 같은 데이터 소스를 사용하는 패널이 제대로 작동하지 않을 수 있습니다: {{unsupportedDataSources}}",
       "unsupported-data-source-alert-title": "지원되지 않는 데이터 소스",
       "unsupported-template-variable-alert-desc": "이 공개 대시보드는 템플릿 변수를 사용하고 있기 때문에  작동하지 않을 수 있습니다.",
       "unsupported-template-variable-alert-title": "템플릿 변수는 지원되지 않습니다."
@@ -11776,11 +11999,10 @@
       "annotations-show-text": "주석 = 표시",
       "time-range-picker-disabled-text": "시간 범위 선택기 = 비활성화됨",
       "time-range-picker-enabled-text": "시간 범위 선택기 = 활성화됨",
-      "time-range-text": "시간 범위 = "
+      "time-range-text": ""
     },
     "share": {
-      "success-delete": "대시보드를 더 이상 공유할 수 없습니다.",
-      "success-delete-old": "공개 대시보드가 삭제되었습니다!"
+      "success-delete": "대시보드를 더 이상 공유할 수 없습니다."
     },
     "share-configuration": {
       "share-type-label": "링크 액세스 권한"
@@ -11799,24 +12021,6 @@
       "revoke-access-button": "액세스 권한 철회",
       "revoke-access-description": "정말 이 액세스 권한을 철회하시겠어요? 대시보드를 더 이상 공유할 수 없습니다.",
       "unsupported-data-source-alert-desc": "이 대시보드에는 공유 대시보드에서 지원되지 않는 데이터 소스가 있습니다. 다음과 같은 데이터 소스를 사용하는 패널이 제대로 작동하지 않을 수 있습니다: {{unsupportedDataSources}}"
-    },
-    "sharing": {
-      "success-creation": "대시보드가 공개되었습니다!"
-    }
-  },
-  "public-dashboard-list": {
-    "button": {
-      "config-button-tooltip": "공개 대시보드 구성",
-      "revoke-button-text": "공개 URL 철회",
-      "revoke-button-tooltip": "공개 대시보드 URL 철회",
-      "view-button-tooltip": "공개 대시보드 보기"
-    },
-    "empty-state": {
-      "message": "아직 생성된 공개 대시보드가 없습니다.",
-      "more-info": "<1>공유</1> 모달을 통해 기존 대시보드에서 공개 대시보드를 생성합니다. <2>자세히 알아보기</2>"
-    },
-    "toggle": {
-      "pause-sharing-toggle-text": "공유 일시 중지"
     }
   },
   "public-dashboard-users-access-list": {
@@ -11824,8 +12028,6 @@
       "external-link": "외부 링크",
       "loading-text": "로딩 중...",
       "open-dashboard-list-text": "대시보드 목록 열기",
-      "public-dashboard-link": "공개 대시보드 URL",
-      "public-dashboard-setting": "공개 대시보드 설정",
       "sharing-setting": "공유 설정"
     },
     "delete-user-modal": {
@@ -11833,14 +12035,12 @@
       "delete-user-cancel-button": "취소",
       "delete-user-revoke-access-button": "액세스 권한 철회",
       "revoke-access-title": "액세스 권한 철회",
-      "revoke-user-access-modal-desc-line1": "정말 {{email}}에 대한 액세스 권한을 철회하시겠어요?",
-      "revoke-user-access-modal-desc-line2": "이 작업을 수행하면 모든 공개 대시보드에 대한 {{email}}의 액세스 권한이 즉시 철회됩니다."
+      "revoke-user-access-modal-desc-line1": "정말 {{email}}에 대한 액세스 권한을 철회하시겠어요?"
     },
     "delete-user-shared-dashboards-modal": {
-      "revoke-user-access-modal-desc-line2": "이 작업을 수행하면 모든 공유 대시보드에 대한 {{email}}의 액세스 권한이 즉시 철회됩니다."
+      "revoke-user-access-modal-desc-line2": ""
     },
     "modal": {
-      "dashboard-modal-title": "공개 대시보드",
       "shared-dashboard-modal-title": "공유된 대시보드"
     },
     "table-body": {
@@ -11912,10 +12112,31 @@
       "expand-row": "쿼리 행 펼치기",
       "hide-response": "응답 숨기기",
       "remove-query": "쿼리 제거",
-      "replace-query-from-library": "저장된 쿼리로 교체",
       "show-response": "응답 표시"
     },
     "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -11925,13 +12146,6 @@
       "no-deleted-dashboards": "최근에 삭제한 대시보드가 없습니다.",
       "no-deleted-dashboards-text": "대시보드를 삭제하면 영구적으로 삭제되기 전에 30일간 여기에 표시됩니다. 조직 관리자는 최근에 삭제된 대시보드를 복구할 수 있습니다.",
       "no-search-result": "쿼리에 대해 찾은 결과 없음"
-    },
-    "permanently-delete-modal": {
-      "confirm-text": "삭제",
-      "delete-button": "삭제",
-      "delete-loading": "삭제 중…",
-      "title": "대시보드 영구 삭제",
-      "text_other": "이 작업을 수행하면 {{numberOfDashboards}}개의 대시보드가 삭제됩니다."
     },
     "restore-modal": {
       "restore-button": "복구",
@@ -11990,7 +12204,7 @@
     },
     "menu": {
       "clear-button": "전체 초기화",
-      "tooltip": "이제 '기본 역할 없음' 옵션을 선택하고 사용자의 필요에 맞게 권한을 추가할 수 있습니다. 자세한 내용은 <1>문서</1>를 참조하세요."
+      "tooltip": ""
     },
     "menu-aria-label": "역할 선택기 메뉴",
     "menu-group-option-aria-label": "역할 선택기 옵션",
@@ -12000,7 +12214,7 @@
     },
     "sub-menu-aria-label": "역할 선택기 하위 메뉴",
     "title": {
-      "description": "사용자에게 역할을 할당하여 Grafana의 기능과 리소스에 대한 액세스 권한을 세분화하여 제어하세요. 자세한 내용은 Grafana의 <2>문서</2>를 참조하세요."
+      "description": ""
     }
   },
   "role-picker-drawer": {
@@ -12054,8 +12268,6 @@
       "title": "범위 선택"
     },
     "tree": {
-      "collapse": "접기",
-      "expand": "펼치기",
       "headline": {
         "noResults": "쿼리에 대해 찾은 결과 없음",
         "recommended": "권장",
@@ -12123,7 +12335,7 @@
   },
   "select": {
     "select-menu": {
-      "selected-count": "선택됨 "
+      "selected-count": ""
     }
   },
   "service-account-create-page": {
@@ -12205,9 +12417,6 @@
       "tokens": "토큰",
       "tooltip-managed-service-account-cannot-modified": "관리되는 서비스 계정이므로 수정할 수 없습니다"
     },
-    "service-account-permissions": {
-      "title-permissions": "권한"
-    },
     "service-account-profile": {
       "information": "정보",
       "label-creation-date": "생성일",
@@ -12225,6 +12434,7 @@
       "aria-label-role": "역할"
     },
     "service-account-tokens-table": {
+      "aria-label-delete-button": "",
       "created": "생성됨",
       "expires": "만료",
       "last-used-at": "마지막 사용 시간",
@@ -12311,7 +12521,7 @@
       "info-text": "아래 옵션으로 사용자 정의된 이 대시보드 또는 패널에 대한 직접 링크를 생성합니다.",
       "link-url": "링크 URL",
       "render-alert": "이미지 렌더러 플러그인 미설치",
-      "render-instructions": "이미지를 렌더링하려면 <2>Grafana 이미지 렌더러 플러그인</2>을 설치해야 합니다. 플러그인을 설치하려면 Grafana 관리자에게 문의하세요.",
+      "render-instructions": "",
       "rendered-image": "렌더링된 이미지에 직접 연결",
       "save-alert": "대시보드 저장되지 않음",
       "save-dashboard": "패널 이미지를 렌더링하려면 먼저 대시보드를 저장해야 합니다.",
@@ -12335,7 +12545,7 @@
       "info-text-1": "스냅샷은 인터랙티브 대시보드를 즉시 공개적으로 공유할 수 있는 방법입니다. 스냅샷이 생성되면, 쿼리(메트릭, 템플릿, 주석), 패널 링크와 같은 민감한 데이터는 제거되고 대시보드에 임베드된 표시 메트릭 데이터와 시리즈 이름만 남습니다.",
       "info-text-2": "스냅샷은 링크가 있고 URL에 액세스할 수 있는 <1>모든 사용자가 볼 수 있다</1>는 점을 기억하세요. 신중하게 공유하세요.",
       "local-button": "스냅샷 게시",
-      "mistake-message": "혹시 실수로 게시하셨나요? ",
+      "mistake-message": "",
       "name": "스냅샷 이름",
       "timeout": "타임아웃(초)",
       "timeout-description": "대시보드 메트릭을 수집하는 데 시간이 오래 걸리는 경우 타임아웃 값을 구성해야 할 수 있습니다.",
@@ -12346,8 +12556,6 @@
       "export": "내보내기",
       "library-panel": "라이브러리 패널",
       "link": "링크",
-      "panel-embed": "임베드",
-      "public-dashboard": "공개 대시보드",
       "public-dashboard-title": "공개 대시보드",
       "snapshot": "스냅샷"
     },
@@ -12461,6 +12669,7 @@
       "theme-label": "인터페이스 테마",
       "week-start-label": "주 시작 요일"
     },
+    "save": "",
     "theme": {
       "default-label": "기본값",
       "experimental": "실험적 기능"
@@ -12556,6 +12765,10 @@
     "sql-suggestion-history": "SQL 제안 내역",
     "suggestions": "제안",
     "view-explanation": "설명 보기"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {
@@ -12739,10 +12952,9 @@
     "description-calculation": "감속기 함수/계산 선택",
     "description-cell-value-inspect": "모달 창에서 셀 값 검사 활성화",
     "description-column-filter": "테이블에서 필드 필터 활성화/비활성화",
-    "description-count-rows": "모든 데이터 행에 대한 단일 개수 표시",
-    "description-fields": "계산해야 하는 필드 선택",
     "description-frozen-columns": "",
     "description-min-column-width": "열 자동 크기 조정을 위한 최소 너비",
+    "description-styling-from-field": "",
     "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "이미지를 표시할 수 없거나 화면 리더를 이용하는 사용자를 위해 표시되는 대체 텍스트",
@@ -12767,21 +12979,18 @@
     "name-column-alignment": "열 정렬",
     "name-column-filter": "열 필터",
     "name-column-width": "열 너비",
-    "name-count-rows": "행 개수 계산",
     "name-enable-pagination": "",
-    "name-fields": "필드",
     "name-frozen-columns": "",
     "name-hide-in-table": "테이블에서 숨기기",
     "name-max-height": "",
     "name-min-column-width": "열 최소 너비",
-    "name-show-table-footer": "테이블 바닥글 표시",
     "name-show-table-header": "테이블 머리말 표시",
+    "name-styling-from-field": "",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "머리말 텍스트 줄 바꿈",
     "name-wrap-text": "",
     "placeholder-column-width": "자동",
-    "placeholder-fields": "모든 숫자 필드",
     "placeholder-max-height": "",
     "tooltip-placement-options": {
       "label-auto": "",
@@ -12861,13 +13070,13 @@
       "placeholder-search-teams": "팀 검색"
     },
     "team-settings": {
-      "description-email": "이 항목은 선택 사항이며 주로 (gravatar 서비스를 통해) 팀 프로필 아바타를 설정하는 데 사용됩니다",
+      "description-email": "",
       "label-email": "이메일",
       "label-name": "이름",
       "label-numerical-identifier": "숫자 식별자",
       "label-role": "역할",
       "label-team-details": "팀 세부 정보",
-      "save": "저장"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "팀 동기화를 사용하면 사용자가 로그인할 때가 아니라 싱글 사인온 그룹에 속한 사용자인지 여부를 토대로 각 사용자의 Grafana 팀 및 권한을 즉시 업데이트하여 Grafana에서 사용자의 액세스를 보다 쉽게 관리할 수 있습니다"
@@ -12886,6 +13095,10 @@
     "name-show-line-numbers": " 번호 표시",
     "name-show-mini-map": "미니 지도 표시"
   },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
+  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "대시보드",
@@ -12895,6 +13108,14 @@
       "form-label": "양식 라벨",
       "title": "패널"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {
@@ -12943,7 +13164,7 @@
       "forwards-time-aria-label": "시간 범위를 이후로 변경",
       "to": "종료",
       "zoom-out-button": "시간 범위 확대",
-      "zoom-out-tooltip": "시간 범위 확대 <1></1> CTRL+Z"
+      "zoom-out-tooltip": ""
     },
     "time-range": {
       "apply": "시간 범위 적용",
@@ -13068,7 +13289,7 @@
   },
   "transformations": {
     "empty": {
-      "add-transformation-body": "변환을 사용하면 시각화가 표시되기 전에 다양한 방법으로 데이터를 변경할 수 있습니다.<1></1>여기에는 데이터 병합, 필드 이름 변경, 계산, 표시용 데이터 형식 지정 등이 포함됩니다.",
+      "add-transformation-body": "",
       "add-transformation-header": "데이터 변환 시작"
     }
   },
@@ -13335,7 +13556,7 @@
       "label-format": "형식",
       "label-set-timezone": "시간대 설정",
       "label-time-field": "시간 필드",
-      "tooltip-format": "<2>Moment.js 형식 문자열</2>로 지정된 필드의 출력 형식입니다.",
+      "tooltip-format": "",
       "tooltip-timezone-manually": "날짜의 시간대를 수동으로 설정합니다"
     },
     "format-time-transformer-editor": {
@@ -13636,6 +13857,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "및",
       "placeholder-from": "",
@@ -13929,8 +14151,8 @@
       "message": "찾은 사용자 없음"
     },
     "token-revoked-modal": {
-      "auto-revoked": "계정의 <2>최대 동시 세션 수인 {{numSessions}}개</2>에 도달했기 때문에 세션 토큰이 자동으로 취소되었습니다.",
-      "resume-message": "<0>세션을 재개하려면 다시 로그인하세요.</0>자동 로그아웃이 반복되는 경우, 관리자에게 문의하거나 라이선스 페이지에서 할당량을 확인하세요.",
+      "auto-revoked": "",
+      "resume-message": "",
       "sign-in": "로그인",
       "title-you-have-been-automatically-signed-out": "자동으로 로그아웃되었습니다"
     },
@@ -13946,7 +14168,6 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "공개 대시보드 사용자",
       "shared-dashboard-users-tab-title": "공유 대시보드 사용자"
     }
   },
@@ -14049,14 +14270,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "옵션 추가",
-      "description": "쿼리 결과 외에 사용자 지정 옵션 추가",
-      "label-placeholder": "표시 레이블",
-      "remove-option-button-label": "옵션 제거",
-      "value-placeholder": "값, 기본 빈 문자열"
+      "description": "쿼리 결과 외에 사용자 지정 옵션 추가"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "쿼리 결과로 정적 옵션을 정렬하는 방법"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "기본값",

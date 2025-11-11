@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"strings"
 
 	mysql "github.com/dolthub/go-mysql-server/sql"
@@ -29,7 +30,7 @@ func (ft *FrameTable) String() string {
 	return ft.Name()
 }
 
-func schemaFromFrame(frame *data.Frame) mysql.Schema {
+func SchemaFromFrame(frame *data.Frame) mysql.Schema {
 	schema := make(mysql.Schema, len(frame.Fields))
 
 	for i, field := range frame.Fields {
@@ -47,7 +48,7 @@ func schemaFromFrame(frame *data.Frame) mysql.Schema {
 // Schema implements the mysql.Table interface
 func (ft *FrameTable) Schema() mysql.Schema {
 	if ft.schema == nil {
-		ft.schema = schemaFromFrame(ft.Frame)
+		ft.schema = SchemaFromFrame(ft.Frame)
 	}
 	return ft.schema
 }
@@ -92,6 +93,16 @@ func (ri *rowIter) Next(ctx *mysql.Context) (mysql.Row, error) {
 			continue
 		}
 		val, _ := field.ConcreteAt(ri.row)
+		switch v := val.(type) {
+		case float32:
+			if math.IsNaN(float64(v)) || math.IsInf(float64(v), 0) {
+				continue
+			}
+		case float64:
+			if math.IsNaN(v) || math.IsInf(v, 0) {
+				continue
+			}
+		}
 
 		// If the field is JSON, convert json.RawMessage to types.JSONDocument
 		if raw, ok := val.(json.RawMessage); ok {

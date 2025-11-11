@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { getDefaultTimeRange, LoadingState } from '@grafana/data';
@@ -16,6 +16,7 @@ import { MIXED_DATASOURCE_NAME } from '../mixed/MixedDataSource';
 import { DashboardQueryEditor, INVALID_PANEL_DESCRIPTION } from './DashboardQueryEditor';
 import { SHARED_DASHBOARD_QUERY } from './constants';
 import { DashboardDatasource } from './datasource';
+import { DashboardQuery } from './types';
 
 jest.mock('app/core/config', () => ({
   ...jest.requireActual('app/core/config'),
@@ -163,5 +164,34 @@ describe('DashboardQueryEditor', () => {
     expect(screen.queryByText('A dashboard query panel')?.nextElementSibling).toHaveTextContent(
       INVALID_PANEL_DESCRIPTION
     );
+  });
+
+  describe('AdHoc Filters Toggle', () => {
+    beforeEach(() => {
+      // Reset only the specific mocks we need, not all mocks
+      mockOnChange.mockClear();
+      mockOnRunQueries.mockClear();
+      // Re-establish the dashboard mock in case it was cleared
+      jest.spyOn(getDashboardSrv(), 'getCurrent').mockImplementation(() => mockDashboard);
+    });
+
+    it('shows the AdHoc Filters toggle', async () => {
+      const query: DashboardQuery = { refId: 'A', panelId: 1, adHocFiltersEnabled: false };
+
+      await act(async () => {
+        render(
+          <DashboardQueryEditor
+            datasource={{} as DashboardDatasource}
+            query={query}
+            data={mockPanelData}
+            onChange={mockOnChange}
+            onRunQuery={mockOnRunQueries}
+          />
+        );
+      });
+
+      const adhocFiltersToggle = await screen.findByText('AdHoc Filters');
+      expect(adhocFiltersToggle).toBeInTheDocument();
+    });
   });
 });

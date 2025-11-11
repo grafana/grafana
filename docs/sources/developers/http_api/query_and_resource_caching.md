@@ -17,7 +17,6 @@ keywords:
 labels:
   products:
     - enterprise
-    - oss
 title: Query and Resource Caching HTTP API
 ---
 

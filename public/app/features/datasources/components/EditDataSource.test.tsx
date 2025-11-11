@@ -108,6 +108,14 @@ describe('<EditDataSource>', () => {
 
       expect(screen.queryByText(readOnlyMessage)).toBeVisible();
     });
+
+    it('should render a message if the datasource is not found', () => {
+      setup({
+        dataSource: getMockDataSource({ uid: undefined, id: 0 }),
+      });
+
+      expect(screen.queryByText('Data source not found')).toBeVisible();
+    });
   });
 
   describe('On loading', () => {

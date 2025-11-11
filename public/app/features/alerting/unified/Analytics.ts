@@ -299,21 +299,30 @@ export function trackFilterButtonClick() {
 
 export function trackAlertRuleFilterEvent(
   payload:
-    | { filterMethod: 'search-input'; filter: RulesFilter }
-    | { filterMethod: 'filter-component'; filter: keyof RulesFilter }
+    | { filterMethod: 'search-input'; filter: RulesFilter; filterVariant: 'v1' | 'v2' }
+    | { filterMethod: 'filter-component'; filter: keyof RulesFilter; filterVariant: 'v1' | 'v2' }
 ) {
+  const variant = payload.filterVariant;
   if (payload.filterMethod === 'search-input') {
     const meaningfulValues = filterMeaningfulValues(payload.filter);
-    reportInteraction('grafana_alerting_rules_filter', { ...meaningfulValues, filterMethod: 'search-input' });
+    reportInteraction('grafana_alerting_rules_filter', {
+      ...meaningfulValues,
+      filter_method: 'search-input',
+      filter_variant: variant,
+    });
     return;
   }
-  reportInteraction('grafana_alerting_rules_filter', { filter: payload.filter, filterMethod: 'filter-component' });
+  reportInteraction('grafana_alerting_rules_filter', {
+    filter: payload.filter,
+    filter_method: 'filter-component',
+    filter_variant: variant,
+  });
 }
 
 export function trackRulesSearchInputCleared(prev: string, next: string) {
   // Only report an explicit clear action when transitioning from non-empty to empty
   if (prev !== '' && next === '') {
-    reportInteraction('grafana_alerting_rules_filter_cleared', { filterMethod: 'search-input' });
+    reportInteraction('grafana_alerting_rules_filter_cleared', { filter_method: 'search-input' });
   }
 }
 
@@ -323,7 +332,8 @@ export function trackFilterButtonApplyClick(payload: AdvancedFilters, pluginsFil
 
   reportInteraction('grafana_alerting_rules_filter', {
     ...meaningfulValues,
-    filterMethod: 'filter-component',
+    filter_method: 'filter-component',
+    filter_variant: 'v2',
   });
 }
 
@@ -354,7 +364,9 @@ function filterMeaningfulValues(
 }
 
 export function trackFilterButtonClearClick() {
-  reportInteraction('grafana_alerting_rules_filter_cleared', { filterMethod: 'filter-component' });
+  reportInteraction('grafana_alerting_rules_filter_cleared', {
+    filter_method: 'filter-component',
+  });
 }
 
 export type AlertRuleTrackingProps = {

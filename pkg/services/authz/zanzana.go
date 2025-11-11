@@ -24,44 +24,47 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	zClient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
+	zServer "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// ProvideZanzana used to register ZanzanaClient.
+// ProvideZanzanaClient used to register ZanzanaClient.
 // It will also start an embedded ZanzanaSever if mode is set to "embedded".
-func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Client, error) {
+func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Client, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		return zanzana.NewNoopClient(), nil
+		return zClient.NewNoopClient(), nil
 	}
 
-	logger := log.New("zanzana.server")
-
-	var client zanzana.Client
 	switch cfg.ZanzanaClient.Mode {
 	case setting.ZanzanaModeClient:
-		return NewZanzanaClient(
+		return NewRemoteZanzanaClient(
 			fmt.Sprintf("stacks-%s", cfg.StackID),
 			ZanzanaClientConfig{
-				Address:          cfg.ZanzanaClient.Addr,
+				URL:              cfg.ZanzanaClient.Addr,
 				Token:            cfg.ZanzanaClient.Token,
 				TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
 				ServerCertFile:   cfg.ZanzanaClient.ServerCertFile,
 			})
+
 	case setting.ZanzanaModeEmbedded:
-		store, err := zanzana.NewEmbeddedStore(cfg, db, logger)
+		logger := log.New("zanzana.server")
+		store, err := zStore.NewEmbeddedStore(cfg, db, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
-		openfga, err := zanzana.NewOpenFGAServer(cfg.ZanzanaServer, store)
+		openfga, err := zServer.NewOpenFGAServer(cfg.ZanzanaServer, store)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
-		srv, err := zanzana.NewServer(cfg.ZanzanaServer, openfga, logger, tracer, reg)
+		srv, err := zServer.NewServer(cfg.ZanzanaServer, openfga, logger, tracer, reg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
@@ -81,26 +84,44 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features 
 		authzv1.RegisterAuthzServiceServer(channel, srv)
 		authzextv1.RegisterAuthzExtentionServiceServer(channel, srv)
 
-		client, err = zanzana.NewClient(channel)
+		client, err := zClient.New(channel)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 		}
+		return client, nil
 
 	default:
 		return nil, fmt.Errorf("unsupported zanzana mode: %s", cfg.ZanzanaClient.Mode)
 	}
+}
 
-	return client, nil
+// ProvideStandaloneZanzanaClient provides a standalone Zanzana client, without registering the Zanzana service.
+// Client connects to a remote Zanzana server specified in the configuration.
+func ProvideStandaloneZanzanaClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (zanzana.Client, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		return zClient.NewNoopClient(), nil
+	}
+
+	zanzanaConfig := ZanzanaClientConfig{
+		URL:              cfg.ZanzanaClient.Addr,
+		Token:            cfg.ZanzanaClient.Token,
+		TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
+		ServerCertFile:   cfg.ZanzanaClient.ServerCertFile,
+	}
+
+	return NewRemoteZanzanaClient(cfg.ZanzanaClient.TokenNamespace, zanzanaConfig)
 }
 
 type ZanzanaClientConfig struct {
-	Address          string
+	URL              string
 	Token            string
 	TokenExchangeURL string
 	ServerCertFile   string
 }
 
-func NewZanzanaClient(namespace string, cfg ZanzanaClientConfig) (zanzana.Client, error) {
+// NewRemoteZanzanaClient creates a new Zanzana client that connects to remote Zanzana server.
+func NewRemoteZanzanaClient(namespace string, cfg ZanzanaClientConfig) (zanzana.Client, error) {
 	tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
 		Token:            cfg.Token,
 		TokenExchangeURL: cfg.TokenExchangeURL,
@@ -128,12 +149,12 @@ func NewZanzanaClient(namespace string, cfg ZanzanaClientConfig) (zanzana.Client
 		),
 	}
 
-	conn, err := grpc.NewClient(cfg.Address, dialOptions...)
+	conn, err := grpc.NewClient(cfg.URL, dialOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
 	}
 
-	client, err := zanzana.NewClient(conn)
+	client, err := zClient.New(conn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 	}
@@ -185,17 +206,17 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return err
 	}
 
-	store, err := zanzana.NewStore(z.cfg, z.logger)
+	store, err := zStore.NewStore(z.cfg, z.logger)
 	if err != nil {
 		return fmt.Errorf("failed to initilize zanana store: %w", err)
 	}
 
-	openfgaServer, err := zanzana.NewOpenFGAServer(z.cfg.ZanzanaServer, store)
+	openfgaServer, err := zServer.NewOpenFGAServer(z.cfg.ZanzanaServer, store)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	zanzanaServer, err := zanzana.NewServer(z.cfg.ZanzanaServer, openfgaServer, z.logger, tracer, z.reg)
+	zanzanaServer, err := zServer.NewServer(z.cfg.ZanzanaServer, openfgaServer, z.logger, tracer, z.reg)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
@@ -239,7 +260,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 	authzextv1.RegisterAuthzExtentionServiceServer(grpcServer, zanzanaServer)
 
 	// register grpc health server
-	healthServer := zanzana.NewHealthServer(zanzanaServer)
+	healthServer := zServer.NewHealthServer(zanzanaServer)
 	healthv1pb.RegisterHealthServer(grpcServer, healthServer)
 
 	if _, err := grpcserver.ProvideReflectionService(z.cfg, z.handle); err != nil {
@@ -252,7 +273,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 func (z *Zanzana) running(ctx context.Context) error {
 	if z.cfg.Env == setting.Dev && z.cfg.ZanzanaServer.OpenFGAHttpAddr != "" {
 		go func() {
-			srv, err := zanzana.NewOpenFGAHttpServer(z.cfg.ZanzanaServer, z.handle)
+			srv, err := zServer.NewOpenFGAHttpServer(z.cfg.ZanzanaServer, z.handle)
 			if err != nil {
 				z.logger.Error("failed to create OpenFGA HTTP server", "error", err)
 			} else {

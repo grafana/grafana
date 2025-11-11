@@ -76,6 +76,10 @@ export class FrontendSearcher implements GrafanaSearcher {
     return this.parent.tags(query);
   }
 
+  async getLocationInfo() {
+    return this.parent.getLocationInfo();
+  }
+
   getFolderViewSort(): string {
     return this.parent.getFolderViewSort();
   }
@@ -113,8 +117,7 @@ class FullResultCache {
     const allFields = this.full.dataFrame.fields;
     const haystack = this.names;
 
-    // eslint-disable-next-line
-    const values = allFields.map((v) => [] as any[]); // empty value for each field
+    const values = allFields.map<unknown[]>((v) => []); // empty value for each field
 
     let [idxs, info, order] = this.ufuzzy.search(haystack, query, 5);
 

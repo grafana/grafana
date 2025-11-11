@@ -8,13 +8,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag"
@@ -39,26 +41,59 @@ func validateTimeRange(item *annotations.Item) error {
 }
 
 type xormRepositoryImpl struct {
-	cfg        *setting.Cfg
-	db         db.DB
-	log        log.Logger
-	tagService tag.Service
+	cfg                *setting.Cfg
+	db                 db.DB
+	log                log.Logger
+	tagService         tag.Service
+	queryRangeStart    *prometheus.HistogramVec
+	queryRangeDuration *prometheus.HistogramVec
+	queryResultsCount  *prometheus.HistogramVec
 }
 
-func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Service) *xormRepositoryImpl {
-	// populate dashboard_uid at startup, to ensure safe downgrades & upgrades after
-	// the initial migration occurs
+func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Service, reg prometheus.Registerer) *xormRepositoryImpl {
 	err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetEngine().DriverName())
 	if err != nil {
 		l.Error("failed to populate dashboard_uid for annotations", "error", err)
 	}
 
-	return &xormRepositoryImpl{
+	repo := &xormRepositoryImpl{
 		cfg:        cfg,
 		db:         db,
 		log:        l,
 		tagService: tagService,
 	}
+
+	if reg != nil {
+		repo.queryRangeStart = metricutil.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Namespace: "grafana",
+				Subsystem: "annotations",
+				Name:      "query_range_start_hours",
+				Help:      "How far back in time (hours from now) annotation queries request",
+			},
+			[]string{"query_type"},
+		)
+		repo.queryRangeDuration = metricutil.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Namespace: "grafana",
+				Subsystem: "annotations",
+				Name:      "query_range_duration_hours",
+				Help:      "Time range duration (hours) of annotation queries",
+			},
+			[]string{"query_type"},
+		)
+		repo.queryResultsCount = metricutil.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Namespace: "grafana",
+				Subsystem: "annotations",
+				Name:      "query_results_count",
+				Help:      "Number of annotation results returned per query",
+			},
+			[]string{"query_type"},
+		)
+		reg.MustRegister(repo.queryRangeStart, repo.queryRangeDuration, repo.queryResultsCount)
+	}
+	return repo
 }
 
 func (r *xormRepositoryImpl) Type() string {
@@ -167,13 +202,16 @@ func (r *xormRepositoryImpl) update(ctx context.Context, item *annotations.Item)
 		existing.Text = item.Text
 
 		if item.Epoch != 0 {
+			r.log.Info("updating epoch for annotation", "id", item.ID, "orgId", item.OrgID, "oldEpoch", existing.Epoch, "newEpoch", item.Epoch)
 			existing.Epoch = item.Epoch
 		}
 		if item.EpochEnd != 0 {
+			r.log.Info("updating epoch_end for annotation", "id", item.ID, "orgId", item.OrgID, "oldEpochEnd", existing.EpochEnd, "newEpochEnd", item.EpochEnd)
 			existing.EpochEnd = item.EpochEnd
 		}
 
 		if item.Data != nil {
+			r.log.Info("updating data for annotation", "id", item.ID, "orgId", item.OrgID)
 			existing.Data = item.Data
 		}
 
@@ -292,7 +330,9 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			params = append(params, query.AnnotationID)
 		}
 
-		if query.AlertID != 0 {
+		if query.AlertID < 0 {
+			sql.WriteString(` AND a.alert_id = 0`)
+		} else if query.AlertID > 0 {
 			sql.WriteString(` AND a.alert_id = ?`)
 			params = append(params, query.AlertID)
 		} else if query.AlertUID != "" {
@@ -300,16 +340,13 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			params = append(params, query.AlertUID, query.OrgID)
 		}
 
-		// nolint: staticcheck
-		if query.DashboardID != 0 {
-			sql.WriteString(` AND a.dashboard_id = ?`)
-			params = append(params, query.DashboardID)
-		}
-
 		// note: orgID is already required above
 		if query.DashboardUID != "" {
 			sql.WriteString(` AND a.dashboard_uid = ?`)
 			params = append(params, query.DashboardUID)
+		} else if query.DashboardID != 0 { // nolint: staticcheck
+			sql.WriteString(` AND a.dashboard_id = ?`)
+			params = append(params, query.DashboardID) // nolint: staticcheck
 		}
 
 		if query.PanelID != 0 {
@@ -366,7 +403,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			}
 		}
 
-		acFilter, acParams := r.getAccessControlFilter(query.SignedInUser, accessResources)
+		acFilter, acParams := r.getAccessControlFilter(accessResources, query.DashboardUID)
 		if acFilter != "" {
 			sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter))
 		}
@@ -387,10 +424,47 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 	},
 	)
 
+	if err == nil {
+		r.recordQueryMetrics(query, len(items))
+	}
+
 	return items, err
 }
 
-func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester, accessResources *accesscontrol.AccessResources) (string, []any) {
+func (r *xormRepositoryImpl) recordQueryMetrics(query annotations.ItemQuery, resultCount int) {
+	if r.queryRangeStart == nil || query.From == 0 && query.To == 0 {
+		return
+	}
+
+	queryType := "all"
+	if query.AnnotationID != 0 {
+		queryType = "by_id"
+	} else if query.AlertID != 0 || query.AlertUID != "" {
+		queryType = "by_alert"
+	} else if query.DashboardUID != "" || query.DashboardID != 0 { // nolint: staticcheck
+		queryType = "by_dashboard"
+	} else if len(query.Tags) > 0 {
+		queryType = "by_tags"
+	}
+
+	if query.From > 0 && query.To > 0 {
+		now := time.Now().UnixMilli()
+		startOffsetHours := float64(now-query.To) / (1000.0 * 3600.0)
+		if startOffsetHours < 0 {
+			startOffsetHours = 0
+		}
+		r.queryRangeStart.WithLabelValues(queryType).Observe(startOffsetHours)
+
+		durationHours := float64(query.To-query.From) / (1000.0 * 3600.0)
+		if durationHours < 0 {
+			durationHours = 0
+		}
+		r.queryRangeDuration.WithLabelValues(queryType).Observe(durationHours)
+	}
+	r.queryResultsCount.WithLabelValues(queryType).Observe(float64(resultCount))
+}
+
+func (r *xormRepositoryImpl) getAccessControlFilter(accessResources *accesscontrol.AccessResources, dashboardUID string) (string, []any) {
 	if accessResources.SkipAccessControlFilter {
 		return "", nil
 	}
@@ -406,9 +480,14 @@ func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester, acc
 		if len(accessResources.Dashboards) == 0 {
 			filters = append(filters, "1=0") // empty set
 		} else {
-			filters = append(filters, fmt.Sprintf("a.dashboard_uid IN (%s)", strings.Repeat("?,", len(accessResources.Dashboards)-1)+"?"))
-			for uid := range accessResources.Dashboards {
-				params = append(params, uid)
+			if dashboardUID != "" {
+				filters = append(filters, "a.dashboard_uid = ?")
+				params = append(params, dashboardUID)
+			} else {
+				filters = append(filters, fmt.Sprintf("a.dashboard_uid IN (%s)", strings.Repeat("?,", len(accessResources.Dashboards)-1)+"?"))
+				for uid := range accessResources.Dashboards {
+					params = append(params, uid)
+				}
 			}
 		}
 	}

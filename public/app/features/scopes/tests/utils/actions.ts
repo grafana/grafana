@@ -1,4 +1,5 @@
 import { act, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { DateTime, makeTimeRange, dateMath } from '@grafana/data';
 import { MultiValueVariable, sceneGraph, VariableValue } from '@grafana/scenes';
@@ -19,21 +20,25 @@ import {
   getResultApplicationsCloudDevSelect,
   getResultApplicationsCloudExpand,
   getResultApplicationsCloudSelect,
-  getResultApplicationsExpand,
   getResultApplicationsGrafanaSelect,
   getResultApplicationsMimirSelect,
-  getResultCloudDevRadio,
   getResultCloudExpand,
-  getResultCloudOpsRadio,
   getResultCloudSelect,
+  getResultEnvironmentsExpand,
+  getResultEnvironmentsDevSelect,
+  getResultEnvironmentsProdSelect,
   getSelectorApply,
   getSelectorCancel,
   getSelectorClear,
   getSelectorInput,
   getTreeSearch,
+  findResultApplicationsExpand,
+  getResultCloudDevLink,
+  getResultCloudOpsLink,
 } from './selectors';
 
-const click = async (selector: () => HTMLElement) => act(() => fireEvent.click(selector()));
+const click = async (selector: () => HTMLElement) => act(() => userEvent.click(selector()));
+
 const type = async (selector: () => HTMLInputElement, value: string) => {
   await act(() => fireEvent.input(selector(), { target: { value } }));
   await jest.runOnlyPendingTimersAsync();
@@ -51,7 +56,11 @@ export const cancelScopes = async () => click(getSelectorCancel);
 export const searchScopes = async (value: string) => type(getTreeSearch, value);
 export const clearScopesSearch = async () => type(getTreeSearch, '');
 export const expandRecentScopes = async () => click(getRecentScopesSection);
-export const expandResultApplications = async () => click(getResultApplicationsExpand);
+export const expandResultApplications = async () => {
+  // Since this is the first in the tree after expansion, we need it to appear async, hence we use find instead of get
+  const el = await findResultApplicationsExpand();
+  await click(() => el);
+};
 export const expandResultApplicationsCloud = async () => click(getResultApplicationsCloudExpand);
 export const expandResultCloud = async () => click(getResultCloudExpand);
 export const selectRecentScope = async (scope: string) => click(() => getRecentScopeSet(scope));
@@ -62,8 +71,12 @@ export const selectResultApplicationsMimir = async () => click(getResultApplicat
 export const selectResultApplicationsCloud = async () => click(getResultApplicationsCloudSelect);
 export const selectResultApplicationsCloudDev = async () => click(getResultApplicationsCloudDevSelect);
 export const selectResultCloud = async () => click(getResultCloudSelect);
-export const selectResultCloudDev = async () => click(getResultCloudDevRadio);
-export const selectResultCloudOps = async () => click(getResultCloudOpsRadio);
+export const selectResultCloudDev = async () => click(getResultCloudDevLink);
+export const selectResultCloudOps = async () => click(getResultCloudOpsLink);
+
+export const expandResultEnvironments = async () => click(getResultEnvironmentsExpand);
+export const selectResultEnvironmentsDev = async () => click(getResultEnvironmentsDevSelect);
+export const selectResultEnvironmentsProd = async () => click(getResultEnvironmentsProdSelect);
 
 export const toggleDashboards = async () => click(getDashboardsExpand);
 export const searchDashboards = async (value: string) => type(getDashboardsSearch, value);

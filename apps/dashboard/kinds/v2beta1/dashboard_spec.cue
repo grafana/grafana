@@ -109,7 +109,17 @@ DashboardLink: {
 	includeVars: bool | *false
 	// If true, includes current time range in the link as query params
 	keepTime: bool | *false
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	placement?: DashboardLinkPlacement
 }
+
+// Dashboard Link placement. Defines where the link should be displayed. 
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+DashboardLinkPlacement: "inControlsMenu"
+
+// Annotation Query placement. Defines where the annotation query should be displayed.
+// - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+AnnotationQueryPlacement: "inControlsMenu"
 
 // A topic is attached to DataFrame metadata in query results.
 // This specifies where the data should be used.
@@ -212,6 +222,9 @@ FieldConfig: {
 
 	// The behavior when clicking on a result
 	links?: [...]
+
+	// Define interactive HTTP requests that can be triggered from data visualizations.
+	actions?: [...Action]
 
 	// Alternative to empty string
 	noValue?: string
@@ -356,6 +369,48 @@ FieldColor: {
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 DashboardLinkType: "link" | "dashboards"
 
+ActionType: "fetch" | "infinity"
+
+FetchOptions: {
+	method: HttpRequestMethod
+	url: string
+	body?: string
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that 
+	// that would have exactly two strings in each sub-array
+	queryParams?: [...[...string]]
+	headers?: [...[...string]]
+}
+
+InfinityOptions: FetchOptions & {
+	datasourceUid: string
+}
+
+HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH" 
+
+// Action variable type
+ActionVariableType: "string"
+
+ActionVariable: {
+	key: string
+	name: string
+	type: ActionVariableType
+}
+
+Action: {
+	type: ActionType
+	title: string
+	fetch?: FetchOptions
+	infinity?: InfinityOptions
+	confirmation?: string
+	oneClick?: bool
+	variables?: [...ActionVariable]
+	style?: {
+		backgroundColor?: string
+	}
+}
+
+
 // --- Common types ---
 Kind: {
 	kind:      string
@@ -385,6 +440,8 @@ AnnotationQuerySpec: {
 	name:        string
 	builtIn?:    bool | *false
 	filter?:     AnnotationPanelFilter
+	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+	placement?:  AnnotationQueryPlacement
 	legacyOptions?:     [string]: _ // Catch-all field for datasource-specific properties. Should not be available in as code tooling.
 }
 
@@ -401,6 +458,7 @@ QueryOptionsSpec: {
 	interval?:         string
 	cacheTimeout?:     string
 	hideTimeOverride?: bool
+	timeCompare?:      string
 }
 
 DataQueryKind: {
@@ -659,9 +717,9 @@ VariableCustomFormatterFn: {
 // `custom`: Define the variable options manually using a comma-separated list.
 // `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
 VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
-	"system" | "snapshot"
+	"system" | "snapshot" | "switch"
 
-VariableKind: QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind
+VariableKind: QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind | SwitchVariableKind
 
 // Sort variable options
 // Accepted values are:
@@ -684,8 +742,8 @@ VariableSort: "disabled" | "alphabeticalAsc" | "alphabeticalDesc" | "numericalAs
 VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 
 // Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
-VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
+VariableHide: *"dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu"
 
 // Determine the origin of the adhoc variable filter
 FilterOrigin: "dashboard"
@@ -719,7 +777,6 @@ QueryVariableSpec: {
 	refresh:      VariableRefresh
 	skipUrlSync:  bool | *false
 	description?: string
-	showInControlsMenu?: bool
 	query:        DataQueryKind
 	regex:        string | *""
 	sort:         VariableSort
@@ -732,7 +789,6 @@ QueryVariableSpec: {
 	allowCustomValue: bool | *true
 	staticOptions?: [...VariableOption]
 	staticOptionsOrder?: "before" | "after" | "sorted"
-	showInControlsMenu?: bool
 }
 
 // Query variable kind
@@ -753,7 +809,6 @@ TextVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
-	showInControlsMenu?: bool
 }
 
 // Text variable kind
@@ -774,7 +829,6 @@ ConstantVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
-	showInControlsMenu?: bool
 }
 
 // Constant variable kind
@@ -802,7 +856,6 @@ DatasourceVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
-	showInControlsMenu?: bool
 }
 
 // Datasource variable kind
@@ -828,7 +881,6 @@ IntervalVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
-	showInControlsMenu?: bool
 }
 
 // Interval variable kind
@@ -851,13 +903,28 @@ CustomVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
-	showInControlsMenu?: bool
 }
 
 // Custom variable kind
 CustomVariableKind: {
 	kind: "CustomVariable"
 	spec: CustomVariableSpec
+}
+
+SwitchVariableSpec: {
+	name:    	   string | *""
+	current:       string | *"false"
+	enabledValue:  string | *"true"
+	disabledValue: string | *"false"
+	label?:        string
+	hide:          VariableHide
+	skipUrlSync:   bool | *false
+	description?:  string
+}
+
+SwitchVariableKind: {
+	kind: "SwitchVariable"
+	spec: SwitchVariableSpec
 }
 
 // GroupBy variable specification
@@ -874,7 +941,6 @@ GroupByVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
-	showInControlsMenu?: bool
 }
 
 // Group variable kind
@@ -898,7 +964,6 @@ AdhocVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
-	showInControlsMenu?: bool
 }
 
 // Define the MetricFindValue type

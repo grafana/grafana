@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -26,9 +27,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlstore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	dashStore := ProvideStore(sqlstore, cfg)
@@ -160,9 +160,8 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 }
 
 func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlstore := db.InitTestDB(t)
 	dashStore := NewStore(sqlstore)
 

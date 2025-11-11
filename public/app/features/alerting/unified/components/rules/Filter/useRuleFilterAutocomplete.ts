@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -6,182 +6,184 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { ComboboxOption } from '@grafana/ui';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { alertRuleApi } from '../../../api/alertRuleApi';
-import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
 import { prometheusApi } from '../../../api/prometheusApi';
-import { useGetLabelsFromDataSourceName } from '../../../components/rule-editor/useAlertRuleSuggestions';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../../utils/datasource';
+import { getRulesDataSources } from '../../../utils/datasource';
+
+// Module-scope utilities
+const collator = new Intl.Collator();
+function getExternalRuleDataSources() {
+  return getRulesDataSources().filter((ds: DataSourceInstanceSettings) => !!ds?.url);
+}
 
 export function useNamespaceAndGroupOptions(): {
-  namespaceOptions: Array<ComboboxOption<string>>;
+  namespaceOptions: (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
   allGroupNames: string[];
   isLoadingNamespaces: boolean;
   namespacePlaceholder: string;
   groupPlaceholder: string;
 } {
-  const { currentData: grafanaPromRulesResponse, isLoading: isLoadingGrafanaPromRules } =
-    prometheusApi.endpoints.getGrafanaGroups.useQuery({
-      limitAlerts: 0,
-      groupLimit: 1000,
-    });
+  const [fetchGrafanaGroups] = prometheusApi.useLazyGetGrafanaGroupsQuery();
+  const [fetchExternalGroups] = prometheusApi.useLazyGetGroupsQuery();
 
-  // Transform Grafana groups to namespace structure
-  const grafanaPromRules = useMemo(() => {
-    const groups = grafanaPromRulesResponse?.data?.groups ?? [];
+  // Formats a raw namespace string into a user-friendly combobox option.
+  const formatNamespaceOption = useCallback((namespaceName: string): ComboboxOption<string> => {
+    if (namespaceName.includes('/') && (namespaceName.endsWith('.yml') || namespaceName.endsWith('.yaml'))) {
+      const filename = namespaceName.split('/').pop() || namespaceName;
+      const maxDescriptionLength = 100;
+      const truncatedDescription =
+        namespaceName.length > maxDescriptionLength
+          ? `${namespaceName.substring(0, maxDescriptionLength)}...`
+          : namespaceName;
+      return { label: filename, value: namespaceName, description: truncatedDescription };
+    }
 
-    const namespaceMap = new Map<string, { name: string; groups: GrafanaPromRuleGroupDTO[] }>();
-    groups.forEach((group) => {
-      const namespaceName = group.file || 'default';
-      const existing = namespaceMap.get(namespaceName);
-      if (existing) {
-        existing.groups.push(group);
-      } else {
-        namespaceMap.set(namespaceName, { name: namespaceName, groups: [group] });
+    const maxLength = 50;
+    const maxDescriptionLength = 100;
+    const truncatedName =
+      namespaceName.length > maxLength ? `${namespaceName.substring(0, maxLength)}...` : namespaceName;
+    const truncatedDescription =
+      namespaceName.length > maxDescriptionLength
+        ? `${namespaceName.substring(0, maxDescriptionLength)}...`
+        : namespaceName;
+    return { label: truncatedName, value: namespaceName, description: truncatedDescription };
+  }, []);
+
+  const namespaceOptions = useCallback(
+    async (inputValue: string) => {
+      // Grafana namespaces
+      const grafanaResponse = await fetchGrafanaGroups({ limitAlerts: 0, groupLimit: 1000 }).unwrap();
+      const grafanaFolders: Array<ComboboxOption<string>> = Array.from(
+        new Set(grafanaResponse.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.file || 'default'))
+      )
+        .map((name) => ({
+          label: name,
+          value: name,
+          description: t('alerting.rules-filter.grafana-folder', 'Grafana folder'),
+        }))
+        .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
+
+      // External namespaces
+      const namespaceNameSet = new Set<string>();
+      const calls = getExternalRuleDataSources().map((ds) =>
+        fetchExternalGroups({
+          ruleSource: { uid: ds.uid },
+          excludeAlerts: true,
+          groupLimit: 500,
+          notificationOptions: { showErrorAlert: false },
+        }).unwrap()
+      );
+      const results = await Promise.allSettled(calls);
+      for (const res of results) {
+        if (res.status === 'fulfilled') {
+          res.value.data.groups.forEach((group: { file?: string }) => namespaceNameSet.add(group.file || 'default'));
+        }
       }
-    });
+      const externalNamespaces = Array.from(namespaceNameSet)
+        .map(formatNamespaceOption)
+        .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
 
-    return Array.from(namespaceMap.values());
-  }, [grafanaPromRulesResponse]);
-
-  const { isLoading: isLoadingGrafanaRulerRules } = alertRuleApi.endpoints.rulerRules.useQuery({
-    rulerConfig: GRAFANA_RULER_CONFIG,
-  });
-
-  const externalDataSources = useMemo(getRulesDataSources, []);
-
-  const externalPromRulesQueries = externalDataSources.map((ds) =>
-    prometheusApi.endpoints.getGroups.useQuery({
-      ruleSource: { uid: ds.uid },
-      excludeAlerts: true,
-      groupLimit: 500,
-      notificationOptions: { showErrorAlert: false },
-    })
+      const options = [...grafanaFolders, ...externalNamespaces];
+      const filtered = filterBySearch(options, inputValue);
+      return filtered;
+    },
+    [fetchGrafanaGroups, fetchExternalGroups, formatNamespaceOption]
   );
 
-  const isLoadingNamespaces = useMemo(() => {
-    return (
-      isLoadingGrafanaPromRules ||
-      isLoadingGrafanaRulerRules ||
-      externalPromRulesQueries.some((query) => query.isLoading)
-    );
-  }, [isLoadingGrafanaPromRules, isLoadingGrafanaRulerRules, externalPromRulesQueries]);
-
-  const namespaceOptions = useMemo((): Array<ComboboxOption<string>> => {
-    const grafanaFolders: Array<ComboboxOption<string>> = [];
-    const externalNamespaces: Array<ComboboxOption<string>> = [];
-
-    // Grafana folders
-    grafanaPromRules.forEach((namespace) => {
-      grafanaFolders.push({
-        label: namespace.name,
-        value: namespace.name,
-        description: t('alerting.rules-filter.grafana-folder', 'Grafana folder'),
-      });
-    });
-
-    // External namespaces (dedupe by file)
-    externalPromRulesQueries.forEach((query) => {
-      const namespaces = new Set<string>();
-      query.currentData?.data?.groups?.forEach((group) => {
-        namespaces.add(group.file || 'default');
-      });
-
-      namespaces.forEach((namespaceName) => {
-        if (namespaceName.includes('/') && (namespaceName.endsWith('.yml') || namespaceName.endsWith('.yaml'))) {
-          const filename = namespaceName.split('/').pop() || namespaceName;
-          const maxDescriptionLength = 100;
-          const truncatedDescription =
-            namespaceName.length > maxDescriptionLength
-              ? `${namespaceName.substring(0, maxDescriptionLength)}...`
-              : namespaceName;
-          externalNamespaces.push({ label: filename, value: namespaceName, description: truncatedDescription });
-        } else {
-          const maxLength = 50;
-          const maxDescriptionLength = 100;
-          const truncatedName =
-            namespaceName.length > maxLength ? `${namespaceName.substring(0, maxLength)}...` : namespaceName;
-          const truncatedDescription =
-            namespaceName.length > maxDescriptionLength
-              ? `${namespaceName.substring(0, maxDescriptionLength)}...`
-              : namespaceName;
-          externalNamespaces.push({ label: truncatedName, value: namespaceName, description: truncatedDescription });
-        }
-      });
-    });
-
-    const collator = new Intl.Collator();
-    grafanaFolders.sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
-    externalNamespaces.sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
-
-    return [...grafanaFolders, ...externalNamespaces];
-  }, [grafanaPromRules, externalPromRulesQueries]);
-
-  const allGroupNames = useMemo(() => {
-    const groupSet = new Set<string>();
-    grafanaPromRules.forEach((namespace) => {
-      namespace.groups.forEach((group) => groupSet.add(group.name));
-    });
-    externalPromRulesQueries.forEach((query) => {
-      query.currentData?.data?.groups?.forEach((group) => {
-        groupSet.add(group.name);
-      });
-    });
-    return Array.from(groupSet).sort();
-  }, [grafanaPromRules, externalPromRulesQueries]);
-
-  const namespacePlaceholder = useMemo(() => {
-    if (isLoadingNamespaces) {
-      return t('common.loading', 'Loading...');
-    }
-    if (namespaceOptions.length === 0) {
-      return t('alerting.rules-filter.no-namespaces', 'No folders available');
-    }
-    return t('alerting.rules-filter.filter-options.placeholder-namespace', 'Select namespace');
-  }, [isLoadingNamespaces, namespaceOptions.length]);
-
-  const groupPlaceholder = useMemo(() => {
-    if (isLoadingNamespaces) {
-      return t('common.loading', 'Loading...');
-    }
-    if (allGroupNames.length === 0) {
-      return t('alerting.rules-filter.no-groups', 'No groups available');
-    }
-    return t('grafana.select-group', 'Select group');
-  }, [isLoadingNamespaces, allGroupNames.length]);
+  const allGroupNames: string[] = [];
+  const isLoadingNamespaces = false;
+  const namespacePlaceholder = t('alerting.rules-filter.filter-options.placeholder-namespace', 'Select namespace');
+  const groupPlaceholder = t('grafana.select-group', 'Select group');
 
   return { namespaceOptions, allGroupNames, isLoadingNamespaces, namespacePlaceholder, groupPlaceholder };
 }
 
 export function useLabelOptions(): {
-  labelOptions: Array<ComboboxOption<string>>;
-  isLoadingGrafanaLabels: boolean;
+  labelOptions: (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
 } {
-  const { labels: grafanaLabels, isLoading: isLoadingGrafanaLabels } =
-    useGetLabelsFromDataSourceName(GRAFANA_RULES_SOURCE_NAME);
+  // Use lazy queries so we only fetch when the dropdown is opened or the user types
+  const [fetchGrafanaGroups] = prometheusApi.useLazyGetGrafanaGroupsQuery();
 
-  const labelOptions = useMemo((): Array<ComboboxOption<string>> => {
-    const infoOption: ComboboxOption<string> = {
+  const createInfoOption = useCallback((): ComboboxOption<string> => {
+    return {
       label: t('label-dropdown-info', "Can't find your label? Enter it manually"),
       value: '__GRAFANA_LABEL_DROPDOWN_INFO__',
       infoOption: true,
     };
+  }, []);
 
-    const selectableOptions = Array.from(grafanaLabels.entries())
-      .flatMap(([key, values]) =>
-        Array.from(values).map((value: string) => ({ label: `${key}=${value}`, value: `${key}=${value}` }))
-      )
-      .sort((a, b) => new Intl.Collator().compare(a.label, b.label));
+  const toOptions = useCallback((labelsMap: Map<string, Set<string>>): Array<ComboboxOption<string>> => {
+    const selectable: Array<ComboboxOption<string>> = Array.from(labelsMap.entries()).flatMap(([key, values]) =>
+      Array.from(values).map<ComboboxOption<string>>((value) => ({
+        label: `${key}=${value}`,
+        value: `${key}=${value}`,
+      }))
+    );
 
-    return [...selectableOptions, infoOption];
-  }, [grafanaLabels]);
+    selectable.sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
+    return selectable;
+  }, []);
 
-  return { labelOptions, isLoadingGrafanaLabels };
+  const labelOptions = useCallback(
+    async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
+      // Fetch grafana groups and prefer cache when available
+      const response = await fetchGrafanaGroups({ limitAlerts: 0, groupLimit: 1000 }, true).unwrap();
+      const labelsMap = groupsToLabels(response.data.groups);
+
+      const selectable = toOptions(labelsMap);
+      if (selectable.length === 0) {
+        return [];
+      }
+
+      const options = [...selectable, createInfoOption()];
+      return filterBySearch(options, inputValue, true);
+    },
+    [fetchGrafanaGroups, toOptions, createInfoOption]
+  );
+
+  return { labelOptions };
 }
 
-export function useAlertingDataSourceOptions(): Array<ComboboxOption<string>> {
-  return useMemo(() => {
-    return getDataSourceSrv()
+export function useAlertingDataSourceOptions(): (inputValue: string) => Promise<Array<ComboboxOption<string>>> {
+  return useCallback(async (inputValue: string) => {
+    const options = getDataSourceSrv()
       .getList({ alerting: true })
       .map((ds: DataSourceInstanceSettings) => ({ label: ds.name, value: ds.name }));
+    return filterBySearch(options, inputValue);
   }, []);
+}
+
+function groupsToLabels(groups: Array<{ rules: Array<{ labels?: Record<string, string> }> }>) {
+  const rules = groups.flatMap((group) => group.rules);
+
+  return rules.reduce((result, rule) => {
+    if (!rule.labels) {
+      return result;
+    }
+
+    Object.entries(rule.labels).forEach(([labelKey, labelValue]) => {
+      if (!labelKey || !labelValue) {
+        return;
+      }
+      const existing = result.get(labelKey);
+      if (existing) {
+        existing.add(labelValue);
+      } else {
+        result.set(labelKey, new Set([labelValue]));
+      }
+    });
+
+    return result;
+  }, new Map<string, Set<string>>());
+}
+
+// Removed rulerRulesToLabels since label autocomplete only uses Prometheus namespaces for simplicity
+
+function filterBySearch(options: Array<ComboboxOption<string>>, inputValue: string, keepInfoOption = false) {
+  const search = (inputValue ?? '').toLowerCase();
+  if (!search) {
+    return options;
+  }
+  return options.filter(
+    (opt) => (opt.label ?? opt.value).toLowerCase().includes(search) || (keepInfoOption && !!opt.infoOption)
+  );
 }

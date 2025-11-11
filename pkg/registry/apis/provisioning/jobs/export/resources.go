@@ -31,7 +31,7 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 		}
 
 		progress.SetMessage(ctx, fmt.Sprintf("export %s", kind.Resource))
-		client, _, err := clients.ForResource(kind)
+		client, _, err := clients.ForResource(ctx, kind)
 		if err != nil {
 			return fmt.Errorf("get client for %s: %w", kind.Resource, err)
 		}
@@ -41,13 +41,15 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 		if kind.GroupResource() == resources.DashboardResource.GroupResource() {
 			var v2clientAlphaV1, v2clientAlphaV2 dynamic.ResourceInterface
 			shim = func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error) {
-				failed, _, _ := unstructured.NestedBool(item.Object, "status", "conversion", "failed")
-				if failed {
-					storedVersion, _, _ := unstructured.NestedString(item.Object, "status", "conversion", "storedVersion")
+				// Check if there's a stored version in the conversion status.
+				// This indicates the original API version the dashboard was created with,
+				// which should be preserved during export regardless of whether conversion succeeded or failed.
+				storedVersion, _, _ := unstructured.NestedString(item.Object, "status", "conversion", "storedVersion")
+				if storedVersion != "" {
 					// For v2 we need to request the original version
 					if strings.HasPrefix(storedVersion, "v2alpha1") {
 						if v2clientAlphaV1 == nil {
-							v2clientAlphaV1, _, err = clients.ForResource(resources.DashboardResourceV2alpha1)
+							v2clientAlphaV1, _, err = clients.ForResource(ctx, resources.DashboardResourceV2alpha1)
 							if err != nil {
 								return nil, err
 							}
@@ -57,7 +59,7 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 
 					if strings.HasPrefix(storedVersion, "v2beta1") {
 						if v2clientAlphaV2 == nil {
-							v2clientAlphaV2, _, err = clients.ForResource(resources.DashboardResourceV2beta1)
+							v2clientAlphaV2, _, err = clients.ForResource(ctx, resources.DashboardResourceV2beta1)
 							if err != nil {
 								return nil, err
 							}
@@ -73,6 +75,13 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 
 					return nil, fmt.Errorf("unsupported dashboard version: %s", storedVersion)
 				}
+
+				// If conversion failed but there's no storedVersion, this is an error condition
+				failed, _, _ := unstructured.NestedBool(item.Object, "status", "conversion", "failed")
+				if failed {
+					return nil, fmt.Errorf("conversion failed but no storedVersion available")
+				}
+
 				return item, nil
 			}
 		}
@@ -98,10 +107,10 @@ func exportResource(ctx context.Context,
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) (err error) {
 		gvk := item.GroupVersionKind()
 		result := jobs.JobResourceResult{
-			Name:     item.GetName(),
-			Resource: resource,
-			Group:    gvk.Group,
-			Action:   repository.FileActionCreated,
+			Name:   item.GetName(),
+			Group:  gvk.Group,
+			Kind:   gvk.Kind,
+			Action: repository.FileActionCreated,
 		}
 
 		// Check if resource is already managed by a repository

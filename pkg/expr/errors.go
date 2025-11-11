@@ -75,6 +75,25 @@ func MakeDependencyError(refID, depRefID string) error {
 	return DependencyError.Build(data)
 }
 
+var parsErrStr = "failed to parse expression [{{ .Public.refId }}]: {{.Public.error}}"
+
+var ParseError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.parseError").MustTemplate(
+	parsErrStr,
+	errutil.WithPublic(parsErrStr))
+
+func MakeParseError(refID string, err error) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId": refID,
+			"error": err.Error(),
+		},
+		Error: err,
+	}
+
+	return ParseError.Build(data)
+}
+
 var unexpectedNodeTypeErrString = "expected executable node type but got node type [{{ .Public.nodeType }} for refid [{{ .Public.refId}}]"
 
 var UnexpectedNodeTypeError = errutil.NewBase(

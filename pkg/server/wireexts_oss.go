@@ -7,7 +7,6 @@ package server
 import (
 	"github.com/google/wire"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -16,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	apisregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	gsmKMSProviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
@@ -66,12 +64,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 var provisioningExtras = wire.NewSet(
-	webhooks.ProvideWebhooks,
-	repository.ProvideFactory,
-	extras.ProvideProvisioningOSSExtras,
 	extras.ProvideProvisioningOSSRepositoryExtras,
 )
 
@@ -146,6 +142,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
 	wire.Struct(new(unified.Options), "*"),
 	unified.ProvideUnifiedStorageClient,
+	sql.ProvideStorageBackend,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 	apisregistry.WireSetExts,
@@ -196,6 +193,9 @@ var wireExtsModuleServerSet = wire.NewSet(
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
+	// Overriden by enterprise
+	ProvideNoopModuleRegisterer,
+	sql.ProvideStorageBackend,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(

@@ -84,7 +84,7 @@ jobs:
           app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
           private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: "Checkout Grafana repo"
-        uses: "actions/checkout@v4"
+        uses: "actions/checkout@v5"
         with:
           ref: main
           sparse-checkout: |
@@ -97,7 +97,7 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
       - name: Setup nodejs environment
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
       - name: "Configure git user"

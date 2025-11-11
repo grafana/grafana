@@ -12,6 +12,7 @@ import {
   FieldType,
   DataFrameWithValue,
   SelectableValue,
+  FieldState,
 } from '@grafana/data';
 import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
@@ -104,14 +105,6 @@ export interface TableSortByFieldState {
   desc?: boolean;
 }
 
-export interface TableFooterCalc {
-  show: boolean;
-  reducer?: string[];
-  fields?: string[];
-  enablePagination?: boolean;
-  countRows?: boolean;
-}
-
 export interface BaseTableProps {
   ariaLabel?: string;
   data: DataFrame;
@@ -127,7 +120,6 @@ export interface BaseTableProps {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
-  footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
   frozenColumns?: number;
   enablePagination?: boolean;
@@ -175,12 +167,12 @@ export type InspectCellProps = {
   rowIdx?: number;
   value: string;
   mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
+  preformatted?: boolean;
 };
 
 export interface TableCellActionsProps {
   field: Field;
   value: TableCellValue;
-  cellOptions: TableCellOptions;
   displayName: string;
   cellInspect: boolean;
   showFilters: boolean;
@@ -316,5 +308,8 @@ export type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRo
 export interface FromFieldsResult {
   columns: TableColumn[];
   cellRootRenderers: Record<string, CellRootRenderer>;
-  colsWithTooltip: Record<string, boolean>;
+}
+
+export interface FooterFieldState extends FieldState {
+  lastProcessedRowCount: number;
 }

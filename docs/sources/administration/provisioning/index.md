@@ -11,7 +11,8 @@ labels:
     - enterprise
     - oss
 title: Provision Grafana
-weight: 600
+menuTitle: Provision Grafana
+weight: 4100
 ---
 
 # Provision Grafana
@@ -374,6 +375,58 @@ providers:
 ```
 
 When Grafana starts, it updates or creates all dashboards found in the configured path.
+These files can define the dashboard using the dashboard JSON:
+
+```json
+{
+  "dashboard": {
+    "id": null,
+    "uid": "example-dashboard",
+    "title": "Production Overview",
+    "tags": ["production", "monitoring"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "30s"
+  },
+  "folderUid": "monitoring-folder",
+  "overwrite": true
+}
+```
+
+Or using a Kubernetes format, for example `kubernetes-dashboard.json`:
+
+```json
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "metadata": {
+    "name": "dashboard-uid"
+  },
+  "spec": {
+    "title": "Dashboard title",
+    "panels": [
+      {
+        "gridPos": {
+          "h": 13,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "options": {
+          "content": "<div><h1>Example panel</h1></div>",
+          "mode": "html"
+        },
+        "transparent": true,
+        "type": "text"
+      }
+    ]
+  }
+}
+```
+
+You _must_ use the Kubernetes resource format to provision dashboards v2 / dynamic dashboards.
+
 It later polls that path every `updateIntervalSeconds` for updates to the dashboard files and updates its database.
 
 {{< admonition type="note" >}}
@@ -603,14 +656,6 @@ Grafana encrypts secure settings in the database.
 | ------------- | -------------- |
 | `singleEmail` |                |
 | `addresses`   |                |
-
-#### Alert notification `hipchat`
-
-| Name     | Secure setting |
-| -------- | -------------- |
-| `url`    |                |
-| `apikey` |                |
-| `roomid` |                |
 
 #### Alert notification `opsgenie`
 

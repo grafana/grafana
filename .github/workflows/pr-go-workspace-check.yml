@@ -16,7 +16,7 @@ jobs:
     outputs:
       changed: ${{ steps.detect-changes.outputs.backend }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 2
@@ -34,12 +34,12 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         persist-credentials: false
 
     - name: Set go version
-      uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
+      uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
       with:
         cache: false
         go-version-file: go.mod
@@ -71,12 +71,12 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         persist-credentials: false
 
     - name: Set go version
-      uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
+      uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
       with:
         cache: false
         go-version-file: go.mod
@@ -123,7 +123,7 @@ jobs:
           echo "No changes in generated Go files"
         else
           if [[ "${{ github.event.pull_request.head.repo.fork }}" == "false" ]]; then
-            echo "> !!! Please link Enterprise and run 'make gen-go', then commit the changes to both repositories."
+            echo "> !!! Please synchronize the grafana OSS and grafana enterprise code bases as defined in the enterprise readme, then run 'make gen-go' in the OSS folder and commit the changes to both repositories."
           else
             echo "> !!! Please run 'make gen-go' and commit the changes."
           fi

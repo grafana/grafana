@@ -2,17 +2,35 @@ import { LogRowModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 
-import { createShortLink, createAndCopyShortLink, getLogsPermalinkRange } from './shortLinks';
+import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
+import { defaultSpec } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.spec.gen';
+import { defaultStatus } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.status.gen';
+
+import { createShortLink, createAndCopyShortLink, getLogsPermalinkRange, buildShortUrl } from './shortLinks';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => {
     return {
       post: () => {
-        return Promise.resolve({ url: 'www.short.com' });
+        return Promise.resolve({ url: 'www.test.grafana.com/goto/bewyw48durgu8d?orgId=1' });
       },
     };
   },
+}));
+
+jest.mock('app/store/store', () => ({
+  dispatch: jest.fn((action) => {
+    // Return the mocked result directly
+    return Promise.resolve({
+      data: {
+        metadata: {
+          name: 'bewyw48durgu8d',
+          namespace: '1',
+        },
+      },
+    });
+  }),
 }));
 
 beforeEach(() => {
@@ -24,12 +42,34 @@ beforeEach(() => {
   });
 
   document.execCommand = jest.fn();
+  config.featureToggles.useKubernetesShortURLsAPI = false;
+
+  // Clear any caches between tests
+  jest.clearAllMocks();
 });
 
 describe('createShortLink', () => {
   it('creates short link', async () => {
-    const shortUrl = await createShortLink('www.verylonglinkwehavehere.com');
-    expect(shortUrl).toBe('www.short.com');
+    const shortUrl = await createShortLink('d/edhmipji89b0gb/welcome?orgId=1&from=now-6h&to=now&timezone=browser');
+    expect(shortUrl).toBe('www.test.grafana.com/goto/bewyw48durgu8d?orgId=1');
+  });
+});
+
+describe('createShortLink using k8s API', () => {
+  it('creates short link', async () => {
+    // Mock window.location for k8s API test
+    const mockLocation = {
+      protocol: 'https:',
+      host: 'www.test.grafana.com',
+    };
+    Object.defineProperty(window, 'location', {
+      value: mockLocation,
+      writable: true,
+    });
+
+    config.featureToggles.useKubernetesShortURLsAPI = true;
+    const shortUrl = await createShortLink('d/edhmipji89b0gb/welcome?orgId=1&from=now-6h&to=now&timezone=browser');
+    expect(shortUrl).toBe('https://www.test.grafana.com/goto/bewyw48durgu8d?orgId=1');
   });
 });
 
@@ -41,14 +81,14 @@ describe('createAndCopyShortLink', () => {
       },
     });
     document.execCommand = jest.fn();
-    await createAndCopyShortLink('www.verylonglinkwehavehere.com');
+    await createAndCopyShortLink('www.test.grafana.com');
     expect(document.execCommand).toHaveBeenCalledWith('copy');
   });
 
   it('copies short link to clipboard via navigator.clipboard.writeText when ClipboardItem is undefined', async () => {
     window.isSecureContext = true;
-    await createAndCopyShortLink('www.verylonglinkwehavehere.com');
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('www.short.com');
+    await createAndCopyShortLink('d/edhmipji89b0gb/welcome?orgId=1&from=now-6h&to=now&timezone=browser');
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('www.test.grafana.com/goto/bewyw48durgu8d?orgId=1');
   });
 
   it('copies short link to clipboard via navigator.clipboard.write and ClipboardItem when it is defined', async () => {
@@ -59,8 +99,58 @@ describe('createAndCopyShortLink', () => {
       supports: jest.fn().mockReturnValue(true),
       // eslint-disable-next-line
     })) as any;
-    await createAndCopyShortLink('www.verylonglinkwehavehere.com');
+    await createAndCopyShortLink('d/edhmipji89b0gb/welcome?orgId=1&from=now-6h&to=now&timezone=browser');
     expect(navigator.clipboard.write).toHaveBeenCalled();
+  });
+});
+
+describe('buildShortUrl', () => {
+  // Mock window.location
+  const mockLocation = {
+    protocol: 'https:',
+    host: 'grafana.example.com',
+  };
+
+  beforeEach(() => {
+    Object.defineProperty(window, 'location', {
+      value: mockLocation,
+      writable: true,
+    });
+    config.appSubUrl = '';
+  });
+
+  it('builds short URL with metadata name and namespace', () => {
+    const shortUrl: ShortURL = {
+      kind: 'ShortURL',
+      apiVersion: 'shorturl.grafana.app/v1beta1',
+      metadata: {
+        name: 'abc123def',
+        namespace: 'org-5',
+      },
+      spec: defaultSpec(),
+      status: defaultStatus(),
+    };
+
+    const result = buildShortUrl(shortUrl);
+    expect(result).toBe('https://grafana.example.com/goto/abc123def?orgId=org-5');
+  });
+
+  it('builds short URL with appSubUrl configured', () => {
+    config.appSubUrl = '/grafana';
+
+    const shortUrl: ShortURL = {
+      kind: 'ShortURL',
+      apiVersion: 'shorturl.grafana.app/v1beta1',
+      metadata: {
+        name: 'xyz789',
+        namespace: 'org-1',
+      },
+      spec: defaultSpec(),
+      status: defaultStatus(),
+    };
+
+    const result = buildShortUrl(shortUrl);
+    expect(result).toBe('https://grafana.example.com/grafana/goto/xyz789?orgId=org-1');
   });
 });
 

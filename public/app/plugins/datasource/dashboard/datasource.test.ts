@@ -12,7 +12,7 @@ import {
   AdHocVariableFilter,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils, config } from '@grafana/runtime';
+import { setPluginImportUtils } from '@grafana/runtime';
 import {
   SafeSerializableSceneObject,
   SceneDataNode,
@@ -159,10 +159,10 @@ describe('DashboardDatasource', () => {
       };
     }
 
-    function createQueryRequest(filters: AdHocVariableFilter[], scene: SceneObject) {
+    function createQueryRequest(filters: AdHocVariableFilter[], scene: SceneObject, adHocFiltersEnabled?: boolean) {
       return {
         timezone: 'utc',
-        targets: [{ refId: 'A', panelId: 1 }],
+        targets: [{ refId: 'A', panelId: 1, adHocFiltersEnabled }],
         requestId: '',
         interval: '',
         intervalMs: 0,
@@ -178,16 +178,6 @@ describe('DashboardDatasource', () => {
 
     // Test AdHoc filtering via the Public API first, to ensure Integration
     describe('Integration (Public API)', () => {
-      const originalToggleValue = config.featureToggles.dashboardDsAdHocFiltering;
-
-      beforeEach(() => {
-        config.featureToggles.dashboardDsAdHocFiltering = true;
-      });
-
-      afterEach(() => {
-        config.featureToggles.dashboardDsAdHocFiltering = originalToggleValue;
-      });
-
       it('should apply basic filtering end-to-end through public query method', async () => {
         const testFrame = createTestFrame([
           { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
@@ -214,7 +204,7 @@ describe('DashboardDatasource', () => {
         const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
         const filters: AdHocVariableFilter[] = [{ key: 'name', operator: '=', value: 'John' }];
 
-        const observable = ds.query(createQueryRequest(filters, scene));
+        const observable = ds.query(createQueryRequest(filters, scene, true));
 
         let result: DataQueryResponse | undefined;
         observable.subscribe({ next: (data) => (result = data) });
@@ -224,10 +214,7 @@ describe('DashboardDatasource', () => {
         expect(result?.data[0].length).toBe(1);
       });
 
-      it('should respect feature toggle and not filter when disabled', async () => {
-        // Temporarily disable the feature toggle for this test
-        config.featureToggles.dashboardDsAdHocFiltering = false;
-
+      it('should respect per-panel adHocFiltersEnabled setting and not filter when disabled', async () => {
         const testFrame = createTestFrame([
           { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
           { name: 'age', type: FieldType.number, values: [25, 30, 35] },
@@ -253,15 +240,130 @@ describe('DashboardDatasource', () => {
         const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
         const filters: AdHocVariableFilter[] = [{ key: 'name', operator: '=', value: 'John' }];
 
+        // Test with adHocFiltersEnabled explicitly set to false
+        const observable = ds.query(createQueryRequest(filters, scene, false));
+
+        let result: DataQueryResponse | undefined;
+        observable.subscribe({ next: (data) => (result = data) });
+
+        // Should return unfiltered data since per-panel setting is disabled
+        expect(result?.data[0].fields[0].values).toEqual(['John', 'Jane', 'Bob']);
+        expect(result?.data[0].fields[1].values).toEqual([25, 30, 35]);
+        expect(result?.data[0].length).toBe(3);
+      });
+
+      it('should not filter when adHocFiltersEnabled is undefined (default behavior)', async () => {
+        const testFrame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+          { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+        ]);
+
+        const scene = new SceneFlexLayout({
+          children: [
+            new SceneFlexItem({
+              body: new VizPanel({
+                key: getVizPanelKeyForPanelId(1),
+                $data: new SceneDataNode({
+                  data: {
+                    series: [testFrame],
+                    state: LoadingState.Done,
+                    timeRange: getDefaultTimeRange(),
+                  },
+                }),
+              }),
+            }),
+          ],
+        });
+
+        const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+        const filters: AdHocVariableFilter[] = [{ key: 'name', operator: '=', value: 'John' }];
+
+        // Test with adHocFiltersEnabled undefined (should default to not filtering)
         const observable = ds.query(createQueryRequest(filters, scene));
 
         let result: DataQueryResponse | undefined;
         observable.subscribe({ next: (data) => (result = data) });
 
-        // Should return unfiltered data since feature toggle is disabled
+        // Should return unfiltered data since adHocFiltersEnabled is not set
         expect(result?.data[0].fields[0].values).toEqual(['John', 'Jane', 'Bob']);
         expect(result?.data[0].fields[1].values).toEqual([25, 30, 35]);
         expect(result?.data[0].length).toBe(3);
+      });
+
+      it('should apply filtering when adHocFiltersEnabled is explicitly enabled', async () => {
+        const testFrame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+          { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+        ]);
+
+        const scene = new SceneFlexLayout({
+          children: [
+            new SceneFlexItem({
+              body: new VizPanel({
+                key: getVizPanelKeyForPanelId(1),
+                $data: new SceneDataNode({
+                  data: {
+                    series: [testFrame],
+                    state: LoadingState.Done,
+                    timeRange: getDefaultTimeRange(),
+                  },
+                }),
+              }),
+            }),
+          ],
+        });
+
+        const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+        const filters: AdHocVariableFilter[] = [{ key: 'name', operator: '=', value: 'John' }];
+
+        // Test with adHocFiltersEnabled explicitly set to true
+        const observable = ds.query(createQueryRequest(filters, scene, true));
+
+        let result: DataQueryResponse | undefined;
+        observable.subscribe({ next: (data) => (result = data) });
+
+        // Should return filtered data since adHocFiltersEnabled is enabled
+        expect(result?.data[0].fields[0].values).toEqual(['John']);
+        expect(result?.data[0].fields[1].values).toEqual([25]);
+        expect(result?.data[0].length).toBe(1);
+      });
+
+      it('should apply not-equal filtering when adHocFiltersEnabled is enabled', async () => {
+        const testFrame = createTestFrame([
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+          { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+        ]);
+
+        const scene = new SceneFlexLayout({
+          children: [
+            new SceneFlexItem({
+              body: new VizPanel({
+                key: getVizPanelKeyForPanelId(1),
+                $data: new SceneDataNode({
+                  data: {
+                    series: [testFrame],
+                    state: LoadingState.Done,
+                    timeRange: getDefaultTimeRange(),
+                  },
+                }),
+              }),
+            }),
+          ],
+        });
+
+        const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+        const filters: AdHocVariableFilter[] = [{ key: 'name', operator: '!=', value: 'John' }];
+
+        // Test with adHocFiltersEnabled explicitly set to true
+        const observable = ds.query(createQueryRequest(filters, scene, true));
+
+        let result: DataQueryResponse | undefined;
+        observable.subscribe({ next: (data) => (result = data) });
+
+        // Should return filtered data excluding 'John'
+        expect(result?.data[0].fields[0].values).toEqual(['Jane', 'Bob']);
+        expect(result?.data[0].fields[1].values).toEqual([30, 35]);
+        expect(result?.data[0].length).toBe(2);
       });
 
       it('should apply multiple filters with AND logic through public API', async () => {
@@ -293,7 +395,7 @@ describe('DashboardDatasource', () => {
           { key: 'status', operator: '=', value: 'active' },
         ];
 
-        const observable = ds.query(createQueryRequest(filters, scene));
+        const observable = ds.query(createQueryRequest(filters, scene, true));
 
         let result: DataQueryResponse | undefined;
         observable.subscribe({ next: (data) => (result = data) });
@@ -571,26 +673,7 @@ describe('DashboardDatasource', () => {
     });
 
     describe('getDrilldownsApplicability', () => {
-      const originalToggleValue = config.featureToggles.dashboardDsAdHocFiltering;
       const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
-
-      beforeEach(() => {
-        config.featureToggles.dashboardDsAdHocFiltering = true;
-      });
-
-      afterEach(() => {
-        config.featureToggles.dashboardDsAdHocFiltering = originalToggleValue;
-      });
-
-      it('should return empty array when feature toggle is disabled', async () => {
-        config.featureToggles.dashboardDsAdHocFiltering = false;
-
-        const result = await ds.getDrilldownsApplicability({
-          filters: [{ key: 'name', operator: '=', value: 'test' }],
-        });
-
-        expect(result).toEqual([]);
-      });
 
       it('should mark supported operators as applicable', async () => {
         const result = await ds.getDrilldownsApplicability({
@@ -598,12 +681,36 @@ describe('DashboardDatasource', () => {
             { key: 'name', operator: '=', value: 'John' },
             { key: 'age', operator: '!=', value: '25' },
           ],
+          queries: [{ refId: 'A', panelId: 1, adHocFiltersEnabled: true }],
         });
 
         expect(result).toEqual([
           { key: 'name', applicable: true },
           { key: 'age', applicable: true },
         ]);
+      });
+
+      it('should return empty array when no query has adHocFiltersEnabled enabled', async () => {
+        const result = await ds.getDrilldownsApplicability({
+          filters: [
+            { key: 'name', operator: '=', value: 'John' },
+            { key: 'age', operator: '!=', value: '25' },
+          ],
+          queries: [{ refId: 'A', panelId: 1, adHocFiltersEnabled: false }],
+        });
+
+        expect(result).toEqual([]);
+      });
+
+      it('should return empty array when queries is undefined', async () => {
+        const result = await ds.getDrilldownsApplicability({
+          filters: [
+            { key: 'name', operator: '=', value: 'John' },
+            { key: 'age', operator: '!=', value: '25' },
+          ],
+        });
+
+        expect(result).toEqual([]);
       });
 
       it('should mark unsupported operators as not applicable with reason', async () => {
@@ -613,6 +720,7 @@ describe('DashboardDatasource', () => {
             { key: 'age', operator: '<', value: '25' },
             { key: 'score', operator: '=~', value: 'pattern' },
           ],
+          queries: [{ refId: 'A', panelId: 1, adHocFiltersEnabled: true }],
         });
 
         expect(result).toEqual([
@@ -641,6 +749,7 @@ describe('DashboardDatasource', () => {
             { key: 'age', operator: '>', value: '25' },
             { key: 'status', operator: '!=', value: 'active' },
           ],
+          queries: [{ refId: 'A', panelId: 1, adHocFiltersEnabled: true }],
         });
 
         expect(result).toEqual([

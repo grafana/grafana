@@ -1,9 +1,16 @@
 import { createContext, ReactElement, PropsWithChildren, useMemo, useContext } from 'react';
 
+// Generic schema type to avoid zod dependency in @grafana/data
+interface ZodSchema {
+  parse: (data: unknown) => unknown;
+  safeParse: (data: unknown) => { success: boolean; data?: unknown; error?: unknown };
+}
+
 export interface RestrictedGrafanaApisContextTypeInternal {
   // Add types for restricted Grafana APIs here
   // (Make sure that they are typed as optional properties)
   // e.g. addPanel?: (vizPanel: VizPanel) => void;
+  alertingAlertRuleFormSchema?: ZodSchema;
 }
 
 // We are exposing this through a "type validation", to make sure that all APIs are optional (which helps plugins catering for scenarios when they are not available).
@@ -35,6 +42,7 @@ export function RestrictedGrafanaApisContextProvider(props: PropsWithChildren<Pr
   const allowedApis = useMemo(() => {
     const allowedApis: RestrictedGrafanaApisContextType = {};
 
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     for (const api of Object.keys(apis) as Array<keyof RestrictedGrafanaApisContextType>) {
       if (
         apiAllowList &&

@@ -6,23 +6,24 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	repository "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
 )
 
 func TestNewHealthChecker(t *testing.T) {
-	mockTester := mocks.NewRepositoryTester(t)
 	mockPatcher := mocks.NewStatusPatcher(t)
 
-	hc := NewHealthChecker(mockTester, mockPatcher)
+	validator := repository.NewValidator(30*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true)
+	hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewSimpleRepositoryTester(validator))
 
 	assert.NotNil(t, hc)
-	assert.Equal(t, mockTester, hc.tester)
 	assert.Equal(t, mockPatcher, hc.statusPatcher)
 }
 
@@ -136,9 +137,9 @@ func TestShouldCheckHealth(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockTester := mocks.NewRepositoryTester(t)
 			mockPatcher := mocks.NewStatusPatcher(t)
-			hc := NewHealthChecker(mockTester, mockPatcher)
+			validator := repository.NewValidator(30*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true)
+			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewSimpleRepositoryTester(validator))
 
 			result := hc.ShouldCheckHealth(tt.repo)
 			assert.Equal(t, tt.expected, result)
@@ -224,9 +225,9 @@ func TestHasRecentFailure(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockTester := mocks.NewRepositoryTester(t)
 			mockPatcher := mocks.NewStatusPatcher(t)
-			hc := NewHealthChecker(mockTester, mockPatcher)
+			validator := repository.NewValidator(30*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true)
+			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewSimpleRepositoryTester(validator))
 
 			result := hc.HasRecentFailure(tt.healthStatus, tt.failureType)
 			assert.Equal(t, tt.expected, result)
@@ -267,9 +268,9 @@ func TestRecordFailure(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockTester := mocks.NewRepositoryTester(t)
 			mockPatcher := mocks.NewStatusPatcher(t)
-			hc := NewHealthChecker(mockTester, mockPatcher)
+			validator := repository.NewValidator(30*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true)
+			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewSimpleRepositoryTester(validator))
 
 			repo := &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
@@ -313,9 +314,9 @@ func TestRecordFailure(t *testing.T) {
 }
 
 func TestRecordFailureFunction(t *testing.T) {
-	mockTester := mocks.NewRepositoryTester(t)
 	mockPatcher := mocks.NewStatusPatcher(t)
-	hc := NewHealthChecker(mockTester, mockPatcher)
+	validator := repository.NewValidator(30*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true)
+	hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewSimpleRepositoryTester(validator))
 
 	testErr := errors.New("test error")
 	result := hc.recordFailure(provisioning.HealthFailureHook, testErr)
@@ -400,6 +401,26 @@ func TestRefreshHealth(t *testing.T) {
 			expectPatch:    false,
 		},
 		{
+			name: "no status change - no patch needed for unhealthy repo (recent check)",
+			testResult: &provisioning.TestResults{
+				Success: false,
+				Code:    500,
+				Errors: []provisioning.ErrorDetails{
+					{Detail: "connection failed"},
+					{Detail: "timeout"},
+				},
+			},
+			testError: nil,
+			existingStatus: provisioning.HealthStatus{
+				Healthy: false,
+				Checked: time.Now().Add(-15 * time.Second).UnixMilli(),
+				Message: []string{"connection failed", "timeout"},
+			},
+			expectError:    false,
+			expectedHealth: false,
+			expectPatch:    false,
+		},
+		{
 			name: "status unchanged but timestamp needs update (old check)",
 			testResult: &provisioning.TestResults{
 				Success: true,
@@ -412,6 +433,26 @@ func TestRefreshHealth(t *testing.T) {
 			},
 			expectError:    false,
 			expectedHealth: true,
+			expectPatch:    true,
+		},
+		{
+			name: "status unchanged but timestamp needs update (old unhealthy check)",
+			testResult: &provisioning.TestResults{
+				Success: false,
+				Code:    500,
+				Errors: []provisioning.ErrorDetails{
+					{Detail: "connection failed"},
+					{Detail: "timeout"},
+				},
+			},
+			testError: nil,
+			existingStatus: provisioning.HealthStatus{
+				Healthy: false,
+				Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
+				Message: []string{"connection failed", "timeout"},
+			},
+			expectError:    false,
+			expectedHealth: false,
 			expectPatch:    true,
 		},
 		{
@@ -437,23 +478,23 @@ func TestRefreshHealth(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockTester := mocks.NewRepositoryTester(t)
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockRepo := &mockRepository{
 				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Title: "Test Repository",
+						Type:  provisioning.LocalRepositoryType,
+					},
 					Status: provisioning.RepositoryStatus{
 						Health: tt.existingStatus,
 					},
 				},
+				testResult: tt.testResult,
+				testError:  tt.testError,
 			}
 
-			hc := NewHealthChecker(mockTester, mockPatcher)
-
-			if tt.testError != nil {
-				mockTester.On("TestRepository", mock.Anything, mockRepo).Return(tt.testResult, tt.testError)
-			} else {
-				mockTester.On("TestRepository", mock.Anything, mockRepo).Return(tt.testResult, nil)
-			}
+			validator := repository.NewValidator(30*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true)
+			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewSimpleRepositoryTester(validator))
 
 			if tt.expectPatch {
 				if tt.patchError != nil {
@@ -484,8 +525,6 @@ func TestRefreshHealth(t *testing.T) {
 					assert.Equal(t, tt.testResult, testResult)
 				}
 			}
-
-			mockTester.AssertExpectations(t)
 			if tt.expectPatch {
 				mockPatcher.AssertExpectations(t)
 			}
@@ -564,9 +603,9 @@ func TestHasHealthStatusChanged(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockTester := mocks.NewRepositoryTester(t)
 			mockPatcher := mocks.NewStatusPatcher(t)
-			hc := NewHealthChecker(mockTester, mockPatcher)
+			validator := repository.NewValidator(30*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true)
+			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewSimpleRepositoryTester(validator))
 
 			result := hc.hasHealthStatusChanged(tt.old, tt.new)
 			assert.Equal(t, tt.expected, result)
@@ -576,7 +615,9 @@ func TestHasHealthStatusChanged(t *testing.T) {
 
 // mockRepository implements repository.Repository interface for testing
 type mockRepository struct {
-	config *provisioning.Repository
+	config     *provisioning.Repository
+	testResult *provisioning.TestResults
+	testError  error
 }
 
 func (m *mockRepository) Config() *provisioning.Repository {
@@ -588,5 +629,11 @@ func (m *mockRepository) Validate() field.ErrorList {
 }
 
 func (m *mockRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	return &provisioning.TestResults{Success: true}, nil
+	if m.testError != nil {
+		return m.testResult, m.testError
+	}
+	if m.testResult != nil {
+		return m.testResult, nil
+	}
+	return &provisioning.TestResults{Success: true, Code: 200}, nil
 }

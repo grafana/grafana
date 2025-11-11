@@ -27,6 +27,8 @@ export interface ObjectMeta {
   generation?: number;
   // The first time this was saved
   creationTimestamp: string;
+  // The time this resource was marked for deletion
+  deletionTimestamp?: string;
   // General resource annotations -- including the common grafana.app values
   annotations?: GrafanaAnnotations & GrafanaClientAnnotations;
   // General application level key+value pairs
@@ -36,6 +38,10 @@ export interface ObjectMeta {
 export const AnnoKeyCreatedBy = 'grafana.app/createdBy';
 export const AnnoKeyUpdatedTimestamp = 'grafana.app/updatedTimestamp';
 export const AnnoKeyUpdatedBy = 'grafana.app/updatedBy';
+/**
+ * A name (or uid in old Grafana) of a folder the resource is contained in. Updating this will move the resource to the
+ * new folder.
+ */
 export const AnnoKeyFolder = 'grafana.app/folder';
 export const AnnoKeyMessage = 'grafana.app/message';
 

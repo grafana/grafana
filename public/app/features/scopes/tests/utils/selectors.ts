@@ -9,6 +9,7 @@ const selectors = {
     headline: 'scopes-tree-headline',
     select: (nodeId: string) => `scopes-tree-${nodeId}-checkbox`,
     radio: (nodeId: string) => `scopes-tree-${nodeId}-radio`,
+    link: (nodeId: string) => `scopes-tree-${nodeId}-link`,
     expand: (nodeId: string) => `scopes-tree-${nodeId}-expand`,
     title: (nodeId: string) => `scopes-tree-${nodeId}-title`,
   },
@@ -63,7 +64,11 @@ export const getNotFoundForFilterClear = () => screen.getByTestId(selectors.dash
 
 export const getTreeSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search);
 export const getTreeHeadline = () => screen.getByTestId(selectors.tree.headline);
+
 export const getResultApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications'));
+export const findResultApplicationsExpand = async () =>
+  await screen.findByTestId(selectors.tree.expand('applications'));
+
 export const queryResultApplicationsGrafanaSelect = () =>
   screen.queryByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana'));
 export const getResultApplicationsGrafanaSelect = () =>
@@ -89,7 +94,15 @@ export const getResultApplicationsCloudDevSelect = () =>
 
 export const getResultCloudSelect = () => screen.getByTestId(selectors.tree.select('cloud'));
 export const getResultCloudExpand = () => screen.getByTestId(selectors.tree.expand('cloud'));
-export const getResultCloudDevRadio = () => screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-dev'));
-export const getResultCloudOpsRadio = () => screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-ops'));
+export const getResultCloudDevLink = () => screen.getByTestId<HTMLButtonElement>(selectors.tree.link('cloud-dev'));
+export const getResultCloudOpsLink = () => screen.getByTestId<HTMLButtonElement>(selectors.tree.link('cloud-ops'));
+
+export const getResultEnvironmentsExpand = () => screen.getByTestId(selectors.tree.expand('environments'));
+export const getResultEnvironmentsDevSelect = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('environments-dev'));
+export const getResultEnvironmentsProdSelect = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('environments-prod'));
+export const queryResultEnvironmentsDevSelect = () => screen.queryByTestId(selectors.tree.radio('environments-dev'));
+export const queryResultEnvironmentsProdSelect = () => screen.queryByTestId(selectors.tree.radio('environments-prod'));
 
 export const getListOfScopes = (service: ScopesService) => service.state.value;

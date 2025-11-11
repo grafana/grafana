@@ -40,6 +40,7 @@ import { SearchQuery } from 'app/features/search/service/types';
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
 
+import { RandomWalkEditor } from './RandomWalkEditor';
 import SearchEditor from './SearchEditor';
 
 interface Props extends QueryEditorProps<GrafanaDatasource, GrafanaQuery>, Themeable2 {}
@@ -108,7 +109,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
   loadFolderInfo() {
     const query: DataQueryRequest<GrafanaQuery> = {
       targets: [{ queryType: GrafanaQueryType.List, refId: 'A' }],
-    } as any;
+    } as DataQueryRequest<GrafanaQuery>;
 
     getDataSourceSrv()
       .get('-- Grafana --')
@@ -450,6 +451,11 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   };
 
+  renderRandomWalkQuery() {
+    const { query, onChange, onRunQuery } = this.props;
+    return <RandomWalkEditor query={query} onChange={onChange} onRunQuery={onRunQuery} />;
+  }
+
   render() {
     const query = {
       ...defaultQuery,
@@ -487,6 +493,9 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
             />
           </InlineField>
         </InlineFieldRow>
+        {queryType === GrafanaQueryType.RandomWalk &&
+          config.featureToggles.dashboardTemplates &&
+          this.renderRandomWalkQuery()}
         {queryType === GrafanaQueryType.LiveMeasurements && this.renderMeasurementsQuery()}
         {queryType === GrafanaQueryType.List && this.renderListPublicFiles()}
         {queryType === GrafanaQueryType.Snapshot && this.renderSnapshotQuery()}

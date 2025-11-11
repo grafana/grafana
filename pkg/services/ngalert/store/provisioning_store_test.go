@@ -16,14 +16,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const testAlertingIntervalSeconds = 10
 
 func TestIntegrationProvisioningStore(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	testCases := []struct {
 		name           string
@@ -157,10 +156,8 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 	}
 }
 
-func TestSetProvenance_DeadlockScenarios(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func TestIntegrationSetProvenance_DeadlockScenarios(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ng, dbStore := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
 	dbStore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingProvenanceLockWrites)

@@ -14,15 +14,14 @@ import (
 )
 
 type singleTenantInstanceProvider struct {
-	client   clientapi.QueryDataClient
-	features featuremgmt.FeatureToggles
-	cfg      *setting.Cfg
+	client       clientapi.QueryDataClient
+	instanceConf clientapi.InstanceConfigurationSettings
 }
 
 type singleTenantInstance struct {
-	client   clientapi.QueryDataClient
-	features featuremgmt.FeatureToggles
-	cfg      *setting.Cfg
+	client       clientapi.QueryDataClient
+	instanceConf clientapi.InstanceConfigurationSettings
+	logger       log.Logger
 }
 
 func (t *singleTenantInstance) GetDataSourceClient(_ context.Context, _ data.DataSourceRef) (clientapi.QueryDataClient, error) {
@@ -30,35 +29,39 @@ func (t *singleTenantInstance) GetDataSourceClient(_ context.Context, _ data.Dat
 }
 
 func NewSingleTenantInstanceProvider(cfg *setting.Cfg, features featuremgmt.FeatureToggles, p plugins.Client, ctxProv *plugincontext.Provider, accessControl accesscontrol.AccessControl) clientapi.InstanceProvider {
+	conf := clientapi.InstanceConfigurationSettings{
+		FeatureToggles:                features,
+		SQLExpressionCellLimit:        cfg.SQLExpressionCellLimit,
+		SQLExpressionOutputCellLimit:  cfg.SQLExpressionOutputCellLimit,
+		SQLExpressionQueryLengthLimit: cfg.SQLExpressionQueryLengthLimit,
+		SQLExpressionTimeout:          cfg.SQLExpressionTimeout,
+		ExpressionsEnabled:            cfg.ExpressionsEnabled,
+	}
+
 	return &singleTenantInstanceProvider{
-		cfg:      cfg,
-		features: features,
-		client:   newQueryClientForPluginClient(p, ctxProv, accessControl),
+		instanceConf: conf,
+		client:       newQueryClientForPluginClient(p, ctxProv, accessControl),
 	}
 }
 
-func (s *singleTenantInstanceProvider) GetInstance(_ context.Context, _ map[string]string) (clientapi.Instance, error) {
+func (s *singleTenantInstanceProvider) GetInstance(_ context.Context, logger log.Logger, _ map[string]string) (clientapi.Instance, error) {
 	return &singleTenantInstance{
-		client:   s.client,
-		features: s.features,
-		cfg:      s.cfg,
+		client:       s.client,
+		instanceConf: s.instanceConf,
+		logger:       logger,
 	}, nil
 }
 
-func (s *singleTenantInstance) GetSettings() clientapi.InstanceConfigurationSettings {
-	return clientapi.InstanceConfigurationSettings{
-		FeatureToggles:                s.features,
-		SQLExpressionCellLimit:        s.cfg.SQLExpressionCellLimit,
-		SQLExpressionOutputCellLimit:  s.cfg.SQLExpressionOutputCellLimit,
-		SQLExpressionQueryLengthLimit: s.cfg.SQLExpressionQueryLengthLimit,
-		SQLExpressionTimeout:          s.cfg.SQLExpressionTimeout,
-		ExpressionsEnabled:            s.cfg.ExpressionsEnabled,
-	}
+func (s *singleTenantInstanceProvider) GetMode() string {
+	return "st"
 }
 
-func (s *singleTenantInstance) GetLogger(parent log.Logger) log.Logger {
-	// currently we do not add any extra info
-	return parent.New()
+func (s *singleTenantInstance) GetSettings() clientapi.InstanceConfigurationSettings {
+	return s.instanceConf
+}
+
+func (s *singleTenantInstance) GetLogger() log.Logger {
+	return s.logger
 }
 
 func (s *singleTenantInstance) ReportMetrics() {

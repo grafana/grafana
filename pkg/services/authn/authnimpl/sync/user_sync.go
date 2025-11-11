@@ -11,6 +11,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -186,6 +187,13 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 		return nil
 	}
 
+	effectiveReject := s.shouldRejectNonProvisionedUsers(ctx, currentIdentity)
+
+	if !effectiveReject {
+		log.Debug("Skip provisioning validation, non-provisioned users are allowed")
+		return nil
+	}
+
 	log.Debug("Validating user provisioning")
 	ctx, span := s.tracer.Start(ctx, "user.sync.ValidateUserProvisioningHook")
 	defer span.End()
@@ -225,7 +233,7 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 	}
 
 	// Reject non-provisioned users if configured to do so
-	if s.shouldRejectNonProvisionedUsers(ctx, currentIdentity) {
+	if effectiveReject {
 		log.Error("Failed to authenticate user, user is not provisioned")
 		return errUserNotProvisioned.Errorf("user is not provisioned")
 	}
@@ -430,6 +438,7 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 			AuthId:     identity.AuthID,
 		}
 
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 			setAuthInfoCmd.OAuthToken = identity.OAuthToken
 		}
@@ -442,6 +451,7 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 		AuthModule: identity.AuthenticatedBy,
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 		updateAuthInfoCmd.OAuthToken = identity.OAuthToken
 	}
@@ -457,6 +467,8 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 	needsConnectionCreation := userAuth == nil
 
 	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthenticatedBy); errProtection != nil {
+		span.RecordError(errProtection)
+		span.SetStatus(codes.Error, errProtection.Error())
 		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)
 	}
 	// sync user info
@@ -500,22 +512,29 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		attribute.String("identity.ID", id.ID),
 		attribute.String("identity.ExternalUID", id.ExternalUID),
 	)
-	if usr.IsProvisioned {
-		s.log.Debug("User is provisioned", "id.UID", id.UID)
+
+	ctxLogger := s.log.FromContext(ctx)
+
+	if s.shouldRejectNonProvisionedUsers(ctx, id) && usr.IsProvisioned && id.AuthenticatedBy != login.GrafanaComAuthModule {
+		ctxLogger.Debug("User is provisioned", "id.UID", id.UID)
 		needsConnectionCreation = false
 		authInfo, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: id.AuthenticatedBy})
 		if err != nil {
-			s.log.Error("Error getting auth info for provisioned user", "error", err)
+			ctxLogger.Error("Error getting auth info for provisioned user", "error", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 
 		if id.ExternalUID == "" {
-			s.log.Error("externalUID is empty for provisioned user", "id", id.UID)
+			ctxLogger.Error("externalUID is empty for provisioned user", "id", id.UID)
+			span.SetStatus(codes.Error, "externalUID is empty for provisioned user")
 			return errEmptyExternalUID.Errorf("externalUID is empty")
 		}
 
 		if id.ExternalUID != authInfo.ExternalUID {
-			s.log.Error("mismatched externalUID for provisioned user", "provisioned_externalUID", authInfo.ExternalUID, "identity_externalUID", id.ExternalUID)
+			ctxLogger.Error("mismatched externalUID for provisioned user", "provisioned_externalUID", authInfo.ExternalUID, "identity_externalUID", id.ExternalUID)
+			span.SetStatus(codes.Error, "mismatched externalUID for provisioned user")
 			return errMismatchedExternalUID.Errorf("externalUID mismatch")
 		}
 	}
@@ -527,18 +546,18 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		if !usr.IsProvisioned {
 			finalCmdToExecute = updateCmd
 			shouldExecuteUpdate = true
-			s.log.FromContext(ctx).Debug("Syncing all differing attributes for non-provisioned user", "id", id.ID,
+			ctxLogger.Debug("Syncing all differing attributes for non-provisioned user", "id", id.ID,
 				"login", finalCmdToExecute.Login, "email", finalCmdToExecute.Email, "name", finalCmdToExecute.Name,
 				"isGrafanaAdmin", finalCmdToExecute.IsGrafanaAdmin, "emailVerified", finalCmdToExecute.EmailVerified)
 		} else {
 			if updateCmd.IsGrafanaAdmin != nil {
 				finalCmdToExecute.IsGrafanaAdmin = updateCmd.IsGrafanaAdmin
 				shouldExecuteUpdate = true
-				s.log.FromContext(ctx).Debug("Syncing IsGrafanaAdmin for provisioned user", "id", id.ID, "isAdmin", fmt.Sprintf("%v", *updateCmd.IsGrafanaAdmin))
+				ctxLogger.Debug("Syncing IsGrafanaAdmin for provisioned user", "id", id.ID, "isAdmin", fmt.Sprintf("%v", *updateCmd.IsGrafanaAdmin))
 			}
 
 			if !shouldExecuteUpdate {
-				s.log.FromContext(ctx).Debug("SAML attributes differed, but no SCIM-overridable attributes changed for provisioned user", "id", id.ID,
+				ctxLogger.Debug("SAML attributes differed, but no SCIM-overridable attributes changed for provisioned user", "id", id.ID,
 					"login", updateCmd.Login, "email", updateCmd.Email, "name", updateCmd.Name,
 					"isGrafanaAdmin", updateCmd.IsGrafanaAdmin, "emailVerified", updateCmd.EmailVerified)
 			}
@@ -546,9 +565,11 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 
 		if shouldExecuteUpdate {
 			if err := s.userService.Update(ctx, finalCmdToExecute); err != nil {
-				s.log.FromContext(ctx).Error("Failed to update user attributes", "error", err, "id", id.ID, "isProvisioned", usr.IsProvisioned,
+				ctxLogger.Error("Failed to update user attributes", "error", err, "id", id.ID, "isProvisioned", usr.IsProvisioned,
 					"login", finalCmdToExecute.Login, "email", finalCmdToExecute.Email, "name", finalCmdToExecute.Name,
 					"isGrafanaAdmin", finalCmdToExecute.IsGrafanaAdmin, "emailVerified", finalCmdToExecute.EmailVerified)
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 				return err
 			}
 		}

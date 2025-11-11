@@ -4,12 +4,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestPluginsIntegrationDiscovery(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func TestIntegrationPluginsIntegrationDiscovery(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("discovery", func(t *testing.T) {
 		helper := setupHelper(t)
@@ -20,19 +20,30 @@ func TestPluginsIntegrationDiscovery(t *testing.T) {
 				"freshness": "Current",
 				"resources": [
 					{
-						"resource": "plugininstalls",
+						"resource": "plugins",
 						"responseKind": {
 							"group": "",
-							"kind": "PluginInstall",
+							"kind": "Plugin",
 							"version": ""
 						},
 						"scope": "Namespaced",
-						"singularResource": "plugininstalls",
+						"singularResource": "plugins",
 						"subresources": [
 							{
 								"responseKind": {
 									"group": "",
-									"kind": "PluginInstall",
+									"kind": "ResourceCallOptions",
+									"version": ""
+								},
+								"subresource": "meta",
+								"verbs": [
+									"get"
+								]
+							},
+							{
+								"responseKind": {
+									"group": "",
+									"kind": "Plugin",
 									"version": ""
 								},
 								"subresource": "status",
@@ -52,35 +63,6 @@ func TestPluginsIntegrationDiscovery(t *testing.T) {
 							"patch",
 							"update",
 							"watch"
-						]
-					},
-					{
-						"resource": "pluginmetas",
-						"responseKind": {
-							"group": "",
-							"kind": "PluginMeta",
-							"version": ""
-						},
-						"scope": "Namespaced",
-						"singularResource": "pluginmeta",
-						"subresources": [
-							{
-								"responseKind": {
-									"group": "",
-									"kind": "PluginMeta",
-									"version": ""
-								},
-								"subresource": "status",
-								"verbs": [
-									"get",
-									"patch",
-									"update"
-								]
-							}
-						],
-						"verbs": [
-							"get",
-							"list"
 						]
 					}
 				]

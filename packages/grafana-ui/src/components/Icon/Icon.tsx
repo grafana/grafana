@@ -42,6 +42,11 @@ const getIconStyles = (theme: GrafanaTheme2) => {
   };
 };
 
+/**
+ * Grafana's icon wrapper component.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/iconography-icon--docs
+ */
 export const Icon = React.memo(
   React.forwardRef<SVGElement, IconProps>(
     ({ size = 'md', type = 'default', name, className, style, title = '', ...rest }, ref) => {
@@ -84,11 +89,11 @@ export const Icon = React.memo(
           title={title}
           className={composedClassName}
           style={style}
-          // render an empty div with the correct dimensions while loading
+          // render an empty element with the correct dimensions while loading
           // this prevents content layout shift whilst the icon asynchronously loads
           // which happens even if the icon is in the cache(!)
           loader={
-            <div
+            <span
               className={cx(
                 css({
                   width: svgWid,
