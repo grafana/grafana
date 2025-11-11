@@ -219,7 +219,7 @@ var (
 			Name:        "disableSSEDataplane",
 			Description: "Disables dataplane specific processing in server side expressions.",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityMetricsSquad,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
 		},
 		{
 			Name:              "unifiedRequestLog",
@@ -263,14 +263,6 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
-		},
-		{
-			Name:           "recordedQueriesMulti",
-			Description:    "Enables writing multiple items from a single query within Recorded Queries",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true",
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: false,
 		},
 		{
 			Name:         "logsExploreTableVisualisation",
@@ -389,7 +381,7 @@ var (
 			Name:        "sseGroupByDatasource",
 			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityMetricsSquad,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
 		},
 		{
 			Name:         "lokiRunQueriesInParallel",

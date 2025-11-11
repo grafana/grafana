@@ -1319,13 +1319,16 @@
     {
       "metadata": {
         "name": "disableSSEDataplane",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-04-12T16:24:34Z"
+        "resourceVersion": "1762552416963",
+        "creationTimestamp": "2023-04-12T16:24:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-07 21:53:36.963146843 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Disables dataplane specific processing in server side expressions.",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics"
+        "codeowner": "@grafana/grafana-datasources-core-services"
       }
     },
     {
@@ -3430,7 +3433,8 @@
       "metadata": {
         "name": "recordedQueriesMulti",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-06-14T12:34:22Z"
+        "creationTimestamp": "2023-06-14T12:34:22Z",
+        "deletionTimestamp": "2025-11-07T17:31:39Z"
       },
       "spec": {
         "description": "Enables writing multiple items from a single query within Recorded Queries",
@@ -3754,13 +3758,16 @@
     {
       "metadata": {
         "name": "sseGroupByDatasource",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-09-07T20:02:07Z"
+        "resourceVersion": "1762552416963",
+        "creationTimestamp": "2023-09-07T20:02:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-07 21:53:36.963146843 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics"
+        "codeowner": "@grafana/grafana-datasources-core-services"
       }
     },
     {
