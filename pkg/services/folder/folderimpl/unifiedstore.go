@@ -439,8 +439,7 @@ func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int6
 	}
 
 	descendantsMap := map[string]*folder.Folder{}
-	seen := map[string]struct{}{}
-	err = getDescendants(nodes, tree, ancestor_uid, descendantsMap, seen)
+	err = getDescendants(nodes, tree, ancestor_uid, descendantsMap, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -458,12 +457,15 @@ func getDescendants(
 	tree map[string]map[string]*folder.Folder,
 	ancestorUID string,
 	descendantsMap map[string]*folder.Folder,
-	seen map[string]struct{},
+	seen map[string]bool,
 ) error {
-	if _, exists := seen[ancestorUID]; exists {
+	if seen == nil {
+		seen = map[string]bool{}
+	}
+	if seen[ancestorUID] {
 		return folder.ErrCircularReference.Errorf("circular reference detected at folder uid: %s", ancestorUID)
 	}
-	seen[ancestorUID] = struct{}{}
+	seen[ancestorUID] = true
 	for uid := range tree[ancestorUID] {
 		descendantsMap[uid] = nodes[uid]
 		if err := getDescendants(nodes, tree, uid, descendantsMap, seen); err != nil {
