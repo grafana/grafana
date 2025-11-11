@@ -131,6 +131,8 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
   };
 
   private fetchSubScopeItems = async (path: string[], subScopeName: string) => {
+    let subScopeFolders: SuggestedNavigationsFoldersMap | undefined;
+
     try {
       // Fetch navigations for this subScope
       const fetchNavigations = config.featureToggles.useScopesNavigationEndpoint
@@ -140,28 +142,32 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       const subScopeItems = await fetchNavigations([subScopeName]);
 
       // Group the items and add them to the subScope folder
-      const subScopeFolders = this.groupSuggestedItems(subScopeItems);
+      subScopeFolders = this.groupSuggestedItems(subScopeItems);
+    } catch (error) {
+      // On error, subScopeFolders will remain undefined and we'll only clear loading state
+    }
 
-      // Get the current state and navigate to the target folder
-      let folders = { ...this.state.folders };
-      let filteredFolders = { ...this.state.filteredFolders };
-      let currentLevelFolders: SuggestedNavigationsFoldersMap = folders;
-      let currentLevelFilteredFolders: SuggestedNavigationsFoldersMap = filteredFolders;
+    // Get the current state and navigate to the target folder
+    let folders = { ...this.state.folders };
+    let filteredFolders = { ...this.state.filteredFolders };
+    let currentLevelFolders: SuggestedNavigationsFoldersMap = folders;
+    let currentLevelFilteredFolders: SuggestedNavigationsFoldersMap = filteredFolders;
 
-      for (let idx = 0; idx < path.length - 1; idx++) {
-        currentLevelFolders = currentLevelFolders[path[idx]].folders;
-        currentLevelFilteredFolders = currentLevelFilteredFolders[path[idx]].folders;
-      }
+    for (let idx = 0; idx < path.length - 1; idx++) {
+      currentLevelFolders = currentLevelFolders[path[idx]].folders;
+      currentLevelFilteredFolders = currentLevelFilteredFolders[path[idx]].folders;
+    }
 
-      const name = path[path.length - 1];
-      const currentFolder = currentLevelFolders[name];
-      const currentFilteredFolder = currentLevelFilteredFolders[name];
+    const name = path[path.length - 1];
+    const currentFolder = currentLevelFolders[name];
+    const currentFilteredFolder = currentLevelFilteredFolders[name];
 
-      // Clear loading state
-      currentFolder.loading = false;
-      currentFilteredFolder.loading = false;
+    // Clear loading state
+    currentFolder.loading = false;
+    currentFilteredFolder.loading = false;
 
-      // Merge the subScope folder's content with the fetched items
+    // Merge the subScope folder's content with the fetched items (if fetch succeeded)
+    if (subScopeFolders) {
       // Take items from the root of the grouped structure
       const rootSubScopeFolder = subScopeFolders[''];
       currentFolder.folders = { ...currentFolder.folders, ...rootSubScopeFolder.folders };
@@ -176,29 +182,9 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         ...currentFilteredFolder.suggestedNavigations,
         ...rootSubScopeFolder.suggestedNavigations,
       };
-
-      this.updateState({ folders, filteredFolders });
-    } catch (error) {
-      // On error, clear loading state
-      let folders = { ...this.state.folders };
-      let filteredFolders = { ...this.state.filteredFolders };
-      let currentLevelFolders: SuggestedNavigationsFoldersMap = folders;
-      let currentLevelFilteredFolders: SuggestedNavigationsFoldersMap = filteredFolders;
-
-      for (let idx = 0; idx < path.length - 1; idx++) {
-        currentLevelFolders = currentLevelFolders[path[idx]].folders;
-        currentLevelFilteredFolders = currentLevelFilteredFolders[path[idx]].folders;
-      }
-
-      const name = path[path.length - 1];
-      const currentFolder = currentLevelFolders[name];
-      const currentFilteredFolder = currentLevelFilteredFolders[name];
-
-      currentFolder.loading = false;
-      currentFilteredFolder.loading = false;
-
-      this.updateState({ folders, filteredFolders });
     }
+
+    this.updateState({ folders, filteredFolders });
   };
 
   public changeSearchQuery = (searchQuery: string) => {
