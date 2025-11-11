@@ -765,6 +765,279 @@ func TestGetFolders(t *testing.T) {
 	}
 }
 
+func TestGetDescendants(t *testing.T) {
+	orgID := int64(1)
+
+	type args struct {
+		ctx         context.Context
+		orgID       int64
+		ancestorUID string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		mock    func(mockCli *client.MockK8sHandler)
+		want    []*folder.Folder
+		wantErr bool
+	}{
+		{
+			name: "should return all descendants in a tree structure",
+			args: args{
+				ctx:         context.Background(),
+				orgID:       orgID,
+				ancestorUID: "root",
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
+					Limit:    folderListLimit,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "root",
+									"uid":  "root",
+								},
+								"spec": map[string]interface{}{
+									"title": "Root",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "child1",
+									"uid":         "child1",
+									"annotations": map[string]interface{}{"grafana.app/folder": "root"},
+								},
+								"spec": map[string]interface{}{
+									"title": "Child1",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "child2",
+									"uid":         "child2",
+									"annotations": map[string]interface{}{"grafana.app/folder": "child1"},
+								},
+								"spec": map[string]interface{}{
+									"title": "Child2",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "child3",
+									"uid":         "child3",
+									"annotations": map[string]interface{}{"grafana.app/folder": "root"},
+								},
+								"spec": map[string]interface{}{
+									"title": "Child3",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			want: []*folder.Folder{
+				{
+					UID:   "child1",
+					Title: "Child1",
+					OrgID: orgID,
+				},
+				{
+					UID:   "child2",
+					Title: "Child2",
+					OrgID: orgID,
+				},
+				{
+					UID:   "child3",
+					Title: "Child3",
+					OrgID: orgID,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return empty list when ancestor has no descendants",
+			args: args{
+				ctx:         context.Background(),
+				orgID:       orgID,
+				ancestorUID: "leaf",
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
+					Limit:    folderListLimit,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "leaf",
+									"uid":  "leaf",
+								},
+								"spec": map[string]interface{}{
+									"title": "Leaf",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "other",
+									"uid":         "other",
+									"annotations": map[string]interface{}{"grafana.app/folder": "parent"},
+								},
+								"spec": map[string]interface{}{
+									"title": "Other",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			want:    []*folder.Folder{},
+			wantErr: false,
+		},
+		{
+			name: "should detect circular reference and return error",
+			args: args{
+				ctx:         context.Background(),
+				orgID:       orgID,
+				ancestorUID: "a",
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
+					Limit:    folderListLimit,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "a",
+									"uid":         "a",
+									"annotations": map[string]interface{}{"grafana.app/folder": "c"},
+								},
+								"spec": map[string]interface{}{
+									"title": "A",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "b",
+									"uid":         "b",
+									"annotations": map[string]interface{}{"grafana.app/folder": "a"},
+								},
+								"spec": map[string]interface{}{
+									"title": "B",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "c",
+									"uid":         "c",
+									"annotations": map[string]interface{}{"grafana.app/folder": "b"},
+								},
+								"spec": map[string]interface{}{
+									"title": "C",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "should detect self-referencing cycle and return error",
+			args: args{
+				ctx:         context.Background(),
+				orgID:       orgID,
+				ancestorUID: "self",
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
+					Limit:    folderListLimit,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "self",
+									"uid":         "self",
+									"annotations": map[string]interface{}{"grafana.app/folder": "child"},
+								},
+								"spec": map[string]interface{}{
+									"title": "Self",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name":        "child",
+									"uid":         "child",
+									"annotations": map[string]interface{}{"grafana.app/folder": "self"},
+								},
+								"spec": map[string]interface{}{
+									"title": "Child",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCLI := new(client.MockK8sHandler)
+			tt.mock(mockCLI)
+			tracer := noop.NewTracerProvider().Tracer("TestGetDescendants")
+			ss := &FolderUnifiedStoreImpl{
+				k8sclient:   mockCLI,
+				userService: usertest.NewUserServiceFake(),
+				tracer:      tracer,
+			}
+			got, err := ss.GetDescendants(tt.args.ctx, tt.args.orgID, tt.args.ancestorUID)
+			if tt.wantErr {
+				require.ErrorIs(t, err, folder.ErrCircularReference)
+				return
+			}
+			require.NoError(t, err)
+			require.Len(t, got, len(tt.want))
+
+			// Create a map for easier comparison since order may vary
+			gotMap := make(map[string]*folder.Folder)
+			for _, f := range got {
+				gotMap[f.UID] = f
+			}
+			require.Len(t, gotMap, len(tt.want))
+
+			for _, want := range tt.want {
+				gotFolder, exists := gotMap[want.UID]
+				require.True(t, exists, "Expected folder with UID %s not found", want.UID)
+				require.Equal(t, want.Title, gotFolder.Title)
+				require.Equal(t, want.OrgID, gotFolder.OrgID)
+			}
+		})
+	}
+}
+
 func TestBuildFolderFullPaths(t *testing.T) {
 	type args struct {
 		f         *folder.Folder
