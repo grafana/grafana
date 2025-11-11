@@ -61,7 +61,7 @@ function useGetConfigurationForApps() {
   const { data: rootRoute, isLoading: isLoadingDefaultContactPoint } = useNotificationPolicyRoute({
     alertmanager: GRAFANA_RULES_SOURCE_NAME,
   });
-  const defaultContactpoint = rootRoute?.[0].receiver || '';
+  const defaultContactpoint = rootRoute?.receiver || '';
   const { isDone: isCreateAlertRuleDone, isLoading: isLoadingAlertCreatedDone } = useIsCreateAlertRuleDone();
   // configuration checks for incidents
   const {

@@ -8,18 +8,24 @@ import { useRouteGroupsMatcher } from '../../../useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { normalizeRoute } from '../../../utils/notification-policies';
+import { NAMED_ROOT_LABEL_NAME } from '../../../api/routesApi';
 
 export const useAlertmanagerNotificationRoutingPreview = (alertmanager: string, instances: Labels[]) => {
+  // if a NAMED_ROOT_LABEL_NAME label exists, then we only match to that route.
+  const routeName = useMemo(() => {
+    const routeNameLabel = instances.find((instance) => instance[NAMED_ROOT_LABEL_NAME]);
+    return routeNameLabel?.[NAMED_ROOT_LABEL_NAME];
+  }, [instances]);
+
   const {
-    data: currentData,
+    data: defaultPolicy,
     isLoading: isPoliciesLoading,
     error: policiesError,
-  } = useNotificationPolicyRoute({ alertmanager });
+  } = useNotificationPolicyRoute({ alertmanager }, routeName);
 
   // this function will use a web worker to compute matching routes
   const { matchInstancesToRoutes } = useRouteGroupsMatcher();
 
-  const [defaultPolicy] = currentData ?? [];
   const rootRoute = useMemo(() => {
     if (!defaultPolicy) {
       return;
