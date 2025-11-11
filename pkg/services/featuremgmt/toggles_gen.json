@@ -4005,7 +4005,8 @@
       "metadata": {
         "name": "tlsMemcached",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-05-09T19:12:08Z"
+        "creationTimestamp": "2024-05-09T19:12:08Z",
+        "deletionTimestamp": "2025-11-11T13:50:51Z"
       },
       "spec": {
         "description": "Use TLS-enabled memcached in the enterprise caching feature",

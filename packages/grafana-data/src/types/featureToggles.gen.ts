@@ -509,11 +509,6 @@ export interface FeatureToggles {
   */
   newPDFRendering?: boolean;
   /**
-  * Use TLS-enabled memcached in the enterprise caching feature
-  * @default true
-  */
-  tlsMemcached?: boolean;
-  /**
   * Enable grafana's embedded kube-aggregator
   */
   kubernetesAggregator?: boolean;
