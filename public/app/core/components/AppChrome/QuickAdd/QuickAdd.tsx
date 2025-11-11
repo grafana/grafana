@@ -3,7 +3,11 @@ import { useMemo, useState } from 'react';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction, config } from '@grafana/runtime';
 import { Menu, Dropdown, ToolbarButton } from '@grafana/ui';
-import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import {
+  CONTENT_KINDS,
+  DashboardLibraryInteractions,
+  SOURCE_ENTRY_POINTS,
+} from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { useSelector } from 'app/types/store';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
@@ -28,8 +32,8 @@ export const QuickAdd = ({}: Props) => {
           url: '/dashboards?templateDashboards=true&source=quickAdd',
           onClick: () => {
             DashboardLibraryInteractions.entryPointClicked({
-              entryPoint: 'quick_add_button',
-              contentKind: 'template_dashboard',
+              entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
+              contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
             });
           },
         });

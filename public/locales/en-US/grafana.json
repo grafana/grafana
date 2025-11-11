@@ -10533,7 +10533,8 @@
       "title": "New"
     },
     "new-dashboard": {
-      "title": "Empty dashboard"
+      "empty-title": "Empty dashboard",
+      "title": "New dashboard"
     },
     "new-folder": {
       "title": "New folder"

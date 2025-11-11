@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
 // Because the navigation content is dynamic (defined in the backend), we can not use
 // the normal inline message definition method.
@@ -48,7 +49,9 @@ export function getNavTitle(navId: string | undefined) {
     case 'dashboards/recently-deleted':
       return t('nav.recently-deleted.title', 'Recently deleted');
     case 'dashboards/new':
-      return t('nav.new-dashboard.title', 'Empty dashboard');
+      return config.featureToggles.dashboardTemplates
+        ? t('nav.new-dashboard.empty-title', 'Empty dashboard')
+        : t('nav.new-dashboard.title', 'New dashboard');
     case 'dashboards/folder/new':
       return t('nav.new-folder.title', 'New folder');
     case 'dashboards/import':

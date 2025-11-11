@@ -7,19 +7,25 @@ export const EVENT_LOCATIONS = {
   EMPTY_DASHBOARD: 'empty_dashboard',
   MODAL_PROVISIONED_TAB: 'suggested_dashboards_modal_provisioned_tab',
   MODAL_COMMUNITY_TAB: 'suggested_dashboards_modal_community_tab',
+  BROWSE_DASHBOARDS_PAGE: 'browse_dashboards_page',
 } as const;
 
 export const CONTENT_KINDS = {
   DATASOURCE_DASHBOARD: 'datasource_dashboard',
   COMMUNITY_DASHBOARD: 'community_dashboard',
+  TEMPLATE_DASHBOARD: 'template_dashboard',
   // in future this could also include "TEMPLATE_DASHBOARD" if/when items become templates
+} as const;
+
+export const TemplateDashboardSourceEntryPoint = {
+  QUICK_ADD_BUTTON: 'quick_add_button',
+  COMMAND_PALETTE: 'command_palette',
+  BROWSE_DASHBOARDS_PAGE: 'browse_dashboards_page_create_new_button',
 } as const;
 
 export const SOURCE_ENTRY_POINTS = {
   DATASOURCE_PAGE: 'datasource_page',
-  QUICK_ADD_BUTTON: 'quick_add_button',
-  COMMAND_PALETTE: 'command_palette',
-  DASHBOARD_LIST_PAGE_CREATE_NEW_BUTTON: 'dashboard_list_page_create_new_button',
+  ...TemplateDashboardSourceEntryPoint,
   // possible future flows: CREATE_DASHBOARD, EMPTY_STATE
 } as const;
 

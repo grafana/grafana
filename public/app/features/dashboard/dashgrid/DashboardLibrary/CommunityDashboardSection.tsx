@@ -94,8 +94,8 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
           datasourceTypes: [ds.type],
           sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
           eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-          hasResults: apiResponse.dashboards.length > 0,
-          resultCount: apiResponse.dashboards.length,
+          hasResults: apiResponse.items.length > 0,
+          resultCount: apiResponse.items.length,
         });
       }
 

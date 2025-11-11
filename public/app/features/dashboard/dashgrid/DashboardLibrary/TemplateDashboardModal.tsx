@@ -11,13 +11,18 @@ import { Box, Grid, Modal, Text, useStyles2 } from '@grafana/ui';
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { DashboardCard } from './DashboardCard';
-import { DashboardLibraryInteractions, TemplateDashboardSourceEntryPoint } from './interactions';
+import {
+  DashboardLibraryInteractions,
+  EVENT_LOCATIONS,
+  SourceEntryPoint,
+  TemplateDashboardSourceEntryPoint,
+} from './interactions';
 import { GnetDashboard, GnetDashboardsResponse, Link } from './types';
 
-const SourceEntryPointMap: Record<string, TemplateDashboardSourceEntryPoint> = {
-  quickAdd: 'quick_add_button',
-  commandPalette: 'command_palette',
-  createNewButton: 'dashboard_list_page_create_new_button',
+const SourceEntryPointMap: Record<string, SourceEntryPoint> = {
+  quickAdd: TemplateDashboardSourceEntryPoint.QUICK_ADD_BUTTON,
+  commandPalette: TemplateDashboardSourceEntryPoint.COMMAND_PALETTE,
+  createNewButton: TemplateDashboardSourceEntryPoint.BROWSE_DASHBOARDS_PAGE,
 };
 
 export const TemplateDashboardModal = () => {
@@ -34,7 +39,7 @@ export const TemplateDashboardModal = () => {
     setSearchParams(searchParams);
   };
 
-  const onImportDashboardClick = async (dashboard: GnetDashboard) => {
+  const onPreviewDashboardClick = async (dashboard: GnetDashboard) => {
     const sourceEntryPoint = SourceEntryPointMap[entryPoint] || 'unknown';
     DashboardLibraryInteractions.itemClicked({
       contentKind: 'template_dashboard',
@@ -42,7 +47,8 @@ export const TemplateDashboardModal = () => {
       libraryItemId: String(dashboard.id),
       libraryItemTitle: dashboard.name,
       sourceEntryPoint,
-      eventLocation: 'browse_dashboards_page',
+      eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
+      discoveryMethod: 'browse',
     });
 
     const params = new URLSearchParams({
@@ -89,7 +95,7 @@ export const TemplateDashboardModal = () => {
         contentKinds: ['template_dashboard'],
         datasourceTypes: [String(testDataSource?.type)],
         sourceEntryPoint: SourceEntryPointMap[entryPoint] || 'unknown',
-        eventLocation: 'browse_dashboards_page',
+        eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
       });
     }
   }, [isOpen, dashboards, entryPoint, testDataSource?.type, loading]);
@@ -133,7 +139,7 @@ export const TemplateDashboardModal = () => {
                     key={dashboard.uid}
                     title={dashboard.name}
                     imageUrl={thumbnailUrl}
-                    onClick={() => onImportDashboardClick(dashboard)}
+                    onClick={() => onPreviewDashboardClick(dashboard)}
                     dashboard={dashboard}
                     kind="template_dashboard"
                   />
