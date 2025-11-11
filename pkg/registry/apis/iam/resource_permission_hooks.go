@@ -14,8 +14,7 @@ import (
 )
 
 var (
-	errEmptyName        = errors.New("name cannot be empty")
-	errInvalidBasicRole = errors.New("invalid basic role")
+	errEmptyName = errors.New("name cannot be empty")
 
 	defaultWriteTimeout = 15 * time.Second
 )
