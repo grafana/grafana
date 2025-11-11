@@ -33,7 +33,9 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
 
   const handleLinkClick = () => {
     if (item.kind === 'dashboard') {
-      reportInteraction('grafana_browse_dashboards_page_choose_dashboard');
+      console.log('grafana_browse_dashboards_page_click_dashboard', {
+        parent: item.parentUID ? 'folder' : 'root',
+      });
     }
   };
 
