@@ -16,7 +16,6 @@ import (
 var (
 	errEmptyName        = errors.New("name cannot be empty")
 	errInvalidBasicRole = errors.New("invalid basic role")
-	errUnknownKind      = errors.New("unknown permission kind")
 
 	defaultWriteTimeout = 15 * time.Second
 )
