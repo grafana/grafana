@@ -204,7 +204,9 @@ func (s *Storage) Versioner() storage.Versioner {
 	return s.versioner
 }
 
-func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Object, error) {
+func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.Object) (runtime.Object, error) {
+	_, span := tracer.Start(ctx, "apistore.Storage.convertToObject")
+	defer span.End()
 	obj, _, err := s.codec.Decode(data, nil, obj)
 	return obj, err
 }
@@ -244,7 +246,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return v.finish(ctx, err, s.opts.SecureValues)
 	}
 
-	if _, err := s.convertToObject(req.Value, out); err != nil {
+	if _, err := s.convertToObject(ctx, req.Value, out); err != nil {
 		return err
 	}
 
@@ -422,7 +424,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		return resource.GetError(rsp.Error)
 	}
 
-	_, err = s.convertToObject(rsp.Value, objPtr)
+	_, err = s.convertToObject(ctx, rsp.Value, objPtr)
 	if err != nil {
 		return err
 	}
@@ -474,30 +476,11 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 
 	for _, item := range rsp.Items {
-		obj, err := s.convertToObject(item.Value, s.newFunc())
+		obj, shouldAppend, err := s.processItem(ctx, item, opts, predicate)
 		if err != nil {
 			return err
 		}
-		if err := s.versioner.UpdateObject(obj, uint64(item.ResourceVersion)); err != nil {
-			return err
-		}
-
-		if opts.ResourceVersionMatch == metaV1.ResourceVersionMatchExact {
-			currentVersion, err := s.versioner.ObjectResourceVersion(obj)
-			if err != nil {
-				return err
-			}
-			expectedRV, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
-			if err != nil {
-				return err
-			}
-			if currentVersion != expectedRV {
-				continue
-			}
-		}
-
-		ok, err := predicate.Matches(obj)
-		if err == nil && ok {
+		if shouldAppend {
 			v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
 		}
 	}
@@ -510,6 +493,45 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 	return nil
+}
+
+// processItem converts a raw item from the response, updates its version,
+// checks resource version matching, and applies predicates.
+// Returns the processed object, whether it should be appended to results, and any error.
+func (s *Storage) processItem(ctx context.Context, item *resourcepb.ResourceWrapper, opts storage.ListOptions, predicate storage.SelectionPredicate) (runtime.Object, bool, error) {
+	_, span := tracer.Start(ctx, "apistore.Storage.processItem")
+	defer span.End()
+
+	obj, err := s.convertToObject(ctx, item.Value, s.newFunc())
+	if err != nil {
+		return nil, false, err
+	}
+	if err := s.versioner.UpdateObject(obj, uint64(item.ResourceVersion)); err != nil {
+		return nil, false, err
+	}
+
+	// Skip items that don't match the exact resource version if specified
+	if opts.ResourceVersionMatch == metaV1.ResourceVersionMatchExact {
+		currentVersion, err := s.versioner.ObjectResourceVersion(obj)
+		if err != nil {
+			return nil, false, err
+		}
+		expectedRV, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
+		if err != nil {
+			return nil, false, err
+		}
+		if currentVersion != expectedRV {
+			return nil, false, nil
+		}
+	}
+
+	// Apply predicate filtering
+	ok, err := predicate.Matches(obj)
+	if err != nil || !ok {
+		return nil, false, nil
+	}
+
+	return obj, true, nil
 }
 
 // GuaranteedUpdate keeps calling 'tryUpdate()' to update key 'key' (of type 'destination')
@@ -602,7 +624,7 @@ func (s *Storage) GuaranteedUpdate(
 		}
 
 		existingBytes = readResponse.Value
-		existingObj, err = s.convertToObject(readResponse.Value, s.newFunc())
+		existingObj, err = s.convertToObject(ctx, readResponse.Value, s.newFunc())
 		if err != nil {
 			return err
 		}
@@ -665,7 +687,7 @@ func (s *Storage) GuaranteedUpdate(
 			rv = uint64(updateResponse.ResourceVersion)
 		}
 
-		if _, err := s.convertToObject(req.Value, destination); err != nil {
+		if _, err := s.convertToObject(ctx, req.Value, destination); err != nil {
 			return err
 		}
 
