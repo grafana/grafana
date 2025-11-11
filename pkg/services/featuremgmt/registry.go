@@ -1968,14 +1968,6 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:         "adhocFiltersInTooltips",
-			Description:  "Enable adhoc filter buttons in visualization tooltips",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaDataProSquad,
-			FrontendOnly: true,
-			Expression:   "true",
-		},
-		{
 			Name:         "favoriteDatasources",
 			Description:  "Enable favorite datasources",
 			Stage:        FeatureStageExperimental,
