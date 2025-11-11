@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { handleLinkClick } from '@react-aria/utils';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -29,6 +30,12 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
 
   const isLoading = isOpen && !childrenByParentUID[item.uid];
   const iconName = getIconForItem(data.item, isOpen);
+
+  const handleLinkClick = () => {
+    if (item.kind === 'dashboard') {
+      reportInteraction('grafana_browse_dashboards_page_choose_dashboard');
+    }
+  };
 
   if (item.kind === 'ui') {
     return (
@@ -91,13 +98,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
 
         <Text variant="body" truncate id={treeID && makeRowID(treeID, item)}>
           {item.url ? (
-            <Link
-              onClick={() => {
-                reportInteraction('manage_dashboards_result_clicked');
-              }}
-              href={item.url}
-              className={styles.link}
-            >
+            <Link onClick={handleLinkClick} href={item.url} className={styles.link}>
               {item.title}
             </Link>
           ) : (
