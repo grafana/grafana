@@ -37,7 +37,7 @@ type pollingNotifier struct {
 	tracer         trace.Tracer
 	storageMetrics *resource.StorageMetrics
 
-	bulkLock      *bulkLock
+	bulkLock      *resource.BulkLock
 	listLatestRVs func(ctx context.Context) (groupResourceRV, error)
 	historyPoll   func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error)
 
@@ -53,7 +53,7 @@ type pollingNotifierConfig struct {
 	tracer         trace.Tracer
 	storageMetrics *resource.StorageMetrics
 
-	bulkLock      *bulkLock
+	bulkLock      *resource.BulkLock
 	listLatestRVs func(ctx context.Context) (groupResourceRV, error)
 	historyPoll   func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error)
 
