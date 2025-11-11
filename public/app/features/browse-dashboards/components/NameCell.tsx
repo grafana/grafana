@@ -96,7 +96,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
                 reportInteraction('grafana_browse_dashboards_page_click_list_item', {
                   itemKind: item.kind,
                   parent: item.parentUID ? 'folder' : 'root',
-                  view: 'browse view',
+                  source: 'browse view',
                 });
               }}
               href={item.url}
