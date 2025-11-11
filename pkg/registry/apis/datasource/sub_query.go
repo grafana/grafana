@@ -13,7 +13,6 @@ import (
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	query_headers "github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/services/datasources"
 
 	"github.com/grafana/grafana/pkg/web"
@@ -91,7 +90,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		rsp, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
 			Queries:       queries,
 			PluginContext: pluginCtx,
-			Headers:       query_headers.ExtractKnownHeaders(req.Header),
+			Headers:       map[string]string{},
 		})
 
 		// all errors get converted into k8 errors when sent in responder.Error and lose important context like downstream info
