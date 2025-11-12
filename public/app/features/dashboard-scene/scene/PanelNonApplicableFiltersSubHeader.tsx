@@ -1,31 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { AdHocVariableFilter, GrafanaTheme2 } from '@grafana/data';
-import {
-  AdHocFiltersVariable,
-  GroupByVariable,
-  SceneComponentProps,
-  SceneObjectBase,
-  sceneGraph,
-} from '@grafana/scenes';
+import { AdHocVariableFilter, DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
 const CHAR_WIDTH_ESTIMATE = 6;
 const PILL_PADDING = 8;
 const GAP_SIZE = 8;
-
-export class PanelNonApplicableFiltersSubHeader extends SceneObjectBase {
-  static Component = PanelNonApplicableFiltersSubHeaderRenderer;
-
-  public getAdHocFiltersVariable(): AdHocFiltersVariable | undefined {
-    return sceneGraph.getVariables(this).state.variables.find((variable) => variable instanceof AdHocFiltersVariable);
-  }
-
-  public getGroupByVariable(): GroupByVariable | undefined {
-    return sceneGraph.getVariables(this).state.variables.find((variable) => variable instanceof GroupByVariable);
-  }
-}
 
 function formatFilterLabel(filter: AdHocVariableFilter): string {
   return `${filter.key} ${filter.operator} ${filter.value}`;
@@ -35,47 +17,43 @@ function estimatePillWidth(text: string): number {
   return text.length * CHAR_WIDTH_ESTIMATE + PILL_PADDING;
 }
 
-function PanelNonApplicableFiltersSubHeaderRenderer({
-  model,
-}: SceneComponentProps<PanelNonApplicableFiltersSubHeader>) {
-  const dataObject = sceneGraph.getData(model);
-  const data = dataObject.useState();
-  const filtersVariable = model.getAdHocFiltersVariable();
-  const groupByVariable = model.getGroupByVariable();
+interface Props {
+  filtersVar: AdHocFiltersVariable | undefined;
+  groupByVar: GroupByVariable | undefined;
+  queries: DataQuery[];
+}
+
+export function PanelNonApplicableFiltersSubHeader({ filtersVar, groupByVar, queries }: Props) {
   const localStyles = useStyles2(getLocalStyles);
   const containerRef = useRef<HTMLDivElement>(null);
+  const filtersState = filtersVar?.useState();
+  const groupByState = groupByVar?.useState();
   const [nonApplicables, setNonApplicables] = useState<string[]>([]);
   const [visibleCount, setVisibleCount] = useState<number>(0);
 
-  const filtersState = filtersVariable?.useState();
-  const groupByState = groupByVariable?.useState();
-
   const fetchApplicability = useCallback(async () => {
-    const queries = data.data?.request?.targets ?? [];
-    const filters = filtersState?.filters ?? [];
-    const originFilters = filtersState?.originFilters ?? [];
+    const filters = [...(filtersState?.filters ?? []), ...(filtersState?.originFilters ?? [])];
     const groupByValue = groupByState?.value ?? [];
-    const allFilters = [...filters, ...originFilters];
 
     const nonApplicables: string[] = [];
 
-    if (filtersVariable && allFilters.length > 0) {
-      const applicability = await filtersVariable.getFiltersApplicabilityForQueries(allFilters, queries);
-      const nonApplicableFilters = allFilters.filter((filter) => {
+    if (filtersVar && filters.length > 0) {
+      const applicability = await filtersVar.getFiltersApplicabilityForQueries(filters, queries);
+      const nonApplicableFilters = filters.filter((filter) => {
         const result = applicability?.find((r) => r.key === filter.key && r.origin === filter.origin);
         return !result?.applicable;
       });
       nonApplicables.push(...nonApplicableFilters.map(formatFilterLabel));
     }
 
-    if (groupByVariable) {
-      const applicability = await groupByVariable.getGroupByApplicabilityForQueries(groupByValue, queries);
+    if (groupByVar && groupByValue) {
+      const applicability = await groupByVar.getGroupByApplicabilityForQueries(groupByValue, queries);
       const nonApplicableKeys = applicability?.filter((r) => !r.applicable).map((r) => r.key) ?? [];
       nonApplicables.push(...nonApplicableKeys);
     }
 
     setNonApplicables(nonApplicables);
-  }, [data, filtersState, groupByState, filtersVariable, groupByVariable]);
+  }, [filtersState, filtersVar, groupByState, groupByVar, queries]);
 
   useEffect(() => {
     fetchApplicability();

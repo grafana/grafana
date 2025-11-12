@@ -1,12 +1,19 @@
 import { useEffect, useState } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectState, SceneObjectBase, VizPanel, sceneGraph } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneObjectState,
+  SceneObjectBase,
+  VizPanel,
+  sceneGraph,
+  AdHocFiltersVariable,
+  GroupByVariable,
+} from '@grafana/scenes';
 
 import { PanelNonApplicableFiltersSubHeader } from './PanelNonApplicableFiltersSubHeader';
 
 export interface VizPanelSubHeaderState extends SceneObjectState {
-  nonApplicableFiltersSubHeader: PanelNonApplicableFiltersSubHeader;
   hideNonApplicableFilters?: boolean;
 }
 
@@ -14,10 +21,7 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
   static Component = VizPanelSubHeaderRenderer;
 
   constructor(state: Partial<VizPanelSubHeaderState>) {
-    super({
-      nonApplicableFiltersSubHeader: new PanelNonApplicableFiltersSubHeader({}),
-      ...state,
-    });
+    super(state);
     this.addActivationHandler(this.onActivate);
   }
 
@@ -27,16 +31,25 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
       throw new Error('VizPanelSubHeader can be used only for VizPanel');
     }
   };
+
+  public getAdHocFiltersVariable(): AdHocFiltersVariable | undefined {
+    return sceneGraph.getVariables(this).state.variables.find((variable) => variable instanceof AdHocFiltersVariable);
+  }
+
+  public getGroupByVariable(): GroupByVariable | undefined {
+    return sceneGraph.getVariables(this).state.variables.find((variable) => variable instanceof GroupByVariable);
+  }
 }
 
 function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHeader>) {
   const [shouldRenderFilters, setShouldRenderFilters] = useState(false);
 
-  const { nonApplicableFiltersSubHeader } = model.useState();
-
   const panel = model.parent;
   const dataObject = panel ? sceneGraph.getData(panel) : undefined;
   const data = dataObject?.useState();
+  const queries = data?.data?.request?.targets ?? [];
+  const adhocFiltersVariable = model.getAdHocFiltersVariable();
+  const groupByVariable = model.getGroupByVariable();
 
   useEffect(() => {
     const checkDatasourceDrilldownsApplicability = async () => {
@@ -54,12 +67,7 @@ function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHea
 
         // only render if datasource supports applicability and we have either adhoc filters or group by variable
         setShouldRenderFilters(
-          Boolean(
-            ds &&
-              ds.getDrilldownsApplicability &&
-              (nonApplicableFiltersSubHeader.getAdHocFiltersVariable() ||
-                nonApplicableFiltersSubHeader.getGroupByVariable())
-          )
+          Boolean(ds && ds.getDrilldownsApplicability && (adhocFiltersVariable || groupByVariable))
         );
       } catch (error) {
         console.error('Error checking datasource for getDrilldownsApplicability:', error);
@@ -68,11 +76,17 @@ function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHea
     };
 
     checkDatasourceDrilldownsApplicability();
-  }, [panel, data, model, nonApplicableFiltersSubHeader]);
+  }, [panel, data, model, adhocFiltersVariable, groupByVariable]);
 
   if (!shouldRenderFilters) {
     return null;
   }
 
-  return <nonApplicableFiltersSubHeader.Component model={nonApplicableFiltersSubHeader} />;
+  return (
+    <PanelNonApplicableFiltersSubHeader
+      filtersVar={adhocFiltersVariable}
+      groupByVar={groupByVariable}
+      queries={queries}
+    />
+  );
 }

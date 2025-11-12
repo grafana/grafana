@@ -1,120 +1,216 @@
-import { getPanelPlugin } from '@grafana/data/test';
-import {
-  AdHocFiltersVariable,
-  GroupByVariable,
-  SceneQueryRunner,
-  SceneTimeRange,
-  SceneVariableSet,
-  VizPanel,
-} from '@grafana/scenes';
+import { render, screen, waitFor } from '@testing-library/react';
+import type { ComponentProps, ReactNode } from 'react';
 
-import { DashboardScene } from './DashboardScene';
+import { AdHocVariableFilter, DataQuery } from '@grafana/data';
+import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
+
 import { PanelNonApplicableFiltersSubHeader } from './PanelNonApplicableFiltersSubHeader';
-import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+
+jest.mock('@grafana/ui', () => {
+  const actual = jest.requireActual('@grafana/ui');
+  return {
+    ...actual,
+    Tooltip: ({ children, content }: { children: ReactNode; content: ReactNode }) => (
+      <div>
+        <div>{children}</div>
+        <div>{content}</div>
+      </div>
+    ),
+    useStyles2: () => ({
+      container: 'container',
+      pill: 'pill',
+      disabledPill: 'disabledPill',
+      strikethrough: 'strikethrough',
+    }),
+  };
+});
+
+type PanelNonApplicableFiltersSubHeaderProps = ComponentProps<typeof PanelNonApplicableFiltersSubHeader>;
+
+const defaultQueries: DataQuery[] = [{ refId: 'A' } as DataQuery];
+
+const renderComponent = (props: Partial<PanelNonApplicableFiltersSubHeaderProps> = {}) => {
+  const mergedProps: PanelNonApplicableFiltersSubHeaderProps = {
+    filtersVar: undefined,
+    groupByVar: undefined,
+    queries: defaultQueries,
+    ...props,
+  };
+
+  return render(<PanelNonApplicableFiltersSubHeader {...mergedProps} />);
+};
 
 describe('PanelNonApplicableFiltersSubHeader', () => {
-  it('should get AdHocFiltersVariable correctly', () => {
-    const adHocVariable = new AdHocFiltersVariable({
-      name: 'filters',
-      applyMode: 'manual',
-      filters: [],
+  const DEFAULT_CONTAINER_WIDTH = 600;
+  let originalOffsetWidthDescriptor: PropertyDescriptor | undefined;
+  let originalResizeObserver: typeof ResizeObserver | undefined;
+
+  const setContainerWidth = (width: number) => {
+    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+      configurable: true,
+      value: width,
     });
+  };
 
-    const subHeader = new PanelNonApplicableFiltersSubHeader({});
-    buildTestPanel(subHeader, adHocVariable);
+  beforeAll(() => {
+    originalOffsetWidthDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
+    setContainerWidth(DEFAULT_CONTAINER_WIDTH);
 
-    const result = subHeader.getAdHocFiltersVariable();
-    expect(result).toBe(adHocVariable);
+    originalResizeObserver = window.ResizeObserver;
+    window.ResizeObserver = jest.fn().mockImplementation(() => ({
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+    }));
   });
 
-  it('should get GroupByVariable correctly', () => {
-    const groupByVariable = new GroupByVariable({
-      name: 'groupBy',
-      value: [],
-    });
+  afterAll(() => {
+    if (originalOffsetWidthDescriptor) {
+      Object.defineProperty(HTMLElement.prototype, 'offsetWidth', originalOffsetWidthDescriptor);
+    } else {
+      delete (HTMLElement.prototype as unknown as Record<string, unknown>).offsetWidth;
+    }
 
-    const subHeader = new PanelNonApplicableFiltersSubHeader({});
-    buildTestPanel(subHeader, undefined, groupByVariable);
-
-    const result = subHeader.getGroupByVariable();
-    expect(result).toBe(groupByVariable);
+    if (originalResizeObserver) {
+      window.ResizeObserver = originalResizeObserver;
+    } else {
+      delete (window as unknown as Record<string, unknown>).ResizeObserver;
+    }
   });
 
-  it('should return undefined when AdHocFiltersVariable is not present', () => {
-    const subHeader = new PanelNonApplicableFiltersSubHeader({});
-    buildTestPanel(subHeader);
-
-    const result = subHeader.getAdHocFiltersVariable();
-    expect(result).toBeUndefined();
+  beforeEach(() => {
+    jest.clearAllMocks();
+    setContainerWidth(DEFAULT_CONTAINER_WIDTH);
   });
 
-  it('should return undefined when GroupByVariable is not present', () => {
-    const subHeader = new PanelNonApplicableFiltersSubHeader({});
-    buildTestPanel(subHeader);
+  it('does not render anything when every filter and group-by value is applicable', async () => {
+    const filter: AdHocVariableFilter = { key: 'status', operator: '=', value: '200', origin: 'user' };
+    const { variable: filtersVar, mock: filtersApplicabilityMock } = createFiltersVariable({
+      filters: [filter],
+      applicability: [{ key: 'status', origin: 'user', applicable: true }],
+    });
 
-    const result = subHeader.getGroupByVariable();
-    expect(result).toBeUndefined();
+    const { variable: groupByVar, mock: groupByApplicabilityMock } = createGroupByVariable({
+      value: ['region'],
+      applicability: [{ key: 'region', applicable: true }],
+    });
+
+    const { container } = renderComponent({ filtersVar, groupByVar });
+
+    await waitFor(() => {
+      expect(filtersApplicabilityMock).toHaveBeenCalledWith([filter], defaultQueries);
+      expect(groupByApplicabilityMock).toHaveBeenCalledWith(['region'], defaultQueries);
+    });
+
+    expect(container.firstChild).toBeNull();
   });
 
-  it('should get both AdHocFiltersVariable and GroupByVariable when both are present', () => {
-    const adHocVariable = new AdHocFiltersVariable({
-      name: 'filters',
-      applyMode: 'manual',
-      filters: [],
+  it('renders pills for non applicable filters from both filters and origin filters', async () => {
+    const filterA: AdHocVariableFilter = { key: 'status', operator: '=', value: '500' };
+    const filterB: AdHocVariableFilter = { key: 'team', operator: '=', value: 'payments', origin: 'dashboard' };
+
+    const { variable: filtersVar, mock: filtersApplicabilityMock } = createFiltersVariable({
+      filters: [filterA],
+      originFilters: [filterB],
+      applicability: [
+        { key: 'status', applicable: false },
+        { key: 'team', origin: 'dashboard', applicable: false },
+      ],
     });
 
-    const groupByVariable = new GroupByVariable({
-      name: 'groupBy',
-      value: [],
+    renderComponent({ filtersVar });
+
+    expect(await screen.findByText('status = 500')).toBeInTheDocument();
+    expect(screen.getByText('team = payments')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(filtersApplicabilityMock).toHaveBeenCalledWith([filterA, filterB], defaultQueries);
+    });
+  });
+
+  it('appends non applicable group-by keys and filter pills', async () => {
+    const filter: AdHocVariableFilter = { key: 'latency', operator: '>', value: '100' };
+    const { variable: filtersVar, mock: filtersApplicabilityMock } = createFiltersVariable({
+      filters: [filter],
+      applicability: [{ key: 'latency', applicable: false }],
     });
 
-    const subHeader = new PanelNonApplicableFiltersSubHeader({});
-    buildTestPanel(subHeader, adHocVariable, groupByVariable);
+    const { variable: groupByVar, mock: groupByApplicabilityMock } = createGroupByVariable({
+      value: ['region', 'service'],
+      applicability: [
+        { key: 'region', applicable: false },
+        { key: 'service', applicable: true },
+      ],
+    });
 
-    expect(subHeader.getAdHocFiltersVariable()).toBe(adHocVariable);
-    expect(subHeader.getGroupByVariable()).toBe(groupByVariable);
+    renderComponent({ filtersVar, groupByVar });
+
+    expect(await screen.findByText('latency > 100')).toBeInTheDocument();
+    expect(screen.getByText('region')).toBeInTheDocument();
+    expect(screen.queryByText('service')).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(filtersApplicabilityMock).toHaveBeenCalled();
+      expect(groupByApplicabilityMock).toHaveBeenCalledWith(['region', 'service'], defaultQueries);
+    });
+  });
+
+  it('renders overflow tooltip with hidden non applicable filters when width is limited', async () => {
+    setContainerWidth(60);
+
+    const filterA: AdHocVariableFilter = { key: 'status', operator: '=', value: '500' };
+    const filterB: AdHocVariableFilter = { key: 'team', operator: '=', value: 'payments', origin: 'dashboard' };
+
+    const { variable: filtersVar } = createFiltersVariable({
+      filters: [filterA],
+      originFilters: [filterB],
+      applicability: [
+        { key: 'status', applicable: false },
+        { key: 'team', origin: 'dashboard', applicable: false },
+      ],
+    });
+
+    renderComponent({ filtersVar });
+
+    expect(await screen.findByText('+2')).toBeInTheDocument();
+    expect(screen.getByText('status = 500, team = payments')).toBeInTheDocument();
+    expect(screen.queryByText('status = 500', { exact: true })).not.toBeInTheDocument();
   });
 });
 
-function buildTestPanel(
-  subHeader: PanelNonApplicableFiltersSubHeader,
-  adHocVariable?: AdHocFiltersVariable,
-  groupByVariable?: GroupByVariable
-): VizPanel {
-  const variables = [];
-  if (adHocVariable) {
-    variables.push(adHocVariable);
-  }
-  if (groupByVariable) {
-    variables.push(groupByVariable);
-  }
-
-  const panel = new VizPanel({
-    title: 'Test Panel',
-    pluginId: 'table',
-    subHeader: subHeader,
-    $data: new SceneQueryRunner({
-      datasource: { uid: 'test-ds' },
-      queries: [{ refId: 'A' }],
+function createFiltersVariable({
+  filters = [],
+  originFilters = [],
+  applicability = [],
+}: {
+  filters?: AdHocVariableFilter[];
+  originFilters?: AdHocVariableFilter[];
+  applicability?: Array<{ key: string; origin?: string; applicable: boolean }>;
+}) {
+  const mock = jest.fn().mockResolvedValue(applicability);
+  const variable = {
+    useState: () => ({
+      filters,
+      originFilters,
     }),
-  });
+    getFiltersApplicabilityForQueries: mock,
+  } as unknown as AdHocFiltersVariable;
 
-  panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+  return { variable, mock };
+}
 
-  const scene = new DashboardScene({
-    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
-    $variables: new SceneVariableSet({ variables }),
-    body: DefaultGridLayoutManager.fromVizPanels([panel]),
-  });
+function createGroupByVariable({
+  value = [],
+  applicability = [],
+}: {
+  value?: string[];
+  applicability?: Array<{ key: string; applicable: boolean }>;
+}) {
+  const mock = jest.fn().mockResolvedValue(applicability);
+  const variable = {
+    useState: () => ({ value }),
+    getGroupByApplicabilityForQueries: mock,
+  } as unknown as GroupByVariable;
 
-  // Activate just the scene and variables
-  scene.activate();
-  if (scene.state.$variables) {
-    scene.state.$variables.activate();
-  }
-
-  // Activate subHeader
-  subHeader.activate();
-
-  return panel;
+  return { variable, mock };
 }
