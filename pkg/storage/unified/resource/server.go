@@ -322,6 +322,12 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 
 	logger := slog.Default().With("logger", "resource-server")
 
+	// TODO: using the default reload options for now - fix later
+	quotaSvc, err := NewQuotaService(context.Background(), ReloadOptions{})
+	if err != nil {
+		return nil, err
+	}
+
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
@@ -342,6 +348,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		reg:              opts.Reg,
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
+		quotaService:     quotaSvc,
 
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
@@ -354,7 +361,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		}
 	}
 
-	err := s.Init(ctx)
+	err = s.Init(ctx)
 	if err != nil {
 		s.log.Error("resource server init failed", "error", err)
 		return nil, err
@@ -379,6 +386,7 @@ type server struct {
 	mostRecentRV   atomic.Int64 // The most recent resource version seen by the server
 	storageMetrics *StorageMetrics
 	indexMetrics   *BleveIndexMetrics
+	quotaService   *QuotaService
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -409,6 +417,11 @@ func (s *server) Init(ctx context.Context) error {
 			if err != nil {
 				s.initErr = fmt.Errorf("initialize Resource Server: %w", err)
 			}
+		}
+
+		// initialize custom quotas reloader
+		if s.initErr == nil && s.quotaService != nil {
+			s.initErr = s.quotaService.init(ctx)
 		}
 
 		// initialize the search index
@@ -442,6 +455,11 @@ func (s *server) Stop(ctx context.Context) error {
 
 	if s.search != nil {
 		s.search.stop()
+	}
+
+	// stop custom quotas reloader
+	if s.quotaService != nil {
+		s.quotaService.stop()
 	}
 
 	// Stops the streaming
