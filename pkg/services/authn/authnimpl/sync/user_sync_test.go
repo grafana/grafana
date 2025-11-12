@@ -149,7 +149,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 
 	scimUserNotAdminInitial := &user.User{
 		ID:            100,
-		UID:           "scim-uid-100",
+		UID:           "scim_uid_100",
 		Login:         "scim.user.notadmin",
 		Email:         "scim.notadmin@example.com",
 		Name:          "SCIM NotAdmin",
@@ -160,7 +160,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 
 	scimUserIsAdminInitial := &user.User{
 		ID:            101,
-		UID:           "scim-uid-101",
+		UID:           "scim_uid_101",
 		Login:         "scim.user.isadmin",
 		Email:         "scim.isadmin@example.com",
 		Name:          "SCIM IsAdmin",
@@ -171,7 +171,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 
 	nonScimUserInitial := &user.User{
 		ID:            102,
-		UID:           "nonscim-uid-102",
+		UID:           "nonscim_uid_102",
 		Login:         "nonscim.user",
 		Email:         "nonscim@example.com",
 		Name:          "NonSCIM User",

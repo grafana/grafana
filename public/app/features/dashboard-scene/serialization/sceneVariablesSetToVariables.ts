@@ -27,6 +27,7 @@ import {
   defaultDataQueryKind,
   AdHocFilterWithLabels,
   SwitchVariableKind,
+  defaultIntervalVariableSpec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 
@@ -34,7 +35,7 @@ import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
 import { DSReferencesMapping } from './DashboardSceneSerializer';
 import { getDataSourceForQuery } from './layoutSerializers/utils';
-import { getDataQueryKind, getDataQuerySpec, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
+import { getDataQueryKind, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
 import {
   transformVariableRefreshToEnum,
   transformVariableHideToEnum,
@@ -331,27 +332,30 @@ export function sceneVariablesSetToSchemaV2Variables(
         dataQuery = {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
-          group: datasource?.type ?? getDataQueryKind(query),
+          group: datasource?.type || getDataQueryKind(query),
           ...(datasource?.uid && {
             datasource: {
               name: datasource.uid,
             },
           }),
-          spec: getDataQuerySpec(query),
+          spec: query,
         };
       } else {
+        // Only include LEGACY_STRING_VALUE_KEY if query is a non-empty string
+        const spec: Record<string, string> = {};
+        if (query) {
+          spec[LEGACY_STRING_VALUE_KEY] = query;
+        }
         dataQuery = {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
-          group: datasource?.type ?? getDataQueryKind(query),
+          group: datasource?.type || getDataQueryKind(query),
           ...(datasource?.uid && {
             datasource: {
               name: datasource.uid,
             },
           }),
-          spec: {
-            [LEGACY_STRING_VALUE_KEY]: query,
-          },
+          spec,
         };
       }
       const queryVariable: QueryVariableKind = {
@@ -364,7 +368,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           definition: variable.state.definition,
           sort: transformSortVariableToEnum(variable.state.sort),
           refresh: transformVariableRefreshToEnum(variable.state.refresh),
-          regex: variable.state.regex,
+          regex: variable.state.regex ?? '',
           allValue: variable.state.allValue,
           includeAll: variable.state.includeAll || false,
           multi: variable.state.isMulti || false,
@@ -405,9 +409,9 @@ export function sceneVariablesSetToSchemaV2Variables(
           ...commonProperties,
           current: currentVariableOption,
           options: [],
-          regex: variable.state.regex,
+          regex: variable.state.regex ?? '',
           refresh: 'onDashboardLoad',
-          pluginId: variable.state.pluginId,
+          pluginId: variable.state.pluginId ?? getDefaultDatasource().type,
           multi: variable.state.isMulti || false,
           includeAll: variable.state.includeAll || false,
           allowCustomValue: variable.state.allowCustomValue ?? true,
@@ -422,17 +426,16 @@ export function sceneVariablesSetToSchemaV2Variables(
 
       // Constant variable
     } else if (sceneUtils.isConstantVariable(variable)) {
+      const value = variable.state.value ? String(variable.state.value) : '';
       const constantVariable: ConstantVariableKind = {
         kind: 'ConstantVariable',
         spec: {
           ...commonProperties,
           current: {
-            ...currentVariableOption,
-            // Constant variable doesn't use text state
-            text: String(variable.state.value),
+            text: value,
+            value: value,
           },
-          // @ts-expect-error
-          query: variable.state.value,
+          query: value,
         },
       };
       variables.push(constantVariable);
@@ -450,15 +453,15 @@ export function sceneVariablesSetToSchemaV2Variables(
             text: variable.state.value,
           },
           query: intervals,
-          refresh: 'onTimeRangeChanged',
+          refresh: defaultIntervalVariableSpec().refresh,
           options: variable.state.intervals.map((interval) => ({
             value: interval,
             text: interval,
             selected: interval === variable.state.value,
           })),
-          auto: variable.state.autoEnabled,
-          auto_min: variable.state.autoMinInterval,
-          auto_count: variable.state.autoStepCount,
+          auto: variable.state.autoEnabled ?? defaultIntervalVariableSpec().auto,
+          auto_min: variable.state.autoMinInterval ?? defaultIntervalVariableSpec().auto_min,
+          auto_count: variable.state.autoStepCount ?? defaultIntervalVariableSpec().auto_count,
         },
       };
       variables.push(intervalVariable);
@@ -466,8 +469,8 @@ export function sceneVariablesSetToSchemaV2Variables(
       // Textbox variable
     } else if (sceneUtils.isTextBoxVariable(variable)) {
       const current = {
-        text: variable.state.value,
-        value: variable.state.value,
+        text: variable.state.value ?? '',
+        value: variable.state.value ?? '',
       };
 
       const textBoxVariable: TextVariableKind = {
@@ -475,7 +478,7 @@ export function sceneVariablesSetToSchemaV2Variables(
         spec: {
           ...commonProperties,
           current,
-          query: variable.state.value,
+          query: variable.state.value ?? '',
         },
       };
 
