@@ -2898,6 +2898,20 @@
     },
     {
       "metadata": {
+        "name": "newVizSuggestions",
+        "resourceVersion": "1762456851857",
+        "creationTimestamp": "2025-11-06T19:20:51Z"
+      },
+      "spec": {
+        "description": "Enable new visualization suggestions",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "oauthRequireSubClaim",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-03-25T13:22:24Z"
