@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { defaultsDeep } from 'lodash';
 
 import { DataTransformerConfig } from '@grafana/schema';
@@ -11,7 +12,7 @@ import { PanelData } from './panel';
 /**
  * @alpha
  */
-export interface VisualizationSuggestion<TOptions extends unknown = {}, TFieldConfig extends {} = {}> {
+export interface VisualizationSuggestion<TOptions = any, TFieldConfig = any> {
   /** Name of suggestion */
   name: string;
   /** Description */
@@ -27,7 +28,7 @@ export interface VisualizationSuggestion<TOptions extends unknown = {}, TFieldCo
   /** Options for how to render suggestion card */
   cardOptions?: {
     /** Tweak for small preview */
-    previewModifier?: (suggestion: VisualizationSuggestion<TOptions, TFieldConfig>) => void;
+    previewModifier?: (suggestion: VisualizationSuggestion) => void;
     icon?: string;
     imgSrc?: string;
   };
@@ -64,9 +65,7 @@ export class VisualizationSuggestionsBuilder {
     this.dataSummary = getPanelDataSummary(data?.series);
   }
 
-  getListAppender<TOptions extends unknown, TFieldConfig extends {} = {}>(
-    defaults: VisualizationSuggestion<TOptions, TFieldConfig>
-  ) {
+  getListAppender<TOptions, TFieldConfig>(defaults: VisualizationSuggestion<TOptions, TFieldConfig>) {
     return new VisualizationSuggestionsListAppender<TOptions, TFieldConfig>(this.list, defaults);
   }
 
@@ -89,7 +88,7 @@ export type VisualizationSuggestionsSupplier = {
  * Helps with typings and defaults
  * @alpha
  */
-export class VisualizationSuggestionsListAppender<TOptions extends unknown, TFieldConfig extends {} = {}> {
+export class VisualizationSuggestionsListAppender<TOptions, TFieldConfig> {
   constructor(
     private list: VisualizationSuggestion[],
     private defaults: VisualizationSuggestion<TOptions, TFieldConfig>
