@@ -7,11 +7,12 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/stretchr/testify/require"
+
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/stretchr/testify/require"
 )
 
 type FakeZanzanaClient struct {
@@ -42,42 +43,6 @@ func (f *FakeZanzanaClient) Mutate(ctx context.Context, req *v1.MutateRequest) e
 	return nil
 }
 
-func requireTuplesMatch(t *testing.T, actual []*v1.TupleKey, expected []*v1.TupleKey, msgAndArgs ...interface{}) {
-	t.Helper()
-	for _, exp := range expected {
-		found := false
-		for _, act := range actual {
-			if act.User == exp.User &&
-				act.Relation == exp.Relation &&
-				act.Object == exp.Object {
-				found = true
-				break
-			}
-		}
-		if !found {
-			require.Fail(t, "Expected tuple not found", "Tuple: %+v\n%v", exp, msgAndArgs)
-		}
-	}
-}
-
-func requireDeleteTuplesMatch(t *testing.T, actual []*v1.TupleKeyWithoutCondition, expected []*v1.TupleKeyWithoutCondition, msgAndArgs ...interface{}) {
-	t.Helper()
-	for _, exp := range expected {
-		found := false
-		for _, act := range actual {
-			if act.User == exp.User &&
-				act.Relation == exp.Relation &&
-				act.Object == exp.Object {
-				found = true
-				break
-			}
-		}
-		if !found {
-			require.Fail(t, "Expected delete tuple not found", "Tuple: %+v\n%v", exp, msgAndArgs)
-		}
-	}
-}
-
 func TestAfterResourcePermissionCreate(t *testing.T) {
 	var wg sync.WaitGroup
 	b := &IdentityAccessManagementAPIBuilder{
@@ -101,23 +66,48 @@ func TestAfterResourcePermissionCreate(t *testing.T) {
 			},
 		}
 
-		testFolderEntries := func(ctx context.Context, req *v1.WriteRequest) error {
+		testFolderEntries := func(ctx context.Context, req *v1.MutateRequest) error {
 			defer wg.Done()
 			require.NotNil(t, req)
-			require.NotNil(t, req.Writes)
-			require.Len(t, req.Writes.TupleKeys, 2)
+			require.NotNil(t, req.Operations)
+			require.Len(t, req.Operations, 2)
 			require.Equal(t, "org-2", req.Namespace)
 
-			expectedTuples := []*v1.TupleKey{
-				{User: "user:u1", Relation: "view", Object: "folder:fold1"},
-				{User: "role:basic_editor#assignee", Relation: "edit", Object: "folder:fold1"},
+			expectedOperations := []*v1.MutateOperation{
+				{
+					Operation: &v1.MutateOperation_CreatePermission{
+						CreatePermission: &v1.CreatePermissionOperation{
+							Resource: &v1.Resource{
+								Group: "folder.grafana.app", Resource: "folders", Name: "fold1",
+							},
+							Permission: &v1.Permission{
+								Kind: string(iamv0.ResourcePermissionSpecPermissionKindUser),
+								Name: "u1",
+								Verb: "View",
+							},
+						},
+					},
+				},
+				{
+					Operation: &v1.MutateOperation_CreatePermission{
+						CreatePermission: &v1.CreatePermissionOperation{
+							Resource: &v1.Resource{
+								Group: "folder.grafana.app", Resource: "folders", Name: "fold1",
+							},
+							Permission: &v1.Permission{
+								Kind: string(iamv0.ResourcePermissionSpecPermissionKindBasicRole),
+								Name: "Editor",
+								Verb: "Edit",
+							},
+						},
+					},
+				},
 			}
-
-			requireTuplesMatch(t, req.Writes.TupleKeys, expectedTuples)
+			require.ElementsMatch(t, expectedOperations, req.Operations)
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testFolderEntries}
+		b.zClient = &FakeZanzanaClient{mutateCallback: testFolderEntries}
 		b.AfterResourcePermissionCreate(&folderPerm, nil)
 		wg.Wait()
 	})
@@ -139,34 +129,54 @@ func TestAfterResourcePermissionCreate(t *testing.T) {
 			},
 		}
 
-		testDashEntries := func(ctx context.Context, req *v1.WriteRequest) error {
+		testDashEntries := func(ctx context.Context, req *v1.MutateRequest) error {
 			defer wg.Done()
-			object := "resource:dashboard.grafana.app/dashboards/dash1"
+			// object := "resource:dashboard.grafana.app/dashboards/dash1"
 
 			require.NotNil(t, req)
-			require.NotNil(t, req.Writes)
-			require.Len(t, req.Writes.TupleKeys, 2)
+			require.NotNil(t, req.Operations)
+			require.Len(t, req.Operations, 2)
 			require.Equal(t, "default", req.Namespace)
 
-			// Verify all tuples have the group_filter condition
-			for _, tuple := range req.Writes.TupleKeys {
-				require.NotNil(t, tuple.Condition, "Condition should not be nil for tuple %+v", tuple)
-				require.Equal(t, "group_filter", tuple.Condition.Name)
+			expectedOperations := []*v1.MutateOperation{
+				{
+					Operation: &v1.MutateOperation_CreatePermission{
+						CreatePermission: &v1.CreatePermissionOperation{
+							Resource: &v1.Resource{
+								Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",
+							},
+							Permission: &v1.Permission{
+								Kind: string(iamv0.ResourcePermissionSpecPermissionKindServiceAccount),
+								Name: "sa1",
+								Verb: "View",
+							},
+						},
+					},
+				},
+				{
+					Operation: &v1.MutateOperation_CreatePermission{
+						CreatePermission: &v1.CreatePermissionOperation{
+							Resource: &v1.Resource{
+								Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",
+							},
+							Permission: &v1.Permission{
+								Kind: string(iamv0.ResourcePermissionSpecPermissionKindTeam),
+								Name: "team1",
+								Verb: "Edit",
+							},
+						},
+					},
+				},
 			}
+			require.ElementsMatch(t, expectedOperations, req.Operations)
 
-			expectedTuples := []*v1.TupleKey{
-				{User: "service-account:sa1", Relation: "view", Object: object},
-				{User: "team:team1#member", Relation: "edit", Object: object},
-			}
-
-			requireTuplesMatch(t, req.Writes.TupleKeys, expectedTuples)
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testDashEntries}
+		b.zClient = &FakeZanzanaClient{mutateCallback: testDashEntries}
 		b.AfterResourcePermissionCreate(&dashPerm, nil)
+		wg.Wait()
 	})
-	wg.Wait()
 }
 
 func TestBeginResourcePermissionUpdate(t *testing.T) {
@@ -206,33 +216,66 @@ func TestBeginResourcePermissionUpdate(t *testing.T) {
 			},
 		}
 
-		testFolderWrite := func(ctx context.Context, req *v1.WriteRequest) error {
+		testFolderWrite := func(ctx context.Context, req *v1.MutateRequest) error {
 			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-2", req.Namespace)
 
 			// Should delete old permission
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 1)
-			require.Equal(
-				t,
-				req.Deletes.TupleKeys[0],
-				&v1.TupleKeyWithoutCondition{User: "user:u1", Relation: "view", Object: "folder:fold1"},
-			)
+			require.NotNil(t, req.Operations)
+			require.Len(t, req.Operations, 3)
+			require.Equal(t, "org-2", req.Namespace)
 
-			// Should write new permissions
-			require.NotNil(t, req.Writes)
-			require.Len(t, req.Writes.TupleKeys, 2)
-
-			expectedWrites := []*v1.TupleKey{
-				{User: "user:u2", Relation: "edit", Object: "folder:fold1"},
-				{User: "team:team1#member", Relation: "view", Object: "folder:fold1"},
+			expectedOperations := []*v1.MutateOperation{
+				{
+					Operation: &v1.MutateOperation_DeletePermission{
+						DeletePermission: &v1.DeletePermissionOperation{
+							Resource: &v1.Resource{
+								Group: "folder.grafana.app", Resource: "folders", Name: "fold1",
+							},
+							Permission: &v1.Permission{
+								Kind: string(iamv0.ResourcePermissionSpecPermissionKindUser),
+								Name: "u1",
+								Verb: "View",
+							},
+						},
+					},
+				},
+				{
+					Operation: &v1.MutateOperation_CreatePermission{
+						CreatePermission: &v1.CreatePermissionOperation{
+							Resource: &v1.Resource{
+								Group: "folder.grafana.app", Resource: "folders", Name: "fold1",
+							},
+							Permission: &v1.Permission{
+								Kind: string(iamv0.ResourcePermissionSpecPermissionKindTeam),
+								Name: "team1",
+								Verb: "View",
+							},
+						},
+					},
+				},
+				{
+					Operation: &v1.MutateOperation_CreatePermission{
+						CreatePermission: &v1.CreatePermissionOperation{
+							Resource: &v1.Resource{
+								Group: "folder.grafana.app", Resource: "folders", Name: "fold1",
+							},
+							Permission: &v1.Permission{
+								Kind: string(iamv0.ResourcePermissionSpecPermissionKindUser),
+								Name: "u2",
+								Verb: "Edit",
+							},
+						},
+					},
+				},
 			}
-			requireTuplesMatch(t, req.Writes.TupleKeys, expectedWrites)
+
+			require.ElementsMatch(t, expectedOperations, req.Operations)
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testFolderWrite}
+		b.zClient = &FakeZanzanaClient{mutateCallback: testFolderWrite}
 
 		// Call BeginUpdate which does all the work
 		finishFunc, err := b.BeginResourcePermissionUpdate(context.Background(), &newFolderPerm, &oldFolderPerm, nil)
@@ -274,40 +317,52 @@ func TestBeginResourcePermissionUpdate(t *testing.T) {
 			},
 		}
 
-		object := "resource:dashboard.grafana.app/dashboards/dash1"
-
-		testDashWrite := func(ctx context.Context, req *v1.WriteRequest) error {
+		testDashWrite := func(ctx context.Context, req *v1.MutateRequest) error {
 			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "default", req.Namespace)
 
 			// Should delete old permission
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 1)
-			require.Equal(
-				t,
-				req.Deletes.TupleKeys[0],
-				&v1.TupleKeyWithoutCondition{User: "user:u1", Relation: "view", Object: object},
-			)
+			require.NotNil(t, req.Operations)
+			require.Len(t, req.Operations, 2)
 
-			// Should write new permission
-			require.NotNil(t, req.Writes)
-			require.Len(t, req.Writes.TupleKeys, 1)
+			expectedOperations := []*v1.MutateOperation{
+				{
+					Operation: &v1.MutateOperation_DeletePermission{
+						DeletePermission: &v1.DeletePermissionOperation{
+							Resource: &v1.Resource{
+								Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",
+							},
+							Permission: &v1.Permission{
+								Kind: string(iamv0.ResourcePermissionSpecPermissionKindUser),
+								Name: "u1",
+								Verb: "View",
+							},
+						},
+					},
+				},
+				{
+					Operation: &v1.MutateOperation_CreatePermission{
+						CreatePermission: &v1.CreatePermissionOperation{
+							Resource: &v1.Resource{
+								Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",
+							},
+							Permission: &v1.Permission{
+								Kind: string(iamv0.ResourcePermissionSpecPermissionKindServiceAccount),
+								Name: "sa1",
+								Verb: "Edit",
+							},
+						},
+					},
+				},
+			}
 
-			tuple := req.Writes.TupleKeys[0]
-			require.NotNil(t, tuple.Condition)
-			require.Equal(t, "group_filter", tuple.Condition.Name)
-			tuple.Condition = nil
-			require.Equal(
-				t,
-				tuple,
-				&v1.TupleKey{User: "service-account:sa1", Relation: "edit", Object: object},
-			)
+			require.ElementsMatch(t, expectedOperations, req.Operations)
 
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testDashWrite}
+		b.zClient = &FakeZanzanaClient{mutateCallback: testDashWrite}
 
 		// Call BeginUpdate which does all the work
 		finishFunc, err := b.BeginResourcePermissionUpdate(context.Background(), &newDashPerm, &oldDashPerm, nil)
@@ -343,30 +398,50 @@ func TestAfterResourcePermissionDelete(t *testing.T) {
 			},
 		}
 
-		testFolderDelete := func(ctx context.Context, req *v1.WriteRequest) error {
+		testFolderDelete := func(ctx context.Context, req *v1.MutateRequest) error {
 			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-2", req.Namespace)
 
 			// Should have deletes but no writes
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 2)
-			require.Nil(t, req.Writes)
+			require.NotNil(t, req.Operations)
+			require.Len(t, req.Operations, 2)
 
-			require.Equal(
-				t,
-				req.Deletes.TupleKeys[0],
-				&v1.TupleKeyWithoutCondition{User: "user:u1", Relation: "view", Object: "folder:fold1"},
-			)
-			require.Equal(
-				t,
-				req.Deletes.TupleKeys[1],
-				&v1.TupleKeyWithoutCondition{User: "role:basic_editor#assignee", Relation: "edit", Object: "folder:fold1"},
-			)
+			expectedOperations := []*v1.MutateOperation{
+				{
+					Operation: &v1.MutateOperation_DeletePermission{
+						DeletePermission: &v1.DeletePermissionOperation{
+							Resource: &v1.Resource{
+								Group: "folder.grafana.app", Resource: "folders", Name: "fold1",
+							},
+							Permission: &v1.Permission{
+								Kind: string(iamv0.ResourcePermissionSpecPermissionKindUser),
+								Name: "u1",
+								Verb: "View",
+							},
+						},
+					},
+				},
+				{
+					Operation: &v1.MutateOperation_DeletePermission{
+						DeletePermission: &v1.DeletePermissionOperation{
+							Resource: &v1.Resource{
+								Group: "folder.grafana.app", Resource: "folders", Name: "fold1",
+							},
+							Permission: &v1.Permission{
+								Kind: string(iamv0.ResourcePermissionSpecPermissionKindBasicRole),
+								Name: "Editor",
+								Verb: "Edit",
+							},
+						},
+					},
+				},
+			}
+			require.ElementsMatch(t, expectedOperations, req.Operations)
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testFolderDelete}
+		b.zClient = &FakeZanzanaClient{mutateCallback: testFolderDelete}
 		b.AfterResourcePermissionDelete(&folderPerm, nil)
 		wg.Wait()
 	})
@@ -388,33 +463,51 @@ func TestAfterResourcePermissionDelete(t *testing.T) {
 			},
 		}
 
-		testDashDelete := func(ctx context.Context, req *v1.WriteRequest) error {
+		testDashDelete := func(ctx context.Context, req *v1.MutateRequest) error {
 			defer wg.Done()
-			object := "resource:dashboard.grafana.app/dashboards/dash1"
 
 			require.NotNil(t, req)
 			require.Equal(t, "default", req.Namespace)
 
 			// Should have deletes but no writes
-			require.NotNil(t, req.Deletes)
-			require.Len(t, req.Deletes.TupleKeys, 2)
-			require.Nil(t, req.Writes)
+			require.NotNil(t, req.Operations)
+			require.Len(t, req.Operations, 2)
 
-			require.Equal(
-				t,
-				req.Deletes.TupleKeys[0],
-				&v1.TupleKeyWithoutCondition{User: "service-account:sa1", Relation: "view", Object: object},
-			)
-			require.Equal(
-				t,
-				req.Deletes.TupleKeys[1],
-				&v1.TupleKeyWithoutCondition{User: "team:team1#member", Relation: "edit", Object: object},
-			)
-
+			expectedOperations := []*v1.MutateOperation{
+				{
+					Operation: &v1.MutateOperation_DeletePermission{
+						DeletePermission: &v1.DeletePermissionOperation{
+							Resource: &v1.Resource{
+								Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",
+							},
+							Permission: &v1.Permission{
+								Kind: string(iamv0.ResourcePermissionSpecPermissionKindServiceAccount),
+								Name: "sa1",
+								Verb: "View",
+							},
+						},
+					},
+				},
+				{
+					Operation: &v1.MutateOperation_DeletePermission{
+						DeletePermission: &v1.DeletePermissionOperation{
+							Resource: &v1.Resource{
+								Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",
+							},
+							Permission: &v1.Permission{
+								Kind: string(iamv0.ResourcePermissionSpecPermissionKindTeam),
+								Name: "team1",
+								Verb: "Edit",
+							},
+						},
+					},
+				},
+			}
+			require.ElementsMatch(t, expectedOperations, req.Operations)
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testDashDelete}
+		b.zClient = &FakeZanzanaClient{mutateCallback: testDashDelete}
 		b.AfterResourcePermissionDelete(&dashPerm, nil)
 		wg.Wait()
 	})
