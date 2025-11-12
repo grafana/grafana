@@ -19,7 +19,7 @@ export function FreeTierLimitNote() {
 
   return (
     <Stack direction="row" alignItems="flex-start">
-      <Icon name="exclamation-triangle" className={styles.warningIcon} />
+      <Icon name="exclamation-triangle" className={styles.warningIcon} size="sm" />
       <Text variant="bodySmall">
         <Trans i18nKey="provisioning.free-tier-limit.note">Note:</Trans>{' '}
         <Trans i18nKey="provisioning.free-tier-limit.messages">
@@ -35,6 +35,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     warningIcon: css({
       color: theme.colors.warning.text,
+      marginTop: theme.spacing(0.5),
     }),
   };
 };
