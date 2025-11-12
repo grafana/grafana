@@ -175,4 +175,3 @@ func (c *JobCleanupController) cleanUpExpiredJob(ctx context.Context, job *provi
 	jobLogger.Debug("cleaned up expired job")
 	return nil
 }
-

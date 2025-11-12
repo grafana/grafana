@@ -455,7 +455,6 @@ func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job)
 	return nil
 }
 
-
 func (s *persistentStore) Insert(ctx context.Context, namespace string, spec provisioning.JobSpec) (*provisioning.Job, error) {
 	ctx, span := tracing.Start(ctx, "provisioning.jobs.insert")
 	defer span.End()

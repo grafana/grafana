@@ -65,7 +65,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 
 	t.Run("error listing expired jobs returns error", func(t *testing.T) {
 		store := &MockStore{}
-		
+
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
@@ -83,7 +83,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 
 	t.Run("successfully cleans up expired job", func(t *testing.T) {
 		store := &MockStore{}
-		
+
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
@@ -124,7 +124,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 
 	t.Run("continues on complete error", func(t *testing.T) {
 		store := &MockStore{}
-		
+
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
@@ -154,12 +154,12 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		}
 
 		store.On("ListExpiredJobs", mock.Anything, mock.Anything, 100).Return([]*provisioning.Job{job1, job2}, nil)
-		
+
 		// First job fails to complete
 		store.On("Complete", mock.Anything, mock.MatchedBy(func(j *provisioning.Job) bool {
 			return j.Name == "job-1"
 		})).Return(errors.New("complete failed"))
-		
+
 		// Second job succeeds
 		store.On("Complete", mock.Anything, mock.MatchedBy(func(j *provisioning.Job) bool {
 			return j.Name == "job-2"
@@ -179,7 +179,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 
 	t.Run("continues on history write error", func(t *testing.T) {
 		store := &MockStore{}
-		
+
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
@@ -212,7 +212,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 
 	t.Run("sets job status correctly", func(t *testing.T) {
 		store := &MockStore{}
-		
+
 		historyWriter := &MockHistoryWriter{}
 
 		fixedTime := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC)
@@ -250,7 +250,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 
 	t.Run("removes claim label before writing to history", func(t *testing.T) {
 		store := &MockStore{}
-		
+
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
@@ -261,8 +261,8 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 				Name:      "test-job",
 				Namespace: "test-ns",
 				Labels: map[string]string{
-					LabelJobClaim:    "123456789",
-					"other-label":    "value",
+					LabelJobClaim: "123456789",
+					"other-label": "value",
 				},
 			},
 			Spec: provisioning.JobSpec{
@@ -289,7 +289,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 
 	t.Run("processes multiple expired jobs", func(t *testing.T) {
 		store := &MockStore{}
-		
+
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
@@ -347,7 +347,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 func TestJobCleanupController_Run(t *testing.T) {
 	t.Run("runs cleanup on start and periodically", func(t *testing.T) {
 		store := &MockStore{}
-		
+
 		historyWriter := &MockHistoryWriter{}
 
 		// Use short expiry to get short cleanup interval for testing
@@ -372,14 +372,14 @@ func TestJobCleanupController_Run(t *testing.T) {
 		// Should return context.DeadlineExceeded when context times out
 		require.Error(t, err)
 		assert.Equal(t, context.DeadlineExceeded, err)
-		
+
 		// Verify cleanup was called at least 3 times (initial + 2 periodic)
 		assert.GreaterOrEqual(t, callCount, 3, "should have run cleanup at least 3 times")
 	})
 
 	t.Run("stops when context is cancelled", func(t *testing.T) {
 		store := &MockStore{}
-		
+
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
@@ -405,7 +405,7 @@ func TestJobCleanupController_Run(t *testing.T) {
 
 	t.Run("continues running after cleanup error", func(t *testing.T) {
 		store := &MockStore{}
-		
+
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 10*time.Second)
@@ -438,7 +438,7 @@ func TestJobCleanupController_Run(t *testing.T) {
 
 	t.Run("logs error when periodic cleanup fails", func(t *testing.T) {
 		store := &MockStore{}
-		
+
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 10*time.Second)
@@ -450,11 +450,11 @@ func TestJobCleanupController_Run(t *testing.T) {
 		// Initial cleanup succeeds
 		store.On("ListExpiredJobs", mock.Anything, mock.Anything, 100).
 			Return([]*provisioning.Job{}, nil).Once()
-		
+
 		// First periodic cleanup fails (this tests the error logging in ticker case)
 		store.On("ListExpiredJobs", mock.Anything, mock.Anything, 100).
 			Return(nil, errors.New("periodic failure")).Once()
-		
+
 		// Subsequent cleanups succeed
 		store.On("ListExpiredJobs", mock.Anything, mock.Anything, 100).
 			Return([]*provisioning.Job{}, nil).
@@ -468,4 +468,3 @@ func TestJobCleanupController_Run(t *testing.T) {
 		store.AssertExpectations(t)
 	})
 }
-
