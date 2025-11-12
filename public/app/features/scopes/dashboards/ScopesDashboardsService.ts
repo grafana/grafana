@@ -145,8 +145,32 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
 
       const subScopeItems = await fetchNavigations([subScopeName]);
 
+      // Filter out items that have a subScope matching any subScope already in the path
+      // This prevents infinite loops when a subScope returns items with the same subScope
+      const subScopesInPath = new Set<string>();
+      let currentLevelFolders: SuggestedNavigationsFoldersMap = this.state.folders;
+
+      // Traverse the path and collect all subScope names
+      for (const folderKey of path) {
+        if (folderKey === '') {
+          continue; // Skip root key
+        }
+        const folder = currentLevelFolders[folderKey];
+        if (folder?.subScopeName) {
+          subScopesInPath.add(folder.subScopeName);
+        }
+        if (folder) {
+          currentLevelFolders = folder.folders;
+        }
+      }
+
+      const filteredItems = subScopeItems.filter((item) => {
+        const itemSubScope = 'subScope' in item.spec ? item.spec.subScope : undefined;
+        return !itemSubScope || !subScopesInPath.has(itemSubScope);
+      });
+
       // Group the items and add them to the subScope folder
-      subScopeFolders = this.groupSuggestedItems(subScopeItems);
+      subScopeFolders = this.groupSuggestedItems(filteredItems);
     } catch (error) {
       // On error, subScopeFolders will remain undefined and we'll only clear loading state
     }
