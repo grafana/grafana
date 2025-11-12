@@ -19,9 +19,10 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("When requests are for a datasource", func(t *testing.T) {
+		cfg := setting.NewCfg()
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			WithReqContext(req, &user.SignedInUser{}),
-			handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware(setting.NewCfg())),
+			handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware(&cfg.JWTAuth, &cfg.AuthProxy)),
 		)
 
 		pluginCtx := backend.PluginContext{
@@ -126,9 +127,10 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 	})
 
 	t.Run("When requests are for an app", func(t *testing.T) {
+		cfg := setting.NewCfg()
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			WithReqContext(req, &user.SignedInUser{}),
-			handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware(setting.NewCfg())),
+			handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware(&cfg.JWTAuth, &cfg.AuthProxy)),
 		)
 
 		req.Header.Set("Authorization", "val")
