@@ -112,7 +112,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
   const isValidState = state && ['success', 'warning', 'error'].includes(state);
   const alertProps = isValidState
     ? {
-        [state]: { message: row.status?.errors },
+        [state]: { message: row.status?.message },
       }
     : null;
 

@@ -52,7 +52,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `onPremToCloudMigrations`              | Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.                                 | Yes                |
 | `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                                              | Yes                |
 | `newPDFRendering`                      | New implementation for the dashboard-to-PDF rendering                                                                                                         | Yes                |
-| `tlsMemcached`                         | Use TLS-enabled memcached in the enterprise caching feature                                                                                                   | Yes                |
 | `cloudWatchNewLabelParsing`            | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
 | `pluginProxyPreserveTrailingSlash`     | Preserve plugin proxy trailing slash.                                                                                                                         |                    |
 | `azureMonitorPrometheusExemplars`      | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                  | Yes                |
@@ -78,7 +77,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `grafanaAssistantInProfilesDrilldown`  | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `sharingDashboardImage`                | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
-| `adhocFiltersInTooltips`               | Enable adhoc filter buttons in visualization tooltips                                                                                                         | Yes                |
 | `tempoSearchBackendMigration`          | Run search queries through the tempo backend                                                                                                                  |                    |
 
 ## Public preview feature toggles
