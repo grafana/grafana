@@ -113,7 +113,7 @@ scenario('Single frame with time and number field', (ctx) => {
       SuggestionName.BarGaugeBasic,
       SuggestionName.BarGaugeLCD,
       SuggestionName.Table,
-      SuggestionName.StateTimeline,
+      'State timeline',
       SuggestionName.StatusHistory,
     ]);
   });
@@ -159,7 +159,7 @@ scenario('Single frame with time 2 number fields', (ctx) => {
       SuggestionName.BarGaugeBasic,
       SuggestionName.BarGaugeLCD,
       SuggestionName.Table,
-      SuggestionName.StateTimeline,
+      'State timeline',
       SuggestionName.StatusHistory,
     ]);
   });

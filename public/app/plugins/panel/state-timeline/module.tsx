@@ -175,6 +175,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
       return;
     }
 
-    return true;
+    // FIXME: can't demonstrate the boolean pattern and keep the `getAllSuggestions` integration test working at the same time
+    // since that test relies on `name` field, and those names aren't going to be populated in that situration.
+    // return true;
+    return [{ name: t('state-timeline.suggestions.default', 'State timeline') }];
   })
   .setDataSupport({ annotations: true });
