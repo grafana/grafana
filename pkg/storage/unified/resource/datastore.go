@@ -449,6 +449,27 @@ func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
 	return d.kv.Delete(ctx, dataSection, key.String())
 }
 
+func (n *dataStore) BatchDelete(ctx context.Context, keys []DataKey) error {
+	for len(keys) > 0 {
+		batch := keys
+		if len(batch) > dataBatchSize {
+			batch = batch[:dataBatchSize]
+		}
+
+		keys = keys[len(batch):]
+		stringKeys := make([]string, len(batch))
+		for _, dataKey := range batch {
+			stringKeys = append(stringKeys, dataKey.String())
+		}
+
+		if err := n.kv.BatchDelete(ctx, dataSection, stringKeys); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // ParseKey parses a string key into a DataKey struct
 func ParseKey(key string) (DataKey, error) {
 	parts := strings.Split(key, "/")

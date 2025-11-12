@@ -2950,6 +2950,42 @@ func TestDataStore_getGroupResources(t *testing.T) {
 	}
 }
 
+func TestDataStore_BatchDelete(t *testing.T) {
+	ds := setupTestDataStore(t)
+	ctx := context.Background()
+
+	keys := make([]DataKey, 95)
+	for i := 0; i < 95; i++ {
+		rv := node.Generate().Int64()
+		keys[i] = DataKey{
+			Namespace:       "test-namespace",
+			Group:           "test-group",
+			Resource:        "test-resource",
+			Name:            fmt.Sprintf("test-name-%d", i),
+			ResourceVersion: rv,
+			Action:          DataActionCreated,
+			Folder:          "test-folder",
+		}
+		content := fmt.Sprintf("test-value-%d", i)
+		err := ds.Save(ctx, keys[i], bytes.NewReader([]byte(content)))
+		require.NoError(t, err)
+	}
+
+	err := ds.BatchDelete(ctx, keys)
+	require.NoError(t, err)
+
+	// Verify all events were deleted
+	for i := 0; i < 95; i++ {
+		_, err := ds.Get(ctx, DataKey{
+			Namespace:       "test-namespace",
+			Group:           "test-group",
+			Resource:        "test-resource",
+			Name:            fmt.Sprintf("test-name-%d", i),
+		})
+		require.Error(t, err, "Resource should have been deleted")
+	}
+}
+
 func TestDataStore_BatchGet(t *testing.T) {
 	ds := setupTestDataStore(t)
 	ctx := context.Background()
