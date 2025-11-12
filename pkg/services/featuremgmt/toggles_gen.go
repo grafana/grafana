@@ -455,10 +455,6 @@ const (
 	// New implementation for the dashboard-to-PDF rendering
 	FlagNewPDFRendering = "newPDFRendering"
 
-	// FlagTlsMemcached
-	// Use TLS-enabled memcached in the enterprise caching feature
-	FlagTlsMemcached = "tlsMemcached"
-
 	// FlagKubernetesAggregator
 	// Enable grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
@@ -1081,6 +1077,10 @@ const (
 	// FlagPluginStoreServiceLoading
 	// Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
 	FlagPluginStoreServiceLoading = "pluginStoreServiceLoading"
+
+	// FlagNewPanelPadding
+	// Increases panel padding globally
+	FlagNewPanelPadding = "newPanelPadding"
 
 	// FlagOnlyStoreActionSets
 	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission

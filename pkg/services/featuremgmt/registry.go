@@ -847,14 +847,6 @@ var (
 			Expression:  "true", // enabled by default,
 		},
 		{
-			Name:           "tlsMemcached",
-			Description:    "Use TLS-enabled memcached in the enterprise caching feature",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaOperatorExperienceSquad,
-			Expression:     "true",
-			AllowSelfServe: false, // the non-tls implementation is slated for removal
-		},
-		{
 			Name:            "kubernetesAggregator",
 			Description:     "Enable grafana's embedded kube-aggregator",
 			Stage:           FeatureStageExperimental,
@@ -2083,6 +2075,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "newPanelPadding",
+			Description:  "Increases panel padding globally",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaDashboardsSquad,
 			Expression:   "false",
 		},
 		{
