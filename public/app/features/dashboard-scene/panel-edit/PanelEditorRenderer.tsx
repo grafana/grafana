@@ -3,12 +3,14 @@ import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps, VizPanel } from '@grafana/scenes';
-import { Button, Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Spinner, Text, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
@@ -164,10 +166,24 @@ interface VizWrapperProps {
 function VizWrapper({ panel, tableView }: VizWrapperProps) {
   const styles = useStyles2(getStyles);
   const panelToShow = tableView ?? panel;
+  const { pluginId } = panel.useState();
+  const showEmptyState =
+    config.featureToggles.newVizSuggestions && pluginId === UNCONFIGURED_PANEL_PLUGIN_ID && !tableView;
 
   return (
     <div className={styles.vizWrapper}>
-      <panelToShow.Component model={panelToShow} />
+      {showEmptyState ? (
+        <div className={styles.emptyStateWrapper}>
+          <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
+          <Text element="p" textAlignment="center" color="secondary">
+            <Trans i18nKey="dashboard.new-panel.empty-state-message">
+              Build a query to visualize it here or go to all visualizations to add other panel types
+            </Trans>
+          </Text>
+        </div>
+      ) : (
+        <panelToShow.Component model={panelToShow} />
+      )}
     </div>
   );
 }
@@ -270,6 +286,20 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       width: '100%',
       paddingLeft: theme.spacing(2),
+    }),
+    emptyStateWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
+      backgroundColor: theme.colors.background.primary,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+    }),
+    emptyStateIcon: css({
+      color: theme.colors.text.secondary,
+      marginBottom: theme.spacing(1),
     }),
     fixedSizeViz: css({
       height: '100vh',

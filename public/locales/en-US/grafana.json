@@ -5090,6 +5090,7 @@
     "new-panel": {
       "configure-button": "Configure",
       "configure-button-menu": "Toggle menu",
+      "empty-state-message": "Build a query to visualize it here or go to all visualizations to add other panel types",
       "menu-open-panel-editor": "Configure",
       "menu-use-library-panel": "Use library panel"
     },

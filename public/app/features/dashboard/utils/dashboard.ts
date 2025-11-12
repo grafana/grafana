@@ -10,7 +10,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { calculateNewPanelGridPos } from 'app/features/dashboard/utils/panel';
 
-export const NEW_PANEL_TITLE = 'New panel';
+export const NEW_PANEL_TITLE = config.featureToggles.newVizSuggestions ? '' : 'New panel';
 
 export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string): number | undefined {
   const newPanel: Partial<PanelModel> = {

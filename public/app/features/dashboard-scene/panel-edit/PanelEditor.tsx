@@ -83,7 +83,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _activationHandler() {
     const panel = this.state.panelRef.resolve();
 
-    if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
+    if (!config.featureToggles.newVizSuggestions && panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
       panel.changePluginType('timeseries');
     }
 
@@ -228,12 +228,17 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         })
       );
 
+      const isUnconfigured = Boolean(
+        config.featureToggles.newVizSuggestions && panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID
+      );
+
       // Setup options pane
       this.setState({
         optionsPane: new PanelOptionsPane({
           panelRef: this.state.panelRef,
           searchQuery: '',
           listMode: OptionFilter.All,
+          isVizPickerOpen: isUnconfigured,
         }),
         isInitializing: false,
       });
