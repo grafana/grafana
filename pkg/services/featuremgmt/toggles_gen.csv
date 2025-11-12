@@ -75,7 +75,6 @@ queryServiceFromUI,experimental,@grafana/grafana-datasources-core-services,false
 queryServiceFromExplore,experimental,@grafana/grafana-datasources-core-services,false,false,true
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
-addFieldFromCalculationStatFunctions,GA,@grafana/datapro,false,false,true
 alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
 alertingProvenanceLockWrites,experimental,@grafana/alerting-squad,false,false,false
 alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false

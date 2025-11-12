@@ -569,14 +569,6 @@ var (
 			FrontendOnly: false,
 		},
 		{
-			Name:         "addFieldFromCalculationStatFunctions",
-			Description:  "Add cumulative and window functions to the add field from calculation transformation",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDataProSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:        "alertmanagerRemoteSecondary",
 			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
 			Stage:       FeatureStageExperimental,
