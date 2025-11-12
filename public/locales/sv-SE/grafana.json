@@ -1662,9 +1662,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1722,9 +1719,6 @@
       },
       "placeholder-key": "nyckel",
       "placeholder-value": "värde"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Visa eller skapa kontaktpunkter",
@@ -2891,6 +2885,8 @@
       "notification-message": "Aviseringsmeddelande",
       "predefined-notification-message": "",
       "send-test-notification": "Skicka testavisering",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Testa kontaktpunkt"
     },
     "threshold": {
@@ -2949,13 +2945,15 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
-      "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
-      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -4132,6 +4130,7 @@
       "scopes": "Omfattningar"
     },
     "empty-state": {
+      "button-title": "",
       "message": "Inga resultat hittades"
     },
     "scopes": {
@@ -4157,6 +4156,7 @@
     "cancel": "Avbryt",
     "clear": "Rensa",
     "collapse": "Minimera",
+    "disabled": "",
     "edit": "Redigera",
     "help": "Hjälp",
     "loading": "Laddar …",
@@ -5133,6 +5133,19 @@
       "aria-label-remove-override": "Ta bort åsidosättning",
       "tooltip-remove-override": "Ta bort åsidosättning"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Instrumentpanelen måste sparas innan varningar kan läggas till.",
@@ -5648,6 +5661,61 @@
       "validation-required": "Kräver en JSON-modell för instrumentpanelen"
     }
   },
+  "dashboard-library": {
+    "browse-grafana-com": "",
+    "browse-plugins": "",
+    "card": {
+      "datasource-provided-badge": "",
+      "details-tooltip": "",
+      "no-preview": "",
+      "use-dashboard-button": "",
+      "use-template-button": ""
+    },
+    "community-empty-title": "",
+    "community-empty-title-with-datasource": "",
+    "community-error": "",
+    "community-error-title": "",
+    "community-mapping-form": {
+      "back": "",
+      "constants-title": "",
+      "datasources-title": "",
+      "description": "",
+      "preview": "",
+      "auto-mapped_one": "",
+      "auto-mapped_other": ""
+    },
+    "community-mapping-select-datasource": "",
+    "community-search-placeholder": "",
+    "community-search-placeholder-with-datasource": "",
+    "dashboard-card": {
+      "details": {
+        "datasource": "",
+        "dependencies": "",
+        "id": "",
+        "last-update": "",
+        "published-by": "",
+        "view-on-grafana-com": ""
+      }
+    },
+    "modal": {
+      "description": "",
+      "tab-community": "",
+      "tab-datasource": "",
+      "title": "",
+      "title-mapping-with-name": "",
+      "title-with-datasource": ""
+    },
+    "no-community-dashboards-datasource": "",
+    "no-community-dashboards-search": "",
+    "no-provisioned-dashboards": "",
+    "provisioned-empty-title": "",
+    "provisioned-empty-title-with-datasource": "",
+    "retry": "",
+    "suggested-dashboards-subtitle": "",
+    "suggested-dashboards-title": "",
+    "suggested-dashboards-title-with-datasource": "",
+    "view-all": ""
+  },
   "dashboard-links": {
     "empty-state": {
       "button-title": "Lägg till en länk till instrumentpanelen",
@@ -5687,6 +5755,11 @@
       "open-dashboard": "Öppna instrumentpanel",
       "open-in-new-tab": "Öppna i ny flik",
       "title-error-adding-the-panel": "Fel vid tillägg av panelen"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Tillbaka till listan",
@@ -6250,6 +6323,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -7173,7 +7247,8 @@
     "logs-table-multi-select": {
       "fields": "Fält",
       "reset": "Återställ",
-      "selected-fields": "Markerade fält"
+      "selected-fields": "Markerade fält",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Välj fråga efter namn",
@@ -7644,7 +7719,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "Inga mappar hittades",
     "select-aria-label": "Mappfilter",
     "select-placeholder": "Filtrera efter mapp"
   },
@@ -8014,26 +8088,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "I förrgår",
+          "previousFiscalQuarter": "Föregående räkenskapskvartal",
+          "previousFiscalYear": "Föregående räkenskapsår",
+          "previousMonth": "Föregående månad",
+          "previousWeek": "Föregående vecka",
+          "previousYear": "Föregående år",
+          "thisDayLastWeek": "Den här dagen förra veckan",
+          "thisFiscalQuarter": "Detta räkenskapskvartal",
+          "thisFiscalQuarterSoFar": "Hittills detta räkenskapskvartal",
+          "thisFiscalYear": "Detta räkenskapsår",
+          "thisFiscalYearSoFar": "Detta räkenskapsår hittills",
+          "thisMonth": "Denna månad",
+          "thisMonthSoFar": "Denna månad hittills",
+          "thisWeek": "Denna vecka",
+          "thisWeekSoFar": "Denna vecka hittills",
+          "thisYear": "Det här året",
+          "thisYearSoFar": "Detta år hittills",
+          "today": "Idag",
+          "todaySoFar": "Hittills idag",
+          "yesterday": "Igår"
         },
         "lastNDays_one": "",
         "lastNDays_other": "",
@@ -8762,6 +8836,9 @@
     },
     "drawer": {
       "close": "Stäng"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "Experimentellt",
@@ -10579,7 +10656,12 @@
       }
     },
     "help": {
-      "aria-label": "Hjälp"
+      "aria-label": "Hjälp",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "Bjud in",
@@ -10872,6 +10954,7 @@
       "replace-library-panel": "Byt ut bibliotekspanel",
       "share": "Dela",
       "show-legend": "Visa förklaring",
+      "time-settings": "",
       "unlink-library-panel": "Ta bort länk till bibliotekspanel",
       "view": "Visa"
     },
@@ -11345,12 +11428,15 @@
       "label-workflow": "Arbetsflöde",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "Den här resursen ligger bakom grenen i {{repoType}}.",
+      "branch-text": "",
       "not-saved": "Resten av Grafana-användarna i din organisation kommer fortfarande att se den aktuella versionen som sparats i den konfigurerade standardgrenen tills den här grenen slås samman",
       "open-in-repo-button": "Öppna i {{repoType}}",
       "open-pull-request-in-repo": "Öppna pull-begäran i {{repoType}}",
@@ -11479,6 +11565,8 @@
     "empty-state": {
       "no-jobs": "Inga jobb …"
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "Få ut mesta möjliga av GitHub-integrationen med dessa valfria tillägg",
       "description-instant-updates": "Få omedelbara uppdateringar i Grafana så snart ändringar görs. Granska och godkänn ändringar med hjälp av pull-förfrågningar innan de publiceras.",
@@ -11698,14 +11786,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "aktiva jobb",
       "column-action": "Åtgärd",
       "column-duration": "Varaktighet",
       "column-job-id": "",
       "column-message": "Meddelande",
       "column-started": "Startat",
       "column-status": "Status",
-      "error-loading": "Fel vid laddning av {{type}}",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "Jobb"
     },
     "repository-actions": {
@@ -12290,8 +12378,6 @@
       "title": "Välj omfattningar"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "Inga resultat hittades för din fråga",
         "recommended": "Rekommenderas",
@@ -12793,7 +12879,9 @@
   },
   "stars": {
     "mark-as-starred": "",
-    "unmark-as-starred": ""
+    "mark-as-starred-with-title": "",
+    "unmark-as-starred": "",
+    "unmark-as-starred-with-title": ""
   },
   "stat": {
     "add-orientation-option": {
@@ -13134,6 +13222,14 @@
       "form-label": "Formuläretikett",
       "title": "Panel"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {

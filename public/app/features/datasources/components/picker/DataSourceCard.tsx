@@ -41,6 +41,7 @@ export function DataSourceCard({
             <small className={styles.type}>{description || ds.meta.name}</small>
             {onToggleFavorite && !ds.meta.builtIn && (
               <Icon
+                key={(isFavorite ? 'favorite' : 'star') + '-' + ds.uid}
                 name={isFavorite ? 'favorite' : 'star'}
                 onClick={(e) => {
                   e.stopPropagation();

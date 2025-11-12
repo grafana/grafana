@@ -3,10 +3,12 @@ package dashboards
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -101,19 +103,26 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		require.Len(t, list.Items, 1, "expected a single connection")
 		require.Equal(t, "test", list.Items[0].GetName(), "with the test uid")
 
-		rsp, err := client.Get(ctx, "test", metav1.GetOptions{}, "health")
-		require.NoError(t, err)
-		body, err := rsp.MarshalJSON()
-		require.NoError(t, err)
-		//fmt.Printf("GOT: %v\n", string(body))
-		require.JSONEq(t, `{
-			"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
-			"code": 1,
-			"kind": "HealthCheckResult",
-			"message": "Data source is working",
-			"status": "OK"
-		  }
-		`, string(body))
+		_, err = client.Get(ctx, "test", metav1.GetOptions{}, "health")
+		// endpoint is disabled currently because it has not been
+		// sufficiently tested.
+		// for more info see pkg/registry/apis/datasource/sub_health.go
+		require.Error(t, err)
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr))
+		require.Equal(t, int32(501), statusErr.ErrStatus.Code)
+		// require.NoError(t, err)
+		// body, err := rsp.MarshalJSON()
+		// require.NoError(t, err)
+		// //fmt.Printf("GOT: %v\n", string(body))
+		// require.JSONEq(t, `{
+		// 	"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+		// 	"code": 1,
+		// 	"kind": "HealthCheckResult",
+		// 	"message": "Data source is working",
+		// 	"status": "OK"
+		//   }
+		// `, string(body))
 
 		// Test connecting to non-JSON marshaled data
 		raw := apis.DoRequest[any](helper, apis.RequestParams{
@@ -121,6 +130,10 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			Method: "GET",
 			Path:   "/apis/testdata.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/resource",
 		}, nil)
-		require.Equal(t, `Hello world from test datasource!`, string(raw.Body))
+		// endpoint is disabled currently because it has not been
+		// sufficiently tested.
+		// for more info see pkg/registry/apis/datasource/sub_resource.go
+		require.Equal(t, int32(501), raw.Status.Code)
+		// require.Equal(t, `Hello world from test datasource!`, string(raw.Body))
 	})
 }

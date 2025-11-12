@@ -7,7 +7,7 @@ const injectedRtkApi = api
   .injectEndpoints({
     endpoints: (build) => ({
       getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
-        query: () => ({ url: `/apis/folder.grafana.app/v1beta1/` }),
+        query: () => ({ url: `/` }),
         providesTags: ['API Discovery'],
       }),
       listFolder: build.query<ListFolderApiResponse, ListFolderApiArg>({
@@ -562,15 +562,22 @@ export type FolderInfoList = {
 };
 export const {
   useGetApiResourcesQuery,
+  useLazyGetApiResourcesQuery,
   useListFolderQuery,
+  useLazyListFolderQuery,
   useCreateFolderMutation,
   useDeletecollectionFolderMutation,
   useGetFolderQuery,
+  useLazyGetFolderQuery,
   useReplaceFolderMutation,
   useDeleteFolderMutation,
   useUpdateFolderMutation,
   useGetFolderAccessQuery,
+  useLazyGetFolderAccessQuery,
   useGetFolderChildrenQuery,
+  useLazyGetFolderChildrenQuery,
   useGetFolderCountsQuery,
+  useLazyGetFolderCountsQuery,
   useGetFolderParentsQuery,
+  useLazyGetFolderParentsQuery,
 } = injectedRtkApi;

@@ -162,6 +162,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
                     'Search by name or enter filter query...'
                   )}
                   name="searchQuery"
+                  escapeRegex={false}
                   onChange={(next) => {
                     trackRulesSearchInputCleared(field.value, next);
                     field.onChange(next);
@@ -729,7 +730,10 @@ function SearchQueryHelp() {
         />
         <HelpRow title={t('alerting.search-query-help.title-group', 'Group')} expr="group:cpu-usage" />
         <HelpRow title={t('alerting.search-query-help.title-rule', 'Rule')} expr='rule:"cpu 80%"' />
-        <HelpRow title={t('alerting.search-query-help.title-labels', 'Labels')} expr="label:team=A label:cluster=a1" />
+        <HelpRow
+          title={t('alerting.search-query-help.title-labels', 'Labels')}
+          expr='label:team=A label:"cluster=new york"'
+        />
         <HelpRow title={t('alerting.search-query-help.title-state', 'State')} expr="state:firing|normal|pending" />
         <HelpRow title={t('alerting.search-query-help.title-type', 'Type')} expr="type:alerting|recording" />
         <HelpRow title={t('alerting.search-query-help.title-health', 'Health')} expr="health:ok|nodata|error" />

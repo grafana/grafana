@@ -100,7 +100,7 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 	}
 
 	// HACK: manual set to the provided branch so that the parser can possible read the file
-	if r.shouldUpdateGrafanaDB(opts, nil) {
+	if !r.shouldUpdateGrafanaDB(opts, nil) {
 		file.Ref = opts.Ref
 	}
 

@@ -1662,9 +1662,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1722,9 +1719,6 @@
       },
       "placeholder-key": "kulcs",
       "placeholder-value": "érték"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Kapcsolattartási pontok megtekintése vagy létrehozása",
@@ -2891,6 +2885,8 @@
       "notification-message": "Értesítési üzenet",
       "predefined-notification-message": "",
       "send-test-notification": "Tesztértesítés küldése",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Kapcsolattartási pont tesztelése"
     },
     "threshold": {
@@ -2949,13 +2945,15 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
-      "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
-      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -4132,6 +4130,7 @@
       "scopes": "Hatókörök"
     },
     "empty-state": {
+      "button-title": "",
       "message": "Nincs eredmény"
     },
     "scopes": {
@@ -4157,6 +4156,7 @@
     "cancel": "Mégse",
     "clear": "Törlés",
     "collapse": "Összecsukás",
+    "disabled": "",
     "edit": "Szerkesztés",
     "help": "Súgó",
     "loading": "Betöltés...",
@@ -5133,6 +5133,19 @@
       "aria-label-remove-override": "Felülbírálás eltávolítása",
       "tooltip-remove-override": "Felülbírálás eltávolítása"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Riasztások hozzáadása előtt menteni kell az irányítópultot.",
@@ -5648,6 +5661,61 @@
       "validation-required": "Szüksége van egy irányítópulti JSON-modellre"
     }
   },
+  "dashboard-library": {
+    "browse-grafana-com": "",
+    "browse-plugins": "",
+    "card": {
+      "datasource-provided-badge": "",
+      "details-tooltip": "",
+      "no-preview": "",
+      "use-dashboard-button": "",
+      "use-template-button": ""
+    },
+    "community-empty-title": "",
+    "community-empty-title-with-datasource": "",
+    "community-error": "",
+    "community-error-title": "",
+    "community-mapping-form": {
+      "back": "",
+      "constants-title": "",
+      "datasources-title": "",
+      "description": "",
+      "preview": "",
+      "auto-mapped_one": "",
+      "auto-mapped_other": ""
+    },
+    "community-mapping-select-datasource": "",
+    "community-search-placeholder": "",
+    "community-search-placeholder-with-datasource": "",
+    "dashboard-card": {
+      "details": {
+        "datasource": "",
+        "dependencies": "",
+        "id": "",
+        "last-update": "",
+        "published-by": "",
+        "view-on-grafana-com": ""
+      }
+    },
+    "modal": {
+      "description": "",
+      "tab-community": "",
+      "tab-datasource": "",
+      "title": "",
+      "title-mapping-with-name": "",
+      "title-with-datasource": ""
+    },
+    "no-community-dashboards-datasource": "",
+    "no-community-dashboards-search": "",
+    "no-provisioned-dashboards": "",
+    "provisioned-empty-title": "",
+    "provisioned-empty-title-with-datasource": "",
+    "retry": "",
+    "suggested-dashboards-subtitle": "",
+    "suggested-dashboards-title": "",
+    "suggested-dashboards-title-with-datasource": "",
+    "view-all": ""
+  },
   "dashboard-links": {
     "empty-state": {
       "button-title": "Irányítópult hivatkozásának hozzáadása",
@@ -5687,6 +5755,11 @@
       "open-dashboard": "Irányítópult megnyitása",
       "open-in-new-tab": "Megnyitás új lapon",
       "title-error-adding-the-panel": "Hiba történt a panel hozzáadásakor"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "Vissza a listához",
@@ -6250,6 +6323,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -7173,7 +7247,8 @@
     "logs-table-multi-select": {
       "fields": "Mezők",
       "reset": "Visszaállítás",
-      "selected-fields": "Kijelölt mezők"
+      "selected-fields": "Kijelölt mezők",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Lekérdezés kijelölése név alapján",
@@ -7644,7 +7719,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "Nem található mappa",
     "select-aria-label": "Mappaszűrő",
     "select-placeholder": "Szűrés mappa alapján"
   },
@@ -8014,26 +8088,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "Tegnapelőtt",
+          "previousFiscalQuarter": "Az előző pénzügyi negyedév",
+          "previousFiscalYear": "Az előző pénzügyi év",
+          "previousMonth": "Előző hónap",
+          "previousWeek": "Az előző hét",
+          "previousYear": "Az előző év",
+          "thisDayLastWeek": "A múlt héten ezen a napon",
+          "thisFiscalQuarter": "Ez a pénzügyi negyedév",
+          "thisFiscalQuarterSoFar": "Ebben a pénzügyi negyedévben eddig",
+          "thisFiscalYear": "Ez a pénzügyi év",
+          "thisFiscalYearSoFar": "Ebben a pénzügyi évben eddig",
+          "thisMonth": "Ez a hónap",
+          "thisMonthSoFar": "Ebben a hónapban eddig",
+          "thisWeek": "Ez a hét",
+          "thisWeekSoFar": "Ezen a héten eddig",
+          "thisYear": "Az évben",
+          "thisYearSoFar": "Ebben az évben eddig",
+          "today": "Ma",
+          "todaySoFar": "Ma eddig",
+          "yesterday": "Tegnap"
         },
         "lastNDays_one": "",
         "lastNDays_other": "",
@@ -8762,6 +8836,9 @@
     },
     "drawer": {
       "close": "Bezárás"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "Kísérleti",
@@ -10579,7 +10656,12 @@
       }
     },
     "help": {
-      "aria-label": "Súgó"
+      "aria-label": "Súgó",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "Meghívás",
@@ -10872,6 +10954,7 @@
       "replace-library-panel": "Könyvtárpanel cseréje",
       "share": "Megosztás",
       "show-legend": "Jelmagyarázat megjelenítése",
+      "time-settings": "",
       "unlink-library-panel": "Könyvtárpanel leválasztása",
       "view": "Nézet"
     },
@@ -11345,12 +11428,15 @@
       "label-workflow": "Munkafolyamat",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "Ez az erőforrás a(z) {{repoType}} ág mögött van.",
+      "branch-text": "",
       "not-saved": "Amíg ez az ág össze nem lesz vonva, a szervezet többi Grafana-felhasználója továbbra is a konfigurált alapértelmezett ágba mentett aktuális verziót fogja látni",
       "open-in-repo-button": "Megnyitás itt: {{repoType}}",
       "open-pull-request-in-repo": "Összefésülési kérelem megnyitása itt: {{repoType}}",
@@ -11479,6 +11565,8 @@
     "empty-state": {
       "no-jobs": "Nincsenek feladatok…"
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "Hozza ki a legtöbbet a GitHub-integrációból ezekkel az opcionális kiegészítőkkel",
       "description-instant-updates": "Azonnali frissítéseket kaphat a Grafanában, amint a változások végrehajtása megtörtént. Tekintse át és hagyja jóvá a módosításokat a lekérések használatával, mielőtt életbe lépnének.",
@@ -11698,14 +11786,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "aktív feladatok",
       "column-action": "Művelet",
       "column-duration": "Időtartam",
       "column-job-id": "",
       "column-message": "Üzenet",
       "column-started": "Elindítva",
       "column-status": "Állapot",
-      "error-loading": "Hiba történt a(z) {{type}} betöltése során",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "Feladatok"
     },
     "repository-actions": {
@@ -12290,8 +12378,6 @@
       "title": "Hatókörök kijelölése"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "Nincs találat a lekérdezésre",
         "recommended": "Ajánlott",
@@ -12793,7 +12879,9 @@
   },
   "stars": {
     "mark-as-starred": "",
-    "unmark-as-starred": ""
+    "mark-as-starred-with-title": "",
+    "unmark-as-starred": "",
+    "unmark-as-starred-with-title": ""
   },
   "stat": {
     "add-orientation-option": {
@@ -13134,6 +13222,14 @@
       "form-label": "Űrlapcímke",
       "title": "Panel"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {

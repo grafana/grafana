@@ -34,7 +34,7 @@ jobs:
       id-token: write
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
-    name: "Run Storybook a11y tests"
+    name: "Run Storybook a11y tests (light theme)"
     steps:
     - uses: actions/checkout@v5
       with:
@@ -64,7 +64,7 @@ jobs:
       id-token: write
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
-    name: "Run Storybook a11y tests"
+    name: "Run Storybook a11y tests (dark theme)"
     steps:
     - uses: actions/checkout@v5
       with:
