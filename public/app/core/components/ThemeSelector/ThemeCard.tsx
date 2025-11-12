@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { FeatureState, GrafanaTheme2, ThemeRegistryItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { FeatureBadge, RadioButtonDot, useStyles2 } from '@grafana/ui';
 
 import { ThemePreview } from '../Theme/ThemePreview';
@@ -14,7 +15,7 @@ interface ThemeCardProps {
 }
 
 export function ThemeCard({ themeOption, isExperimental, isSelected, onSelect }: ThemeCardProps) {
-  const theme = themeOption.build();
+  const theme = themeOption.build(config.featureToggles);
   const label = getTranslatedThemeName(themeOption);
   const styles = useStyles2(getStyles);
 
