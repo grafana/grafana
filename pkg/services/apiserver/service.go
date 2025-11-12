@@ -110,7 +110,7 @@ type service struct {
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 	aggregatorRunner                  aggregatorrunner.AggregatorRunner
-	appInstallers                     []appsdkapiserver.AppInstaller
+	appInstallers                     map[string]appsdkapiserver.AppInstaller
 	builderMetrics                    *builder.BuilderMetrics
 	dualWriterMetrics                 *grafanarest.DualWriterMetrics
 }
@@ -135,7 +135,7 @@ func ProvideService(
 	eventualRestConfigProvider *eventualRestConfigProvider,
 	reg prometheus.Registerer,
 	aggregatorRunner aggregatorrunner.AggregatorRunner,
-	appInstallers []appsdkapiserver.AppInstaller,
+	appInstallers map[string]appsdkapiserver.AppInstaller,
 	builderMetrics *builder.BuilderMetrics,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
@@ -248,8 +248,8 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
 }
 
-func (s *service) RegisterAppInstaller(i appsdkapiserver.AppInstaller) {
-	s.appInstallers = append(s.appInstallers, i)
+func (s *service) RegisterAppInstaller(featureFlag string, i appsdkapiserver.AppInstaller) {
+	s.appInstallers[featureFlag] = i
 }
 
 // nolint:gocyclo
