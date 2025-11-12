@@ -2126,6 +2126,13 @@ var (
 			Owner:       grafanaBackendServicesSquad,
 			Expression:  "false",
 		},
+		{
+			Name:        "awsDatasourcesHttpProxy",
+			Description: "Enables http proxy settings for aws datasources",
+			Stage:       FeatureStageExperimental,
+			Owner:       awsDatasourcesSquad,
+			Expression:  "false",
+		},
 	}
 )
 
