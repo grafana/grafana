@@ -111,7 +111,6 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 	}()
 
 	logger := logging.FromContext(ctx).With("operation", "claim")
-	logger.Debug("start claim job")
 
 	requirement, err := labels.NewRequirement(LabelJobClaim, selection.DoesNotExist, nil)
 	if err != nil {
@@ -225,7 +224,6 @@ func (s *persistentStore) Update(ctx context.Context, job *provisioning.Job) (*p
 		"job", job.GetName(),
 		"namespace", job.GetNamespace(),
 	)
-	logger.Debug("start update job")
 
 	span.SetAttributes(
 		attribute.String("job.name", job.GetName()),
@@ -259,7 +257,6 @@ func (s *persistentStore) Get(ctx context.Context, namespace, name string) (*pro
 		"job", name,
 		"namespace", namespace,
 	)
-	logger.Debug("start get job")
 
 	span.SetAttributes(
 		attribute.String("job.name", name),
@@ -295,7 +292,6 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 		"namespace", job.GetNamespace(),
 		"job", job.GetName(),
 	)
-	logger.Debug("start complete job")
 
 	span.SetAttributes(
 		attribute.String("job.name", job.GetName()),
@@ -344,7 +340,6 @@ func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job)
 		"job", job.GetName(),
 		"namespace", job.GetNamespace(),
 	)
-	logger.Debug("start renew lease")
 
 	span.SetAttributes(
 		attribute.String("job.name", job.GetName()),
@@ -418,7 +413,6 @@ func (s *persistentStore) Cleanup(ctx context.Context) error {
 
 	startTime := s.clock()
 	logger := logging.FromContext(ctx).With("operation", "cleanup")
-	logger.Debug("start cleanup", "expiry_duration", s.expiry)
 
 	// List expired jobs
 	jobs, err := s.listExpiredJobs(ctx)
@@ -542,8 +536,6 @@ func (s *persistentStore) cleanUpExpiredJob(ctx context.Context, job provisionin
 		attribute.String("job.expired_for", expiredFor.String()),
 	)
 
-	logger.Info("start clean up expired job")
-
 	// Mark job as failed due to lease expiry and archive it
 	jobCopy := job.DeepCopy()
 	jobCopy.Status.State = provisioning.JobStateError
@@ -581,7 +573,6 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		"repository", spec.Repository,
 		"action", spec.Action,
 	)
-	logger.Debug("start insert job")
 
 	span.SetAttributes(
 		attribute.String("job.namespace", namespace),
