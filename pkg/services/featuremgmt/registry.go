@@ -125,13 +125,6 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
-			Name:         "editPanelCSVDragAndDrop",
-			Description:  "Enables drag and drop for CSV and Excel files",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
 			Name:           "logsContextDatasourceUi",
 			Description:    "Allow datasource to provide custom UI for context view",
 			Stage:          FeatureStageGeneralAvailability,
@@ -219,7 +212,7 @@ var (
 			Name:        "disableSSEDataplane",
 			Description: "Disables dataplane specific processing in server side expressions.",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityMetricsSquad,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
 		},
 		{
 			Name:              "unifiedRequestLog",
@@ -263,14 +256,6 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
-		},
-		{
-			Name:           "recordedQueriesMulti",
-			Description:    "Enables writing multiple items from a single query within Recorded Queries",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true",
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: false,
 		},
 		{
 			Name:         "logsExploreTableVisualisation",
@@ -389,7 +374,7 @@ var (
 			Name:        "sseGroupByDatasource",
 			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityMetricsSquad,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
 		},
 		{
 			Name:         "lokiRunQueriesInParallel",
@@ -611,13 +596,6 @@ var (
 			RequiresDevMode: false,
 			Expression:      "true", // enabled by default
 			Owner:           identityAccessTeam,
-		},
-		{
-			Name:         "extractFieldsNameDeduplication",
-			Description:  "Make sure extracted field names are unique in the dataframe",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaDataProSquad,
 		},
 		{
 			Name:         "dashboardSceneForViewers",
@@ -867,14 +845,6 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "true", // enabled by default,
-		},
-		{
-			Name:           "tlsMemcached",
-			Description:    "Use TLS-enabled memcached in the enterprise caching feature",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaOperatorExperienceSquad,
-			Expression:     "true",
-			AllowSelfServe: false, // the non-tls implementation is slated for removal
 		},
 		{
 			Name:            "kubernetesAggregator",
@@ -1968,14 +1938,6 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:         "adhocFiltersInTooltips",
-			Description:  "Enable adhoc filter buttons in visualization tooltips",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaDataProSquad,
-			FrontendOnly: true,
-			Expression:   "true",
-		},
-		{
 			Name:         "favoriteDatasources",
 			Description:  "Enable favorite datasources",
 			Stage:        FeatureStageExperimental,
@@ -2094,6 +2056,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "newVizSuggestions",
+			Description:  "Enable new visualization suggestions",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "preventPanelChromeOverflow",
 			Description:  "Restrict PanelChrome contents with overflow: hidden;",
 			Stage:        FeatureStagePublicPreview,
@@ -2113,6 +2083,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "newPanelPadding",
+			Description:  "Increases panel padding globally",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaDashboardsSquad,
 			Expression:   "false",
 		},
 		{
@@ -2144,10 +2122,23 @@ var (
 			FrontendOnly: false,
 		},
 		{
+			Name:        "grafanaAdvisorAppInstaller",
+			Description: "Enables Advisor app installer",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:        "kubernetesAnnotations",
 			Description: "Enables app platform API for annotations",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaBackendServicesSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "awsDatasourcesHttpProxy",
+			Description: "Enables http proxy settings for aws datasources",
+			Stage:       FeatureStageExperimental,
+			Owner:       awsDatasourcesSquad,
 			Expression:  "false",
 		},
 	}

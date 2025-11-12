@@ -245,7 +245,7 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	}
 
 	// Register the explicit conversions
-	if err := conversion.RegisterConversions(scheme); err != nil {
+	if err := conversion.RegisterConversions(scheme, migration.GetDataSourceInfoProvider()); err != nil {
 		return err
 	}
 

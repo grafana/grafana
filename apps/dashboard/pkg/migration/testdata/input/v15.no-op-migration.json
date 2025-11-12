@@ -43,7 +43,10 @@
       "list": [
         {
           "name": "Annotations & Alerts",
-          "datasource": "grafana",
+          "datasource": {
+            "type": "grafana",
+            "uid": "grafana"
+          },
           "enable": true
         }
       ]
