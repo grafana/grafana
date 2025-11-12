@@ -2855,6 +2855,19 @@
     },
     {
       "metadata": {
+        "name": "newPanelPadding",
+        "resourceVersion": "1760780310038",
+        "creationTimestamp": "2025-10-18T09:38:30Z"
+      },
+      "spec": {
+        "description": "Increases panel padding globally",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "newShareReportDrawer",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-02-17T19:05:46Z"
@@ -2952,6 +2965,20 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "panelPadding",
+        "resourceVersion": "1760779980125",
+        "creationTimestamp": "2025-10-18T09:33:00Z",
+        "deletionTimestamp": "2025-10-18T09:38:30Z"
+      },
+      "spec": {
+        "description": "Increases panel padding globally",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
       }
     },
     {

@@ -2086,6 +2086,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "newPanelPadding",
+			Description:  "Increases panel padding globally",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:              "onlyStoreActionSets",
 			Description:       "When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission",
 			Stage:             FeatureStageGeneralAvailability,
