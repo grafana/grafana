@@ -11536,9 +11536,8 @@
     },
     "connect-repository-button": {
       "configure": "Configure",
-      "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed",
-      "repository-limit-reached-tooltip_one": "Repository limit reached {{count}}",
-      "repository-limit-reached-tooltip_other": "Repository limit reached {{count}}"
+      "free-tier-limit-tooltip": "Free-tier accounts are restricted to one connection",
+      "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
     },
     "delete-repository-button": {
       "button-delete": "Delete",
