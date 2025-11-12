@@ -19,6 +19,7 @@ import {
   extractTargetVersionFromFilename,
   constructBackendOutputFilename,
 } from './__tests__/migrationTestUtils';
+import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
 
 /*
  * Single Version Migration Test Design Explanation:
@@ -116,6 +117,23 @@ describe('Backend / Frontend single version migration result comparison', () => 
 
       // version in the backend is never added because it is returned from the backend as metadata
       delete frontendMigrationResult.version;
+
+      // since we are initializing panels inside collapsed rows with PanelModel in transformSceneToSaveModel (see createRowItemFromLegacyRow)
+      // and not in DashboardModel, this means that these panels will have automigratedFrom and panel type changed to the new panel type
+      // backend matches this behaviour by setting up autoMigrateFrom and type for nested panels too
+      // @ts-expect-error - we are using the type from the frontend migration result
+      for (const panel of frontendMigrationResult.panels) {
+        if (panel.type === 'row' && 'panels' in panel) {
+          for (const nestedPanel of panel.panels) {
+            const panelPluginToMigrateTo = getPanelPluginToMigrateTo(nestedPanel);
+            if (panelPluginToMigrateTo) {
+              // @ts-expect-error - we are using the type from the frontend migration result
+              nestedPanel.autoMigrateFrom = nestedPanel.type;
+              nestedPanel.type = panelPluginToMigrateTo;
+            }
+          }
+        }
+      }
 
       expect(backendMigrationResult).toEqual(frontendMigrationResult);
     });

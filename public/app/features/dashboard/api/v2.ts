@@ -2,7 +2,7 @@ import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
@@ -59,7 +59,7 @@ export class K8sDashboardV2API
       // load folder info if available
       if (dashboard.metadata.annotations && dashboard.metadata.annotations[AnnoKeyFolder]) {
         try {
-          const folder = await backendSrv.getFolderByUid(dashboard.metadata.annotations[AnnoKeyFolder]);
+          const folder = await getFolderByUidFacade(dashboard.metadata.annotations[AnnoKeyFolder]);
           dashboard.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
           dashboard.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
         } catch (e) {
