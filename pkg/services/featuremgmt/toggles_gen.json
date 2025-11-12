@@ -25,6 +25,7 @@
         "name": "adhocFiltersInTooltips",
         "resourceVersion": "1756814786992",
         "creationTimestamp": "2025-07-29T17:53:43Z",
+        "deletionTimestamp": "2025-11-11T09:49:48Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-09-02 12:06:26.992384 +0000 UTC"
         }

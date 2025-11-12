@@ -1018,10 +1018,6 @@ const (
 	// Enables sharing a list of APIs with a list of plugins
 	FlagRestrictedPluginApis = "restrictedPluginApis"
 
-	// FlagAdhocFiltersInTooltips
-	// Enable adhoc filter buttons in visualization tooltips
-	FlagAdhocFiltersInTooltips = "adhocFiltersInTooltips"
-
 	// FlagFavoriteDatasources
 	// Enable favorite datasources
 	FlagFavoriteDatasources = "favoriteDatasources"

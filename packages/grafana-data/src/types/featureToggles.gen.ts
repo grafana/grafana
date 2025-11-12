@@ -1127,11 +1127,6 @@ export interface FeatureToggles {
   */
   restrictedPluginApis?: boolean;
   /**
-  * Enable adhoc filter buttons in visualization tooltips
-  * @default true
-  */
-  adhocFiltersInTooltips?: boolean;
-  /**
   * Enable favorite datasources
   */
   favoriteDatasources?: boolean;
