@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
@@ -13,7 +13,14 @@ import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { DashboardCard } from './DashboardCard';
 import { fetchProvisionedDashboards } from './api/dashboardLibraryApi';
-import { DashboardLibraryInteractions } from './interactions';
+import {
+  CONTENT_KINDS,
+  CREATION_ORIGINS,
+  DashboardLibraryInteractions,
+  DISCOVERY_METHODS,
+  EVENT_LOCATIONS,
+  SOURCE_ENTRY_POINTS,
+} from './interactions';
 import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
 
 // Constants for datasource-provided dashboards pagination
@@ -24,6 +31,7 @@ export const DashboardLibrarySection = () => {
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
 
   const [currentPage, setCurrentPage] = useState(1);
+  const hasTrackedLoaded = useRef(false);
 
   // Get datasource info for empty state
   const datasourceType = useMemo(() => {
@@ -49,17 +57,16 @@ export const DashboardLibrarySection = () => {
   }, [datasourceUid]);
 
   // Track analytics only once on first successful load
-  const hasTrackedRef = useRef(false);
   useEffect(() => {
-    if (!loading && !hasTrackedRef.current && templateDashboards && templateDashboards.length > 0) {
+    if (!loading && !hasTrackedLoaded.current && templateDashboards && templateDashboards.length > 0) {
       DashboardLibraryInteractions.loaded({
         numberOfItems: templateDashboards.length,
-        contentKinds: ['datasource_dashboard'],
+        contentKinds: [CONTENT_KINDS.DATASOURCE_DASHBOARD],
         datasourceTypes: [datasourceType],
-        sourceEntryPoint: 'datasource_page',
-        eventLocation: 'suggested_dashboards_modal_provisioned_tab',
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+        eventLocation: EVENT_LOCATIONS.MODAL_PROVISIONED_TAB,
       });
-      hasTrackedRef.current = true;
+      hasTrackedLoaded.current = true;
     }
   }, [loading, templateDashboards, datasourceType]);
 
@@ -77,12 +84,13 @@ export const DashboardLibrarySection = () => {
 
   const onUseProvisionedDashboard = async (dashboard: PluginDashboard) => {
     DashboardLibraryInteractions.itemClicked({
-      contentKind: 'datasource_dashboard',
+      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
       datasourceTypes: [dashboard.pluginId],
       libraryItemId: dashboard.uid,
       libraryItemTitle: dashboard.title,
-      sourceEntryPoint: 'datasource_page',
-      eventLocation: 'suggested_dashboards_modal_provisioned_tab',
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+      eventLocation: EVENT_LOCATIONS.MODAL_PROVISIONED_TAB,
+      discoveryMethod: DISCOVERY_METHODS.BROWSE,
     });
 
     const params = new URLSearchParams({
@@ -91,9 +99,11 @@ export const DashboardLibrarySection = () => {
       pluginId: dashboard.pluginId,
       path: dashboard.path,
       // tracking event purpose values
-      sourceEntryPoint: 'datasource_page',
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       libraryItemId: dashboard.uid,
-      creationOrigin: 'dashboard_library_datasource_dashboard',
+      creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_DATASOURCE_DASHBOARD,
+      eventLocation: EVENT_LOCATIONS.MODAL_PROVISIONED_TAB,
+      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
     });
 
     const templateUrl = `${DASHBOARD_LIBRARY_ROUTES.Template}?${params.toString()}`;
