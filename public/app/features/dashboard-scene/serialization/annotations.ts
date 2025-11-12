@@ -1,11 +1,14 @@
 import { AnnotationQuery } from '@grafana/data';
-import { AnnotationQueryKind, defaultDataQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import {
+  AnnotationQueryKind,
+  defaultAnnotationQuerySpec,
+  defaultDataQueryKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { getRuntimePanelDataSource } from './layoutSerializers/utils';
 
 export function transformV1ToV2AnnotationQuery(
   annotation: AnnotationQuery,
-
   dsType: string,
   dsUID?: string,
   // Overrides are used to provide properties based on scene's annotations data layer object state
@@ -36,10 +39,10 @@ export function transformV1ToV2AnnotationQuery(
     kind: 'AnnotationQuery',
     spec: {
       builtIn: Boolean(annotation.builtIn),
-      name: annotation.name,
+      name: annotation.name ?? defaultAnnotationQuerySpec().name,
       enable: Boolean(override?.enable) || Boolean(annotation.enable),
       hide: Boolean(override?.hide) || Boolean(annotation.hide),
-      iconColor: annotation.iconColor,
+      iconColor: annotation.iconColor ?? defaultAnnotationQuerySpec().iconColor,
 
       query: {
         kind: 'DataQuery',
@@ -50,15 +53,16 @@ export function transformV1ToV2AnnotationQuery(
     },
   };
 
-  // Add placement if it exists
-  if (annotation.placement) {
-    result.spec.placement = annotation.placement;
-  }
-
-  if (dsUID) {
+  if (dsUID && annotation.datasource && annotation.datasource.type) {
+    // Only add datasource reference if the annotation actually has a valid datasource in the original input
     result.spec.query.datasource = {
       name: dsUID,
     };
+  }
+
+  // Add placement if it exists
+  if (annotation.placement) {
+    result.spec.placement = annotation.placement;
   }
 
   // if legacy options is not an empty object, add it to the result

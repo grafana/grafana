@@ -146,4 +146,21 @@ describe('FilesView', () => {
     expect(screen.getByRole('link', { name: 'View' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'History' })).not.toBeInTheDocument();
   });
+
+  it('renders plain text and hides actions for .keep files', () => {
+    mockRepositoryFilesQuery({
+      isSuccess: true,
+      status: 'fulfilled',
+      data: {
+        items: [{ path: 'dashboards/.keep', hash: 'abc', size: '0' }],
+      },
+    });
+
+    renderComponent();
+
+    expect(screen.getByText('dashboards/.keep')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'dashboards/.keep' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'View' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'History' })).not.toBeInTheDocument();
+  });
 });

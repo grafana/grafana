@@ -440,10 +440,7 @@ func getPanels(dashboard map[string]interface{}) []map[string]interface{} {
 func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool) {
 	// Apply auto-migration logic (matches frontend PanelModel constructor)
 	// This happens during cleanup phase to match when frontend applies auto-migration
-	// Only apply auto-migration to top-level panels, not nested ones (matches frontend behavior)
-	if !isNested {
-		applyPanelAutoMigration(panel)
-	}
+	applyPanelAutoMigration(panel)
 
 	// Library panel specific cleanup (matches frontend behavior)
 	// Frontend only preserves id, title, gridPos, and libraryPanel for library panels

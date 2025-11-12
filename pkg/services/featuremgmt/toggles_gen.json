@@ -25,6 +25,7 @@
         "name": "adhocFiltersInTooltips",
         "resourceVersion": "1756814786992",
         "creationTimestamp": "2025-07-29T17:53:43Z",
+        "deletionTimestamp": "2025-11-11T09:49:48Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-09-02 12:06:26.992384 +0000 UTC"
         }
@@ -1356,6 +1357,7 @@
         "name": "editPanelCSVDragAndDrop",
         "resourceVersion": "1762783224740",
         "creationTimestamp": "2023-01-24T09:43:44Z",
+        "deletionTimestamp": "2025-11-10T16:31:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-10 14:00:24.740459 +0000 UTC"
         }
@@ -1622,6 +1624,7 @@
         "name": "extractFieldsNameDeduplication",
         "resourceVersion": "1762442825881",
         "creationTimestamp": "2023-11-02T15:47:42Z",
+        "deletionTimestamp": "2025-11-11T16:00:57Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
         }
@@ -1803,6 +1806,18 @@
       "spec": {
         "description": "Enables Advisor app",
         "stage": "privatePreview",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafanaAdvisorAppInstaller",
+        "resourceVersion": "1762790554324",
+        "creationTimestamp": "2025-11-10T16:02:34Z"
+      },
+      "spec": {
+        "description": "Enables Advisor app installer",
+        "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend"
       }
     },
