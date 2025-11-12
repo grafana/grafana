@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 
@@ -1727,7 +1726,7 @@ func buildAnnotationFilter(filterMap map[string]interface{}) *dashv2alpha1.Dashb
 					uintIds = append(uintIds, uint32(v))
 				}
 			case int:
-				if v >= 0 && v <= math.MaxUint32 {
+				if v >= 0 && uint64(v) <= 0xFFFFFFFF {
 					uintIds = append(uintIds, uint32(v))
 				}
 			}
