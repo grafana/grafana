@@ -15,6 +15,7 @@ interface Props {
 }
 
 const EXTENSION_ID = (nodeId: string) => `grafana/dynamic/nav-landing-page/nav-id-${nodeId}/v1`;
+const CARD_EXTENSION_ID = (nodeId: string) => `grafana/dynamic/nav-landing-page/nav-id-${nodeId}/card/v1`;
 
 export function NavLandingPage({ navId, header }: Props) {
   const { node } = useNavModel(navId);
@@ -27,7 +28,13 @@ export function NavLandingPage({ navId, header }: Props) {
     extensionPointId: EXTENSION_ID(node.id ?? ''),
   });
 
-  if (isLoading) {
+  const { components: additionalCardComponents, isLoading: isLoadingCards } = usePluginComponents<{
+    node: NavModelItem;
+  }>({
+    extensionPointId: CARD_EXTENSION_ID(node.id ?? ''),
+  });
+
+  if (isLoading || isLoadingCards) {
     return null;
   }
 
@@ -48,6 +55,9 @@ export function NavLandingPage({ navId, header }: Props) {
                     text={child.text}
                     url={child.url ?? ''}
                   />
+                ))}
+                {additionalCardComponents?.map((Component, idx) => (
+                  <Component key={`extension-card-${idx}`} node={node} />
                 ))}
               </section>
             )}

@@ -1,8 +1,18 @@
 import { AppPlugin, PluginExtensionPanelContext, PluginExtensionPoints } from '@grafana/data';
+import { Card } from '@grafana/ui';
 import { App } from './components/App';
 import { QueryModal } from './components/QueryModal';
 import { selectQuery } from './utils/utils';
 import pluginJson from './plugin.json';
+
+function TestAdminCard() {
+  return (
+    <Card noMargin href={`/a/${pluginJson.id}/`}>
+      <Card.Heading>Extensions Test App</Card.Heading>
+      <Card.Description>This card tests the admin page card extension point</Card.Description>
+    </Card>
+  );
+}
 
 export const plugin = new AppPlugin<{}>()
   .setRootPage(App)
@@ -78,6 +88,12 @@ export const plugin = new AppPlugin<{}>()
           return undefined;
       }
     },
+  })
+  .addComponent({
+    targets: 'grafana/dynamic/nav-landing-page/nav-id-cfg/card/v1',
+    title: 'Extensions Test Admin Card',
+    description: 'Test card for the admin page card extension point',
+    component: TestAdminCard,
   });
 
 function isSupported(context?: PluginExtensionPanelContext): boolean {

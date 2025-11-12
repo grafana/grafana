@@ -57,6 +57,13 @@
         "description": "This link will only be visible on time series and pie charts"
       }
     ],
+    "addedComponents": [
+      {
+        "targets": ["grafana/dynamic/nav-landing-page/nav-id-cfg/card/v1"],
+        "title": "Extensions Test Admin Card",
+        "description": "Test card for the admin page card extension point"
+      }
+    ],
     "extensionPoints": [
       {
         "id": "plugins/grafana-extensionstest-app/use-plugin-links/v1",
