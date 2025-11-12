@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -76,10 +75,10 @@ func NewConcurrentJobDriver(
 
 // Run starts multiple job drivers concurrently and handles cleanup coordination.
 // This is a blocking function that will run until the context is canceled or an error occurs.
+//
+// Note: This function intentionally does NOT create a tracing span because it runs indefinitely
+// until shutdown. Individual job processing and cleanup operations already have their own spans.
 func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
-	ctx, span := tracing.Start(ctx, "provisioning.jobs.concurrent_driver.run")
-	defer span.End()
-
 	logger := logging.FromContext(ctx).With("logger", "concurrent-job-driver", "num_drivers", c.numDrivers)
 	logger.Info("start concurrent job driver", "num_drivers", c.numDrivers, "cleanup_interval", c.cleanupInterval)
 
@@ -157,7 +156,6 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 	for err := range errChan {
 		if err != nil {
 			logger.Error("concurrent job driver error", "error", err)
-			span.RecordError(err)
 			return err
 		}
 	}

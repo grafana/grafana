@@ -108,6 +108,9 @@ func NewJobDriver(
 // Run drives jobs to completion. This is a blocking function.
 // It will run until the context is canceled or an error occurs.
 // This is a thread-safe function; it may be called from multiple goroutines.
+//
+// Note: This function intentionally does NOT create a tracing span because it runs indefinitely
+// until shutdown. Individual job processing operations already have their own spans.
 func (d *jobDriver) Run(ctx context.Context) error {
 	jobTicker := time.NewTicker(d.jobInterval)
 	defer jobTicker.Stop()
@@ -174,7 +177,6 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	namespace := claimedJob.GetNamespace()
 	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace)
 	ctx = logging.Context(ctx, logger)
-	logger.Info("claim job")
 	d.currentJob = claimedJob
 
 	span.SetAttributes(
@@ -257,6 +259,9 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 
 // leaseRenewalLoop continuously renews the lease for a job until the context is cancelled.
 // If lease renewal fails persistently, it signals via the leaseExpired channel.
+//
+// Note: This function intentionally does NOT create a tracing span because it runs indefinitely
+// for the lifetime of a job. Individual RenewLease calls already have their own spans.
 func (d *jobDriver) leaseRenewalLoop(ctx context.Context, logger logging.Logger, leaseExpired chan struct{}) {
 	ticker := time.NewTicker(d.leaseRenewalInterval)
 	defer ticker.Stop()
@@ -300,10 +305,9 @@ func (d *jobDriver) leaseRenewalLoop(ctx context.Context, logger logging.Logger,
 				}
 			} else {
 				if consecutiveFailures > 0 {
-					logger.Debug("lease renewal recover", "previous_failures", consecutiveFailures)
+					logger.Debug("lease renewal recovered", "previous_failures", consecutiveFailures)
 				}
 				consecutiveFailures = 0
-				logger.Debug("renew lease complete")
 			}
 		}
 	}
@@ -386,6 +390,9 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 
 func (d *jobDriver) onProgress() ProgressFn {
 	return func(ctx context.Context, status provisioning.JobStatus) error {
+		ctx, span := tracing.Start(ctx, "provisioning.jobs.update_progress")
+		defer span.End()
+
 		logging.FromContext(ctx).Debug("job progress", "status", status)
 
 		const maxRetries = 3
@@ -429,9 +436,16 @@ func (d *jobDriver) onProgress() ProgressFn {
 			// Update succeeded, update our local copy
 			*d.currentJob = *updated
 			d.mu.Unlock()
+
+			span.SetAttributes(
+				attribute.String("job.state", string(status.State)),
+				attribute.Int("attempt", attempt+1),
+			)
 			return nil
 		}
 
-		return apifmt.Errorf("failed to update job progress after %d attempts", maxRetries)
+		err := apifmt.Errorf("failed to update job progress after %d attempts", maxRetries)
+		span.RecordError(err)
+		return err
 	}
 }
