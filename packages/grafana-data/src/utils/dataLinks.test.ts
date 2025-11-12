@@ -46,7 +46,7 @@ describe('mapInternalLinkToExplore', () => {
     expect(link).toEqual(
       expect.objectContaining({
         title: 'dsName',
-        href: `/explore?left=${encodeURIComponent('{"datasource":"uid","queries":[{"query":"12344"}]}')}`,
+        href: `/explore?left=${encodeURIComponent('{"datasource":"uid","queries":[{"query":"12344","datasource":{"uid":"uid"}}]}')}`,
         onClick: undefined,
         interpolatedParams: {
           query: {
@@ -95,7 +95,7 @@ describe('mapInternalLinkToExplore', () => {
       expect.objectContaining({
         title: 'dsName',
         href: `/explore?left=${encodeURIComponent(
-          '{"datasource":"uid","queries":[{"query":"12344"}],"panelsState":{"trace":{"spanId":"abcdef"}}}'
+          '{"datasource":"uid","queries":[{"query":"12344","datasource":{"uid":"uid"}}],"panelsState":{"trace":{"spanId":"abcdef"}}}'
         )}`,
         onClick: undefined,
       })
@@ -144,6 +144,7 @@ describe('mapInternalLinkToExplore', () => {
       nested: { something: 'val1' },
       num: 1,
       arr: ['val1', 'non var'],
+      datasource: { uid: 'uid' },
     };
 
     expect(decodeURIComponent(link.href)).toEqual(
@@ -158,9 +159,6 @@ describe('mapInternalLinkToExplore', () => {
     );
 
     expect(link.interpolatedParams?.query).toEqual({
-      datasource: {
-        uid: 'uid',
-      },
       ...query,
     });
 
