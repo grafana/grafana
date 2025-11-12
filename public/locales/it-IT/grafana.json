@@ -5997,7 +5997,7 @@
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Questa dashboard è fornita da un plugin. Qualsiasi modifica apportata verrà sovrascritta quando il plugin viene aggiornato. Per mantenere le modifiche in modo permanente, utilizza <strong>Salva con nome</strong> per creare una copia personalizzata.",
         "title-failed-to-save-dashboard": "Impossibile salvare la dashboard",
-        "title-plugin-dashboard": "Dashboard del componente aggiuntivo - le modifiche possono andare perse",
+        "title-plugin-dashboard": "Dashboard del plugin - le modifiche potrebbero andare perse",
         "title-someone-else-has-updated-this-dashboard": "Qualcun altro ha aggiornato questa dashboard",
         "would-still-dashboard": "Desideri comunque salvare questa dashboard?"
       },
