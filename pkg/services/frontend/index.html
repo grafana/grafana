@@ -200,6 +200,12 @@
           });
         };
 
+        window.__grafana_custom_domain_failed = function(err) {
+          console.error('Failed to load Grafana due to custom domain issue', err);
+          document.querySelector('.fs-variant-loader').classList.add('fs-hidden');
+          document.querySelector('.fs-custom-domain-error').classList.remove('fs-hidden');
+        }
+
         window.onload = function() {
           if (window.__grafana_app_bundle_loaded) {
             return;
