@@ -2,17 +2,13 @@
 
 package v0alpha1
 
-import (
-	time "time"
-)
-
 // +k8s:openapi-gen=true
 type Info struct {
 	// Required fields
 	// +listType=set
 	Keywords []string          `json:"keywords"`
 	Logos    V0alpha1InfoLogos `json:"logos"`
-	Updated  time.Time         `json:"updated"`
+	Updated  string            `json:"updated"`
 	Version  string            `json:"version"`
 	// Optional fields
 	Author      *V0alpha1InfoAuthor `json:"author,omitempty"`

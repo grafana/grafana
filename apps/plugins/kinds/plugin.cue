@@ -1,35 +1,30 @@
 package plugins
 
-import (
-	"time"
-)
-
 pluginV0Alpha1: {
-	kind: "Plugin"
+	kind:   "Plugin"
 	plural: "plugins"
-	scope: "Namespaced"
+	scope:  "Namespaced"
 	schema: {
 		spec: {
-			id:       string
-			version:  string
-			url?: string
-			class: "core" | "external" | "cdn"
+			id:      string
+			version: string
+			url?:    string
+			class:   "core" | "external" | "cdn"
 		}
 	}
 	routes: {
 		"/meta": {
 			"GET": {
 				request: {}
-				response:  #JSONData,
+				response: #JSONData
 				responseMetadata: {
-					typeMeta: false
+					typeMeta:   false
 					objectMeta: false
 				}
 			}
 		}
 	}
 }
-
 
 // JSON configuration schema for Grafana plugins
 // Converted from: https://github.com/grafana/grafana/blob/main/docs/sources/developers/plugins/plugin.schema.json
@@ -50,31 +45,31 @@ pluginV0Alpha1: {
 	dependencies: #Dependencies
 
 	// Optional fields
-	alerting?: bool
-	annotations?: bool
-	autoEnabled?: bool
-	backend?: bool
-	buildMode?: string
-	builtIn?: bool
-	category?: "tsdb" | "logging" | "cloud" | "tracing" | "profiling" | "sql" | "enterprise" | "iot" | "other"
+	alerting?:           bool
+	annotations?:        bool
+	autoEnabled?:        bool
+	backend?:            bool
+	buildMode?:          string
+	builtIn?:            bool
+	category?:           "tsdb" | "logging" | "cloud" | "tracing" | "profiling" | "sql" | "enterprise" | "iot" | "other"
 	enterpriseFeatures?: #EnterpriseFeatures
-	executable?: string
-	hideFromList?: bool
+	executable?:         string
+	hideFromList?:       bool
 	// +listType=atomic
 	includes?: [...#Include]
-	logs?: bool
-	metrics?: bool
+	logs?:                      bool
+	metrics?:                   bool
 	multiValueFilterOperators?: bool
-	pascalName?: string
-	preload?: bool
-	queryOptions?: #QueryOptions
+	pascalName?:                string
+	preload?:                   bool
+	queryOptions?:              #QueryOptions
 	// +listType=atomic
 	routes?: [...#Route]
 	skipDataQuery?: bool
-	state?: "alpha" | "beta"
-	streaming?: bool
-	tracing?: bool
-	iam?: #IAM
+	state?:         "alpha" | "beta"
+	streaming?:     bool
+	tracing?:       bool
+	iam?:           #IAM
 	// +listType=atomic
 	roles?: [...#Role]
 	extensions?: #Extensions
@@ -88,19 +83,19 @@ pluginV0Alpha1: {
 		small: string
 		large: string
 	}
-	updated: string & time.Time
+	updated: string
 	version: string
 	// Optional fields
 	author?: {
-		name?: string
+		name?:  string
 		email?: string
-		url?: string
+		url?:   string
 	}
 	description?: string
 	// +listType=atomic
 	links?: [...{
 		name?: string
-		url?: string
+		url?:  string
 	}]
 	// +listType=atomic
 	screenshots?: [...{
@@ -118,7 +113,7 @@ pluginV0Alpha1: {
 	// +listType=set
 	// +listMapKey=id
 	plugins?: [...{
-		id: string
+		id:   string
 		type: "app" | "datasource" | "panel"
 		name: string
 	}]
@@ -135,31 +130,31 @@ pluginV0Alpha1: {
 }
 
 #Include: {
-	uid?: string
-	type?: "dashboard" | "page" | "panel" | "datasource"
-	name?: string
-	component?: string
-	role?: "Admin" | "Editor" | "Viewer"
-	action?: string
-	path?: string
-	addToNav?: bool
+	uid?:        string
+	type?:       "dashboard" | "page" | "panel" | "datasource"
+	name?:       string
+	component?:  string
+	role?:       "Admin" | "Editor" | "Viewer"
+	action?:     string
+	path?:       string
+	addToNav?:   bool
 	defaultNav?: bool
-	icon?: string
+	icon?:       string
 }
 
 #QueryOptions: {
 	maxDataPoints?: bool
-	minInterval?: bool
-	cacheTimeout?: bool
+	minInterval?:   bool
+	cacheTimeout?:  bool
 }
 
 #Route: {
-	path?: string
-	method?: string
-	url?: string
+	path?:        string
+	method?:      string
+	url?:         string
 	reqSignedIn?: bool
-	reqRole?: string
-	reqAction?: string
+	reqRole?:     string
+	reqAction?:   string
 	// +listType=atomic
 	headers?: [...string]
 	body?: [string]: _
@@ -177,7 +172,7 @@ pluginV0Alpha1: {
 	}
 	// +listType=atomic
 	urlParams?: [...{
-		name?: string
+		name?:    string
 		content?: string
 	}]
 }
@@ -186,18 +181,18 @@ pluginV0Alpha1: {
 	// +listType=atomic
 	permissions?: [...{
 		action?: string
-		scope?: string
+		scope?:  string
 	}]
 }
 
 #Role: {
 	role?: {
-		name?: string
+		name?:        string
 		description?: string
 		// +listType=atomic
 		permissions?: [...{
 			action?: string
-			scope?: string
+			scope?:  string
 		}]
 	}
 	// +listType=set
@@ -209,28 +204,28 @@ pluginV0Alpha1: {
 	addedComponents?: [...{
 		// +listType=set
 		targets: [...string]
-		title: string
+		title:        string
 		description?: string
 	}]
 	// +listType=atomic
 	addedLinks?: [...{
 		// +listType=set
 		targets: [...string]
-		title: string
+		title:        string
 		description?: string
 	}]
 	// +listType=set
 	// +listMapKey=id
 	exposedComponents?: [...{
-		id: string
-		title?: string
+		id:           string
+		title?:       string
 		description?: string
 	}]
 	// +listType=set
 	// +listMapKey=id
 	extensionPoints?: [...{
-		id: string
-		title?: string
+		id:           string
+		title?:       string
 		description?: string
 	}]
 }
