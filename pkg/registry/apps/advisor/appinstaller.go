@@ -8,6 +8,8 @@ import (
 	advisorapp "github.com/grafana/grafana/apps/advisor/pkg/app"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/client-go/rest"
 )
@@ -26,17 +28,26 @@ func (a *AdvisorAppInstaller) GetAuthorizer() authorizer.Authorizer {
 	return advisorapp.GetAuthorizer()
 }
 
-func ProvideAppInstaller() (*AdvisorAppInstaller, error) {
+func ProvideAppInstaller(
+	checkRegistry checkregistry.CheckService,
+	cfg *setting.Cfg,
+	orgService org.Service,
+) (*AdvisorAppInstaller, error) {
 	provider := simple.NewAppProvider(advisorapi.LocalManifest(), nil, advisorapp.New)
-	specificConfig := checkregistry.AdvisorAppConfig{}
-	appConfig := app.Config{
+	pluginConfig := cfg.PluginSettings["grafana-advisor-app"]
+	specificConfig := checkregistry.AdvisorAppConfig{
+		CheckRegistry: checkRegistry,
+		PluginConfig:  pluginConfig,
+		StackID:       cfg.StackID,
+		OrgService:    orgService,
+	}
+	appCfg := app.Config{
 		KubeConfig:     rest.Config{},
 		ManifestData:   *advisorapi.LocalManifest().ManifestData,
 		SpecificConfig: specificConfig,
 	}
-
 	installer := &AdvisorAppInstaller{}
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, advisorapi.NewGoTypeAssociator())
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appCfg, advisorapi.NewGoTypeAssociator())
 	if err != nil {
 		return nil, err
 	}

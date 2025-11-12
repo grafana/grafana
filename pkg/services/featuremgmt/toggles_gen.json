@@ -1813,7 +1813,8 @@
       "metadata": {
         "name": "grafanaAdvisorAppInstaller",
         "resourceVersion": "1762790554324",
-        "creationTimestamp": "2025-11-10T16:02:34Z"
+        "creationTimestamp": "2025-11-10T16:02:34Z",
+        "deletionTimestamp": "2025-11-12T15:59:15Z"
       },
       "spec": {
         "description": "Enables Advisor app installer",
