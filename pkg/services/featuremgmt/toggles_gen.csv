@@ -53,7 +53,6 @@ lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,false,false,
 externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
 enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 disableClassicHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
-formatString,GA,@grafana/datapro,false,false,true
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,GA,@grafana/dashboards-squad,false,false,true

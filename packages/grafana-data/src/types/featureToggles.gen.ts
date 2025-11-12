@@ -251,11 +251,6 @@ export interface FeatureToggles {
   */
   disableClassicHTTPHistogram?: boolean;
   /**
-  * Enable format string transformer
-  * @default true
-  */
-  formatString?: boolean;
-  /**
   * Routes snapshot requests from /api to the /apis endpoint
   */
   kubernetesSnapshots?: boolean;

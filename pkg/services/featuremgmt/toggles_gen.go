@@ -223,10 +223,6 @@ const (
 	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
 	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
 
-	// FlagFormatString
-	// Enable format string transformer
-	FlagFormatString = "formatString"
-
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"

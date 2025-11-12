@@ -65,7 +65,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
     getJoinByLabelsTransformRegistryItem(),
     getRegressionTransformerRegistryItem(),
     getPartitionByValuesTransformRegistryItem(),
-    ...(config.featureToggles.formatString ? [getFormatStringTransformerRegistryItem()] : []),
+    getFormatStringTransformerRegistryItem(),
     ...(config.featureToggles.groupToNestedTableTransformation ? [getGroupToNestedTableTransformRegistryItem()] : []),
     getFormatTimeTransformerRegistryItem(),
     getTimeSeriesTableTransformRegistryItem(),

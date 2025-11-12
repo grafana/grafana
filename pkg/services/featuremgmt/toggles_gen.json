@@ -1756,6 +1756,7 @@
         "name": "formatString",
         "resourceVersion": "1762442825881",
         "creationTimestamp": "2023-10-13T18:17:12Z",
+        "deletionTimestamp": "2025-11-12T00:00:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
         }
