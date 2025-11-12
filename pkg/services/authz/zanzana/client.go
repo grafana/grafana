@@ -16,4 +16,5 @@ type Client interface {
 	BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error)
 
 	Mutate(ctx context.Context, req *authzextv1.MutateRequest) error
+	Query(ctx context.Context, req *authzextv1.QueryRequest) (*authzextv1.QueryResponse, error)
 }

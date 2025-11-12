@@ -118,6 +118,7 @@ func Convert_dashboard_AnnotationPermission_To_v2alpha1_AnnotationPermission(in 
 func autoConvert_v2alpha1_DashboardAccess_To_dashboard_DashboardAccess(in *DashboardAccess, out *dashboard.DashboardAccess, s conversion.Scope) error {
 	out.Slug = in.Slug
 	out.Url = in.Url
+	out.IsPublic = in.IsPublic
 	out.CanSave = in.CanSave
 	out.CanEdit = in.CanEdit
 	out.CanAdmin = in.CanAdmin
@@ -135,6 +136,7 @@ func Convert_v2alpha1_DashboardAccess_To_dashboard_DashboardAccess(in *Dashboard
 func autoConvert_dashboard_DashboardAccess_To_v2alpha1_DashboardAccess(in *dashboard.DashboardAccess, out *DashboardAccess, s conversion.Scope) error {
 	out.Slug = in.Slug
 	out.Url = in.Url
+	out.IsPublic = in.IsPublic
 	out.CanSave = in.CanSave
 	out.CanEdit = in.CanEdit
 	out.CanAdmin = in.CanAdmin

@@ -6,14 +6,19 @@ import { hasVisibleLegendSeries, PlotLegend, UPlotConfigBuilder } from '@grafana
 
 import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
 
-import { preparePlotConfigBuilder } from './utils';
+import { getXAxisConfig, preparePlotConfigBuilder } from './utils';
 
-const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'theme'];
+const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'annotationLanes', 'theme'];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 
 export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
-  prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
+  prepConfig = (
+    alignedFrame: DataFrame,
+    allFrames: DataFrame[],
+    getTimeRange: () => TimeRange,
+    annotationLanes?: number
+  ) => {
     const { theme, timeZone, options, renderers, tweakAxis, tweakScale } = this.props;
 
     return preparePlotConfigBuilder({
@@ -27,6 +32,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
       tweakAxis,
       hoverProximity: options?.tooltip?.hoverProximity,
       orientation: options?.orientation,
+      xAxisConfig: getXAxisConfig(annotationLanes),
     });
   };
 

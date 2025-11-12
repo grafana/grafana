@@ -115,7 +115,7 @@ export class CSVReader {
                   if (!fields[j].config) {
                     fields[j].config = {};
                   }
-                  const disp = fields[j].config as any; // any lets name lookup
+                  const disp: any = fields[j].config; // any lets name lookup
                   disp[k] = j === 0 ? v : line[j];
                 }
               }

@@ -434,6 +434,7 @@ module.exports = [
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
       'public/app/plugins/datasource/mysql/**/*.{ts,tsx}',
+      'public/app/plugins/datasource/opentsdb/**/*.{ts,tsx}',
       'public/app/plugins/datasource/parca/**/*.{ts,tsx}',
       'public/app/plugins/datasource/tempo/**/*.{ts,tsx}',
       'public/app/plugins/datasource/zipkin/**/*.{ts,tsx}',
@@ -599,4 +600,17 @@ module.exports = [
       ],
     },
   },
+
+  // {
+  //   name: 'grafana/plugin-external-import-paths',
+  //   files: [
+  //     'public/app/plugins/panel/histogram/**/*.{ts,tsx}',
+  //   ],
+  //   plugins: {
+  //     '@grafana': grafanaPlugin,
+  //   },
+  //   rules: {
+  //     '@grafana/no-plugin-external-import-paths': 'error',
+  //   },
+  // },
 ];

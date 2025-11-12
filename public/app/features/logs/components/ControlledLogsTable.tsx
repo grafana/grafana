@@ -8,7 +8,8 @@ import { LogsTableWrap } from '../../explore/Logs/LogsTableWrap';
 
 import { LogRowsComponentProps } from './ControlledLogRows';
 import { useLogListContext } from './panel/LogListContext';
-import { CONTROLS_WIDTH, CONTROLS_WIDTH_EXPANDED, LogListControls } from './panel/LogListControls';
+import { CONTROLS_WIDTH_EXPANDED, LogListControls } from './panel/LogListControls';
+import { LOG_LIST_CONTROLS_WIDTH } from './panel/virtualization';
 
 export const ControlledLogsTable = ({
   loading,
@@ -38,7 +39,7 @@ export const ControlledLogsTable = ({
   }
 
   const tableWidthExpandedControls = width - (CONTROLS_WIDTH_EXPANDED + 12);
-  const tableWidth = width - (CONTROLS_WIDTH + 12);
+  const tableWidth = width - (LOG_LIST_CONTROLS_WIDTH + 12);
 
   return (
     <div ref={ref} className={styles.logRowsContainer}>

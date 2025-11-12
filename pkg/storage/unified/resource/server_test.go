@@ -4,20 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	badger "github.com/dgraph-io/badger/v4"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gocloud.dev/blob/fileblob"
-	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	authlib "github.com/grafana/authlib/types"
@@ -41,20 +38,19 @@ func TestSimpleServer(t *testing.T) {
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), testUserA)
 
-	bucket := memblob.OpenBucket(nil)
-	if false {
-		tmp, err := os.MkdirTemp("", "xxx-*")
+	// Create in-memory BadgerDB for testing
+	db, err := badger.Open(badger.DefaultOptions("").
+		WithInMemory(true).
+		WithLogger(nil))
+	require.NoError(t, err)
+	defer func() {
+		err := db.Close()
 		require.NoError(t, err)
+	}()
 
-		bucket, err = fileblob.OpenBucket(tmp, &fileblob.Options{
-			CreateDir: true,
-			Metadata:  fileblob.MetadataDontWrite, // skip
-		})
-		require.NoError(t, err)
-		fmt.Printf("ROOT: %s\n\n", tmp)
-	}
-	store, err := NewCDKBackend(ctx, CDKBackendOptions{
-		Bucket: bucket,
+	kv := NewBadgerKV(db)
+	store, err := NewKVStorageBackend(KVBackendOptions{
+		KvStore: kv,
 	})
 	require.NoError(t, err)
 
@@ -591,10 +587,13 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 }
 
 func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
-	s := &server{artificialSuccessfulWriteDelay: 1 * time.Millisecond}
+	s := &server{
+		artificialSuccessfulWriteDelay: 1 * time.Millisecond,
+		log:                            slog.Default(),
+	}
 
 	check := func(t *testing.T, expectedSleep bool, res responseWithErrorResult, err error) {
-		slept := s.sleepAfterSuccessfulWriteOperation(res, err)
+		slept := s.sleepAfterSuccessfulWriteOperation("test", &resourcepb.ResourceKey{}, res, err)
 		require.Equal(t, expectedSleep, slept)
 	}
 

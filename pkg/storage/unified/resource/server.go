@@ -14,8 +14,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/trace/noop"
+	"go.opentelemetry.io/otel"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -29,6 +28,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
 
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
@@ -210,9 +211,6 @@ type SearchOptions struct {
 }
 
 type ResourceServerOptions struct {
-	// OTel tracer
-	Tracer trace.Tracer
-
 	// Real storage backend
 	Backend StorageBackend
 
@@ -259,10 +257,6 @@ type ResourceServerOptions struct {
 }
 
 func NewResourceServer(opts ResourceServerOptions) (*server, error) {
-	if opts.Tracer == nil {
-		opts.Tracer = noop.NewTracerProvider().Tracer("resource-server")
-	}
-
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing Backend implementation")
 	}
@@ -314,8 +308,8 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 			}
 
 			blobstore, err = NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
-				Tracer: opts.Tracer,
-				Bucket: NewInstrumentedBucket(bucket, opts.Reg, opts.Tracer),
+				Tracer: tracer,
+				Bucket: NewInstrumentedBucket(bucket, opts.Reg, tracer),
 			})
 			if err != nil {
 				return nil, err
@@ -331,7 +325,6 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
-		tracer:           opts.Tracer,
 		log:              logger,
 		backend:          opts.Backend,
 		blob:             blobstore,
@@ -355,7 +348,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.OwnsIndexFn)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
 		if err != nil {
 			return nil, err
 		}
@@ -373,7 +366,6 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 var _ ResourceServer = &server{}
 
 type server struct {
-	tracer         trace.Tracer
 	log            *slog.Logger
 	backend        StorageBackend
 	blob           BlobSupport
@@ -651,7 +643,7 @@ func (s *server) checkFolderMovePermissions(ctx context.Context, user claims.Aut
 }
 
 func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
+	ctx, span := tracer.Start(ctx, "resource.server.Create")
 	defer span.End()
 
 	if r := verifyRequestKey(req.Key); r != nil {
@@ -681,7 +673,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation(res, err)
+	s.sleepAfterSuccessfulWriteOperation("Create", req.Key, res, err)
 
 	return res, err
 }
@@ -714,7 +706,7 @@ type responseWithErrorResult interface {
 // Returns boolean indicating whether the sleep was performed or not (used in testing).
 //
 // This sleep is performed to guarantee search-after-write consistency, when rate-limiting updates to search index.
-func (s *server) sleepAfterSuccessfulWriteOperation(res responseWithErrorResult, err error) bool {
+func (s *server) sleepAfterSuccessfulWriteOperation(operation string, key *resourcepb.ResourceKey, res responseWithErrorResult, err error) bool {
 	if s.artificialSuccessfulWriteDelay <= 0 {
 		return false
 	}
@@ -733,12 +725,20 @@ func (s *server) sleepAfterSuccessfulWriteOperation(res responseWithErrorResult,
 		}
 	}
 
+	s.log.Debug("sleeping after successful write operation",
+		"operation", operation,
+		"delay", s.artificialSuccessfulWriteDelay,
+		"group", key.Group,
+		"resource", key.Resource,
+		"namespace", key.Namespace,
+		"name", key.Name)
+
 	time.Sleep(s.artificialSuccessfulWriteDelay)
 	return true
 }
 
 func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "storage_server.Update")
+	ctx, span := tracer.Start(ctx, "resource.server.Update")
 	defer span.End()
 
 	rsp := &resourcepb.UpdateResponse{}
@@ -768,7 +768,7 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation(res, err)
+	s.sleepAfterSuccessfulWriteOperation("Update", req.Key, res, err)
 
 	return res, err
 }
@@ -812,7 +812,7 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 }
 
 func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*resourcepb.DeleteResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "storage_server.Delete")
+	ctx, span := tracer.Start(ctx, "resource.server.Delete")
 	defer span.End()
 
 	rsp := &resourcepb.DeleteResponse{}
@@ -842,7 +842,7 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation(res, err)
+	s.sleepAfterSuccessfulWriteOperation("Delete", req.Key, res, err)
 
 	return res, err
 }
@@ -983,7 +983,7 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 }
 
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "storage_server.List")
+	ctx, span := tracer.Start(ctx, "resource.server.List")
 	defer span.End()
 
 	// The history + trash queries do not yet support additional filters
@@ -1072,7 +1072,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 
 			pageBytes += len(item.Value)
 			rsp.Items = append(rsp.Items, item)
-			if len(rsp.Items) >= int(req.Limit) || pageBytes >= maxPageBytes {
+			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= maxPageBytes {
 				t := iter.ContinueToken()
 				if iter.Next() {
 					rsp.NextPageToken = t

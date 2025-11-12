@@ -1,4 +1,3 @@
-import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { KeyValue } from '@grafana/data';
@@ -6,6 +5,8 @@ import { t, Trans } from '@grafana/i18n';
 
 import { FormField } from '../FormField/FormField';
 import { Icon } from '../Icon/Icon';
+import { Box } from '../Layout/Box/Box';
+import { Stack } from '../Layout/Stack/Stack';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { CertificationKey } from './CertificationKey';
@@ -53,29 +54,24 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
   const privateKeyBeginsWith = '-----BEGIN RSA PRIVATE KEY-----';
 
   return (
-    <div className="gf-form-group">
-      <div
-        className={cx(
-          'gf-form',
-          css({
-            alignItems: 'baseline',
-          })
-        )}
-      >
-        <h6>
-          <Trans i18nKey="grafana-ui.data-source-settings.tls-heading">TLS/SSL Auth Details</Trans>
-        </h6>
-        <Tooltip
-          placement="right-end"
-          content={t(
-            'grafana-ui.data-source-settings.tls-tooltip',
-            'TLS/SSL Certs are encrypted and stored in the Grafana database.'
-          )}
-          theme="info"
-        >
-          <Icon name="info-circle" size="xs" style={{ marginLeft: '10px' }} />
-        </Tooltip>
-      </div>
+    <Box marginBottom={5}>
+      <Box marginBottom={0.5} position="relative">
+        <Stack direction="row" alignItems="baseline">
+          <h6>
+            <Trans i18nKey="grafana-ui.data-source-settings.tls-heading">TLS/SSL Auth Details</Trans>
+          </h6>
+          <Tooltip
+            placement="right-end"
+            content={t(
+              'grafana-ui.data-source-settings.tls-tooltip',
+              'TLS/SSL Certs are encrypted and stored in the Grafana database.'
+            )}
+            theme="info"
+          >
+            <Icon name="info-circle" size="xs" style={{ marginLeft: '10px' }} />
+          </Tooltip>
+        </Stack>
+      </Box>
       <div>
         {dataSourceConfig.jsonData.tlsAuthWithCACert && (
           <CertificationKey
@@ -93,17 +89,19 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
 
         {dataSourceConfig.jsonData.tlsAuth && (
           <>
-            <div className="gf-form">
-              <FormField
-                label={t('grafana-ui.data-source-settings.tls-server-name-label', 'ServerName')}
-                labelWidth={7}
-                inputWidth={30}
-                // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                placeholder="domain.example.com"
-                value={hasServerName && dataSourceConfig.jsonData.serverName}
-                onChange={onServerNameLabelChange}
-              />
-            </div>
+            <Box marginBottom={0.5} position="relative">
+              <Stack direction="row" alignItems="baseline">
+                <FormField
+                  label={t('grafana-ui.data-source-settings.tls-server-name-label', 'ServerName')}
+                  labelWidth={7}
+                  inputWidth={30}
+                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                  placeholder="domain.example.com"
+                  value={hasServerName && dataSourceConfig.jsonData.serverName}
+                  onChange={onServerNameLabelChange}
+                />
+              </Stack>
+            </Box>
             <CertificationKey
               hasCert={!!hasTLSClientCert}
               label={t('grafana-ui.data-source-settings.tls-client-certification-label', 'Client Cert')}
@@ -130,6 +128,6 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
           </>
         )}
       </div>
-    </div>
+    </Box>
   );
 };
