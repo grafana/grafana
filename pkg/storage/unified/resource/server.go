@@ -220,6 +220,9 @@ type ResourceServerOptions struct {
 	// Search options
 	Search SearchOptions
 
+	// Quota service
+	QuotaService *QuotaService
+
 	// Diagnostics
 	Diagnostics resourcepb.DiagnosticsServer
 
@@ -322,12 +325,6 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 
 	logger := slog.Default().With("logger", "resource-server")
 
-	// TODO: using the default reload options for now - fix later
-	quotaSvc, err := NewQuotaService(context.Background(), ReloadOptions{})
-	if err != nil {
-		return nil, err
-	}
-
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
@@ -348,7 +345,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		reg:              opts.Reg,
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
-		quotaService:     quotaSvc,
+		quotaService:     opts.QuotaService,
 
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
@@ -361,7 +358,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		}
 	}
 
-	err = s.Init(ctx)
+	err := s.Init(ctx)
 	if err != nil {
 		s.log.Error("resource server init failed", "error", err)
 		return nil, err

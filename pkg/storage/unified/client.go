@@ -178,6 +178,11 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
+		quotaSvc, err := resource.NewQuotaService(context.Background(), reg, resource.ReloadOptions{})
+		if err != nil {
+			return nil, err
+		}
+
 		serverOptions := sql.ServerOptions{
 			DB:             db,
 			Cfg:            cfg,
@@ -189,6 +194,7 @@ func newClient(opts options.StorageOptions,
 			IndexMetrics:   indexMetrics,
 			Features:       features,
 			SecureValues:   secure,
+			QuotaService:   quotaSvc,
 		}
 
 		if cfg.QOSEnabled {

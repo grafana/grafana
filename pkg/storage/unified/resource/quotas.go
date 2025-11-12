@@ -54,7 +54,7 @@ This service loads quota overrides from a YAML file with the following yaml stru
 		folders:
 		  limit: 1500
 */
-func NewQuotaService(ctx context.Context, opts ReloadOptions) (*QuotaService, error) {
+func NewQuotaService(ctx context.Context, reg prometheus.Registerer, opts ReloadOptions) (*QuotaService, error) {
 	if opts.FilePath == "" {
 		opts.FilePath = "overrides.yaml"
 	}
@@ -76,7 +76,7 @@ func NewQuotaService(ctx context.Context, opts ReloadOptions) (*QuotaService, er
 	}
 
 	// TODO pass in prom reg
-	manager, err := runtimeconfig.New(config, "custom-quotas", prometheus.NewRegistry(), log.New())
+	manager, err := runtimeconfig.New(config, "custom-quotas", reg, log.New())
 	if err != nil {
 		return nil, err
 	}
