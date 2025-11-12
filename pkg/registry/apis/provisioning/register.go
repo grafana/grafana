@@ -778,11 +778,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// Create abandonment handlers for different job types
 			syncAbandonmentHandler := sync.NewSyncAbandonmentHandler(b.statusPatcher.Patch)
-			abandonmentRegistry := appjobs.NewAbandonmentHandlerRegistry(syncAbandonmentHandler)
 
 			leaseRenewalInterval := 30 * time.Second
-			// Create expired job cleaner
-			jobCleaner := appjobs.NewExpiredJobCleaner(b.jobs, b.jobs, leaseRenewalInterval, abandonmentRegistry)
+			// Create expired job cleaner with abandonment handlers
+			jobCleaner := appjobs.NewExpiredJobCleaner(b.jobs, b.jobs, leaseRenewalInterval, syncAbandonmentHandler)
 
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(

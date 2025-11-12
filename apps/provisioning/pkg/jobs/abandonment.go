@@ -19,27 +19,3 @@ type AbandonmentHandler interface {
 	// SupportsAction returns true if this handler supports the given job action.
 	SupportsAction(action provisioning.JobAction) bool
 }
-
-// AbandonmentHandlerRegistry manages handlers for different job types.
-type AbandonmentHandlerRegistry struct {
-	handlers []AbandonmentHandler
-}
-
-// NewAbandonmentHandlerRegistry creates a new registry with the given handlers.
-func NewAbandonmentHandlerRegistry(handlers ...AbandonmentHandler) *AbandonmentHandlerRegistry {
-	return &AbandonmentHandlerRegistry{
-		handlers: handlers,
-	}
-}
-
-// HandleAbandonment finds the appropriate handler for the job and invokes it.
-// If no handler supports the job action, this is a no-op (returns nil).
-func (r *AbandonmentHandlerRegistry) HandleAbandonment(ctx context.Context, job *provisioning.Job) error {
-	for _, handler := range r.handlers {
-		if handler.SupportsAction(job.Spec.Action) {
-			return handler.HandleAbandonment(ctx, job)
-		}
-	}
-	// No handler found - that's okay, not all job types need special abandonment handling
-	return nil
-}

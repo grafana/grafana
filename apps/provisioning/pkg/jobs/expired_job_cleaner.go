@@ -42,24 +42,24 @@ type JobCleaner interface {
 
 // ExpiredJobCleaner handles cleanup of expired/abandoned jobs.
 type ExpiredJobCleaner struct {
-	lister             JobLister
-	completer          JobCompleter
-	clock              func() time.Time
-	expiry             time.Duration
-	abandonmentHandler *AbandonmentHandlerRegistry
+	lister              JobLister
+	completer           JobCompleter
+	clock               func() time.Time
+	expiry              time.Duration
+	abandonmentHandlers []AbandonmentHandler
 }
 
 // Ensure ExpiredJobCleaner implements JobCleaner
 var _ JobCleaner = (*ExpiredJobCleaner)(nil)
 
 // NewExpiredJobCleaner creates a new expired job cleaner.
-func NewExpiredJobCleaner(lister JobLister, completer JobCompleter, expiry time.Duration, abandonmentHandler *AbandonmentHandlerRegistry) *ExpiredJobCleaner {
+func NewExpiredJobCleaner(lister JobLister, completer JobCompleter, expiry time.Duration, abandonmentHandlers ...AbandonmentHandler) *ExpiredJobCleaner {
 	return &ExpiredJobCleaner{
-		lister:             lister,
-		completer:          completer,
-		clock:              time.Now,
-		expiry:             expiry,
-		abandonmentHandler: abandonmentHandler,
+		lister:              lister,
+		completer:           completer,
+		clock:               time.Now,
+		expiry:              expiry,
+		abandonmentHandlers: abandonmentHandlers,
 	}
 }
 
@@ -106,9 +106,14 @@ func (c *ExpiredJobCleaner) Cleanup(ctx context.Context) error {
 		jobLogger.Debug("cleaned up expired job")
 
 		// Handle job-type-specific abandonment logic (e.g., update repository sync status)
-		if err := c.abandonmentHandler.HandleAbandonment(ctx, job); err != nil {
-			jobLogger.Error("failed to handle job abandonment", "error", err)
-			// Continue anyway - we still want to clean up the job
+		for _, handler := range c.abandonmentHandlers {
+			if handler.SupportsAction(job.Spec.Action) {
+				if err := handler.HandleAbandonment(ctx, job); err != nil {
+					jobLogger.Error("failed to handle job abandonment", "error", err)
+					// Continue anyway - we still want to clean up the job
+				}
+				break // Only use the first handler that supports this action
+			}
 		}
 	}
 
