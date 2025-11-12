@@ -4620,7 +4620,7 @@
       "body-plugin-dashboard": "Questa dashboard è fornita da un plugin. Qualsiasi modifica apportata verrà sovrascritta quando il plugin viene aggiornato. Per mantenere le modifiche in modo permanente, utilizza <strong>Salva con nome</strong> per creare una copia personalizzata.",
       "cancel": "Annulla",
       "overwrite": "Salva e sovrascrivi comunque",
-      "title-plugin-dashboard": "Dashboard del componente aggiuntivo - le modifiche possono andare perse"
+      "title-plugin-dashboard": "Dashboard del plugin - le modifiche potrebbero andare perse"
     },
     "controls": {
       "menu": {
