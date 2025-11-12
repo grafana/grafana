@@ -3,9 +3,7 @@ import { lastValueFrom } from 'rxjs';
 
 import {
   generatedAPI as correlationAPIv0alpha1,
-  CorrelationCorrelationType,
   Correlation as CorrelationK8s,
-  CorrelationList,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import {
   getDataSourceSrv,
@@ -145,9 +143,16 @@ export const useCorrelations = () => {
   const { backend } = useGrafana();
 
   const [getInfo, get] = useAsyncFn<(params: GetCorrelationsParams) => Promise<CorrelationsData>>(
-    (params) => {
+    async (params) => {
       if (config.featureToggles.kubernetesCorrelations) {
-        return toEnrichedCorrelationDataK8s(correlationAPIv0alpha1.endpoints.listCorrelation.select({}));
+        // the legacy version has pages , how does one accomplish this when getting a full list back?
+        const { data } = correlationAPIv0alpha1.endpoints.listCorrelation.useQuery({});
+        const enrichedCorrelations =
+          data !== undefined
+            ? data.items.map((item) => toEnrichedCorrelationDataK8s(item)).filter((i) => i !== undefined)
+            : [];
+        // todo returning bad response data, how to fix?
+        return { correlations: enrichedCorrelations, page: 0, limit: 1000, totalCount: enrichedCorrelations.length };
       } else {
         return lastValueFrom(
           backend.fetch<CorrelationsResponse>({
