@@ -100,8 +100,7 @@ func (u *SignedInUser) IsIdentityType(expected ...claims.IdentityType) bool {
 }
 
 func (u *SignedInUser) GetName() string {
-	// kubernetesAggregator feature flag which allows Cloud Apps to become available
-	// in single tenant Grafana requires that GetName() returns something and not an empty string
+	// kubernetesAggregator in single tenant Grafana requires that GetName() returns something and not an empty string
 	// the logic below ensures that something is returned
 	if u.Name != "" {
 		return u.Name
