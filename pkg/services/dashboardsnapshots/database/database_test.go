@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -123,7 +123,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 			cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 				Key:       "strangesnapshotwithuserid0",
 				DeleteKey: "adeletekey",
-				DashboardCreateCommand: dashboardsnapshot.DashboardCreateCommand{
+				DashboardCreateCommand: snapshot.DashboardCreateCommand{
 					Dashboard: &common.Unstructured{Object: map[string]any{
 						"hello": "mupp",
 					}},
@@ -202,7 +202,7 @@ func createTestSnapshot(t *testing.T, dashStore *DashboardSnapshotStore, key str
 	cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 		Key:       key,
 		DeleteKey: "delete" + key,
-		DashboardCreateCommand: dashboardsnapshot.DashboardCreateCommand{
+		DashboardCreateCommand: snapshot.DashboardCreateCommand{
 			Expires: expires,
 			Dashboard: &common.Unstructured{Object: map[string]any{
 				"hello": "mupp",

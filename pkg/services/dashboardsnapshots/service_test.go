@@ -10,9 +10,9 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -22,9 +22,9 @@ import (
 
 func TestCreateDashboardSnapshot_DashboardNotFound(t *testing.T) {
 	mockService := &MockService{}
-	cfg := dashboardsnapshot.SnapshotSharingOptions{
-		SnapshotsEnabled: true,
-		ExternalEnabled:  false,
+	cfg := snapshot.SharingOptionSpec{
+		SnapshotsEnabled: ptrBool(true),
+		ExternalEnabled:  ptrBool(false),
 	}
 	testUser := &user.SignedInUser{
 		UserID: 1,
@@ -42,7 +42,7 @@ func TestCreateDashboardSnapshot_DashboardNotFound(t *testing.T) {
 	_ = json.Unmarshal(dashboardBytes, dashboard)
 
 	cmd := CreateDashboardSnapshotCommand{
-		DashboardCreateCommand: dashboardsnapshot.DashboardCreateCommand{
+		DashboardCreateCommand: snapshot.DashboardCreateCommand{
 			Dashboard: dashboard,
 			Name:      "Test Snapshot",
 		},
@@ -72,4 +72,8 @@ func TestCreateDashboardSnapshot_DashboardNotFound(t *testing.T) {
 	err := json.Unmarshal(recorder.Body.Bytes(), &response)
 	require.NoError(t, err)
 	assert.Equal(t, "Dashboard not found", response["message"])
+}
+
+func ptrBool(b bool) *bool {
+	return &b
 }
