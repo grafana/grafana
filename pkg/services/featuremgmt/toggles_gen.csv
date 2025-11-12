@@ -110,7 +110,6 @@ useMultipleScopeNodesEndpoint,experimental,@grafana/grafana-operator-experience-
 logQLScope,privatePreview,@grafana/observability-logs,false,false,false
 sqlExpressions,preview,@grafana/grafana-datasources-core-services,false,false,false
 sqlExpressionsColumnAutoComplete,experimental,@grafana/datapro,false,false,true
-groupToNestedTableTransformation,GA,@grafana/datapro,false,false,true
 newPDFRendering,GA,@grafana/grafana-operator-experience-squad,false,false,false
 tlsMemcached,GA,@grafana/grafana-operator-experience-squad,false,false,false
 kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false

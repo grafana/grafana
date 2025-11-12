@@ -495,11 +495,6 @@ export interface FeatureToggles {
   */
   sqlExpressionsColumnAutoComplete?: boolean;
   /**
-  * Enables the group to nested table transformation
-  * @default true
-  */
-  groupToNestedTableTransformation?: boolean;
-  /**
   * New implementation for the dashboard-to-PDF rendering
   * @default true
   */

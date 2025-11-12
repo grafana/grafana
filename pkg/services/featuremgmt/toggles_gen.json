@@ -1931,6 +1931,7 @@
         "name": "groupToNestedTableTransformation",
         "resourceVersion": "1762442825881",
         "creationTimestamp": "2024-02-07T14:28:26Z",
+        "deletionTimestamp": "2025-11-12T14:33:44Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
         }
