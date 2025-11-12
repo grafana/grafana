@@ -47,4 +47,11 @@ Designing and configuring an alert management set up that works takes time. Here
 - Continually tune your alert rules to review effectiveness. Remove alert rules to avoid duplication or ineffective alerts.
 - Continually review your thresholds and evaluation rules.
 
+**How should you configure recording rules?**
+
+- Use frequent evaluation intervals. It is recommended to set a frequent evaluation interval for recording rules. Long intervals, such as an hour, can cause the recorded metric to be stale and lead to misaligned alert rule evaluations, especially when combined with a long pending period.
+- Understand query types. Grafana Alerting uses both **Instant** and **Range** queries. Instant queries fetch a single data point, while Range queries fetch a series of data points over time. When using a Range query in an alert condition, you must use a Reduce expression to aggregate the series into a single value.
+- Align alert evaluation with recording frequency. The evaluation interval of an alert rule that depends on a recorded metric should be aligned with the recording rule's interval. If a recording rule runs every 3 minutes, the alert rule should also be evaluated at a similar frequency to ensure it acts on fresh data.
+- Use `_over_time` functions for instant queries. Since all alert rules are ultimately executed as an instant query, you can use functions like `max_over_time(my_metric[1h])` as an instant query. This allows you to get an aggregated value over a period without using a range query and a reduce expression.
+
 {{< /shared >}}

@@ -764,6 +764,22 @@
     },
     {
       "metadata": {
+        "name": "awsDatasourcesHttpProxy",
+        "resourceVersion": "1762964349996",
+        "creationTimestamp": "2025-11-12T16:15:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 16:19:09.996919 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables http proxy settings for aws datasources",
+        "stage": "experimental",
+        "codeowner": "@grafana/aws-datasources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "awsDatasourcesTempCredentials",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-07-06T15:06:11Z"
@@ -2878,6 +2894,20 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "newVizSuggestions",
+        "resourceVersion": "1762456851857",
+        "creationTimestamp": "2025-11-06T19:20:51Z"
+      },
+      "spec": {
+        "description": "Enable new visualization suggestions",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {

@@ -2056,6 +2056,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "newVizSuggestions",
+			Description:  "Enable new visualization suggestions",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "preventPanelChromeOverflow",
 			Description:  "Restrict PanelChrome contents with overflow: hidden;",
 			Stage:        FeatureStagePublicPreview,
@@ -2124,6 +2132,13 @@ var (
 			Description: "Enables app platform API for annotations",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaBackendServicesSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "awsDatasourcesHttpProxy",
+			Description: "Enables http proxy settings for aws datasources",
+			Stage:       FeatureStageExperimental,
+			Owner:       awsDatasourcesSquad,
 			Expression:  "false",
 		},
 	}

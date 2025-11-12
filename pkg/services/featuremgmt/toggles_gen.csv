@@ -264,6 +264,7 @@ cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,f
 cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false
 pluginInstallAPISync,experimental,@grafana/plugins-platform-backend,false,false,false
 newGauge,experimental,@grafana/dataviz-squad,false,false,true
+newVizSuggestions,preview,@grafana/dataviz-squad,false,false,true
 preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 jaegerEnableGrpcEndpoint,experimental,@grafana/oss-big-tent,false,false,false
 pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
@@ -273,3 +274,4 @@ panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
 dashboardTemplates,experimental,@grafana/sharing-squad,false,false,false
 grafanaAdvisorAppInstaller,experimental,@grafana/plugins-platform-backend,false,false,false
 kubernetesAnnotations,experimental,@grafana/grafana-backend-services-squad,false,false,false
+awsDatasourcesHttpProxy,experimental,@grafana/aws-datasources,false,false,false

@@ -1066,6 +1066,10 @@ const (
 	// Enable new gauge visualization
 	FlagNewGauge = "newGauge"
 
+	// FlagNewVizSuggestions
+	// Enable new visualization suggestions
+	FlagNewVizSuggestions = "newVizSuggestions"
+
 	// FlagPreventPanelChromeOverflow
 	// Restrict PanelChrome contents with overflow: hidden;
 	FlagPreventPanelChromeOverflow = "preventPanelChromeOverflow"
@@ -1101,4 +1105,8 @@ const (
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations
 	FlagKubernetesAnnotations = "kubernetesAnnotations"
+
+	// FlagAwsDatasourcesHttpProxy
+	// Enables http proxy settings for aws datasources
+	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
 )

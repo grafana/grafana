@@ -287,6 +287,16 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionAllow, "", nil
 			}
 
+			// Check if any extra authorizer has a decision.
+			// Since the move to access checker when useExclusivelyAccessCheckerForAuthz=true, extra authorizers
+			// need to run first because access checker is not aware of the extras logic
+			for _, extra := range b.extras {
+				decision, reason, err := extra.Authorize(ctx, a)
+				if decision != authorizer.DecisionNoOpinion {
+					return decision, reason, err
+				}
+			}
+
 			info, ok := authlib.AuthInfoFrom(ctx)
 			// when running as standalone API server, the identity type may not always match TypeAccessPolicy
 			// so we allow it to use the access checker if there is any auth info available
@@ -310,6 +320,12 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 				return authorizer.DecisionAllow, "", nil
 			}
+
+			id, err := identity.GetRequester(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "failed to find requester", err
+			}
+
 			// Different routes may need different permissions.
 			// * Reading and modifying a repository's configuration requires administrator privileges.
 			// * Reading a repository's limited configuration (/stats & /settings) requires viewer privileges.
@@ -321,19 +337,6 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 			// * Migrating a repository requires administrator privileges.
 			// * Testing a repository configuration requires administrator privileges.
 			// * Viewing a repository's history requires editor privileges.
-
-			id, err := identity.GetRequester(ctx)
-			if err != nil {
-				return authorizer.DecisionDeny, "failed to find requester", err
-			}
-
-			// Check if any extra authorizer has a decision.
-			for _, extra := range b.extras {
-				decision, reason, err := extra.Authorize(ctx, a)
-				if decision != authorizer.DecisionNoOpinion {
-					return decision, reason, err
-				}
-			}
 
 			switch a.GetResource() {
 			case provisioning.RepositoryResourceInfo.GetName():
