@@ -605,13 +605,6 @@ var (
 			Owner:           identityAccessTeam,
 		},
 		{
-			Name:         "extractFieldsNameDeduplication",
-			Description:  "Make sure extracted field names are unique in the dataframe",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaDataProSquad,
-		},
-		{
 			Name:         "dashboardSceneForViewers",
 			Description:  "Enables dashboard rendering using Scenes for viewer roles",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1958,14 +1951,6 @@ var (
 			HideFromDocs:      true,
 			FrontendOnly:      true,
 			Expression:        "false",
-		},
-		{
-			Name:         "adhocFiltersInTooltips",
-			Description:  "Enable adhoc filter buttons in visualization tooltips",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaDataProSquad,
-			FrontendOnly: true,
-			Expression:   "true",
 		},
 		{
 			Name:         "favoriteDatasources",

@@ -331,10 +331,6 @@ const (
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
-	// FlagExtractFieldsNameDeduplication
-	// Make sure extracted field names are unique in the dataframe
-	FlagExtractFieldsNameDeduplication = "extractFieldsNameDeduplication"
-
 	// FlagDashboardSceneForViewers
 	// Enables dashboard rendering using Scenes for viewer roles
 	FlagDashboardSceneForViewers = "dashboardSceneForViewers"
@@ -1017,10 +1013,6 @@ const (
 	// FlagRestrictedPluginApis
 	// Enables sharing a list of APIs with a list of plugins
 	FlagRestrictedPluginApis = "restrictedPluginApis"
-
-	// FlagAdhocFiltersInTooltips
-	// Enable adhoc filter buttons in visualization tooltips
-	FlagAdhocFiltersInTooltips = "adhocFiltersInTooltips"
 
 	// FlagFavoriteDatasources
 	// Enable favorite datasources

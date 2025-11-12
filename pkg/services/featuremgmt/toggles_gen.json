@@ -25,6 +25,7 @@
         "name": "adhocFiltersInTooltips",
         "resourceVersion": "1756814786992",
         "creationTimestamp": "2025-07-29T17:53:43Z",
+        "deletionTimestamp": "2025-11-11T09:49:48Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-09-02 12:06:26.992384 +0000 UTC"
         }
@@ -1622,6 +1623,7 @@
         "name": "extractFieldsNameDeduplication",
         "resourceVersion": "1762442825881",
         "creationTimestamp": "2023-11-02T15:47:42Z",
+        "deletionTimestamp": "2025-11-11T16:00:57Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
         }

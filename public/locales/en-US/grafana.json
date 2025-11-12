@@ -5661,6 +5661,61 @@
       "validation-required": "Need a dashboard JSON model"
     }
   },
+  "dashboard-library": {
+    "browse-grafana-com": "Browse Grafana.com",
+    "browse-plugins": "Browse plugins",
+    "card": {
+      "datasource-provided-badge": "Data source provided",
+      "details-tooltip": "Details",
+      "no-preview": "No preview available",
+      "use-dashboard-button": "Use dashboard",
+      "use-template-button": "Use template"
+    },
+    "community-empty-title": "No community dashboards found",
+    "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
+    "community-error": "Failed to load community dashboards. Please try again.",
+    "community-error-title": "Error loading community dashboards",
+    "community-mapping-form": {
+      "auto-mapped_one": "{{count}} datasources were automatically configured:",
+      "auto-mapped_other": "{{count}} datasources were automatically configured:",
+      "back": "Back to dashboards",
+      "constants-title": "Dashboard Variables",
+      "datasources-title": "Datasource Configuration",
+      "description": "This dashboard requires datasource configuration. Select datasources for each input below.",
+      "preview": "Preview dashboard"
+    },
+    "community-mapping-select-datasource": "Select a datasource",
+    "community-search-placeholder": "Search community dashboards...",
+    "community-search-placeholder-with-datasource": "Search {{datasourceType}} community dashboards...",
+    "dashboard-card": {
+      "details": {
+        "datasource": "Datasource",
+        "dependencies": "Dependencies",
+        "id": "ID",
+        "last-update": "Last Update",
+        "published-by": "Published By",
+        "view-on-grafana-com": "View on Grafana.com"
+      }
+    },
+    "modal": {
+      "description": "Browse and select from data-source provided or community dashboards",
+      "tab-community": "Community",
+      "tab-datasource": "Data-source provided",
+      "title": "Suggested dashboards",
+      "title-mapping-with-name": "Configure datasources for {{dashboardName}}",
+      "title-with-datasource": "Suggested dashboards for your {{datasourceType}} datasource"
+    },
+    "no-community-dashboards-datasource": "Try a different search term or browse dashboards for different datasource types on Grafana.com.",
+    "no-community-dashboards-search": "Try a different search term or browse more dashboards on Grafana.com.",
+    "no-provisioned-dashboards": "Provisioned dashboards are provided by data source plugins. You can find more plugins on Grafana.com.",
+    "provisioned-empty-title": "No provisioned dashboards found",
+    "provisioned-empty-title-with-datasource": "No {{datasourceType}} provisioned dashboards found",
+    "retry": "Retry",
+    "suggested-dashboards-subtitle": "Browse and select from data-source provided or community dashboards",
+    "suggested-dashboards-title": "Build a dashboard using suggested options for your selected data source",
+    "suggested-dashboards-title-with-datasource": "Build a dashboard using suggested options for your {{datasourceType}} data source",
+    "view-all": "View all"
+  },
   "dashboard-links": {
     "empty-state": {
       "button-title": "Add dashboard link",
@@ -11708,6 +11763,11 @@
       "path-label": "Repository Path",
       "path-required": "Repository path is required"
     },
+    "message": {
+      "show-less": "show less",
+      "show-more": "show more",
+      "truncated": "Message truncated"
+    },
     "mode-options": {
       "folder": {
         "description": "After setup, a new Grafana folder will be created and synced with external storage. If any resources are present in external storage, they will be provisioned to this new folder. All new resources created in this folder will be stored and versioned in external storage.",
@@ -12823,8 +12883,10 @@
     "view-explanation": "View explanation"
   },
   "stars": {
-    "mark-as-starred": "Mark \"{{title}}\" as favorite",
-    "unmark-as-starred": "Unmark \"{{title}}\" as favorite"
+    "mark-as-starred": "Mark as favorite",
+    "mark-as-starred-with-title": "Mark \"{{title}}\" as favorite",
+    "unmark-as-starred": "Unmark as favorite",
+    "unmark-as-starred-with-title": "Unmark \"{{title}}\" as favorite"
   },
   "stat": {
     "add-orientation-option": {
