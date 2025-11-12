@@ -363,10 +363,6 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
-  * Make sure extracted field names are unique in the dataframe
-  */
-  extractFieldsNameDeduplication?: boolean;
-  /**
   * Enables dashboard rendering using Scenes for viewer roles
   * @default true
   */
@@ -1121,11 +1117,6 @@ export interface FeatureToggles {
   * @default false
   */
   restrictedPluginApis?: boolean;
-  /**
-  * Enable adhoc filter buttons in visualization tooltips
-  * @default true
-  */
-  adhocFiltersInTooltips?: boolean;
   /**
   * Enable favorite datasources
   */
