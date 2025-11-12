@@ -44,7 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
-	"github.com/grafana/grafana/pkg/services/team/teamimpl"
+	teamservice "github.com/grafana/grafana/pkg/services/team"
 	legacyuser "github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -73,18 +73,13 @@ func RegisterAPIService(
 	dual dualwrite.Service,
 	unified resource.ResourceClient,
 	userService legacyuser.Service,
+	teamService teamservice.Service,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
 	legacyAccessClient := newLegacyAccessClient(ac, store)
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
 	registerMetrics(reg)
-
-	teamService, err := teamimpl.ProvideService(sql, cfg, tracing)
-	if err != nil {
-		return nil, err
-	}
-	legacyTeamSearcher := team.NewLegacyTeamSearchClient(teamService)
 
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                       store,
@@ -107,7 +102,7 @@ func RegisterAPIService(
 		dual:                        dual,
 		unified:                     unified,
 		userSearchClient:            resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), unified, user.NewUserLegacySearchClient(userService), features),
-		teamSearch:                  NewTeamSearchHandler(tracing, dual, legacyTeamSearcher, unified, features),
+		teamSearch:                  NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService), unified, features),
 	}
 	apiregistration.RegisterAPI(builder)
 

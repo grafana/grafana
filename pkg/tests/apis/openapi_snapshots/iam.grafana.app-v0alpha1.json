@@ -3629,7 +3629,7 @@
           {
             "name": "query",
             "in": "query",
-            "description": "user query string",
+            "description": "team name query string",
             "schema": {
               "type": "string"
             }

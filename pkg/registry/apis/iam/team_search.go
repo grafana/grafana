@@ -67,7 +67,7 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 									ParameterProps: spec3.ParameterProps{
 										Name:        "query",
 										In:          "query",
-										Description: "user query string",
+										Description: "team name query string",
 										Required:    false,
 										Schema:      spec.StringProperty(),
 									},
