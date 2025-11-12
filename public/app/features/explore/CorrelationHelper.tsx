@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { useEffect, useId, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
-import { DataLinkTransformationConfig, ExploreCorrelationHelperData, GrafanaTheme2 } from '@grafana/data';
+import { DataLinkTransformationConfig, ExploreCorrelationHelperData, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -15,6 +15,7 @@ import {
   Icon,
   IconButton,
   Input,
+  Select,
   Stack,
   Tooltip,
   useStyles2,
@@ -35,6 +36,7 @@ interface Props {
 }
 
 interface FormValues {
+  type: string;
   label: string;
   description: string;
 }
@@ -54,7 +56,11 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
     ]
   );
 
-  const { register, watch, getValues, setValue } = useForm<FormValues>();
+  const { control, register, watch, getValues, setValue } = useForm<FormValues>({
+    defaultValues: {
+      type: 'Link',
+    },
+  });
   const [isLabelDescOpen, setIsLabelDescOpen] = useState(false);
   const [isTransformOpen, setIsTransformOpen] = useState(false);
   const [showTransformationAddModal, setShowTransformationAddModal] = useState(false);
@@ -164,16 +170,71 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
       >
         <div className={styles.alertContent}>
           <div>
-            <Trans
+            {/* <Trans
               i18nKey="explore.correlation-helper.body-correlation-details"
               values={{ resultField: correlations.resultField }}
-            >
-              When saved, the <code>{'{{resultField}}'}</code> field will have a clickable link that runs your target
-              query below. Use the below variables in your query. When clicked, they're replaced with values from that
-              row.
-            </Trans>
+            > */}
+            <p>
+              When saved, the <code>{correlations.resultField}</code> field will have a clickable link that runs your target
+              query below.
+            </p>
+            {/* </Trans> */}
           </div>
-          <div className={styles.variableList}>
+        </div>
+        </Alert>
+            <Stack gap={1} direction="row" wrap="wrap" alignItems="center">
+              <p>General</p>
+            </Stack>
+          <Field label="Type" htmlFor={`${id}-type`}>
+            <Controller
+              name="type"
+              control={control}
+              render={({ field: { onChange, value, ...field } }) => {
+                const typeOptions: Array<SelectableValue<string>> = [
+                  { label: 'Link', value: 'Link' },
+                  { label: 'Explore Query', value: 'Explore Query' },
+                ];
+                return (
+                  <Select
+                    {...field}
+                    inputId={`${id}-type`}
+                    options={typeOptions}
+                    value={typeOptions.find((option) => option.value === value) || typeOptions[0]}
+                    onChange={(option) => onChange(option?.value || 'Link')}
+                  />
+                );
+              }}
+            />
+          </Field>
+          <Field label="Name" htmlFor={`${id}-label`}>
+            <Input
+              {...register('label')}
+              id={`${id}-label`}
+              onBlur={() => {
+                if (getValues('label') === '' && defaultLabel !== undefined) {
+                  setValue('label', defaultLabel);
+                }
+              }}
+            />
+          </Field>
+          <Field label="Description" htmlFor={`${id}-description`}>
+            <Input {...register('description')} id={`${id}-description`} />
+          </Field>
+            <Stack gap={1} direction="row" wrap="wrap" alignItems="center">
+              {/* <Trans i18nKey="explore.correlation-helper.transformations">Transformations</Trans> */}
+              Variables (optional)
+              <Tooltip
+                content={t(
+                  'explore.correlation-helper.tooltip-transformations',
+                  'A transformation extracts one or more variables out of a single field.'
+                )}
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Stack>
+          <p>Use these variables in your target query. When a correlation link is clicked, each variable is filled in with its value from that row.</p>          
+          <div className={styles.variableList}>        
+
             {Object.entries(correlations.vars).map(([name, value]) => (
               <div key={name} className={styles.variableRow}>
                 <div className={styles.variableNameCell}>
@@ -186,58 +247,8 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-        <Collapse
-          isOpen={isLabelDescOpen}
-          onToggle={() => {
-            setIsLabelDescOpen(!isLabelDescOpen);
-          }}
-          label={
-            <Stack gap={1} direction="row" wrap="wrap" alignItems="center">
-              <Trans i18nKey="explore.correlation-helper.label-description-header">
-                Correlation Label / Description
-              </Trans>
-              {!isLabelDescOpen && !loadingLabel && (
-                <span className={styles.labelCollapseDetails}>{`Label: ${getValues('label') || defaultLabel}`}</span>
-              )}
-            </Stack>
-          }
-        >
-          <Field label={t('explore.correlation-helper.label-label', 'Label')} htmlFor={`${id}-label`}>
-            <Input
-              {...register('label')}
-              id={`${id}-label`}
-              onBlur={() => {
-                if (getValues('label') === '' && defaultLabel !== undefined) {
-                  setValue('label', defaultLabel);
-                }
-              }}
-            />
-          </Field>
-          <Field label={t('explore.correlation-helper.label-description', 'Description')} htmlFor={`${id}-description`}>
-            <Input {...register('description')} id={`${id}-description`} />
-          </Field>
-        </Collapse>
-        <Collapse
-          isOpen={isTransformOpen}
-          onToggle={() => {
-            setIsTransformOpen(!isTransformOpen);
-          }}
-          label={
-            <Stack gap={1} direction="row" wrap="wrap" alignItems="center">
-              <Trans i18nKey="explore.correlation-helper.transformations">Transformations</Trans>
-              <Tooltip
-                content={t(
-                  'explore.correlation-helper.tooltip-transformations',
-                  'A transformation extracts one or more variables out of a single field.'
-                )}
-              >
-                <Icon name="info-circle" size="sm" />
-              </Tooltip>
-            </Stack>
-          }
-        >
+          </div>     
+
           <Button
             variant="secondary"
             fill="outline"
@@ -246,7 +257,8 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
             }}
             className={styles.transformationAction}
           >
-            <Trans i18nKey="explore.correlation-helper.add-transformation">Add transformation</Trans>
+            {/* <Trans i18nKey="explore.correlation-helper.add-transformation">Add transformation</Trans> */}
+            Add custom variable
           </Button>
           {transformations.map((transformation, i) => {
             const { type, field, expression, mapValue } = transformation;
@@ -288,8 +300,7 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
               </Card>
             );
           })}
-        </Collapse>
-      </Alert>
+        <hr />
     </>
   );
 };
