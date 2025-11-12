@@ -17,7 +17,7 @@ Examples:
 
 ### Backend
 
-Use the OpenFeature client for all new backend feature flags and toggles.
+Use the OpenFeature client for all new backend feature flags.
 
 #### Key points:
 
