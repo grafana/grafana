@@ -11,6 +11,7 @@ import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
   defaultDataQueryKind,
+  defaultPanelQueryKind,
   defaultPanelSpec,
   GridLayoutKind,
   PanelKind,
@@ -783,7 +784,7 @@ describe('DashboardSceneSerializer', () => {
             data: {
               kind: 'QueryGroup',
               spec: {
-                queries: [],
+                queries: [defaultPanelQueryKind()],
                 queryOptions: {},
                 transformations: [],
               },

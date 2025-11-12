@@ -4,22 +4,12 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
+import { reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import {
-  Modal,
-  FileDropzone,
-  FileDropzoneDefaultChildren,
-  useStyles2,
-  Input,
-  Icon,
-  ScrollContainer,
-} from '@grafana/ui';
-import { acceptedFiles, maxFileSize } from 'app/features/dataframe-import/constants';
+import { Modal, useStyles2, Input, Icon, ScrollContainer } from '@grafana/ui';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
-import { getFileDropToQueryHandler } from 'app/plugins/datasource/grafana/utils';
 
-import { useDatasource, useDatasources } from '../../hooks';
+import { useDatasources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { BuiltInDataSourceList } from './BuiltInDataSourceList';
@@ -29,7 +19,6 @@ import { matchDataSourceWithSearch } from './utils';
 const INTERACTION_EVENT_NAME = 'dashboards_dspickermodal_clicked';
 const INTERACTION_ITEM = {
   SELECT_DS: 'select_ds',
-  UPLOAD_FILE: 'upload_file',
   CONFIG_NEW_DS: 'config_new_ds',
   CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
   SEARCH: 'search',
@@ -56,7 +45,6 @@ export interface DataSourceModalProps {
   alerting?: boolean;
   pluginId?: string;
   logs?: boolean;
-  uploadFile?: boolean;
 }
 
 export function DataSourceModal({
@@ -70,7 +58,6 @@ export function DataSourceModal({
   alerting,
   pluginId,
   logs,
-  uploadFile,
   filter,
   onChange,
   current,
@@ -95,8 +82,6 @@ export function DataSourceModal({
       is_favorite: favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined,
     });
   };
-
-  const grafanaDS = useDatasource('-- Grafana --');
 
   // Get all datasources to report total_configured count
   const dataSources = useDatasources({
@@ -133,22 +118,6 @@ export function DataSourceModal({
       }),
     [analyticsInteractionSrc]
   );
-
-  const onFileDrop = getFileDropToQueryHandler((query, fileRejections) => {
-    if (!grafanaDS) {
-      return;
-    }
-    onChange(grafanaDS, [query]);
-
-    reportInteraction(INTERACTION_EVENT_NAME, {
-      item: INTERACTION_ITEM.UPLOAD_FILE,
-      src: analyticsInteractionSrc,
-    });
-
-    if (fileRejections.length < 1) {
-      onDismiss();
-    }
-  });
 
   // Built-in data sources used twice because of mobile layout adjustments
   // In movile the list is appended to the bottom of the DS list
@@ -231,20 +200,6 @@ export function DataSourceModal({
               <BuiltInList />
             </ScrollContainer>
           </div>
-          {uploadFile && config.featureToggles.editPanelCSVDragAndDrop && (
-            <FileDropzone
-              readAs="readAsArrayBuffer"
-              fileListRenderer={() => undefined}
-              options={{
-                maxSize: maxFileSize,
-                multiple: false,
-                accept: acceptedFiles,
-                onDrop: onFileDrop,
-              }}
-            >
-              <FileDropzoneDefaultChildren />
-            </FileDropzone>
-          )}
         </div>
         <div className={styles.newDSSection}>
           <span className={styles.newDSDescription}>
