@@ -673,7 +673,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation(res, err)
+	s.sleepAfterSuccessfulWriteOperation("Create", req.Key, res, err)
 
 	return res, err
 }
@@ -706,7 +706,7 @@ type responseWithErrorResult interface {
 // Returns boolean indicating whether the sleep was performed or not (used in testing).
 //
 // This sleep is performed to guarantee search-after-write consistency, when rate-limiting updates to search index.
-func (s *server) sleepAfterSuccessfulWriteOperation(res responseWithErrorResult, err error) bool {
+func (s *server) sleepAfterSuccessfulWriteOperation(operation string, key *resourcepb.ResourceKey, res responseWithErrorResult, err error) bool {
 	if s.artificialSuccessfulWriteDelay <= 0 {
 		return false
 	}
@@ -725,7 +725,13 @@ func (s *server) sleepAfterSuccessfulWriteOperation(res responseWithErrorResult,
 		}
 	}
 
-	s.log.Debug("sleeping after successful write operation", "delay", s.artificialSuccessfulWriteDelay)
+	s.log.Debug("sleeping after successful write operation",
+		"operation", operation,
+		"delay", s.artificialSuccessfulWriteDelay,
+		"group", key.Group,
+		"resource", key.Resource,
+		"namespace", key.Namespace,
+		"name", key.Name)
 
 	time.Sleep(s.artificialSuccessfulWriteDelay)
 	return true
@@ -762,7 +768,7 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation(res, err)
+	s.sleepAfterSuccessfulWriteOperation("Update", req.Key, res, err)
 
 	return res, err
 }
@@ -836,7 +842,7 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation(res, err)
+	s.sleepAfterSuccessfulWriteOperation("Delete", req.Key, res, err)
 
 	return res, err
 }
