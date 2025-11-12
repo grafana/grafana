@@ -90,3 +90,8 @@ func (d *directResourceClient) Watch(ctx context.Context, in *resourcepb.WatchRe
 func (d *directResourceClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resourcepb.BulkStore_BulkProcessClient, error) {
 	return nil, fmt.Errorf("BulkProcess not supported with direct resource client")
 }
+
+// RebuildIndexes implements resource.ResourceClient.
+func (b *directResourceClient) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest, opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}

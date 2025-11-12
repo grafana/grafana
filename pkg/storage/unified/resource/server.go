@@ -125,7 +125,7 @@ type StorageBackend interface {
 	GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error)
 
 	// GetResourceLastImportTimes returns import times for all namespaced resources in the backend.
-	GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error]
+	GetResourceLastImportTimes(ctx context.Context, filterKeys []NamespacedResource) iter.Seq2[ResourceLastImportTime, error]
 }
 
 type ModifiedResource struct {
@@ -1539,4 +1539,12 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	case <-queueCtx.Done():
 		return queueCtx.Err() // Timed out or canceled while waiting for execution.
 	}
+}
+
+func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
+
+	return s.search.RebuildIndexes(ctx, req)
 }

@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -706,4 +707,8 @@ func parseLibraryPanelRow(p panel) (dashboardV0.LibraryPanel, error) {
 	}
 
 	return item, nil
+}
+
+func (b *dashboardSqlAccess) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	return nil, fmt.Errorf("not implemented")
 }

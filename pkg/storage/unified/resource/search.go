@@ -459,6 +459,32 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 	return rsp, nil
 }
 
+func (s *searchSupport) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "unified_search.RebuildIndexes")
+	defer span.End()
+
+	filterKeys := make([]NamespacedResource, 0, len(req.Keys))
+	for _, key := range req.Keys {
+		filterKeys = append(filterKeys, NamespacedResource{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		})
+	}
+
+	importTimes, err := s.getLastImportTimes(ctx, filterKeys)
+	if err != nil {
+		return &resourcepb.RebuildIndexesResponse{
+			Error: AsErrorResult(err),
+		}, nil
+	}
+
+	rebuiltCount := s.findIndexesToRebuild(importTimes, filterKeys, time.Now())
+	return &resourcepb.RebuildIndexesResponse{
+		RebuiltCount: int64(rebuiltCount),
+	}, nil
+}
+
 func (s *searchSupport) buildIndexes(ctx context.Context) (int, error) {
 	totalBatchesIndexed := 0
 	group := errgroup.Group{}
@@ -545,23 +571,31 @@ func (s *searchSupport) runPeriodicScanForIndexesToRebuild(ctx context.Context) 
 			s.log.Info("stopping periodic index rebuild due to context cancellation")
 			return
 		case <-ticker.C:
-			importTimes, err := s.getLastImportTimes(ctx)
+			importTimes, err := s.getLastImportTimes(ctx, nil)
 			if err != nil {
 				s.log.Error("failed to get import times", "error", err)
 			}
-			s.findIndexesToRebuild(importTimes, time.Now())
+			s.findIndexesToRebuild(importTimes, nil, time.Now())
 		}
 	}
 }
 
-func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, now time.Time) {
+func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time) int {
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
 
-	keys := s.search.GetOpenIndexes()
+	var keys []NamespacedResource
+	if len(filterKeys) > 0 {
+		keys = filterKeys
+	} else {
+		keys = s.search.GetOpenIndexes()
+	}
+
+	rebuildCount := 0
 	for _, key := range keys {
 		idx := s.search.GetIndex(key)
 		if idx == nil {
+			s.log.Info("rebuild indexes, index not found for key", "key", key)
 			// This can happen if index was closed in the meantime.
 			continue
 		}
@@ -592,16 +626,18 @@ func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResou
 				lastImportTime:     lastImportTime,
 			})
 
+			rebuildCount++
 			if s.indexMetrics != nil {
 				s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
 			}
 		}
 	}
+	return rebuildCount
 }
 
-func (s *searchSupport) getLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error) {
+func (s *searchSupport) getLastImportTimes(ctx context.Context, filterKeys []NamespacedResource) (map[NamespacedResource]time.Time, error) {
 	result := map[NamespacedResource]time.Time{}
-	for importTime, err := range s.storage.GetResourceLastImportTimes(ctx) {
+	for importTime, err := range s.storage.GetResourceLastImportTimes(ctx, filterKeys) {
 		if err != nil {
 			// We return times that we have collected so far, if any.
 			return result, err

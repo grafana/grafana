@@ -13,6 +13,8 @@ service ResourceIndex {
 
   // Get the resource stats
   rpc GetStats(ResourceStatsRequest) returns (ResourceStatsResponse);
+
+  rpc RebuildIndexes(RebuildIndexesRequest) returns (RebuildIndexesResponse);
 }
 
 // Get statistics across multiple resources
@@ -138,3 +140,20 @@ message ResourceSearchResponse {
   // Facet results
   map<string,Facet> facet = 7;
 }
+
+message RebuildIndexesRequest {
+  // Namespace (tenant)
+  string namespace = 1;
+
+  // List of ResourceKeys (Namespace + Group + Resource)
+  repeated ResourceKey keys = 2;
+}
+
+message RebuildIndexesResponse {
+  // Total count of rebuilt indexes
+  int64 rebuiltCount = 1;
+
+  // Error details
+  ErrorResult error = 2;
+}
+

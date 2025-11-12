@@ -1142,7 +1142,7 @@ func (k *kvStorageBackend) GetResourceStats(ctx context.Context, namespace strin
 	return k.dataStore.GetResourceStats(ctx, namespace, minCount)
 }
 
-func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
+func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context, filterKeys []NamespacedResource) iter.Seq2[ResourceLastImportTime, error] {
 	return func(yield func(ResourceLastImportTime, error) bool) {
 		yield(ResourceLastImportTime{}, fmt.Errorf("not implemented"))
 	}

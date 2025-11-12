@@ -175,6 +175,27 @@ func TestIntegrationDistributor(t *testing.T) {
 		}
 	})
 
+	t.Run("RebuildIndexes", func(t *testing.T) {
+		instanceResponseCount := make(map[string]int)
+
+		// simulate RebuildIndexes for a single namespace
+		testNamespace := testNamespaces[0]
+
+		req := &resourcepb.RebuildIndexesRequest{
+			Namespace: testNamespace,
+			Keys: []*resourcepb.ResourceKey{&resourcepb.ResourceKey{
+				Namespace: testNamespace,
+				Group:     "folder.grafana.app",
+				Resource:  "folders",
+			}},
+		}
+		baselineRes := getBaselineResponse(t, req, baselineServer.RebuildIndexes)
+		distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.RebuildIndexes, instanceResponseCount)
+		require.Equal(t, baselineRes.String(), distributorRes.String())
+
+		require.GreaterOrEqual(t, len(instanceResponseCount), len(testServers), "rebuild indexes must be distributed to all servers")
+	})
+
 	var wg sync.WaitGroup
 	for _, testServer := range testServers {
 		wg.Add(1)

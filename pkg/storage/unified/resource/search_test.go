@@ -86,7 +86,8 @@ func (m *MockDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 
 // mockStorageBackend implements StorageBackend for testing
 type mockStorageBackend struct {
-	resourceStats []ResourceStats
+	resourceStats   []ResourceStats
+	lastImportTimes []ResourceLastImportTime
 }
 
 func (m *mockStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
@@ -126,9 +127,13 @@ func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key Namespac
 	}
 }
 
-func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
+func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context, filterKeys []NamespacedResource) iter.Seq2[ResourceLastImportTime, error] {
 	return func(yield func(ResourceLastImportTime, error) bool) {
-		yield(ResourceLastImportTime{}, errors.New("not implemented"))
+		for _, ti := range m.lastImportTimes {
+			if !yield(ti, nil) {
+				return
+			}
+		}
 	}
 }
 
@@ -606,14 +611,14 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: lastImportTime,
 	}
 
-	support.findIndexesToRebuild(importTimes, now)
+	support.findIndexesToRebuild(importTimes, nil, now)
 	require.Equal(t, 7, support.rebuildQueue.Len())
 
 	now5m := now.Add(5 * time.Minute)
 
 	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing
 	// ones should be "combined" with new ones (this will "bump" minBuildTime)
-	support.findIndexesToRebuild(importTimes, now5m)
+	support.findIndexesToRebuild(importTimes, nil, now5m)
 	require.Equal(t, 7, support.rebuildQueue.Len())
 
 	// Values that we expect to find in rebuild requests.
@@ -748,4 +753,71 @@ func checkRebuildIndex(t *testing.T, support *searchSupport, req rebuildRequest,
 	} else {
 		require.Nil(t, idxAfter, "index should not exist after rebuildIndex")
 	}
+}
+
+func TestRebuildIndexesForResource(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{
+			{NamespacedResource: key, Count: 50, ResourceVersion: 11111111},
+		},
+		lastImportTimes: []ResourceLastImportTime{ResourceLastImportTime{
+			NamespacedResource: key,
+			LastImportTime:     time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC),
+		}},
+	}
+
+	search := &mockSearchBackend{
+		cache: map[NamespacedResource]ResourceIndex{
+			key: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildVersion: semver.MustParse("5.0.0"), BuildTime: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC)},
+			},
+		},
+	}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"group": "resource",
+		},
+	}
+
+	opts := SearchOptions{
+		Backend:      search,
+		Resources:    supplier,
+		InitMinCount: 1,
+	}
+
+	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	require.Equal(t, 0, support.rebuildQueue.Len())
+
+	rebuildReq := &resourcepb.RebuildIndexesRequest{
+		Namespace: key.Namespace,
+		Keys: []*resourcepb.ResourceKey{&resourcepb.ResourceKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}}}
+
+	// old import time will not be rebuilt
+	storage.lastImportTimes = []ResourceLastImportTime{ResourceLastImportTime{
+		NamespacedResource: key,
+		LastImportTime:     time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+	}}
+	rsp, err := support.RebuildIndexes(t.Context(), rebuildReq)
+	require.NoError(t, err)
+	require.Equal(t, int64(0), rsp.RebuiltCount)
+	require.Equal(t, 0, support.rebuildQueue.Len())
+
+	// recent import time gets added to rebuild queue
+	storage.lastImportTimes = []ResourceLastImportTime{ResourceLastImportTime{
+		NamespacedResource: key,
+		LastImportTime:     time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC),
+	}}
+	rsp, err = support.RebuildIndexes(t.Context(), rebuildReq)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), rsp.RebuiltCount)
+	require.Equal(t, 1, support.rebuildQueue.Len())
 }

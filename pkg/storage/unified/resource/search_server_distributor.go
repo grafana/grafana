@@ -2,8 +2,10 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"hash/fnv"
 	"math/rand"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/dskit/ring"
@@ -12,6 +14,7 @@ import (
 	userutils "github.com/grafana/dskit/user"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
@@ -90,6 +93,11 @@ var (
 	searchRingRead = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
 		return s != ring.ACTIVE
 	})
+
+	// select only ACTIVE instances for updating indexes
+	searchRingWrite = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
+		return s != ring.ACTIVE
+	})
 )
 
 func (ds *distributorServer) Search(ctx context.Context, r *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
@@ -112,6 +120,70 @@ func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.Resourc
 	}
 
 	return client.GetStats(ctx, r)
+}
+
+func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	ctx, span := ds.tracing.Start(ctx, "distributor.RebuildIndexes")
+	defer span.End()
+
+	// distribute the request to all search pods to minimize risk of stale index
+	// it will not rebuild on those which don't have the index open
+	rs, err := ds.ring.GetAllHealthy(searchRingWrite)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all healthy instances from the ring")
+	}
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = make(metadata.MD)
+	}
+
+	g, ctx := errgroup.WithContext(ctx)
+
+	var totalRebuiltCount atomic.Int64
+	for _, inst := range rs.Instances {
+		inst := inst
+		g.Go(func() error {
+			client, err := ds.clientPool.GetClientForInstance(inst)
+			if err != nil {
+				ds.log.Error("failed to get client for instance", "instance", inst.Id, "err", err)
+				return err
+			}
+
+			// context for each req
+			instanceCtx := userutils.InjectOrgID(
+				metadata.NewOutgoingContext(ctx, md),
+				r.Namespace,
+			)
+
+			err = grpc.SetHeader(instanceCtx, metadata.Pairs("proxied-instance-id", inst.Id))
+			if err != nil {
+				ds.log.Debug("error setting grpc header", "err", err)
+			}
+
+			rsp, err := client.(*RingClient).Client.RebuildIndexes(instanceCtx, r)
+			if err != nil {
+				ds.log.Error("failed to distribute rebuild index request", "instance", inst.Id, "error", err)
+				return err
+			}
+
+			if rsp.Error != nil {
+				return fmt.Errorf("failed to rebuild index in search instance %s with %s", inst.Id, rsp.Error)
+			}
+
+			totalRebuiltCount.Add(rsp.RebuiltCount)
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return &resourcepb.RebuildIndexesResponse{
+			Error: AsErrorResult(err),
+		}, nil
+	}
+	return &resourcepb.RebuildIndexesResponse{
+		RebuiltCount: totalRebuiltCount.Load(),
+	}, nil
 }
 
 func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {

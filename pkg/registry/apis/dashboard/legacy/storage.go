@@ -247,7 +247,7 @@ func (a *dashboardSqlAccess) ListModifiedSince(ctx context.Context, key resource
 	}
 }
 
-func (a *dashboardSqlAccess) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
+func (a *dashboardSqlAccess) GetResourceLastImportTimes(ctx context.Context, filterKeys []resource.NamespacedResource) iter.Seq2[resource.ResourceLastImportTime, error] {
 	return func(yield func(resource.ResourceLastImportTime, error) bool) {
 		yield(resource.ResourceLastImportTime{}, errors.New("not implemented"))
 	}

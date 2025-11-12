@@ -62,7 +62,7 @@ func (c *StorageBackendImpl) WriteEvent(context.Context, resource.WriteEvent) (i
 	return 0, errNoopStorage
 }
 
-func (c *StorageBackendImpl) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
+func (c *StorageBackendImpl) GetResourceLastImportTimes(ctx context.Context, filterKeys []resource.NamespacedResource) iter.Seq2[resource.ResourceLastImportTime, error] {
 	return func(yield func(resource.ResourceLastImportTime, error) bool) {
 		yield(resource.ResourceLastImportTime{}, errNoopStorage)
 	}
