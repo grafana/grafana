@@ -13,7 +13,7 @@ export function addTextSizeOptions<T extends OptionsWithTextFormatting>(
 ) {
   // if called from old plugins when parameter was withTitle boolean
   if (typeof options === 'boolean') {
-    options = { withValue: options };
+    options = { withTitle: options };
   }
 
   const category = [t('grafana-ui.builder.text.category-text-size', 'Text size')];
