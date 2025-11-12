@@ -725,6 +725,8 @@ func (s *server) sleepAfterSuccessfulWriteOperation(res responseWithErrorResult,
 		}
 	}
 
+	s.log.Debug("sleeping after successful write operation", "delay", s.artificialSuccessfulWriteDelay)
+
 	time.Sleep(s.artificialSuccessfulWriteDelay)
 	return true
 }
