@@ -26,8 +26,7 @@ import {
   ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { FetchResponse, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { AnnotationEditor } from './components/AnnotationEditor';
 import { prepareAnnotation } from './migrations';
