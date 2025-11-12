@@ -453,7 +453,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 }
 
 func (s *searchSupport) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "unified_search.RebuildIndexes")
+	ctx, span := tracer.Start(ctx, "resource.searchSupport.RebuildIndexes")
 	defer span.End()
 
 	filterKeys := make([]NamespacedResource, 0, len(req.Keys))
