@@ -11,6 +11,11 @@ export function addTextSizeOptions<T extends OptionsWithTextFormatting>(
   builder: PanelOptionsEditorBuilder<T>,
   options: { withValue?: boolean; withTitle?: boolean; withPercentChange?: boolean } = { withTitle: true }
 ) {
+  // if called from old plugins when parameter was withTitle boolean
+  if (typeof options === 'boolean') {
+    options = { withValue: options };
+  }
+
   const category = [t('grafana-ui.builder.text.category-text-size', 'Text size')];
   if (options.withTitle) {
     builder.addNumberInput({
