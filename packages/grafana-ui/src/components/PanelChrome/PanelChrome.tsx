@@ -477,7 +477,7 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { background, borderColor, padding, headerHeight } = theme.components.panel;
+  const { background, borderColor, headerHeight } = theme.components.panel;
 
   return {
     container: css({
@@ -553,7 +553,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       // remove logic after newPanelPadding feature toggle is removed
-      padding: headerHeight === 5 ? theme.spacing(0, 0.5, 0, 1.5) : theme.spacing(0, 0, 0, 1),
+      padding: headerHeight === 5 ? theme.spacing(0, 1, 0, 1.5) : theme.spacing(0, 0.5, 0, 1),
+      gap: theme.spacing(1),
     }),
     pointer: css({
       cursor: 'pointer',
@@ -603,7 +604,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     rightActions: css({
       display: 'flex',
-      padding: theme.spacing(0, padding),
       gap: theme.spacing(1),
     }),
     rightAligned: css({
