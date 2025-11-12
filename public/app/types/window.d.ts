@@ -4,7 +4,6 @@ export declare global {
     __grafana_app_bundle_loaded: boolean;
     __grafana_public_path__: string;
     __grafana_load_failed: () => void;
-    __grafana_custom_domain_failed: () => void;
     grafanaBootData: import('@grafana/data').BootData;
 
     /**
