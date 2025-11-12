@@ -3935,7 +3935,8 @@
       "metadata": {
         "name": "templateVariablesUsesCombobox",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-01-31T09:53:13Z"
+        "creationTimestamp": "2025-01-31T09:53:13Z",
+        "deletionTimestamp": "2025-11-12T14:40:39Z"
       },
       "spec": {
         "description": "Use new **Combobox** component for template variables",

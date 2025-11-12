@@ -848,10 +848,6 @@ export interface FeatureToggles {
   */
   teamHttpHeadersTempo?: boolean;
   /**
-  * Use new **Combobox** component for template variables
-  */
-  templateVariablesUsesCombobox?: boolean;
-  /**
   * Enables Advisor app
   */
   grafanaAdvisor?: boolean;

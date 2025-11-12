@@ -1458,13 +1458,6 @@ var (
 			Owner:        identityAccessTeam,
 		},
 		{
-			Name:         "templateVariablesUsesCombobox",
-			Description:  "Use new **Combobox** component for template variables",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			FrontendOnly: true,
-		},
-		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
 			Stage:       FeatureStagePrivatePreview,
