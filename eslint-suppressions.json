@@ -1820,11 +1820,6 @@
       "count": 1
     }
   },
-  "public/app/features/annotations/components/AnnotationResultMapper.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/annotations/components/StandardAnnotationQueryEditor.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
