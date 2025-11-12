@@ -10,6 +10,7 @@ import {
   sceneGraph,
   SceneObjectBase,
   VariableValueOption,
+  VariableValueSingle,
   VizPanel,
 } from '@grafana/scenes';
 import { Button, Icon, Input, useStyles2, Checkbox, Dropdown, Stack } from '@grafana/ui';
@@ -107,15 +108,21 @@ function PanelGroupByActionRenderer({ model }: SceneComponentProps<PanelGroupByA
   }, []);
 
   const handleApply = useCallback(() => {
-    const checkedOptions = options.filter((opt) => opt.checked);
+    const selectedValues: VariableValueSingle[] = [];
+    const selectedLabels: string[] = [];
 
-    if (!checkedOptions.length) {
+    for (const option of options) {
+      if (option.checked) {
+        selectedValues.push(option.value);
+        selectedLabels.push(option.label);
+      }
+    }
+
+    if (!selectedValues.length) {
       return;
     }
 
     const groupByVariable = model.getGroupByVariable();
-    const selectedValues = checkedOptions.map((item) => item.value);
-    const selectedLabels = checkedOptions.map((item) => item.label);
 
     if (groupByVariable) {
       groupByVariable.changeValueTo(selectedValues, selectedLabels, true);
