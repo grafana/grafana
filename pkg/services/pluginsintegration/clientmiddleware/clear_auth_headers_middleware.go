@@ -12,18 +12,20 @@ import (
 // NewClearAuthHeadersMiddleware creates a new backend.HandlerMiddleware
 // that will clear any outgoing HTTP headers that was part of the incoming
 // HTTP request and used when authenticating to Grafana.
-func NewClearAuthHeadersMiddleware(cfg *setting.Cfg) backend.HandlerMiddleware {
+func NewClearAuthHeadersMiddleware(cfgJWTAuth *setting.AuthJWTSettings, cfgAuthProxy *setting.AuthProxySettings) backend.HandlerMiddleware {
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &ClearAuthHeadersMiddleware{
-			BaseHandler: backend.NewBaseHandler(next),
-			cfg:         cfg,
+			BaseHandler:  backend.NewBaseHandler(next),
+			cfgJWTAuth:   cfgJWTAuth,
+			cfgAuthProxy: cfgAuthProxy,
 		}
 	})
 }
 
 type ClearAuthHeadersMiddleware struct {
 	backend.BaseHandler
-	cfg *setting.Cfg
+	cfgJWTAuth   *setting.AuthJWTSettings
+	cfgAuthProxy *setting.AuthProxySettings
 }
 
 func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, h backend.ForwardHTTPHeaders) {
@@ -33,7 +35,7 @@ func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, h backend
 		return
 	}
 
-	items := contexthandler.GetAuthHTTPHeaders(m.cfg)
+	items := contexthandler.GetAuthHTTPHeaders(m.cfgJWTAuth, m.cfgAuthProxy)
 	for _, k := range items {
 		h.DeleteHTTPHeader(k)
 	}

@@ -207,7 +207,7 @@ type AuthHTTPHeaderList struct {
 	Items []string
 }
 
-func GetAuthHTTPHeaders(cfg *setting.Cfg) []string {
+func GetAuthHTTPHeaders(jwtAuth *setting.AuthJWTSettings, authProxy *setting.AuthProxySettings) []string {
 	var items []string
 
 	// used by basic auth, api keys and potentially jwt auth
@@ -217,14 +217,14 @@ func GetAuthHTTPHeaders(cfg *setting.Cfg) []string {
 	items = append(items, "X-Grafana-Device-Id")
 
 	// if jwt is enabled we add it to the list. We can ignore in case it is set to Authorization
-	if cfg.JWTAuth.Enabled && cfg.JWTAuth.HeaderName != "" && cfg.JWTAuth.HeaderName != "Authorization" {
-		items = append(items, cfg.JWTAuth.HeaderName)
+	if jwtAuth.Enabled && jwtAuth.HeaderName != "" && jwtAuth.HeaderName != "Authorization" {
+		items = append(items, jwtAuth.HeaderName)
 	}
 
 	// if auth proxy is enabled add the main proxy header and all configured headers
-	if cfg.AuthProxy.Enabled {
-		items = append(items, cfg.AuthProxy.HeaderName)
-		for _, header := range cfg.AuthProxy.Headers {
+	if authProxy.Enabled {
+		items = append(items, authProxy.HeaderName)
+		for _, header := range authProxy.Headers {
 			if header != "" {
 				items = append(items, header)
 			}
@@ -244,7 +244,7 @@ func WithAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Context 
 		}
 	}
 
-	for _, item := range GetAuthHTTPHeaders(cfg) {
+	for _, item := range GetAuthHTTPHeaders(&cfg.JWTAuth, &cfg.AuthProxy) {
 		list.Items = append(list.Items, item)
 	}
 
