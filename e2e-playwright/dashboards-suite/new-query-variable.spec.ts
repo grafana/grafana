@@ -60,7 +60,7 @@ test.describe(
         selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect
       );
       await expect(displaySelect).toBeVisible();
-      await expect(displaySelect).toHaveValue('Filters area');
+      await expect(displaySelect).toHaveValue('Above dashboard');
 
       // Check datasource selector
       const datasourceSelect = dashboardPage.getByGrafanaSelector(
