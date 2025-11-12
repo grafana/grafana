@@ -11633,8 +11633,9 @@
     },
     "free-tier-limit": {
       "message": "Free-tier accounts are capped to 1 connection, and 20 resources per folder",
-      "messages": "Free-tier accounts are capped to 1 connection, and 20 resources per folder. To add more connections, upgrade your account.",
-      "note": "Note:"
+      "message-prefix": "Free-tier accounts are capped to 1 connection, and 20 resources per folder. To add more connections,",
+      "note": "Note:",
+      "upgrade-link": "upgrade your account"
     },
     "get-default-values": {
       "title": {

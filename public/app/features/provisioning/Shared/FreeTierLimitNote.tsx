@@ -2,9 +2,11 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { isFreeTierLicense } from '../utils/isFreeTierLicense';
+
+const UPGRADE_URL = 'https://grafana.com/profile/org/subscription';
 
 /**
  * Displays a free tier limit notification with an icon and "Note:" prefix
@@ -22,10 +24,13 @@ export function FreeTierLimitNote() {
       <Icon name="exclamation-triangle" className={styles.warningIcon} size="sm" />
       <Text variant="bodySmall">
         <Trans i18nKey="provisioning.free-tier-limit.note">Note:</Trans>{' '}
-        <Trans i18nKey="provisioning.free-tier-limit.messages">
-          Free-tier accounts are capped to 1 connection, and 20 resources per folder. To add more connections, upgrade
-          your account.
-        </Trans>
+        <Trans i18nKey="provisioning.free-tier-limit.message-prefix">
+          Free-tier accounts are capped to 1 connection, and 20 resources per folder. To add more connections,
+        </Trans>{' '}
+        <TextLink href={UPGRADE_URL} external variant="bodySmall">
+          <Trans i18nKey="provisioning.free-tier-limit.upgrade-link">upgrade your account</Trans>
+        </TextLink>
+        .
       </Text>
     </Stack>
   );
@@ -35,7 +40,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     warningIcon: css({
       color: theme.colors.warning.text,
-      marginTop: theme.spacing(0.5),
+      marginTop: theme.spacing(0.25),
     }),
   };
 };
