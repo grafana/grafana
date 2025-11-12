@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { Button } from './Button';
+import { Button, LinkButton } from './Button';
 
 const setup = (jsx: JSX.Element) => {
   return {
@@ -62,5 +62,39 @@ describe('Button', () => {
     expect(screen.queryByRole('button', { name: 'Child text' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Tooltip text' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Aria label' })).toBeInTheDocument();
+  });
+});
+
+describe('LinkButton', () => {
+  it('should place the icon on the right when iconPlacement is "right"', () => {
+    setup(
+      <LinkButton icon="cloud" iconPlacement="right" href="https://grafana.com">
+        Click me
+      </LinkButton>
+    );
+
+    const link = screen.getByRole('link');
+    const icon = screen.getByTitle('');
+    const textSpan = link.querySelector('span');
+
+    // Assert that the text span comes before the icon in the DOM
+    expect(link.childNodes[0]).toBe(textSpan);
+    expect(link.childNodes[1]).toBe(icon);
+  });
+
+  it('should place the icon on the left when iconPlacement is "left"', () => {
+    setup(
+      <LinkButton icon="cloud" iconPlacement="left" href="https://grafana.com">
+        Click me
+      </LinkButton>
+    );
+
+    const link = screen.getByRole('link');
+    const icon = screen.getByTitle('');
+    const textSpan = link.querySelector('span');
+
+    // Assert that the icon comes before the text span in the DOM
+    expect(link.childNodes[0]).toBe(icon);
+    expect(link.childNodes[1]).toBe(textSpan);
   });
 });
