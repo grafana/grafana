@@ -1,5 +1,5 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
-import { BigValueColorMode, BigValueGraphMode } from '@grafana/schema';
+import { BigValueColorMode, BigValueGraphMode, GraphFieldConfig } from '@grafana/schema';
 import { SuggestionName } from 'app/types/suggestions';
 
 import { Options } from './panelcfg.gen';
@@ -12,7 +12,7 @@ export class StatSuggestionsSupplier {
       return;
     }
 
-    const list = builder.getListAppender<Options, {}>({
+    const list = builder.getListAppender<Options, GraphFieldConfig>({
       name: SuggestionName.Stat,
       pluginId: 'stat',
       options: {},
@@ -25,8 +25,8 @@ export class StatSuggestionsSupplier {
       },
       cardOptions: {
         previewModifier: (s) => {
-          if (s.options!.reduceOptions.values) {
-            s.options!.reduceOptions.limit = 1;
+          if (s.options?.reduceOptions?.values) {
+            s.options.reduceOptions.limit = 1;
           }
         },
       },

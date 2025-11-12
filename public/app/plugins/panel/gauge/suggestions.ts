@@ -1,4 +1,5 @@
 import { ThresholdsMode, VisualizationSuggestionsBuilder } from '@grafana/data';
+import { GraphFieldConfig } from '@grafana/ui';
 import { SuggestionName } from 'app/types/suggestions';
 
 import { Options } from './panelcfg.gen';
@@ -16,7 +17,7 @@ export class GaugeSuggestionsSupplier {
       return;
     }
 
-    const list = builder.getListAppender<Options, {}>({
+    const list = builder.getListAppender<Options, GraphFieldConfig>({
       name: SuggestionName.Gauge,
       pluginId: 'gauge',
       options: {},
@@ -36,8 +37,8 @@ export class GaugeSuggestionsSupplier {
       },
       cardOptions: {
         previewModifier: (s) => {
-          if (s.options!.reduceOptions.values) {
-            s.options!.reduceOptions.limit = 2;
+          if (s.options?.reduceOptions?.values) {
+            s.options.reduceOptions.limit = 2;
           }
         },
       },
