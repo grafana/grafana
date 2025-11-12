@@ -25,11 +25,12 @@ import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Role, AccessControlAction } from 'app/types/accessControl';
+import { TeamWithRoles } from 'app/types/teams';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
 import { EnterpriseAuthFeaturesCard } from '../admin/EnterpriseAuthFeaturesCard';
 
-import { useDeleteTeam, useGetTeams, TeamWithRoles } from './hooks';
+import { useDeleteTeam, useGetTeams } from './hooks';
 
 type Cell<T extends keyof TeamWithRoles = keyof TeamWithRoles> = CellProps<TeamWithRoles, TeamWithRoles[T]>;
 
@@ -57,7 +58,7 @@ const TeamList = () => {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<string>();
-  const { data, isLoading } = useGetTeams({ query, pageSize, page, sort });
+  const { data, isLoading } = useGetTeams({ query, pageSize, page, sort, fetchRoles: displayRolePicker });
   const [deleteTeam] = useDeleteTeam();
 
   const teams = data?.teams || [];
@@ -216,7 +217,7 @@ const TeamList = () => {
                 })}
                 size="sm"
                 disabled={!canDelete}
-                onConfirm={() => deleteTeam(original.uid)}
+                onConfirm={() => deleteTeam({ uid: original.uid })}
               />
             </Stack>
           );

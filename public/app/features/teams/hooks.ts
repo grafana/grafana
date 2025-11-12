@@ -5,7 +5,6 @@ import {
   useSearchTeamsQuery as useLegacySearchTeamsQuery,
   useCreateTeamMutation,
   useDeleteTeamByIdMutation,
-  TeamDto,
   useListTeamsRolesQuery,
   CreateTeamCommand,
   useSetTeamRolesMutation,
@@ -21,32 +20,41 @@ import { useDispatch } from 'app/types/store';
 
 import { buildNavModel } from './state/navModel';
 
-export type TeamWithRoles = TeamDto & {
-  roles?: Role[];
-};
-
 const rolesEnabled =
   contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList);
 
+const canUpdateRoles = () =>
+  contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
+  contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
+
+/**
+ * Get list of teams and their associated roles (if roles are enabled)
+ */
 export const useGetTeams = ({
   query,
   pageSize,
   page,
   sort,
+  fetchRoles,
 }: {
   query?: string;
   pageSize?: number;
   page?: number;
   sort?: string;
+  fetchRoles?: boolean;
 }) => {
   const legacyResponse = useLegacySearchTeamsQuery({ perpage: pageSize, accesscontrol: true, page, sort, query });
+
   const teamIds = useMemo(() => {
-    return (legacyResponse.data?.teams || []).map((team) => team.id).filter((id): id is number => id !== undefined);
+    const teams = legacyResponse.data?.teams || [];
+    const ids = teams.map((team) => team.id);
+    return ids.filter((id): id is number => id !== undefined);
   }, [legacyResponse.data?.teams]);
+
   const teamsRolesResponse = useListTeamsRolesQuery(teamIds.length ? { rolesSearchQuery: { teamIds } } : skipToken);
 
   const teamsWithRoles = useMemo(() => {
-    if (rolesEnabled && teamsRolesResponse.isLoading) {
+    if (!fetchRoles || (rolesEnabled && teamsRolesResponse.isLoading)) {
       return [];
     }
     return (legacyResponse.data?.teams || []).map((team) => {
@@ -57,7 +65,7 @@ export const useGetTeams = ({
         roles: mappedRoles,
       };
     });
-  }, [legacyResponse, teamsRolesResponse]);
+  }, [legacyResponse, teamsRolesResponse, fetchRoles]);
 
   return {
     ...legacyResponse,
@@ -69,6 +77,9 @@ export const useGetTeams = ({
   };
 };
 
+/**
+ * Get a single team by UID
+ */
 export const useGetTeam = ({ uid }: { uid: string }) => {
   const response = useGetTeamByIdQuery({ teamId: uid, accesscontrol: true });
   const dispatch = useDispatch();
@@ -83,6 +94,9 @@ export const useGetTeam = ({ uid }: { uid: string }) => {
   return response;
 };
 
+/**
+ * Update a team by UID
+ */
 export const useUpdateTeam = () => {
   const [updateTeam, response] = useUpdateTeamMutation();
 
@@ -98,16 +112,18 @@ export const useUpdateTeam = () => {
   return [trigger, response] as const;
 };
 
+/**
+ * Delete a team by UID
+ */
 export const useDeleteTeam = () => {
   const [deleteTeam, response] = useDeleteTeamByIdMutation();
 
-  return [(uid: string) => deleteTeam({ teamId: uid }), response] as const;
+  return [({ uid }: { uid: string }) => deleteTeam({ teamId: uid }), response] as const;
 };
 
-const canUpdateRoles = () =>
-  contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
-  contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
-
+/**
+ * Create a new team, and link any pending roles
+ */
 export const useCreateTeam = () => {
   const [createTeam, response] = useCreateTeamMutation();
   const [setTeamRoles] = useSetTeamRolesMutation();

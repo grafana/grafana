@@ -1,16 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { TeamsState, TeamState, TeamGroup } from 'app/types/teams';
-
-export const initialTeamsState: TeamsState = {
-  teams: [],
-  page: 1,
-  query: '',
-  perPage: 30,
-  totalPages: 0,
-  noTeams: false,
-  hasFetched: false,
-};
+import { TeamState, TeamGroup } from 'app/types/teams';
 
 export const initialTeamState: TeamState = {
   groups: [],
