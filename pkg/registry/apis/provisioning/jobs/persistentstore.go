@@ -60,9 +60,9 @@ type Queue interface {
 }
 
 var (
-	_ Queue               = (*persistentStore)(nil)
-	_ Store               = (*persistentStore)(nil)
-	_ appjobs.JobLister   = (*persistentStore)(nil)
+	_ Queue                = (*persistentStore)(nil)
+	_ Store                = (*persistentStore)(nil)
+	_ appjobs.JobLister    = (*persistentStore)(nil)
 	_ appjobs.JobCompleter = (*persistentStore)(nil)
 )
 
@@ -78,11 +78,10 @@ type persistentStore struct {
 	expiry time.Duration
 
 	queueMetrics QueueMetrics
-	historicJobs HistoryWriter
 }
 
 // NewJobStore creates a new job queue implementation using the API client.
-func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry time.Duration, historicJobs HistoryWriter, registry prometheus.Registerer) (*persistentStore, error) {
+func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry time.Duration, registry prometheus.Registerer) (*persistentStore, error) {
 	if expiry <= 0 {
 		expiry = time.Second * 30
 	}
@@ -94,7 +93,6 @@ func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry
 		clock:        time.Now,
 		expiry:       expiry,
 		queueMetrics: queueMetrics,
-		historicJobs: historicJobs,
 	}, nil
 }
 
@@ -222,8 +220,8 @@ func (s *persistentStore) Get(ctx context.Context, namespace, name string) (*pro
 	return job, nil
 }
 
-// Complete marks a job as completed and moves it to the historic job store.
-// When in the historic store, there is no more claim on the job.
+// Complete marks a job as completed and removes it from the active job store.
+// Callers are responsible for writing the job to history after calling this.
 func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) error {
 	logger := logging.FromContext(ctx).With("namespace", job.GetNamespace(), "job", job.GetName())
 
@@ -231,20 +229,6 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, job.GetNamespace())
 	if err != nil {
 		return apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
-	}
-
-	// Remove the claim label before moving to history
-	if job.Labels == nil {
-		job.Labels = make(map[string]string)
-	}
-	delete(job.Labels, LabelJobClaim)
-
-	// Write to history first (as documented: "moves it to the historic job store")
-	if err := s.historicJobs.WriteJob(ctx, job); err != nil {
-		logger.Warn("failed to write job to history", "error", err)
-		// Continue anyway - we still want to clean up the active job
-	} else {
-		logger.Debug("wrote job to history")
 	}
 
 	// Delete the job from the active job store
@@ -256,7 +240,6 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 
 	s.queueMetrics.DecreaseQueueSize(string(job.Spec.Action))
 
-	logger.Debug("job completion done")
 	return nil
 }
 

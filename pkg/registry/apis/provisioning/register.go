@@ -669,16 +669,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return nil
 			}
 
-			// Set up job history writer before creating the job store
-			var jobHistoryWriter jobs.HistoryWriter
-			if b.jobHistoryLoki != nil {
-				jobHistoryWriter = b.jobHistoryLoki
-			} else {
-				jobHistoryWriter = jobs.NewAPIClientHistoryWriter(b.GetClient())
-			}
-
-			// Initialize the API client-based job store with history writer
-			b.jobs, err = jobs.NewJobStore(b.client, 30*time.Second, jobHistoryWriter, b.registry)
+		// Initialize the API client-based job store
+		b.jobs, err = jobs.NewJobStore(b.client, 30*time.Second, b.registry)
 			if err != nil {
 				return fmt.Errorf("create API client job store: %w", err)
 			}
@@ -776,24 +768,32 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			repoGetter := resources.NewRepositoryGetter(b.repoFactory, b.client)
 
+			// Set up job history writer
+			var jobHistoryWriter jobs.HistoryWriter
+			if b.jobHistoryLoki != nil {
+				jobHistoryWriter = b.jobHistoryLoki
+			} else {
+				jobHistoryWriter = jobs.NewAPIClientHistoryWriter(b.GetClient())
+			}
+
 			// Create abandonment handlers for different job types
 			syncAbandonmentHandler := sync.NewSyncAbandonmentHandler(b.statusPatcher.Patch)
 
 			leaseRenewalInterval := 30 * time.Second
 			// Create expired job cleaner with abandonment handlers
-			jobCleaner := appjobs.NewExpiredJobCleaner(b.jobs, b.jobs, leaseRenewalInterval, syncAbandonmentHandler)
+			jobCleaner := appjobs.NewExpiredJobCleaner(b.jobs, b.jobs, jobHistoryWriter, leaseRenewalInterval, syncAbandonmentHandler)
 
-			// This is basically our own JobQueue system
-			driver, err := jobs.NewConcurrentJobDriver(
-				3,                    // 3 drivers for now
-				20*time.Minute,       // Max time for each job
-				30*time.Second,       // Periodically look for new jobs
-				leaseRenewalInterval, // Lease renewal interval
-				b.jobs, repoGetter, jobCleaner,
-				jobController.InsertNotifications(),
-				b.registry,
-				workers...,
-			)
+		// This is basically our own JobQueue system
+		driver, err := jobs.NewConcurrentJobDriver(
+			3,                    // 3 drivers for now
+			20*time.Minute,       // Max time for each job
+			30*time.Second,       // Periodically look for new jobs
+			leaseRenewalInterval, // Lease renewal interval
+			b.jobs, repoGetter, jobHistoryWriter, jobCleaner,
+			jobController.InsertNotifications(),
+			b.registry,
+			workers...,
+		)
 			if err != nil {
 				return err
 			}

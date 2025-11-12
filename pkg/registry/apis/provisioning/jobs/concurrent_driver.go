@@ -19,6 +19,7 @@ type ConcurrentJobDriver struct {
 	leaseRenewalInterval time.Duration
 	store                Store
 	repoGetter           RepoGetter
+	historicJobs         HistoryWriter
 	cleaner              appjobs.JobCleaner
 	workers              []Worker
 	notifications        chan struct{}
@@ -30,6 +31,7 @@ func NewConcurrentJobDriver(
 	jobTimeout, jobInterval, leaseRenewalInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
+	historicJobs HistoryWriter,
 	cleaner appjobs.JobCleaner,
 	notifications chan struct{},
 	registry prometheus.Registerer,
@@ -48,6 +50,7 @@ func NewConcurrentJobDriver(
 		leaseRenewalInterval: leaseRenewalInterval,
 		store:                store,
 		repoGetter:           repoGetter,
+		historicJobs:         historicJobs,
 		cleaner:              cleaner,
 		workers:              workers,
 		notifications:        notifications,
@@ -83,15 +86,16 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 			driverLogger := logger.With("driver_id", driverID)
 			driverCtx := logging.Context(ctx, driverLogger)
 
-			driver, err := NewJobDriver(
-				c.jobTimeout,
-				c.jobInterval,
-				c.leaseRenewalInterval,
-				c.store,
-				c.repoGetter,
-				c.notifications,
-				c.workers...,
-			)
+		driver, err := NewJobDriver(
+			c.jobTimeout,
+			c.jobInterval,
+			c.leaseRenewalInterval,
+			c.store,
+			c.repoGetter,
+			c.historicJobs,
+			c.notifications,
+			c.workers...,
+		)
 			if err != nil {
 				driverLogger.Error("failed to create job driver", "error", err)
 				errChan <- err

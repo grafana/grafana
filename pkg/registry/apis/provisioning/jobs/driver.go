@@ -61,6 +61,8 @@ type jobDriver struct {
 	store Store
 	// RepoGetter lets us access repositories to pass to the worker.
 	repoGetter RepoGetter
+	// historicJobs is the history writer for archiving completed jobs.
+	historicJobs HistoryWriter
 
 	// Workers process the job.
 	// Only the first worker who supports the job will process it; the rest are ignored.
@@ -79,6 +81,7 @@ func NewJobDriver(
 	jobTimeout, jobInterval, leaseRenewalInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
+	historicJobs HistoryWriter,
 	notifications chan struct{},
 	workers ...Worker,
 ) (*jobDriver, error) {
@@ -88,6 +91,7 @@ func NewJobDriver(
 		leaseRenewalInterval: leaseRenewalInterval,
 		store:                store,
 		repoGetter:           repoGetter,
+		historicJobs:         historicJobs,
 		workers:              workers,
 		notifications:        notifications,
 	}, nil
@@ -192,10 +196,17 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 		d.mu.Unlock()
 	}()
 
-	// Mark the job as completed (Complete will handle writing to history)
+	// Delete the job from active store first
 	if err := d.store.Complete(ctx, d.currentJob); err != nil {
 		return apifmt.Errorf("failed to complete job '%s' in '%s': %w", d.currentJob.GetName(), d.currentJob.GetNamespace(), err)
 	}
+
+	// Write to history after deletion
+	if err := d.historicJobs.WriteJob(ctx, d.currentJob); err != nil {
+		logger.Warn("failed to write job to history", "error", err)
+		// Job was already deleted, so we can't recover from this
+	}
+
 	logger.Debug("job completed")
 
 	return nil

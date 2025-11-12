@@ -40,10 +40,19 @@ type JobCleaner interface {
 	Run(ctx context.Context) error
 }
 
+// HistoryWriter is responsible for writing jobs to history storage.
+//
+//go:generate mockery --name HistoryWriter --structname MockHistoryWriter --inpackage --filename history_writer_mock.go --with-expecter
+type HistoryWriter interface {
+	// WriteJob writes a job to the history store.
+	WriteJob(ctx context.Context, job *provisioning.Job) error
+}
+
 // ExpiredJobCleaner handles cleanup of expired/abandoned jobs.
 type ExpiredJobCleaner struct {
 	lister              JobLister
 	completer           JobCompleter
+	historicJobs        HistoryWriter
 	clock               func() time.Time
 	expiry              time.Duration
 	abandonmentHandlers []AbandonmentHandler
@@ -53,10 +62,11 @@ type ExpiredJobCleaner struct {
 var _ JobCleaner = (*ExpiredJobCleaner)(nil)
 
 // NewExpiredJobCleaner creates a new expired job cleaner.
-func NewExpiredJobCleaner(lister JobLister, completer JobCompleter, expiry time.Duration, abandonmentHandlers ...AbandonmentHandler) *ExpiredJobCleaner {
+func NewExpiredJobCleaner(lister JobLister, completer JobCompleter, historicJobs HistoryWriter, expiry time.Duration, abandonmentHandlers ...AbandonmentHandler) *ExpiredJobCleaner {
 	return &ExpiredJobCleaner{
 		lister:              lister,
 		completer:           completer,
+		historicJobs:        historicJobs,
 		clock:               time.Now,
 		expiry:              expiry,
 		abandonmentHandlers: abandonmentHandlers,
@@ -94,17 +104,6 @@ func (c *ExpiredJobCleaner) Cleanup(ctx context.Context) error {
 
 		jobLogger := logger.With("namespace", job.GetNamespace(), "job", job.GetName(), "action", job.Spec.Action)
 
-		// Complete will handle writing to history and deleting from active queue
-		if err := c.completer.Complete(ctx, job); err != nil {
-			// Check if it's a "not found" error - this is okay, job was already cleaned up
-			if err.Error() == "not found" || err.Error() == "job no longer exists" {
-				jobLogger.Debug("job already deleted during cleanup")
-				continue
-			}
-			return apifmt.Errorf("failed to complete expired job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
-		}
-		jobLogger.Debug("cleaned up expired job")
-
 		// Handle job-type-specific abandonment logic (e.g., update repository sync status)
 		for _, handler := range c.abandonmentHandlers {
 			if handler.SupportsAction(job.Spec.Action) {
@@ -115,6 +114,29 @@ func (c *ExpiredJobCleaner) Cleanup(ctx context.Context) error {
 				break // Only use the first handler that supports this action
 			}
 		}
+
+		// Delete from active job store first
+		if err := c.completer.Complete(ctx, job); err != nil {
+			// Check if it's a "not found" error - this is okay, job was already cleaned up
+			if err.Error() == "not found" || err.Error() == "job no longer exists" {
+				jobLogger.Debug("job already deleted during cleanup")
+				continue
+			}
+			return apifmt.Errorf("failed to complete expired job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+		}
+
+		// Remove the claim label before archiving
+		if job.Labels != nil {
+			delete(job.Labels, "provisioning.grafana.app/claim")
+		}
+
+		// Write to history after deleting from active store
+		if err := c.historicJobs.WriteJob(ctx, job); err != nil {
+			jobLogger.Warn("failed to write expired job to history", "error", err)
+			// Job was already deleted, so we can't recover from this
+		}
+
+		jobLogger.Debug("cleaned up expired job")
 	}
 
 	return nil
