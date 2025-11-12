@@ -1222,6 +1222,10 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
+  * Enables Advisor app installer
+  */
+  grafanaAdvisorAppInstaller?: boolean;
+  /**
   * Enables app platform API for annotations
   * @default false
   */
