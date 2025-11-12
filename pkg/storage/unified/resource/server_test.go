@@ -593,7 +593,7 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 	}
 
 	check := func(t *testing.T, expectedSleep bool, res responseWithErrorResult, err error) {
-		slept := s.sleepAfterSuccessfulWriteOperation(res, err)
+		slept := s.sleepAfterSuccessfulWriteOperation("test", &resourcepb.ResourceKey{}, res, err)
 		require.Equal(t, expectedSleep, slept)
 	}
 
