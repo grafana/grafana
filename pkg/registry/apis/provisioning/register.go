@@ -35,7 +35,7 @@ import (
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
-	jobsvalidation "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -105,7 +105,8 @@ type APIBuilder struct {
 	jobs                interface {
 		jobs.Queue
 		jobs.Store
-		jobs.JobLister
+		appjobs.JobLister
+		appjobs.JobCompleter
 	}
 	jobHistoryConfig *JobHistoryConfig
 	jobHistoryLoki   *jobs.LokiJobHistory
@@ -581,7 +582,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	// Validate Jobs
 	job, ok := obj.(*provisioning.Job)
 	if ok {
-		return jobsvalidation.ValidateJob(job)
+		return appjobs.ValidateJob(job)
 	}
 
 	repo, err := b.asRepository(ctx, obj, a.GetOldObject())
@@ -775,16 +776,20 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			repoGetter := resources.NewRepositoryGetter(b.repoFactory, b.client)
 
+			// Create abandonment handlers for different job types
+			syncAbandonmentHandler := sync.NewSyncAbandonmentHandler(b.statusPatcher.Patch)
+			abandonmentRegistry := appjobs.NewAbandonmentHandlerRegistry(syncAbandonmentHandler)
+
+			leaseRenewalInterval := 30 * time.Second
 			// Create expired job cleaner
-			jobCleaner := jobs.NewExpiredJobCleaner(b.jobs, b.jobs, 30*time.Second)
+			jobCleaner := appjobs.NewExpiredJobCleaner(b.jobs, b.jobs, leaseRenewalInterval, abandonmentRegistry)
 
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
-				3,              // 3 drivers for now
-				20*time.Minute, // Max time for each job
-				time.Minute,    // Cleanup jobs
-				30*time.Second, // Periodically look for new jobs
-				30*time.Second, // Lease renewal interval
+				3,                    // 3 drivers for now
+				20*time.Minute,       // Max time for each job
+				30*time.Second,       // Periodically look for new jobs
+				leaseRenewalInterval, // Lease renewal interval
 				b.jobs, repoGetter, jobCleaner,
 				jobController.InsertNotifications(),
 				b.registry,

@@ -7,8 +7,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // JobLister provides methods to list jobs for cleanup purposes.
@@ -20,6 +18,15 @@ type JobLister interface {
 	ListExpiredJobs(ctx context.Context, expiredBefore time.Time, limit int) ([]*provisioning.Job, error)
 }
 
+// JobCompleter completes jobs (archives and removes from active queue).
+//
+//go:generate mockery --name JobCompleter --structname MockJobCompleter --inpackage --filename job_completer_mock.go --with-expecter
+type JobCompleter interface {
+	// Complete marks a job as completed and moves it to the historic job store.
+	// When in the historic store, there is no more claim on the job.
+	Complete(ctx context.Context, job *provisioning.Job) error
+}
+
 // JobCleaner handles cleanup of expired/abandoned jobs.
 //
 //go:generate mockery --name JobCleaner --structname MockJobCleaner --inpackage --filename job_cleaner_mock.go --with-expecter
@@ -28,29 +35,31 @@ type JobCleaner interface {
 	// This should be called periodically to clean up jobs from crashed workers.
 	Cleanup(ctx context.Context) error
 
-	// Run starts a cleanup loop that runs at the specified interval.
+	// Run starts a cleanup loop that runs at an appropriate interval.
 	// This is a blocking function that runs until the context is canceled.
-	Run(ctx context.Context, cleanupInterval time.Duration) error
+	Run(ctx context.Context) error
 }
 
 // ExpiredJobCleaner handles cleanup of expired/abandoned jobs.
 type ExpiredJobCleaner struct {
-	lister JobLister
-	store  Store
-	clock  func() time.Time
-	expiry time.Duration
+	lister             JobLister
+	completer          JobCompleter
+	clock              func() time.Time
+	expiry             time.Duration
+	abandonmentHandler *AbandonmentHandlerRegistry
 }
 
 // Ensure ExpiredJobCleaner implements JobCleaner
 var _ JobCleaner = (*ExpiredJobCleaner)(nil)
 
 // NewExpiredJobCleaner creates a new expired job cleaner.
-func NewExpiredJobCleaner(lister JobLister, store Store, expiry time.Duration) *ExpiredJobCleaner {
+func NewExpiredJobCleaner(lister JobLister, completer JobCompleter, expiry time.Duration, abandonmentHandler *AbandonmentHandlerRegistry) *ExpiredJobCleaner {
 	return &ExpiredJobCleaner{
-		lister: lister,
-		store:  store,
-		clock:  time.Now,
-		expiry: expiry,
+		lister:             lister,
+		completer:          completer,
+		clock:              time.Now,
+		expiry:             expiry,
+		abandonmentHandler: abandonmentHandler,
 	}
 }
 
@@ -83,33 +92,46 @@ func (c *ExpiredJobCleaner) Cleanup(ctx context.Context) error {
 		job.Status.Message = "Job failed due to lease expiry - worker may have crashed or lost connection"
 		job.Status.Finished = c.clock().Unix()
 
-		// Set namespace context for the completion
-		ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
-		if err != nil {
-			return apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
-		}
-
-		jobLogger := logger.With("namespace", job.GetNamespace(), "job", job.GetName())
+		jobLogger := logger.With("namespace", job.GetNamespace(), "job", job.GetName(), "action", job.Spec.Action)
 
 		// Complete will handle writing to history and deleting from active queue
-		if err := c.store.Complete(ctx, job); err != nil {
-			if apierrors.IsNotFound(err) {
-				// Job was already completed/deleted by another process
+		if err := c.completer.Complete(ctx, job); err != nil {
+			// Check if it's a "not found" error - this is okay, job was already cleaned up
+			if err.Error() == "not found" || err.Error() == "job no longer exists" {
 				jobLogger.Debug("job already deleted during cleanup")
 				continue
 			}
 			return apifmt.Errorf("failed to complete expired job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 		}
 		jobLogger.Debug("cleaned up expired job")
+
+		// Handle job-type-specific abandonment logic (e.g., update repository sync status)
+		if err := c.abandonmentHandler.HandleAbandonment(ctx, job); err != nil {
+			jobLogger.Error("failed to handle job abandonment", "error", err)
+			// Continue anyway - we still want to clean up the job
+		}
 	}
 
 	return nil
 }
 
-// Run starts a cleanup loop that runs at the specified interval.
+// Run starts a cleanup loop that runs at an appropriate interval based on the expiry duration.
 // This is a blocking function that runs until the context is canceled.
-func (c *ExpiredJobCleaner) Run(ctx context.Context, cleanupInterval time.Duration) error {
+func (c *ExpiredJobCleaner) Run(ctx context.Context) error {
 	logger := logging.FromContext(ctx).With("logger", "job-cleaner")
+
+	// Calculate cleanup interval based on expiry duration
+	// Run cleanup every 3-4 expiry intervals to detect expired leases promptly but not too aggressively
+	cleanupInterval := c.expiry * 3
+
+	// Enforce minimum and maximum bounds
+	if cleanupInterval < 30*time.Second {
+		cleanupInterval = 30 * time.Second
+	}
+	if cleanupInterval > 5*time.Minute {
+		cleanupInterval = 5 * time.Minute
+	}
+
 	logger.Info("starting job cleaner", "cleanup_interval", cleanupInterval, "expiry", c.expiry)
 
 	// Initial cleanup

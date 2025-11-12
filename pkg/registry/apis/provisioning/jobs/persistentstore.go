@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -59,9 +60,10 @@ type Queue interface {
 }
 
 var (
-	_ Queue     = (*persistentStore)(nil)
-	_ Store     = (*persistentStore)(nil)
-	_ JobLister = (*persistentStore)(nil)
+	_ Queue               = (*persistentStore)(nil)
+	_ Store               = (*persistentStore)(nil)
+	_ appjobs.JobLister   = (*persistentStore)(nil)
+	_ appjobs.JobCompleter = (*persistentStore)(nil)
 )
 
 // persistentStore is a job queue implementation that uses the API client instead of rest.Storage.

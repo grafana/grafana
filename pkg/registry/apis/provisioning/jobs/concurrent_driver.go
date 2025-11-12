@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -14,12 +15,11 @@ import (
 type ConcurrentJobDriver struct {
 	numDrivers           int
 	jobTimeout           time.Duration
-	cleanupInterval      time.Duration
 	jobInterval          time.Duration
 	leaseRenewalInterval time.Duration
 	store                Store
 	repoGetter           RepoGetter
-	cleaner              JobCleaner
+	cleaner              appjobs.JobCleaner
 	workers              []Worker
 	notifications        chan struct{}
 }
@@ -27,10 +27,10 @@ type ConcurrentJobDriver struct {
 // NewConcurrentJobDriver creates a new concurrent job driver that spawns multiple job drivers.
 func NewConcurrentJobDriver(
 	numDrivers int,
-	jobTimeout, cleanupInterval, jobInterval, leaseRenewalInterval time.Duration,
+	jobTimeout, jobInterval, leaseRenewalInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
-	cleaner JobCleaner,
+	cleaner appjobs.JobCleaner,
 	notifications chan struct{},
 	registry prometheus.Registerer,
 	workers ...Worker,
@@ -38,31 +38,12 @@ func NewConcurrentJobDriver(
 	if numDrivers <= 0 {
 		return nil, fmt.Errorf("numWorkers must be greater than 0, got %d", numDrivers)
 	}
-	// Default lease renewal interval to 1/3 of job timeout, minimum 5 seconds
-	if leaseRenewalInterval <= 0 {
-		leaseRenewalInterval = jobTimeout / 3
-	}
-	if leaseRenewalInterval < 5*time.Second {
-		leaseRenewalInterval = 5 * time.Second
-	}
-	// For lease-based cleanup, run at most every 3-4 lease renewal intervals
-	// to detect expired leases promptly but not too aggressively
-	if cleanupInterval <= 0 {
-		cleanupInterval = leaseRenewalInterval * 3
-	}
-	if cleanupInterval < 30*time.Second {
-		cleanupInterval = 30 * time.Second // Minimum cleanup interval
-	}
-	if cleanupInterval > 5*time.Minute {
-		cleanupInterval = 5 * time.Minute // Maximum cleanup interval
-	}
 
 	recordConcurrentDriverMetric(registry, numDrivers)
 
 	return &ConcurrentJobDriver{
 		numDrivers:           numDrivers,
 		jobTimeout:           jobTimeout,
-		cleanupInterval:      cleanupInterval,
 		jobInterval:          jobInterval,
 		leaseRenewalInterval: leaseRenewalInterval,
 		store:                store,
@@ -77,7 +58,7 @@ func NewConcurrentJobDriver(
 // This is a blocking function that will run until the context is canceled or an error occurs.
 func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 	logger := logging.FromContext(ctx).With("logger", "concurrent-job-driver", "num_drivers", c.numDrivers)
-	logger.Info("starting concurrent job driver with lease-based cleanup", "cleanup_interval", c.cleanupInterval)
+	logger.Info("starting concurrent job driver")
 
 	var wg sync.WaitGroup
 	errChan := make(chan error, c.numDrivers+1) // +1 for cleanup goroutine
@@ -87,7 +68,7 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 	go func() {
 		defer wg.Done()
 		cleanerCtx := logging.Context(ctx, logger)
-		if err := c.cleaner.Run(cleanerCtx, c.cleanupInterval); err != nil && ctx.Err() == nil {
+		if err := c.cleaner.Run(cleanerCtx); err != nil && ctx.Err() == nil {
 			logger.Error("cleaner failed", "error", err)
 			errChan <- err
 		}
