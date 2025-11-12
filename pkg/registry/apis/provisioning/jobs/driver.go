@@ -327,9 +327,9 @@ func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, recorder JobPr
 	case <-leaseExpired:
 		return apifmt.Errorf("job aborted due to lease expiry")
 	case <-ctx.Done():
-		// Return context error - caller will determine if this is due to graceful shutdown
+		// Return context error directly - caller will determine if this is due to graceful shutdown
 		// or job timeout based on which context was cancelled
-		return fmt.Errorf("job processing interrupted: %w", ctx.Err())
+		return ctx.Err()
 	}
 }
 
