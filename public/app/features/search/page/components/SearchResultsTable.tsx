@@ -31,6 +31,7 @@ export type SearchResultsProps = {
   onDatasourceChange?: (datasource?: string) => void;
   onClickItem?: (event: React.MouseEvent<HTMLElement>) => void;
   keyboardEvents: Observable<React.KeyboardEvent>;
+  trackingSource: string;
 };
 
 export type TableColumn = Column & {
@@ -51,6 +52,7 @@ export const SearchResultsTable = React.memo(
     onDatasourceChange,
     onClickItem,
     keyboardEvents,
+    trackingSource,
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
     const columnStyles = useStyles2(getColumnStyles);
@@ -159,7 +161,7 @@ export const SearchResultsTable = React.memo(
                     reportInteraction('grafana_browse_dashboards_page_click_list_item', {
                       itemKind: kind,
                       parent: !parent ? 'general' : parent === 'general' ? 'general' : 'folder',
-                      source: 'search view',
+                      source: trackingSource,
                     });
                   } catch (e) {
                     // ignore analytics errors
@@ -194,6 +196,7 @@ export const SearchResultsTable = React.memo(
         tableStyles,
         onClickItem,
         response.view.dataFrame,
+        trackingSource,
       ]
     );
 
