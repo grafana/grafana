@@ -1,13 +1,16 @@
+import { config } from '@grafana/runtime';
+
+import { isOnPrem } from './isOnPrem';
+
 /**
  * Checks if the current Grafana instance is on a free tier license
  *
- * TODO: This is a placeholder implementation. The exact logic for determining
- * free tier status needs to be implemented based on actual license information.
+ * Free tier is defined as:
+ * - Cloud instance (not on-prem) AND
+ * - Not licensed (unlicensed or trial)
  *
- * @returns true if the instance is on a free tier license
+ * @returns true if the instance is a free tier cloud instance
  */
 export function isFreeTierLicense() {
-  // Placeholder: Assume cloud instances without premium features are free tier
-  // This logic should be updated when proper license detection is available
-  return true;
+  return !isOnPrem() && config.licenseInfo.stateInfo !== 'Licensed';
 }
