@@ -419,6 +419,15 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	// If we want to check unified errors just run it in foreground.
 	if _, _, err := d.unified.Update(ctx, name, unifiedInfo, createValidation, updateValidation, unifiedForceCreate, options); err != nil {
 		log.With("objectInfo", objectInfo(objFromLegacy)).Error("failed to UPDATE in unified storage", "err", err)
+		// cleanup the legacy object if we created it there
+		if createdLegacy {
+			go func(ctxBg context.Context, cancel context.CancelFunc) {
+				defer cancel()
+				if _, asyncDelete, err := d.legacy.Delete(ctxBg, name, nil, &metav1.DeleteOptions{}); err != nil {
+					log.With("name", name).Error("failed to CLEANUP object in legacy storage after unified storage update failure", "err", err, "asyncDelete", asyncDelete)
+				}
+			}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
+		}
 		return nil, false, err
 	}
 	return objFromLegacy, createdLegacy, nil
