@@ -118,6 +118,10 @@
           opacity: 1;
         }
 
+        .fs-custom-domain-error .fs-loader-text {
+          opacity: 1;
+        }
+
         .fs-error-icon {
           fill: var(--fs-color-error);
         }
@@ -186,6 +190,7 @@
         window.__grafana_load_failed = function(err) {
           console.error('Failed to load Grafana', err);
           document.querySelector('.fs-variant-loader').classList.add('fs-hidden');
+          document.querySelector('.fs-custom-domain-error').classList.add('fs-hidden');
           document.querySelector('.fs-variant-error').classList.remove('fs-hidden');
 
           // not a secure random value, but collisions are highly unlikely and 1/1000_000_000 lost requests
@@ -203,6 +208,7 @@
         window.__grafana_custom_domain_failed = function(err) {
           console.error('Failed to load Grafana due to custom domain issue', err);
           document.querySelector('.fs-variant-loader').classList.add('fs-hidden');
+          document.querySelector('.fs-variant-error').classList.add('fs-hidden');
           document.querySelector('.fs-custom-domain-error').classList.remove('fs-hidden');
         }
 
@@ -211,6 +217,7 @@
             return;
           }
           window.__grafana_load_failed();
+          window.__grafana_custom_domain_failed();
         };
 
         let hasSetLoading = false;
@@ -333,6 +340,7 @@
         window.__grafana_boot_data_promise.catch((err) => {
           console.error("__grafana_boot_data_promise rejected", err);
           window.__grafana_load_failed(err);
+          window.__grafana_custom_domain_failed(err);
         });
       })();
     </script>
