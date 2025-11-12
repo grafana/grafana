@@ -925,6 +925,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/dashboard/ @grafana/dashboards-squad
 /public/app/features/dashboard/components/TransformationsEditor/ @grafana/datapro
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
+/public/app/features/dropandpaste/ @grafana/dashboards-squad
 /public/app/features/scopes/ @grafana/grafana-operator-experience-squad
 /public/app/features/datasources/ @grafana/plugins-platform-frontend
 /public/app/features/dimensions/ @grafana/dataviz-squad

@@ -1226,4 +1226,9 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesAnnotations?: boolean;
+  /**
+  * Enables the drop and paste handlers on dashboards
+  * @default false
+  */
+  dashboardDropAndPaste?: boolean;
 }

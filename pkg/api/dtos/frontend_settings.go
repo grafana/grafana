@@ -254,6 +254,7 @@ type FrontendSettingsDTO struct {
 	PluginCatalogManagedPlugins         []string                       `json:"pluginCatalogManagedPlugins"`
 	PluginCatalogPreinstalledPlugins    []setting.InstallPlugin        `json:"pluginCatalogPreinstalledPlugins"`
 	PluginCatalogPreinstalledAutoUpdate bool                           `json:"pluginCatalogPreinstalledAutoUpdate"`
+	PluginEnableDropAndPasteHook        []string                       `json:"pluginEnableDropAndPasteHook"`
 	ExpressionsEnabled                  bool                           `json:"expressionsEnabled"`
 	AwsAllowedAuthProviders             []string                       `json:"awsAllowedAuthProviders"`
 	AwsAssumeRoleEnabled                bool                           `json:"awsAssumeRoleEnabled"`

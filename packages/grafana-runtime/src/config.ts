@@ -163,6 +163,7 @@ export class GrafanaBootConfig {
     internalLoggerLevel: 0,
     botFilterEnabled: false,
   };
+  pluginEnableDropAndPasteHook: string[] = [];
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
