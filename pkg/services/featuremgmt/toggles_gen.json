@@ -3007,13 +3007,16 @@
     {
       "metadata": {
         "name": "pinNavItems",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-06-10T11:40:03Z"
+        "resourceVersion": "1762958248290",
+        "creationTimestamp": "2024-06-10T11:40:03Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables pinning of nav items",
         "stage": "GA",
-        "codeowner": "@grafana/grafana-frontend-platform",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
         "expression": "true"
       }
     },
@@ -3533,13 +3536,16 @@
     {
       "metadata": {
         "name": "restoreDashboards",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-05-23T14:35:54Z"
+        "resourceVersion": "1762958248290",
+        "creationTimestamp": "2025-05-23T14:35:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables restore deleted dashboards feature",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
         "hideFromAdminPage": true,
         "expression": "false"
       }
@@ -3634,13 +3640,16 @@
     {
       "metadata": {
         "name": "scopeSearchAllLevels",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-04-14T07:42:16Z"
+        "resourceVersion": "1762958248290",
+        "creationTimestamp": "2025-04-14T07:42:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable scope search to include all levels of the scope node tree",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
@@ -3790,13 +3799,16 @@
     {
       "metadata": {
         "name": "starsFromAPIServer",
-        "resourceVersion": "1758276055065",
-        "creationTimestamp": "2025-09-19T10:00:55Z"
+        "resourceVersion": "1762958248290",
+        "creationTimestamp": "2025-09-19T10:00:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
+        }
       },
       "spec": {
         "description": "populate star status from apiserver",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
         "frontend": true,
         "hideFromDocs": true
       }
@@ -4034,13 +4046,16 @@
     {
       "metadata": {
         "name": "unifiedHistory",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-12-13T10:41:18Z"
+        "resourceVersion": "1762958248290",
+        "creationTimestamp": "2024-12-13T10:41:18Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Displays the navigation history so the user can navigate back to previous pages",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
         "frontend": true
       }
     },
@@ -4268,13 +4283,16 @@
     {
       "metadata": {
         "name": "useScopesNavigationEndpoint",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-31T15:20:00Z"
+        "resourceVersion": "1762958248290",
+        "creationTimestamp": "2025-03-31T15:20:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromAdminPage": true,
         "hideFromDocs": true
