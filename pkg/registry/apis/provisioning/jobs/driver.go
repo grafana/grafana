@@ -33,10 +33,6 @@ type Store interface {
 	// When in the historic store, there is no more claim on the job.
 	Complete(ctx context.Context, job *provisioning.Job) error
 
-	// Cleanup should be called periodically to clean up abandoned jobs.
-	// An abandoned job is one that has been claimed by a worker, but the worker has not updated the job in a while.
-	Cleanup(ctx context.Context) error
-
 	// Update saves the job back to the store.
 	Update(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error)
 

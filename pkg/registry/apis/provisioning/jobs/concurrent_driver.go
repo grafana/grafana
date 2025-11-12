@@ -19,6 +19,7 @@ type ConcurrentJobDriver struct {
 	leaseRenewalInterval time.Duration
 	store                Store
 	repoGetter           RepoGetter
+	cleaner              JobCleaner
 	workers              []Worker
 	notifications        chan struct{}
 }
@@ -29,6 +30,7 @@ func NewConcurrentJobDriver(
 	jobTimeout, cleanupInterval, jobInterval, leaseRenewalInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
+	cleaner JobCleaner,
 	notifications chan struct{},
 	registry prometheus.Registerer,
 	workers ...Worker,
@@ -65,6 +67,7 @@ func NewConcurrentJobDriver(
 		leaseRenewalInterval: leaseRenewalInterval,
 		store:                store,
 		repoGetter:           repoGetter,
+		cleaner:              cleaner,
 		workers:              workers,
 		notifications:        notifications,
 	}, nil
@@ -76,32 +79,17 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 	logger := logging.FromContext(ctx).With("logger", "concurrent-job-driver", "num_drivers", c.numDrivers)
 	logger.Info("starting concurrent job driver with lease-based cleanup", "cleanup_interval", c.cleanupInterval)
 
-	// Set up cleanup ticker - runs more frequently with lease-based approach
-	cleanupTicker := time.NewTicker(c.cleanupInterval)
-	defer cleanupTicker.Stop()
-
-	// Initial cleanup
-	if err := c.store.Cleanup(ctx); err != nil {
-		logger.Error("failed to clean up old jobs at start", "error", err)
-	}
-
 	var wg sync.WaitGroup
 	errChan := make(chan error, c.numDrivers+1) // +1 for cleanup goroutine
 
-	// Start cleanup goroutine
+	// Start cleanup goroutine - runs the cleaner's Run method
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for {
-			select {
-			case <-cleanupTicker.C:
-				if err := c.store.Cleanup(ctx); err != nil {
-					logger.Error("failed to cleanup jobs", "error", err)
-				}
-			case <-ctx.Done():
-				logger.Debug("cleanup goroutine stopping")
-				return
-			}
+		cleanerCtx := logging.Context(ctx, logger)
+		if err := c.cleaner.Run(cleanerCtx, c.cleanupInterval); err != nil && ctx.Err() == nil {
+			logger.Error("cleaner failed", "error", err)
+			errChan <- err
 		}
 	}()
 

@@ -105,6 +105,7 @@ type APIBuilder struct {
 	jobs                interface {
 		jobs.Queue
 		jobs.Store
+		jobs.JobLister
 	}
 	jobHistoryConfig *JobHistoryConfig
 	jobHistoryLoki   *jobs.LokiJobHistory
@@ -657,29 +658,29 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 
-		b.client = c.ProvisioningV0alpha1()
+			b.client = c.ProvisioningV0alpha1()
 
-		b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
-		b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewSimpleRepositoryTester(b.validator))
+			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
+			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewSimpleRepositoryTester(b.validator))
 
-		// if running solely CRUD, skip the rest of the setup
-		if b.onlyApiServer {
-			return nil
-		}
+			// if running solely CRUD, skip the rest of the setup
+			if b.onlyApiServer {
+				return nil
+			}
 
-		// Set up job history writer before creating the job store
-		var jobHistoryWriter jobs.HistoryWriter
-		if b.jobHistoryLoki != nil {
-			jobHistoryWriter = b.jobHistoryLoki
-		} else {
-			jobHistoryWriter = jobs.NewAPIClientHistoryWriter(b.GetClient())
-		}
+			// Set up job history writer before creating the job store
+			var jobHistoryWriter jobs.HistoryWriter
+			if b.jobHistoryLoki != nil {
+				jobHistoryWriter = b.jobHistoryLoki
+			} else {
+				jobHistoryWriter = jobs.NewAPIClientHistoryWriter(b.GetClient())
+			}
 
-		// Initialize the API client-based job store with history writer
-		b.jobs, err = jobs.NewJobStore(b.client, 30*time.Second, jobHistoryWriter, b.registry)
-		if err != nil {
-			return fmt.Errorf("create API client job store: %w", err)
-		}
+			// Initialize the API client-based job store with history writer
+			b.jobs, err = jobs.NewJobStore(b.client, 30*time.Second, jobHistoryWriter, b.registry)
+			if err != nil {
+				return fmt.Errorf("create API client job store: %w", err)
+			}
 
 			// Informer with resync interval used for health check and reconciliation
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
@@ -769,22 +770,26 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 
-		// Add any extra workers
-		workers = append(workers, b.extraWorkers...)
+			// Add any extra workers
+			workers = append(workers, b.extraWorkers...)
 
-		repoGetter := resources.NewRepositoryGetter(b.repoFactory, b.client)
+			repoGetter := resources.NewRepositoryGetter(b.repoFactory, b.client)
+
+			// Create expired job cleaner
+			jobCleaner := jobs.NewExpiredJobCleaner(b.jobs, b.jobs, 30*time.Second)
+
 			// This is basically our own JobQueue system
-		driver, err := jobs.NewConcurrentJobDriver(
-			3,              // 3 drivers for now
-			20*time.Minute, // Max time for each job
-			time.Minute,    // Cleanup jobs
-			30*time.Second, // Periodically look for new jobs
-			30*time.Second, // Lease renewal interval
-			b.jobs, repoGetter,
-			jobController.InsertNotifications(),
-			b.registry,
-			workers...,
-		)
+			driver, err := jobs.NewConcurrentJobDriver(
+				3,              // 3 drivers for now
+				20*time.Minute, // Max time for each job
+				time.Minute,    // Cleanup jobs
+				30*time.Second, // Periodically look for new jobs
+				30*time.Second, // Lease renewal interval
+				b.jobs, repoGetter, jobCleaner,
+				jobController.InsertNotifications(),
+				b.registry,
+				workers...,
+			)
 			if err != nil {
 				return err
 			}

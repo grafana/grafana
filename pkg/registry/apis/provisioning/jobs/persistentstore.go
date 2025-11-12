@@ -59,8 +59,9 @@ type Queue interface {
 }
 
 var (
-	_ Queue = (*persistentStore)(nil)
-	_ Store = (*persistentStore)(nil)
+	_ Queue     = (*persistentStore)(nil)
+	_ Store     = (*persistentStore)(nil)
+	_ JobLister = (*persistentStore)(nil)
 )
 
 // persistentStore is a job queue implementation that uses the API client instead of rest.Storage.
@@ -306,69 +307,40 @@ func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job)
 	return nil
 }
 
-// Cleanup finds jobs with expired leases and marks them as failed.
-// This replaces the old cleanup mechanism and should be called more frequently.
-func (s *persistentStore) Cleanup(ctx context.Context) error {
-	logger := logging.FromContext(ctx)
-
+// ListExpiredJobs lists jobs with expired leases (claim timestamp older than the given time).
+// Returns jobs in batches up to the specified limit.
+func (s *persistentStore) ListExpiredJobs(ctx context.Context, expiredBefore time.Time, limit int) ([]*provisioning.Job, error) {
 	// Set up provisioning identity to access jobs across all namespaces
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, "*") // "*" grants access to all namespaces
 	if err != nil {
-		return apifmt.Errorf("failed to grant provisioning identity for cleanup: %w", err)
+		return nil, apifmt.Errorf("failed to grant provisioning identity for listing expired jobs: %w", err)
 	}
 
-	// Find jobs with expired leases (older than expiry time)
-	expiry := s.clock().Add(-s.expiry).UnixMilli()
-	requirement, err := labels.NewRequirement(LabelJobClaim, selection.LessThan, []string{strconv.FormatInt(expiry, 10)})
+	// Find jobs with expired leases (claim timestamp before expiredBefore)
+	expiryMillis := expiredBefore.UnixMilli()
+	requirement, err := labels.NewRequirement(LabelJobClaim, selection.LessThan, []string{strconv.FormatInt(expiryMillis, 10)})
 	if err != nil {
-		return apifmt.Errorf("could not create requirement: %w", err)
+		return nil, apifmt.Errorf("could not create requirement: %w", err)
 	}
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	jobs, err := s.client.Jobs("").List(timeoutCtx, metav1.ListOptions{
+	defer cancel()
+
+	jobList, err := s.client.Jobs("").List(timeoutCtx, metav1.ListOptions{
 		LabelSelector: labels.NewSelector().Add(*requirement).String(),
-		Limit:         100, // Process in batches
+		Limit:         int64(limit),
 	})
-	cancel()
 	if err != nil {
-		return apifmt.Errorf("failed to list jobs with expired leases: %w", err)
+		return nil, apifmt.Errorf("failed to list jobs with expired leases: %w", err)
 	}
 
-	// If no jobs found, cleanup is complete
-	if len(jobs.Items) == 0 {
-		return nil
+	// Convert to slice of pointers
+	result := make([]*provisioning.Job, 0, len(jobList.Items))
+	for i := range jobList.Items {
+		result = append(result, &jobList.Items[i])
 	}
 
-	logger.Info("cleaning up expired jobs", "count", len(jobs.Items))
-
-	for _, job := range jobs.Items {
-		// Mark job as failed due to lease expiry
-		job := job.DeepCopy()
-		job.Status.State = provisioning.JobStateError
-		job.Status.Message = "Job failed due to lease expiry - worker may have crashed or lost connection"
-		job.Status.Finished = s.clock().Unix()
-
-		// Set namespace context for the completion
-		ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
-		if err != nil {
-			return apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
-		}
-
-		jobLogger := logger.With("namespace", job.GetNamespace(), "job", job.GetName())
-
-		// Complete will handle writing to history and deleting from active queue
-		if err := s.Complete(ctx, job); err != nil {
-			if apierrors.IsNotFound(err) {
-				// Job was already completed/deleted by another process
-				jobLogger.Debug("job already deleted during cleanup")
-				continue
-			}
-			return apifmt.Errorf("failed to complete expired job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
-		}
-		jobLogger.Debug("cleaned up expired job")
-	}
-
-	return nil
+	return result, nil
 }
 
 func (s *persistentStore) Insert(ctx context.Context, namespace string, spec provisioning.JobSpec) (*provisioning.Job, error) {
