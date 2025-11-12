@@ -160,7 +160,10 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 		}
 	}
 
-	logger.Info("all job drivers stopped")
-	// Context cancellation during shutdown is expected and not an error
-	return nil
+	if ctx.Err() != nil {
+		logger.Info("all job drivers gracefully stopped")
+		return nil
+	}
+
+	return fmt.Errorf("concurrent job driver stopped unexpectedly")
 }
