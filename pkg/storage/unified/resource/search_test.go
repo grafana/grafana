@@ -786,7 +786,7 @@ func TestRebuildIndexesForResource(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil)
+	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
