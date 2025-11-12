@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, useCallback, useState, CSSProperties } from 'react';
 import * as React from 'react';
-import { useTable, Column, TableOptions, Cell } from 'react-table';
+import { useTable, Column, TableOptions, Cell, ColumnInstance } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 import { Observable } from 'rxjs';
@@ -143,14 +143,13 @@ export const SearchResultsTable = React.memo(
           <div key={key} {...rowProps} className={className}>
             {row.cells.map((cell: Cell, index: number) => {
               const href = onClickItem ? url : undefined;
-              const fieldName = cell.column.field.name;
 
               let userProps: { href?: string; onClick?: (event: React.MouseEvent<HTMLElement>) => void } = {
                 href,
                 onClick: onClickItem,
               };
 
-              if (fieldName === 'name' && href) {
+              if (cell.column.id === 'column-name' && href) {
                 const parent = response.view.dataFrame.fields[5].values[rowIndex];
                 const kind = response.view.dataFrame.fields[0].values[rowIndex];
                 const existingOnClick = onClickItem;
@@ -159,7 +158,7 @@ export const SearchResultsTable = React.memo(
                   try {
                     reportInteraction('grafana_browse_dashboards_page_click_list_item', {
                       itemKind: kind,
-                      parent: !parent ? 'general': parent === 'general' ? 'general' : 'folder',
+                      parent: !parent ? 'general' : parent === 'general' ? 'general' : 'folder',
                       source: 'search view',
                     });
                   } catch (e) {
