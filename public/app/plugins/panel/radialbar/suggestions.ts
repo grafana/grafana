@@ -21,7 +21,7 @@ export const radialBarSuggestionsHandler: VisualizationSuggestionsHandler<Option
   const withDefaults = (
     suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
   ): VisualizationSuggestion<Options, GraphFieldConfig> => {
-    // if there is a string field and there are few enough rows, we assume it's tabular data and not time series data,
+    // if there is a string field and there are few enough rows, we assume it's tabular data and not numeric series data,
     // and the de-aggregated version of the viz probably makes more sense
     const isTabularData =
       dataSummary.hasFieldType(FieldType.string) && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10;
