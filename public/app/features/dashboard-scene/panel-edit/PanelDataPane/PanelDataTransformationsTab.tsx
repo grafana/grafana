@@ -132,7 +132,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         if (targetQuery) {
           scrollToQuery(targetQuery.refId);
         }
-      }, 100);
+      }, 250);
     };
 
     const onAddTransformation = (transformationId: string) => {

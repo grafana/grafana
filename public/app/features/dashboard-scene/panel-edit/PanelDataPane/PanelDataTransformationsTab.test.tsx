@@ -176,7 +176,7 @@ describe('PanelDataTransformationsTab', () => {
       render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
 
       // Should show SQL transformation card in empty state
-      expect(screen.getByText('SQL')).toBeInTheDocument();
+      expect(screen.getByText('SQL Expressions')).toBeInTheDocument();
       expect(screen.getByTestId('go-to-queries-button')).toBeInTheDocument();
     } finally {
       config.featureToggles.transformationsEmptyPlaceholder = originalFeatureToggle;

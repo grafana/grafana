@@ -39,7 +39,7 @@ export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
   // Create SQL Transformation tile
   const sqlTransformationTile: SQLTransformationTile = {
     id: 'sql-transformation',
-    name: 'SQL',
+    name: 'SQL Expressions',
     description: t(
       'dashboard-scene.empty-transformations-message.sql-transformation-description',
       'Manipulate your data using MySQL-like syntax'
