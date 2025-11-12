@@ -67,10 +67,6 @@ const (
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
 
-	// FlagEditPanelCSVDragAndDrop
-	// Enables drag and drop for CSV and Excel files
-	FlagEditPanelCSVDragAndDrop = "editPanelCSVDragAndDrop"
-
 	// FlagLogsContextDatasourceUi
 	// Allow datasource to provide custom UI for context view
 	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
@@ -1097,6 +1093,10 @@ const (
 	// FlagDashboardTemplates
 	// Enable template dashboards
 	FlagDashboardTemplates = "dashboardTemplates"
+
+	// FlagGrafanaAdvisorAppInstaller
+	// Enables Advisor app installer
+	FlagGrafanaAdvisorAppInstaller = "grafanaAdvisorAppInstaller"
 
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations
