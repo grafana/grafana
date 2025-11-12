@@ -107,6 +107,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `logsPanelControls`             | Enables a control component for the logs panel in Explore                                              |
 | `interactiveLearning`           | Enables the interactive learning app                                                                   |
 | `azureResourcePickerUpdates`    | Enables the updated Azure Monitor resource picker                                                      |
+| `newVizSuggestions`             | Enable new visualization suggestions                                                                   |
 | `preventPanelChromeOverflow`    | Restrict PanelChrome contents with overflow: hidden;                                                   |
 
 ## Development feature toggles
