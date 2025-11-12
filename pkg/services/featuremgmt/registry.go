@@ -709,13 +709,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:         "regressionTransformation",
-			Description:  "Enables regression analysis transformation",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDataProSquad,
-		},
-		{
 			Name:              "kubernetesFeatureToggles",
 			Description:       "Use the kubernetes API for feature toggle management in the frontend",
 			Stage:             FeatureStageExperimental,

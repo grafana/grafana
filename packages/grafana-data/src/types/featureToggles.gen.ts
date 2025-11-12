@@ -424,10 +424,6 @@ export interface FeatureToggles {
   */
   tableSharedCrosshair?: boolean;
   /**
-  * Enables regression analysis transformation
-  */
-  regressionTransformation?: boolean;
-  /**
   * Use the kubernetes API for feature toggle management in the frontend
   */
   kubernetesFeatureToggles?: boolean;

@@ -387,10 +387,6 @@ const (
 	// Enables shared crosshair in table panel
 	FlagTableSharedCrosshair = "tableSharedCrosshair"
 
-	// FlagRegressionTransformation
-	// Enables regression analysis transformation
-	FlagRegressionTransformation = "regressionTransformation"
-
 	// FlagKubernetesFeatureToggles
 	// Use the kubernetes API for feature toggle management in the frontend
 	FlagKubernetesFeatureToggles = "kubernetesFeatureToggles"

@@ -94,7 +94,6 @@ logsInfiniteScrolling,GA,@grafana/observability-logs,false,false,true
 logRowsPopoverMenu,GA,@grafana/observability-logs,false,false,true
 pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false
 tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
-regressionTransformation,preview,@grafana/datapro,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 cloudRBACRoles,preview,@grafana/identity-access-team,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
