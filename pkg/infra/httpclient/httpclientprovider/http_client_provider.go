@@ -25,10 +25,10 @@ func New(cfg *setting.Cfg, validator validations.DataSourceRequestURLValidator, 
 		TracingMiddleware(logger, tracer),
 		DataSourceMetricsMiddleware(),
 		sdkhttpclient.ContextualMiddleware(),
-		SetUserAgentMiddleware(cfg.DataProxyUserAgent),
+		SetUserAgentMiddleware(cfg.DataProxy.UserAgent),
 		sdkhttpclient.BasicAuthenticationMiddleware(),
 		sdkhttpclient.CustomHeadersMiddleware(),
-		sdkhttpclient.ResponseLimitMiddleware(cfg.ResponseLimit),
+		sdkhttpclient.ResponseLimitMiddleware(cfg.DataProxy.ResponseLimit),
 		RedirectLimitMiddleware(validator),
 	}
 
@@ -81,14 +81,14 @@ func newConntrackRoundTripper(name string, transport *http.Transport) *http.Tran
 // Note: Not optimal changing global state, but hard to not do in this case.
 func setDefaultTimeoutOptions(cfg *setting.Cfg) {
 	sdkhttpclient.DefaultTimeoutOptions = sdkhttpclient.TimeoutOptions{
-		Timeout:               time.Duration(cfg.DataProxyTimeout) * time.Second,
-		DialTimeout:           time.Duration(cfg.DataProxyDialTimeout) * time.Second,
-		KeepAlive:             time.Duration(cfg.DataProxyKeepAlive) * time.Second,
-		TLSHandshakeTimeout:   time.Duration(cfg.DataProxyTLSHandshakeTimeout) * time.Second,
-		ExpectContinueTimeout: time.Duration(cfg.DataProxyExpectContinueTimeout) * time.Second,
-		MaxConnsPerHost:       cfg.DataProxyMaxConnsPerHost,
-		MaxIdleConns:          cfg.DataProxyMaxIdleConns,
-		MaxIdleConnsPerHost:   cfg.DataProxyMaxIdleConns,
-		IdleConnTimeout:       time.Duration(cfg.DataProxyIdleConnTimeout) * time.Second,
+		Timeout:               time.Duration(cfg.DataProxy.Timeout) * time.Second,
+		DialTimeout:           time.Duration(cfg.DataProxy.DialTimeout) * time.Second,
+		KeepAlive:             time.Duration(cfg.DataProxy.KeepAlive) * time.Second,
+		TLSHandshakeTimeout:   time.Duration(cfg.DataProxy.TLSHandshakeTimeout) * time.Second,
+		ExpectContinueTimeout: time.Duration(cfg.DataProxy.ExpectContinueTimeout) * time.Second,
+		MaxConnsPerHost:       cfg.DataProxy.MaxConnsPerHost,
+		MaxIdleConns:          cfg.DataProxy.MaxIdleConns,
+		MaxIdleConnsPerHost:   cfg.DataProxy.MaxIdleConns,
+		IdleConnTimeout:       time.Duration(cfg.DataProxy.IdleConnTimeout) * time.Second,
 	}
 }

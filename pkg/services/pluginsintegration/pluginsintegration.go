@@ -208,7 +208,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewUseAlertHeadersMiddleware(),
 	)
 
-	if cfg.SendUserHeader {
+	if cfg.DataProxy.SendUserHeader {
 		middlewares = append(middlewares, clientmiddleware.NewUserHeaderMiddleware())
 	}
 

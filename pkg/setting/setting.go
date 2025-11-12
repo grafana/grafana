@@ -301,19 +301,7 @@ type Cfg struct {
 	SSOSettingsConfigurableProviders map[string]bool
 
 	// Dataproxy
-	SendUserHeader                 bool
-	DataProxyLogging               bool
-	DataProxyTimeout               int
-	DataProxyDialTimeout           int
-	DataProxyTLSHandshakeTimeout   int
-	DataProxyExpectContinueTimeout int
-	DataProxyMaxConnsPerHost       int
-	DataProxyMaxIdleConns          int
-	DataProxyKeepAlive             int
-	DataProxyIdleConnTimeout       int
-	ResponseLimit                  int64
-	DataProxyRowLimit              int64
-	DataProxyUserAgent             string
+	DataProxy DataProxySettings
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheSettings

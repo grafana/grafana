@@ -231,10 +231,10 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		req.Header.Set("Authorization", dsAuth)
 	}
 
-	proxyutil.ApplyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
+	proxyutil.ApplyUserHeader(proxy.cfg.DataProxy.SendUserHeader, req, proxy.ctx.SignedInUser)
 
 	proxyutil.ClearCookieHeader(req, proxy.ds.AllowedCookies(), []string{proxy.cfg.LoginCookieName})
-	req.Header.Set("User-Agent", proxy.cfg.DataProxyUserAgent)
+	req.Header.Set("User-Agent", proxy.cfg.DataProxy.UserAgent)
 
 	jsonData := make(map[string]any)
 	if proxy.ds.JsonData != nil {
@@ -356,7 +356,7 @@ func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
 }
 
 func (proxy *DataSourceProxy) logRequest() {
-	if !proxy.cfg.DataProxyLogging {
+	if !proxy.cfg.DataProxy.Logging {
 		return
 	}
 

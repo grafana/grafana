@@ -118,11 +118,11 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		GrafanaVersion:                      cfg.BuildVersion,
 		ConcurrentQueryCount:                cfg.ConcurrentQueryCount,
 		UserFacingDefaultError:              cfg.UserFacingDefaultError,
-		DataProxyRowLimit:                   cfg.DataProxyRowLimit,
+		DataProxyRowLimit:                   cfg.DataProxy.RowLimit,
 		SQLDatasourceMaxOpenConnsDefault:    cfg.SqlDatasourceMaxOpenConnsDefault,
 		SQLDatasourceMaxIdleConnsDefault:    cfg.SqlDatasourceMaxIdleConnsDefault,
 		SQLDatasourceMaxConnLifetimeDefault: cfg.SqlDatasourceMaxConnLifetimeDefault,
-		ResponseLimit:                       cfg.ResponseLimit,
+		ResponseLimit:                       cfg.DataProxy.ResponseLimit,
 		SigV4AuthEnabled:                    cfg.SigV4AuthEnabled,
 		SigV4VerboseLogging:                 cfg.SigV4VerboseLogging,
 	}, nil
