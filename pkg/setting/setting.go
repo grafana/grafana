@@ -114,6 +114,7 @@ type Cfg struct {
 	EnableGzip        bool
 	EnforceDomain     bool
 	MinTLSVersion     string
+	CipherSuites      string
 
 	// Security settings
 	SecretKey             string
@@ -1959,6 +1960,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		return fmt.Errorf("TLS version not configured correctly:%v, allowed values are TLS1.2 and TLS1.3", cfg.MinTLSVersion)
 	}
 
+	cfg.CipherSuites = valueAsString(server, "cipher_suites", "")
 	cfg.Domain = valueAsString(server, "domain", "localhost")
 	cfg.HTTPAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
 	cfg.HTTPPort = valueAsString(server, "http_port", "3000")
