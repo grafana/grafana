@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, useCallback, useState, CSSProperties } from 'react';
 import * as React from 'react';
-import { useTable, Column, TableOptions, Cell, ColumnInstance } from 'react-table';
+import { useTable, Column, TableOptions, Cell } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 import { Observable } from 'rxjs';
