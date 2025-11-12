@@ -60,4 +60,3 @@ export const ExtensionSidebarContext = createContext<ExtensionSidebarContextType
 export function useExtensionSidebarContext() {
   return useContext(ExtensionSidebarContext);
 }
-
