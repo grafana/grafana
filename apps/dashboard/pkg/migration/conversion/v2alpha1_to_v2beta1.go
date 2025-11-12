@@ -125,21 +125,26 @@ func convertDataQuery_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardDataQueryKin
 	if in == nil {
 		// v2beta1 requires a query even if v2alpha1 had none, so create a default
 		out.Kind = "DataQuery"
-		out.Group = ""
 		out.Version = "v0"
 		out.Spec = make(map[string]interface{})
+		// Don't set group field for manual annotations (no datasource)
 	} else {
 		out.Kind = "DataQuery"
-		out.Group = in.Kind
 		out.Version = "v0"
 		out.Spec = in.Spec
+		// Don't set group field by default - only set if datasource is present
 	}
 
-	// Convert datasource reference
+	// Convert datasource reference and set group from datasource type
 	if datasource != nil {
 		out.Datasource = &dashv2beta1.DashboardV2beta1DataQueryKindDatasource{}
 		if datasource.Uid != nil {
 			out.Datasource.Name = datasource.Uid
+		}
+		// Set group to datasource type to match frontend behavior
+		// Only set group if datasource type is not empty (matches frontend logic)
+		if datasource.Type != nil && *datasource.Type != "" {
+			out.Group = *datasource.Type
 		}
 	}
 
@@ -256,7 +261,7 @@ func convertQueryOptions_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardQueryOpti
 
 func convertVizConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVizConfigKind, out *dashv2beta1.DashboardVizConfigKind) error {
 	out.Kind = "VizConfig"
-	out.Group = in.Kind
+	out.Group = in.Kind // in.Kind is the panel type (e.g., "timeseries", "graph")
 	out.Version = in.Spec.PluginVersion
 	out.Spec = dashv2beta1.DashboardVizConfigSpec{
 		Options: in.Spec.Options,
@@ -303,6 +308,7 @@ func convertFieldConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFieldConfi
 			Steps: make([]dashv2beta1.DashboardThreshold, len(in.Thresholds.Steps)),
 		}
 		for i, step := range in.Thresholds.Steps {
+			// Convert threshold values: preserve null values from v2alpha1
 			out.Thresholds.Steps[i] = dashv2beta1.DashboardThreshold{
 				Value: step.Value,
 				Color: step.Color,
@@ -329,6 +335,8 @@ func convertFieldConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFieldConfi
 }
 
 func convertFieldConfigOverride_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides, out *dashv2beta1.DashboardV2beta1FieldConfigSourceOverrides) {
+	out.SystemRef = in.SystemRef
+
 	out.Matcher = dashv2beta1.DashboardMatcherConfig{
 		Id:      in.Matcher.Id,
 		Options: in.Matcher.Options,
@@ -629,6 +637,7 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 	}
 
 	if in.IntervalVariableKind != nil {
+		defaultIntervalVariableSpec := dashv2beta1.NewDashboardIntervalVariableSpec()
 		out.IntervalVariableKind = &dashv2beta1.DashboardIntervalVariableKind{
 			Kind: in.IntervalVariableKind.Kind,
 			Spec: dashv2beta1.DashboardIntervalVariableSpec{
@@ -639,7 +648,7 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 				Auto:        in.IntervalVariableKind.Spec.Auto,
 				AutoMin:     in.IntervalVariableKind.Spec.AutoMin,
 				AutoCount:   in.IntervalVariableKind.Spec.AutoCount,
-				Refresh:     dashv2beta1.DashboardVariableRefresh(in.IntervalVariableKind.Spec.Refresh),
+				Refresh:     defaultIntervalVariableSpec.Refresh,
 				Label:       in.IntervalVariableKind.Spec.Label,
 				Hide:        dashv2beta1.DashboardVariableHide(in.IntervalVariableKind.Spec.Hide),
 				SkipUrlSync: in.IntervalVariableKind.Spec.SkipUrlSync,
@@ -690,11 +699,19 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 	}
 
 	if in.AdhocVariableKind != nil {
+		group := ""
+		var uid *string
+		if in.AdhocVariableKind.Spec.Datasource != nil {
+			if in.AdhocVariableKind.Spec.Datasource.Type != nil {
+				group = *in.AdhocVariableKind.Spec.Datasource.Type
+			}
+			uid = in.AdhocVariableKind.Spec.Datasource.Uid
+		}
 		out.AdhocVariableKind = &dashv2beta1.DashboardAdhocVariableKind{
 			Kind:  in.AdhocVariableKind.Kind,
-			Group: *in.AdhocVariableKind.Spec.Datasource.Type,
+			Group: group,
 			Datasource: &dashv2beta1.DashboardV2beta1AdhocVariableKindDatasource{
-				Name: in.AdhocVariableKind.Spec.Datasource.Uid,
+				Name: uid,
 			},
 			Spec: dashv2beta1.DashboardAdhocVariableSpec{
 				Name:             in.AdhocVariableKind.Spec.Name,

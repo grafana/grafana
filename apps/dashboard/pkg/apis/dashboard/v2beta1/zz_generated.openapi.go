@@ -4549,9 +4549,9 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardThreshold(ref common.ReferenceCa
 				Properties: map[string]spec.Schema{
 					"value": {
 						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"number"},
-							Format:  "double",
+							Description: "Value null means -Infinity",
+							Type:        []string{"number"},
+							Format:      "double",
 						},
 					},
 					"color": {
@@ -4832,6 +4832,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardV2beta1FieldConfigSourceOverride
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"__systemRef": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Describes config override rules created when interacting with Grafana.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"matcher": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},

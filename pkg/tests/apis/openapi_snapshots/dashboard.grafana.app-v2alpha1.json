@@ -3762,9 +3762,9 @@
             "default": ""
           },
           "value": {
+            "description": "Value null means -Infinity",
             "type": "number",
-            "format": "double",
-            "default": 0
+            "format": "double"
           }
         }
       },
@@ -3923,6 +3923,10 @@
           "properties"
         ],
         "properties": {
+          "__systemRef": {
+            "description": "Describes config override rules created when interacting with Grafana.",
+            "type": "string"
+          },
           "matcher": {
             "default": {},
             "allOf": [

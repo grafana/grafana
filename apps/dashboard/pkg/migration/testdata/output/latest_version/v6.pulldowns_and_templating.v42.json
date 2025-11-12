@@ -15,7 +15,8 @@
       },
       {
         "datasource": {
-          "uid": "prometheus"
+          "type": "prometheus",
+          "uid": "default-ds-uid"
         },
         "enable": true,
         "iconColor": "red",
@@ -24,7 +25,8 @@
       },
       {
         "datasource": {
-          "uid": "loki"
+          "type": "loki",
+          "uid": "loki-uid"
         },
         "enable": false,
         "iconColor": "yellow",
@@ -108,6 +110,7 @@
         },
         "name": "environment",
         "options": [],
+        "query": "label_values(up, instance)",
         "refresh": 1,
         "type": "query"
       },
@@ -116,6 +119,7 @@
         "datasource": "prometheus",
         "name": "service",
         "options": [],
+        "query": "label_values(up, instance)",
         "refresh": 1,
         "type": "query"
       },

@@ -162,7 +162,7 @@ export interface PanelQuerySpec {
 
 export const defaultPanelQuerySpec = (): PanelQuerySpec => ({
 	query: defaultDataQueryKind(),
-	refId: "",
+	refId: "A",
 	hidden: false,
 });
 
@@ -266,6 +266,8 @@ export interface FieldConfigSource {
 	defaults: FieldConfig;
 	// Overrides are the options applied to specific fields overriding the defaults.
 	overrides: {
+		// Describes config override rules created when interacting with Grafana.
+		__systemRef?: string;
 		matcher: MatcherConfig;
 		properties: DynamicConfigValue[];
 	}[];
@@ -464,7 +466,8 @@ export type ThresholdsMode = "absolute" | "percentage";
 export const defaultThresholdsMode = (): ThresholdsMode => ("absolute");
 
 export interface Threshold {
-	value: number;
+	// Value null means -Infinity
+	value: number | null;
 	color: string;
 }
 
@@ -1282,7 +1285,7 @@ export interface IntervalVariableSpec {
 	auto: boolean;
 	auto_min: string;
 	auto_count: number;
-	refresh: VariableRefresh;
+	refresh: "onTimeRangeChanged";
 	label?: string;
 	hide: VariableHide;
 	skipUrlSync: boolean;
@@ -1297,7 +1300,7 @@ export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
 	auto: false,
 	auto_min: "",
 	auto_count: 0,
-	refresh: "never",
+	refresh: "onTimeRangeChanged",
 	hide: "dontHide",
 	skipUrlSync: false,
 });

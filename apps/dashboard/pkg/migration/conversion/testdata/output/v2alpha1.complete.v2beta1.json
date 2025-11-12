@@ -79,7 +79,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
                       "datasource": {
                         "name": "gdev-prometheus"
@@ -399,7 +399,7 @@
           "auto": true,
           "auto_min": "10s",
           "auto_count": 30,
-          "refresh": "load",
+          "refresh": "onTimeRangeChanged",
           "label": "Interval",
           "hide": "dontHide",
           "skipUrlSync": false,

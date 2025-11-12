@@ -15,6 +15,7 @@
       },
       {
         "datasource": {
+          "type": "grafana",
           "uid": "grafana"
         },
         "enable": true,

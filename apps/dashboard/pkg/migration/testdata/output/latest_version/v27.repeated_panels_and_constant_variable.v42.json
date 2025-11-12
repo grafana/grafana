@@ -50,9 +50,10 @@
       "id": 4,
       "panels": [
         {
+          "autoMigrateFrom": "graph",
           "id": 6,
           "title": "Normal nested panel",
-          "type": "graph"
+          "type": "timeseries"
         }
       ],
       "targets": [

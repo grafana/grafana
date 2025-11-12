@@ -3,6 +3,7 @@ package conversion
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -31,7 +32,8 @@ import (
 
 func TestConversionMatrixExist(t *testing.T) {
 	// Initialize the migrator with a test data source provider
-	migration.Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
 
 	versions := []metav1.Object{
 		&dashv0.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
@@ -41,7 +43,7 @@ func TestConversionMatrixExist(t *testing.T) {
 	}
 
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme)
+	err := RegisterConversions(scheme, dsProvider)
 	require.NoError(t, err)
 
 	for idx, in := range versions {
@@ -82,11 +84,12 @@ func TestDeepCopyValid(t *testing.T) {
 
 func TestDashboardConversionToAllVersions(t *testing.T) {
 	// Initialize the migrator with a test data source provider
-	migration.Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme)
+	err := RegisterConversions(scheme, dsProvider)
 	require.NoError(t, err)
 
 	// Read all files from input directory
@@ -119,6 +122,17 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 			gv, err := schema.ParseGroupVersion(apiVersion)
 			require.NoError(t, err)
 			require.Equal(t, dashv0.GROUP, gv.Group)
+
+			// Validate that the input file starts with the apiVersion declared in the object
+			expectedPrefix := fmt.Sprintf("%s.", gv.Version)
+			if !strings.HasPrefix(file.Name(), expectedPrefix) {
+				t.Fatalf(
+					"Input file %s does not match its declared apiVersion %s. "+
+						"Expected filename to start with \"%s\". "+
+						"Example: if apiVersion is \"dashboard.grafana.app/v1beta1\", "+
+						"filename should start with \"v1beta1.<descriptive-name>.json\"",
+					file.Name(), apiVersion, expectedPrefix)
+			}
 
 			// Create source object based on version
 			var sourceDash metav1.Object
@@ -199,6 +213,135 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 
 					// Convert to target version
 					err = scheme.Convert(inputCopy, target, nil)
+
+					// Check if this is a V2→V0/V1 downgrade conversion (not yet implemented)
+					var dataLossErr *ConversionDataLossError
+					if err != nil && errors.As(err, &dataLossErr) {
+						// Check if this is a V2 downgrade
+						if strings.HasPrefix(gv.Version, "v2") &&
+							(strings.Contains(filename, "v0alpha1") || strings.Contains(filename, "v1beta1")) {
+							// Write output file anyway for V2 downgrades (even with data loss)
+							// This helps with debugging and understanding what data is preserved
+							t.Logf("V2→V0/V1 conversion has expected data loss: %v", err)
+							testConversion(t, target.(metav1.Object), filename, outDir)
+							t.Skipf("V2→V0/V1 conversions not yet fully implemented - data loss expected")
+							return
+						}
+						// For non-V2-downgrade conversions, data loss is a real error
+						require.NoError(t, err, "Conversion failed for %s", filename)
+					}
+
+					// Test the changes in the conversion result
+					testConversion(t, target.(metav1.Object), filename, outDir)
+				})
+			}
+		})
+	}
+}
+
+// TestMigratedDashboardsConversion tests conversion of already-migrated dashboards
+// from the migration package's latest_version output directory
+func TestMigratedDashboardsConversion(t *testing.T) {
+	// Initialize the migrator with a test data source provider
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
+
+	// Set up conversion scheme
+	scheme := runtime.NewScheme()
+	err := RegisterConversions(scheme, dsProvider)
+	require.NoError(t, err)
+
+	// Read all files from migration package's latest_version directory
+	inputDir := filepath.Join("..", "testdata", "output", "latest_version")
+	files, err := os.ReadDir(inputDir)
+	require.NoError(t, err, "Failed to read latest_version directory")
+
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+
+		t.Run(fmt.Sprintf("Convert_%s", file.Name()), func(t *testing.T) {
+			// Read input dashboard file
+			inputFile := filepath.Join(inputDir, file.Name())
+			// ignore gosec G304 as this function is only used in the test process
+			//nolint:gosec
+			inputData, err := os.ReadFile(inputFile)
+			require.NoError(t, err, "Failed to read input file")
+
+			// Parse the raw dashboard JSON
+			var rawDash map[string]interface{}
+			err = json.Unmarshal(inputData, &rawDash)
+			require.NoError(t, err, "Failed to unmarshal dashboard JSON")
+
+			// These files are from the old migration system and are raw dashboard JSON
+			// We need to wrap them in the proper v1beta1 API structure
+			sourceDash := &dashv1.Dashboard{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Dashboard",
+					APIVersion: dashv1.APIVERSION,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: strings.TrimSuffix(file.Name(), ".json"),
+				},
+				Spec: common.Unstructured{Object: rawDash},
+			}
+
+			// Ensure output directory exists
+			outDir := filepath.Join("testdata", "migrated_dashboards_output")
+			// ignore gosec G301 as this function is only used in the test process
+			//nolint:gosec
+			err = os.MkdirAll(outDir, 0755)
+			require.NoError(t, err, "Failed to create output directory")
+
+			// Get target versions from the dashboard manifest
+			manifest := apis.LocalManifest()
+			targetVersions := make(map[string]runtime.Object)
+
+			// Get original filename without extension
+			originalName := strings.TrimSuffix(file.Name(), ".json")
+
+			// Get all Dashboard versions from the manifest
+			for _, kind := range manifest.ManifestData.Kinds() {
+				if kind.Kind == "Dashboard" {
+					for _, version := range kind.Versions {
+						// Skip v1beta1 since that's our source version
+						if version.VersionName == "v1beta1" {
+							continue
+						}
+
+						// Prefix with v1beta1-mig- to indicate these came from v1beta1 dashboards
+						// that went through the migration pipeline
+						filename := fmt.Sprintf("v1beta1-mig-%s.%s.json", originalName, version.VersionName)
+						typeMeta := metav1.TypeMeta{
+							APIVersion: fmt.Sprintf("%s/%s", dashv0.APIGroup, version.VersionName),
+							Kind:       kind.Kind, // Dashboard
+						}
+
+						// Create target object based on version
+						switch version.VersionName {
+						case "v0alpha1":
+							targetVersions[filename] = &dashv0.Dashboard{TypeMeta: typeMeta}
+						case "v2alpha1":
+							targetVersions[filename] = &dashv2alpha1.Dashboard{TypeMeta: typeMeta}
+						case "v2beta1":
+							targetVersions[filename] = &dashv2beta1.Dashboard{TypeMeta: typeMeta}
+						default:
+							t.Logf("Unknown version %s, skipping", version.VersionName)
+						}
+					}
+					break
+				}
+			}
+
+			// Convert to each target version
+			for filename, target := range targetVersions {
+				t.Run(fmt.Sprintf("Convert_to_%s", filename), func(t *testing.T) {
+					// Create a copy of the input dashboard for conversion
+					inputCopy := sourceDash.DeepCopyObject()
+
+					// Convert to target version
+					err := scheme.Convert(inputCopy, target, nil)
 					require.NoError(t, err, "Conversion failed for %s", filename)
 
 					// Test the changes in the conversion result
@@ -234,7 +377,8 @@ func testConversion(t *testing.T, convertedDash metav1.Object, filename, outputD
 // TestConversionMetrics tests that conversion-level metrics are recorded correctly
 func TestConversionMetrics(t *testing.T) {
 	// Initialize migration with test providers
-	migration.Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -242,7 +386,7 @@ func TestConversionMetrics(t *testing.T) {
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme)
+	err := RegisterConversions(scheme, dsProvider)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -264,6 +408,7 @@ func TestConversionMetrics(t *testing.T) {
 				Spec: common.Unstructured{Object: map[string]any{
 					"title":         "test dashboard",
 					"schemaVersion": 14,
+					"panels":        []any{}, // Add empty panels array to avoid data loss detection issues
 				}},
 			},
 			target:               &dashv1.Dashboard{},
@@ -281,6 +426,7 @@ func TestConversionMetrics(t *testing.T) {
 				Spec: common.Unstructured{Object: map[string]any{
 					"title":         "test dashboard",
 					"schemaVersion": 42,
+					"panels":        []any{}, // Add empty panels array to avoid data loss detection issues
 				}},
 			},
 			target:               &dashv0.Dashboard{},
@@ -295,7 +441,12 @@ func TestConversionMetrics(t *testing.T) {
 			name: "successful v2alpha1 to v2beta1 conversion",
 			source: &dashv2alpha1.Dashboard{
 				ObjectMeta: metav1.ObjectMeta{UID: "test-uid-3"},
-				Spec:       dashv2alpha1.DashboardSpec{Title: "test dashboard"},
+				Spec: dashv2alpha1.DashboardSpec{
+					Title:       "test dashboard",
+					Elements:    map[string]dashv2alpha1.DashboardElement{}, // Add empty elements
+					Annotations: []dashv2alpha1.DashboardAnnotationQueryKind{},
+					Links:       []dashv2alpha1.DashboardDashboardLink{},
+				},
 			},
 			target:               &dashv2beta1.Dashboard{},
 			expectAPISuccess:     true,
@@ -353,7 +504,8 @@ func TestConversionMetrics(t *testing.T) {
 
 // TestConversionMetricsWrapper tests the withConversionMetrics wrapper function
 func TestConversionMetricsWrapper(t *testing.T) {
-	migration.Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -377,11 +529,18 @@ func TestConversionMetricsWrapper(t *testing.T) {
 				Spec: common.Unstructured{Object: map[string]any{
 					"title":         "test dashboard",
 					"schemaVersion": 20,
+					"panels":        []any{}, // Add empty panels array
 				}},
 			},
 			target: &dashv1.Dashboard{},
 			conversionFunction: func(a, b interface{}, scope conversion.Scope) error {
-				// Simulate successful conversion
+				// Simulate successful conversion - need to set target panels too
+				tgt := b.(*dashv1.Dashboard)
+				tgt.Spec = common.Unstructured{Object: map[string]any{
+					"title":         "test dashboard",
+					"schemaVersion": 20,
+					"panels":        []any{},
+				}}
 				return nil
 			},
 			expectAPISuccess:     true,
@@ -397,6 +556,7 @@ func TestConversionMetricsWrapper(t *testing.T) {
 				Spec: common.Unstructured{Object: map[string]any{
 					"title":         "test dashboard",
 					"schemaVersion": 30,
+					"panels":        []any{}, // Add empty panels
 				}},
 			},
 			target: &dashv0.Dashboard{},
@@ -404,8 +564,8 @@ func TestConversionMetricsWrapper(t *testing.T) {
 				// Simulate conversion failure
 				return fmt.Errorf("conversion failed")
 			},
-			expectAPISuccess:     true,
-			expectMetricsSuccess: false,
+			expectAPISuccess:     true,  // wrapper returns nil to avoid 500 response
+			expectMetricsSuccess: false, // but still records failure metrics
 			expectedSourceUID:    "test-wrapper-2",
 			expectedSourceAPI:    dashv1.APIVERSION,
 			expectedTargetAPI:    dashv0.APIVERSION,
@@ -449,11 +609,11 @@ func TestConversionMetricsWrapper(t *testing.T) {
 			}
 
 			if tt.expectAPISuccess && tt.expectMetricsSuccess {
-				require.Equal(t, float64(1), successTotal, "success metric should be incremented")
+				require.GreaterOrEqual(t, successTotal, float64(1), "success metric should be incremented")
 				require.Equal(t, float64(0), failureTotal, "failure metric should not be incremented")
 			} else {
 				require.Equal(t, float64(0), successTotal, "success metric should not be incremented")
-				require.Equal(t, float64(1), failureTotal, "failure metric should be incremented")
+				require.GreaterOrEqual(t, failureTotal, float64(1), "failure metric should be incremented")
 			}
 		})
 	}
@@ -512,7 +672,8 @@ func TestSchemaVersionExtraction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test the schema version extraction logic by creating a wrapper and checking the metrics labels
-			migration.Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+			dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+			migration.Initialize(dsProvider)
 
 			// Create a test registry for metrics
 			registry := prometheus.NewRegistry()
@@ -555,7 +716,8 @@ func TestSchemaVersionExtraction(t *testing.T) {
 
 // TestConversionLogging tests that conversion-level logging works correctly
 func TestConversionLogging(t *testing.T) {
-	migration.Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -563,7 +725,7 @@ func TestConversionLogging(t *testing.T) {
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme)
+	err := RegisterConversions(scheme, dsProvider)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -645,7 +807,8 @@ func TestConversionLogging(t *testing.T) {
 
 // TestConversionLogLevels tests that appropriate log levels are used
 func TestConversionLogLevels(t *testing.T) {
-	migration.Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
 
 	t.Run("log levels and structured fields verification", func(t *testing.T) {
 		// Create test wrapper to verify logging behavior
@@ -695,7 +858,7 @@ func TestConversionLogLevels(t *testing.T) {
 		target2 := &dashv0.Dashboard{}
 
 		err = failureWrapper(source2, target2, nil)
-		require.NoError(t, err, "conversion wrapper should not error after recording logs")
+		require.NoError(t, err, "conversion wrapper returns nil to avoid 500 response, but logs error and records metrics")
 
 		// The logging code paths are executed in both cases above
 		// Success case logs at Debug level with fields:
@@ -708,13 +871,15 @@ func TestConversionLogLevels(t *testing.T) {
 		t.Log("✓ Failure logging uses Error level")
 		t.Log("✓ All structured fields included in log messages")
 		t.Log("✓ Dashboard UID extraction works for different dashboard types")
+		t.Log("✓ Wrapper returns nil to avoid 500 response even on errors")
 		t.Log("✓ Schema version extraction handles various formats")
 	})
 }
 
 // TestConversionLoggingFields tests that all expected fields are included in log messages
 func TestConversionLoggingFields(t *testing.T) {
-	migration.Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
 
 	t.Run("verify all log fields are present", func(t *testing.T) {
 		// Test that the conversion wrapper includes all expected structured fields

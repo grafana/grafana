@@ -371,7 +371,17 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
         variable.spec.current?.value === DEFAULT_DATASOURCE && variable.spec.current?.text === 'default',
     });
   } else if (variable.kind === defaultIntervalVariableKind().kind) {
-    const intervals = getIntervalsFromQueryString(variable.spec.query);
+    // If query is missing/empty, extract intervals from options instead of using defaults
+    let intervals: string[];
+    if (variable.spec.query) {
+      intervals = getIntervalsFromQueryString(variable.spec.query);
+    } else if (variable.spec.options && variable.spec.options.length > 0) {
+      // Extract intervals from options when query is missing (matches backend behavior)
+      intervals = variable.spec.options.map((opt) => String(opt.value || opt.text)).filter(Boolean);
+    } else {
+      // Fallback to default intervals only if both query and options are missing
+      intervals = getIntervalsFromQueryString('');
+    }
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     return new IntervalVariable({
       ...commonProperties,
@@ -446,16 +456,23 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
 function getDataQueryForVariable(variable: QueryVariableKind) {
   return LEGACY_STRING_VALUE_KEY in variable.spec.query.spec
     ? (variable.spec.query.spec[LEGACY_STRING_VALUE_KEY] ?? '')
-    : {
-        ...variable.spec.query.spec,
-        refId: variable.spec.query.spec.refId ?? 'A',
-      };
+    : variable.spec.query.spec;
 }
 
 export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKind, intervals: string[]): string {
-  const selectedInterval = Array.isArray(variable.spec.current.value)
-    ? variable.spec.current.value[0]
-    : variable.spec.current.value;
+  // Handle missing current object or value
+  const currentValue = variable.spec.current?.value;
+  const selectedInterval = Array.isArray(currentValue) ? currentValue[0] : currentValue;
+
+  // If no intervals are available, return empty string (will use default from IntervalVariable)
+  if (intervals.length === 0) {
+    return '';
+  }
+
+  // If no selected interval, return the first valid interval
+  if (!selectedInterval) {
+    return intervals[0];
+  }
 
   // If the interval is the old auto format, return the new auto interval from scenes.
   if (selectedInterval.startsWith('$__auto_interval_')) {
