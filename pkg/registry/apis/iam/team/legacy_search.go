@@ -57,25 +57,9 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 		SignedInUser: signedInUser,
 		Limit:        int(req.Limit),
 		Page:         int(req.Page),
+		Query:        req.Query,
+		OrgID:        signedInUser.GetOrgID(),
 	}
-
-	var title string
-	for _, field := range req.Options.Fields {
-		vals := field.GetValues()
-		if len(vals) != 1 {
-			c.log.Warn("only single value fields are supported for legacy search, using first value", "field", field.Key, "values", vals)
-		}
-		switch field.Key {
-		case res.SEARCH_FIELD_TITLE:
-			title = vals[0]
-		}
-	}
-
-	if title == "" {
-		return nil, fmt.Errorf("title is required for the query")
-	}
-
-	query.Query = title
 
 	res, err := c.teamService.SearchTeams(ctx, query)
 	if err != nil {
@@ -89,10 +73,12 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 		},
 	}
 
+	namespace := signedInUser.GetNamespace()
+
 	for _, t := range res.Teams {
 		cells := createDefaultCells(t)
 		list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
-			Key:   getResourceKey(t, req.Options.Key.Namespace),
+			Key:   getResourceKey(t, namespace),
 			Cells: cells,
 		})
 	}

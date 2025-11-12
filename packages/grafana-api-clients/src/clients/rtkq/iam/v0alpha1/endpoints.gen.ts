@@ -1419,7 +1419,7 @@ export type DeletecollectionTeamApiArg = {
 };
 export type GetTeamsSearchApiResponse = /** status 200 undefined */ any;
 export type GetTeamsSearchApiArg = {
-  /** user query string */
+  /** team name query string */
   query?: string;
 };
 export type GetTeamApiResponse = /** status 200 OK */ Team;
