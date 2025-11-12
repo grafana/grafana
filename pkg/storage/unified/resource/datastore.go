@@ -449,7 +449,7 @@ func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
 	return d.kv.Delete(ctx, dataSection, key.String())
 }
 
-func (n *dataStore) BatchDelete(ctx context.Context, keys []DataKey) error {
+func (n *dataStore) batchDelete(ctx context.Context, keys []DataKey) error {
 	for len(keys) > 0 {
 		batch := keys
 		if len(batch) > dataBatchSize {

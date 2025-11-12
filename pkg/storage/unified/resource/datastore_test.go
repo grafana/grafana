@@ -2971,7 +2971,7 @@ func TestDataStore_BatchDelete(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	err := ds.BatchDelete(ctx, keys)
+	err := ds.batchDelete(ctx, keys)
 	require.NoError(t, err)
 
 	// Verify all events were deleted

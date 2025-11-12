@@ -338,7 +338,7 @@ type bulkRV struct {
 	counter int64
 }
 
-// When executing a bulk import we can fake the RV values
+// Used when executing a bulk import where we can fake the RV values
 func NewBulkRV() *bulkRV {
 	t := time.Now().Truncate(time.Second * 10)
 	return &bulkRV{
