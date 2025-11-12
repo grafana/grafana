@@ -40,20 +40,20 @@ func TestExpiredJobCleaner_Cleanup(t *testing.T) {
 		expiredBefore := fixedTime.Add(-expiry)
 
 		lister.EXPECT().ListExpiredJobs(ctx, expiredBefore, 100).Return([]*provisioning.Job{expiredJob}, nil)
-		
+
 		handler.EXPECT().SupportsAction(provisioning.JobActionPull).Return(true)
 		handler.EXPECT().HandleAbandonment(ctx, mock.MatchedBy(func(j *provisioning.Job) bool {
 			return j.GetName() == "test-job" &&
 				j.Status.State == provisioning.JobStateError
 		})).Return(nil)
-		
+
 		// Complete is called first
 		completer.EXPECT().Complete(ctx, mock.MatchedBy(func(j *provisioning.Job) bool {
 			return j.GetName() == "test-job" &&
 				j.Status.State == provisioning.JobStateError &&
 				j.Status.Finished == fixedTime.Unix()
 		})).Return(nil)
-		
+
 		// Then history is written
 		historicJobs.EXPECT().WriteJob(ctx, mock.Anything).Return(nil)
 
@@ -161,6 +161,7 @@ func TestExpiredJobCleaner_Cleanup(t *testing.T) {
 	t.Run("continues cleanup when abandonment handler fails", func(t *testing.T) {
 		lister := NewMockJobLister(t)
 		completer := NewMockJobCompleter(t)
+		historicJobs := NewMockHistoryWriter(t)
 		handler := NewMockAbandonmentHandler(t)
 
 		expiredJob := &provisioning.Job{
@@ -177,11 +178,12 @@ func TestExpiredJobCleaner_Cleanup(t *testing.T) {
 		expiredBefore := fixedTime.Add(-expiry)
 
 		lister.EXPECT().ListExpiredJobs(ctx, expiredBefore, 100).Return([]*provisioning.Job{expiredJob}, nil)
-		completer.EXPECT().Complete(ctx, mock.Anything).Return(nil)
 		handler.EXPECT().SupportsAction(provisioning.JobActionPull).Return(true)
 		handler.EXPECT().HandleAbandonment(ctx, mock.Anything).Return(errors.New("abandonment failed"))
+		completer.EXPECT().Complete(ctx, mock.Anything).Return(nil)
+		historicJobs.EXPECT().WriteJob(ctx, mock.Anything).Return(nil)
 
-		cleaner := NewExpiredJobCleaner(lister, completer, expiry, handler)
+		cleaner := NewExpiredJobCleaner(lister, completer, historicJobs, expiry, handler)
 		cleaner.clock = func() time.Time { return fixedTime }
 
 		err := cleaner.Cleanup(ctx)

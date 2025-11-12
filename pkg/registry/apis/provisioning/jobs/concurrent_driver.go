@@ -86,16 +86,16 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 			driverLogger := logger.With("driver_id", driverID)
 			driverCtx := logging.Context(ctx, driverLogger)
 
-		driver, err := NewJobDriver(
-			c.jobTimeout,
-			c.jobInterval,
-			c.leaseRenewalInterval,
-			c.store,
-			c.repoGetter,
-			c.historicJobs,
-			c.notifications,
-			c.workers...,
-		)
+			driver, err := NewJobDriver(
+				c.jobTimeout,
+				c.jobInterval,
+				c.leaseRenewalInterval,
+				c.store,
+				c.repoGetter,
+				c.historicJobs,
+				c.notifications,
+				c.workers...,
+			)
 			if err != nil {
 				driverLogger.Error("failed to create job driver", "error", err)
 				errChan <- err

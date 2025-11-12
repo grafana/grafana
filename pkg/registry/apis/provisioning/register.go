@@ -669,8 +669,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return nil
 			}
 
-		// Initialize the API client-based job store
-		b.jobs, err = jobs.NewJobStore(b.client, 30*time.Second, b.registry)
+			// Initialize the API client-based job store
+			b.jobs, err = jobs.NewJobStore(b.client, 30*time.Second, b.registry)
 			if err != nil {
 				return fmt.Errorf("create API client job store: %w", err)
 			}
@@ -783,17 +783,17 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Create expired job cleaner with abandonment handlers
 			jobCleaner := appjobs.NewExpiredJobCleaner(b.jobs, b.jobs, jobHistoryWriter, leaseRenewalInterval, syncAbandonmentHandler)
 
-		// This is basically our own JobQueue system
-		driver, err := jobs.NewConcurrentJobDriver(
-			3,                    // 3 drivers for now
-			20*time.Minute,       // Max time for each job
-			30*time.Second,       // Periodically look for new jobs
-			leaseRenewalInterval, // Lease renewal interval
-			b.jobs, repoGetter, jobHistoryWriter, jobCleaner,
-			jobController.InsertNotifications(),
-			b.registry,
-			workers...,
-		)
+			// This is basically our own JobQueue system
+			driver, err := jobs.NewConcurrentJobDriver(
+				3,                    // 3 drivers for now
+				20*time.Minute,       // Max time for each job
+				30*time.Second,       // Periodically look for new jobs
+				leaseRenewalInterval, // Lease renewal interval
+				b.jobs, repoGetter, jobHistoryWriter, jobCleaner,
+				jobController.InsertNotifications(),
+				b.registry,
+				workers...,
+			)
 			if err != nil {
 				return err
 			}
