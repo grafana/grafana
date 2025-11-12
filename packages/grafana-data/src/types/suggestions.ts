@@ -6,24 +6,21 @@ import { PanelDataSummary, getPanelDataSummary } from '../panel/suggestions/getP
 
 import { PanelModel } from './dashboard';
 import { FieldConfigSource } from './fieldOverrides';
-import { PanelData, PanelPluginMeta } from './panel';
+import { PanelData } from './panel';
 
 /**
  * @alpha
  */
 export interface VisualizationSuggestion<TOptions extends unknown = {}, TFieldConfig extends {} = {}> {
-  /** Name of suggestion */
-  name: string;
-  /** Description */
-  description?: string;
-  /** Panel plugin id */
-  pluginId: string;
+  name?: string;
   /** Panel plugin options */
   options?: Partial<TOptions>;
   /** Panel plugin field options */
   fieldConfig?: FieldConfigSource<Partial<TFieldConfig>>;
   /** Data transformations */
   transformations?: DataTransformerConfig[];
+  /** A value between 0-100 how suitable suggestion is */
+  score?: VisualizationSuggestionScore;
   /** Options for how to render suggestion card */
   cardOptions?: {
     /** Tweak for small preview */
@@ -31,8 +28,18 @@ export interface VisualizationSuggestion<TOptions extends unknown = {}, TFieldCo
     icon?: string;
     imgSrc?: string;
   };
-  /** A value between 0-100 how suitable suggestion is */
-  score?: VisualizationSuggestionScore;
+}
+
+/**
+ * @internal
+ * the internal interface that the panel plugin transforms the provided suggestions into.
+ */
+export interface PanelPluginVisualizationSuggestion<TOptions extends unknown = {}, TFieldConfig extends {} = {}>
+  extends VisualizationSuggestion<TOptions, TFieldConfig> {
+  /** Name of suggestion */
+  name: string;
+  /** Panel plugin id */
+  pluginId: string;
 }
 
 /**
@@ -48,12 +55,13 @@ export enum VisualizationSuggestionScore {
 }
 
 /**
- * @alpha
+ * @internal
+ * TODO we can remove this from exports in the future.
  */
 export class VisualizationSuggestionsBuilder {
   /** Summary stats for current data */
   dataSummary: PanelDataSummary;
-  private list: VisualizationSuggestion[] = [];
+  private list: PanelPluginVisualizationSuggestion[] = [];
 
   constructor(
     /** Current data */
@@ -65,7 +73,7 @@ export class VisualizationSuggestionsBuilder {
   }
 
   getListAppender<TOptions extends unknown, TFieldConfig extends {} = {}>(
-    defaults: VisualizationSuggestion<TOptions, TFieldConfig>
+    defaults: PanelPluginVisualizationSuggestion<TOptions, TFieldConfig>
   ) {
     return new VisualizationSuggestionsListAppender<TOptions, TFieldConfig>(this.list, defaults);
   }
@@ -85,14 +93,14 @@ export class VisualizationSuggestionsBuilder {
  */
 export type VisualizationSuggestionsHandler<TOptions extends unknown, TFieldConfig extends {} = {}> = (
   panelDataSummary: PanelDataSummary
-) => Array<Partial<VisualizationSuggestion<TOptions, TFieldConfig>>> | boolean | void;
+) => Array<VisualizationSuggestion<TOptions, TFieldConfig>> | boolean | void;
 
 /**
  * @internal
  */
 export type VisualizationSuggestionsSupplier = {
   /**
-   * Adds good suitable suggestions for the current data
+   * Adds suitable suggestions for the current data
    */
   getSuggestionsForData: (builder: VisualizationSuggestionsBuilder) => void;
 };
@@ -103,14 +111,14 @@ export type VisualizationSuggestionsSupplier = {
 export class VisualizationSuggestionsListAppender<TOptions extends unknown, TFieldConfig extends {} = {}> {
   constructor(
     private list: VisualizationSuggestion[],
-    private defaults: Partial<VisualizationSuggestion<TOptions, TFieldConfig>> = {}
+    private defaults: Partial<PanelPluginVisualizationSuggestion<TOptions, TFieldConfig>> = {}
   ) {}
 
-  append(overrides: Partial<VisualizationSuggestion<TOptions, TFieldConfig>>) {
-    this.list.push(defaultsDeep(overrides, this.defaults));
+  append(suggestion: VisualizationSuggestion<TOptions, TFieldConfig>) {
+    this.list.push(defaultsDeep(suggestion, this.defaults));
   }
 
-  appendAll(overridesList: Array<Partial<VisualizationSuggestion<TOptions, TFieldConfig>>>) {
-    this.list.push(...overridesList.map((o) => defaultsDeep(o, this.defaults)));
+  appendAll(suggestions: Array<VisualizationSuggestion<TOptions, TFieldConfig>>) {
+    this.list.push(...suggestions.map((o) => defaultsDeep(o, this.defaults)));
   }
 }

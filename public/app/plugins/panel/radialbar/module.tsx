@@ -1,6 +1,8 @@
-import { PanelPlugin } from '@grafana/data';
+import { defaultsDeep } from 'lodash';
+
+import { FieldColorModeId, FieldType, PanelPlugin, VisualizationSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { commonOptionsBuilder } from '@grafana/ui';
+import { commonOptionsBuilder, GraphFieldConfig } from '@grafana/ui';
 
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
 
@@ -8,9 +10,8 @@ import { EffectsEditor } from './EffectsEditor';
 import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldMigrateGauge } from './GaugeMigrations';
 import { RadialBarPanel } from './RadialBarPanel';
 import { defaultGaugePanelEffects, defaultOptions, Options } from './panelcfg.gen';
-import { GaugeSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<Options>(RadialBarPanel)
+export const plugin = new PanelPlugin<Options, GraphFieldConfig>(RadialBarPanel)
   .useFieldConfig({})
   .setPanelOptions((builder) => {
     const category = [t('gauge.category-radial-bar', 'Gauge')];
@@ -112,6 +113,65 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       defaultValue: defaultGaugePanelEffects,
     });
   })
-  .setSuggestionsSupplier(new GaugeSuggestionsSupplier())
+  .setSuggestionsHandler((dataSummary) => {
+    if (!dataSummary.hasData || !dataSummary.hasNumberField) {
+      return;
+    }
+
+    // for many fields / series this is probably not a good fit
+    if (dataSummary.fieldCountByType(FieldType.number) >= 10) {
+      return;
+    }
+
+    const suggestionsDefaults = {
+      options: {
+        // determine whether to recommend aggregated or un-aggregated gauges.
+        reduceOptions:
+          dataSummary.hasFieldType(FieldType.string) && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10
+            ? {
+                values: true,
+                calcs: [],
+              }
+            : {
+                values: false,
+                calcs: ['lastNotNull'],
+              },
+      },
+      cardOptions: {
+        previewModifier: (s) => {
+          if (s.options?.reduceOptions?.values) {
+            s.options.reduceOptions.limit = 2;
+          }
+        },
+      },
+    } satisfies VisualizationSuggestion<Options, GraphFieldConfig>;
+
+    return [
+      defaultsDeep({ name: t('gauge.suggestions.arc', 'Gauge') }, suggestionsDefaults),
+      defaultsDeep(
+        {
+          name: t('gauge.suggestions.circular', 'Circular gauge'),
+          options: {
+            shape: 'circle',
+            showThresholdMarkers: false,
+            barWidthFactor: 0.3,
+            effects: {
+              rounded: true,
+              barGlow: true,
+              centerGlow: true,
+              spotlight: true,
+            },
+          },
+          fieldConfig: {
+            defaults: {
+              color: { mode: FieldColorModeId.PaletteClassic },
+            },
+            overrides: [],
+          },
+        },
+        suggestionsDefaults
+      ),
+    ];
+  })
   .setMigrationHandler(gaugePanelMigrationHandler, shouldMigrateGauge)
   .setPanelChangeHandler(gaugePanelChangedHandler);
