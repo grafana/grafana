@@ -11,8 +11,6 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { ModalRoot, ModalsProvider } from '@grafana/ui';
-import config from 'app/core/config';
-import { defaultFileUploadQuery } from 'app/plugins/datasource/grafana/types';
 
 import { DataSourcePicker, DataSourcePickerProps } from './DataSourcePicker';
 import * as utils from './utils';
@@ -288,18 +286,6 @@ describe('DataSourcePicker', () => {
       expect(await screen.findByText('Configure a new data source')).toBeInTheDocument();
       // It should point to the new data source page including any sub url configured
       expect(screen.getByRole('link')).toHaveAttribute('href', '/my-sub-path/connections/datasources/new');
-    });
-
-    it('should call onChange with the default query when add csv is clicked', async () => {
-      config.featureToggles.editPanelCSVDragAndDrop = true;
-      const onChange = jest.fn();
-      await setupOpenDropdown(user, { onChange, uploadFile: true });
-
-      await user.click(await screen.findByText('Add csv or spreadsheet'));
-
-      expect(onChange.mock.lastCall[1]).toEqual([defaultFileUploadQuery]);
-      expect(screen.queryByText('Open advanced data source picker')).toBeNull(); //Drop down is closed
-      config.featureToggles.editPanelCSVDragAndDrop = false;
     });
 
     it('should open the modal when open advanced is clicked', async () => {

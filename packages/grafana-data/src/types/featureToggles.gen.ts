@@ -84,10 +84,6 @@ export interface FeatureToggles {
   */
   alertingBacktesting?: boolean;
   /**
-  * Enables drag and drop for CSV and Excel files
-  */
-  editPanelCSVDragAndDrop?: boolean;
-  /**
   * Allow datasource to provide custom UI for context view
   * @default true
   */
