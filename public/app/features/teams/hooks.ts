@@ -35,13 +35,11 @@ export const useGetTeams = ({
   pageSize,
   page,
   sort,
-  fetchRoles,
 }: {
   query?: string;
   pageSize?: number;
   page?: number;
   sort?: string;
-  fetchRoles?: boolean;
 }) => {
   const legacyResponse = useLegacySearchTeamsQuery({ perpage: pageSize, accesscontrol: true, page, sort, query });
 
@@ -51,11 +49,13 @@ export const useGetTeams = ({
     return ids.filter((id): id is number => id !== undefined);
   }, [legacyResponse.data?.teams]);
 
-  const teamsRolesResponse = useListTeamsRolesQuery(teamIds.length ? { rolesSearchQuery: { teamIds } } : skipToken);
+  const teamsRolesResponse = useListTeamsRolesQuery(
+    rolesEnabled && teamIds.length ? { rolesSearchQuery: { teamIds } } : skipToken
+  );
 
   const teamsWithRoles = useMemo(() => {
-    if (!fetchRoles || (rolesEnabled && teamsRolesResponse.isLoading)) {
-      return [];
+    if (!rolesEnabled || (rolesEnabled && teamsRolesResponse.isLoading)) {
+      return legacyResponse.data?.teams || [];
     }
     return (legacyResponse.data?.teams || []).map((team) => {
       const roles = team.id ? teamsRolesResponse.data?.[team.id] || [] : [];
@@ -65,11 +65,11 @@ export const useGetTeams = ({
         roles: mappedRoles,
       };
     });
-  }, [legacyResponse, teamsRolesResponse, fetchRoles]);
+  }, [legacyResponse, teamsRolesResponse]);
 
   return {
     ...legacyResponse,
-    isLoading: legacyResponse.isLoading || teamsRolesResponse.isLoading,
+    isLoading: legacyResponse.isLoading || (rolesEnabled ? teamsRolesResponse.isLoading : false),
     data: {
       teams: teamsWithRoles,
       totalCount: legacyResponse.data?.totalCount,

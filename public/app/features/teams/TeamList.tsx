@@ -58,7 +58,7 @@ const TeamList = () => {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<string>();
-  const { data, isLoading } = useGetTeams({ query, pageSize, page, sort, fetchRoles: displayRolePicker });
+  const { data, isLoading } = useGetTeams({ query, pageSize, page, sort });
   const [deleteTeam] = useDeleteTeam();
 
   const teams = data?.teams || [];
