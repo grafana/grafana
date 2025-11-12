@@ -47,13 +47,9 @@ export function getBuiltInThemes(allowedExtras: string[]) {
  */
 const themeRegistry = new Registry<ThemeRegistryItem>(() => {
   return [
-    { id: 'system', name: 'System preference', build: () => getSystemPreferenceTheme() },
+    { id: 'system', name: 'System preference', build: getSystemPreferenceTheme },
     { id: 'dark', name: 'Dark', build: () => createTheme({ colors: { mode: 'dark' } }) },
-    {
-      id: 'light',
-      name: 'Light',
-      build: () => createTheme({ colors: { mode: 'light' } }),
-    },
+    { id: 'light', name: 'Light', build: () => createTheme({ colors: { mode: 'light' } }) },
   ];
 });
 
