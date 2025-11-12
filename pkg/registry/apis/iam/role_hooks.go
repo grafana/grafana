@@ -411,3 +411,23 @@ func (b *IdentityAccessManagementAPIBuilder) BeginRoleUpdate(ctx context.Context
 		}(oldRole.DeepCopy(), newRole.DeepCopy())
 	}, nil
 }
+
+// tupleToTupleKeyWithoutCondition converts a TupleKey to TupleKeyWithoutCondition
+// This is needed for delete operations which don't support conditions
+func tupleToTupleKeyWithoutCondition(tuple *v1.TupleKey) *v1.TupleKeyWithoutCondition {
+	return &v1.TupleKeyWithoutCondition{
+		User:     tuple.User,
+		Relation: tuple.Relation,
+		Object:   tuple.Object,
+	}
+}
+
+// toTupleKeysWithoutCondition converts v1.TupleKey to v1.TupleKeyWithoutCondition
+// by stripping the condition field, which is required for delete operations
+func toTupleKeysWithoutCondition(tuples []*v1.TupleKey) []*v1.TupleKeyWithoutCondition {
+	result := make([]*v1.TupleKeyWithoutCondition, len(tuples))
+	for i, t := range tuples {
+		result[i] = tupleToTupleKeyWithoutCondition(t)
+	}
+	return result
+}
