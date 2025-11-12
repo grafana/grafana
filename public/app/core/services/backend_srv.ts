@@ -173,7 +173,6 @@ export class BackendSrv implements BackendService {
         .subscribe(this.getChunkedResponseObserver({ controller, observer, options, requestId }));
 
       return function unsubscribe() {
-        console.log(requestId, 'unsubscribe');
         controller.abort('unsubscribe');
         sub.unsubscribe();
       };
@@ -218,7 +217,6 @@ export class BackendSrv implements BackendService {
         // Setup onabort callback so that we can cancel the reader properly
         controller.signal.onabort = () => {
           reader.cancel(controller.signal.reason);
-          console.log(requestId, 'signal.aborted');
         };
 
         async function process() {
@@ -230,13 +228,11 @@ export class BackendSrv implements BackendService {
             });
             if (chunk.done) {
               done = true;
-              console.log(requestId, 'done');
             }
           }
         }
         process()
           .then(() => {
-            console.log(requestId, 'complete');
             observer.complete();
           }) // runs in background
           .catch((e) => {

@@ -764,6 +764,22 @@
     },
     {
       "metadata": {
+        "name": "awsDatasourcesHttpProxy",
+        "resourceVersion": "1762964349996",
+        "creationTimestamp": "2025-11-12T16:15:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 16:19:09.996919 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables http proxy settings for aws datasources",
+        "stage": "experimental",
+        "codeowner": "@grafana/aws-datasources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "awsDatasourcesTempCredentials",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-07-06T15:06:11Z"
@@ -1357,6 +1373,7 @@
         "name": "editPanelCSVDragAndDrop",
         "resourceVersion": "1762783224740",
         "creationTimestamp": "2023-01-24T09:43:44Z",
+        "deletionTimestamp": "2025-11-10T16:31:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-10 14:00:24.740459 +0000 UTC"
         }
@@ -1805,6 +1822,18 @@
       "spec": {
         "description": "Enables Advisor app",
         "stage": "privatePreview",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafanaAdvisorAppInstaller",
+        "resourceVersion": "1762790554324",
+        "creationTimestamp": "2025-11-10T16:02:34Z"
+      },
+      "spec": {
+        "description": "Enables Advisor app installer",
+        "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend"
       }
     },
@@ -2842,6 +2871,19 @@
     },
     {
       "metadata": {
+        "name": "newPanelPadding",
+        "resourceVersion": "1760780310038",
+        "creationTimestamp": "2025-10-18T09:38:30Z"
+      },
+      "spec": {
+        "description": "Increases panel padding globally",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "newShareReportDrawer",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-02-17T19:05:46Z"
@@ -2953,6 +2995,20 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "panelPadding",
+        "resourceVersion": "1760779980125",
+        "creationTimestamp": "2025-10-18T09:33:00Z",
+        "deletionTimestamp": "2025-10-18T09:38:30Z"
+      },
+      "spec": {
+        "description": "Increases panel padding globally",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
       }
     },
     {
@@ -4021,7 +4077,8 @@
       "metadata": {
         "name": "tlsMemcached",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-05-09T19:12:08Z"
+        "creationTimestamp": "2024-05-09T19:12:08Z",
+        "deletionTimestamp": "2025-11-11T13:50:51Z"
       },
       "spec": {
         "description": "Use TLS-enabled memcached in the enterprise caching feature",

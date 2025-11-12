@@ -14,7 +14,6 @@ cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/search-and-storage,false,false,false
 alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
-editPanelCSVDragAndDrop,experimental,@grafana/dataviz-squad,false,false,true
 logsContextDatasourceUi,GA,@grafana/observability-logs,false,false,true
 lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
@@ -112,7 +111,6 @@ sqlExpressions,preview,@grafana/grafana-datasources-core-services,false,false,fa
 sqlExpressionsColumnAutoComplete,experimental,@grafana/datapro,false,false,true
 groupToNestedTableTransformation,GA,@grafana/datapro,false,false,true
 newPDFRendering,GA,@grafana/grafana-operator-experience-squad,false,false,false
-tlsMemcached,GA,@grafana/grafana-operator-experience-squad,false,false,false
 kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesAggregatorCapTokenAuth,experimental,@grafana/grafana-app-platform-squad,false,true,false
 groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
@@ -270,7 +268,10 @@ newVizSuggestions,preview,@grafana/dataviz-squad,false,false,true
 preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 jaegerEnableGrpcEndpoint,experimental,@grafana/oss-big-tent,false,false,false
 pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
+newPanelPadding,experimental,@grafana/dashboards-squad,false,false,false
 onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
 panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
 dashboardTemplates,experimental,@grafana/sharing-squad,false,false,false
+grafanaAdvisorAppInstaller,experimental,@grafana/plugins-platform-backend,false,false,false
 kubernetesAnnotations,experimental,@grafana/grafana-backend-services-squad,false,false,false
+awsDatasourcesHttpProxy,experimental,@grafana/aws-datasources,false,false,false

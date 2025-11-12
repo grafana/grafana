@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync, useDebounce } from 'react-use';
 
@@ -11,7 +11,13 @@ import { Button, useStyles2, Stack, Grid, EmptyState, Alert, Pagination, FilterI
 import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './SuggestedDashboardsModal';
 import { fetchCommunityDashboards } from './api/dashboardLibraryApi';
-import { DashboardLibraryInteractions } from './interactions';
+import {
+  CONTENT_KINDS,
+  DashboardLibraryInteractions,
+  DISCOVERY_METHODS,
+  EVENT_LOCATIONS,
+  SOURCE_ENTRY_POINTS,
+} from './interactions';
 import { GnetDashboard } from './types';
 import {
   getThumbnailUrl,
@@ -38,6 +44,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const hasTrackedLoaded = useRef(false);
 
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   useDebounce(
@@ -81,6 +88,17 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         filter: debouncedSearchQuery.trim() || undefined,
       });
 
+      // Track search if query is present
+      if (debouncedSearchQuery.trim()) {
+        DashboardLibraryInteractions.searchPerformed({
+          datasourceTypes: [ds.type],
+          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+          hasResults: apiResponse.dashboards.length > 0,
+          resultCount: apiResponse.dashboards.length,
+        });
+      }
+
       return {
         dashboards: apiResponse.dashboards,
         pages: apiResponse.pages,
@@ -93,25 +111,18 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   }, [datasourceUid, currentPage, debouncedSearchQuery]);
 
   // Track analytics only once on first successful load
-  const hasTrackedRef = useRef(false);
   useEffect(() => {
-    if (
-      !loading &&
-      !hasTrackedRef.current &&
-      currentPage === 1 &&
-      response?.dashboards &&
-      response.dashboards.length > 0
-    ) {
+    if (!loading && !hasTrackedLoaded.current && response?.dashboards && response.dashboards.length > 0) {
       DashboardLibraryInteractions.loaded({
         numberOfItems: response.dashboards.length,
-        contentKinds: ['community_dashboard'],
+        contentKinds: [CONTENT_KINDS.COMMUNITY_DASHBOARD],
         datasourceTypes: [response.datasourceType],
-        sourceEntryPoint: 'datasource_page',
-        eventLocation: 'suggested_dashboards_modal_community_tab',
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+        eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
       });
-      hasTrackedRef.current = true;
+      hasTrackedLoaded.current = true;
     }
-  }, [loading, currentPage, response]);
+  }, [loading, response]);
 
   const styles = useStyles2(getStyles);
 
@@ -126,11 +137,22 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       return;
     }
 
+    // Track item click
+    DashboardLibraryInteractions.itemClicked({
+      contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+      datasourceTypes: [response.datasourceType],
+      libraryItemId: String(dashboard.id),
+      libraryItemTitle: dashboard.name,
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+      eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+      discoveryMethod: debouncedSearchQuery.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
+    });
+
     onUseCommunityDashboard({
       dashboard,
       datasourceUid: datasourceUid || '',
       datasourceType: response.datasourceType,
-      eventLocation: 'suggested_dashboards_modal_community_tab',
+      eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
       onShowMapping,
     });
   };
