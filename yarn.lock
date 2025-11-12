@@ -3480,7 +3480,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:^0.11.0":
+"@grafana/plugin-ui@npm:^0.11.0, @grafana/plugin-ui@npm:^0.11.1":
   version: 0.11.1
   resolution: "@grafana/plugin-ui@npm:0.11.1"
   dependencies:
@@ -18910,7 +18910,7 @@ __metadata:
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:^3.0.1"
-    "@grafana/plugin-ui": "npm:^0.10.10"
+    "@grafana/plugin-ui": "npm:^0.11.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:^6.42.1"
