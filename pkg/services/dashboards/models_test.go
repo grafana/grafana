@@ -86,3 +86,50 @@ func TestSlugifyTitle(t *testing.T) {
 		})
 	}
 }
+
+func TestParseK8sDashboard(t *testing.T) {
+	t.Run("should parse valid K8s dashboard with all fields", func(t *testing.T) {
+		data := simplejson.NewFromAny(map[string]interface{}{
+			"apiVersion": "dashboard.grafana.app/v2alpha1",
+			"kind":       "Dashboard",
+			"metadata": map[string]interface{}{
+				"name":       "test-dashboard-uid",
+				"namespace":  "org-123",
+				"generation": int64(5),
+				"labels": map[string]interface{}{
+					"grafana.app/deprecatedInternalID": "456",
+				},
+				"annotations": map[string]interface{}{
+					"grafana.app/folder": "test-folder-uid",
+				},
+			},
+			"spec": map[string]interface{}{
+				"title":  "Test Dashboard",
+				"gnetId": float64(12345),
+			},
+		})
+
+		dash := parseK8sDashboard(data)
+		assert.Equal(t, "dashboard.grafana.app/v2alpha1", dash.APIVersion)
+		assert.Equal(t, int64(123), dash.OrgID)
+		assert.Equal(t, "test-dashboard-uid", dash.UID)
+		assert.Equal(t, "Test Dashboard", dash.Title)
+		assert.Equal(t, "test-dashboard", dash.Slug)
+		assert.Equal(t, "test-folder-uid", dash.FolderUID)
+		assert.Equal(t, int64(12345), dash.GnetID)
+		assert.Equal(t, "test-dashboard-uid", dash.Data.Get("uid").MustString())
+		assert.Equal(t, int64(5), dash.Data.Get("version").MustInt64())
+		assert.Equal(t, int64(456), dash.Data.Get("id").MustInt64())
+		assert.False(t, dash.Updated.IsZero())
+		assert.True(t, dash.Created.IsZero())
+	})
+
+	t.Run("should handle invalid input (not a map)", func(t *testing.T) {
+		data := simplejson.NewFromAny("invalid string")
+		dash := parseK8sDashboard(data)
+		assert.Empty(t, dash.UID)
+		assert.Empty(t, dash.Title) // this will fail later in the provisioning chain because its empty
+		assert.Empty(t, dash.APIVersion)
+		assert.Nil(t, dash.Data)
+	})
+}

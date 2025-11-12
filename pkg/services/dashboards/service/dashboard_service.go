@@ -745,15 +745,16 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	cmd := &dashboards.SaveDashboardCommand{
-		Dashboard: dash.Data,
-		Message:   dto.Message,
-		OrgID:     dto.OrgID,
-		Overwrite: dto.Overwrite,
-		UserID:    userID,
-		FolderID:  dash.FolderID, // nolint:staticcheck
-		FolderUID: dash.FolderUID,
-		IsFolder:  dash.IsFolder,
-		PluginID:  dash.PluginID,
+		Dashboard:  dash.Data,
+		Message:    dto.Message,
+		OrgID:      dto.OrgID,
+		Overwrite:  dto.Overwrite,
+		UserID:     userID,
+		FolderID:   dash.FolderID, // nolint:staticcheck
+		FolderUID:  dash.FolderUID,
+		IsFolder:   dash.IsFolder,
+		PluginID:   dash.PluginID,
+		APIVersion: dash.APIVersion,
 	}
 
 	if !dto.UpdatedAt.IsZero() {
@@ -2286,6 +2287,10 @@ func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, names
 
 	if cmd.Message != "" {
 		meta.SetMessage(cmd.Message)
+	}
+
+	if cmd.APIVersion != "" {
+		finalObj.SetAPIVersion(cmd.APIVersion)
 	}
 
 	return finalObj, nil
