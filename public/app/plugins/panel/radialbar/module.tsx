@@ -114,7 +114,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(RadialBarPanel)
     });
   })
   .setSuggestionsHandler((dataSummary) => {
-    if (!dataSummary.hasData || !dataSummary.hasNumberField) {
+    if (!dataSummary.hasData || !dataSummary.hasFieldType(FieldType.number)) {
       return;
     }
 
@@ -123,54 +123,54 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(RadialBarPanel)
       return;
     }
 
-    const suggestionsDefaults = {
-      options: {
-        // determine whether to recommend aggregated or un-aggregated gauges.
-        reduceOptions:
-          dataSummary.hasFieldType(FieldType.string) && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10
-            ? {
-                values: true,
-                calcs: [],
-              }
-            : {
-                values: false,
-                calcs: ['lastNotNull'],
-              },
-      },
-      cardOptions: {
-        previewModifier: (s) => {
-          if (s.options?.reduceOptions?.values) {
-            s.options.reduceOptions.limit = 2;
-          }
+    const withDefaults = (
+      suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
+    ): VisualizationSuggestion<Options, GraphFieldConfig> =>
+      defaultsDeep(suggestion, {
+        options: {
+          // determine whether to recommend aggregated or un-aggregated gauges.
+          reduceOptions:
+            dataSummary.hasFieldType(FieldType.string) && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10
+              ? {
+                  values: true,
+                  calcs: [],
+                }
+              : {
+                  values: false,
+                  calcs: ['lastNotNull'],
+                },
         },
-      },
-    } satisfies VisualizationSuggestion<Options, GraphFieldConfig>;
+        cardOptions: {
+          previewModifier: (s) => {
+            if (s.options?.reduceOptions?.values) {
+              s.options.reduceOptions.limit = 10;
+            }
+          },
+        },
+      } satisfies VisualizationSuggestion<Options, GraphFieldConfig>);
 
     return [
-      defaultsDeep({ name: t('gauge.suggestions.arc', 'Gauge') }, suggestionsDefaults),
-      defaultsDeep(
-        {
-          name: t('gauge.suggestions.circular', 'Circular gauge'),
-          options: {
-            shape: 'circle',
-            showThresholdMarkers: false,
-            barWidthFactor: 0.3,
-            effects: {
-              rounded: true,
-              barGlow: true,
-              centerGlow: true,
-              spotlight: true,
-            },
-          },
-          fieldConfig: {
-            defaults: {
-              color: { mode: FieldColorModeId.PaletteClassic },
-            },
-            overrides: [],
+      withDefaults({ name: t('gauge.suggestions.arc', 'Gauge') }),
+      withDefaults({
+        name: t('gauge.suggestions.circular', 'Circular gauge'),
+        options: {
+          shape: 'circle',
+          showThresholdMarkers: false,
+          barWidthFactor: 0.3,
+          effects: {
+            rounded: true,
+            barGlow: true,
+            centerGlow: true,
+            spotlight: true,
           },
         },
-        suggestionsDefaults
-      ),
+        fieldConfig: {
+          defaults: {
+            color: { mode: FieldColorModeId.PaletteClassic },
+          },
+          overrides: [],
+        },
+      }),
     ];
   })
   .setMigrationHandler(gaugePanelMigrationHandler, shouldMigrateGauge)

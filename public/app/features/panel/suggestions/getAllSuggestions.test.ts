@@ -6,7 +6,7 @@ import {
   PanelData,
   PanelPluginMeta,
   toDataFrame,
-  VisualizationSuggestion,
+  PanelPluginVisualizationSuggestion,
 } from '@grafana/data';
 import { GraphFieldConfig, ReduceDataOptions } from '@grafana/schema';
 import { config } from 'app/core/config';
@@ -33,7 +33,7 @@ config.panels['text'] = {
 
 class ScenarioContext {
   data: DataFrame[] = [];
-  suggestions: Array<VisualizationSuggestion<{ reduceOptions?: ReduceDataOptions }, GraphFieldConfig>> = [];
+  suggestions: Array<PanelPluginVisualizationSuggestion<{ reduceOptions?: ReduceDataOptions }, GraphFieldConfig>> = [];
 
   setData(scenarioData: DataFrame[]) {
     this.data = scenarioData;

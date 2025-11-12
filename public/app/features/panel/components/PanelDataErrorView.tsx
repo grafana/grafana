@@ -1,6 +1,12 @@
 import { css } from '@emotion/css';
 
-import { CoreApp, getPanelDataSummary, GrafanaTheme2, PanelDataSummary, VisualizationSuggestion } from '@grafana/data';
+import {
+  CoreApp,
+  getPanelDataSummary,
+  GrafanaTheme2,
+  PanelDataSummary,
+  PanelPluginVisualizationSuggestion,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
@@ -63,7 +69,7 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
     );
   };
 
-  const loadSuggestion = (s: VisualizationSuggestion) => {
+  const loadSuggestion = (s: PanelPluginVisualizationSuggestion) => {
     if (!panel) {
       return;
     }

@@ -1,4 +1,4 @@
-import { defaultsDeep, set } from 'lodash';
+import { set } from 'lodash';
 import { ComponentClass, ComponentType } from 'react';
 
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
@@ -18,7 +18,6 @@ import { VisualizationSuggestionsHandler, VisualizationSuggestionsSupplier } fro
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
-import { getPanelOptionsWithDefaults } from './getPanelOptionsWithDefaults';
 import { createFieldConfigRegistry } from './registryFactories';
 
 /** @beta */

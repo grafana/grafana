@@ -13,6 +13,7 @@ import { PanelData } from './panel';
  */
 export interface VisualizationSuggestion<TOptions extends unknown = {}, TFieldConfig extends {} = {}> {
   name?: string;
+  description?: string;
   /** Panel plugin options */
   options?: Partial<TOptions>;
   /** Panel plugin field options */
