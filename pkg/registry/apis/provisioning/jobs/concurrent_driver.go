@@ -19,7 +19,6 @@ type ConcurrentJobDriver struct {
 	leaseRenewalInterval time.Duration
 	store                Store
 	repoGetter           RepoGetter
-	historicJobs         HistoryWriter
 	workers              []Worker
 	notifications        chan struct{}
 }
@@ -30,7 +29,6 @@ func NewConcurrentJobDriver(
 	jobTimeout, cleanupInterval, jobInterval, leaseRenewalInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
-	historicJobs HistoryWriter,
 	notifications chan struct{},
 	registry prometheus.Registerer,
 	workers ...Worker,
@@ -67,7 +65,6 @@ func NewConcurrentJobDriver(
 		leaseRenewalInterval: leaseRenewalInterval,
 		store:                store,
 		repoGetter:           repoGetter,
-		historicJobs:         historicJobs,
 		workers:              workers,
 		notifications:        notifications,
 	}, nil
@@ -123,7 +120,6 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 				c.leaseRenewalInterval,
 				c.store,
 				c.repoGetter,
-				c.historicJobs,
 				c.notifications,
 				c.workers...,
 			)

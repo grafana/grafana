@@ -75,10 +75,11 @@ type persistentStore struct {
 	expiry time.Duration
 
 	queueMetrics QueueMetrics
+	historicJobs HistoryWriter
 }
 
 // NewJobStore creates a new job queue implementation using the API client.
-func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry time.Duration, registry prometheus.Registerer) (*persistentStore, error) {
+func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry time.Duration, historicJobs HistoryWriter, registry prometheus.Registerer) (*persistentStore, error) {
 	if expiry <= 0 {
 		expiry = time.Second * 30
 	}
@@ -90,6 +91,7 @@ func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry
 		clock:        time.Now,
 		expiry:       expiry,
 		queueMetrics: queueMetrics,
+		historicJobs: historicJobs,
 	}, nil
 }
 
@@ -228,22 +230,27 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 		return apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
 	}
 
-	// We need to delete the job from the job store and create it in the historic job store.
-	// We are fine with the job being lost if the historic job store fails to create it.
-	//
-	// We will assume that the caller is the claimant. If this is not true, an error is returned.
-	// This is a best-effort operation; if the job is not in the claimed state, we will still attempt to move it to the historic job store.
-	err = s.client.Jobs(job.GetNamespace()).Delete(ctx, job.GetName(), metav1.DeleteOptions{})
-	if err != nil {
-		return apifmt.Errorf("failed to delete job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
-	}
-	logger.Debug("deleted job from job store")
-
-	// We need to remove the claim label before moving the job to the historic job store.
+	// Remove the claim label before moving to history
 	if job.Labels == nil {
 		job.Labels = make(map[string]string)
 	}
 	delete(job.Labels, LabelJobClaim)
+
+	// Write to history first (as documented: "moves it to the historic job store")
+	if err := s.historicJobs.WriteJob(ctx, job); err != nil {
+		logger.Warn("failed to write job to history", "error", err)
+		// Continue anyway - we still want to clean up the active job
+	} else {
+		logger.Debug("wrote job to history")
+	}
+
+	// Delete the job from the active job store
+	err = s.client.Jobs(job.GetNamespace()).Delete(ctx, job.GetName(), metav1.DeleteOptions{})
+	if err != nil {
+		return apifmt.Errorf("failed to delete job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+	}
+	logger.Debug("deleted job from active job store")
+
 	s.queueMetrics.DecreaseQueueSize(string(job.Spec.Action))
 
 	logger.Debug("job completion done")
@@ -302,6 +309,8 @@ func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job)
 // Cleanup finds jobs with expired leases and marks them as failed.
 // This replaces the old cleanup mechanism and should be called more frequently.
 func (s *persistentStore) Cleanup(ctx context.Context) error {
+	logger := logging.FromContext(ctx)
+
 	// Set up provisioning identity to access jobs across all namespaces
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, "*") // "*" grants access to all namespaces
 	if err != nil {
@@ -330,11 +339,14 @@ func (s *persistentStore) Cleanup(ctx context.Context) error {
 		return nil
 	}
 
+	logger.Info("cleaning up expired jobs", "count", len(jobs.Items))
+
 	for _, job := range jobs.Items {
-		// Mark job as failed due to lease expiry and archive it
+		// Mark job as failed due to lease expiry
 		job := job.DeepCopy()
 		job.Status.State = provisioning.JobStateError
 		job.Status.Message = "Job failed due to lease expiry - worker may have crashed or lost connection"
+		job.Status.Finished = s.clock().Unix()
 
 		// Set namespace context for the completion
 		ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
@@ -342,14 +354,18 @@ func (s *persistentStore) Cleanup(ctx context.Context) error {
 			return apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
 		}
 
-		// Use Complete to properly archive the failed job
+		jobLogger := logger.With("namespace", job.GetNamespace(), "job", job.GetName())
+
+		// Complete will handle writing to history and deleting from active queue
 		if err := s.Complete(ctx, job); err != nil {
 			if apierrors.IsNotFound(err) {
 				// Job was already completed/deleted by another process
+				jobLogger.Debug("job already deleted during cleanup")
 				continue
 			}
 			return apifmt.Errorf("failed to complete expired job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 		}
+		jobLogger.Debug("cleaned up expired job")
 	}
 
 	return nil

@@ -67,8 +67,10 @@ type RepositoryController struct {
 
 	queue workqueue.TypedRateLimitingInterface[*queueItem]
 
-	registry prometheus.Registerer
-	tracer   tracing.Tracer
+	registry      prometheus.Registerer
+	tracer        tracing.Tracer
+	startupTime   time.Time
+	startupWindow time.Duration
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -107,11 +109,13 @@ func NewRepositoryController(
 			metrics:       &finalizerMetrics,
 			maxWorkers:    parallelOperations,
 		},
-		jobs:      jobs,
-		logger:    logging.DefaultLogger.With("logger", loggerName),
-		dualwrite: dualwrite,
-		registry:  registry,
-		tracer:    tracer,
+		jobs:          jobs,
+		logger:        logging.DefaultLogger.With("logger", loggerName),
+		dualwrite:     dualwrite,
+		registry:      registry,
+		tracer:        tracer,
+		startupTime:   time.Now(),
+		startupWindow: 5 * time.Minute, // Consider syncs stuck if they haven't updated in 5 minutes
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -271,7 +275,7 @@ func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *pro
 
 func (rc *RepositoryController) shouldResync(obj *provisioning.Repository) bool {
 	// don't trigger resync if a sync was never started
-	if obj.Status.Sync.Finished == 0 && obj.Status.Sync.State == "" {
+	if obj.Status.Sync.State == "" {
 		return false
 	}
 
@@ -285,6 +289,62 @@ func (rc *RepositoryController) shouldResync(obj *provisioning.Repository) bool 
 	isRunning := obj.Status.Sync.State == provisioning.JobStateWorking
 
 	return obj.Spec.Sync.Enabled && syncAge >= (syncInterval-tolerance) && !pendingForTooLong && !isRunning
+}
+
+// hasActiveJob checks if there's an active (claimed/leased) job for the given repository.
+// A job is considered active if it has the claim label, meaning a worker currently holds a lease on it.
+func (rc *RepositoryController) hasActiveJob(ctx context.Context, namespace, repoName string) (bool, error) {
+	// Set up the provisioning identity for this namespace
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
+	if err != nil {
+		return false, fmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
+	}
+
+	// Build label selector: must have both repository label and claim label (exists)
+	// Using the same approach as persistentStore.Claim but with additional repository filter
+	selector := fmt.Sprintf("%s=%s,%s", jobs.LabelRepository, repoName, jobs.LabelJobClaim)
+
+	jobList, err := rc.client.Jobs(namespace).List(ctx, v1.ListOptions{
+		LabelSelector: selector,
+		Limit:         1, // We only need to know if at least one exists
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed to list jobs: %w", err)
+	}
+
+	return len(jobList.Items) > 0, nil
+}
+
+// isSyncStuck detects if a repository's sync state appears to be stuck from a previous crash or restart.
+// This only applies during the startup window and verifies there's no active job in the queue.
+func (rc *RepositoryController) isSyncStuck(ctx context.Context, obj *provisioning.Repository) (bool, error) {
+	// Only check for stuck syncs during startup window
+	if time.Since(rc.startupTime) > rc.startupWindow {
+		return false, nil
+	}
+
+	// Check if the repository is in a potentially stuck state
+	if obj.Status.Sync.State != provisioning.JobStatePending && obj.Status.Sync.State != provisioning.JobStateWorking {
+		return false, nil
+	}
+
+	// If the sync started before this controller started, it might be from a previous run
+	if obj.Status.Sync.Started > 0 {
+		startedAt := time.UnixMilli(obj.Status.Sync.Started)
+		if !startedAt.Before(rc.startupTime) {
+			// Sync started after this controller started, so it's legitimate
+			return false, nil
+		}
+	}
+
+	// Check if there's an active job for this repository
+	hasActiveJob, err := rc.hasActiveJob(ctx, obj.Namespace, obj.Name)
+	if err != nil {
+		return false, fmt.Errorf("failed to check for active job: %w", err)
+	}
+
+	// If there's an active job with a valid lease, the sync is not stuck
+	return !hasActiveJob, nil
 }
 
 func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, error) {
@@ -479,6 +539,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	shouldResync := rc.shouldResync(obj)
 	shouldCheckHealth := rc.healthChecker.ShouldCheckHealth(obj)
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
+	isStuckSync, err := rc.isSyncStuck(ctx, obj)
+	if err != nil {
+		return fmt.Errorf("failed to check if sync is stuck: %w", err)
+	}
 	patchOperations := []map[string]interface{}{}
 
 	// Determine the main triggering condition
@@ -490,6 +554,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			"path":  "/status/observedGeneration",
 			"value": obj.Generation,
 		})
+	case isStuckSync:
+		logger.Info("detected stuck sync from previous run, will trigger recovery sync", "sync_state", obj.Status.Sync.State, "started", obj.Status.Sync.Started)
 	case shouldResync:
 		logger.Info("sync interval triggered", "sync_interval", time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, "sync_status", obj.Status.Sync)
 	case shouldCheckHealth:
@@ -522,8 +588,18 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return fmt.Errorf("update health status: %w", err)
 	}
 
-	// determine the sync strategy and sync status to apply
-	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, healthStatus)
+	// Handle stuck sync recovery - force a new sync regardless of other conditions
+	var syncOptions *provisioning.SyncJobOptions
+	if isStuckSync {
+		if obj.Spec.Sync.Enabled {
+			logger.Info("forcing full sync to recover from stuck state")
+			syncOptions = &provisioning.SyncJobOptions{}
+		}
+	} else {
+		// determine the sync strategy and sync status to apply normally
+		syncOptions = rc.determineSyncStrategy(ctx, obj, repo, shouldResync, healthStatus)
+	}
+
 	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus)...)
 
 	// Apply all patch operations
