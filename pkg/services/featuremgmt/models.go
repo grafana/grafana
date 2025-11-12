@@ -12,7 +12,8 @@ type FeatureToggles interface {
 	// The settings may be per user, tenant, or globally set in the cloud
 	//
 	// Deprecated: FeatureToggles.IsEnabled is deprecated and will be removed in a future release.
-	// Evaluate with OpenFeature instead (see [github.com/open-feature/go-sdk/openfeature.Client])
+	// Evaluate with OpenFeature instead (see [github.com/open-feature/go-sdk/openfeature.Client]), for example:
+	// openfeature.NewDefaultClient().Boolean(ctx, "your-flag", false, openfeature.TransactionContext(ctx))
 	IsEnabled(ctx context.Context, flag string) bool
 
 	// IsEnabledGlobally checks if a flag is configured globally.  For now, this is the same
@@ -22,7 +23,8 @@ type FeatureToggles interface {
 	// a full server restart for a change to take place.
 	//
 	// Deprecated: FeatureToggles.IsEnabledGlobally is deprecated and will be removed in a future release.
-	// Toggles that must be reliably evaluated at the service startup should be moved to config.ini.
+	// Toggles that must be reliably evaluated at the service startup should be
+	// changed to settings (see setting.StartupSettings), and/or removed entirely.
 	IsEnabledGlobally(flag string) bool
 
 	// Get the enabled flags -- this *may* also include disabled flags (with value false)
