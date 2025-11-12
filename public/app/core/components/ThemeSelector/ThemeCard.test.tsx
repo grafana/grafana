@@ -15,7 +15,7 @@ describe('ThemeCard', () => {
   const mockTheme: ThemeRegistryItem = {
     id: 'dark',
     name: 'Dark',
-    build: () => createTheme(),
+    build: createTheme,
   };
 
   it('should only call onSelect once when clicking the radio button dot', async () => {

@@ -282,8 +282,10 @@ export class GrafanaBootConfig {
     overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
 
+    this.bootData.settings.featureToggles = this.featureToggles;
+
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
-    this.theme2 = getThemeById(this.bootData.user.theme, this.featureToggles);
+    this.theme2 = getThemeById(this.bootData.user.theme);
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
     this.regionalFormat = options.bootData.user.regionalFormat;

@@ -1,4 +1,3 @@
-import { FeatureToggles } from '../types/featureToggles.gen';
 import { Registry, RegistryItem } from '../utils/Registry';
 
 import { createTheme } from './createTheme';
@@ -7,16 +6,16 @@ import { GrafanaTheme2 } from './types';
 
 export interface ThemeRegistryItem extends RegistryItem {
   isExtra?: boolean;
-  build: (featureToggles: FeatureToggles) => GrafanaTheme2;
+  build: () => GrafanaTheme2;
 }
 
 /**
  * @internal
  * Only for internal use, never use this from a plugin
  **/
-export function getThemeById(id: string, featureToggles: FeatureToggles): GrafanaTheme2 {
+export function getThemeById(id: string): GrafanaTheme2 {
   const theme = themeRegistry.getIfExists(id) ?? themeRegistry.get('dark');
-  return theme.build(featureToggles);
+  return theme.build();
 }
 
 /**
@@ -48,12 +47,12 @@ export function getBuiltInThemes(allowedExtras: string[]) {
  */
 const themeRegistry = new Registry<ThemeRegistryItem>(() => {
   return [
-    { id: 'system', name: 'System preference', build: (featureToggles) => getSystemPreferenceTheme(featureToggles) },
-    { id: 'dark', name: 'Dark', build: (featureToggles) => createTheme({ colors: { mode: 'dark' }, featureToggles }) },
+    { id: 'system', name: 'System preference', build: () => getSystemPreferenceTheme() },
+    { id: 'dark', name: 'Dark', build: () => createTheme({ colors: { mode: 'dark' } }) },
     {
       id: 'light',
       name: 'Light',
-      build: (featureToggles) => createTheme({ colors: { mode: 'light' }, featureToggles }),
+      build: () => createTheme({ colors: { mode: 'light' } }),
     },
   ];
 });
@@ -67,8 +66,8 @@ for (const [id, theme] of Object.entries(extraThemes)) {
   });
 }
 
-function getSystemPreferenceTheme(featureToggles: FeatureToggles) {
+function getSystemPreferenceTheme() {
   const mediaResult = window.matchMedia('(prefers-color-scheme: dark)');
   const id = mediaResult.matches ? 'dark' : 'light';
-  return getThemeById(id, featureToggles);
+  return getThemeById(id);
 }

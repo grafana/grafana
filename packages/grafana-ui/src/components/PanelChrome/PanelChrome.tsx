@@ -436,6 +436,10 @@ const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNo
 
 const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean) => {
   if (hasHeader) {
+    if (getFeatureToggle('newPanelPadding')) {
+      return theme.spacing.gridSize * 5;
+    }
+
     return theme.spacing.gridSize * theme.components.panel.headerHeight;
   }
 
@@ -477,7 +481,8 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { background, borderColor, headerHeight } = theme.components.panel;
+  const { background, borderColor } = theme.components.panel;
+  const newPanelPadding = getFeatureToggle('newPanelPadding');
 
   return {
     container: css({
@@ -553,7 +558,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       // remove logic after newPanelPadding feature toggle is removed
-      padding: headerHeight === 5 ? theme.spacing(0, 1, 0, 1.5) : theme.spacing(0, 0.5, 0, 1),
+      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1.5) : theme.spacing(0, 0.5, 0, 1),
       gap: theme.spacing(1),
     }),
     pointer: css({
@@ -615,6 +620,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     titleItems: css({
       display: 'flex',
       height: '100%',
+      alignItems: 'center',
     }),
     clearButtonStyles: css({
       alignItems: 'center',
