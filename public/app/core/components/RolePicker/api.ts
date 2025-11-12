@@ -66,7 +66,7 @@ export const fetchTeamRoles = async (teamId: number, orgId?: number): Promise<Ro
   }
 };
 
-export const updateTeamRoles = (roles: Role[], teamId: number | string, orgId?: number) => {
+export const updateTeamRoles = (roles: Role[], teamId: number, orgId?: number) => {
   let teamRolesUrl = `/api/access-control/teams/${teamId}/roles`;
   if (orgId) {
     teamRolesUrl += `?targetOrgId=${orgId}`;
