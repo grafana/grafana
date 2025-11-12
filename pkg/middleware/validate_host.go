@@ -32,6 +32,11 @@ func ValidateHostHeader(cfg *setting.Cfg) web.Handler {
 		}
 
 		if !strings.EqualFold(h, cfg.Domain) {
+			// the normal redirecting logic doesn't work when running as frontend service, since it has no knowledge of the custom domain.
+			// instead, we modify the single tenant `/bootdata` call with a 204 response and a header indicating the domain to redirect to
+			// this is safe because only the frontend service calls `/bootdata`
+			// the redirect is then handled client side.
+			// see pkg/services/frontend/index.html
 			if c.Req.URL.Path == "/bootdata" {
 				c.Resp.Header().Set("Redirect-Domain", cfg.Domain)
 				c.Resp.WriteHeader(204)
