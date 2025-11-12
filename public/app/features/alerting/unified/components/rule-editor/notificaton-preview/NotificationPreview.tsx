@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { Fragment, Suspense, lazy } from 'react';
-import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -65,10 +64,6 @@ export const NotificationPreview = ({
       alertUid: alertUid,
     });
   };
-
-  useEffectOnce(() => {
-    onPreview();
-  });
 
   //  Get alert managers's data source information
   const alertManagerDataSources = useGetAlertManagerDataSourcesByPermissionAndConfig('notification');

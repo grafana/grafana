@@ -32,6 +32,7 @@ const getAlertManagerDataSourcesByPermissionAndConfigMock =
   >;
 
 const ui = {
+  previewButton: byRole('button', { name: /preview routing/i }),
   contactPointGroup: byRole('list'),
   grafanaAlertManagerLabel: byText(/alertmanager:grafana/i),
   otherAlertManagerLabel: byText(/alertmanager:other_am/i),
@@ -118,7 +119,12 @@ describe('NotificationPreview', () => {
       }),
     ]);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
+    const { user } = render(
+      <NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />
+    );
+
+    // Click the preview button to trigger the preview
+    await user.click(await ui.previewButton.find());
 
     // wait for loading to finish
     await waitFor(async () => {
@@ -144,7 +150,12 @@ describe('NotificationPreview', () => {
       }),
     ]);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
+    const { user } = render(
+      <NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />
+    );
+
+    // Click the preview button to trigger the preview
+    await user.click(await ui.previewButton.find());
 
     // wait for loading to finish
     await waitFor(async () => {
@@ -178,6 +189,10 @@ describe('NotificationPreview', () => {
     const { user } = render(
       <NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />
     );
+
+    // Click the preview button to trigger the preview
+    await user.click(await ui.previewButton.find());
+
     // wait for loading to finish
     await waitFor(async () => {
       const matchingContactPoint = await ui.contactPointGroup.findAll();
