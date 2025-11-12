@@ -184,7 +184,6 @@ export function LogsTable(props: Props) {
                     <>
                       <LogsTableActionButtons
                         {...cellProps}
-                        fieldIndex={0}
                         logId={logsFrame?.idField?.values[cellProps.rowIndex]}
                         logsFrame={logsFrame ?? undefined}
                         exploreId={props.exploreId}
