@@ -12416,9 +12416,10 @@
       }
     },
     "dashboard-actions": {
+      "empty-dashboard": "Empty dashboard",
       "import": "Import",
       "new": "New",
-      "new-dashboard": "Empty dashboard",
+      "new-dashboard": "New dashboard",
       "new-folder": "New folder",
       "new-template-dashboard": "Dashboard from template"
     },

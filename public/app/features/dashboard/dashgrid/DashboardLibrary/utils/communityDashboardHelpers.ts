@@ -3,7 +3,7 @@ import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
 import { MappingContext } from '../SuggestedDashboardsModal';
-import { fetchCommunityDashboard, GnetDashboardDependency } from '../api/dashboardLibraryApi';
+import { fetchCommunityDashboard } from '../api/dashboardLibraryApi';
 import { CONTENT_KINDS, ContentKind, CREATION_ORIGINS, EventLocation, SOURCE_ENTRY_POINTS } from '../interactions';
 import { GnetDashboard, Link } from '../types';
 
