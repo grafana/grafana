@@ -5995,7 +5995,7 @@
         "cancel": "Annulla"
       },
       "render-save-button-and-error": {
-        "body-plugin-dashboard": "Questa dashboard è fornita da un componente aggiuntivo. Qualsiasi modifica apportata qui verrà sovrascritta quando il componente aggiuntivo viene aggiornato. Per mantenere le modifiche in modo permanente, utilizzare <strong>Salva con nome</strong> per creare una copia personalizzata.",
+        "body-plugin-dashboard": "Questa dashboard è fornita da un plugin. Qualsiasi modifica apportata verrà sovrascritta quando il plugin viene aggiornato. Per mantenere le modifiche in modo permanente, utilizza <strong>Salva con nome</strong> per creare una copia personalizzata.",
         "title-failed-to-save-dashboard": "Impossibile salvare la dashboard",
         "title-plugin-dashboard": "Dashboard del componente aggiuntivo - le modifiche possono andare perse",
         "title-someone-else-has-updated-this-dashboard": "Qualcun altro ha aggiornato questa dashboard",
