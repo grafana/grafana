@@ -217,7 +217,6 @@
             return;
           }
           window.__grafana_load_failed();
-          window.__grafana_custom_domain_failed();
         };
 
         let hasSetLoading = false;
@@ -246,7 +245,10 @@
             bootDataUrl.searchParams.append(key, value);
           }
 
-          const resp = await fetch(bootDataUrl);
+          const resp = await fetch(bootDataUrl, {redirect: 'manual'});
+          if (resp.type === 'opaqueredirect') {
+            window.__grafana_custom_domain_failed();
+          }
           const textResponse = await resp.text();
 
           let rawBootData;
@@ -340,7 +342,6 @@
         window.__grafana_boot_data_promise.catch((err) => {
           console.error("__grafana_boot_data_promise rejected", err);
           window.__grafana_load_failed(err);
-          window.__grafana_custom_domain_failed(err);
         });
       })();
     </script>
