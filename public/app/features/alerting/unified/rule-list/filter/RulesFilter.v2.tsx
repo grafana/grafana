@@ -248,8 +248,7 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
   const defaultValues = searchQueryToDefaultValues(filterState);
 
   // Fetch namespace and group data from all sources (optimized for filter UI)
-  const { namespaceOptions, allGroupNames, isLoadingNamespaces, namespacePlaceholder, groupPlaceholder } =
-    useNamespaceAndGroupOptions();
+  const { namespaceOptions, groupOptions, namespacePlaceholder, groupPlaceholder } = useNamespaceAndGroupOptions();
 
   const { labelOptions } = useLabelOptions();
 
@@ -294,13 +293,11 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
             <NamespaceField
               namespaceOptions={namespaceOptions}
               namespacePlaceholder={namespacePlaceholder}
-              isLoadingNamespaces={isLoadingNamespaces}
               portalContainer={portalContainer}
             />
             <GroupField
-              allGroupNames={allGroupNames}
+              groupOptions={groupOptions}
               groupPlaceholder={groupPlaceholder}
-              isLoadingNamespaces={isLoadingNamespaces}
               portalContainer={portalContainer}
             />
             <DataSourceNamesField dataSourceOptions={dataSourceOptions} portalContainer={portalContainer} />
@@ -373,12 +370,10 @@ function LabelsField({
 function NamespaceField({
   namespaceOptions,
   namespacePlaceholder,
-  isLoadingNamespaces,
   portalContainer,
 }: {
   namespaceOptions: (inputValue: string) => Promise<Array<{ label?: string; value: string; description?: string }>>;
   namespacePlaceholder: string;
-  isLoadingNamespaces: boolean;
   portalContainer?: HTMLElement;
 }) {
   const { control } = useFormContext<AdvancedFilters>();
@@ -397,7 +392,6 @@ function NamespaceField({
               options={namespaceOptions}
               onChange={(option) => field.onChange(option?.value || null)}
               value={field.value}
-              loading={isLoadingNamespaces}
               isClearable
               portalContainer={portalContainer}
             />
@@ -409,21 +403,37 @@ function NamespaceField({
 }
 
 function GroupField({
-  allGroupNames,
+  groupOptions,
   groupPlaceholder,
-  isLoadingNamespaces,
   portalContainer,
 }: {
-  allGroupNames: string[];
+  groupOptions: (inputValue: string) => Promise<Array<{ label?: string; value: string }>>;
   groupPlaceholder: string;
-  isLoadingNamespaces: boolean;
   portalContainer?: HTMLElement;
 }) {
   const { control } = useFormContext<AdvancedFilters>();
   return (
     <>
       <Label>
-        <Trans i18nKey="alerting.search.property.evaluation-group">Evaluation group</Trans>
+        <Stack gap={0.5} alignItems="center">
+          <span>
+            <Trans i18nKey="alerting.search.property.evaluation-group">Evaluation group</Trans>
+          </span>
+          <Tooltip
+            content={
+              <Trans i18nKey="alerting.rules-filter.evaluation-group-tooltip">
+                Showing the first 500 evaluation groups. If you have more groups or can&apos;t find yours, use the
+                search input above with group: syntax (e.g., group:cpu-usage).
+              </Trans>
+            }
+          >
+            <Icon
+              name="info-circle"
+              size="sm"
+              title={t('alerting.rules-filter.evaluation-group-tooltip-title', 'Evaluation group filter help')}
+            />
+          </Tooltip>
+        </Stack>
       </Label>
       <Controller
         name="groupName"
@@ -432,10 +442,9 @@ function GroupField({
           return (
             <Combobox<string>
               placeholder={groupPlaceholder}
-              options={allGroupNames.map((name) => ({ label: name, value: name }))}
+              options={groupOptions}
               onChange={(option) => field.onChange(option?.value || null)}
               value={field.value}
-              loading={isLoadingNamespaces}
               isClearable
               portalContainer={portalContainer}
             />

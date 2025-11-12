@@ -17,18 +17,12 @@ function getExternalRuleDataSources() {
 
 export function useNamespaceAndGroupOptions(): {
   namespaceOptions: (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
-  allGroupNames: string[];
-  isLoadingNamespaces: boolean;
+  groupOptions: (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
   namespacePlaceholder: string;
   groupPlaceholder: string;
 } {
   const [fetchGrafanaGroups] = prometheusApi.useLazyGetGrafanaGroupsQuery();
   const [fetchExternalGroups] = prometheusApi.useLazyGetGroupsQuery();
-
-  const { data: grafanaData, isLoading: isLoadingGrafana } = prometheusApi.useGetGrafanaGroupsQuery({
-    limitAlerts: 0,
-    groupLimit: 1000,
-  });
 
   // Formats a raw namespace string into a user-friendly combobox option.
   const formatNamespaceOption = useCallback((namespaceName: string): ComboboxOption<string> => {
@@ -94,18 +88,26 @@ export function useNamespaceAndGroupOptions(): {
     [fetchGrafanaGroups, fetchExternalGroups, formatNamespaceOption]
   );
 
-  // Extract all unique group names from Grafana data
-  const allGroupNames: string[] = grafanaData?.data.groups
-    ? Array.from(new Set(grafanaData.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.name))).sort((a, b) =>
-        collator.compare(a, b)
-      )
-    : [];
+  const groupOptions = useCallback(
+    async (inputValue: string) => {
+      // Limit to 500 groups for performance - users with more groups can use the search input with group: syntax
+      const grafanaResponse = await fetchGrafanaGroups({ limitAlerts: 0, groupLimit: 500 }).unwrap();
+      const groupNames = Array.from(new Set(grafanaResponse.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.name)));
 
-  const isLoadingNamespaces = isLoadingGrafana;
+      const options: Array<ComboboxOption<string>> = groupNames
+        .map((name) => ({ label: name, value: name }))
+        .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
+
+      const filtered = filterBySearch(options, inputValue);
+      return filtered;
+    },
+    [fetchGrafanaGroups]
+  );
+
   const namespacePlaceholder = t('alerting.rules-filter.filter-options.placeholder-namespace', 'Select namespace');
   const groupPlaceholder = t('grafana.select-group', 'Select group');
 
-  return { namespaceOptions, allGroupNames, isLoadingNamespaces, namespacePlaceholder, groupPlaceholder };
+  return { namespaceOptions, groupOptions, namespacePlaceholder, groupPlaceholder };
 }
 
 export function useLabelOptions(): {
