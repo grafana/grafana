@@ -2977,10 +2977,10 @@ func TestDataStore_BatchDelete(t *testing.T) {
 	// Verify all events were deleted
 	for i := 0; i < 95; i++ {
 		_, err := ds.Get(ctx, DataKey{
-			Namespace:       "test-namespace",
-			Group:           "test-group",
-			Resource:        "test-resource",
-			Name:            fmt.Sprintf("test-name-%d", i),
+			Namespace: "test-namespace",
+			Group:     "test-group",
+			Resource:  "test-resource",
+			Name:      fmt.Sprintf("test-name-%d", i),
 		})
 		require.Error(t, err, "Resource should have been deleted")
 	}
