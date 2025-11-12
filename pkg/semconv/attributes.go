@@ -81,6 +81,26 @@ func K8sDataplaneserviceName(val string) attribute.KeyValue {
 	return k8sDataplaneserviceNameKey.String(val)
 }
 
+// Describes Grafana app platform namespace attributes.
+const (
+	// GrafanaNamespaceNameKey is the attribute Key conforming to the
+	// "grafana.namespace.name" semantic conventions. It represents the
+	// namespace name.
+	//
+	// Type: string
+	// RequirementLevel: Optional
+	// Stability: stable
+	// Examples: 'stacks-99999'
+	grafanaNamespaceNameKey = attribute.Key("grafana.namespace.name")
+)
+
+// GrafanaNamespaceName returns an attribute KeyValue conforming to the
+// "grafana.namespace.name" semantic conventions. It represents the namespace
+// name.
+func GrafanaNamespaceName(val string) attribute.KeyValue {
+	return grafanaNamespaceNameKey.String(val)
+}
+
 // Describes Grafana plugin attributes.
 const (
 	// GrafanaPluginIdKey is the attribute Key conforming to the
