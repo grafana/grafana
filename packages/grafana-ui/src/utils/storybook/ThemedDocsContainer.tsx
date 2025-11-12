@@ -21,7 +21,7 @@ export const ThemedDocsContainer = ({ children, context }: Props) => {
     const { globals } = context.getStoryContext(story);
     themeId = globals.theme;
   }
-  const theme = getThemeById(themeId, {});
+  const theme = getThemeById(themeId);
 
   return (
     <DocsContainer theme={createStorybookTheme(theme)} context={context}>
