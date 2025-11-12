@@ -70,14 +70,6 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
-			Name:           "correlations",
-			Description:    "Correlations page",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaDataProSquad,
-			Expression:     "true", // enabled by default
-			AllowSelfServe: true,
-		},
-		{
 			Name:              "canvasPanelNesting",
 			Description:       "Allow elements nesting",
 			Stage:             FeatureStageExperimental,
