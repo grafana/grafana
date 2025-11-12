@@ -555,10 +555,6 @@ A space-separated list of memcached servers. Example: `memcached-server-1:11211 
 
 The default is `"localhost:11211"`.
 
-{{< admonition type="note" >}}
-The following memcached configuration requires the `tlsMemcached` feature toggle.
-{{< /admonition >}}
-
 ### tls_enabled
 
 Enables TLS authentication for memcached. Defaults to `false`.
