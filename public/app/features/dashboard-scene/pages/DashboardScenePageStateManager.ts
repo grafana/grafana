@@ -236,6 +236,7 @@ abstract class DashboardScenePageStateManagerBase<T>
   private processDashboardFromProvisioning(
     repo: string,
     path: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     dryRun: any,
     provisioningPreview: ProvisioningPreview
   ) {
@@ -930,7 +931,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     this.v1Manager = new DashboardScenePageStateManager(initialState);
     this.v2Manager = new DashboardScenePageStateManagerV2(initialState);
 
-    this.activeManager = this.v1Manager;
+    this.activeManager = config.featureToggles.dashboardNewLayouts ? this.v2Manager : this.v1Manager;
   }
 
   private async withVersionHandling<T>(

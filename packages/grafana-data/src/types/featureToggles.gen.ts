@@ -84,10 +84,6 @@ export interface FeatureToggles {
   */
   alertingBacktesting?: boolean;
   /**
-  * Enables drag and drop for CSV and Excel files
-  */
-  editPanelCSVDragAndDrop?: boolean;
-  /**
   * Allow datasource to provide custom UI for context view
   * @default true
   */
@@ -362,10 +358,6 @@ export interface FeatureToggles {
   * @default true
   */
   annotationPermissionUpdate?: boolean;
-  /**
-  * Make sure extracted field names are unique in the dataframe
-  */
-  extractFieldsNameDeduplication?: boolean;
   /**
   * Enables dashboard rendering using Scenes for viewer roles
   * @default true
@@ -1127,11 +1119,6 @@ export interface FeatureToggles {
   */
   restrictedPluginApis?: boolean;
   /**
-  * Enable adhoc filter buttons in visualization tooltips
-  * @default true
-  */
-  adhocFiltersInTooltips?: boolean;
-  /**
   * Enable favorite datasources
   */
   favoriteDatasources?: boolean;
@@ -1230,6 +1217,10 @@ export interface FeatureToggles {
   * Enable template dashboards
   */
   dashboardTemplates?: boolean;
+  /**
+  * Enables Advisor app installer
+  */
+  grafanaAdvisorAppInstaller?: boolean;
   /**
   * Enables app platform API for annotations
   * @default false
