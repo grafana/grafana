@@ -26,7 +26,7 @@ refs:
 
 # Data sources, plugins, and integrations
 
-When working with Grafana, you'll encounter three key concepts: data sources, plugins, and integrations.  Each one is essential in building effective monitoring solutions, but they serve distinct purposes, and are often confused with one another. This document clarifies the meaning of each concept and what each one does, when to use it, and how they work together to create observability solutions in Grafana.
+When working with Grafana, you'll encounter three key concepts: data sources, plugins, and integrations. Each one is essential in building effective monitoring solutions, but they serve distinct purposes, and are often confused with one another. This document clarifies the meaning of each concept and what each one does, when to use it, and how they work together to create observability solutions in Grafana.
 
 ## Data sources
 
