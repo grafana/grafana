@@ -832,7 +832,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if b.jobHistoryLoki == nil {
 				// Create HistoryJobController for cleanup of old job history entries
 				// Separate informer factory for HistoryJob cleanup with resync interval
-				historyJobExpiration := 30 * time.Second
+				historyJobExpiration := 10 * time.Minute
 				historyJobInformerFactory := informers.NewSharedInformerFactory(c, historyJobExpiration)
 				historyJobInformer := historyJobInformerFactory.Provisioning().V0alpha1().HistoricJobs()
 				go historyJobInformer.Informer().Run(postStartHookCtx.Done())

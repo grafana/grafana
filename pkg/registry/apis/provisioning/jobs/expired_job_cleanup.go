@@ -143,7 +143,7 @@ func (c *JobCleanupController) cleanUpExpiredJob(ctx context.Context, job *provi
 	jobCopy := job.DeepCopy()
 	jobCopy.Status.State = provisioning.JobStateError
 	jobCopy.Status.Message = "Job failed due to lease expiry - worker may have crashed or lost connection"
-	jobCopy.Status.Finished = c.clock().Unix()
+	jobCopy.Status.Finished = c.clock().UnixMilli()
 
 	span.SetAttributes(
 		attribute.String("job.name", jobCopy.GetName()),
