@@ -14,14 +14,11 @@ import {
   PanelPluginDataSupport,
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
-import {
-  VisualizationSuggestionsConfig,
-  VisualizationSuggestionsHandler,
-  VisualizationSuggestionsSupplier,
-} from '../types/suggestions';
+import { VisualizationSuggestionsHandler, VisualizationSuggestionsSupplier } from '../types/suggestions';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
+import { getPanelOptionsWithDefaults } from './getPanelOptionsWithDefaults';
 import { createFieldConfigRegistry } from './registryFactories';
 
 /** @beta */
@@ -114,7 +111,6 @@ export class PanelPlugin<
 
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
   private suggestionsSupplier?: VisualizationSuggestionsSupplier;
-  private suggestionsConfig?: VisualizationSuggestionsConfig<TOptions, TFieldConfigOptions>;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -369,19 +365,10 @@ export class PanelPlugin<
 
   /**
    * Sets function that can return visualization examples and suggestions.
-   * @deprecated use setSuggestionsHandler and useSuggestionsConfig instead
+   * @deprecated use setSuggestionsHandler
    */
   setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier) {
     this.suggestionsSupplier = supplier;
-    return this;
-  }
-
-  /**
-   * @alpha
-   * Allows specifying default suggestion options and presets
-   */
-  useSuggestionsConfig(config: VisualizationSuggestionsConfig<TOptions, TFieldConfigOptions>) {
-    this.suggestionsConfig = config;
     return this;
   }
 
@@ -392,21 +379,19 @@ export class PanelPlugin<
   setSuggestionsHandler(handler: VisualizationSuggestionsHandler<TOptions, TFieldConfigOptions>) {
     this.suggestionsSupplier = {
       getSuggestionsForData: (builder) => {
-        const appender = builder.getListAppender<TOptions, TFieldConfigOptions>(
-          defaultsDeep(this.suggestionsConfig?.defaults ?? {}, {
-            pluginId: this.meta.id,
-            name: this.meta.name,
-            options: {},
-            fieldConfig: {
-              defaults: {
-                custom: {},
-              },
-              overrides: [],
+        const appender = builder.getListAppender<TOptions, TFieldConfigOptions>({
+          pluginId: this.meta.id,
+          name: this.meta.name,
+          options: this._defaults,
+          fieldConfig: {
+            defaults: {
+              custom: {},
             },
-          })
-        );
+            overrides: [],
+          },
+        });
 
-        const result = handler(builder.dataSummary, this.suggestionsConfig?.presets);
+        const result = handler(builder.dataSummary);
 
         if (Array.isArray(result)) {
           appender.appendAll(result);

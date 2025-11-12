@@ -77,80 +77,14 @@ export class VisualizationSuggestionsBuilder {
 
 /**
  * @alpha
- * Configuration for suggestions defaults and presets
- */
-export interface VisualizationSuggestionsConfig<TOptions extends unknown, TFieldConfig extends {}> {
-  /**
-   * Default suggestion options applied to all suggestions.
-   * For example, in a suggestions handler, you could do something like
-   * ```ts
-   *   .setSuggestionsConfig({
-   *     defaults: {
-   *       options: {
-   *         someOption: true,
-   *       },
-   *       fieldConfig: { ... },
-   *     }
-   *   })
-   *   .setSuggestionsHandler((panelSummary) => {
-   *     if (panelSummary.hasFieldType('string')) {
-   *       return [{
-   *         options: {
-   *           someOtherOption: 'value',
-   *         }
-   *       }];
-   *     }
-   *   })
-   * ```
-   * This would result in the returned suggestion having both `someOption: true` and `someOtherOption: 'value'` set on its options.
-   */
-  defaults?: Partial<VisualizationSuggestion<TOptions, TFieldConfig>>;
-
-  /**
-   * Key-value map of named presets that can be used when returning suggestions.
-   * For example, in a suggestions handler, you could do something like
-   * ```ts
-   *   .setSuggestionsConfig({
-   *     presets: {
-   *       stringsPreset1: {
-   *         name: 'String values preset 1',
-   *         options: {
-   *           someOption: true,
-   *         },
-   *       },
-   *       stringsPreset2: {
-   *         name: 'String values preset 2',
-   *         fieldConfig: { ... },
-   *         options: {
-   *           someOptions: false,
-   *         },
-   *       },
-   *     }
-   *   })
-   *   .setSuggestionsHandler((panelSummary, presets) => {
-   *     if (panelSummary.hasFieldType('string')) {
-   *       return [presets.stringsPreset1, presets.stringsPreset2];
-   *     }
-   *   })
-   * ```
-   * This would result in two suggestions being shown, both extended with the defaults set in `defaults`.
-   */
-  presets?: Record<string, Partial<VisualizationSuggestion<TOptions, TFieldConfig>>>;
-}
-
-/**
- * @alpha
  * executed while rendering suggestions each time the DataFrame changes, this method
  * determines which suggestions can be shown for this PanelPlugin given the PanelDataSummary.
  *
- * - if a boolean is returned, the default options and field config will be used (including overrides set on useSuggestionsConfig)
- * - if an array of VisualizationSuggestion is returned, you may pass return presets (which are set using useSuggestionsConfig) or raw VisualizationSuggestions.
- *   - these will be extended with the defaults set in useSuggestionsConfig.
- * - if void is returned, no suggestions will be shown for this plugin (same as returning false)
+ * - returns an array of VisualizationSuggestions
+ * - boolean return equates to "show a single suggestion card for this panel plugin with the default options" (true = show, false or void = hide)
  */
 export type VisualizationSuggestionsHandler<TOptions extends unknown, TFieldConfig extends {} = {}> = (
-  panelDataSummary: PanelDataSummary,
-  presets?: VisualizationSuggestionsConfig<TOptions, TFieldConfig>['presets']
+  panelDataSummary: PanelDataSummary
 ) => Array<Partial<VisualizationSuggestion<TOptions, TFieldConfig>>> | boolean | void;
 
 /**
@@ -169,7 +103,7 @@ export type VisualizationSuggestionsSupplier = {
 export class VisualizationSuggestionsListAppender<TOptions extends unknown, TFieldConfig extends {} = {}> {
   constructor(
     private list: VisualizationSuggestion[],
-    private defaults: VisualizationSuggestionsConfig<TOptions, TFieldConfig>['defaults']
+    private defaults: Partial<VisualizationSuggestion<TOptions, TFieldConfig>> = {}
   ) {}
 
   append(overrides: Partial<VisualizationSuggestion<TOptions, TFieldConfig>>) {
