@@ -20,7 +20,7 @@ export function isDataSourceInput(input: Input): input is Input & DataSourceInpu
 export interface AutoMapResult {
   allMapped: boolean;
   mappings: InputMapping[];
-  unmappedInputs: DataSourceInput[];
+  unmappedDsInputs: DataSourceInput[];
 }
 
 /**
@@ -35,7 +35,7 @@ export interface AutoMapResult {
  */
 export function tryAutoMapDatasources(inputs: DataSourceInput[], currentDatasourceUid: string): AutoMapResult {
   const mappings: InputMapping[] = [];
-  const unmappedInputs: DataSourceInput[] = [];
+  const unmappedDsInputs: DataSourceInput[] = [];
 
   for (const input of inputs) {
     // Get all datasources compatible with this input's plugin type
@@ -70,14 +70,14 @@ export function tryAutoMapDatasources(inputs: DataSourceInput[], currentDatasour
         value: selectedDs,
       });
     } else {
-      unmappedInputs.push(input);
+      unmappedDsInputs.push(input);
     }
   }
 
   return {
-    allMapped: unmappedInputs.length === 0,
+    allMapped: unmappedDsInputs.length === 0,
     mappings,
-    unmappedInputs,
+    unmappedDsInputs,
   };
 }
 

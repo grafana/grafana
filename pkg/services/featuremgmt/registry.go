@@ -125,13 +125,6 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
-			Name:         "editPanelCSVDragAndDrop",
-			Description:  "Enables drag and drop for CSV and Excel files",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
 			Name:           "logsContextDatasourceUi",
 			Description:    "Allow datasource to provide custom UI for context view",
 			Stage:          FeatureStageGeneralAvailability,
@@ -852,14 +845,6 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "true", // enabled by default,
-		},
-		{
-			Name:           "tlsMemcached",
-			Description:    "Use TLS-enabled memcached in the enterprise caching feature",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaOperatorExperienceSquad,
-			Expression:     "true",
-			AllowSelfServe: false, // the non-tls implementation is slated for removal
 		},
 		{
 			Name:            "kubernetesAggregator",
@@ -2093,6 +2078,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "newPanelPadding",
+			Description:  "Increases panel padding globally",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:              "onlyStoreActionSets",
 			Description:       "When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission",
 			Stage:             FeatureStageGeneralAvailability,
@@ -2119,6 +2112,12 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
+		},
+		{
+			Name:        "grafanaAdvisorAppInstaller",
+			Description: "Enables Advisor app installer",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:        "kubernetesAnnotations",
