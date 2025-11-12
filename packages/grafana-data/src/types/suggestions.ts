@@ -18,8 +18,6 @@ export interface VisualizationSuggestion<TOptions extends unknown = {}, TFieldCo
   name?: string;
   /** Description */
   description?: string;
-  /** Panel plugin id */
-  pluginId: string;
   /** Panel plugin options */
   options?: Partial<TOptions>;
   /** Panel plugin field options */
