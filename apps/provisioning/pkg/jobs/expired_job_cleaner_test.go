@@ -194,6 +194,7 @@ func TestExpiredJobCleaner_Cleanup(t *testing.T) {
 	t.Run("skips abandonment when no handler supports action", func(t *testing.T) {
 		lister := NewMockJobLister(t)
 		completer := NewMockJobCompleter(t)
+		historicJobs := NewMockHistoryWriter(t)
 		handler := NewMockAbandonmentHandler(t)
 
 		expiredJob := &provisioning.Job{
@@ -210,10 +211,11 @@ func TestExpiredJobCleaner_Cleanup(t *testing.T) {
 		expiredBefore := fixedTime.Add(-expiry)
 
 		lister.EXPECT().ListExpiredJobs(ctx, expiredBefore, 100).Return([]*provisioning.Job{expiredJob}, nil)
-		completer.EXPECT().Complete(ctx, mock.Anything).Return(nil)
 		handler.EXPECT().SupportsAction(provisioning.JobActionDelete).Return(false)
+		completer.EXPECT().Complete(ctx, mock.Anything).Return(nil)
+		historicJobs.EXPECT().WriteJob(ctx, mock.Anything).Return(nil)
 
-		cleaner := NewExpiredJobCleaner(lister, completer, expiry, handler)
+		cleaner := NewExpiredJobCleaner(lister, completer, historicJobs, expiry, handler)
 		cleaner.clock = func() time.Time { return fixedTime }
 
 		err := cleaner.Cleanup(ctx)
@@ -223,6 +225,7 @@ func TestExpiredJobCleaner_Cleanup(t *testing.T) {
 	t.Run("uses first handler that supports action", func(t *testing.T) {
 		lister := NewMockJobLister(t)
 		completer := NewMockJobCompleter(t)
+		historicJobs := NewMockHistoryWriter(t)
 		handler1 := NewMockAbandonmentHandler(t)
 		handler2 := NewMockAbandonmentHandler(t)
 
@@ -240,16 +243,18 @@ func TestExpiredJobCleaner_Cleanup(t *testing.T) {
 		expiredBefore := fixedTime.Add(-expiry)
 
 		lister.EXPECT().ListExpiredJobs(ctx, expiredBefore, 100).Return([]*provisioning.Job{expiredJob}, nil)
-		completer.EXPECT().Complete(ctx, mock.Anything).Return(nil)
-
+		
 		// First handler doesn't support it
 		handler1.EXPECT().SupportsAction(provisioning.JobActionPull).Return(false)
-
+		
 		// Second handler supports it and should be called
 		handler2.EXPECT().SupportsAction(provisioning.JobActionPull).Return(true)
 		handler2.EXPECT().HandleAbandonment(ctx, mock.Anything).Return(nil)
+		
+		completer.EXPECT().Complete(ctx, mock.Anything).Return(nil)
+		historicJobs.EXPECT().WriteJob(ctx, mock.Anything).Return(nil)
 
-		cleaner := NewExpiredJobCleaner(lister, completer, expiry, handler1, handler2)
+		cleaner := NewExpiredJobCleaner(lister, completer, historicJobs, expiry, handler1, handler2)
 		cleaner.clock = func() time.Time { return fixedTime }
 
 		err := cleaner.Cleanup(ctx)
@@ -285,17 +290,18 @@ func TestExpiredJobCleaner_Run(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				lister := NewMockJobLister(t)
 				completer := NewMockJobCompleter(t)
+				historicJobs := NewMockHistoryWriter(t)
 
 				// We'll use a simple approach - just test that it cancels quickly
-				cleaner := NewExpiredJobCleaner(lister, completer, tt.expiry)
+				cleaner := NewExpiredJobCleaner(lister, completer, historicJobs, tt.expiry)
 
 				// Run in goroutine and cancel quickly
 				ctx, cancel := context.WithCancel(context.Background())
-
+				
 				// Mock the initial cleanup call - it will be called once when Run starts
 				lister.EXPECT().ListExpiredJobs(mock.Anything, mock.Anything, 100).
 					Return([]*provisioning.Job{}, nil).Once()
-
+				
 				cancel() // Cancel immediately after setup
 
 				err := cleaner.Run(ctx)
