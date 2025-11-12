@@ -381,13 +381,6 @@ export class PanelPlugin<
         const appender = builder.getListAppender<TOptions, TFieldConfigOptions>({
           pluginId: this.meta.id,
           name: this.meta.name,
-          options: this._defaults,
-          fieldConfig: {
-            defaults: {
-              custom: {},
-            },
-            overrides: [],
-          },
         });
 
         const result = handler(builder.dataSummary);
