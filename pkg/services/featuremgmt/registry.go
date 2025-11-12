@@ -125,13 +125,6 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
-			Name:         "editPanelCSVDragAndDrop",
-			Description:  "Enables drag and drop for CSV and Excel files",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
 			Name:           "logsContextDatasourceUi",
 			Description:    "Allow datasource to provide custom UI for context view",
 			Stage:          FeatureStageGeneralAvailability,
@@ -605,13 +598,6 @@ var (
 			Owner:           identityAccessTeam,
 		},
 		{
-			Name:         "extractFieldsNameDeduplication",
-			Description:  "Make sure extracted field names are unique in the dataframe",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaDataProSquad,
-		},
-		{
 			Name:         "dashboardSceneForViewers",
 			Description:  "Enables dashboard rendering using Scenes for viewer roles",
 			Stage:        FeatureStageGeneralAvailability,
@@ -859,14 +845,6 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "true", // enabled by default,
-		},
-		{
-			Name:           "tlsMemcached",
-			Description:    "Use TLS-enabled memcached in the enterprise caching feature",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaOperatorExperienceSquad,
-			Expression:     "true",
-			AllowSelfServe: false, // the non-tls implementation is slated for removal
 		},
 		{
 			Name:            "kubernetesAggregator",
@@ -1960,14 +1938,6 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:         "adhocFiltersInTooltips",
-			Description:  "Enable adhoc filter buttons in visualization tooltips",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaDataProSquad,
-			FrontendOnly: true,
-			Expression:   "true",
-		},
-		{
 			Name:         "favoriteDatasources",
 			Description:  "Enable favorite datasources",
 			Stage:        FeatureStageExperimental,
@@ -2108,6 +2078,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "newPanelPadding",
+			Description:  "Increases panel padding globally",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:              "onlyStoreActionSets",
 			Description:       "When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission",
 			Stage:             FeatureStageGeneralAvailability,
@@ -2134,6 +2112,12 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
+		},
+		{
+			Name:        "grafanaAdvisorAppInstaller",
+			Description: "Enables Advisor app installer",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:        "kubernetesAnnotations",
