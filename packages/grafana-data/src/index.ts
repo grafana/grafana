@@ -716,6 +716,7 @@ export {
   type VisualizationSuggestion,
   type VisualizationSuggestionsSupplier,
   type PanelPluginVisualizationSuggestion,
+  type VisualizationSuggestionsHandler,
   VisualizationSuggestionScore,
   VisualizationSuggestionsBuilder,
   VisualizationSuggestionsListAppender,
