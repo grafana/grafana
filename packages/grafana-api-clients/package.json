@@ -3,7 +3,7 @@
   "license": "Apache-2.0",
   "private": true,
   "name": "@grafana/api-clients",
-  "version": "12.3.0-pre",
+  "version": "12.4.0-pre",
   "description": "Grafana API client utilities",
   "keywords": [
     "grafana",
@@ -48,6 +48,10 @@
       "import": "./src/clients/rtkq/iam/v0alpha1/index.ts",
       "require": "./src/clients/rtkq/iam/v0alpha1/index.ts"
     },
+    "./rtkq/legacy": {
+      "import": "./src/clients/rtkq/legacy/index.ts",
+      "require": "./src/clients/rtkq/legacy/index.ts"
+    },
     "./rtkq/legacy/migrate-to-cloud": {
       "import": "./src/clients/rtkq/migrate-to-cloud/index.ts",
       "require": "./src/clients/rtkq/migrate-to-cloud/index.ts"
@@ -71,14 +75,6 @@
     "./rtkq/provisioning/v0alpha1": {
       "import": "./src/clients/rtkq/provisioning/v0alpha1/index.ts",
       "require": "./src/clients/rtkq/provisioning/v0alpha1/index.ts"
-    },
-    "./rtkq/shorturl/v1alpha1": {
-      "import": "./src/clients/rtkq/shorturl/v1alpha1/index.ts",
-      "require": "./src/clients/rtkq/shorturl/v1alpha1/index.ts"
-    },
-    "./rtkq/correlations/v0alpha1": {
-      "import": "./src/clients/rtkq/correlations/v0alpha1/index.ts",
-      "require": "./src/clients/rtkq/correlations/v0alpha1/index.ts"
     }
   },
   "publishConfig": {

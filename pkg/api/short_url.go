@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
+	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -119,13 +119,8 @@ type shortURLK8sHandler struct {
 }
 
 func newShortURLK8sHandler(hs *HTTPServer) *shortURLK8sHandler {
-	gvr := schema.GroupVersionResource{
-		Group:    v1alpha1.ShortURLKind().Group(),
-		Version:  v1alpha1.ShortURLKind().Version(),
-		Resource: v1alpha1.ShortURLKind().Plural(),
-	}
 	return &shortURLK8sHandler{
-		gvr:                  gvr,
+		gvr:                  v1beta1.ShortURLKind().GroupVersionResource(),
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
 		cfg:                  hs.Cfg,
@@ -169,9 +164,9 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 	}
 
 	result := client.RESTClient().Get().
-		Prefix("apis", v1alpha1.APIGroup, v1alpha1.APIVersion).
+		Prefix("apis", v1beta1.APIGroup, v1beta1.APIVersion).
 		Namespace(sk8s.namespacer(c.OrgID)).
-		Resource(v1alpha1.ShortURLKind().Plural()).
+		Resource(v1beta1.ShortURLKind().Plural()).
 		Name(uid).
 		SubResource("goto").
 		Param("redirect", "false"). // returns the URL and then we will do the redirect
@@ -188,7 +183,7 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 		return
 	}
 
-	value := &v1alpha1.GetGoto{}
+	value := &v1beta1.GetGoto{}
 	if err = json.Unmarshal(body, value); err != nil {
 		c.JsonApiErr(500, "unmarshal", err)
 		return
@@ -217,7 +212,7 @@ func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel
 
 	c.Logger.Debug("Creating short URL", "path", cmd.Path)
 	obj := shorturl.LegacyCreateCommandToUnstructured(cmd)
-	obj.SetGenerateName("u") // becomes a prefix
+	obj.SetGenerateName("s") // becomes a prefix
 
 	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
 	if err != nil {

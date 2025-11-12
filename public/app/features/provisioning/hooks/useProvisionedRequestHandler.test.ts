@@ -153,12 +153,7 @@ describe('useProvisionedRequestHandler', () => {
       );
 
       expect(handlers.onWriteSuccess).toHaveBeenCalledWith(
-        expect.objectContaining({
-          resourceType: 'dashboard',
-          repoType: 'git',
-          workflow: 'write',
-        }),
-        expect.any(Object)
+        expect.objectContaining({ kind: 'Dashboard', metadata: expect.objectContaining({ name: 'test-dashboard' }) })
       );
       expect(handlers.onDismiss).toHaveBeenCalled();
     });

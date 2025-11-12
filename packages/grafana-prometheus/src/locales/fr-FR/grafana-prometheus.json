@@ -85,9 +85,9 @@
         "tooltip-classic-query": "L’implémentation d’origine de l’éditeur de requêtes à variables Prometheus. Saisissez une chaîne de caractères avec le type de requête et les paramètres appropriés comme décrit dans la documentation. Par exemple, {{exampleQuery}}.",
         "tooltip-label": "Renvoie une liste de valeurs d’étiquette pour le nom d’étiquette dans toutes les métriques, sauf si la métrique est spécifiée.",
         "tooltip-metric-regex": "Renvoie une liste de noms d’étiquettes, en filtrant éventuellement par expression régulière de métrique spécifiée.",
-        "tooltip-query": "Renvoie une liste de résultats de requête Prometheus pour la requête. Cela peut inclure des fonctions Prometheus, par exemple {{exampleQuery}}.",
+        "tooltip-query": "",
         "tooltip-query-type": "Le plugin de source de données Prometheus fournit les types de requêtes suivants pour les variables de modèle.",
-        "tooltip-series-query": "Saisissez une métrique avec des étiquettes, uniquement une métrique ou uniquement des étiquettes, c’est-à-dire {{example1}}, {{example2}} ou {{example3}}. Renvoie une liste de séries chronologiques associées aux données saisies."
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "sélecteur",
@@ -175,16 +175,16 @@
         "label-scrape-interval": "Intervalle de scraping",
         "label-series-limit": "Limite de séries",
         "label-use-series-endpoint": "Utiliser le point de terminaison de la série",
-        "more-info": "Pour en savoir plus sur la configuration du type et de la version de Prometheus dans les sources de données, consultez la <2>documentation sur le provisionnement</2>.",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "Exemple : {{example}}",
         "title-interval-behaviour": "Comportement de l’intervalle",
         "title-other": "Autre",
         "title-performance": "Performance",
         "title-query-editor": "Éditeur de requêtes",
         "tooltip-cache-level": "Définit le niveau de mise en cache du navigateur pour les requêtes de l’éditeur. Des paramètres de cache plus élevés sont recommandés pour les sources de données à cardinalité élevée.",
-        "tooltip-custom-query-parameters": "Ajoutez des paramètres personnalisés à l’URL de la requête Prometheus. Par exemple {{example1}}, {{example2}}, {{example3}}, ou {{example4}}. Plusieurs paramètres doivent être concaténés avec {{concatenationChar}}.",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "Définir l’option d’éditeur par défaut pour tous les utilisateurs de cette source de données.",
-        "tooltip-disable-metrics-lookup": "Cocher cette option désactivera le sélecteur de métriques et la prise en charge des métriques/étiquettes dans la saisie semi-automatique du champ de requête. Cela vous aide si vous avez des problèmes de performances avec des instances Prometheus plus grandes. ",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "Cette fonctionnalité désactivera les règles d’enregistrement. Activez cette option pour améliorer les performances du tableau de bord",
         "tooltip-http-method": "Vous pouvez utiliser la méthode POST ou GET HTTP pour interroger votre source de données Prometheus. POST est la méthode recommandée car elle permet des requêtes plus volumineuses. Changez ceci en GET si vous avez une version Prometheus antérieure à la version 2.1 ou si les demandes POST sont restreintes dans votre réseau.",
         "tooltip-incremental-querying-beta": "Cette fonctionnalité modifiera le comportement par défaut des requêtes relatives pour toujours demander des données récentes à l’instance Prometheus. Au lieu de cela, les résultats des requêtes seront mis en cache et seuls les nouveaux enregistrements seront demandés. Activez cette option pour réduire la charge de la base de données et du réseau.",
@@ -479,7 +479,7 @@
         "aria-label-selector": "sélecteur"
       },
       "results-table": {
-        "content-descriptive-type": "Lors de la création d’un(e) {{descriptiveType}}, Prometheus expose plusieurs séries avec le compteur de type. ",
+        "content-descriptive-type": "",
         "description": "Description",
         "message-expand-label-filters": "Aucune métrique trouvée. Essayez d’élargir vos filtres d’étiquettes.",
         "message-expand-search": "Aucune métrique trouvée. Essayez d’élargir votre recherche et vos filtres.",

@@ -9,6 +9,8 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { Button } from '../Button/Button';
 import { FormField } from '../FormField/FormField';
 import { Icon } from '../Icon/Icon';
+import { Box } from '../Layout/Box/Box';
+import { Stack } from '../Layout/Stack/Stack';
 import { SecretFormField } from '../SecretFormField/SecretFormField';
 
 export interface CustomHeader {
@@ -199,12 +201,14 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
     const { dataSourceConfig } = this.props;
 
     return (
-      <div className={'gf-form-group'}>
-        <div className="gf-form">
-          <h6>
-            <Trans i18nKey="grafana-ui.data-source-settings.custom-headers-title">Custom HTTP Headers</Trans>
-          </h6>
-        </div>
+      <Box marginBottom={5}>
+        <Box marginBottom={0.5} position="relative">
+          <Stack direction="row" alignItems="baseline">
+            <h6>
+              <Trans i18nKey="grafana-ui.data-source-settings.custom-headers-title">Custom HTTP Headers</Trans>
+            </h6>
+          </Stack>
+        </Box>
         <div>
           {headers.map((header, i) => (
             <CustomHeaderRow
@@ -220,20 +224,22 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
           ))}
         </div>
         {!dataSourceConfig.readOnly && (
-          <div className="gf-form">
-            <Button
-              variant="secondary"
-              icon="plus"
-              type="button"
-              onClick={(e) => {
-                this.onHeaderAdd();
-              }}
-            >
-              <Trans i18nKey="grafana-ui.data-source-settings.custom-headers-add">Add header</Trans>
-            </Button>
-          </div>
+          <Box marginBottom={0.5} position="relative">
+            <Stack direction="row" alignItems="baseline">
+              <Button
+                variant="secondary"
+                icon="plus"
+                type="button"
+                onClick={(e) => {
+                  this.onHeaderAdd();
+                }}
+              >
+                <Trans i18nKey="grafana-ui.data-source-settings.custom-headers-add">Add header</Trans>
+              </Button>
+            </Stack>
+          </Box>
         )}
-      </div>
+      </Box>
     );
   }
 }

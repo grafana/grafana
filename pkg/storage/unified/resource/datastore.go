@@ -77,8 +77,10 @@ func (k DataKey) Validate() error {
 	}
 
 	// Validate naming conventions for all required fields
-	if err := validation.IsValidNamespace(k.Namespace); err != nil {
-		return NewValidationError("namespace", k.Namespace, err[0])
+	if k.Namespace != clusterScopeNamespace {
+		if err := validation.IsValidNamespace(k.Namespace); err != nil {
+			return NewValidationError("namespace", k.Namespace, err[0])
+		}
 	}
 	if err := validation.IsValidGroup(k.Group); err != nil {
 		return NewValidationError("group", k.Group, err[0])
@@ -117,7 +119,7 @@ func (k ListRequestKey) Validate() error {
 	if k.Namespace == "" && k.Name != "" {
 		return errors.New(ErrNameMustBeEmptyWhenNamespaceEmpty)
 	}
-	if k.Namespace != "" {
+	if k.Namespace != "" && k.Namespace != clusterScopeNamespace {
 		if err := validation.IsValidNamespace(k.Namespace); err != nil {
 			return NewValidationError("namespace", k.Namespace, err[0])
 		}
@@ -155,8 +157,10 @@ func (k GetRequestKey) Validate() error {
 	if k.Namespace == "" {
 		return errors.New(ErrNamespaceRequired)
 	}
-	if err := validation.IsValidNamespace(k.Namespace); err != nil {
-		return NewValidationError("namespace", k.Namespace, err[0])
+	if k.Namespace != clusterScopeNamespace {
+		if err := validation.IsValidNamespace(k.Namespace); err != nil {
+			return NewValidationError("namespace", k.Namespace, err[0])
+		}
 	}
 	if err := validation.IsValidGroup(k.Group); err != nil {
 		return NewValidationError("group", k.Group, err[0])
@@ -364,7 +368,7 @@ func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error)
 
 // BatchGet retrieves multiple data objects in batches.
 // It returns an iterator that yields DataObj results for the given keys.
-// Keys are processed in batches (default 50) to balance between efficiency and memory usage.
+// Keys are processed in batches (default 50).
 // Non-existent entries will not appear in the result.
 func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[DataObj, error] {
 	return func(yield func(DataObj, error) bool) {

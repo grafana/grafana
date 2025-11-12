@@ -51,6 +51,9 @@ type CommonProps = BasePropsWithChildren | NoChildrenTooltip | NoChildrenAriaLab
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-button--docs
+ */
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
@@ -139,6 +142,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       size = 'md',
       fill = 'solid',
       icon,
+      iconPlacement = 'left',
       fullWidth,
       children,
       className,
@@ -171,6 +175,8 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       className
     );
 
+    const iconComponent = icon && <IconRenderer icon={icon} size={size} className={styles.icon} />;
+
     // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
       <a
@@ -181,8 +187,9 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
         ref={tooltip ? undefined : ref}
         aria-label={ariaLabel ?? (!children && typeof tooltip === 'string' ? tooltip : undefined)}
       >
-        <IconRenderer icon={icon} size={size} className={styles.icon} />
+        {iconPlacement === 'left' && iconComponent}
         {children && <span className={styles.content}>{children}</span>}
+        {iconPlacement === 'right' && iconComponent}
       </a>
     );
 
