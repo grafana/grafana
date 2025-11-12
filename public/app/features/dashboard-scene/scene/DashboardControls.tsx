@@ -206,7 +206,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     controls: css({
       gap: theme.spacing(1),
-      padding: theme.spacing(2),
+      padding: theme.spacing(2, 2, 1, 2),
       flexDirection: 'row',
       flexWrap: 'nowrap',
       position: 'relative',
@@ -234,7 +234,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       justifyContent: 'flex-end',
       gap: theme.spacing(1),
-      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(1),
       float: 'right',
     }),
     timeControlsWrap: css({
