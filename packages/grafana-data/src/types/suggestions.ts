@@ -10,6 +10,8 @@ import { PanelData } from './panel';
 
 /**
  * @alpha
+ * A suggestion for a visualization given some data. This represents the shape of the panel (including options and field config)
+ * that will be used to show a small preview in the Grafana UI when suggesting visualizations in the Panel Editor.
  */
 export interface VisualizationSuggestion<TOptions extends unknown = {}, TFieldConfig extends {} = {}> {
   /** Name of suggestion */
@@ -28,7 +30,11 @@ export interface VisualizationSuggestion<TOptions extends unknown = {}, TFieldCo
   score?: VisualizationSuggestionScore;
   /** Options for how to render suggestion card */
   cardOptions?: {
-    /** Tweak for small preview */
+    /**
+     * Given that the suggestion is being rendered as a small preview, you may want to modify certain options
+     * specifically for the smaller preview version of the visualization. In this method, you should directly
+     * mutate the suggestion object which is passed in as the first argument.
+     */
     previewModifier?: (suggestion: VisualizationSuggestion<TOptions, TFieldConfig>) => void;
     icon?: string;
     imgSrc?: string;
