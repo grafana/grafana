@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -17,6 +18,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/prometheus/client_golang/prometheus"
@@ -122,8 +124,16 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 	}
 
 	return provisioningapis.WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := logging.FromContext(r.Context()).With("logger", "webhook-connector", "repo", name)
-		ctx := logging.Context(r.Context(), logger)
+		ctx, span := tracing.Start(r.Context(), "provisioning.webhook.handle")
+		defer span.End()
+
+		span.SetAttributes(
+			attribute.String("repository", name),
+			attribute.String("namespace", namespace),
+		)
+
+		logger := logging.FromContext(ctx).With("logger", "webhook-connector", "repo", name)
+		ctx = logging.Context(ctx, logger)
 		if !s.webhooksEnabled {
 			responder.Error(errors.NewBadRequest("webhooks are not enabled"))
 			return
@@ -140,12 +150,15 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 
 		rsp, err := hooks.Webhook(ctx, r)
 		if err != nil {
+			span.RecordError(err)
 			responder.Error(err)
 			return
 		}
 
 		if rsp == nil {
-			responder.Error(fmt.Errorf("expecting a response"))
+			err := fmt.Errorf("expecting a response")
+			span.RecordError(err)
+			responder.Error(err)
 			return
 		}
 
@@ -162,12 +175,17 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		if rsp.Job != nil {
 			rsp.Job.Repository = name
 			actionTaken = string(rsp.Job.Action)
+			span.SetAttributes(attribute.String("job.action", actionTaken))
+
 			job, err := s.core.GetJobQueue().Insert(ctx, namespace, *rsp.Job)
 			if err != nil {
+				span.RecordError(err)
 				logger.Error("failed to insert job", "error", err)
 				responder.Error(err)
 				return
 			}
+			span.SetAttributes(attribute.String("job.name", job.Name))
+			logger.Info("webhook job created", "job", job.Name, "action", actionTaken)
 			responder.Object(rsp.Code, job)
 			return
 		}

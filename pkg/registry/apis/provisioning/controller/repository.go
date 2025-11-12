@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -140,6 +141,9 @@ func repoKeyFunc(obj any) (string, error) {
 }
 
 // Run starts the RepositoryController.
+//
+// Note: This function intentionally does NOT create a tracing span because it runs indefinitely
+// until shutdown. Individual processing operations already have their own spans.
 func (rc *RepositoryController) Run(ctx context.Context, workerCount int) {
 	defer utilruntime.HandleCrash()
 	defer rc.queue.ShutDown()
@@ -386,21 +390,31 @@ func shouldUseIncrementalSync(ctx context.Context, versioned repository.Versione
 }
 
 func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions) error {
+	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.add_sync_job")
+	defer span.End()
+
+	span.SetAttributes(
+		attribute.String("repository", obj.GetName()),
+		attribute.String("namespace", obj.Namespace),
+		attribute.Bool("incremental", syncOptions != nil && syncOptions.Incremental),
+	)
+
 	job, err := rc.jobs.Insert(ctx, obj.Namespace, provisioning.JobSpec{
 		Repository: obj.GetName(),
 		Action:     provisioning.JobActionPull,
 		Pull:       syncOptions,
 	})
 	if apierrors.IsAlreadyExists(err) {
-		logging.FromContext(ctx).Info("sync job already exists, nothing triggered")
+		logging.FromContext(ctx).Info("sync job already exists")
 		return nil
 	}
 	if err != nil {
+		span.RecordError(err)
 		// FIXME: should we update the status of the repository if we fail to add the job?
 		return fmt.Errorf("error adding sync job: %w", err)
 	}
 
-	logging.FromContext(ctx).Info("sync job triggered", "job", job.Name)
+	span.SetAttributes(attribute.String("job.name", job.Name))
 	return nil
 }
 
