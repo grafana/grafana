@@ -26,7 +26,6 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -906,7 +905,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 				}
 
 				vars := mux.Vars(r)
-				info, err := claims.ParseNamespace(vars["namespace"])
+				info, err := authlib.ParseNamespace(vars["namespace"])
 				if err != nil {
 					wrap.JsonApiErr(http.StatusBadRequest, "expected namespace", nil)
 					return
