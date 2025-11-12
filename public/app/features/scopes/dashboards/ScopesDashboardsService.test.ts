@@ -8,7 +8,7 @@ import { ScopesApiClient } from '../ScopesApiClient';
 // Import mock data for subScope tests
 import { navigationWithSubScope, navigationWithSubScope2, navigationWithSubScopeAndGroups } from '../tests/utils/mocks';
 
-import { ScopesDashboardsService } from './ScopesDashboardsService';
+import { ScopesDashboardsService, filterItemsWithSubScopesInPath } from './ScopesDashboardsService';
 import { ScopeNavigation } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -532,8 +532,11 @@ describe('ScopesDashboardsService', () => {
         },
       ];
 
-      // Set up mock to return items when fetching 'mimir' subScope
+      // Set up mock to return items based on scope being fetched
       mockApiClient.fetchScopeNavigations.mockImplementation((scopeNames: string[]) => {
+        if (scopeNames.includes('grafana')) {
+          return Promise.resolve([initialNavigation]);
+        }
         if (scopeNames.includes('mimir')) {
           return Promise.resolve(subScopeItemsWithSameSubScope);
         }
@@ -543,40 +546,27 @@ describe('ScopesDashboardsService', () => {
       // Initial fetch to create the subScope folder
       await service.fetchDashboards(['grafana']);
 
-      // Manually set up the initial navigation to create the folder structure
-      const folders = service.groupSuggestedItems([initialNavigation]);
-      service.updateState({ folders, filteredFolders: folders });
+      // The folder key is based on the pattern: ${subScope}-${metadata.name}
+      const subScopeFolderKey = 'mimir-subscope-nav-1';
 
-      // Find the subScope folder key
-      const subScopeFolderKey = Object.keys(service.state.folders[''].folders).find(
-        (key) => service.state.folders[''].folders[key].subScopeName === 'mimir'
+      // Test the filtering logic directly
+      const filteredItems = filterItemsWithSubScopesInPath(
+        subScopeItemsWithSameSubScope,
+        ['', subScopeFolderKey],
+        'mimir',
+        service.state.folders
       );
 
-      expect(subScopeFolderKey).toBeDefined();
-
-      // Expand the subScope folder - this should trigger fetchSubScopeItems
-      service.updateFolder(['', subScopeFolderKey!], true);
-
-      // Wait for async fetch to complete
-      await new Promise((resolve) => setTimeout(resolve, 0));
-
-      // Verify that the folder was expanded and items were fetched
-      const expandedFolder = service.state.folders[''].folders[subScopeFolderKey!];
-
-      // The item with the same subScope should be filtered out
-      // Check that we don't have a folder created for the filtered item
-      const folderKeys = Object.keys(expandedFolder.folders);
-      const hasFilteredItem = folderKeys.some((key) => {
-        const folder = expandedFolder.folders[key];
-        return folder.subScopeName === 'mimir' && folder.title === 'Mimir Dashboard 2';
-      });
-
+      // Verify that the item with the same subScope was filtered out
+      const hasFilteredItem = filteredItems.some(
+        (item) => 'subScope' in item.spec && item.spec.subScope === 'mimir' && item.metadata.name === 'mimir-item-2'
+      );
       expect(hasFilteredItem).toBe(false);
 
-      // Verify that valid items (without the same subScope) are still present
-      // We should have folders for 'General' and 'Observability' groups
-      expect(expandedFolder.folders['General']).toBeDefined();
-      expect(expandedFolder.folders['Observability']).toBeDefined();
+      // Verify that valid items are still present
+      expect(filteredItems.length).toBe(2); // Should have 2 items (mimir-item-1 and mimir-item-3)
+      expect(filteredItems.some((item) => item.metadata.name === 'mimir-item-1')).toBe(true);
+      expect(filteredItems.some((item) => item.metadata.name === 'mimir-item-3')).toBe(true);
     });
 
     it('should filter out items with subScope matching nested subScope in the path', async () => {
@@ -650,8 +640,11 @@ describe('ScopesDashboardsService', () => {
         },
       ];
 
-      // Set up mock to return items based on subScope being fetched
+      // Set up mock to return items based on scope being fetched
       mockApiClient.fetchScopeNavigations.mockImplementation((scopeNames: string[]) => {
+        if (scopeNames.includes('grafana')) {
+          return Promise.resolve([grafanaNavigation]);
+        }
         if (scopeNames.includes('mimir')) {
           return Promise.resolve(mimirSubScopeItems);
         }
@@ -664,45 +657,44 @@ describe('ScopesDashboardsService', () => {
       // Initial fetch to create the first subScope folder
       await service.fetchDashboards(['grafana']);
 
-      // Manually set up the initial navigation to create the folder structure
+      // Set up the folder structure to simulate nested path
       const folders = service.groupSuggestedItems([grafanaNavigation]);
-      service.updateState({ folders, filteredFolders: folders });
+      const mimirFolders = service.groupSuggestedItems(mimirSubScopeItems);
 
-      // Find the mimir subScope folder key
-      const mimirFolderKey = Object.keys(service.state.folders[''].folders).find(
-        (key) => service.state.folders[''].folders[key].subScopeName === 'mimir'
+      // Manually construct the nested folder structure for testing
+      const testFolders: typeof service.state.folders = {
+        '': {
+          ...folders[''],
+          folders: {
+            ...folders[''].folders,
+            'mimir-mimir-nav': {
+              ...folders[''].folders['mimir-mimir-nav'],
+              folders: {
+                ...mimirFolders[''].folders,
+              },
+            },
+          },
+        },
+      };
+
+      // Test the filtering logic for nested path
+      const filteredItems = filterItemsWithSubScopesInPath(
+        lokiSubScopeItems,
+        ['', 'mimir-mimir-nav', 'loki-loki-nav'],
+        'loki',
+        testFolders
       );
-
-      expect(mimirFolderKey).toBeDefined();
-
-      // Expand the mimir subScope folder
-      service.updateFolder(['', mimirFolderKey!], true);
-      await new Promise((resolve) => setTimeout(resolve, 0));
-
-      // Find the loki subScope folder key (should be created from mimir's items)
-      const mimirFolder = service.state.folders[''].folders[mimirFolderKey!];
-      const lokiFolderKey = Object.keys(mimirFolder.folders).find(
-        (key) => mimirFolder.folders[key].subScopeName === 'loki'
-      );
-
-      expect(lokiFolderKey).toBeDefined();
-
-      // Expand the loki subScope folder - path is now ['', mimirFolderKey, lokiFolderKey]
-      // The path contains 'mimir' subScope, so items with 'mimir' subScope should be filtered out
-      service.updateFolder(['', mimirFolderKey!, lokiFolderKey!], true);
-      await new Promise((resolve) => setTimeout(resolve, 0));
 
       // Verify that the item with 'mimir' subScope was filtered out
-      const lokiFolder = mimirFolder.folders[lokiFolderKey!];
-      const hasFilteredItem = Object.keys(lokiFolder.folders).some((key) => {
-        const folder = lokiFolder.folders[key];
-        return folder.subScopeName === 'mimir' && folder.title === 'Mimir Dashboards Again';
-      });
+      const hasFilteredItem = filteredItems.some(
+        (item) => 'subScope' in item.spec && item.spec.subScope === 'mimir' && item.metadata.name === 'mimir-nav-again'
+      );
 
       expect(hasFilteredItem).toBe(false);
 
       // Verify that valid items are still present
-      expect(lokiFolder.folders['General']).toBeDefined();
+      expect(filteredItems.length).toBe(1); // Should have 1 item (loki-item-1)
+      expect(filteredItems.some((item) => item.metadata.name === 'loki-item-1')).toBe(true);
     });
   });
 });

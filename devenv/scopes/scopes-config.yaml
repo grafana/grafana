@@ -145,6 +145,11 @@ navigationTree:
             title: UI Performance
             url: /d/2xuwrgV7z
             scope: frontend
+          - name: frontend-shoes
+            title: Nested shoes
+            url: /d/5SdHCadmz
+            scope: frontend
+            subScope: shoes # This should be filtered out since 'shoes' is already in the path
 
       - name: shoes-database
         title: Database

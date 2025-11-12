@@ -147,27 +147,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
 
       // Filter out items that have a subScope matching any subScope already in the path
       // This prevents infinite loops when a subScope returns items with the same subScope
-      const subScopesInPath = new Set<string>();
-      let currentLevelFolders: SuggestedNavigationsFoldersMap = this.state.folders;
-
-      // Traverse the path and collect all subScope names
-      for (const folderKey of path) {
-        if (folderKey === '') {
-          continue; // Skip root key
-        }
-        const folder = currentLevelFolders[folderKey];
-        if (folder?.subScopeName) {
-          subScopesInPath.add(folder.subScopeName);
-        }
-        if (folder) {
-          currentLevelFolders = folder.folders;
-        }
-      }
-
-      const filteredItems = subScopeItems.filter((item) => {
-        const itemSubScope = 'subScope' in item.spec ? item.spec.subScope : undefined;
-        return !itemSubScope || !subScopesInPath.has(itemSubScope);
-      });
+      const filteredItems = filterItemsWithSubScopesInPath(subScopeItems, path, subScopeName, this.state.folders);
 
       // Group the items and add them to the subScope folder
       subScopeFolders = this.groupSuggestedItems(filteredItems);
@@ -417,4 +397,44 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
   };
 
   public toggleDrawer = () => this.updateState({ drawerOpened: !this.state.drawerOpened });
+}
+
+/**
+ * Filters out navigation items that have a subScope matching any subScope already in the path.
+ * This prevents infinite loops when a subScope returns items with the same subScope.
+ * @param items - The navigation items to filter
+ * @param path - The folder path to check for existing subScopes
+ * @param currentSubScope - The subScope currently being expanded
+ * @param folders - The folder structure to traverse
+ * @returns Filtered items without subScopes that would create infinite loops
+ */
+export function filterItemsWithSubScopesInPath(
+  items: Array<ScopeDashboardBinding | ScopeNavigation>,
+  path: string[],
+  currentSubScope: string,
+  folders: SuggestedNavigationsFoldersMap
+): Array<ScopeDashboardBinding | ScopeNavigation> {
+  const subScopesInPath = new Set<string>();
+  // Include the current subScope being expanded
+  subScopesInPath.add(currentSubScope);
+
+  // Traverse the path and collect all subScope names
+  let currentLevelFolders: SuggestedNavigationsFoldersMap = folders;
+  for (const folderKey of path) {
+    const folder = currentLevelFolders[folderKey];
+    if (folder?.subScopeName) {
+      subScopesInPath.add(folder.subScopeName);
+    }
+    if (folder) {
+      currentLevelFolders = folder.folders;
+    } else {
+      // If folder is not found, break to avoid errors
+      break;
+    }
+  }
+
+  return items.filter((item) => {
+    const itemSubScope = 'subScope' in item.spec ? item.spec.subScope : undefined;
+    return !itemSubScope || !subScopesInPath.has(itemSubScope);
+  });
 }
