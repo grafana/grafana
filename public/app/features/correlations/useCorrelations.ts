@@ -79,6 +79,19 @@ const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): 
   return undefined;
 };
 
+/*
+the various todos in this function relate to some changes that were required for correlations to be added to app platform
+we now must resolve those changes with the way correlations currently functions
+the main one is around the various source/target references - current this just refers to datasources by UID, but I was 
+required to do a group/name combination - how do I resolve this?
+
+secondly, I was required to remove the provisioned flag. This provisioned flag locks the correlations record and makes it readonly
+so people don't make edits that will be overwritten by provisioned correlations. Maybe this isn't relevant for app platform and hardcoding it to false is fine.
+
+With transformations, I just didn't convert because they should be straightforward, that can be ignored for now and I'll work on it
+
+also, maybe this should be closer to the app platform code, like in the client code? any other best practices?
+*/
 const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationData | undefined => {
   if (item.metadata.name !== undefined) {
     const baseCor = {
