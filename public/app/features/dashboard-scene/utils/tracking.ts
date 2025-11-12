@@ -1,6 +1,6 @@
 import { store } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { extractDatasourceTypesFromUrl } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/communityDashboardHelpers';
+import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/dashboardLibraryHelpers';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
@@ -61,8 +61,8 @@ export function trackDashboardSceneCreatedOrSaved(
   const libraryItemId = urlParams.get('libraryItemId') || urlParams.get('gnetId') || undefined;
   const creationOrigin = urlParams.get('creationOrigin') || undefined;
 
-  // Extract datasourceTypes from URL params (supports both community and provisioned dashboards)
-  const datasourceTypes = extractDatasourceTypesFromUrl();
+  // Extract datasourceTypes from dashboard panels
+  const datasourceTypes = getDatasourceTypes(dashboard);
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
 
   const dashboardLibraryProperties =

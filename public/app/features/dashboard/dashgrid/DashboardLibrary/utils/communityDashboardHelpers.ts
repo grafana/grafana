@@ -10,34 +10,6 @@ import { GnetDashboard, Link } from '../types';
 import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
 
 /**
- * Extract datasource types from URL parameters for tracking purposes.
- * Supports two formats:
- * - datasourceTypes: JSON array of datasource types (for community dashboards)
- * - pluginId: Single datasource type (legacy format for provisioned dashboards)
- *
- * @returns Array of datasource type strings, or undefined if not available
- */
-export function extractDatasourceTypesFromUrl(): string[] | undefined {
-  const params = locationService.getSearchObject();
-  const datasourceTypesParam = params.datasourceTypes;
-  const pluginIdParam = params.pluginId;
-
-  if (datasourceTypesParam && typeof datasourceTypesParam === 'string') {
-    try {
-      return JSON.parse(datasourceTypesParam);
-    } catch {
-      // If parsing fails, return undefined
-      return undefined;
-    }
-  } else if (pluginIdParam && typeof pluginIdParam === 'string') {
-    // Fallback to legacy pluginId for provisioned dashboards
-    return [pluginIdParam];
-  }
-
-  return undefined;
-}
-
-/**
  * Extract thumbnail URL from dashboard screenshots
  */
 export function getThumbnailUrl(dashboard: GnetDashboard): string {

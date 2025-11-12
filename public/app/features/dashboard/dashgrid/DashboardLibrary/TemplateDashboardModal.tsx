@@ -54,7 +54,7 @@ export const TemplateDashboardModal = () => {
     const params = new URLSearchParams({
       datasource: testDataSource?.uid || '',
       title: dashboard.name,
-      pluginId: String(testDataSource?.uid) || '',
+      pluginId: String(testDataSource?.type) || '',
       gnetId: String(dashboard.id),
       // tracking event purpose values
       sourceEntryPoint,
@@ -136,7 +136,7 @@ export const TemplateDashboardModal = () => {
 
                 return (
                   <DashboardCard
-                    key={dashboard.uid}
+                    key={dashboard.id}
                     title={dashboard.name}
                     imageUrl={thumbnailUrl}
                     onClick={() => onPreviewDashboardClick(dashboard)}
