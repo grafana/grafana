@@ -1,10 +1,10 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "shorturl.grafana.app/v1alpha1"
+    "title": "shorturl.grafana.app/v1beta1"
   },
   "paths": {
-    "/apis/shorturl.grafana.app/v1alpha1/": {
+    "/apis/shorturl.grafana.app/v1beta1/": {
       "get": {
         "tags": [
           "API Discovery"
@@ -35,7 +35,7 @@
         }
       }
     },
-    "/apis/shorturl.grafana.app/v1alpha1/namespaces/{namespace}/shorturls": {
+    "/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls": {
       "get": {
         "tags": [
           "ShortURL"
@@ -140,27 +140,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLList"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLList"
                 }
               },
               "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLList"
                 }
               }
             }
@@ -169,7 +169,7 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1beta1",
           "kind": "ShortURL"
         }
       },
@@ -212,17 +212,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
               }
             }
           },
@@ -234,17 +234,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               }
             }
@@ -254,17 +254,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               }
             }
@@ -274,17 +274,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               }
             }
@@ -293,7 +293,7 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1beta1",
           "kind": "ShortURL"
         }
       },
@@ -447,7 +447,7 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1beta1",
           "kind": "ShortURL"
         }
       },
@@ -473,7 +473,7 @@
         }
       ]
     },
-    "/apis/shorturl.grafana.app/v1alpha1/namespaces/{namespace}/shorturls/{name}": {
+    "/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}": {
       "get": {
         "tags": [
           "ShortURL"
@@ -486,17 +486,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               }
             }
@@ -505,7 +505,7 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1beta1",
           "kind": "ShortURL"
         }
       },
@@ -548,17 +548,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
               }
             }
           },
@@ -570,17 +570,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               }
             }
@@ -590,17 +590,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               }
             }
@@ -609,7 +609,7 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1beta1",
           "kind": "ShortURL"
         }
       },
@@ -711,7 +711,7 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1beta1",
           "kind": "ShortURL"
         }
       },
@@ -790,17 +790,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               }
             }
@@ -810,17 +810,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               }
             }
@@ -829,7 +829,7 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1beta1",
           "kind": "ShortURL"
         }
       },
@@ -865,7 +865,7 @@
         }
       ]
     },
-    "/apis/shorturl.grafana.app/v1alpha1/namespaces/{namespace}/shorturls/{name}/goto": {
+    "/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}/goto": {
       "get": {
         "tags": [
           "ShortURL"
@@ -878,7 +878,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.GetGoto"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.GetGoto"
                 }
               }
             }
@@ -887,7 +887,7 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1beta1",
           "kind": "ResourceCallOptions"
         }
       },
@@ -914,7 +914,7 @@
         }
       ]
     },
-    "/apis/shorturl.grafana.app/v1alpha1/namespaces/{namespace}/shorturls/{name}/status": {
+    "/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}/status": {
       "get": {
         "tags": [
           "ShortURL"
@@ -927,17 +927,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               }
             }
@@ -946,7 +946,7 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1beta1",
           "kind": "ShortURL"
         }
       },
@@ -989,17 +989,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
               }
             }
           },
@@ -1011,17 +1011,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               }
             }
@@ -1031,17 +1031,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               }
             }
@@ -1050,7 +1050,7 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1beta1",
           "kind": "ShortURL"
         }
       },
@@ -1129,17 +1129,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               }
             }
@@ -1149,17 +1149,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               }
             }
@@ -1168,7 +1168,7 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1beta1",
           "kind": "ShortURL"
         }
       },
@@ -1207,7 +1207,7 @@
   },
   "components": {
     "schemas": {
-      "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.GetGoto": {
+      "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.GetGoto": {
         "type": "object",
         "required": [
           "url"
@@ -1218,7 +1218,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL": {
+      "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL": {
         "type": "object",
         "required": [
           "kind",
@@ -1244,21 +1244,21 @@
             ]
           },
           "spec": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLSpec"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLSpec"
           },
           "status": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLStatus"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
           {
             "group": "shorturl.grafana.app",
             "kind": "ShortURL",
-            "version": "v1alpha1"
+            "version": "v1beta1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLList": {
+      "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLList": {
         "type": "object",
         "required": [
           "metadata",
@@ -1275,7 +1275,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURL"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURL"
                 }
               ]
             }
@@ -1297,11 +1297,11 @@
           {
             "group": "shorturl.grafana.app",
             "kind": "ShortURLList",
-            "version": "v1alpha1"
+            "version": "v1beta1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLOperatorState": {
+      "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLOperatorState": {
         "type": "object",
         "required": [
           "lastEvaluation",
@@ -1336,7 +1336,7 @@
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLSpec": {
+      "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLSpec": {
         "type": "object",
         "required": [
           "path"
@@ -1349,7 +1349,7 @@
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLStatus": {
+      "com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLStatus": {
         "type": "object",
         "required": [
           "lastSeenAt"
@@ -1371,7 +1371,7 @@
             "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
             "type": "object",
             "additionalProperties": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1alpha1.ShortURLOperatorState"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.shorturl.pkg.apis.shorturl.v1beta1.ShortURLOperatorState"
             }
           }
         },
