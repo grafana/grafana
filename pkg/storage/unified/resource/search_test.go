@@ -761,7 +761,7 @@ func TestRebuildIndexesForResource(t *testing.T) {
 		resourceStats: []ResourceStats{
 			{NamespacedResource: key, Count: 50, ResourceVersion: 11111111},
 		},
-		lastImportTimes: []ResourceLastImportTime{ResourceLastImportTime{
+		lastImportTimes: []ResourceLastImportTime{{
 			NamespacedResource: key,
 			LastImportTime:     time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC),
 		}},
@@ -794,14 +794,14 @@ func TestRebuildIndexesForResource(t *testing.T) {
 
 	rebuildReq := &resourcepb.RebuildIndexesRequest{
 		Namespace: key.Namespace,
-		Keys: []*resourcepb.ResourceKey{&resourcepb.ResourceKey{
+		Keys: []*resourcepb.ResourceKey{{
 			Namespace: key.Namespace,
 			Group:     key.Group,
 			Resource:  key.Resource,
 		}}}
 
 	// old import time will not be rebuilt
-	storage.lastImportTimes = []ResourceLastImportTime{ResourceLastImportTime{
+	storage.lastImportTimes = []ResourceLastImportTime{{
 		NamespacedResource: key,
 		LastImportTime:     time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 	}}
@@ -811,7 +811,7 @@ func TestRebuildIndexesForResource(t *testing.T) {
 	require.Equal(t, 0, support.rebuildQueue.Len())
 
 	// recent import time gets added to rebuild queue
-	storage.lastImportTimes = []ResourceLastImportTime{ResourceLastImportTime{
+	storage.lastImportTimes = []ResourceLastImportTime{{
 		NamespacedResource: key,
 		LastImportTime:     time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC),
 	}}

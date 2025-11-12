@@ -183,7 +183,7 @@ func TestIntegrationDistributor(t *testing.T) {
 
 		req := &resourcepb.RebuildIndexesRequest{
 			Namespace: testNamespace,
-			Keys: []*resourcepb.ResourceKey{&resourcepb.ResourceKey{
+			Keys: []*resourcepb.ResourceKey{{
 				Namespace: testNamespace,
 				Group:     "folder.grafana.app",
 				Resource:  "folders",

@@ -262,7 +262,6 @@ func (a *dashboardSqlAccess) ListModifiedSince(ctx context.Context, key resource
 	}
 }
 
-
 func (a *dashboardSqlAccess) GetResourceLastImportTimes(ctx context.Context, filterKeys []resource.NamespacedResource) iter.Seq2[resource.ResourceLastImportTime, error] {
 	_, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.GetResourceLastImportTimes")
 	defer span.End()
