@@ -786,7 +786,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				3,              // 3 drivers for now
 				20*time.Minute, // Max time for each job
 				30*time.Second, // Periodically look for new jobs
-				30*time.Second, // Lease renewal interval
+				jobExpiry,      // Lease renewal interval
 				b.jobs, repoGetter, jobHistoryWriter,
 				jobController.InsertNotifications(),
 				b.registry,
