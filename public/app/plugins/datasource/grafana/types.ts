@@ -53,16 +53,6 @@ export const defaultQuery: GrafanaQuery = {
   queryType: GrafanaQueryType.RandomWalk,
 };
 
-export const defaultFileUploadQuery: GrafanaQuery = {
-  refId: 'A',
-  datasource: {
-    type: 'grafana',
-    uid: 'grafana',
-  },
-  queryType: GrafanaQueryType.Snapshot,
-  snapshot: [],
-};
-
 //----------------------------------------------
 // Annotations
 //----------------------------------------------
