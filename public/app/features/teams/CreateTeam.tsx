@@ -23,11 +23,11 @@ const pageNav: NavModelItem = {
   subTitle: 'Create a new team. Teams let you grant permissions to a group of users.',
 };
 
-export const CreateTeam = (): JSX.Element => {
-  const notifyApp = useAppNotification();
-
-  const [createTeamTrigger] = useCreateTeam();
+const CreateTeam = (): JSX.Element => {
   const currentOrgId = contextSrv.user.orgId;
+
+  const notifyApp = useAppNotification();
+  const [createTeamTrigger] = useCreateTeam();
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
   const [{ roleOptions }] = useRoleOptions(currentOrgId);
   const {
@@ -57,7 +57,7 @@ export const CreateTeam = (): JSX.Element => {
         locationService.push(`/org/teams/edit/${data.uid}`);
       }
     } catch (e) {
-      notifyApp.error('Failed to create team');
+      notifyApp.error(t('teams.create-team.failed-to-create', 'Failed to create team'));
       console.error(e);
     }
   };

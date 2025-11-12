@@ -13149,6 +13149,7 @@
     "create-team": {
       "create": "Create",
       "description-email": "This is optional and is primarily used for allowing custom team avatars",
+      "failed-to-create": "Failed to create team",
       "label-email": "Email",
       "label-name": "Name",
       "label-role": "Role"
