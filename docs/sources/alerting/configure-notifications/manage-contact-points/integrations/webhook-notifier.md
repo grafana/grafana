@@ -79,7 +79,7 @@ For more details on contact points, including how to test them and enable notifi
 | Max Alerts                        | Maximum number of alerts to include in a notification. Any alerts exceeding this limit are ignored. `0` means no limit.                                                                   |
 | TLS                               | TLS configuration options, including CA certificate, client certificate, and client key.                                                                                                  |
 | HMAC Signature                    | HMAC signature configuration options.                                                                                                                                                     |
-| HTTP Config                       | Configure an OAuth2 endpoint for alert notifications                                                                                                                                      |
+| HTTP Config                       | Configure an OAuth2 endpoint for alert notifications.                                                                                                                                     |
 
 {{< admonition type="note" >}}
 
