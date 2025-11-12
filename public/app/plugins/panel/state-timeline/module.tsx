@@ -157,6 +157,10 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
     commonOptionsBuilder.addTooltipOptions(builder);
   })
   .setSuggestionsHandler((ds) => {
+    if (!ds.hasData) {
+      return;
+    }
+
     // This panel needs a time field and a string or number field
     if (
       !ds.hasFieldType(FieldType.time) ||
