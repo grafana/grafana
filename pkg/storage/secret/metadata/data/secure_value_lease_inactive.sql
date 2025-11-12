@@ -3,11 +3,11 @@ UPDATE
 SET
   {{ .Ident "lease_token" }} = {{ .Arg .LeaseToken }},
   {{ .Ident "lease_created" }} = {{ .Arg .Now }}
-WHERE guid IN (
-  SELECT guid FROM (
+WHERE {{ .Ident "guid" }} IN (
+  SELECT {{ .Ident "guid" }} FROM (
     SELECT
-      guid,
-      ROW_NUMBER() OVER (ORDER BY created ASC) AS rn
+      {{ .Ident "guid" }},
+      ROW_NUMBER() OVER (ORDER BY {{ .Ident "created" }} ASC) AS rn
     FROM {{ .Ident "secret_secure_value" }}
     WHERE
       {{ .Ident "active" }} = FALSE AND

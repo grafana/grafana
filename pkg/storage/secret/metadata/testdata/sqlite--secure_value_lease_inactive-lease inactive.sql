@@ -3,11 +3,11 @@ UPDATE
 SET
   "lease_token" = 'token',
   "lease_created" = 10
-WHERE guid IN (
-  SELECT guid FROM (
+WHERE "guid" IN (
+  SELECT "guid" FROM (
     SELECT
-      guid,
-      ROW_NUMBER() OVER (ORDER BY created ASC) AS rn
+      "guid",
+      ROW_NUMBER() OVER (ORDER BY "created" ASC) AS rn
     FROM "secret_secure_value"
     WHERE
       "active" = FALSE AND
