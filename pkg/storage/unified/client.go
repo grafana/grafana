@@ -178,7 +178,7 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		quotaSvc, err := resource.NewQuotaService(context.Background(), reg, resource.ReloadOptions{})
+		quotaSvc, err := resource.NewQuotaService(ctx, reg, resource.ReloadOptions{})
 		if err != nil {
 			return nil, err
 		}
