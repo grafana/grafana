@@ -68,7 +68,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -tags=sqlite -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
 
   sqlite_nocgo:
     needs: detect-changes
@@ -109,7 +109,7 @@ jobs:
           # Build regex pattern like: pkg1$|pkg2$|pkg3$
           SKIP_PATTERN=$(echo "$SKIP_PACKAGES" | sed '/^$/d' | sed 's|.*|&$|' | paste -sd '|' -)
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | grep -Ev "($SKIP_PATTERN)")"
-          go test -tags=sqlite -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Run profiled tests
         id: run-profiled-tests
         if: matrix.shard == 'profiled'
@@ -135,7 +135,7 @@ jobs:
             pkg_name=$(basename "$full_pkg" | tr '/' '_' | tr '.' '_')
             echo "📦 Running $full_pkg"
             set +e
-            go test -tags=sqlite -timeout=12m -run '^TestIntegration' \
+            go test -tags=sqlite -timeout=8m -run '^TestIntegration' \
               -outputdir=profiles \
               -cpuprofile="cpu_${pkg_name}.prof" \
               -memprofile="mem_${pkg_name}.prof" \
@@ -150,10 +150,16 @@ jobs:
               echo "✅ $full_pkg passed"
             fi
           done
+          # Set output for artifact upload
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "upload_artifacts=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "upload_artifacts=false" >> "$GITHUB_OUTPUT"
+          fi
           exit $EXIT_CODE
       - name: Output test profiles and traces
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4
-        if: (matrix.shard == 'profiled' && !cancelled())
+        if: matrix.shard == 'profiled' && !cancelled() && steps.run-profiled-tests.outputs.upload_artifacts == 'true'
         with:
           name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}
           path: profiles/

@@ -10,7 +10,6 @@ import {
   getUniqueFieldName,
   SynchronousDataTransformerInfo,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { findField } from 'app/features/dimensions/utils';
 
 import { fieldExtractors } from './fieldExtractors';
@@ -109,9 +108,7 @@ export function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptio
       type: buffer ? getFieldTypeFromValue(buffer.find((v) => v != null)) : FieldType.other,
       config: {},
     };
-    if (config.featureToggles.extractFieldsNameDeduplication) {
-      field.name = getUniqueFieldName(field, frame);
-    }
+    field.name = getUniqueFieldName(field, frame);
     return field;
   });
 

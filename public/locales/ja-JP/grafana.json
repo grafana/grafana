@@ -5640,6 +5640,60 @@
       "validation-required": "ダッシュボードJSONモデルが必要です"
     }
   },
+  "dashboard-library": {
+    "browse-grafana-com": "",
+    "browse-plugins": "",
+    "card": {
+      "datasource-provided-badge": "",
+      "details-tooltip": "",
+      "no-preview": "",
+      "use-dashboard-button": "",
+      "use-template-button": ""
+    },
+    "community-empty-title": "",
+    "community-empty-title-with-datasource": "",
+    "community-error": "",
+    "community-error-title": "",
+    "community-mapping-form": {
+      "back": "",
+      "constants-title": "",
+      "datasources-title": "",
+      "description": "",
+      "preview": "",
+      "auto-mapped_other": ""
+    },
+    "community-mapping-select-datasource": "",
+    "community-search-placeholder": "",
+    "community-search-placeholder-with-datasource": "",
+    "dashboard-card": {
+      "details": {
+        "datasource": "",
+        "dependencies": "",
+        "id": "",
+        "last-update": "",
+        "published-by": "",
+        "view-on-grafana-com": ""
+      }
+    },
+    "modal": {
+      "description": "",
+      "tab-community": "",
+      "tab-datasource": "",
+      "title": "",
+      "title-mapping-with-name": "",
+      "title-with-datasource": ""
+    },
+    "no-community-dashboards-datasource": "",
+    "no-community-dashboards-search": "",
+    "no-provisioned-dashboards": "",
+    "provisioned-empty-title": "",
+    "provisioned-empty-title-with-datasource": "",
+    "retry": "",
+    "suggested-dashboards-subtitle": "",
+    "suggested-dashboards-title": "",
+    "suggested-dashboards-title-with-datasource": "",
+    "view-all": ""
+  },
   "dashboard-links": {
     "empty-state": {
       "button-title": "ダッシュボードリンクを追加",
@@ -11460,6 +11514,8 @@
     "empty-state": {
       "no-jobs": "ジョブはありません…"
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "これらのオプションのアドオンを使って、GitHub連携を最大限に活用しましょう",
       "description-instant-updates": "変更がコミットされるとすぐに、Grafanaでリアルタイムに更新を受け取ります。変更が公開される前に、プルリクエストを使用して変更を確認・承認します。",
@@ -11677,14 +11733,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "アクティブなジョブ",
       "column-action": "操作",
       "column-duration": "継続時間",
       "column-job-id": "",
       "column-message": "メッセージ",
       "column-started": "開始済み",
       "column-status": "ステータス",
-      "error-loading": "{{type}}の読み込みエラー",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "ジョブ"
     },
     "repository-actions": {
@@ -12766,7 +12822,9 @@
   },
   "stars": {
     "mark-as-starred": "",
-    "unmark-as-starred": ""
+    "mark-as-starred-with-title": "",
+    "unmark-as-starred": "",
+    "unmark-as-starred-with-title": ""
   },
   "stat": {
     "add-orientation-option": {
