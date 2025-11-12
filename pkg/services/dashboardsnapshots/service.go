@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
@@ -36,8 +37,8 @@ var client = &http.Client{
 	Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 }
 
-func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.SnapshotSharingOptions, cmd CreateDashboardSnapshotCommand, svc Service) {
-	if !cfg.SnapshotsEnabled {
+func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SharingOptionSpec, cmd CreateDashboardSnapshotCommand, svc Service) {
+	if !*cfg.SnapshotsEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return
 	}
@@ -74,12 +75,12 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.S
 	}
 
 	if cmd.External {
-		if !cfg.ExternalEnabled {
+		if !*cfg.ExternalEnabled {
 			c.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
 			return
 		}
 
-		resp, err := createExternalDashboardSnapshot(cmd, cfg.ExternalSnapshotURL)
+		resp, err := createExternalDashboardSnapshot(cmd, *cfg.ExternalSnapshotURL)
 		if err != nil {
 			c.JsonApiErr(http.StatusInternalServerError, "Failed to create external snapshot", err)
 			return

@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"time"
 
+	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -34,8 +34,8 @@ func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
 				errhttp.Write(r.Context(), fmt.Errorf("no user"), w)
 				return
 			}
-			r.URL.Path = "/apis/dashboardsnapshot.grafana.app/v0alpha1/namespaces/" +
-				namespaceMapper(user.GetOrgID()) + "/dashboardsnapshots/create"
+			r.URL.Path = "/apis/dashboard.grafana.app/v0alpha1/namespaces/" +
+				namespaceMapper(user.GetOrgID()) + "/snapshots/create"
 			hs.clientConfigProvider.DirectlyServeHTTP(w, r)
 		}
 	}
@@ -85,11 +85,11 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) {
 		}
 	}
 
-	dashboardsnapshots.CreateDashboardSnapshot(c, dashboardsnapshot.SnapshotSharingOptions{
-		SnapshotsEnabled:     hs.Cfg.SnapshotEnabled,
-		ExternalEnabled:      hs.Cfg.ExternalEnabled,
-		ExternalSnapshotName: hs.Cfg.ExternalSnapshotName,
-		ExternalSnapshotURL:  hs.Cfg.ExternalSnapshotUrl,
+	dashboardsnapshots.CreateDashboardSnapshot(c, snapshot.SharingOptionSpec{
+		SnapshotsEnabled:     &hs.Cfg.SnapshotEnabled,
+		ExternalEnabled:      &hs.Cfg.ExternalEnabled,
+		ExternalSnapshotName: &hs.Cfg.ExternalSnapshotName,
+		ExternalSnapshotURL:  &hs.Cfg.ExternalSnapshotUrl,
 	}, cmd, hs.dashboardsnapshotsService)
 }
 

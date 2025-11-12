@@ -43,6 +43,13 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 				},
+
+				{
+					Kind:       "SharingOption",
+					Plural:     "SharingOptions",
+					Scope:      "Namespaced",
+					Conversion: false,
+				},
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{},
@@ -116,11 +123,12 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"Dashboard/v0alpha1": v0alpha1.DashboardKind(),
-	"Snapshot/v0alpha1":  v0alpha1.SnapshotKind(),
-	"Dashboard/v1beta1":  v1beta1.DashboardKind(),
-	"Dashboard/v2alpha1": v2alpha1.DashboardKind(),
-	"Dashboard/v2beta1":  v2beta1.DashboardKind(),
+	"Dashboard/v0alpha1":     v0alpha1.DashboardKind(),
+	"Snapshot/v0alpha1":      v0alpha1.SnapshotKind(),
+	"SharingOption/v0alpha1": v0alpha1.SharingOptionKind(),
+	"Dashboard/v1beta1":      v1beta1.DashboardKind(),
+	"Dashboard/v2alpha1":     v2alpha1.DashboardKind(),
+	"Dashboard/v2beta1":      v2beta1.DashboardKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

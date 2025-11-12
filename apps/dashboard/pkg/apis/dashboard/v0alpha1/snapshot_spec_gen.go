@@ -17,7 +17,7 @@ type SnapshotSpec struct {
 	// Snapshot creation timestamp
 	Timestamp *string `json:"timestamp,omitempty"`
 	// The raw dashboard (unstructured for now)
-	Dashboard map[string]interface{} `json:"Dashboard,omitempty"`
+	Dashboard map[string]interface{} `json:"dashboard,omitempty"`
 }
 
 // NewSnapshotSpec creates a new SnapshotSpec object.

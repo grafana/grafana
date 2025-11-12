@@ -38,7 +38,46 @@ snapshot: {
 					timestamp?: string
 
 					// The raw dashboard (unstructured for now)
-	        Dashboard?: [string]: _
+	        dashboard?: [string]: _
+				}
+			}
+		}
+	}
+}
+
+// Each tenant, may have different sharing options
+// This is currently set using custom.ini, but multi-tenant support will need
+// to be managed differently
+sharingOptions: {
+	kind:       "SharingOption"
+	pluralName: "SharingOptions"
+	scope:      "Namespaced"
+	current:    "v0alpha1"
+
+	codegen: {
+		ts: {
+			enabled: true
+		}
+		go: {
+			enabled: true
+		}
+	}
+
+	versions: {
+		"v0alpha1": {
+			schema: {
+				spec: {
+					// Snapshot title
+					snapshotsEnabled?: bool | *false
+
+					// The external URL where the snapshot can be pushed
+					externalSnapshotURL?: string
+
+					// The external name of the snapshot in the remote server
+					externalSnapshotName?: string
+
+					// External snapshots feature enabled
+					externalEnabled?: bool | *false
 				}
 			}
 		}

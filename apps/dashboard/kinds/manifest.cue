@@ -6,5 +6,6 @@ manifest: {
 	kinds: [
 		dashboard,
 		snapshot,
+		sharingOptions,
 	]
 }

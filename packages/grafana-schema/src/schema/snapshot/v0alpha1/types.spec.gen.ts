@@ -14,7 +14,7 @@ export interface Spec {
 	// Snapshot creation timestamp
 	timestamp?: string;
 	// The raw dashboard (unstructured for now)
-	Dashboard?: Record<string, any>;
+	dashboard?: Record<string, any>;
 }
 
 export const defaultSpec = (): Spec => ({
