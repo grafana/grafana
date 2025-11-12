@@ -205,10 +205,6 @@ function renderHiddenVariables(dashboard: DashboardScene) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     controls: css({
-      /*display: 'flex',
-      alignItems: 'flex-start',
-      flex: '100%',
-      */
       gap: theme.spacing(1),
       padding: theme.spacing(2),
       flexDirection: 'row',
