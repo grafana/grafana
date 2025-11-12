@@ -978,6 +978,9 @@ type ListAlertRulesQuery struct {
 
 	ReceiverName     string
 	TimeIntervalName string
+	// TitleSearch allows searching for alert rules that contain
+	// the given string in their title (case insensitive)
+	TitleSearch string
 
 	HasPrometheusRuleDefinition *bool
 }

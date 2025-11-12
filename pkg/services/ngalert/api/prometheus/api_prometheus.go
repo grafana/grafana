@@ -479,6 +479,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	ruleGroups := opts.Query["rule_group"]
 
 	receiverName := opts.Query.Get("receiver_name")
+	title := opts.Query.Get("title")
 
 	maxGroups := getInt64WithDefault(opts.Query, "group_limit", -1)
 	nextToken := opts.Query.Get("group_next_token")
@@ -495,6 +496,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 			PanelID:       panelID,
 			RuleGroups:    ruleGroups,
 			ReceiverName:  receiverName,
+			TitleSearch:   title,
 		},
 		Limit:         maxGroups,
 		ContinueToken: nextToken,
@@ -624,6 +626,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 	ruleGroups := opts.Query["rule_group"]
 
 	receiverName := opts.Query.Get("receiver_name")
+	title := opts.Query.Get("title")
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
 		OrgID:         opts.OrgID,
@@ -632,6 +635,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		PanelID:       panelID,
 		RuleGroups:    ruleGroups,
 		ReceiverName:  receiverName,
+		TitleSearch:   title,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {

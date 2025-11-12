@@ -584,6 +584,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "alertingUIUseBackendFilters",
+			Description:       "Enables the UI to use certain backend-side filters",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:        "alertmanagerRemotePrimary",
 			Description: "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
 			Stage:       FeatureStageExperimental,

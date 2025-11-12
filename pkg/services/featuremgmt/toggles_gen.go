@@ -319,6 +319,10 @@ const (
 	// Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
 	FlagAlertingProvenanceLockWrites = "alertingProvenanceLockWrites"
 
+	// FlagAlertingUIUseBackendFilters
+	// Enables the UI to use certain backend-side filters
+	FlagAlertingUIUseBackendFilters = "alertingUIUseBackendFilters"
+
 	// FlagAlertmanagerRemotePrimary
 	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
 	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
