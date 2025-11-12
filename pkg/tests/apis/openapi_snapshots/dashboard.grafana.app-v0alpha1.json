@@ -3726,6 +3726,13 @@
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.SnapshotSpec": {
         "type": "object",
         "properties": {
+          "dashboard": {
+            "description": "The raw dashboard (unstructured for now)",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
           "expires": {
             "description": "Optionally auto-remove the snapshot at a future date (Unix timestamp in seconds)",
             "type": "integer",
