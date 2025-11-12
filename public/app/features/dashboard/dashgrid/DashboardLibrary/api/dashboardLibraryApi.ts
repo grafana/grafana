@@ -2,7 +2,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { PluginDashboard } from 'app/types/plugins';
 
-import { GnetDashboardsResponse } from '../types';
+import { GnetDashboardsResponse, Link } from '../types';
 
 /**
  * Parameters for fetching community dashboards from Grafana.com
@@ -19,10 +19,27 @@ export interface FetchCommunityDashboardsParams {
 }
 
 /**
+ * Dependency item from Grafana.com dashboard API
+ */
+export interface GnetDashboardDependency {
+  pluginSlug: string;
+  pluginTypeCode: 'app' | 'panel' | 'datasource' | 'grafana';
+  pluginName?: string;
+  pluginVersion?: string;
+  [key: string]: unknown;
+}
+
+/**
  * Response from the Gnet API when fetching a single dashboard
  */
 export interface GnetDashboardResponse {
   json: DashboardJson;
+  dependencies?: {
+    items?: GnetDashboardDependency[];
+    direction?: 'asc' | 'desc';
+    orderBy?: string;
+    links?: Link[];
+  };
   [key: string]: unknown;
 }
 

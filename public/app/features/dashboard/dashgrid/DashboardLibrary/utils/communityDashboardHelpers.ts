@@ -3,11 +3,39 @@ import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
 import { MappingContext } from '../SuggestedDashboardsModal';
-import { fetchCommunityDashboard } from '../api/dashboardLibraryApi';
-import { DashboardLibraryInteractions } from '../interactions';
+import { fetchCommunityDashboard, GnetDashboardDependency } from '../api/dashboardLibraryApi';
+import { CONTENT_KINDS, ContentKind, CREATION_ORIGINS, EventLocation, SOURCE_ENTRY_POINTS } from '../interactions';
 import { GnetDashboard, Link } from '../types';
 
 import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
+
+/**
+ * Extract datasource types from URL parameters for tracking purposes.
+ * Supports two formats:
+ * - datasourceTypes: JSON array of datasource types (for community dashboards)
+ * - pluginId: Single datasource type (legacy format for provisioned dashboards)
+ *
+ * @returns Array of datasource type strings, or undefined if not available
+ */
+export function extractDatasourceTypesFromUrl(): string[] | undefined {
+  const params = locationService.getSearchObject();
+  const datasourceTypesParam = params.datasourceTypes;
+  const pluginIdParam = params.pluginId;
+
+  if (datasourceTypesParam && typeof datasourceTypesParam === 'string') {
+    try {
+      return JSON.parse(datasourceTypesParam);
+    } catch {
+      // If parsing fails, return undefined
+      return undefined;
+    }
+  } else if (pluginIdParam && typeof pluginIdParam === 'string') {
+    // Fallback to legacy pluginId for provisioned dashboards
+    return [pluginIdParam];
+  }
+
+  return undefined;
+}
 
 /**
  * Extract thumbnail URL from dashboard screenshots
@@ -86,16 +114,26 @@ export function navigateToTemplate(
   dashboardTitle: string,
   gnetId: number,
   datasourceUid: string,
-  mappings: InputMapping[]
+  mappings: InputMapping[],
+  eventLocation: EventLocation,
+  contentKind: ContentKind,
+  datasourceTypes?: string[]
 ): void {
   const searchParams = new URLSearchParams({
     datasource: datasourceUid,
     title: dashboardTitle,
     gnetId: String(gnetId),
-    sourceEntryPoint: 'datasource_page',
-    creationOrigin: 'dashboard_library_community_dashboard',
+    sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+    creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_COMMUNITY_DASHBOARD,
+    contentKind,
+    eventLocation,
     mappings: JSON.stringify(mappings),
   });
+
+  // Add datasource types for tracking if available
+  if (datasourceTypes && datasourceTypes.length > 0) {
+    searchParams.set('datasourceTypes', JSON.stringify(datasourceTypes));
+  }
 
   locationService.push({
     pathname: DASHBOARD_LIBRARY_ROUTES.Template,
@@ -125,16 +163,8 @@ export async function onUseCommunityDashboard({
   eventLocation,
   onShowMapping,
 }: UseCommunityDashboardParams): Promise<void> {
-  // Track analytics
-  DashboardLibraryInteractions.itemClicked({
-    contentKind: 'community_dashboard',
-    datasourceTypes: [datasourceType],
-    libraryItemId: String(dashboard.id),
-    libraryItemTitle: dashboard.name,
-    sourceEntryPoint: 'datasource_page',
-    eventLocation,
-  });
-
+  // Note: item_clicked tracking is done by the caller (CommunityDashboardSection or SuggestedDashboards)
+  // with the correct discoveryMethod before calling this function
   try {
     // Fetch full dashboard from Gcom, this is the JSON with __inputs
     const fullDashboard = await fetchCommunityDashboard(dashboard.id);
@@ -142,6 +172,13 @@ export async function onUseCommunityDashboard({
 
     // Parse datasource requirements from __inputs
     const dsInputs: DataSourceInput[] = dashboardJson.__inputs?.filter(isDataSourceInput) || [];
+
+    // Extract datasource types for tracking purposes from dependencies
+    const datasourceTypes =
+      fullDashboard.dependencies?.items
+        ?.filter((dep: GnetDashboardDependency) => dep.pluginTypeCode === 'datasource')
+        .map((dep: GnetDashboardDependency) => dep.pluginSlug)
+        .filter(Boolean) || [];
 
     // Parse constant inputs - these always need user review
     const constantInputs = parseConstantInputs(dashboardJson.__inputs || []);
@@ -151,22 +188,40 @@ export async function onUseCommunityDashboard({
 
     // Decide whether to show mapping form or navigate directly
     // Show mapping form if: (a) there are unmapped datasources OR (b) there are constants
-    const needsMapping = mappingResult.unmappedInputs.length > 0 || constantInputs.length > 0;
+    const needsMapping = mappingResult.unmappedDsInputs.length > 0 || constantInputs.length > 0;
 
     if (!needsMapping) {
       // No mapping needed - all datasources auto-mapped, no constants
-      navigateToTemplate(dashboard.name, dashboard.id, datasourceUid, mappingResult.mappings);
+      navigateToTemplate(
+        dashboard.name,
+        dashboard.id,
+        datasourceUid,
+        mappingResult.mappings,
+        eventLocation,
+        CONTENT_KINDS.COMMUNITY_DASHBOARD,
+        datasourceTypes
+      );
     } else {
       // Show mapping form for unmapped datasources and/or constants
       if (onShowMapping) {
         onShowMapping({
           dashboardName: dashboard.name,
           dashboardJson,
-          unmappedInputs: mappingResult.unmappedInputs,
+          unmappedDsInputs: mappingResult.unmappedDsInputs,
           constantInputs,
           existingMappings: mappingResult.mappings,
+          eventLocation,
+          contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
           onInterpolateAndNavigate: (mappings) =>
-            navigateToTemplate(dashboard.name, dashboard.id, datasourceUid, mappings),
+            navigateToTemplate(
+              dashboard.name,
+              dashboard.id,
+              datasourceUid,
+              mappings,
+              eventLocation,
+              CONTENT_KINDS.COMMUNITY_DASHBOARD,
+              datasourceTypes
+            ),
         });
       }
     }
