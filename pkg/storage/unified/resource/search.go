@@ -588,7 +588,6 @@ func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResou
 	for _, key := range keys {
 		idx := s.search.GetIndex(key)
 		if idx == nil {
-			s.log.Info("rebuild indexes, index not found for key", "key", key)
 			// This can happen if index was closed in the meantime.
 			continue
 		}
