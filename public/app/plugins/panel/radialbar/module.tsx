@@ -125,29 +125,53 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(RadialBarPanel)
 
     const withDefaults = (
       suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
-    ): VisualizationSuggestion<Options, GraphFieldConfig> =>
-      defaultsDeep(suggestion, {
+    ): VisualizationSuggestion<Options, GraphFieldConfig> => {
+      // if there is a string field and there are few enough rows, we assume it's tabular data and not time series data,
+      // and the de-aggregated version of the viz probably makes more sense
+      const isTabularData =
+        dataSummary.hasFieldType(FieldType.string) && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10;
+      return defaultsDeep(suggestion, {
         options: {
-          // determine whether to recommend aggregated or un-aggregated gauges.
-          reduceOptions:
-            dataSummary.hasFieldType(FieldType.string) && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10
-              ? {
-                  values: true,
-                  calcs: [],
-                }
-              : {
-                  values: false,
-                  calcs: ['lastNotNull'],
-                },
+          reduceOptions: isTabularData
+            ? {
+                values: true,
+                calcs: [],
+              }
+            : {
+                values: false,
+                calcs: ['lastNotNull'],
+              },
+        },
+        fieldConfig: {
+          defaults: isTabularData
+            ? {
+                color: { mode: FieldColorModeId.PaletteClassic },
+              }
+            : {},
+          overrides: [],
         },
         cardOptions: {
           previewModifier: (s) => {
-            if (s.options?.reduceOptions?.values) {
-              s.options.reduceOptions.limit = 10;
+            if (s.options?.reduceOptions) {
+              s.options.reduceOptions.limit = 4;
             }
           },
         },
+        // styles: [{
+        //   name: t('gauge.suggestions.style.circular', 'Glowing'),
+        //   options: {
+        //     effects: {
+        //       rounded: true,
+        //       barGlow: true,
+        //       centerGlow: true,
+        //       spotlight: true,
+        //     },
+        //   },
+        // }, {
+        //   name: t('gauge.suggestions.style.simple', 'Simple'),
+        // }]
       } satisfies VisualizationSuggestion<Options, GraphFieldConfig>);
+    };
 
     return [
       withDefaults({ name: t('gauge.suggestions.arc', 'Gauge') }),
@@ -157,18 +181,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(RadialBarPanel)
           shape: 'circle',
           showThresholdMarkers: false,
           barWidthFactor: 0.3,
-          effects: {
-            rounded: true,
-            barGlow: true,
-            centerGlow: true,
-            spotlight: true,
-          },
-        },
-        fieldConfig: {
-          defaults: {
-            color: { mode: FieldColorModeId.PaletteClassic },
-          },
-          overrides: [],
         },
       }),
     ];
