@@ -306,7 +306,7 @@
     "@leeoniya/ufuzzy": "1.0.19",
     "@lezer/common": "1.2.3",
     "@lezer/highlight": "1.2.1",
-    "@lezer/lr": "1.4.2",
+    "@lezer/lr": "1.4.3",
     "@locker/near-membrane-dom": "0.14.0",
     "@locker/near-membrane-shared": "0.14.0",
     "@locker/near-membrane-shared-dom": "0.14.0",
