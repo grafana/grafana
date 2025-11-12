@@ -119,7 +119,6 @@ export const NumberInput = memo(
           error={`Out of range ${range}`}
           validationMessageHorizontalOverflow={true}
           style={{ direction: 'rtl' }}
-          noMargin
         >
           {renderInput()}
         </Field>

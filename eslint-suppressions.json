@@ -1169,6 +1169,11 @@
       "count": 1
     }
   },
+  "public/app/core/components/OptionsUI/NumberInput.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
   "public/app/core/components/OptionsUI/fieldColor.tsx": {
     "no-restricted-syntax": {
       "count": 1
