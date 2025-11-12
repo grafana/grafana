@@ -18,8 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewStore(cfg *setting.Cfg, sql db.DB, features featuremgmt.FeatureToggles) *store {
-	store := &store{cfg: cfg, sql: sql, features: features}
+func NewStore(cfg *setting.Cfg, sql db.DB) *store {
+	store := &store{cfg: cfg, sql: sql}
 	return store
 }
 

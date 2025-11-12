@@ -698,7 +698,8 @@
       "metadata": {
         "name": "annotationPermissionUpdate",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2023-10-31T13:30:13Z"
+        "creationTimestamp": "2023-10-31T13:30:13Z",
+        "deletionTimestamp": "2025-11-10T17:52:30Z"
       },
       "spec": {
         "description": "Change the way annotation permissions work by scoping them to folders and dashboards.",
