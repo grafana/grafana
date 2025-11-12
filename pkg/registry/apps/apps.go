@@ -42,6 +42,7 @@ func ProvideAppInstallers(
 	logsdrilldownAppInstaller *logsdrilldown.LogsDrilldownAppInstaller,
 	annotationAppInstaller *annotation.AnnotationAppInstaller,
 	exampleAppInstaller *example.ExampleAppInstaller,
+	advisorAppInstaller *advisor.AdvisorAppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
@@ -70,6 +71,10 @@ func ProvideAppInstallers(
 	//nolint:staticcheck
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
 		installers = append(installers, annotationAppInstaller)
+	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) && features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisorAppInstaller) {
+		installers = append(installers, advisorAppInstaller)
 	}
 
 	return installers
@@ -118,6 +123,7 @@ func ProvideBuilderRunners(
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) &&
+		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisorAppInstaller) &&
 		!slices.Contains(grafanaCfg.DisablePlugins, "grafana-advisor-app") {
 		providers = append(providers, advisorAppProvider)
 	}

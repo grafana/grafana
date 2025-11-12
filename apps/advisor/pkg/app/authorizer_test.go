@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -77,6 +78,14 @@ func (m *mockUser) GetIsGrafanaAdmin() bool {
 
 func (m *mockUser) HasRole(role identity.RoleType) bool {
 	return role == identity.RoleAdmin && m.isGrafanaAdmin
+}
+
+func (m *mockUser) GetUID() string {
+	return "test-uid"
+}
+
+func (m *mockUser) GetIdentityType() claims.IdentityType {
+	return claims.TypeUser
 }
 
 // Implement other methods of identity.Requester as needed
