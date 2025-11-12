@@ -67,14 +67,23 @@
             ]
           },
           {
+            "__systemRef": "hideSeriesFrom",
             "matcher": {
-              "id": "__systemRef",
-              "options": "hiddenSeries"
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "foo"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
             },
             "properties": [
               {
                 "id": "custom.hideFrom",
                 "value": {
+                  "legend": false,
                   "tooltip": true,
                   "viz": true
                 }
@@ -121,6 +130,10 @@
             "defaults": {},
             "overrides": [
               {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Time"
+                },
                 "properties": [
                   {
                     "id": "unit",
@@ -143,13 +156,18 @@
         "defaults": {},
         "overrides": [
           {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
             "properties": [
               {
-                "id": "custom.hideFrom",
-                "value": {
-                  "tooltip": false,
-                  "viz": false
-                }
+                "id": "unit",
+                "value": "short"
               }
             ]
           }
@@ -164,10 +182,15 @@
         "defaults": {},
         "overrides": [
           {
+            "matcher": {
+              "id": "byName",
+              "options": "{__name__=\"ALERTS\", alertname=\"k6CloudServiceErrorsLogged\"}"
+            },
             "properties": [
               {
                 "id": "custom.hideFrom",
                 "value": {
+                  "legend": false,
                   "tooltip": true,
                   "viz": true
                 }

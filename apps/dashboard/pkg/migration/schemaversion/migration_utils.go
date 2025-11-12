@@ -8,11 +8,14 @@ import (
 // migration_utils.go contains shared utility functions used across multiple schema version migrations.
 
 // GetStringValue safely extracts a string value from a map, returning empty string if not found or not a string
-func GetStringValue(m map[string]interface{}, key string) string {
+func GetStringValue(m map[string]interface{}, key string, defaultValue ...string) string {
 	if value, ok := m[key]; ok {
 		if s, ok := value.(string); ok {
 			return s
 		}
+	}
+	if len(defaultValue) > 0 {
+		return defaultValue[0]
 	}
 	return ""
 }
