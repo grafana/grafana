@@ -65,11 +65,11 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
     // test that hover overflow works.
-    const loremIpsumCell = await getCell(page, 1, longTextColIdx);
+    const loremIpsumCell = getCell(page, 1, longTextColIdx);
     await loremIpsumCell.scrollIntoViewIfNeeded();
     await loremIpsumCell.hover();
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
-    await (await getCell(page, 1, longTextColIdx + 1)).hover();
+    await getCell(page, 1, longTextColIdx + 1).hover();
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
     // enable cell inspect, confirm that hover no longer triggers.
@@ -140,15 +140,15 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     ).toBeVisible();
 
     // click the "State" column header to sort it.
-    const stateColumnHeader = await getCell(page, 0, 1);
+    const stateColumnHeader = getCell(page, 0, 1);
 
     await stateColumnHeader.getByText('Info').click();
     await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'ascending');
-    expect(getCell(page, 1, 1)).resolves.toContainText('down'); // down or down fast
+    await expect(getCell(page, 1, 1)).toContainText('down'); // down or down fast
 
     await stateColumnHeader.getByText('Info').click();
     await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'descending');
-    expect(getCell(page, 1, 1)).resolves.toContainText('up'); // up or up fast
+    await expect(getCell(page, 1, 1)).toContainText('up'); // up or up fast
 
     await stateColumnHeader.getByText('Info').click();
     await expect(stateColumnHeader).not.toHaveAttribute('aria-sort');
@@ -171,7 +171,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     const stateColumnHeader = page.getByRole('columnheader').nth(infoColumnIdx);
 
     // get the first value in the "State" column, filter it out, then check that it went away.
-    const firstStateValue = (await (await getCell(page, 1, infoColumnIdx)).textContent())!;
+    const firstStateValue = (await getCell(page, 1, infoColumnIdx).textContent())!;
     await stateColumnHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
     const filterContainer = dashboardPage.getByGrafanaSelector(
       selectors.components.Panels.Visualization.TableNG.Filters.Container
@@ -188,7 +188,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(filterContainer).not.toBeVisible();
 
     // did it actually filter out our value?
-    await expect(getCell(page, 1, infoColumnIdx)).resolves.not.toHaveText(firstStateValue);
+    await expect(getCell(page, 1, infoColumnIdx)).not.toHaveText(firstStateValue);
   });
 
   test('Tests pagination, row height adjustment', async ({ gotoDashboardPage, selectors, page }) => {
@@ -289,7 +289,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     const dataLinkColIdx = await getColumnIdx(page, 'Data Link');
 
     // Info column has a single DataLink by default.
-    const infoCell = await getCell(page, 1, infoColumnIdx);
+    const infoCell = getCell(page, 1, infoColumnIdx);
     await expect(infoCell.locator('a')).toBeVisible();
     expect(infoCell.locator('a')).toHaveAttribute('href');
     expect(infoCell.locator('a')).not.toHaveAttribute('aria-haspopup');
@@ -306,7 +306,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
         continue;
       }
 
-      const cell = await getCell(page, 1, colIdx);
+      const cell = getCell(page, 1, colIdx);
       await expect(cell.locator('a')).toBeVisible();
       expect(cell.locator('a')).toHaveAttribute('href');
       expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
@@ -319,7 +319,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     // loop thru the columns, click the links, observe that the tooltip appears, and close the tooltip.
     for (let colIdx = 0; colIdx < colCount; colIdx++) {
-      const cell = await getCell(page, 1, colIdx);
+      const cell = getCell(page, 1, colIdx);
       if (colIdx === infoColumnIdx) {
         // the Info column should still have its single link.
         expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
