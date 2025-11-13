@@ -66,5 +66,7 @@ func NewSearchOptions(
 			IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
 		}, nil
 	}
-	return resource.SearchOptions{}, nil
+	return resource.SearchOptions{
+		IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
+	}, nil
 }
