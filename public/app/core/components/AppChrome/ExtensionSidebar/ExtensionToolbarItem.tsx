@@ -1,13 +1,10 @@
 import { ExtensionInfo } from '@grafana/data';
+import { useExtensionSidebarContext } from '@grafana/runtime';
 import { Dropdown, Menu } from '@grafana/ui';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
-import {
-  getComponentIdFromComponentMeta,
-  getComponentMetaFromComponentId,
-  useExtensionSidebarContext,
-} from './ExtensionSidebarProvider';
+import { getComponentIdFromComponentMeta, getComponentMetaFromComponentId } from './ExtensionSidebarProvider';
 import { ExtensionToolbarItemButton } from './ExtensionToolbarItemButton';
 
 type ComponentWithPluginId = ExtensionInfo & { pluginId: string };

@@ -42,3 +42,10 @@ export {
 export { setCurrentUser } from './user';
 export { RuntimeDataSource } from './RuntimeDataSource';
 export { ScopesContext, type ScopesContextValueState, type ScopesContextValue, useScopes } from './ScopesContext';
+export {
+  ExtensionSidebarContext,
+  useExtensionSidebarContext,
+  type ExtensionSidebarContextType,
+  type ExtensionPointPluginMeta,
+  DEFAULT_EXTENSION_SIDEBAR_WIDTH,
+} from './extensionSidebar/ExtensionSidebarContext';
