@@ -285,8 +285,14 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 		return false
 	}
 
+	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
+	syncInterval := time.Duration(obj.Spec.Sync.IntervalSeconds) * time.Second
+	tolerance := time.Second
+
 	// Check for stale sync status - if sync status indicates a job is running but the job no longer exists
-	if (obj.Status.Sync.State == provisioning.JobStatePending || obj.Status.Sync.State == provisioning.JobStateWorking) &&
+	// Only check if Finished is set (meaning a sync has completed before) to avoid interfering with initial syncs
+	if obj.Status.Sync.Finished > 0 &&
+		(obj.Status.Sync.State == provisioning.JobStatePending || obj.Status.Sync.State == provisioning.JobStateWorking) &&
 		obj.Status.Sync.JobID != "" {
 		_, err := rc.jobs.Get(ctx, obj.Namespace, obj.Status.Sync.JobID)
 		if apierrors.IsNotFound(err) {
@@ -301,10 +307,6 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 			logger.Warn("failed to check job existence for stale sync status", "error", err, "job_id", obj.Status.Sync.JobID)
 		}
 	}
-
-	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
-	syncInterval := time.Duration(obj.Spec.Sync.IntervalSeconds) * time.Second
-	tolerance := time.Second
 
 	// HACK: how would this work in a multi-tenant world or under heavy load?
 	// It will start queueing up jobs and we will have to deal with that
