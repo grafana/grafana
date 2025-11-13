@@ -29,33 +29,19 @@ function ExtensionToolbarItemButtonComponent(
   ref: React.ForwardedRef<HTMLButtonElement>
 ) {
   const icon = getPluginIcon(pluginId);
+  const tooltip = isOpen
+    ? t('navigation.extension-sidebar.button-tooltip.close', 'Close {{title}}', { title })
+    : title
+      ? t('navigation.extension-sidebar.button-tooltip.open', 'Open {{title}}', { title })
+      : t('navigation.extension-sidebar.button-tooltip.open-all', 'Open AI assistants and sidebar apps');
 
-  if (isOpen) {
-    // render button to close the sidebar
-    return (
-      <ToolbarButton
-        ref={ref}
-        icon={icon}
-        iconOnly
-        data-testid="extension-toolbar-button-close"
-        variant="active"
-        onClick={onClick}
-        tooltip={t('navigation.extension-sidebar.button-tooltip.close', 'Close {{title}}', { title })}
-      />
-    );
-  }
-  // if a title is provided, use it in the tooltip
-  let tooltip = t('navigation.extension-sidebar.button-tooltip.open-all', 'Open AI assistants and sidebar apps');
-  if (title) {
-    tooltip = t('navigation.extension-sidebar.button-tooltip.open', 'Open {{title}}', { title });
-  }
   return (
     <ToolbarButton
       ref={ref}
       icon={icon}
       iconOnly
-      data-testid="extension-toolbar-button-open"
-      variant="default"
+      data-testid={`extension-toolbar-button-${isOpen ? 'close' : 'open'}`}
+      variant={isOpen ? 'active' : 'default'}
       onClick={onClick}
       tooltip={tooltip}
     />
