@@ -1677,6 +1677,7 @@ type DashboardCustomVariableSpec struct {
 	SkipUrlSync      bool                      `json:"skipUrlSync"`
 	Description      *string                   `json:"description,omitempty"`
 	AllowCustomValue bool                      `json:"allowCustomValue"`
+	ValuesFormat     *string                   `json:"valuesFormat,omitempty"`
 }
 
 // NewDashboardCustomVariableSpec creates a new DashboardCustomVariableSpec object.

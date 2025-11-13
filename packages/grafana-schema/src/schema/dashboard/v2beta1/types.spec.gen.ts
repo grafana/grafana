@@ -1330,6 +1330,7 @@ export interface CustomVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
+	valuesFormat?: string;
 }
 
 export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
