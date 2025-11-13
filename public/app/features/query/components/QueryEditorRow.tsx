@@ -23,7 +23,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
+import { Badge, ErrorBoundaryAlert, List, Text } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -562,12 +562,33 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       </QueryOperationRow>
     );
 
+    const { queries } = this.props;
+    const hiddenQueriesCount = queries.length - 1; // Total queries minus the focused one
+
     return (
       <div
         data-testid="query-editor-row"
         aria-label={selectors.components.QueryEditorRows.rows}
         className={focusedWrapperStyle}
       >
+        {isFocused && (
+          <div className={getFocusedBannerStyle()}>
+            <Text color="primary" variant="bodySmall" italic>
+              <Trans
+                i18nKey="query.query-editor-row.focused-message"
+                values={{ queryName: query.refId, count: hiddenQueriesCount }}
+              >
+                Query {query.refId} is focused, {hiddenQueriesCount}{' '}
+                {hiddenQueriesCount === 1 ? (
+                  <Trans i18nKey="query.query-editor-row.focused-singular">query is</Trans>
+                ) : (
+                  <Trans i18nKey="query.query-editor-row.focused-plural">all other queries are</Trans>
+                )}{' '}
+                hidden from view.
+              </Trans>
+            </Text>
+          </div>
+        )}
         {queryLibraryRef && (
           <MaybeQueryLibraryEditingHeader
             query={query}
@@ -704,4 +725,9 @@ const getFocusedRowStyle = () =>
     flexDirection: 'column',
     // Remove margins when focused to maximize space
     marginBottom: 0,
+  });
+
+const getFocusedBannerStyle = () =>
+  css({
+    marginBottom: '10px',
   });
