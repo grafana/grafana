@@ -4,7 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Card, Field, Icon, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
@@ -34,7 +34,9 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   const selectedTarget = watch('repository.sync.target');
   const repositoryType = watch('repository.type');
   const options = useModeOptions(repoName, settingsData);
-  const { target } = options[0];
+  const enabledOptions = options.filter((option) => !option.disabled);
+  const disabledOptions = options.filter((option) => option.disabled);
+  const { target } = enabledOptions[0];
   const { resourceCountString, fileCountString, isLoading } = useResourceStats(repoName, settingsData?.legacyStorage);
   const styles = useStyles2(getStyles);
 
@@ -71,14 +73,17 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
           control={control}
           render={({ field: { ref, onChange, ...field } }) => (
             <>
-              {options.map((action) => (
+              {enabledOptions.map((action) => (
                 <Card
                   key={action.target}
                   isSelected={action.target === selectedTarget}
                   onClick={() => {
-                    onChange(action.target);
+                    if (!action.disabled) {
+                      onChange(action.target);
+                    }
                   }}
                   noMargin
+                  disabled={action.disabled}
                   {...field}
                 >
                   <Card.Heading>
@@ -94,7 +99,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
                       {action.description}
                       <Text color="primary">{action.subtitle}</Text>
                     </Stack>
-
                     <div className={styles.divider} />
 
                     <BootstrapStepResourceCounting
@@ -136,6 +140,22 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
             />
           </Field>
         )}
+
+        {/* Unavailable options */}
+        <Box marginTop={3}>
+          <Text variant="h4">{t('provisioning.bootstrap-step.unavailable-options.title', 'Unavailable options')}</Text>
+        </Box>
+        {disabledOptions.map((action) => (
+          <Card key={action.target} noMargin disabled={action.disabled}>
+            <Card.Heading>
+              <Text variant="h5">{action.label}</Text>
+            </Card.Heading>
+            <Card.Description>
+              <div className={styles.divider} />
+              <Icon name="info-circle" className={styles.infoIcon} /> {action.disabledReason}
+            </Card.Description>
+          </Card>
+        ))}
       </Stack>
     </Stack>
   );
@@ -148,5 +168,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.border.medium,
     marginTop: theme.spacing(2),
     marginBottom: theme.spacing(2),
+  }),
+  infoIcon: css({
+    color: theme.colors.primary.main,
+    marginRight: theme.spacing(0.5),
   }),
 });
