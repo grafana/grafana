@@ -26,63 +26,44 @@ export interface RuleFrame {
   Value: number;
 }
 
-export function parseAlertstateFilter(filter: string): AlertState | null {
-  const firingMatch = filter.match(/alertstate\s*=~?\s*"firing"/);
-  const pendingMatch = filter.match(/alertstate\s*=~?\s*"pending"/);
+export function parseAlertstateFilter(filter: string): AlertState[] {
+  const hasFiring = filter.match(/alertstate\s*=~?\s*"firing"/);
+  const hasPending = filter.match(/alertstate\s*=~?\s*"pending"/);
 
-  if (firingMatch && pendingMatch) {
-    return null;
+  const states: AlertState[] = [];
+
+  // If both or neither match, include both states
+  if ((hasFiring && hasPending) || (!hasFiring && !hasPending)) {
+    return [PromAlertingRuleState.Firing, PromAlertingRuleState.Pending];
   }
 
-  if (firingMatch) {
-    return PromAlertingRuleState.Firing;
+  if (hasFiring) {
+    states.push(PromAlertingRuleState.Firing);
+  }
+  if (hasPending) {
+    states.push(PromAlertingRuleState.Pending);
   }
 
-  if (pendingMatch) {
-    return PromAlertingRuleState.Pending;
-  }
-
-  return null;
+  return states;
 }
 
-export function countRules(ruleDfv: DataFrameView<RuleFrame>, alertstateFilter: AlertState | null) {
-  const rulesWithFiring = new Set<string>();
-  const rulesWithPending = new Set<string>();
+export function countRules(ruleDfv: DataFrameView<RuleFrame>, alertstateFilter: AlertState[]) {
+  const counts = {
+    [PromAlertingRuleState.Firing]: new Set<string>(),
+    [PromAlertingRuleState.Pending]: new Set<string>(),
+  };
 
+  // Only count rules for states we're interested in
   ruleDfv.fields.grafana_rule_uid.values.forEach((ruleUID, i) => {
     const alertstate = ruleDfv.fields.alertstate.values[i];
-    if (alertstate === PromAlertingRuleState.Firing) {
-      rulesWithFiring.add(ruleUID);
-    }
-    if (alertstate === PromAlertingRuleState.Pending) {
-      rulesWithPending.add(ruleUID);
+    if (alertstateFilter.includes(alertstate)) {
+      counts[alertstate].add(ruleUID);
     }
   });
 
-  // When filtering by pending, count all rules with pending instances (may also have firing)
-  if (alertstateFilter === PromAlertingRuleState.Pending) {
-    return {
-      firing: 0,
-      pending: rulesWithPending.size,
-    };
-  }
-
-  // When filtering by firing, count all rules with firing instances (may also have pending)
-  if (alertstateFilter === PromAlertingRuleState.Firing) {
-    return {
-      firing: rulesWithFiring.size,
-      pending: 0,
-    };
-  }
-
-  // When no filter: firing takes precedence
-  // A rule is "firing" if it has ANY firing instances (even if it also has pending)
-  // A rule is "pending" ONLY if it has pending instances but NO firing instances
-  const onlyPending = new Set([...rulesWithPending].filter((uid) => !rulesWithFiring.has(uid)));
-
   return {
-    firing: rulesWithFiring.size, // ALL rules with firing instances
-    pending: onlyPending.size, // ONLY rules with no firing instances
+    firing: counts[PromAlertingRuleState.Firing].size,
+    pending: counts[PromAlertingRuleState.Pending].size,
   };
 }
 
@@ -99,10 +80,9 @@ interface StatBoxProps {
   value: number;
   color: 'error' | 'warning';
   children: React.ReactNode;
-  fullHeight?: boolean;
 }
 
-function StatBox({ i18nKey, value, color, children, fullHeight }: StatBoxProps) {
+function StatBox({ i18nKey, value, color, children }: StatBoxProps) {
   const styles = useStyles2(getStatBoxStyles);
   const colorClass = color === 'error' ? styles.errorColor : styles.warningColor;
 
@@ -116,10 +96,7 @@ function StatBox({ i18nKey, value, color, children, fullHeight }: StatBoxProps) 
       backgroundColor="secondary"
       borderRadius="default"
       gap={1}
-      flex="1 1 0"
-      minWidth={0}
-      width="100%"
-      height={fullHeight ? '100%' : undefined}
+      height="100%"
     >
       <div className={styles.label}>{children}</div>
       <div className={`${styles.value} ${colorClass}`}>{value}</div>
@@ -201,55 +178,25 @@ function SummaryStatsContent() {
 
   return (
     <Grid gap={2}>
-      {alertstateFilter === PromAlertingRuleState.Firing && (
+      {alertstateFilter.includes(PromAlertingRuleState.Firing) && (
         <Grid columns={2} gap={2}>
-          <StatBox i18nKey="alerting.triage.firing-instances-count" value={instances.firing} color="error" fullHeight>
+          <StatBox i18nKey="alerting.triage.firing-instances-count" value={instances.firing} color="error">
             <Trans i18nKey="alerting.triage.firing-instances-count">Firing alert instances</Trans>
           </StatBox>
-          <StatBox i18nKey="alerting.triage.firing-rules-count" value={rules.firing} color="error" fullHeight>
+          <StatBox i18nKey="alerting.triage.firing-rules-count" value={rules.firing} color="error">
             <Trans i18nKey="alerting.triage.rules-with-firing-instances">Alert rules with firing instances</Trans>
           </StatBox>
         </Grid>
       )}
-      {alertstateFilter === PromAlertingRuleState.Pending && (
+      {alertstateFilter.includes(PromAlertingRuleState.Pending) && (
         <Grid columns={2} gap={2}>
-          <StatBox
-            i18nKey="alerting.triage.pending-instances-count"
-            value={instances.pending}
-            color="warning"
-            fullHeight
-          >
+          <StatBox i18nKey="alerting.triage.pending-instances-count" value={instances.pending} color="warning">
             <Trans i18nKey="alerting.triage.pending-instances-count">Pending alert instances</Trans>
           </StatBox>
-          <StatBox
-            i18nKey="alerting.triage.rules-with-pending-instances"
-            value={rules.pending}
-            color="warning"
-            fullHeight
-          >
+          <StatBox i18nKey="alerting.triage.rules-with-pending-instances" value={rules.pending} color="warning">
             <Trans i18nKey="alerting.triage.rules-with-pending-instances">Alert rules with pending instances</Trans>
           </StatBox>
         </Grid>
-      )}
-      {!alertstateFilter && (
-        <>
-          <Grid columns={2} gap={2}>
-            <StatBox i18nKey="alerting.triage.firing-instances-count" value={instances.firing} color="error">
-              <Trans i18nKey="alerting.triage.firing-instances-count">Firing alert instances</Trans>
-            </StatBox>
-            <StatBox i18nKey="alerting.triage.firing-rules-count" value={rules.firing} color="error">
-              <Trans i18nKey="alerting.triage.rules-with-firing-instances">Alert rules with firing instances</Trans>
-            </StatBox>
-          </Grid>
-          <Grid columns={2} gap={2}>
-            <StatBox i18nKey="alerting.triage.pending-instances-count" value={instances.pending} color="warning">
-              <Trans i18nKey="alerting.triage.pending-instances-count">Pending alert instances</Trans>
-            </StatBox>
-            <StatBox i18nKey="alerting.triage.pending-rules-count" value={rules.pending} color="warning">
-              <Trans i18nKey="alerting.triage.pending-rules-count">Pending alert rules</Trans>
-            </StatBox>
-          </Grid>
-        </>
       )}
     </Grid>
   );
