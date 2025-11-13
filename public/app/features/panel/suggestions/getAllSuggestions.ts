@@ -51,6 +51,7 @@ export async function getAllSuggestions(
       list.push({
         name: plugin.name,
         pluginId: plugin.id,
+        description: plugin.info.description,
         cardOptions: {
           imgSrc: plugin.info.logos.small,
         },
