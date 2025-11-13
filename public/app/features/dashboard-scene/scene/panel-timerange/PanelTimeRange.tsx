@@ -113,6 +113,30 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
     );
   }
 
+  public onTimeRangeChange(timeRange: TimeRange): void {
+    const { timeShift } = this.state;
+
+    if (timeShift) {
+      const timeShiftInterpolated = sceneGraph.interpolate(this, timeShift);
+      const reverseShift = '+' + timeShiftInterpolated;
+
+      const from = dateMath.parseDateMath(reverseShift, timeRange.from, false);
+      const to = dateMath.parseDateMath(reverseShift, timeRange.to, true);
+
+      if (from && to) {
+        this.getAncestorTimeRange().onTimeRangeChange({
+          ...timeRange,
+          from,
+          to,
+          raw: { from, to },
+        });
+        return;
+      }
+    }
+
+    this.getAncestorTimeRange().onTimeRangeChange(timeRange);
+  }
+
   private getTimeOverride(parentTimeRange: TimeRange): TimeOverrideResult {
     const { timeFrom, timeShift, compareWith } = this.state;
     const infoBlocks = [];
