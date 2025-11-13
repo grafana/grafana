@@ -6750,9 +6750,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "További részletek a hibáról"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "CSV vagy táblázat hozzáadása"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Adobe Analytics-adatforrás",
@@ -11762,6 +11759,11 @@
       "path-description": "Helyi fájlrendszer elérési útja az adattárhoz",
       "path-label": "Adattár elérési útja",
       "path-required": "Az adattár elérési útvonalának megadása kötelező"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {

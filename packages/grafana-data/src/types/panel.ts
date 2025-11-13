@@ -1,8 +1,5 @@
-import { defaultsDeep } from 'lodash';
-
 import { EventBus } from '../events/types';
 import { StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
-import { PanelDataSummary, getPanelDataSummary } from '../panel/suggestions/getPanelDataSummary';
 import { Registry } from '../utils/Registry';
 
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
@@ -17,7 +14,6 @@ import { IconName } from './icon';
 import { OptionEditorConfig } from './options';
 import { PluginMeta } from './plugin';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
-import { DataTransformerConfig } from './transformations';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -218,96 +214,4 @@ export enum VizOrientation {
 export interface PanelPluginDataSupport {
   annotations: boolean;
   alertStates: boolean;
-}
-
-/**
- * @alpha
- */
-export interface VisualizationSuggestion<TOptions = any, TFieldConfig = any> {
-  /** Name of suggestion */
-  name: string;
-  /** Description */
-  description?: string;
-  /** Panel plugin id */
-  pluginId: string;
-  /** Panel plugin options */
-  options?: Partial<TOptions>;
-  /** Panel plugin field options */
-  fieldConfig?: FieldConfigSource<Partial<TFieldConfig>>;
-  /** Data transformations */
-  transformations?: DataTransformerConfig[];
-  /** Options for how to render suggestion card */
-  cardOptions?: {
-    /** Tweak for small preview */
-    previewModifier?: (suggestion: VisualizationSuggestion) => void;
-    icon?: string;
-    imgSrc?: string;
-  };
-  /** A value between 0-100 how suitable suggestion is */
-  score?: VisualizationSuggestionScore;
-}
-
-/**
- * @alpha
- */
-export enum VisualizationSuggestionScore {
-  /** We are pretty sure this is the best possible option */
-  Best = 100,
-  /** Should be a really good option */
-  Good = 70,
-  /** Can be visualized but there are likely better options. If no score is set this score is assumed */
-  OK = 50,
-}
-
-/**
- * @alpha
- */
-export class VisualizationSuggestionsBuilder {
-  /** Current data */
-  data?: PanelData;
-  /** Current panel & options */
-  panel?: PanelModel;
-  /** Summary stats for current data */
-  dataSummary: PanelDataSummary;
-
-  private list: VisualizationSuggestion[] = [];
-
-  constructor(data?: PanelData, panel?: PanelModel) {
-    this.data = data;
-    this.panel = panel;
-    this.dataSummary = getPanelDataSummary(this.data?.series);
-  }
-
-  getListAppender<TOptions, TFieldConfig>(defaults: VisualizationSuggestion<TOptions, TFieldConfig>) {
-    return new VisualizationSuggestionsListAppender<TOptions, TFieldConfig>(this.list, defaults);
-  }
-
-  getList() {
-    return this.list;
-  }
-}
-
-/**
- * @alpha
- */
-export type VisualizationSuggestionsSupplier = {
-  /**
-   * Adds good suitable suggestions for the current data
-   */
-  getSuggestionsForData: (builder: VisualizationSuggestionsBuilder) => void;
-};
-
-/**
- * Helps with typings and defaults
- * @alpha
- */
-export class VisualizationSuggestionsListAppender<TOptions, TFieldConfig> {
-  constructor(
-    private list: VisualizationSuggestion[],
-    private defaults: VisualizationSuggestion<TOptions, TFieldConfig>
-  ) {}
-
-  append(overrides: Partial<VisualizationSuggestion<TOptions, TFieldConfig>>) {
-    this.list.push(defaultsDeep(overrides, this.defaults));
-  }
 }

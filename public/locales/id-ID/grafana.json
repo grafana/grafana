@@ -6726,9 +6726,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Detail lebih lanjut tentang kesalahan"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "Tambahkan csv atau spreadsheet"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Sumber data Adobe Analytics",
@@ -11709,6 +11706,11 @@
       "path-description": "Jalur sistem file lokal ke repositori",
       "path-label": "Jalur Repositori",
       "path-required": "Jalur repositori wajib diisi"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {

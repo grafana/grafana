@@ -14,7 +14,6 @@ import (
 type ConcurrentJobDriver struct {
 	numDrivers           int
 	jobTimeout           time.Duration
-	cleanupInterval      time.Duration
 	jobInterval          time.Duration
 	leaseRenewalInterval time.Duration
 	store                Store
@@ -27,7 +26,7 @@ type ConcurrentJobDriver struct {
 // NewConcurrentJobDriver creates a new concurrent job driver that spawns multiple job drivers.
 func NewConcurrentJobDriver(
 	numDrivers int,
-	jobTimeout, cleanupInterval, jobInterval, leaseRenewalInterval time.Duration,
+	jobTimeout, jobInterval, leaseRenewalInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
 	historicJobs HistoryWriter,
@@ -45,24 +44,12 @@ func NewConcurrentJobDriver(
 	if leaseRenewalInterval < 5*time.Second {
 		leaseRenewalInterval = 5 * time.Second
 	}
-	// For lease-based cleanup, run at most every 3-4 lease renewal intervals
-	// to detect expired leases promptly but not too aggressively
-	if cleanupInterval <= 0 {
-		cleanupInterval = leaseRenewalInterval * 3
-	}
-	if cleanupInterval < 30*time.Second {
-		cleanupInterval = 30 * time.Second // Minimum cleanup interval
-	}
-	if cleanupInterval > 5*time.Minute {
-		cleanupInterval = 5 * time.Minute // Maximum cleanup interval
-	}
 
 	recordConcurrentDriverMetric(registry, numDrivers)
 
 	return &ConcurrentJobDriver{
 		numDrivers:           numDrivers,
 		jobTimeout:           jobTimeout,
-		cleanupInterval:      cleanupInterval,
 		jobInterval:          jobInterval,
 		leaseRenewalInterval: leaseRenewalInterval,
 		store:                store,
@@ -73,43 +60,17 @@ func NewConcurrentJobDriver(
 	}, nil
 }
 
-// Run starts multiple job drivers concurrently and handles cleanup coordination.
+// Run starts multiple job drivers concurrently.
 // This is a blocking function that will run until the context is canceled or an error occurs.
 //
 // Note: This function intentionally does NOT create a tracing span because it runs indefinitely
-// until shutdown. Individual job processing and cleanup operations already have their own spans.
+// until shutdown. Individual job processing operations already have their own spans.
 func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 	logger := logging.FromContext(ctx).With("logger", "concurrent-job-driver", "num_drivers", c.numDrivers)
-	logger.Info("start concurrent job driver", "num_drivers", c.numDrivers, "cleanup_interval", c.cleanupInterval)
-
-	// Set up cleanup ticker - runs more frequently with lease-based approach
-	cleanupTicker := time.NewTicker(c.cleanupInterval)
-	defer cleanupTicker.Stop()
-
-	// Initial cleanup
-	if err := c.store.Cleanup(ctx); err != nil {
-		logger.Error("failed initial cleanup", "error", err)
-	}
+	logger.Info("start concurrent job driver", "num_drivers", c.numDrivers)
 
 	var wg sync.WaitGroup
-	errChan := make(chan error, c.numDrivers+1) // +1 for cleanup goroutine
-
-	// Start cleanup goroutine
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for {
-			select {
-			case <-cleanupTicker.C:
-				if err := c.store.Cleanup(ctx); err != nil {
-					logger.Error("failed cleanup", "error", err)
-				}
-			case <-ctx.Done():
-				logger.Debug("cleanup routine stopped")
-				return
-			}
-		}
-	}()
+	errChan := make(chan error, c.numDrivers)
 
 	// Start driver goroutines
 	for i := 0; i < c.numDrivers; i++ {
