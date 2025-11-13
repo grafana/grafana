@@ -33,8 +33,7 @@
           }
         ],
         "title": "grafana-default-email"
-      },
-      "status": {}
+      }
     },
     {
       "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
@@ -55,8 +54,7 @@
       "spec": {
         "integrations": [],
         "title": "grafana-default-emailtest-create-get-config"
-      },
-      "status": {}
+      }
     },
     {
       "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
@@ -100,8 +98,7 @@
           }
         ],
         "title": "discord"
-      },
-      "status": {}
+      }
     },
     {
       "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
@@ -149,8 +146,7 @@
           }
         ],
         "title": "email"
-      },
-      "status": {}
+      }
     },
     {
       "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
@@ -208,8 +204,7 @@
           }
         ],
         "title": "jira"
-      },
-      "status": {}
+      }
     },
     {
       "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
@@ -254,8 +249,7 @@
           }
         ],
         "title": "msteams"
-      },
-      "status": {}
+      }
     },
     {
       "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
@@ -316,8 +310,7 @@
           }
         ],
         "title": "opsgenie"
-      },
-      "status": {}
+      }
     },
     {
       "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
@@ -388,8 +381,7 @@
           }
         ],
         "title": "pagerduty"
-      },
-      "status": {}
+      }
     },
     {
       "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
@@ -442,8 +434,7 @@
           }
         ],
         "title": "pushover"
-      },
-      "status": {}
+      }
     },
     {
       "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
@@ -527,8 +518,7 @@
           }
         ],
         "title": "slack"
-      },
-      "status": {}
+      }
     },
     {
       "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
@@ -582,8 +572,7 @@
           }
         ],
         "title": "sns"
-      },
-      "status": {}
+      }
     },
     {
       "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
@@ -629,8 +618,7 @@
           }
         ],
         "title": "telegram"
-      },
-      "status": {}
+      }
     },
     {
       "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
@@ -679,8 +667,7 @@
           }
         ],
         "title": "victorops"
-      },
-      "status": {}
+      }
     },
     {
       "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
@@ -728,8 +715,7 @@
           }
         ],
         "title": "webex"
-      },
-      "status": {}
+      }
     },
     {
       "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
@@ -774,8 +760,7 @@
           }
         ],
         "title": "webhook"
-      },
-      "status": {}
+      }
     },
     {
       "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
@@ -825,8 +810,7 @@
           }
         ],
         "title": "wechat"
-      },
-      "status": {}
+      }
     }
   ],
   "kind": "ReceiverList",
