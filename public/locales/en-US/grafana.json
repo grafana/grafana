@@ -12987,9 +12987,6 @@
       "label-always": "Always",
       "label-auto": "Auto",
       "label-never": "Never"
-    },
-    "suggestions": {
-      "default": "State timeline"
     }
   },
   "status-history": {
