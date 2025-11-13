@@ -18,3 +18,15 @@ func AddAlertRuleUpdatedByMigration(mg *migrator.Migrator) {
 		Nullable: true,
 	}))
 }
+
+func ExpandAlertRuleUpdatedByMigration(mg *migrator.Migrator) {
+	mg.AddMigration("expand created_by in alert_rule_version table", migrator.NewRawSQLMigration("").
+		SQLite("SELECT 1;"). // do nothing for sqlite because it's a TEXT column
+		Postgres("ALTER TABLE `alert_rule_version` ALTER COLUMN created_by TYPE VARCHAR(190);").
+		Mysql("ALTER TABLE `alert_rule_version` MODIFY created_by VARCHAR(190);"))
+
+	mg.AddMigration("expand updated_by in alert_rule table", migrator.NewRawSQLMigration("").
+		SQLite("SELECT 1;"). // do nothing for sqlite because it's a TEXT column
+		Postgres("ALTER TABLE `alert_rule` ALTER COLUMN updated_by TYPE VARCHAR(190);").
+		Mysql("ALTER TABLE `alert_rule` MODIFY updated_by VARCHAR(190);"))
+}
