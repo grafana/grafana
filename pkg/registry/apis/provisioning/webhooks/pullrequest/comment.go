@@ -10,10 +10,10 @@ import (
 )
 
 type commenter struct {
-	templateDashboard      *template.Template
-	templateTable          *template.Template
-	templateRenderInfo     *template.Template
-	showImageRendererNote  bool
+	templateDashboard     *template.Template
+	templateTable         *template.Template
+	templateRenderInfo    *template.Template
+	showImageRendererNote bool
 }
 
 func NewCommenter(showImageRendererNote bool) Commenter {
