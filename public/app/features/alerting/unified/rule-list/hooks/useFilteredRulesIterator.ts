@@ -82,9 +82,7 @@ export function useFilteredRulesIteratorProvider() {
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
     const useBackendFilters = shouldUseBackendFilters();
 
-    const titleSearch = useBackendFilters
-      ? filterState.ruleName || (filterState.freeFormWords.length > 0 ? filterState.freeFormWords.join(' ') : undefined)
-      : undefined;
+    const titleSearch = useBackendFilters ? buildTitleSearch(filterState) : undefined;
 
     const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
       grafanaGroupsGenerator(groupLimit, {
@@ -169,6 +167,30 @@ export function hasClientSideFilters(filterState: RulesFilter): boolean {
     Boolean(filterState.dashboardUid) ||
     filterState.ruleSource === RuleSource.DataSource
   );
+}
+
+export function buildTitleSearch(filterState: RulesFilter): string | undefined {
+  const titleParts: string[] = [];
+
+  const ruleName = filterState.ruleName?.trim();
+  if (ruleName) {
+    titleParts.push(ruleName);
+  }
+
+  const freeFormSegment = filterState.freeFormWords
+    .map((word) => word.trim())
+    .filter(Boolean)
+    .join(' ');
+
+  if (freeFormSegment) {
+    titleParts.push(freeFormSegment);
+  }
+
+  if (titleParts.length === 0) {
+    return undefined;
+  }
+
+  return titleParts.join(' ');
 }
 
 function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): AsyncIterableX<RuleWithOrigin> {

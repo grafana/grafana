@@ -3,7 +3,7 @@ import { config } from '@grafana/runtime';
 import { RuleSource } from '../../search/rulesSearchParser';
 import { getFilter } from '../../utils/search';
 
-import { hasClientSideFilters } from './useFilteredRulesIterator';
+import { buildTitleSearch, hasClientSideFilters } from './useFilteredRulesIterator';
 
 describe('hasClientSideFilters', () => {
   const originalFeatureToggles = config.featureToggles;
@@ -72,5 +72,25 @@ describe('hasClientSideFilters', () => {
       expect(hasClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(true);
       expect(hasClientSideFilters(getFilter({ ruleName: 'test' }))).toBe(true);
     });
+  });
+});
+
+describe('buildTitleSearch', () => {
+  it('returns undefined when no search terms are provided', () => {
+    expect(buildTitleSearch(getFilter({}))).toBeUndefined();
+  });
+
+  it('returns the rule name when only a rule search is provided', () => {
+    expect(buildTitleSearch(getFilter({ ruleName: 'cpu' }))).toBe('cpu');
+  });
+
+  it('returns joined free-form words when only text search is provided', () => {
+    expect(buildTitleSearch(getFilter({ freeFormWords: ['cpu', 'memory'] }))).toBe('cpu memory');
+  });
+
+  it('concatenates rule search and free-form text when both are provided', () => {
+    expect(buildTitleSearch(getFilter({ ruleName: 'cpu', freeFormWords: ['memory', 'latency'] }))).toBe(
+      'cpu memory latency'
+    );
   });
 });
