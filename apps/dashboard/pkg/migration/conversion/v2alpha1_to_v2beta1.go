@@ -147,8 +147,9 @@ func convertDataQuery_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardDataQueryKin
 		}
 	}
 
-	// Fallback: if group is still empty and we have a query with a kind, use the kind as group
+	// Fallback: if group is still empty and we have a query with a kind (datasource type), use the kind as group
 	// This preserves the datasource type information when datasource reference is missing
+	// Note: in.Kind is the datasource type (e.g., "prometheus", "elasticsearch"), not "DataQuery"
 	if out.Group == "" && in != nil && in.Kind != "" {
 		out.Group = in.Kind
 	}

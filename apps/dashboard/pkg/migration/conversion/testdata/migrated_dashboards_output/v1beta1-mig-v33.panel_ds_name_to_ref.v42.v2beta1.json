@@ -470,7 +470,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "DataQuery",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "description": "Empty string target should also migrate to empty object {}"

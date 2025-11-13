@@ -33,7 +33,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "DataQuery",
+            "group": "",
             "version": "v0",
             "spec": {}
           },
@@ -212,7 +212,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "DataQuery",
+            "group": "prometheus",
             "version": "v0",
             "spec": {}
           },
