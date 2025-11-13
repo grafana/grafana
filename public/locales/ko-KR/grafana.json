@@ -6726,9 +6726,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "오류에 대한 자세한 정보"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "CSV 또는 스프레드시트 추가"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Adobe Analytics 데이터 소스",
@@ -11709,6 +11706,11 @@
       "path-description": "리포지토리에 대한 로컬 파일 시스템 경로",
       "path-label": "리포지토리 경로",
       "path-required": "리포지토리 경로는 필수 항목입니다"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {

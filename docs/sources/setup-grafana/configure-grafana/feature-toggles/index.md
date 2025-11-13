@@ -27,7 +27,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `disableEnvelopeEncryption`            | Disable envelope encryption (emergency only)                                                                                                                  |                    |
 | `publicDashboardsScene`                | Enables public dashboard rendering using scenes                                                                                                               | Yes                |
 | `featureHighlights`                    | Highlight Grafana Enterprise features                                                                                                                         |                    |
-| `correlations`                         | Correlations page                                                                                                                                             | Yes                |
 | `cloudWatchCrossAccountQuerying`       | Enables cross-account querying in CloudWatch datasources                                                                                                      | Yes                |
 | `logsContextDatasourceUi`              | Allow datasource to provide custom UI for context view                                                                                                        | Yes                |
 | `lokiQuerySplitting`                   | Split large interval queries into subqueries with smaller time intervals                                                                                      | Yes                |
@@ -107,6 +106,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `logsPanelControls`             | Enables a control component for the logs panel in Explore                                              |
 | `interactiveLearning`           | Enables the interactive learning app                                                                   |
 | `azureResourcePickerUpdates`    | Enables the updated Azure Monitor resource picker                                                      |
+| `newVizSuggestions`             | Enable new visualization suggestions                                                                   |
 | `preventPanelChromeOverflow`    | Restrict PanelChrome contents with overflow: hidden;                                                   |
 
 ## Development feature toggles

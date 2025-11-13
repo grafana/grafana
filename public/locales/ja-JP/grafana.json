@@ -6726,9 +6726,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "エラーの詳細"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "CSVまたはスプレッドシートを追加"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Adobe Analyticsデータソース",
@@ -11709,6 +11706,11 @@
       "path-description": "リポジトリへのローカルファイルシステムパス",
       "path-label": "リポジトリパス",
       "path-required": "リポジトリパスが必要です"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {
