@@ -129,7 +129,6 @@ preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,fals
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,true
 pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,false,false
 azureMonitorPrometheusExemplars,GA,@grafana/partner-datasources,false,false,false
-pinNavItems,GA,@grafana/grafana-search-navigate-organise,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
 ssoSettingsLDAP,GA,@grafana/identity-access-team,false,true,false
 zanzana,experimental,@grafana/identity-access-team,false,false,false
