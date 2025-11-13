@@ -94,7 +94,7 @@ Think of it this way: You _install_ a plugin but _configure_ a data source.
 
 **Do I need a plugin to use a data source?**
 
-In most cases, yes. Some plugins are bundled with Grafana by default, like Prometheus or Loki, but starting with Grafana v12.4, these are being released separately. Each has its own versioning and lifecycle but remains fully compatible.
+You must have the plugin installed before you can configure or use a data source. Each data source plugin has its own versioning and lifecycle.
 
 **Can I use integrations in self-hosted Grafana?** 
 
