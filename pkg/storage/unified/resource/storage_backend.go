@@ -303,6 +303,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	}
 
 	// Optimistic concurrency control to verify our write is the latest version
+	// and that the resource still had the expected PreviousRV when we wrote it
 	if event.PreviousRV != 0 {
 		latestKey, err := k.dataStore.LastResourceVersion(ctx, ListRequestKey{
 			Group:     event.Key.Group,
@@ -321,6 +322,29 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 			// Delete the data we just wrote since it's not the latest
 			_ = k.dataStore.Delete(ctx, dataKey)
 			return 0, fmt.Errorf("optimistic locking failed: concurrent modification detected")
+		}
+
+		// Additional check: Verify that the resource at PreviousRV still exists and is the one we're updating.
+		// If another concurrent write happened, there might be a resource with a version between PreviousRV and rv.
+		// We need to check that the resource at PreviousRV is still the immediate predecessor of our write.
+		// Get the resource at the revision just before our new RV to verify it matches PreviousRV
+		prevKey, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
+			Group:     event.Key.Group,
+			Resource:  event.Key.Resource,
+			Namespace: namespace,
+			Name:      event.Key.Name,
+		}, rv-1)
+		if err != nil {
+			// If we can't find the previous version, something is wrong
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return 0, fmt.Errorf("failed to verify previous version: %w", err)
+		}
+
+		// Verify that the immediate predecessor has the PreviousRV we expected
+		if prevKey.ResourceVersion != event.PreviousRV {
+			// Another concurrent write happened between our read and write
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return 0, fmt.Errorf("optimistic locking failed: resource was modified concurrently (expected previous RV %d, found %d)", event.PreviousRV, prevKey.ResourceVersion)
 		}
 	}
 
