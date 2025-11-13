@@ -830,9 +830,12 @@ func TestDataLossDetectionOnAllInputFiles(t *testing.T) {
 	dsProvider := testutil.NewDataSourceProvider(testutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
 
+	libPanelProvider := testutil.NewFakeLibraryPanelProvider()
+	migration.InitializeLibraryPanelProvider(libPanelProvider)
+
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, libPanelProvider)
 	require.NoError(t, err)
 
 	// Read all files from input directory

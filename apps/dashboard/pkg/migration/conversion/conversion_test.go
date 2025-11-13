@@ -42,8 +42,9 @@ func TestConversionMatrixExist(t *testing.T) {
 		&dashv2beta1.Dashboard{Spec: dashv2beta1.DashboardSpec{Title: "dashboardV2beta1"}},
 	}
 
+	libPanelProvider := migrationtestutil.NewFakeLibraryPanelProvider()
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, libPanelProvider)
 	require.NoError(t, err)
 
 	for idx, in := range versions {
@@ -87,9 +88,13 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
 
+	// Create a fake library panel provider for testing with standard test models
+	libPanelProvider := migrationtestutil.NewStandardLibraryPanelProvider()
+	migration.InitializeLibraryPanelProvider(libPanelProvider)
+
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, libPanelProvider)
 	require.NoError(t, err)
 
 	// Read all files from input directory
@@ -246,9 +251,13 @@ func TestMigratedDashboardsConversion(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
 
+	// Create a fake library panel provider for testing
+	libPanelProvider := migrationtestutil.NewFakeLibraryPanelProvider()
+	migration.InitializeLibraryPanelProvider(libPanelProvider)
+
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, libPanelProvider)
 	require.NoError(t, err)
 
 	// Read all files from migration package's latest_version directory
@@ -385,8 +394,9 @@ func TestConversionMetrics(t *testing.T) {
 	migration.RegisterMetrics(registry)
 
 	// Set up conversion scheme
+	libPanelProvider := migrationtestutil.NewFakeLibraryPanelProvider()
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, libPanelProvider)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -724,8 +734,9 @@ func TestConversionLogging(t *testing.T) {
 	migration.RegisterMetrics(registry)
 
 	// Set up conversion scheme
+	libPanelProvider := migrationtestutil.NewFakeLibraryPanelProvider()
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, libPanelProvider)
 	require.NoError(t, err)
 
 	tests := []struct {

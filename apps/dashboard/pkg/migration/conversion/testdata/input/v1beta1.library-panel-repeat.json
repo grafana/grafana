@@ -1,0 +1,99 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "metadata": {
+    "name": "library-panel-repeat-test",
+    "labels": {
+      "test": "library-panel-repeat"
+    }
+  },
+  "spec": {
+    "title": "Library Panel Repeat Options Test Dashboard",
+    "description": "Testing library panel repeat options extraction during conversion",
+    "tags": ["test", "library-panels", "repeat"],
+    "editable": true,
+    "preload": false,
+    "panels": [
+      {
+        "id": 1,
+        "title": "Library Panel Without Repeat",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "libraryPanel": {
+          "uid": "lib-panel-no-repeat",
+          "name": "Library Panel No Repeat"
+        },
+        "type": "timeseries"
+      },
+      {
+        "id": 2,
+        "title": "Library Panel With Repeat",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        },
+        "libraryPanel": {
+          "uid": "lib-panel-with-repeat",
+          "name": "Library Panel With Repeat"
+        },
+        "type": "timeseries"
+      },
+      {
+        "id": 3,
+        "title": "Library Panel With Repeat and Direction",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        },
+        "libraryPanel": {
+          "uid": "lib-panel-repeat-h",
+          "name": "Library Panel Repeat Horizontal"
+        },
+        "type": "timeseries"
+      },
+      {
+        "id": 4,
+        "title": "Library Panel With All Repeat Options",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        },
+        "libraryPanel": {
+          "uid": "lib-panel-repeat-complete",
+          "name": "Library Panel Repeat Complete"
+        },
+        "type": "timeseries"
+      },
+      {
+        "id": 5,
+        "title": "Panel With Direct Repeat (should not be overridden)",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 32
+        },
+        "libraryPanel": {
+          "uid": "lib-panel-with-repeat",
+          "name": "Library Panel With Repeat"
+        },
+        "repeat": "server",
+        "repeatDirection": "v",
+        "maxPerRow": 4,
+        "type": "timeseries"
+      }
+    ],
+    "schemaVersion": 38
+  }
+}
+

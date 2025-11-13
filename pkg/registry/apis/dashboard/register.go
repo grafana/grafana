@@ -178,6 +178,9 @@ func RegisterAPIService(
 	migration.Initialize(&datasourceInfoProvider{
 		datasourceService: datasourceService,
 	})
+	migration.InitializeLibraryPanelProvider(&libraryPanelInfoProvider{
+		libraryPanelService: libraryPanels,
+	})
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -231,7 +234,7 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	}
 
 	// Register the explicit conversions
-	if err := conversion.RegisterConversions(scheme, migration.GetDataSourceInfoProvider()); err != nil {
+	if err := conversion.RegisterConversions(scheme, migration.GetDataSourceInfoProvider(), migration.GetLibraryPanelInfoProvider()); err != nil {
 		return err
 	}
 
