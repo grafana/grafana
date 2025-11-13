@@ -326,15 +326,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 			return 0, fmt.Errorf("optimistic locking failed: concurrent modification detected")
 		}
 
-		// Verify that the immediate predecessor has the PreviousRV we expected
-		// If there's no predecessor (only one version existed), prevKey will be empty
-		if prevKey.ResourceVersion == 0 {
-			// Only one version exists, so we should verify that the only version matches PreviousRV
-			if latestKey.ResourceVersion != event.PreviousRV {
-				_ = k.dataStore.Delete(ctx, dataKey)
-				return 0, fmt.Errorf("optimistic locking failed: resource was modified concurrently (expected previous RV %d, found %d)", event.PreviousRV, latestKey.ResourceVersion)
-			}
-		} else if prevKey.ResourceVersion != event.PreviousRV {
+		if prevKey.ResourceVersion != event.PreviousRV {
 			// Another concurrent write happened between our read and write
 			_ = k.dataStore.Delete(ctx, dataKey)
 			return 0, fmt.Errorf("optimistic locking failed: resource was modified concurrently (expected previous RV %d, found %d)", event.PreviousRV, prevKey.ResourceVersion)
