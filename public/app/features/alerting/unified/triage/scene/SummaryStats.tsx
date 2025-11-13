@@ -1,10 +1,10 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 
 import { DataFrameView, GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { useQueryRunner } from '@grafana/scenes-react';
-import { ErrorBoundaryAlert, Stack, useStyles2 } from '@grafana/ui';
+import { Box, ErrorBoundaryAlert, Grid, useStyles2 } from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { METRIC_NAME } from '../constants';
@@ -107,31 +107,27 @@ function StatBox({ i18nKey, value, color, children, fullHeight }: StatBoxProps) 
   const colorClass = color === 'error' ? styles.errorColor : styles.warningColor;
 
   return (
-    <div className={cx(styles.statBox, fullHeight && styles.fullHeight)}>
+    <Box
+      display="flex"
+      direction="column"
+      justifyContent="center"
+      alignItems="center"
+      padding={2}
+      backgroundColor="secondary"
+      borderRadius="default"
+      gap={1}
+      flex="1 1 0"
+      minWidth={0}
+      width="100%"
+      height={fullHeight ? '100%' : undefined}
+    >
       <div className={styles.label}>{children}</div>
       <div className={`${styles.value} ${colorClass}`}>{value}</div>
-    </div>
+    </Box>
   );
 }
 
 const getStatBoxStyles = (theme: GrafanaTheme2) => ({
-  statBox: css({
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: theme.spacing(2),
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.default,
-    gap: theme.spacing(1),
-    flex: '1 1 0',
-    minWidth: 0,
-    width: '100%',
-    alignSelf: 'stretch',
-  }),
-  fullHeight: css({
-    height: '100%',
-  }),
   label: css({
     fontSize: theme.typography.bodySmall.fontSize,
     color: theme.colors.text.primary,
@@ -204,19 +200,19 @@ function SummaryStatsContent() {
   const rules = countRules(ruleDfv, alertstateFilter);
 
   return (
-    <Stack direction="column" gap={2}>
+    <Grid gap={2}>
       {alertstateFilter === PromAlertingRuleState.Firing && (
-        <Stack direction={{ xs: 'column', md: 'row' }} gap={2} wrap height="100%">
+        <Grid columns={2} gap={2}>
           <StatBox i18nKey="alerting.triage.firing-instances-count" value={instances.firing} color="error" fullHeight>
             <Trans i18nKey="alerting.triage.firing-instances-count">Firing alert instances</Trans>
           </StatBox>
           <StatBox i18nKey="alerting.triage.firing-rules-count" value={rules.firing} color="error" fullHeight>
-            <Trans i18nKey="alerting.triage.firing-rules-count">Firing alert rules</Trans>
+            <Trans i18nKey="alerting.triage.rules-with-firing-instances">Alert rules with firing instances</Trans>
           </StatBox>
-        </Stack>
+        </Grid>
       )}
       {alertstateFilter === PromAlertingRuleState.Pending && (
-        <Stack direction={{ xs: 'column', md: 'row' }} gap={2} wrap height="100%">
+        <Grid columns={2} gap={2}>
           <StatBox
             i18nKey="alerting.triage.pending-instances-count"
             value={instances.pending}
@@ -233,29 +229,29 @@ function SummaryStatsContent() {
           >
             <Trans i18nKey="alerting.triage.rules-with-pending-instances">Alert rules with pending instances</Trans>
           </StatBox>
-        </Stack>
+        </Grid>
       )}
       {!alertstateFilter && (
         <>
-          <Stack direction={{ xs: 'column', md: 'row' }} gap={2} wrap>
+          <Grid columns={2} gap={2}>
             <StatBox i18nKey="alerting.triage.firing-instances-count" value={instances.firing} color="error">
               <Trans i18nKey="alerting.triage.firing-instances-count">Firing alert instances</Trans>
             </StatBox>
             <StatBox i18nKey="alerting.triage.firing-rules-count" value={rules.firing} color="error">
-              <Trans i18nKey="alerting.triage.firing-rules-count">Firing alert rules</Trans>
+              <Trans i18nKey="alerting.triage.rules-with-firing-instances">Alert rules with firing instances</Trans>
             </StatBox>
-          </Stack>
-          <Stack direction={{ xs: 'column', md: 'row' }} gap={2} wrap>
+          </Grid>
+          <Grid columns={2} gap={2}>
             <StatBox i18nKey="alerting.triage.pending-instances-count" value={instances.pending} color="warning">
               <Trans i18nKey="alerting.triage.pending-instances-count">Pending alert instances</Trans>
             </StatBox>
             <StatBox i18nKey="alerting.triage.pending-rules-count" value={rules.pending} color="warning">
               <Trans i18nKey="alerting.triage.pending-rules-count">Pending alert rules</Trans>
             </StatBox>
-          </Stack>
+          </Grid>
         </>
       )}
-    </Stack>
+    </Grid>
   );
 }
 
