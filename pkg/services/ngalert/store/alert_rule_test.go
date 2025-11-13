@@ -2073,7 +2073,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		}
 	})
 
-	t.Run("filter by TitleSearch", func(t *testing.T) {
+	t.Run("filter by SearchTitle", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
@@ -2133,7 +2133,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				query := &models.ListAlertRulesQuery{
 					OrgID:       orgID,
-					TitleSearch: tt.titleSearch,
+					SearchTitle: tt.titleSearch,
 				}
 				result, err := store.ListAlertRules(context.Background(), query)
 				require.NoError(t, err)

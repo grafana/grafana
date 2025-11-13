@@ -496,7 +496,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 			PanelID:       panelID,
 			RuleGroups:    ruleGroups,
 			ReceiverName:  receiverName,
-			TitleSearch:   title,
+			SearchTitle:   title,
 		},
 		Limit:         maxGroups,
 		ContinueToken: nextToken,
@@ -635,7 +635,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		PanelID:       panelID,
 		RuleGroups:    ruleGroups,
 		ReceiverName:  receiverName,
-		TitleSearch:   title,
+		SearchTitle:   title,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {
