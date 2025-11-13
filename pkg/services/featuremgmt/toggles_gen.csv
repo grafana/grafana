@@ -177,7 +177,6 @@ alertingAIAnalyzeCentralStateHistory,experimental,@grafana/alerting-squad,false,
 alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true
 unifiedStorageSearchUI,experimental,@grafana/search-and-storage,false,false,false
 elasticsearchCrossClusterSearch,GA,@grafana/partner-datasources,false,false,false
-unifiedHistory,experimental,@grafana/grafana-search-navigate-organise,false,false,true
 lokiLabelNamesQueryApi,GA,@grafana/observability-logs,false,false,false
 k8SFolderCounts,experimental,@grafana/search-and-storage,false,false,false
 k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false

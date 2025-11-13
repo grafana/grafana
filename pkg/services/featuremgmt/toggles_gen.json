@@ -3572,8 +3572,12 @@
     {
       "metadata": {
         "name": "unifiedHistory",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-12-13T10:41:18Z"
+        "resourceVersion": "1762958248290",
+        "creationTimestamp": "2024-12-13T10:41:18Z",
+        "deletionTimestamp": "2025-11-13T16:25:53Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Displays the navigation history so the user can navigate back to previous pages",
