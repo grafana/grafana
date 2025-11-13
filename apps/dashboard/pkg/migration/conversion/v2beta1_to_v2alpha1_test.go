@@ -18,11 +18,6 @@ import (
 	migrationtestutil "github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 )
 
-// TODO: Implement tests for v1beta1 round-trip conversions once v2alpha1_to_v1beta1 is implemented
-// These tests should be added as part of step 3 in the plan:
-// - TestV1beta1ToV2beta1ToV1beta1RoundTrip: v1beta1 → v2beta1 → v2alpha1 → v1beta1
-// - TestV1beta1ToV2alpha1ToV1beta1RoundTrip: v1beta1 → v2alpha1 → v1beta1
-
 // TestV2beta1ToV2alpha1RoundTrip tests round-trip conversion: v2beta1 → v2alpha1 → v2beta1
 // This ensures no data loss during conversion between v2 versions
 func TestV2beta1ToV2alpha1RoundTrip(t *testing.T) {
@@ -587,42 +582,4 @@ func stringPtr(s string) *string {
 // Helper function to create bool pointer
 func boolPtr(b bool) *bool {
 	return &b
-}
-
-// normalizeDashboardJSON normalizes a dashboard JSON structure for comparison
-// It removes fields that may differ but don't represent data loss (like version, id, etc.)
-func normalizeDashboardJSON(dashboard interface{}) map[string]interface{} {
-	// Marshal and unmarshal to get a clean map
-	dashBytes, err := json.Marshal(dashboard)
-	if err != nil {
-		return nil
-	}
-
-	var normalized map[string]interface{}
-	err = json.Unmarshal(dashBytes, &normalized)
-	if err != nil {
-		return nil
-	}
-
-	// Remove fields that may differ but don't represent data loss
-	// These are typically metadata fields that get updated during conversion
-	delete(normalized, "version")
-	delete(normalized, "id")
-	delete(normalized, "uid") // UID might be set differently
-	delete(normalized, "gnetId")
-
-	// Normalize panels array
-	if panels, ok := normalized["panels"].([]interface{}); ok {
-		normalizedPanels := make([]interface{}, 0, len(panels))
-		for _, p := range panels {
-			if panelMap, ok := p.(map[string]interface{}); ok {
-				// Remove panel id for comparison (may be regenerated)
-				delete(panelMap, "id")
-				normalizedPanels = append(normalizedPanels, panelMap)
-			}
-		}
-		normalized["panels"] = normalizedPanels
-	}
-
-	return normalized
 }
