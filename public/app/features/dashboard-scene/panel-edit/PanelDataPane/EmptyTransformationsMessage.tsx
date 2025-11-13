@@ -84,12 +84,12 @@ export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
             <Stack direction="row" gap={2}>
               <Button
                 icon="plus"
-                variant="secondary"
+                variant="primary"
                 size="md"
                 onClick={props.onShowPicker}
                 data-testid={selectors.components.Transforms.addTransformationButton}
               >
-                <Trans i18nKey="dashboard-scene.empty-transformations-message.see-more">See more</Trans>
+                <Trans i18nKey="dashboard-scene.empty-transformations-message.show-more">Show more</Trans>
               </Button>
             </Stack>
           </Stack>

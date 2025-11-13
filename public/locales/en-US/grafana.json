@@ -5922,7 +5922,7 @@
     },
     "empty-transformations-message": {
       "add-transformation": "Add transformation",
-      "see-more": "See more",
+      "show-more": "Show more",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
     },
     "general-settings-edit-view": {
