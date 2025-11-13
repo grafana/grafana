@@ -509,14 +509,14 @@ func NewTopMetrics() *TopMetrics {
 	}
 }
 
-type RawQuery struct {
+type RawDSLQuery struct {
 	Query     *string        `json:"query,omitempty"`
 	ProcessAs *ProcessAsType `json:"processAs,omitempty"`
 }
 
-// NewRawQuery creates a new RawQuery object.
-func NewRawQuery() *RawQuery {
-	return &RawQuery{}
+// NewRawDSLQuery creates a new RawDSLQuery object.
+func NewRawDSLQuery() *RawDSLQuery {
+	return &RawDSLQuery{}
 }
 
 type ProcessAsType string
@@ -813,8 +813,8 @@ type ElasticsearchDataQuery struct {
 	// List of bucket aggregations
 	BucketAggs []BucketAggregation `json:"bucketAggs,omitempty"`
 	// List of metric aggregations
-	Metrics  []MetricAggregation `json:"metrics,omitempty"`
-	RawQuery *RawQuery           `json:"rawQuery,omitempty"`
+	Metrics     []MetricAggregation `json:"metrics,omitempty"`
+	RawDSLQuery *RawDSLQuery        `json:"rawDSLQuery,omitempty"`
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.

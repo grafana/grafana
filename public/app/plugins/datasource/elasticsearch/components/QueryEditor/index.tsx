@@ -116,8 +116,8 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
 
       {isRawDSL ? (
         <RawQueryEditor
-          value={value.rawQuery}
-          onChange={(rawQuery) => dispatch(changeRawQuery(rawQuery))}
+          value={value.rawDSLQuery}
+          onChange={(rawDSLQuery) => dispatch(changeRawQuery(rawDSLQuery))}
           onRunQuery={onRunQuery}
         />
       ) : (

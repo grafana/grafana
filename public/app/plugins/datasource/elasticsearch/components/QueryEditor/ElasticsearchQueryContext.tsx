@@ -40,10 +40,10 @@ export const ElasticsearchProvider = ({
     [onChange, onRunQuery]
   );
 
-  const reducer = combineReducers<Pick<ElasticsearchDataQuery, 'query' | 'alias' | 'rawQuery' | 'metrics' | 'bucketAggs'>>({
+  const reducer = combineReducers<Pick<ElasticsearchDataQuery, 'query' | 'alias' | 'rawDSLQuery' | 'metrics' | 'bucketAggs'>>({
     query: queryReducer,
     alias: aliasPatternReducer,
-    rawQuery: rawQueryReducer,
+    rawDSLQuery: rawQueryReducer,
     metrics: metricsReducer,
     bucketAggs: createBucketAggsReducer(datasource.timeField),
   });

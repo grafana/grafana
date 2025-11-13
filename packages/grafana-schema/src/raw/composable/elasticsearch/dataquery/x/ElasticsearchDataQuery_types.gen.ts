@@ -39,7 +39,7 @@ export interface DateHistogram extends BucketAggregationWithField {
   type: 'date_histogram';
 }
 
-export interface RawQuery {
+export interface RawDSLQuery {
   processAs?: ProcessAsType;
   query?: string;
 }
@@ -411,7 +411,7 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    * Lucene query
    */
   query?: string;
-  rawQuery?: RawQuery;
+  rawDSLQuery?: RawDSLQuery;
   /**
    * Name of time field
    */

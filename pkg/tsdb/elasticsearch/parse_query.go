@@ -43,15 +43,15 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 		// please do not create a new field with that name, to avoid potential problems with old, persisted queries.
 
 		rawQuery := model.Get("query").MustString()
-		rawDSLQuery := dataquery.RawQuery{}
-		rr := model.Get("rawDslQuery")
+		rawDSLQuery := dataquery.RawDSLQuery{}
+		rr := model.Get("rawDSLQuery")
 		if rrBytes, err := rr.Encode(); err == nil {
 			// Try to unmarshal as the new struct format first
 			if err := json.Unmarshal(rrBytes, &rawDSLQuery); err != nil {
 				// If that fails, it might be a string (old format)
 				var rawDSLQueryString string
 				if err := json.Unmarshal(rrBytes, &rawDSLQueryString); err == nil {
-					rawDSLQuery = dataquery.RawQuery{
+					rawDSLQuery = dataquery.RawDSLQuery{
 						Query: &rawDSLQueryString,
 					}
 				}

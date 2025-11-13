@@ -5,11 +5,11 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { EditorField, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { CodeEditor, Monaco, monacoTypes, useStyles2, Button, Stack, Combobox } from '@grafana/ui';
 
-import { ProcessAsType, RawQuery } from '../../dataquery.gen';
+import { ProcessAsType, RawDSLQuery } from '../../dataquery.gen';
 
 interface Props {
-  value?: RawQuery;
-  onChange: (value: RawQuery) => void;
+  value?: RawDSLQuery;
+  onChange: (value: RawDSLQuery) => void;
   onRunQuery: () => void;
 }
 
