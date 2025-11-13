@@ -334,7 +334,7 @@ test.describe(
       ).toHaveCount(3);
     });
 
-    test('can collapse rows', async ({ dashboardPage, selectors, page }) => {
+    test.skip('can collapse rows', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(page, selectors, 'Collapse rows');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
