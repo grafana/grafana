@@ -21,7 +21,7 @@ func TestCommenter_Comment_FailedToComment(t *testing.T) {
 	repo := NewMockPullRequestRepo(t)
 	repo.On("CommentPullRequest", context.Background(), 1, mock.Anything).Return(errors.New("failed"))
 
-	commenter := NewCommenter()
+	commenter := NewCommenter(false)
 	err := commenter.Comment(context.Background(), repo, 1, changeInfo{})
 	require.Error(t, err)
 }
@@ -138,9 +138,78 @@ func TestGenerateComment(t *testing.T) {
 			require.NoError(t, err)
 			repo.On("CommentPullRequest", context.Background(), 1, string(expect)).Return(nil)
 
-			commenter := NewCommenter()
+			commenter := NewCommenter(false)
 			err = commenter.Comment(context.Background(), repo, 1, tc.Input)
 			require.NoError(t, err)
 		})
 	}
+}
+
+func TestCommenter_ShowImageRendererNote(t *testing.T) {
+	t.Run("note appears when showImageRendererNote is true", func(t *testing.T) {
+		repo := NewMockPullRequestRepo(t)
+		info := changeInfo{
+			GrafanaBaseURL: "http://host/",
+			Changes: []fileChangeInfo{
+				{
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "file.json",
+						},
+						Action: v0alpha1.ResourceActionUpdate,
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+					},
+					Title:      "Existing Dashboard",
+					GrafanaURL: "http://grafana/d/uid",
+					PreviewURL: "http://grafana/admin/preview",
+				},
+			},
+			MissingImageRenderer: true,
+		}
+
+		var capturedComment string
+		repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+			capturedComment = comment
+			return true
+		})).Return(nil)
+
+		commenter := NewCommenter(true)
+		err := commenter.Comment(context.Background(), repo, 1, info)
+		require.NoError(t, err)
+		require.Contains(t, capturedComment, "NOTE: The image renderer is not configured")
+		require.Contains(t, capturedComment, "https://grafana.com/docs/grafana/latest/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering")
+	})
+
+	t.Run("note does not appear when showImageRendererNote is false", func(t *testing.T) {
+		repo := NewMockPullRequestRepo(t)
+		info := changeInfo{
+			GrafanaBaseURL: "http://host/",
+			Changes: []fileChangeInfo{
+				{
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "file.json",
+						},
+						Action: v0alpha1.ResourceActionUpdate,
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+					},
+					Title:      "Existing Dashboard",
+					GrafanaURL: "http://grafana/d/uid",
+					PreviewURL: "http://grafana/admin/preview",
+				},
+			},
+			MissingImageRenderer: true,
+		}
+
+		var capturedComment string
+		repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+			capturedComment = comment
+			return true
+		})).Return(nil)
+
+		commenter := NewCommenter(false)
+		err := commenter.Comment(context.Background(), repo, 1, info)
+		require.NoError(t, err)
+		require.NotContains(t, capturedComment, "NOTE: The image renderer is not configured")
+	})
 }

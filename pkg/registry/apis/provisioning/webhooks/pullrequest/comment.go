@@ -10,16 +10,18 @@ import (
 )
 
 type commenter struct {
-	templateDashboard  *template.Template
-	templateTable      *template.Template
-	templateRenderInfo *template.Template
+	templateDashboard      *template.Template
+	templateTable          *template.Template
+	templateRenderInfo     *template.Template
+	showImageRendererNote  bool
 }
 
-func NewCommenter() Commenter {
+func NewCommenter(showImageRendererNote bool) Commenter {
 	return &commenter{
-		templateDashboard:  template.Must(template.New("dashboard").Parse(commentTemplateSingleDashboard)),
-		templateTable:      template.Must(template.New("table").Parse(commentTemplateTable)),
-		templateRenderInfo: template.Must(template.New("setup").Parse(commentTemplateMissingImageRenderer)),
+		templateDashboard:     template.Must(template.New("dashboard").Parse(commentTemplateSingleDashboard)),
+		templateTable:         template.Must(template.New("table").Parse(commentTemplateTable)),
+		templateRenderInfo:    template.Must(template.New("setup").Parse(commentTemplateMissingImageRenderer)),
+		showImageRendererNote: showImageRendererNote,
 	}
 }
 
@@ -53,7 +55,7 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 		}
 	}
 
-	if info.MissingImageRenderer {
+	if info.MissingImageRenderer && c.showImageRendererNote {
 		if err := c.templateRenderInfo.Execute(&buf, info); err != nil {
 			return "", fmt.Errorf("unable to execute template: %w", err)
 		}
@@ -101,8 +103,9 @@ and {{ .SkippedFiles }} more files.
 {{ end}}
 `
 
-// TODO: this should expand and show links to setup docs
-const commentTemplateMissingImageRenderer = ``
+const commentTemplateMissingImageRenderer = `
+NOTE: The image renderer is not configured. To enable dashboard previews in pull requests, refer to the [image rendering setup documentation](https://grafana.com/docs/grafana/latest/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering).
+`
 
 // TODO: does this have some value?
 func (f *fileChangeInfo) Kind() string {
