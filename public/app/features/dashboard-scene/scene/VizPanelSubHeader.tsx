@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -9,12 +9,16 @@ import {
   sceneGraph,
   AdHocFiltersVariable,
   GroupByVariable,
+  SceneQueryRunner,
 } from '@grafana/scenes';
+import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
 
 import { PanelNonApplicableFiltersSubHeader } from './PanelNonApplicableFiltersSubHeader';
 
 export interface VizPanelSubHeaderState extends SceneObjectState {
   hideNonApplicableFilters?: boolean;
+  // todo dont need this just get it off SQR
+  datasourceRef?: DataSourceRef | null;
 }
 
 export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
@@ -30,6 +34,20 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
     if (!panel || !(panel instanceof VizPanel)) {
       throw new Error('VizPanelSubHeader can be used only for VizPanel');
     }
+
+    const dataObject = panel ? sceneGraph.getData(panel) : undefined;
+
+    this._subs.add(
+      dataObject?.subscribeToState((state) => {
+        const queryRunner = state.$data;
+
+        if (!(queryRunner instanceof SceneQueryRunner)) {
+          return;
+        }
+
+        this.setState({ datasourceRef: queryRunner.state.datasource });
+      })
+    );
   };
 
   public getAdHocFiltersVariable(): AdHocFiltersVariable | undefined {
@@ -41,42 +59,37 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
   }
 }
 
-function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHeader>) {
+export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHeader>) {
   const [shouldRenderFilters, setShouldRenderFilters] = useState(false);
+  const { datasourceRef } = model.useState();
 
   const panel = model.parent;
   const dataObject = panel ? sceneGraph.getData(panel) : undefined;
   const data = dataObject?.useState();
-  const queries = data?.data?.request?.targets ?? [];
+  const queries = useMemo(() => data?.data?.request?.targets ?? [], [data]);
   const adhocFiltersVariable = model.getAdHocFiltersVariable();
   const groupByVariable = model.getGroupByVariable();
+  const hasVariables = Boolean(adhocFiltersVariable || groupByVariable);
 
   useEffect(() => {
-    const checkDatasourceDrilldownsApplicability = async () => {
-      const queries = data?.data?.request?.targets ?? [];
-      const datasourceRef = queries.length > 0 ? queries[0].datasource : undefined;
+    if (model.state.hideNonApplicableFilters || !hasVariables || !datasourceRef) {
+      setShouldRenderFilters(false);
+      return;
+    }
 
-      if (!datasourceRef) {
-        setShouldRenderFilters(false);
-        return;
-      }
-
+    const checkDatasourceSupport = async () => {
       try {
         const datasourceSrv = getDataSourceSrv();
-        const ds = await datasourceSrv.get(datasourceRef);
-
-        // only render if datasource supports applicability and we have either adhoc filters or group by variable
-        setShouldRenderFilters(
-          Boolean(ds && ds.getDrilldownsApplicability && (adhocFiltersVariable || groupByVariable))
-        );
+        const datasource = await datasourceSrv.get(datasourceRef);
+        setShouldRenderFilters(Boolean(datasource?.getDrilldownsApplicability));
       } catch (error) {
         console.error('Error checking datasource for getDrilldownsApplicability:', error);
         setShouldRenderFilters(false);
       }
     };
 
-    checkDatasourceDrilldownsApplicability();
-  }, [panel, data, model, adhocFiltersVariable, groupByVariable]);
+    checkDatasourceSupport();
+  }, [datasourceRef, hasVariables, model.state.hideNonApplicableFilters]);
 
   if (!shouldRenderFilters) {
     return null;

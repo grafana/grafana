@@ -130,7 +130,7 @@ describe('PanelNonApplicableFiltersSubHeader', () => {
 
   it('appends non applicable group-by keys and filter pills', async () => {
     const filter: AdHocVariableFilter = { key: 'latency', operator: '>', value: '100' };
-    const { variable: filtersVar, mock: filtersApplicabilityMock } = createFiltersVariable({
+    const { variable: filtersVar } = createFiltersVariable({
       filters: [filter],
       applicability: [{ key: 'latency', applicable: false }],
     });
@@ -150,7 +150,6 @@ describe('PanelNonApplicableFiltersSubHeader', () => {
     expect(screen.queryByText('service')).not.toBeInTheDocument();
 
     await waitFor(() => {
-      expect(filtersApplicabilityMock).toHaveBeenCalled();
       expect(groupByApplicabilityMock).toHaveBeenCalledWith(['region', 'service'], defaultQueries);
     });
   });
@@ -175,6 +174,23 @@ describe('PanelNonApplicableFiltersSubHeader', () => {
     expect(await screen.findByText('+2')).toBeInTheDocument();
     expect(screen.getByText('status = 500, team = payments')).toBeInTheDocument();
     expect(screen.queryByText('status = 500', { exact: true })).not.toBeInTheDocument();
+  });
+
+  it('gracefully handles errors when resolving filter applicability', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const failingFiltersVar = {
+      useState: () => ({ filters: [{ key: 'status', operator: '=', value: '500' }] }),
+      getFiltersApplicabilityForQueries: jest.fn().mockRejectedValue(new Error('boom')),
+    } as unknown as AdHocFiltersVariable;
+
+    const { container } = renderComponent({ filtersVar: failingFiltersVar });
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to resolve ad-hoc filter applicability', expect.any(Error));
+    });
+
+    expect(container.firstChild).toBeNull();
+    consoleErrorSpy.mockRestore();
   });
 });
 

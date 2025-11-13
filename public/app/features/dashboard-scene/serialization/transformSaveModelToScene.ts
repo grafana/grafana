@@ -439,7 +439,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,
-    subHeader: new VizPanelSubHeader({}),
+    subHeader: new VizPanelSubHeader({ datasourceRef: panel.datasource }),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
