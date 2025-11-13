@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, VizPanel, sceneGraph } from '@grafana/scenes';
 import { Button, Icon, Spinner, Text, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
@@ -167,6 +167,10 @@ function VizWrapper({ panel, tableView }: VizWrapperProps) {
   const styles = useStyles2(getStyles);
   const panelToShow = tableView ?? panel;
   const { pluginId } = panel.useState();
+
+  const { data } = sceneGraph.getData(panel).useState();
+  const hasData = data?.series && data.series.length > 0 && !data.series.every((frame) => frame.length === 0);
+
   const showEmptyState =
     config.featureToggles.newVizSuggestions && pluginId === UNCONFIGURED_PANEL_PLUGIN_ID && !tableView;
 
@@ -176,9 +180,15 @@ function VizWrapper({ panel, tableView }: VizWrapperProps) {
         <div className={styles.emptyStateWrapper}>
           <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
           <Text element="p" textAlignment="center" color="secondary">
-            <Trans i18nKey="dashboard.new-panel.empty-state-message">
-              Build a query to visualize it here or go to all visualizations to add other panel types
-            </Trans>
+            {hasData ? (
+              <Trans i18nKey="dashboard.new-panel.empty-state-with-data-message">
+                Click on a suggested chart to preview it
+              </Trans>
+            ) : (
+              <Trans i18nKey="dashboard.new-panel.empty-state-message">
+                Build a query to visualize it here or go to all visualizations to add other panel types
+              </Trans>
+            )}
           </Text>
         </div>
       ) : (
