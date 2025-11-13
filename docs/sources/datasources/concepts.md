@@ -40,9 +40,9 @@ Plugins come in three types:
 
 - **Data source plugins** connect Grafana to **external data sources**. You use this type of plugin when you want to access and work with data from an external source or third party. Examples include Prometheus, MSSQL, and Databricks.
 
-- **App plugins** allow you to bundle data sources and panel plugins within a single package. They also enable you to create custom pages within Grafana, providing a dedicated space for documentation, sign-up forms, and integration with other services via HTTP. Examples include Grafana Metrics Drilldown, Azure Cloud Native Monitoring, and Redis Application.
-
 - **Panel plugins** control how data appears in Grafana dashboards. Examples of panel plugins include pie chart, candlestick, and Plotly. 
+
+- **App plugins** allow you to bundle data sources and panel plugins within a single package. They also enable you to create custom pages within Grafana, providing a dedicated space for documentation, sign-up forms, and integration with other services via HTTP. Examples include Grafana Metrics Drilldown, Azure Cloud Native Monitoring, and Redis Application.
 
 ## Integrations
 
@@ -111,11 +111,11 @@ No, integrations are much more than just dashboards. While dashboards are part o
 
 **What’s the difference between plugin types?**
 
+A data source plugin in Grafana is a software component that enables Grafana to connect to and retrieve data from various external data sources. Once you install the plugin, you can use it to configure one or more data sources. Each data source defines the actual connection details, like the server URL, authentication method, and query options.
+
 A panel plugin in Grafana is an extension that allows you to add new and custom visualizations to your Grafana dashboards. While Grafana comes with several built-in panel types (like graphs, single stats, and tables), panel plugins extend this functionality by providing specialized ways to display data. 
 
 An app plugin in Grafana is a type of plugin that provides a comprehensive, integrated, and often out-of-the-box experience within Grafana. Unlike data source plugins, which connect to external data sources, or panel plugins, which provide new visualization types, app plugins can combine various functionalities to create a more complete application-like experience. 
-
-A data source plugin in Grafana is a software component that enables Grafana to connect to and retrieve data from various external data sources. Once you install the plugin, you can use it to configure one or more data sources. Each data source defines the actual connection details, like the server URL, authentication method, and query options.
 
 ## Summary reference
 
@@ -124,7 +124,7 @@ Use the following table to compare how data sources, plugins, and integrations d
 | Concept                | Where it applies                | Purpose                                                                      | What it includes                                                                                                                              | When to use it                                                                              | Example                                                                         |
 | ---------------------- | ------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | **Data source**        | Grafana (self-hosted and Cloud) | Connects Grafana to an external system that stores metrics, logs, or traces. | Connection settings, authentication details, query configuration.                                                                             | You want to visualize data from a database, monitoring system, or API.                      | Prometheus, CloudWatch, PostgreSQL, Loki                                        |
-| **Plugin**             | Grafana (self-hosted and Cloud) | Extends Grafana’s core platform with new capabilities.                       | Data source types, panel visualizations, or complete app workflows.                                                                           | You need new data source support, visualizations, or functionality not included by default. | Plotly panel, MongoDB data source, Redis Application                            |
+| **Plugin**             | Grafana (self-hosted and Cloud) | Extends Grafana’s core platform with new capabilities.                       | Three types: data source, panel and app.                                                                           | You need to connect to a data source, or functionality not included by default. | Plotly panel, MongoDB data source, Redis Application                            |
 | **App plugin**         | Grafana (self-hosted and Cloud) | Bundles multiple plugin types and adds custom pages or UI.                   | Data source + panel plugins + custom routes and integrations.                                                                                 | You want to create a dedicated app-like experience in Grafana.                              | Azure Cloud Native Monitoring, Metrics Drilldown                                |
 | **Panel plugin**       | Grafana (self-hosted and Cloud) | Adds new visualization types to dashboards.                                  | Custom panels and visualization logic.                                                                                                        | You want to display data in new visual forms beyond Grafana’s built-ins.                    | Pie chart, Candlestick, Plotly, Geomap                                                  |
 | **Data source plugin** | Grafana (self-hosted and Cloud) | Enables Grafana to connect to a new type of external system.                 | Driver or connector code that defines how Grafana queries that system.                                                                        | You need to access data from an unsupported or proprietary backend.                         | Databricks, MongoDB, MSSQL                                                      |
