@@ -479,8 +479,8 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	// Pre-allocate results slice to preserve order and avoid race conditions.
 	// Each goroutine writes to its own index, no mutex needed.
 	type resultSlot struct {
-		obj   runtime.Object
-		valid bool
+		obj          runtime.Object
+		shouldAppend bool
 	}
 	results := make([]resultSlot, len(rsp.Items))
 
@@ -492,7 +492,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 			return err
 		}
 		if shouldAppend {
-			results[idx] = resultSlot{obj: obj, valid: true}
+			results[idx] = resultSlot{obj: obj, shouldAppend: true}
 		}
 		return nil
 	})
@@ -501,7 +501,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 
 	for _, r := range results {
-		if r.valid {
+		if r.shouldAppend {
 			v.Set(reflect.Append(v, reflect.ValueOf(r.obj).Elem()))
 		}
 	}
