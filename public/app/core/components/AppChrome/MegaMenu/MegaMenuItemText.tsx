@@ -4,7 +4,6 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Icon, IconButton, Link, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -37,9 +36,8 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
 
   return (
     <div
-      className={cx(styles.wrapper, {
+      className={cx(styles.wrapper, styles.wrapperBookmark, {
         [styles.wrapperActive]: isActive,
-        [styles.wrapperBookmark]: config.featureToggles.pinNavItems,
       })}
     >
       <LinkComponent
@@ -52,7 +50,7 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
       >
         {linkContent}
       </LinkComponent>
-      {config.featureToggles.pinNavItems && contextSrv.isSignedIn && url && url !== '/bookmarks' && (
+      {contextSrv.isSignedIn && url && url !== '/bookmarks' && (
         <IconButton
           name="bookmark"
           className={'pin-icon'}
