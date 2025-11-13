@@ -67,6 +67,7 @@ func NewSearchOptions(
 		}, nil
 	}
 	return resource.SearchOptions{
+		// it is used for search after write and throttles index updates
 		IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
 	}, nil
 }
