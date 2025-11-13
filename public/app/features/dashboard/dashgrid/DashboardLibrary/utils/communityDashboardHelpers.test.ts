@@ -104,16 +104,21 @@ describe('communityDashboardHelpers', () => {
         updatedAt: '2025-11-05T16:55:41.000Z',
       });
 
-      const dashboardDetails = {
+      const result = buildDashboardDetails(gnetDashboard);
+
+      expect(result).toEqual({
         id: '1',
         datasource: 'Test',
         dependencies: ['Test'],
         publishedBy: 'Org',
-        lastUpdate: '5 Nov 2025',
+        lastUpdate: expect.any(String), // Date format varies by locale
         grafanaComUrl: 'https://grafana.com/grafana/dashboards/1-test/',
-      };
+      });
 
-      expect(buildDashboardDetails(gnetDashboard)).toEqual(dashboardDetails);
+      // Verify the date was formatted (not the raw ISO string)
+      expect(result.lastUpdate).not.toBe('2025-11-05T16:55:41.000Z');
+      expect(result.lastUpdate).toContain('2025');
+      expect(result.lastUpdate).toMatch(/Nov/);
     });
   });
 
