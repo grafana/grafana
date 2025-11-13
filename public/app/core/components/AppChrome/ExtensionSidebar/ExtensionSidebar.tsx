@@ -61,10 +61,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
-      padding: theme.spacing(1),
       width: '100%',
       height: '100%',
       overflow: 'auto',
+      // Temp fix for AI assistant, remove in a 1-2 months
+      ' > div > div': {
+        margin: 0,
+      },
     }),
     content: css({
       flex: 1,
