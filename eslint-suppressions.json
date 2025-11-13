@@ -1894,11 +1894,6 @@
       "count": 1
     }
   },
-  "public/app/features/canvas/runtime/scene.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/commandPalette/actions/scopeActions.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 4

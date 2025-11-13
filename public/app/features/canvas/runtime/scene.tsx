@@ -370,7 +370,7 @@ export class Scene {
     }
   };
 
-  render() {
+  renderElement() {
     const hasDataLinks = this.tooltipPayload?.element?.getLinks && this.tooltipPayload.element.getLinks({}).length > 0;
     const hasActions =
       this.tooltipPayload?.element?.options.actions &&
