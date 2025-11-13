@@ -23,7 +23,7 @@ import {
   hasClientSideFilters,
   useFilteredRulesIteratorProvider,
 } from './hooks/useFilteredRulesIterator';
-import { FRONTEND_LIST_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
+import { FRONTEND_LIST_PAGE_SIZE, getSearchApiGroupPageSize } from './paginationLimits';
 
 interface FilterViewProps {
   filterState: RulesFilter;
@@ -80,7 +80,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
        */
       const { iterable, abortController } = getFilteredRulesIterator(
         filterState,
-        getApiGroupPageSize(hasClientSideFilters(filterState))
+        getSearchApiGroupPageSize(hasClientSideFilters(filterState))
       );
       const rulesBatchIterator = iterable
         .pipe(
