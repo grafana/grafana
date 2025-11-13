@@ -36,7 +36,7 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
 
   return (
     <div
-      className={cx(styles.wrapper, styles.wrapperBookmark, {
+      className={cx(styles.wrapper, {
         [styles.wrapperActive]: isActive,
       })}
     >
@@ -75,8 +75,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     justifyContent: 'space-between',
     width: '100%',
     height: '100%',
-  }),
-  wrapperBookmark: css({
     '.pin-icon': {
       visibility: 'hidden',
     },
