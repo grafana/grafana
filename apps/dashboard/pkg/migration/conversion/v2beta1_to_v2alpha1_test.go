@@ -197,8 +197,9 @@ func TestV2beta1ToV2alpha1FromOutputFiles(t *testing.T) {
 	}
 }
 
-// TestV2beta1ToV2alpha1 tests the conversion logic for v2beta1 to v2alpha1
-// covering various aspects of the conversion including empty groups, datasource extraction, etc.
+// TestV2beta1ToV2alpha1 tests the conversion logic for v2beta1 to v2alpha1.
+// The conversion uses the Group field directly as the query kind and datasource type.
+// No fallback mechanisms (provider lookup or UID inference) are used.
 func TestV2beta1ToV2alpha1(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)

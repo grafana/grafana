@@ -17,9 +17,9 @@
           "name": "test-v2alpha1-groupby-adhoc-vars"
         },
         "spec": {
-          "annotations": null,
+          "annotations": [],
           "cursorSync": "",
-          "elements": null,
+          "elements": {},
           "layout": null,
           "links": [],
           "preload": false,

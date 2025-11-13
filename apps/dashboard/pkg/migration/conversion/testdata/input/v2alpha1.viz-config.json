@@ -5,7 +5,7 @@
     "name": "test-v2alpha1-viz-config"
   },
   "spec": {
-    "annotations": null,
+    "annotations": [],
     "cursorSync": "",
     "elements": {
       "panel-1": {
@@ -207,7 +207,7 @@
       "fiscalYearStartMonth": 0
     },
     "title": "Test: V2alpha1 dashboard with viz config",
-    "variables": null
+    "variables": []
   },
   "status": {
     "conversion": {

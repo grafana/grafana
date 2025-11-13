@@ -1,13 +1,10 @@
 package conversion
 
 import (
-	"context"
-
 	"k8s.io/apimachinery/pkg/conversion"
 
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 )
 
 // Schema Migration: v2beta1 → v2alpha1
@@ -51,15 +48,10 @@ func ConvertDashboard_V2beta1_to_V2alpha1(in *dashv2beta1.Dashboard, out *dashv2
 
 func convertDashboardSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope) error {
 	// Convert annotations
-	// Empty arrays in v2beta1 should be converted to nil to match original v2alpha1 files
-	if in.Annotations == nil || len(in.Annotations) == 0 {
-		out.Annotations = nil
-	} else {
-		out.Annotations = make([]dashv2alpha1.DashboardAnnotationQueryKind, len(in.Annotations))
-		for i := range in.Annotations {
-			if err := convertAnnotationQuery_V2beta1_to_V2alpha1(&in.Annotations[i], &out.Annotations[i], scope); err != nil {
-				return err
-			}
+	out.Annotations = make([]dashv2alpha1.DashboardAnnotationQueryKind, len(in.Annotations))
+	for i := range in.Annotations {
+		if err := convertAnnotationQuery_V2beta1_to_V2alpha1(&in.Annotations[i], &out.Annotations[i], scope); err != nil {
+			return err
 		}
 	}
 
@@ -74,18 +66,13 @@ func convertDashboardSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardSpec, out
 	out.Title = in.Title
 
 	// Convert elements
-	// Empty maps in v2beta1 should be converted to nil to match original v2alpha1 files
-	if in.Elements == nil || len(in.Elements) == 0 {
-		out.Elements = nil
-	} else {
-		out.Elements = make(map[string]dashv2alpha1.DashboardElement, len(in.Elements))
-		for key, element := range in.Elements {
-			var convertedElement dashv2alpha1.DashboardElement
-			if err := convertElement_V2beta1_to_V2alpha1(&element, &convertedElement, scope); err != nil {
-				return err
-			}
-			out.Elements[key] = convertedElement
+	out.Elements = make(map[string]dashv2alpha1.DashboardElement, len(in.Elements))
+	for key, element := range in.Elements {
+		var convertedElement dashv2alpha1.DashboardElement
+		if err := convertElement_V2beta1_to_V2alpha1(&element, &convertedElement, scope); err != nil {
+			return err
 		}
+		out.Elements[key] = convertedElement
 	}
 
 	// Convert layout
@@ -94,14 +81,9 @@ func convertDashboardSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardSpec, out
 	}
 
 	// Convert links
-	// Preserve empty arrays as empty arrays (not nil) to match original v2alpha1 files
-	if in.Links == nil || len(in.Links) == 0 {
-		out.Links = []dashv2alpha1.DashboardDashboardLink{}
-	} else {
-		out.Links = make([]dashv2alpha1.DashboardDashboardLink, len(in.Links))
-		for i, link := range in.Links {
-			convertDashboardLink_V2beta1_to_V2alpha1(&link, &out.Links[i])
-		}
+	out.Links = make([]dashv2alpha1.DashboardDashboardLink, len(in.Links))
+	for i, link := range in.Links {
+		convertDashboardLink_V2beta1_to_V2alpha1(&link, &out.Links[i])
 	}
 
 	// Convert time settings
@@ -110,15 +92,10 @@ func convertDashboardSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardSpec, out
 	}
 
 	// Convert variables
-	// Empty arrays in v2beta1 should be converted to nil to match original v2alpha1 files
-	if in.Variables == nil || len(in.Variables) == 0 {
-		out.Variables = nil
-	} else {
-		out.Variables = make([]dashv2alpha1.DashboardVariableKind, len(in.Variables))
-		for i, variable := range in.Variables {
-			if err := convertVariable_V2beta1_to_V2alpha1(&variable, &out.Variables[i], scope); err != nil {
-				return err
-			}
+	out.Variables = make([]dashv2alpha1.DashboardVariableKind, len(in.Variables))
+	for i, variable := range in.Variables {
+		if err := convertVariable_V2beta1_to_V2alpha1(&variable, &out.Variables[i], scope); err != nil {
+			return err
 		}
 	}
 
@@ -155,52 +132,18 @@ func convertDataQuery_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardDataQueryKind
 
 	// Extract datasource from query
 	var datasource *dashv2alpha1.DashboardDataSourceRef
-	var queryKind string
 
-	// Always use Group as queryKind - this is the primary source of truth for the query kind in v2beta1
+	// Use Group as queryKind - this is the primary source of truth for the query kind in v2beta1
 	// Group field contains the datasource type in v2beta1
-	// Note: We check Group first, then fall back to datasource lookup if Group is empty
-	if in.Group != "" {
-		queryKind = in.Group
-	}
+	queryKind := in.Group
 
 	if in.Datasource != nil && in.Datasource.Name != nil {
 		uid := *in.Datasource.Name
-		var dsType *string
-		// Extract type from group field - if group is set, use it as datasource type too
-		if in.Group != "" {
-			dsType = &in.Group
-			// queryKind already set above
-		} else {
-			// If group is empty, try to look up datasource type from provider
-			dsProvider := migration.GetDataSourceInfoProvider()
-			if dsProvider != nil {
-				// Use background context since we don't have access to request context
-				ctx := context.Background()
-				dsInfoList := dsProvider.GetDataSourceInfo(ctx)
-				for _, dsInfo := range dsInfoList {
-					if dsInfo.UID == uid {
-						dsType = &dsInfo.Type
-						queryKind = dsInfo.Type
-						break
-					}
-				}
-			}
-			// If still not found, try to infer from common UID patterns (for test data)
-			if queryKind == "" {
-				if inferredType := inferDatasourceTypeFromUID(uid); inferredType != "" {
-					dsType = &inferredType
-					queryKind = inferredType
-				}
-			}
-		}
+
 		datasource = &dashv2alpha1.DashboardDataSourceRef{
 			Uid:  &uid,
-			Type: dsType,
+			Type: &in.Group,
 		}
-	} else {
-		// No datasource, use group as query kind
-		queryKind = in.Group
 	}
 
 	// Convert query kind: v2beta1 has kind="DataQuery", v2alpha1 uses group as kind
@@ -218,35 +161,6 @@ func convertDataQuery_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardDataQueryKind
 	}
 
 	return query, datasource, nil
-}
-
-// inferDatasourceTypeFromUID attempts to infer datasource type from common UID patterns
-// This is a fallback for cases where the datasource provider doesn't have the datasource
-// (e.g., test data with "gdev-*" UIDs)
-func inferDatasourceTypeFromUID(uid string) string {
-	// Common patterns for dev/test datasources
-	if uid == "gdev-testdata" || uid == "PD8C576611E62080A" {
-		return "grafana-testdata-datasource"
-	}
-	if uid == "gdev-prometheus" {
-		return "prometheus"
-	}
-	if uid == "gdev-postgres" || uid == "gdev-postgresql" {
-		return "grafana-postgresql-datasource"
-	}
-	if uid == "gdev-elasticsearch" || uid == "gdev-elastic" {
-		return "elasticsearch"
-	}
-	// Check if UID starts with common prefixes
-	if len(uid) > 5 && uid[:5] == "gdev-" {
-		// Try to infer from the suffix
-		suffix := uid[5:]
-		if suffix == "testdata" {
-			return "grafana-testdata-datasource"
-		}
-		return suffix // Use suffix as type for simple cases
-	}
-	return ""
 }
 
 func convertElement_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardElement, out *dashv2alpha1.DashboardElement, scope conversion.Scope) error {
@@ -273,14 +187,9 @@ func convertPanelKind_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardPanelKind, ou
 	out.Spec.Transparent = in.Spec.Transparent
 
 	// Convert links
-	// Preserve empty arrays as empty arrays (not nil) to match original v2alpha1 files
-	if in.Spec.Links == nil || len(in.Spec.Links) == 0 {
-		out.Spec.Links = []dashv2alpha1.DashboardDataLink{}
-	} else {
-		out.Spec.Links = make([]dashv2alpha1.DashboardDataLink, len(in.Spec.Links))
-		for i, link := range in.Spec.Links {
-			convertDataLink_V2beta1_to_V2alpha1(&link, &out.Spec.Links[i])
-		}
+	out.Spec.Links = make([]dashv2alpha1.DashboardDataLink, len(in.Spec.Links))
+	for i, link := range in.Spec.Links {
+		convertDataLink_V2beta1_to_V2alpha1(&link, &out.Spec.Links[i])
 	}
 
 	// Convert data (QueryGroup)
