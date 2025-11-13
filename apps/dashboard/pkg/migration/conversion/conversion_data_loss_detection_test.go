@@ -828,10 +828,8 @@ func TestWithConversionValidation_DataLoss(t *testing.T) {
 func TestDataLossDetectionOnAllInputFiles(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := testutil.NewDataSourceProvider(testutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
-
 	libPanelProvider := testutil.NewFakeLibraryPanelProvider()
-	migration.InitializeLibraryPanelProvider(libPanelProvider)
+	migration.Initialize(dsProvider, libPanelProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()

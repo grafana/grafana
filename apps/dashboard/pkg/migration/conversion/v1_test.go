@@ -16,9 +16,9 @@ import (
 
 // TestV1ConversionErrorHandling tests that v1 conversion functions properly handle errors
 func TestV1ConversionErrorHandling(t *testing.T) {
-	// Initialize the migrator with a test data source provider
+	// Initialize the migrator with a test data source provider and library panel provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	migration.Initialize(dsProvider, migrationtestutil.NewFakeLibraryPanelProvider())
 
 	t.Run("Convert_V1beta1_to_V2alpha1 sets status on conversion error", func(t *testing.T) {
 		// Create a dashboard that will cause conversion to fail
