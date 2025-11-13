@@ -19,7 +19,7 @@ test.use({
 });
 
 // Skipping due to failing test in CI
-test.skip(
+test.describe(
   'Grouping panels',
   {
     tag: ['@dashboards'],
