@@ -18,6 +18,10 @@ export interface ThemeBreakpoints {
   unit: string;
   up: (key: ThemeBreakpointsKey | number) => string;
   down: (key: ThemeBreakpointsKey | number) => string;
+  container: {
+    up: (key: ThemeBreakpointsKey | number, name?: string) => string;
+    down: (key: ThemeBreakpointsKey | number, name?: string) => string;
+  };
 }
 
 /** @internal */
@@ -44,6 +48,18 @@ export function createBreakpoints(): ThemeBreakpoints {
     return `@media (max-width:${value - step / 100}${unit})`;
   }
 
+  function containerUp(key: ThemeBreakpointsKey | number, name?: string) {
+    const value = typeof key === 'number' ? key : values[key];
+    const query = typeof name === 'string' ? `@container ${name}` : '@container';
+    return `${query} (width >= ${value}${unit})`;
+  }
+
+  function containerDown(key: ThemeBreakpointsKey | number, name?: string) {
+    const value = typeof key === 'number' ? key : values[key];
+    const query = typeof name === 'string' ? `@container ${name}` : '@container';
+    return `${query} (width < ${value}${unit})`;
+  }
+
   // TODO add functions for between and only
 
   return {
@@ -52,5 +68,9 @@ export function createBreakpoints(): ThemeBreakpoints {
     down,
     keys,
     unit,
+    container: {
+      up: containerUp,
+      down: containerDown,
+    },
   };
 }
