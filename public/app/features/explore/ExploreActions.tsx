@@ -1,7 +1,6 @@
 import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
 import { useEffect, useState } from 'react';
 
-import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -76,7 +75,7 @@ export const ExploreActions = () => {
         return pane?.datasourceInstance?.uid === MIXED_DATASOURCE_NAME;
       });
 
-      if (config.featureToggles.correlations && canWriteCorrelations && !hasMixed) {
+      if (canWriteCorrelations && !hasMixed) {
         actionsArr.push({
           id: 'explore/correlations-editor',
           name: 'Correlations editor',
