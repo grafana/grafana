@@ -139,7 +139,6 @@ func NewInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
 		}
 		pgxlogger.Debug("Successfully connected to Postgres")
 		return handler, nil
-
 	}
 }
 

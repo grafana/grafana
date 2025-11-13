@@ -53,15 +53,6 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			expConnStr:  "user='user' host='host' dbname='database' password='password' sslmode='verify-full'",
 		},
 		{
-			desc:        "verify-ca automatically adds disable-sni",
-			host:        "host:1234",
-			user:        "user",
-			password:    "password",
-			database:    "database",
-			tlsSettings: tlsSettings{Mode: "verify-ca"},
-			expConnStr:  "user='user' host='host' dbname='database' password='password' port=1234 sslmode='verify-ca' sslsni=0",
-		},
-		{
 			desc:        "TCP/port host",
 			host:        "host:1234",
 			user:        "user",

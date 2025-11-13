@@ -167,14 +167,11 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 			cnnstr := getCnnStr()
 
 			p, handler, err := newPostgres(t.Context(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
-
-			t.Cleanup((func() {
-				_, err := p.Exec(t.Context(), "DROP TABLE tbl")
-				require.NoError(t, err)
-				p.Close()
-			}))
-
 			require.NoError(t, err)
+
+			t.Cleanup(func() {
+				p.Close()
+			})
 
 			sqlFilePath := filepath.Join("testdata", test.format, test.name+".sql")
 			goldenFileName := filepath.Join(test.format, test.name+".golden")
