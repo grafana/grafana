@@ -1003,7 +1003,7 @@
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 42,
+  "schemaVersion": 43,
   "tags": [
     "gdev",
     "panel-tests",
