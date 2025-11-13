@@ -1894,21 +1894,6 @@
       "count": 1
     }
   },
-  "public/app/features/canvas/runtime/element.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/canvas/runtime/frame.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/canvas/runtime/root.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/canvas/runtime/scene.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -4523,16 +4508,6 @@
     }
   },
   "public/app/plugins/panel/canvas/CanvasPanel.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/canvas/components/connections/Connections.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/canvas/components/connections/Connections2.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }

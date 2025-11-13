@@ -43,7 +43,7 @@ export class RootElement extends FrameState {
     this.div = target;
   };
 
-  render() {
+  renderElement() {
     return (
       <div
         onContextMenu={(event) => event.preventDefault()}
@@ -52,7 +52,7 @@ export class RootElement extends FrameState {
         style={{ ...this.sizeStyle, ...this.dataStyle }}
       >
         {this.elements.map((v) => (
-          <Fragment key={v.UID}>{v.render()}</Fragment>
+          <Fragment key={v.UID}>{v.renderElement()}</Fragment>
         ))}
       </div>
     );

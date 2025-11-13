@@ -388,8 +388,8 @@ export class Scene {
 
     const sceneDiv = (
       <>
-        {this.connections.render()}
-        {this.root.render()}
+        {this.connections.renderElement()}
+        {this.root.renderElement()}
         {this.isEditingEnabled && (
           <Portal>
             <CanvasContextMenu
