@@ -20,6 +20,10 @@ import (
 )
 
 func New(cfg app.Config) (app.App, error) {
+	// Needed until https://github.com/grafana/grafana-app-sdk/pull/1077
+	if cfg.KubeConfig.APIPath == "" {
+		cfg.KubeConfig.APIPath = "apis"
+	}
 	// Read config
 	specificConfig, ok := cfg.SpecificConfig.(checkregistry.AdvisorAppConfig)
 	if !ok {

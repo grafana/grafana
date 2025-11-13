@@ -6750,9 +6750,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Mais detalhes sobre o erro"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "Adicionar csv ou planilha"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Fonte de dados do Adobe Analytics",
@@ -11762,6 +11759,11 @@
       "path-description": "Caminho do sistema de arquivos local para o repositório",
       "path-label": "Diretório do repositório",
       "path-required": "O diretório do repositório é obrigatório"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {

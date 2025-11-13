@@ -4378,8 +4378,6 @@
       "next-button": "Next",
       "save-button": "Save"
     },
-    "page-content": "To enable Correlations, add it in the Grafana config:",
-    "page-heading": "Correlations are disabled",
     "query-editor": {
       "control-rules": "The selected target data source must export a query editor.",
       "data-source-text": "Please select a target data source first.",
@@ -6750,9 +6748,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "More details about the error"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "Add csv or spreadsheet"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Adobe Analytics datasource",
@@ -7470,6 +7465,7 @@
       "label-resource-attributes": "Resource attributes",
       "label-span-attributes": "Span attributes",
       "label-stack-trace": "Stack trace",
+      "label-warnings": "Warnings",
       "overview-items": {
         "label": {
           "child-count": "Child Count:",
@@ -7478,8 +7474,7 @@
           "start-time": "Start Time:"
         }
       },
-      "share-span": "Share",
-      "warnings": "Warnings"
+      "share-span": "Share"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Select max span operator",
