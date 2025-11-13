@@ -51,14 +51,13 @@ func ConvertDashboard_V2beta1_to_V2alpha1(in *dashv2beta1.Dashboard, out *dashv2
 
 func convertDashboardSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope) error {
 	// Convert annotations
-	if in.Annotations == nil {
+	// Empty arrays in v2beta1 should be converted to nil to match original v2alpha1 files
+	if in.Annotations == nil || len(in.Annotations) == 0 {
 		out.Annotations = nil
-	} else if len(in.Annotations) == 0 {
-		out.Annotations = []dashv2alpha1.DashboardAnnotationQueryKind{}
 	} else {
 		out.Annotations = make([]dashv2alpha1.DashboardAnnotationQueryKind, len(in.Annotations))
-		for i, annotation := range in.Annotations {
-			if err := convertAnnotationQuery_V2beta1_to_V2alpha1(&annotation, &out.Annotations[i], scope); err != nil {
+		for i := range in.Annotations {
+			if err := convertAnnotationQuery_V2beta1_to_V2alpha1(&in.Annotations[i], &out.Annotations[i], scope); err != nil {
 				return err
 			}
 		}
@@ -75,10 +74,9 @@ func convertDashboardSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardSpec, out
 	out.Title = in.Title
 
 	// Convert elements
-	if in.Elements == nil {
+	// Empty maps in v2beta1 should be converted to nil to match original v2alpha1 files
+	if in.Elements == nil || len(in.Elements) == 0 {
 		out.Elements = nil
-	} else if len(in.Elements) == 0 {
-		out.Elements = map[string]dashv2alpha1.DashboardElement{}
 	} else {
 		out.Elements = make(map[string]dashv2alpha1.DashboardElement, len(in.Elements))
 		for key, element := range in.Elements {
@@ -96,9 +94,8 @@ func convertDashboardSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardSpec, out
 	}
 
 	// Convert links
-	if in.Links == nil {
-		out.Links = nil
-	} else if len(in.Links) == 0 {
+	// Preserve empty arrays as empty arrays (not nil) to match original v2alpha1 files
+	if in.Links == nil || len(in.Links) == 0 {
 		out.Links = []dashv2alpha1.DashboardDashboardLink{}
 	} else {
 		out.Links = make([]dashv2alpha1.DashboardDashboardLink, len(in.Links))
@@ -113,10 +110,9 @@ func convertDashboardSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardSpec, out
 	}
 
 	// Convert variables
-	if in.Variables == nil {
+	// Empty arrays in v2beta1 should be converted to nil to match original v2alpha1 files
+	if in.Variables == nil || len(in.Variables) == 0 {
 		out.Variables = nil
-	} else if len(in.Variables) == 0 {
-		out.Variables = []dashv2alpha1.DashboardVariableKind{}
 	} else {
 		out.Variables = make([]dashv2alpha1.DashboardVariableKind, len(in.Variables))
 		for i, variable := range in.Variables {
@@ -160,13 +156,21 @@ func convertDataQuery_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardDataQueryKind
 	// Extract datasource from query
 	var datasource *dashv2alpha1.DashboardDataSourceRef
 	var queryKind string
+
+	// Always use Group as queryKind - this is the primary source of truth for the query kind in v2beta1
+	// Group field contains the datasource type in v2beta1
+	// Note: We check Group first, then fall back to datasource lookup if Group is empty
+	if in.Group != "" {
+		queryKind = in.Group
+	}
+
 	if in.Datasource != nil && in.Datasource.Name != nil {
 		uid := *in.Datasource.Name
 		var dsType *string
-		// Extract type from group field
+		// Extract type from group field - if group is set, use it as datasource type too
 		if in.Group != "" {
 			dsType = &in.Group
-			queryKind = in.Group
+			// queryKind already set above
 		} else {
 			// If group is empty, try to look up datasource type from provider
 			dsProvider := migration.GetDataSourceInfoProvider()
@@ -269,9 +273,8 @@ func convertPanelKind_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardPanelKind, ou
 	out.Spec.Transparent = in.Spec.Transparent
 
 	// Convert links
-	if in.Spec.Links == nil {
-		out.Spec.Links = nil
-	} else if len(in.Spec.Links) == 0 {
+	// Preserve empty arrays as empty arrays (not nil) to match original v2alpha1 files
+	if in.Spec.Links == nil || len(in.Spec.Links) == 0 {
 		out.Spec.Links = []dashv2alpha1.DashboardDataLink{}
 	} else {
 		out.Spec.Links = make([]dashv2alpha1.DashboardDataLink, len(in.Spec.Links))
@@ -903,12 +906,9 @@ func convertStringOrArrayOfString_V2beta1_to_V2alpha1(in dashv2beta1.DashboardSt
 	out := dashv2alpha1.DashboardStringOrArrayOfString{
 		ArrayOfString: in.ArrayOfString,
 	}
-	// Convert String field: if it's an empty string, set to nil
-	if in.String != nil && *in.String != "" {
-		out.String = in.String
-	} else {
-		out.String = nil
-	}
+	// Preserve String field as-is to match unmarshaler behavior (null unmarshals to "")
+	// The unmarshaler converts null to empty string, so we preserve empty strings
+	out.String = in.String
 	return out
 }
 

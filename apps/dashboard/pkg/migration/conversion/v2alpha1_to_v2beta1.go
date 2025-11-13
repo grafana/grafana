@@ -132,20 +132,25 @@ func convertDataQuery_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardDataQueryKin
 		out.Kind = "DataQuery"
 		out.Version = "v0"
 		out.Spec = in.Spec
-		// Don't set group field by default - only set if datasource is present
 	}
 
-	// Convert datasource reference and set group from datasource type
+	// Convert datasource reference and set group
+	// Priority: 1) datasource.Type, 2) in.Kind (if no datasource or datasource.Type is empty)
 	if datasource != nil {
 		out.Datasource = &dashv2beta1.DashboardV2beta1DataQueryKindDatasource{}
 		if datasource.Uid != nil {
 			out.Datasource.Name = datasource.Uid
 		}
-		// Set group to datasource type to match frontend behavior
-		// Only set group if datasource type is not empty (matches frontend logic)
+		// Set group to datasource type if available
 		if datasource.Type != nil && *datasource.Type != "" {
 			out.Group = *datasource.Type
 		}
+	}
+
+	// Fallback: if group is still empty and we have a query with a kind, use the kind as group
+	// This preserves the datasource type information when datasource reference is missing
+	if out.Group == "" && in != nil && in.Kind != "" {
+		out.Group = in.Kind
 	}
 
 	return nil
@@ -761,9 +766,20 @@ func convertQueryVariableSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardQuer
 func convertVariableOption_V2alpha1_to_V2beta1(in dashv2alpha1.DashboardVariableOption) dashv2beta1.DashboardVariableOption {
 	return dashv2beta1.DashboardVariableOption{
 		Selected: in.Selected,
-		Text:     dashv2beta1.DashboardStringOrArrayOfString(in.Text),
-		Value:    dashv2beta1.DashboardStringOrArrayOfString(in.Value),
+		Text:     convertStringOrArrayOfString_V2alpha1_to_V2beta1(in.Text),
+		Value:    convertStringOrArrayOfString_V2alpha1_to_V2beta1(in.Value),
 	}
+}
+
+// convertStringOrArrayOfString_V2alpha1_to_V2beta1 preserves empty strings to match unmarshaler behavior
+func convertStringOrArrayOfString_V2alpha1_to_V2beta1(in dashv2alpha1.DashboardStringOrArrayOfString) dashv2beta1.DashboardStringOrArrayOfString {
+	out := dashv2beta1.DashboardStringOrArrayOfString{
+		ArrayOfString: in.ArrayOfString,
+	}
+	// Preserve String field as-is to match unmarshaler behavior (null unmarshals to "")
+	// The unmarshaler converts null to empty string, so we preserve empty strings
+	out.String = in.String
+	return out
 }
 
 func convertVariableOptionPtr_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableOption) *dashv2beta1.DashboardVariableOption {

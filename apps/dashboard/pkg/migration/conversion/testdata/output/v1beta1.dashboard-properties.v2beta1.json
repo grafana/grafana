@@ -14,7 +14,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "DataQuery",
             "version": "v0",
             "spec": {
               "refId": "Anno"
@@ -48,7 +48,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "DataQuery",
                       "version": "v0",
                       "spec": {}
                     },

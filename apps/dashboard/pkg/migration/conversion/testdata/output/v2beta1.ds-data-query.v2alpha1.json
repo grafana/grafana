@@ -1,6 +1,6 @@
 {
   "kind": "Dashboard",
-  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "apiVersion": "dashboard.grafana.app/v2alpha1",
   "metadata": {
     "name": "test-v2alpha1-annotations"
   },
@@ -9,13 +9,12 @@
       {
         "kind": "AnnotationQuery",
         "spec": {
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
           "query": {
-            "kind": "DataQuery",
-            "group": "grafana",
-            "version": "v0",
-            "datasource": {
-              "name": "-- Grafana --"
-            },
+            "kind": "grafana",
             "spec": {
               "limit": 100,
               "matchAny": false,
@@ -33,13 +32,12 @@
       {
         "kind": "AnnotationQuery",
         "spec": {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
           "query": {
-            "kind": "DataQuery",
-            "group": "grafana-testdata-datasource",
-            "version": "v0",
-            "datasource": {
-              "name": "PD8C576611E62080A"
-            },
+            "kind": "grafana-testdata-datasource",
             "spec": {
               "lines": 10,
               "refId": "Anno",
@@ -57,9 +55,7 @@
         "kind": "AnnotationQuery",
         "spec": {
           "query": {
-            "kind": "DataQuery",
-            "group": "prometheus",
-            "version": "v0",
+            "kind": "prometheus",
             "spec": {
               "lines": 10,
               "refId": "Anno",
@@ -76,13 +72,12 @@
       {
         "kind": "AnnotationQuery",
         "spec": {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "gdev-prometheus"
+          },
           "query": {
-            "kind": "DataQuery",
-            "group": "prometheus",
-            "version": "v0",
-            "datasource": {
-              "name": "gdev-prometheus"
-            },
+            "kind": "prometheus",
             "spec": {
               "expr": "{action=\"add_client\"}",
               "interval": "",
@@ -102,9 +97,7 @@
         "kind": "AnnotationQuery",
         "spec": {
           "query": {
-            "kind": "DataQuery",
-            "group": "prometheus",
-            "version": "v0",
+            "kind": "prometheus",
             "spec": {
               "expr": "{action=\"add_client\"}",
               "interval": "",
@@ -123,13 +116,12 @@
       {
         "kind": "AnnotationQuery",
         "spec": {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "PBBCEC2D313BC06C3"
+          },
           "query": {
-            "kind": "DataQuery",
-            "group": "grafana-postgresql-datasource",
-            "version": "v0",
-            "datasource": {
-              "name": "PBBCEC2D313BC06C3"
-            },
+            "kind": "grafana-postgresql-datasource",
             "spec": {
               "editorMode": "builder",
               "format": "table",
@@ -166,13 +158,12 @@
       {
         "kind": "AnnotationQuery",
         "spec": {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "gdev-elasticsearch"
+          },
           "query": {
-            "kind": "DataQuery",
-            "group": "elasticsearch",
-            "version": "v0",
-            "datasource": {
-              "name": "gdev-elasticsearch"
-            },
+            "kind": "elasticsearch",
             "spec": {
               "lines": 10,
               "query": "test query",
@@ -212,16 +203,15 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "gdev-testdata"
-                      },
+                      "kind": "grafana-testdata-datasource",
                       "spec": {
                         "scenarioId": "random_walk",
                         "seriesCount": 3
                       }
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "gdev-testdata"
                     },
                     "refId": "A",
                     "hidden": false
@@ -233,10 +223,9 @@
             }
           },
           "vizConfig": {
-            "kind": "VizConfig",
-            "group": "timeseries",
-            "version": "12.1.0-pre",
+            "kind": "timeseries",
             "spec": {
+              "pluginVersion": "12.1.0-pre",
               "options": {
                 "legend": {
                   "calcs": [],
@@ -323,9 +312,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
-                      "version": "v0",
+                      "kind": "grafana-testdata-datasource",
                       "spec": {
                         "scenarioId": "random_walk",
                         "seriesCount": 4
@@ -341,10 +328,9 @@
             }
           },
           "vizConfig": {
-            "kind": "VizConfig",
-            "group": "stat",
-            "version": "12.1.0-pre",
+            "kind": "stat",
             "spec": {
+              "pluginVersion": "12.1.0-pre",
               "options": {
                 "colorMode": "value",
                 "graphMode": "area",
@@ -402,9 +388,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
+                      "kind": "prometheus",
                       "spec": {
                         "disableTextWrap": false,
                         "editorMode": "builder",
@@ -427,10 +411,9 @@
             }
           },
           "vizConfig": {
-            "kind": "VizConfig",
-            "group": "timeseries",
-            "version": "12.1.0-pre",
+            "kind": "timeseries",
             "spec": {
+              "pluginVersion": "12.1.0-pre",
               "options": {
                 "legend": {
                   "calcs": [],
@@ -517,12 +500,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "gdev-prometheus"
-                      },
+                      "kind": "prometheus",
                       "spec": {
                         "disableTextWrap": false,
                         "editorMode": "builder",
@@ -535,6 +513,10 @@
                         "useBackend": false
                       }
                     },
+                    "datasource": {
+                      "type": "prometheus",
+                      "uid": "gdev-prometheus"
+                    },
                     "refId": "A",
                     "hidden": false
                   }
@@ -545,10 +527,9 @@
             }
           },
           "vizConfig": {
-            "kind": "VizConfig",
-            "group": "timeseries",
-            "version": "12.1.0-pre",
+            "kind": "timeseries",
             "spec": {
+              "pluginVersion": "12.1.0-pre",
               "options": {
                 "legend": {
                   "calcs": [],
@@ -635,12 +616,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "gdev-prometheus"
-                      },
+                      "kind": "prometheus",
                       "spec": {
                         "disableTextWrap": false,
                         "editorMode": "builder",
@@ -652,6 +628,10 @@
                         "useBackend": false
                       }
                     },
+                    "datasource": {
+                      "type": "prometheus",
+                      "uid": "gdev-prometheus"
+                    },
                     "refId": "A",
                     "hidden": false
                   }
@@ -660,13 +640,12 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "gdev-testdata"
-                      },
+                      "kind": "grafana-testdata-datasource",
                       "spec": {}
+                    },
+                    "datasource": {
+                      "type": "grafana-testdata-datasource",
+                      "uid": "gdev-testdata"
                     },
                     "refId": "B",
                     "hidden": false
@@ -678,10 +657,9 @@
             }
           },
           "vizConfig": {
-            "kind": "VizConfig",
-            "group": "timeseries",
-            "version": "12.1.0-pre",
+            "kind": "timeseries",
             "spec": {
+              "pluginVersion": "12.1.0-pre",
               "options": {
                 "legend": {
                   "calcs": [],
@@ -768,9 +746,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
+                      "kind": "prometheus",
                       "spec": {
                         "disableTextWrap": false,
                         "editorMode": "builder",
@@ -790,9 +766,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
-                      "version": "v0",
+                      "kind": "grafana-testdata-datasource",
                       "spec": {}
                     },
                     "refId": "B",
@@ -805,10 +779,9 @@
             }
           },
           "vizConfig": {
-            "kind": "VizConfig",
-            "group": "timeseries",
-            "version": "12.1.0-pre",
+            "kind": "timeseries",
             "spec": {
+              "pluginVersion": "12.1.0-pre",
               "options": {
                 "legend": {
                   "calcs": [],
@@ -982,13 +955,12 @@
           "hide": "dontHide",
           "refresh": "",
           "skipUrlSync": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "gdev-prometheus"
+          },
           "query": {
-            "kind": "DataQuery",
-            "group": "prometheus",
-            "version": "v0",
-            "datasource": {
-              "name": "gdev-prometheus"
-            },
+            "kind": "prometheus",
             "spec": {
               "expr": "up"
             }
@@ -1013,9 +985,7 @@
           "refresh": "",
           "skipUrlSync": false,
           "query": {
-            "kind": "DataQuery",
-            "group": "grafana-testdata-datasource",
-            "version": "v0",
+            "kind": "grafana-testdata-datasource",
             "spec": {
               "csv": "1,2,3,4",
               "scenarioId": "csv_metric_values"
@@ -1041,9 +1011,7 @@
           "refresh": "",
           "skipUrlSync": false,
           "query": {
-            "kind": "DataQuery",
-            "group": "grafana-testdata-datasource",
-            "version": "v0",
+            "kind": "grafana-testdata-datasource",
             "spec": {}
           },
           "regex": "",
@@ -1066,9 +1034,7 @@
           "refresh": "",
           "skipUrlSync": false,
           "query": {
-            "kind": "DataQuery",
-            "group": "prometheus",
-            "version": "v0",
+            "kind": "prometheus",
             "spec": {
               "expr": "up"
             }
@@ -1086,7 +1052,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v2alpha1"
+      "storedVersion": "v2beta1"
     }
   }
 }

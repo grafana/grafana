@@ -154,7 +154,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "DataQuery",
             "version": "v0",
             "spec": {
               "expr": "static_annotation_query",

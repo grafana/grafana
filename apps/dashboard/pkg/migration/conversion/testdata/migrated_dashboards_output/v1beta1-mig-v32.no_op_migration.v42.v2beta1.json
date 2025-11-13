@@ -33,7 +33,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "DataQuery",
             "version": "v0",
             "spec": {}
           },
@@ -306,7 +306,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "DataQuery",
             "version": "v0",
             "spec": {}
           },

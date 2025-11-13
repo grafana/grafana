@@ -9,17 +9,17 @@
     "conversion": {
       "failed": true,
       "error": "backend conversion not yet implemented",
-      "storedVersion": "v2alpha1",
+      "storedVersion": "v2beta1",
       "source": {
         "kind": "Dashboard",
-        "apiVersion": "dashboard.grafana.app/v2alpha1",
+        "apiVersion": "dashboard.grafana.app/v2beta1",
         "metadata": {
           "name": "test-v2alpha1-groupby-adhoc-vars"
         },
         "spec": {
-          "annotations": null,
+          "annotations": [],
           "cursorSync": "",
-          "elements": null,
+          "elements": {},
           "layout": null,
           "links": [],
           "preload": false,
@@ -36,12 +36,12 @@
           "variables": [
             {
               "kind": "GroupByVariable",
+              "group": "prometheus",
+              "datasource": {
+                "name": "gdev-prometheus"
+              },
               "spec": {
                 "name": "",
-                "datasource": {
-                  "type": "prometheus",
-                  "uid": "gdev-prometheus"
-                },
                 "current": {
                   "text": "text7",
                   "value": "value7"
@@ -56,12 +56,12 @@
             },
             {
               "kind": "AdhocVariable",
+              "group": "prometheus",
+              "datasource": {
+                "name": "datasource-3"
+              },
               "spec": {
                 "name": "adhocVar",
-                "datasource": {
-                  "type": "prometheus",
-                  "uid": "datasource-3"
-                },
                 "baseFilters": [
                   {
                     "key": "key1",
@@ -104,7 +104,7 @@
         "status": {
           "conversion": {
             "failed": false,
-            "storedVersion": "v2beta1"
+            "storedVersion": "v2alpha1"
           }
         }
       }

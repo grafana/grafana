@@ -33,7 +33,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "DataQuery",
             "version": "v0",
             "spec": {}
           },
@@ -70,7 +70,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "DataQuery",
                       "version": "v0",
                       "datasource": {
                         "name": "$datasource"
@@ -215,7 +215,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "DataQuery",
                       "version": "v0",
                       "datasource": {
                         "name": "$datasource"
@@ -339,7 +339,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "DataQuery",
                       "version": "v0",
                       "datasource": {
                         "name": "$datasource"
@@ -463,7 +463,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "DataQuery",
                       "version": "v0",
                       "datasource": {
                         "name": "$datasource"
@@ -553,7 +553,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "DataQuery",
                       "version": "v0",
                       "datasource": {
                         "name": "$datasource"
@@ -677,7 +677,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "DataQuery",
                       "version": "v0",
                       "datasource": {
                         "name": "$datasource"
@@ -978,7 +978,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "DataQuery",
             "version": "v0",
             "spec": {
               "__legacyStringValue": "label_values(up, job)"
@@ -1007,7 +1007,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "DataQuery",
             "version": "v0",
             "spec": {
               "__legacyStringValue": "label_values(up{job=~\"$cluster\"}, instance)"
