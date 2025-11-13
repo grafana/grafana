@@ -86,7 +86,7 @@ func (p *CloudProvider) GetMeta(ctx context.Context, pluginID, version string) (
 	if err = json.NewDecoder(resp.Body).Decode(&gcomMeta); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
-	
+
 	return &Result{
 		Meta: gcomMeta.JSON,
 		TTL:  p.ttl,
