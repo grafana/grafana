@@ -2020,12 +2020,10 @@ func Benchmark_ListAlertRules(b *testing.B) {
 func TestIntegration_ListAlertRules(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
 		BaseInterval: time.Duration(rand.Int64N(100)) * time.Second,
 	}
-	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
 	orgID := int64(1)
 	ruleGen := models.RuleGen
@@ -2034,6 +2032,8 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		ruleGen.WithOrgID(orgID),
 	)
 	t.Run("filter by HasPrometheusRuleDefinition", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 		regularRule := createRule(t, store, ruleGen)
 		importedRule := createRule(t, store, ruleGen.With(
@@ -2065,6 +2065,75 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				query := &models.ListAlertRulesQuery{
 					OrgID:                       orgID,
 					HasPrometheusRuleDefinition: tt.importedPrometheusRule,
+				}
+				result, err := store.ListAlertRules(context.Background(), query)
+				require.NoError(t, err)
+				require.ElementsMatch(t, tt.expectedRules, result)
+			})
+		}
+	})
+
+	t.Run("filter by SearchTitle", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+		rule1 := createRule(t, store, ruleGen.With(models.RuleMuts.WithTitle("CPU Usage Alert")))
+		rule2 := createRule(t, store, ruleGen.With(models.RuleMuts.WithTitle("Memory Usage Alert")))
+		rule3 := createRule(t, store, ruleGen.With(models.RuleMuts.WithTitle("Disk Space Alert")))
+		rule4 := createRule(t, store, ruleGen.With(models.RuleMuts.WithTitle("Application Error Rate")))
+
+		tc := []struct {
+			name          string
+			titleSearch   string
+			expectedRules []*models.AlertRule
+		}{
+			{
+				name:          "should find rules",
+				titleSearch:   "alert",
+				expectedRules: []*models.AlertRule{rule1, rule2, rule3},
+			},
+			{
+				name:          "should find rule with partial match",
+				titleSearch:   "aPpl",
+				expectedRules: []*models.AlertRule{rule4},
+			},
+			{
+				name:          "should return no rules when no match",
+				titleSearch:   "nonexistent",
+				expectedRules: []*models.AlertRule{},
+			},
+			{
+				name:          "should return all rules when empty",
+				titleSearch:   "",
+				expectedRules: []*models.AlertRule{rule1, rule2, rule3, rule4},
+			},
+			{
+				name:          "should not find rules when word order is reversed",
+				titleSearch:   "usage cpu",
+				expectedRules: []*models.AlertRule{},
+			},
+			{
+				name:          "should find multiple rules matching sequential words",
+				titleSearch:   "usage alert",
+				expectedRules: []*models.AlertRule{rule1, rule2},
+			},
+			{
+				name:          "should handle extra whitespace between words",
+				titleSearch:   "  cpu   usage  ",
+				expectedRules: []*models.AlertRule{rule1},
+			},
+			{
+				name:          "should handle multiple words with partial matches",
+				titleSearch:   "aPp erR",
+				expectedRules: []*models.AlertRule{rule4},
+			},
+		}
+
+		for _, tt := range tc {
+			t.Run(tt.name, func(t *testing.T) {
+				query := &models.ListAlertRulesQuery{
+					OrgID:       orgID,
+					SearchTitle: tt.titleSearch,
 				}
 				result, err := store.ListAlertRules(context.Background(), query)
 				require.NoError(t, err)

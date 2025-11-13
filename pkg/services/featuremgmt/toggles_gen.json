@@ -616,6 +616,20 @@
     },
     {
       "metadata": {
+        "name": "alertingUIUseBackendFilters",
+        "resourceVersion": "1762966218072",
+        "creationTimestamp": "2025-11-12T16:50:18Z"
+      },
+      "spec": {
+        "description": "Enables the UI to use certain backend-side filters",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingUseNewSimplifiedRoutingHashAlgorithm",
         "resourceVersion": "1759339813575",
         "creationTimestamp": "2025-10-01T17:28:42Z",

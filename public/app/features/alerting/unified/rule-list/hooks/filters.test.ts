@@ -60,6 +60,34 @@ describe('ruleFilter', () => {
     expect(ruleFilter(rule, getFilter({ ruleName: 'memory' }))).toBe(false);
   });
 
+  describe('backendFiltered parameter for backend filtering', () => {
+    it('should skip title filtering when backendFiltered is true', () => {
+      const rule = mockPromAlertingRule({ name: 'High CPU Usage' });
+
+      // When backendFiltered is true, title search should be skipped (already filtered by backend)
+      expect(ruleFilter(rule, getFilter({ freeFormWords: ['memory'] }), true)).toBe(true);
+      expect(ruleFilter(rule, getFilter({ ruleName: 'memory' }), true)).toBe(true);
+    });
+
+    it('should perform title filtering when backendFiltered is false', () => {
+      const rule = mockPromAlertingRule({ name: 'High CPU Usage' });
+
+      // When backendFiltered is false, title search should be performed client-side
+      expect(ruleFilter(rule, getFilter({ freeFormWords: ['cpu'] }), false)).toBe(true);
+      expect(ruleFilter(rule, getFilter({ freeFormWords: ['memory'] }), false)).toBe(false);
+      expect(ruleFilter(rule, getFilter({ ruleName: 'cpu' }), false)).toBe(true);
+      expect(ruleFilter(rule, getFilter({ ruleName: 'memory' }), false)).toBe(false);
+    });
+
+    it('should perform title filtering when backendFiltered is not specified (backward compatibility)', () => {
+      const rule = mockPromAlertingRule({ name: 'High CPU Usage' });
+
+      // When backendFiltered is not provided, should perform client-side filtering (default behavior)
+      expect(ruleFilter(rule, getFilter({ freeFormWords: ['cpu'] }))).toBe(true);
+      expect(ruleFilter(rule, getFilter({ freeFormWords: ['memory'] }))).toBe(false);
+    });
+  });
+
   it('should filter by labels', () => {
     const rule = mockPromAlertingRule({
       labels: { severity: 'critical', team: 'ops' },

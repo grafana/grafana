@@ -15,6 +15,7 @@ import {
   PromRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
+import { shouldUseBackendFilters } from '../../featureToggles';
 import { RuleSource, RulesFilter } from '../../search/rulesSearchParser';
 import {
   getDataSourceByUid,
@@ -79,12 +80,16 @@ export function useFilteredRulesIteratorProvider() {
 
     const normalizedFilterState = normalizeFilterState(filterState);
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
+    const useBackendFilters = shouldUseBackendFilters();
+
+    const titleSearch = useBackendFilters ? buildTitleSearch(filterState) : undefined;
 
     const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
       grafanaGroupsGenerator(groupLimit, {
         contactPoint: filterState.contactPoint ?? undefined,
         health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
         state: filterState.ruleState ? [filterState.ruleState] : [],
+        title: titleSearch,
       })
     ).pipe(
       withAbort(abortController.signal),
@@ -92,7 +97,7 @@ export function useFilteredRulesIteratorProvider() {
         groups
           .filter((group) => groupFilter(group, normalizedFilterState))
           .flatMap((group) => group.rules.map((rule) => ({ group, rule })))
-          .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
+          .filter(({ rule }) => ruleFilter(rule, normalizedFilterState, useBackendFilters))
           .map(({ group, rule }) => mapGrafanaRuleToRuleWithOrigin(group, rule))
       ),
       catchError(() => empty())
@@ -117,7 +122,7 @@ export function useFilteredRulesIteratorProvider() {
             groups
               .filter((group) => groupFilter(group, normalizedFilterState))
               .flatMap((group) => group.rules.map((rule, index) => ({ group, rule, index })))
-              .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
+              .filter(({ rule }) => ruleFilter(rule, normalizedFilterState, false))
               .map(({ group, rule, index }) => mapRuleToRuleWithOrigin(dataSourceIdentifier, group, rule, index))
           ),
           catchError(() => empty())
@@ -144,6 +149,48 @@ export function useFilteredRulesIteratorProvider() {
   };
 
   return getFilteredRulesIterable;
+}
+
+/**
+ * Determines if client-side filtering is needed for Grafana-managed rules.
+ */
+export function hasClientSideFilters(filterState: RulesFilter): boolean {
+  const useBackendFilters = shouldUseBackendFilters();
+
+  return (
+    // When backend filters are disabled, title search needs client-side filtering
+    (!useBackendFilters && (filterState.freeFormWords.length > 0 || Boolean(filterState.ruleName))) ||
+    // Client-side only filters:
+    Boolean(filterState.namespace) ||
+    filterState.dataSourceNames.length > 0 ||
+    filterState.labels.length > 0 ||
+    Boolean(filterState.dashboardUid) ||
+    filterState.ruleSource === RuleSource.DataSource
+  );
+}
+
+export function buildTitleSearch(filterState: RulesFilter): string | undefined {
+  const titleParts: string[] = [];
+
+  const ruleName = filterState.ruleName?.trim();
+  if (ruleName) {
+    titleParts.push(ruleName);
+  }
+
+  const freeFormSegment = filterState.freeFormWords
+    .map((word) => word.trim())
+    .filter(Boolean)
+    .join(' ');
+
+  if (freeFormSegment) {
+    titleParts.push(freeFormSegment);
+  }
+
+  if (titleParts.length === 0) {
+    return undefined;
+  }
+
+  return titleParts.join(' ');
 }
 
 function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): AsyncIterableX<RuleWithOrigin> {

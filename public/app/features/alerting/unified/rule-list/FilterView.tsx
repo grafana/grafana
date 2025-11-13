@@ -20,9 +20,10 @@ import {
   GrafanaRuleWithOrigin,
   PromRuleWithOrigin,
   RuleWithOrigin,
+  hasClientSideFilters,
   useFilteredRulesIteratorProvider,
 } from './hooks/useFilteredRulesIterator';
-import { FRONTEND_LIST_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
+import { FRONTEND_LIST_PAGE_SIZE, getSearchApiGroupPageSize } from './paginationLimits';
 
 interface FilterViewProps {
   filterState: RulesFilter;
@@ -77,7 +78,10 @@ function FilterViewResults({ filterState }: FilterViewProps) {
        * ⚠️ Make sure we are returning / using a "iterator" and not an "iterable" since the iterable is only a blueprint
        * and the iterator will allow us to exhaust the iterable in a stateful way
        */
-      const { iterable, abortController } = getFilteredRulesIterator(filterState, getApiGroupPageSize(true));
+      const { iterable, abortController } = getFilteredRulesIterator(
+        filterState,
+        getSearchApiGroupPageSize(hasClientSideFilters(filterState))
+      );
       const rulesBatchIterator = iterable
         .pipe(
           bufferCountOrTime(FRONTEND_LIST_PAGE_SIZE, 1000),
