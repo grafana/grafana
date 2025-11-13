@@ -104,7 +104,7 @@ and {{ .SkippedFiles }} more files.
 `
 
 const commentTemplateMissingImageRenderer = `
-NOTE: The image renderer is not configured. To enable dashboard previews in pull requests, refer to the [image rendering setup documentation](https://grafana.com/docs/grafana/latest/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering).
+NOTE: To enable dashboard previews in pull requests, refer to the [image rendering setup documentation](https://grafana.com/docs/grafana/latest/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering).
 `
 
 // TODO: does this have some value?
