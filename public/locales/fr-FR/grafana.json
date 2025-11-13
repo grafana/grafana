@@ -6750,9 +6750,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Plus de détails sur l’erreur"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "Ajouter un fichier CSV ou une feuille de calcul"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Source de données Adobe Analytics",
@@ -11762,6 +11759,11 @@
       "path-description": "Chemin du système de fichiers local vers le dépôt",
       "path-label": "Chemin du dépôt",
       "path-required": "Le chemin du dépôt est requis"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {
