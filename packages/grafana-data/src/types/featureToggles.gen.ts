@@ -406,11 +406,6 @@ export interface FeatureToggles {
   */
   logsInfiniteScrolling?: boolean;
   /**
-  * Enable filtering menu displayed when text of a log line is selected
-  * @default true
-  */
-  logRowsPopoverMenu?: boolean;
-  /**
   * Disables passing host environment variable to plugin processes
   */
   pluginsSkipHostEnvVars?: boolean;
