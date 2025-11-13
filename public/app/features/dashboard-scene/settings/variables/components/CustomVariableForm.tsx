@@ -137,8 +137,8 @@ function TooltipJsonFormat() {
   );
 }
 
-const validateJsonQuery = (rawQuwey: string): Error | undefined => {
-  const query = rawQuwey.trim();
+const validateJsonQuery = (rawQuery: string): Error | undefined => {
+  const query = rawQuery.trim();
   if (!query) {
     return;
   }

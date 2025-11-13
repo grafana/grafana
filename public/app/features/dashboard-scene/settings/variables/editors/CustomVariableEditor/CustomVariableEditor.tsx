@@ -20,15 +20,15 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
   const [prevQuery, setPrevQuery] = useState('');
   const onValuesFormatChange = useCallback(
     (format: CustomVariableModel['valuesFormat']) => {
+      variable.setState({ query: prevQuery });
       variable.setState({ valuesFormat: format });
       variable.setState({ allowCustomValue: false });
       variable.setState({ allValue: undefined });
+      onRunQuery();
 
-      variable.setState({ query: prevQuery });
       if (query !== prevQuery) {
         setPrevQuery(query);
       }
-      onRunQuery();
     },
     [onRunQuery, prevQuery, query, variable]
   );
