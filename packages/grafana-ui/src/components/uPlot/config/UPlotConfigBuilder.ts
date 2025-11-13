@@ -29,6 +29,8 @@ const cursorDefaults: Cursor = {
 type PrepData = (frames: DataFrame[]) => AlignedData | FacetedData;
 type PreDataStacked = (frames: DataFrame[], stackingGroups: StackingGroup[]) => AlignedData | FacetedData;
 
+type PlotState = { isPanning: false } | { isPanning: true; min: number; max: number };
+
 export class UPlotConfigBuilder {
   readonly uid = Math.random().toString(36).slice(2);
 
@@ -47,6 +49,7 @@ export class UPlotConfigBuilder {
   // to prevent more than one threshold per scale
   private thresholds: Record<string, UPlotThresholdOptions> = {};
   private padding?: Padding = undefined;
+  private state: PlotState = { isPanning: false };
 
   private cachedConfig?: PlotConfig;
 
@@ -58,6 +61,14 @@ export class UPlotConfigBuilder {
 
   // Exposed to let the container know the primary scale keys
   scaleKeys: [string, string] = ['', ''];
+
+  setState(state: PlotState) {
+    this.state = merge({}, this.state, state);
+  }
+
+  getState() {
+    return this.state;
+  }
 
   addHook<T extends keyof Hooks.Defs>(type: T, hook: Hooks.Defs[T]) {
     pluginLog('UPlotConfigBuilder', false, 'addHook', type);
