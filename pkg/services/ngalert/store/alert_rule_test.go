@@ -2072,6 +2072,42 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 			})
 		}
 	})
+	t.Run("filter by HidePluginRules", func(t *testing.T) {
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+		testOrgID := int64(12345)
+		testRuleGen := ruleGen.With(models.RuleMuts.WithOrgID(testOrgID))
+		regularRule := createRule(t, store, testRuleGen)
+		pluginRule := createRule(t, store, testRuleGen.With(
+			models.RuleMuts.WithLabel("__grafana_origin", "plugin/grafana-slo-app"),
+		))
+		tc := []struct {
+			name          string
+			expectedRules []*models.AlertRule
+		}{
+			{
+				name:          "should filter out plugin rules when HidePluginRules is true",
+				expectedRules: []*models.AlertRule{regularRule},
+			},
+			{
+				name:          "should include plugin rules when HidePluginRules is false",
+				expectedRules: []*models.AlertRule{regularRule, pluginRule},
+			},
+		}
+		for _, tt := range tc {
+			t.Run(tt.name, func(t *testing.T) {
+				hidePlugins := tt.name == "should filter out plugin rules when HidePluginRules is true"
+				query := &models.ListAlertRulesExtendedQuery{
+					ListAlertRulesQuery: models.ListAlertRulesQuery{
+						OrgID: testOrgID,
+					},
+					HidePluginRules: hidePlugins,
+				}
+				result, _, err := store.ListAlertRulesByGroup(context.Background(), query)
+				require.NoError(t, err)
+				require.ElementsMatch(t, tt.expectedRules, result)
+			})
+		}
+	})
 }
 
 func TestIntegration_ListAlertRulesPaginated(t *testing.T) {

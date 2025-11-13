@@ -28,6 +28,22 @@ interface FilterViewProps {
   filterState: RulesFilter;
 }
 
+/**
+ * Determines if any client-side filtering is required
+ */
+function hasClientSideFilters(filterState: RulesFilter): boolean {
+  return (
+    filterState.freeFormWords.length > 0 ||
+    Boolean(filterState.namespace) ||
+    filterState.labels.length > 0 ||
+    filterState.dataSourceNames.length > 0 ||
+    Boolean(filterState.dashboardUid) ||
+    Boolean(filterState.ruleSource) ||
+    Boolean(filterState.ruleName) ||
+    Boolean(filterState.ruleType)
+  );
+}
+
 export function FilterView({ filterState }: FilterViewProps) {
   // ⚠️ We use a key to force the component to unmount and remount when the filter state changes
   // filterState is a complex object including arrays and is constructed from URL params
@@ -77,7 +93,11 @@ function FilterViewResults({ filterState }: FilterViewProps) {
        * ⚠️ Make sure we are returning / using a "iterator" and not an "iterable" since the iterable is only a blueprint
        * and the iterator will allow us to exhaust the iterable in a stateful way
        */
-      const { iterable, abortController } = getFilteredRulesIterator(filterState, getApiGroupPageSize(true));
+      const needsClientSideFiltering = hasClientSideFilters(filterState);
+      const { iterable, abortController } = getFilteredRulesIterator(
+        filterState,
+        getApiGroupPageSize(needsClientSideFiltering)
+      );
       const rulesBatchIterator = iterable
         .pipe(
           bufferCountOrTime(FRONTEND_LIST_PAGE_SIZE, 1000),

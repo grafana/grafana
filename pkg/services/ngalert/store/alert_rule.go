@@ -862,6 +862,13 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		}
 	}
 
+	if query.HidePluginRules {
+		q, err = st.filterByPluginOrigin(true, q)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+	}
+
 	// FIXME: record is nullable but we don't save it as null when it's nil
 	switch query.RuleType {
 	case ngmodels.RuleTypeFilterAlerting:
@@ -1287,6 +1294,16 @@ func (st DBstore) filterWithPrometheusRuleDefinition(value bool, sess *xorm.Sess
 		"%prometheus_style_rule%",
 		"%original_rule_definition%",
 	), nil
+}
+
+func (st DBstore) filterByPluginOrigin(hidePlugins bool, sess *xorm.Session) (*xorm.Session, error) {
+	// The labels are stored as JSON in the database, so we search for the literal JSON key pattern
+	pattern := `%"__grafana_origin":%`
+
+	if hidePlugins {
+		return sess.And("(labels NOT LIKE ? OR labels = '' OR labels IS NULL)", pattern), nil
+	}
+	return sess.And("labels LIKE ?", pattern), nil
 }
 
 func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(ngmodels.Provenance) bool, dryRun bool) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {

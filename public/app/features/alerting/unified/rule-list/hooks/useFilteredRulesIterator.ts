@@ -80,12 +80,16 @@ export function useFilteredRulesIteratorProvider() {
     const normalizedFilterState = normalizeFilterState(filterState);
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
+    const apiFilter = {
+      contactPoint: filterState.contactPoint ?? undefined,
+      health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
+      state: filterState.ruleState ? [filterState.ruleState] : [],
+      groupName: filterState.groupName ?? undefined,
+      hidePlugins: filterState.plugins === 'hide',
+    };
+
     const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
-      grafanaGroupsGenerator(groupLimit, {
-        contactPoint: filterState.contactPoint ?? undefined,
-        health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
-        state: filterState.ruleState ? [filterState.ruleState] : [],
-      })
+      grafanaGroupsGenerator(groupLimit, apiFilter)
     ).pipe(
       withAbort(abortController.signal),
       concatMap((groups) =>

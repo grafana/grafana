@@ -987,6 +987,9 @@ type ListAlertRulesExtendedQuery struct {
 
 	RuleType RuleTypeFilter
 
+	// HidePluginRules filters out rules with __grafana_origin label
+	HidePluginRules bool
+
 	Limit         int64
 	ContinueToken string
 }

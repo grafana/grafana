@@ -487,6 +487,8 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		return ruleResponse
 	}
 
+	hidePluginRules := getBoolWithDefault(opts.Query, "hide_plugins", false)
+
 	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
 			OrgID:         opts.OrgID,
@@ -496,8 +498,9 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 			RuleGroups:    ruleGroups,
 			ReceiverName:  receiverName,
 		},
-		Limit:         maxGroups,
-		ContinueToken: nextToken,
+		HidePluginRules: hidePluginRules,
+		Limit:           maxGroups,
+		ContinueToken:   nextToken,
 	}
 	ruleList, continueToken, err := store.ListAlertRulesByGroup(opts.Ctx, &byGroupQuery)
 	if err != nil {
