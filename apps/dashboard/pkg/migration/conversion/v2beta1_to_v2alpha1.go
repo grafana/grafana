@@ -806,19 +806,9 @@ func convertQueryVariableSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardQuery
 func convertVariableOption_V2beta1_to_V2alpha1(in dashv2beta1.DashboardVariableOption) dashv2alpha1.DashboardVariableOption {
 	return dashv2alpha1.DashboardVariableOption{
 		Selected: in.Selected,
-		Text:     convertStringOrArrayOfString_V2beta1_to_V2alpha1(in.Text),
-		Value:    convertStringOrArrayOfString_V2beta1_to_V2alpha1(in.Value),
+		Text:     dashv2alpha1.DashboardStringOrArrayOfString(in.Text),
+		Value:    dashv2alpha1.DashboardStringOrArrayOfString(in.Value),
 	}
-}
-
-func convertStringOrArrayOfString_V2beta1_to_V2alpha1(in dashv2beta1.DashboardStringOrArrayOfString) dashv2alpha1.DashboardStringOrArrayOfString {
-	out := dashv2alpha1.DashboardStringOrArrayOfString{
-		ArrayOfString: in.ArrayOfString,
-	}
-	// Preserve String field as-is to match unmarshaler behavior (null unmarshals to "")
-	// The unmarshaler converts null to empty string, so we preserve empty strings
-	out.String = in.String
-	return out
 }
 
 func convertVariableOptionPtr_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardVariableOption) *dashv2alpha1.DashboardVariableOption {
