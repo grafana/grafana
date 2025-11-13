@@ -67,10 +67,6 @@ const (
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
 
-	// FlagEditPanelCSVDragAndDrop
-	// Enables drag and drop for CSV and Excel files
-	FlagEditPanelCSVDragAndDrop = "editPanelCSVDragAndDrop"
-
 	// FlagLogsContextDatasourceUi
 	// Allow datasource to provide custom UI for context view
 	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
@@ -459,10 +455,6 @@ const (
 	// New implementation for the dashboard-to-PDF rendering
 	FlagNewPDFRendering = "newPDFRendering"
 
-	// FlagTlsMemcached
-	// Use TLS-enabled memcached in the enterprise caching feature
-	FlagTlsMemcached = "tlsMemcached"
-
 	// FlagKubernetesAggregator
 	// Enable grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
@@ -771,10 +763,6 @@ const (
 	// Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
 	FlagTeamHttpHeadersTempo = "teamHttpHeadersTempo"
 
-	// FlagTemplateVariablesUsesCombobox
-	// Use new **Combobox** component for template variables
-	FlagTemplateVariablesUsesCombobox = "templateVariablesUsesCombobox"
-
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
 	FlagGrafanaAdvisor = "grafanaAdvisor"
@@ -1074,6 +1062,10 @@ const (
 	// Enable new gauge visualization
 	FlagNewGauge = "newGauge"
 
+	// FlagNewVizSuggestions
+	// Enable new visualization suggestions
+	FlagNewVizSuggestions = "newVizSuggestions"
+
 	// FlagPreventPanelChromeOverflow
 	// Restrict PanelChrome contents with overflow: hidden;
 	FlagPreventPanelChromeOverflow = "preventPanelChromeOverflow"
@@ -1085,6 +1077,10 @@ const (
 	// FlagPluginStoreServiceLoading
 	// Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
 	FlagPluginStoreServiceLoading = "pluginStoreServiceLoading"
+
+	// FlagNewPanelPadding
+	// Increases panel padding globally
+	FlagNewPanelPadding = "newPanelPadding"
 
 	// FlagOnlyStoreActionSets
 	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
@@ -1098,7 +1094,15 @@ const (
 	// Enable template dashboards
 	FlagDashboardTemplates = "dashboardTemplates"
 
+	// FlagGrafanaAdvisorAppInstaller
+	// Enables Advisor app installer
+	FlagGrafanaAdvisorAppInstaller = "grafanaAdvisorAppInstaller"
+
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations
 	FlagKubernetesAnnotations = "kubernetesAnnotations"
+
+	// FlagAwsDatasourcesHttpProxy
+	// Enables http proxy settings for aws datasources
+	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
 )

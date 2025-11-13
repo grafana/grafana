@@ -52,7 +52,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `onPremToCloudMigrations`              | Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.                                 | Yes                |
 | `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                                              | Yes                |
 | `newPDFRendering`                      | New implementation for the dashboard-to-PDF rendering                                                                                                         | Yes                |
-| `tlsMemcached`                         | Use TLS-enabled memcached in the enterprise caching feature                                                                                                   | Yes                |
 | `cloudWatchNewLabelParsing`            | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
 | `pluginProxyPreserveTrailingSlash`     | Preserve plugin proxy trailing slash.                                                                                                                         |                    |
 | `azureMonitorPrometheusExemplars`      | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                  | Yes                |
@@ -108,6 +107,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `logsPanelControls`             | Enables a control component for the logs panel in Explore                                              |
 | `interactiveLearning`           | Enables the interactive learning app                                                                   |
 | `azureResourcePickerUpdates`    | Enables the updated Azure Monitor resource picker                                                      |
+| `newVizSuggestions`             | Enable new visualization suggestions                                                                   |
 | `preventPanelChromeOverflow`    | Restrict PanelChrome contents with overflow: hidden;                                                   |
 
 ## Development feature toggles

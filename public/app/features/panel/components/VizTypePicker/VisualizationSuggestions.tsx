@@ -7,7 +7,7 @@ import { GrafanaTheme2, PanelData, PanelModel, VisualizationSuggestion } from '@
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { getAllSuggestions } from '../../state/getAllSuggestions';
+import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
 import { VizTypeChangeDetails } from './types';

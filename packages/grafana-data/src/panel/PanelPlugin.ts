@@ -7,7 +7,6 @@ import { PanelModel } from '../types/dashboard';
 import { FieldConfigProperty, FieldConfigSource } from '../types/fieldOverrides';
 import {
   PanelPluginMeta,
-  VisualizationSuggestionsSupplier,
   PanelProps,
   PanelEditorProps,
   PanelMigrationHandler,
@@ -15,6 +14,7 @@ import {
   PanelPluginDataSupport,
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
+import { VisualizationSuggestionsSupplier } from '../types/suggestions';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
