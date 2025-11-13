@@ -126,6 +126,7 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 	}
 
 	if canSave, err := hs.canCreateAnnotation(c, cmd.DashboardUID); err != nil || !canSave {
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
 			return dashboardGuardianResponse(err)
 		} else if err != nil {
@@ -271,6 +272,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		return resp
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		if canSave, err := hs.canSaveAnnotation(c, hs.AccessControl, annotation); err != nil || !canSave {
 			return dashboardGuardianResponse(err)
@@ -329,6 +331,7 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		return resp
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		if canSave, err := hs.canSaveAnnotation(c, hs.AccessControl, annotation); err != nil || !canSave {
 			return dashboardGuardianResponse(err)
@@ -439,6 +442,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *contextmodel.ReqContext) response
 
 	canSave, err := hs.canMassDeleteAnnotations(c, dashboardUID)
 	if err != nil || !canSave {
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
 			return dashboardGuardianResponse(err)
 		} else if err != nil {
@@ -500,6 +504,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
 		if resp != nil {
@@ -610,6 +615,7 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 			},
 		}
 
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
 			tempUser = &user.SignedInUser{
 				OrgID: orgID,
@@ -626,6 +632,7 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 			return nil, errors.New("could not resolve annotation type")
 		}
 
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
 			switch annotation.GetType() {
 			case annotations.Organization:
@@ -662,6 +669,7 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 }
 
 func (hs *HTTPServer) canCreateAnnotation(c *contextmodel.ReqContext, dashboardUID string) (bool, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		if dashboardUID != "" {
 			evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboardUID))
@@ -686,6 +694,7 @@ func (hs *HTTPServer) canCreateAnnotation(c *contextmodel.ReqContext, dashboardU
 }
 
 func (hs *HTTPServer) canMassDeleteAnnotations(c *contextmodel.ReqContext, dashboardUID string) (bool, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		if dashboardUID == "" {
 			evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, accesscontrol.ScopeAnnotationsTypeOrganization)

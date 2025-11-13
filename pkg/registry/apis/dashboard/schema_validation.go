@@ -33,9 +33,11 @@ func (b *DashboardsAPIBuilder) ValidateDashboardSpec(ctx context.Context, obj ru
 		case *v0.Dashboard:
 			errorOnSchemaMismatches = false // Never error for v0
 		case *v1.Dashboard:
+			//nolint:staticcheck // not yet migrated to OpenFeature
 			errorOnSchemaMismatches = !b.features.IsEnabled(ctx, featuremgmt.FlagDashboardDisableSchemaValidationV1)
 		case *v2alpha1.Dashboard:
 		case *v2beta1.Dashboard:
+			//nolint:staticcheck // not yet migrated to OpenFeature
 			errorOnSchemaMismatches = !b.features.IsEnabled(ctx, featuremgmt.FlagDashboardDisableSchemaValidationV2)
 		default:
 			return nil, fmt.Errorf("invalid dashboard type: %T", obj)
@@ -45,6 +47,7 @@ func (b *DashboardsAPIBuilder) ValidateDashboardSpec(ctx context.Context, obj ru
 		return nil, apierrors.NewBadRequest("Not supported: FieldValidationMode: Warn")
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	alwaysLogSchemaValidationErrors := b.features.IsEnabled(ctx, featuremgmt.FlagDashboardSchemaValidationLogging)
 
 	var errors field.ErrorList

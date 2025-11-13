@@ -93,15 +93,16 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 ) DashboardAccess {
 	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	return &dashboardSqlAccess{
-		sql:                                  sql,
-		namespacer:                           namespacer,
-		dashStore:                            dashStore,
-		provisioning:                         provisioning,
-		dashboardSearchClient:                *dashboardSearchClient,
-		dashboardPermissionSvc:               dashboardPermissionSvc,
-		libraryPanelSvc:                      libraryPanelSvc,
-		accessControl:                        accessControl,
-		log:                                  log.New("dashboard.legacysql"),
+		sql:                    sql,
+		namespacer:             namespacer,
+		dashStore:              dashStore,
+		provisioning:           provisioning,
+		dashboardSearchClient:  *dashboardSearchClient,
+		dashboardPermissionSvc: dashboardPermissionSvc,
+		libraryPanelSvc:        libraryPanelSvc,
+		accessControl:          accessControl,
+		log:                    log.New("dashboard.legacysql"),
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		invalidDashboardParseFallbackEnabled: features.IsEnabled(context.Background(), featuremgmt.FlagScanRowInvalidDashboardParseFallbackEnabled),
 	}
 }

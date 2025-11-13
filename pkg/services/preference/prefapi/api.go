@@ -61,6 +61,7 @@ func UpdatePreferencesFor(ctx context.Context,
 		Navbar:            dtoCmd.Navbar,
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabled(ctx, featuremgmt.FlagLocaleFormatPreference) {
 		saveCmd.RegionalFormat = dtoCmd.RegionalFormat
 	}
@@ -101,6 +102,7 @@ func GetPreferencesFor(ctx context.Context,
 			dto.Language = &preference.JSONData.Language
 		}
 
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if features.IsEnabled(ctx, featuremgmt.FlagLocaleFormatPreference) {
 			if preference.JSONData.RegionalFormat != "" {
 				dto.RegionalFormat = &preference.JSONData.RegionalFormat

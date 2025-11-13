@@ -29,6 +29,7 @@ func (c *ResultConverter) Convert(ctx context.Context,
 	}
 
 	var dt data.FrameType
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	dt, useDataplane, _ := shouldUseDataplane(frames, logger, c.Features.IsEnabled(ctx, featuremgmt.FlagDisableSSEDataplane))
 	if useDataplane {
 		logger.Debug("Handling SSE data source query through dataplane", "datatype", dt)
