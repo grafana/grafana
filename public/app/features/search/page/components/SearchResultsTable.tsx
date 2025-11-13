@@ -152,22 +152,26 @@ export const SearchResultsTable = React.memo(
               };
 
               if (cell.column.id === 'column-name' && href) {
-                const parent = response.view.dataFrame.fields[5].values[rowIndex];
-                const kind = response.view.dataFrame.fields[0].values[rowIndex];
-                const existingOnClick = onClickItem;
+                const item = response.view.get(rowIndex);
+                const itemKind = item.kind;
+                const parent = item.location || 'general';
+                const parentType = parent === 'general' ? 'general' : 'folder';
 
                 userProps.onClick = (evt: React.MouseEvent<HTMLElement>) => {
                   try {
                     reportInteraction('grafana_browse_dashboards_page_click_list_item', {
-                      itemKind: kind,
-                      parent: !parent ? 'general' : parent === 'general' ? 'general' : 'folder',
+                      itemKind: itemKind,
+                      parent: parentType,
                       source: trackingSource,
+                    });
+                    console.log({
+                      itemKind: itemKind,
                     });
                   } catch (e) {
                     // ignore analytics errors
                   }
-                  if (typeof existingOnClick === 'function') {
-                    existingOnClick(evt);
+                  if (onClickItem) {
+                    onClickItem(evt);
                   }
                 };
               }
@@ -187,17 +191,7 @@ export const SearchResultsTable = React.memo(
           </div>
         );
       },
-      [
-        rows,
-        prepareRow,
-        response.view.fields.url?.values,
-        highlightIndex,
-        styles,
-        tableStyles,
-        onClickItem,
-        response.view.dataFrame,
-        trackingSource,
-      ]
+      [rows, prepareRow, highlightIndex, styles, tableStyles, onClickItem, response.view, trackingSource]
     );
 
     if (!rows.length) {
