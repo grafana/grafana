@@ -2400,9 +2400,6 @@
     },
     "no-restricted-syntax": {
       "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/dashboard/components/ShareModal/ShareLink.tsx": {
