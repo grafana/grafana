@@ -105,7 +105,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
           limit_alerts: limitAlerts,
           group_limit: groupLimit?.toFixed(0),
           group_next_token: groupNextToken,
-          title: title,
+          'search.title': title,
         },
       }),
       providesTags: (_result, _error, { folderUid, groupName, ruleName }) => {
