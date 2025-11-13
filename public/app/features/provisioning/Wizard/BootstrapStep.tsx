@@ -34,6 +34,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   const selectedTarget = watch('repository.sync.target');
   const repositoryType = watch('repository.type');
   const options = useModeOptions(repoName, settingsData);
+  // Filtering 2 mode options on each render; trivial cost, so no need for useMemo here.
   const enabledOptions = options.filter((option) => !option.disabled);
   const disabledOptions = options.filter((option) => option.disabled);
   const { target } = enabledOptions[0];
@@ -73,7 +74,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
           control={control}
           render={({ field: { ref, onChange, ...field } }) => (
             <>
-              {enabledOptions.map((action) => (
+              {enabledOptions?.map((action) => (
                 <Card
                   key={action.target}
                   isSelected={action.target === selectedTarget}
@@ -141,21 +142,27 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
           </Field>
         )}
 
-        {/* Unavailable options */}
-        <Box marginTop={3}>
-          <Text variant="h4">{t('provisioning.bootstrap-step.unavailable-options.title', 'Unavailable options')}</Text>
-        </Box>
-        {disabledOptions.map((action) => (
-          <Card key={action.target} noMargin disabled={action.disabled}>
-            <Card.Heading>
-              <Text variant="h5">{action.label}</Text>
-            </Card.Heading>
-            <Card.Description>
-              <div className={styles.divider} />
-              <Icon name="info-circle" className={styles.infoIcon} /> {action.disabledReason}
-            </Card.Description>
-          </Card>
-        ))}
+        {disabledOptions.length > 0 && (
+          <>
+            {/* Unavailable options */}
+            <Box marginTop={3}>
+              <Text variant="h4">
+                {t('provisioning.bootstrap-step.unavailable-options.title', 'Unavailable options')}
+              </Text>
+            </Box>
+            {disabledOptions?.map((action) => (
+              <Card key={action.target} noMargin disabled={action.disabled}>
+                <Card.Heading>
+                  <Text variant="h5">{action.label}</Text>
+                </Card.Heading>
+                <Card.Description>
+                  <div className={styles.divider} />
+                  <Icon name="info-circle" className={styles.infoIcon} /> {action.disabledReason}
+                </Card.Description>
+              </Card>
+            ))}
+          </>
+        )}
       </Stack>
     </Stack>
   );
