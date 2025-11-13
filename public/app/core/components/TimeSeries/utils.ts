@@ -136,6 +136,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       direction: isHorizontal ? ScaleDirection.Right : ScaleDirection.Up,
       isTime: true,
       range: () => {
+        const state = builder.getState();
+        if (state.isPanning) {
+          return [state.min, state.max];
+        }
         const r = getTimeRange();
         return [r.from.valueOf(), r.to.valueOf()];
       },

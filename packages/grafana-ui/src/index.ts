@@ -353,6 +353,7 @@ export { EventsCanvas } from './components/uPlot/geometries/EventsCanvas';
 export { TooltipPlugin2 } from './components/uPlot/plugins/TooltipPlugin2';
 export { EventBusPlugin } from './components/uPlot/plugins/EventBusPlugin';
 export { KeyboardPlugin } from './components/uPlot/plugins/KeyboardPlugin';
+export { XAxisInteractionAreaPlugin } from './components/uPlot/plugins/XAxisInteractionAreaPlugin';
 
 export { type PlotTooltipInterpolator, type PlotSelection, FIXED_UNIT } from './components/uPlot/types';
 export { type UPlotConfigPrepFn } from './components/uPlot/config/UPlotConfigBuilder';
