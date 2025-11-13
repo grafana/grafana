@@ -148,6 +148,20 @@ describe('QueryVariableEditor', () => {
     expect(staticOptionsToggle).toBeInTheDocument();
   });
 
+  it('should update the variable with default datasource when opening editor', async () => {
+    const onRunQueryMock = jest.fn();
+    const variable = new QueryVariable({ datasource: undefined, query: '' });
+
+    await setup({
+      variable,
+      onRunQuery: onRunQueryMock,
+    });
+
+    await waitFor(async () => {
+      expect(variable.state.datasource).not.toBe(undefined);
+    });
+  });
+
   it('should update the variable with default query for the selected DS', async () => {
     const onRunQueryMock = jest.fn();
     const variable = new QueryVariable({ datasource: { uid: 'mock-ds-2', type: 'test' }, query: '' });
