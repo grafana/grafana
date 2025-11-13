@@ -7,6 +7,7 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -47,8 +48,32 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 		usageStats,
 		enc,
 		ossProviders,
+		&NoopDataKeyCache{},
+		cfg,
 	)
 	require.NoError(tb, err)
 
 	return encMgr.(*EncryptionManager)
 }
+
+type NoopDataKeyCache struct {
+}
+
+func (c *NoopDataKeyCache) GetById(id string) (*encryption.DataKeyCacheEntry, bool) {
+	return nil, false
+}
+
+func (c *NoopDataKeyCache) GetByLabel(label string) (*encryption.DataKeyCacheEntry, bool) {
+	return nil, false
+}
+
+func (c *NoopDataKeyCache) AddById(entry *encryption.DataKeyCacheEntry) {
+}
+
+func (c *NoopDataKeyCache) AddByLabel(entry *encryption.DataKeyCacheEntry) {
+}
+
+func (c *NoopDataKeyCache) RemoveExpired() {
+}
+
+func (c *NoopDataKeyCache) Flush() {}

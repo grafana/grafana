@@ -11,7 +11,15 @@ const (
 )
 
 type SecretsManagerSettings struct {
+	// Which encryption provider to use to encrypt any new secrets
 	CurrentEncryptionProvider string
+
+	// The time to live for decrypted data keys in memory
+	DataKeysCacheTTL time.Duration
+	// The interval to remove expired data keys from the cache
+	DataKeysCacheCleanupInterval time.Duration
+	// Whether to use a Redis cache for data keys instead of the in-memory cache
+	DataKeysCacheUseRedis bool
 
 	// ConfiguredKMSProviders is a map of KMS providers found in the config file. The keys are in the format of <provider>.<keyName>, and the values are a map of the properties in that section
 	// In OSS, the provider type can only be "secret_key". In Enterprise, it can additionally be one of: "aws_kms", "azure_keyvault", "google_kms", "hashicorp_vault"
@@ -65,6 +73,10 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.RegisterAPIServer = secretsMgmt.Key("register_api_server").MustBool(true)
 	cfg.SecretsManagement.RunSecretsDBMigrations = secretsMgmt.Key("run_secrets_db_migrations").MustBool(true)
 	cfg.SecretsManagement.RunDataKeyMigration = secretsMgmt.Key("run_data_key_migration").MustBool(true)
+
+	cfg.SecretsManagement.DataKeysCacheUseRedis = secretsMgmt.Key("data_keys_cache_use_redis").MustBool(false)
+	cfg.SecretsManagement.DataKeysCacheTTL = secretsMgmt.Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
+	cfg.SecretsManagement.DataKeysCacheCleanupInterval = secretsMgmt.Key("data_keys_cache_cleanup_interval").MustDuration(1 * time.Minute)
 
 	// Extract available KMS providers from configuration sections
 	providers := make(map[string]map[string]string)

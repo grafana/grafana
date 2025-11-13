@@ -40,3 +40,25 @@ func (id ProviderID) Kind() (string, error) {
 func KeyLabel(providerID ProviderID) string {
 	return fmt.Sprintf("%s@%s", time.Now().Format("2006-01-02"), providerID)
 }
+
+type DataKeyCache interface {
+	GetById(id string) (*DataKeyCacheEntry, bool)
+	GetByLabel(label string) (*DataKeyCacheEntry, bool)
+	AddById(entry *DataKeyCacheEntry)
+	AddByLabel(entry *DataKeyCacheEntry)
+	RemoveExpired()
+	Flush()
+}
+
+type DataKeyCacheEntry struct {
+	Namespace  string
+	Id         string
+	Label      string
+	DataKey    []byte
+	Active     bool
+	Expiration time.Time
+}
+
+func (e DataKeyCacheEntry) IsExpired() bool {
+	return e.Expiration.Before(time.Now())
+}

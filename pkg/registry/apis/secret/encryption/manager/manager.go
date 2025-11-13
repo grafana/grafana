@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -19,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -26,6 +29,9 @@ type EncryptionManager struct {
 	tracer     trace.Tracer
 	store      contracts.DataKeyStorage
 	usageStats usagestats.Service
+	cfg        *setting.Cfg
+
+	dataKeyCache encryption.DataKeyCache
 
 	mtx sync.Mutex
 
@@ -44,6 +50,8 @@ func ProvideEncryptionManager(
 	usageStats usagestats.Service,
 	enc cipher.Cipher,
 	providerConfig encryption.ProviderConfig,
+	dataKeyCache encryption.DataKeyCache,
+	cfg *setting.Cfg,
 ) (contracts.EncryptionManager, error) {
 	currentProviderID := providerConfig.CurrentProvider
 	if _, ok := providerConfig.AvailableProviders[currentProviderID]; !ok {
@@ -57,6 +65,7 @@ func ProvideEncryptionManager(
 		cipher:         enc,
 		log:            log.New("encryption"),
 		providerConfig: providerConfig,
+		cfg:            cfg,
 	}
 
 	s.registerUsageMetrics()
@@ -326,4 +335,30 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 
 func (s *EncryptionManager) GetProviders() encryption.ProviderConfig {
 	return s.providerConfig
+}
+
+func (s *EncryptionManager) Run(ctx context.Context) error {
+	gc := time.NewTicker(
+		s.cfg.SecretsManagement.DataKeysCacheCleanupInterval,
+	)
+
+	grp, gCtx := errgroup.WithContext(ctx)
+
+	for {
+		select {
+		case <-gc.C:
+			s.log.Debug("Removing expired data keys from cache...")
+			s.dataKeyCache.RemoveExpired()
+			s.log.Debug("Removing expired data keys from cache finished successfully")
+		case <-gCtx.Done():
+			s.log.Debug("Grafana is shutting down; stopping...")
+			gc.Stop()
+
+			if err := grp.Wait(); err != nil && !errors.Is(err, context.Canceled) {
+				return err
+			}
+
+			return nil
+		}
+	}
 }

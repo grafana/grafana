@@ -201,6 +201,8 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 			usageStats,
 			enc,
 			ossProviders,
+			&NoopDataKeyCache{},
+			cfg,
 		)
 		require.NoError(t, err)
 
@@ -226,6 +228,8 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 			usageStats,
 			enc,
 			ossProviders,
+			&NoopDataKeyCache{},
+			cfg,
 		)
 		require.NoError(t, err)
 
@@ -275,6 +279,8 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 			usageStats,
 			enc,
 			ossProviders,
+			&NoopDataKeyCache{},
+			cfgV1,
 		)
 		require.NoError(t, err)
 
@@ -313,6 +319,8 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 			usageStats,
 			enc,
 			ossProvidersV2,
+			&NoopDataKeyCache{},
+			cfgV2,
 		)
 		require.NoError(t, err)
 
@@ -368,6 +376,8 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 			usageStats,
 			enc,
 			ossProviders,
+			&NoopDataKeyCache{},
+			cfgV1,
 		)
 		require.NoError(t, err)
 
@@ -392,6 +402,8 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 			usageStats,
 			enc,
 			ossProvidersV2,
+			&NoopDataKeyCache{},
+			cfgV2,
 		)
 		require.NoError(t, err)
 
@@ -573,6 +585,8 @@ func TestIntegration_SecretsService(t *testing.T) {
 				usageStats,
 				enc,
 				ossProviders,
+				&NoopDataKeyCache{},
+				cfg,
 			)
 			require.NoError(t, err)
 
@@ -610,6 +624,8 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 	enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
 	require.NoError(t, err)
 
+	cfg := &setting.Cfg{}
+
 	svc, err := ProvideEncryptionManager(
 		tracer,
 		nil,
@@ -621,6 +637,8 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 				encryption.ProviderID("fakeProvider.v1"): &fakeProvider{},
 			},
 		},
+		&NoopDataKeyCache{},
+		cfg,
 	)
 	require.NoError(t, err)
 
