@@ -1,5 +1,6 @@
-import { FormEvent, useCallback } from 'react';
+import { FormEvent, useCallback, useState } from 'react';
 
+import { CustomVariableModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { CustomVariable, SceneVariable } from '@grafana/scenes';
 
@@ -14,7 +15,23 @@ interface CustomVariableEditorProps {
 }
 
 export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEditorProps) {
-  const { query, isMulti, allValue, includeAll, allowCustomValue } = variable.useState();
+  const { query, valuesFormat, isMulti, allValue, includeAll, allowCustomValue } = variable.useState();
+
+  const [prevQuery, setPrevQuery] = useState('');
+  const onValuesFormatChange = useCallback(
+    (format: CustomVariableModel['valuesFormat']) => {
+      variable.setState({ valuesFormat: format });
+      variable.setState({ allowCustomValue: false });
+      variable.setState({ allValue: undefined });
+
+      variable.setState({ query: prevQuery });
+      if (query !== prevQuery) {
+        setPrevQuery(query);
+      }
+      onRunQuery();
+    },
+    [onRunQuery, prevQuery, query, variable]
+  );
 
   const onMultiChange = useCallback(
     (event: FormEvent<HTMLInputElement>) => {
@@ -55,6 +72,7 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
   return (
     <CustomVariableForm
       query={query ?? ''}
+      valuesFormat={valuesFormat ?? 'csv'}
       multi={!!isMulti}
       allValue={allValue ?? ''}
       includeAll={!!includeAll}
@@ -64,6 +82,7 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
       onQueryChange={onQueryChange}
       onAllValueChange={onAllValueChange}
       onAllowCustomValueChange={onAllowCustomValueChange}
+      onValuesFormatChange={onValuesFormatChange}
     />
   );
 }

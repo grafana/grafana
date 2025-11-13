@@ -321,12 +321,12 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       supportsMultiValueOperators: Boolean(getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators),
     });
   }
+
   if (variable.kind === defaultCustomVariableKind().kind) {
     return new CustomVariable({
       ...commonProperties,
       value: variable.spec.current?.value ?? '',
       text: variable.spec.current?.text ?? '',
-
       query: variable.spec.query,
       isMulti: variable.spec.multi,
       allValue: variable.spec.allValue || undefined,
@@ -334,6 +334,10 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       defaultToAll: Boolean(variable.spec.includeAll),
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
+      valuesFormat:
+        variable.spec.valuesFormat === 'csv' || variable.spec.valuesFormat === 'json'
+          ? variable.spec.valuesFormat
+          : undefined,
     });
   } else if (variable.kind === defaultQueryVariableKind().kind) {
     return new QueryVariable({

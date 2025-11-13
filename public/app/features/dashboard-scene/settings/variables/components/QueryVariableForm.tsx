@@ -1,4 +1,4 @@
-import { FormEvent } from 'react';
+import { FormEvent, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, SelectableValue, TimeRange } from '@grafana/data';
@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable } from '@grafana/scenes';
 import { DataSourceRef, VariableRefresh, VariableSort } from '@grafana/schema';
-import { Field, TextLink } from '@grafana/ui';
+import { Box, Field, Switch, TextLink } from '@grafana/ui';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
 import { SelectionOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/SelectionOptionsForm';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -15,9 +15,9 @@ import { getVariableQueryEditor } from 'app/features/variables/editor/getVariabl
 import { QueryVariableRefreshSelect } from 'app/features/variables/query/QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from 'app/features/variables/query/QueryVariableSortSelect';
 import {
+  QueryVariableStaticOptions,
   StaticOptionsOrderType,
   StaticOptionsType,
-  QueryVariableStaticOptions,
 } from 'app/features/variables/query/QueryVariableStaticOptions';
 
 import { VariableLegend } from './VariableLegend';
@@ -94,6 +94,16 @@ export function QueryVariableEditorForm({
 
   const { datasource, VariableQueryEditor } = dsConfig ?? {};
 
+  // TODO: remove me after finished testing - each DS can/should implement their own UI
+  const [returnsMultiProps, setReturnsMultiProps] = useState(false);
+  const onChangeReturnsMultipleProps = (e: FormEvent<HTMLInputElement>) => {
+    setReturnsMultiProps(e.currentTarget.checked);
+    onAllowCustomValueChange?.({ currentTarget: { checked: false } });
+    onAllValueChange({ currentTarget: { value: '' } });
+    onRegExChange({ currentTarget: { value: '' } });
+    onStaticOptionsChange?.([]);
+  };
+
   return (
     <>
       <VariableLegend>
@@ -102,48 +112,70 @@ export function QueryVariableEditorForm({
       <Field
         label={t('dashboard-scene.query-variable-editor-form.label-data-source', 'Data source')}
         htmlFor="data-source-picker"
+        noMargin
       >
         <DataSourcePicker current={datasourceRef} onChange={onDataSourceChange} variables={true} width={30} />
       </Field>
 
       {datasource && VariableQueryEditor && (
-        <QueryEditor
-          onQueryChange={onQueryChange}
-          onLegacyQueryChange={onLegacyQueryChange}
-          datasource={datasource}
-          query={query}
-          VariableQueryEditor={VariableQueryEditor}
-          timeRange={timeRange}
-        />
+        <Box marginBottom={2}>
+          <QueryEditor
+            onQueryChange={onQueryChange}
+            onLegacyQueryChange={onLegacyQueryChange}
+            datasource={datasource}
+            query={query}
+            VariableQueryEditor={VariableQueryEditor}
+            timeRange={timeRange}
+          />
+          <Field
+            // TODO: add translation
+            label="Enable access to all the fields of the query results"
+            description={
+              // TODO: add translation
+              <Trans i18nKey="">
+                Check{' '}
+                <TextLink href="https://grafana.com/docs/grafana/latest/variables/xxx" external>
+                  our docs
+                </TextLink>{' '}
+                for more information.
+              </Trans>
+            }
+            noMargin
+          >
+            <Switch onChange={onChangeReturnsMultipleProps} />
+          </Field>
+        </Box>
       )}
 
-      <VariableTextAreaField
-        defaultValue={regex ?? ''}
-        name={t('dashboard-scene.query-variable-editor-form.name-regex', 'Regex')}
-        description={
-          <div>
-            <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-optional">
-              Optional, if you want to extract part of a series name or metric node segment.
-            </Trans>
-            <br />
-            <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-examples">
-              Named capture groups can be used to separate the display text and value (
-              <TextLink
-                href="https://grafana.com/docs/grafana/latest/variables/filter-variables-with-regex#filter-and-modify-using-named-text-and-value-capture-groups"
-                external
-              >
-                see examples
-              </TextLink>
-              ).
-            </Trans>
-          </div>
-        }
-        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
-        onBlur={onRegExChange}
-        testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}
-        width={52}
-      />
+      {!returnsMultiProps && (
+        <VariableTextAreaField
+          defaultValue={regex ?? ''}
+          name={t('dashboard-scene.query-variable-editor-form.name-regex', 'Regex')}
+          description={
+            <div>
+              <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-optional">
+                Optional, if you want to extract part of a series name or metric node segment.
+              </Trans>
+              <br />
+              <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-examples">
+                Named capture groups can be used to separate the display text and value (
+                <TextLink
+                  href="https://grafana.com/docs/grafana/latest/variables/filter-variables-with-regex#filter-and-modify-using-named-text-and-value-capture-groups"
+                  external
+                >
+                  see examples
+                </TextLink>
+                ).
+              </Trans>
+            </div>
+          }
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+          placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
+          onBlur={onRegExChange}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}
+          width={52}
+        />
+      )}
 
       <QueryVariableSortSelect
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2}
@@ -157,7 +189,7 @@ export function QueryVariableEditorForm({
         refresh={refresh}
       />
 
-      {onStaticOptionsChange && onStaticOptionsOrderChange && (
+      {!returnsMultiProps && onStaticOptionsChange && onStaticOptionsOrderChange && (
         <QueryVariableStaticOptions
           staticOptions={staticOptions}
           staticOptionsOrder={staticOptionsOrder}
@@ -173,6 +205,8 @@ export function QueryVariableEditorForm({
         multi={!!isMulti}
         includeAll={!!includeAll}
         allowCustomValue={allowCustomValue}
+        disableAllowCustomValue={returnsMultiProps}
+        disableCustomAllValue={returnsMultiProps}
         allValue={allValue}
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}

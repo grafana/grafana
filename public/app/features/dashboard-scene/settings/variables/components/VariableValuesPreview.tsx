@@ -4,14 +4,44 @@ import { MouseEvent, useCallback, useEffect, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { VariableValueOption } from '@grafana/scenes';
-import { Button, InlineFieldRow, InlineLabel, useStyles2, Text } from '@grafana/ui';
+import { MultiValueVariable, VariableValueOption } from '@grafana/scenes';
+import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2 } from '@grafana/ui';
 
-export interface VariableValuesPreviewProps {
-  options: VariableValueOption[];
+export interface Props {
+  variable: MultiValueVariable;
 }
 
-export const VariableValuesPreview = ({ options }: VariableValuesPreviewProps) => {
+export const VariableValuesPreview = ({ variable }: Props) => {
+  const options = variable.getOptionsForSelect(false);
+  if (!options.length) {
+    return null;
+  }
+
+  if ('valuesFormat' in variable.state && variable.state.valuesFormat === 'json') {
+    return <VariableValuesWithPropsPreview options={options} />;
+  }
+
+  return <VariableValuesWithoutPropsPreview options={options} />;
+};
+VariableValuesPreview.displayName = 'VariableValuesPreview';
+
+function VariableValuesWithPropsPreview({ options }: { options: VariableValueOption[] }) {
+  const styles = useStyles2(getStyles);
+  const data = options.map((o) => ({ label: String(o.label), value: String(o.value), ...o.properties }));
+  const columns = Object.keys(data[0]).map((id) => ({ id, header: id, sortType: 'alphanumeric' as const }));
+
+  return (
+    <div className={styles.previewContainer} style={{ gap: '8px' }}>
+      <Text variant="bodySmall" weight="medium">
+        <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values">Preview of values</Trans>
+      </Text>
+      <InteractiveTable columns={columns} data={data} getRowId={(r) => String(r.value)} pageSize={2} />
+    </div>
+  );
+}
+
+function VariableValuesWithoutPropsPreview({ options }: { options: VariableValueOption[] }) {
+  const styles = useStyles2(getStyles);
   const [previewLimit, setPreviewLimit] = useState(20);
   const [previewOptions, setPreviewOptions] = useState<VariableValueOption[]>([]);
   const showMoreOptions = useCallback(
@@ -21,15 +51,10 @@ export const VariableValuesPreview = ({ options }: VariableValuesPreviewProps) =
     },
     [previewLimit, setPreviewLimit]
   );
-  const styles = useStyles2(getStyles);
   useEffect(() => setPreviewOptions(options.slice(0, previewLimit)), [previewLimit, options]);
 
-  if (!previewOptions.length) {
-    return null;
-  }
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', marginTop: '16px' }}>
+    <div className={styles.previewContainer}>
       <Text variant="bodySmall" weight="medium">
         <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values">Preview of values</Trans>
       </Text>
@@ -51,12 +76,12 @@ export const VariableValuesPreview = ({ options }: VariableValuesPreviewProps) =
       )}
     </div>
   );
-};
-VariableValuesPreview.displayName = 'VariableValuesPreview';
+}
+VariableValuesWithoutPropsPreview.displayName = 'VariableValuesWithoutPropsPreview';
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    wrapper: css({
+    previewContainer: css({
       display: 'flex',
       flexDirection: 'column',
       marginTop: theme.spacing(2),
