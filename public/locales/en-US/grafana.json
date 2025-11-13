@@ -7465,6 +7465,7 @@
       "label-resource-attributes": "Resource attributes",
       "label-span-attributes": "Span attributes",
       "label-stack-trace": "Stack trace",
+      "label-warnings": "Warnings",
       "overview-items": {
         "label": {
           "child-count": "Child Count:",
@@ -7473,8 +7474,7 @@
           "start-time": "Start Time:"
         }
       },
-      "share-span": "Share",
-      "warnings": "Warnings"
+      "share-span": "Share"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Select max span operator",
