@@ -267,9 +267,10 @@ func (d *dataStore) GetLatestAndPredecessor(ctx context.Context, key ListRequest
 		if err != nil {
 			return DataKey{}, DataKey{}, err
 		}
-		if count == 0 {
+		switch count {
+		case 0:
 			latest = parsedKey
-		} else if count == 1 {
+		case 1:
 			predecessor = parsedKey
 		}
 		count++
@@ -278,7 +279,6 @@ func (d *dataStore) GetLatestAndPredecessor(ctx context.Context, key ListRequest
 		return DataKey{}, DataKey{}, ErrNotFound
 	}
 	if count == 1 {
-		// Only one version exists, return it with empty predecessor
 		return latest, DataKey{}, nil
 	}
 	return latest, predecessor, nil
