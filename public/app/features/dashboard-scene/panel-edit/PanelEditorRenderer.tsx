@@ -178,13 +178,10 @@ function VizWrapper({ panel, tableView }: VizWrapperProps) {
     <div className={styles.vizWrapper}>
       {showEmptyState ? (
         <div className={styles.emptyStateWrapper}>
+          {/*@TODO: Remove icon; Add link*/}
           <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
           <Text element="p" textAlignment="center" color="secondary">
-            {hasData ? (
-              <Trans i18nKey="dashboard.new-panel.empty-state-with-data-message">
-                Click on a suggested chart to preview it
-              </Trans>
-            ) : (
+            {!hasData && (
               <Trans i18nKey="dashboard.new-panel.empty-state-message">
                 Build a query to visualize it here or go to all visualizations to add other panel types
               </Trans>
