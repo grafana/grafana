@@ -537,21 +537,51 @@ func TestKvStorageBackend_ListIterator_WithPagination(t *testing.T) {
 	var continueToken2 string
 
 	_, err = backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
+		count := 0
 		for iter.Next() {
 			if err := iter.Error(); err != nil {
 				return err
 			}
 			secondPageItems = append(secondPageItems, iter.Name())
+			count++
+			// Simulate pagination by getting continue token after limit items
+			if count >= int(listReq.Limit) {
+				continueToken2 = iter.ContinueToken()
+				break
+			}
 		}
-		// Capture continue token for potential third page
-		continueToken2 = iter.ContinueToken()
 		return iter.Error()
 	})
-	// TODO: fix the ListIterator to respect the limit. This require a change to the resource server.
 	require.NoError(t, err)
-	require.Equal(t, 3, len(secondPageItems))
-	require.Equal(t, []string{"resource-3", "resource-4", "resource-5"}, secondPageItems)
+	require.Equal(t, 2, len(secondPageItems))
+	require.Equal(t, []string{"resource-3", "resource-4"}, secondPageItems)
 	require.NotEmpty(t, continueToken2)
+
+	// third page using continue token
+	listReq.NextPageToken = continueToken2
+	var thirdPageItems []string
+	var continueToken3 string
+
+	_, err = backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
+		count := 0
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
+			thirdPageItems = append(thirdPageItems, iter.Name())
+			count++
+			// Simulate pagination by getting continue token after limit items
+			if count >= int(listReq.Limit) {
+				continueToken = iter.ContinueToken()
+				break
+			}
+		}
+		return iter.Error()
+	})
+	require.NoError(t, err)
+	require.Equal(t, 1, len(thirdPageItems))
+	require.Equal(t, []string{"resource-5"}, thirdPageItems)
+	require.Empty(t, continueToken3)
 }
 func TestKvStorageBackend_ListIterator_EmptyResult(t *testing.T) {
 	backend := setupTestStorageBackend(t)

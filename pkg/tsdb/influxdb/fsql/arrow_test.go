@@ -77,12 +77,8 @@ func TestNewQueryDataResponse(t *testing.T) {
 		arr = append(arr, tarr)
 	}
 
-	//TODO: fix deprecation warning
-	//nolint:staticcheck
-	record := array.NewRecord(schema, arr, -1)
-	//TODO: fix deprecation warning
-	//nolint:staticcheck
-	records := []arrow.Record{record}
+	record := array.NewRecordBatch(schema, arr, -1)
+	records := []arrow.RecordBatch{record}
 	reader, err := array.NewRecordReader(schema, records)
 	assert.NoError(t, err)
 
@@ -206,12 +202,8 @@ func TestNewQueryDataResponse_Error(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
-	//TODO: fix deprecation warning
-	//nolint:staticcheck
-	record := array.NewRecord(schema, []arrow.Array{i64s, f64s}, -1)
-	//TODO: fix deprecation warning
-	//nolint:staticcheck
-	records := []arrow.Record{record}
+	record := array.NewRecordBatch(schema, []arrow.Array{i64s, f64s}, -1)
+	records := []arrow.RecordBatch{record}
 	reader, err := array.NewRecordReader(schema, records)
 	assert.NoError(t, err)
 
@@ -255,12 +247,8 @@ func TestNewQueryDataResponse_WideTable(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
-	//TODO: fix deprecation warning
-	//nolint:staticcheck
-	record := array.NewRecord(schema, []arrow.Array{times, strs, i64s}, -1)
-	//TODO: fix deprecation warning
-	//nolint:staticcheck
-	records := []arrow.Record{record}
+	record := array.NewRecordBatch(schema, []arrow.Array{times, strs, i64s}, -1)
+	records := []arrow.RecordBatch{record}
 	reader, err := array.NewRecordReader(schema, records)
 	assert.NoError(t, err)
 
@@ -534,12 +522,8 @@ func TestCustomMetadata(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
-	//TODO: fix deprecation warning
-	//nolint:staticcheck
-	record := array.NewRecord(schema, []arrow.Array{i64s}, -1)
-	//TODO: fix deprecation warning
-	//nolint:staticcheck
-	records := []arrow.Record{record}
+	record := array.NewRecordBatch(schema, []arrow.Array{i64s}, -1)
+	records := []arrow.RecordBatch{record}
 	reader, err := array.NewRecordReader(schema, records)
 	assert.NoError(t, err)
 

@@ -2,7 +2,7 @@ import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { backendSrv } from 'app/core/services/backend_srv';
+import * as folderHooks from 'app/api/clients/folder/v1beta1/hooks';
 import {
   AnnoKeyFolder,
   AnnoKeyFolderTitle,
@@ -101,7 +101,7 @@ describe('v2 dashboard API', () => {
       },
     });
 
-    jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue({
+    jest.spyOn(folderHooks, 'getFolderByUidFacade').mockResolvedValue({
       id: 1,
       uid: 'new-folder',
       title: 'New Folder',
@@ -136,7 +136,7 @@ describe('v2 dashboard API', () => {
       },
     });
     jest
-      .spyOn(backendSrv, 'getFolderByUid')
+      .spyOn(folderHooks, 'getFolderByUidFacade')
       .mockRejectedValueOnce({ message: 'folder not found', status: 'not-found' });
 
     const api = new K8sDashboardV2API();
@@ -148,7 +148,7 @@ describe('v2 dashboard API', () => {
       ...mockDashboardDto,
       metadata: { ...mockDashboardDto.metadata, annotations: { [AnnoKeyFolder]: 'new-folder' } },
     });
-    jest.spyOn(backendSrv, 'getFolderByUid').mockRejectedValueOnce({ message: 'folder not found', status: 403 });
+    jest.spyOn(folderHooks, 'getFolderByUidFacade').mockRejectedValueOnce({ message: 'folder not found', status: 403 });
 
     const api = new K8sDashboardV2API();
     const dashboardDTO = await api.getDashboardDTO('test');

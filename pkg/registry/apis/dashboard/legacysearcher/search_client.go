@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"google.golang.org/grpc"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/selection"
 
 	claims "github.com/grafana/authlib/types"
@@ -62,7 +63,7 @@ func ParseSortName(sortName string) (string, bool, error) {
 		}
 	}
 
-	return "", false, fmt.Errorf("no matching sort field found for: %s", sortName)
+	return "", false, apierrors.NewBadRequest(fmt.Sprintf("no matching sort field found for: %s", sortName))
 }
 
 // nolint:gocyclo
@@ -97,11 +98,11 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 	case folders.RESOURCE:
 		queryType = searchstore.TypeFolder
 	default:
-		return nil, fmt.Errorf("bad type request")
+		return nil, apierrors.NewBadRequest("bad type request")
 	}
 
 	if len(req.Federated) > 1 {
-		return nil, fmt.Errorf("bad type request")
+		return nil, apierrors.NewBadRequest("bad type request")
 	}
 
 	if len(req.Federated) == 1 &&
@@ -117,7 +118,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 	sortByField := ""
 	if len(req.SortBy) != 0 {
 		if len(req.SortBy) > 1 {
-			return nil, fmt.Errorf("only one sort field is supported")
+			return nil, apierrors.NewBadRequest("only one sort field is supported")
 		}
 		sort := req.SortBy[0]
 		sortByField = strings.TrimPrefix(sort.Field, resource.SEARCH_FIELD_PREFIX)
@@ -208,13 +209,13 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 		case resource.SEARCH_FIELD_SOURCE_PATH:
 			// only one value is supported in legacy search
 			if len(vals) != 1 {
-				return nil, fmt.Errorf("only one repo path query is supported")
+				return nil, apierrors.NewBadRequest("only one repo path query is supported")
 			}
 			query.SourcePath = vals[0]
 
 		case resource.SEARCH_FIELD_MANAGER_KIND:
 			if len(vals) != 1 {
-				return nil, fmt.Errorf("only one manager kind supported")
+				return nil, apierrors.NewBadRequest("only one manager kind supported")
 			}
 			query.ManagedBy = utils.ManagerKind(vals[0])
 
@@ -226,18 +227,38 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 
 			// only one value is supported in legacy search
 			if len(vals) != 1 {
-				return nil, fmt.Errorf("only one repo name is supported")
+				return nil, apierrors.NewBadRequest("only one repo name is supported")
 			}
 			query.ManagerIdentity = vals[0]
+
 		case unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE:
 			if len(vals) != 1 {
-				return nil, fmt.Errorf("only one library panel uid is supported")
+				return nil, apierrors.NewBadRequest("only one library panel uid is supported")
 			}
 
-			return c.getLibraryPanelConnections(ctx, user, vals[0], req.Options.Key.Namespace)
+			// Make sure the query does not include incompatible combinations
+			for _, f := range req.Options.Fields {
+				switch f.Key {
+				case resource.SEARCH_FIELD_NAME:
+					return nil, apierrors.NewBadRequest("libraryPanel query must not include explicit names")
+				}
+			}
+
+			query.DashboardUIDs, err = c.getLibraryPanelConnections(ctx, user, vals[0])
+			if err != nil {
+				return nil, err
+			}
+			if len(query.DashboardUIDs) == 0 {
+				// Empty results
+				return &resourcepb.ResourceSearchResponse{
+					TotalHits: 0,
+					Results:   &resourcepb.ResourceTable{},
+				}, nil
+			}
+
 		case resource.SEARCH_FIELD_TITLE_PHRASE:
 			if len(vals) != 1 {
-				return nil, fmt.Errorf("only one title supported")
+				return nil, apierrors.NewBadRequest("only one title supported")
 			}
 
 			query.Title = vals[0]
@@ -256,7 +277,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 	// legacy sql query, since legacy search does not support this
 	if query.ManagerIdentity != "" || len(query.ManagerIdentityNotIn) > 0 || query.ManagedBy != "" {
 		if query.ManagedBy == utils.ManagerKindUnknown {
-			return nil, fmt.Errorf("query by manager identity also requires manager.kind parameter")
+			return nil, apierrors.NewBadRequest("query by manager identity also requires manager.kind parameter")
 		}
 
 		// for plugin and orphaned dashboards, we will only return the manager kind alongside the regular search response
@@ -362,50 +383,36 @@ func getResourceKey(item *dashboards.DashboardSearchProjection, namespace string
 	}
 }
 
-// retrieves all the dashboards that are connected to the given library panel
-func (c *DashboardSearchClient) getLibraryPanelConnections(ctx context.Context, user identity.Requester, libraryElementUID, namespace string) (*resourcepb.ResourceSearchResponse, error) {
+// retrieves all dashboard UIDs connected to a given library panel
+func (c *DashboardSearchClient) getLibraryPanelConnections(ctx context.Context, user identity.Requester, libraryElementUID string) ([]string, error) {
 	connections, err := c.dashboardStore.GetDashboardsByLibraryPanelUID(ctx, libraryElementUID, user.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
 
-	columns := c.getColumns("", &dashboards.FindPersistedDashboardsQuery{})
-	list := &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: columns,
-		},
+	uids := make([]string, len(connections))
+	for i, dashboard := range connections {
+		uids[i] = dashboard.UID
 	}
-
-	for _, dashboard := range connections {
-		cells := c.createCommonCells("", dashboard.FolderUID, dashboard.ID, nil) // nolint:staticcheck
-		list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
-			Key: getResourceKey(&dashboards.DashboardSearchProjection{
-				UID: dashboard.UID,
-			}, namespace),
-			Cells: cells,
-		})
-	}
-
-	list.TotalHits = int64(len(list.Results.Rows))
-	return list, nil
+	return uids, nil
 }
 
 func (c *DashboardSearchClient) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	info, err := claims.ParseNamespace(req.Namespace)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read namespace")
+		return nil, apierrors.NewInternalError(fmt.Errorf("unable to read namespace: %w", err))
 	}
 	if info.OrgID == 0 {
-		return nil, fmt.Errorf("invalid OrgID found in namespace")
+		return nil, apierrors.NewInternalError(fmt.Errorf("invalid OrgID found in namespace"))
 	}
 
 	if len(req.Kinds) != 1 {
-		return nil, fmt.Errorf("only can query for dashboard kind in legacy fallback")
+		return nil, apierrors.NewBadRequest("only can query for dashboard kind in legacy fallback")
 	}
 
 	parts := strings.SplitN(req.Kinds[0], "/", 2)
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid kind")
+		return nil, apierrors.NewBadRequest("invalid kind")
 	}
 
 	var count int64
@@ -415,7 +422,7 @@ func (c *DashboardSearchClient) GetStats(ctx context.Context, req *resourcepb.Re
 	case folders.GROUP:
 		count, err = c.dashboardStore.CountInOrg(ctx, info.OrgID, true)
 	default:
-		return nil, fmt.Errorf("invalid group")
+		return nil, apierrors.NewBadRequest("invalid group")
 	}
 	if err != nil {
 		return nil, err

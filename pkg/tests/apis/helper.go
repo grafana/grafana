@@ -58,6 +58,24 @@ const (
 	Org2 = "OrgB"
 )
 
+var (
+	sharedHTTPClient = &http.Client{
+		Timeout: 30 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Transport: &http.Transport{
+			MaxIdleConns:        1000,
+			MaxIdleConnsPerHost: 500,
+			MaxConnsPerHost:     500,
+			IdleConnTimeout:     90 * time.Second,
+			DisableKeepAlives:   false,
+			DisableCompression:  true,
+			ForceAttemptHTTP2:   false,
+		},
+	}
+)
+
 type K8sTestHelper struct {
 	t               *testing.T
 	listenerAddress string
@@ -498,12 +516,8 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	if params.Accept != "" {
 		req.Header.Set("Accept", params.Accept)
 	}
-	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
-	rsp, err := client.Do(req)
+
+	rsp, err := sharedHTTPClient.Do(req)
 	require.NoError(c.t, err)
 
 	r := K8sResponse[T]{
@@ -941,6 +955,50 @@ func (c *K8sTestHelper) DeleteServiceAccount(user User, orgID int64, saID int64)
 	}, &struct{}{})
 
 	require.Equal(c.t, http.StatusOK, resp.Response.StatusCode, "failed to delete service account, body: %s", string(resp.Body))
+}
+
+func (c *K8sTestHelper) DeleteFolder(user User, folderUID string) error {
+	c.t.Helper()
+
+	resp := DoRequest(c, RequestParams{
+		User:   user,
+		Method: http.MethodDelete,
+		Path:   fmt.Sprintf("/api/folders/%s", folderUID),
+	}, &struct{}{})
+
+	if resp.Response.StatusCode != http.StatusOK && resp.Response.StatusCode != http.StatusNotFound {
+		return fmt.Errorf("failed to delete folder %s: status %d, body: %s", folderUID, resp.Response.StatusCode, string(resp.Body))
+	}
+	return nil
+}
+
+func (c *K8sTestHelper) DeleteUser(adminUser User, userID int64) error {
+	c.t.Helper()
+
+	resp := DoRequest(c, RequestParams{
+		User:   adminUser,
+		Method: http.MethodDelete,
+		Path:   fmt.Sprintf("/api/admin/users/%d", userID),
+	}, &struct{}{})
+
+	if resp.Response.StatusCode != http.StatusOK && resp.Response.StatusCode != http.StatusNotFound {
+		return fmt.Errorf("failed to delete user %d: status %d, body: %s", userID, resp.Response.StatusCode, string(resp.Body))
+	}
+	return nil
+}
+
+func (c *K8sTestHelper) CleanupTestResources(folderUIDs []string, userIDs []int64) func() {
+	return func() {
+		c.t.Helper()
+		// Delete folders first (they may have dependencies)
+		for _, uid := range folderUIDs {
+			_ = c.DeleteFolder(c.Org1.Admin, uid)
+		}
+		// Then delete users
+		for _, id := range userIDs {
+			_ = c.DeleteUser(c.Org1.Admin, id)
+		}
+	}
 }
 
 // Ensures that the passed error is an APIStatus error and fails the test if it is not.
