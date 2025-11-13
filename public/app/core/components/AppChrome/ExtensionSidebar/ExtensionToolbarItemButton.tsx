@@ -1,9 +1,7 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ToolbarButton, useStyles2 } from '@grafana/ui';
+import { ToolbarButton } from '@grafana/ui';
 
 interface ToolbarItemButtonProps {
   isOpen: boolean;
@@ -30,7 +28,6 @@ function ExtensionToolbarItemButtonComponent(
   { isOpen, title, onClick, pluginId }: ToolbarItemButtonProps,
   ref: React.ForwardedRef<HTMLButtonElement>
 ) {
-  const styles = useStyles2(getStyles);
   const icon = getPluginIcon(pluginId);
 
   if (isOpen) {
@@ -38,11 +35,10 @@ function ExtensionToolbarItemButtonComponent(
     return (
       <ToolbarButton
         ref={ref}
-        className={styles.buttonActive}
         icon={icon}
         iconOnly
         data-testid="extension-toolbar-button-close"
-        variant="default"
+        variant="active"
         onClick={onClick}
         tooltip={t('navigation.extension-sidebar.button-tooltip.close', 'Close {{title}}', { title })}
       />
@@ -71,14 +67,3 @@ function ExtensionToolbarItemButtonComponent(
 export const ExtensionToolbarItemButton = React.forwardRef<HTMLButtonElement, ToolbarItemButtonProps>(
   ExtensionToolbarItemButtonComponent
 );
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    buttonActive: css({
-      borderRadius: theme.shape.radius.circle,
-      backgroundColor: theme.colors.primary.transparent,
-      border: `1px solid ${theme.colors.primary.borderTransparent}`,
-      color: theme.colors.text.primary,
-    }),
-  };
-}
