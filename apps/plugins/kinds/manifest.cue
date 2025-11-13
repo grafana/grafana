@@ -16,24 +16,6 @@ v0alpha1Version: {
 	}
 	kinds: [
 		pluginV0Alpha1,
+		pluginMetaV0Alpha1,
 	]
-	routes: {
-		namespaced: {
-			"/metas": {
-				"GET": {
-					response: {
-						items: [...{
-							id:   string
-							type: string
-							name: string
-						}]
-					}
-					responseMetadata: {
-						typeMeta:   false
-						objectMeta: false
-					}
-				}
-			}
-		}
-	}
 }

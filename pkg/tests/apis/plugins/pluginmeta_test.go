@@ -34,29 +34,30 @@ func TestIntegrationPluginMeta(t *testing.T) {
 		_, err := client.Resource.Create(ctx, plugin, metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
-		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/plugins/%s/meta", namespace, pluginName)
+		namespace := helper.Org1.Admin.Identity.GetNamespace()
+		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/pluginmetas/%s", namespace, pluginName)
 		response := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: "GET",
 			Path:   path,
-		}, &pluginsv0alpha1.GetMeta{})
+		}, &pluginsv0alpha1.PluginMeta{})
 
 		require.NotNil(t, response.Result)
-		require.Equal(t, "grafana-piechart-panel", response.Result.Id)
-		require.NotEmpty(t, response.Result.Name)
-		require.NotEmpty(t, response.Result.Type)
+		require.NotNil(t, response.Result.Spec.PluginJSON)
+		require.Equal(t, "grafana-piechart-panel", response.Result.Spec.PluginJSON.Id)
+		require.NotEmpty(t, response.Result.Spec.PluginJSON.Name)
+		require.NotEmpty(t, response.Result.Spec.PluginJSON.Type)
 	})
 
 	t.Run("get plugin meta for non-existent plugin", func(t *testing.T) {
 		helper := setupHelper(t)
-		namespace := helper.Org1.Admin.Identity.GetOrgID()
-		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/plugins/non-existent-plugin/meta", namespace)
+		namespace := helper.Org1.Admin.Identity.GetNamespace()
+		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/pluginmetas/non-existent-plugin", namespace)
 		response := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: "GET",
 			Path:   path,
-		}, &pluginsv0alpha1.GetMeta{})
+		}, &pluginsv0alpha1.PluginMeta{})
 
 		require.NotNil(t, response.Status)
 		require.Equal(t, int32(404), response.Status.Code)
@@ -80,13 +81,13 @@ func TestIntegrationPluginMeta(t *testing.T) {
 		_, err := client.Resource.Create(ctx, plugin, metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
-		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/plugins/%s/meta", namespace, pluginName)
+		namespace := helper.Org1.Admin.Identity.GetNamespace()
+		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/pluginmetas/%s", namespace, pluginName)
 		response := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: "GET",
 			Path:   path,
-		}, &pluginsv0alpha1.GetMeta{})
+		}, &pluginsv0alpha1.PluginMeta{})
 
 		require.NotNil(t, response.Status)
 		require.Equal(t, int32(404), response.Status.Code)

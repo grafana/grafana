@@ -22,10 +22,10 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 	t.Run("returns cached plugin when available", func(t *testing.T) {
 		provider := NewCoreProvider()
 
-		expectedMeta := &pluginsv0alpha1.GetMeta{
+		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
 			Id:   "test-plugin",
 			Name: "Test Plugin",
-			Type: pluginsv0alpha1.GetMetaTypeDatasource,
+			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
 		}
 
 		provider.mu.Lock()
@@ -58,10 +58,10 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 	t.Run("ignores version parameter", func(t *testing.T) {
 		provider := NewCoreProvider()
 
-		expectedMeta := &pluginsv0alpha1.GetMeta{
+		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
 			Id:   "test-plugin",
 			Name: "Test Plugin",
-			Type: pluginsv0alpha1.GetMetaTypeDatasource,
+			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
 		}
 
 		provider.mu.Lock()
@@ -81,10 +81,10 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		customTTL := 2 * time.Hour
 		provider := NewCoreProviderWithTTL(customTTL)
 
-		expectedMeta := &pluginsv0alpha1.GetMeta{
+		expectedMeta := pluginsv0alpha1.PluginMetaJSONData{
 			Id:   "test-plugin",
 			Name: "Test Plugin",
-			Type: pluginsv0alpha1.GetMetaTypeDatasource,
+			Type: pluginsv0alpha1.PluginMetaJSONDataTypeDatasource,
 		}
 
 		provider.mu.Lock()
@@ -98,12 +98,33 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		require.NotNil(t, result)
 		assert.Equal(t, customTTL, result.TTL)
 	})
+
+	t.Run("gracefully handles initialization failure and returns ErrMetaNotFound", func(t *testing.T) {
+		tempDir := t.TempDir()
+
+		oldWd, err := os.Getwd()
+		require.NoError(t, err)
+		defer func() {
+			_ = os.Chdir(oldWd)
+		}()
+
+		require.NoError(t, os.Chdir(tempDir))
+
+		provider := NewCoreProvider()
+		result, err := provider.GetMeta(ctx, "any-plugin", "1.0.0")
+		assert.Error(t, err)
+		assert.True(t, errors.Is(err, ErrMetaNotFound))
+		assert.Nil(t, result)
+
+		initialized := provider.initialized
+		assert.True(t, initialized, "provider should be marked as initialized even after failure")
+	})
 }
 
 func TestCoreProvider_loadPlugins(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("loads all core plugins from Grafana codebase", func(t *testing.T) {
+	t.Run("loads all core plugins", func(t *testing.T) {
 		_, filename, _, _ := runtime.Caller(0)
 		testDir := filepath.Dir(filename)
 		grafanaRoot := filepath.Join(testDir, "..", "..", "..", "..", "..")
@@ -141,7 +162,7 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 		assert.Contains(t, err.Error(), "could not find Grafana static root path")
 	})
 
-	t.Run("returns error when no plugins found", func(t *testing.T) {
+	t.Run("returns no error when no plugins found", func(t *testing.T) {
 		tempDir := t.TempDir()
 		publicPath := filepath.Join(tempDir, "public", "app", "plugins")
 		require.NoError(t, os.MkdirAll(publicPath, 0750))
@@ -156,9 +177,7 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 
 		provider := NewCoreProvider()
 		err = provider.loadPlugins(ctx)
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "core plugins could not be found")
+		assert.NoError(t, err)
 	})
 
 	t.Run("successfully loads plugins when structure exists", func(t *testing.T) {
@@ -252,11 +271,11 @@ func TestJsonDataToMeta(t *testing.T) {
 			},
 		}
 
-		meta := jsonDataToMeta(jsonData)
+		meta := jsonDataToPluginMetaJSONData(jsonData)
 
 		assert.Equal(t, "test-plugin", meta.Id)
 		assert.Equal(t, "Test Plugin", meta.Name)
-		assert.Equal(t, pluginsv0alpha1.GetMetaTypeDatasource, meta.Type)
+		assert.Equal(t, pluginsv0alpha1.PluginMetaJSONDataTypeDatasource, meta.Type)
 		assert.Equal(t, "1.0.0", meta.Info.Version)
 		assert.Equal(t, "Test description", *meta.Info.Description)
 		assert.Equal(t, []string{"test", "plugin"}, meta.Info.Keywords)
@@ -274,7 +293,7 @@ func TestJsonDataToMeta(t *testing.T) {
 			},
 		}
 
-		meta := jsonDataToMeta(jsonData)
+		meta := jsonDataToPluginMetaJSONData(jsonData)
 
 		assert.Nil(t, meta.Info.Description)
 		assert.Nil(t, meta.Info.Author)

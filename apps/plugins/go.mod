@@ -9,6 +9,7 @@ replace github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery
 replace github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
 
 require (
+	github.com/grafana/authlib/types v0.0.0-20250926065801-df98203cff37
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.48.1
 	github.com/grafana/grafana-app-sdk/logging v0.48.1
@@ -68,7 +69,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/alerting v0.0.0-20251009192429-9427c24835ae // indirect
 	github.com/grafana/authlib v0.0.0-20250930082137-a40e2c2b094f // indirect
-	github.com/grafana/authlib/types v0.0.0-20250926065801-df98203cff37 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 // indirect
 	github.com/grafana/grafana-aws-sdk v1.3.0 // indirect

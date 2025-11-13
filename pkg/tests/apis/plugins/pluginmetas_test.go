@@ -45,22 +45,24 @@ func TestIntegrationPluginMetas(t *testing.T) {
 		require.NoError(t, err)
 
 		namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
-		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/metas", namespace)
+		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/pluginmetas", namespace)
 		response := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: "GET",
 			Path:   path,
-		}, &pluginsv0alpha1.GetMetas{})
+		}, &pluginsv0alpha1.PluginMetaList{})
 
 		require.NotNil(t, response.Result)
+		require.NotNil(t, response.Result.Items)
 		require.GreaterOrEqual(t, len(response.Result.Items), 2)
 
 		foundIDs := make(map[string]bool)
 		for _, item := range response.Result.Items {
-			foundIDs[item.Id] = true
-			require.NotEmpty(t, item.Id)
-			require.NotEmpty(t, item.Type)
-			require.NotEmpty(t, item.Name)
+			require.NotNil(t, item.Spec.PluginJSON)
+			foundIDs[item.Spec.PluginJSON.Id] = true
+			require.NotEmpty(t, item.Spec.PluginJSON.Id)
+			require.NotEmpty(t, item.Spec.PluginJSON.Type)
+			require.NotEmpty(t, item.Spec.PluginJSON.Name)
 		}
 		require.True(t, foundIDs["grafana-piechart-panel"])
 		require.True(t, foundIDs["grafana-clock-panel"])
@@ -69,12 +71,12 @@ func TestIntegrationPluginMetas(t *testing.T) {
 	t.Run("list plugin metas with no plugins", func(t *testing.T) {
 		helper := setupHelper(t)
 		namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
-		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/metas", namespace)
+		path := fmt.Sprintf("/apis/plugins.grafana.app/v0alpha1/namespaces/%s/pluginmetas", namespace)
 		response := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: "GET",
 			Path:   path,
-		}, &pluginsv0alpha1.GetMetas{})
+		}, &pluginsv0alpha1.PluginMetaList{})
 
 		require.NotNil(t, response.Result)
 		require.NotNil(t, response.Result.Items)
