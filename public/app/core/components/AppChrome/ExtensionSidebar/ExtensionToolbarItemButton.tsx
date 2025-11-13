@@ -29,11 +29,15 @@ function ExtensionToolbarItemButtonComponent(
   ref: React.ForwardedRef<HTMLButtonElement>
 ) {
   const icon = getPluginIcon(pluginId);
-  const tooltip = isOpen
-    ? t('navigation.extension-sidebar.button-tooltip.close', 'Close {{title}}', { title })
-    : title
-      ? t('navigation.extension-sidebar.button-tooltip.open', 'Open {{title}}', { title })
-      : t('navigation.extension-sidebar.button-tooltip.open-all', 'Open AI assistants and sidebar apps');
+  const tooltip = (() => {
+    if (isOpen) {
+      return t('navigation.extension-sidebar.button-tooltip.close', 'Close {{title}}', { title });
+    }
+    if (title) {
+      return t('navigation.extension-sidebar.button-tooltip.open', 'Open {{title}}', { title });
+    }
+    return t('navigation.extension-sidebar.button-tooltip.open-all', 'Open AI assistants and sidebar apps');
+  })();
 
   return (
     <ToolbarButton
