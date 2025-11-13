@@ -6750,9 +6750,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Mer information om felet"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "Lägg till csv eller kalkylblad"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Adobe Analytics-datakälla",
@@ -11762,6 +11759,11 @@
       "path-description": "Lokal filsystemväg till lagringsplatsen",
       "path-label": "Sökväg till lagringsplats",
       "path-required": "Sökväg till lagringsplats krävs"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {

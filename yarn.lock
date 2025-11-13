@@ -2920,7 +2920,7 @@ __metadata:
     "@grafana/schema": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@lezer/common": "npm:1.2.3"
-    "@lezer/lr": "npm:1.4.2"
+    "@lezer/lr": "npm:1.4.3"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.37.0"
@@ -3057,9 +3057,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/assistant@npm:0.1.1":
-  version: 0.1.1
-  resolution: "@grafana/assistant@npm:0.1.1"
+"@grafana/assistant@npm:0.1.4":
+  version: 0.1.4
+  resolution: "@grafana/assistant@npm:0.1.4"
   peerDependencies:
     "@grafana/data": ">=12.1.0"
     "@grafana/runtime": ">=12.1.0"
@@ -3067,7 +3067,7 @@ __metadata:
     "@grafana/ui": ">=12.1.0"
     react: ">=18.0.0"
     rxjs: ">=7.0.0"
-  checksum: 10/33e5b3f59b3b7a747a736f36183c77014214fa6e8048faac7a680dbba64833b1827dd7ef2e8c1ddf566a31829347449579ef6255811586b39914ca0510bb34a5
+  checksum: 10/1435e4552763e88a2d4715f2e529d1a247d949563567bfb46405a2a3e348b98dc08b32c96214c2d00c46e185f92a76da8d29422b1b70edbd8447e02b3b8cf3d0
   languageName: node
   linkType: hard
 
@@ -3525,7 +3525,7 @@ __metadata:
     "@leeoniya/ufuzzy": "npm:1.0.19"
     "@lezer/common": "npm:1.2.3"
     "@lezer/highlight": "npm:1.2.1"
-    "@lezer/lr": "npm:1.4.2"
+    "@lezer/lr": "npm:1.4.3"
     "@prometheus-io/lezer-promql": "npm:0.305.0"
     "@reduxjs/toolkit": "npm:2.9.0"
     "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
@@ -3624,11 +3624,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:^6.42.1":
-  version: 6.42.1
-  resolution: "@grafana/scenes-react@npm:6.42.1"
+"@grafana/scenes-react@npm:^6.46.0":
+  version: 6.46.0
+  resolution: "@grafana/scenes-react@npm:6.46.0"
   dependencies:
-    "@grafana/scenes": "npm:6.42.1"
+    "@grafana/scenes": "npm:6.46.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3640,7 +3640,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/190289561d343a7a2d9d036f9b23abb063cee20f3a3e9e9275d8f11ef2e0df9fbd256e4687bf5a7b8f59aa79ae2bbc05bbb009876f582ebaeed97a0f52492907
+  checksum: 10/be082f31c14e636efe6c60f98771a03b94606c6210a1f90d64a1c4ee8429ccb5aaa9e401092f4f6d728befeec13051d9811ec894bdee9b3c39865a5ebc2bba41
   languageName: node
   linkType: hard
 
@@ -3670,9 +3670,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.42.1, @grafana/scenes@npm:^6.42.1":
-  version: 6.42.1
-  resolution: "@grafana/scenes@npm:6.42.1"
+"@grafana/scenes@npm:6.46.0, @grafana/scenes@npm:^6.46.0":
+  version: 6.46.0
+  resolution: "@grafana/scenes@npm:6.46.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3692,7 +3692,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/f1f455f823c01324942fef9feb256b04cb209d486a43e6dd683e984abb88f078d8e2a9d85e31619e37c9c3ee4356c97707d258a608f9b64ae8df097813bf178f
+  checksum: 10/c4b2b3113da0ea9b5745b4d560e73ad8877934138cb2862ed0fecf0954a36dc7aee2b15e12b802e0884ff8f56756935acc545019753f99a2900ba19a620a4e96
   languageName: node
   linkType: hard
 
@@ -5221,12 +5221,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/lr@npm:1.4.2":
-  version: 1.4.2
-  resolution: "@lezer/lr@npm:1.4.2"
+"@lezer/lr@npm:1.4.3":
+  version: 1.4.3
+  resolution: "@lezer/lr@npm:1.4.3"
   dependencies:
     "@lezer/common": "npm:^1.0.0"
-  checksum: 10/f7b505906c8d8df14c07866553cf3dae1e065b1da8b28fbb4193fd67ab8d187eb45f92759e29a2cfe4283296f0aa864b38a0a91708ecfc3e24b8f662d626e0c6
+  checksum: 10/d6dfecedcd51027b38bac756026bcbdffa2e086d9a48a4ef0f84176ca28b300d9da0e508fc77d8d64181540b6027571a7fe1dc3705abdcc5d6db45386d6fb482
   languageName: node
   linkType: hard
 
@@ -18892,7 +18892,7 @@ __metadata:
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
     "@grafana/api-clients": "workspace:*"
-    "@grafana/assistant": "npm:0.1.1"
+    "@grafana/assistant": "npm:0.1.4"
     "@grafana/aws-sdk": "npm:0.8.3"
     "@grafana/azure-sdk": "npm:0.0.8"
     "@grafana/data": "workspace:*"
@@ -18913,8 +18913,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.11.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^6.42.1"
-    "@grafana/scenes-react": "npm:^6.42.1"
+    "@grafana/scenes": "npm:^6.46.0"
+    "@grafana/scenes-react": "npm:^6.46.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -18924,7 +18924,7 @@ __metadata:
     "@leeoniya/ufuzzy": "npm:1.0.19"
     "@lezer/common": "npm:1.2.3"
     "@lezer/highlight": "npm:1.2.1"
-    "@lezer/lr": "npm:1.4.2"
+    "@lezer/lr": "npm:1.4.3"
     "@locker/near-membrane-dom": "npm:0.14.0"
     "@locker/near-membrane-shared": "npm:0.14.0"
     "@locker/near-membrane-shared-dom": "npm:0.14.0"
@@ -19135,7 +19135,7 @@ __metadata:
     node-notifier: "npm:10.0.1"
     nx: "npm:21.3.11"
     ol: "npm:10.6.1"
-    ol-ext: "npm:4.0.35"
+    ol-ext: "npm:4.0.36"
     ol-mapbox-style: "npm:^13.0.1"
     open: "npm:^10.2.0"
     ora: "npm:^9.0.0"
@@ -25309,12 +25309,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-ext@npm:4.0.35":
-  version: 4.0.35
-  resolution: "ol-ext@npm:4.0.35"
+"ol-ext@npm:4.0.36":
+  version: 4.0.36
+  resolution: "ol-ext@npm:4.0.36"
   peerDependencies:
     ol: ">= 5.3.0"
-  checksum: 10/d6adcbbb4b21a785ee1113e50c6c6e5d8da8f9209019de420ff2634ca7fd5c0028aac2628ea6ce4056a9d9ef54edace0a5d3ea478fed87661a044fe32d8fa0be
+  checksum: 10/071ce9be427dce8be6fb8e4fbdc972038ace08090c21f6dce7ae0929fe5263518a1a80d7b205e0fd208ac337d49e3782ead805be19f74f0474c291dea8c8d01e
   languageName: node
   linkType: hard
 
