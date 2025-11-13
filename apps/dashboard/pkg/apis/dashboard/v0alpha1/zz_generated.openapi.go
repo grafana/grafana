@@ -170,6 +170,13 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardAccess(ref common.ReferenceCall
 							Format: "",
 						},
 					},
+					"isPublic": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
 					"canSave": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The permissions part",
@@ -212,7 +219,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardAccess(ref common.ReferenceCall
 						},
 					},
 				},
-				Required: []string{"canSave", "canEdit", "canAdmin", "canStar", "canDelete", "annotationsPermissions"},
+				Required: []string{"isPublic", "canSave", "canEdit", "canAdmin", "canStar", "canDelete", "annotationsPermissions"},
 			},
 		},
 		Dependencies: []string{
@@ -882,7 +889,7 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanelSpec(ref common.ReferenceCal
 					"targets": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{

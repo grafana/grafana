@@ -1662,9 +1662,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1722,9 +1719,6 @@
       },
       "placeholder-key": "chave",
       "placeholder-value": "valor"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Visualizar ou criar pontos de contato",
@@ -2891,6 +2885,8 @@
       "notification-message": "Mensagem de notificação",
       "predefined-notification-message": "",
       "send-test-notification": "Enviar notificação de teste",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Testar ponto de contato"
     },
     "threshold": {
@@ -2949,13 +2945,15 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
-      "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
-      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -4132,6 +4130,7 @@
       "scopes": "Escopos"
     },
     "empty-state": {
+      "button-title": "",
       "message": "Nenhum resultado encontrado"
     },
     "scopes": {
@@ -5662,6 +5661,61 @@
       "validation-required": "Precisa de um modelo JSON de painel de controle"
     }
   },
+  "dashboard-library": {
+    "browse-grafana-com": "",
+    "browse-plugins": "",
+    "card": {
+      "datasource-provided-badge": "",
+      "details-tooltip": "",
+      "no-preview": "",
+      "use-dashboard-button": "",
+      "use-template-button": ""
+    },
+    "community-empty-title": "",
+    "community-empty-title-with-datasource": "",
+    "community-error": "",
+    "community-error-title": "",
+    "community-mapping-form": {
+      "back": "",
+      "constants-title": "",
+      "datasources-title": "",
+      "description": "",
+      "preview": "",
+      "auto-mapped_one": "",
+      "auto-mapped_other": ""
+    },
+    "community-mapping-select-datasource": "",
+    "community-search-placeholder": "",
+    "community-search-placeholder-with-datasource": "",
+    "dashboard-card": {
+      "details": {
+        "datasource": "",
+        "dependencies": "",
+        "id": "",
+        "last-update": "",
+        "published-by": "",
+        "view-on-grafana-com": ""
+      }
+    },
+    "modal": {
+      "description": "",
+      "tab-community": "",
+      "tab-datasource": "",
+      "title": "",
+      "title-mapping-with-name": "",
+      "title-with-datasource": ""
+    },
+    "no-community-dashboards-datasource": "",
+    "no-community-dashboards-search": "",
+    "no-provisioned-dashboards": "",
+    "provisioned-empty-title": "",
+    "provisioned-empty-title-with-datasource": "",
+    "retry": "",
+    "suggested-dashboards-subtitle": "",
+    "suggested-dashboards-title": "",
+    "suggested-dashboards-title-with-datasource": "",
+    "view-all": ""
+  },
   "dashboard-links": {
     "empty-state": {
       "button-title": "Adicionar link de painel de controle",
@@ -6269,6 +6323,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -6694,9 +6749,6 @@
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Mais detalhes sobre o erro"
-    },
-    "footer": {
-      "add-csv-or-spreadsheet": "Adicionar csv ou planilha"
     },
     "get-enterprise-phantom-plugins": {
       "description": {
@@ -7192,7 +7244,8 @@
     "logs-table-multi-select": {
       "fields": "Campos",
       "reset": "Redefinir",
-      "selected-fields": "Campos selecionados"
+      "selected-fields": "Campos selecionados",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Selecionar consulta por nome",
@@ -8032,26 +8085,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "Anteontem",
+          "previousFiscalQuarter": "Trimestre fiscal anterior",
+          "previousFiscalYear": "Ano fiscal anterior",
+          "previousMonth": "Mês anterior",
+          "previousWeek": "Semana anterior",
+          "previousYear": "Ano anterior",
+          "thisDayLastWeek": "Neste dia na semana passada",
+          "thisFiscalQuarter": "Este trimestre fiscal",
+          "thisFiscalQuarterSoFar": "Este trimestre fiscal até agora",
+          "thisFiscalYear": "Este ano fiscal",
+          "thisFiscalYearSoFar": "Este ano fiscal até agora",
+          "thisMonth": "Este mês",
+          "thisMonthSoFar": "Este mês até agora",
+          "thisWeek": "Esta semana",
+          "thisWeekSoFar": "Esta semana até agora",
+          "thisYear": "Este ano",
+          "thisYearSoFar": "Este ano até agora",
+          "today": "Hoje",
+          "todaySoFar": "Hoje até agora",
+          "yesterday": "Ontem"
         },
         "lastNDays_one": "",
         "lastNDays_other": "",
@@ -8780,6 +8833,9 @@
     },
     "drawer": {
       "close": "Fechar"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "Em testes",
@@ -10597,7 +10653,12 @@
       }
     },
     "help": {
-      "aria-label": "Ajuda"
+      "aria-label": "Ajuda",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "Convidar",
@@ -11364,12 +11425,15 @@
       "label-workflow": "Fluxo de trabalho",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "Este recurso está atrás da ramificação em {{repoType}}.",
+      "branch-text": "",
       "not-saved": "O restante dos usuários do Grafana na sua organização ainda verá a versão atual salva na ramificação padrão configurada até que esta ramificação seja mesclada",
       "open-in-repo-button": "Abrir em {{repoType}}",
       "open-pull-request-in-repo": "Abrir solicitação de pull no {{repoType}}",
@@ -11498,6 +11562,8 @@
     "empty-state": {
       "no-jobs": "Sem tarefas…"
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "Aproveite ao máximo sua integração com o GitHub usando estes complementos opcionais",
       "description-instant-updates": "Receba atualizações instantâneas na Grafana assim que as alterações forem confirmadas. Revise e aprove as alterações por meio de solicitações de extração antes que elas sejam implementadas.",
@@ -11694,6 +11760,11 @@
       "path-label": "Diretório do repositório",
       "path-required": "O diretório do repositório é obrigatório"
     },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
+    },
     "mode-options": {
       "folder": {
         "description": "Após a configuração, uma nova pasta Grafana será criada e sincronizada com o armazenamento externo. Se algum recurso estiver presente no armazenamento externo, ele será provisionado para esta nova pasta. Todos os novos recursos criados nesta pasta serão armazenados e versionados no armazenamento externo.",
@@ -11717,14 +11788,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "tarefas ativas",
       "column-action": "Ação",
       "column-duration": "Duração",
       "column-job-id": "",
       "column-message": "Mensagem",
       "column-started": "Iniciado",
       "column-status": "Status",
-      "error-loading": "Erro ao carregar {{type}}",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "Tarefas"
     },
     "repository-actions": {
@@ -12810,7 +12881,9 @@
   },
   "stars": {
     "mark-as-starred": "",
-    "unmark-as-starred": ""
+    "mark-as-starred-with-title": "",
+    "unmark-as-starred": "",
+    "unmark-as-starred-with-title": ""
   },
   "stat": {
     "add-orientation-option": {

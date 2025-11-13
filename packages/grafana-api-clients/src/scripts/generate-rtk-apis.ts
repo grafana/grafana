@@ -53,6 +53,12 @@ const config: ConfigFile = {
       tag: true,
       apiFile: '../clients/rtkq/legacy/baseAPI.ts',
       filterEndpoints: (_name, operation) => !operation.operation.deprecated,
+      endpointOverrides: [
+        {
+          pattern: 'listTeamsRoles',
+          type: 'query',
+        },
+      ],
     },
     '../clients/rtkq/migrate-to-cloud/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
@@ -100,7 +106,9 @@ const config: ConfigFile = {
     ...createAPIConfig('playlist', 'v0alpha1'),
     ...createAPIConfig('preferences', 'v1alpha1'),
     ...createAPIConfig('provisioning', 'v0alpha1'),
-    ...createAPIConfig('shorturl', 'v1alpha1'),
+    ...createAPIConfig('shorturl', 'v1beta1'),
+    ...createAPIConfig('shorturl', 'v1beta1'),
+    ...createAPIConfig('shorturl', 'v1beta1'),
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };

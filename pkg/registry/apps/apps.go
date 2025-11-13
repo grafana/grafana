@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
+	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
@@ -39,7 +40,9 @@ func ProvideAppInstallers(
 	correlationsAppInstaller *correlations.AppInstaller,
 	alertingNotificationAppInstaller *notifications.AlertingNotificationsAppInstaller,
 	logsdrilldownAppInstaller *logsdrilldown.LogsDrilldownAppInstaller,
+	annotationAppInstaller *annotation.AnnotationAppInstaller,
 	exampleAppInstaller *example.ExampleAppInstaller,
+	advisorAppInstaller *advisor.AdvisorAppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
@@ -65,6 +68,15 @@ func ProvideAppInstallers(
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesLogsDrilldown) {
 		installers = append(installers, logsdrilldownAppInstaller)
 	}
+	//nolint:staticcheck
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
+		installers = append(installers, annotationAppInstaller)
+	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) && features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisorAppInstaller) {
+		installers = append(installers, advisorAppInstaller)
+	}
+
 	return installers
 }
 
@@ -111,6 +123,7 @@ func ProvideBuilderRunners(
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) &&
+		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisorAppInstaller) &&
 		!slices.Contains(grafanaCfg.DisablePlugins, "grafana-advisor-app") {
 		providers = append(providers, advisorAppProvider)
 	}

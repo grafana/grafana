@@ -1657,9 +1657,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1717,9 +1714,6 @@
       },
       "placeholder-key": "密钥",
       "placeholder-value": "值"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "查看或创建联络点",
@@ -2879,6 +2873,8 @@
       "notification-message": "通知消息",
       "predefined-notification-message": "",
       "send-test-notification": "发送测试通知",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "测试联络点"
     },
     "threshold": {
@@ -2937,13 +2933,15 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
-      "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
-      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -4112,6 +4110,7 @@
       "scopes": "范围"
     },
     "empty-state": {
+      "button-title": "",
       "message": "未找到结果"
     },
     "scopes": {
@@ -5641,6 +5640,60 @@
       "validation-required": "需要一个仪表板 JSON 模型"
     }
   },
+  "dashboard-library": {
+    "browse-grafana-com": "",
+    "browse-plugins": "",
+    "card": {
+      "datasource-provided-badge": "",
+      "details-tooltip": "",
+      "no-preview": "",
+      "use-dashboard-button": "",
+      "use-template-button": ""
+    },
+    "community-empty-title": "",
+    "community-empty-title-with-datasource": "",
+    "community-error": "",
+    "community-error-title": "",
+    "community-mapping-form": {
+      "back": "",
+      "constants-title": "",
+      "datasources-title": "",
+      "description": "",
+      "preview": "",
+      "auto-mapped_other": ""
+    },
+    "community-mapping-select-datasource": "",
+    "community-search-placeholder": "",
+    "community-search-placeholder-with-datasource": "",
+    "dashboard-card": {
+      "details": {
+        "datasource": "",
+        "dependencies": "",
+        "id": "",
+        "last-update": "",
+        "published-by": "",
+        "view-on-grafana-com": ""
+      }
+    },
+    "modal": {
+      "description": "",
+      "tab-community": "",
+      "tab-datasource": "",
+      "title": "",
+      "title-mapping-with-name": "",
+      "title-with-datasource": ""
+    },
+    "no-community-dashboards-datasource": "",
+    "no-community-dashboards-search": "",
+    "no-provisioned-dashboards": "",
+    "provisioned-empty-title": "",
+    "provisioned-empty-title-with-datasource": "",
+    "retry": "",
+    "suggested-dashboards-subtitle": "",
+    "suggested-dashboards-title": "",
+    "suggested-dashboards-title-with-datasource": "",
+    "view-all": ""
+  },
   "dashboard-links": {
     "empty-state": {
       "button-title": "添加数据面板链接",
@@ -6246,6 +6299,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -6671,9 +6725,6 @@
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "有关错误的更多详情"
-    },
-    "footer": {
-      "add-csv-or-spreadsheet": "添加 csv 或电子表格"
     },
     "get-enterprise-phantom-plugins": {
       "description": {
@@ -7169,7 +7220,8 @@
     "logs-table-multi-select": {
       "fields": "字段",
       "reset": "重置",
-      "selected-fields": "已选择的字段"
+      "selected-fields": "已选择的字段",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "按名称选择查询",
@@ -8007,26 +8059,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "前天",
+          "previousFiscalQuarter": "上一财季",
+          "previousFiscalYear": "上一财年",
+          "previousMonth": "上个月",
+          "previousWeek": "上周",
+          "previousYear": "上一年",
+          "thisDayLastWeek": "上周的今天",
+          "thisFiscalQuarter": "本财季",
+          "thisFiscalQuarterSoFar": "本财季到现在",
+          "thisFiscalYear": "本财年",
+          "thisFiscalYearSoFar": "本财年到现在",
+          "thisMonth": "本月",
+          "thisMonthSoFar": "本月到现在",
+          "thisWeek": "本周",
+          "thisWeekSoFar": "本周到现在",
+          "thisYear": "今年",
+          "thisYearSoFar": "今年到现在",
+          "today": "今天",
+          "todaySoFar": "今天到现在",
+          "yesterday": "昨天"
         },
         "lastNDays_other": "",
         "lastNHours_other": "",
@@ -8745,6 +8797,9 @@
     },
     "drawer": {
       "close": "关闭"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "实验性",
@@ -10554,7 +10609,12 @@
       }
     },
     "help": {
-      "aria-label": "帮助"
+      "aria-label": "帮助",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "邀请",
@@ -11318,12 +11378,15 @@
       "label-workflow": "工作流程",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "此资源位于 {{repoType}} 的分支之后。",
+      "branch-text": "",
       "not-saved": "在合并此分支之前，您组织中的其他 Grafana 用户仍将看到保存到已配置默认分支的当前版本",
       "open-in-repo-button": "在 {{repoType}} 中打开",
       "open-pull-request-in-repo": "在以下位置打开拉取请求：{{repoType}}",
@@ -11448,6 +11511,8 @@
     "empty-state": {
       "no-jobs": "无作业..."
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "使用这些可选附加组件，充分利用 GitHub 集成功能",
       "description-instant-updates": "在提交更改后立即在 Grafana 中获取更新。使用拉取请求审核和批准更改，然后再发布。",
@@ -11642,6 +11707,11 @@
       "path-label": "存储库路径",
       "path-required": "存储库路径为必填项"
     },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
+    },
     "mode-options": {
       "folder": {
         "description": "设置后，将创建一个新的 Grafana 文件夹，并与外部存储同步。如果外部存储中存在任何资源，它们将被预配到此新文件夹中。在此文件夹中创建的所有新资源都将存储在外部存储中并进行版本控制。",
@@ -11665,14 +11735,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "活跃的作业",
       "column-action": "操作",
       "column-duration": "持续时间",
       "column-job-id": "",
       "column-message": "消息",
       "column-started": "已启动",
       "column-status": "状态",
-      "error-loading": "加载 {{type}} 时出错",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "作业"
     },
     "repository-actions": {
@@ -12754,7 +12824,9 @@
   },
   "stars": {
     "mark-as-starred": "",
-    "unmark-as-starred": ""
+    "mark-as-starred-with-title": "",
+    "unmark-as-starred": "",
+    "unmark-as-starred-with-title": ""
   },
   "stat": {
     "add-orientation-option": {

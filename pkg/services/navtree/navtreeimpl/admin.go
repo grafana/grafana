@@ -56,7 +56,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	if c.HasRole(identity.RoleAdmin) &&
 		(s.cfg.StackID == "" || // show OnPrem even when provisioning is disabled
 			s.features.IsEnabledGlobally(featuremgmt.FlagProvisioning)) {
-		configNodes = append(configNodes, &navtree.NavLink{
+		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
 			SubTitle: "View and manage your provisioning connections",
@@ -89,7 +89,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/plugins",
 		})
 	}
-	if s.features.IsEnabled(ctx, featuremgmt.FlagCorrelations) && hasAccess(correlations.ConfigurationPageAccess) {
+	if hasAccess(correlations.ConfigurationPageAccess) {
 		pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
 			Text:     "Correlations",
 			Icon:     "gf-glue",

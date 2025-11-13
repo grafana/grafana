@@ -1657,9 +1657,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1717,9 +1714,6 @@
       },
       "placeholder-key": "kunci",
       "placeholder-value": "nilai"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Lihat atau buat titik kontak",
@@ -2879,6 +2873,8 @@
       "notification-message": "Pesan pemberitahuan",
       "predefined-notification-message": "",
       "send-test-notification": "Kirim pemberitahuan tes",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Uji titik kontak"
     },
     "threshold": {
@@ -2937,13 +2933,15 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
-      "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
-      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -4112,6 +4110,7 @@
       "scopes": "Lingkup"
     },
     "empty-state": {
+      "button-title": "",
       "message": "Hasil tidak ditemukan"
     },
     "scopes": {
@@ -5641,6 +5640,60 @@
       "validation-required": "Perlu model JSON dasbor"
     }
   },
+  "dashboard-library": {
+    "browse-grafana-com": "",
+    "browse-plugins": "",
+    "card": {
+      "datasource-provided-badge": "",
+      "details-tooltip": "",
+      "no-preview": "",
+      "use-dashboard-button": "",
+      "use-template-button": ""
+    },
+    "community-empty-title": "",
+    "community-empty-title-with-datasource": "",
+    "community-error": "",
+    "community-error-title": "",
+    "community-mapping-form": {
+      "back": "",
+      "constants-title": "",
+      "datasources-title": "",
+      "description": "",
+      "preview": "",
+      "auto-mapped_other": ""
+    },
+    "community-mapping-select-datasource": "",
+    "community-search-placeholder": "",
+    "community-search-placeholder-with-datasource": "",
+    "dashboard-card": {
+      "details": {
+        "datasource": "",
+        "dependencies": "",
+        "id": "",
+        "last-update": "",
+        "published-by": "",
+        "view-on-grafana-com": ""
+      }
+    },
+    "modal": {
+      "description": "",
+      "tab-community": "",
+      "tab-datasource": "",
+      "title": "",
+      "title-mapping-with-name": "",
+      "title-with-datasource": ""
+    },
+    "no-community-dashboards-datasource": "",
+    "no-community-dashboards-search": "",
+    "no-provisioned-dashboards": "",
+    "provisioned-empty-title": "",
+    "provisioned-empty-title-with-datasource": "",
+    "retry": "",
+    "suggested-dashboards-subtitle": "",
+    "suggested-dashboards-title": "",
+    "suggested-dashboards-title-with-datasource": "",
+    "view-all": ""
+  },
   "dashboard-links": {
     "empty-state": {
       "button-title": "Tambahkan tautan dasbor",
@@ -6246,6 +6299,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -6671,9 +6725,6 @@
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Detail lebih lanjut tentang kesalahan"
-    },
-    "footer": {
-      "add-csv-or-spreadsheet": "Tambahkan csv atau spreadsheet"
     },
     "get-enterprise-phantom-plugins": {
       "description": {
@@ -7169,7 +7220,8 @@
     "logs-table-multi-select": {
       "fields": "Bidang",
       "reset": "Atur ulang",
-      "selected-fields": "Bidang yang dipilih"
+      "selected-fields": "Bidang yang dipilih",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Pilih kueri berdasarkan nama",
@@ -8007,26 +8059,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "Selumbari",
+          "previousFiscalQuarter": "Kuartal fiskal sebelumnya",
+          "previousFiscalYear": "Tahun fiskal sebelumnya",
+          "previousMonth": "Bulan sebelumnya",
+          "previousWeek": "Minggu sebelumnya",
+          "previousYear": "Tahun sebelumnya",
+          "thisDayLastWeek": "Hari ini minggu lalu",
+          "thisFiscalQuarter": "Kuartal fiskal ini",
+          "thisFiscalQuarterSoFar": "Kuartal fiskal ini sejauh ini",
+          "thisFiscalYear": "Tahun fiskal ini",
+          "thisFiscalYearSoFar": "Tahun fiskal ini sejauh ini",
+          "thisMonth": "Bulan ini",
+          "thisMonthSoFar": "Bulan ini sejauh ini",
+          "thisWeek": "Minggu ini",
+          "thisWeekSoFar": "Minggu ini sejauh ini",
+          "thisYear": "Tahun ini",
+          "thisYearSoFar": "Tahun ini sejauh ini",
+          "today": "Hari ini",
+          "todaySoFar": "Hari ini sejauh ini",
+          "yesterday": "Kemarin"
         },
         "lastNDays_other": "",
         "lastNHours_other": "",
@@ -8745,6 +8797,9 @@
     },
     "drawer": {
       "close": "Tutup"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "Eksperimental",
@@ -10554,7 +10609,12 @@
       }
     },
     "help": {
-      "aria-label": "Bantuan"
+      "aria-label": "Bantuan",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "Undang",
@@ -11318,12 +11378,15 @@
       "label-workflow": "Alur kerja",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "Sumber daya ini berada di belakang cabang di {{repoType}}.",
+      "branch-text": "",
       "not-saved": "Pengguna Grafana lainnya di organisasi Anda masih akan melihat versi saat ini yang disimpan ke cabang default yang dikonfigurasi hingga cabang ini digabungkan",
       "open-in-repo-button": "Buka di {{repoType}}",
       "open-pull-request-in-repo": "Buka permintaan penarikan di {{repoType}}",
@@ -11448,6 +11511,8 @@
     "empty-state": {
       "no-jobs": "Tidak ada pekerjaan..."
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "Optimalkan integrasi GitHub Anda dengan add-on opsional ini",
       "description-instant-updates": "Segera dapatkan pembaruan instan di Grafana setelah perubahan dilakukan. Tinjau dan setujui perubahan menggunakan permintaan pull sebelum live.",
@@ -11642,6 +11707,11 @@
       "path-label": "Jalur Repositori",
       "path-required": "Jalur repositori wajib diisi"
     },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
+    },
     "mode-options": {
       "folder": {
         "description": "Setelah penyiapan, folder Grafana baru akan dibuat dan disinkronkan dengan penyimpanan eksternal. Jika ada sumber daya yang ada di penyimpanan eksternal, sumber daya akan disediakan ke folder baru ini. Semua sumber daya baru yang dibuat dalam folder ini akan disimpan dan diberi versi dalam penyimpanan eksternal.",
@@ -11665,14 +11735,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "pekerjaan aktif",
       "column-action": "Tindakan",
       "column-duration": "Durasi",
       "column-job-id": "",
       "column-message": "Pesan",
       "column-started": "Dimulai",
       "column-status": "Status",
-      "error-loading": "Kesalahan saat memuat {{type}}",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "Pekerjaan"
     },
     "repository-actions": {
@@ -12754,7 +12824,9 @@
   },
   "stars": {
     "mark-as-starred": "",
-    "unmark-as-starred": ""
+    "mark-as-starred-with-title": "",
+    "unmark-as-starred": "",
+    "unmark-as-starred-with-title": ""
   },
   "stat": {
     "add-orientation-option": {

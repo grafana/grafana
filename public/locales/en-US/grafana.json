@@ -2885,6 +2885,8 @@
       "notification-message": "Notification message",
       "predefined-notification-message": "You will send a test notification that uses a predefined alert. If you have defined a custom template or message, for better results switch to <strong>custom</strong> notification message, from above.",
       "send-test-notification": "Send test notification",
+      "test-failed": "Test notification failed",
+      "test-successful": "Test notification sent successfully",
       "title-test-contact-point": "Test contact point"
     },
     "threshold": {
@@ -2943,15 +2945,15 @@
     "triage": {
       "alert-instances": "Alert instances",
       "error-loading-rule": "Error loading rule",
-      "firing-instances-count": "{{firingCount}} firing instances",
       "instance-details-drawer": {
         "instance-details": "Instance details"
       },
+      "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
       "no-instances-found": "No alert instances found for rule: {{ruleUID}}",
       "no-labels": "No labels",
+      "no-matching-instances-with-filters": "No alert instances match your current set of filters for the selected time range.",
       "open-in-sidebar": "Open in sidebar",
       "open-rule-details": "Open rule details",
-      "pending-instances-count": "{{pendingCount}} pending instances",
       "rule-details": {
         "subtitle": "Rule details and conditions",
         "title": "Rule Details"
@@ -4128,6 +4130,7 @@
       "scopes": "Scopes"
     },
     "empty-state": {
+      "button-title": "Search with Grafana Assistant",
       "message": "No results found"
     },
     "scopes": {
@@ -4375,8 +4378,6 @@
       "next-button": "Next",
       "save-button": "Save"
     },
-    "page-content": "To enable Correlations, add it in the Grafana config:",
-    "page-heading": "Correlations are disabled",
     "query-editor": {
       "control-rules": "The selected target data source must export a query editor.",
       "data-source-text": "Please select a target data source first.",
@@ -5132,15 +5133,15 @@
     },
     "panel": {
       "time-range-settings": {
-        "hide-time-info": "Hidden time info",
-        "hide-time-info-description": "Do not show the custom time range in the panel header",
-        "time-from": "Custom panel time range",
-        "time-from-description": "Overrides the dashboard time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
+        "hide-time-info": "Hide panel time range",
+        "hide-time-info-description": "Do not show the panel time range in the panel header",
+        "time-from": "Panel time range",
+        "time-from-description": "Overrides the dashboard time range. Use one of the preset values or enter a custom value like 5m or 2h.",
         "time-shift": "Time shift",
-        "time-shift-description": "Adds a time shift relative to the dashboard or panel time range. To specify a value not found in the list just type in a custom value, for example 5m or 2h",
-        "time-window-compare": "Time window comparison",
-        "time-window-compare-description": "Query and overlay data from a different time period",
-        "title": "Panel time range settings"
+        "time-shift-description": "Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like 5m or 2h.",
+        "time-window-compare": "Time comparison",
+        "time-window-compare-description": "Compare data between two time ranges",
+        "title": "Panel time settings"
       }
     },
     "panel-edit": {
@@ -5657,6 +5658,61 @@
       "label": "Import via dashboard JSON model",
       "validation-required": "Need a dashboard JSON model"
     }
+  },
+  "dashboard-library": {
+    "browse-grafana-com": "Browse Grafana.com",
+    "browse-plugins": "Browse plugins",
+    "card": {
+      "datasource-provided-badge": "Data source provided",
+      "details-tooltip": "Details",
+      "no-preview": "No preview available",
+      "use-dashboard-button": "Use dashboard",
+      "use-template-button": "Use template"
+    },
+    "community-empty-title": "No community dashboards found",
+    "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
+    "community-error": "Failed to load community dashboards. Please try again.",
+    "community-error-title": "Error loading community dashboards",
+    "community-mapping-form": {
+      "auto-mapped_one": "{{count}} datasources were automatically configured:",
+      "auto-mapped_other": "{{count}} datasources were automatically configured:",
+      "back": "Back to dashboards",
+      "constants-title": "Dashboard Variables",
+      "datasources-title": "Datasource Configuration",
+      "description": "This dashboard requires datasource configuration. Select datasources for each input below.",
+      "preview": "Preview dashboard"
+    },
+    "community-mapping-select-datasource": "Select a datasource",
+    "community-search-placeholder": "Search community dashboards...",
+    "community-search-placeholder-with-datasource": "Search {{datasourceType}} community dashboards...",
+    "dashboard-card": {
+      "details": {
+        "datasource": "Datasource",
+        "dependencies": "Dependencies",
+        "id": "ID",
+        "last-update": "Last Update",
+        "published-by": "Published By",
+        "view-on-grafana-com": "View on Grafana.com"
+      }
+    },
+    "modal": {
+      "description": "Browse and select from data-source provided or community dashboards",
+      "tab-community": "Community",
+      "tab-datasource": "Data-source provided",
+      "title": "Suggested dashboards",
+      "title-mapping-with-name": "Configure datasources for {{dashboardName}}",
+      "title-with-datasource": "Suggested dashboards for your {{datasourceType}} datasource"
+    },
+    "no-community-dashboards-datasource": "Try a different search term or browse dashboards for different datasource types on Grafana.com.",
+    "no-community-dashboards-search": "Try a different search term or browse more dashboards on Grafana.com.",
+    "no-provisioned-dashboards": "Provisioned dashboards are provided by data source plugins. You can find more plugins on Grafana.com.",
+    "provisioned-empty-title": "No provisioned dashboards found",
+    "provisioned-empty-title-with-datasource": "No {{datasourceType}} provisioned dashboards found",
+    "retry": "Retry",
+    "suggested-dashboards-subtitle": "Browse and select from data-source provided or community dashboards",
+    "suggested-dashboards-title": "Build a dashboard using suggested options for your selected data source",
+    "suggested-dashboards-title-with-datasource": "Build a dashboard using suggested options for your {{datasourceType}} data source",
+    "view-all": "View all"
   },
   "dashboard-links": {
     "empty-state": {
@@ -6324,7 +6380,7 @@
       "content-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
     },
     "variable-controls": {
-      "add-variable": "Add"
+      "add-variable": "Add variable"
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
@@ -6691,9 +6747,6 @@
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "More details about the error"
-    },
-    "footer": {
-      "add-csv-or-spreadsheet": "Add csv or spreadsheet"
     },
     "get-enterprise-phantom-plugins": {
       "description": {
@@ -7189,7 +7242,8 @@
     "logs-table-multi-select": {
       "fields": "Fields",
       "reset": "Reset",
-      "selected-fields": "Selected fields"
+      "selected-fields": "Selected fields",
+      "suggested-fields": "Suggested"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Select query by name",
@@ -10597,7 +10651,12 @@
       }
     },
     "help": {
-      "aria-label": "Help"
+      "aria-label": "Help",
+      "interactive-learning": {
+        "close-tooltip": "Close interactive learning, help, and documentation",
+        "open-tooltip": "Open interactive learning, help, and documentation"
+      },
+      "tooltip": "Get help and useful links"
     },
     "invite-user": {
       "invite-button": "Invite",
@@ -11501,6 +11560,8 @@
     "empty-state": {
       "no-jobs": "No jobs..."
     },
+    "enable-push-to-configured-branch-description": "Allow direct commits to the configured branch.",
+    "enable-push-to-configured-branch-label": "Enable push to configured branch",
     "enhanced-features": {
       "description": "Get the most out of your GitHub integration with these optional add-ons",
       "description-instant-updates": "Get instant updates in Grafana as soon as changes are committed. Review and approve changes using pull requests before they go live.",
@@ -11697,6 +11758,11 @@
       "path-label": "Repository Path",
       "path-required": "Repository path is required"
     },
+    "message": {
+      "show-less": "show less",
+      "show-more": "show more",
+      "truncated": "Message truncated"
+    },
     "mode-options": {
       "folder": {
         "description": "After setup, a new Grafana folder will be created and synced with external storage. If any resources are present in external storage, they will be provisioned to this new folder. All new resources created in this folder will be stored and versioned in external storage.",
@@ -11720,14 +11786,14 @@
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "recent-jobs": {
-      "active-jobs": "active jobs",
       "column-action": "Action",
       "column-duration": "Duration",
       "column-job-id": "Job ID",
       "column-message": "Message",
       "column-started": "Started",
       "column-status": "Status",
-      "error-loading": "Error loading {{type}}",
+      "error-loading-active-jobs": "Error loading active jobs",
+      "error-loading-historic-jobs": "Error loading historic jobs",
       "jobs": "Jobs"
     },
     "repository-actions": {
@@ -12812,8 +12878,10 @@
     "view-explanation": "View explanation"
   },
   "stars": {
-    "mark-as-starred": "Mark \"{{title}}\" as favorite",
-    "unmark-as-starred": "Unmark \"{{title}}\" as favorite"
+    "mark-as-starred": "Mark as favorite",
+    "mark-as-starred-with-title": "Mark \"{{title}}\" as favorite",
+    "unmark-as-starred": "Unmark as favorite",
+    "unmark-as-starred-with-title": "Unmark \"{{title}}\" as favorite"
   },
   "stat": {
     "add-orientation-option": {

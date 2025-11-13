@@ -46,14 +46,9 @@ export const FieldList = ({ activeFields, clear, fields, reorder, suggestedField
 function getStyles(theme: GrafanaTheme2) {
   return {
     sidebarWrap: css({
-      overflowY: 'scroll',
+      overflowY: 'auto',
       flex: 1,
-      /* Hide scrollbar for Chrome, Safari, and Opera */
-      '&::-webkit-scrollbar': {
-        display: 'none',
-      },
-      /* Hide scrollbar for Firefox */
-      scrollbarWidth: 'none',
+      scrollbarWidth: 'thin',
     }),
     columnHeader: css({
       display: 'flex',

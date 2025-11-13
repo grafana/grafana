@@ -676,11 +676,14 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 	// Validate folder
 	if dash.FolderID != 0 || dash.FolderUID != "" { // nolint:staticcheck
-		folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
+		// use a background requester, because the user may have been granted edit access to that specific dashboard, but
+		// not have access to the parent folder. we should still allow editing in that case.
+		ctxIdentity, backgroundRequester := identity.WithServiceIdentity(ctx, dash.OrgID)
+		folder, err := dr.folderService.Get(ctxIdentity, &folder.GetFolderQuery{
 			OrgID:        dash.OrgID,
 			UID:          &dash.FolderUID,
 			ID:           &dash.FolderID, // nolint:staticcheck
-			SignedInUser: dto.User,
+			SignedInUser: backgroundRequester,
 		})
 		if err != nil {
 			return nil, err
@@ -742,15 +745,16 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	cmd := &dashboards.SaveDashboardCommand{
-		Dashboard: dash.Data,
-		Message:   dto.Message,
-		OrgID:     dto.OrgID,
-		Overwrite: dto.Overwrite,
-		UserID:    userID,
-		FolderID:  dash.FolderID, // nolint:staticcheck
-		FolderUID: dash.FolderUID,
-		IsFolder:  dash.IsFolder,
-		PluginID:  dash.PluginID,
+		Dashboard:  dash.Data,
+		Message:    dto.Message,
+		OrgID:      dto.OrgID,
+		Overwrite:  dto.Overwrite,
+		UserID:     userID,
+		FolderID:   dash.FolderID, // nolint:staticcheck
+		FolderUID:  dash.FolderUID,
+		IsFolder:   dash.IsFolder,
+		PluginID:   dash.PluginID,
+		APIVersion: dash.APIVersion,
 	}
 
 	if !dto.UpdatedAt.IsZero() {
@@ -873,6 +877,12 @@ func (dr *DashboardServiceImpl) waitForSearchQuery(ctx context.Context, query *d
 }
 
 func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
+	// cleanup duplicate provisioned dashboards first (this will have the same name and external_id)
+	// note: only works in modes 1-3
+	if err := dr.DeleteDuplicateProvisionedDashboards(ctx); err != nil {
+		dr.log.Error("Failed to delete duplicate provisioned dashboards", "error", err)
+	}
+
 	// check each org for orphaned provisioned dashboards
 	orgs, err := dr.orgService.Search(ctx, &org.SearchOrgsQuery{})
 	if err != nil {
@@ -908,6 +918,34 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 			}
 		}
 	}
+	return nil
+}
+
+func (dr *DashboardServiceImpl) DeleteDuplicateProvisionedDashboards(ctx context.Context) error {
+	duplicates, err := dr.dashboardStore.GetDuplicateProvisionedDashboards(ctx)
+	if err != nil {
+		return err
+	}
+
+	type provisioningKey struct {
+		name       string
+		externalID string
+	}
+
+	groups := make(map[provisioningKey][]*dashboards.DashboardProvisioningSearchResults)
+	for _, dash := range duplicates {
+		key := provisioningKey{
+			name:       dash.Provisioner,
+			externalID: dash.ExternalID,
+		}
+		if _, exists := groups[key]; exists {
+			if err = dr.deleteDashboard(ctx, dash.ID, dash.UID, dash.OrgID, false); err != nil {
+				dr.log.Error("Failed to delete duplicate provisioned dashboard", "error", err, "dashboardUID", dash.UID, "dashboardID", dash.ID)
+			}
+		}
+		groups[key] = append(groups[key], dash)
+	}
+
 	return nil
 }
 
@@ -1174,12 +1212,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	if err != nil {
 		return err
 	}
-	uid, err := user.GetInternalID()
-	if err != nil {
-		return err
-	}
 	permissions := []accesscontrol.SetResourcePermissionCommand{}
-
 	isNested := obj.GetFolder() != ""
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
@@ -1187,6 +1220,10 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 		return nil
 	}
 	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		uid, err := user.GetInternalID()
+		if err != nil {
+			return err
+		}
 		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 			UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 		})
@@ -2250,6 +2287,10 @@ func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, names
 
 	if cmd.Message != "" {
 		meta.SetMessage(cmd.Message)
+	}
+
+	if cmd.APIVersion != "" {
+		finalObj.SetAPIVersion(cmd.APIVersion)
 	}
 
 	return finalObj, nil

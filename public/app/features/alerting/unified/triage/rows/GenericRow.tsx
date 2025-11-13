@@ -54,7 +54,7 @@ export const GenericRow = ({
             />
           </div>
         </div>
-        <div style={{ minWidth: 'min-content', flexGrow: 1 }} className={cx(styles.column, rightColumnClassName)}>
+        <div className={cx(styles.rightColumnWrapper, styles.column, rightColumnClassName)}>
           {content && <div className={styles.columnContent()}>{content}</div>}
         </div>
       </div>
@@ -79,7 +79,7 @@ const LeftCell = ({ title, metadata = null, actions = null, isOpen = true, onTog
       {onToggle && (
         <IconButton
           name={isOpen ? 'angle-down' : 'angle-right'}
-          onClick={() => onToggle()}
+          onClick={onToggle}
           className={styles.dropdownIcon}
           variant="secondary"
           size="md"
@@ -113,11 +113,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
     leftColumn: css({
       overflow: 'hidden',
     }),
+    rightColumnWrapper: css({
+      minWidth: 'min-content',
+      flexGrow: 1,
+    }),
     columnContent: (depth?: number) =>
       css({
         padding: 5,
         width: '100%',
-        paddingLeft: depth ? `calc(${theme.spacing(depth)} + 5px)` : 5,
+        addingLeft: depth ? `calc(${theme.spacing(depth)} + 5px)` : 5,
       }),
     groupItemWrapper: (width: number) =>
       css({

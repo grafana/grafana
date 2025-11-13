@@ -89,12 +89,7 @@ describe('UnifiedDashboardAPI', () => {
       };
 
       v1Client.getDashboardDTO.mockRejectedValue(new DashboardVersionError('v2beta1', 'Dashboard is V1 format'));
-      v2Client.getDashboardDTO.mockImplementation((params) => {
-        const actualClient = jest.requireActual('./v2').K8sDashboardV2API;
-        const client = new actualClient();
-        return client.getDashboardDTO(params);
-      });
-      mockBackendSrvGet = mockV2Response;
+      v2Client.getDashboardDTO.mockResolvedValue(mockV2Response as DashboardWithAccessInfo<DashboardV2Spec>);
       const result = await api.getDashboardDTO('123');
       expect(result).toEqual(mockV2Response);
       expect(v2Client.getDashboardDTO).toHaveBeenCalledWith('123');

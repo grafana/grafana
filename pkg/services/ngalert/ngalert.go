@@ -504,13 +504,6 @@ func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles feature
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
 		logger.Info("Using protobuf-based alert instance store")
 		instanceStore = protoInstanceStore
-		// If FlagAlertingSaveStateCompressed is enabled, ProtoInstanceDBStore is used,
-		// which functions differently from InstanceDBStore. FlagAlertingSaveStatePeriodic is
-		// not applicable to ProtoInstanceDBStore, so a warning is logged if it is set.
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
-			logger.Warn("alertingSaveStatePeriodic is not used when alertingSaveStateCompressed feature flag enabled")
-		}
 	} else {
 		logger.Info("Using simple database alert instance store")
 		instanceStore = simpleInstanceStore
@@ -525,7 +518,15 @@ func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.Manager
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
 		logger.Info("Using rule state persister")
-		statePersister = state.NewSyncRuleStatePersisiter(logger, cfg)
+
+		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
+			logger.Info("Compressed storage with periodic save enabled")
+			ticker := clock.New().Ticker(cfg.StatePeriodicSaveInterval)
+			statePersister = state.NewSyncRuleStatePersisiter(logger, ticker, cfg)
+		} else {
+			logger.Info("Compressed storage FullSync disabled")
+			statePersister = state.NewSyncRuleStatePersisiter(logger, nil, cfg)
+		}
 	} else if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
 		logger.Info("Using periodic state persister")
 		ticker := clock.New().Ticker(uaCfg.StatePeriodicSaveInterval)

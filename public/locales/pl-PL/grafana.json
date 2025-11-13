@@ -1672,9 +1672,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1732,9 +1729,6 @@
       },
       "placeholder-key": "klucz",
       "placeholder-value": "wartość"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Wyświetl lub utwórz punkty kontaktu",
@@ -2915,6 +2909,8 @@
       "notification-message": "Wiadomość z powiadomieniem",
       "predefined-notification-message": "",
       "send-test-notification": "Wyślij powiadomienie testowe",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "Testuj punkt kontaktu"
     },
     "threshold": {
@@ -2973,13 +2969,15 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
-      "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
-      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -4172,6 +4170,7 @@
       "scopes": "Zakresy"
     },
     "empty-state": {
+      "button-title": "",
       "message": "Brak wyników"
     },
     "scopes": {
@@ -5704,6 +5703,63 @@
       "validation-required": "Wymagany model JSON pulpitu"
     }
   },
+  "dashboard-library": {
+    "browse-grafana-com": "",
+    "browse-plugins": "",
+    "card": {
+      "datasource-provided-badge": "",
+      "details-tooltip": "",
+      "no-preview": "",
+      "use-dashboard-button": "",
+      "use-template-button": ""
+    },
+    "community-empty-title": "",
+    "community-empty-title-with-datasource": "",
+    "community-error": "",
+    "community-error-title": "",
+    "community-mapping-form": {
+      "back": "",
+      "constants-title": "",
+      "datasources-title": "",
+      "description": "",
+      "preview": "",
+      "auto-mapped_one": "",
+      "auto-mapped_few": "",
+      "auto-mapped_many": "",
+      "auto-mapped_other": ""
+    },
+    "community-mapping-select-datasource": "",
+    "community-search-placeholder": "",
+    "community-search-placeholder-with-datasource": "",
+    "dashboard-card": {
+      "details": {
+        "datasource": "",
+        "dependencies": "",
+        "id": "",
+        "last-update": "",
+        "published-by": "",
+        "view-on-grafana-com": ""
+      }
+    },
+    "modal": {
+      "description": "",
+      "tab-community": "",
+      "tab-datasource": "",
+      "title": "",
+      "title-mapping-with-name": "",
+      "title-with-datasource": ""
+    },
+    "no-community-dashboards-datasource": "",
+    "no-community-dashboards-search": "",
+    "no-provisioned-dashboards": "",
+    "provisioned-empty-title": "",
+    "provisioned-empty-title-with-datasource": "",
+    "retry": "",
+    "suggested-dashboards-subtitle": "",
+    "suggested-dashboards-title": "",
+    "suggested-dashboards-title-with-datasource": "",
+    "view-all": ""
+  },
   "dashboard-links": {
     "empty-state": {
       "button-title": "Dodaj link do pulpitu",
@@ -6315,6 +6371,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -6740,9 +6797,6 @@
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Więcej informacji o błędzie"
-    },
-    "footer": {
-      "add-csv-or-spreadsheet": "Dodaj plik CSV lub arkusz kalkulacyjny"
     },
     "get-enterprise-phantom-plugins": {
       "description": {
@@ -7238,7 +7292,8 @@
     "logs-table-multi-select": {
       "fields": "Pola",
       "reset": "Zresetuj",
-      "selected-fields": "Wybrane pola"
+      "selected-fields": "Wybrane pola",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Wybierz zapytanie według nazwy",
@@ -8082,26 +8137,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "Przedwczoraj",
+          "previousFiscalQuarter": "Poprzedni kwartał podatkowy",
+          "previousFiscalYear": "Poprzedni rok podatkowy",
+          "previousMonth": "Poprzedni miesiąc",
+          "previousWeek": "Poprzedni tydzień",
+          "previousYear": "Poprzedni rok",
+          "thisDayLastWeek": "Ten dzień w poprzednim tygodniu",
+          "thisFiscalQuarter": "Bieżący kwartał podatkowy",
+          "thisFiscalQuarterSoFar": "Bieżący kwartał podatkowy do tej pory",
+          "thisFiscalYear": "Bieżący rok podatkowy",
+          "thisFiscalYearSoFar": "Bieżący rok podatkowy do tej pory",
+          "thisMonth": "Bieżący miesiąc",
+          "thisMonthSoFar": "Bieżący miesiąc do tej pory",
+          "thisWeek": "Bieżący tydzień",
+          "thisWeekSoFar": "Bieżący tydzień do tej pory",
+          "thisYear": "Bieżący rok",
+          "thisYearSoFar": "Bieżący rok do tej pory",
+          "today": "Dzisiaj",
+          "todaySoFar": "Dzisiaj do tej pory",
+          "yesterday": "Wczoraj"
         },
         "lastNDays_one": "",
         "lastNDays_few": "",
@@ -8850,6 +8905,9 @@
     },
     "drawer": {
       "close": "Zamknij"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "Eksperymentalna",
@@ -10683,7 +10741,12 @@
       }
     },
     "help": {
-      "aria-label": "Pomoc"
+      "aria-label": "Pomoc",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "Zaproś",
@@ -11456,12 +11519,15 @@
       "label-workflow": "Przepływ pracy",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "Ten zasób znajduje się za gałęzią w repozytorium {{repoType}}.",
+      "branch-text": "",
       "not-saved": "Pozostali użytkownicy Grafany w Twojej organizacji nadal będą widzieć bieżącą wersję zapisaną w skonfigurowanej gałęzi domyślnej, dopóki ta gałąź nie zostanie scalona",
       "open-in-repo-button": "Otwórz w repozytorium {{repoType}}",
       "open-pull-request-in-repo": "Otwórz żądanie pull w repozytorium {{repoType}}",
@@ -11598,6 +11664,8 @@
     "empty-state": {
       "no-jobs": "Brak zadań…"
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "Wykorzystaj w pełni integrację z GitHub dzięki tym opcjonalnym dodatkom",
       "description-instant-updates": "Otrzymuj aktualizacje w usłudze Grafana natychmiast po zatwierdzeniu zmian (commit). Przejrzyj i zatwierdź zmiany za pomocą żądań pull przed ich opublikowaniem.",
@@ -11798,6 +11866,11 @@
       "path-label": "Ścieżka do repozytorium",
       "path-required": "Ścieżka do repozytorium jest wymagana"
     },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
+    },
     "mode-options": {
       "folder": {
         "description": "Po konfiguracji utworzony zostanie nowy folder Grafany, który zostanie zsynchronizowany z zewnętrzną pamięcią masową. Jeśli w zewnętrznej pamięci masowej są dostępne zasoby, zostaną one przydzielone do tego nowego folderu. Wszystkie nowe zasoby utworzone w tym folderze będą przechowywane i wersjonowane w zewnętrznej pamięci masowej.",
@@ -11821,14 +11894,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "aktywne zadania",
       "column-action": "Działanie",
       "column-duration": "Czas trwania",
       "column-job-id": "",
       "column-message": "Wiadomość",
       "column-started": "Rozpoczęto",
       "column-status": "Status",
-      "error-loading": "Błąd podczas wczytywania: {{type}}",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "Zadania"
     },
     "repository-actions": {
@@ -12922,7 +12995,9 @@
   },
   "stars": {
     "mark-as-starred": "",
-    "unmark-as-starred": ""
+    "mark-as-starred-with-title": "",
+    "unmark-as-starred": "",
+    "unmark-as-starred-with-title": ""
   },
   "stat": {
     "add-orientation-option": {

@@ -66,7 +66,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/NewDashboardWithDS')
       ),
     },
-    {
+    (config.featureToggles.suggestedDashboards || config.featureToggles.dashboardLibrary) && {
       path: DASHBOARD_LIBRARY_ROUTES.Template,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',
@@ -138,12 +138,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/datasources/correlations',
-      component: SafeDynamicImport(() =>
-        config.featureToggles.correlations
-          ? import(/* webpackChunkName: "CorrelationsPage" */ 'app/features/correlations/CorrelationsPage')
-          : import(
-              /* webpackChunkName: "CorrelationsFeatureToggle" */ 'app/features/correlations/CorrelationsFeatureToggle'
-            )
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "CorrelationsPage" */ 'app/features/correlations/CorrelationsPage')
       ),
     },
     {

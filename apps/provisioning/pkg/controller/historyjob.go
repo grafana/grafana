@@ -58,32 +58,42 @@ func NewHistoryJobController(
 func (c *HistoryJobController) cleanupJob(obj interface{}) {
 	job, ok := obj.(*provisioning.HistoricJob)
 	if !ok {
-		c.logger.Error("Expected HistoricJob but got", "type", obj)
+		c.logger.Error("unexpected object type - expected HistoricJob", "type", obj)
 		return
 	}
 
 	age := time.Since(job.CreationTimestamp.Time)
-	if age > c.expirationTime {
-		namespace := job.Namespace
-		ctx, _, err := identity.WithProvisioningIdentity(context.Background(), namespace)
-		if err != nil {
-			c.logger.Error("Failed to set provisioning identity for cleanup", "error", err)
+
+	// Only cleanup jobs older than expiration time
+	if age <= c.expirationTime {
+		return
+	}
+
+	logger := c.logger.With(
+		"job", job.Name,
+		"namespace", job.Namespace,
+		"age", age,
+	)
+
+	logger.Debug("start cleanup expired historic job")
+
+	namespace := job.Namespace
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), namespace)
+	if err != nil {
+		logger.Error("failed to set provisioning identity", "error", err)
+		return
+	}
+
+	ctx = request.WithNamespace(ctx, namespace)
+	err = c.client.HistoricJobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Debug("historic job already deleted")
 			return
 		}
-
-		ctx = request.WithNamespace(ctx, namespace)
-		err = c.client.HistoricJobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{})
-		if err != nil && !apierrors.IsNotFound(err) {
-			c.logger.Error("Failed to delete expired HistoryJob",
-				"namespace", job.Namespace,
-				"name", job.Name,
-				"age", age,
-				"error", err)
-		} else {
-			c.logger.Info("Deleted expired HistoryJob",
-				"namespace", job.Namespace,
-				"name", job.Name,
-				"age", age)
-		}
+		logger.Error("failed to delete expired historic job", "error", err)
+		return
 	}
+
+	logger.Info("deleted expired historic job")
 }

@@ -1662,9 +1662,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1722,9 +1719,6 @@
       },
       "placeholder-key": "anahtar",
       "placeholder-value": "değer"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "İletişim noktalarını görüntüle veya oluştur",
@@ -2891,6 +2885,8 @@
       "notification-message": "Bildirim mesajı",
       "predefined-notification-message": "",
       "send-test-notification": "Test bildirimi gönder",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "İletişim noktasını test et"
     },
     "threshold": {
@@ -2949,13 +2945,15 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
-      "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
-      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -4132,6 +4130,7 @@
       "scopes": "Kapsamlar"
     },
     "empty-state": {
+      "button-title": "",
       "message": "Sonuç bulunamadı"
     },
     "scopes": {
@@ -5662,6 +5661,61 @@
       "validation-required": "Pano JSON modeli gerekli"
     }
   },
+  "dashboard-library": {
+    "browse-grafana-com": "",
+    "browse-plugins": "",
+    "card": {
+      "datasource-provided-badge": "",
+      "details-tooltip": "",
+      "no-preview": "",
+      "use-dashboard-button": "",
+      "use-template-button": ""
+    },
+    "community-empty-title": "",
+    "community-empty-title-with-datasource": "",
+    "community-error": "",
+    "community-error-title": "",
+    "community-mapping-form": {
+      "back": "",
+      "constants-title": "",
+      "datasources-title": "",
+      "description": "",
+      "preview": "",
+      "auto-mapped_one": "",
+      "auto-mapped_other": ""
+    },
+    "community-mapping-select-datasource": "",
+    "community-search-placeholder": "",
+    "community-search-placeholder-with-datasource": "",
+    "dashboard-card": {
+      "details": {
+        "datasource": "",
+        "dependencies": "",
+        "id": "",
+        "last-update": "",
+        "published-by": "",
+        "view-on-grafana-com": ""
+      }
+    },
+    "modal": {
+      "description": "",
+      "tab-community": "",
+      "tab-datasource": "",
+      "title": "",
+      "title-mapping-with-name": "",
+      "title-with-datasource": ""
+    },
+    "no-community-dashboards-datasource": "",
+    "no-community-dashboards-search": "",
+    "no-provisioned-dashboards": "",
+    "provisioned-empty-title": "",
+    "provisioned-empty-title-with-datasource": "",
+    "retry": "",
+    "suggested-dashboards-subtitle": "",
+    "suggested-dashboards-title": "",
+    "suggested-dashboards-title-with-datasource": "",
+    "view-all": ""
+  },
   "dashboard-links": {
     "empty-state": {
       "button-title": "Pano bağlantısı ekle",
@@ -6269,6 +6323,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -6694,9 +6749,6 @@
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Hata hakkında daha fazla bilgi"
-    },
-    "footer": {
-      "add-csv-or-spreadsheet": "CSV veya elektronik tablo ekle"
     },
     "get-enterprise-phantom-plugins": {
       "description": {
@@ -7192,7 +7244,8 @@
     "logs-table-multi-select": {
       "fields": "Alanlar",
       "reset": "Sıfırla",
-      "selected-fields": "Seçilen alanlar"
+      "selected-fields": "Seçilen alanlar",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Sorguyu ada göre seç",
@@ -8032,26 +8085,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "Dünden önceki gün",
+          "previousFiscalQuarter": "Önceki mali çeyrek",
+          "previousFiscalYear": "Önceki mali yıl",
+          "previousMonth": "Önceki ay",
+          "previousWeek": "Önceki hafta",
+          "previousYear": "Önceki yıl",
+          "thisDayLastWeek": "Geçen hafta bugün",
+          "thisFiscalQuarter": "Bu mali çeyrek",
+          "thisFiscalQuarterSoFar": "Bu mali çeyreğin başından bugüne",
+          "thisFiscalYear": "Bu mali yıl",
+          "thisFiscalYearSoFar": "Bu mali yıl şimdiye kadar",
+          "thisMonth": "Bu ay",
+          "thisMonthSoFar": "Bu ay şimdiye kadar",
+          "thisWeek": "Bu hafta",
+          "thisWeekSoFar": "Bu hafta şimdiye kadar",
+          "thisYear": "Bu yıl ",
+          "thisYearSoFar": "Bu yıl şimdiye kadar",
+          "today": "Bugün",
+          "todaySoFar": "Bugün şimdiye kadar",
+          "yesterday": "Dün"
         },
         "lastNDays_one": "",
         "lastNDays_other": "",
@@ -8780,6 +8833,9 @@
     },
     "drawer": {
       "close": "Kapat"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "Deneysel",
@@ -10597,7 +10653,12 @@
       }
     },
     "help": {
-      "aria-label": "Yardım"
+      "aria-label": "Yardım",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "Davet et",
@@ -11364,12 +11425,15 @@
       "label-workflow": "İş akışı",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "Bu kaynak, {{repoType}} içindeki dalın gerisinde.",
+      "branch-text": "",
       "not-saved": "Kuruluşunuzdaki diğer Grafana kullanıcıları, bu dal birleştirilene kadar yapılandırılmış varsayılan dala kaydedilen mevcut sürümü görmeye devam edecektir",
       "open-in-repo-button": "Şurada aç: {{repoType}}",
       "open-pull-request-in-repo": "Şurada çekme isteği aç: {{repoType}}",
@@ -11498,6 +11562,8 @@
     "empty-state": {
       "no-jobs": "İş yok..."
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "GitHub entegrasyonunuzdan en iyi şekilde yararlanmak için bu isteğe bağlı eklentileri kullanın",
       "description-instant-updates": "Değişiklikler gönderildiği anda Grafana'da anlık güncellemeler alın. Değişiklikleri kullanıma sunmadan önce çekme isteklerini kullanarak gözden geçirip onaylayın.",
@@ -11694,6 +11760,11 @@
       "path-label": "Depo Yolu",
       "path-required": "Depo yolu gereklidir"
     },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
+    },
     "mode-options": {
       "folder": {
         "description": "Kurulumdan sonra yeni bir Grafana klasörü oluşturulacak ve harici depolama ile senkronize edilecek. Harici depolamada bulunan kaynaklar bu yeni klasöre sağlanacak. Bu klasörde oluşturulan tüm yeni kaynaklar haricî depolamada saklanacak ve sürümlendirilecektir.",
@@ -11717,14 +11788,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "etkin işler",
       "column-action": "Eylem",
       "column-duration": "Süre",
       "column-job-id": "",
       "column-message": "Mesaj",
       "column-started": "Başlatıldı",
       "column-status": "Durum",
-      "error-loading": "{{type}} yüklenirken hata oluştu",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "İşler"
     },
     "repository-actions": {
@@ -12810,7 +12881,9 @@
   },
   "stars": {
     "mark-as-starred": "",
-    "unmark-as-starred": ""
+    "mark-as-starred-with-title": "",
+    "unmark-as-starred": "",
+    "unmark-as-starred-with-title": ""
   },
   "stat": {
     "add-orientation-option": {

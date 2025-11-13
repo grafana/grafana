@@ -50,8 +50,10 @@ import (
 	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -68,6 +70,8 @@ var (
 	_ builder.APIGroupVersionsProvider = (*DashboardsAPIBuilder)(nil)
 	_ builder.OpenAPIPostProcessor     = (*DashboardsAPIBuilder)(nil)
 	_ builder.APIGroupRouteProvider    = (*DashboardsAPIBuilder)(nil)
+	_ builder.APIGroupMutation         = (*DashboardsAPIBuilder)(nil)
+	_ builder.APIGroupValidation       = (*DashboardsAPIBuilder)(nil)
 )
 
 const (
@@ -108,6 +112,8 @@ type DashboardsAPIBuilder struct {
 	minRefreshInterval           string
 	dualWriter                   dualwrite.Service
 	folderClientProvider         client.K8sHandlerProvider
+	libraryPanels                libraryelements.Service // for legacy library panels
+	publicDashboardService       publicdashboards.Service
 
 	isStandalone bool // skips any handling including anything to do with legacy storage
 }
@@ -135,6 +141,8 @@ func RegisterAPIService(
 	libraryPanelSvc librarypanels.Service,
 	restConfigProvider apiserver.RestConfigProvider,
 	userService user.Service,
+	libraryPanels libraryelements.Service,
+	publicDashboardService publicdashboards.Service,
 ) *DashboardsAPIBuilder {
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -157,6 +165,8 @@ func RegisterAPIService(
 		minRefreshInterval:           cfg.MinRefreshInterval,
 		dualWriter:                   dual,
 		folderClientProvider:         newSimpleFolderClientProvider(folderClient),
+		libraryPanels:                libraryPanels,
+		publicDashboardService:       publicDashboardService,
 
 		legacy: &DashboardStorage{
 			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
@@ -221,7 +231,7 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	}
 
 	// Register the explicit conversions
-	if err := conversion.RegisterConversions(scheme); err != nil {
+	if err := conversion.RegisterConversions(scheme, migration.GetDataSourceInfoProvider()); err != nil {
 		return err
 	}
 
@@ -229,26 +239,35 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 func (b *DashboardsAPIBuilder) AllowedV0Alpha1Resources() []string {
-	return []string{dashv0.DashboardKind().Plural()}
+	return []string{
+		dashv0.DashboardKind().Plural(),
+		dashv0.LIBRARY_PANEL_RESOURCE,
+	}
 }
 
 // Validate validates dashboard operations for the apiserver
 func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	op := a.GetOperation()
 
-	// Handle different operations
-	switch op {
-	case admission.Delete:
-		return b.validateDelete(ctx, a)
-	case admission.Create:
-		return b.validateCreate(ctx, a, o)
-	case admission.Update:
-		return b.validateUpdate(ctx, a, o)
-	case admission.Connect:
-		return nil
+	switch a.GetResource().Resource {
+	case dashv0.DASHBOARD_RESOURCE:
+		// Handle different operations
+		switch op {
+		case admission.Delete:
+			return b.validateDelete(ctx, a)
+		case admission.Create:
+			return b.validateCreate(ctx, a, o)
+		case admission.Update:
+			return b.validateUpdate(ctx, a, o)
+		case admission.Connect:
+			return nil
+		}
+
+	case dashv0.LIBRARY_PANEL_RESOURCE:
+		return nil // OK for now
 	}
 
-	return nil
+	return fmt.Errorf("unsupported validation: %+v", a.GetResource())
 }
 
 // validateDelete checks if a dashboard can be deleted
@@ -637,17 +656,19 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		b.accessControl,
 		opts.Scheme,
 		newDTOFunc,
+		b.publicDashboardService,
 	)
 	if err != nil {
 		return err
 	}
 
-	// Expose read only library panels
-	if libraryPanels != nil {
+	// Expose read library panels
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if libraryPanels != nil && b.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		legacyLibraryStore := &LibraryPanelStore{
-			Access:        b.legacy.Access,
-			ResourceInfo:  *libraryPanels,
-			AccessControl: b.accessControl,
+			Access:       b.legacy.Access,
+			ResourceInfo: *libraryPanels,
+			service:      b.libraryPanels,
 		}
 
 		unifiedLibraryStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
