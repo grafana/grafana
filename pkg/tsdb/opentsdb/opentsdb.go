@@ -60,8 +60,8 @@ type QueryModel struct {
 	Tags                 map[string]interface{} `json:"tags"`
 	ShouldComputeRate    bool                   `json:"shouldComputeRate"`
 	IsCounter            bool                   `json:"isCounter"`
-	CounterMax           float64                `json:"counterMax"`
-	CounterResetValue    float64                `json:"counterResetValue"`
+	CounterMax           string                 `json:"counterMax"`
+	CounterResetValue    string                 `json:"counterResetValue"`
 }
 
 func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -311,15 +311,27 @@ func (s *Service) buildMetric(query backend.DataQuery) map[string]any {
 		rateOptions := make(map[string]any)
 		rateOptions["counter"] = model.IsCounter
 
-		if model.CounterMax != 0 {
-			rateOptions["counterMax"] = model.CounterMax
+		var counterMax *float64
+		if model.CounterMax != "" {
+			if val, err := strconv.ParseFloat(model.CounterMax, 64); err == nil {
+				counterMax = &val
+			}
+		}
+		if counterMax != nil {
+			rateOptions["counterMax"] = *counterMax
 		}
 
-		if model.CounterResetValue != 0 {
-			rateOptions["resetValue"] = model.CounterResetValue
+		var counterResetValue *float64
+		if model.CounterResetValue != "" {
+			if val, err := strconv.ParseFloat(model.CounterResetValue, 64); err == nil {
+				counterResetValue = &val
+			}
+		}
+		if counterResetValue != nil {
+			rateOptions["resetValue"] = *counterResetValue
 		}
 
-		if model.CounterMax == 0 && (model.CounterResetValue == 0) {
+		if counterMax == nil && (counterResetValue == nil || *counterResetValue == 0) {
 			rateOptions["dropResets"] = true
 		}
 
