@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 import { getAPINamespace } from '@grafana/api-clients';
+import { getDefaultTimeRange, TimeRange } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
@@ -28,11 +29,10 @@ export interface SQLSchemasResponse {
 interface UseSQLSchemasOptions {
   queries?: DataQuery[];
   enabled: boolean;
+  timeRange?: TimeRange;
 }
 
-const ONE_HOUR_MS = 60 * 60 * 1000;
-
-export function useSQLSchemas({ queries, enabled }: UseSQLSchemasOptions) {
+export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOptions) {
   const [schemas, setSchemas] = useState<SQLSchemasResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -72,13 +72,14 @@ export function useSQLSchemas({ queries, enabled }: UseSQLSchemasOptions) {
       }
 
       const namespace = getAPINamespace();
+      const currentTimeRange = timeRange || getDefaultTimeRange();
 
       const response = await getBackendSrv().post<SQLSchemasResponse>(
         `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas/name`,
         {
           queries: datasourceQueries,
-          from: new Date(Date.now() - ONE_HOUR_MS).toISOString(),
-          to: new Date().toISOString(),
+          from: currentTimeRange.from.toISOString(),
+          to: currentTimeRange.to.toISOString(),
         }
       );
 
@@ -88,7 +89,7 @@ export function useSQLSchemas({ queries, enabled }: UseSQLSchemasOptions) {
     } finally {
       setLoading(false);
     }
-  }, [enabled, isFeatureEnabled]);
+  }, [enabled, isFeatureEnabled, timeRange]);
 
   useEffect(() => {
     fetchSchemas();

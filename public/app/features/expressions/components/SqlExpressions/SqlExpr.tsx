@@ -122,6 +122,7 @@ LIMIT
   } = useSQLSchemas({
     queries,
     enabled: isSchemaInspectorOpen,
+    timeRange: metadata?.range,
   });
 
   const queryContext = useMemo(
