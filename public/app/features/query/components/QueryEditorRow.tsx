@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import classNames from 'classnames';
 import { cloneDeep, filter, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
@@ -73,6 +74,8 @@ export interface Props<TQuery extends DataQuery> {
   queryLibraryRef?: string;
   onCancelQueryLibraryEdit?: () => void;
   isOpen?: boolean;
+  isFocused?: boolean;
+  onFocusQuery?: () => void;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -391,7 +394,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {
-    const { query, hideHideQueryButton: hideHideQueryButton = false, queryLibraryRef, app } = this.props;
+    const {
+      query,
+      hideHideQueryButton: hideHideQueryButton = false,
+      queryLibraryRef,
+      app,
+      isFocused,
+      onFocusQuery,
+    } = this.props;
     const { datasource, showingHelp } = this.state;
     const isHidden = !!query.hide;
 
@@ -452,6 +462,19 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             onClick={this.onRemoveQuery}
           />
         )}
+        {onFocusQuery && (
+          <QueryOperationToggleAction
+            dataTestId={selectors.components.QueryEditorRow.actionButton('Focus query')}
+            title={
+              isFocused
+                ? t('query-operation.header.collapse', 'Show all queries')
+                : t('query-operation.header.focus', 'Focus query')
+            }
+            icon={isFocused ? 'compress-screen' : 'expand-screen'}
+            active={Boolean(isFocused)}
+            onClick={onFocusQuery}
+          />
+        )}
       </>
     );
   };
@@ -487,14 +510,19 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       app,
       queryLibraryRef,
       onCancelQueryLibraryEdit,
+      isFocused,
     } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isHidden = query.hide;
     const error =
       data?.error && data.error.refId === query.refId ? data.error : data?.errors?.find((e) => e.refId === query.refId);
+    // Note: We can't use hooks in class components, so we use static styles
+    const focusedRowStyle = isFocused ? getFocusedRowStyle() : undefined;
+    const focusedWrapperStyle = isFocused ? getFocusedWrapperStyle() : undefined;
     const rowClasses = classNames('query-editor-row', {
       'query-editor-row--disabled': isHidden,
       'gf-form-disabled': isHidden,
+      [focusedRowStyle || '']: isFocused,
     });
 
     if (!datasource) {
@@ -535,7 +563,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     );
 
     return (
-      <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
+      <div
+        data-testid="query-editor-row"
+        aria-label={selectors.components.QueryEditorRows.rows}
+        className={focusedWrapperStyle}
+      >
         {queryLibraryRef && (
           <MaybeQueryLibraryEditingHeader
             query={query}
@@ -652,3 +684,24 @@ function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {
     return null;
   }
 }
+
+// Static styles for focused state - used in class component
+// Transitions are handled in parent components where we have theme access
+const getFocusedWrapperStyle = () =>
+  css({
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    flex: '1 1 auto',
+  });
+
+const getFocusedRowStyle = () =>
+  css({
+    flex: '1 1 100%',
+    height: '100%',
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    // Remove margins when focused to maximize space
+    marginBottom: 0,
+  });
