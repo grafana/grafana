@@ -390,7 +390,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             const useStreaming =
               this.isStreamingMetricsEnabled() &&
               options.app !== CoreApp.CloudAlerting &&
-              options.app !== CoreApp.UnifiedAlerting;
+              options.app !== CoreApp.UnifiedAlerting &&
+              options.app !== 'grafana-assistant-app';
 
             reportInteraction('grafana_traces_traceql_metrics_queried', {
               datasourceType: 'tempo',
@@ -405,6 +406,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               subQueries.push(this.handleTraceQlMetricsQuery(options, targets.traceql, queryValue));
             }
           } else {
+            const useStreaming = this.isStreamingSearchEnabled() && options.app !== 'grafana-assistant-app';
+
             reportInteraction('grafana_traces_traceql_queried', {
               datasourceType: 'tempo',
               app: options.app ?? '',
@@ -413,7 +416,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               streaming: this.isStreamingSearchEnabled(),
             });
 
-            if (this.isStreamingSearchEnabled()) {
+            if (useStreaming) {
               return this.handleStreamingQuery(options, targets.traceql, queryValue);
             }
 
