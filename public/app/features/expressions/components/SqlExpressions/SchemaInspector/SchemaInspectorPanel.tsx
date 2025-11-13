@@ -135,7 +135,7 @@ export const SchemaInspectorPanel = ({ schemas, loading, error }: SchemaInspecto
           const { fieldIndex, sampleRows } = row.original;
 
           // Extract sample values for this field (column index)
-          const sampleValues = sampleRows?.map((row) => row[fieldIndex]) ?? [];
+          const sampleValues = sampleRows?.map((sampleRow) => sampleRow[fieldIndex]) ?? [];
 
           // Format as a proper array string with quoted strings
           const arrayString = JSON.stringify(sampleValues);
