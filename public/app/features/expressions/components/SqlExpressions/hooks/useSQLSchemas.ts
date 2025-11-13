@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
+import { getAPINamespace } from '@grafana/api-clients';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
@@ -70,7 +71,7 @@ export function useSQLSchemas({ queries, enabled }: UseSQLSchemasOptions) {
         return;
       }
 
-      const namespace = 'default';
+      const namespace = getAPINamespace();
 
       const response = await getBackendSrv().post<SQLSchemasResponse>(
         `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas/name`,
