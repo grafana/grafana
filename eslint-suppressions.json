@@ -2317,11 +2317,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor.tsx": {
     "@grafana/no-aria-label-selectors": {
       "count": 1
@@ -2330,9 +2325,6 @@
       "count": 1
     },
     "no-restricted-syntax": {
-      "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },

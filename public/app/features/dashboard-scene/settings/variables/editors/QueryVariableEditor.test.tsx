@@ -457,7 +457,7 @@ describe('QueryVariableEditor', () => {
       title: 'Mock Parent',
     });
 
-    const { queryByRole } = render(descriptor.render());
+    const { queryByRole } = render(descriptor.renderElement());
     const user = userEvent.setup();
 
     // 1. Initial state: "Open variable editor" button is visible, Modal is not.

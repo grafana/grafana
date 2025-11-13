@@ -38,7 +38,7 @@ export class OptionsPaneItemDescriptor {
     this.props = { ...props };
   }
 
-  render(searchQuery?: string) {
+  renderElement(searchQuery?: string) {
     return <OptionsPaneItem key={this.props.id} itemDescriptor={this} searchQuery={searchQuery} />;
   }
 
