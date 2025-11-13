@@ -1,4 +1,4 @@
-import { addDays, addHours, differenceInCalendarDays, differenceInMinutes, isBefore, parseISO, toDate } from 'date-fns';
+import { differenceInMinutes, parseISO, toDate } from 'date-fns';
 import { Page } from 'playwright-core';
 
 import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
