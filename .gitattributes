@@ -2,6 +2,8 @@
 *.gen.ts linguist-generated
 *_gen.ts linguist-generated
 *_gen.go linguist-generated
+*_gen.csv linguist-generated
+*_gen.json linguist-generated
 **/openapi_snapshots/*.json linguist-generated
 apps/**/pkg/apis/*_manifest.go linguist-generated
 public/openapi3.json linguist-generated

@@ -775,13 +775,21 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			repoGetter := resources.NewRepositoryGetter(b.repoFactory, b.client)
+
+			// Create job cleanup controller
+			jobExpiry := 30 * time.Second
+			jobCleanupController := jobs.NewJobCleanupController(
+				b.jobs,
+				jobHistoryWriter,
+				jobExpiry,
+			)
+
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,              // 3 drivers for now
 				20*time.Minute, // Max time for each job
-				time.Minute,    // Cleanup jobs
 				30*time.Second, // Periodically look for new jobs
-				30*time.Second, // Lease renewal interval
+				jobExpiry,      // Lease renewal interval
 				b.jobs, repoGetter, jobHistoryWriter,
 				jobController.InsertNotifications(),
 				b.registry,
@@ -794,6 +802,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			go func() {
 				if err := driver.Run(postStartHookCtx.Context); err != nil {
 					logging.FromContext(postStartHookCtx.Context).Error("job driver failed", "error", err)
+				}
+			}()
+
+			go func() {
+				if err := jobCleanupController.Run(postStartHookCtx.Context); err != nil {
+					logging.FromContext(postStartHookCtx.Context).Error("job cleanup controller failed", "error", err)
 				}
 			}()
 
@@ -821,7 +835,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if b.jobHistoryLoki == nil {
 				// Create HistoryJobController for cleanup of old job history entries
 				// Separate informer factory for HistoryJob cleanup with resync interval
-				historyJobExpiration := 30 * time.Second
+				historyJobExpiration := 10 * time.Minute
 				historyJobInformerFactory := informers.NewSharedInformerFactory(c, historyJobExpiration)
 				historyJobInformer := historyJobInformerFactory.Provisioning().V0alpha1().HistoricJobs()
 				go historyJobInformer.Informer().Run(postStartHookCtx.Done())

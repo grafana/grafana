@@ -50,11 +50,6 @@ export interface FeatureToggles {
   */
   storage?: boolean;
   /**
-  * Correlations page
-  * @default true
-  */
-  correlations?: boolean;
-  /**
   * Allow elements nesting
   */
   canvasPanelNesting?: boolean;

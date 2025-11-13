@@ -31,13 +31,9 @@ type Store interface {
 	// The err may be ErrNoJobs if there are no jobs to claim.
 	Claim(ctx context.Context) (job *provisioning.Job, rollback func(), err error)
 
-	// Complete marks a job as completed and moves it to the historic job store.
-	// When in the historic store, there is no more claim on the job.
+	// Complete marks a job as completed and removes it from the active job store.
+	// Callers are responsible for writing the job to history after calling this.
 	Complete(ctx context.Context, job *provisioning.Job) error
-
-	// Cleanup should be called periodically to clean up abandoned jobs.
-	// An abandoned job is one that has been claimed by a worker, but the worker has not updated the job in a while.
-	Cleanup(ctx context.Context) error
 
 	// Update saves the job back to the store.
 	Update(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error)
@@ -48,6 +44,10 @@ type Store interface {
 
 	// Get retrieves a job by name for conflict resolution.
 	Get(ctx context.Context, namespace, name string) (*provisioning.Job, error)
+
+	// ListExpiredJobs lists jobs with expired leases (claim timestamp older than the given time).
+	// Returns jobs in batches up to the specified limit.
+	ListExpiredJobs(ctx context.Context, expiredBefore time.Time, limit int) ([]*provisioning.Job, error)
 }
 
 // jobDriver drives jobs to completion and manages the job queue.
