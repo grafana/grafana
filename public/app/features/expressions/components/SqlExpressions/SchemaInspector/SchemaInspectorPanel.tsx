@@ -144,9 +144,7 @@ export const SchemaInspectorPanel = ({ schemas, loading, error }: SchemaInspecto
         },
       },
     ],
-    // We don't need to memoize the styles because they are stable
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [styles]
   );
 
   if (error) {
