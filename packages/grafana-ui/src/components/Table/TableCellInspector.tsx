@@ -19,14 +19,15 @@ export enum TableCellInspectorMode {
 
 interface TableCellInspectorProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value: string;
+  value: string | any; // @todo type as unknown instead of any
   onDismiss: () => void;
   mode: TableCellInspectorMode;
 }
 
 export function TableCellInspector({ value, onDismiss, mode }: TableCellInspectorProps) {
   const [currentMode, setMode] = useState(mode);
-  const text = value.trim();
+  const stringValue: string = typeof value === 'string' ? value : (value?.toString() ?? '');
+  const text: string = stringValue?.trim();
   const styles = useStyles2(getStyles);
 
   const tabs = [
