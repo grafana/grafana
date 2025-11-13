@@ -662,6 +662,7 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[stri
 			UpdatedBy:                   getUserFromMapping(userUIDmapping, r.UpdatedBy),
 			IntervalSeconds:             r.IntervalSeconds,
 			Version:                     r.Version,
+			Message:                     r.Message,
 			UID:                         r.UID,
 			NamespaceUID:                r.NamespaceUID,
 			RuleGroup:                   r.RuleGroup,

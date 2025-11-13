@@ -344,15 +344,18 @@ type AlertRule struct {
 	UpdatedBy       *UserUID
 	IntervalSeconds int64
 	Version         int64
-	UID             string
-	NamespaceUID    string
-	DashboardUID    *string
-	PanelID         *int64
-	RuleGroup       string
-	RuleGroupIndex  int
-	Record          *Record
-	NoDataState     NoDataState
-	ExecErrState    ExecutionErrorState
+	// Message is version history metadata, only populated when reading version history
+	// and only used when creating or updating rules.
+	Message        string
+	UID            string
+	NamespaceUID   string
+	DashboardUID   *string
+	PanelID        *int64
+	RuleGroup      string
+	RuleGroupIndex int
+	Record         *Record
+	NoDataState    NoDataState
+	ExecErrState   ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
 	// but this is currently not possible because of circular dependencies
 	For                  time.Duration
