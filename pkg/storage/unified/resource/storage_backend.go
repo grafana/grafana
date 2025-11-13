@@ -307,7 +307,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		latestKey, err := k.dataStore.LastResourceVersion(ctx, ListRequestKey{
 			Group:     event.Key.Group,
 			Resource:  event.Key.Resource,
-			Namespace: event.Key.Namespace,
+			Namespace: namespace,
 			Name:      event.Key.Name,
 		})
 		if err != nil {
