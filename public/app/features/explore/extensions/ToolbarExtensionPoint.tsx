@@ -1,7 +1,7 @@
 import { ReactElement, useMemo, useState } from 'react';
 
 import { type PluginExtensionLink, PluginExtensionPoints, RawTimeRange, getTimeZone } from '@grafana/data';
-import { config, reportInteraction, usePluginLinks } from '@grafana/runtime';
+import { reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -109,12 +109,7 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
       data: queryResponse,
       timeRange: range.raw,
       timeZone: getTimeZone({ timeZone }),
-      shouldShowAddCorrelation:
-        config.featureToggles.correlations === true &&
-        canWriteCorrelations &&
-        !isCorrelationsEditorMode &&
-        isLeftPane &&
-        numUniqueIds === 1,
+      shouldShowAddCorrelation: canWriteCorrelations && !isCorrelationsEditorMode && isLeftPane && numUniqueIds === 1,
     };
   }, [
     exploreId,

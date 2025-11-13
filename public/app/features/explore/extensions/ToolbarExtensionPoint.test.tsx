@@ -66,6 +66,7 @@ function setupToolbarExtensionPoint(
 describe('ToolbarExtensionPoint', () => {
   describe('with extension points', () => {
     beforeAll(() => {
+      contextSrvMock.hasPermission.mockReturnValue(false);
       usePluginLinksMock.mockReturnValue({
         links: [
           {
@@ -183,6 +184,7 @@ describe('ToolbarExtensionPoint', () => {
 
   describe('with extension points without categories', () => {
     beforeAll(() => {
+      contextSrvMock.hasPermission.mockReturnValue(false);
       usePluginLinksMock.mockReturnValue({
         links: [
           {
@@ -257,6 +259,7 @@ describe('ToolbarExtensionPoint', () => {
 
   describe('with multiple queryless apps links', () => {
     beforeAll(() => {
+      contextSrvMock.hasPermission.mockReturnValue(false);
       usePluginLinksMock.mockReturnValue({
         links: [
           {
@@ -323,6 +326,7 @@ describe('ToolbarExtensionPoint', () => {
 
   describe('with single queryless apps link', () => {
     beforeAll(() => {
+      contextSrvMock.hasPermission.mockReturnValue(false);
       usePluginLinksMock.mockReturnValue({
         links: [
           {
