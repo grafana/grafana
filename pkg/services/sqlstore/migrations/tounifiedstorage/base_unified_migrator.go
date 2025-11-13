@@ -120,7 +120,7 @@ func (m *unifiedStorageMigrator) validateMigrationResults(ctx context.Context, s
 
 	// Validate counts for each resource type
 	for _, summary := range response.Summary {
-		legacyCount, err := m.getLegacyCount(ctx, sess, summary.Group, summary.Resource, summary.Namespace)
+		legacyCount, err := m.getLegacyCount(sess, summary.Group, summary.Resource, summary.Namespace)
 		if err != nil {
 			return fmt.Errorf("failed to get legacy count for %s/%s: %w", summary.Group, summary.Resource, err)
 		}
@@ -148,7 +148,7 @@ func (m *unifiedStorageMigrator) validateMigrationResults(ctx context.Context, s
 }
 
 // getLegacyCount retrieves the count of items in the legacy database
-func (m *unifiedStorageMigrator) getLegacyCount(ctx context.Context, sess *xorm.Session, group, resourceType, namespace string) (int64, error) {
+func (m *unifiedStorageMigrator) getLegacyCount(sess *xorm.Session, group, resourceType, namespace string) (int64, error) {
 	// Parse namespace to get org ID
 	orgID, err := ParseOrgIDFromNamespace(namespace)
 	if err != nil {
