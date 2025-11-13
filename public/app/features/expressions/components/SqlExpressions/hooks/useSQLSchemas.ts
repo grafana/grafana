@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 import { config, getBackendSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -40,10 +40,12 @@ export function useSQLSchemas({ queries, enabled }: UseSQLSchemasOptions) {
   const queriesRef = useRef(queries);
   queriesRef.current = queries;
 
-  const isFeatureEnabled =
-    config.featureToggles.queryService || config.featureToggles.grafanaAPIServerWithExperimentalAPIs || false;
+  const isFeatureEnabled = useMemo(
+    () => config.featureToggles.queryService || config.featureToggles.grafanaAPIServerWithExperimentalAPIs || false,
+    []
+  );
 
-  useEffect(() => {
+  const fetchSchemas = useCallback(async () => {
     if (!enabled || !isFeatureEnabled) {
       return;
     }
@@ -53,43 +55,43 @@ export function useSQLSchemas({ queries, enabled }: UseSQLSchemasOptions) {
       return;
     }
 
-    const fetchSchemas = async () => {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      try {
-        // Filter to only datasource queries (not expression queries)
-        const datasourceQueries = currentQueries.filter(({ datasource }: DataQuery) => {
-          return datasource && datasource.type !== '__expr__' && datasource.uid !== '__expr__';
-        });
+    try {
+      // Filter to only datasource queries (not expression queries)
+      const datasourceQueries = currentQueries.filter(({ datasource }: DataQuery) => {
+        return datasource && datasource.type !== '__expr__' && datasource.uid !== '__expr__';
+      });
 
-        if (datasourceQueries.length === 0) {
-          setSchemas({ kind: 'SQLSchemaResponse', apiVersion: 'query.grafana.app/v0alpha1', sqlSchemas: {} });
-          setLoading(false);
-          return;
-        }
-
-        const namespace = 'default';
-
-        const response = await getBackendSrv().post<SQLSchemasResponse>(
-          `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas/name`,
-          {
-            queries: datasourceQueries,
-            from: new Date(Date.now() - ONE_HOUR_MS).toISOString(),
-            to: new Date().toISOString(),
-          }
-        );
-
-        setSchemas(response);
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to fetch SQL schemas'));
-      } finally {
+      if (datasourceQueries.length === 0) {
+        setSchemas({ kind: 'SQLSchemaResponse', apiVersion: 'query.grafana.app/v0alpha1', sqlSchemas: {} });
         setLoading(false);
+        return;
       }
-    };
 
-    fetchSchemas();
+      const namespace = 'default';
+
+      const response = await getBackendSrv().post<SQLSchemasResponse>(
+        `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas/name`,
+        {
+          queries: datasourceQueries,
+          from: new Date(Date.now() - ONE_HOUR_MS).toISOString(),
+          to: new Date().toISOString(),
+        }
+      );
+
+      setSchemas(response);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch SQL schemas'));
+    } finally {
+      setLoading(false);
+    }
   }, [enabled, isFeatureEnabled]);
 
-  return { schemas, loading, error, isFeatureEnabled };
+  useEffect(() => {
+    fetchSchemas();
+  }, [fetchSchemas]);
+
+  return { schemas, loading, error, isFeatureEnabled, refetch: fetchSchemas };
 }

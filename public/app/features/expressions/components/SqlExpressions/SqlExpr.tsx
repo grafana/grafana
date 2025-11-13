@@ -118,6 +118,7 @@ LIMIT
     loading: schemasLoading,
     error: schemasError,
     isFeatureEnabled: isSchemasFeatureEnabled,
+    refetch: refetchSchemas,
   } = useSQLSchemas({
     queries,
     enabled: isSchemaInspectorOpen,
@@ -186,7 +187,12 @@ LIMIT
 
       onRunQuery();
     }
-  }, [onRunQuery]);
+
+    // Refetch schemas when query is run (only if inspector is open)
+    if (isSchemaInspectorOpen) {
+      refetchSchemas();
+    }
+  }, [onRunQuery, refetchSchemas, isSchemaInspectorOpen]);
 
   // Set up resize observer to handle container resizing
   useEffect(() => {
