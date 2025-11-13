@@ -4,6 +4,7 @@ import memoize from 'micro-memoize';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
+import { GrafanaPromRulesOptions } from '../../api/prometheusApi';
 import { RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
@@ -13,21 +14,110 @@ import { parseMatcher } from '../../utils/matchers';
 import { isPluginProvidedRule, prometheusRuleType } from '../../utils/rules';
 import { normalizeHealth } from '../components/util';
 
+type RuleFilterHandler = (rule: PromRuleDTO, filterState: RulesFilter) => boolean;
+type GroupFilterHandler = (
+  group: PromRuleGroupDTO,
+  filterState: Pick<RulesFilter, 'namespace' | 'groupName'>
+) => boolean;
+
+type RuleFilterConfig = Record<
+  Exclude<keyof RulesFilter, 'namespace' | 'groupName' | 'ruleSource'>,
+  RuleFilterHandler | null
+>;
+
+type GroupFilterConfig = Record<keyof Pick<RulesFilter, 'namespace' | 'groupName'>, GroupFilterHandler | null>;
+
+export function getGrafanaFilter(filterState: RulesFilter) {
+  const backendFilter: GrafanaPromRulesOptions = {
+    state: filterState.ruleState ? [filterState.ruleState] : [],
+    health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
+    contactPoint: filterState.contactPoint ?? undefined,
+  };
+
+  const grafanaFilterProcessingConfig: RuleFilterConfig = {
+    freeFormWords: freeFormFilter,
+    ruleName: ruleNameFilter,
+    ruleState: null,
+    ruleType: ruleTypeFilter,
+    dataSourceNames: dataSourceNamesFilter,
+    labels: labelsFilter,
+    ruleHealth: null,
+    dashboardUid: dashboardUidFilter,
+    plugins: pluginsFilter,
+    contactPoint: null,
+  };
+
+  const grafanaGroupFilterConfig: GroupFilterConfig = {
+    namespace: namespaceFilter,
+    groupName: groupNameFilter,
+  };
+
+  return {
+    backendFilter,
+    frontendFilter: {
+      groupFilter: (group: PromRuleGroupDTO, filterState: Pick<RulesFilter, 'namespace' | 'groupName'>) =>
+        groupFilter(group, filterState, grafanaGroupFilterConfig),
+      ruleFilter: (rule: PromRuleDTO, filterState: RulesFilter) =>
+        ruleFilter(rule, filterState, grafanaFilterProcessingConfig),
+    },
+  };
+}
+
+export function getDatasourceFilter() {
+  const dsRuleFilterConfig: RuleFilterConfig = {
+    freeFormWords: freeFormFilter,
+    ruleName: ruleNameFilter,
+    ruleState: ruleStateFilter,
+    ruleType: ruleTypeFilter,
+    dataSourceNames: dataSourceNamesFilter,
+    labels: labelsFilter,
+    ruleHealth: ruleHealthFilter,
+    dashboardUid: dashboardUidFilter,
+    plugins: pluginsFilter,
+    contactPoint: contactPointFilter,
+  };
+
+  const dsGroupFilterConfig: GroupFilterConfig = {
+    namespace: namespaceFilter,
+    groupName: groupNameFilter,
+  };
+
+  return {
+    groupFilter: (group: PromRuleGroupDTO, filterState: Pick<RulesFilter, 'namespace' | 'groupName'>) =>
+      groupFilter(group, filterState, dsGroupFilterConfig),
+    ruleFilter: (rule: PromRuleDTO, filterState: RulesFilter) => ruleFilter(rule, filterState, dsRuleFilterConfig),
+  };
+}
+
 /**
  * @returns True if the group matches the filter, false otherwise. Keeps rules intact
  */
-export function groupFilter(
+function groupFilter(
   group: PromRuleGroupDTO,
-  filterState: Pick<RulesFilter, 'namespace' | 'groupName'>
+  filterState: Pick<RulesFilter, 'namespace' | 'groupName'>,
+  filterConfig: GroupFilterConfig
 ): boolean {
-  const { name, file } = group;
-  const { namespace, groupName } = filterState;
-
-  if (namespace && !fuzzyMatches(file, namespace)) {
+  if (filterConfig.namespace && filterConfig.namespace(group, filterState) === false) {
     return false;
   }
 
-  if (groupName && !fuzzyMatches(name, groupName)) {
+  if (filterConfig.groupName && filterConfig.groupName(group, filterState) === false) {
+    return false;
+  }
+
+  return true;
+}
+
+function namespaceFilter(group: PromRuleGroupDTO, filterState: Pick<RulesFilter, 'namespace' | 'groupName'>): boolean {
+  if (filterState.namespace && !fuzzyMatches(group.file, filterState.namespace)) {
+    return false;
+  }
+
+  return true;
+}
+
+function groupNameFilter(group: PromRuleGroupDTO, filterState: Pick<RulesFilter, 'namespace' | 'groupName'>): boolean {
+  if (filterState.groupName && !fuzzyMatches(group.name, filterState.groupName)) {
     return false;
   }
 
@@ -37,23 +127,73 @@ export function groupFilter(
 /**
  * @returns True if the rule matches the filter, false otherwise
  */
-export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
-  const { name, labels = {}, health, type } = rule;
+function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter, filterConfig: RuleFilterConfig) {
+  if (filterConfig.freeFormWords && filterConfig.freeFormWords(rule, filterState) === false) {
+    return false;
+  }
 
+  if (filterConfig.ruleName && filterConfig.ruleName(rule, filterState) === false) {
+    return false;
+  }
+
+  if (filterConfig.labels && filterConfig.labels(rule, filterState) === false) {
+    return false;
+  }
+
+  if (filterConfig.ruleType && filterConfig.ruleType(rule, filterState) === false) {
+    return false;
+  }
+
+  if (filterConfig.ruleState && filterConfig.ruleState(rule, filterState) === false) {
+    return false;
+  }
+
+  if (filterConfig.ruleHealth && filterConfig.ruleHealth(rule, filterState) === false) {
+    return false;
+  }
+
+  if (filterConfig.contactPoint && filterConfig.contactPoint(rule, filterState) === false) {
+    return false;
+  }
+
+  if (filterConfig.dashboardUid && filterConfig.dashboardUid(rule, filterState) === false) {
+    return false;
+  }
+
+  if (filterConfig.plugins && filterConfig.plugins(rule, filterState) === false) {
+    return false;
+  }
+
+  if (filterConfig.dataSourceNames && filterConfig.dataSourceNames(rule, filterState) === false) {
+    return false;
+  }
+
+  return true;
+}
+
+function freeFormFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
   if (filterState.freeFormWords.length > 0) {
-    const nameMatches = fuzzyMatches(name, filterState.freeFormWords.join(' '));
+    const nameMatches = fuzzyMatches(rule.name, filterState.freeFormWords.join(' '));
     if (!nameMatches) {
       return false;
     }
   }
 
-  if (filterState.ruleName && !fuzzyMatches(name, filterState.ruleName)) {
+  return true;
+}
+
+function ruleNameFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
+  if (filterState.ruleName && !fuzzyMatches(rule.name, filterState.ruleName)) {
     return false;
   }
 
+  return true;
+}
+
+function labelsFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
   if (filterState.labels.length > 0) {
     const matchers = compact(filterState.labels.map(looseParseMatcher));
-    const doRuleLabelsMatchQuery = matchers.length > 0 && labelsMatchMatchers(labels, matchers);
+    const doRuleLabelsMatchQuery = matchers.length > 0 && labelsMatchMatchers(rule.labels || {}, matchers);
 
     // Also check alerts if they exist
     const doAlertsContainMatchingLabels =
@@ -67,10 +207,18 @@ export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
     }
   }
 
-  if (filterState.ruleType && type !== filterState.ruleType) {
+  return true;
+}
+
+function ruleTypeFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
+  if (filterState.ruleType && rule.type !== filterState.ruleType) {
     return false;
   }
 
+  return true;
+}
+
+function ruleStateFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
   if (filterState.ruleState) {
     if (!prometheusRuleType.alertingRule(rule)) {
       return false;
@@ -80,10 +228,18 @@ export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
     }
   }
 
-  if (filterState.ruleHealth && normalizeHealth(health) !== filterState.ruleHealth) {
+  return true;
+}
+
+function ruleHealthFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
+  if (filterState.ruleHealth && normalizeHealth(rule.health) !== filterState.ruleHealth) {
     return false;
   }
 
+  return true;
+}
+
+function contactPointFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
   if (filterState.contactPoint) {
     if (!prometheusRuleType.grafana.alertingRule(rule)) {
       return false;
@@ -98,6 +254,10 @@ export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
     }
   }
 
+  return true;
+}
+
+function dashboardUidFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
   if (filterState.dashboardUid) {
     if (!prometheusRuleType.alertingRule(rule)) {
       return false;
@@ -109,11 +269,19 @@ export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
     }
   }
 
+  return true;
+}
+
+function pluginsFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
   // Plugins filter - hide plugin-provided rules when set to 'hide'
   if (filterState.plugins === 'hide' && isPluginProvidedRule(rule)) {
     return false;
   }
 
+  return true;
+}
+
+function dataSourceNamesFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
   // Note: We can't implement these filters from reduceGroups because they rely on rulerRule property
   // which is not available in PromRuleDTO:
   // - contactPoint filter

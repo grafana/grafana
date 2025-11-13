@@ -24,7 +24,7 @@ import {
 } from '../../utils/datasource';
 import { RulePositionHash, createRulePositionHash } from '../rulePositionHash';
 
-import { groupFilter, ruleFilter } from './filters';
+import { getDatasourceFilter, getGrafanaFilter } from './filters';
 import { useGrafanaGroupsGenerator, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
 
 export type RuleWithOrigin = PromRuleWithOrigin | GrafanaRuleWithOrigin;
@@ -80,19 +80,17 @@ export function useFilteredRulesIteratorProvider() {
     const normalizedFilterState = normalizeFilterState(filterState);
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
+    const { backendFilter, frontendFilter } = getGrafanaFilter(filterState);
+
     const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
-      grafanaGroupsGenerator(groupLimit, {
-        contactPoint: filterState.contactPoint ?? undefined,
-        health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
-        state: filterState.ruleState ? [filterState.ruleState] : [],
-      })
+      grafanaGroupsGenerator(groupLimit, backendFilter)
     ).pipe(
       withAbort(abortController.signal),
       concatMap((groups) =>
         groups
-          .filter((group) => groupFilter(group, normalizedFilterState))
+          .filter((group) => frontendFilter.groupFilter(group, normalizedFilterState))
           .flatMap((group) => group.rules.map((rule) => ({ group, rule })))
-          .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
+          .filter(({ rule }) => frontendFilter.ruleFilter(rule, normalizedFilterState))
           .map(({ group, rule }) => mapGrafanaRuleToRuleWithOrigin(group, rule))
       ),
       catchError(() => empty())
@@ -106,6 +104,8 @@ export function useFilteredRulesIteratorProvider() {
     if (filterState.ruleSource === RuleSource.Grafana) {
       return { iterable: grafanaRulesGenerator, abortController };
     }
+
+    const { groupFilter, ruleFilter } = getDatasourceFilter(filterState);
 
     const dataSourceGenerators: Array<AsyncIterableX<RuleWithOrigin>> = externalRulesSourcesToFetchFrom.map(
       (dataSourceIdentifier) => {
