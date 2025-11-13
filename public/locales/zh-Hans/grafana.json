@@ -6726,9 +6726,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "有关错误的更多详情"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "添加 csv 或电子表格"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Adobe Analytics 数据源",
@@ -11709,6 +11706,11 @@
       "path-description": "存储库的本地文件系统路径",
       "path-label": "存储库路径",
       "path-required": "存储库路径为必填项"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {

@@ -6750,9 +6750,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Hata hakkında daha fazla bilgi"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "CSV veya elektronik tablo ekle"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Adobe Analytics veri kaynağı",
@@ -11762,6 +11759,11 @@
       "path-description": "Depoya giden yerel dosya sistemi yolu",
       "path-label": "Depo Yolu",
       "path-required": "Depo yolu gereklidir"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {
