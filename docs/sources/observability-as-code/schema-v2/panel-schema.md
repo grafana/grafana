@@ -268,7 +268,7 @@ Map a field to a color.
 | ----------- | -------------------------------------------------------------------- |
 | mode        | [`FieldColorModeId`](#fieldcolormodeid). The main color scheme mode. |
 | FixedColor? | string. The fixed color value for fixed or shades color modes.       |
-| seriesBy?   |  `FieldColorSeriesByMode`. Some visualizations need to know how to assign a series color from by value color schemes. Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value. Options are: `min`, `max`, and `last`. |
+| seriesBy?   |  `FieldColorSeriesByMode`. Some visualizations need to know how to assign a series color from by value color schemes. Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by any reducer value such as min, max, last, mean, median, or percentiles (p1-p99). |
 
 <!-- prettier-ignore-end -->
 
