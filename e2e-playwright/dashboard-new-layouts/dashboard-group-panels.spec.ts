@@ -63,7 +63,7 @@ test.describe(
      * Rows
      */
 
-    test.skip('can group and ungroup new panels into row', async ({ dashboardPage, selectors, page }) => {
+    test('can group and ungroup new panels into row', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(page, selectors, 'Group new panels into row');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
@@ -113,7 +113,7 @@ test.describe(
       ).toHaveCount(3);
     });
 
-    test.skip('can add multiple rows and ungroup them all at once', async ({ dashboardPage, selectors, page }) => {
+    test('can add multiple rows and ungroup them all at once', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(page, selectors, 'Add and remove rows');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
@@ -214,7 +214,7 @@ test.describe(
       ).toHaveCount(4);
     });
 
-    test.skip('can paste a copied row', async ({ dashboardPage, selectors, page }) => {
+    test('can paste a copied row', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(page, selectors, 'Paste row');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
@@ -275,7 +275,7 @@ test.describe(
       ).toHaveCount(3);
     });
 
-    test.skip('can duplicate a row', async ({ dashboardPage, selectors, page }) => {
+    test('can duplicate a row', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(page, selectors, 'Duplicate row');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
