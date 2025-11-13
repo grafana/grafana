@@ -1,5 +1,5 @@
 // Libraries
-import { defaults } from 'lodash';
+import { defaults, isObject } from 'lodash';
 import Papa, { ParseConfig, Parser, ParseResult } from 'papaparse';
 
 // Types
@@ -315,6 +315,10 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
             // For FieldType frame, use value if it exists to prevent exporting [object object]
             if (fields[j].type === FieldType.frame && 'value' in v) {
               v = v.value;
+            }
+
+            if (fields[j].type === FieldType.other && isObject(v)) {
+              v = JSON.stringify(v);
             }
 
             csv += writers[j](v);
