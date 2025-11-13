@@ -1,0 +1,224 @@
+---
+description: Configure notification alerts for Knowledge Graph using Terraform
+menuTitle: Notification alerts
+title: Configure notification alerts using Terraform
+weight: 200
+keywords:
+  - Terraform
+  - Knowledge Graph
+  - Notification Alerts
+  - Alert Configuration
+canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/terraform/terraform-knowledge-graph/notification-alerts/
+---
+
+# Configure notification alerts using Terraform
+
+Notification alerts configurations in [Knowledge Graph](/docs/grafana-cloud/knowledge-graph/) allow you to manage how alerts are processed and routed. You can specify match labels to filter alerts, add custom labels, set duration requirements, and control silencing.
+
+For information about configuring notification alerts in the Knowledge Graph UI, refer to [Configure notifications](/docs/grafana-cloud/knowledge-graph/configure/notifications/).
+
+## Basic notification alerts configuration
+
+Create a file named `alert-configs.tf` and add the following:
+
+```terraform
+# Basic alert configuration with silencing
+resource "grafana_asserts_notification_alerts_config" "prometheus_remote_storage_failures" {
+  provider = grafana.asserts
+
+  name = "PrometheusRemoteStorageFailures"
+
+  match_labels = {
+    alertname   = "PrometheusRemoteStorageFailures"
+    alertgroup  = "prometheus.alerts"
+    asserts_env = "prod"
+  }
+
+  silenced = true
+}
+
+# High severity alert with specific job and context matching
+resource "grafana_asserts_notification_alerts_config" "error_buildup_notify" {
+  provider = grafana.asserts
+
+  name = "ErrorBuildupNotify"
+
+  match_labels = {
+    alertname               = "ErrorBuildup"
+    job                     = "acai"
+    asserts_request_type    = "inbound"
+    asserts_request_context = "/auth"
+  }
+
+  silenced = false
+}
+```
+
+## Notification alerts with additional labels and duration
+
+Configure alerts with custom labels and timing requirements:
+
+```terraform
+# Alert with additional labels and custom duration
+resource "grafana_asserts_notification_alerts_config" "payment_test_alert" {
+  provider = grafana.asserts
+
+  name = "PaymentTestAlert"
+
+  match_labels = {
+    alertname         = "PaymentTestAlert"
+    additional_labels = "asserts_severity=~\"critical\""
+    alertgroup        = "alex-k8s-integration-test.alerts"
+  }
+
+  alert_labels = {
+    testing = "onetwothree"
+  }
+
+  duration = "5m"
+  silenced = false
+}
+```
+
+## Latency and performance notification alerts
+
+Monitor and alert on latency and performance issues:
+
+```terraform
+# Latency alert for shipping service
+resource "grafana_asserts_notification_alerts_config" "high_shipping_latency" {
+  provider = grafana.asserts
+
+  name = "high shipping latency"
+
+  match_labels = {
+    alertname            = "LatencyP99ErrorBuildup"
+    job                  = "shipping"
+    asserts_request_type = "inbound"
+  }
+
+  silenced = false
+}
+
+# CPU throttling alert with warning severity
+resource "grafana_asserts_notification_alerts_config" "cpu_throttling_sustained" {
+  provider = grafana.asserts
+
+  name = "CPUThrottlingSustained"
+
+  match_labels = {
+    alertname         = "CPUThrottlingSustained"
+    additional_labels = "asserts_severity=~\"warning\""
+  }
+
+  silenced = true
+}
+```
+
+## Infrastructure and service notification alerts
+
+Configure alerts for infrastructure components and services:
+
+```terraform
+# Ingress error rate alert
+resource "grafana_asserts_notification_alerts_config" "ingress_error" {
+  provider = grafana.asserts
+
+  name = "ingress error"
+
+  match_labels = {
+    alertname            = "ErrorRatioBreach"
+    job                  = "ingress-nginx-controller-metrics"
+    asserts_request_type = "inbound"
+  }
+
+  silenced = false
+}
+
+# MySQL Galera cluster alert
+resource "grafana_asserts_notification_alerts_config" "mysql_galera_not_ready" {
+  provider = grafana.asserts
+
+  name = "MySQLGaleraNotReady"
+
+  match_labels = {
+    alertname = "MySQLGaleraNotReady"
+  }
+
+  silenced = false
+}
+```
+
+## Resource reference
+
+### `grafana_asserts_notification_alerts_config`
+
+Manage Knowledge Graph notification alerts configurations through the Grafana API.
+
+#### Arguments
+
+| Name           | Type          | Required | Description                                                                                                                   |
+| -------------- | ------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `name`         | `string`      | Yes      | The name of the notification alerts configuration. This field is immutable and forces recreation if changed.                  |
+| `match_labels` | `map(string)` | No       | Labels to match for this notification alerts configuration. Used to filter which alerts this configuration applies to.        |
+| `alert_labels` | `map(string)` | No       | Labels to add to alerts generated by this notification alerts configuration.                                                  |
+| `duration`     | `string`      | No       | Duration for which the condition must be true before firing (for example, '5m', '30s'). Maps to 'for' in Knowledge Graph API. |
+| `silenced`     | `bool`        | No       | Whether this notification alerts configuration is silenced. Defaults to `false`.                                              |
+
+#### Example
+
+```terraform
+resource "grafana_asserts_notification_alerts_config" "example" {
+  provider = grafana.asserts
+
+  name = "ExampleAlert"
+
+  match_labels = {
+    alertname = "HighCPUUsage"
+    job       = "monitoring"
+  }
+
+  alert_labels = {
+    severity = "warning"
+    team     = "platform"
+  }
+
+  duration = "5m"
+  silenced = false
+}
+```
+
+## Best practices
+
+### Label management
+
+- Use specific and meaningful labels in `match_labels` to ensure precise alert filtering
+- Leverage existing label conventions from your monitoring setup
+- Consider using `asserts_env` and `asserts_site` labels for multi-environment setups
+
+### Silence strategy
+
+- Use the `silenced` parameter for temporary suppression rather than deleting notification alerts configurations
+- Document the reason for silencing in your Terraform configuration comments
+- Regularly review silenced configurations to ensure they're still needed
+
+### Duration configuration
+
+- Set appropriate duration values based on your alerting requirements
+- Consider the nature of the monitored condition when choosing duration
+- Use consistent duration formats across similar alert types
+
+## Validation
+
+After applying the Terraform configuration, verify that:
+
+- Notification alerts configurations are created in your Knowledge Graph instance
+- Configurations appear in the Knowledge Graph UI under **Observability > Rules > Notify**
+- Match labels correctly filter the intended alerts
+- Custom labels are properly applied to generated alerts
+
+## Related documentation
+
+- [Configure notifications in Knowledge Graph](/docs/grafana-cloud/knowledge-graph/configure/notifications/)
+- [Get started with Terraform for Knowledge Graph](../getting-started/)
+- [Configure alerts in Knowledge Graph](/docs/grafana-cloud/knowledge-graph/configure/alerts/)
