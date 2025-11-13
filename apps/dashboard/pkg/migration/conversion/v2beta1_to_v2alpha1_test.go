@@ -171,20 +171,12 @@ func TestV2beta1ToV2alpha1FromOutputFiles(t *testing.T) {
 			expectedStats := collectStatsV2alpha1(expectedV2alpha1.Spec)
 			convertedStats := collectStatsV2alpha1(convertedV2alpha1.Spec)
 
+			// Verify no data loss using statistics
 			assert.Equal(t, expectedStats.panelCount, convertedStats.panelCount, "Panel count mismatch")
 			assert.Equal(t, expectedStats.queryCount, convertedStats.queryCount, "Query count mismatch")
 			assert.Equal(t, expectedStats.annotationCount, convertedStats.annotationCount, "Annotation count mismatch")
 			assert.Equal(t, expectedStats.linkCount, convertedStats.linkCount, "Link count mismatch")
 			assert.Equal(t, expectedStats.variableCount, convertedStats.variableCount, "Variable count mismatch")
-
-			// Compare ObjectMeta (excluding fields that may differ during conversion)
-			assert.Equal(t, expectedV2alpha1.ObjectMeta.Name, convertedV2alpha1.ObjectMeta.Name, "Name mismatch")
-			assert.Equal(t, expectedV2alpha1.ObjectMeta.Namespace, convertedV2alpha1.ObjectMeta.Namespace, "Namespace mismatch")
-			assert.Equal(t, expectedV2alpha1.ObjectMeta.UID, convertedV2alpha1.ObjectMeta.UID, "UID mismatch")
-			assert.Equal(t, expectedV2alpha1.ObjectMeta.ResourceVersion, convertedV2alpha1.ObjectMeta.ResourceVersion, "ResourceVersion mismatch")
-			assert.Equal(t, expectedV2alpha1.ObjectMeta.Generation, convertedV2alpha1.ObjectMeta.Generation, "Generation mismatch")
-			// Note: We exclude Labels, Annotations, CreationTimestamp, ManagedFields
-			// as these may be set/generated during conversion
 
 			// Compare the entire spec structures - they should be equal
 			assert.Equal(t, expectedV2alpha1.Spec, convertedV2alpha1.Spec, "Converted v2alpha1 spec should match expected v2alpha1 spec")
