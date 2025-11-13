@@ -11491,6 +11491,9 @@
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
       "text-loading-resource-information": "Loading resource information...",
+      "unavailable-options": {
+        "title": "Unavailable options"
+      },
       "unmanaged-resources-label": "Unmanaged resources"
     },
     "check-repository": {
@@ -11766,6 +11769,12 @@
       "truncated": "Message truncated"
     },
     "mode-options": {
+      "disabled": {
+        "folder-connected": "Full instance synchronization is disabled because another folder is already synced with a repository.",
+        "legacy-storage": "Legacy storage mode only supports syncing the entire Grafana instance.",
+        "not-allowed": "Provisioning settings for this repository restrict syncing to specific targets. Update the repository configuration to enable this option.",
+        "not-supported": "This option is not supported yet."
+      },
       "folder": {
         "description": "After setup, a new Grafana folder will be created and synced with external storage. If any resources are present in external storage, they will be provisioned to this new folder. All new resources created in this folder will be stored and versioned in external storage.",
         "label": "Sync external storage to a new Grafana folder",
