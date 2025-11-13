@@ -143,11 +143,11 @@ func New(cfg app.Config) (app.App, error) {
 					}
 
 					// Return typed response matching the manifest
-					return json.NewEncoder(w).Encode(advisorv0alpha1.GetRegister{
+					return json.NewEncoder(w).Encode(advisorv0alpha1.CreateRegister{
 						TypeMeta: metav1.TypeMeta{
 							APIVersion: fmt.Sprintf("%s/%s", advisorv0alpha1.APIGroup, advisorv0alpha1.APIVersion),
 						},
-						GetRegisterBody: advisorv0alpha1.GetRegisterBody{
+						CreateRegisterBody: advisorv0alpha1.CreateRegisterBody{
 							Message: "Check types registered successfully",
 						},
 					})
