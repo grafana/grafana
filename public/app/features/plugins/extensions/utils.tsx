@@ -478,6 +478,7 @@ export function getLinkExtensionOverrides(
       path = config.path,
       icon = config.icon,
       category = config.category,
+      buildPathAsync = config.buildPathAsync,
       ...rest
     } = overrides;
 
@@ -502,6 +503,7 @@ export function getLinkExtensionOverrides(
       path,
       icon,
       category,
+      buildPathAsync,
     };
   } catch (error) {
     if (error instanceof Error) {

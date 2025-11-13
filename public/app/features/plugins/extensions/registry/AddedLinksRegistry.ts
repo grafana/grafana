@@ -21,6 +21,7 @@ export type AddedLinkRegistryItem<Context extends object = object> = {
   configure?: PluginAddedLinksConfigureFunc<Context>;
   icon?: IconName;
   category?: string;
+  buildPathAsync?: (context: Context) => Promise<string | null>;
 };
 
 export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], PluginExtensionAddedLinkConfig> {
@@ -40,13 +41,14 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
     const { pluginId, configs } = item;
 
     for (const config of configs) {
-      const { path, title, description, configure, onClick, targets } = config;
+      const { path, title, description, configure, onClick, targets, buildPathAsync } = config;
       const configLog = this.logger.child({
         path: path ?? '',
         description: description ?? '',
         title,
         pluginId,
         onClick: typeof onClick,
+        buildPathAsync: typeof buildPathAsync,
       });
 
       if (!title) {
