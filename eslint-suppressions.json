@@ -237,7 +237,7 @@
   },
   "packages/grafana-data/src/types/panel.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 13
+      "count": 11
     }
   },
   "packages/grafana-data/src/types/plugin.ts": {
@@ -602,30 +602,12 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/DataSourceSettings/AlertingSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "packages/grafana-ui/src/components/DataSourceSettings/CustomHeadersSettings.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
     },
-    "no-restricted-syntax": {
-      "count": 3
-    },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/DataSourceSettings/SecureSocksProxySettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
-  "packages/grafana-ui/src/components/DataSourceSettings/TLSAuthSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "packages/grafana-ui/src/components/DataSourceSettings/types.ts": {
@@ -766,11 +748,6 @@
     }
   },
   "packages/grafana-ui/src/components/PageLayout/PageToolbar.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/PanelChrome/PanelChrome.story.tsx": {
     "no-restricted-syntax": {
       "count": 1
     }
@@ -2034,11 +2011,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/pages/DashboardScenePageStateManager.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataPane.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2278,10 +2250,10 @@
   },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 4
+      "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 3
+      "count": 1
     }
   },
   "public/app/features/dashboard/components/AnnotationSettings/AnnotationSettingsEdit.tsx": {

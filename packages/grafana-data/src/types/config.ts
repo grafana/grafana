@@ -291,6 +291,7 @@ export interface GrafanaConfig {
   rudderstackIntegrationsUrl: string;
   applicationInsightsConnectionString: string;
   applicationInsightsEndpointUrl: string;
+  applicationInsightsAutoRouteTracking: boolean;
   analyticsConsoleReporting: boolean;
   rendererAvailable: boolean;
   rendererVersion: string;
