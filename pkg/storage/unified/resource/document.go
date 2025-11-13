@@ -290,6 +290,9 @@ const SEARCH_FIELD_NAMESPACE = "namespace"
 const SEARCH_FIELD_NAME = "name"
 const SEARCH_FIELD_RV = "rv"
 const SEARCH_FIELD_TITLE = "title"
+const SEARCH_FIELD_EMAIL = "email"
+const SEARCH_FIELD_PROVISIONED = "provisioned"
+const SEARCH_FIELD_EXTERNAL_UID = "externalUID"
 const SEARCH_FIELD_TITLE_NGRAM = "title_ngram"
 const SEARCH_FIELD_TITLE_PHRASE = "title_phrase" // filtering/sorting on title by full phrase
 const SEARCH_FIELD_DESCRIPTION = "description"
@@ -355,6 +358,21 @@ func StandardSearchFields() SearchableDocumentFields {
 				Name:        SEARCH_FIELD_TITLE,
 				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				Description: "Display name for the resource",
+			},
+			{
+				Name:        SEARCH_FIELD_EMAIL,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+				Description: "Email of the resource",
+			},
+			{
+				Name:        SEARCH_FIELD_PROVISIONED,
+				Type:        resourcepb.ResourceTableColumnDefinition_BOOLEAN,
+				Description: "Whether the resource is provisioned",
+			},
+			{
+				Name:        SEARCH_FIELD_EXTERNAL_UID,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+				Description: "External UID of the resource",
 			},
 			{
 				Name:        SEARCH_FIELD_DESCRIPTION,

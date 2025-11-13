@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"strconv"
 
 	"google.golang.org/grpc"
 
@@ -113,6 +114,9 @@ func defaultColumns() []*resourcepb.ResourceTableColumnDefinition {
 	return []*resourcepb.ResourceTableColumnDefinition{
 		searchFields.Field(res.SEARCH_FIELD_NAME),
 		searchFields.Field(res.SEARCH_FIELD_TITLE),
+		searchFields.Field("email"),
+		searchFields.Field("provisioned"),
+		searchFields.Field("externalUID"),
 	}
 }
 
@@ -121,5 +125,7 @@ func createDefaultCells(t *team.TeamDTO) [][]byte {
 		[]byte(t.UID),
 		[]byte(t.Name),
 		[]byte(t.Email),
+		[]byte(strconv.FormatBool(t.IsProvisioned)),
+		[]byte(t.ExternalUID),
 	}
 }

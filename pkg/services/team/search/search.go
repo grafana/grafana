@@ -18,11 +18,24 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 	}
 
 	titleIDX := -1
+	emailIDX := -1
+	provisionedIDX := -1
+	externalUIDIDX := -1
 
 	for i, v := range result.Results.Columns {
+		if v == nil {
+			continue
+		}
+
 		switch v.Name {
 		case resource.SEARCH_FIELD_TITLE:
 			titleIDX = i
+		case resource.SEARCH_FIELD_EMAIL:
+			emailIDX = i
+		case resource.SEARCH_FIELD_PROVISIONED:
+			provisionedIDX = i
+		case resource.SEARCH_FIELD_EXTERNAL_UID:
+			externalUIDIDX = i
 		}
 	}
 
@@ -43,6 +56,18 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 			hit.Title = string(row.Cells[titleIDX])
 		} else {
 			hit.Title = "(no title)"
+		}
+
+		if emailIDX >= 0 && row.Cells[emailIDX] != nil {
+			hit.Email = string(row.Cells[emailIDX])
+		}
+
+		if provisionedIDX >= 0 && row.Cells[provisionedIDX] != nil {
+			hit.Provisioned = string(row.Cells[provisionedIDX]) == "true"
+		}
+
+		if externalUIDIDX >= 0 && row.Cells[externalUIDIDX] != nil {
+			hit.ExternalUID = string(row.Cells[externalUIDIDX])
 		}
 
 		sr.Hits[i] = *hit

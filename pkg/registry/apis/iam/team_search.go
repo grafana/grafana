@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 
 	"go.opentelemetry.io/otel/trace"
@@ -133,6 +134,17 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		Page:    int64(page),
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 	}
+
+	fields := []string{"title", "email", "provisioned", "externalUID"}
+	if queryParams.Has("field") {
+		// add fields to search and exclude duplicates
+		for _, f := range queryParams["field"] {
+			if f != "" && !slices.Contains(fields, f) {
+				fields = append(fields, f)
+			}
+		}
+	}
+	searchRequest.Fields = fields
 
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
