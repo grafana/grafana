@@ -308,12 +308,15 @@ func jsonDataToPluginMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.Plu
 	if jsonData.State != "" {
 		var state pluginsv0alpha1.PluginMetaJSONDataState
 		switch jsonData.State {
-		case "alpha":
+		case plugins.ReleaseStateAlpha:
 			state = pluginsv0alpha1.PluginMetaJSONDataStateAlpha
-		case "beta":
+		case plugins.ReleaseStateBeta:
 			state = pluginsv0alpha1.PluginMetaJSONDataStateBeta
+		default:
 		}
-		meta.State = &state
+		if state != "" {
+			meta.State = &state
+		}
 	}
 
 	// Map executable
