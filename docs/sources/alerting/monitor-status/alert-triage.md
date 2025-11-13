@@ -10,8 +10,14 @@ keywords:
   - incidents
   - monitoring
   - Grafana-managed alerts
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 ---
 
+{{< docs/public-preview product="Alert triage view" >}}
 # Alert triage view
 
 Grafana provides a consolidated view of your Grafana-managed alerts in a simplified triage view. For users with complex deployments, it can be difficult to monitor and prioritize critical incidents among a large volume of firing or pending alerts. With the Alert triage page, you have a view where you can quickly explore and sort your recent alert history and see what alerts have been firing or are pending. 
