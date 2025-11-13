@@ -146,7 +146,7 @@ export const SearchResultsTable = React.memo(
             {row.cells.map((cell: Cell, index: number) => {
               const href = onClickItem ? url : undefined;
 
-              let userProps: { href?: string; onClick?: (event: React.MouseEvent<HTMLElement>) => void } = {
+              let userProps = {
                 href,
                 onClick: onClickItem,
               };
