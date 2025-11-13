@@ -102,9 +102,7 @@ and {{ .SkippedFiles }} more files.
 `
 
 // TODO: this should expand and show links to setup docs
-const commentTemplateMissingImageRenderer = `
-NOTE: The image renderer is not configured
-`
+const commentTemplateMissingImageRenderer = ``
 
 // TODO: does this have some value?
 func (f *fileChangeInfo) Kind() string {
