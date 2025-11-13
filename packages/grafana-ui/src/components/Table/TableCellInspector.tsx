@@ -26,7 +26,7 @@ interface TableCellInspectorProps {
 
 export function TableCellInspector({ value, onDismiss, mode }: TableCellInspectorProps) {
   const [currentMode, setMode] = useState(mode);
-  const stringValue: string = typeof value === 'string' ? value : (value?.toString() ?? '');
+  const stringValue: string = typeof value === 'string' ? value : (value?.toString?.() ?? '');
   const text: string = stringValue?.trim();
   const styles = useStyles2(getStyles);
 
