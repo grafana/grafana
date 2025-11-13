@@ -38,8 +38,15 @@ but for query correlations, target is the json for populating the query editor, 
 for every datasource
 
 right now this is resolving to require an object of objects, like item.spec.config.target.url is expecting an object
-instead of a string. how do i fix this? */
+instead of a string. how do i fix this? 
+
+Already tried and unsuccessful
 TargetSpec:  [string]: _
+
+*/
+TargetSpec:  {
+	[string]: _
+}
 
 TransformationSpec: {
 	type: "regex" | "logfmt"

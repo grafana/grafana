@@ -15,6 +15,7 @@ import {
   CorrelationQuery,
 } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { dispatch } from 'app/store/store';
 
 import {
   Correlation,
@@ -109,7 +110,7 @@ const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationData | u
         config: {
           field: item.spec.config.field,
           target: {
-            url: item.spec.config.target.url.url || '', // todo this is wrong, fix in spec
+            url: item.spec.config.target.url || '', // todo this is wrong, fix in spec
           },
           transformations: [], // todo fix
         },
@@ -184,17 +185,45 @@ export const useCorrelations = () => {
   );
 
   const [createInfo, create] = useAsyncFn<(params: CreateCorrelationParams) => Promise<CorrelationData>>(
-    ({ sourceUID, ...correlation }) =>
-      backend
-        .post<CreateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations`, correlation)
-        .then((response) => {
-          const enrichedCorrelation = toEnrichedCorrelationData(response.result);
-          if (enrichedCorrelation !== undefined) {
-            return enrichedCorrelation;
-          } else {
-            throw new Error('invalid sourceUID');
-          }
-        }),
+    async ({ sourceUID, ...correlation }) => {
+      if (config.featureToggles.kubernetesCorrelations) {
+        // todo, fix once target is fixed
+        let target;
+        if (correlation.type === 'external') {
+          target = { url: { url: correlation.config.target.url } };
+        } else {
+          target = { target: { ...correlation.config.target } };
+        }
+
+        const result = await dispatch(
+          correlationAPIv0alpha1.endpoints.createCorrelation.initiate({
+            correlation: {
+              apiVersion: 'correlations.grafana.app/v0alpha1',
+              kind: 'Correlations',
+              metadata: {},
+              spec: {
+                ...correlation,
+                label: correlation.label ?? '',
+                source: { name: sourceUID, group: '' },
+                config: { ...correlation.config, target: target, transformations: [] },
+              },
+            },
+          })
+        );
+        return result;
+      } else {
+        return backend
+          .post<CreateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations`, correlation)
+          .then((response) => {
+            const enrichedCorrelation = toEnrichedCorrelationData(response.result);
+            if (enrichedCorrelation !== undefined) {
+              return enrichedCorrelation;
+            } else {
+              throw new Error('invalid sourceUID');
+            }
+          });
+      }
+    },
     [backend]
   );
 
