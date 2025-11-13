@@ -52,7 +52,7 @@
     "@leeoniya/ufuzzy": "1.0.19",
     "@lezer/common": "1.2.3",
     "@lezer/highlight": "1.2.1",
-    "@lezer/lr": "1.4.2",
+    "@lezer/lr": "1.4.3",
     "@prometheus-io/lezer-promql": "0.305.0",
     "@reduxjs/toolkit": "2.9.0",
     "@types/debounce-promise": "3.1.9",
