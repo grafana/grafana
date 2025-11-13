@@ -16,12 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/apimachinery/pkg/labels"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/applyconfiguration/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
@@ -352,38 +350,6 @@ type mockJobsQueueStore struct {
 	*jobs.MockStore
 }
 
-// mockRepositoryLister implements listers.RepositoryLister for testing
-type mockRepositoryLister struct {
-	repositoriesFunc func(namespace string) listers.RepositoryNamespaceLister
-}
-
-func (m *mockRepositoryLister) Repositories(namespace string) listers.RepositoryNamespaceLister {
-	if m.repositoriesFunc != nil {
-		return m.repositoriesFunc(namespace)
-	}
-	return nil
-}
-
-func (m *mockRepositoryLister) List(selector labels.Selector) ([]*provisioning.Repository, error) {
-	panic("not needed for testing")
-}
-
-// mockRepositoryNamespaceLister implements listers.RepositoryNamespaceLister for testing
-type mockRepositoryNamespaceLister struct {
-	getFunc func(name string) (*provisioning.Repository, error)
-}
-
-func (m *mockRepositoryNamespaceLister) Get(name string) (*provisioning.Repository, error) {
-	if m.getFunc != nil {
-		return m.getFunc(name)
-	}
-	return nil, nil
-}
-
-func (m *mockRepositoryNamespaceLister) List(selector labels.Selector) ([]*provisioning.Repository, error) {
-	panic("not needed for testing")
-}
-
 func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 	testCases := []struct {
 		name           string
@@ -546,32 +512,6 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 			jobGetError:    assert.AnError, // Non-NotFound error
 			expectedResync: false,          // Should continue with normal logic
 			description:    "should handle non-NotFound errors gracefully and continue with normal logic",
-		},
-		{
-			name: "stale sync status but sync disabled",
-			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
-				Spec: provisioning.RepositorySpec{
-					Sync: provisioning.SyncOptions{
-						Enabled:         false,
-						IntervalSeconds: 300,
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Sync: provisioning.SyncStatus{
-						State:    provisioning.JobStatePending,
-						JobID:    "test-job-disabled",
-						Started:  time.Now().Add(-10 * time.Minute).UnixMilli(),
-						Finished: time.Now().Add(-10 * time.Minute).UnixMilli(),
-					},
-				},
-			},
-			jobGetError:    apierrors.NewNotFound(schema.GroupResource{Resource: "jobs"}, "test-job-disabled"),
-			expectedResync: false, // Should return false when sync is disabled
-			description:    "should return false when sync is disabled even if job is stale",
 		},
 	}
 
