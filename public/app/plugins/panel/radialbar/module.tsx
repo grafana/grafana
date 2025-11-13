@@ -1,6 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { commonOptionsBuilder, GraphFieldConfig } from '@grafana/ui';
+import { commonOptionsBuilder } from '@grafana/ui';
 
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
 
@@ -10,7 +10,7 @@ import { RadialBarPanel } from './RadialBarPanel';
 import { defaultGaugePanelEffects, defaultOptions, Options } from './panelcfg.gen';
 import { radialBarSuggestionsHandler } from './suggestions';
 
-export const plugin = new PanelPlugin<Options, GraphFieldConfig>(RadialBarPanel)
+export const plugin = new PanelPlugin<Options>(RadialBarPanel)
   .useFieldConfig({})
   .setPanelOptions((builder) => {
     const category = [t('gauge.category-radial-bar', 'Gauge')];
