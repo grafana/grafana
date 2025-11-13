@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -95,6 +98,11 @@ func (d *Dashboard) GetTags() []string {
 }
 
 func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
+	// if apiVersion is set in the json - use it as an indicator that it is in the k8s format
+	if apiVersion, err := data.Get("apiVersion").String(); err == nil && apiVersion != "" {
+		return parseK8sDashboard(data)
+	}
+
 	dash := &Dashboard{}
 	dash.Data = data
 	dash.Title = dash.Data.Get("title").MustString()
@@ -119,6 +127,66 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 		dash.Created = time.Now()
 		dash.Updated = time.Now()
 	}
+
+	if gnetId, err := dash.Data.Get("gnetId").Float64(); err == nil {
+		dash.GnetID = int64(gnetId)
+	}
+
+	return dash
+}
+
+// parses json in the k8s format
+// i.e:
+//
+//	{
+//	  "apiVersion": "dashboard.grafana.app/v1",
+//	  "kind": "Dashboard",
+//	  "metadata": {...},
+//	  "spec": {...}
+//	}
+func parseK8sDashboard(data *simplejson.Json) *Dashboard {
+	dash := &Dashboard{}
+
+	dataMap, ok := data.Interface().(map[string]interface{})
+	if !ok {
+		return dash
+	}
+
+	item := &unstructured.Unstructured{Object: dataMap}
+	obj, err := utils.MetaAccessor(item)
+	if err != nil {
+		return dash
+	}
+	dash.APIVersion = item.GetAPIVersion()
+	info, err := types.ParseNamespace(obj.GetNamespace())
+	if err == nil && info.OrgID > 0 {
+		dash.OrgID = info.OrgID
+	}
+	dash.UID = obj.GetName()
+
+	spec, ok := item.Object["spec"].(map[string]any)
+	if !ok {
+		return dash
+	}
+	dash.Data = simplejson.NewFromAny(spec)
+
+	dash.Title = obj.FindTitle("")
+	dash.UpdateSlug()
+
+	dash.FolderUID = obj.GetFolder()
+	dash.Data.Set("uid", dash.UID)
+
+	generation := obj.GetGeneration()
+	if generation > 0 {
+		dash.Data.Set("version", generation)
+		dash.Updated = time.Now()
+	} else {
+		dash.Data.Set("version", 0)
+		dash.Created = time.Now()
+		dash.Updated = time.Now()
+	}
+
+	dash.Data.Set("id", obj.GetDeprecatedInternalID()) // nolint:staticcheck
 
 	if gnetId, err := dash.Data.Get("gnetId").Float64(); err == nil {
 		dash.GnetID = int64(gnetId)

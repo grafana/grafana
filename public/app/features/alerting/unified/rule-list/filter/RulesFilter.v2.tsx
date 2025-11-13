@@ -162,6 +162,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
                     'Search by name or enter filter query...'
                   )}
                   name="searchQuery"
+                  escapeRegex={false}
                   onChange={(next) => {
                     trackRulesSearchInputCleared(field.value, next);
                     field.onChange(next);

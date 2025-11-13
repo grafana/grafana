@@ -69,6 +69,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '& > div': {
       border: 'none',
       background: 'transparent',
+      paddingRight: theme.spacing(0.5),
+      height: theme.spacing(2),
       '&:hover': {
         border: 'none',
         background: 'transparent',
@@ -76,6 +78,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   menuLabel: css({
-    marginTop: theme.spacing(0.5),
+    marginTop: 0,
+    marginBottom: 0,
   }),
 });

@@ -4,20 +4,20 @@ import { MouseEvent, useCallback, useEffect, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { MultiValueVariable, VariableValueOption } from '@grafana/scenes';
+import { VariableValueOption } from '@grafana/scenes';
 import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2 } from '@grafana/ui';
 
 export interface Props {
-  variable: MultiValueVariable;
+  options: VariableValueOption[];
+  hasMultiProps?: boolean;
 }
 
-export const VariableValuesPreview = ({ variable }: Props) => {
-  const options = variable.getOptionsForSelect(false);
+export const VariableValuesPreview = ({ options, hasMultiProps }: Props) => {
   if (!options.length) {
     return null;
   }
 
-  if ('valuesFormat' in variable.state && variable.state.valuesFormat === 'json') {
+  if (hasMultiProps) {
     return <VariableValuesWithPropsPreview options={options} />;
   }
 
@@ -35,6 +35,7 @@ function VariableValuesWithPropsPreview({ options }: { options: VariableValueOpt
       <Text variant="bodySmall" weight="medium">
         <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values">Preview of values</Trans>
       </Text>
+      {/* TODO: pageSize=20 */}
       <InteractiveTable columns={columns} data={data} getRowId={(r) => String(r.value)} pageSize={2} />
     </div>
   );

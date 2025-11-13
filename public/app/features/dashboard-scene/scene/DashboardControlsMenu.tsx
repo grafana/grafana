@@ -88,7 +88,7 @@ function DashboardControlsMenu({ variables, links, annotationLayers, dashboardUI
     >
       {/* Variables */}
       {variables.map((variable, index) => (
-        <div className={cx({ [styles.variableItem]: index > 0 })} key={variable.state.key}>
+        <div className={cx({ [styles.menuItem]: index > 0 })} key={variable.state.key}>
           <VariableValueSelectWrapper variable={variable} inMenu />
         </div>
       ))}
@@ -96,7 +96,7 @@ function DashboardControlsMenu({ variables, links, annotationLayers, dashboardUI
       {/* Annotation layers */}
       {annotationLayers.length > 0 &&
         annotationLayers.map((layer, index) => (
-          <div className={cx(index > 0 && styles.variableItem)} key={layer.state.key}>
+          <div className={cx({ [styles.menuItem]: variables.length > 0 || index > 0 })} key={layer.state.key}>
             <DataLayerControl layer={layer} inMenu />
           </div>
         ))}
@@ -131,7 +131,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginTop: theme.spacing(2),
     padding: theme.spacing(0, 0.5),
   }),
-  variableItem: css({
+  menuItem: css({
     marginTop: theme.spacing(2),
   }),
 });

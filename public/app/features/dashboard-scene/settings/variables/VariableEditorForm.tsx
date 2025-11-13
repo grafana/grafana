@@ -68,6 +68,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
   const onHideChange = (hide: VariableHide) => variable.setState({ hide });
 
   const isHasVariableOptions = hasVariableOptions(variable);
+  const hasMultiProps = 'valuesFormat' in variable.state && variable.state.valuesFormat === 'json';
 
   const onDeleteVariable = (hideModal: () => void) => () => {
     reportInteraction('Delete variable');
@@ -123,7 +124,9 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
 
       {EditorToRender && <EditorToRender variable={variable} onRunQuery={onRunQuery} />}
 
-      {isHasVariableOptions && <VariableValuesPreview variable={variable} />}
+      {isHasVariableOptions && (
+        <VariableValuesPreview options={variable.getOptionsForSelect(false)} hasMultiProps={hasMultiProps} />
+      )}
 
       <div className={styles.buttonContainer}>
         <Stack gap={2}>

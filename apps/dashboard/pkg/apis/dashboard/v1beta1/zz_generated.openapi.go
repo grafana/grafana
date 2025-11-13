@@ -165,6 +165,13 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardAccess(ref common.ReferenceCallb
 							Format: "",
 						},
 					},
+					"isPublic": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
 					"canSave": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The permissions part",
@@ -207,7 +214,7 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardAccess(ref common.ReferenceCallb
 						},
 					},
 				},
-				Required: []string{"canSave", "canEdit", "canAdmin", "canStar", "canDelete", "annotationsPermissions"},
+				Required: []string{"isPublic", "canSave", "canEdit", "canAdmin", "canStar", "canDelete", "annotationsPermissions"},
 			},
 		},
 		Dependencies: []string{

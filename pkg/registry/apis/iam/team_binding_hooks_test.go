@@ -487,6 +487,223 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, finishFunc) // Should return nil when zClient is nil
 	})
+
+	t.Run("should handle empty old binding subject name gracefully", func(t *testing.T) {
+		wg.Add(1)
+		oldBinding := iamv0.TeamBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "binding-6",
+				Namespace: "org-6",
+			},
+			Spec: iamv0.TeamBindingSpec{
+				Subject: iamv0.TeamBindingspecSubject{
+					Name: "", // Empty name - conversion will be skipped
+				},
+				TeamRef: iamv0.TeamBindingTeamRef{
+					Name: "team-1",
+				},
+				Permission: iamv0.TeamBindingTeamPermissionMember,
+			},
+		}
+
+		newBinding := iamv0.TeamBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "binding-6",
+				Namespace: "org-6",
+			},
+			Spec: iamv0.TeamBindingSpec{
+				Subject: iamv0.TeamBindingspecSubject{
+					Name: "user-2",
+				},
+				TeamRef: iamv0.TeamBindingTeamRef{
+					Name: "team-1",
+				},
+				Permission: iamv0.TeamBindingTeamPermissionMember,
+			},
+		}
+
+		testEmptyOldBinding := func(ctx context.Context, req *v1.WriteRequest) error {
+			defer wg.Done()
+			require.NotNil(t, req)
+			require.Equal(t, "org-6", req.Namespace)
+
+			// Should not delete old binding (it was skipped due to empty name)
+			require.Nil(t, req.Deletes)
+
+			// Should write new binding
+			require.NotNil(t, req.Writes)
+			require.Len(t, req.Writes.TupleKeys, 1)
+			require.Equal(
+				t,
+				req.Writes.TupleKeys[0],
+				&v1.TupleKey{User: "user:user-2", Relation: "member", Object: "team:team-1"},
+			)
+
+			return nil
+		}
+
+		b.zClient = &FakeZanzanaClient{writeCallback: testEmptyOldBinding}
+
+		finishFunc, err := b.BeginTeamBindingUpdate(context.Background(), &newBinding, &oldBinding, nil)
+		require.NoError(t, err)
+		require.NotNil(t, finishFunc) // Should still return finish function
+
+		finishFunc(context.Background(), true)
+		wg.Wait()
+	})
+
+	t.Run("should return nil finish func when bindings are identical", func(t *testing.T) {
+		oldBinding := iamv0.TeamBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "binding-7",
+				Namespace: "org-7",
+			},
+			Spec: iamv0.TeamBindingSpec{
+				Subject: iamv0.TeamBindingspecSubject{
+					Name: "user-1",
+				},
+				TeamRef: iamv0.TeamBindingTeamRef{
+					Name: "team-1",
+				},
+				Permission: iamv0.TeamBindingTeamPermissionMember,
+			},
+		}
+
+		newBinding := iamv0.TeamBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "binding-7",
+				Namespace: "org-7",
+			},
+			Spec: iamv0.TeamBindingSpec{
+				Subject: iamv0.TeamBindingspecSubject{
+					Name: "user-1",
+				},
+				TeamRef: iamv0.TeamBindingTeamRef{
+					Name: "team-1",
+				},
+				Permission: iamv0.TeamBindingTeamPermissionMember,
+			},
+		}
+
+		writeCalled := false
+		testNoWriteOnNoChange := func(ctx context.Context, req *v1.WriteRequest) error {
+			writeCalled = true
+			require.Fail(t, "Write should not be called when bindings are identical")
+			return nil
+		}
+
+		b.zClient = &FakeZanzanaClient{writeCallback: testNoWriteOnNoChange}
+
+		finishFunc, err := b.BeginTeamBindingUpdate(context.Background(), &newBinding, &oldBinding, nil)
+		require.NoError(t, err)
+		require.Nil(t, finishFunc) // Should return nil when bindings are identical
+
+		// Verify write was never called
+		time.Sleep(100 * time.Millisecond)
+		require.False(t, writeCalled, "Write callback should not be called when bindings are identical")
+	})
+
+	t.Run("should return nil finish func when new binding has empty subject name", func(t *testing.T) {
+		oldBinding := iamv0.TeamBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "binding-8",
+				Namespace: "org-8",
+			},
+			Spec: iamv0.TeamBindingSpec{
+				Subject: iamv0.TeamBindingspecSubject{
+					Name: "user-1",
+				},
+				TeamRef: iamv0.TeamBindingTeamRef{
+					Name: "team-1",
+				},
+				Permission: iamv0.TeamBindingTeamPermissionMember,
+			},
+		}
+
+		newBinding := iamv0.TeamBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "binding-8",
+				Namespace: "org-8",
+			},
+			Spec: iamv0.TeamBindingSpec{
+				Subject: iamv0.TeamBindingspecSubject{
+					Name: "", // Empty name - should cause early return
+				},
+				TeamRef: iamv0.TeamBindingTeamRef{
+					Name: "team-1",
+				},
+				Permission: iamv0.TeamBindingTeamPermissionMember,
+			},
+		}
+
+		writeCalled := false
+		testNoWriteOnInvalidBinding := func(ctx context.Context, req *v1.WriteRequest) error {
+			writeCalled = true
+			require.Fail(t, "Write should not be called when new binding has empty subject name")
+			return nil
+		}
+
+		b.zClient = &FakeZanzanaClient{writeCallback: testNoWriteOnInvalidBinding}
+
+		finishFunc, err := b.BeginTeamBindingUpdate(context.Background(), &newBinding, &oldBinding, nil)
+		require.NoError(t, err)
+		require.Nil(t, finishFunc) // Should return nil when new binding has empty subject name
+
+		// Verify write was never called
+		time.Sleep(100 * time.Millisecond)
+		require.False(t, writeCalled, "Write callback should not be called when new binding has empty subject name")
+	})
+
+	t.Run("should return nil finish func when new binding has empty team ref name", func(t *testing.T) {
+		oldBinding := iamv0.TeamBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "binding-9",
+				Namespace: "org-9",
+			},
+			Spec: iamv0.TeamBindingSpec{
+				Subject: iamv0.TeamBindingspecSubject{
+					Name: "user-1",
+				},
+				TeamRef: iamv0.TeamBindingTeamRef{
+					Name: "team-1",
+				},
+				Permission: iamv0.TeamBindingTeamPermissionMember,
+			},
+		}
+
+		newBinding := iamv0.TeamBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "binding-9",
+				Namespace: "org-9",
+			},
+			Spec: iamv0.TeamBindingSpec{
+				Subject: iamv0.TeamBindingspecSubject{
+					Name: "user-2",
+				},
+				TeamRef: iamv0.TeamBindingTeamRef{
+					Name: "", // Empty name - should cause early return
+				},
+				Permission: iamv0.TeamBindingTeamPermissionMember,
+			},
+		}
+
+		writeCalled := false
+		testNoWriteOnInvalidBinding := func(ctx context.Context, req *v1.WriteRequest) error {
+			writeCalled = true
+			require.Fail(t, "Write should not be called when new binding has empty team ref name")
+			return nil
+		}
+
+		b.zClient = &FakeZanzanaClient{writeCallback: testNoWriteOnInvalidBinding}
+
+		finishFunc, err := b.BeginTeamBindingUpdate(context.Background(), &newBinding, &oldBinding, nil)
+		require.NoError(t, err)
+		require.Nil(t, finishFunc) // Should return nil when new binding has empty team ref name
+
+		// Verify write was never called
+		time.Sleep(100 * time.Millisecond)
+		require.False(t, writeCalled, "Write callback should not be called when new binding has empty team ref name")
+	})
 }
 
 func TestAfterTeamBindingDelete(t *testing.T) {
