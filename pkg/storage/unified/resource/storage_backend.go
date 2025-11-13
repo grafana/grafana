@@ -305,6 +305,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	// Optimistic concurrency control to verify our write is the latest version
 	// and that the resource still had the expected PreviousRV when we wrote it
 	if event.PreviousRV != 0 {
+		// Update operations: verify PreviousRV matches and our write is latest
 		// Get both the latest and predecessor
 		latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
 			Group:     event.Key.Group,
@@ -337,6 +338,33 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 			// Another concurrent write happened between our read and write
 			_ = k.dataStore.Delete(ctx, dataKey)
 			return 0, fmt.Errorf("optimistic locking failed: resource was modified concurrently (expected previous RV %d, found %d)", event.PreviousRV, prevKey.ResourceVersion)
+		}
+	} else if event.Type == resourcepb.WatchEvent_ADDED {
+		// Create operations: verify our write is the latest version
+		latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
+			Group:     event.Key.Group,
+			Resource:  event.Key.Resource,
+			Namespace: namespace,
+			Name:      event.Key.Name,
+		})
+		if err != nil {
+			// If we can't read the latest version, clean up what we wrote
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return 0, fmt.Errorf("failed to check latest version: %w", err)
+		}
+
+		// Check if the RV we just wrote is the latest. If not, a concurrent create with higher RV happened
+		if latestKey.ResourceVersion != rv {
+			// Delete the data we just wrote since it's not the latest
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
+		}
+
+		// Verify that the immediate predecessor is not a create
+		if prevKey.Action == DataActionCreated {
+			// Another concurrent create happened - delete our write and return error
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
 		}
 	}
 
