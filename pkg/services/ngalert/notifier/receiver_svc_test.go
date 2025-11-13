@@ -569,6 +569,12 @@ func TestReceiverService_Create(t *testing.T) {
 			},
 		},
 		{
+			name:        "receiver with empty name fails",
+			user:        writer,
+			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithName("")),
+			expectedErr: legacy_storage.ErrReceiverInvalid,
+		},
+		{
 			name:     "should be able to create receiver with the same name as imported ones",
 			user:     writer,
 			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithName("receiver1")),
@@ -1029,6 +1035,16 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		assert.Equal(t, newReceiverName, ruleStore.Calls[0].Args[3])
 		assert.NotNil(t, ruleStore.Calls[0].Args[4])
 		assert.Falsef(t, ruleStore.Calls[0].Args[5].(bool), "dryrun expected to be false")
+	})
+
+	t.Run("returns ErrReceiverInvalid if empty name", func(t *testing.T) {
+		ruleStore := &fakeAlertRuleNotificationStore{}
+		sut := createReceiverServiceSut(t, &secretsService)
+		sut.ruleNotificationsStore = ruleStore
+		baseReceiver.Name = ""
+
+		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		require.ErrorIs(t, err, legacy_storage.ErrReceiverInvalid)
 	})
 
 	t.Run("can rename receiver to name that is already used by another receiver of different origin", func(t *testing.T) {

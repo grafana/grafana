@@ -7,7 +7,7 @@ const injectedRtkApi = api
   .injectEndpoints({
     endpoints: (build) => ({
       getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
-        query: () => ({ url: `/apis/advisor.grafana.app/v0alpha1/` }),
+        query: () => ({ url: `/` }),
         providesTags: ['API Discovery'],
       }),
       listCheck: build.query<ListCheckApiResponse, ListCheckApiArg>({
@@ -1008,24 +1008,31 @@ export type CheckTypeList = {
 };
 export const {
   useGetApiResourcesQuery,
+  useLazyGetApiResourcesQuery,
   useListCheckQuery,
+  useLazyListCheckQuery,
   useCreateCheckMutation,
   useDeletecollectionCheckMutation,
   useGetCheckQuery,
+  useLazyGetCheckQuery,
   useReplaceCheckMutation,
   useDeleteCheckMutation,
   useUpdateCheckMutation,
   useGetCheckStatusQuery,
+  useLazyGetCheckStatusQuery,
   useReplaceCheckStatusMutation,
   useUpdateCheckStatusMutation,
   useListCheckTypeQuery,
+  useLazyListCheckTypeQuery,
   useCreateCheckTypeMutation,
   useDeletecollectionCheckTypeMutation,
   useGetCheckTypeQuery,
+  useLazyGetCheckTypeQuery,
   useReplaceCheckTypeMutation,
   useDeleteCheckTypeMutation,
   useUpdateCheckTypeMutation,
   useGetCheckTypeStatusQuery,
+  useLazyGetCheckTypeStatusQuery,
   useReplaceCheckTypeStatusMutation,
   useUpdateCheckTypeStatusMutation,
 } = injectedRtkApi;

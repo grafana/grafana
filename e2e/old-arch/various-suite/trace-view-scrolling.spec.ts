@@ -33,15 +33,15 @@ describe('Trace view', () => {
 
     e2e.components.TraceViewer.spanBar().should('be.visible');
 
+    e2e.components.TraceViewer.spanBar().its('length').should('be.equal', 100);
+
+    e2e.pages.Explore.General.scrollView().children().first().scrollTo('bottom');
+
+    // After scrolling we should see 50 spans
     e2e.components.TraceViewer.spanBar()
       .its('length')
-      .then((oldLength) => {
-        e2e.pages.Explore.General.scrollView().children().first().scrollTo('center');
-
-        // After scrolling we should load more spans
-        e2e.components.TraceViewer.spanBar().should(($span) => {
-          expect($span.length).to.be.gt(oldLength);
-        });
+      .should(($span) => {
+        expect($span).to.be.equal(50);
       });
   });
 });

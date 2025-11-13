@@ -1,5 +1,6 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
+import { GrafanaTheme2 } from '@grafana/data/';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Card, Grid, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
@@ -16,6 +17,8 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
   const status = repo.status;
   const statusColor = getStatusColor(status?.sync.state);
   const statusIcon = getStatusIcon(status?.sync.state);
+
+  const isWorking = status?.sync.state === 'working' || status?.sync.state === 'pending';
 
   const { url: lastCommitUrl, hasUrl } = getRepoCommitUrl(repo.spec, status?.sync.lastRef);
 
@@ -42,45 +45,48 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
             <Text variant="body">{status?.sync.job ?? 'N/A'}</Text>
           </div>
 
-          {/* Last Ref */}
-          <Text color="secondary">
-            <Trans i18nKey="provisioning.repository-overview.last-ref">Last Ref:</Trans>
-          </Text>
-          <div className={styles.spanTwo}>
-            {hasUrl && lastCommitUrl ? (
-              <TextLink href={lastCommitUrl} external>
+          <div
+            className={cx(styles.historicalData, { [styles.historicalDataOverlay]: isWorking })}
+            aria-busy={isWorking}
+          >
+            {/* Last Ref */}
+            <Text color="secondary">
+              <Trans i18nKey="provisioning.repository-overview.last-ref">Last Ref:</Trans>
+            </Text>
+            <div className={styles.spanTwo}>
+              {hasUrl && lastCommitUrl ? (
+                <TextLink href={lastCommitUrl} external>
+                  {status?.sync.lastRef
+                    ? status.sync.lastRef.substring(0, 7)
+                    : t('provisioning.repository-overview.not-available', 'N/A')}
+                </TextLink>
+              ) : (
                 <Text variant="body">
                   {status?.sync.lastRef
                     ? status.sync.lastRef.substring(0, 7)
                     : t('provisioning.repository-overview.not-available', 'N/A')}
                 </Text>
-              </TextLink>
-            ) : (
-              <Text variant="body">
-                {status?.sync.lastRef
-                  ? status.sync.lastRef.substring(0, 7)
-                  : t('provisioning.repository-overview.not-available', 'N/A')}
-              </Text>
+              )}
+            </div>
+
+            <Text color="secondary">
+              <Trans i18nKey="provisioning.repository-overview.finished">Last successful pull:</Trans>
+            </Text>
+            <div className={styles.spanTwo}>
+              <Text variant="body">{formatTimestamp(status?.sync.finished)}</Text>
+            </div>
+
+            {!!status?.sync?.message?.length && (
+              <>
+                <Text color="secondary">
+                  <Trans i18nKey="provisioning.repository-overview.messages">Messages:</Trans>
+                </Text>
+                <div className={styles.spanTwo}>
+                  <MessageList messages={status.sync.message} variant="body" />
+                </div>
+              </>
             )}
           </div>
-
-          <Text color="secondary">
-            <Trans i18nKey="provisioning.repository-overview.finished">Last successful pull:</Trans>
-          </Text>
-          <div className={styles.spanTwo}>
-            <Text variant="body">{formatTimestamp(status?.sync.finished)}</Text>
-          </div>
-
-          {!!status?.sync?.message?.length && (
-            <>
-              <Text color="secondary">
-                <Trans i18nKey="provisioning.repository-overview.messages">Messages:</Trans>
-              </Text>
-              <div className={styles.spanTwo}>
-                <MessageList messages={status.sync.message} variant="body" />
-              </div>
-            </>
-          )}
         </Grid>
       </Card.Description>
       <Card.Actions>
@@ -90,10 +96,19 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
   );
 }
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     spanTwo: css({
       gridColumn: 'span 2',
+    }),
+    historicalData: css({
+      gridColumn: '1 / -1',
+      display: 'grid',
+      gridTemplateColumns: 'subgrid',
+      gap: theme.spacing(1),
+    }),
+    historicalDataOverlay: css({
+      opacity: 0.6,
     }),
   };
 };

@@ -2,9 +2,9 @@ import { LogRowModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 
-import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1alpha1/shorturl_object_gen';
-import { defaultSpec } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1alpha1/types.spec.gen';
-import { defaultStatus } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1alpha1/types.status.gen';
+import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
+import { defaultSpec } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.spec.gen';
+import { defaultStatus } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.status.gen';
 
 import { createShortLink, createAndCopyShortLink, getLogsPermalinkRange, buildShortUrl } from './shortLinks';
 
@@ -122,7 +122,7 @@ describe('buildShortUrl', () => {
   it('builds short URL with metadata name and namespace', () => {
     const shortUrl: ShortURL = {
       kind: 'ShortURL',
-      apiVersion: 'shorturl.grafana.app/v1alpha1',
+      apiVersion: 'shorturl.grafana.app/v1beta1',
       metadata: {
         name: 'abc123def',
         namespace: 'org-5',
@@ -140,7 +140,7 @@ describe('buildShortUrl', () => {
 
     const shortUrl: ShortURL = {
       kind: 'ShortURL',
-      apiVersion: 'shorturl.grafana.app/v1alpha1',
+      apiVersion: 'shorturl.grafana.app/v1beta1',
       metadata: {
         name: 'xyz789',
         namespace: 'org-1',

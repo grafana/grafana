@@ -56,10 +56,16 @@ export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectP
     }
 
     // Ignore click if it's inside the value control
-    if (evt.target instanceof Element && !evt.target.closest(`label`)) {
-      // Prevent clearing selection when clicking inside value
-      evt.stopPropagation();
-      return;
+    if (evt.target instanceof Element) {
+      // multi variable options contain label element so we need a more specific
+      //  condition to target variable label to prevent edit pane selection on option click
+      const forAttribute = evt.target.closest('label[for]')?.getAttribute('for');
+
+      if (!(forAttribute === `var-${variable.state.key || ''}`)) {
+        // Prevent clearing selection when clicking inside value
+        evt.stopPropagation();
+        return;
+      }
     }
 
     if (isSelectable && onSelect) {
@@ -166,10 +172,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   switchLabel: css({
     marginTop: 0,
     marginBottom: 0,
-  }),
-  labelWrapper: css({
-    display: 'flex',
-    alignItems: 'center',
   }),
   labelSelectable: css({
     cursor: 'pointer',

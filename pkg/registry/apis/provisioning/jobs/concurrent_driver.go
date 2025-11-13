@@ -75,9 +75,12 @@ func NewConcurrentJobDriver(
 
 // Run starts multiple job drivers concurrently and handles cleanup coordination.
 // This is a blocking function that will run until the context is canceled or an error occurs.
+//
+// Note: This function intentionally does NOT create a tracing span because it runs indefinitely
+// until shutdown. Individual job processing and cleanup operations already have their own spans.
 func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 	logger := logging.FromContext(ctx).With("logger", "concurrent-job-driver", "num_drivers", c.numDrivers)
-	logger.Info("starting concurrent job driver with lease-based cleanup", "cleanup_interval", c.cleanupInterval)
+	logger.Info("start concurrent job driver", "num_drivers", c.numDrivers, "cleanup_interval", c.cleanupInterval)
 
 	// Set up cleanup ticker - runs more frequently with lease-based approach
 	cleanupTicker := time.NewTicker(c.cleanupInterval)
@@ -85,7 +88,7 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 
 	// Initial cleanup
 	if err := c.store.Cleanup(ctx); err != nil {
-		logger.Error("failed to clean up old jobs at start", "error", err)
+		logger.Error("failed initial cleanup", "error", err)
 	}
 
 	var wg sync.WaitGroup
@@ -99,10 +102,10 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 			select {
 			case <-cleanupTicker.C:
 				if err := c.store.Cleanup(ctx); err != nil {
-					logger.Error("failed to cleanup jobs", "error", err)
+					logger.Error("failed cleanup", "error", err)
 				}
 			case <-ctx.Done():
-				logger.Debug("cleanup goroutine stopping")
+				logger.Debug("cleanup routine stopped")
 				return
 			}
 		}
@@ -133,13 +136,13 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 				return
 			}
 
-			driverLogger.Debug("starting job driver")
+			driverLogger.Info("start job driver")
 			if err := driver.Run(driverCtx); err != nil {
 				driverLogger.Error("job driver failed", "error", err)
 				errChan <- err
 				return
 			}
-			driverLogger.Debug("job driver stopped")
+			driverLogger.Info("job driver stopped")
 		}(i)
 	}
 
@@ -157,6 +160,10 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 		}
 	}
 
-	logger.Info("all job driver workers stopped")
-	return ctx.Err()
+	if ctx.Err() != nil {
+		logger.Info("all job drivers gracefully stopped")
+		return nil
+	}
+
+	return fmt.Errorf("concurrent job driver stopped unexpectedly")
 }

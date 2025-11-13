@@ -24,7 +24,7 @@ import {
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Collapse } from '@grafana/ui';
+import { PanelChrome } from '@grafana/ui';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { ExploreItemState } from 'app/types/explore';
@@ -309,7 +309,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     return (
       <>
         <LogsCrossFadeTransition visible={isLive}>
-          <Collapse label={t('explore.logs-container.label-logs', 'Logs')} loading={false} isOpen>
+          <PanelChrome title={t('explore.logs-container.label-logs', 'Logs')}>
             <LiveTailControls exploreId={exploreId}>
               {(controls) => (
                 <LiveLogsWithTheme
@@ -324,7 +324,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
                 />
               )}
             </LiveTailControls>
-          </Collapse>
+          </PanelChrome>
         </LogsCrossFadeTransition>
         <LogsCrossFadeTransition visible={!isLive}>
           <Logs

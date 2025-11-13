@@ -7,7 +7,7 @@ const injectedRtkApi = api
   .injectEndpoints({
     endpoints: (build) => ({
       getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
-        query: () => ({ url: `/apis/preferences.grafana.app/v1alpha1/` }),
+        query: () => ({ url: `/` }),
         providesTags: ['API Discovery'],
       }),
       listPreferences: build.query<ListPreferencesApiResponse, ListPreferencesApiArg>({
@@ -778,17 +778,23 @@ export type StarsList = {
 };
 export const {
   useGetApiResourcesQuery,
+  useLazyGetApiResourcesQuery,
   useListPreferencesQuery,
+  useLazyListPreferencesQuery,
   useCreatePreferencesMutation,
   useMergedPreferencesQuery,
+  useLazyMergedPreferencesQuery,
   useGetPreferencesQuery,
+  useLazyGetPreferencesQuery,
   useReplacePreferencesMutation,
   useDeletePreferencesMutation,
   useUpdatePreferencesMutation,
   useListStarsQuery,
+  useLazyListStarsQuery,
   useCreateStarsMutation,
   useDeletecollectionStarsMutation,
   useGetStarsQuery,
+  useLazyGetStarsQuery,
   useReplaceStarsMutation,
   useDeleteStarsMutation,
   useUpdateStarsMutation,

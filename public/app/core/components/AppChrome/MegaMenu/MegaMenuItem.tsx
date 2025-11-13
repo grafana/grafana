@@ -107,7 +107,9 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
               })}
             >
               {level === 0 && iconElement && <FeatureHighlightWrapper>{iconElement}</FeatureHighlightWrapper>}
-              <Text truncate>{link.text}</Text>
+              <Text truncate element="p">
+                {link.text}
+              </Text>
               {link.isNew && <FeatureBadge featureState={FeatureState.new} />}
             </div>
           </MegaMenuItemText>

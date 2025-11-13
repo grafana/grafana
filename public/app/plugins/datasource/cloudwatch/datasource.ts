@@ -16,7 +16,12 @@ import { DataSourceWithBackend, TemplateSrv, getTemplateSrv } from '@grafana/run
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';
 import { DEFAULT_METRICS_QUERY, getDefaultLogsQuery } from './defaultQueries';
-import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
+import {
+  isCloudWatchAnnotationQuery,
+  isCloudWatchLogsQuery,
+  isCloudWatchMetricsQuery,
+  isLogsAnomaliesQuery,
+} from './guards';
 import { CloudWatchLogsLanguageProvider } from './language/cloudwatch-logs/CloudWatchLogsLanguageProvider';
 import {
   LogsSQLCompletionItemProvider,
@@ -40,6 +45,7 @@ import { ResourcesAPI } from './resources/ResourcesAPI';
 import {
   CloudWatchAnnotationQuery,
   CloudWatchJsonData,
+  CloudWatchLogsAnomaliesQuery,
   CloudWatchLogsQuery,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
@@ -104,11 +110,14 @@ export class CloudWatchDatasource
 
     const logQueries: CloudWatchLogsQuery[] = [];
     const metricsQueries: CloudWatchMetricsQuery[] = [];
+    const logsAnomaliesQueries: CloudWatchLogsAnomaliesQuery[] = [];
     const annotationQueries: CloudWatchAnnotationQuery[] = [];
 
     queries.forEach((query) => {
       if (isCloudWatchAnnotationQuery(query)) {
         annotationQueries.push(query);
+      } else if (isLogsAnomaliesQuery(query)) {
+        logsAnomaliesQueries.push(query);
       } else if (isCloudWatchLogsQuery(query)) {
         logQueries.push(query);
       } else {
@@ -124,6 +133,12 @@ export class CloudWatchDatasource
     if (metricsQueries.length) {
       dataQueryResponses.push(
         this.metricsQueryRunner.handleMetricQueries(metricsQueries, options, super.query.bind(this))
+      );
+    }
+
+    if (logsAnomaliesQueries.length) {
+      dataQueryResponses.push(
+        this.logsQueryRunner.handleLogAnomaliesQueries(logsAnomaliesQueries, options, super.query.bind(this))
       );
     }
 

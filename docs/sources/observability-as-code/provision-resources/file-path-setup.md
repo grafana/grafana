@@ -40,8 +40,7 @@ To set up file sync with local with local files, you need to:
 Local file provisioning using **Administration** > **Provisioning** will eventually replace the traditional methods Grafana has used for referencing local file systems for dashboard files.
 
 {{< admonition type="note" >}}
-For production system, we recommend using the `folderFromFilesStructure` capability instead of **Administration** > **Provisioning** to include dashboards from a local file system in your Grafana instance.
-Refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#provision-folders-structure-from-filesystem-to-grafana) for more information.
+For production systems, use the `folderFromFilesStructure` capability instead of **Administration** > **Provisioning** to include dashboards from a local file system in your Grafana instance. Refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#provision-folders-structure-from-filesystem-to-grafana) for more information.
 {{< /admonition >}}
 
 ### Limitations
@@ -124,6 +123,18 @@ The value you enter in the Grafana UI must _begin_ with any of the configured va
 The set up process verifies the path and provides an error message if a problem occurs.
 
 ### Choose what to synchronize
+
+#### Synchronization limitations
+
+Full instance sync is not available in Grafana Cloud.
+
+In Grafana OSS/Enterprise:
+
+- If you try to perform a full instance sync with resources that contain alerts or panels, the connection will be blocked.
+- You won't be able to create new alerts or library panels after setup is completed.
+- If you opted for full instance sync and want to use alerts and library panels, you'll have to delete the provisioned repository and connect again with folder sync.
+
+#### Set up synchronization
 
 Choose to either sync your entire organization resources with external storage, or to sync certain resources to a new Grafana folder (with up to 10 connections).
 

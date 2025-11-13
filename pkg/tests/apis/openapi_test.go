@@ -108,7 +108,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v0alpha1",
 	}, {
 		Group:   "shorturl.grafana.app",
-		Version: "v1alpha1",
+		Version: "v1beta1",
 	}, {
 		Group:   "testdata.datasource.grafana.app",
 		Version: "v0alpha1",

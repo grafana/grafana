@@ -1657,9 +1657,6 @@
       "no-history": "",
       "state-history": ""
     },
-    "instance-details-drawer": {
-      "title-instance-details": ""
-    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1717,9 +1714,6 @@
       },
       "placeholder-key": "키",
       "placeholder-value": "값"
-    },
-    "left-column": {
-      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "연락처 보기 또는 생성",
@@ -2879,6 +2873,8 @@
       "notification-message": "알림 메시지",
       "predefined-notification-message": "",
       "send-test-notification": "테스트 알림 전송",
+      "test-failed": "",
+      "test-successful": "",
       "title-test-contact-point": "연락처 테스트"
     },
     "threshold": {
@@ -2937,13 +2933,15 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
-      "firing-instances-count": "",
-      "instance-details": "",
+      "instance-details-drawer": {
+        "instance-details": ""
+      },
+      "no-firing-or-pending-instances": "",
       "no-instances-found": "",
       "no-labels": "",
+      "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
-      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -4112,6 +4110,7 @@
       "scopes": "범위"
     },
     "empty-state": {
+      "button-title": "",
       "message": "찾은 결과 없음"
     },
     "scopes": {
@@ -4137,6 +4136,7 @@
     "cancel": "취소",
     "clear": "초기화",
     "collapse": "접기",
+    "disabled": "",
     "edit": "편집",
     "help": "도움말",
     "loading": "로딩 중...",
@@ -5112,6 +5112,19 @@
       "aria-label-remove-override": "재정의 제거",
       "tooltip-remove-override": "재정의 제거"
     },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "",
+        "hide-time-info-description": "",
+        "time-from": "",
+        "time-from-description": "",
+        "time-shift": "",
+        "time-shift-description": "",
+        "time-window-compare": "",
+        "time-window-compare-description": "",
+        "title": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "경고를 추가하기 전에 먼저 대시보드를 저장해야 합니다.",
@@ -5627,6 +5640,60 @@
       "validation-required": "대시보드 JSON 모델이 필요합니다."
     }
   },
+  "dashboard-library": {
+    "browse-grafana-com": "",
+    "browse-plugins": "",
+    "card": {
+      "datasource-provided-badge": "",
+      "details-tooltip": "",
+      "no-preview": "",
+      "use-dashboard-button": "",
+      "use-template-button": ""
+    },
+    "community-empty-title": "",
+    "community-empty-title-with-datasource": "",
+    "community-error": "",
+    "community-error-title": "",
+    "community-mapping-form": {
+      "back": "",
+      "constants-title": "",
+      "datasources-title": "",
+      "description": "",
+      "preview": "",
+      "auto-mapped_other": ""
+    },
+    "community-mapping-select-datasource": "",
+    "community-search-placeholder": "",
+    "community-search-placeholder-with-datasource": "",
+    "dashboard-card": {
+      "details": {
+        "datasource": "",
+        "dependencies": "",
+        "id": "",
+        "last-update": "",
+        "published-by": "",
+        "view-on-grafana-com": ""
+      }
+    },
+    "modal": {
+      "description": "",
+      "tab-community": "",
+      "tab-datasource": "",
+      "title": "",
+      "title-mapping-with-name": "",
+      "title-with-datasource": ""
+    },
+    "no-community-dashboards-datasource": "",
+    "no-community-dashboards-search": "",
+    "no-provisioned-dashboards": "",
+    "provisioned-empty-title": "",
+    "provisioned-empty-title-with-datasource": "",
+    "retry": "",
+    "suggested-dashboards-subtitle": "",
+    "suggested-dashboards-title": "",
+    "suggested-dashboards-title-with-datasource": "",
+    "view-all": ""
+  },
   "dashboard-links": {
     "empty-state": {
       "button-title": "대시보드 링크 추가",
@@ -5666,6 +5733,11 @@
       "open-dashboard": "대시보드 열기",
       "open-in-new-tab": "새 탭에서 열기",
       "title-error-adding-the-panel": "패널 추가 중 오류 발생"
+    },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "annotation-settings-edit": {
       "back-to-list": "목록으로 돌아가기",
@@ -6227,6 +6299,7 @@
       "enabled-value": "",
       "enabled-value-description": "",
       "enabled-value-placeholder": "",
+      "same-values-error": "",
       "switch-options": "",
       "value-pair-type": "",
       "value-pair-type-description": ""
@@ -7150,7 +7223,8 @@
     "logs-table-multi-select": {
       "fields": "필드",
       "reset": "재설정",
-      "selected-fields": "선택된 필드"
+      "selected-fields": "선택된 필드",
+      "suggested-fields": ""
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "이름으로 쿼리 선택",
@@ -7619,7 +7693,6 @@
     }
   },
   "folder-filter": {
-    "noOptionsMessage-no-folders-found": "폴더를 찾을 수 없습니다",
     "select-aria-label": "폴더 필터",
     "select-placeholder": "폴더별로 필터링"
   },
@@ -7989,26 +8062,26 @@
     "datetime": {
       "rangeutils": {
         "getBaseRangeOptions": {
-          "dayBeforeYesterday": "",
-          "previousFiscalQuarter": "",
-          "previousFiscalYear": "",
-          "previousMonth": "",
-          "previousWeek": "",
-          "previousYear": "",
-          "thisDayLastWeek": "",
-          "thisFiscalQuarter": "",
-          "thisFiscalQuarterSoFar": "",
-          "thisFiscalYear": "",
-          "thisFiscalYearSoFar": "",
-          "thisMonth": "",
-          "thisMonthSoFar": "",
-          "thisWeek": "",
-          "thisWeekSoFar": "",
-          "thisYear": "",
-          "thisYearSoFar": "",
-          "today": "",
-          "todaySoFar": "",
-          "yesterday": ""
+          "dayBeforeYesterday": "그저께",
+          "previousFiscalQuarter": "이전 회계 분기",
+          "previousFiscalYear": "이전 회계 연도",
+          "previousMonth": "지난 달",
+          "previousWeek": "지난주",
+          "previousYear": "작년",
+          "thisDayLastWeek": "지난주 오늘",
+          "thisFiscalQuarter": "이번 회계 분기",
+          "thisFiscalQuarterSoFar": "이번 회계 분기 현재까지",
+          "thisFiscalYear": "이번 회계 연도",
+          "thisFiscalYearSoFar": "이번 회계 연도 현재까지",
+          "thisMonth": "이번 달",
+          "thisMonthSoFar": "이번 달 현재까지",
+          "thisWeek": "이번 주",
+          "thisWeekSoFar": "이번 주 현재까지",
+          "thisYear": "올해",
+          "thisYearSoFar": "올해 현재까지",
+          "today": "오늘",
+          "todaySoFar": "오늘 현재까지",
+          "yesterday": "어제"
         },
         "lastNDays_other": "",
         "lastNHours_other": "",
@@ -8727,6 +8800,9 @@
     },
     "drawer": {
       "close": "닫기"
+    },
+    "error-boundary": {
+      "title": ""
     },
     "feature-badge": {
       "experimental": "실험적 기능",
@@ -10536,7 +10612,12 @@
       }
     },
     "help": {
-      "aria-label": "도움말"
+      "aria-label": "도움말",
+      "interactive-learning": {
+        "close-tooltip": "",
+        "open-tooltip": ""
+      },
+      "tooltip": ""
     },
     "invite-user": {
       "invite-button": "초대",
@@ -10826,6 +10907,7 @@
       "replace-library-panel": "라이브러리 패널 교체",
       "share": "공유",
       "show-legend": "범례 보기",
+      "time-settings": "",
       "unlink-library-panel": "라이브러리 패널 연결 해제",
       "view": "보기"
     },
@@ -11299,12 +11381,15 @@
       "label-workflow": "워크플로",
       "placeholder-branch": "",
       "placeholder-new-branch": "",
-      "suffix-configured-branch": ""
+      "suffix-configured-branch": "",
+      "suffix-last-used": "",
+      "suffix-pr-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "이 리소스는 {{repoType}}의 브랜치보다 이전 상태입니다.",
+      "branch-text": "",
       "not-saved": "이 브랜치가 머지될 때까지 조직의 다른 Grafana 사용자에게는 구성된 기본 브랜치에 저장된 현재 버전이 계속 표시됩니다",
       "open-in-repo-button": "{{repoType}}에서 열기",
       "open-pull-request-in-repo": "{{repoType}}에서 풀 요청 열기",
@@ -11429,6 +11514,8 @@
     "empty-state": {
       "no-jobs": "작업 없음..."
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "선택적 애드온으로 GitHub 통합을 최대한 활용하세요",
       "description-instant-updates": "변경 사항이 커밋되는 즉시 Grafana에서 업데이트를 받으세요. 변경 사항이 실제로 적용되기 전에 풀 요청을 사용하여 검토하고 승인하세요.",
@@ -11646,14 +11733,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "활성 작업",
       "column-action": "동작",
       "column-duration": "지속 시간",
       "column-job-id": "",
       "column-message": "메시지",
       "column-started": "시작됨",
       "column-status": "상태",
-      "error-loading": "{{type}} 로딩 중 오류 발생",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "작업"
     },
     "repository-actions": {
@@ -12235,8 +12322,6 @@
       "title": "범위 선택"
     },
     "tree": {
-      "collapse": "",
-      "expand": "",
       "headline": {
         "noResults": "쿼리에 대해 찾은 결과 없음",
         "recommended": "권장",
@@ -12737,7 +12822,9 @@
   },
   "stars": {
     "mark-as-starred": "",
-    "unmark-as-starred": ""
+    "mark-as-starred-with-title": "",
+    "unmark-as-starred": "",
+    "unmark-as-starred-with-title": ""
   },
   "stat": {
     "add-orientation-option": {
@@ -13077,6 +13164,14 @@
       "form-label": "양식 라벨",
       "title": "패널"
     }
+  },
+  "time-period": {
+    "1_day": "",
+    "1_hour": "",
+    "12_hours": "",
+    "30_days": "",
+    "6_hours": "",
+    "7_days": ""
   },
   "time-picker": {
     "absolute": {

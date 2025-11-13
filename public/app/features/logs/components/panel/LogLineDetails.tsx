@@ -1,15 +1,17 @@
 import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { usePrevious } from 'react-use';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, Icon, Tab, TabsBar, useStyles2 } from '@grafana/ui';
 
+import { getSidebarWidth } from '../fieldSelector/FieldSelector';
+
+import { getDetailsScrollPosition, saveDetailsScrollPosition, useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsComponent } from './LogLineDetailsComponent';
-import { getDetailsScrollPosition, saveDetailsScrollPosition, useLogListContext } from './LogListContext';
+import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
@@ -26,7 +28,8 @@ export type LogLineDetailsMode = 'inline' | 'sidebar';
 
 export const LogLineDetails = memo(
   ({ containerElement, focusLogLine, logs, timeRange, timeZone, showControls }: Props) => {
-    const { detailsWidth, noInteractions, setDetailsWidth } = useLogListContext();
+    const { noInteractions, logOptionsStorageKey } = useLogListContext();
+    const { detailsWidth, setDetailsWidth } = useLogDetailsContext();
     const styles = useStyles2(getStyles, 'sidebar', showControls);
     const dragStyles = useStyles2(getDragStyles);
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -45,7 +48,7 @@ export const LogLineDetails = memo(
       }
     }, [noInteractions]);
 
-    const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
+    const maxWidth = containerElement.clientWidth - getSidebarWidth(logOptionsStorageKey) - LOG_LIST_MIN_WIDTH;
 
     return (
       <Resizable
@@ -69,15 +72,15 @@ LogLineDetails.displayName = 'LogLineDetails';
 
 const LogLineDetailsTabs = memo(
   ({ focusLogLine, logs, timeRange, timeZone }: Pick<Props, 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
-    const { app, closeDetails, noInteractions, showDetails, toggleDetails, wrapLogMessage } = useLogListContext();
-    const [currentLog, setCurrentLog] = useState(showDetails[0]);
-    const previousShowDetails = usePrevious(showDetails);
+    const { app, noInteractions, wrapLogMessage } = useLogListContext();
+    const { currentLog, setCurrentLog, showDetails, toggleDetails } = useLogDetailsContext();
+
     const styles = useStyles2(getStyles, 'sidebar');
 
     useEffect(() => {
       // When wrapping is enabled and details is in sidebar mode, the logs panel width changes and the
       // user may lose focus of the log line, so we scroll to it.
-      if (wrapLogMessage) {
+      if (wrapLogMessage && currentLog) {
         focusLogLine(currentLog);
       }
       if (!noInteractions) {
@@ -90,25 +93,17 @@ const LogLineDetailsTabs = memo(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    useEffect(() => {
-      if (!showDetails.length) {
-        closeDetails();
-        return;
-      }
-      // Focus on the recently open
-      if (!previousShowDetails || showDetails.length > previousShowDetails.length) {
-        setCurrentLog(showDetails[showDetails.length - 1]);
-        return;
-      } else if (!showDetails.find((log) => log.uid === currentLog.uid)) {
-        setCurrentLog(showDetails[showDetails.length - 1]);
-      }
-    }, [closeDetails, currentLog.uid, previousShowDetails, showDetails]);
+    const tabs = useMemo(() => showDetails.slice().reverse(), [showDetails]);
+
+    if (!currentLog) {
+      return null;
+    }
 
     return (
       <>
         {showDetails.length > 1 && (
           <TabsBar>
-            {showDetails.map((log) => {
+            {tabs.map((log) => {
               return (
                 <Tab
                   key={log.uid}
@@ -120,7 +115,10 @@ const LogLineDetailsTabs = memo(
                     <Icon
                       name="times"
                       aria-label={t('logs.log-line-details.remove-log', 'Remove log')}
-                      onClick={() => toggleDetails(log)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleDetails(log);
+                      }}
                     />
                   )}
                 />
@@ -152,7 +150,8 @@ export interface InlineLogLineDetailsProps {
 }
 
 export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, timeZone }: InlineLogLineDetailsProps) => {
-  const { app, detailsWidth, noInteractions } = useLogListContext();
+  const { app, noInteractions } = useLogListContext();
+  const { detailsWidth } = useLogDetailsContext();
   const styles = useStyles2(getStyles, 'inline');
   const scrollRef = useRef<HTMLDivElement | null>(null);
 

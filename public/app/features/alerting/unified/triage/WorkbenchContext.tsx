@@ -6,6 +6,7 @@ import { Domain } from './types';
 
 interface WorkbenchContextValue {
   leftColumnWidth: number;
+  rightColumnWidth: number;
   domain: Domain;
   queryRunner: SceneQueryRunner;
 }
@@ -22,13 +23,22 @@ export function useWorkbenchContext(): WorkbenchContextValue {
 
 interface WorkbenchProviderProps {
   leftColumnWidth: number;
+  rightColumnWidth: number;
   domain: Domain;
   queryRunner: SceneQueryRunner;
   children: React.ReactNode;
 }
 
-export function WorkbenchProvider({ leftColumnWidth, domain, queryRunner, children }: WorkbenchProviderProps) {
+export function WorkbenchProvider({
+  leftColumnWidth,
+  rightColumnWidth,
+  domain,
+  queryRunner,
+  children,
+}: WorkbenchProviderProps) {
   return (
-    <WorkbenchContext.Provider value={{ leftColumnWidth, domain, queryRunner }}>{children}</WorkbenchContext.Provider>
+    <WorkbenchContext.Provider value={{ leftColumnWidth, rightColumnWidth, domain, queryRunner }}>
+      {children}
+    </WorkbenchContext.Provider>
   );
 }

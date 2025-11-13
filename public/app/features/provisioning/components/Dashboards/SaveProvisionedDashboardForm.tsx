@@ -55,7 +55,16 @@ export function SaveProvisionedDashboardForm({
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
-  const { handleSubmit, watch, control, reset, register } = methods;
+  const {
+    handleSubmit,
+    watch,
+    control,
+    reset,
+    register,
+    formState: { dirtyFields },
+  } = methods;
+  // button enabled if form comment is dirty or dashboard state is dirty
+  const isDirtyState = Boolean(dirtyFields.comment) || isDirty;
   const [workflow, ref, path] = watch(['workflow', 'ref', 'path']);
 
   // Update the form if default values change
@@ -148,6 +157,7 @@ export function SaveProvisionedDashboardForm({
     workflow,
     resourceType: 'dashboard',
     repository,
+    selectedBranch: methods.getValues().ref,
     handlers: {
       onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
       onWriteSuccess,
@@ -156,15 +166,7 @@ export function SaveProvisionedDashboardForm({
   });
 
   // Submit handler for saving the form data
-  const handleFormSubmit = async ({
-    title,
-    description,
-    repo,
-    path,
-    comment,
-    ref,
-    folder,
-  }: ProvisionedDashboardFormData) => {
+  const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
     // Validate required fields
     if (!repo || !path) {
       console.error('Missing required fields for saving:', { repo, path });
@@ -289,7 +291,7 @@ export function SaveProvisionedDashboardForm({
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
               <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
             </Button>
-            <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty || readOnly}>
+            <Button variant="primary" type="submit" disabled={request.isLoading || readOnly || !isDirtyState}>
               {request.isLoading
                 ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
                 : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}

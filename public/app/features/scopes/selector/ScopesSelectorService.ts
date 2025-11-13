@@ -1,6 +1,6 @@
 import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { SceneRenderProfiler } from '@grafana/scenes';
+import { performanceUtils } from '@grafana/scenes';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 
 import { ScopesApiClient } from '../ScopesApiClient';
@@ -54,7 +54,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     private apiClient: ScopesApiClient,
     private dashboardsService: ScopesDashboardsService,
     private store = storeImpl,
-    private interactionProfiler: SceneRenderProfiler | undefined = config.dashboardPerformanceMetrics.length
+    private interactionProfiler: performanceUtils.SceneRenderProfiler | undefined = config.dashboardPerformanceMetrics
+      .length
       ? getDashboardSceneProfiler()
       : undefined
   ) {
@@ -340,8 +341,15 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     return this.collapseNode(scopeNodeId);
   };
 
-  changeScopes = (scopeNames: string[], parentNodeId?: string) => {
-    return this.applyScopes(scopeNames.map((id) => ({ scopeId: id, parentNodeId })));
+  changeScopes = (scopeNames: string[], parentNodeId?: string, scopeNodeId?: string) => {
+    return this.applyScopes(
+      scopeNames.map((id, index) => ({
+        scopeId: id,
+        // Only the first scope gets the scopeNodeId
+        scopeNodeId: index === 0 ? scopeNodeId : undefined,
+        parentNodeId,
+      }))
+    );
   };
 
   /**
