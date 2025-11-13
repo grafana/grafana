@@ -239,7 +239,9 @@ export function TransformationCard({
     cardClasses = cx(styles.newCard, styles.cardDisabled);
   }
 
-  const imageUrl = isFullTransform && (theme.isDark ? transform.imageDark : transform.imageLight);
+  // Get image URL - check if transform has images directly or if it's a full registry item
+  const hasImages = 'imageLight' in transform && 'imageDark' in transform;
+  const imageUrl = hasImages ? (theme.isDark ? transform.imageDark : transform.imageLight) : undefined;
   const description = isFullTransform
     ? standardTransformersRegistry.getIfExists(transform.id)?.description
     : transform.description;

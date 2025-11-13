@@ -6,6 +6,8 @@ import { Box, Button, Grid, Stack, Text } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { TransformationCard } from '../../../dashboard/components/TransformationsEditor/TransformationPickerNg';
+import sqlDarkImage from '../../../transformers/images/dark/sqlExpression.svg';
+import sqlLightImage from '../../../transformers/images/light/sqlExpression.svg';
 
 interface EmptyTransformationsProps {
   onShowPicker: () => void;
@@ -24,6 +26,8 @@ interface SQLTransformationTile {
   id: 'sql-transformation';
   name: string;
   description: string;
+  imageLight: string;
+  imageDark: string;
   isSQL: true;
 }
 
@@ -44,6 +48,8 @@ export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
       'dashboard-scene.empty-transformations-message.sql-transformation-description',
       'Manipulate your data using MySQL-like syntax'
     ),
+    imageLight: sqlLightImage,
+    imageDark: sqlDarkImage,
     isSQL: true,
   };
 
@@ -72,7 +78,7 @@ export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
                       key={tile.id}
                       transform={tile}
                       onClick={isSQL ? handleSqlTransformationClick : (id) => props.onAddTransformation?.(id)}
-                      showIllustrations={!isSQL}
+                      showIllustrations={true}
                       showPluginState={false}
                       showTags={false}
                       testId={isSQL ? 'go-to-queries-button' : undefined}
