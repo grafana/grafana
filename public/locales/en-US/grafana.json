@@ -4378,8 +4378,6 @@
       "next-button": "Next",
       "save-button": "Save"
     },
-    "page-content": "To enable Correlations, add it in the Grafana config:",
-    "page-heading": "Correlations are disabled",
     "query-editor": {
       "control-rules": "The selected target data source must export a query editor.",
       "data-source-text": "Please select a target data source first.",
@@ -6749,9 +6747,6 @@
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "More details about the error"
-    },
-    "footer": {
-      "add-csv-or-spreadsheet": "Add csv or spreadsheet"
     },
     "get-enterprise-phantom-plugins": {
       "description": {
@@ -11762,6 +11757,11 @@
       "path-description": "Local file system path to the repository",
       "path-label": "Repository Path",
       "path-required": "Repository path is required"
+    },
+    "message": {
+      "show-less": "show less",
+      "show-more": "show more",
+      "truncated": "Message truncated"
     },
     "mode-options": {
       "folder": {

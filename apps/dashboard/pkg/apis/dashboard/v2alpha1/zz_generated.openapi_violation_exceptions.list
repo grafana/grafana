@@ -67,6 +67,7 @@ API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/ap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardStringOrArrayOfString,String
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardStringOrFloat64,Float64
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardStringOrFloat64,String
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardV2alpha1FieldConfigSourceOverrides,SystemRef
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap,RangeMap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap,RegexMap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap,SpecialValueMap
