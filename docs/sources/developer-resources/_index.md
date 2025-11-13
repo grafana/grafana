@@ -42,4 +42,3 @@ You might also find the following resources to be helpful:
 
 - [Grafana Tutorials:](https://grafana.com/tutorials/) Step-by-step guides that help you make the most of Grafana.
 - [Grafana Community Forums:](https://community.grafana.com) Get technical support for open source Grafana, Loki, and Tempo.
-
