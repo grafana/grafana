@@ -11,7 +11,7 @@ import { GraphFieldConfig } from '@grafana/ui';
 
 import { Options } from './panelcfg.gen';
 
-export const radialBarSuggestionsHandler: VisualizationSuggestionsSupplierFn<Options, GraphFieldConfig> = (
+export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options, GraphFieldConfig> = (
   dataSummary
 ) => {
   if (!dataSummary.hasData || !dataSummary.hasFieldType(FieldType.number)) {

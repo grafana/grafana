@@ -1,26 +1,37 @@
-import { ThresholdsMode, VisualizationSuggestionsBuilder } from '@grafana/data';
-import { GraphFieldConfig } from '@grafana/ui';
-import { SuggestionName } from 'app/types/suggestions';
+import { defaultsDeep } from 'lodash';
+
+import { ThresholdsMode, FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplierFn } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { Options } from './panelcfg.gen';
 
-export class GaugeSuggestionsSupplier {
-  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const { dataSummary } = builder;
+export const gaugeSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options> = (dataSummary) => {
+  if (!dataSummary.hasData || !dataSummary.hasFieldType(FieldType.number)) {
+    return;
+  }
 
-    if (!dataSummary.hasData || !dataSummary.hasNumberField) {
-      return;
-    }
+  // for many fields / series this is probably not a good fit
+  if (dataSummary.fieldCountByType(FieldType.number) >= 10) {
+    return;
+  }
 
-    // for many fields / series this is probably not a good fit
-    if (dataSummary.numberFieldCount >= 50) {
-      return;
-    }
-
-    const list = builder.getListAppender<Options, GraphFieldConfig>({
-      name: SuggestionName.Gauge,
-      pluginId: 'gauge',
-      options: {},
+  const withDefaults = (suggestion: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> => {
+    // if there is a string field and there are few enough rows, we assume it's tabular data and not numeric series data,
+    // and the de-aggregated version of the viz probably makes more sense
+    const isTabularData =
+      dataSummary.hasFieldType(FieldType.string) && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10;
+    return defaultsDeep(suggestion, {
+      options: {
+        reduceOptions: isTabularData
+          ? {
+              values: true,
+              calcs: [],
+            }
+          : {
+              values: false,
+              calcs: ['lastNotNull'],
+            },
+      },
       fieldConfig: {
         defaults: {
           thresholds: {
@@ -42,48 +53,16 @@ export class GaugeSuggestionsSupplier {
           }
         },
       },
-    });
+    } satisfies VisualizationSuggestion<Options>);
+  };
 
-    if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
-      list.append({
-        name: SuggestionName.Gauge,
-        options: {
-          reduceOptions: {
-            values: true,
-            calcs: [],
-          },
-        },
-      });
-      list.append({
-        name: SuggestionName.GaugeNoThresholds,
-        options: {
-          reduceOptions: {
-            values: true,
-            calcs: [],
-          },
-          showThresholdMarkers: false,
-        },
-      });
-    } else {
-      list.append({
-        name: SuggestionName.Gauge,
-        options: {
-          reduceOptions: {
-            values: false,
-            calcs: ['lastNotNull'],
-          },
-        },
-      });
-      list.append({
-        name: SuggestionName.GaugeNoThresholds,
-        options: {
-          reduceOptions: {
-            values: false,
-            calcs: ['lastNotNull'],
-          },
-          showThresholdMarkers: false,
-        },
-      });
-    }
-  }
-}
+  return [
+    withDefaults({ name: t('gauge.suggestions.arc', 'Gauge') }),
+    withDefaults({
+      name: t('gauge.suggestions.no-thresholds', 'Gauge - no thresholds'),
+      options: {
+        showThresholdMarkers: false,
+      },
+    }),
+  ];
+};

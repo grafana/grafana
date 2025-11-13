@@ -3470,6 +3470,14 @@
         "label-negative-y": "Negative Y"
       }
     },
+    "suggestions": {
+      "horizontal": "Horizontal bar chart",
+      "hz-stacked": "Horizontal bar chart - stacked",
+      "hz-stacked-percent": "Horizontal bar chart - stacked by percentage",
+      "vert-stacked": "Vertical bar chart - stacked",
+      "vert-stacked-percent": "Vertical bar chart - stacked by percentage",
+      "vertical": "Vertical bar chart"
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Require space from the right side",
       "gaps-options": {
@@ -7795,6 +7803,7 @@
     "suggestions": {
       "arc": "Gauge",
       "circular": "Circular gauge",
+      "no-thresholds": "Gauge - no thresholds",
       "style": {
         "circular": "Glowing",
         "simple": "Simple"
@@ -12994,6 +13003,12 @@
       "label-same-as-value": "Same as Value",
       "label-standard": "Standard"
     },
+    "suggestions": {
+      "stat-aggregated-color-background": "Stat - color background",
+      "stat-discrete-values": "Stat - discrete values",
+      "stat-discrete-values-color-background": "Stat - discrete values - color background",
+      "stat-single-string": "Stat - single string"
+    },
     "text-alignment-options": {
       "label-auto": "Auto",
       "label-center": "Center"
@@ -14271,7 +14286,11 @@
     "category-x-axis": "X axis",
     "description-x-field": "An increasing numeric value",
     "name-x-field": "X field",
-    "placeholder-x-field": "First numeric value"
+    "placeholder-x-field": "First numeric value",
+    "suggestions": {
+      "default": "Trend",
+      "default-description": "A panel for visualizing trends over dimensions other than time."
+    }
   },
   "upgrade-box": {
     "discovery-text": "You’ve discovered a Pro feature!",

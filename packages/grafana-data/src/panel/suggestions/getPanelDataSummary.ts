@@ -7,13 +7,18 @@ import { DataFrame, FieldType } from '../../types/dataFrame';
 export interface PanelDataSummary {
   hasData?: boolean;
   rowCountTotal: number;
+  /** max number of rows in any given dataframe in the panel data */
   rowCountMax: number;
   frameCount: number;
   fieldCount: number;
+  /** max number of fields in any given dataframe in the panel data */
+  fieldCountMax: number;
   fieldCountByType: (type: FieldType) => number;
   hasFieldType: (type: FieldType) => boolean;
   /** The first frame that set's this value */
   preferredVisualisationType?: PreferredVisualisationType;
+  /** pass along a reference to the raw data in case it's needed by the plugin */
+  _data?: DataFrame[];
 
   /* --- DEPRECATED FIELDS BELOW --- */
   /** @deprecated use PanelDataSummary.fieldCountByType(FieldType.number) */
@@ -36,14 +41,15 @@ export interface PanelDataSummary {
  * @param frames - dataframes to summarize
  * @returns summary of the dataframes
  */
-export function getPanelDataSummary(frames: DataFrame[] = []): PanelDataSummary {
+export function getPanelDataSummary(frames?: DataFrame[]): PanelDataSummary {
   let rowCountTotal = 0;
   let rowCountMax = 0;
   let fieldCount = 0;
+  let fieldCountMax = 0;
   const countByType: Partial<Record<FieldType, number>> = {};
   let preferredVisualisationType: PreferredVisualisationType | undefined;
 
-  for (const frame of frames) {
+  for (const frame of frames ?? []) {
     rowCountTotal += frame.length;
 
     if (frame.meta?.preferredVisualisationType) {
@@ -58,6 +64,9 @@ export function getPanelDataSummary(frames: DataFrame[] = []): PanelDataSummary 
     if (frame.length > rowCountMax) {
       rowCountMax = frame.length;
     }
+    if (frame.fields.length > fieldCountMax) {
+      fieldCountMax = frame.fields.length;
+    }
   }
 
   const fieldCountByType = (f: FieldType) => countByType[f] ?? 0;
@@ -66,11 +75,13 @@ export function getPanelDataSummary(frames: DataFrame[] = []): PanelDataSummary 
     rowCountTotal,
     rowCountMax,
     fieldCount,
+    fieldCountMax,
     preferredVisualisationType,
-    frameCount: frames.length,
+    frameCount: frames?.length ?? 0,
     hasData: rowCountTotal > 0,
     hasFieldType: (f: FieldType) => fieldCountByType(f) > 0,
     fieldCountByType,
+    _data: frames,
     // deprecated
     numberFieldCount: fieldCountByType(FieldType.number),
     timeFieldCount: fieldCountByType(FieldType.time),

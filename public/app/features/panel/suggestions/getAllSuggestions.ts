@@ -4,6 +4,7 @@ import {
   VisualizationSuggestionsBuilder,
   PanelModel,
   VisualizationSuggestionScore,
+  PreferredVisualisationType,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
@@ -23,7 +24,15 @@ export const panelsToCheckFirst = [
   'flamegraph',
   'traces',
   'nodeGraph',
+  'heatmap',
 ];
+
+/**
+ * some of the PreferredVisualisationTypes do not match the panel plugin ids, so we have to map them. d'oh.
+ */
+const OVERRIDE_PREFERRED_VISUALISATION_TYPE_TO_PLUGIN: Partial<Record<PreferredVisualisationType, string>> = {
+  trace: 'traces',
+};
 
 export async function getAllSuggestions(
   data?: PanelData,
@@ -61,10 +70,14 @@ export async function getAllSuggestions(
 
   return list.sort((a, b) => {
     if (builder.dataSummary.preferredVisualisationType) {
-      if (a.pluginId === builder.dataSummary.preferredVisualisationType) {
+      const mappedPlugin =
+        OVERRIDE_PREFERRED_VISUALISATION_TYPE_TO_PLUGIN[builder.dataSummary.preferredVisualisationType] ??
+        builder.dataSummary.preferredVisualisationType;
+
+      if (a.pluginId === mappedPlugin) {
         return -1;
       }
-      if (b.pluginId === builder.dataSummary.preferredVisualisationType) {
+      if (b.pluginId === mappedPlugin) {
         return 1;
       }
     }

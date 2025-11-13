@@ -35,6 +35,7 @@ export interface VisualizationSuggestion<TOptions extends unknown = {}, TFieldCo
      */
     previewModifier?: (suggestion: VisualizationSuggestion<TOptions, TFieldConfig>) => void;
     icon?: string;
+    /** @deprecated this will be removed with the new suggestions. */
     imgSrc?: string;
   };
 }
