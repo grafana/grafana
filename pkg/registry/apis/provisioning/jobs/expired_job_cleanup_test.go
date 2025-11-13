@@ -118,7 +118,6 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 
 		assert.NoError(t, err)
 		store.AssertExpectations(t)
-		store.AssertExpectations(t)
 		historyWriter.AssertExpectations(t)
 	})
 
@@ -173,7 +172,6 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		// Should not return error, continues processing
 		assert.NoError(t, err)
 		store.AssertExpectations(t)
-		store.AssertExpectations(t)
 		historyWriter.AssertExpectations(t)
 	})
 
@@ -206,7 +204,6 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		// Should not return error, just log warning
 		assert.NoError(t, err)
 		store.AssertExpectations(t)
-		store.AssertExpectations(t)
 		historyWriter.AssertExpectations(t)
 	})
 
@@ -236,7 +233,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		store.On("Complete", mock.Anything, mock.MatchedBy(func(j *provisioning.Job) bool {
 			assert.Equal(t, provisioning.JobStateError, j.Status.State)
 			assert.Equal(t, "Job failed due to lease expiry - worker may have crashed or lost connection", j.Status.Message)
-			assert.Equal(t, fixedTime.Unix(), j.Status.Finished)
+			assert.Equal(t, fixedTime.UnixMilli(), j.Status.Finished)
 			return true
 		})).Return(nil)
 		historyWriter.On("WriteJob", mock.Anything, mock.Anything).Return(nil)
@@ -244,7 +241,6 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		err := controller.Cleanup(ctx)
 
 		assert.NoError(t, err)
-		store.AssertExpectations(t)
 		store.AssertExpectations(t)
 	})
 
@@ -335,7 +331,6 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		err := controller.Cleanup(ctx)
 
 		assert.NoError(t, err)
-		store.AssertExpectations(t)
 		store.AssertExpectations(t)
 		historyWriter.AssertExpectations(t)
 		// Verify all 3 jobs were processed
