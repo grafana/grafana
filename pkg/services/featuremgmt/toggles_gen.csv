@@ -19,7 +19,7 @@ lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
 individualCookiePreferences,experimental,@grafana/grafana-backend-group,false,false,false
 influxdbBackendMigration,GA,@grafana/partner-datasources,false,false,true
-starsFromAPIServer,experimental,@grafana/grafana-frontend-platform,false,false,true
+starsFromAPIServer,experimental,@grafana/grafana-search-navigate-organise,false,false,true
 kubernetesStars,experimental,@grafana/grafana-app-platform-squad,false,true,false
 influxqlStreamingParser,experimental,@grafana/partner-datasources,false,false,false
 influxdbRunQueriesInParallel,privatePreview,@grafana/partner-datasources,false,false,false
@@ -130,7 +130,7 @@ preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,fals
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,true
 pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,false,false
 azureMonitorPrometheusExemplars,GA,@grafana/partner-datasources,false,false,false
-pinNavItems,GA,@grafana/grafana-frontend-platform,false,false,false
+pinNavItems,GA,@grafana/grafana-search-navigate-organise,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
 ssoSettingsLDAP,GA,@grafana/identity-access-team,false,true,false
 zanzana,experimental,@grafana/identity-access-team,false,false,false
@@ -181,14 +181,13 @@ alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true
 feedbackButton,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 unifiedStorageSearchUI,experimental,@grafana/search-and-storage,false,false,false
 elasticsearchCrossClusterSearch,GA,@grafana/partner-datasources,false,false,false
-unifiedHistory,experimental,@grafana/grafana-frontend-platform,false,false,true
+unifiedHistory,experimental,@grafana/grafana-search-navigate-organise,false,false,true
 lokiLabelNamesQueryApi,GA,@grafana/observability-logs,false,false,false
 investigationsBackend,experimental,@grafana/grafana-app-platform-squad,false,false,false
 k8SFolderCounts,experimental,@grafana/search-and-storage,false,false,false
 k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false
 improvedExternalSessionHandlingSAML,GA,@grafana/identity-access-team,false,false,false
 teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
-templateVariablesUsesCombobox,experimental,@grafana/grafana-frontend-platform,false,false,true
 grafanaAdvisor,privatePreview,@grafana/plugins-platform-backend,false,false,false
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
 datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
@@ -197,8 +196,8 @@ newLogsPanel,GA,@grafana/observability-logs,false,false,true
 grafanaconThemes,GA,@grafana/grafana-frontend-platform,false,true,false
 alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
 alertingUseNewSimplifiedRoutingHashAlgorithm,preview,@grafana/alerting-squad,false,true,false
-useScopesNavigationEndpoint,experimental,@grafana/grafana-frontend-platform,false,false,true
-scopeSearchAllLevels,experimental,@grafana/grafana-frontend-platform,false,false,false
+useScopesNavigationEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
+scopeSearchAllLevels,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 alertingRuleVersionHistoryRestore,GA,@grafana/alerting-squad,false,false,true
 newShareReportDrawer,preview,@grafana/grafana-operator-experience-squad,false,false,false
 rendererDisableAppPluginsPreload,experimental,@grafana/grafana-operator-experience-squad,false,false,true
@@ -230,7 +229,7 @@ kubernetesAuthZHandlerRedirect,experimental,@grafana/identity-access-team,false,
 kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,false
-restoreDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
+restoreDashboards,experimental,@grafana/grafana-search-navigate-organise,false,false,false
 alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
 alertEnrichmentMultiStep,experimental,@grafana/alerting-squad,false,false,false
 alertEnrichmentConditional,experimental,@grafana/alerting-squad,false,false,false
