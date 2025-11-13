@@ -3,7 +3,7 @@ import { Fragment, Suspense, lazy } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, LoadingPlaceholder, Stack, Text, useEffectOnce, useStyles2 } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { AlertQuery, Labels } from 'app/types/unified-alerting-dto';
 
@@ -64,6 +64,12 @@ export const NotificationPreview = ({
       alertUid: alertUid,
     });
   };
+
+  useEffectOnce(() => {
+    if (!disabled) {
+      onPreview();
+    }
+  });
 
   //  Get alert managers's data source information
   const alertManagerDataSources = useGetAlertManagerDataSourcesByPermissionAndConfig('notification');
