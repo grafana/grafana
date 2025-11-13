@@ -275,36 +275,6 @@ func (_m *FakeDashboardStore) GetDashboardsByPluginID(ctx context.Context, query
 	return r0, r1
 }
 
-// GetOrphanedProvisionedDashboards provides a mock function with given fields: ctx, notIn, orgID
-func (_m *FakeDashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string, orgID int64) ([]*Dashboard, error) {
-	ret := _m.Called(ctx, notIn, orgID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetOrphanedProvisionedDashboards")
-	}
-
-	var r0 []*Dashboard
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []string, int64) ([]*Dashboard, error)); ok {
-		return rf(ctx, notIn, orgID)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, []string, int64) []*Dashboard); ok {
-		r0 = rf(ctx, notIn, orgID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*Dashboard)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, []string, int64) error); ok {
-		r1 = rf(ctx, notIn, orgID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetDuplicateProvisionedDashboards provides a mock function with given fields: ctx
 func (_m *FakeDashboardStore) GetDuplicateProvisionedDashboards(ctx context.Context) ([]*DashboardProvisioningSearchResults, error) {
 	ret := _m.Called(ctx)
@@ -328,6 +298,36 @@ func (_m *FakeDashboardStore) GetDuplicateProvisionedDashboards(ctx context.Cont
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
 		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetOrphanedProvisionedDashboards provides a mock function with given fields: ctx, notIn, orgID
+func (_m *FakeDashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string, orgID int64) ([]*Dashboard, error) {
+	ret := _m.Called(ctx, notIn, orgID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetOrphanedProvisionedDashboards")
+	}
+
+	var r0 []*Dashboard
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, []string, int64) ([]*Dashboard, error)); ok {
+		return rf(ctx, notIn, orgID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []string, int64) []*Dashboard); ok {
+		r0 = rf(ctx, notIn, orgID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*Dashboard)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []string, int64) error); ok {
+		r1 = rf(ctx, notIn, orgID)
 	} else {
 		r1 = ret.Error(1)
 	}

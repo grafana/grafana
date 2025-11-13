@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -13,6 +15,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
+	search "github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	alerting "github.com/grafana/grafana/pkg/tests/api/alerting"
@@ -1985,6 +1989,151 @@ func TestIntegrationDeleteNestedFoldersPostorder(t *testing.T) {
 			verifyFolderExists(child1UID, false)
 			verifyFolderExists(child2UID, false)
 			verifyFolderExists(parentUID, false)
+		})
+	}
+}
+
+// Test deleting nested folders with provisioned dashboards ensures proper handling of forceDeleteRules
+func TestIntegrationDeleteNestedFoldersWithProvisionedDashboards(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	for mode := 0; mode <= 3; mode++ {
+		t.Run(fmt.Sprintf("Mode %d: Delete provisioned folders and dashboards", mode), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
+			// Setup Grafana with provisioning
+			dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+				DisableAnonymous:     true,
+				AppModeProduction:    true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagUnifiedStorageSearch,
+				},
+			})
+			// Create provisioning directories
+			provDashboardsDir := fmt.Sprintf("%s/conf/provisioning/dashboards", dir)
+			provDashboardsCfg := fmt.Sprintf("%s/dev.yaml", provDashboardsDir)
+			blob := []byte(fmt.Sprintf(`
+apiVersion: 1
+
+providers:
+- name: 'provisioned dashboards'
+  type: file
+  orgId: 1
+  folder: 'GrafanaCloud'
+  options:
+   path: %s`, provDashboardsDir))
+			err := os.WriteFile(provDashboardsCfg, blob, 0o644)
+			require.NoError(t, err)
+			input, err := os.ReadFile(filepath.Join("testdata/dashboard.json"))
+			require.NoError(t, err)
+			provDashboardFile := filepath.Join(provDashboardsDir, "dashboard.json")
+			err = os.WriteFile(provDashboardFile, input, 0o644)
+			require.NoError(t, err)
+
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagUnifiedStorageSearch,
+				},
+				Dir:     dir,
+				DirPath: path,
+			})
+
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+
+			time.Sleep(1 * time.Second) // Give provisioner time to process
+
+			var folderUID string
+			var dashboardUID string
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				title := "dashboard"
+				dashboardList := &search.HitList{}
+				resp := apis.DoRequest(helper, apis.RequestParams{
+					User:   client.Args.User,
+					Method: http.MethodGet,
+					Path:   fmt.Sprintf("/api/search?query=%s", title),
+				}, &map[string]interface{}{})
+				require.NotNil(t, resp.Response)
+				assert.Equal(t, http.StatusOK, resp.Response.StatusCode)
+				assert.NoError(t, json.Unmarshal(resp.Body, dashboardList))
+				assert.Equal(collect, dashboardList.Len(), 1, "Dashboard should be ready")
+				for _, d := range *dashboardList {
+					folderUID = d.FolderUID
+					dashboardUID = d.UID
+				}
+			}, 10*time.Second, 25*time.Millisecond)
+
+			_, err = client.Resource.Get(context.Background(), folderUID, metav1.GetOptions{})
+			require.NoError(t, err, "folder %s should exist", folderUID)
+			// Verify dashboards exist
+			verifyDashboardExists := func(shouldExist bool) {
+				getDash := apis.DoRequest(helper, apis.RequestParams{
+					User:   client.Args.User,
+					Method: http.MethodGet,
+					Path:   fmt.Sprintf("/api/dashboards/uid/%s", dashboardUID),
+				}, &map[string]interface{}{})
+				if shouldExist {
+					require.Equal(t, http.StatusOK, getDash.Response.StatusCode, "dashboard %s should exist", dashboardUID)
+				} else {
+					require.Equal(t, http.StatusNotFound, getDash.Response.StatusCode, "dashboard %s should not exist", dashboardUID)
+				}
+			}
+
+			verifyDashboardExists(true)
+
+			t.Run("Deletion should fail when forceDeleteRules=false with provisioned dashboards", func(t *testing.T) {
+				// Attempt to delete the parent folder without forceDeleteRules
+				parentDeleteNoForce := apis.DoRequest(helper, apis.RequestParams{
+					User:   client.Args.User,
+					Method: http.MethodDelete,
+					Path:   fmt.Sprintf("/api/folders/%s?forceDeleteRules=false", folderUID),
+				}, &folder.Folder{})
+
+				// Should fail because provisioned dashboards cannot be deleted without forceDeleteRules
+				require.Equal(t, http.StatusBadRequest, parentDeleteNoForce.Response.StatusCode, "deletion should fail without forceDeleteRules")
+				require.Contains(t, string(parentDeleteNoForce.Body), dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason, "error message should indicate provisioned dashboards cannot be deleted")
+				// Verify folders still exist
+				_, err := client.Resource.Get(context.Background(), folderUID, metav1.GetOptions{})
+				require.NoError(t, err, "parent folder %d should still exist", folderUID)
+				// Verify dashboard still exist
+				verifyDashboardExists(true)
+			})
+
+			t.Run("Deletion should succeed when forceDeleteRules=true and delete provisioned dashboards", func(t *testing.T) {
+				// Delete the parent folder with forceDeleteRules=true
+				parentDelete := apis.DoRequest(helper, apis.RequestParams{
+					User:   client.Args.User,
+					Method: http.MethodDelete,
+					Path:   fmt.Sprintf("/api/folders/%s?forceDeleteRules=true", folderUID),
+				}, &folder.Folder{})
+
+				require.Equal(t, http.StatusOK, parentDelete.Response.StatusCode, "deletion should succeed with forceDeleteRules")
+
+				// Verify folders was deleted
+				_, err := client.Resource.Get(context.Background(), folderUID, metav1.GetOptions{})
+				require.Error(t, err, "parent folder %s should not exist", folderUID)
+				// Verify all provisioned dashboards are deleted in both legacy and unified storage
+				verifyDashboardExists(false)
+			})
 		})
 	}
 }

@@ -140,9 +140,9 @@ func (_m *FakeDashboardProvisioning) GetProvisionedDashboardDataByDashboardUID(c
 	return r0, r1
 }
 
-// SaveFolderForProvisionedDashboards provides a mock function with given fields: ctx, cmd, readerName
-func (_m *FakeDashboardProvisioning) SaveFolderForProvisionedDashboards(ctx context.Context, cmd *folder.CreateFolderCommand, readerName string) (*folder.Folder, error) {
-	ret := _m.Called(ctx, cmd, readerName)
+// SaveFolderForProvisionedDashboards provides a mock function with given fields: ctx, cmd, managerIdentity
+func (_m *FakeDashboardProvisioning) SaveFolderForProvisionedDashboards(ctx context.Context, cmd *folder.CreateFolderCommand, managerIdentity string) (*folder.Folder, error) {
+	ret := _m.Called(ctx, cmd, managerIdentity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SaveFolderForProvisionedDashboards")
@@ -151,10 +151,10 @@ func (_m *FakeDashboardProvisioning) SaveFolderForProvisionedDashboards(ctx cont
 	var r0 *folder.Folder
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *folder.CreateFolderCommand, string) (*folder.Folder, error)); ok {
-		return rf(ctx, cmd, readerName)
+		return rf(ctx, cmd, managerIdentity)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, *folder.CreateFolderCommand, string) *folder.Folder); ok {
-		r0 = rf(ctx, cmd, readerName)
+		r0 = rf(ctx, cmd, managerIdentity)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*folder.Folder)
@@ -162,7 +162,7 @@ func (_m *FakeDashboardProvisioning) SaveFolderForProvisionedDashboards(ctx cont
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *folder.CreateFolderCommand, string) error); ok {
-		r1 = rf(ctx, cmd, readerName)
+		r1 = rf(ctx, cmd, managerIdentity)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -218,9 +218,9 @@ func (_m *FakeDashboardProvisioning) UnprovisionDashboard(ctx context.Context, d
 	return r0
 }
 
-// UpdateFolderWithManagedByAnnotation provides a mock function with given fields: ctx, _a1, readerName
-func (_m *FakeDashboardProvisioning) UpdateFolderWithManagedByAnnotation(ctx context.Context, _a1 *folder.Folder, readerName string) (*folder.Folder, error) {
-	ret := _m.Called(ctx, _a1, readerName)
+// UpdateFolderWithManagedByAnnotation provides a mock function with given fields: ctx, _a1, managerIdentity
+func (_m *FakeDashboardProvisioning) UpdateFolderWithManagedByAnnotation(ctx context.Context, _a1 *folder.Folder, managerIdentity string) (*folder.Folder, error) {
+	ret := _m.Called(ctx, _a1, managerIdentity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateFolderWithManagedByAnnotation")
@@ -229,10 +229,10 @@ func (_m *FakeDashboardProvisioning) UpdateFolderWithManagedByAnnotation(ctx con
 	var r0 *folder.Folder
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *folder.Folder, string) (*folder.Folder, error)); ok {
-		return rf(ctx, _a1, readerName)
+		return rf(ctx, _a1, managerIdentity)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, *folder.Folder, string) *folder.Folder); ok {
-		r0 = rf(ctx, _a1, readerName)
+		r0 = rf(ctx, _a1, managerIdentity)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*folder.Folder)
@@ -240,7 +240,7 @@ func (_m *FakeDashboardProvisioning) UpdateFolderWithManagedByAnnotation(ctx con
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *folder.Folder, string) error); ok {
-		r1 = rf(ctx, _a1, readerName)
+		r1 = rf(ctx, _a1, managerIdentity)
 	} else {
 		r1 = ret.Error(1)
 	}

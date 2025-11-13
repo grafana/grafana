@@ -462,6 +462,10 @@ func (s *dashboardServiceMock) DeleteDashboard(_ context.Context, dashboardId in
 	return nil
 }
 
+func (s *dashboardServiceMock) ForceDeleteDashboard(ctx context.Context, dashboardId int64, dashboardUID string, orgId int64) error {
+	return s.DeleteDashboard(ctx, dashboardId, dashboardUID, orgId)
+}
+
 func (s *dashboardServiceMock) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*dashboards.Dashboard, error) {
 	return nil, nil
 }
