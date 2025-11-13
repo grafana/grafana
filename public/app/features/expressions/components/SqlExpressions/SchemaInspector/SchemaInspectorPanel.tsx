@@ -44,50 +44,6 @@ export const SchemaInspectorPanel = ({ schemas, loading, error }: SchemaInspecto
   const activeSchemaTab = refIds.includes(selectedTab) ? selectedTab : refIds[0] || '';
   const activeSchemaData = schemaResponse[activeSchemaTab];
 
-  const renderSchemaFields = (fields: SchemaField[], sampleRows: SampleRows | null) => {
-    // Enhance fields with fieldIndex and sampleRows for the Sample column
-    const enhancedFields = fields.map((field, index) => ({
-      ...field,
-      fieldIndex: index,
-      sampleRows,
-    }));
-
-    return (
-      <div className={styles.tableContainer}>
-        <InteractiveTable
-          columns={columns}
-          data={enhancedFields}
-          getRowId={({ name }) => name}
-          pageSize={0} // No pagination
-        />
-      </div>
-    );
-  };
-
-  const renderSchemaTabContent = ({ columns, error, sampleRows }: SchemaData) => {
-    if (error) {
-      return (
-        <div className={styles.schemaInfoContainer}>
-          <Alert title={t('expressions.sql-schema.query-error-title', 'Query error')} severity="error">
-            {error}
-          </Alert>
-        </div>
-      );
-    }
-
-    if (!columns || columns.length === 0) {
-      return (
-        <div className={styles.schemaInfoContainer}>
-          <Alert severity="warning" title={t('expressions.sql-schema.no-fields-title', 'No schema information')}>
-            <Trans i18nKey="expressions.sql-schema.no-fields-desc">This query returned no schema information.</Trans>
-          </Alert>
-        </div>
-      );
-    }
-
-    return renderSchemaFields(columns, sampleRows);
-  };
-
   const columns = useMemo(
     () => [
       {
@@ -146,6 +102,50 @@ export const SchemaInspectorPanel = ({ schemas, loading, error }: SchemaInspecto
     ],
     [styles]
   );
+
+  const renderSchemaFields = (fields: SchemaField[], sampleRows: SampleRows | null) => {
+    // Enhance fields with fieldIndex and sampleRows for the Sample column
+    const enhancedFields = fields.map((field, index) => ({
+      ...field,
+      fieldIndex: index,
+      sampleRows,
+    }));
+
+    return (
+      <div className={styles.tableContainer}>
+        <InteractiveTable
+          columns={columns}
+          data={enhancedFields}
+          getRowId={({ name }) => name}
+          pageSize={0} // No pagination
+        />
+      </div>
+    );
+  };
+
+  const renderSchemaTabContent = ({ columns, error, sampleRows }: SchemaData) => {
+    if (error) {
+      return (
+        <div className={styles.schemaInfoContainer}>
+          <Alert title={t('expressions.sql-schema.query-error-title', 'Query error')} severity="error">
+            {error}
+          </Alert>
+        </div>
+      );
+    }
+
+    if (!columns || columns.length === 0) {
+      return (
+        <div className={styles.schemaInfoContainer}>
+          <Alert severity="warning" title={t('expressions.sql-schema.no-fields-title', 'No schema information')}>
+            <Trans i18nKey="expressions.sql-schema.no-fields-desc">This query returned no schema information.</Trans>
+          </Alert>
+        </div>
+      );
+    }
+
+    return renderSchemaFields(columns, sampleRows);
+  };
 
   if (error) {
     return (
