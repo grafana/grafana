@@ -57,9 +57,7 @@ jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => (
     onChange: (ds: { uid: string; name: string; type: string }) => void;
     placeholder?: string;
   }) => (
-    <button onClick={() => onChange({ uid: 'test-ds-uid', name: 'Test DS', type: 'prometheus' })}>
-      {placeholder}
-    </button>
+    <button onClick={() => onChange({ uid: 'test-ds-uid', name: 'Test DS', type: 'prometheus' })}>{placeholder}</button>
   ),
 }));
 
