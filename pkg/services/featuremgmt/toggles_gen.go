@@ -763,10 +763,6 @@ const (
 	// Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
 	FlagTeamHttpHeadersTempo = "teamHttpHeadersTempo"
 
-	// FlagTemplateVariablesUsesCombobox
-	// Use new **Combobox** component for template variables
-	FlagTemplateVariablesUsesCombobox = "templateVariablesUsesCombobox"
-
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
 	FlagGrafanaAdvisor = "grafanaAdvisor"
@@ -1066,6 +1062,10 @@ const (
 	// Enable new gauge visualization
 	FlagNewGauge = "newGauge"
 
+	// FlagNewVizSuggestions
+	// Enable new visualization suggestions
+	FlagNewVizSuggestions = "newVizSuggestions"
+
 	// FlagPreventPanelChromeOverflow
 	// Restrict PanelChrome contents with overflow: hidden;
 	FlagPreventPanelChromeOverflow = "preventPanelChromeOverflow"
@@ -1101,4 +1101,8 @@ const (
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations
 	FlagKubernetesAnnotations = "kubernetesAnnotations"
+
+	// FlagAwsDatasourcesHttpProxy
+	// Enables http proxy settings for aws datasources
+	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
 )

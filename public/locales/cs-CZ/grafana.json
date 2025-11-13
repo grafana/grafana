@@ -6798,9 +6798,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Další podrobnosti o chybě"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "Přidat soubor CSV nebo tabulku"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Zdroj dat Adobe Analytics",
@@ -11868,6 +11865,11 @@
       "path-description": "Cesta k úložišti v místním souborovém systému",
       "path-label": "Cesta k úložišti",
       "path-required": "Cesta k úložišti je povinná"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {

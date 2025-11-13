@@ -839,10 +839,6 @@ export interface FeatureToggles {
   */
   teamHttpHeadersTempo?: boolean;
   /**
-  * Use new **Combobox** component for template variables
-  */
-  templateVariablesUsesCombobox?: boolean;
-  /**
   * Enables Advisor app
   */
   grafanaAdvisor?: boolean;
@@ -1186,6 +1182,11 @@ export interface FeatureToggles {
   */
   newGauge?: boolean;
   /**
+  * Enable new visualization suggestions
+  * @default false
+  */
+  newVizSuggestions?: boolean;
+  /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
   */
@@ -1226,4 +1227,9 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesAnnotations?: boolean;
+  /**
+  * Enables http proxy settings for aws datasources
+  * @default false
+  */
+  awsDatasourcesHttpProxy?: boolean;
 }
