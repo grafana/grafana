@@ -856,8 +856,13 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 	}
 
 	if query.TitleSearch != "" {
-		sql, param := st.SQLStore.GetDialect().LikeOperator("title", true, query.TitleSearch, true)
-		q = q.And(sql, param)
+		words := strings.Fields(query.TitleSearch)
+		if len(words) > 0 {
+			// Build sequential pattern: %word1%word2%word3%
+			pattern := strings.Join(words, "%")
+			sql, param := st.SQLStore.GetDialect().LikeOperator("title", true, pattern, true)
+			q = q.And(sql, param)
+		}
 	}
 
 	if query.HasPrometheusRuleDefinition != nil {

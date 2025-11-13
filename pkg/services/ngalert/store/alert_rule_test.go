@@ -2107,6 +2107,26 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				titleSearch:   "",
 				expectedRules: []*models.AlertRule{rule1, rule2, rule3, rule4},
 			},
+			{
+				name:          "should not find rules when word order is reversed",
+				titleSearch:   "usage cpu",
+				expectedRules: []*models.AlertRule{},
+			},
+			{
+				name:          "should find multiple rules matching sequential words",
+				titleSearch:   "usage alert",
+				expectedRules: []*models.AlertRule{rule1, rule2},
+			},
+			{
+				name:          "should handle extra whitespace between words",
+				titleSearch:   "  cpu   usage  ",
+				expectedRules: []*models.AlertRule{rule1},
+			},
+			{
+				name:          "should handle multiple words with partial matches",
+				titleSearch:   "aPp erR",
+				expectedRules: []*models.AlertRule{rule4},
+			},
 		}
 
 		for _, tt := range tc {
