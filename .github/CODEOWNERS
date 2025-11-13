@@ -834,7 +834,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/constants.ts @grafana/grafana-frontend-platform
 /public/app/core/context/ @grafana/grafana-frontend-platform
 /public/app/core/copy/appNotification.ts @grafana/grafana-search-navigate-organise
-/public/app/core/core.ts @grafana/grafana-frontend-platform
 /public/app/core/crash/ @grafana/observability-traces-and-profiling
 /public/app/core/history/ @grafana/observability-traces-and-profiling
 /public/app/core/hooks/useBusEvent.ts @grafana/grafana-frontend-platform
