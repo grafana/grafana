@@ -98,7 +98,7 @@ LIMIT
   const containerRef = useRef<HTMLDivElement>(null);
   const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isSchemaInspectorOpen, setIsSchemaInspectorOpen] = useState(false);
+  const [isSchemaInspectorOpen, setIsSchemaInspectorOpen] = useState(true);
 
   const { handleApplySuggestion, handleHistoryUpdate, handleCloseDrawer, handleOpenDrawer, isDrawerOpen, suggestions } =
     useSQLSuggestions();
