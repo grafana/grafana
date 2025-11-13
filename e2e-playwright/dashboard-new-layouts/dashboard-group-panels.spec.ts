@@ -449,7 +449,7 @@ test.describe(
       ).toHaveCount(3);
     });
 
-    test.skip('can group and ungroup new panels into row with tab', async ({ dashboardPage, selectors, page }) => {
+    test.skip('can  group and ungroup new panels into row with tab', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(page, selectors, 'Group new panels into tab with row');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
