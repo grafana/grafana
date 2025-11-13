@@ -5640,6 +5640,60 @@
       "validation-required": "대시보드 JSON 모델이 필요합니다."
     }
   },
+  "dashboard-library": {
+    "browse-grafana-com": "",
+    "browse-plugins": "",
+    "card": {
+      "datasource-provided-badge": "",
+      "details-tooltip": "",
+      "no-preview": "",
+      "use-dashboard-button": "",
+      "use-template-button": ""
+    },
+    "community-empty-title": "",
+    "community-empty-title-with-datasource": "",
+    "community-error": "",
+    "community-error-title": "",
+    "community-mapping-form": {
+      "back": "",
+      "constants-title": "",
+      "datasources-title": "",
+      "description": "",
+      "preview": "",
+      "auto-mapped_other": ""
+    },
+    "community-mapping-select-datasource": "",
+    "community-search-placeholder": "",
+    "community-search-placeholder-with-datasource": "",
+    "dashboard-card": {
+      "details": {
+        "datasource": "",
+        "dependencies": "",
+        "id": "",
+        "last-update": "",
+        "published-by": "",
+        "view-on-grafana-com": ""
+      }
+    },
+    "modal": {
+      "description": "",
+      "tab-community": "",
+      "tab-datasource": "",
+      "title": "",
+      "title-mapping-with-name": "",
+      "title-with-datasource": ""
+    },
+    "no-community-dashboards-datasource": "",
+    "no-community-dashboards-search": "",
+    "no-provisioned-dashboards": "",
+    "provisioned-empty-title": "",
+    "provisioned-empty-title-with-datasource": "",
+    "retry": "",
+    "suggested-dashboards-subtitle": "",
+    "suggested-dashboards-title": "",
+    "suggested-dashboards-title-with-datasource": "",
+    "view-all": ""
+  },
   "dashboard-links": {
     "empty-state": {
       "button-title": "대시보드 링크 추가",
@@ -6671,9 +6725,6 @@
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "오류에 대한 자세한 정보"
-    },
-    "footer": {
-      "add-csv-or-spreadsheet": "CSV 또는 스프레드시트 추가"
     },
     "get-enterprise-phantom-plugins": {
       "description": {
@@ -11656,6 +11707,11 @@
       "path-label": "리포지토리 경로",
       "path-required": "리포지토리 경로는 필수 항목입니다"
     },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
+    },
     "mode-options": {
       "folder": {
         "description": "설정 후 새 Grafana 폴더가 생성되고 외부 스토리지와 동기화됩니다. 외부 스토리지에 리소스가 있는 경우 해당 리소스가 이 새 폴더에 프로비저닝됩니다. 이 폴더에 생성된 모든 새 리소스는 외부 스토리지에 저장되고 버전이 관리됩니다.",
@@ -12768,7 +12824,9 @@
   },
   "stars": {
     "mark-as-starred": "",
-    "unmark-as-starred": ""
+    "mark-as-starred-with-title": "",
+    "unmark-as-starred": "",
+    "unmark-as-starred-with-title": ""
   },
   "stat": {
     "add-orientation-option": {

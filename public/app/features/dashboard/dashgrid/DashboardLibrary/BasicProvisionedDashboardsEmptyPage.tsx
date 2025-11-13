@@ -11,7 +11,14 @@ import { PluginDashboard } from 'app/types/plugins';
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { fetchProvisionedDashboards } from './api/dashboardLibraryApi';
-import { DashboardLibraryInteractions } from './interactions';
+import {
+  CONTENT_KINDS,
+  CREATION_ORIGINS,
+  DashboardLibraryInteractions,
+  DISCOVERY_METHODS,
+  EVENT_LOCATIONS,
+  SOURCE_ENTRY_POINTS,
+} from './interactions';
 import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
 
 interface Props {
@@ -42,12 +49,13 @@ export const BasicProvisionedDashboardsEmptyPage = ({ datasourceUid }: Props) =>
 
   const onImportDashboardClick = async (dashboard: PluginDashboard) => {
     DashboardLibraryInteractions.itemClicked({
-      contentKind: 'datasource_dashboard',
+      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
       datasourceTypes: [dashboard.pluginId],
       libraryItemId: dashboard.uid,
       libraryItemTitle: dashboard.title,
-      sourceEntryPoint: 'datasource_page',
-      eventLocation: 'empty_dashboard',
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+      eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+      discoveryMethod: DISCOVERY_METHODS.BROWSE,
     });
 
     const params = new URLSearchParams({
@@ -56,9 +64,9 @@ export const BasicProvisionedDashboardsEmptyPage = ({ datasourceUid }: Props) =>
       pluginId: dashboard.pluginId,
       path: dashboard.path,
       // tracking event purpose values
-      sourceEntryPoint: 'datasource_page',
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       libraryItemId: dashboard.uid,
-      creationOrigin: 'dashboard_library_datasource_dashboard',
+      creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_DATASOURCE_DASHBOARD,
     });
 
     const templateUrl = `${DASHBOARD_LIBRARY_ROUTES.Template}?${params.toString()}`;

@@ -25,6 +25,7 @@
         "name": "adhocFiltersInTooltips",
         "resourceVersion": "1756814786992",
         "creationTimestamp": "2025-07-29T17:53:43Z",
+        "deletionTimestamp": "2025-11-11T09:49:48Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-09-02 12:06:26.992384 +0000 UTC"
         }
@@ -763,6 +764,22 @@
     },
     {
       "metadata": {
+        "name": "awsDatasourcesHttpProxy",
+        "resourceVersion": "1762964349996",
+        "creationTimestamp": "2025-11-12T16:15:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 16:19:09.996919 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables http proxy settings for aws datasources",
+        "stage": "experimental",
+        "codeowner": "@grafana/aws-datasources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "awsDatasourcesTempCredentials",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-07-06T15:06:11Z"
@@ -1007,6 +1024,7 @@
         "name": "correlations",
         "resourceVersion": "1762442825881",
         "creationTimestamp": "2022-09-16T13:14:27Z",
+        "deletionTimestamp": "2025-11-12T13:11:31Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
         }
@@ -1356,6 +1374,7 @@
         "name": "editPanelCSVDragAndDrop",
         "resourceVersion": "1762783224740",
         "creationTimestamp": "2023-01-24T09:43:44Z",
+        "deletionTimestamp": "2025-11-10T16:31:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-10 14:00:24.740459 +0000 UTC"
         }
@@ -1622,6 +1641,7 @@
         "name": "extractFieldsNameDeduplication",
         "resourceVersion": "1762442825881",
         "creationTimestamp": "2023-11-02T15:47:42Z",
+        "deletionTimestamp": "2025-11-11T16:00:57Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
         }
@@ -1803,6 +1823,18 @@
       "spec": {
         "description": "Enables Advisor app",
         "stage": "privatePreview",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafanaAdvisorAppInstaller",
+        "resourceVersion": "1762790554324",
+        "creationTimestamp": "2025-11-10T16:02:34Z"
+      },
+      "spec": {
+        "description": "Enables Advisor app installer",
+        "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend"
       }
     },
@@ -2840,6 +2872,19 @@
     },
     {
       "metadata": {
+        "name": "newPanelPadding",
+        "resourceVersion": "1760780310038",
+        "creationTimestamp": "2025-10-18T09:38:30Z"
+      },
+      "spec": {
+        "description": "Increases panel padding globally",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "newShareReportDrawer",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-02-17T19:05:46Z"
@@ -2850,6 +2895,20 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "newVizSuggestions",
+        "resourceVersion": "1762456851857",
+        "creationTimestamp": "2025-11-06T19:20:51Z"
+      },
+      "spec": {
+        "description": "Enable new visualization suggestions",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -2941,6 +3000,20 @@
     },
     {
       "metadata": {
+        "name": "panelPadding",
+        "resourceVersion": "1760779980125",
+        "creationTimestamp": "2025-10-18T09:33:00Z",
+        "deletionTimestamp": "2025-10-18T09:38:30Z"
+      },
+      "spec": {
+        "description": "Increases panel padding globally",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "panelTimeSettings",
         "resourceVersion": "1761555646368",
         "creationTimestamp": "2025-10-27T09:00:46Z"
@@ -3005,13 +3078,16 @@
     {
       "metadata": {
         "name": "pinNavItems",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-06-10T11:40:03Z"
+        "resourceVersion": "1762958248290",
+        "creationTimestamp": "2024-06-10T11:40:03Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables pinning of nav items",
         "stage": "GA",
-        "codeowner": "@grafana/grafana-frontend-platform",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
         "expression": "true"
       }
     },
@@ -3531,13 +3607,16 @@
     {
       "metadata": {
         "name": "restoreDashboards",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-05-23T14:35:54Z"
+        "resourceVersion": "1762958248290",
+        "creationTimestamp": "2025-05-23T14:35:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables restore deleted dashboards feature",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
         "hideFromAdminPage": true,
         "expression": "false"
       }
@@ -3632,13 +3711,16 @@
     {
       "metadata": {
         "name": "scopeSearchAllLevels",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-04-14T07:42:16Z"
+        "resourceVersion": "1762958248290",
+        "creationTimestamp": "2025-04-14T07:42:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable scope search to include all levels of the scope node tree",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
@@ -3788,13 +3870,16 @@
     {
       "metadata": {
         "name": "starsFromAPIServer",
-        "resourceVersion": "1758276055065",
-        "creationTimestamp": "2025-09-19T10:00:55Z"
+        "resourceVersion": "1762958248290",
+        "creationTimestamp": "2025-09-19T10:00:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
+        }
       },
       "spec": {
         "description": "populate star status from apiserver",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
         "frontend": true,
         "hideFromDocs": true
       }
@@ -3921,7 +4006,8 @@
       "metadata": {
         "name": "templateVariablesUsesCombobox",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-01-31T09:53:13Z"
+        "creationTimestamp": "2025-01-31T09:53:13Z",
+        "deletionTimestamp": "2025-11-12T14:40:39Z"
       },
       "spec": {
         "description": "Use new **Combobox** component for template variables",
@@ -4005,7 +4091,8 @@
       "metadata": {
         "name": "tlsMemcached",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-05-09T19:12:08Z"
+        "creationTimestamp": "2024-05-09T19:12:08Z",
+        "deletionTimestamp": "2025-11-11T13:50:51Z"
       },
       "spec": {
         "description": "Use TLS-enabled memcached in the enterprise caching feature",
@@ -4045,13 +4132,16 @@
     {
       "metadata": {
         "name": "unifiedHistory",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-12-13T10:41:18Z"
+        "resourceVersion": "1762958248290",
+        "creationTimestamp": "2024-12-13T10:41:18Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Displays the navigation history so the user can navigate back to previous pages",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
         "frontend": true
       }
     },
@@ -4279,13 +4369,16 @@
     {
       "metadata": {
         "name": "useScopesNavigationEndpoint",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-31T15:20:00Z"
+        "resourceVersion": "1762958248290",
+        "creationTimestamp": "2025-03-31T15:20:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromAdminPage": true,
         "hideFromDocs": true
