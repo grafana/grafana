@@ -359,7 +359,15 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 
 func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID string) func(include *plugins.Includes) bool {
 	hasAccess := ac.HasAccess(s.accessControl, c)
+	ctx := c.Req.Context()
 	return func(include *plugins.Includes) bool {
+		if include.ReqFeatureToggle != "" && !s.features.IsEnabled(ctx, include.ReqFeatureToggle) {
+			s.log.Debug("plugin include requires feature toggle that is not enabled",
+				"plugin", pluginID,
+				"include", include.Name,
+				"featureToggle", include.ReqFeatureToggle)
+			return false
+		}
 		if include.RequiresRBACAction() && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(pluginID, include.Action)) {
 			s.log.Debug("plugin include is covered by RBAC, user doesn't have access",
 				"plugin", pluginID,

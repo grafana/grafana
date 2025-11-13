@@ -301,6 +301,10 @@
             "type": "string",
             "description": "The RBAC action a user must have to see this page in the navigation menu. **Warning**: unless the action targets the plugin, only the action is verified, not what it applies to."
           },
+          "reqFeatureToggle": {
+            "type": "string",
+            "description": "The feature toggle that must be enabled for this page to appear in the navigation menu."
+          },
           "path": {
             "type": "string",
             "description": "Used for app plugins."
