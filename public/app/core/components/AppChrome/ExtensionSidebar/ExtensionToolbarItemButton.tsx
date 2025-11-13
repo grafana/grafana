@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -38,8 +38,9 @@ function ExtensionToolbarItemButtonComponent(
     return (
       <ToolbarButton
         ref={ref}
-        className={cx(styles.button, styles.buttonActive)}
+        className={styles.buttonActive}
         icon={icon}
+        iconOnly
         data-testid="extension-toolbar-button-close"
         variant="default"
         onClick={onClick}
@@ -55,8 +56,8 @@ function ExtensionToolbarItemButtonComponent(
   return (
     <ToolbarButton
       ref={ref}
-      className={cx(styles.button)}
       icon={icon}
+      iconOnly
       data-testid="extension-toolbar-button-open"
       variant="default"
       onClick={onClick}
@@ -73,17 +74,6 @@ export const ExtensionToolbarItemButton = React.forwardRef<HTMLButtonElement, To
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    button: css({
-      // this is needed because with certain breakpoints the button will get `width: auto`
-      // and the icon will stretch
-      aspectRatio: '1 / 1 !important',
-      width: '28px',
-      height: '28px',
-      padding: 0,
-      justifyContent: 'center',
-      borderRadius: theme.shape.radius.circle,
-      margin: theme.spacing(0, 0.25),
-    }),
     buttonActive: css({
       borderRadius: theme.shape.radius.circle,
       backgroundColor: theme.colors.primary.transparent,
