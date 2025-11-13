@@ -2753,11 +2753,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/RawPrometheus/RawPrometheusContainer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/RichHistory/RichHistorySettingsTab.tsx": {
     "no-restricted-syntax": {
       "count": 1
