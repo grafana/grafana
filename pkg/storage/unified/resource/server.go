@@ -256,7 +256,6 @@ type ResourceServerOptions struct {
 	OwnsIndexFn func(key NamespacedResource) (bool, error)
 }
 
-// NewResourceServer is used to spin up server locally
 func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing Backend implementation")

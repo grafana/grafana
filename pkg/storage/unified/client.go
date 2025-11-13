@@ -59,7 +59,6 @@ func ProvideUnifiedStorageClient(opts *Options,
 ) (resource.ResourceClient, error) {
 	// See: apiserver.applyAPIServerConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
-	// Unified Storage server is started here!!!!
 	client, err := newClient(options.StorageOptions{
 		StorageType:             options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
 		DataPath:                apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
@@ -140,7 +139,6 @@ func newClient(opts options.StorageOptions,
 		}
 		return resource.NewLocalResourceClient(server), nil
 
-	// do this after
 	case options.StorageTypeUnifiedGrpc:
 		if opts.Address == "" {
 			return nil, fmt.Errorf("expecting address for storage_type: %s", opts.StorageType)
@@ -168,14 +166,9 @@ func newClient(opts options.StorageOptions,
 			indexConn = conn
 		}
 
-		// Create a client instance
-		client, err := resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
-		if err != nil {
-			return nil, err
-		}
-		return client, nil
+		// Create a resource client
+		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
 
-	// default storage type - do it first
 	default:
 		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics, nil)
 		if err != nil {

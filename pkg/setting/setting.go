@@ -575,21 +575,7 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage map[string]UnifiedStorageConfig
-	// SkipDataMigrations migrates resources to unified storage at startup
-	// Requires:
-	// [feature_toggles]
-	// unifiedStorage = true
-	// unifiedStorageSearchUI = true
-	// unifiedStorageSearch = true
-	// [unified_storage]
-	// - DualWriterMode to rest.Mode5
-	// - DualWriterMigrationDataSyncDisabled to true
-	// - DualWriterPeriodicDataSyncJobEnabled to false
-	// Maybe:
-	// unifiedStorageHistoryPruner=true // ask JP
-	// grafanaAPIServerWithExperimentalAPIs = true
-	SkipDataMigrations                         bool
+	UnifiedStorage                             map[string]UnifiedStorageConfig
 	MaxPageSizeBytes                           int
 	IndexPath                                  string
 	IndexWorkers                               int
