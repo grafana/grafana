@@ -291,17 +291,20 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 
 	// Check for stale sync status - if sync status indicates a job is running but the job no longer exists
 	// Only check if Finished is set (meaning a sync has completed before) to avoid interfering with initial syncs
-	// Only trigger resync if sync is enabled to avoid unnecessary operations
+	// Only trigger resync if sync is enabled and sync interval has elapsed (to avoid unnecessary operations)
 	if obj.Status.Sync.Finished > 0 &&
 		obj.Spec.Sync.Enabled &&
 		(obj.Status.Sync.State == provisioning.JobStatePending || obj.Status.Sync.State == provisioning.JobStateWorking) &&
 		obj.Status.Sync.JobID != "" {
 		_, err := rc.jobs.Get(ctx, obj.Namespace, obj.Status.Sync.JobID)
 		if apierrors.IsNotFound(err) {
-			// Job was cleaned up but sync status wasn't updated
-			logger := logging.FromContext(ctx)
-			logger.Info("detected stale sync status", "job_id", obj.Status.Sync.JobID)
-			return true
+			// Job was cleaned up but sync status wasn't updated - trigger resync to reconcile
+			// Only trigger if sync interval has elapsed to avoid unnecessary operations
+			if syncAge >= (syncInterval - tolerance) {
+				logger := logging.FromContext(ctx)
+				logger.Info("detected stale sync status", "job_id", obj.Status.Sync.JobID)
+				return true
+			}
 		}
 		// For other errors, log but continue with normal logic
 		if err != nil {
