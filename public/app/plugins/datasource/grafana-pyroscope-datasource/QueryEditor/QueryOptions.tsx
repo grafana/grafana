@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2, RadioButtonGroup, MultiSelect, Input, InlineSwitch } from '@grafana/ui';
 
 import { Query } from '../types';
@@ -55,6 +56,9 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
   }
   if (query.maxNodes) {
     collapsedInfo.push(`Max nodes: ${query.maxNodes}`);
+  }
+  if (query.includeExemplars) {
+    collapsedInfo.push(`With exemplars`);
   }
 
   return (
@@ -142,6 +146,14 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
               }}
             />
           </EditorField>
+          {config.featureToggles.profilesExemplars && <EditorField label={'Exemplars'} tooltip={<>Include profile exemplars in the time series.</>}>
+            <InlineSwitch
+              value={query.includeExemplars || false}
+              onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
+                onQueryChange({...query, includeExemplars: event.currentTarget.checked});
+              }}
+            />
+          </EditorField>}
         </div>
       </QueryOptionGroup>
     </Stack>
