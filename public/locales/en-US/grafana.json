@@ -9150,6 +9150,9 @@
     "category-legend": "Legend",
     "category-tooltip": "Tooltip",
     "category-y-axis": "Y Axis",
+    "error": {
+      "no-y-fields": "No numeric fields found for heatmap"
+    },
     "mode-options": {
       "label-opacity": "Opacity",
       "label-scheme": "Scheme"
