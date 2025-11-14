@@ -178,6 +178,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   infoIcon: css({
     color: theme.colors.primary.main,
-    marginRight: theme.spacing(0.5),
+    marginRight: theme.spacing(0.25),
+    marginBottom: theme.spacing(0.25),
   }),
 });
