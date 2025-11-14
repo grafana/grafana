@@ -4,9 +4,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
+import { UPGRADE_URL } from '../constants';
 import { isFreeTierLicense } from '../utils/isFreeTierLicense';
-
-const UPGRADE_URL = 'https://grafana.com/profile/org/subscription';
 
 export interface FreeTierLimitNoteProps {
   /** The type of limit to display: connection limit or resource limit */

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Box, EmptyState, FilterInput, Icon, Stack } from '@grafana/ui';
+import { Alert, Box, EmptyState, FilterInput, Icon, Stack, TextLink } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryCard } from '../Repository/RepositoryCard';
 import { useResourceStats } from '../Wizard/hooks/useResourceStats';
+import { UPGRADE_URL } from '../constants';
 import { useIsProvisionedInstance } from '../hooks/useIsProvisionedInstance';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
 import { isFreeTierLicense } from '../utils/isFreeTierLicense';
@@ -56,10 +57,14 @@ export function RepositoryList({ items }: Props) {
             )}
             {isFreeTierLicense() && (
               <>
-                {' '}
-                <Trans i18nKey="provisioning.free-tier-limit.message">
-                  Free-tier accounts are capped to 1 connection, and 20 resources per folder.
-                </Trans>
+                <br />
+                <Trans i18nKey="provisioning.free-tier-limit.message-connection">
+                  Free-tier accounts are limited to 20 resources per folder. To add more resources per folder,
+                </Trans>{' '}
+                <TextLink href={UPGRADE_URL} external>
+                  <Trans i18nKey="provisioning.free-tier-limit.upgrade-link">upgrade your account</Trans>{' '}
+                </TextLink>
+                .
               </>
             )}
           </Alert>
