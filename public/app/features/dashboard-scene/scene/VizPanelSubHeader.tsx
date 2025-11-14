@@ -8,7 +8,6 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
 
 import { PanelNonApplicableFiltersSubHeader } from './PanelNonApplicableFiltersSubHeader';
 
@@ -49,7 +48,7 @@ export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPane
     return null;
   }
 
-  const datasourceRef = queryRunner.state.datasource;
+  const dsUid = sceneGraph.interpolate(queryRunner, queryRunner.state.datasource?.uid);
   const queries = data.data?.request?.targets ?? [];
   const adhocFiltersVariable = sceneGraph
     .getVariables(model)
@@ -59,9 +58,9 @@ export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPane
     .state.variables.find((variable) => variable instanceof GroupByVariable);
 
   if (
-    !datasourceRef ||
+    !dsUid ||
     !enableNonApplicableDrilldowns ||
-    !supportsDrilldownsApplicability(datasourceRef, adhocFiltersVariable, groupByVariable)
+    !supportsDrilldownsApplicability(dsUid, adhocFiltersVariable, groupByVariable)
   ) {
     return null;
   }
@@ -76,15 +75,14 @@ export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPane
 }
 
 function supportsDrilldownsApplicability(
-  panelDsRef: DataSourceRef,
+  dsUid: string,
   filtersVar?: AdHocFiltersVariable,
   groupByVar?: GroupByVariable
 ) {
   if (
     filtersVar &&
     filtersVar.isApplicabilityEnabled() &&
-    panelDsRef.uid === filtersVar.state.datasource?.uid &&
-    panelDsRef.type === filtersVar.state.datasource?.type
+    dsUid === sceneGraph.interpolate(filtersVar, filtersVar.state.datasource?.uid)
   ) {
     return true;
   }
@@ -92,8 +90,7 @@ function supportsDrilldownsApplicability(
   if (
     groupByVar &&
     groupByVar.isApplicabilityEnabled() &&
-    panelDsRef.uid === groupByVar.state.datasource?.uid &&
-    panelDsRef.type === groupByVar.state.datasource?.type
+    dsUid === sceneGraph.interpolate(groupByVar, groupByVar.state.datasource?.uid)
   ) {
     return true;
   }
