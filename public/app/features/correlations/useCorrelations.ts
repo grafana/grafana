@@ -110,7 +110,7 @@ const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationData | u
         config: {
           field: item.spec.config.field,
           target: {
-            url: item.spec.config.target.url || '', // todo this is wrong, fix in spec
+            url: item.spec.config.target.url.url || '', // todo this is wrong, fix in spec
           },
           transformations: [], // todo fix
         },

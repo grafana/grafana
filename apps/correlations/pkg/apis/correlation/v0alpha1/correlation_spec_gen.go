@@ -33,11 +33,20 @@ type CorrelationConfigSpec struct {
 
 // NewCorrelationConfigSpec creates a new CorrelationConfigSpec object.
 func NewCorrelationConfigSpec() *CorrelationConfigSpec {
-	return &CorrelationConfigSpec{}
+	return &CorrelationConfigSpec{
+		Target: *NewCorrelationTargetSpec(),
+	}
 }
 
 // +k8s:openapi-gen=true
-type CorrelationTargetSpec map[string]interface{}
+type CorrelationTargetSpec struct {
+	Test string `json:"test"`
+}
+
+// NewCorrelationTargetSpec creates a new CorrelationTargetSpec object.
+func NewCorrelationTargetSpec() *CorrelationTargetSpec {
+	return &CorrelationTargetSpec{}
+}
 
 // +k8s:openapi-gen=true
 type CorrelationTransformationSpec struct {
