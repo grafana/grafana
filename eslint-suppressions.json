@@ -729,11 +729,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/Menu/Menu.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Modal/ModalsContext.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -1894,26 +1889,6 @@
       "count": 1
     }
   },
-  "public/app/features/canvas/runtime/element.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/canvas/runtime/frame.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/canvas/runtime/root.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/canvas/runtime/scene.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/commandPalette/actions/scopeActions.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 4
@@ -2337,11 +2312,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor.tsx": {
     "@grafana/no-aria-label-selectors": {
       "count": 1
@@ -2350,14 +2320,6 @@
       "count": 1
     },
     "no-restricted-syntax": {
-      "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/PanelEditor/OptionsPaneOptions.test.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2810,11 +2772,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/TraceView.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    }
-  },
   "public/app/features/explore/TraceView/components/TracePageHeader/SpanGraph/CanvasSpanGraph.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -2822,11 +2779,6 @@
   },
   "public/app/features/explore/TraceView/components/TracePageHeader/SpanGraph/ViewingLayer.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TracePageHeader/TracePageHeader.tsx": {
-    "react-hooks/rules-of-hooks": {
       "count": 1
     }
   },
@@ -4523,16 +4475,6 @@
     }
   },
   "public/app/plugins/panel/canvas/CanvasPanel.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/canvas/components/connections/Connections.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/canvas/components/connections/Connections2.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
