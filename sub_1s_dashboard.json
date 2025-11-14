@@ -1,0 +1,732 @@
+{
+  "kind": "DashboardList",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "metadata": {
+    "resourceVersion": "1763108812000000",
+    "continue": "b3JnOjEvc3RhcnQ6Njk4Mi9mb2xkZXI6LA=="
+  },
+  "items": [
+    {
+      "metadata": {
+        "name": "s9s2yn_ik",
+        "namespace": "stacks-915432",
+        "uid": "QuOhR1IHfXaznXcVdPRMxWNIUTh28N8DuYfkkXTldXoX",
+        "resourceVersion": "9",
+        "generation": 9,
+        "creationTimestamp": "2019-01-25T17:58:56Z",
+        "labels": {
+          "grafana.app/deprecatedInternalID": "6982"
+        },
+        "annotations": {
+          "grafana.app/createdBy": "user:u000002291",
+          "grafana.app/folder": "ddba99cd-6be0-4515-9574-bf21f3859707",
+          "grafana.app/updatedBy": "user:u000000347",
+          "grafana.app/updatedTimestamp": "2025-01-27T11:14:17Z"
+        }
+      },
+      "spec": {
+        "annotations": {
+          "list": [
+            {
+              "builtIn": 1,
+              "datasource": {
+                "type": "datasource",
+                "uid": "grafana"
+              },
+              "enable": true,
+              "hide": true,
+              "iconColor": "rgba(0, 211, 255, 1)",
+              "name": "Annotations & Alerts",
+              "type": "dashboard"
+            }
+          ]
+        },
+        "editable": true,
+        "fiscalYearStartMonth": 0,
+        "graphTooltip": 0,
+        "links": [],
+        "liveNow": false,
+        "panels": [
+          {
+            "aliasColors": {},
+            "autoMigrateFrom": "graph",
+            "bars": false,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": {
+              "type": "graphite",
+              "uid": "000000004"
+            },
+            "fill": 1,
+            "fillGradient": 0,
+            "gridPos": {
+              "h": 10,
+              "w": 12,
+              "x": 0,
+              "y": 0
+            },
+            "hiddenSeries": false,
+            "id": 2,
+            "legend": {
+              "alignAsTable": true,
+              "avg": true,
+              "current": false,
+              "max": false,
+              "min": false,
+              "rightSide": true,
+              "show": true,
+              "sort": "avg",
+              "sortDesc": true,
+              "total": false,
+              "values": true
+            },
+            "lines": true,
+            "linewidth": 1,
+            "nullPointMode": "null",
+            "options": {
+              "alertThreshold": true
+            },
+            "percentage": false,
+            "pluginVersion": "10.2.99-custom.booking.1",
+            "pointradius": 5,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "stack": false,
+            "steppedLine": false,
+            "targets": [
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "refId": "A",
+                "target": "aliasByNode(transformNull(summarize(aggregations.[[rollup_resolution_prod]].reviews.submission.platform.*, '[[interval]]', 'sum', false), 0), 5)",
+                "textEditor": false
+              }
+            ],
+            "thresholds": [],
+            "timeRegions": [],
+            "title": "Per platform",
+            "tooltip": {
+              "shared": true,
+              "sort": 0,
+              "value_type": "individual"
+            },
+            "type": "timeseries",
+            "xaxis": {
+              "mode": "time",
+              "show": true,
+              "values": []
+            },
+            "yaxes": [
+              {
+                "format": "short",
+                "logBase": 1,
+                "show": true
+              },
+              {
+                "format": "short",
+                "logBase": 1,
+                "show": true
+              }
+            ],
+            "yaxis": {
+              "align": false
+            }
+          },
+          {
+            "aliasColors": {},
+            "autoMigrateFrom": "graph",
+            "bars": false,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": {
+              "type": "graphite",
+              "uid": "000000004"
+            },
+            "decimals": 0,
+            "fill": 1,
+            "fillGradient": 0,
+            "gridPos": {
+              "h": 10,
+              "w": 12,
+              "x": 12,
+              "y": 0
+            },
+            "hiddenSeries": false,
+            "id": 4,
+            "legend": {
+              "alignAsTable": true,
+              "avg": true,
+              "current": false,
+              "max": false,
+              "min": false,
+              "rightSide": true,
+              "show": true,
+              "sort": "avg",
+              "sortDesc": true,
+              "total": false,
+              "values": true
+            },
+            "lines": true,
+            "linewidth": 1,
+            "nullPointMode": "null",
+            "options": {
+              "alertThreshold": true
+            },
+            "percentage": false,
+            "pluginVersion": "10.2.99-custom.booking.1",
+            "pointradius": 5,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "stack": false,
+            "steppedLine": false,
+            "targets": [
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "hide": true,
+                "refCount": 1,
+                "refId": "A",
+                "target": "aliasByNode(transformNull(summarize(aggregations.[[rollup_resolution_prod]].reviews.submission.platform.*, '[[interval]]', 'sum', false), 0), 5)",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "hide": true,
+                "refCount": 1,
+                "refId": "B",
+                "target": "alias(sumSeries(transformNull(summarize(aggregations.[[rollup_resolution_prod]].reviews.submission.platform.*, '[[interval]]', 'sum', false), 0)), 'total')",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "refCount": 0,
+                "refId": "C",
+                "target": "aliasByNode(divideSeries(#A, #B), 0)",
+                "textEditor": true
+              }
+            ],
+            "thresholds": [],
+            "timeRegions": [],
+            "title": "Contribution Per platform",
+            "tooltip": {
+              "shared": true,
+              "sort": 0,
+              "value_type": "individual"
+            },
+            "type": "timeseries",
+            "xaxis": {
+              "mode": "time",
+              "show": true,
+              "values": []
+            },
+            "yaxes": [
+              {
+                "format": "percentunit",
+                "logBase": 1,
+                "show": true
+              },
+              {
+                "format": "short",
+                "logBase": 1,
+                "show": true
+              }
+            ],
+            "yaxis": {
+              "align": false
+            }
+          },
+          {
+            "aliasColors": {},
+            "autoMigrateFrom": "graph",
+            "bars": false,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": {
+              "type": "graphite",
+              "uid": "000000004"
+            },
+            "fill": 1,
+            "fillGradient": 0,
+            "gridPos": {
+              "h": 10,
+              "w": 12,
+              "x": 0,
+              "y": 10
+            },
+            "hiddenSeries": false,
+            "id": 3,
+            "legend": {
+              "alignAsTable": true,
+              "avg": true,
+              "current": false,
+              "hideEmpty": true,
+              "hideZero": true,
+              "max": false,
+              "min": false,
+              "rightSide": true,
+              "show": true,
+              "sort": "avg",
+              "sortDesc": true,
+              "total": false,
+              "values": true
+            },
+            "lines": true,
+            "linewidth": 1,
+            "nullPointMode": "null",
+            "options": {
+              "alertThreshold": true
+            },
+            "percentage": false,
+            "pluginVersion": "10.2.99-custom.booking.1",
+            "pointradius": 5,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "stack": false,
+            "steppedLine": false,
+            "targets": [
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "refCount": 2,
+                "refId": "A",
+                "target": "aliasByNode(transformNull(summarize(aggregations.[[rollup_resolution_prod]].reviews.submission.source.*email_sum, '[[interval]]', 'sum', false), 0), 5)",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "hide": true,
+                "refCount": 2,
+                "refId": "B",
+                "target": "aliasByNode(transformNull(summarize(aggregations.[[rollup_resolution_prod]].reviews.submission.source.other_sum, '[[interval]]', 'sum', false), 0), 5)",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "refCount": 2,
+                "refId": "C",
+                "target": "aliasByNode(transformNull(summarize(sumSeriesWithWildcards(aggregations.[[rollup_resolution_prod]].mobile_apps.main_app.*.all.counters.ugc.reviewsource_invite*.email_invite_count, 8), '[[interval]]', 'sum', false), 0), 4, 8)",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "refCount": 1,
+                "refId": "E",
+                "target": "alias(diffSeries(#B, sumSeries(#D)), 'other web')",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "hide": true,
+                "refCount": 0,
+                "refId": "D",
+                "target": "aliasByNode(transformNull(summarize(sumSeriesWithWildcards(aggregations.[[rollup_resolution_prod]].mobile_apps.main_app.*.all.counters.ugc.reviewsource_invite*.*, 8, 9), '[[interval]]', 'sum', false), 0), 4, 8)",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "refCount": 1,
+                "refId": "F",
+                "target": "aliasSub(aliasByNode(diffSeriesLists(#D, #C), 0), '(.*)', '${1}.other')",
+                "textEditor": true
+              }
+            ],
+            "thresholds": [],
+            "timeRegions": [],
+            "title": "Per source",
+            "tooltip": {
+              "shared": true,
+              "sort": 0,
+              "value_type": "individual"
+            },
+            "type": "timeseries",
+            "xaxis": {
+              "mode": "time",
+              "show": true,
+              "values": []
+            },
+            "yaxes": [
+              {
+                "format": "short",
+                "logBase": 1,
+                "show": true
+              },
+              {
+                "format": "short",
+                "logBase": 1,
+                "show": true
+              }
+            ],
+            "yaxis": {
+              "align": false
+            }
+          },
+          {
+            "aliasColors": {},
+            "autoMigrateFrom": "graph",
+            "bars": false,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": {
+              "type": "graphite",
+              "uid": "000000004"
+            },
+            "decimals": 0,
+            "fill": 1,
+            "fillGradient": 0,
+            "gridPos": {
+              "h": 10,
+              "w": 12,
+              "x": 12,
+              "y": 10
+            },
+            "hiddenSeries": false,
+            "id": 5,
+            "legend": {
+              "alignAsTable": true,
+              "avg": true,
+              "current": false,
+              "hideEmpty": true,
+              "hideZero": true,
+              "max": false,
+              "min": false,
+              "rightSide": true,
+              "show": true,
+              "sort": "avg",
+              "sortDesc": true,
+              "total": false,
+              "values": true
+            },
+            "lines": true,
+            "linewidth": 1,
+            "nullPointMode": "null",
+            "options": {
+              "alertThreshold": true
+            },
+            "percentage": false,
+            "pluginVersion": "10.2.99-custom.booking.1",
+            "pointradius": 5,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [
+              {
+                "alias": "diffSeries(transformNull(summarize(monitors.reviews.submission.source.other_sum, '1d', 'sum', false), 0),sumSeries(transformNull(summarize(sumSeriesWithWildcards(monitors.mobile_apps.main_app.*.all.counters.ugc.reviewsource_invite*.email_invite_count, 7), '1d', 'sum', false), 0),transformNull(summarize(sumSeriesWithWildcards(monitors.mobile_apps.main_app.*.all.counters.ugc.reviewsource_invite*.*, 7, 8), '1d', 'sum', false), 0)))",
+                "yaxis": 2
+              }
+            ],
+            "spaceLength": 10,
+            "stack": false,
+            "steppedLine": false,
+            "targets": [
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "hide": true,
+                "refCount": 3,
+                "refId": "A",
+                "target": "transformNull(summarize(aggregations.[[rollup_resolution_prod]].reviews.submission.source.*email_sum, '[[interval]]', 'sum', false), 0)",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "hide": true,
+                "refCount": 2,
+                "refId": "B",
+                "target": "transformNull(summarize(aggregations.[[rollup_resolution_prod]].reviews.submission.source.other_sum, '[[interval]]', 'sum', false), 0)",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "hide": true,
+                "refCount": 4,
+                "refId": "C",
+                "target": "transformNull(summarize(sumSeriesWithWildcards(aggregations.[[rollup_resolution_prod]].mobile_apps.main_app.*.all.counters.ugc.reviewsource_invite*.email_invite_count, 8), '[[interval]]', 'sum', false), 0)",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "hide": true,
+                "refCount": 3,
+                "refId": "D",
+                "target": "transformNull(summarize(sumSeriesWithWildcards(aggregations.[[rollup_resolution_prod]].mobile_apps.main_app.*.all.counters.ugc.reviewsource_invite*.*, 8, 9), '[[interval]]', 'sum', false), 0)",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "hide": true,
+                "refCount": 4,
+                "refId": "F",
+                "target": "diffSeriesLists(#D, #C)",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "hide": true,
+                "refCount": 3,
+                "refId": "G",
+                "target": "sumSeries(#A, #B)",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "refCount": 3,
+                "refId": "H",
+                "target": "aliasSub(aliasByMetric(divideSeries(#A, #G)), '(.*)', '${1}.web')",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "hide": false,
+                "refCount": 3,
+                "refId": "I",
+                "target": "aliasSub(aliasByNode(divideSeries(#C, #G), 4), '(.*)', '$1.email')",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "hide": false,
+                "refCount": 3,
+                "refId": "K",
+                "target": "aliasSub(aliasByNode(divideSeries(#F, #G), 4), '(.*)', '${1}.other')",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "hide": true,
+                "refCount": 2,
+                "refId": "E",
+                "target": "diffSeries(#B, sumSeries(#D))",
+                "textEditor": true
+              },
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "refCount": 3,
+                "refId": "J",
+                "target": "alias(divideSeries(#E, #G), 'web.other')",
+                "textEditor": true
+              }
+            ],
+            "thresholds": [],
+            "timeRegions": [],
+            "title": "Contribution Per source",
+            "tooltip": {
+              "shared": true,
+              "sort": 0,
+              "value_type": "individual"
+            },
+            "type": "timeseries",
+            "xaxis": {
+              "mode": "time",
+              "show": true,
+              "values": []
+            },
+            "yaxes": [
+              {
+                "format": "percentunit",
+                "logBase": 1,
+                "show": true
+              },
+              {
+                "format": "short",
+                "logBase": 1,
+                "show": true
+              }
+            ],
+            "yaxis": {
+              "align": false
+            }
+          }
+        ],
+        "refresh": "",
+        "schemaVersion": 42,
+        "tags": [],
+        "templating": {
+          "list": [
+            {
+              "auto": false,
+              "auto_count": 30,
+              "auto_min": "10s",
+              "current": {
+                "text": "10m",
+                "value": "10m"
+              },
+              "hide": 0,
+              "name": "interval",
+              "options": [
+                {
+                  "selected": false,
+                  "text": "1m",
+                  "value": "1m"
+                },
+                {
+                  "selected": false,
+                  "text": "10m",
+                  "value": "10m"
+                },
+                {
+                  "selected": false,
+                  "text": "30m",
+                  "value": "30m"
+                },
+                {
+                  "selected": false,
+                  "text": "1h",
+                  "value": "1h"
+                },
+                {
+                  "selected": false,
+                  "text": "6h",
+                  "value": "6h"
+                },
+                {
+                  "selected": false,
+                  "text": "12h",
+                  "value": "12h"
+                },
+                {
+                  "selected": true,
+                  "text": "1d",
+                  "value": "1d"
+                },
+                {
+                  "selected": false,
+                  "text": "7d",
+                  "value": "7d"
+                },
+                {
+                  "selected": false,
+                  "text": "14d",
+                  "value": "14d"
+                },
+                {
+                  "selected": false,
+                  "text": "30d",
+                  "value": "30d"
+                }
+              ],
+              "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+              "refresh": 2,
+              "skipUrlSync": false,
+              "type": "interval"
+            },
+            {
+              "current": {
+                "selected": false,
+                "text": "minutely",
+                "value": "minutely"
+              },
+              "datasource": {
+                "type": "graphite",
+                "uid": "000000004"
+              },
+              "definition": "aggregations.*",
+              "hide": 0,
+              "includeAll": false,
+              "label": "Resolution (Prod)",
+              "multi": false,
+              "name": "rollup_resolution_prod",
+              "options": [],
+              "query": "aggregations.*",
+              "refresh": 1,
+              "regex": "",
+              "skipUrlSync": false,
+              "sort": 0,
+              "type": "query"
+            }
+          ]
+        },
+        "time": {
+          "from": "now-24h",
+          "to": "now"
+        },
+        "timepicker": {
+          "refresh_intervals": [
+            "5s",
+            "10s",
+            "30s",
+            "1m",
+            "5m",
+            "15m",
+            "30m",
+            "1h",
+            "2h",
+            "1d"
+          ]
+        },
+        "timezone": "",
+        "title": "review submission accurate - WIP",
+        "weekStart": ""
+      },
+      "status": {
+        "conversion": {
+          "failed": false,
+          "storedVersion": "v0alpha1"
+        }
+      }
+    }
+  ]
+}

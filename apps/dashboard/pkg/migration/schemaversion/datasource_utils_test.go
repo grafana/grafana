@@ -129,6 +129,7 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 		{UID: "existing-target-uid", Type: "elasticsearch", Name: "Existing Target Name", Default: false, APIVersion: "v2"},
 		{UID: "existing-ref-uid", Type: "prometheus", Name: "Existing Ref Name", Default: false, APIVersion: "v1"},
 	}
+	index := schemaversion.NewDatasourceIndex(datasources)
 
 	t.Run("returnDefaultAsNull: true", func(t *testing.T) {
 		options := map[string]bool{"returnDefaultAsNull": true}
@@ -193,7 +194,7 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result := schemaversion.MigrateDatasourceNameToRef(tt.nameOrRef, options, datasources)
+				result := schemaversion.MigrateDatasourceNameToRef(tt.nameOrRef, options, index)
 				assert.Equal(t, tt.expected, result)
 			})
 		}
@@ -261,7 +262,7 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result := schemaversion.MigrateDatasourceNameToRef(tt.nameOrRef, options, datasources)
+				result := schemaversion.MigrateDatasourceNameToRef(tt.nameOrRef, options, index)
 				assert.Equal(t, tt.expected, result)
 			})
 		}
@@ -274,7 +275,7 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 			nameOrRef := map[string]interface{}{
 				"type": "prometheus",
 			}
-			result := schemaversion.MigrateDatasourceNameToRef(nameOrRef, options, datasources)
+			result := schemaversion.MigrateDatasourceNameToRef(nameOrRef, options, index)
 			expected := map[string]interface{}{
 				"type": "prometheus",
 			}
@@ -282,13 +283,14 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 		})
 
 		t.Run("integer input should return nil", func(t *testing.T) {
-			result := schemaversion.MigrateDatasourceNameToRef(123, options, datasources)
+			result := schemaversion.MigrateDatasourceNameToRef(123, options, index)
 			expected := map[string]interface{}(nil)
 			assert.Equal(t, expected, result)
 		})
 
 		t.Run("empty datasources list", func(t *testing.T) {
-			result := schemaversion.MigrateDatasourceNameToRef("any-ds", options, []schemaversion.DataSourceInfo{})
+			emptyIndex := schemaversion.NewDatasourceIndex([]schemaversion.DataSourceInfo{})
+			result := schemaversion.MigrateDatasourceNameToRef("any-ds", options, emptyIndex)
 			expected := map[string]interface{}{
 				"uid": "any-ds",
 			}

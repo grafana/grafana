@@ -22,10 +22,10 @@ type DataSourceInfo struct {
 	APIVersion string
 }
 
-type DataSourceInfoProvider interface {
-	// GetDataSourceInfo returns a list of all data sources with their info
-	// The context must have the namespace in it
-	GetDataSourceInfo(ctx context.Context) []DataSourceInfo
+type DataSourceIndexProvider interface {
+
+	// Index returns a pre-built index for O(1) datasource lookups.
+	Index(ctx context.Context) *DatasourceIndex
 }
 
 type PanelPluginInfo struct {
@@ -33,7 +33,7 @@ type PanelPluginInfo struct {
 	Version string
 }
 
-func GetMigrations(dsInfoProvider DataSourceInfoProvider) map[int]SchemaVersionMigrationFunc {
+func GetMigrations(dsIndexProvider DataSourceIndexProvider) map[int]SchemaVersionMigrationFunc {
 	return map[int]SchemaVersionMigrationFunc{
 		2:  V2,
 		3:  V3,
@@ -66,10 +66,10 @@ func GetMigrations(dsInfoProvider DataSourceInfoProvider) map[int]SchemaVersionM
 		30: V30,
 		31: V31,
 		32: V32,
-		33: V33(dsInfoProvider),
+		33: V33(dsIndexProvider),
 		34: V34,
 		35: V35,
-		36: V36(dsInfoProvider),
+		36: V36(dsIndexProvider),
 		37: V37,
 		38: V38,
 		39: V39,

@@ -1,0 +1,190 @@
+{
+  "kind": "DashboardList",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "metadata": {
+    "resourceVersion": "1763108812000000",
+    "continue": "b3JnOjEvc3RhcnQ6NzAwNC9mb2xkZXI6LA=="
+  },
+  "items": [
+    {
+      "metadata": {
+        "name": "Z1wsDpliz",
+        "namespace": "stacks-915432",
+        "uid": "nyL7RenOTAaBr5r2p6WAvvRJ4ZNp3tSuBrF20tVBKv0X",
+        "resourceVersion": "4",
+        "generation": 4,
+        "creationTimestamp": "2019-01-28T16:33:08Z",
+        "labels": {
+          "grafana.app/deprecatedInternalID": "7004"
+        },
+        "annotations": {
+          "grafana.app/createdBy": "user:u000002705",
+          "grafana.app/folder": "MRWblclmk",
+          "grafana.app/updatedBy": "provisioning:",
+          "grafana.app/updatedTimestamp": "2023-01-18T13:54:23Z"
+        }
+      },
+      "spec": {
+        "annotations": {
+          "list": [
+            {
+              "builtIn": 1,
+              "datasource": {
+                "uid": "-- Grafana --"
+              },
+              "enable": true,
+              "hide": true,
+              "iconColor": "rgba(0, 211, 255, 1)",
+              "name": "Annotations & Alerts",
+              "type": "dashboard"
+            }
+          ]
+        },
+        "editable": true,
+        "fiscalYearStartMonth": 0,
+        "graphTooltip": 0,
+        "links": [],
+        "panels": [
+          {
+            "aliasColors": {},
+            "autoMigrateFrom": "graph",
+            "bars": false,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": {
+              "type": "graphite",
+              "uid": "000000004"
+            },
+            "fill": 1,
+            "fillGradient": 0,
+            "gridPos": {
+              "h": 9,
+              "w": 24,
+              "x": 0,
+              "y": 0
+            },
+            "hiddenSeries": false,
+            "id": 2,
+            "legend": {
+              "avg": false,
+              "current": false,
+              "max": false,
+              "min": false,
+              "show": true,
+              "total": false,
+              "values": false
+            },
+            "lines": true,
+            "linewidth": 1,
+            "nullPointMode": "null",
+            "options": {
+              "dataLinks": []
+            },
+            "percentage": false,
+            "pointradius": 5,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "stack": false,
+            "steppedLine": false,
+            "targets": [
+              {
+                "datasource": {
+                  "type": "graphite",
+                  "uid": "000000004"
+                },
+                "refId": "A",
+                "target": "aggregations.[[rollup_resolution_prod]].pulse.backend.endpoint.context_mark_reservation_as_no_show_1.platform.*.version.__ALL__.request_had_errors_count.sum"
+              }
+            ],
+            "thresholds": [],
+            "timeRegions": [],
+            "title": "Mark reservation as no show",
+            "tooltip": {
+              "shared": true,
+              "sort": 0,
+              "value_type": "individual"
+            },
+            "type": "timeseries",
+            "xaxis": {
+              "mode": "time",
+              "show": true,
+              "values": []
+            },
+            "yaxes": [
+              {
+                "format": "short",
+                "logBase": 1,
+                "show": true
+              },
+              {
+                "format": "short",
+                "logBase": 1,
+                "show": true
+              }
+            ],
+            "yaxis": {
+              "align": false
+            }
+          }
+        ],
+        "refresh": "",
+        "schemaVersion": 42,
+        "tags": [],
+        "templating": {
+          "list": [
+            {
+              "current": {
+                "selected": false,
+                "text": "minutely",
+                "value": "minutely"
+              },
+              "datasource": "Graphite Prod",
+              "definition": "aggregations.*",
+              "hide": 0,
+              "includeAll": false,
+              "label": "Resolution (Prod)",
+              "multi": false,
+              "name": "rollup_resolution_prod",
+              "options": [],
+              "query": "aggregations.*",
+              "refresh": 1,
+              "regex": "",
+              "skipUrlSync": false,
+              "sort": 0,
+              "type": "query"
+            }
+          ]
+        },
+        "time": {
+          "from": "2018-10-04T08:00:00.000Z",
+          "to": "2018-10-08T08:00:00.000Z"
+        },
+        "timepicker": {
+          "refresh_intervals": [
+            "5s",
+            "10s",
+            "30s",
+            "1m",
+            "5m",
+            "15m",
+            "30m",
+            "1h",
+            "2h",
+            "1d"
+          ]
+        },
+        "timezone": "",
+        "title": "mark_as_no_show",
+        "weekStart": ""
+      },
+      "status": {
+        "conversion": {
+          "failed": false,
+          "storedVersion": "v0alpha1"
+        }
+      }
+    }
+  ]
+}
