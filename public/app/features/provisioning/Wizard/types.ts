@@ -24,6 +24,8 @@ export interface ModeOption {
   label: string;
   description: string;
   subtitle: string;
+  disabled: boolean;
+  disabledReason?: string;
 }
 
 export const RepoTypeDisplay: { [key in RepoType]: string } = {
