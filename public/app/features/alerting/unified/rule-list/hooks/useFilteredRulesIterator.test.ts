@@ -4,7 +4,8 @@ import { PromRuleType } from 'app/types/unified-alerting-dto';
 import { RuleSource } from '../../search/rulesSearchParser';
 import { getFilter } from '../../utils/search';
 
-import { buildTitleSearch, hasClientSideFilters } from './useFilteredRulesIterator';
+import { buildTitleSearch } from './filters';
+import { hasClientSideFilters } from './useFilteredRulesIterator';
 
 describe('hasClientSideFilters', () => {
   const originalFeatureToggles = config.featureToggles;
