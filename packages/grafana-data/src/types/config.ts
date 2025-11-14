@@ -71,6 +71,7 @@ export enum GrafanaEdition {
   OpenSource = 'Open Source',
   Pro = 'Pro',
   Enterprise = 'Enterprise',
+  Trial = 'Cloud Trial',
 }
 
 /**
