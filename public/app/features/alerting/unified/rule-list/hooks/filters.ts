@@ -5,6 +5,7 @@ import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { GrafanaPromRulesOptions } from '../../api/prometheusApi';
+import { shouldUseBackendFilters } from '../../featureToggles';
 import { RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
@@ -29,16 +30,22 @@ type GroupFilterConfig = Record<keyof Pick<RulesFilter, 'namespace' | 'groupName
 
 export function getGrafanaFilter(filterState: RulesFilter) {
   const normalizedFilterState = normalizeFilterState(filterState);
+  const useBackendFilters = shouldUseBackendFilters();
+
+  // Build title search for backend filtering
+  const titleSearch = useBackendFilters ? buildTitleSearch(normalizedFilterState) : undefined;
 
   const backendFilter: GrafanaPromRulesOptions = {
     state: normalizedFilterState.ruleState ? [normalizedFilterState.ruleState] : [],
     health: normalizedFilterState.ruleHealth ? [normalizedFilterState.ruleHealth] : [],
     contactPoint: normalizedFilterState.contactPoint ?? undefined,
+    title: titleSearch,
   };
 
   const grafanaFilterProcessingConfig: RuleFilterConfig = {
-    freeFormWords: freeFormFilter,
-    ruleName: ruleNameFilter,
+    // When backend filtering is enabled, these filters are handled by the backend
+    freeFormWords: useBackendFilters ? null : freeFormFilter,
+    ruleName: useBackendFilters ? null : ruleNameFilter,
     ruleState: null,
     ruleType: ruleTypeFilter,
     dataSourceNames: dataSourceNamesFilter,
@@ -323,6 +330,34 @@ const mapDataSourceNamesToUids = memoize(
   },
   { maxSize: 1 }
 );
+
+/**
+ * Build title search parameter for backend filtering
+ * Combines ruleName and freeFormWords into a single search string
+ */
+export function buildTitleSearch(filterState: RulesFilter): string | undefined {
+  const titleParts: string[] = [];
+
+  const ruleName = filterState.ruleName?.trim();
+  if (ruleName) {
+    titleParts.push(ruleName);
+  }
+
+  const freeFormSegment = filterState.freeFormWords
+    .map((word) => word.trim())
+    .filter(Boolean)
+    .join(' ');
+
+  if (freeFormSegment) {
+    titleParts.push(freeFormSegment);
+  }
+
+  if (titleParts.length === 0) {
+    return undefined;
+  }
+
+  return titleParts.join(' ');
+}
 
 /**
  * Normalize filter state for case-insensitive matching

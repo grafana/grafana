@@ -15,6 +15,7 @@ import {
   PromRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
+import { shouldUseBackendFilters } from '../../featureToggles';
 import { RuleSource, RulesFilter } from '../../search/rulesSearchParser';
 import {
   getDataSourceByUid,
@@ -143,6 +144,24 @@ export function useFilteredRulesIteratorProvider() {
   };
 
   return getFilteredRulesIterable;
+}
+
+/**
+ * Determines if client-side filtering is needed for Grafana-managed rules.
+ */
+export function hasClientSideFilters(filterState: RulesFilter): boolean {
+  const useBackendFilters = shouldUseBackendFilters();
+
+  return (
+    // When backend filters are disabled, title search needs client-side filtering
+    (!useBackendFilters && (filterState.freeFormWords.length > 0 || Boolean(filterState.ruleName))) ||
+    // Client-side only filters:
+    Boolean(filterState.namespace) ||
+    filterState.dataSourceNames.length > 0 ||
+    filterState.labels.length > 0 ||
+    Boolean(filterState.dashboardUid) ||
+    filterState.ruleSource === RuleSource.DataSource
+  );
 }
 
 function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): AsyncIterableX<RuleWithOrigin> {

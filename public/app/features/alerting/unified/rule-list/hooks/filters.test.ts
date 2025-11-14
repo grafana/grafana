@@ -1,3 +1,5 @@
+import { testWithFeatureToggles } from 'test/test-utils';
+
 import { PromAlertingRuleState, PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { mockGrafanaPromAlertingRule, mockPromAlertingRule, mockPromRecordingRule } from '../../mocks';
@@ -556,6 +558,97 @@ describe('grafana-managed rules', () => {
       expect(backendFilter.state).toEqual([]);
       expect(backendFilter.health).toEqual([]);
       expect(backendFilter.contactPoint).toBeUndefined();
+    });
+  });
+
+  describe('backend filtering with alertingUIUseBackendFilters feature toggle', () => {
+    describe('when alertingUIUseBackendFilters is enabled', () => {
+      testWithFeatureToggles({ enable: ['alertingUIUseBackendFilters'] });
+
+      it('should include title in backend filter when freeFormWords are provided', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({ freeFormWords: ['cpu', 'usage'] }));
+
+        expect(backendFilter.title).toBe('cpu usage');
+      });
+
+      it('should include title in backend filter when ruleName is provided', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({ ruleName: 'high cpu' }));
+
+        expect(backendFilter.title).toBe('high cpu');
+      });
+
+      it('should combine ruleName and freeFormWords in title', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({ ruleName: 'alert', freeFormWords: ['cpu'] }));
+
+        expect(backendFilter.title).toBe('alert cpu');
+      });
+
+      it('should not include title when no title filters are provided', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({ ruleState: PromAlertingRuleState.Firing }));
+
+        expect(backendFilter.title).toBeUndefined();
+      });
+
+      it('should skip freeFormWords filtering on frontend when backend filtering is enabled', () => {
+        const rule = mockGrafanaPromAlertingRule({ name: 'High CPU Usage' });
+
+        const { frontendFilter } = getGrafanaFilter(getFilter({ freeFormWords: ['memory'] }));
+        // Should return true because freeFormWords filter is null (handled by backend)
+        expect(frontendFilter.ruleMatches(rule)).toBe(true);
+      });
+
+      it('should skip ruleName filtering on frontend when backend filtering is enabled', () => {
+        const rule = mockGrafanaPromAlertingRule({ name: 'High CPU Usage' });
+
+        const { frontendFilter } = getGrafanaFilter(getFilter({ ruleName: 'memory' }));
+        // Should return true because ruleName filter is null (handled by backend)
+        expect(frontendFilter.ruleMatches(rule)).toBe(true);
+      });
+
+      it('should still apply other frontend filters', () => {
+        const rule = mockGrafanaPromAlertingRule({
+          name: 'High CPU Usage',
+          labels: { severity: 'critical', team: 'ops' },
+          alerts: [],
+        });
+
+        // Label filter should still work on frontend
+        const { frontendFilter } = getGrafanaFilter(getFilter({ labels: ['severity=warning'] }));
+        expect(frontendFilter.ruleMatches(rule)).toBe(false);
+
+        const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ labels: ['severity=critical'] }));
+        expect(frontendFilter2.ruleMatches(rule)).toBe(true);
+      });
+    });
+
+    describe('when alertingUIUseBackendFilters is disabled', () => {
+      testWithFeatureToggles({ disable: ['alertingUIUseBackendFilters'] });
+
+      it('should not include title in backend filter', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({ freeFormWords: ['cpu'] }));
+
+        expect(backendFilter.title).toBeUndefined();
+      });
+
+      it('should perform freeFormWords filtering on frontend', () => {
+        const rule = mockGrafanaPromAlertingRule({ name: 'High CPU Usage' });
+
+        const { frontendFilter } = getGrafanaFilter(getFilter({ freeFormWords: ['cpu'] }));
+        expect(frontendFilter.ruleMatches(rule)).toBe(true);
+
+        const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ freeFormWords: ['memory'] }));
+        expect(frontendFilter2.ruleMatches(rule)).toBe(false);
+      });
+
+      it('should perform ruleName filtering on frontend', () => {
+        const rule = mockGrafanaPromAlertingRule({ name: 'High CPU Usage' });
+
+        const { frontendFilter } = getGrafanaFilter(getFilter({ ruleName: 'cpu' }));
+        expect(frontendFilter.ruleMatches(rule)).toBe(true);
+
+        const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ ruleName: 'memory' }));
+        expect(frontendFilter2.ruleMatches(rule)).toBe(false);
+      });
     });
   });
 });
