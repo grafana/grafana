@@ -317,7 +317,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
           GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
           REPO: ${{ github.repository }}
-        run:
+        run: |
           set -eo pipefail
           gh api "/repos/${REPO}/commits/${GRAFANA_COMMIT}/pulls" | jq -r '.[0].number' | tee issue_number.txt
           echo "ISSUE_NUMBER=$(cat issue_number.txt)" >> "$GITHUB_ENV"
