@@ -2,6 +2,7 @@ package sqleng
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -16,9 +17,11 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azusercontext"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -74,6 +77,7 @@ type DataSourceInfo struct {
 	Updated                 time.Time
 	UID                     string
 	DecryptedSecureJSONData map[string]string
+	OrgID                   int64
 }
 
 type DataPluginConfiguration struct {
@@ -97,6 +101,8 @@ type DataSourceHandler struct {
 	azureCredentials       azcredentials.AzureCredentials
 	kerberosAuth           kerberos.KerberosAuth
 	driverName             string
+	proxyClient            proxy.Client
+	dbConnections          sync.Map
 }
 
 type QueryJson struct {
@@ -142,6 +148,12 @@ func NewQueryDataHandler(ctx context.Context, settings backend.DataSourceInstanc
 		return nil, fmt.Errorf("error getting kerberos settings: %w", err)
 	}
 
+	proxyClient, err := settings.ProxyClient(ctx)
+	if err != nil {
+		logger.Error("mssql proxy creation failed", "error", err)
+		return nil, fmt.Errorf("mssql proxy creation failed")
+	}
+
 	queryDataHandler := DataSourceHandler{
 		queryResultTransformer: &queryResultTransformer,
 		macroEngine:            newMssqlMacroEngine(),
@@ -154,6 +166,7 @@ func NewQueryDataHandler(ctx context.Context, settings backend.DataSourceInstanc
 		azureCredentials:       azureCredentials,
 		kerberosAuth:           kerberosAuth,
 		driverName:             driverName,
+		proxyClient:            proxyClient,
 	}
 
 	if len(config.TimeColumnNames) > 0 {
@@ -164,18 +177,21 @@ func NewQueryDataHandler(ctx context.Context, settings backend.DataSourceInstanc
 		queryDataHandler.metricColumnTypes = config.MetricColumnTypes
 	}
 
-	cnnstr, err := generateConnectionString(config.DSInfo, azureSettings.ManagedIdentityClientId, azureSettings.AzureEntraPasswordCredentialsEnabled, azureCredentials, kerberosAuth, log)
-	if err != nil {
-		return nil, err
-	}
+	// Every auth method besides Azure AD Current User Identity can use a persistent DB connection
+	if config.DSInfo.JsonData.AuthenticationType != azureAuthentication || azureCredentials.AzureAuthType() != azcredentials.AzureAuthCurrentUserIdentity {
+		cnnstr, err := generateConnectionString(config.DSInfo, azureCredentials, kerberosAuth, log, azureSettings, "")
+		if err != nil {
+			return nil, err
+		}
 
-	db, err := newMSSQL(ctx, driverName, config.RowLimit, config.DSInfo, cnnstr, log, settings)
-	if err != nil {
-		logger.Error("Failed connecting to MSSQL", "err", err)
-		return nil, err
-	}
+		db, err := newMSSQL(driverName, config.RowLimit, config.DSInfo, cnnstr, log, proxyClient)
+		if err != nil {
+			logger.Error("Failed connecting to MSSQL", "err", err)
+			return nil, err
+		}
 
-	queryDataHandler.db = db
+		queryDataHandler.db = db
+	}
 
 	return &queryDataHandler, nil
 }
@@ -192,7 +208,50 @@ func (e *DataSourceHandler) Dispose() {
 			e.log.Error("Failed to dispose db", "error", err)
 		}
 	}
+
+	// Clear any cached user-specific connections
+	e.dbConnections.Range(func(_, conn interface{}) bool {
+		_ = conn.(*sql.DB).Close()
+		return true
+	})
+	e.dbConnections.Clear()
+
 	e.log.Debug("DB disposed")
+}
+
+func (e *DataSourceHandler) getDB(ctx context.Context) (*sql.DB, error) {
+	e.log.Debug("Getting DB...")
+	if e.dsInfo.JsonData.AuthenticationType != azureAuthentication || e.azureCredentials.AzureAuthType() != azcredentials.AzureAuthCurrentUserIdentity {
+		if e.db == nil {
+			return nil, fmt.Errorf("database connection is not initialized")
+		}
+		return e.db, nil
+	}
+
+	userCtx, ok := azusercontext.GetCurrentUser(ctx)
+	if !ok {
+		return nil, fmt.Errorf("failed to get user from context for Azure Current User authentication")
+	}
+	cacheKey := fmt.Sprintf("mssql-%d-%x-%s-%s", e.dsInfo.OrgID, sha256.Sum256([]byte(userCtx.User.Email)), userCtx.IdToken, e.dsInfo.UID)
+
+	conn, ok := e.dbConnections.Load(cacheKey)
+	if ok {
+		return conn.(*sql.DB), nil
+	}
+
+	cnnstr, err := generateConnectionString(e.dsInfo, e.azureCredentials, e.kerberosAuth, e.log, e.azureSettings, userCtx.IdToken)
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := newMSSQL(e.driverName, e.rowLimit, e.dsInfo, cnnstr, e.log, e.proxyClient)
+	if err != nil {
+		logger.Error("Failed connecting to MSSQL", "err", err)
+		return nil, err
+	}
+	e.dbConnections.Store(cacheKey, db)
+
+	return db, nil
 }
 
 func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -293,7 +352,12 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		return
 	}
 
-	rows, err := e.db.QueryContext(queryContext, interpolatedQuery)
+	db, err := e.getDB(queryContext)
+	if err != nil {
+		errAppendDebug("retrieving database connection failed", e.TransformQueryError(logger, err), interpolatedQuery, backend.ErrorSourcePlugin)
+		return
+	}
+	rows, err := db.QueryContext(queryContext, interpolatedQuery)
 	if err != nil {
 		errAppendDebug("db query error", e.TransformQueryError(logger, err), interpolatedQuery, backend.ErrorSourceDownstream)
 		return
