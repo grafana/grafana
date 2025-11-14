@@ -65,6 +65,7 @@ func ProvideEncryptionManager(
 		cipher:         enc,
 		log:            log.New("encryption"),
 		providerConfig: providerConfig,
+		dataKeyCache:   dataKeyCache,
 		cfg:            cfg,
 	}
 
@@ -182,6 +183,11 @@ func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace xkube.
 // dataKeyByLabel looks up for data key in cache by label.
 // Otherwise, it fetches it from database, decrypts it and caches it decrypted.
 func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label string) (string, []byte, error) {
+	// 0. Get data key from in-memory cache.
+	if entry, exists := s.dataKeyCache.GetByLabel(namespace, label); exists && entry.Active {
+		return entry.Id, entry.DataKey, nil
+	}
+
 	// 1. Get data key from database.
 	dataKey, err := s.store.GetCurrentDataKey(ctx, namespace, label)
 	if err != nil {
@@ -202,6 +208,9 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 	if err != nil {
 		return "", nil, err
 	}
+
+	// 3. Store the decrypted data key into the in-memory cache.
+	s.cacheDataKey(namespace, dataKey, decrypted)
 
 	return dataKey.UID, decrypted, nil
 }
@@ -248,6 +257,9 @@ func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, la
 	if err != nil {
 		return "", nil, err
 	}
+
+	// 4. Store the decrypted data key into the in-memory cache.
+	s.cacheDataKey(namespace, &dbDataKey, dataKey)
 
 	return id, dataKey, nil
 }
@@ -312,6 +324,11 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 	))
 	defer span.End()
 
+	// 0. Get data key from in-memory cache.
+	if entry, exists := s.dataKeyCache.GetById(namespace, id); exists && entry.Active {
+		return entry.DataKey, nil
+	}
+
 	// 1. Get encrypted data key from database.
 	dataKey, err := s.store.GetDataKey(ctx, namespace, id)
 	if err != nil {
@@ -330,6 +347,9 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 		return nil, err
 	}
 
+	// 3. Store the decrypted data key into the in-memory cache.
+	s.cacheDataKey(namespace, dataKey, decrypted)
+
 	return decrypted, nil
 }
 
@@ -337,10 +357,12 @@ func (s *EncryptionManager) GetProviders() encryption.ProviderConfig {
 	return s.providerConfig
 }
 
+func (s *EncryptionManager) FlushCache(namespace xkube.Namespace) {
+	s.dataKeyCache.Flush(namespace.String())
+}
+
 func (s *EncryptionManager) Run(ctx context.Context) error {
-	gc := time.NewTicker(
-		s.cfg.SecretsManagement.DataKeysCacheCleanupInterval,
-	)
+	gc := time.NewTicker(s.cfg.SecretsManagement.DataKeysCacheCleanupInterval)
 
 	grp, gCtx := errgroup.WithContext(ctx)
 
@@ -360,5 +382,47 @@ func (s *EncryptionManager) Run(ctx context.Context) error {
 
 			return nil
 		}
+	}
+}
+
+// NB: Much of this was copied or derived from the original implementation in the legacy SecretsService.
+//
+// Caching a data key is tricky, because at SecretsService level we cannot guarantee
+// that a newly created data key has actually been persisted, depending on the different
+// use cases that rely on SecretsService encryption and different database engines that
+// we have support for, because the data key creation may have happened within a DB TX,
+// that may fail afterwards.
+//
+// Therefore, if we cache a data key that hasn't been persisted with success (and won't),
+// and later that one is used for a encryption operation (aside from the DB TX that created
+// it), we may end up with data encrypted by a non-persisted data key, which could end up
+// in (unrecoverable) data corruption.
+//
+// So, we cache the data key by id and/or by label, depending on the data key's lifetime,
+// assuming that a data key older than a "caution period" should have been persisted.
+//
+// Look at the comments inline for further details.
+// You can also take a look at the issue below for more context:
+// https://github.com/grafana/grafana-enterprise/issues/4252
+func (s *EncryptionManager) cacheDataKey(namespace string, dataKey *contracts.SecretDataKey, decrypted []byte) {
+	// First, we cache the data key by id, because cache "by id" is
+	// only used by decrypt operations, so no risk of corrupting data.
+	entry := &encryption.DataKeyCacheEntry{
+		Namespace: namespace,
+		Id:        dataKey.UID,
+		Label:     dataKey.Label,
+		DataKey:   decrypted,
+		Active:    dataKey.Active,
+	}
+
+	s.dataKeyCache.AddById(namespace, entry)
+
+	// Then, we cache the data key by label, ONLY if data key's lifetime
+	// is longer than a certain "caution period", because cache "by label"
+	// is used (only) by encrypt operations, and we want to ensure that
+	// no data key is cached for encryption ops before being persisted.
+	nowMinusCautionPeriod := time.Now().Add(-s.cfg.SecretsManagement.DataKeysCacheCautionPeriod)
+	if dataKey.Created.Before(nowMinusCautionPeriod) {
+		s.dataKeyCache.AddByLabel(namespace, entry)
 	}
 }

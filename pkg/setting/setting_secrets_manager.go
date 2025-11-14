@@ -18,6 +18,8 @@ type SecretsManagerSettings struct {
 	DataKeysCacheTTL time.Duration
 	// The interval to remove expired data keys from the cache
 	DataKeysCacheCleanupInterval time.Duration
+	// The caution period is the time after which a data key is assumed to be persisted in the worst case scenario.
+	DataKeysCacheCautionPeriod time.Duration
 	// Whether to use a Redis cache for data keys instead of the in-memory cache
 	DataKeysCacheUseRedis bool
 
@@ -77,6 +79,8 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.DataKeysCacheUseRedis = secretsMgmt.Key("data_keys_cache_use_redis").MustBool(false)
 	cfg.SecretsManagement.DataKeysCacheTTL = secretsMgmt.Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
 	cfg.SecretsManagement.DataKeysCacheCleanupInterval = secretsMgmt.Key("data_keys_cache_cleanup_interval").MustDuration(1 * time.Minute)
+	// We consider a "caution period" of 10m to be long enough for any database transaction that implied a data key creation to have finished successfully.
+	cfg.SecretsManagement.DataKeysCacheCautionPeriod = secretsMgmt.Key("data_keys_cache_caution_period").MustDuration(10 * time.Minute)
 
 	// Extract available KMS providers from configuration sections
 	providers := make(map[string]map[string]string)

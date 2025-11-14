@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -645,4 +646,89 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 	encMgr := svc.(*EncryptionManager)
 	require.Len(t, encMgr.providerConfig.AvailableProviders, 1)
 	require.Contains(t, encMgr.providerConfig.AvailableProviders, encryption.ProviderID("fakeProvider.v1"))
+}
+
+func TestEncryptionService_FlushCache(t *testing.T) {
+	ctx := context.Background()
+	namespace := xkube.Namespace("test-namespace")
+	plaintext := []byte("secret data to encrypt")
+
+	// Set up the encryption manager with a real OSS DEK cache
+	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+	tracer := noop.NewTracerProvider().Tracer("test")
+	database := database.ProvideDatabase(testDB, tracer)
+
+	cfg := &setting.Cfg{
+		SecretsManagement: setting.SecretsManagerSettings{
+			CurrentEncryptionProvider:  "secret_key.v1",
+			ConfiguredKMSProviders:     map[string]map[string]string{"secret_key.v1": {"secret_key": "SW2YcwTIb9zpOOhoPsMm"}},
+			DataKeysCacheTTL:           time.Hour,       // Long TTL to ensure keys don't expire during test
+			DataKeysCacheCautionPeriod: 0 * time.Second, // Override the caution period for testing
+		},
+	}
+
+	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
+	require.NoError(t, err)
+
+	usageStats := &usagestats.UsageStatsMock{T: t}
+	enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
+	require.NoError(t, err)
+
+	ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
+	require.NoError(t, err)
+
+	// Create a real OSS DEK cache
+	dekCache := ProvideOSSDataKeyCache(cfg)
+
+	encMgr, err := ProvideEncryptionManager(
+		tracer,
+		store,
+		usageStats,
+		enc,
+		ossProviders,
+		dekCache,
+		cfg,
+	)
+	require.NoError(t, err)
+
+	svc := encMgr.(*EncryptionManager)
+
+	// Encrypt some data - this will create a DEK and cache it
+	encrypted, err := svc.Encrypt(ctx, namespace, plaintext)
+	require.NoError(t, err)
+
+	// Verify we can decrypt - this should use the cached key
+	decrypted, err := svc.Decrypt(ctx, namespace, encrypted)
+	require.NoError(t, err)
+	assert.Equal(t, plaintext, decrypted)
+
+	// Get the data key ID from the encrypted payload
+	dataKeyID := encrypted.DataKeyID
+
+	// Verify the key is in the cache by checking both by ID and by label
+	label := encryption.KeyLabel(svc.providerConfig.CurrentProvider)
+	_, existsById := dekCache.GetById(namespace.String(), dataKeyID)
+	assert.True(t, existsById, "DEK should be cached by ID before flush")
+
+	_, existsByLabel := dekCache.GetByLabel(namespace.String(), label)
+	assert.True(t, existsByLabel, "DEK should be cached by label before flush")
+
+	// Flush the cache for this namespace
+	svc.FlushCache(namespace)
+
+	// Verify the cache is empty for this namespace
+	_, existsById = dekCache.GetById(namespace.String(), dataKeyID)
+	assert.False(t, existsById, "DEK should not be in cache by ID after flush")
+
+	_, existsByLabel = dekCache.GetByLabel(namespace.String(), label)
+	assert.False(t, existsByLabel, "DEK should not be in cache by label after flush")
+
+	// Verify we can still decrypt - this should fetch from DB and re-cache
+	decrypted, err = svc.Decrypt(ctx, namespace, encrypted)
+	require.NoError(t, err)
+	assert.Equal(t, plaintext, decrypted)
+
+	// Verify the key is back in the cache after the decrypt operation
+	_, existsById = dekCache.GetById(namespace.String(), dataKeyID)
+	assert.True(t, existsById, "DEK should be re-cached by ID after decrypt")
 }
