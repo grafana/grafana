@@ -5,12 +5,6 @@ package schemaversion
 // string names/UIDs to structured reference objects with uid, type, and apiVersion.
 
 // DatasourceIndex provides O(1) lookup of datasources by name or UID.
-// This dramatically improves performance by avoiding repeated linear searches through
-// the datasources list. For a dashboard with 100 panels × 4 targets = 400 lookups,
-// this changes from O(n*m) to O(m) where n=lookups, m=datasources.
-//
-// The index fields are exported to allow DataSourceInfoProvider implementations to build
-// the index directly from query results without creating intermediate slices.
 type DatasourceIndex struct {
 	ByName    map[string]*DataSourceInfo
 	ByUID     map[string]*DataSourceInfo
