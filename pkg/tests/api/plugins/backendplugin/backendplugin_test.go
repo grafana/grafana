@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -38,6 +39,14 @@ func TestMain(m *testing.M) {
 func TestIntegrationBackendPlugins(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	// Set up shared Grafana instance once for all test scenarios
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
+
+	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
+	testEnv.Cfg.LoginCookieName = loginCookieName
+
 	oauthToken := &oauth2.Token{
 		TokenType:    "bearer",
 		AccessToken:  "access-token",
@@ -46,7 +55,103 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 	}
 	oauthToken = oauthToken.WithExtra(map[string]any{"id_token": "id-token"})
 
-	newTestScenario(t, "Datasource with no custom HTTP settings",
+	// Track scenario number for unique IDs
+	scenarioNum := 0
+
+	newTestScenario := func(name string, opts []testScenarioOption, callback func(t *testing.T, tsCtx *testScenarioContext)) {
+		scenarioNum++
+		pluginID := fmt.Sprintf("test-plugin-%d", scenarioNum)
+		datasourceUID := fmt.Sprintf("test-plugin-%d", scenarioNum)
+
+		tsCtx := testScenarioContext{
+			testPluginID:         pluginID,
+			uid:                  datasourceUID,
+			grafanaListeningAddr: grafanaListeningAddr,
+			testEnv:              testEnv,
+		}
+
+		ctx := context.Background()
+
+		// Each scenario gets its own outgoing server
+		tsCtx.outgoingServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			tsCtx.outgoingRequest = r
+			w.WriteHeader(http.StatusUnauthorized)
+		}))
+		t.Cleanup(tsCtx.outgoingServer.Close)
+
+		// Create plugin
+		p, bp := createTestPlugin(pluginID, &tsCtx)
+		tsCtx.backendTestPlugin = bp
+		err := testEnv.PluginRegistry.Add(ctx, p)
+		require.NoError(t, err)
+
+		// Set up datasource
+		cmd := &datasources.AddDataSourceCommand{
+			OrgID:          1,
+			Access:         datasources.DS_ACCESS_PROXY,
+			Name:           fmt.Sprintf("TestPlugin-%d", scenarioNum),
+			Type:           pluginID,
+			UID:            datasourceUID,
+			URL:            tsCtx.outgoingServer.URL,
+			JsonData:       simplejson.New(),
+			SecureJsonData: map[string]string{},
+		}
+
+		in := &testScenarioInput{ds: cmd}
+		for _, opt := range opts {
+			opt(in)
+		}
+
+		tsCtx.modifyIncomingRequest = in.modifyIncomingRequest
+
+		if in.modifyCallResourceResponse == nil {
+			in.modifyCallResourceResponse = func(sender backend.CallResourceResponseSender) error {
+				responseHeaders := map[string][]string{
+					"Connection":       {"close, TE"},
+					"Te":               {"foo", "bar, trailers"},
+					"Proxy-Connection": {"should be deleted"},
+					"Upgrade":          {"foo"},
+					"Set-Cookie":       {"should be deleted"},
+					"X-Custom":         {"should not be deleted"},
+				}
+
+				return sender.Send(&backend.CallResourceResponse{
+					Status:  http.StatusOK,
+					Headers: responseHeaders,
+				})
+			}
+		}
+
+		tsCtx.modifyCallResourceResponse = in.modifyCallResourceResponse
+
+		if in.token != nil {
+			testEnv.OAuthTokenService.Token = in.token
+		} else {
+			testEnv.OAuthTokenService.Token = nil
+		}
+
+		_, err = testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, cmd)
+		require.NoError(t, err)
+
+		getDataSourceQuery := &datasources.GetDataSourceQuery{
+			OrgID: 1,
+			UID:   datasourceUID,
+		}
+		dataSource, err := testEnv.Server.HTTPServer.DataSourcesService.GetDataSource(ctx, getDataSourceQuery)
+		require.NoError(t, err)
+
+		rt, err := testEnv.Server.HTTPServer.DataSourcesService.GetHTTPTransport(ctx, dataSource, testEnv.HTTPClientProvider)
+		require.NoError(t, err)
+
+		tsCtx.rt = rt
+
+		t.Run(name, func(t *testing.T) {
+			callback(t, &tsCtx)
+		})
+	}
+
+	// All test scenarios using the shared Grafana instance
+	newTestScenario("Datasource with no custom HTTP settings",
 		options(
 			withIncomingRequest(func(req *http.Request) {
 				req.Header.Set("X-Custom", "custom")
@@ -94,7 +199,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			})
 		})
 
-	newTestScenario(t, "Datasource with most HTTP settings set except oauthPassThru and oauth token available",
+	newTestScenario("Datasource with most HTTP settings set except oauthPassThru and oauth token available",
 		options(
 			withIncomingRequest(func(req *http.Request) {
 				req.AddCookie(&http.Cookie{Name: "cookie1"})
@@ -151,7 +256,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			})
 		})
 
-	newTestScenario(t, "Datasource with oauthPassThru and basic auth configured and oauth token available",
+	newTestScenario("Datasource with oauthPassThru and basic auth configured and oauth token available",
 		options(
 			withOAuthToken(oauthToken),
 			withDsOAuthForwarding(),
@@ -199,7 +304,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			})
 		})
 
-	newTestScenario(t, "Datasource with resource returning non-default content-type should not be kept",
+	newTestScenario("Datasource with resource returning non-default content-type should not be kept",
 		options(
 			withCallResourceResponse(func(sender backend.CallResourceResponseSender) error {
 				return sender.Send(&backend.CallResourceResponse{
@@ -221,7 +326,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			})
 		})
 
-	newTestScenario(t, "Datasource with resource returning 204 (no content) status should not set content-type header",
+	newTestScenario("Datasource with resource returning 204 (no content) status should not set content-type header",
 		options(
 			withCallResourceResponse(func(sender backend.CallResourceResponseSender) error {
 				return sender.Send(&backend.CallResourceResponse{
@@ -236,7 +341,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			})
 		})
 
-	newTestScenario(t, "Datasource with resource returning streaming content should return chunked transfer encoding",
+	newTestScenario("Datasource with resource returning streaming content should return chunked transfer encoding",
 		options(
 			withCallResourceResponse(func(sender backend.CallResourceResponseSender) error {
 				err := sender.Send(&backend.CallResourceResponse{
@@ -261,13 +366,13 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 				require.Equal(t, "text/plain", resp.Header.Get("Content-Type"))
 				require.Equal(t, http.StatusOK, resp.StatusCode)
 				require.Equal(t, []string{"chunked"}, resp.TransferEncoding)
-				bytes, err := io.ReadAll(resp.Body)
+				body, err := io.ReadAll(resp.Body)
 				require.NoError(t, err)
-				require.Equal(t, "msg 1\r\nmsg 2\r\n", string(bytes))
+				require.Equal(t, "msg 1\r\nmsg 2\r\n", string(body))
 			})
 		})
 
-	newTestScenario(t, "Query data error should return expected status code and marked with downstream status",
+	newTestScenario("Query data error should return expected status code and marked with downstream status",
 		options(),
 		func(t *testing.T, tsCtx *testScenarioContext) {
 			tsCtx.backendTestPlugin.QueryDataHandler = backend.QueryDataHandlerFunc(func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -288,7 +393,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			})
 		})
 
-	newTestScenario(t, "Call resource error should return expected status code and marked with downstream status",
+	newTestScenario("Call resource error should return expected status code and marked with downstream status",
 		options(),
 		func(t *testing.T, tsCtx *testScenarioContext) {
 			tsCtx.backendTestPlugin.CallResourceHandler = backend.CallResourceHandlerFunc(func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -300,7 +405,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 			require.NotNil(t, tsCtx.incomingRequest)
-			require.Equal(t, "/api/datasources/uid/test-plugin/resources", tsCtx.incomingRequest.URL.Path)
+			require.Equal(t, fmt.Sprintf("/api/datasources/uid/%s/resources", tsCtx.uid), tsCtx.incomingRequest.URL.Path)
 			rmd := requestmeta.GetRequestMetaData(tsCtx.incomingRequest.Context())
 			require.Equal(t, requestmeta.StatusSourceDownstream, rmd.StatusSource)
 			t.Cleanup(func() {
@@ -309,7 +414,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			})
 		})
 
-	newTestScenario(t, "Check health error should return expected status code and marked with downstream status",
+	newTestScenario("Check health error should return expected status code and marked with downstream status",
 		options(),
 		func(t *testing.T, tsCtx *testScenarioContext) {
 			tsCtx.backendTestPlugin.CheckHealthHandler = backend.CheckHealthHandlerFunc(func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -321,7 +426,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 			require.NotNil(t, tsCtx.incomingRequest)
-			require.Equal(t, "/api/datasources/uid/test-plugin/health", tsCtx.incomingRequest.URL.Path)
+			require.Equal(t, fmt.Sprintf("/api/datasources/uid/%s/health", tsCtx.uid), tsCtx.incomingRequest.URL.Path)
 			rmd := requestmeta.GetRequestMetaData(tsCtx.incomingRequest.Context())
 			require.Equal(t, requestmeta.StatusSourceDownstream, rmd.StatusSource)
 			t.Cleanup(func() {
@@ -330,7 +435,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			})
 		})
 
-	newTestScenario(t, "Call resource response with 502 status code should be marked with downstream status",
+	newTestScenario("Call resource response with 502 status code should be marked with downstream status",
 		options(),
 		func(t *testing.T, tsCtx *testScenarioContext) {
 			tsCtx.backendTestPlugin.CallResourceHandler = backend.CallResourceHandlerFunc(func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -347,7 +452,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, http.StatusBadGateway, resp.StatusCode, string(b))
 			require.NotNil(t, tsCtx.incomingRequest)
-			require.Equal(t, "/api/datasources/uid/test-plugin/resources", tsCtx.incomingRequest.URL.Path)
+			require.Equal(t, fmt.Sprintf("/api/datasources/uid/%s/resources", tsCtx.uid), tsCtx.incomingRequest.URL.Path)
 			rmd := requestmeta.GetRequestMetaData(tsCtx.incomingRequest.Context())
 			require.Equal(t, requestmeta.StatusSourceDownstream, rmd.StatusSource)
 			t.Cleanup(func() {
@@ -356,7 +461,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			})
 		})
 
-	newTestScenario(t, "Query data response that includes a query data response error should return expected status code and marked with downstream status",
+	newTestScenario("Query data response that includes a query data response error should return expected status code and marked with downstream status",
 		options(),
 		func(t *testing.T, tsCtx *testScenarioContext) {
 			tsCtx.backendTestPlugin.QueryDataHandler = backend.QueryDataHandlerFunc(func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -461,102 +566,6 @@ func withCallResourceResponse(cb func(sender backend.CallResourceResponseSender)
 	}
 }
 
-func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callback func(t *testing.T, ctx *testScenarioContext)) {
-	tsCtx := testScenarioContext{
-		testPluginID: "test-plugin",
-	}
-
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous: true,
-		// EnableLog:        true,
-	})
-
-	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
-	testEnv.RequestMiddleware = func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			tsCtx.incomingRequest = r
-			next.ServeHTTP(w, r)
-		})
-	}
-	tsCtx.grafanaListeningAddr = grafanaListeningAddr
-	testEnv.Cfg.LoginCookieName = loginCookieName
-	tsCtx.testEnv = testEnv
-	ctx := context.Background()
-
-	tsCtx.outgoingServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tsCtx.outgoingRequest = r
-		w.WriteHeader(http.StatusUnauthorized)
-	}))
-	t.Cleanup(tsCtx.outgoingServer.Close)
-
-	testPlugin, backendTestPlugin := createTestPlugin(tsCtx.testPluginID)
-	tsCtx.backendTestPlugin = backendTestPlugin
-	err := testEnv.PluginRegistry.Add(ctx, testPlugin)
-	require.NoError(t, err)
-
-	jsonData := simplejson.New()
-	secureJSONData := map[string]string{}
-
-	tsCtx.uid = "test-plugin"
-	cmd := &datasources.AddDataSourceCommand{
-		OrgID:          1,
-		Access:         datasources.DS_ACCESS_PROXY,
-		Name:           "TestPlugin",
-		Type:           tsCtx.testPluginID,
-		UID:            tsCtx.uid,
-		URL:            tsCtx.outgoingServer.URL,
-		JsonData:       jsonData,
-		SecureJsonData: secureJSONData,
-	}
-
-	in := &testScenarioInput{ds: cmd}
-	for _, opt := range opts {
-		opt(in)
-	}
-
-	tsCtx.modifyIncomingRequest = in.modifyIncomingRequest
-
-	if in.modifyCallResourceResponse == nil {
-		in.modifyCallResourceResponse = func(sender backend.CallResourceResponseSender) error {
-			responseHeaders := map[string][]string{
-				"Connection":       {"close, TE"},
-				"Te":               {"foo", "bar, trailers"},
-				"Proxy-Connection": {"should be deleted"},
-				"Upgrade":          {"foo"},
-				"Set-Cookie":       {"should be deleted"},
-				"X-Custom":         {"should not be deleted"},
-			}
-
-			return sender.Send(&backend.CallResourceResponse{
-				Status:  http.StatusOK,
-				Headers: responseHeaders,
-			})
-		}
-	}
-
-	tsCtx.modifyCallResourceResponse = in.modifyCallResourceResponse
-	tsCtx.testEnv.OAuthTokenService.Token = in.token
-
-	_, err = testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, cmd)
-	require.NoError(t, err)
-
-	getDataSourceQuery := &datasources.GetDataSourceQuery{
-		OrgID: 1,
-		UID:   tsCtx.uid,
-	}
-	dataSource, err := testEnv.Server.HTTPServer.DataSourcesService.GetDataSource(ctx, getDataSourceQuery)
-	require.NoError(t, err)
-
-	rt, err := testEnv.Server.HTTPServer.DataSourcesService.GetHTTPTransport(ctx, dataSource, testEnv.HTTPClientProvider)
-	require.NoError(t, err)
-
-	tsCtx.rt = rt
-
-	t.Run(name, func(t *testing.T) {
-		callback(t, &tsCtx)
-	})
-}
-
 func createRegularQuery(t *testing.T, tsCtx *testScenarioContext) dtos.MetricRequest {
 	t.Helper()
 
@@ -593,6 +602,8 @@ func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T, mr dtos.MetricR
 		var received *backend.QueryDataRequest
 		tsCtx.backendTestPlugin.QueryDataHandler = backend.QueryDataHandlerFunc(func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			received = req
+			// Incoming request should already be captured by middleware
+			// The middleware reads the request body to extract the datasource UID
 
 			c := http.Client{
 				Transport: tsCtx.rt,
@@ -809,7 +820,7 @@ func createQueryDataHTTPRequest(t *testing.T, tsCtx *testScenarioContext, mr dto
 	return req
 }
 
-func createTestPlugin(id string) (*plugins.Plugin, *testPlugin) {
+func createTestPlugin(id string, tsCtx *testScenarioContext) (*plugins.Plugin, *testPlugin) {
 	p := &plugins.Plugin{
 		JSONData: plugins.JSONData{
 			ID: id,
@@ -819,8 +830,9 @@ func createTestPlugin(id string) (*plugins.Plugin, *testPlugin) {
 
 	p.SetLogger(log.New("test-plugin"))
 	tp := &testPlugin{
-		pluginID: id,
-		logger:   p.Logger(),
+		pluginID:    id,
+		logger:      p.Logger(),
+		scenarioCtx: tsCtx,
 		QueryDataHandler: backend.QueryDataHandlerFunc(func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			return &backend.QueryDataResponse{}, nil
 		}),
@@ -831,8 +843,9 @@ func createTestPlugin(id string) (*plugins.Plugin, *testPlugin) {
 }
 
 type testPlugin struct {
-	pluginID string
-	logger   log.Logger
+	pluginID    string
+	logger      log.Logger
+	scenarioCtx *testScenarioContext
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.QueryDataHandler
@@ -882,6 +895,10 @@ func (tp *testPlugin) CollectMetrics(_ context.Context, _ *backend.CollectMetric
 }
 
 func (tp *testPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil && reqCtx.Req != nil {
+		tp.scenarioCtx.incomingRequest = reqCtx.Req
+	}
+
 	if tp.CheckHealthHandler != nil {
 		return tp.CheckHealthHandler.CheckHealth(ctx, req)
 	}
@@ -890,6 +907,10 @@ func (tp *testPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 }
 
 func (tp *testPlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil && reqCtx.Req != nil {
+		tp.scenarioCtx.incomingRequest = reqCtx.Req
+	}
+
 	if tp.QueryDataHandler != nil {
 		return tp.QueryDataHandler.QueryData(ctx, req)
 	}
@@ -898,6 +919,10 @@ func (tp *testPlugin) QueryData(ctx context.Context, req *backend.QueryDataReque
 }
 
 func (tp *testPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil && reqCtx.Req != nil {
+		tp.scenarioCtx.incomingRequest = reqCtx.Req
+	}
+
 	if tp.CallResourceHandler != nil {
 		return tp.CallResourceHandler.CallResource(ctx, req, sender)
 	}
@@ -926,7 +951,6 @@ func (tp *testPlugin) RunStream(ctx context.Context, req *backend.RunStreamReque
 	return plugins.ErrMethodNotImplemented
 }
 
-// ValidateAdmission implements backend.AdmissionHandler.
 func (tp *testPlugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
 	if tp.AdmissionHandler != nil {
 		return tp.AdmissionHandler.ValidateAdmission(ctx, req)
@@ -935,7 +959,6 @@ func (tp *testPlugin) ValidateAdmission(ctx context.Context, req *backend.Admiss
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-// MutateAdmission implements backend.AdmissionHandler.
 func (tp *testPlugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 	if tp.AdmissionHandler != nil {
 		return tp.AdmissionHandler.MutateAdmission(ctx, req)
@@ -944,7 +967,6 @@ func (tp *testPlugin) MutateAdmission(ctx context.Context, req *backend.Admissio
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-// ConvertObject implements backend.AdmissionHandler.
 func (tp *testPlugin) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	if tp.ConversionHandler != nil {
 		return tp.ConversionHandler.ConvertObjects(ctx, req)
@@ -956,10 +978,10 @@ func (tp *testPlugin) ConvertObjects(ctx context.Context, req *backend.Conversio
 func metricRequestWithQueries(t *testing.T, rawQueries ...string) dtos.MetricRequest {
 	t.Helper()
 	queries := make([]*simplejson.Json, 0)
-	for _, q := range rawQueries {
-		json, err := simplejson.NewJson([]byte(q))
+	for _, rq := range rawQueries {
+		q, err := simplejson.NewJson([]byte(rq))
 		require.NoError(t, err)
-		queries = append(queries, json)
+		queries = append(queries, q)
 	}
 	return dtos.MetricRequest{
 		From:    "now-1h",
