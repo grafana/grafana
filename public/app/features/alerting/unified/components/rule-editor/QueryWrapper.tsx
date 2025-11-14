@@ -14,13 +14,15 @@ import {
   RelativeTimeRange,
   ThresholdsConfig,
   getDefaultRelativeTimeRange,
+  isTimeSeriesFrames,
   rangeUtil,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -194,8 +196,36 @@ export const QueryWrapper = ({
   const editorQueries = cloneDeep(queries.map((query) => query.model));
   const range = rangeUtil.relativeToTimeRange(query.relativeTimeRange ?? getDefaultRelativeTimeRange());
 
+  // Check if we should show a warning about using a data source query as alert condition
+  const isAlertCondition = condition === query.refId;
+  const isDataSourceQuery = !isExpressionQuery(query.model);
+  const hasExpressions = queries.some((q) => isExpressionQuery(q.model));
+  const isTimeSeriesData = data.series.length > 0 && isTimeSeriesFrames(data.series);
+  
+  // Show warning if:
+  // 1. This query is set as alert condition AND
+  // 2. It's a data source query (not an expression) AND
+  // 3. There are expressions available to use AND
+  // 4. It's NOT time series data (time series data will be blocked by backend validation)
+  const shouldShowDatasourceQueryConditionWarning = 
+    isAlertCondition && isDataSourceQuery && hasExpressions && !isTimeSeriesData;
+
   return (
     <Stack direction="column" gap={0.5}>
+      {shouldShowDatasourceQueryConditionWarning && (
+        <Alert
+          severity="warning"
+          title={t(
+            'alerting.query-wrapper.warning-title',
+            'Data source query set as alert condition'
+          )}
+        >
+          <Trans i18nKey="alerting.query-wrapper.warning-body">
+            This query will trigger an alert when it returns any non-zero value. Consider using an expression below
+            for more precise alert control.
+          </Trans>
+        </Alert>
+      )}
       <div className={styles.wrapper}>
         <QueryEditorRow<AlertDataQuery>
           hideRefId={!isAdvancedMode}
