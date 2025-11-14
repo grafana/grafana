@@ -326,7 +326,10 @@ jobs:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
           GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
           REPO: ${{ github.repository }}
-        run: echo "ISSUE_NUMBER=$(gh api "/repos/${REPO}/commits/${GRAFANA_COMMIT}/pulls" | jq -r '.[0].number')" >> "$GITHUB_ENV"
+        run:
+          set -o pipefail
+          issue_number=$(gh api "/repos/${REPO}/commits/${GRAFANA_COMMIT}/pulls" | jq -r '.[0].number')
+          echo "ISSUE_NUMBER=${issue_number}" >> "$GITHUB_ENV"
       - name: Find Comment
         uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
         if: ${{ steps.find-pr.outcome == 'success' }}
