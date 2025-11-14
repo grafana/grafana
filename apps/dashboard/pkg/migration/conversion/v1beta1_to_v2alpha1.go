@@ -1639,7 +1639,6 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 	// Build the query from target
 	var query *dashv2alpha1.DashboardDataQueryKind
 	// Use datasourceType as the kind (datasource type, e.g., "prometheus", "grafana")
-	// If datasourceType is empty, leave kind as empty string (not "DataQuery")
 	kind := datasourceType
 	if target, ok := annotationMap["target"].(map[string]interface{}); ok && target != nil {
 		queryKind := dashv2alpha1.DashboardDataQueryKind{
