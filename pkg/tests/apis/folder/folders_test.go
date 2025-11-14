@@ -1993,8 +1993,8 @@ func TestIntegrationDeleteNestedFoldersPostorder(t *testing.T) {
 	}
 }
 
-// Test deleting nested folders with provisioned dashboards ensures proper handling of forceDeleteRules
-func TestIntegrationDeleteNestedFoldersWithProvisionedDashboards(t *testing.T) {
+// Test deleting folder with provisioned dashboard has proper handling with forceDeleteRules
+func TestIntegrationDeleteFolderWithProvisionedDashboards(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	if !db.IsTestDbSQLite() {
