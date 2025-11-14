@@ -30,14 +30,26 @@ func Convert_V2alpha1_to_V0(in *dashv2alpha1.Dashboard, out *dashv0.Dashboard, s
 func Convert_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 
-	// TODO: implement V2 to V1 conversion
+	// Convert the spec
+	if err := ConvertDashboard_V2alpha1_to_V1beta1(in, out, scope); err != nil {
+		out.Status = dashv1.DashboardStatus{
+			Conversion: &dashv1.DashboardConversionStatus{
+				StoredVersion: ptr.To(dashv2alpha1.VERSION),
+				Failed:        true,
+				Error:         ptr.To(err.Error()),
+				Source:        in,
+			},
+		}
 
+		// For errors, set status but don't return error (matches v1beta1_to_v2alpha1 pattern)
+		return nil
+	}
+
+	// Set successful conversion status
 	out.Status = dashv1.DashboardStatus{
 		Conversion: &dashv1.DashboardConversionStatus{
 			StoredVersion: ptr.To(dashv2alpha1.VERSION),
-			Failed:        true,
-			Error:         ptr.To("backend conversion not yet implemented"),
-			Source:        in,
+			Failed:        false,
 		},
 	}
 
@@ -92,14 +104,43 @@ func Convert_V2beta1_to_V0(in *dashv2beta1.Dashboard, out *dashv0.Dashboard, sco
 func Convert_V2beta1_to_V1beta1(in *dashv2beta1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 
-	// TODO: implement v2beta1 to V1 conversion
+	// Convert v2beta1 → v2alpha1 first, then v2alpha1 → v1beta1
+	// This combines the atomic conversions, similar to Convert_V1beta1_to_V2beta1
+	v2alpha1 := &dashv2alpha1.Dashboard{}
+	if err := ConvertDashboard_V2beta1_to_V2alpha1(in, v2alpha1, scope); err != nil {
+		out.Status = dashv1.DashboardStatus{
+			Conversion: &dashv1.DashboardConversionStatus{
+				StoredVersion: ptr.To(dashv2beta1.VERSION),
+				Failed:        true,
+				Error:         ptr.To(err.Error()),
+				Source:        in,
+			},
+		}
+		// For errors, set status but don't return error (matches v1beta1_to_v2alpha1 pattern)
+		return nil
+	}
 
+	// Convert v2alpha1 → v1beta1
+	// Note: ConvertDashboard_V2alpha1_to_V1beta1 will set out.ObjectMeta from v2alpha1,
+	// but we've already set it from the original input, so it will be preserved
+	if err := ConvertDashboard_V2alpha1_to_V1beta1(v2alpha1, out, scope); err != nil {
+		out.Status = dashv1.DashboardStatus{
+			Conversion: &dashv1.DashboardConversionStatus{
+				StoredVersion: ptr.To(dashv2beta1.VERSION),
+				Failed:        true,
+				Error:         ptr.To(err.Error()),
+				Source:        in,
+			},
+		}
+		// For errors, set status but don't return error (matches v1beta1_to_v2alpha1 pattern)
+		return nil
+	}
+
+	// Set successful conversion status
 	out.Status = dashv1.DashboardStatus{
 		Conversion: &dashv1.DashboardConversionStatus{
 			StoredVersion: ptr.To(dashv2beta1.VERSION),
-			Failed:        true,
-			Error:         ptr.To("backend conversion not yet implemented"),
-			Source:        in,
+			Failed:        false,
 		},
 	}
 
