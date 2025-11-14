@@ -4378,8 +4378,6 @@
       "next-button": "Volgende",
       "save-button": "Opslaan"
     },
-    "page-content": "Om Correlaties in te schakelen, voeg je het toe aan de Grafana-configuratie:",
-    "page-heading": "Correlaties zijn uitgeschakeld",
     "query-editor": {
       "control-rules": "De geselecteerde doelgegevensbron moet een query-editor exporteren.",
       "data-source-text": "Selecteer eerst een doelgegevensbron.",
@@ -7467,6 +7465,7 @@
       "label-resource-attributes": "Broneigenschappen",
       "label-span-attributes": "Spaneigenschappen",
       "label-stack-trace": "Stackspoor",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Tellen van onderliggenden:",
@@ -7475,8 +7474,7 @@
           "start-time": "Starttijd:"
         }
       },
-      "share-span": "Delen",
-      "warnings": "Waarschuwingen"
+      "share-span": "Delen"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Operator voor maximale span selecteren",

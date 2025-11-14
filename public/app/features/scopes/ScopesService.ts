@@ -157,7 +157,8 @@ export class ScopesService implements ScopesContextValue {
   }
 
   public changeScopes = (scopeNames: string[], parentNodeId?: string, scopeNodeId?: string) =>
-    this.selectorService.changeScopes(scopeNames, parentNodeId, scopeNodeId);
+    // Don't redirect on apply for initial load from URL. We only want to redirect when selecting from the selector
+    this.selectorService.changeScopes(scopeNames, parentNodeId, scopeNodeId, false);
 
   public setReadOnly = (readOnly: boolean) => {
     if (this.state.readOnly !== readOnly) {

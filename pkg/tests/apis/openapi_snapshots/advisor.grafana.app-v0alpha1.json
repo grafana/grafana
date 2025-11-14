@@ -2281,9 +2281,10 @@
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.Check": {
         "type": "object",
         "required": [
+          "kind",
+          "apiVersion",
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -2303,21 +2304,10 @@
             ]
           },
           "spec": {
-            "description": "Spec is the spec of the Check",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckSpec"
           },
           "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckStatus"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
@@ -2337,15 +2327,14 @@
         "properties": {
           "message": {
             "description": "Human readable error message",
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "url": {
             "description": "URL to a page with more information about the error",
-            "type": "string",
-            "default": ""
+            "type": "string"
           }
-        }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckList": {
         "type": "object",
@@ -2390,6 +2379,41 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckOperatorState": {
+        "type": "object",
+        "required": [
+          "lastEvaluation",
+          "state"
+        ],
+        "properties": {
+          "descriptiveState": {
+            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+            "type": "string"
+          },
+          "details": {
+            "description": "details contains any extra information that is operator-specific",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "lastEvaluation": {
+            "description": "lastEvaluation is the ResourceVersion last evaluated",
+            "type": "string"
+          },
+          "state": {
+            "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
+            "type": "string",
+            "enum": [
+              "success",
+              "in_progress",
+              "failed"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReport": {
         "type": "object",
         "required": [
@@ -2399,23 +2423,17 @@
         "properties": {
           "count": {
             "description": "Number of elements analyzed",
-            "type": "integer",
-            "format": "int64",
-            "default": 0
+            "type": "integer"
           },
           "failures": {
             "description": "List of failures",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReportFailure"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReportFailure"
             }
           }
-        }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReportFailure": {
         "type": "object",
@@ -2429,24 +2447,17 @@
         "properties": {
           "item": {
             "description": "Human readable identifier of the item that failed",
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "itemID": {
             "description": "ID of the item that failed",
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "links": {
             "description": "Links to actions that can be taken to resolve the failure",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckErrorLink"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckErrorLink"
             }
           },
           "moreInfo": {
@@ -2456,14 +2467,17 @@
           "severity": {
             "description": "Severity of the failure",
             "type": "string",
-            "default": ""
+            "enum": [
+              "high",
+              "low"
+            ]
           },
           "stepID": {
             "description": "Step ID that the failure is associated with",
-            "type": "string",
-            "default": ""
+            "type": "string"
           }
-        }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckSpec": {
         "type": "object",
@@ -2472,11 +2486,11 @@
             "description": "Generic data input that a check can receive",
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
-        }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckStatus": {
         "type": "object",
@@ -2488,37 +2502,30 @@
             "description": "additionalFields is reserved for future use",
             "type": "object",
             "additionalProperties": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": {}
             }
           },
           "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
+            "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckstatusOperatorState"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckOperatorState"
             }
           },
           "report": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReport"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReport"
           }
-        }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckType": {
         "type": "object",
         "required": [
+          "kind",
+          "apiVersion",
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {
@@ -2538,21 +2545,10 @@
             ]
           },
           "spec": {
-            "description": "Spec is the spec of the CheckType",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeSpec"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeSpec"
           },
           "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStatus"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
@@ -2606,6 +2602,41 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeOperatorState": {
+        "type": "object",
+        "required": [
+          "lastEvaluation",
+          "state"
+        ],
+        "properties": {
+          "descriptiveState": {
+            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+            "type": "string"
+          },
+          "details": {
+            "description": "details contains any extra information that is operator-specific",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "lastEvaluation": {
+            "description": "lastEvaluation is the ResourceVersion last evaluated",
+            "type": "string"
+          },
+          "state": {
+            "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
+            "type": "string",
+            "enum": [
+              "success",
+              "in_progress",
+              "failed"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeSpec": {
         "type": "object",
         "required": [
@@ -2614,21 +2645,16 @@
         ],
         "properties": {
           "name": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "steps": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStep"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStep"
             }
           }
-        }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStatus": {
         "type": "object",
@@ -2637,22 +2663,19 @@
             "description": "additionalFields is reserved for future use",
             "type": "object",
             "additionalProperties": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": {}
             }
           },
           "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
+            "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypestatusOperatorState"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeOperatorState"
             }
           }
-        }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStep": {
         "type": "object",
@@ -2664,82 +2687,19 @@
         ],
         "properties": {
           "description": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "resolution": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "stepID": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "title": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypestatusOperatorState": {
-        "type": "object",
-        "required": [
-          "lastEvaluation",
-          "state"
-        ],
-        "properties": {
-          "descriptiveState": {
-            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
             "type": "string"
-          },
-          "details": {
-            "description": "details contains any extra information that is operator-specific",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "lastEvaluation": {
-            "description": "lastEvaluation is the ResourceVersion last evaluated",
-            "type": "string",
-            "default": ""
-          },
-          "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-            "type": "string",
-            "default": ""
           }
-        }
-      },
-      "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckstatusOperatorState": {
-        "type": "object",
-        "required": [
-          "lastEvaluation",
-          "state"
-        ],
-        "properties": {
-          "descriptiveState": {
-            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
-            "type": "string"
-          },
-          "details": {
-            "description": "details contains any extra information that is operator-specific",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "lastEvaluation": {
-            "description": "lastEvaluation is the ResourceVersion last evaluated",
-            "type": "string",
-            "default": ""
-          },
-          "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-            "type": "string",
-            "default": ""
-          }
-        }
+        },
+        "additionalProperties": false
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",

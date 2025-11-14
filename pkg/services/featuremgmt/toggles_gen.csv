@@ -203,7 +203,6 @@ rendererDisableAppPluginsPreload,experimental,@grafana/grafana-operator-experien
 assetSriChecks,experimental,@grafana/frontend-ops,false,false,true
 alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
 infinityRunQueriesInParallel,privatePreview,@grafana/oss-big-tent,false,false,false
-inviteUserExperimental,experimental,@grafana/sharing-squad,false,false,true
 alertingMigrationUI,GA,@grafana/alerting-squad,false,false,true
 alertingImportYAMLUI,GA,@grafana/alerting-squad,false,false,true
 unifiedStorageHistoryPruner,GA,@grafana/search-and-storage,false,false,false
@@ -270,6 +269,5 @@ newPanelPadding,experimental,@grafana/dashboards-squad,false,false,false
 onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
 panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
 dashboardTemplates,experimental,@grafana/sharing-squad,false,false,false
-grafanaAdvisorAppInstaller,experimental,@grafana/plugins-platform-backend,false,false,false
 kubernetesAnnotations,experimental,@grafana/grafana-backend-services-squad,false,false,false
 awsDatasourcesHttpProxy,experimental,@grafana/aws-datasources,false,false,false
