@@ -3094,3 +3094,110 @@ func TestDataStore_BatchGet(t *testing.T) {
 		}
 	})
 }
+
+func TestDataStore_GetLatestAndPredecessor(t *testing.T) {
+	ds := setupTestDataStore(t)
+	ctx := context.Background()
+
+	resourceKey := ListRequestKey{
+		Namespace: "test-namespace",
+		Group:     "test-group",
+		Resource:  "test-resource",
+		Name:      "test-name",
+	}
+
+	t.Run("returns latest and predecessor when multiple versions exist", func(t *testing.T) {
+		// Create test data with multiple versions
+		rv1 := node.Generate().Int64()
+		rv2 := node.Generate().Int64()
+		rv3 := node.Generate().Int64()
+
+		versions := []int64{rv1, rv2, rv3}
+
+		// Save all versions
+		for _, version := range versions {
+			dataKey := DataKey{
+				Namespace:       resourceKey.Namespace,
+				Group:           resourceKey.Group,
+				Resource:        resourceKey.Resource,
+				Name:            resourceKey.Name,
+				ResourceVersion: version,
+				Action:          DataActionCreated,
+			}
+
+			err := ds.Save(ctx, dataKey, bytes.NewReader([]byte(fmt.Sprintf("version-%d", version))))
+			require.NoError(t, err)
+		}
+
+		// Get latest and predecessor
+		latest, predecessor, err := ds.GetLatestAndPredecessor(ctx, resourceKey)
+		require.NoError(t, err)
+
+		// Verify latest is rv3 (highest)
+		require.Equal(t, rv3, latest.ResourceVersion)
+		require.Equal(t, resourceKey.Namespace, latest.Namespace)
+		require.Equal(t, resourceKey.Group, latest.Group)
+		require.Equal(t, resourceKey.Resource, latest.Resource)
+		require.Equal(t, resourceKey.Name, latest.Name)
+
+		// Verify predecessor is rv2 (second highest)
+		require.Equal(t, rv2, predecessor.ResourceVersion)
+		require.Equal(t, resourceKey.Namespace, predecessor.Namespace)
+		require.Equal(t, resourceKey.Group, predecessor.Group)
+		require.Equal(t, resourceKey.Resource, predecessor.Resource)
+		require.Equal(t, resourceKey.Name, predecessor.Name)
+	})
+
+	t.Run("returns latest with empty predecessor when only one version exists", func(t *testing.T) {
+		singleResourceKey := ListRequestKey{
+			Namespace: "single-namespace",
+			Group:     "single-group",
+			Resource:  "single-resource",
+			Name:      "single-name",
+		}
+
+		rv := node.Generate().Int64()
+		dataKey := DataKey{
+			Namespace:       singleResourceKey.Namespace,
+			Group:           singleResourceKey.Group,
+			Resource:        singleResourceKey.Resource,
+			Name:            singleResourceKey.Name,
+			ResourceVersion: rv,
+			Action:          DataActionCreated,
+		}
+
+		err := ds.Save(ctx, dataKey, bytes.NewReader([]byte("single-version")))
+		require.NoError(t, err)
+
+		// Get latest and predecessor
+		latest, predecessor, err := ds.GetLatestAndPredecessor(ctx, singleResourceKey)
+		require.NoError(t, err)
+
+		// Verify latest is correct
+		require.Equal(t, rv, latest.ResourceVersion)
+		require.Equal(t, singleResourceKey.Namespace, latest.Namespace)
+		require.Equal(t, singleResourceKey.Group, latest.Group)
+		require.Equal(t, singleResourceKey.Resource, latest.Resource)
+		require.Equal(t, singleResourceKey.Name, latest.Name)
+
+		// Verify predecessor is empty (ResourceVersion == 0)
+		require.Equal(t, int64(0), predecessor.ResourceVersion)
+		require.Empty(t, predecessor.Namespace)
+		require.Empty(t, predecessor.Group)
+		require.Empty(t, predecessor.Resource)
+		require.Empty(t, predecessor.Name)
+	})
+
+	t.Run("returns error for non-existent resource", func(t *testing.T) {
+		nonExistentKey := ListRequestKey{
+			Namespace: "non-existent-namespace",
+			Group:     "non-existent-group",
+			Resource:  "non-existent-resource",
+			Name:      "non-existent-name",
+		}
+
+		_, _, err := ds.GetLatestAndPredecessor(ctx, nonExistentKey)
+		require.Error(t, err)
+		require.Equal(t, ErrNotFound, err)
+	})
+}

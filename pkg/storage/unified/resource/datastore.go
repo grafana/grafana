@@ -241,6 +241,49 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 	return DataKey{}, ErrNotFound
 }
 
+// GetLatestAndPredecessor returns the latest resource version and its immediate predecessor
+// in a single atomic operation. Returns (latest, predecessor, error).
+// If there's only one version, predecessor will be an empty DataKey (ResourceVersion == 0).
+func (d *dataStore) GetLatestAndPredecessor(ctx context.Context, key ListRequestKey) (DataKey, DataKey, error) {
+	if err := key.Validate(); err != nil {
+		return DataKey{}, DataKey{}, fmt.Errorf("invalid data key: %w", err)
+	}
+	if key.Group == "" || key.Resource == "" || key.Namespace == "" || key.Name == "" {
+		return DataKey{}, DataKey{}, fmt.Errorf("group, resource, namespace or name is empty")
+	}
+	prefix := key.Prefix()
+	var latest, predecessor DataKey
+	count := 0
+	for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+		Limit:    2, // Get latest and predecessor
+		Sort:     SortOrderDesc,
+	}) {
+		if err != nil {
+			return DataKey{}, DataKey{}, err
+		}
+		parsedKey, err := ParseKey(k)
+		if err != nil {
+			return DataKey{}, DataKey{}, err
+		}
+		switch count {
+		case 0:
+			latest = parsedKey
+		case 1:
+			predecessor = parsedKey
+		}
+		count++
+	}
+	if count == 0 {
+		return DataKey{}, DataKey{}, ErrNotFound
+	}
+	if count == 1 {
+		return latest, DataKey{}, nil
+	}
+	return latest, predecessor, nil
+}
+
 // GetLatestResourceKey retrieves the data key for the latest version of a resource.
 // Returns the key with the highest resource version that is not deleted.
 func (d *dataStore) GetLatestResourceKey(ctx context.Context, key GetRequestKey) (DataKey, error) {

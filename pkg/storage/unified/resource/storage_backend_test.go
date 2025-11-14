@@ -65,93 +65,160 @@ func TestKvStorageBackend_WriteEvent_Success(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
 
-	tests := []struct {
-		name      string
-		eventType resourcepb.WatchEvent_Type
-	}{
-		{
-			name:      "write ADDED event",
-			eventType: resourcepb.WatchEvent_ADDED,
+	testObj, err := createTestObject()
+	require.NoError(t, err)
+
+	metaAccessor, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+
+	resourceName := "test-resource"
+
+	// Step 1: Create the resource (ADDED event)
+	addEvent := WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      resourceName,
 		},
-		{
-			name:      "write MODIFIED event",
-			eventType: resourcepb.WatchEvent_MODIFIED,
-		},
-		{
-			name:      "write DELETED event",
-			eventType: resourcepb.WatchEvent_DELETED,
-		},
+		Value:      objectToJSONBytes(t, testObj),
+		Object:     metaAccessor,
+		ObjectOld:  metaAccessor,
+		PreviousRV: 0,
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			testObj, err := createTestObject()
-			require.NoError(t, err)
+	rv1, err := backend.WriteEvent(ctx, addEvent)
+	require.NoError(t, err)
+	assert.Greater(t, rv1, int64(0), "resource version should be positive")
 
-			metaAccessor, err := utils.MetaAccessor(testObj)
-			require.NoError(t, err)
-
-			writeEvent := WriteEvent{
-				Type: tt.eventType,
-				Key: &resourcepb.ResourceKey{
-					Namespace: "default",
-					Group:     "apps",
-					Resource:  "resources",
-					Name:      "test-resource",
-				},
-				Value:      objectToJSONBytes(t, testObj),
-				Object:     metaAccessor,
-				ObjectOld:  metaAccessor,
-				PreviousRV: 100,
-			}
-
-			rv, err := backend.WriteEvent(ctx, writeEvent)
-			require.NoError(t, err)
-			assert.Greater(t, rv, int64(0), "resource version should be positive")
-
-			// Verify data was written to dataStore
-			var expectedAction DataAction
-			switch tt.eventType {
-			case resourcepb.WatchEvent_ADDED:
-				expectedAction = DataActionCreated
-			case resourcepb.WatchEvent_MODIFIED:
-				expectedAction = DataActionUpdated
-			case resourcepb.WatchEvent_DELETED:
-				expectedAction = DataActionDeleted
-			default:
-				t.Fatalf("unexpected event type: %v", tt.eventType)
-			}
-
-			dataKey := DataKey{
-				Namespace:       "default",
-				Group:           "apps",
-				Resource:        "resources",
-				Name:            "test-resource",
-				ResourceVersion: rv,
-				Action:          expectedAction,
-			}
-
-			dataReader, err := backend.dataStore.Get(ctx, dataKey)
-			require.NoError(t, err)
-			dataValue, err := io.ReadAll(dataReader)
-			require.NoError(t, err)
-			require.NoError(t, dataReader.Close())
-			assert.Equal(t, objectToJSONBytes(t, testObj), dataValue)
-
-			// Verify event was written to eventStore
-			eventKey := EventKey{
-				Namespace:       "default",
-				Group:           "apps",
-				Resource:        "resources",
-				Name:            "test-resource",
-				ResourceVersion: rv,
-				Action:          expectedAction,
-			}
-
-			_, err = backend.eventStore.Get(ctx, eventKey)
-			require.NoError(t, err)
-		})
+	// Verify ADDED event was written to dataStore
+	dataKey1 := DataKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resources",
+		Name:            resourceName,
+		ResourceVersion: rv1,
+		Action:          DataActionCreated,
 	}
+
+	dataReader1, err := backend.dataStore.Get(ctx, dataKey1)
+	require.NoError(t, err)
+	dataValue1, err := io.ReadAll(dataReader1)
+	require.NoError(t, err)
+	require.NoError(t, dataReader1.Close())
+	assert.Equal(t, objectToJSONBytes(t, testObj), dataValue1)
+
+	// Verify ADDED event was written to eventStore
+	eventKey1 := EventKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resources",
+		Name:            resourceName,
+		ResourceVersion: rv1,
+		Action:          DataActionCreated,
+	}
+
+	_, err = backend.eventStore.Get(ctx, eventKey1)
+	require.NoError(t, err)
+
+	// Step 2: Update the resource (MODIFIED event)
+	modifyEvent := WriteEvent{
+		Type: resourcepb.WatchEvent_MODIFIED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      resourceName,
+		},
+		Value:      objectToJSONBytes(t, testObj),
+		Object:     metaAccessor,
+		ObjectOld:  metaAccessor,
+		PreviousRV: rv1,
+	}
+
+	rv2, err := backend.WriteEvent(ctx, modifyEvent)
+	require.NoError(t, err)
+	assert.Greater(t, rv2, rv1, "updated resource version should be greater")
+
+	// Verify MODIFIED event was written to dataStore
+	dataKey2 := DataKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resources",
+		Name:            resourceName,
+		ResourceVersion: rv2,
+		Action:          DataActionUpdated,
+	}
+
+	dataReader2, err := backend.dataStore.Get(ctx, dataKey2)
+	require.NoError(t, err)
+	dataValue2, err := io.ReadAll(dataReader2)
+	require.NoError(t, err)
+	require.NoError(t, dataReader2.Close())
+	assert.Equal(t, objectToJSONBytes(t, testObj), dataValue2)
+
+	// Verify MODIFIED event was written to eventStore
+	eventKey2 := EventKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resources",
+		Name:            resourceName,
+		ResourceVersion: rv2,
+		Action:          DataActionUpdated,
+	}
+
+	_, err = backend.eventStore.Get(ctx, eventKey2)
+	require.NoError(t, err)
+
+	// Step 3: Delete the resource (DELETED event)
+	deleteEvent := WriteEvent{
+		Type: resourcepb.WatchEvent_DELETED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      resourceName,
+		},
+		Value:      objectToJSONBytes(t, testObj),
+		Object:     metaAccessor,
+		ObjectOld:  metaAccessor,
+		PreviousRV: rv2,
+	}
+
+	rv3, err := backend.WriteEvent(ctx, deleteEvent)
+	require.NoError(t, err)
+	assert.Greater(t, rv3, rv2, "deleted resource version should be greater")
+
+	// Verify DELETED event was written to dataStore
+	dataKey3 := DataKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resources",
+		Name:            resourceName,
+		ResourceVersion: rv3,
+		Action:          DataActionDeleted,
+	}
+
+	dataReader3, err := backend.dataStore.Get(ctx, dataKey3)
+	require.NoError(t, err)
+	dataValue3, err := io.ReadAll(dataReader3)
+	require.NoError(t, err)
+	require.NoError(t, dataReader3.Close())
+	assert.Equal(t, objectToJSONBytes(t, testObj), dataValue3)
+
+	// Verify DELETED event was written to eventStore
+	eventKey3 := EventKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resources",
+		Name:            resourceName,
+		ResourceVersion: rv3,
+		Action:          DataActionDeleted,
+	}
+
+	_, err = backend.eventStore.Get(ctx, eventKey3)
+	require.NoError(t, err)
 }
 
 func TestKvStorageBackend_WriteEvent_ResourceAlreadyExists(t *testing.T) {
@@ -1520,7 +1587,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		metaAccessor, err := utils.MetaAccessor(testObj)
 		require.NoError(t, err)
 		writeEvent := WriteEvent{
-			Type: resourcepb.WatchEvent_DELETED,
+			Type: resourcepb.WatchEvent_ADDED,
 			Key: &resourcepb.ResourceKey{
 				Namespace: "default",
 				Group:     "apps",
@@ -1529,23 +1596,39 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			},
 			Value:      objectToJSONBytes(t, testObj),
 			Object:     metaAccessor,
-			ObjectOld:  metaAccessor,
 			PreviousRV: 0,
 		}
 		rv1, err := backend.WriteEvent(ctx, writeEvent)
 		require.NoError(t, err)
 
-		// Add prunerMaxEvents+1 deleted events
+		// Create prunerMaxEvents deleted events by repeatedly deleting and recreating the resource
+		// This will create: 1 initial ADDED + prunerMaxEvents cycles of (DELETE + ADDED)
+		// = 1 + 20 + 20 = 41 total events (21 ADDED + 20 DELETED)
 		// Multiple deleted events for a resource shouldn't happen - this is just to ensure the pruner won't remove deleted events
 		previousRV := rv1
 		for i := 0; i < prunerMaxEvents; i++ {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("delete-%d", i)
+			metaAccessor, err := utils.MetaAccessor(testObj)
+			require.NoError(t, err)
+
+			// Delete the resource
 			writeEvent.Type = resourcepb.WatchEvent_DELETED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
+			writeEvent.Object = metaAccessor
+			writeEvent.ObjectOld = metaAccessor
 			writeEvent.PreviousRV = previousRV
-			newRv, err := backend.WriteEvent(ctx, writeEvent)
+			_, err = backend.WriteEvent(ctx, writeEvent)
 			require.NoError(t, err)
-			previousRV = newRv
+
+			// Recreate the resource
+			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("recreate-%d", i)
+			writeEvent.Type = resourcepb.WatchEvent_ADDED
+			writeEvent.Value = objectToJSONBytes(t, testObj)
+			writeEvent.Object, err = utils.MetaAccessor(testObj)
+			require.NoError(t, err)
+			writeEvent.PreviousRV = 0
+			previousRV, err = backend.WriteEvent(ctx, writeEvent)
+			require.NoError(t, err)
 		}
 
 		pruningKey := PruningKey{
@@ -1558,18 +1641,25 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		err = backend.pruneEvents(ctx, pruningKey)
 		require.NoError(t, err)
 
-		// assert all deleted events exist
+		// Assert all deleted events exist (20) + the most recent 20 non-deleted events
+		// Pruner should keep: all 20 DELETED + 20 most recent non-deleted = 40 total
+		// The oldest non-deleted event (initial ADDED) should be pruned
 		counter := 0
-		for _, err := range backend.dataStore.Keys(ctx, ListRequestKey{
+		deletedCount := 0
+		for datakey, err := range backend.dataStore.Keys(ctx, ListRequestKey{
 			Namespace: "default",
 			Group:     "apps",
 			Resource:  "resources",
 			Name:      "test-resource",
 		}, SortOrderDesc) {
 			require.NoError(t, err)
+			if datakey.Action == DataActionDeleted {
+				deletedCount++
+			}
 			counter++
 		}
-		require.Equal(t, prunerMaxEvents+1, counter)
+		require.Equal(t, prunerMaxEvents, deletedCount, "All deleted events should be kept")
+		require.Equal(t, prunerMaxEvents*2, counter, "Should have 20 deleted + 20 non-deleted events")
 	})
 }
 
