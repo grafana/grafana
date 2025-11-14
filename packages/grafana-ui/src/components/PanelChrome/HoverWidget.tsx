@@ -6,7 +6,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { getFeatureToggle } from '../../utils/featureToggle';
 import { Icon } from '../Icon/Icon';
 
 import { PanelMenu } from './PanelMenu';
@@ -64,8 +63,6 @@ export function HoverWidget({ menu, title, dragClass, children, onOpenMenu }: Pr
 }
 
 function getStyles(theme: GrafanaTheme2) {
-  const newPanelPadding = getFeatureToggle('newPanelPadding');
-
   return {
     container: css({
       label: 'hover-container-widget',
@@ -86,7 +83,7 @@ function getStyles(theme: GrafanaTheme2) {
       height: theme.spacing(4),
       boxShadow: theme.shadows.z1,
       gap: theme.spacing(1),
-      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1.5) : theme.spacing(0, 0.5, 0, 1),
+      padding: theme.spacing(0, 1),
     }),
     square: css({
       display: 'flex',
