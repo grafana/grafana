@@ -825,7 +825,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
 
-      // Save dashboard and reload
+      // Save  dashboard and reload
       await saveDashboard(dashboardPage, selectors);
       await page.reload();
 
