@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
-	search "github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	alerting "github.com/grafana/grafana/pkg/tests/api/alerting"
@@ -2001,12 +2001,10 @@ func TestIntegrationDeleteNestedFoldersWithProvisionedDashboards(t *testing.T) {
 		t.Skip("test only on sqlite for now")
 	}
 
-	// Provisioning service needs to be using non-static dual writer for provisioning on mode 4+
-	for mode := 0; mode <= 3; mode++ {
+	for mode := 0; mode <= 5; mode++ {
 		t.Run(fmt.Sprintf("Mode %d: Delete provisioned folders and dashboards", mode), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
-			// Setup Grafana with provisioning
-			dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			ops := testinfra.GrafanaOpts{
 				DisableAnonymous:     true,
 				AppModeProduction:    true,
 				APIServerStorageType: "unified",
@@ -2014,13 +2012,18 @@ func TestIntegrationDeleteNestedFoldersWithProvisionedDashboards(t *testing.T) {
 					folders.RESOURCEGROUP: {
 						DualWriterMode: modeDw,
 					},
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: modeDw,
+					},
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagUnifiedStorageSearch,
 				},
-			})
+			}
+			// Setup Grafana with provisioning
+			ops.Dir, ops.DirPath = testinfra.CreateGrafDir(t, ops)
 			// Create provisioning directories
-			provDashboardsDir := fmt.Sprintf("%s/conf/provisioning/dashboards", dir)
+			provDashboardsDir := fmt.Sprintf("%s/conf/provisioning/dashboards", ops.Dir)
 			provDashboardsCfg := fmt.Sprintf("%s/dev.yaml", provDashboardsDir)
 			blob := []byte(fmt.Sprintf(`
 apiVersion: 1
@@ -2040,21 +2043,7 @@ providers:
 			err = os.WriteFile(provDashboardFile, input, 0o644)
 			require.NoError(t, err)
 
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					folders.RESOURCEGROUP: {
-						DualWriterMode: modeDw,
-					},
-				},
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagUnifiedStorageSearch,
-				},
-				Dir:     dir,
-				DirPath: path,
-			})
+			helper := apis.NewK8sTestHelper(t, ops)
 
 			client := helper.GetResourceClient(apis.ResourceClientArgs{
 				User: helper.Org1.Admin,
@@ -2066,20 +2055,19 @@ providers:
 			var folderUID string
 			var dashboardUID string
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				title := "dashboard"
-				dashboardList := &search.HitList{}
 				resp := apis.DoRequest(helper, apis.RequestParams{
 					User:   client.Args.User,
 					Method: http.MethodGet,
-					Path:   fmt.Sprintf("/api/search?query=%s", title),
+					Path:   fmt.Sprintf("/apis/dashboard.grafana.app/v0alpha1/namespaces/%s/search?query=dashboard&limit=50&type=dashboard", client.Args.Namespace),
 				}, &map[string]interface{}{})
+				var list v0alpha1.SearchResults
 				require.NotNil(t, resp.Response)
 				assert.Equal(t, http.StatusOK, resp.Response.StatusCode)
-				assert.NoError(t, json.Unmarshal(resp.Body, dashboardList))
-				assert.Equal(collect, dashboardList.Len(), 1, "Dashboard should be ready")
-				for _, d := range *dashboardList {
-					folderUID = d.FolderUID
-					dashboardUID = d.UID
+				assert.NoError(t, json.Unmarshal(resp.Body, &list))
+				assert.Equal(collect, list.TotalHits, int64(1), "Dashboard should be ready")
+				for _, d := range list.Hits {
+					folderUID = d.Folder
+					dashboardUID = d.Name
 				}
 			}, 10*time.Second, 25*time.Millisecond)
 
@@ -2090,7 +2078,7 @@ providers:
 				getDash := apis.DoRequest(helper, apis.RequestParams{
 					User:   client.Args.User,
 					Method: http.MethodGet,
-					Path:   fmt.Sprintf("/api/dashboards/uid/%s", dashboardUID),
+					Path:   fmt.Sprintf("/apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/%s", dashboardUID),
 				}, &map[string]interface{}{})
 				if shouldExist {
 					require.Equal(t, http.StatusOK, getDash.Response.StatusCode, "dashboard %s should exist", dashboardUID)
@@ -2120,6 +2108,8 @@ providers:
 			})
 
 			t.Run("Deletion should succeed when forceDeleteRules=true and delete provisioned dashboards", func(t *testing.T) {
+				_, err = client.Resource.Get(context.Background(), folderUID, metav1.GetOptions{})
+				require.NoError(t, err, "parent folder %d should still exist", folderUID)
 				// Delete the parent folder with forceDeleteRules=true
 				parentDelete := apis.DoRequest(helper, apis.RequestParams{
 					User:   client.Args.User,
