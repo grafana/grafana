@@ -27,14 +27,12 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `disableEnvelopeEncryption`            | Disable envelope encryption (emergency only)                                                                                                                  |                    |
 | `publicDashboardsScene`                | Enables public dashboard rendering using scenes                                                                                                               | Yes                |
 | `featureHighlights`                    | Highlight Grafana Enterprise features                                                                                                                         |                    |
-| `correlations`                         | Correlations page                                                                                                                                             | Yes                |
 | `cloudWatchCrossAccountQuerying`       | Enables cross-account querying in CloudWatch datasources                                                                                                      | Yes                |
 | `logsContextDatasourceUi`              | Allow datasource to provide custom UI for context view                                                                                                        | Yes                |
 | `lokiQuerySplitting`                   | Split large interval queries into subqueries with smaller time intervals                                                                                      | Yes                |
 | `influxdbBackendMigration`             | Query InfluxDB InfluxQL without the proxy                                                                                                                     | Yes                |
 | `dataplaneFrontendFallback`            | Support dataplane contract field name change for transformations and field name matchers where the name is different                                          | Yes                |
 | `unifiedRequestLog`                    | Writes error logs to the request logger                                                                                                                       | Yes                |
-| `recordedQueriesMulti`                 | Enables writing multiple items from a single query within Recorded Queries                                                                                    | Yes                |
 | `logsExploreTableVisualisation`        | A table visualisation for logs in Explore                                                                                                                     | Yes                |
 | `awsDatasourcesTempCredentials`        | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                             | Yes                |
 | `transformationsRedesign`              | Enables the transformations redesign                                                                                                                          | Yes                |
@@ -53,7 +51,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `onPremToCloudMigrations`              | Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.                                 | Yes                |
 | `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                                              | Yes                |
 | `newPDFRendering`                      | New implementation for the dashboard-to-PDF rendering                                                                                                         | Yes                |
-| `tlsMemcached`                         | Use TLS-enabled memcached in the enterprise caching feature                                                                                                   | Yes                |
 | `cloudWatchNewLabelParsing`            | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
 | `pluginProxyPreserveTrailingSlash`     | Preserve plugin proxy trailing slash.                                                                                                                         |                    |
 | `azureMonitorPrometheusExemplars`      | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                  | Yes                |
@@ -79,8 +76,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `grafanaAssistantInProfilesDrilldown`  | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `sharingDashboardImage`                | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
-| `dashboardDsAdHocFiltering`            | Enables adhoc filtering support for the dashboard datasource                                                                                                  | Yes                |
-| `adhocFiltersInTooltips`               | Enable adhoc filter buttons in visualization tooltips                                                                                                         | Yes                |
 | `tempoSearchBackendMigration`          | Run search queries through the tempo backend                                                                                                                  |                    |
 
 ## Public preview feature toggles
@@ -111,6 +106,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `logsPanelControls`             | Enables a control component for the logs panel in Explore                                              |
 | `interactiveLearning`           | Enables the interactive learning app                                                                   |
 | `azureResourcePickerUpdates`    | Enables the updated Azure Monitor resource picker                                                      |
+| `newVizSuggestions`             | Enable new visualization suggestions                                                                   |
 | `preventPanelChromeOverflow`    | Restrict PanelChrome contents with overflow: hidden;                                                   |
 
 ## Development feature toggles

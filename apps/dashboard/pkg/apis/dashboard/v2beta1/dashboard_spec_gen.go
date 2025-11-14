@@ -209,6 +209,7 @@ type DashboardPanelQuerySpec struct {
 func NewDashboardPanelQuerySpec() *DashboardPanelQuerySpec {
 	return &DashboardPanelQuerySpec{
 		Query: *NewDashboardDataQueryKind(),
+		RefId: "A",
 	}
 }
 
@@ -554,8 +555,9 @@ const (
 
 // +k8s:openapi-gen=true
 type DashboardThreshold struct {
-	Value float64 `json:"value"`
-	Color string  `json:"color"`
+	// Value null means -Infinity
+	Value *float64 `json:"value"`
+	Color string   `json:"color"`
 }
 
 // NewDashboardThreshold creates a new DashboardThreshold object.
@@ -1615,7 +1617,7 @@ type DashboardIntervalVariableSpec struct {
 	Auto        bool                      `json:"auto"`
 	AutoMin     string                    `json:"auto_min"`
 	AutoCount   int64                     `json:"auto_count"`
-	Refresh     DashboardVariableRefresh  `json:"refresh"`
+	Refresh     string                    `json:"refresh"`
 	Label       *string                   `json:"label,omitempty"`
 	Hide        DashboardVariableHide     `json:"hide"`
 	SkipUrlSync bool                      `json:"skipUrlSync"`
@@ -1639,7 +1641,7 @@ func NewDashboardIntervalVariableSpec() *DashboardIntervalVariableSpec {
 		Auto:        false,
 		AutoMin:     "",
 		AutoCount:   0,
-		Refresh:     DashboardVariableRefreshNever,
+		Refresh:     "onTimeRangeChanged",
 		Hide:        DashboardVariableHideDontHide,
 		SkipUrlSync: false,
 	}
@@ -1926,6 +1928,8 @@ func NewDashboardV2beta1DataQueryKindDatasource() *DashboardV2beta1DataQueryKind
 
 // +k8s:openapi-gen=true
 type DashboardV2beta1FieldConfigSourceOverrides struct {
+	// Describes config override rules created when interacting with Grafana.
+	SystemRef  *string                       `json:"__systemRef,omitempty"`
 	Matcher    DashboardMatcherConfig        `json:"matcher"`
 	Properties []DashboardDynamicConfigValue `json:"properties"`
 }
