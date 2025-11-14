@@ -18,7 +18,6 @@ test.use({
   viewport: { width: 1920, height: 1080 },
 });
 
-// Skipping due to failing test in CI
 test.describe(
   'Grouping panels',
   {
