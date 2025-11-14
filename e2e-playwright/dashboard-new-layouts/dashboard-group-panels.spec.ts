@@ -18,8 +18,7 @@ test.use({
   viewport: { width: 1920, height: 1080 },
 });
 
-// Skipping due to failing test in CI
-test.skip(
+test.describe(
   'Grouping panels',
   {
     tag: ['@dashboards'],
@@ -164,7 +163,7 @@ test.skip(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
       ).toHaveCount(1);
 
-      thirdRow.scrollIntoViewIfNeeded();
+      await thirdRow.scrollIntoViewIfNeeded();
       await expect(thirdRow).toBeVisible();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: thirdRow })
@@ -239,7 +238,7 @@ test.skip(
       const firstRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row'));
       await expect(firstRow).toBeVisible();
 
-      firstRow.scrollIntoViewIfNeeded();
+      await firstRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
       ).toHaveCount(3);
@@ -247,7 +246,7 @@ test.skip(
       const secondRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row 1'));
       await expect(secondRow).toBeVisible();
 
-      secondRow.scrollIntoViewIfNeeded();
+      await secondRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
       ).toHaveCount(3);
@@ -264,12 +263,12 @@ test.skip(
       await expect(firstRow).toBeVisible();
       await expect(secondRow).toBeVisible();
 
-      firstRow.scrollIntoViewIfNeeded();
+      await firstRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
       ).toHaveCount(3);
 
-      secondRow.scrollIntoViewIfNeeded();
+      await secondRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
       ).toHaveCount(3);
@@ -298,7 +297,7 @@ test.skip(
       const firstRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row'));
       await expect(firstRow).toBeVisible();
 
-      firstRow.scrollIntoViewIfNeeded();
+      await firstRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
       ).toHaveCount(3);
@@ -306,7 +305,7 @@ test.skip(
       const secondRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row 1'));
       await expect(secondRow).toBeVisible();
 
-      secondRow.scrollIntoViewIfNeeded();
+      await secondRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
       ).toHaveCount(3);
@@ -323,12 +322,12 @@ test.skip(
       await expect(firstRow).toBeVisible();
       await expect(secondRow).toBeVisible();
 
-      firstRow.scrollIntoViewIfNeeded();
+      await firstRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
       ).toHaveCount(3);
 
-      secondRow.scrollIntoViewIfNeeded();
+      await secondRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
       ).toHaveCount(3);
@@ -357,7 +356,7 @@ test.skip(
       const firstRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row'));
       await expect(firstRow).toBeVisible();
 
-      firstRow.scrollIntoViewIfNeeded();
+      await firstRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
       ).toHaveCount(3);
@@ -365,7 +364,7 @@ test.skip(
       const secondRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row 1'));
       await expect(secondRow).toBeVisible();
 
-      secondRow.scrollIntoViewIfNeeded();
+      await secondRow.scrollIntoViewIfNeeded();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
       ).toHaveCount(3);
@@ -724,7 +723,7 @@ test.skip(
       const secondRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New tab 1'));
       const thirdRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New tab 2'));
 
-      firstRow.scrollIntoViewIfNeeded();
+      await firstRow.scrollIntoViewIfNeeded();
       await expect(firstRow).toBeVisible();
       // Wait for panels to load
       await expect(
@@ -735,13 +734,13 @@ test.skip(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
       ).toHaveCount(3);
 
-      secondRow.scrollIntoViewIfNeeded();
+      await secondRow.scrollIntoViewIfNeeded();
       await expect(secondRow).toBeVisible();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
       ).toHaveCount(3);
 
-      thirdRow.scrollIntoViewIfNeeded();
+      await thirdRow.scrollIntoViewIfNeeded();
       await expect(thirdRow).toBeVisible();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: thirdRow })
@@ -768,13 +767,13 @@ test.skip(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
       ).toHaveCount(3);
 
-      secondRow.scrollIntoViewIfNeeded();
+      await secondRow.scrollIntoViewIfNeeded();
       await expect(secondRow).toBeVisible();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
       ).toHaveCount(3);
 
-      thirdRow.scrollIntoViewIfNeeded();
+      await thirdRow.scrollIntoViewIfNeeded();
       await expect(thirdRow).toBeVisible();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: thirdRow })
