@@ -10,7 +10,7 @@ require (
 	github.com/grafana/grafana-app-sdk/logging v0.48.1
 	github.com/grafana/grafana/apps/secret v0.0.0-20250902093454-b56b7add012f
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2
-	github.com/grafana/nanogit v0.0.0-20250723104447-68f58f5ecec0
+	github.com/grafana/nanogit v0.0.0-20251106115617-c622d3e0fc4b
 	github.com/migueleliasweb/go-github-mock v1.1.0
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/oauth2 v0.32.0

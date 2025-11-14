@@ -38,6 +38,7 @@ import { getHasTokenInstructions } from '../utils/git';
 import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
 
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
+import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
 import { getDefaultValues } from './defaults';
 
 // This needs to be a function for translations to work
@@ -303,6 +304,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
               onChange: (e) => {
                 if (e.target.checked) {
                   setValue('prWorkflow', false);
+                  setValue('enablePushToConfiguredBranch', false);
                 }
               },
             })}
@@ -323,6 +325,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
               description={gitFields.prWorkflowConfig.description}
             />
           </Field>
+        )}
+        {isGitBased && (
+          <EnablePushToConfiguredBranchOption<RepositoryFormData>
+            register={register}
+            registerName="enablePushToConfiguredBranch"
+            readOnly={readOnly}
+          />
         )}
         {type === 'github' && <ConfigFormGithubCollapse register={register} />}
 

@@ -203,6 +203,14 @@ func createPostStartHook(
 			logger.Error("Failed to initialize app", "app", installer.ManifestData().AppName, "error", err)
 			return fmt.Errorf("failed to get app from installer %s: %w", installer.ManifestData().AppName, err)
 		}
-		return app.Runner().Run(hookContext.Context)
+		go func() {
+			err := app.Runner().Run(hookContext.Context)
+			if err != nil {
+				logger.Error("App runner exited with error", "app", installer.ManifestData().AppName, "error", err)
+			} else {
+				logger.Info("App runner exited without error", "app", installer.ManifestData().AppName)
+			}
+		}()
+		return nil
 	}
 }

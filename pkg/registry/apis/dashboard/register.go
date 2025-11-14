@@ -53,6 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -112,6 +113,7 @@ type DashboardsAPIBuilder struct {
 	dualWriter                   dualwrite.Service
 	folderClientProvider         client.K8sHandlerProvider
 	libraryPanels                libraryelements.Service // for legacy library panels
+	publicDashboardService       publicdashboards.Service
 
 	isStandalone bool // skips any handling including anything to do with legacy storage
 }
@@ -140,6 +142,7 @@ func RegisterAPIService(
 	restConfigProvider apiserver.RestConfigProvider,
 	userService user.Service,
 	libraryPanels libraryelements.Service,
+	publicDashboardService publicdashboards.Service,
 ) *DashboardsAPIBuilder {
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -163,6 +166,7 @@ func RegisterAPIService(
 		dualWriter:                   dual,
 		folderClientProvider:         newSimpleFolderClientProvider(folderClient),
 		libraryPanels:                libraryPanels,
+		publicDashboardService:       publicDashboardService,
 
 		legacy: &DashboardStorage{
 			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
@@ -227,7 +231,7 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	}
 
 	// Register the explicit conversions
-	if err := conversion.RegisterConversions(scheme); err != nil {
+	if err := conversion.RegisterConversions(scheme, migration.GetDataSourceInfoProvider()); err != nil {
 		return err
 	}
 
@@ -652,6 +656,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		b.accessControl,
 		opts.Scheme,
 		newDTOFunc,
+		b.publicDashboardService,
 	)
 	if err != nil {
 		return err

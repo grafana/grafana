@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"time"
 
+	badger "github.com/dgraph-io/badger/v4"
 	otgrpc "github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"gocloud.dev/blob/fileblob"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
@@ -111,19 +111,22 @@ func newClient(opts options.StorageOptions,
 		if opts.DataPath == "" {
 			opts.DataPath = filepath.Join(cfg.DataPath, "grafana-apiserver")
 		}
-		bucket, err := fileblob.OpenBucket(filepath.Join(opts.DataPath, "resource"), &fileblob.Options{
-			CreateDir: true,
-			Metadata:  fileblob.MetadataDontWrite, // skip
+
+		// Create BadgerDB instance
+		db, err := badger.Open(badger.DefaultOptions(filepath.Join(opts.DataPath, "badger")).
+			WithLogger(nil))
+		if err != nil {
+			return nil, err
+		}
+
+		kv := resource.NewBadgerKV(db)
+		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
+			KvStore: kv,
 		})
 		if err != nil {
 			return nil, err
 		}
-		backend, err := resource.NewCDKBackend(ctx, resource.CDKBackendOptions{
-			Bucket: bucket,
-		})
-		if err != nil {
-			return nil, err
-		}
+
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 			Backend: backend,
 			Blob: resource.BlobConfig{

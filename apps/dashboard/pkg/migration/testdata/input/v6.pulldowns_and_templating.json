@@ -12,14 +12,20 @@
       "annotations": [
         {
           "name": "deployment",
-          "datasource": "prometheus",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus"
+          },
           "enable": true,
           "iconColor": "red",
           "query": "ALERTS{alertname=\"DeploymentStarted\"}"
         },
         {
           "name": "alerts",
-          "datasource": "loki",
+          "datasource": {
+            "uid": "loki-uid",
+            "type": "loki"
+          },
           "enable": false,
           "iconColor": "yellow",
           "query": "{job=\"alertmanager\"}"
@@ -32,12 +38,14 @@
       {
         "name": "environment",
         "type": "filter",
-        "allFormat": null
+        "allFormat": null,
+        "query": "label_values(up, instance)"
       },
       {
         "name": "service",
         "datasource": "prometheus",
-        "allFormat": "glob"
+        "allFormat": "glob",
+        "query": "label_values(up, instance)"
       },
       {
         "name": "region",
