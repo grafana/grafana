@@ -13,6 +13,9 @@ labels:
     - oss
 title: What's new in Grafana v12.3
 posts:
+  - title: Interactive learning
+    items:
+      - whats-new/2025-10-22-interactive-learning-in-grafana.md
   - title: Dashboards and visualizations
     items:
       - whats-new/2025-08-28-compare-time-series-data-across-time-ranges-in-the-same-panel.md
@@ -20,18 +23,21 @@ posts:
       - whats-new/2025-10-28-export-dashboards-as-images.md
       - whats-new/2025-10-28-style-table-cells-with-css-properties.md
       - whats-new/2025-10-31-save-reuse-and-share-dashboard-annotation-queries.md
-  - title: Interactive learning
+  - title: Logs
     items:
-      - whats-new/2025-10-22-interactive-learning-in-grafana.md
+      - whats-new/2025-09-09-new-logs-panel.md
+      - whats-new/2025-10-20-new-logs-context.md
+      - whats-new/2025-10-22-new-field-selector-component-for-logs.md
   - title: Data sources
     items:
       - whats-new/2025-10-16-unity-catalog-support-in-grafana-databricks-plugin.md
+      - whats-new/2025-11-04-cloudwatch-logs-anomaly-detection-and-pattern-analysis.md
+      - whats-new/2025-11-04-opensearch-ppl-language-support-and-sample-queries.md
   - title: Breaking changes
     items:
       - whats-new/2025-10-03-removal-of-api-key-associated-permissions.md
       - whats-new/2025-10-16-change-to-creator-permissions.md
       - whats-new/2025-10-16-changes-to-provisioned-permissions.md
-
 whats_new_grafana_version: 12.3
 weight: -52
 ---
