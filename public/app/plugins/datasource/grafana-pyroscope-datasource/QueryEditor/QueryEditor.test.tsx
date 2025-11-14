@@ -33,6 +33,7 @@ describe('QueryEditor', () => {
           refId: 'A',
           maxNodes: 1000,
           groupBy: [],
+          includeExemplars: false,
         },
       },
     });
@@ -125,6 +126,7 @@ function setup(options: { props: Partial<Props> } = { props: {} }) {
         maxNodes: 1000,
         groupBy: [],
         limit: 42,
+        includeExemplars: false,
       }}
       datasource={setupDs()}
       onChange={onChange}
