@@ -44,7 +44,7 @@ jest.mock('@grafana/ui', () => {
     measureText: (text: string) =>
       ({
         width: text.length * 6,
-      } as TextMetrics),
+      }) as TextMetrics,
   };
 });
 
