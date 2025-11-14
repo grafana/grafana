@@ -48,6 +48,7 @@ interface GrafanaPromApiFilter {
   contactPoint?: string;
   title?: string;
   type?: 'alerting' | 'recording';
+  dashboardUid?: string;
 }
 
 interface GrafanaFetchGroupsOptions extends FetchGroupsOptions {
