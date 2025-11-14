@@ -1062,7 +1062,6 @@ func buildDataQueryKind(query interface{}, datasourceType string) dashv2alpha1.D
 	}
 
 	// Use datasourceType as the kind (datasource type, e.g., "prometheus", "elasticsearch")
-	// If datasourceType is empty, leave kind as empty string (not "DataQuery")
 	kind := datasourceType
 
 	return dashv2alpha1.DashboardDataQueryKind{
