@@ -44,6 +44,11 @@ beforeEach(() => {
   document.execCommand = jest.fn();
   config.featureToggles.useKubernetesShortURLsAPI = false;
 
+  // clear memoizeOne function
+  if ('clear' in createShortLink) {
+    (createShortLink as { clear: () => void }).clear();
+  }
+
   // Clear any caches between tests
   jest.clearAllMocks();
 });
@@ -68,7 +73,7 @@ describe('createShortLink using k8s API', () => {
     });
 
     config.featureToggles.useKubernetesShortURLsAPI = true;
-    const shortUrl = await createShortLink('d/edhmipji89b0ga2/welcome?orgId=1&from=now-6h&to=now&timezone=browser');
+    const shortUrl = await createShortLink('d/edhmipji89b0gb/welcome?orgId=1&from=now-6h&to=now&timezone=browser');
     expect(shortUrl).toBe('https://www.test.grafana.com/goto/bewyw48durgu8d?orgId=1');
   });
 });
