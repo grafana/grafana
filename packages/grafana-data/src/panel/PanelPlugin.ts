@@ -398,7 +398,7 @@ export class PanelPlugin<
 
   /**
    * Returns the suggestions supplier
-   * @deprecated use hasSuggestionsSupplier
+   * @deprecated use VisualizationSuggestionSupplierFn
    */
   getSuggestionsSupplier(): VisualizationSuggestionsSupplier | undefined {
     return this.suggestionsSupplier;
