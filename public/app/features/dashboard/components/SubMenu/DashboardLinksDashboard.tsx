@@ -74,20 +74,22 @@ export const DashboardLinksDashboard = ({ link, linkInfo, dashboardUID }: Props)
 
   if (link.asDropdown) {
     return (
-      <Dropdown overlay={<DashboardLinksMenu link={link} dashboardUID={dashboardUID} />}>
-        <DashboardLinkButton
-          data-placement="bottom"
-          data-toggle="dropdown"
-          aria-controls="dropdown-list"
-          aria-haspopup="menu"
-          fill="outline"
-          variant="secondary"
-          data-testid={selectors.components.DashboardLinks.dropDown}
-        >
-          <Icon aria-hidden name="bars" className={styles.iconMargin} />
-          <span>{title}</span>
-        </DashboardLinkButton>
-      </Dropdown>
+      <div className={styles.linkContainer}>
+        <Dropdown overlay={<DashboardLinksMenu link={link} dashboardUID={dashboardUID} />}>
+          <DashboardLinkButton
+            data-placement="bottom"
+            data-toggle="dropdown"
+            aria-controls="dropdown-list"
+            aria-haspopup="menu"
+            fill="outline"
+            variant="secondary"
+            data-testid={selectors.components.DashboardLinks.dropDown}
+          >
+            <Icon aria-hidden name="bars" className={styles.iconMargin} />
+            <span>{title}</span>
+          </DashboardLinkButton>
+        </Dropdown>
+      </div>
     );
   }
 
@@ -96,18 +98,19 @@ export const DashboardLinksDashboard = ({ link, linkInfo, dashboardUID }: Props)
       {resolvedLinks.length > 0 &&
         resolvedLinks.map((resolvedLink, index) => {
           return (
-            <DashboardLinkButton
-              key={`dashlinks-list-item-${resolvedLink.uid}-${index}`}
-              icon="apps"
-              variant="secondary"
-              fill="outline"
-              href={resolvedLink.url}
-              target={link.targetBlank ? '_blank' : undefined}
-              rel="noreferrer"
-              data-testid={selectors.components.DashboardLinks.link}
-            >
-              {resolvedLink.title}
-            </DashboardLinkButton>
+            <div key={`dashlinks-list-item-${resolvedLink.uid}-${index}`} className={styles.linkContainer}>
+              <DashboardLinkButton
+                icon="apps"
+                variant="secondary"
+                fill="outline"
+                href={resolvedLink.url}
+                target={link.targetBlank ? '_blank' : undefined}
+                rel="noreferrer"
+                data-testid={selectors.components.DashboardLinks.link}
+              >
+                {resolvedLink.title}
+              </DashboardLinkButton>
+            </div>
           );
         })}
     </>
@@ -173,6 +176,13 @@ function getStyles(theme: GrafanaTheme2) {
       fontSize: theme.typography.bodySmall.fontSize,
       paddingLeft: theme.spacing(1),
       paddingRight: theme.spacing(1),
+    }),
+    linkContainer: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      verticalAlign: 'middle',
+      marginBottom: theme.spacing(1),
+      marginRight: theme.spacing(1),
     }),
   };
 }

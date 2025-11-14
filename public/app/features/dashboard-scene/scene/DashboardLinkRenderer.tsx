@@ -1,7 +1,10 @@
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { sanitizeUrl } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { DashboardLink } from '@grafana/schema';
-import { MenuItem, Tooltip } from '@grafana/ui';
+import { MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
 import {
   DashboardLinkButton,
   DashboardLinksDashboard,
@@ -19,6 +22,7 @@ export interface Props {
 
 export function DashboardLinkRenderer({ link, dashboardUID, inMenu }: Props) {
   const linkInfo = getLinkSrv().getAnchorInfo(link);
+  const styles = useStyles2(getStyles);
 
   if (link.type === 'dashboards') {
     return <DashboardLinksDashboard link={link} linkInfo={linkInfo} dashboardUID={dashboardUID} />;
@@ -47,8 +51,20 @@ export function DashboardLinkRenderer({ link, dashboardUID, inMenu }: Props) {
   );
 
   return (
-    <div data-testid={selectors.components.DashboardLinks.container}>
+    <div className={styles.linkContainer} data-testid={selectors.components.DashboardLinks.container}>
       {link.tooltip ? <Tooltip content={linkInfo.tooltip}>{linkElement}</Tooltip> : linkElement}
     </div>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    linkContainer: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      verticalAlign: 'middle',
+      marginBottom: theme.spacing(1),
+      marginRight: theme.spacing(1),
+    }),
+  };
 }
