@@ -6,7 +6,7 @@
   "dependencies": {
     "@emotion/css": "11.13.5",
     "@grafana/data": "12.4.0-pre",
-    "@grafana/plugin-ui": "^0.10.10",
+    "@grafana/plugin-ui": "^0.11.0",
     "@grafana/runtime": "12.4.0-pre",
     "@grafana/sql": "12.4.0-pre",
     "@grafana/ui": "12.4.0-pre",
@@ -40,5 +40,5 @@
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --maxWorkers 4"
   },
-  "packageManager": "yarn@4.10.3"
+  "packageManager": "yarn@4.11.0"
 }

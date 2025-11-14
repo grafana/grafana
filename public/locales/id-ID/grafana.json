@@ -4358,8 +4358,6 @@
       "next-button": "Berikutnya",
       "save-button": "Simpan"
     },
-    "page-content": "Untuk mengaktifkan Korelasi, tambahkan dalam konfigurasi Grafana:",
-    "page-heading": "Korelasi dinonaktifkan",
     "query-editor": {
       "control-rules": "Sumber data target yang dipilih harus mengekspor editor kueri.",
       "data-source-text": "Pilih sumber data target terlebih dahulu.",
@@ -7441,6 +7439,7 @@
       "label-resource-attributes": "Atribut sumber daya",
       "label-span-attributes": "Atribut rentang",
       "label-stack-trace": "Jejak stack",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Jumlah Anak:",
@@ -7449,8 +7448,7 @@
           "start-time": "Waktu Mulai:"
         }
       },
-      "share-span": "Bagikan",
-      "warnings": "Peringatan"
+      "share-span": "Bagikan"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Pilih operator rentang maksimum",
