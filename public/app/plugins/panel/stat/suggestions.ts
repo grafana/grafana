@@ -6,35 +6,35 @@ import { BigValueColorMode, BigValueGraphMode } from '@grafana/schema';
 
 import { Options } from './panelcfg.gen';
 
+const withDefaults = (s: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
+  defaultsDeep(s, {
+    options: {
+      reduceOptions: {
+        values: true,
+        calcs: [],
+        fields: '/.*/',
+      },
+    },
+    fieldConfig: {
+      defaults: {
+        unit: 'short',
+        custom: {},
+      },
+      overrides: [],
+    },
+    cardOptions: {
+      previewModifier: (s) => {
+        if (s.options?.reduceOptions?.values) {
+          s.options.reduceOptions.limit = 1;
+        }
+      },
+    },
+  } satisfies VisualizationSuggestion<Options>);
+
 export const statSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options> = (ds) => {
   if (!ds.hasData) {
     return;
   }
-
-  const withDefaults = (s: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
-    defaultsDeep(s, {
-      options: {
-        reduceOptions: {
-          values: true,
-          calcs: [],
-          fields: '/.*/',
-        },
-      },
-      fieldConfig: {
-        defaults: {
-          unit: 'short',
-          custom: {},
-        },
-        overrides: [],
-      },
-      cardOptions: {
-        previewModifier: (s) => {
-          if (s.options?.reduceOptions?.values) {
-            s.options.reduceOptions.limit = 1;
-          }
-        },
-      },
-    } satisfies VisualizationSuggestion<Options>);
 
   const valuesReduceOptions: Options['reduceOptions'] = {
     values: true,
@@ -46,9 +46,7 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options
     calcs: ['lastNotNull'],
   };
 
-  const result: Array<VisualizationSuggestion<Options>> = [];
-
-  // TODO: color background will be a style.
+  const suggestions: Array<VisualizationSuggestion<Options>> = [];
 
   // String and number field with low row count show individual rows
   if (
@@ -57,7 +55,7 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options
     ds.frameCount === 1 &&
     ds.rowCountTotal < 10
   ) {
-    result.push(
+    suggestions.push(
       {
         name: t('stat.suggestions.stat-discrete-values', 'Stat - discrete values'),
         options: {
@@ -76,7 +74,7 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options
 
   // just a single string field
   if (ds.fieldCount === 1 && ds.hasFieldType(FieldType.string)) {
-    result.push({
+    suggestions.push({
       name: t('stat.suggestions.stat-single-string', 'Stat - single string'),
       options: {
         reduceOptions: valuesReduceOptions,
@@ -85,15 +83,16 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options
     });
   }
 
+  // aggregated suggestions for number fields
   if (ds.hasFieldType(FieldType.number) && ds.hasFieldType(FieldType.time)) {
-    result.push(
+    suggestions.push(
       {
         options: {
           reduceOptions: aggregatedReduceOptions,
         },
       },
       {
-        name: t('stat.suggestions.stat-aggregated-color-background', 'Stat - color background'),
+        name: t('stat.suggestions.stat-color-background', 'Stat - color background'),
         options: {
           reduceOptions: aggregatedReduceOptions,
           graphMode: BigValueGraphMode.None,
@@ -103,5 +102,5 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options
     );
   }
 
-  return result.map(withDefaults);
+  return suggestions.map(withDefaults);
 };
