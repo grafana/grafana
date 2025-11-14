@@ -111,7 +111,7 @@ No, integrations are much more than just dashboards. While dashboards are part o
 
 **What’s the difference between plugin types?**
 
-A data source plugin in Grafana is a software component that enables Grafana to connect to and retrieve data from various external data sources. Once you install the plugin, you can use it to configure one or more data sources. Each data source defines the actual connection details, like the server URL, authentication method, and query options.
+A data source plugin in Grafana is a software component that enables Grafana to connect to and retrieve data from various external data sources. After you install the plugin, you can use it to configure one or more data sources. Each data source defines the actual connection details, like the server URL, authentication method, and query options.
 
 A panel plugin in Grafana is an extension that allows you to add new and custom visualizations to your Grafana dashboards. While Grafana comes with several built-in panel types (like graphs, single stats, and tables), panel plugins extend this functionality by providing specialized ways to display data. 
 
