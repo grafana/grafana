@@ -201,8 +201,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     panelState?.logs?.sortOrder ?? store.get(SETTINGS_KEYS.logsSortOrder) ?? LogsSortOrder.Descending
   );
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
-  const [displayedFields, setDisplayedFields] = useState<string[]>(panelState?.logs?.displayedFields ?? []);
   const [defaultDisplayedFields, setDefaultDisplayedFields] = useState<string[]>([]);
+  // Use Redux state as single source of truth
+  const displayedFields = useMemo(() => panelState?.logs?.displayedFields ?? [], [panelState?.logs?.displayedFields]);
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
   const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<PopoverContent>(PINNED_LOGS_MESSAGE);
@@ -322,7 +323,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         dispatch(
           changePanelState(exploreId, 'logs', {
             ...state.panelsState.logs,
-            columns: logsPanelState.columns ?? panelState?.logs?.columns,
             visualisationType: logsPanelState.visualisationType ?? visualisationType,
             labelFieldName: logsPanelState.labelFieldName,
             refId: logsPanelState.refId ?? panelState?.logs?.refId,
@@ -336,7 +336,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [
       dispatch,
       exploreId,
-      panelState?.logs?.columns,
       panelState?.logs?.displayedFields,
       panelState?.logs?.refId,
       panelState?.logs?.tableSortBy,
@@ -345,14 +344,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     ]
   );
 
-  useEffect(() => {
-    if (!shallowCompare(displayedFields, panelState?.logs?.displayedFields ?? [])) {
-      updatePanelState({
-        ...panelState?.logs,
-        displayedFields,
-      });
-    }
-  }, [displayedFields, panelState?.logs, updatePanelState]);
+  // No longer needed - displayedFields is read directly from Redux state
 
   // actions
   const onLogRowHover = useCallback(
@@ -541,30 +533,48 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const showField = useCallback(
     (key: string) => {
-      const index = displayedFields.indexOf(key);
+      const currentFields = panelState?.logs?.displayedFields ?? [];
+      const index = currentFields.indexOf(key);
 
       if (index === -1) {
-        const updatedDisplayedFields = displayedFields.concat(key);
-        setDisplayedFields(updatedDisplayedFields);
+        const updatedDisplayedFields = currentFields.concat(key);
+        updatePanelState({
+          displayedFields: updatedDisplayedFields,
+        });
       }
     },
-    [displayedFields]
+    [panelState?.logs?.displayedFields, updatePanelState]
   );
 
   const hideField = useCallback(
     (key: string) => {
-      const index = displayedFields.indexOf(key);
+      const currentFields = panelState?.logs?.displayedFields ?? [];
+      const index = currentFields.indexOf(key);
       if (index > -1) {
-        const updatedDisplayedFields = displayedFields.filter((k) => key !== k);
-        setDisplayedFields(updatedDisplayedFields);
+        const updatedDisplayedFields = currentFields.filter((k) => key !== k);
+        updatePanelState({
+          displayedFields: updatedDisplayedFields,
+        });
       }
     },
-    [displayedFields]
+    [panelState?.logs?.displayedFields, updatePanelState]
   );
 
   const clearDisplayedFields = useCallback(() => {
-    setDisplayedFields([]);
-  }, []);
+    updatePanelState({
+      displayedFields: [],
+    });
+  }, [updatePanelState]);
+
+  // Wrapper function for setDisplayedFields prop - updates Redux directly
+  const setDisplayedFields = useCallback(
+    (fields: string[]) => {
+      updatePanelState({
+        displayedFields: fields,
+      });
+    },
+    [updatePanelState]
+  );
 
   const onCloseCallbackRef = useRef<() => void>(() => {});
 

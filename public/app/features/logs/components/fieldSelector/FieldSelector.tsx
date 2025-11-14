@@ -10,8 +10,8 @@ import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { parseLogsFrame } from 'app/features/logs/logsFrame';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-import { getSuggestedFieldsForLogs } from '../otel/formats';
+import { LOG_LINE_BODY_FIELD_NAME, TABLE_DETECTED_LEVEL_FIELD_NAME } from '../LogDetailsBody';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME, getSuggestedFieldsForLogs } from '../otel/formats';
 import { useLogListContext } from '../panel/LogListContext';
 import { reportInteractionOnce } from '../panel/analytics';
 import { LogListModel } from '../panel/processing';
@@ -103,7 +103,10 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
   );
 
   const suggestedFields = useMemo(() => getSuggestedFields(logs, displayedFields), [displayedFields, logs]);
-  const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
+  const fields = useMemo(
+    () => getFieldsWithStats(dataFrames).filter((field) => field.name !== TABLE_DETECTED_LEVEL_FIELD_NAME),
+    [dataFrames]
+  );
 
   if (!onClickShowField || !onClickHideField || !setDisplayedFields) {
     console.warn(
@@ -215,7 +218,7 @@ export const LogsTableFieldSelector = ({
   const displayedColumns = useMemo(
     () =>
       Object.keys(columnsWithMeta)
-        .filter((column) => columnsWithMeta[column].active)
+        .filter((column) => columnsWithMeta[column].active && column !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME)
         .sort((a, b) =>
           columnsWithMeta[a].index !== undefined && columnsWithMeta[b].index !== undefined
             ? columnsWithMeta[a].index - columnsWithMeta[b].index
@@ -250,7 +253,10 @@ export const LogsTableFieldSelector = ({
     () => getSuggestedFields(logs, displayedColumns, defaultColumns),
     [defaultColumns, displayedColumns, logs]
   );
-  const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
+  const fields = useMemo(
+    () => getFieldsWithStats(dataFrames).filter((field) => field.name !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME),
+    [dataFrames]
+  );
 
   return sidebarWidth > MIN_WIDTH * 2 ? (
     <FieldSelector

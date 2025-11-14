@@ -27,8 +27,9 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
+import { LOG_LINE_BODY_FIELD_NAME, TABLE_TIME_FIELD_NAME, TABLE_DETECTED_LEVEL_FIELD_NAME } from '../LogDetailsBody';
 import { getFieldSelectorState } from '../fieldSelector/FieldSelector';
-import { getDisplayedFieldsForLogs } from '../otel/formats';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME, getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { getDefaultDetailsMode, getDetailsWidth } from './LogDetailsContext';
 import { LogLineTimestampResolution } from './LogLine';
@@ -117,6 +118,15 @@ export const useLogIsPermalinked = (log: LogListModel) => {
   const { permalinkedLogId } = useContext(LogListContext);
   return permalinkedLogId && permalinkedLogId === log.uid;
 };
+
+/**
+ * Get default table fields.
+ * Always returns the table field constants: Time and detected_level (excluding Line).
+ */
+function getTableDefaultFields(logs: LogRowModel[]): string[] {
+  // Always return the table field constants (Time and detected_level, excluding Line)
+  return [TABLE_TIME_FIELD_NAME, TABLE_DETECTED_LEVEL_FIELD_NAME];
+}
 
 export type LogListState = Pick<
   LogListContextData,
@@ -269,6 +279,48 @@ export const LogListContextProvider = ({
     return getDisplayedFieldsForLogs(logs);
   }, [logs, setDisplayedFields, showLogAttributes]);
 
+  // Get table default fields
+  const tableDefaultFields = useMemo(() => {
+    return getTableDefaultFields(logs);
+  }, [logs]);
+
+  // Combine table defaults with OTel defaults in specific order:
+  // ['Time', 'detected_level', '___LOG_LINE_BODY___', '___OTEL_LOG_ATTRIBUTES___']
+  const defaultDisplayedFields = useMemo(() => {
+    const orderedFields: string[] = [];
+
+    // 1. Add Time from table defaults
+    if (tableDefaultFields.includes(TABLE_TIME_FIELD_NAME)) {
+      orderedFields.push(TABLE_TIME_FIELD_NAME);
+    }
+
+    // 2. Add detected_level from table defaults
+    if (tableDefaultFields.includes(TABLE_DETECTED_LEVEL_FIELD_NAME)) {
+      orderedFields.push(TABLE_DETECTED_LEVEL_FIELD_NAME);
+    }
+
+    // 3. Always add LOG_LINE_BODY
+    orderedFields.push(LOG_LINE_BODY_FIELD_NAME);
+
+    // 4. Add OTEL_LOG_ATTRIBUTES if it's in OTel fields
+    if (otelDisplayedFields.includes(OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME)) {
+      orderedFields.push(OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME);
+    }
+
+    // 5. Add any other OTel fields that aren't already included
+    otelDisplayedFields.forEach((field) => {
+      if (
+        field !== LOG_LINE_BODY_FIELD_NAME &&
+        field !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME &&
+        !orderedFields.includes(field)
+      ) {
+        orderedFields.push(field);
+      }
+    });
+
+    return orderedFields;
+  }, [tableDefaultFields, otelDisplayedFields]);
+
   // OTel displayed fields
   useEffect(() => {
     if (config.featureToggles.otelLogsFormatting && showLogAttributes !== false) {
@@ -276,14 +328,16 @@ export const LogListContextProvider = ({
     }
   }, [onLogOptionsChange, otelDisplayedFields, showLogAttributes]);
 
+  // Set default displayed fields (table defaults + OTel defaults) when displayedFields is empty or missing table defaults
   useEffect(() => {
-    if (displayedFields.length > 0 || !setDisplayedFields) {
+    if (!setDisplayedFields || defaultDisplayedFields.length === 0) {
       return;
     }
-    if (otelDisplayedFields.length) {
-      setDisplayedFields(otelDisplayedFields);
+
+    if (displayedFields.length === 0) {
+      setDisplayedFields(defaultDisplayedFields);
     }
-  }, [displayedFields.length, otelDisplayedFields, setDisplayedFields]);
+  }, [displayedFields, defaultDisplayedFields, tableDefaultFields, setDisplayedFields]);
 
   // Sync state
   useEffect(() => {
