@@ -85,4 +85,89 @@ test.describe('Scope Redirect Functionality', () => {
       await expect(page).toHaveURL(/scopes=scope-sn-redirect-fallback/);
     });
   });
+
+  test('should not redirect when reloading page on dashboard not in dashboard list', async ({
+    page,
+    gotoDashboardPage,
+  }) => {
+    const scopes = testScopesWithRedirect();
+
+    await test.step('Navigate to dashboard and select scope', async () => {
+      await gotoDashboardPage({ uid: 'cuj-dashboard-1' });
+      await openScopesSelector(page, scopes);
+      await selectScope(page, 'sn-redirect-fallback', scopes[1]);
+      await applyScopes(page, [scopes[1]]);
+
+      // Verify the scope was applied
+      await expect(page).toHaveURL(/scopes=scope-sn-redirect-fallback/);
+    });
+
+    await test.step('Navigate to dashboard not in scope dashboard list', async () => {
+      // Navigate to a dashboard that is not in the scope dashboard bindings
+      // Preserve the scope parameter using queryParams
+      await gotoDashboardPage({
+        uid: 'cuj-dashboard-3',
+        queryParams: new URLSearchParams({ scopes: 'scope-sn-redirect-fallback' }),
+      });
+
+      // Verify we're on cuj-dashboard-3 with the scope still applied
+      await expect(page).toHaveURL(/\/d\/cuj-dashboard-3/);
+      await expect(page).toHaveURL(/scopes=scope-sn-redirect-fallback/);
+    });
+
+    await test.step('Reload page and verify no redirect', async () => {
+      // Reload the page with the scope still selected
+      await page.reload();
+
+      // Wait for the page to load
+      await page.waitForLoadState('networkidle');
+
+      // Should stay on the same dashboard (cuj-dashboard-3), not redirect
+      await expect(page).toHaveURL(/\/d\/cuj-dashboard-3/);
+
+      // Verify the scope is still applied
+      await expect(page).toHaveURL(/scopes=scope-sn-redirect-fallback/);
+    });
+  });
+
+  test('should not redirect when deselecting scopes on dashboard not in dashboard list', async ({
+    page,
+    gotoDashboardPage,
+  }) => {
+    const scopes = testScopesWithRedirect();
+
+    await test.step('Navigate to dashboard and select scope', async () => {
+      await gotoDashboardPage({ uid: 'cuj-dashboard-1' });
+      await openScopesSelector(page, scopes);
+      await selectScope(page, 'sn-redirect-fallback', scopes[1]);
+      await applyScopes(page, [scopes[1]]);
+
+      // Verify the scope was applied
+      await expect(page).toHaveURL(/scopes=scope-sn-redirect-fallback/);
+    });
+
+    await test.step('Navigate to dashboard not in scope dashboard list', async () => {
+      // Navigate to a dashboard that is not in the scope dashboard bindings
+      // Preserve the scope parameter using queryParams
+      await gotoDashboardPage({
+        uid: 'cuj-dashboard-3',
+        queryParams: new URLSearchParams({ scopes: 'scope-sn-redirect-fallback' }),
+      });
+
+      // Verify we're on cuj-dashboard-3 with the scope still applied
+      await expect(page).toHaveURL(/\/d\/cuj-dashboard-3/);
+      await expect(page).toHaveURL(/scopes=scope-sn-redirect-fallback/);
+    });
+
+    await test.step('Deselect scopes and verify no redirect', async () => {
+      // Click the clear button to remove all scopes
+      await page.getByTestId('scopes-selector-input-clear').click();
+
+      // Should stay on the same dashboard (cuj-dashboard-3), not redirect
+      await expect(page).toHaveURL(/\/d\/cuj-dashboard-3/);
+
+      // Verify the scope is no longer in the URL
+      await expect(page).not.toHaveURL(/scopes=/);
+    });
+  });
 });

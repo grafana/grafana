@@ -100,7 +100,7 @@ describe('ScopesService', () => {
 
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
-      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, 'node1');
+      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, 'node1', false);
     });
 
     it('should read scope_parent for backward compatibility', () => {
@@ -111,7 +111,7 @@ describe('ScopesService', () => {
 
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
-      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], 'parent1', undefined);
+      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], 'parent1', undefined, false);
     });
 
     it('should prefer scope_node when both scope_node and scope_parent exist', () => {
@@ -123,7 +123,7 @@ describe('ScopesService', () => {
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
       // Should call with parent1 as parentNodeId and node1 as scopeNodeId
-      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], 'parent1', 'node1');
+      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], 'parent1', 'node1', false);
       // Should preload node1 (not parent1)
       expect(selectorService.resolvePathToRoot).toHaveBeenCalledWith('node1', expect.anything());
     });
@@ -158,7 +158,7 @@ describe('ScopesService', () => {
 
       service = new ScopesService(selectorService, dashboardsService, locationService);
 
-      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1', 'scope2'], undefined, 'node1');
+      expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1', 'scope2'], undefined, 'node1', false);
     });
   });
 

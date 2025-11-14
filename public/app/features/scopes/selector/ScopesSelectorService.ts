@@ -341,14 +341,15 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     return this.collapseNode(scopeNodeId);
   };
 
-  changeScopes = (scopeNames: string[], parentNodeId?: string, scopeNodeId?: string) => {
+  changeScopes = (scopeNames: string[], parentNodeId?: string, scopeNodeId?: string, redirectOnApply?: boolean) => {
     return this.applyScopes(
       scopeNames.map((id, index) => ({
         scopeId: id,
         // Only the first scope gets the scopeNodeId
         scopeNodeId: index === 0 ? scopeNodeId : undefined,
         parentNodeId,
-      }))
+      })),
+      redirectOnApply
     );
   };
 
@@ -356,7 +357,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
    * Apply the selected scopes. Apart from setting the scopes it also fetches the scope metadata and also loads the
    * related dashboards.
    */
-  private applyScopes = async (scopes: SelectedScope[]) => {
+  private applyScopes = async (scopes: SelectedScope[], redirectOnApply = true) => {
     // Skip if we are trying to apply the same scopes as are already applied.
     if (
       this.state.appliedScopes.length === scopes.length &&
@@ -372,7 +373,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // We call this even if we have 0 scope because in that case it also closes the dashboard drawer.
     this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId)).then(() => {
       const selectedScopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
-      this.redirectAfterApply(selectedScopeNode);
+      if (redirectOnApply) {
+        this.redirectAfterApply(selectedScopeNode);
+      }
     });
 
     if (scopes.length > 0) {
@@ -428,7 +431,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
   };
 
-  public removeAllScopes = () => this.applyScopes([]);
+  public removeAllScopes = () => this.applyScopes([], false);
 
   private addRecentScopes = (scopes: Scope[], parentNode?: ScopeNode) => {
     if (scopes.length === 0) {
