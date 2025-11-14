@@ -67,62 +67,6 @@ func TestGetDataSourceRef(t *testing.T) {
 	}
 }
 
-func TestGetDefaultDSInstanceSettings(t *testing.T) {
-	tests := []struct {
-		name        string
-		datasources []schemaversion.DataSourceInfo
-		expected    *schemaversion.DataSourceInfo
-	}{
-		{
-			name:        "empty datasources list",
-			datasources: []schemaversion.DataSourceInfo{},
-			expected:    nil,
-		},
-		{
-			name: "no default datasource",
-			datasources: []schemaversion.DataSourceInfo{
-				{UID: "existing-ref-uid", Type: "prometheus", Name: "Existing Ref Name", Default: false},
-				{UID: "existing-target-uid", Type: "elasticsearch", Name: "Existing Target Name", Default: false},
-			},
-			expected: nil,
-		},
-		{
-			name: "single default datasource",
-			datasources: []schemaversion.DataSourceInfo{
-				{UID: "existing-ref-uid", Type: "prometheus", Name: "Existing Ref Name", Default: false},
-				{UID: "default-ds-uid", Type: "prometheus", Name: "Default Test Datasource Name", Default: true, APIVersion: "v1"},
-				{UID: "existing-target-uid", Type: "elasticsearch", Name: "Existing Target Name", Default: false},
-			},
-			expected: &schemaversion.DataSourceInfo{
-				UID:        "default-ds-uid",
-				Type:       "prometheus",
-				Name:       "Default Test Datasource Name",
-				APIVersion: "v1",
-			},
-		},
-		{
-			name: "multiple default datasources returns first",
-			datasources: []schemaversion.DataSourceInfo{
-				{UID: "first-default", Type: "prometheus", Name: "First Default", Default: true, APIVersion: "v1"},
-				{UID: "second-default", Type: "elasticsearch", Name: "Second Default", Default: true, APIVersion: "v2"},
-			},
-			expected: &schemaversion.DataSourceInfo{
-				UID:        "first-default",
-				Type:       "prometheus",
-				Name:       "First Default",
-				APIVersion: "v1",
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := schemaversion.GetDefaultDSInstanceSettings(tt.datasources)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
 func TestMigrateDatasourceNameToRef(t *testing.T) {
 	datasources := []schemaversion.DataSourceInfo{
 		{UID: "default-ds-uid", Type: "prometheus", Name: "Default Test Datasource Name", Default: true, APIVersion: "v1"},

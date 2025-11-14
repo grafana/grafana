@@ -89,22 +89,6 @@ func GetDataSourceRef(ds *DataSourceInfo) map[string]interface{} {
 	return ref
 }
 
-// GetDefaultDSInstanceSettings returns the default datasource if one exists.
-// Deprecated: Use DatasourceIndex.GetDefault() for O(1) lookup instead of O(n) scan.
-func GetDefaultDSInstanceSettings(datasources []DataSourceInfo) *DataSourceInfo {
-	for _, ds := range datasources {
-		if ds.Default {
-			return &DataSourceInfo{
-				UID:        ds.UID,
-				Type:       ds.Type,
-				Name:       ds.Name,
-				APIVersion: ds.APIVersion,
-			}
-		}
-	}
-	return nil
-}
-
 // isDataSourceRef checks if the object is a valid DataSourceRef (has uid or type)
 // Matches the frontend isDataSourceRef function in datasource.ts
 func isDataSourceRef(ref interface{}) bool {
