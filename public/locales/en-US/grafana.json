@@ -1986,6 +1986,7 @@
       "error": "Could not load routing preview for {{alertmanager}}",
       "initialized": "Based on the labels added, alert instances are routed to the following notification policies. Expand each notification policy below to view more details.",
       "preview-routing": "Preview routing",
+      "select-folder-tooltip": "Select a folder to preview routing",
       "text-loading-preview": "Loading preview...",
       "title": "Alert instance routing preview",
       "uninitialized": "When you have your folder selected and your query and labels are configured, click \"Preview routing\" to see the results here."
