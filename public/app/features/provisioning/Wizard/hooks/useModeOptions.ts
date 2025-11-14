@@ -103,6 +103,14 @@ export function useModeOptions(repoName: string, settings?: RepositoryViewList) 
       },
     ];
 
-    return filterModeOptions(modeOptions, repoName, settings);
+    const options = filterModeOptions(modeOptions, repoName, settings);
+    // Filtering 2 mode options on each render; trivial cost, so no need for useMemo here.
+    const enabledOptions = options.filter((option) => !option.disabled);
+    const disabledOptions = options.filter((option) => option.disabled);
+
+    return {
+      enabledOptions,
+      disabledOptions,
+    };
   }, [repoName, settings]);
 }

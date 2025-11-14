@@ -33,10 +33,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
 
   const selectedTarget = watch('repository.sync.target');
   const repositoryType = watch('repository.type');
-  const options = useModeOptions(repoName, settingsData);
-  // Filtering 2 mode options on each render; trivial cost, so no need for useMemo here.
-  const enabledOptions = options.filter((option) => !option.disabled);
-  const disabledOptions = options.filter((option) => option.disabled);
+  const { enabledOptions, disabledOptions } = useModeOptions(repoName, settingsData);
   const { target } = enabledOptions[0];
   const { resourceCountString, fileCountString, isLoading } = useResourceStats(repoName, settingsData?.legacyStorage);
   const styles = useStyles2(getStyles);
@@ -137,7 +134,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
                 'My repository connection'
               )}
               // Autofocus the title field if it's the only available option
-              autoFocus={options.length === 1 && options[0].target === 'folder'}
+              autoFocus={enabledOptions.length === 1 && enabledOptions[0].target === 'folder'}
             />
           </Field>
         )}
