@@ -5,19 +5,19 @@ import {
   LoadingState,
   PanelData,
   PanelPluginMeta,
-  toDataFrame,
   PanelPluginVisualizationSuggestion,
+  toDataFrame,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
   BigValueColorMode,
+  GraphDrawStyle,
   GraphFieldConfig,
   ReduceDataOptions,
   StackingMode,
   VizOrientation,
 } from '@grafana/schema';
 import { config } from 'app/core/config';
-import { SuggestionName } from 'app/types/suggestions';
 
 import { getAllSuggestions, panelsToCheckFirst } from './getAllSuggestions';
 
@@ -78,7 +78,7 @@ scenario('No series', (ctx) => {
   it('should return correct suggestions', () => {
     expect(ctx.suggestions).toEqual([
       expect.objectContaining({ pluginId: 'table' }),
-      expect.objectContaining({ name: SuggestionName.TextPanel }),
+      expect.objectContaining({ pluginId: 'text' }),
     ]);
   });
 });
@@ -110,12 +110,10 @@ scenario('Single frame with time and number field', (ctx) => {
 
   it('should return correct suggestions', () => {
     expect(ctx.suggestions).toEqual([
-      expect.objectContaining({ name: SuggestionName.LineChart }),
-      expect.objectContaining({ name: SuggestionName.LineChartSmooth }),
-      expect.objectContaining({ name: SuggestionName.AreaChart }),
-      expect.objectContaining({ name: SuggestionName.LineChartGradientColorScheme }),
-      expect.objectContaining({ name: SuggestionName.BarChart }),
-      expect.objectContaining({ name: SuggestionName.BarChartGradientColorScheme }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart' }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart - smooth' }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart' }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Bar chart' }),
       expect.objectContaining({ pluginId: 'gauge' }),
       expect.objectContaining({ pluginId: 'gauge', options: expect.objectContaining({ showThresholdMarkers: false }) }),
       expect.objectContaining({ pluginId: 'stat' }),
@@ -139,7 +137,7 @@ scenario('Single frame with time and number field', (ctx) => {
   });
 
   it('Bar chart suggestion should be using timeseries panel', () => {
-    expect(ctx.suggestions.find((x) => x.name === SuggestionName.BarChart)?.pluginId).toBe('timeseries');
+    expect(ctx.suggestions.find((x) => x.name === 'Bar chart')?.pluginId).toBe('timeseries');
   });
 
   it('Stat panels have reduce values disabled', () => {
@@ -164,12 +162,12 @@ scenario('Single frame with time 2 number fields', (ctx) => {
 
   it('should return correct suggestions', () => {
     expect(ctx.suggestions).toEqual([
-      expect.objectContaining({ name: SuggestionName.LineChart }),
-      expect.objectContaining({ name: SuggestionName.LineChartSmooth }),
-      expect.objectContaining({ name: SuggestionName.AreaChartStacked }),
-      expect.objectContaining({ name: SuggestionName.AreaChartStackedPercent }),
-      expect.objectContaining({ name: SuggestionName.BarChartStacked }),
-      expect.objectContaining({ name: SuggestionName.BarChartStackedPercent }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart' }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart - smooth' }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart - stacked' }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart - stacked by percentage' }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Bar chart - stacked' }),
+      expect.objectContaining({ pluginId: 'timeseries', name: 'Bar chart - stacked by percentage' }),
       expect.objectContaining({ pluginId: 'gauge' }),
       expect.objectContaining({ pluginId: 'gauge', options: expect.objectContaining({ showThresholdMarkers: false }) }),
       expect.objectContaining({ pluginId: 'stat' }),
@@ -214,7 +212,7 @@ scenario('Single time series with 100 data points', (ctx) => {
   ]);
 
   it('should not suggest bar chart', () => {
-    expect(ctx.suggestions.find((x) => x.name === SuggestionName.BarChart)).toBe(undefined);
+    expect(ctx.suggestions.find((x) => x.name === 'Bar chart')).toBe(undefined);
   });
 });
 

@@ -3474,9 +3474,9 @@
       "horizontal": "Horizontal bar chart",
       "hz-stacked": "Horizontal bar chart - stacked",
       "hz-stacked-percent": "Horizontal bar chart - stacked by percentage",
-      "vert-stacked": "Vertical bar chart - stacked",
-      "vert-stacked-percent": "Vertical bar chart - stacked by percentage",
-      "vertical": "Vertical bar chart"
+      "vert-stacked": "Bar chart - stacked",
+      "vert-stacked-percent": "Bar chart - stacked by percentage",
+      "vertical": "Bar chart"
     },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Require space from the right side",
@@ -13455,6 +13455,16 @@
         "label-never": "Never",
         "label-threshold": "Threshold"
       }
+    },
+    "suggestions": {
+      "area": "Area chart",
+      "area-stacked": "Area chart - stacked",
+      "area-stacked-percentage": "Area chart - stacked by percentage",
+      "bar": "Bar chart",
+      "bar-stacked": "Bar chart - stacked",
+      "bar-stacked-percent": "Bar chart - stacked by percentage",
+      "line": "Line chart",
+      "line-smooth": "Line chart - smooth"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Add timezone",

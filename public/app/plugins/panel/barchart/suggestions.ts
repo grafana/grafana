@@ -47,20 +47,20 @@ export const barcharSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Opti
 
   const result: Array<VisualizationSuggestion<Options, FieldConfig>> = [
     {
-      name: t('barchart.suggestions.vertical', 'Vertical bar chart'),
+      name: t('barchart.suggestions.vertical', 'Bar chart'),
     },
   ];
 
   if (dataSummary.fieldCountByType(FieldType.number) > 1) {
     result.push(
       {
-        name: t('barchart.suggestions.vert-stacked', 'Vertical bar chart - stacked'),
+        name: t('barchart.suggestions.vert-stacked', 'Bar chart - stacked'),
         options: {
           stacking: StackingMode.Normal,
         },
       },
       {
-        name: t('barchart.suggestions.vert-stacked-percent', 'Vertical bar chart - stacked by percentage'),
+        name: t('barchart.suggestions.vert-stacked-percent', 'Bar chart - stacked by percentage'),
         options: {
           stacking: StackingMode.Percent,
         },
