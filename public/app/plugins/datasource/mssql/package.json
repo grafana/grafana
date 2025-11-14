@@ -7,7 +7,7 @@
     "@emotion/css": "11.13.5",
     "@grafana/data": "12.4.0-pre",
     "@grafana/i18n": "12.4.0-pre",
-    "@grafana/plugin-ui": "^0.10.10",
+    "@grafana/plugin-ui": "^0.11.0",
     "@grafana/runtime": "12.4.0-pre",
     "@grafana/sql": "12.4.0-pre",
     "@grafana/ui": "12.4.0-pre",
@@ -40,5 +40,5 @@
     "dev": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -w -c ./webpack.config.ts --env development",
     "i18n-extract": "i18next-cli extract --sync-primary"
   },
-  "packageManager": "yarn@4.10.3"
+  "packageManager": "yarn@4.11.0"
 }

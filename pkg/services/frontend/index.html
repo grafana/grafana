@@ -252,6 +252,16 @@
           if (resp.type === 'opaqueredirect') {
             window.__grafana_custom_domain_failed();
             return CUSTOM_DOMAIN_ERROR;
+          const resp = await fetch(bootDataUrl);
+
+          // manual redirect for custom domains
+          // see pkg/middleware/validate_host.go
+          if (resp.status === 204) {
+            const redirectDomain = resp.headers.get('Redirect-Domain');
+            if (redirectDomain) {
+              window.location.hostname = redirectDomain;
+              return;
+            }
           }
           const textResponse = await resp.text();
 

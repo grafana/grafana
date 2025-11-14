@@ -4418,8 +4418,6 @@
       "next-button": "Далее",
       "save-button": "Сохранить"
     },
-    "page-content": "Чтобы включить корреляции, добавьте функцию в конфигурацию Grafana:",
-    "page-heading": "Корреляции отключены",
     "query-editor": {
       "control-rules": "Выбранный целевой источник данных должен экспортировать редактор запросов.",
       "data-source-text": "Сначала выберите целевой источник данных.",
@@ -6798,9 +6796,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Подробнее об ошибке"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "Добавить CSV-файл или электронную таблицу"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Источник данных Adobe Analytics",
@@ -7522,6 +7517,7 @@
       "label-resource-attributes": "Атрибуты ресурса",
       "label-span-attributes": "Атрибуты диапазона",
       "label-stack-trace": "Трассировка стека",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Число дочерних элементов:",
@@ -7530,8 +7526,7 @@
           "start-time": "Время начала:"
         }
       },
-      "share-span": "Поделиться",
-      "warnings": "Предупреждения"
+      "share-span": "Поделиться"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Выбрать оператора макс. диапазона",
@@ -11868,6 +11863,11 @@
       "path-description": "Путь к репозиторию в локальной файловой системе",
       "path-label": "Путь к репозиторию",
       "path-required": "Требуется указать путь к репозиторию"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {
