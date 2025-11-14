@@ -183,7 +183,7 @@ function VizWrapper({ panel, tableView }: VizWrapperProps) {
           <Text element="p" textAlignment="center" color="secondary">
             {!hasData && (
               <Trans i18nKey="dashboard.new-panel.empty-state-message">
-                Build a query to visualize it here or go to all visualizations to add other panel types
+                Run a query to visualize it here or go to all visualizations to add other panel types
               </Trans>
             )}
           </Text>
