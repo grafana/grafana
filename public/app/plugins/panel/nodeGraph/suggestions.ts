@@ -44,7 +44,7 @@ function frameHasCorrectFields(frames: DataFrame[]): boolean {
   return hasNodesFrame && hasEdgesFrame;
 }
 
-export const nodeGraphSuggestinsHandler: VisualizationSuggestionsSupplierFn<Options> = (dataSummary) => {
+export const nodeGraphSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options> = (dataSummary) => {
   if (!dataSummary._data) {
     return;
   }

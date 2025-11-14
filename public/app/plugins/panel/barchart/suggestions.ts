@@ -31,7 +31,7 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options, FieldConfig>)
     },
   } satisfies VisualizationSuggestion<Options, FieldConfig>);
 
-export const barcharSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options, FieldConfig> = (dataSummary) => {
+export const barchartSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options, FieldConfig> = (dataSummary) => {
   if (dataSummary.frameCount !== 1) {
     return;
   }
