@@ -777,8 +777,6 @@ func convertStringOrArrayOfString_V2alpha1_to_V2beta1(in dashv2alpha1.DashboardS
 	out := dashv2beta1.DashboardStringOrArrayOfString{
 		ArrayOfString: in.ArrayOfString,
 	}
-	// Preserve String field as-is to match unmarshaler behavior (null unmarshals to "")
-	// The unmarshaler converts null to empty string, so we preserve empty strings
 	out.String = in.String
 	return out
 }
