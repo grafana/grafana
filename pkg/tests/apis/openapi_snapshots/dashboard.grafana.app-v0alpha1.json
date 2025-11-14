@@ -1813,6 +1813,14 @@
             }
           },
           {
+            "name": "libraryPanel",
+            "in": "query",
+            "description": "find dashboards that reference a given libraryPanel",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "sort",
             "in": "query",
             "description": "sortable field",

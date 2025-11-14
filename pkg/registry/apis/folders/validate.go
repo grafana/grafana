@@ -120,6 +120,14 @@ func validateOnUpdate(ctx context.Context,
 		return err
 	}
 
+	// Check that the folder being moved is not an ancestor of the target parent.
+	// This prevents circular references (e.g., moving A under B when B is already under A).
+	for _, ancestor := range info.Items {
+		if ancestor.Name == obj.Name {
+			return fmt.Errorf("cannot move folder under its own descendant, this would create a circular reference")
+		}
+	}
+
 	// if by moving a folder we exceed the max depth, return an error
 	if len(info.Items) > maxDepth+1 {
 		return folder.ErrMaximumDepthReached.Errorf("maximum folder depth reached")

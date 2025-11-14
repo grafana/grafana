@@ -4418,8 +4418,6 @@
       "next-button": "Dalej",
       "save-button": "Zapisz"
     },
-    "page-content": "Aby włączyć Korelacje, dodaj je w konfiguracji Grafana:",
-    "page-heading": "Korelacje są wyłączone",
     "query-editor": {
       "control-rules": "Wybrane docelowe źródło danych musi wyeksportować edytor zapytań.",
       "data-source-text": "Najpierw wybierz docelowe źródło danych.",
@@ -5703,6 +5701,63 @@
       "validation-required": "Wymagany model JSON pulpitu"
     }
   },
+  "dashboard-library": {
+    "browse-grafana-com": "",
+    "browse-plugins": "",
+    "card": {
+      "datasource-provided-badge": "",
+      "details-tooltip": "",
+      "no-preview": "",
+      "use-dashboard-button": "",
+      "use-template-button": ""
+    },
+    "community-empty-title": "",
+    "community-empty-title-with-datasource": "",
+    "community-error": "",
+    "community-error-title": "",
+    "community-mapping-form": {
+      "back": "",
+      "constants-title": "",
+      "datasources-title": "",
+      "description": "",
+      "preview": "",
+      "auto-mapped_one": "",
+      "auto-mapped_few": "",
+      "auto-mapped_many": "",
+      "auto-mapped_other": ""
+    },
+    "community-mapping-select-datasource": "",
+    "community-search-placeholder": "",
+    "community-search-placeholder-with-datasource": "",
+    "dashboard-card": {
+      "details": {
+        "datasource": "",
+        "dependencies": "",
+        "id": "",
+        "last-update": "",
+        "published-by": "",
+        "view-on-grafana-com": ""
+      }
+    },
+    "modal": {
+      "description": "",
+      "tab-community": "",
+      "tab-datasource": "",
+      "title": "",
+      "title-mapping-with-name": "",
+      "title-with-datasource": ""
+    },
+    "no-community-dashboards-datasource": "",
+    "no-community-dashboards-search": "",
+    "no-provisioned-dashboards": "",
+    "provisioned-empty-title": "",
+    "provisioned-empty-title-with-datasource": "",
+    "retry": "",
+    "suggested-dashboards-subtitle": "",
+    "suggested-dashboards-title": "",
+    "suggested-dashboards-title-with-datasource": "",
+    "view-all": ""
+  },
   "dashboard-links": {
     "empty-state": {
       "button-title": "Dodaj link do pulpitu",
@@ -6741,9 +6796,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Więcej informacji o błędzie"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "Dodaj plik CSV lub arkusz kalkulacyjny"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Źródło danych Adobe Analytics",
@@ -7465,6 +7517,7 @@
       "label-resource-attributes": "Atrybuty zasobów",
       "label-span-attributes": "Atrybuty zakresu",
       "label-stack-trace": "Śledzenie stosu",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Liczba elementów podrzędnych:",
@@ -7473,8 +7526,7 @@
           "start-time": "Czas rozpoczęcia:"
         }
       },
-      "share-span": "Udostępnij",
-      "warnings": "Ostrzeżenia"
+      "share-span": "Udostępnij"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Wybierz operator maksymalnego zakresu",
@@ -11610,6 +11662,8 @@
     "empty-state": {
       "no-jobs": "Brak zadań…"
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "Wykorzystaj w pełni integrację z GitHub dzięki tym opcjonalnym dodatkom",
       "description-instant-updates": "Otrzymuj aktualizacje w usłudze Grafana natychmiast po zatwierdzeniu zmian (commit). Przejrzyj i zatwierdź zmiany za pomocą żądań pull przed ich opublikowaniem.",
@@ -11810,6 +11864,11 @@
       "path-label": "Ścieżka do repozytorium",
       "path-required": "Ścieżka do repozytorium jest wymagana"
     },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
+    },
     "mode-options": {
       "folder": {
         "description": "Po konfiguracji utworzony zostanie nowy folder Grafany, który zostanie zsynchronizowany z zewnętrzną pamięcią masową. Jeśli w zewnętrznej pamięci masowej są dostępne zasoby, zostaną one przydzielone do tego nowego folderu. Wszystkie nowe zasoby utworzone w tym folderze będą przechowywane i wersjonowane w zewnętrznej pamięci masowej.",
@@ -11833,14 +11892,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "aktywne zadania",
       "column-action": "Działanie",
       "column-duration": "Czas trwania",
       "column-job-id": "",
       "column-message": "Wiadomość",
       "column-started": "Rozpoczęto",
       "column-status": "Status",
-      "error-loading": "Błąd podczas wczytywania: {{type}}",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "Zadania"
     },
     "repository-actions": {
@@ -12934,7 +12993,9 @@
   },
   "stars": {
     "mark-as-starred": "",
-    "unmark-as-starred": ""
+    "mark-as-starred-with-title": "",
+    "unmark-as-starred": "",
+    "unmark-as-starred-with-title": ""
   },
   "stat": {
     "add-orientation-option": {

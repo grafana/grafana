@@ -81,7 +81,21 @@
     "layout": {
       "kind": "GridLayout",
       "spec": {
-        "items": null
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 3,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          }
+        ]
       }
     },
     "links": [],
@@ -319,7 +333,7 @@
         "kind": "DatasourceVariable",
         "spec": {
           "name": "datasource_variable",
-          "pluginId": "default-ds-uid",
+          "pluginId": "prometheus",
           "refresh": "never",
           "regex": "",
           "current": {

@@ -41,12 +41,14 @@
 /docs/sources/                                                                    @irenerl24
 
 /docs/sources/alerting/                                                           @JohnnyK-Grafana
+/docs/sources/as-code/                                                            @urbiz-grafana
+/docs/sources/developer-resources/                                                @urbiz-grafana
 /docs/sources/datasources/                                                        @lwandz13
 /docs/sources/upgrade-guide/                                                      @jtvdez
 /docs/sources/whatsnew/                                                           @jtvdez
 
 
-/docs/sources/developers/plugins/                                                 @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+/docs/sources/developer-resources/plugins/                                        @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/visualizations/dashboards/                                          @imatwawana
 /docs/sources/visualizations/panels-visualizations/                               @imatwawana
 
@@ -98,6 +100,7 @@
 /apps/correlations @grafana/datapro
 /apps/example/ @grafana/grafana-app-platform-squad
 /apps/logsdrilldown/ @grafana/observability-logs
+/apps/annotation/ @grafana/grafana-backend-services-squad
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/query @grafana/grafana-datasources-core-services
@@ -226,6 +229,7 @@
 /devenv/datasources.yaml @grafana/grafana-backend-group
 /devenv/datasources_docker.yaml @grafana/grafana-backend-group
 /devenv/dev-dashboards-without-uid/ @grafana/dashboards-squad
+/devenv/scopes/ @grafana/grafana-operator-experience-squad
 
 /devenv/dev-dashboards/annotations @grafana/dataviz-squad
 /devenv/dev-dashboards/migrations @grafana/dataviz-squad
@@ -252,7 +256,6 @@
 /devenv/dev-dashboards/all-panels.json @grafana/dataviz-squad
 /devenv/dev-dashboards/dashboards.go @grafana/dataviz-squad
 /devenv/dev-dashboards/home.json @grafana/dataviz-squad
-
 /devenv/dev-dashboards/datasource-elasticsearch/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-opentsdb/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-influxdb/ @grafana/partner-datasources
@@ -548,6 +551,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/geo/ @grafana/dataviz-squad
 /packages/grafana-data/src/monaco/ @grafana/partner-datasources
 /packages/grafana-data/src/panel/ @grafana/dashboards-squad
+/packages/grafana-data/src/panel/suggestions/ @grafana/dataviz-squad
 /packages/grafana-data/src/query/ @grafana/grafana-datasources-core-services
 /packages/grafana-data/src/rbac/ @grafana/access-squad
 /packages/grafana-data/src/table/ @grafana/dataviz-squad
@@ -556,6 +560,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/transformations/ @grafana/datapro
 /packages/grafana-data/src/types/ @grafana/grafana-frontend-platform
 /packages/grafana-data/src/types/scopes.ts @grafana/grafana-operator-experience-squad
+/packages/grafana-data/src/types/suggestions.ts @grafana/dataviz-squad
 /packages/grafana-data/src/utils/__snapshots__/ @grafanabot
 /packages/grafana-data/src/utils/anyToNumber.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/arrayUtils* @grafana/grafana-frontend-platform
@@ -940,6 +945,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/notifications/ @grafana/grafana-search-navigate-organise
 /public/app/features/org/ @grafana/grafana-search-navigate-organise
 /public/app/features/panel/ @grafana/dashboards-squad
+/public/app/features/panel/suggestions/ @grafana/dataviz-squad
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/plugins-platform-frontend
 /public/app/features/profile/ @grafana/grafana-frontend-platform

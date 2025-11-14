@@ -4378,8 +4378,6 @@
       "next-button": "Volgende",
       "save-button": "Opslaan"
     },
-    "page-content": "Om Correlaties in te schakelen, voeg je het toe aan de Grafana-configuratie:",
-    "page-heading": "Correlaties zijn uitgeschakeld",
     "query-editor": {
       "control-rules": "De geselecteerde doelgegevensbron moet een query-editor exporteren.",
       "data-source-text": "Selecteer eerst een doelgegevensbron.",
@@ -5661,6 +5659,61 @@
       "validation-required": "Dashboard JSON-model nodig"
     }
   },
+  "dashboard-library": {
+    "browse-grafana-com": "",
+    "browse-plugins": "",
+    "card": {
+      "datasource-provided-badge": "",
+      "details-tooltip": "",
+      "no-preview": "",
+      "use-dashboard-button": "",
+      "use-template-button": ""
+    },
+    "community-empty-title": "",
+    "community-empty-title-with-datasource": "",
+    "community-error": "",
+    "community-error-title": "",
+    "community-mapping-form": {
+      "back": "",
+      "constants-title": "",
+      "datasources-title": "",
+      "description": "",
+      "preview": "",
+      "auto-mapped_one": "",
+      "auto-mapped_other": ""
+    },
+    "community-mapping-select-datasource": "",
+    "community-search-placeholder": "",
+    "community-search-placeholder-with-datasource": "",
+    "dashboard-card": {
+      "details": {
+        "datasource": "",
+        "dependencies": "",
+        "id": "",
+        "last-update": "",
+        "published-by": "",
+        "view-on-grafana-com": ""
+      }
+    },
+    "modal": {
+      "description": "",
+      "tab-community": "",
+      "tab-datasource": "",
+      "title": "",
+      "title-mapping-with-name": "",
+      "title-with-datasource": ""
+    },
+    "no-community-dashboards-datasource": "",
+    "no-community-dashboards-search": "",
+    "no-provisioned-dashboards": "",
+    "provisioned-empty-title": "",
+    "provisioned-empty-title-with-datasource": "",
+    "retry": "",
+    "suggested-dashboards-subtitle": "",
+    "suggested-dashboards-title": "",
+    "suggested-dashboards-title-with-datasource": "",
+    "view-all": ""
+  },
   "dashboard-links": {
     "empty-state": {
       "button-title": "Dashboardlink toevoegen",
@@ -6695,9 +6748,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Meer informatie over de fout"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "Csv of spreadsheet toevoegen"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Adobe Analytics-gegevensbron",
@@ -7415,6 +7465,7 @@
       "label-resource-attributes": "Broneigenschappen",
       "label-span-attributes": "Spaneigenschappen",
       "label-stack-trace": "Stackspoor",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Tellen van onderliggenden:",
@@ -7423,8 +7474,7 @@
           "start-time": "Starttijd:"
         }
       },
-      "share-span": "Delen",
-      "warnings": "Waarschuwingen"
+      "share-span": "Delen"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Operator voor maximale span selecteren",
@@ -11510,6 +11560,8 @@
     "empty-state": {
       "no-jobs": "Geen taken..."
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "Haal het meeste uit je GitHub-integratie met deze optionele add-ons",
       "description-instant-updates": "Krijg directe updates in Grafana zodra wijzigingen zijn doorgevoerd. Bekijk en keur wijzigingen goed met pull requests voordat ze live gaan.",
@@ -11706,6 +11758,11 @@
       "path-label": "Repository-pad",
       "path-required": "Repository-pad is vereist"
     },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
+    },
     "mode-options": {
       "folder": {
         "description": "Na het instellen wordt een nieuwe Grafana-map gemaakt en gesynchroniseerd met externe opslag. Als er bronnen aanwezig zijn in externe opslag, worden deze in deze nieuwe map ingericht. Alle nieuwe bronnen die in deze map worden gemaakt, worden opgeslagen en in versies beheerd in externe opslag.",
@@ -11729,14 +11786,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "actieve taken",
       "column-action": "Actie",
       "column-duration": "Duur",
       "column-job-id": "",
       "column-message": "Bericht",
       "column-started": "Gestart",
       "column-status": "Status",
-      "error-loading": "Er is een fout opgetreden bij het laden van {{type}}",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "Taken"
     },
     "repository-actions": {
@@ -12822,7 +12879,9 @@
   },
   "stars": {
     "mark-as-starred": "",
-    "unmark-as-starred": ""
+    "mark-as-starred-with-title": "",
+    "unmark-as-starred": "",
+    "unmark-as-starred-with-title": ""
   },
   "stat": {
     "add-orientation-option": {

@@ -7,7 +7,7 @@ const injectedRtkApi = api
   .injectEndpoints({
     endpoints: (build) => ({
       getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
-        query: () => ({ url: `/apis/dashboard.grafana.app/v0alpha1/` }),
+        query: () => ({ url: `/` }),
         providesTags: ['API Discovery'],
       }),
       listDashboard: build.query<ListDashboardApiResponse, ListDashboardApiArg>({
@@ -244,6 +244,7 @@ const injectedRtkApi = api
             folder: queryArg.folder,
             facet: queryArg.facet,
             tags: queryArg.tags,
+            libraryPanel: queryArg.libraryPanel,
             sort: queryArg.sort,
             limit: queryArg.limit,
             explain: queryArg.explain,
@@ -608,6 +609,8 @@ export type GetSearchApiArg = {
   facet?: string[];
   /** tag query filter */
   tags?: string[];
+  /** find dashboards that reference a given libraryPanel */
+  libraryPanel?: string;
   /** sortable field */
   sort?: string;
   /** number of results to return */

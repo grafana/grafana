@@ -4358,8 +4358,6 @@
       "next-button": "繼續",
       "save-button": "儲存"
     },
-    "page-content": "若要啟用「相關性」，請在 Grafana 設定中新增：",
-    "page-heading": "相關性已停用",
     "query-editor": {
       "control-rules": "所選目標資料來源必須匯出查詢編輯器。",
       "data-source-text": "請先選擇目標資料來源。",
@@ -5640,6 +5638,60 @@
       "validation-required": "需要儀表板 JSON 模型"
     }
   },
+  "dashboard-library": {
+    "browse-grafana-com": "",
+    "browse-plugins": "",
+    "card": {
+      "datasource-provided-badge": "",
+      "details-tooltip": "",
+      "no-preview": "",
+      "use-dashboard-button": "",
+      "use-template-button": ""
+    },
+    "community-empty-title": "",
+    "community-empty-title-with-datasource": "",
+    "community-error": "",
+    "community-error-title": "",
+    "community-mapping-form": {
+      "back": "",
+      "constants-title": "",
+      "datasources-title": "",
+      "description": "",
+      "preview": "",
+      "auto-mapped_other": ""
+    },
+    "community-mapping-select-datasource": "",
+    "community-search-placeholder": "",
+    "community-search-placeholder-with-datasource": "",
+    "dashboard-card": {
+      "details": {
+        "datasource": "",
+        "dependencies": "",
+        "id": "",
+        "last-update": "",
+        "published-by": "",
+        "view-on-grafana-com": ""
+      }
+    },
+    "modal": {
+      "description": "",
+      "tab-community": "",
+      "tab-datasource": "",
+      "title": "",
+      "title-mapping-with-name": "",
+      "title-with-datasource": ""
+    },
+    "no-community-dashboards-datasource": "",
+    "no-community-dashboards-search": "",
+    "no-provisioned-dashboards": "",
+    "provisioned-empty-title": "",
+    "provisioned-empty-title-with-datasource": "",
+    "retry": "",
+    "suggested-dashboards-subtitle": "",
+    "suggested-dashboards-title": "",
+    "suggested-dashboards-title-with-datasource": "",
+    "view-all": ""
+  },
   "dashboard-links": {
     "empty-state": {
       "button-title": "新增儀表板連結",
@@ -6672,9 +6724,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "有關錯誤的更多詳細資料"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "新增 CSV 或試算表"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Adobe Analytics 資料來源",
@@ -7390,6 +7439,7 @@
       "label-resource-attributes": "資源屬性",
       "label-span-attributes": "範圍屬性",
       "label-stack-trace": "堆疊追蹤",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "子項目數量：",
@@ -7398,8 +7448,7 @@
           "start-time": "開始時間："
         }
       },
-      "share-span": "分享",
-      "warnings": "警告"
+      "share-span": "分享"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "選擇最大範圍的運算子",
@@ -11460,6 +11509,8 @@
     "empty-state": {
       "no-jobs": "沒有作業…"
     },
+    "enable-push-to-configured-branch-description": "",
+    "enable-push-to-configured-branch-label": "",
     "enhanced-features": {
       "description": "使用這些可選附加元件，充分利用 GitHub 整合",
       "description-instant-updates": "在 Grafana 中，一旦提交變更，就能即時取得更新。在變更上線之前，使用拉取請求來檢查並核准變更。",
@@ -11654,6 +11705,11 @@
       "path-label": "儲存庫路徑",
       "path-required": "儲存庫路徑為必填"
     },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
+    },
     "mode-options": {
       "folder": {
         "description": "設定後，將建立新的 Grafana 資料夾，並與外部儲存空間同步。如果外部儲存空間中存在任何資源，則會將其佈建到此新資料夾。在此資料夾中建立的所有新資源都將儲存在外部儲存空間中，並進行版本控制。",
@@ -11677,14 +11733,14 @@
     "read-only-local-tooltip": "",
     "read-only-remote-tooltip": "",
     "recent-jobs": {
-      "active-jobs": "進行中的作業",
       "column-action": "動作",
       "column-duration": "持續時間",
       "column-job-id": "",
       "column-message": "訊息",
       "column-started": "已開始",
       "column-status": "狀態",
-      "error-loading": "載入{{type}}時發生錯誤",
+      "error-loading-active-jobs": "",
+      "error-loading-historic-jobs": "",
       "jobs": "作業"
     },
     "repository-actions": {
@@ -12766,7 +12822,9 @@
   },
   "stars": {
     "mark-as-starred": "",
-    "unmark-as-starred": ""
+    "mark-as-starred-with-title": "",
+    "unmark-as-starred": "",
+    "unmark-as-starred-with-title": ""
   },
   "stat": {
     "add-orientation-option": {

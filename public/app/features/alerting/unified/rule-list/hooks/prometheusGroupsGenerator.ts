@@ -46,6 +46,8 @@ interface GrafanaPromApiFilter {
   state?: PromAlertingRuleState[];
   health?: RuleHealth[];
   contactPoint?: string;
+  title?: string;
+  type?: 'alerting' | 'recording';
 }
 
 interface GrafanaFetchGroupsOptions extends FetchGroupsOptions {

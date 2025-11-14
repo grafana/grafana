@@ -34,7 +34,6 @@ func TestConversionMatrixExist(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
 
 	versions := []metav1.Object{
 		&dashv0.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
@@ -44,7 +43,7 @@ func TestConversionMatrixExist(t *testing.T) {
 	}
 
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme)
+	err := RegisterConversions(scheme, dsProvider)
 	require.NoError(t, err)
 
 	for idx, in := range versions {
@@ -87,11 +86,10 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme)
+	err := RegisterConversions(scheme, dsProvider)
 	require.NoError(t, err)
 
 	// Read all files from input directory
@@ -218,12 +216,10 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 
 					// Check if this is a V2→V0/V1 downgrade conversion (not yet implemented)
 					var dataLossErr *ConversionDataLossError
-					isV2Downgrade := false
 					if err != nil && errors.As(err, &dataLossErr) {
 						// Check if this is a V2 downgrade
 						if strings.HasPrefix(gv.Version, "v2") &&
 							(strings.Contains(filename, "v0alpha1") || strings.Contains(filename, "v1beta1")) {
-							isV2Downgrade = true
 							// Write output file anyway for V2 downgrades (even with data loss)
 							// This helps with debugging and understanding what data is preserved
 							t.Logf("V2→V0/V1 conversion has expected data loss: %v", err)
@@ -231,10 +227,7 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 							t.Skipf("V2→V0/V1 conversions not yet fully implemented - data loss expected")
 							return
 						}
-					}
-
-					// For non-V2-downgrade conversions, data loss is a real error
-					if !isV2Downgrade {
+						// For non-V2-downgrade conversions, data loss is a real error
 						require.NoError(t, err, "Conversion failed for %s", filename)
 					}
 
@@ -252,11 +245,10 @@ func TestMigratedDashboardsConversion(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme)
+	err := RegisterConversions(scheme, dsProvider)
 	require.NoError(t, err)
 
 	// Read all files from migration package's latest_version directory
@@ -387,7 +379,6 @@ func TestConversionMetrics(t *testing.T) {
 	// Initialize migration with test providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -395,7 +386,7 @@ func TestConversionMetrics(t *testing.T) {
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme)
+	err := RegisterConversions(scheme, dsProvider)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -515,7 +506,6 @@ func TestConversionMetrics(t *testing.T) {
 func TestConversionMetricsWrapper(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -574,8 +564,8 @@ func TestConversionMetricsWrapper(t *testing.T) {
 				// Simulate conversion failure
 				return fmt.Errorf("conversion failed")
 			},
-			expectAPISuccess:     false, // FIXED: wrapper should propagate errors
-			expectMetricsSuccess: false,
+			expectAPISuccess:     true,  // wrapper returns nil to avoid 500 response
+			expectMetricsSuccess: false, // but still records failure metrics
 			expectedSourceUID:    "test-wrapper-2",
 			expectedSourceAPI:    dashv1.APIVERSION,
 			expectedTargetAPI:    dashv0.APIVERSION,
@@ -684,7 +674,6 @@ func TestSchemaVersionExtraction(t *testing.T) {
 			// Test the schema version extraction logic by creating a wrapper and checking the metrics labels
 			dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 			migration.Initialize(dsProvider)
-			SetDataSourceProvider(dsProvider)
 
 			// Create a test registry for metrics
 			registry := prometheus.NewRegistry()
@@ -729,7 +718,6 @@ func TestSchemaVersionExtraction(t *testing.T) {
 func TestConversionLogging(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -737,7 +725,7 @@ func TestConversionLogging(t *testing.T) {
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme)
+	err := RegisterConversions(scheme, dsProvider)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -821,7 +809,6 @@ func TestConversionLogging(t *testing.T) {
 func TestConversionLogLevels(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
 
 	t.Run("log levels and structured fields verification", func(t *testing.T) {
 		// Create test wrapper to verify logging behavior
@@ -871,8 +858,7 @@ func TestConversionLogLevels(t *testing.T) {
 		target2 := &dashv0.Dashboard{}
 
 		err = failureWrapper(source2, target2, nil)
-		require.Error(t, err, "conversion wrapper should propagate errors from the conversion function")
-		require.Equal(t, "simulated conversion failure", err.Error(), "error should match the simulated failure")
+		require.NoError(t, err, "conversion wrapper returns nil to avoid 500 response, but logs error and records metrics")
 
 		// The logging code paths are executed in both cases above
 		// Success case logs at Debug level with fields:
@@ -885,7 +871,7 @@ func TestConversionLogLevels(t *testing.T) {
 		t.Log("✓ Failure logging uses Error level")
 		t.Log("✓ All structured fields included in log messages")
 		t.Log("✓ Dashboard UID extraction works for different dashboard types")
-		t.Log("✓ Errors are properly propagated (bug fix: previously returned nil)")
+		t.Log("✓ Wrapper returns nil to avoid 500 response even on errors")
 		t.Log("✓ Schema version extraction handles various formats")
 	})
 }
@@ -894,7 +880,6 @@ func TestConversionLogLevels(t *testing.T) {
 func TestConversionLoggingFields(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
-	SetDataSourceProvider(dsProvider)
 
 	t.Run("verify all log fields are present", func(t *testing.T) {
 		// Test that the conversion wrapper includes all expected structured fields

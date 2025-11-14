@@ -411,7 +411,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           options: [],
           regex: variable.state.regex ?? '',
           refresh: 'onDashboardLoad',
-          pluginId: variable.state.pluginId ?? getDefaultDatasource().uid,
+          pluginId: variable.state.pluginId ?? getDefaultDatasource().type,
           multi: variable.state.isMulti || false,
           includeAll: variable.state.includeAll || false,
           allowCustomValue: variable.state.allowCustomValue ?? true,

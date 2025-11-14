@@ -16,7 +16,7 @@
     "layout": {
       "kind": "GridLayout",
       "spec": {
-        "items": null
+        "items": []
       }
     },
     "links": [],
