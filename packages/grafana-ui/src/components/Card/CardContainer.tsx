@@ -96,15 +96,20 @@ export const getCardContainerStyles = (
     container: css({
       display: 'grid',
       position: 'relative',
-      gridTemplateColumns: 'auto 1fr auto',
-      gridTemplateRows: hasDescriptionComponent ? 'auto auto 1fr auto' : '1fr auto auto auto',
-      gridAutoColumns: '1fr',
-      gridAutoFlow: 'row',
-      gridTemplateAreas: `
+      gridTemplate: hasDescriptionComponent
+        ? `
         "Figure Heading Tags"
         "Figure Meta Tags"
-        "Figure Description Tags"
-        "Figure Actions Secondary"`,
+        "Figure Description Tags" 1fr
+        "Figure Actions Secondary" / auto 1fr auto
+      `
+        : `
+        "Figure Heading Tags" 1fr
+        "Figure Meta Tags"
+        "Figure Actions Secondary" / auto 1fr auto
+      `,
+      gridAutoColumns: '1fr',
+      gridAutoFlow: 'row',
       width: '100%',
       padding: theme.spacing(isCompact ? 1 : 2),
       background: theme.colors.background.secondary,
