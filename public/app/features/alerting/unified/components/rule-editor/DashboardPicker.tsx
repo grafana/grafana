@@ -20,9 +20,7 @@ import {
 } from '@grafana/ui';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
-import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
-
-import { useDashboardQuery } from './useDashboardQuery';
+import { UnifiedDashboardDTO, useDashboardQuery } from './useDashboardQuery';
 
 export interface PanelDTO {
   id?: number;
@@ -74,7 +72,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   const [debouncedDashboardFilter, setDebouncedDashboardFilter] = useState('');
   const [panelFilter, setPanelFilter] = useState('');
   const { value, loading: isDashSearchFetching } = useFilteredDashboards(debouncedDashboardFilter);
-  const { dashboardModel, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
+  const { dashboard, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
   const handleDashboardChange = useCallback((dashboardUid: string) => {
     setSelectedDashboardUid(dashboardUid);
     setSelectedPanelId(undefined);
@@ -82,7 +80,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
 
   const { dashboards: filteredDashboards = [], locationInfo: locationInfo = {} } = value || {};
 
-  const allDashboardPanels = getVisualPanels(dashboardModel);
+  const allDashboardPanels = getVisualPanels(dashboard);
 
   const filteredPanels =
     allDashboardPanels
@@ -197,7 +195,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
       contentClassName={styles.modalContent}
     >
       {/* This alert shows if the selected dashboard is not found in the first page of dashboards */}
-      {!selectedDashboardIsInPageResult && dashboardUid && dashboardModel && (
+      {!selectedDashboardIsInPageResult && dashboardUid && dashboard && (
         <Alert
           title={t('alerting.dashboard-picker.title-current-selection', 'Current selection')}
           severity="info"
@@ -209,9 +207,9 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
             <Trans
               i18nKey="alerting.dashboard-picker.current-selection-dashboard"
               values={{
-                dashboardTitle: dashboardModel.title,
-                dashboardUid: dashboardModel.uid,
-                folderTitle: dashboardModel.meta?.folderTitle ?? fallbackDashboardsString,
+                dashboardTitle: dashboard.title,
+                dashboardUid: dashboard.uid,
+                folderTitle: dashboard.folderTitle ?? fallbackDashboardsString,
               }}
             >
               Dashboard: {'{{dashboardTitle}}'} ({'{{ dashboardUid }}'}) in folder {'{{ folderTitle }}'}
@@ -318,15 +316,15 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   );
 };
 
-export function getVisualPanels(dashboardModel: DashboardModel | undefined) {
-  if (!dashboardModel) {
+export function getVisualPanels(dashboard: UnifiedDashboardDTO | undefined) {
+  if (!dashboard) {
     return [];
   }
 
-  const panelsWithoutRows = dashboardModel.panels.filter((panel) => panel.type !== 'row');
-  const panelsNestedInRows = dashboardModel.panels
-    .filter((rowPanel) => rowPanel.collapsed)
-    .flatMap((collapsedRow) => collapsedRow.panels ?? []);
+  const panelsWithoutRows = dashboard.panels.filter((panel: PanelDTO) => panel.type !== 'row');
+  const panelsNestedInRows = dashboard.panels
+    .filter((rowPanel: PanelDTO) => rowPanel.collapsed)
+    .flatMap((collapsedRow) => collapsedRow.rows ?? []);
 
   const allDashboardPanels = [...panelsWithoutRows, ...panelsNestedInRows];
   return allDashboardPanels;
