@@ -64,6 +64,11 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 
 func (r *Runner) Run(ctx context.Context) error {
 	logger := r.log.WithContext(ctx)
+	// If stackID is empty and OrgService is nil, do nothing (on-demand registration only)
+	if r.stackID == "" && r.orgService == nil {
+		logger.Debug("Auto-registration of checktypes disabled")
+		return nil
+	}
 
 	// Determine namespaces based on StackID or OrgID
 	namespaces, err := checks.GetNamespaces(ctx, r.stackID, r.orgService)
