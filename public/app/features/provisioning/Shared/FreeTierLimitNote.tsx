@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Icon, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { isFreeTierLicense } from '../utils/isFreeTierLicense';
 
@@ -27,9 +27,11 @@ export function FreeTierLimitNote() {
         <Trans i18nKey="provisioning.free-tier-limit.message-prefix">
           Free-tier accounts are capped to 1 connection, and 20 resources per folder. To add more connections,
         </Trans>{' '}
-        <TextLink href={UPGRADE_URL} external variant="bodySmall">
-          <Trans i18nKey="provisioning.free-tier-limit.upgrade-link">upgrade your account</Trans>
-        </TextLink>
+        {/*We are using the 'a' tag here instead of the external link component because we need the text inside the link to wrap */}
+        <a href={UPGRADE_URL} target="_blank" rel="noopener noreferrer" className={styles.link}>
+          <Trans i18nKey="provisioning.free-tier-limit.upgrade-link">upgrade your account</Trans>{' '}
+          <Icon name="external-link-alt" size="xs" />
+        </a>
         .
       </Text>
     </Stack>
@@ -41,6 +43,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     warningIcon: css({
       color: theme.colors.warning.text,
       marginTop: theme.spacing(0.25),
+    }),
+    link: css({
+      color: theme.colors.text.link,
+      textDecoration: 'underline',
+      '&:hover': {
+        color: theme.colors.text.link,
+        textDecoration: 'none',
+      },
     }),
   };
 };
