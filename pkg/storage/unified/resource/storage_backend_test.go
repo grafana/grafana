@@ -1997,3 +1997,68 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 		}
 	}
 }
+
+func TestKvStorageBackend_ResourceLastImportTime(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	lastImportTimes := []ResourceLastImportTime{
+		{
+			NamespacedResource: NamespacedResource{
+				Namespace: "stacks-1",
+				Group:     "apps",
+				Resource:  "resource",
+			},
+			LastImportTime: time.Now().Add(-2 * time.Minute).UTC().Truncate(time.Microsecond),
+		},
+		{
+			NamespacedResource: NamespacedResource{
+				Namespace: "stacks-2",
+				Group:     "apps",
+				Resource:  "resource",
+			},
+			LastImportTime: time.Now().Add(-7 * time.Minute).UTC().Truncate(time.Microsecond),
+		},
+		{
+			NamespacedResource: NamespacedResource{
+				Namespace: "stacks-3",
+				Group:     "apps",
+				Resource:  "resource",
+			},
+			LastImportTime: time.Now().Add(-3 * time.Minute).UTC().Truncate(time.Microsecond),
+		},
+		{
+			NamespacedResource: NamespacedResource{
+				Namespace: "stacks-4",
+				Group:     "apps",
+				Resource:  "resource",
+			},
+			LastImportTime: time.Now().Add(-24 * time.Minute).UTC().Truncate(time.Microsecond),
+		},
+		{
+			NamespacedResource: NamespacedResource{
+				Namespace: "stacks-5",
+				Group:     "apps",
+				Resource:  "resource",
+			},
+			LastImportTime: time.Now().Add(-44 * time.Minute).UTC().Truncate(time.Microsecond),
+		},
+	}
+
+	for _, lastImportTime := range lastImportTimes {
+		err := backend.updateLastImportTime(ctx, &resourcepb.ResourceKey{
+			Namespace: lastImportTime.NamespacedResource.Namespace,
+			Group:     lastImportTime.NamespacedResource.Group,
+			Resource:  lastImportTime.NamespacedResource.Resource,
+		}, lastImportTime.LastImportTime)
+
+		require.NoError(t, err)
+	}
+
+	var i int
+	for lastImportTime, err := range backend.GetResourceLastImportTimes(ctx) {
+		require.NoError(t, err)
+		require.Equal(t, lastImportTimes[i], lastImportTime)
+		i++
+	}
+}
