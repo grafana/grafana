@@ -33,6 +33,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
+import { TABLE_DETECTED_LEVEL_FIELD_NAME } from 'app/features/logs/components/LogDetailsBody';
 import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from 'app/features/logs/components/otel/formats';
 import { DATAPLANE_ID_NAME, LogsFrame } from 'app/features/logs/logsFrame';
 
@@ -435,6 +436,11 @@ function getInitialFieldWidth(field: Field): number | undefined {
   if (field.type === FieldType.time) {
     return 230;
   }
+  // Set constrained width for detected_level
+  if (field.name === TABLE_DETECTED_LEVEL_FIELD_NAME) {
+    return 150;
+  }
+  // All other fields (including body field) will auto-expand
   return undefined;
 }
 
