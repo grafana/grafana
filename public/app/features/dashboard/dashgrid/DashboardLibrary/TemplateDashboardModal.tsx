@@ -12,7 +12,10 @@ import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { DashboardCard } from './DashboardCard';
 import {
+  CONTENT_KINDS,
+  CREATION_ORIGINS,
   DashboardLibraryInteractions,
+  DISCOVERY_METHODS,
   EVENT_LOCATIONS,
   SourceEntryPoint,
   TemplateDashboardSourceEntryPoint,
@@ -42,13 +45,13 @@ export const TemplateDashboardModal = () => {
   const onPreviewDashboardClick = async (dashboard: GnetDashboard) => {
     const sourceEntryPoint = SourceEntryPointMap[entryPoint] || 'unknown';
     DashboardLibraryInteractions.itemClicked({
-      contentKind: 'template_dashboard',
+      contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
       datasourceTypes: [String(testDataSource?.type)],
       libraryItemId: String(dashboard.id),
       libraryItemTitle: dashboard.name,
       sourceEntryPoint,
       eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
-      discoveryMethod: 'browse',
+      discoveryMethod: DISCOVERY_METHODS.BROWSE,
     });
 
     const params = new URLSearchParams({
@@ -59,7 +62,8 @@ export const TemplateDashboardModal = () => {
       // tracking event purpose values
       sourceEntryPoint,
       libraryItemId: String(dashboard.id),
-      creationOrigin: 'template_dashboard_modal',
+      creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_TEMPLATE_DASHBOARD,
+      contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
     });
 
     const templateUrl = `${DASHBOARD_LIBRARY_ROUTES.Template}?${params.toString()}`;
@@ -92,7 +96,7 @@ export const TemplateDashboardModal = () => {
     if (isOpen && !loading && dashboards.length > 0) {
       DashboardLibraryInteractions.loaded({
         numberOfItems: dashboards.length,
-        contentKinds: ['template_dashboard'],
+        contentKinds: [CONTENT_KINDS.TEMPLATE_DASHBOARD],
         datasourceTypes: [String(testDataSource?.type)],
         sourceEntryPoint: SourceEntryPointMap[entryPoint] || 'unknown',
         eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,

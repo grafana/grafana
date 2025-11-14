@@ -1,6 +1,9 @@
+import { locationService } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
+
+import { CONTENT_KINDS } from '../interactions';
 
 function getPanelDatasourceTypes(scene: DashboardScene): string[] {
   const types = new Set<string>();
@@ -31,10 +34,38 @@ function panelDatasourceTypes(vizPanel: VizPanel) {
 }
 
 /**
- * Extract datasource types from dashboard panels for tracking purposes.
+ * Extract datasource types from URL parameters or dashboard panels based on the content kind.
+ * Supports two formats:
+ * - datasourceTypes: JSON array of datasource types (for community dashboards)
+ * - pluginId: Single datasource type (legacy format for provisioned dashboards)
+ *
  * @returns Array of datasource type strings, or undefined if not available
  */
 export function getDatasourceTypes(dashboard: DashboardScene): string[] | undefined {
-  const datasourceTypes = getPanelDatasourceTypes(dashboard);
-  return datasourceTypes.length > 0 ? datasourceTypes : undefined;
+  const params = locationService.getSearchObject();
+  const datasourceTypesParam = params.datasourceTypes;
+  const pluginIdParam = params.pluginId;
+  const contentKind = params.contentKind;
+
+  switch (contentKind) {
+    case CONTENT_KINDS.COMMUNITY_DASHBOARD: {
+      if (datasourceTypesParam && typeof datasourceTypesParam === 'string') {
+        try {
+          return JSON.parse(datasourceTypesParam);
+        } catch {
+          // If parsing fails, return undefined
+          return undefined;
+        }
+      }
+      return undefined;
+    }
+    case CONTENT_KINDS.DATASOURCE_DASHBOARD:
+      return pluginIdParam && typeof pluginIdParam === 'string' ? [pluginIdParam] : undefined;
+    case CONTENT_KINDS.TEMPLATE_DASHBOARD: {
+      const datasourceTypes = getPanelDatasourceTypes(dashboard);
+      return datasourceTypes.length > 0 ? datasourceTypes : undefined;
+    }
+    default:
+      return undefined;
+  }
 }

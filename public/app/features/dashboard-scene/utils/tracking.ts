@@ -60,18 +60,22 @@ export function trackDashboardSceneCreatedOrSaved(
   // For community dashboards, use gnetId as libraryItemId if libraryItemId is not present
   const libraryItemId = urlParams.get('libraryItemId') || urlParams.get('gnetId') || undefined;
   const creationOrigin = urlParams.get('creationOrigin') || undefined;
+  const contentKind = urlParams.get('contentKind') || undefined;
 
-  // Extract datasourceTypes from dashboard panels
+  // Extract datasourceTypes from URL params (supports both community and provisioned dashboards) or dashboard panels
   const datasourceTypes = getDatasourceTypes(dashboard);
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
 
   const dashboardLibraryProperties =
-    config.featureToggles.dashboardLibrary || config.featureToggles.dashboardTemplates
+    config.featureToggles.dashboardLibrary ||
+    config.featureToggles.dashboardTemplates ||
+    config.featureToggles.suggestedDashboards
       ? {
           datasourceTypes,
           sourceEntryPoint,
           libraryItemId,
           creationOrigin,
+          contentKind,
         }
       : {};
 

@@ -37,6 +37,7 @@ export const DISCOVERY_METHODS = {
 export const CREATION_ORIGINS = {
   DASHBOARD_LIBRARY_DATASOURCE_DASHBOARD: 'dashboard_library_datasource_dashboard',
   DASHBOARD_LIBRARY_COMMUNITY_DASHBOARD: 'dashboard_library_community_dashboard',
+  DASHBOARD_LIBRARY_TEMPLATE_DASHBOARD: 'dashboard_library_template_dashboard_modal',
 } as const;
 
 // Derive types from constant maps for single source of truth
