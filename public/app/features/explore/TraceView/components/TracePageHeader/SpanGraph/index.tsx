@@ -25,9 +25,6 @@ import ViewingLayer from './ViewingLayer';
 
 const getStyles = () => {
   return {
-    container: css({
-      padding: '0 0.5rem 0.5rem 0.5rem',
-    }),
     canvasContainer: css({
       position: 'relative',
     }),
@@ -75,7 +72,7 @@ const SpanGraph = memo(
 
     const items = memoizedGetitems(trace);
     return (
-      <div className={styles.container}>
+      <div>
         <TickLabels numTicks={TIMELINE_TICK_INTERVAL} duration={trace.duration} />
         <div className={styles.canvasContainer}>
           <CanvasSpanGraph valueWidth={trace.duration} items={items} />

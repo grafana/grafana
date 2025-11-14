@@ -1,6 +1,7 @@
 import { DataQuery } from '@grafana/schema';
 
 import { PreferredVisualisationType } from './data';
+import { SelectableValue } from './select';
 import { TimeRange } from './time';
 
 type AnyQuery = DataQuery & Record<string, any>;
@@ -31,6 +32,7 @@ export interface TraceSearchProps {
   to?: string;
   toOperator: string;
   tags: TraceSearchTag[];
+  adhocFilters?: Array<SelectableValue<string>>;
   query?: string;
   matchesOnly: boolean;
   criticalPathOnly: boolean;
