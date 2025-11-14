@@ -44,6 +44,11 @@ export default function CreateNewButton({
   const notifyApp = useAppNotification();
   const isProvisionedInstance = useIsProvisionedInstance();
 
+  const handleVisibleChange = () => {
+    !isOpen && reportInteraction('grafana_create_new_button_menu_opened');
+    setIsOpen(!isOpen);
+  };
+
   const onCreateFolder = async (folderName: string) => {
     try {
       const folder = await newFolder({
@@ -103,7 +108,7 @@ export default function CreateNewButton({
 
   return (
     <>
-      <Dropdown overlay={newMenu} onVisibleChange={setIsOpen}>
+      <Dropdown overlay={newMenu} onVisibleChange={handleVisibleChange}>
         <Button
           disabled={isReadOnlyRepo}
           tooltip={isReadOnlyRepo ? getReadOnlyTooltipText({ isLocal: repoType === 'local' }) : undefined}
