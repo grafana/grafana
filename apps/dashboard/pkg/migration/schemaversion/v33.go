@@ -60,7 +60,7 @@ import (
 //	    { "refId": "A", "datasource": "default" }
 //	  ]
 //	}
-func V33(dsInfo DataSourceIndexProvider) SchemaVersionMigrationFunc {
+func V33(dsIndexProvider DataSourceIndexProvider) SchemaVersionMigrationFunc {
 	return func(ctx context.Context, dashboard map[string]interface{}) error {
 		if dashboard == nil {
 			dashboard = map[string]interface{}{}
@@ -68,7 +68,7 @@ func V33(dsInfo DataSourceIndexProvider) SchemaVersionMigrationFunc {
 		dashboard["schemaVersion"] = int(33)
 
 		// Build datasource index directly from provider for O(1) lookups
-		index := dsInfo.Index(ctx)
+		index := dsIndexProvider.Index(ctx)
 
 		migratePanelsV33(dashboard, index)
 
