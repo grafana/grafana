@@ -103,9 +103,6 @@ function getStyles(theme: GrafanaTheme2) {
       // Background and border are overriden when topnav toggle is disabled
       background: 'inherit',
       border: 'none',
-      '&:hover': {
-        background: theme.colors.secondary.main,
-      },
     }),
     draggableIcon: css({
       transform: 'rotate(45deg)',
