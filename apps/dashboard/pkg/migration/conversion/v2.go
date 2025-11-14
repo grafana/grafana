@@ -122,7 +122,6 @@ func Convert_V2beta1_to_V2alpha1(in *dashv2beta1.Dashboard, out *dashv2alpha1.Da
 		return NewConversionError(err.Error(), "v2beta1", "v2alpha1", "ConvertDashboard_V2beta1_to_V2alpha1")
 	}
 
-	// Set successful conversion status
 	out.Status = dashv2alpha1.DashboardStatus{
 		Conversion: &dashv2alpha1.DashboardConversionStatus{
 			StoredVersion: ptr.To(dashv2beta1.VERSION),
