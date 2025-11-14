@@ -41,8 +41,13 @@ test.use({
 });
 
 test.describe('Panels test: Heatmap X-axis panning', { tag: ['@panels', '@heatmap'] }, () => {
-  test('cursor changes to grab hand over x-axis', async ({ gotoDashboardPage, page }) => {
-    await test.step('Load dashboard and verify cursor changes to grab', async () => {
+  test('x-axis panning functionality', async ({ gotoDashboardPage, page, selectors }) => {
+    let centerX: number;
+    let centerY: number;
+    let initialFromTime: number;
+    let initialToTime: number;
+
+    const dashboardPage = await test.step('Load dashboard and verify cursor changes to grab', async () => {
       const dashboardPage = await gotoDashboardPage({ uid: TIME_RANGE_PAN_DASHBOARD_UID });
 
       const heatmapPanel = page.locator('.uplot').first();
@@ -55,23 +60,13 @@ test.describe('Panels test: Heatmap X-axis panning', { tag: ['@panels', '@heatma
 
       const cursorStyle = await xAxis.evaluate((el: HTMLElement) => window.getComputedStyle(el).cursor);
       expect(cursorStyle, 'cursor is grab').toBe('grab');
+
+      return dashboardPage;
     });
-  });
 
-  test('drag right pans backward in time, drag left pans forward', async ({ gotoDashboardPage, page, selectors }) => {
-    let centerX: number;
-    let centerY: number;
-    let initialFromTime: number;
-    let initialToTime: number;
-
-    const dashboardPage = await test.step('Load dashboard and capture initial time range', async () => {
-      const dashboardPage = await gotoDashboardPage({ uid: TIME_RANGE_PAN_DASHBOARD_UID });
-
+    await test.step('Capture initial time range', async () => {
       const heatmapPanel = page.locator('.uplot').first();
-      await expect(heatmapPanel, 'panel rendered').toBeVisible();
-
       const xAxis = heatmapPanel.locator('.u-axis').first();
-      await expect(xAxis, 'x-axis rendered').toBeVisible();
 
       const timePickerButton = dashboardPage.getByGrafanaSelector(selectors.components.TimePicker.openButton);
       await timePickerButton.click();
@@ -93,8 +88,6 @@ test.describe('Panels test: Heatmap X-axis panning', { tag: ['@panels', '@heatma
 
       centerX = axisBox.x + axisBox.width / 2;
       centerY = axisBox.y + axisBox.height / 2;
-
-      return dashboardPage;
     });
 
     await test.step('Drag right pans backward in time', async () => {
