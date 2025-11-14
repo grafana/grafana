@@ -1,0 +1,239 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      },
+      {
+        "datasource": {
+          "type": "grafana-testdata-datasource",
+          "uid": "PD8C576611E62080A"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "blue",
+        "name": "testdata-annos",
+        "target": {
+          "lines": 10,
+          "refId": "Anno",
+          "scenarioId": "annotations"
+        }
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "blue",
+        "name": "no-ds-testdata-annos",
+        "target": {
+          "lines": 10,
+          "refId": "Anno",
+          "scenarioId": "annotations"
+        }
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "gdev-prometheus"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "yellow",
+        "name": "prom-annos",
+        "target": {
+          "expr": "{action=\"add_client\"}",
+          "interval": "",
+          "lines": 10,
+          "refId": "Anno",
+          "scenarioId": "annotations"
+        }
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "yellow",
+        "name": "no-ds-prom-annos",
+        "target": {
+          "expr": "{action=\"add_client\"}",
+          "interval": "",
+          "lines": 10,
+          "refId": "Anno",
+          "scenarioId": "annotations"
+        }
+      },
+      {
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "PBBCEC2D313BC06C3"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "red",
+        "name": "postgress-annos",
+        "target": {
+          "editorMode": "builder",
+          "format": "table",
+          "lines": 10,
+          "rawSql": "",
+          "refId": "Anno",
+          "scenarioId": "annotations",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      },
+      {
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "gdev-elasticsearch"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "red",
+        "name": "elastic - annos",
+        "tagsField": "asd",
+        "target": {
+          "lines": 10,
+          "query": "test query",
+          "refId": "Anno",
+          "scenarioId": "annotations"
+        },
+        "textField": "asd",
+        "timeEndField": "asdas",
+        "timeField": "asd"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [],
+  "preload": false,
+  "refresh": "",
+  "schemaVersion": 42,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "gdev-prometheus"
+        },
+        "includeAll": false,
+        "name": "variable-ds-prometheus",
+        "options": [],
+        "query": {
+          "expr": "up"
+        },
+        "refresh": 0,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "includeAll": false,
+        "name": "variable-no-ds",
+        "options": [],
+        "query": {
+          "csv": "1,2,3,4",
+          "scenarioId": "csv_metric_values"
+        },
+        "refresh": 0,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "includeAll": false,
+        "name": "variable-no-ds-empty-query",
+        "options": [],
+        "query": {},
+        "refresh": 0,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "includeAll": false,
+        "name": "variable-no-default-ds",
+        "options": [],
+        "query": {
+          "expr": "up"
+        },
+        "refresh": 0,
+        "regex": "",
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Test: V2alpha1 dashboard with annotations",
+  "uid": "test-v2alpha1-annotations"
+}

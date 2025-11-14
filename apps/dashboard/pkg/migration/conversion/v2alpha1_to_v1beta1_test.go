@@ -15,6 +15,7 @@ import (
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	migrationtestutil "github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 )
@@ -149,6 +150,73 @@ func TestV2alpha1ToV1beta1WriteOutputFiles(t *testing.T) {
 			// Write output file using the shared testConversion helper
 			// dashv1.Dashboard implements metav1.Object, so we can use testConversion directly
 			testConversion(t, &convertedV1beta1, outputFileName, outputDir)
+		})
+	}
+}
+
+// TestV2alpha1ToV2beta1WriteOutputFiles reads v2alpha1 input files from testdata/input,
+// converts them to v2beta1, and writes the output to testdata/output.
+// These outputs are used by the frontend test to verify consistency.
+func TestV2alpha1ToV2beta1WriteOutputFiles(t *testing.T) {
+	// Initialize the migrator with a test data source provider
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
+
+	// Set up conversion scheme
+	scheme := runtime.NewScheme()
+	err := RegisterConversions(scheme, dsProvider)
+	require.NoError(t, err)
+
+	// Read all v2alpha1 input files
+	inputDir := filepath.Join("testdata", "input")
+	files, err := os.ReadDir(inputDir)
+	require.NoError(t, err, "Failed to read input directory")
+
+	// Ensure output directory exists
+	outputDir := filepath.Join("testdata", "output")
+	err = os.MkdirAll(outputDir, 0755)
+	require.NoError(t, err, "Failed to create output directory")
+
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+
+		// Only process v2alpha1 input files
+		if !strings.HasPrefix(file.Name(), "v2alpha1.") {
+			continue
+		}
+
+		t.Run(file.Name(), func(t *testing.T) {
+			// Read input file
+			inputPath := filepath.Join(inputDir, file.Name())
+			inputData, err := os.ReadFile(inputPath)
+			require.NoError(t, err, "Failed to read input file")
+
+			// Parse v2alpha1 dashboard
+			var v2alpha1 dashv2alpha1.Dashboard
+			err = json.Unmarshal(inputData, &v2alpha1)
+			require.NoError(t, err, "Failed to unmarshal v2alpha1 dashboard")
+
+			// Convert v2alpha1 → v2beta1
+			var v2beta1 dashv2beta1.Dashboard
+			err = scheme.Convert(&v2alpha1, &v2beta1, nil)
+			require.NoError(t, err, "Failed to convert v2alpha1 to v2beta1")
+
+			// Generate output filename
+			baseName := strings.TrimPrefix(file.Name(), "v2alpha1.")
+			baseName = strings.TrimSuffix(baseName, ".json")
+			outputFileName := fmt.Sprintf("v2alpha1.%s.v2beta1.json", baseName)
+			outputPath := filepath.Join(outputDir, outputFileName)
+
+			// Write output file
+			outputData, err := json.MarshalIndent(v2beta1, "", "  ")
+			require.NoError(t, err, "Failed to marshal v2beta1 dashboard")
+
+			err = os.WriteFile(outputPath, outputData, 0644)
+			require.NoError(t, err, "Failed to write output file")
+
+			t.Logf("Generated %s", outputFileName)
 		})
 	}
 }

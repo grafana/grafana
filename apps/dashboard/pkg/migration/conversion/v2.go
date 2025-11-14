@@ -12,6 +12,8 @@ import (
 
 func Convert_V2alpha1_to_V0(in *dashv2alpha1.Dashboard, out *dashv0.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
+	out.APIVersion = dashv0.APIVERSION
+	out.Kind = in.Kind
 
 	// TODO: implement V2 to V0 conversion
 
@@ -29,6 +31,8 @@ func Convert_V2alpha1_to_V0(in *dashv2alpha1.Dashboard, out *dashv0.Dashboard, s
 
 func Convert_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
+	out.APIVersion = dashv1.APIVERSION
+	out.Kind = in.Kind
 
 	// Convert the spec
 	if err := ConvertDashboard_V2alpha1_to_V1beta1(in, out, scope); err != nil {
@@ -58,6 +62,8 @@ func Convert_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboa
 
 func Convert_V2alpha1_to_V2beta1(in *dashv2alpha1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
+	out.APIVersion = dashv2beta1.APIVERSION
+	out.Kind = in.Kind
 
 	// Convert the spec
 	if err := ConvertDashboard_V2alpha1_to_V2beta1(in, out, scope); err != nil {
@@ -86,6 +92,8 @@ func Convert_V2alpha1_to_V2beta1(in *dashv2alpha1.Dashboard, out *dashv2beta1.Da
 
 func Convert_V2beta1_to_V0(in *dashv2beta1.Dashboard, out *dashv0.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
+	out.APIVersion = dashv0.APIVERSION
+	out.Kind = in.Kind
 
 	// TODO: implement v2beta1 to V0 conversion
 
@@ -149,6 +157,8 @@ func Convert_V2beta1_to_V1beta1(in *dashv2beta1.Dashboard, out *dashv1.Dashboard
 
 func Convert_V2beta1_to_V2alpha1(in *dashv2beta1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
+	out.APIVersion = dashv2alpha1.APIVERSION
+	out.Kind = in.Kind
 
 	if err := ConvertDashboard_V2beta1_to_V2alpha1(in, out, scope); err != nil {
 		out.Status = dashv2alpha1.DashboardStatus{

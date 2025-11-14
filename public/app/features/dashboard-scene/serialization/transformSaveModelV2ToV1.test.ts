@@ -2,8 +2,8 @@ import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
-import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
-import { transformDashboardV2SpecToV1 } from '../../api/ResponseTransformers';
+import { transformSaveModelToScene } from './transformSaveModelToScene';
+import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 
 // Mock the config to provide datasource information
 jest.mock('@grafana/runtime', () => {
@@ -144,91 +144,72 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
   );
 
   const jsonInputs = readdirSync(inputDir);
-  const V2ALPHA1_API_VERSION = 'dashboard.grafana.app/v2alpha1';
-  const V1BETA1_API_VERSION = 'dashboard.grafana.app/v1beta1';
+  const LATEST_API_VERSION = 'dashboard.grafana.app/v2beta1';
 
-  // Filter to only process v2alpha1 input files
-  const v2alpha1Inputs = jsonInputs.filter((inputFile) => inputFile.startsWith('v2alpha1.'));
+  // Filter to only process v2beta1 input files
+  const v2beta1Inputs = jsonInputs.filter((inputFile) => inputFile.startsWith('v2beta1.'));
 
-  v2alpha1Inputs.forEach((inputFile) => {
-    it(`compare ${inputFile} from v2alpha1 to v1beta1 backend and frontend conversions`, async () => {
+  v2beta1Inputs.forEach((inputFile) => {
+    it(`compare ${inputFile} from v2beta1 to v1beta1 backend and frontend conversions`, async () => {
       const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
 
       // Find the corresponding v1beta1 output file
-      const outputFileName = inputFile.replace('.json', `.${V1BETA1_API_VERSION.split('/')[1]}.json`);
+      const outputFileName = inputFile.replace('.json', '.v1beta1.json');
       const outputFilePath = path.join(outputDir, outputFileName);
 
-      // Load the backend output (if it exists)
-      let backendOutput: any;
-      try {
-        backendOutput = JSON.parse(readFileSync(outputFilePath, 'utf8'));
-        expect(backendOutput.apiVersion).toBe(V1BETA1_API_VERSION);
-      } catch (err) {
-        // Backend output file doesn't exist yet - skip this test
-        // The backend test will generate it
-        return;
-      }
+      // Load the backend output
+      const backendOutput = JSON.parse(readFileSync(outputFilePath, 'utf8'));
 
-      // Extract the dashboard spec from backend v1beta1 output
-      // v1beta1 format wraps the dashboard in spec.dashboard
+      // Load the backend v1beta1 output into a scene, then transform it back to v1beta1
+      // This is to ensure that the backend output is the same as the frontend output being loaded by the scene
       const backendDashboardSpec = backendOutput.spec?.dashboard || backendOutput.spec;
+      const sceneBackend = transformSaveModelToScene({
+        dashboard: backendDashboardSpec,
+        meta: {
+          isNew: false,
+          isFolder: false,
+          canSave: true,
+          canEdit: true,
+          canDelete: false,
+          canShare: false,
+          canStar: false,
+          canAdmin: false,
+          isSnapshot: false,
+          provisioned: false,
+          version: 1,
+        },
+      });
+      const backendOutputAfterLoadedByScene = transformSceneToSaveModel(sceneBackend, false);
 
-      // Transform using frontend path: v2alpha1 -> Scene -> v1beta1
-      // Load v2alpha1 into a scene first
+      // Transform using frontend path: v2beta1 -> Scene -> v1beta1
+      // Extract the spec from v2beta1 format and use it as the dashboard data
+      // Remove snapshot field to prevent isSnapshot() from returning true
+      const dashboardSpec = { ...jsonInput.spec };
+      delete dashboardSpec.snapshot;
+
+      // Load v2beta1 into Scene (frontend can handle v2beta1)
       const scene = transformSaveModelSchemaV2ToScene({
-        spec: jsonInput.spec,
+        spec: dashboardSpec,
         metadata: jsonInput.metadata || {
           name: 'test-dashboard',
           generation: 1,
           resourceVersion: '1',
           creationTimestamp: new Date().toISOString(),
         },
-        apiVersion: V2ALPHA1_API_VERSION,
+        apiVersion: jsonInput.apiVersion || LATEST_API_VERSION,
         access: {},
         kind: 'DashboardWithAccessInfo',
       });
 
-      // Transform scene to v2alpha1 spec (to ensure we have the correct format)
-      const v2alpha1Spec = transformSceneToSaveModelSchemaV2(scene, false);
-
-      // Transform v2alpha1 spec to v1beta1 using frontend transformation
-      const frontendDashboardSpec = transformDashboardV2SpecToV1(v2alpha1Spec, {
-        name: jsonInput.metadata?.name || 'test-dashboard',
-        generation: jsonInput.metadata?.generation || 1,
-        resourceVersion: jsonInput.metadata?.resourceVersion || '1',
-        creationTimestamp: jsonInput.metadata?.creationTimestamp || new Date().toISOString(),
-      });
+      // Transform Scene to v1beta1 using frontend transformation
+      const frontendOutput = transformSceneToSaveModel(scene, false);
 
       // Verify both outputs have valid spec structures
-      expect(frontendDashboardSpec).toBeDefined();
-      expect(backendDashboardSpec).toBeDefined();
+      expect(frontendOutput).toBeDefined();
+      expect(backendOutputAfterLoadedByScene).toBeDefined();
 
-      // Compare key fields - since v1beta1 is unstructured, we compare the JSON structure
-      expect(frontendDashboardSpec.title).toBe(backendDashboardSpec.title);
-      expect(frontendDashboardSpec.description).toBe(backendDashboardSpec.description);
-      expect(frontendDashboardSpec.tags).toEqual(backendDashboardSpec.tags);
-
-      // Compare panels count
-      const frontendPanels = frontendDashboardSpec.panels || [];
-      const backendPanels = backendDashboardSpec.panels || [];
-      expect(frontendPanels.length).toBe(backendPanels.length);
-
-      // Compare variables count
-      const frontendVars = frontendDashboardSpec.templating?.list || [];
-      const backendVars = backendDashboardSpec.templating?.list || [];
-      expect(frontendVars.length).toBe(backendVars.length);
-
-      // Compare annotations count
-      const frontendAnn = frontendDashboardSpec.annotations?.list || [];
-      const backendAnn = backendDashboardSpec.annotations?.list || [];
-      expect(frontendAnn.length).toBe(backendAnn.length);
-
-      // Compare time settings
-      expect(frontendDashboardSpec.time?.from).toBe(backendDashboardSpec.time?.from);
-      expect(frontendDashboardSpec.time?.to).toBe(backendDashboardSpec.time?.to);
-      expect(frontendDashboardSpec.timezone).toBe(backendDashboardSpec.timezone);
-      expect(frontendDashboardSpec.refresh).toBe(backendDashboardSpec.refresh);
+      // Compare only the spec structures - this is the core transformation
+      expect(backendOutputAfterLoadedByScene).toEqual(frontendOutput);
     });
   });
 });
-
