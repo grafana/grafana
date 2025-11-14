@@ -27,9 +27,9 @@ func TestNewMetadataStore(t *testing.T) {
 
 func TestMetadataStore_MetadataKey_String(t *testing.T) {
 	tests := []struct {
-		name       string
+		name        string
 		metadataKey MetadataKey
-		expected   string
+		expected    string
 	}{
 		{
 			name: "basic event key",
@@ -116,27 +116,78 @@ func TestMetadataStore_MetadataKey_Validate(t *testing.T) {
 	}
 }
 
-func TestMetadataStore_Save_Get(t *testing.T) {
-	ctx := context.Background()
-	store := setupTestMetadataStore(t)
+func TestMetadataStore(t *testing.T) {
 
-	metadata := Metadata{
-		Namespace:      "default",
-		Group:          "apps",
-		Resource:       "resource",
-		LastImportTime: time.Now().Truncate(time.Microsecond),
-	}
+	t.Run("Save and Get", func(t *testing.T) {
+		ctx := context.Background()
+		store := setupTestMetadataStore(t)
+		metadata := Metadata{
+			Namespace:      "default",
+			Group:          "apps",
+			Resource:       "resource",
+			LastImportTime: time.Now().Truncate(time.Microsecond),
+		}
 
-	err := store.Save(ctx, metadata)
-	require.NoError(t, err)
+		err := store.Save(ctx, metadata)
+		require.NoError(t, err)
 
-	metadataKey := MetadataKey{
-		Namespace: "default",
-		Group:     "apps",
-		Resource:  "resource",
-	}
+		metadataKey := MetadataKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resource",
+		}
 
-	retrievedMetadata, err := store.Get(ctx, metadataKey)
-	require.NoError(t, err)
-	assert.Equal(t, metadata, retrievedMetadata)
+		retrievedMetadata, err := store.Get(ctx, metadataKey)
+		require.NoError(t, err)
+		assert.Equal(t, metadata, retrievedMetadata)
+	})
+
+	t.Run("GetAll", func(t *testing.T) {
+		ctx := context.Background()
+		store := setupTestMetadataStore(t)
+		metadatas := []Metadata{
+			{
+				Namespace:      "stacks-1",
+				Group:          "apps",
+				Resource:       "resource",
+				LastImportTime: time.Now().Add(-2 * time.Minute).Truncate(time.Microsecond),
+			},
+			{
+				Namespace:      "stacks-2",
+				Group:          "apps",
+				Resource:       "resource",
+				LastImportTime: time.Now().Add(-7 * time.Minute).Truncate(time.Microsecond),
+			},
+			{
+				Namespace:      "stacks-3",
+				Group:          "apps",
+				Resource:       "resource",
+				LastImportTime: time.Now().Add(-3 * time.Minute).Truncate(time.Microsecond),
+			},
+			{
+				Namespace:      "stacks-4",
+				Group:          "apps",
+				Resource:       "resource",
+				LastImportTime: time.Now().Add(-24 * time.Minute).Truncate(time.Microsecond),
+			},
+			{
+				Namespace:      "stacks-5",
+				Group:          "apps",
+				Resource:       "resource",
+				LastImportTime: time.Now().Add(-44 * time.Minute).Truncate(time.Microsecond),
+			},
+		}
+
+		for _, metadata := range metadatas {
+			err := store.Save(ctx, metadata)
+			require.NoError(t, err)
+		}
+
+		var i int
+		for metadata, err := range store.GetAll(ctx) {
+			require.NoError(t, err)
+			require.Equal(t, metadatas[i], metadata)
+			i++
+		}
+	})
 }

@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 )
 
 const (
-	metadatasSection = "unified/metadata"
+	metadataSection = "unified/metadata"
 )
 
 type metadataStore struct {
@@ -58,7 +59,11 @@ func (d *metadataStore) Get(ctx context.Context, key MetadataKey) (Metadata, err
 		return Metadata{}, fmt.Errorf("invalid metadata key: %w", err)
 	}
 
-	reader, err := d.kv.Get(ctx, metadatasSection, key.String())
+	return d.get(ctx, key.String())
+}
+
+func (d *metadataStore) get(ctx context.Context, key string) (Metadata, error) {
+	reader, err := d.kv.Get(ctx, metadataSection, key)
 	if err != nil {
 		return Metadata{}, err
 	}
@@ -68,6 +73,26 @@ func (d *metadataStore) Get(ctx context.Context, key MetadataKey) (Metadata, err
 		return Metadata{}, err
 	}
 	return metadata, nil
+}
+
+func (d *metadataStore) GetAll(ctx context.Context) iter.Seq2[Metadata, error] {
+	opts := ListOptions{
+		Sort:     SortOrderAsc,
+		StartKey: "",
+	}
+	return func(yield func(Metadata, error) bool) {
+		for metadataKey, err := range d.kv.Keys(ctx, metadataSection, opts) {
+			if err != nil {
+				yield(Metadata{}, err)
+				return
+			}
+
+			metadata, err := d.get(ctx, metadataKey)
+			if !yield(metadata, err) {
+				return
+			}
+		}
+	}
 }
 
 func (d *metadataStore) Save(ctx context.Context, metadata Metadata) error {
@@ -81,7 +106,7 @@ func (d *metadataStore) Save(ctx context.Context, metadata Metadata) error {
 		return fmt.Errorf("invalid metadataKey key: %w", err)
 	}
 
-	writer, err := d.kv.Save(ctx, metadatasSection, metadataKey.String())
+	writer, err := d.kv.Save(ctx, metadataSection, metadataKey.String())
 	if err != nil {
 		return err
 	}
