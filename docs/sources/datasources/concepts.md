@@ -94,7 +94,7 @@ Think of it this way: You _install_ a plugin but _configure_ a data source.
 
 **Do I need a plugin to use a data source?**
 
-You must have the plugin installed before you can configure or use a data source. Each data source plugin has its own versioning and lifecycle.
+You must install the plugin before you configure or use the data source. Each data source plugin has its own versioning and lifecycle. Some core data sources currently come with pre-installed plugins, but these will transition to installable plugins over upcoming releases.
 
 **Can I use integrations in self-hosted Grafana?** 
 
