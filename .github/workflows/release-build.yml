@@ -326,6 +326,7 @@ jobs:
         run: echo "ISSUE_NUMBER=$(gh api "/repos/grafana/grafana/commits/${GRAFANA_COMMIT}/pulls" | jq -r '.[0].number')" >> "$GITHUB_ENV"
       - name: Find Comment
         uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
+        continue-on-error: true
         id: fc
         with:
           issue-number: ${{ env.ISSUE_NUMBER }}
@@ -334,6 +335,7 @@ jobs:
           token: ${{ steps.generate_token.outputs.token }}
       - name: Create or update comment
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v4
+        if: ${{ steps.fc.outcome == 'success' }}
         with:
           token: ${{ steps.generate_token.outputs.token }}
           comment-id: ${{ steps.fc.outputs.comment-id }}
