@@ -100,7 +100,7 @@ const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationData | u
       sourceUID: item.spec.source.name, //todo
       label: item.spec.label,
       description: item.spec.description,
-      provisioned: false, // todo
+      provisioned: false, // todo,
     };
 
     if (item.spec.type === 'external') {
@@ -110,7 +110,7 @@ const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationData | u
         config: {
           field: item.spec.config.field,
           target: {
-            url: item.spec.config.target.url.url || '', // todo this is wrong, fix in spec
+            url: item.spec.config.target.url || '',
           },
           transformations: [], // todo fix
         },
@@ -123,7 +123,7 @@ const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationData | u
         targetUID: item.spec.target?.name || '', // todo
         config: {
           field: item.spec.config.field,
-          target: item.spec.config.target, // todo
+          target: item.spec.config.target,
           transformations: [], // todo fix
         },
       };
@@ -187,14 +187,6 @@ export const useCorrelations = () => {
   const [createInfo, create] = useAsyncFn<(params: CreateCorrelationParams) => Promise<CorrelationData>>(
     async ({ sourceUID, ...correlation }) => {
       if (config.featureToggles.kubernetesCorrelations) {
-        // todo, fix once target is fixed
-        let target;
-        if (correlation.type === 'external') {
-          target = { url: { url: correlation.config.target.url } };
-        } else {
-          target = { target: { ...correlation.config.target } };
-        }
-
         const result = await dispatch(
           correlationAPIv0alpha1.endpoints.createCorrelation.initiate({
             correlation: {
@@ -205,7 +197,7 @@ export const useCorrelations = () => {
                 ...correlation,
                 label: correlation.label ?? '',
                 source: { name: sourceUID, group: '' },
-                config: { ...correlation.config, target: target, transformations: [] },
+                config: { ...correlation.config, transformations: [] },
               },
             },
           })

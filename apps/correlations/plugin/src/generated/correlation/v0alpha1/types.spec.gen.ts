@@ -31,13 +31,9 @@ export const defaultConfigSpec = (): ConfigSpec => ({
 	target: defaultTargetSpec(),
 });
 
-export interface TargetSpec {
-	test: string;
-}
+export type TargetSpec = Record<string, any>;
 
-export const defaultTargetSpec = (): TargetSpec => ({
-	test: "",
-});
+export const defaultTargetSpec = (): TargetSpec => ({});
 
 export interface TransformationSpec {
 	type: "regex" | "logfmt";

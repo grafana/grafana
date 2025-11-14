@@ -32,9 +32,8 @@ ConfigSpec: {
 }
 
 TargetSpec: {
-	test: string
+	...
 }
-
 
 TransformationSpec: {
 	type: "regex" | "logfmt"

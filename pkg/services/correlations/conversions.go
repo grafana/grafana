@@ -88,8 +88,8 @@ func ToSpecConfig(orig CorrelationConfig) (*correlationsV0.CorrelationConfigSpec
 	if err != nil {
 		return nil, err
 	}
-	if len(out.Target.Test) == 0 {
-		out.Target.Test = "hi"
+	if len(out.Target) == 0 {
+		out.Target =  map[string]any{} 
 	}
 	return out, err
 }
