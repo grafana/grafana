@@ -491,11 +491,6 @@ export interface FeatureToggles {
   */
   groupToNestedTableTransformation?: boolean;
   /**
-  * New implementation for the dashboard-to-PDF rendering
-  * @default true
-  */
-  newPDFRendering?: boolean;
-  /**
   * Enable grafana's embedded kube-aggregator
   */
   kubernetesAggregator?: boolean;

@@ -833,13 +833,6 @@ var (
 			Expression:   "true", // enabled by default,
 		},
 		{
-			Name:        "newPDFRendering",
-			Description: "New implementation for the dashboard-to-PDF rendering",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "true", // enabled by default,
-		},
-		{
 			Name:            "kubernetesAggregator",
 			Description:     "Enable grafana's embedded kube-aggregator",
 			Stage:           FeatureStageExperimental,
