@@ -66,9 +66,17 @@ func (m *LegacyMigrator) Migrate(ctx context.Context, rw repository.ReaderWriter
 		return fmt.Errorf("migrate from SQL: %w", err)
 	}
 
-	progress.SetMessage(ctx, "resetting unified storage")
-	if err := m.storageSwapper.WipeUnifiedAndSetMigratedFlag(ctx, namespace); err != nil {
-		return fmt.Errorf("unable to reset unified storage %w", err)
+	cfg := rw.Config()
+	if cfg != nil && cfg.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
+		progress.SetMessage(ctx, "resetting unified storage")
+		if err := m.storageSwapper.WipeUnifiedAndSetMigratedFlag(ctx, namespace); err != nil {
+			return fmt.Errorf("unable to reset unified storage %w", err)
+		}
+	} else {
+		progress.SetMessage(ctx, "switch to unified storage")
+		if err := m.storageSwapper.StartReadingUnifiedStorage(ctx); err != nil {
+			return fmt.Errorf("unable to switch to unified storage %w", err)
+		}
 	}
 
 	// Reset the results after the export as pull will operate on the same resources

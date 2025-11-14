@@ -121,7 +121,7 @@ export function useResourceStats(repoName?: string, isLegacyStorage?: boolean, s
     };
   }, [resourceStatsQuery.data]);
 
-  const requiresMigration = isLegacyStorage || resourceCount > 0;
+  const requiresMigration = isLegacyStorage || syncTarget === 'instance';
   const shouldSkipSync = !isLegacyStorage && (resourceCount === 0 || syncTarget === 'folder') && fileCount === 0;
 
   // Format display strings
