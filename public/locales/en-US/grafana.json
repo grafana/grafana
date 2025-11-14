@@ -2945,6 +2945,7 @@
     "triage": {
       "alert-instances": "Alert instances",
       "error-loading-rule": "Error loading rule",
+      "firing-instances-count": "Firing alert instances",
       "instance-details-drawer": {
         "instance-details": "Instance details"
       },
@@ -2954,6 +2955,7 @@
       "no-matching-instances-with-filters": "No alert instances match your current set of filters for the selected time range.",
       "open-in-sidebar": "Open in sidebar",
       "open-rule-details": "Open rule details",
+      "pending-instances-count": "Pending alert instances",
       "rule-details": {
         "subtitle": "Rule details and conditions",
         "title": "Rule Details"
@@ -2961,7 +2963,9 @@
       "rule-not-found": {
         "description": "The requested rule could not be found.",
         "title": "Rule not found"
-      }
+      },
+      "rules-with-firing-instances": "Alert rules with firing instances",
+      "rules-with-pending-instances": "Alert rules with pending instances"
     },
     "type-selector-button": {
       "add-expression": "Add expression"
