@@ -42,12 +42,12 @@ func KeyLabel(providerID ProviderID) string {
 }
 
 type DataKeyCache interface {
-	GetById(id string) (*DataKeyCacheEntry, bool)
-	GetByLabel(label string) (*DataKeyCacheEntry, bool)
-	AddById(entry *DataKeyCacheEntry)
-	AddByLabel(entry *DataKeyCacheEntry)
+	GetById(namespace, id string) (*DataKeyCacheEntry, bool)
+	GetByLabel(namespace, label string) (*DataKeyCacheEntry, bool)
+	AddById(namespace string, entry *DataKeyCacheEntry)
+	AddByLabel(namespace string, entry *DataKeyCacheEntry)
 	RemoveExpired()
-	Flush()
+	Flush(namespace string)
 }
 
 type DataKeyCacheEntry struct {

@@ -59,21 +59,21 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 type NoopDataKeyCache struct {
 }
 
-func (c *NoopDataKeyCache) GetById(id string) (*encryption.DataKeyCacheEntry, bool) {
+func (c *NoopDataKeyCache) GetById(namespace, id string) (*encryption.DataKeyCacheEntry, bool) {
 	return nil, false
 }
 
-func (c *NoopDataKeyCache) GetByLabel(label string) (*encryption.DataKeyCacheEntry, bool) {
+func (c *NoopDataKeyCache) GetByLabel(namespace, label string) (*encryption.DataKeyCacheEntry, bool) {
 	return nil, false
 }
 
-func (c *NoopDataKeyCache) AddById(entry *encryption.DataKeyCacheEntry) {
+func (c *NoopDataKeyCache) AddById(namespace string, entry *encryption.DataKeyCacheEntry) {
 }
 
-func (c *NoopDataKeyCache) AddByLabel(entry *encryption.DataKeyCacheEntry) {
+func (c *NoopDataKeyCache) AddByLabel(namespace string, entry *encryption.DataKeyCacheEntry) {
 }
 
 func (c *NoopDataKeyCache) RemoveExpired() {
 }
 
-func (c *NoopDataKeyCache) Flush() {}
+func (c *NoopDataKeyCache) Flush(namespace string) {}
