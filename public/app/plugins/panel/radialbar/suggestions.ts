@@ -1,12 +1,17 @@
 import { defaultsDeep } from 'lodash';
 
-import { FieldColorModeId, FieldType, VisualizationSuggestion, VisualizationSuggestionsHandler } from '@grafana/data';
+import {
+  FieldColorModeId,
+  FieldType,
+  VisualizationSuggestion,
+  VisualizationSuggestionsSupplierFn,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { GraphFieldConfig } from '@grafana/ui';
 
 import { Options } from './panelcfg.gen';
 
-export const radialBarSuggestionsHandler: VisualizationSuggestionsHandler<Options, GraphFieldConfig> = (
+export const radialBarSuggestionsHandler: VisualizationSuggestionsSupplierFn<Options, GraphFieldConfig> = (
   dataSummary
 ) => {
   if (!dataSummary.hasData || !dataSummary.hasFieldType(FieldType.number)) {

@@ -65,7 +65,7 @@ export enum VisualizationSuggestionScore {
 
 /**
  * @internal
- * TODO we can remove this from exports in the future.
+ * TODO this will move into the grafana app code once suppliers are migrated.
  */
 export class VisualizationSuggestionsBuilder {
   /** Summary stats for current data */
@@ -94,18 +94,20 @@ export class VisualizationSuggestionsBuilder {
 
 /**
  * @alpha
+ * TODO: this name is temporary; it will become just "VisualizationSuggestionsSupplier" when the other interface is deleted.
+ *
  * executed while rendering suggestions each time the DataFrame changes, this method
  * determines which suggestions can be shown for this PanelPlugin given the PanelDataSummary.
  *
  * - returns an array of VisualizationSuggestions
  * - boolean return equates to "show a single suggestion card for this panel plugin with the default options" (true = show, false or void = hide)
  */
-export type VisualizationSuggestionsHandler<TOptions extends unknown, TFieldConfig extends {} = {}> = (
+export type VisualizationSuggestionsSupplierFn<TOptions extends unknown, TFieldConfig extends {} = {}> = (
   panelDataSummary: PanelDataSummary
-) => Array<VisualizationSuggestion<TOptions, TFieldConfig>> | boolean | void;
+) => Array<VisualizationSuggestion<TOptions, TFieldConfig>> | void;
 
 /**
- * @internal
+ * @deprecated use VisualizationSuggestionsSupplierFn instead.
  */
 export type VisualizationSuggestionsSupplier = {
   /**
@@ -116,6 +118,7 @@ export type VisualizationSuggestionsSupplier = {
 
 /**
  * @internal
+ * TODO this will move into the grafana app code once suppliers are migrated.
  */
 export class VisualizationSuggestionsListAppender<TOptions extends unknown, TFieldConfig extends {} = {}> {
   constructor(

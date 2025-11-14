@@ -112,6 +112,6 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       defaultValue: defaultGaugePanelEffects,
     });
   })
-  .setSuggestionsHandler(radialBarSuggestionsHandler)
+  .setSuggestionsSupplier(radialBarSuggestionsHandler)
   .setMigrationHandler(gaugePanelMigrationHandler, shouldMigrateGauge)
   .setPanelChangeHandler(gaugePanelChangedHandler);

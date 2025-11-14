@@ -14,7 +14,7 @@ import {
   PanelPluginDataSupport,
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
-import { VisualizationSuggestionsHandler, VisualizationSuggestionsSupplier } from '../types/suggestions';
+import { VisualizationSuggestionsSupplierFn, VisualizationSuggestionsSupplier } from '../types/suggestions';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
@@ -363,36 +363,36 @@ export class PanelPlugin<
   }
 
   /**
-   * Sets function that can return visualization examples and suggestions.
    * @deprecated use setSuggestionsHandler
    */
-  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier) {
-    this.suggestionsSupplier = supplier;
-    return this;
-  }
-
+  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier): PanelPlugin<TOptions, TFieldConfigOptions>;
   /**
    * @alpha
-   * Sets function that returns visualization suggestions based on the current panel data summary
+   * sets function that can return visualization examples and suggestions.
    */
-  setSuggestionsHandler(handler: VisualizationSuggestionsHandler<TOptions, TFieldConfigOptions>) {
-    this.suggestionsSupplier = {
-      getSuggestionsForData: (builder) => {
-        const appender = builder.getListAppender<TOptions, TFieldConfigOptions>({
-          pluginId: this.meta.id,
-          name: this.meta.name,
-        });
+  setSuggestionsSupplier(
+    supplier: VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions>
+  ): PanelPlugin<TOptions, TFieldConfigOptions>;
+  setSuggestionsSupplier(
+    supplier: VisualizationSuggestionsSupplier | VisualizationSuggestionsSupplierFn<TOptions, TFieldConfigOptions>
+  ): PanelPlugin<TOptions, TFieldConfigOptions> {
+    this.suggestionsSupplier =
+      typeof supplier === 'function'
+        ? {
+            getSuggestionsForData: (builder) => {
+              const appender = builder.getListAppender<TOptions, TFieldConfigOptions>({
+                pluginId: this.meta.id,
+                name: this.meta.name,
+              });
 
-        const result = handler(builder.dataSummary);
+              const result = supplier(builder.dataSummary);
 
-        if (Array.isArray(result)) {
-          appender.appendAll(result);
-        } else if (result === true) {
-          appender.append({});
-        }
-      },
-    };
-
+              if (Array.isArray(result)) {
+                appender.appendAll(result);
+              }
+            },
+          }
+        : supplier;
     return this;
   }
 
