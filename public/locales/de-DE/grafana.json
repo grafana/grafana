@@ -4378,8 +4378,6 @@
       "next-button": "Weiter",
       "save-button": "Speichern"
     },
-    "page-content": "Um Korrelationen zu aktivieren, fügen Sie es in die Grafana-Konfiguration ein:",
-    "page-heading": "Korrelationen sind deaktiviert",
     "query-editor": {
       "control-rules": "Die ausgewählte Zieldatenquelle muss einen Abfrageeditor exportieren.",
       "data-source-text": "Bitte wählen Sie zuerst eine Zieldatenquelle aus.",
@@ -7467,6 +7465,7 @@
       "label-resource-attributes": "Ressourcenattribute",
       "label-span-attributes": "Attribute der Spanne",
       "label-stack-trace": "Stacktrace",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Untergeordnete Zählung:",
@@ -7475,8 +7474,7 @@
           "start-time": "Startzeit:"
         }
       },
-      "share-span": "Teilen",
-      "warnings": "Warnungen"
+      "share-span": "Teilen"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Höchstspannen-Operator auswählen",
