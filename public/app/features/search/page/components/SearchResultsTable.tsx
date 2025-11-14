@@ -164,9 +164,7 @@ export const SearchResultsTable = React.memo(
                       parent: parentType,
                       source: trackingSource,
                     });
-                    console.log({
-                      itemKind: itemKind,
-                    });
+               
                   } catch (e) {
                     // ignore analytics errors
                   }
