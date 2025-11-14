@@ -94,13 +94,13 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
           datasourceTypes: [ds.type],
           sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
           eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-          hasResults: apiResponse.dashboards.length > 0,
-          resultCount: apiResponse.dashboards.length,
+          hasResults: apiResponse.items.length > 0,
+          resultCount: apiResponse.items.length,
         });
       }
 
       return {
-        dashboards: apiResponse.dashboards,
+        dashboards: apiResponse.items,
         pages: apiResponse.pages,
         datasourceType: ds.type,
       };
@@ -160,7 +160,6 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   return (
     <Stack direction="column" gap={2} height="100%">
       <FilterInput
-        className={styles.searchInput}
         placeholder={
           datasourceType
             ? t(
@@ -258,7 +257,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                   onClick={() => onPreviewCommunityDashboard(dashboard)}
                   isLogo={isLogo}
                   details={details}
-                  buttonText={<Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>}
+                  kind="suggested_dashboard"
                 />
               );
             })}
@@ -290,10 +289,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       justifyContent: 'flex-end',
       zIndex: 2,
-    }),
-    searchInput: css({
-      paddingLeft: theme.spacing(2),
-      paddingRight: theme.spacing(2),
     }),
   };
 }
