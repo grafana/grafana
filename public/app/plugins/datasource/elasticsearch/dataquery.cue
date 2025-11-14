@@ -39,7 +39,7 @@ composableKinds: DataQuery: {
 				metrics?: [...#MetricAggregation]
 				// settingsfor raw query
 
-				rawQuery?: #RawQuery
+				rawDSLQuery?: #RawDSLQuery
 
 				#BucketAggregation: #DateHistogram | #Histogram | #Terms | #Filters | #GeoHashGrid | #Nested @cuetsy(kind="type")
 				#MetricAggregation: #Count | #PipelineMetricAggregation | #MetricAggregationWithSettings     @cuetsy(kind="type")
@@ -63,7 +63,7 @@ composableKinds: DataQuery: {
 					settings?: #DateHistogramSettings
 				} @cuetsy(kind="interface")
 
-				#RawQuery: {
+				#RawDSLQuery: {
 					query?: string
 					processAs?: #ProcessAsType
 				} @cuetsy(kind="interface")
