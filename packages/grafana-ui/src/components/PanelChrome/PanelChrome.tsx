@@ -583,7 +583,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       maxHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
-      padding: theme.spacing(0, padding),
+      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1.5) : theme.spacing(0, 0.5, 0, 1),
       overflow: 'hidden',
       gap: theme.spacing(1),
     }),

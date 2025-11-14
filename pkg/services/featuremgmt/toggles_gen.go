@@ -351,6 +351,10 @@ const (
 	// Enables unlimited dashboard panel grouping
 	FlagUnlimitedLayoutsNesting = "unlimitedLayoutsNesting"
 
+	// FlagPerPanelNonApplicableDrilldowns
+	// Enables viewing non-applicable drilldowns on a panel level
+	FlagPerPanelNonApplicableDrilldowns = "perPanelNonApplicableDrilldowns"
+
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
 	FlagPanelFilterVariable = "panelFilterVariable"
