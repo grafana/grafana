@@ -5,8 +5,8 @@ import { t } from '@grafana/i18n';
 
 import { Options } from './panelcfg.gen';
 
-const withDefaults = (suggestion: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> => {
-  return defaultsDeep(suggestion, {
+const withDefaults = (suggestion: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
+  defaultsDeep(suggestion, {
     options: {
       reduceOptions: {
         values: false,
@@ -35,7 +35,8 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options>): Visualizati
       },
     },
   } satisfies VisualizationSuggestion<Options>);
-};
+
+const GAUGE_LIMIT = 10;
 
 export const gaugeSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options> = (dataSummary) => {
   if (!dataSummary.hasData || !dataSummary.hasFieldType(FieldType.number)) {
@@ -43,7 +44,7 @@ export const gaugeSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Option
   }
 
   // for many fields / series this is probably not a good fit
-  if (dataSummary.fieldCountByType(FieldType.number) >= 10) {
+  if (dataSummary.fieldCountByType(FieldType.number) > GAUGE_LIMIT) {
     return;
   }
 
@@ -59,7 +60,9 @@ export const gaugeSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Option
 
   // sometimes, we want to de-aggregate the data for the gauge suggestion
   const shouldDeaggregate =
-    dataSummary.hasFieldType(FieldType.string) && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10;
+    dataSummary.hasFieldType(FieldType.string) &&
+    dataSummary.frameCount === 1 &&
+    dataSummary.rowCountTotal <= GAUGE_LIMIT;
 
   return suggestions.map((s) => {
     if (shouldDeaggregate) {

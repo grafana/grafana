@@ -24,6 +24,9 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options>): Visualizati
     },
   } satisfies VisualizationSuggestion<Options>);
 
+const SLICE_MAX = 30;
+const SLICE_MIN = 2;
+
 export const piechartSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options> = (dataSummary) => {
   if (!dataSummary.hasFieldType(FieldType.number)) {
     return;
@@ -46,14 +49,14 @@ export const piechartSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Opt
   // we're filtering out data which has more than 30 slices or less than 2, and we're also
   // determining whether the reduce options should be set based on the data summary.
   if (dataSummary.hasFieldType(FieldType.string) && dataSummary.frameCount === 1) {
-    if (dataSummary.rowCountTotal > 30 && dataSummary.rowCountTotal < 2) {
+    if (dataSummary.rowCountTotal > SLICE_MAX && dataSummary.rowCountTotal < SLICE_MIN) {
       return;
     }
 
     shouldDeaggregate = true;
   } else if (
-    dataSummary.fieldCountByType(FieldType.number) > 30 ||
-    dataSummary.fieldCountByType(FieldType.number) < 2
+    dataSummary.fieldCountByType(FieldType.number) > SLICE_MAX ||
+    dataSummary.fieldCountByType(FieldType.number) < SLICE_MIN
   ) {
     return;
   }

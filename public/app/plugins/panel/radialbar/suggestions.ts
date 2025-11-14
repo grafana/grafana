@@ -13,8 +13,8 @@ import { Options } from './panelcfg.gen';
 
 const withDefaults = (
   suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
-): VisualizationSuggestion<Options, GraphFieldConfig> => {
-  return defaultsDeep(suggestion, {
+): VisualizationSuggestion<Options, GraphFieldConfig> =>
+  defaultsDeep(suggestion, {
     options: {
       reduceOptions: {
         values: false,
@@ -42,7 +42,6 @@ const withDefaults = (
     //   name: t('gauge.suggestions.style.simple', 'Simple'),
     // }]
   } satisfies VisualizationSuggestion<Options, GraphFieldConfig>);
-};
 
 export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options, GraphFieldConfig> = (
   dataSummary

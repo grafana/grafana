@@ -32,7 +32,7 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options>): Visualizati
     },
   });
 
-const MAX_BARS = 30;
+const BAR_LIMIT = 30;
 
 export const barGaugeSugggestionsSupplier: VisualizationSuggestionsSupplierFn<Options> = (dataSummary) => {
   if (!dataSummary.hasData || !dataSummary.hasFieldType(FieldType.number)) {
@@ -40,7 +40,7 @@ export const barGaugeSugggestionsSupplier: VisualizationSuggestionsSupplierFn<Op
   }
 
   // This is probably not a good option for many numeric fields
-  if (dataSummary.fieldCountByType(FieldType.number) > MAX_BARS) {
+  if (dataSummary.fieldCountByType(FieldType.number) > BAR_LIMIT) {
     return;
   }
 
@@ -55,7 +55,9 @@ export const barGaugeSugggestionsSupplier: VisualizationSuggestionsSupplierFn<Op
   ];
 
   const shouldDeaggregate =
-    dataSummary.hasFieldType(FieldType.string) && dataSummary.frameCount === 1 && dataSummary.rowCountTotal <= MAX_BARS;
+    dataSummary.hasFieldType(FieldType.string) &&
+    dataSummary.frameCount === 1 &&
+    dataSummary.rowCountTotal <= BAR_LIMIT;
 
   return suggestions.map((s) => {
     if (shouldDeaggregate) {

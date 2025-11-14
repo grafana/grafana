@@ -36,16 +36,6 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options
     return;
   }
 
-  const valuesReduceOptions: Options['reduceOptions'] = {
-    values: true,
-    calcs: [],
-    fields: '/.*/',
-  };
-  const aggregatedReduceOptions: Options['reduceOptions'] = {
-    values: false,
-    calcs: ['lastNotNull'],
-  };
-
   const suggestions: Array<VisualizationSuggestion<Options>> = [];
 
   // String and number field with low row count show individual rows
@@ -58,14 +48,10 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options
     suggestions.push(
       {
         name: t('stat.suggestions.stat-discrete-values', 'Stat - discrete values'),
-        options: {
-          reduceOptions: valuesReduceOptions,
-        },
       },
       {
         name: t('stat.suggestions.stat-discrete-values-color-background', 'Stat - discrete values - color background'),
         options: {
-          reduceOptions: valuesReduceOptions,
           colorMode: BigValueColorMode.Background,
         },
       }
@@ -77,7 +63,6 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options
     suggestions.push({
       name: t('stat.suggestions.stat-single-string', 'Stat - single string'),
       options: {
-        reduceOptions: valuesReduceOptions,
         colorMode: BigValueColorMode.None,
       },
     });
@@ -88,13 +73,19 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options
     suggestions.push(
       {
         options: {
-          reduceOptions: aggregatedReduceOptions,
+          reduceOptions: {
+            values: false,
+            calcs: ['lastNotNull'],
+          },
         },
       },
       {
         name: t('stat.suggestions.stat-color-background', 'Stat - color background'),
         options: {
-          reduceOptions: aggregatedReduceOptions,
+          reduceOptions: {
+            values: false,
+            calcs: ['lastNotNull'],
+          },
           graphMode: BigValueGraphMode.None,
           colorMode: BigValueColorMode.Background,
         },
