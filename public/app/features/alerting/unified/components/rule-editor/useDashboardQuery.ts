@@ -17,6 +17,10 @@ export interface UnifiedDashboardDTO {
     title: string;
     type: string;
     collapsed?: boolean;
+    libraryPanel?: {
+      name: string;
+      uid: string;
+    };
     // this is only used for v1 dashboards, because in v2 there is not concept of panel.panels,
     // and rows are determined by the layout mode
     rows?: PanelModel[];
@@ -40,6 +44,12 @@ const convertV1ToUnifiedDashboardDTO = memoizeOne((dashboardDTO: DashboardDTO) =
       type: panel.type,
       collapsed: Boolean(panel.collapsed),
       rows: panel.panels,
+      ...(panel.libraryPanel && {
+        libraryPanel: {
+          name: panel.libraryPanel.name ?? '',
+          uid: panel.libraryPanel.uid ?? '',
+        },
+      }),
     })),
     title: model.title,
     uid: model.uid,
@@ -71,6 +81,12 @@ const convertV2ToUnifiedDashboardDTO = (dashboardDTO: DashboardWithAccessInfo<Da
         id: element.spec.id,
         title: element.spec.title,
         type: element.kind === 'Panel' ? element.spec.vizConfig.group : 'LibraryPanel',
+        ...(element.kind === 'LibraryPanel' && {
+          libraryPanel: {
+            name: element.spec.libraryPanel.name ?? '',
+            uid: element.spec.libraryPanel.uid ?? '',
+          },
+        }),
       })),
       title: dashboardDTO.spec.title,
       uid: dashboardDTO.metadata.name,
