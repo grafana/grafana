@@ -1,7 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/monitor-status/alert-triage/
-title: Alert triage view
-description: Use the Alert triage view to assess, prioritize, and take action on alerts quickly in Grafana Cloud.
+canonical: https://grafana.com/docs/grafana/latest/alerting/monitor-status/alert-page/
+title: Alerts overview page
+description: Use the Alert page to assess, prioritize, and take action on alerts quickly in Grafana Cloud.
 weight: 405
 keywords:
   - Grafana Cloud
@@ -17,23 +17,23 @@ labels:
     - oss
 ---
 
-{{< docs/public-preview product="Alert triage view" >}}
+{{< docs/public-preview product="Alerts page" >}}
 
-# Alert triage view
+# Alert view
 
-Grafana Alerting provides a consolidated view of your Grafana-managed alerts in a simplified triage view. For users with complex deployments, it can be difficult to monitor and prioritize critical incidents among a large volume of firing or pending alerts. With the Alert triage page, you have a view where you can quickly explore and sort your recent alert history and see what alerts have been firing or are pending.
+Grafana Alerting provides a consolidated snapshot of your firing and pending Grafana-managed alerts in a simplified view. For users with complex deployments, it can be difficult to monitor and prioritize critical incidents among a large volume of firing or pending alerts. With the Alert page, you have a view where you can quickly explore and sort your recent alert history and see what alerts require review or action.
 
-To see your alerts in the triage view, go to **Alerts & IRM > Alerting > Alerts**.
+To see your firing and pending alerts in the alert page, go to **Alerts & IRM > Alerting > Alerts**.
 
 ## How it works
 
-The triage view only shows alerts from Grafana-managed alert rules. Grafana uses a metric called `GRAFANA_ALERTS`, which is recorded in the default Mimir data source that is provisioned for cloud users.
+The Alerts page only shows alerts from Grafana-managed alert rules. Grafana uses a metric called `GRAFANA_ALERTS`, which is recorded in the default Mimir data source that is provisioned for cloud users.
 
 {{< admonition type="note" >}}
 OSS users need to manually configure this. To configure alert state history for OSS, refer to the <a href="https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alert-state-history/#configure-loki-and-prometheus-for-alert-state">configure Loki and Prometheus for alert state</a> documentation.
 {{< /admonition >}}
 
-## Filter alerts in the triage view
+## Filter alerts in the Alerts page
 
 The page displays the count of alert rules and instances that are both firing and pending. Use the filters to group your alerts and find specific alerts by label.
 
