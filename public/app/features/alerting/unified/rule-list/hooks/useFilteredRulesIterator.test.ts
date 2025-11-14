@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { RuleSource } from '../../search/rulesSearchParser';
 import { getFilter } from '../../utils/search';
@@ -21,9 +22,10 @@ describe('hasClientSideFilters', () => {
       config.featureToggles.alertingUIUseBackendFilters = true;
     });
 
-    it('should return false for title search filters (backend-supported)', () => {
+    it('should return false for backend-supported filters (title and type)', () => {
       expect(hasClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(false);
       expect(hasClientSideFilters(getFilter({ ruleName: 'test' }))).toBe(false);
+      expect(hasClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(false);
     });
 
     it('should return true for client-side only filters', () => {
@@ -44,9 +46,10 @@ describe('hasClientSideFilters', () => {
       config.featureToggles.alertingUIUseBackendFilters = false;
     });
 
-    it('should return true for title search filters (client-side fallback)', () => {
+    it('should return true for title and type filters (client-side fallback)', () => {
       expect(hasClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(true);
       expect(hasClientSideFilters(getFilter({ ruleName: 'test' }))).toBe(true);
+      expect(hasClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(true);
     });
 
     it('should return true for client-side only filters', () => {
@@ -67,10 +70,11 @@ describe('hasClientSideFilters', () => {
       config.featureToggles.alertingUIUseBackendFilters = undefined;
     });
 
-    it('should return true for title search filters (backward compatibility)', () => {
+    it('should return true for title and type filters (backward compatibility)', () => {
       // Default behavior should be client-side filtering
       expect(hasClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(true);
       expect(hasClientSideFilters(getFilter({ ruleName: 'test' }))).toBe(true);
+      expect(hasClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(true);
     });
   });
 });
