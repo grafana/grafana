@@ -166,6 +166,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
+      gap: theme.spacing(2),
     }),
     actions: css({
       marginTop: 'auto',
@@ -178,6 +179,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gridColumn: 'span 9',
     }),
     pullStatusCard: css({
+      height: '100%',
       gridColumn: 'span 2',
 
       [theme.breakpoints.down('lg')]: {

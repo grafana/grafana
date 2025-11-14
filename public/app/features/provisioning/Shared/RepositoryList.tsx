@@ -58,7 +58,7 @@ export function RepositoryList({ items }: Props) {
               <>
                 {' '}
                 <Trans i18nKey="provisioning.free-tier-limit.message">
-                  Free-tier accounts are capped to 1 connection, and 20 resources per folder
+                  Free-tier accounts are capped to 1 connection, and 20 resources per folder.
                 </Trans>
               </>
             )}
