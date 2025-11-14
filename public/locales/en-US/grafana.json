@@ -3522,6 +3522,10 @@
     },
     "name-show-unfilled-area": "Show unfilled area",
     "name-value-display": "Value display",
+    "suggestions": {
+      "basic": "Bar gauge",
+      "lcd": "Bar gauge - LCD"
+    },
     "value-display-options": {
       "label-hidden": "Hidden",
       "label-text-color": "Text color",

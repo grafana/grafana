@@ -10,8 +10,6 @@ export enum SuggestionName {
   BarChartStacked = 'Bar chart stacked',
   BarChartStackedPercent = 'Bar chart 100% stacked',
   Candlestick = 'Candlestick',
-  BarGaugeBasic = 'Bar gauge basic',
-  BarGaugeLCD = 'Bar gauge LCD',
   TextPanel = 'Text',
   DashboardList = 'Dashboard list',
 }

@@ -8,7 +8,14 @@ import {
   toDataFrame,
   PanelPluginVisualizationSuggestion,
 } from '@grafana/data';
-import { BigValueColorMode, GraphFieldConfig, ReduceDataOptions, StackingMode, VizOrientation } from '@grafana/schema';
+import {
+  BarGaugeDisplayMode,
+  BigValueColorMode,
+  GraphFieldConfig,
+  ReduceDataOptions,
+  StackingMode,
+  VizOrientation,
+} from '@grafana/schema';
 import { config } from 'app/core/config';
 import { SuggestionName } from 'app/types/suggestions';
 
@@ -116,8 +123,14 @@ scenario('Single frame with time and number field', (ctx) => {
         pluginId: 'stat',
         options: expect.objectContaining({ colorMode: BigValueColorMode.Background }),
       }),
-      expect.objectContaining({ name: SuggestionName.BarGaugeBasic }),
-      expect.objectContaining({ name: SuggestionName.BarGaugeLCD }),
+      expect.objectContaining({
+        pluginId: 'bargauge',
+        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Basic }),
+      }),
+      expect.objectContaining({
+        pluginId: 'bargauge',
+        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Lcd }),
+      }),
       expect.objectContaining({ pluginId: 'table' }),
       expect.objectContaining({ pluginId: 'state-timeline' }),
       expect.objectContaining({ pluginId: 'status-history' }),
@@ -166,8 +179,14 @@ scenario('Single frame with time 2 number fields', (ctx) => {
       }),
       expect.objectContaining({ pluginId: 'piechart' }),
       expect.objectContaining({ pluginId: 'piechart', options: expect.objectContaining({ pieType: 'donut' }) }),
-      expect.objectContaining({ name: SuggestionName.BarGaugeBasic }),
-      expect.objectContaining({ name: SuggestionName.BarGaugeLCD }),
+      expect.objectContaining({
+        pluginId: 'bargauge',
+        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Basic }),
+      }),
+      expect.objectContaining({
+        pluginId: 'bargauge',
+        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Lcd }),
+      }),
       expect.objectContaining({ pluginId: 'table' }),
       expect.objectContaining({ pluginId: 'state-timeline' }),
       expect.objectContaining({ pluginId: 'status-history' }),
@@ -261,8 +280,14 @@ scenario('Single frame with string and number field', (ctx) => {
       }),
       expect.objectContaining({ pluginId: 'piechart' }),
       expect.objectContaining({ pluginId: 'piechart', options: expect.objectContaining({ pieType: 'donut' }) }),
-      expect.objectContaining({ name: SuggestionName.BarGaugeBasic }),
-      expect.objectContaining({ name: SuggestionName.BarGaugeLCD }),
+      expect.objectContaining({
+        pluginId: 'bargauge',
+        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Basic }),
+      }),
+      expect.objectContaining({
+        pluginId: 'bargauge',
+        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Lcd }),
+      }),
       expect.objectContaining({ pluginId: 'table' }),
     ]);
   });
@@ -320,8 +345,14 @@ scenario('Single frame with string and 2 number field', (ctx) => {
       }),
       expect.objectContaining({ pluginId: 'piechart' }),
       expect.objectContaining({ pluginId: 'piechart', options: expect.objectContaining({ pieType: 'donut' }) }),
-      expect.objectContaining({ name: SuggestionName.BarGaugeBasic }),
-      expect.objectContaining({ name: SuggestionName.BarGaugeLCD }),
+      expect.objectContaining({
+        pluginId: 'bargauge',
+        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Basic }),
+      }),
+      expect.objectContaining({
+        pluginId: 'bargauge',
+        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Lcd }),
+      }),
       expect.objectContaining({ pluginId: 'table' }),
     ]);
   });

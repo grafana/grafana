@@ -1,115 +1,71 @@
-import { FieldColorModeId, VisualizationSuggestionsBuilder, VizOrientation } from '@grafana/data';
+import { defaultsDeep } from 'lodash';
+
+import {
+  FieldColorModeId,
+  FieldType,
+  VisualizationSuggestion,
+  VisualizationSuggestionsSupplierFn,
+  VizOrientation,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { BarGaugeDisplayMode } from '@grafana/ui';
-import { SuggestionName } from 'app/types/suggestions';
 
 import { Options } from './panelcfg.gen';
 
-export class BarGaugeSuggestionsSupplier {
-  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const { dataSummary } = builder;
-
-    if (!dataSummary.hasData || !dataSummary.hasNumberField) {
-      return;
-    }
-
-    const list = builder.getListAppender<Options, {}>({
-      name: '',
-      pluginId: 'bargauge',
-      options: {},
-      fieldConfig: {
-        defaults: {
-          custom: {},
-        },
-        overrides: [],
+const withDefaults = (suggestion: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
+  defaultsDeep(suggestion, {
+    options: {
+      displayMode: BarGaugeDisplayMode.Basic,
+      orientation: VizOrientation.Horizontal,
+      reduceOptions: {
+        values: false,
+        calcs: ['lastNotNull'],
       },
-    });
+    },
+    fieldConfig: {
+      defaults: {
+        color: {
+          mode: FieldColorModeId.ContinuousGrYlRd,
+        },
+      },
+      overrides: [],
+    },
+  });
 
-    // This is probably not a good option for many numeric fields
-    if (dataSummary.numberFieldCount > 50) {
-      return;
-    }
+const MAX_BARS = 30;
 
-    // To use show individual row values we also need a string field to give each value a name
-    if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 30) {
-      list.append({
-        name: SuggestionName.BarGaugeBasic,
-        options: {
-          reduceOptions: {
-            values: true,
-            calcs: [],
-          },
-          displayMode: BarGaugeDisplayMode.Basic,
-          orientation: VizOrientation.Horizontal,
-        },
-        fieldConfig: {
-          defaults: {
-            color: {
-              mode: FieldColorModeId.ContinuousGrYlRd,
-            },
-          },
-          overrides: [],
-        },
-      });
-
-      list.append({
-        name: SuggestionName.BarGaugeLCD,
-        options: {
-          reduceOptions: {
-            values: true,
-            calcs: [],
-          },
-          displayMode: BarGaugeDisplayMode.Lcd,
-          orientation: VizOrientation.Horizontal,
-        },
-        fieldConfig: {
-          defaults: {
-            color: {
-              mode: FieldColorModeId.ContinuousGrYlRd,
-            },
-          },
-          overrides: [],
-        },
-      });
-    } else {
-      list.append({
-        name: SuggestionName.BarGaugeBasic,
-        options: {
-          displayMode: BarGaugeDisplayMode.Basic,
-          orientation: VizOrientation.Horizontal,
-          reduceOptions: {
-            values: false,
-            calcs: ['lastNotNull'],
-          },
-        },
-        fieldConfig: {
-          defaults: {
-            color: {
-              mode: FieldColorModeId.ContinuousGrYlRd,
-            },
-          },
-          overrides: [],
-        },
-      });
-
-      list.append({
-        name: SuggestionName.BarGaugeLCD,
-        options: {
-          displayMode: BarGaugeDisplayMode.Lcd,
-          orientation: VizOrientation.Horizontal,
-          reduceOptions: {
-            values: false,
-            calcs: ['lastNotNull'],
-          },
-        },
-        fieldConfig: {
-          defaults: {
-            color: {
-              mode: FieldColorModeId.ContinuousGrYlRd,
-            },
-          },
-          overrides: [],
-        },
-      });
-    }
+export const barGaugeSugggestionsSupplier: VisualizationSuggestionsSupplierFn<Options> = (dataSummary) => {
+  if (!dataSummary.hasData || !dataSummary.hasFieldType(FieldType.number)) {
+    return;
   }
-}
+
+  // This is probably not a good option for many numeric fields
+  if (dataSummary.fieldCountByType(FieldType.number) > MAX_BARS) {
+    return;
+  }
+
+  const suggestions: Array<VisualizationSuggestion<Options>> = [
+    { name: t('bargauge.suggestions.basic', 'Bar gauge') },
+    {
+      name: t('bargauge.suggestions.lcd', 'Bar gauge - LCD'),
+      options: {
+        displayMode: BarGaugeDisplayMode.Lcd,
+      },
+    },
+  ];
+
+  const shouldDeaggregate =
+    dataSummary.hasFieldType(FieldType.string) && dataSummary.frameCount === 1 && dataSummary.rowCountTotal <= MAX_BARS;
+
+  return suggestions.map((s) => {
+    if (shouldDeaggregate) {
+      s.options = s.options ?? {};
+      s.options.reduceOptions = {
+        values: true,
+        calcs: [],
+      };
+    }
+
+    return withDefaults(s);
+  });
+};
