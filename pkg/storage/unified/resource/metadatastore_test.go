@@ -117,7 +117,6 @@ func TestMetadataStore_MetadataKey_Validate(t *testing.T) {
 }
 
 func TestMetadataStore(t *testing.T) {
-
 	t.Run("Save and Get", func(t *testing.T) {
 		ctx := context.Background()
 		store := setupTestMetadataStore(t)

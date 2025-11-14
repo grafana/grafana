@@ -1270,12 +1270,12 @@ func (k *kvStorageBackend) updateLastImportTime(ctx context.Context, key *resour
 		Resource:  key.Resource,
 	})
 
-	if err != nil && err != ErrNotFound {
+	if err != nil && !errors.Is(err, ErrNotFound) {
 		k.log.Error("Error retrieving metadata for namespace %s: %s", key.Namespace, err)
 		return err
 	}
 
-	if err == ErrNotFound {
+	if errors.Is(err, ErrNotFound) {
 		metadata = Metadata{
 			Namespace: key.Namespace,
 			Group:     key.Group,
