@@ -84,7 +84,7 @@ export function useFilteredRulesIteratorProvider() {
 
     const titleSearch = useBackendFilters ? buildTitleSearch(filterState) : undefined;
     const ruleType = useBackendFilters ? filterState.ruleType : undefined;
-    const dashboardUID = useBackendFilters ? filterState.dashboardUid : undefined;
+    const dashboardUid = useBackendFilters ? filterState.dashboardUid : undefined;
 
     const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
       grafanaGroupsGenerator(groupLimit, {
@@ -93,7 +93,7 @@ export function useFilteredRulesIteratorProvider() {
         state: filterState.ruleState ? [filterState.ruleState] : [],
         title: titleSearch,
         type: ruleType,
-        dashboardUID: dashboardUID,
+        dashboardUid,
       })
     ).pipe(
       withAbort(abortController.signal),
