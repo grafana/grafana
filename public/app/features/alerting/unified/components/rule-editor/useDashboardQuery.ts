@@ -91,7 +91,6 @@ export function useDashboardQuery(dashboardUid?: string) {
       getDashboardAPI()
         .getDashboardDTO(dashboardUid)
         .then((dashboardDTO) => {
-          console.log('dashboardDTO', dashboardDTO);
           if ('dashboard' in dashboardDTO) {
             if (isDashboardV2Spec(dashboardDTO.dashboard)) {
               setDashboard(convertV2ToUnifiedDashboardDTO(dashboardDTO));
