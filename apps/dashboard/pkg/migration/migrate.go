@@ -13,8 +13,7 @@ func Initialize(dsIndexProvider schemaversion.DataSourceIndexProvider) {
 	migratorInstance.init(dsIndexProvider)
 }
 
-// GetDataSourceInfoProvider returns the datasource info provider instance that was initialized.
-// This allows reuse of the same provider instance across migrations and conversions.
+// GetDataSourceIndexProvider returns the datasource index provider instance that was initialized.
 func GetDataSourceIndexProvider() schemaversion.DataSourceIndexProvider {
 	// Wait for initialization to complete
 	<-migratorInstance.ready

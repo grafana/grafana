@@ -53,9 +53,6 @@ type DatasourceIndex struct {
 
 // NewDatasourceIndex creates an index from a list of datasources.
 // Iterates once through the list to build name and UID maps for O(1) lookups.
-//
-// For better performance, prefer using DataSourceInfoProvider.GetDataSourceIndex()
-// which builds the index directly from query results without an intermediate slice.
 func NewDatasourceIndex(datasources []DataSourceInfo) *DatasourceIndex {
 	idx := &DatasourceIndex{
 		ByName: make(map[string]*DataSourceInfo, len(datasources)),
