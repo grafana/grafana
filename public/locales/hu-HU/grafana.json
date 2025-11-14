@@ -4378,8 +4378,6 @@
       "next-button": "Következő",
       "save-button": "Mentés"
     },
-    "page-content": "A korrelációk engedélyezéséhez adja hozzá a Grafana-konfigurációban:",
-    "page-heading": "A korrelációk le vannak tiltva",
     "query-editor": {
       "control-rules": "A kijelölt céladatforrásnak lekérdezésszerkesztőt kell exportálnia.",
       "data-source-text": "Először jelöljön ki egy céladatforrást.",
@@ -6750,9 +6748,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "További részletek a hibáról"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "CSV vagy táblázat hozzáadása"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Adobe Analytics-adatforrás",
@@ -7470,6 +7465,7 @@
       "label-resource-attributes": "Erőforrás-attribútumok",
       "label-span-attributes": "Terjedelemattribútumok",
       "label-stack-trace": "Stack nyomvonala",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Gyermekek száma:",
@@ -7478,8 +7474,7 @@
           "start-time": "Kezdés időpontja:"
         }
       },
-      "share-span": "Megosztás",
-      "warnings": "Figyelmeztetések"
+      "share-span": "Megosztás"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Max. terjedelem operátor kijelölése",
@@ -11762,6 +11757,11 @@
       "path-description": "Helyi fájlrendszer elérési útja az adattárhoz",
       "path-label": "Adattár elérési útja",
       "path-required": "Az adattár elérési útvonalának megadása kötelező"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {

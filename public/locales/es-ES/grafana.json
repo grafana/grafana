@@ -4378,8 +4378,6 @@
       "next-button": "Siguiente",
       "save-button": "Guardar"
     },
-    "page-content": "Para habilitar las correlaciones, añádala en la configuración de Grafana:",
-    "page-heading": "Las correlaciones están deshabilitadas",
     "query-editor": {
       "control-rules": "La fuente de datos de destino seleccionada debe exportar un editor de consultas.",
       "data-source-text": "Seleccione primero una fuente de datos de destino.",
@@ -6750,9 +6748,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Más detalles sobre el error"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "Añadir CSV u hoja de cálculo"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Fuente de datos de Adobe Analytics",
@@ -7470,6 +7465,7 @@
       "label-resource-attributes": "Atributos de recursos",
       "label-span-attributes": "Atributos de intervalo",
       "label-stack-trace": "Traza de pilas",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Recuento de secundarios:",
@@ -7478,8 +7474,7 @@
           "start-time": "Hora de comienzo:"
         }
       },
-      "share-span": "Compartir",
-      "warnings": "Advertencias"
+      "share-span": "Compartir"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Seleccionar operador de intervalo máximo",
@@ -11762,6 +11757,11 @@
       "path-description": "Ruta del sistema de archivos local al repositorio",
       "path-label": "Ruta del repositorio",
       "path-required": "La ruta del repositorio es obligatoria"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {

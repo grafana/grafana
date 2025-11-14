@@ -4418,8 +4418,6 @@
       "next-button": "Dalej",
       "save-button": "Zapisz"
     },
-    "page-content": "Aby włączyć Korelacje, dodaj je w konfiguracji Grafana:",
-    "page-heading": "Korelacje są wyłączone",
     "query-editor": {
       "control-rules": "Wybrane docelowe źródło danych musi wyeksportować edytor zapytań.",
       "data-source-text": "Najpierw wybierz docelowe źródło danych.",
@@ -6798,9 +6796,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Więcej informacji o błędzie"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "Dodaj plik CSV lub arkusz kalkulacyjny"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Źródło danych Adobe Analytics",
@@ -7522,6 +7517,7 @@
       "label-resource-attributes": "Atrybuty zasobów",
       "label-span-attributes": "Atrybuty zakresu",
       "label-stack-trace": "Śledzenie stosu",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Liczba elementów podrzędnych:",
@@ -7530,8 +7526,7 @@
           "start-time": "Czas rozpoczęcia:"
         }
       },
-      "share-span": "Udostępnij",
-      "warnings": "Ostrzeżenia"
+      "share-span": "Udostępnij"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Wybierz operator maksymalnego zakresu",
@@ -11868,6 +11863,11 @@
       "path-description": "Ścieżka do repozytorium w lokalnym systemie plików",
       "path-label": "Ścieżka do repozytorium",
       "path-required": "Ścieżka do repozytorium jest wymagana"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {
