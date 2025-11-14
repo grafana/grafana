@@ -55,15 +55,13 @@ export function getGrafanaFilter(filterState: RulesFilter) {
   return {
     backendFilter,
     frontendFilter: {
-      groupFilter: (group: PromRuleGroupDTO, filterState: Pick<RulesFilter, 'namespace' | 'groupName'>) =>
-        groupFilter(group, filterState, grafanaGroupFilterConfig),
-      ruleFilter: (rule: PromRuleDTO, filterState: RulesFilter) =>
-        ruleFilter(rule, filterState, grafanaFilterProcessingConfig),
+      groupMatches: (group: PromRuleGroupDTO) => groupMatches(group, filterState, grafanaGroupFilterConfig),
+      ruleMatches: (rule: PromRuleDTO) => ruleMatches(rule, filterState, grafanaFilterProcessingConfig),
     },
   };
 }
 
-export function getDatasourceFilter() {
+export function getDatasourceFilter(filterState: RulesFilter) {
   const dsRuleFilterConfig: RuleFilterConfig = {
     freeFormWords: freeFormFilter,
     ruleName: ruleNameFilter,
@@ -83,16 +81,15 @@ export function getDatasourceFilter() {
   };
 
   return {
-    groupFilter: (group: PromRuleGroupDTO, filterState: Pick<RulesFilter, 'namespace' | 'groupName'>) =>
-      groupFilter(group, filterState, dsGroupFilterConfig),
-    ruleFilter: (rule: PromRuleDTO, filterState: RulesFilter) => ruleFilter(rule, filterState, dsRuleFilterConfig),
+    groupMatches: (group: PromRuleGroupDTO) => groupMatches(group, filterState, dsGroupFilterConfig),
+    ruleMatches: (rule: PromRuleDTO) => ruleMatches(rule, filterState, dsRuleFilterConfig),
   };
 }
 
 /**
  * @returns True if the group matches the filter, false otherwise. Keeps rules intact
  */
-function groupFilter(
+function groupMatches(
   group: PromRuleGroupDTO,
   filterState: Pick<RulesFilter, 'namespace' | 'groupName'>,
   filterConfig: GroupFilterConfig
@@ -127,7 +124,7 @@ function groupNameFilter(group: PromRuleGroupDTO, filterState: Pick<RulesFilter,
 /**
  * @returns True if the rule matches the filter, false otherwise
  */
-function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter, filterConfig: RuleFilterConfig) {
+function ruleMatches(rule: PromRuleDTO, filterState: RulesFilter, filterConfig: RuleFilterConfig) {
   if (filterConfig.freeFormWords && filterConfig.freeFormWords(rule, filterState) === false) {
     return false;
   }

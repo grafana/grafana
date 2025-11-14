@@ -88,9 +88,9 @@ export function useFilteredRulesIteratorProvider() {
       withAbort(abortController.signal),
       concatMap((groups) =>
         groups
-          .filter((group) => frontendFilter.groupFilter(group, normalizedFilterState))
+          .filter((group) => frontendFilter.groupMatches(group))
           .flatMap((group) => group.rules.map((rule) => ({ group, rule })))
-          .filter(({ rule }) => frontendFilter.ruleFilter(rule, normalizedFilterState))
+          .filter(({ rule }) => frontendFilter.ruleMatches(rule))
           .map(({ group, rule }) => mapGrafanaRuleToRuleWithOrigin(group, rule))
       ),
       catchError(() => empty())
@@ -105,7 +105,7 @@ export function useFilteredRulesIteratorProvider() {
       return { iterable: grafanaRulesGenerator, abortController };
     }
 
-    const { groupFilter, ruleFilter } = getDatasourceFilter(filterState);
+    const { groupMatches, ruleMatches } = getDatasourceFilter(normalizedFilterState);
 
     const dataSourceGenerators: Array<AsyncIterableX<RuleWithOrigin>> = externalRulesSourcesToFetchFrom.map(
       (dataSourceIdentifier) => {
@@ -115,9 +115,9 @@ export function useFilteredRulesIteratorProvider() {
           withAbort(abortController.signal),
           concatMap((groups) =>
             groups
-              .filter((group) => groupFilter(group, normalizedFilterState))
+              .filter((group) => groupMatches(group))
               .flatMap((group) => group.rules.map((rule, index) => ({ group, rule, index })))
-              .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
+              .filter(({ rule }) => ruleMatches(rule))
               .map(({ group, rule, index }) => mapRuleToRuleWithOrigin(dataSourceIdentifier, group, rule, index))
           ),
           catchError(() => empty())

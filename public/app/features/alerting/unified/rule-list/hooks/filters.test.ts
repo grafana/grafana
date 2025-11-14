@@ -32,9 +32,11 @@ describe('datasource-managed rules', () => {
         interval: 60,
       };
 
-      const { groupFilter } = getDatasourceFilter();
-      expect(groupFilter(group, getFilter({ namespace: 'production' }))).toBe(true);
-      expect(groupFilter(group, getFilter({ namespace: 'staging' }))).toBe(false);
+      const { groupMatches } = getDatasourceFilter(getFilter({ namespace: 'production' }));
+      expect(groupMatches(group)).toBe(true);
+
+      const { groupMatches: groupMatches2 } = getDatasourceFilter(getFilter({ namespace: 'staging' }));
+      expect(groupMatches2(group)).toBe(false);
     });
 
     it('should filter by group name', () => {
@@ -45,9 +47,11 @@ describe('datasource-managed rules', () => {
         interval: 60,
       };
 
-      const { groupFilter } = getDatasourceFilter();
-      expect(groupFilter(group, getFilter({ groupName: 'cpu' }))).toBe(true);
-      expect(groupFilter(group, getFilter({ groupName: 'memory' }))).toBe(false);
+      const { groupMatches } = getDatasourceFilter(getFilter({ groupName: 'cpu' }));
+      expect(groupMatches(group)).toBe(true);
+
+      const { groupMatches: groupMatches2 } = getDatasourceFilter(getFilter({ groupName: 'memory' }));
+      expect(groupMatches2(group)).toBe(false);
     });
 
     it('should return true when no filters are applied', () => {
@@ -58,26 +62,30 @@ describe('datasource-managed rules', () => {
         interval: 60,
       };
 
-      const { groupFilter } = getDatasourceFilter();
-      expect(groupFilter(group, getFilter({}))).toBe(true);
+      const { groupMatches } = getDatasourceFilter(getFilter({}));
+      expect(groupMatches(group)).toBe(true);
     });
   });
 
   describe('ruleFilter', () => {
     it('should filter by free form words in rule name', () => {
       const rule = mockPromAlertingRule({ name: 'High CPU Usage' });
-      const { ruleFilter } = getDatasourceFilter();
 
-      expect(ruleFilter(rule, getFilter({ freeFormWords: ['cpu'] }))).toBe(true);
-      expect(ruleFilter(rule, getFilter({ freeFormWords: ['memory'] }))).toBe(false);
+      const { ruleMatches } = getDatasourceFilter(getFilter({ freeFormWords: ['cpu'] }));
+      expect(ruleMatches(rule)).toBe(true);
+
+      const { ruleMatches: ruleMatches2 } = getDatasourceFilter(getFilter({ freeFormWords: ['memory'] }));
+      expect(ruleMatches2(rule)).toBe(false);
     });
 
     it('should filter by rule name', () => {
       const rule = mockPromAlertingRule({ name: 'High CPU Usage' });
-      const { ruleFilter } = getDatasourceFilter();
 
-      expect(ruleFilter(rule, getFilter({ ruleName: 'cpu' }))).toBe(true);
-      expect(ruleFilter(rule, getFilter({ ruleName: 'memory' }))).toBe(false);
+      const { ruleMatches } = getDatasourceFilter(getFilter({ ruleName: 'cpu' }));
+      expect(ruleMatches(rule)).toBe(true);
+
+      const { ruleMatches: ruleMatches2 } = getDatasourceFilter(getFilter({ ruleName: 'memory' }));
+      expect(ruleMatches2(rule)).toBe(false);
     });
 
     it('should filter by labels', () => {
@@ -85,11 +93,15 @@ describe('datasource-managed rules', () => {
         labels: { severity: 'critical', team: 'ops' },
         alerts: [],
       });
-      const { ruleFilter } = getDatasourceFilter();
 
-      expect(ruleFilter(rule, getFilter({ labels: ['severity=critical'] }))).toBe(true);
-      expect(ruleFilter(rule, getFilter({ labels: ['severity=warning'] }))).toBe(false);
-      expect(ruleFilter(rule, getFilter({ labels: ['team=ops'] }))).toBe(true);
+      const { ruleMatches } = getDatasourceFilter(getFilter({ labels: ['severity=critical'] }));
+      expect(ruleMatches(rule)).toBe(true);
+
+      const { ruleMatches: ruleMatches2 } = getDatasourceFilter(getFilter({ labels: ['severity=warning'] }));
+      expect(ruleMatches2(rule)).toBe(false);
+
+      const { ruleMatches: ruleMatches3 } = getDatasourceFilter(getFilter({ labels: ['team=ops'] }));
+      expect(ruleMatches3(rule)).toBe(true);
     });
 
     it('should filter by alert instance labels', () => {
@@ -105,22 +117,28 @@ describe('datasource-managed rules', () => {
           },
         ],
       });
-      const { ruleFilter } = getDatasourceFilter();
 
-      expect(ruleFilter(rule, getFilter({ labels: ['instance=server-1'] }))).toBe(true);
-      expect(ruleFilter(rule, getFilter({ labels: ['env=production'] }))).toBe(true);
-      expect(ruleFilter(rule, getFilter({ labels: ['instance=server-2'] }))).toBe(false);
+      const { ruleMatches } = getDatasourceFilter(getFilter({ labels: ['instance=server-1'] }));
+      expect(ruleMatches(rule)).toBe(true);
+
+      const { ruleMatches: ruleMatches2 } = getDatasourceFilter(getFilter({ labels: ['env=production'] }));
+      expect(ruleMatches2(rule)).toBe(true);
+
+      const { ruleMatches: ruleMatches3 } = getDatasourceFilter(getFilter({ labels: ['instance=server-2'] }));
+      expect(ruleMatches3(rule)).toBe(false);
     });
 
     it('should filter by rule type', () => {
       const alertingRule = mockPromAlertingRule({ name: 'Test Alert' });
       const recordingRule = mockPromRecordingRule({ name: 'Test Recording' });
-      const { ruleFilter } = getDatasourceFilter();
 
-      expect(ruleFilter(alertingRule, getFilter({ ruleType: PromRuleType.Alerting }))).toBe(true);
-      expect(ruleFilter(alertingRule, getFilter({ ruleType: PromRuleType.Recording }))).toBe(false);
-      expect(ruleFilter(recordingRule, getFilter({ ruleType: PromRuleType.Recording }))).toBe(true);
-      expect(ruleFilter(recordingRule, getFilter({ ruleType: PromRuleType.Alerting }))).toBe(false);
+      const { ruleMatches } = getDatasourceFilter(getFilter({ ruleType: PromRuleType.Alerting }));
+      expect(ruleMatches(alertingRule)).toBe(true);
+      expect(ruleMatches(recordingRule)).toBe(false);
+
+      const { ruleMatches: ruleMatches2 } = getDatasourceFilter(getFilter({ ruleType: PromRuleType.Recording }));
+      expect(ruleMatches2(alertingRule)).toBe(false);
+      expect(ruleMatches2(recordingRule)).toBe(true);
     });
 
     it('should filter by rule state', () => {
@@ -133,23 +151,36 @@ describe('datasource-managed rules', () => {
         name: 'Pending Alert',
         state: PromAlertingRuleState.Pending,
       });
-      const { ruleFilter } = getDatasourceFilter();
 
-      expect(ruleFilter(firingRule, getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(true);
-      expect(ruleFilter(firingRule, getFilter({ ruleState: PromAlertingRuleState.Pending }))).toBe(false);
-      expect(ruleFilter(pendingRule, getFilter({ ruleState: PromAlertingRuleState.Pending }))).toBe(true);
+      const { ruleMatches } = getDatasourceFilter(getFilter({ ruleState: PromAlertingRuleState.Firing }));
+      expect(ruleMatches(firingRule)).toBe(true);
+      expect(ruleMatches(pendingRule)).toBe(false);
+
+      const { ruleMatches: ruleMatches2 } = getDatasourceFilter(
+        getFilter({ ruleState: PromAlertingRuleState.Pending })
+      );
+      expect(ruleMatches2(firingRule)).toBe(false);
+      expect(ruleMatches2(pendingRule)).toBe(true);
     });
 
     it('should filter out recording rules when filtering by rule state', () => {
       const recordingRule = mockPromRecordingRule({
         name: 'Recording Rule',
       });
-      const { ruleFilter } = getDatasourceFilter();
 
       // Recording rules should always be filtered out when any rule state filter is applied as they don't have a state
-      expect(ruleFilter(recordingRule, getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(false);
-      expect(ruleFilter(recordingRule, getFilter({ ruleState: PromAlertingRuleState.Pending }))).toBe(false);
-      expect(ruleFilter(recordingRule, getFilter({ ruleState: PromAlertingRuleState.Inactive }))).toBe(false);
+      const { ruleMatches } = getDatasourceFilter(getFilter({ ruleState: PromAlertingRuleState.Firing }));
+      expect(ruleMatches(recordingRule)).toBe(false);
+
+      const { ruleMatches: ruleMatches2 } = getDatasourceFilter(
+        getFilter({ ruleState: PromAlertingRuleState.Pending })
+      );
+      expect(ruleMatches2(recordingRule)).toBe(false);
+
+      const { ruleMatches: ruleMatches3 } = getDatasourceFilter(
+        getFilter({ ruleState: PromAlertingRuleState.Inactive })
+      );
+      expect(ruleMatches3(recordingRule)).toBe(false);
     });
 
     it('should filter by rule health', () => {
@@ -167,12 +198,15 @@ describe('datasource-managed rules', () => {
         name: 'Error Rule',
         health: 'err',
       });
-      const { ruleFilter } = getDatasourceFilter();
 
-      expect(ruleFilter(healthyRule, getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(true);
-      expect(ruleFilter(healthyRule, getFilter({ ruleHealth: RuleHealth.Error }))).toBe(false);
-      expect(ruleFilter(errorRule, getFilter({ ruleHealth: RuleHealth.Error }))).toBe(true);
-      expect(ruleFilter(prometheusErrorRule, getFilter({ ruleHealth: RuleHealth.Error }))).toBe(true);
+      const { ruleMatches } = getDatasourceFilter(getFilter({ ruleHealth: RuleHealth.Ok }));
+      expect(ruleMatches(healthyRule)).toBe(true);
+      expect(ruleMatches(errorRule)).toBe(false);
+
+      const { ruleMatches: ruleMatches2 } = getDatasourceFilter(getFilter({ ruleHealth: RuleHealth.Error }));
+      expect(ruleMatches2(healthyRule)).toBe(false);
+      expect(ruleMatches2(errorRule)).toBe(true);
+      expect(ruleMatches2(prometheusErrorRule)).toBe(true);
     });
 
     it('should normalize health values when filtering', () => {
@@ -181,10 +215,10 @@ describe('datasource-managed rules', () => {
         name: 'Legacy Error Rule',
         health: 'err',
       });
-      const { ruleFilter } = getDatasourceFilter();
 
       // When filtering for 'error', it should match rules with health 'err' (legacy) or 'error'
-      expect(ruleFilter(legacyErrorRule, getFilter({ ruleHealth: RuleHealth.Error }))).toBe(true);
+      const { ruleMatches } = getDatasourceFilter(getFilter({ ruleHealth: RuleHealth.Error }));
+      expect(ruleMatches(legacyErrorRule)).toBe(true);
     });
 
     it('should filter by dashboard UID', () => {
@@ -197,11 +231,14 @@ describe('datasource-managed rules', () => {
         name: 'Dashboard B Rule',
         annotations: { [Annotation.dashboardUID]: 'dashboard-b' },
       });
-      const { ruleFilter } = getDatasourceFilter();
 
-      expect(ruleFilter(ruleDashboardA, getFilter({ dashboardUid: 'dashboard-a' }))).toBe(true);
-      expect(ruleFilter(ruleDashboardA, getFilter({ dashboardUid: 'dashboard-b' }))).toBe(false);
-      expect(ruleFilter(ruleDashboardB, getFilter({ dashboardUid: 'dashboard-b' }))).toBe(true);
+      const { ruleMatches } = getDatasourceFilter(getFilter({ dashboardUid: 'dashboard-a' }));
+      expect(ruleMatches(ruleDashboardA)).toBe(true);
+      expect(ruleMatches(ruleDashboardB)).toBe(false);
+
+      const { ruleMatches: ruleMatches2 } = getDatasourceFilter(getFilter({ dashboardUid: 'dashboard-b' }));
+      expect(ruleMatches2(ruleDashboardA)).toBe(false);
+      expect(ruleMatches2(ruleDashboardB)).toBe(true);
     });
 
     it('should filter out recording rules when filtering by dashboard UID', () => {
@@ -209,10 +246,10 @@ describe('datasource-managed rules', () => {
         name: 'Recording Rule',
         // Recording rules cannot have dashboard UIDs because they don't have annotations
       });
-      const { ruleFilter } = getDatasourceFilter();
 
       // Dashboard UID filter should filter out recording rules
-      expect(ruleFilter(recordingRule, getFilter({ dashboardUid: 'any-dashboard' }))).toBe(false);
+      const { ruleMatches } = getDatasourceFilter(getFilter({ dashboardUid: 'any-dashboard' }));
+      expect(ruleMatches(recordingRule)).toBe(false);
     });
 
     describe('dataSourceNames filter', () => {
@@ -221,10 +258,10 @@ describe('datasource-managed rules', () => {
         const ruleWithMatchingDatasource = mockGrafanaPromAlertingRule({
           queriedDatasourceUIDs: ['datasource-uid-1'],
         });
-        const { ruleFilter } = getDatasourceFilter();
 
         // 'prometheus' resolves to 'datasource-uid-1' which is in the rule
-        expect(ruleFilter(ruleWithMatchingDatasource, getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
+        const { ruleMatches } = getDatasourceFilter(getFilter({ dataSourceNames: ['prometheus'] }));
+        expect(ruleMatches(ruleWithMatchingDatasource)).toBe(true);
       });
 
       it("should filter out rules that don't use the filtered datasource", () => {
@@ -232,19 +269,19 @@ describe('datasource-managed rules', () => {
         const ruleWithoutMatchingDatasource = mockGrafanaPromAlertingRule({
           queriedDatasourceUIDs: ['datasource-uid-1', 'datasource-uid-2'],
         });
-        const { ruleFilter } = getDatasourceFilter();
 
         // 'loki' resolves to 'datasource-uid-3' which is not in the rule
-        expect(ruleFilter(ruleWithoutMatchingDatasource, getFilter({ dataSourceNames: ['loki'] }))).toBe(false);
+        const { ruleMatches } = getDatasourceFilter(getFilter({ dataSourceNames: ['loki'] }));
+        expect(ruleMatches(ruleWithoutMatchingDatasource)).toBe(false);
       });
 
       it('should return false when there is an error parsing the query', () => {
         const ruleWithInvalidQuery = mockGrafanaPromAlertingRule({
           query: 'not-valid-json',
         });
-        const { ruleFilter } = getDatasourceFilter();
 
-        expect(ruleFilter(ruleWithInvalidQuery, getFilter({ dataSourceNames: ['prometheus'] }))).toBe(false);
+        const { ruleMatches } = getDatasourceFilter(getFilter({ dataSourceNames: ['prometheus'] }));
+        expect(ruleMatches(ruleWithInvalidQuery)).toBe(false);
       });
     });
 
@@ -262,9 +299,8 @@ describe('datasource-managed rules', () => {
         ruleState: PromAlertingRuleState.Firing,
         ruleHealth: RuleHealth.Ok,
       });
-      const { ruleFilter } = getDatasourceFilter();
-
-      expect(ruleFilter(rule, filter)).toBe(true);
+      const { ruleMatches } = getDatasourceFilter(filter);
+      expect(ruleMatches(rule)).toBe(true);
     });
 
     it('should return false if any filter does not match', () => {
@@ -282,9 +318,8 @@ describe('datasource-managed rules', () => {
         ruleState: PromAlertingRuleState.Firing,
         ruleHealth: RuleHealth.Ok,
       });
-      const { ruleFilter } = getDatasourceFilter();
-
-      expect(ruleFilter(rule, filter)).toBe(false);
+      const { ruleMatches } = getDatasourceFilter(filter);
+      expect(ruleMatches(rule)).toBe(false);
     });
   });
 });
@@ -299,9 +334,11 @@ describe('grafana-managed rules', () => {
         interval: 60,
       };
 
-      const { frontendFilter } = getGrafanaFilter(getFilter({}));
-      expect(frontendFilter.groupFilter(group, getFilter({ namespace: 'production' }))).toBe(true);
-      expect(frontendFilter.groupFilter(group, getFilter({ namespace: 'staging' }))).toBe(false);
+      const { frontendFilter } = getGrafanaFilter(getFilter({ namespace: 'production' }));
+      expect(frontendFilter.groupMatches(group)).toBe(true);
+
+      const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ namespace: 'staging' }));
+      expect(frontendFilter2.groupMatches(group)).toBe(false);
     });
 
     it('should filter by group name', () => {
@@ -312,9 +349,11 @@ describe('grafana-managed rules', () => {
         interval: 60,
       };
 
-      const { frontendFilter } = getGrafanaFilter(getFilter({}));
-      expect(frontendFilter.groupFilter(group, getFilter({ groupName: 'cpu' }))).toBe(true);
-      expect(frontendFilter.groupFilter(group, getFilter({ groupName: 'memory' }))).toBe(false);
+      const { frontendFilter } = getGrafanaFilter(getFilter({ groupName: 'cpu' }));
+      expect(frontendFilter.groupMatches(group)).toBe(true);
+
+      const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ groupName: 'memory' }));
+      expect(frontendFilter2.groupMatches(group)).toBe(false);
     });
 
     it('should return true when no filters are applied', () => {
@@ -326,25 +365,29 @@ describe('grafana-managed rules', () => {
       };
 
       const { frontendFilter } = getGrafanaFilter(getFilter({}));
-      expect(frontendFilter.groupFilter(group, getFilter({}))).toBe(true);
+      expect(frontendFilter.groupMatches(group)).toBe(true);
     });
   });
 
   describe('ruleFilter - frontend filters', () => {
     it('should filter by free form words in rule name', () => {
       const rule = mockGrafanaPromAlertingRule({ name: 'High CPU Usage' });
-      const { frontendFilter } = getGrafanaFilter(getFilter({}));
 
-      expect(frontendFilter.ruleFilter(rule, getFilter({ freeFormWords: ['cpu'] }))).toBe(true);
-      expect(frontendFilter.ruleFilter(rule, getFilter({ freeFormWords: ['memory'] }))).toBe(false);
+      const { frontendFilter } = getGrafanaFilter(getFilter({ freeFormWords: ['cpu'] }));
+      expect(frontendFilter.ruleMatches(rule)).toBe(true);
+
+      const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ freeFormWords: ['memory'] }));
+      expect(frontendFilter2.ruleMatches(rule)).toBe(false);
     });
 
     it('should filter by rule name', () => {
       const rule = mockGrafanaPromAlertingRule({ name: 'High CPU Usage' });
-      const { frontendFilter } = getGrafanaFilter(getFilter({}));
 
-      expect(frontendFilter.ruleFilter(rule, getFilter({ ruleName: 'cpu' }))).toBe(true);
-      expect(frontendFilter.ruleFilter(rule, getFilter({ ruleName: 'memory' }))).toBe(false);
+      const { frontendFilter } = getGrafanaFilter(getFilter({ ruleName: 'cpu' }));
+      expect(frontendFilter.ruleMatches(rule)).toBe(true);
+
+      const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ ruleName: 'memory' }));
+      expect(frontendFilter2.ruleMatches(rule)).toBe(false);
     });
 
     it('should filter by labels', () => {
@@ -352,22 +395,28 @@ describe('grafana-managed rules', () => {
         labels: { severity: 'critical', team: 'ops' },
         alerts: [],
       });
-      const { frontendFilter } = getGrafanaFilter(getFilter({}));
 
-      expect(frontendFilter.ruleFilter(rule, getFilter({ labels: ['severity=critical'] }))).toBe(true);
-      expect(frontendFilter.ruleFilter(rule, getFilter({ labels: ['severity=warning'] }))).toBe(false);
-      expect(frontendFilter.ruleFilter(rule, getFilter({ labels: ['team=ops'] }))).toBe(true);
+      const { frontendFilter } = getGrafanaFilter(getFilter({ labels: ['severity=critical'] }));
+      expect(frontendFilter.ruleMatches(rule)).toBe(true);
+
+      const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ labels: ['severity=warning'] }));
+      expect(frontendFilter2.ruleMatches(rule)).toBe(false);
+
+      const { frontendFilter: frontendFilter3 } = getGrafanaFilter(getFilter({ labels: ['team=ops'] }));
+      expect(frontendFilter3.ruleMatches(rule)).toBe(true);
     });
 
     it('should filter by rule type', () => {
       const alertingRule = mockGrafanaPromAlertingRule({ name: 'Test Alert' });
       const recordingRule = mockPromRecordingRule({ name: 'Test Recording' });
-      const { frontendFilter } = getGrafanaFilter(getFilter({}));
 
-      expect(frontendFilter.ruleFilter(alertingRule, getFilter({ ruleType: PromRuleType.Alerting }))).toBe(true);
-      expect(frontendFilter.ruleFilter(alertingRule, getFilter({ ruleType: PromRuleType.Recording }))).toBe(false);
-      expect(frontendFilter.ruleFilter(recordingRule, getFilter({ ruleType: PromRuleType.Recording }))).toBe(true);
-      expect(frontendFilter.ruleFilter(recordingRule, getFilter({ ruleType: PromRuleType.Alerting }))).toBe(false);
+      const { frontendFilter } = getGrafanaFilter(getFilter({ ruleType: PromRuleType.Alerting }));
+      expect(frontendFilter.ruleMatches(alertingRule)).toBe(true);
+      expect(frontendFilter.ruleMatches(recordingRule)).toBe(false);
+
+      const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ ruleType: PromRuleType.Recording }));
+      expect(frontendFilter2.ruleMatches(alertingRule)).toBe(false);
+      expect(frontendFilter2.ruleMatches(recordingRule)).toBe(true);
     });
 
     it('should filter by dashboard UID', () => {
@@ -380,11 +429,14 @@ describe('grafana-managed rules', () => {
         name: 'Dashboard B Rule',
         annotations: { [Annotation.dashboardUID]: 'dashboard-b' },
       });
-      const { frontendFilter } = getGrafanaFilter(getFilter({}));
 
-      expect(frontendFilter.ruleFilter(ruleDashboardA, getFilter({ dashboardUid: 'dashboard-a' }))).toBe(true);
-      expect(frontendFilter.ruleFilter(ruleDashboardA, getFilter({ dashboardUid: 'dashboard-b' }))).toBe(false);
-      expect(frontendFilter.ruleFilter(ruleDashboardB, getFilter({ dashboardUid: 'dashboard-b' }))).toBe(true);
+      const { frontendFilter } = getGrafanaFilter(getFilter({ dashboardUid: 'dashboard-a' }));
+      expect(frontendFilter.ruleMatches(ruleDashboardA)).toBe(true);
+      expect(frontendFilter.ruleMatches(ruleDashboardB)).toBe(false);
+
+      const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ dashboardUid: 'dashboard-b' }));
+      expect(frontendFilter2.ruleMatches(ruleDashboardA)).toBe(false);
+      expect(frontendFilter2.ruleMatches(ruleDashboardB)).toBe(true);
     });
 
     describe('dataSourceNames filter', () => {
@@ -392,22 +444,18 @@ describe('grafana-managed rules', () => {
         const ruleWithMatchingDatasource = mockGrafanaPromAlertingRule({
           queriedDatasourceUIDs: ['datasource-uid-1'],
         });
-        const { frontendFilter } = getGrafanaFilter(getFilter({}));
 
-        expect(
-          frontendFilter.ruleFilter(ruleWithMatchingDatasource, getFilter({ dataSourceNames: ['prometheus'] }))
-        ).toBe(true);
+        const { frontendFilter } = getGrafanaFilter(getFilter({ dataSourceNames: ['prometheus'] }));
+        expect(frontendFilter.ruleMatches(ruleWithMatchingDatasource)).toBe(true);
       });
 
       it("should filter out rules that don't use the filtered datasource", () => {
         const ruleWithoutMatchingDatasource = mockGrafanaPromAlertingRule({
           queriedDatasourceUIDs: ['datasource-uid-1', 'datasource-uid-2'],
         });
-        const { frontendFilter } = getGrafanaFilter(getFilter({}));
 
-        expect(frontendFilter.ruleFilter(ruleWithoutMatchingDatasource, getFilter({ dataSourceNames: ['loki'] }))).toBe(
-          false
-        );
+        const { frontendFilter } = getGrafanaFilter(getFilter({ dataSourceNames: ['loki'] }));
+        expect(frontendFilter.ruleMatches(ruleWithoutMatchingDatasource)).toBe(false);
       });
     });
   });
@@ -423,15 +471,17 @@ describe('grafana-managed rules', () => {
         name: 'Pending Alert',
         state: PromAlertingRuleState.Pending,
       });
-      const { frontendFilter } = getGrafanaFilter(getFilter({}));
 
       // Frontend filter should return true for all states since backend handles this
-      expect(frontendFilter.ruleFilter(firingRule, getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(true);
-      expect(frontendFilter.ruleFilter(firingRule, getFilter({ ruleState: PromAlertingRuleState.Pending }))).toBe(true);
-      expect(frontendFilter.ruleFilter(pendingRule, getFilter({ ruleState: PromAlertingRuleState.Pending }))).toBe(
-        true
+      const { frontendFilter } = getGrafanaFilter(getFilter({ ruleState: PromAlertingRuleState.Firing }));
+      expect(frontendFilter.ruleMatches(firingRule)).toBe(true);
+      expect(frontendFilter.ruleMatches(pendingRule)).toBe(true);
+
+      const { frontendFilter: frontendFilter2 } = getGrafanaFilter(
+        getFilter({ ruleState: PromAlertingRuleState.Pending })
       );
-      expect(frontendFilter.ruleFilter(pendingRule, getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(true);
+      expect(frontendFilter2.ruleMatches(firingRule)).toBe(true);
+      expect(frontendFilter2.ruleMatches(pendingRule)).toBe(true);
     });
 
     it('should NOT filter by rule health in frontend (returns true regardless)', () => {
@@ -444,13 +494,15 @@ describe('grafana-managed rules', () => {
         name: 'Error Rule',
         health: RuleHealth.Error,
       });
-      const { frontendFilter } = getGrafanaFilter(getFilter({}));
 
       // Frontend filter should return true for all health states since backend handles this
-      expect(frontendFilter.ruleFilter(healthyRule, getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(true);
-      expect(frontendFilter.ruleFilter(healthyRule, getFilter({ ruleHealth: RuleHealth.Error }))).toBe(true);
-      expect(frontendFilter.ruleFilter(errorRule, getFilter({ ruleHealth: RuleHealth.Error }))).toBe(true);
-      expect(frontendFilter.ruleFilter(errorRule, getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(true);
+      const { frontendFilter } = getGrafanaFilter(getFilter({ ruleHealth: RuleHealth.Ok }));
+      expect(frontendFilter.ruleMatches(healthyRule)).toBe(true);
+      expect(frontendFilter.ruleMatches(errorRule)).toBe(true);
+
+      const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ ruleHealth: RuleHealth.Error }));
+      expect(frontendFilter2.ruleMatches(healthyRule)).toBe(true);
+      expect(frontendFilter2.ruleMatches(errorRule)).toBe(true);
     });
 
     it('should NOT filter by contact point in frontend (returns true regardless)', () => {
@@ -467,21 +519,15 @@ describe('grafana-managed rules', () => {
           receiver: 'contact-point-2',
         },
       });
-      const { frontendFilter } = getGrafanaFilter(getFilter({}));
 
       // Frontend filter should return true for all contact points since backend handles this
-      expect(frontendFilter.ruleFilter(ruleWithContactPoint, getFilter({ contactPoint: 'contact-point-1' }))).toBe(
-        true
-      );
-      expect(frontendFilter.ruleFilter(ruleWithContactPoint, getFilter({ contactPoint: 'contact-point-2' }))).toBe(
-        true
-      );
-      expect(
-        frontendFilter.ruleFilter(ruleWithDifferentContactPoint, getFilter({ contactPoint: 'contact-point-1' }))
-      ).toBe(true);
-      expect(
-        frontendFilter.ruleFilter(ruleWithDifferentContactPoint, getFilter({ contactPoint: 'contact-point-2' }))
-      ).toBe(true);
+      const { frontendFilter } = getGrafanaFilter(getFilter({ contactPoint: 'contact-point-1' }));
+      expect(frontendFilter.ruleMatches(ruleWithContactPoint)).toBe(true);
+      expect(frontendFilter.ruleMatches(ruleWithDifferentContactPoint)).toBe(true);
+
+      const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ contactPoint: 'contact-point-2' }));
+      expect(frontendFilter2.ruleMatches(ruleWithContactPoint)).toBe(true);
+      expect(frontendFilter2.ruleMatches(ruleWithDifferentContactPoint)).toBe(true);
     });
   });
 
