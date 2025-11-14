@@ -109,7 +109,6 @@ func Convert_V2beta1_to_V1beta1(in *dashv2beta1.Dashboard, out *dashv1.Dashboard
 func Convert_V2beta1_to_V2alpha1(in *dashv2beta1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 
-	// Convert the spec
 	if err := ConvertDashboard_V2beta1_to_V2alpha1(in, out, scope); err != nil {
 		out.Status = dashv2alpha1.DashboardStatus{
 			Conversion: &dashv2alpha1.DashboardConversionStatus{
