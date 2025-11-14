@@ -43,6 +43,7 @@ type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace'
   health?: RuleHealth[];
   state?: PromAlertingRuleState[];
   title?: string;
+  type?: 'alerting' | 'recording';
 };
 
 export const prometheusApi = alertingApi.injectEndpoints({
@@ -89,6 +90,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
         contactPoint,
         health,
         state,
+        type,
         groupLimit,
         limitAlerts,
         groupNextToken,
@@ -102,6 +104,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
           receiver_name: contactPoint,
           health: health,
           state: state,
+          rule_type: type,
           limit_alerts: limitAlerts,
           group_limit: groupLimit?.toFixed(0),
           group_next_token: groupNextToken,

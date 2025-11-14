@@ -83,6 +83,7 @@ export function useFilteredRulesIteratorProvider() {
     const useBackendFilters = shouldUseBackendFilters();
 
     const titleSearch = useBackendFilters ? buildTitleSearch(filterState) : undefined;
+    const ruleType = useBackendFilters ? filterState.ruleType : undefined;
 
     const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
       grafanaGroupsGenerator(groupLimit, {
@@ -90,6 +91,7 @@ export function useFilteredRulesIteratorProvider() {
         health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
         state: filterState.ruleState ? [filterState.ruleState] : [],
         title: titleSearch,
+        type: ruleType,
       })
     ).pipe(
       withAbort(abortController.signal),
@@ -158,8 +160,9 @@ export function hasClientSideFilters(filterState: RulesFilter): boolean {
   const useBackendFilters = shouldUseBackendFilters();
 
   return (
-    // When backend filters are disabled, title search needs client-side filtering
-    (!useBackendFilters && (filterState.freeFormWords.length > 0 || Boolean(filterState.ruleName))) ||
+    // When backend filters are disabled, title search and type filter need client-side filtering
+    (!useBackendFilters &&
+      (filterState.freeFormWords.length > 0 || Boolean(filterState.ruleName) || Boolean(filterState.ruleType))) ||
     // Client-side only filters:
     Boolean(filterState.namespace) ||
     filterState.dataSourceNames.length > 0 ||
