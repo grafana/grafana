@@ -17,14 +17,10 @@ title: Observability as code
 weight: 100
 cards:
   items:
-    - title: Get started
-      height: 24
-      href: ./get-started/
-      description: Learn about how you can use Observability as Code.
     - title: Grafana CLI
       height: 24
       href: ./grafana-cli/
-      description: Grafana CLI (`grafanactl`) is a command-line tool designed to simplify interaction with Grafana instances using the new APIs. You can authenticate, manage multiple environments, and perform administrative tasks through Grafana’s REST API, all from the terminal. It's suitable for CI/CD pipelines and local development or free-form tasks. It supports pulling/pushing configurations from remote instances, validating configurations, and more.
+      description: Grafana CLI (`grafanactl`) is a command-line tool designed to simplify interaction with Grafana instances using the new REST APIs. You can authenticate, manage multiple environments, and perform administrative tasks from the terminal. It's suitable for CI/CD pipelines, local development, or free-form tasks. 
     - title: Foundation SDK
       height: 24
       href: ./foundation-sdk/
@@ -36,7 +32,7 @@ cards:
     - title: Git Sync (private preview)
       height: 24
       href: ./provision-resources/intro-git-sync/
-      description: Git Sync lets you store your dashboard files in a GitHub repository and synchronize those changes with your Grafana instance, enabling version control, branching, and pull requests directly from Grafana. Git Sync is available in **private preview** for Grafana Cloud, and it's an **experimental feature** in Grafana 12, available in Grafana OSS and Enterprise [nightly releases](https://grafana.com/grafana/download/nightly).
+      description: Git Sync lets you store your dashboard files in a GitHub repository and synchronize those changes with your Grafana instance, enabling version control, branching, and pull requests directly from Grafana. 
     - title: File provisioning (private preview)
       height: 24
       href: ./provision-resources/
