@@ -150,7 +150,6 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 		})
 	}
 
-	// All test scenarios using the shared Grafana instance
 	newTestScenario("Datasource with no custom HTTP settings",
 		options(
 			withIncomingRequest(func(req *http.Request) {
@@ -388,7 +387,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			rmd := requestmeta.GetRequestMetaData(tsCtx.incomingRequest.Context())
 			require.Equal(t, requestmeta.StatusSourceDownstream, rmd.StatusSource)
 			t.Cleanup(func() {
-				err := resp.Body.Close()
+				err = resp.Body.Close()
 				require.NoError(t, err)
 			})
 		})
@@ -409,7 +408,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			rmd := requestmeta.GetRequestMetaData(tsCtx.incomingRequest.Context())
 			require.Equal(t, requestmeta.StatusSourceDownstream, rmd.StatusSource)
 			t.Cleanup(func() {
-				err := resp.Body.Close()
+				err = resp.Body.Close()
 				require.NoError(t, err)
 			})
 		})
@@ -430,7 +429,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			rmd := requestmeta.GetRequestMetaData(tsCtx.incomingRequest.Context())
 			require.Equal(t, requestmeta.StatusSourceDownstream, rmd.StatusSource)
 			t.Cleanup(func() {
-				err := resp.Body.Close()
+				err = resp.Body.Close()
 				require.NoError(t, err)
 			})
 		})
@@ -456,7 +455,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			rmd := requestmeta.GetRequestMetaData(tsCtx.incomingRequest.Context())
 			require.Equal(t, requestmeta.StatusSourceDownstream, rmd.StatusSource)
 			t.Cleanup(func() {
-				err := resp.Body.Close()
+				err = resp.Body.Close()
 				require.NoError(t, err)
 			})
 		})
@@ -484,7 +483,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 			rmd := requestmeta.GetRequestMetaData(tsCtx.incomingRequest.Context())
 			require.Equal(t, requestmeta.StatusSourceDownstream, rmd.StatusSource)
 			t.Cleanup(func() {
-				err := resp.Body.Close()
+				err = resp.Body.Close()
 				require.NoError(t, err)
 			})
 		})
@@ -602,8 +601,6 @@ func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T, mr dtos.MetricR
 		var received *backend.QueryDataRequest
 		tsCtx.backendTestPlugin.QueryDataHandler = backend.QueryDataHandlerFunc(func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			received = req
-			// Incoming request should already be captured by middleware
-			// The middleware reads the request body to extract the datasource UID
 
 			c := http.Client{
 				Transport: tsCtx.rt,
@@ -641,7 +638,7 @@ func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T, mr dtos.MetricR
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode, string(b))
 		t.Cleanup(func() {
-			err := resp.Body.Close()
+			err = resp.Body.Close()
 			require.NoError(t, err)
 		})
 		_, err = io.ReadAll(resp.Body)
@@ -670,7 +667,7 @@ func (tsCtx *testScenarioContext) runCheckHealthTest(t *testing.T, callback func
 				return nil, err
 			}
 			defer func() {
-				if err := resp.Body.Close(); err != nil {
+				if err = resp.Body.Close(); err != nil {
 					tsCtx.testEnv.Server.HTTPServer.Cfg.Logger.Error("Failed to close body", "error", err)
 				}
 			}()
@@ -699,7 +696,7 @@ func (tsCtx *testScenarioContext) runCheckHealthTest(t *testing.T, callback func
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode, string(b))
 		t.Cleanup(func() {
-			err := resp.Body.Close()
+			err = resp.Body.Close()
 			require.NoError(t, err)
 		})
 		_, err = io.ReadAll(resp.Body)
@@ -734,7 +731,7 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T, callback fun
 				return err
 			}
 			defer func() {
-				if err := resp.Body.Close(); err != nil {
+				if err = resp.Body.Close(); err != nil {
 					tsCtx.testEnv.Server.HTTPServer.Cfg.Logger.Error("Failed to close body", "error", err)
 				}
 			}()
@@ -761,7 +758,7 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T, callback fun
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
 		t.Cleanup(func() {
-			err := resp.Body.Close()
+			err = resp.Body.Close()
 			require.NoError(t, err)
 		})
 
