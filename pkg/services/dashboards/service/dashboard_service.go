@@ -1089,12 +1089,6 @@ func (dr *DashboardServiceImpl) DeleteDashboard(ctx context.Context, dashboardId
 	return dr.deleteDashboard(ctx, dashboardId, dashboardUID, orgId, true)
 }
 
-// ForceDeleteDashboard removes dashboard from the DB. Does not validate if the dashboard was provisioned.
-// Should be used for operations where we want to delete the dashboard no matter what.
-func (dr *DashboardServiceImpl) ForceDeleteDashboard(ctx context.Context, dashboardId int64, dashboardUID string, orgId int64) error {
-	return dr.deleteDashboard(ctx, dashboardId, dashboardUID, orgId, false)
-}
-
 // DeleteAllDashboards will delete all dashboards within a given org.
 func (dr *DashboardServiceImpl) DeleteAllDashboards(ctx context.Context, orgId int64) error {
 	return dr.deleteAllDashboardThroughK8s(ctx, orgId)
@@ -1704,7 +1698,7 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	}
 
 	for _, dash := range dashes {
-		errDel := dr.ForceDeleteDashboard(ctx, dash.ID, dash.UID, orgID)
+		errDel := dr.deleteDashboard(ctx, dash.ID, dash.UID, orgID, false)
 		if errDel != nil {
 			dr.log.Error("failed to delete dashboard inside folder", "dashboardUID", dash.UID, "folderUIDs", folderUIDs, "error", errDel)
 		}

@@ -21,7 +21,6 @@ import (
 type DashboardService interface {
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, validateProvisionedDashboard bool) (*SaveDashboardCommand, error)
 	DeleteDashboard(ctx context.Context, dashboardId int64, dashboardUID string, orgId int64) error
-	ForceDeleteDashboard(ctx context.Context, dashboardId int64, dashboardUID string, orgId int64) error
 	DeleteAllDashboards(ctx context.Context, orgID int64) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	// GetDashboard fetches a dashboard.

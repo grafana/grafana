@@ -2001,6 +2001,7 @@ func TestIntegrationDeleteNestedFoldersWithProvisionedDashboards(t *testing.T) {
 		t.Skip("test only on sqlite for now")
 	}
 
+	// Provisioning service needs to be using non-static dual writer for provisioning on mode 4+
 	for mode := 0; mode <= 3; mode++ {
 		t.Run(fmt.Sprintf("Mode %d: Delete provisioned folders and dashboards", mode), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
