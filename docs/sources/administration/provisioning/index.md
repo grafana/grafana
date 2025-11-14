@@ -206,6 +206,8 @@ Common settings in the [built-in core data sources](../../datasources/#built-in-
 | ------------------------------- | ------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `tlsAuth`                       | boolean | _HTTP\*_, MySQL                                                  | Enable TLS authentication using client cert configured in secure JSON data                                                                                                                                                                                                                    |
 | `tlsAuthWithCACert`             | boolean | _HTTP\*_, MySQL, PostgreSQL                                      | Enable TLS authentication using CA cert                                                                                                                                                                                                                                                       |
+| `tlsClientCertFile`             | string  | _HTTP\*_ , MySQL, PostgreSQL, MSSQL                               | Path to a client certificate file. When set together with `tlsClientKeyFile`, Grafana reloads the certificate for every request to allow mTLS certificate rotation without restarting Grafana.                                                                                               |
+| `tlsClientKeyFile`              | string  | _HTTP\*_ , MySQL, PostgreSQL, MSSQL                               | Path to a client key file. Use with `tlsClientCertFile`; Grafana reloads both on each request enabling seamless mTLS client cert/key rotation.                                                                                                                                                |
 | `tlsSkipVerify`                 | boolean | _HTTP\*_, MySQL, PostgreSQL, MSSQL                               | Controls whether a client verifies the server's certificate chain and host name.                                                                                                                                                                                                              |
 | `serverName`                    | string  | _HTTP\*_, MSSQL                                                  | Optional. Controls the server name used for certificate common name/subject alternative name verification. Defaults to using the data source URL.                                                                                                                                             |
 | `timeout`                       | string  | _HTTP\*_                                                         | Request timeout in seconds. Overrides `dataproxy.timeout` option                                                                                                                                                                                                                              |
@@ -262,6 +264,10 @@ Data sources tagged with _HTTP\*_ communicate using the HTTP protocol, which inc
 {{< /admonition >}}
 
 For examples of specific data sources' JSON data, refer to that [data source's documentation](../../datasources/).
+
+{{< admonition type="note" >}}
+To enable dynamic mTLS client certificate rotation (for example with cert-manager on Kubernetes), set both `tlsClientCertFile` and `tlsClientKeyFile` in `jsonData`. Grafana then reloads the client certificate and key on every request, so you don't need to restart Grafana when certificates rotate.
+{{< /admonition >}}
 
 #### Secure JSON data
 
