@@ -4378,8 +4378,6 @@
       "next-button": "İleri",
       "save-button": "Kaydet"
     },
-    "page-content": "Korelasyonları etkinleştirmek için Grafana yapılandırmasına ekleyin:",
-    "page-heading": "Korelasyonlar devre dışı bırakıldı",
     "query-editor": {
       "control-rules": "Seçilen hedef veri kaynağı bir sorgu düzenleyici dışa aktarmalıdır.",
       "data-source-text": "Lütfen önce bir hedef veri kaynağı seçin.",
@@ -6750,9 +6748,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Hata hakkında daha fazla bilgi"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "CSV veya elektronik tablo ekle"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Adobe Analytics veri kaynağı",
@@ -7470,6 +7465,7 @@
       "label-resource-attributes": "Kaynak öznitelikleri",
       "label-span-attributes": "Zaman aralığı öznitelikleri",
       "label-stack-trace": "Yığın izleme",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Alt Öge Sayısı:",
@@ -7478,8 +7474,7 @@
           "start-time": "Başlangıç Tarihi:"
         }
       },
-      "share-span": "Paylaş",
-      "warnings": "Uyarılar"
+      "share-span": "Paylaş"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Maksimum zaman aralığı işlecini seçin",
@@ -11762,6 +11757,11 @@
       "path-description": "Depoya giden yerel dosya sistemi yolu",
       "path-label": "Depo Yolu",
       "path-required": "Depo yolu gereklidir"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {

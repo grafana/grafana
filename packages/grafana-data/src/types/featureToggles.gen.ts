@@ -50,11 +50,6 @@ export interface FeatureToggles {
   */
   storage?: boolean;
   /**
-  * Correlations page
-  * @default true
-  */
-  correlations?: boolean;
-  /**
   * Allow elements nesting
   */
   canvasPanelNesting?: boolean;
@@ -350,6 +345,10 @@ export interface FeatureToggles {
   */
   alertingProvenanceLockWrites?: boolean;
   /**
+  * Enables the UI to use certain backend-side filters
+  */
+  alertingUIUseBackendFilters?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
   alertmanagerRemotePrimary?: boolean;
@@ -411,10 +410,6 @@ export interface FeatureToggles {
   * @default true
   */
   logRowsPopoverMenu?: boolean;
-  /**
-  * Disables passing host environment variable to plugin processes
-  */
-  pluginsSkipHostEnvVars?: boolean;
   /**
   * Enables shared crosshair in table panel
   */
@@ -839,10 +834,6 @@ export interface FeatureToggles {
   */
   teamHttpHeadersTempo?: boolean;
   /**
-  * Use new **Combobox** component for template variables
-  */
-  templateVariablesUsesCombobox?: boolean;
-  /**
   * Enables Advisor app
   */
   grafanaAdvisor?: boolean;
@@ -1186,6 +1177,11 @@ export interface FeatureToggles {
   */
   newGauge?: boolean;
   /**
+  * Enable new visualization suggestions
+  * @default false
+  */
+  newVizSuggestions?: boolean;
+  /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
   */
@@ -1226,4 +1222,9 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesAnnotations?: boolean;
+  /**
+  * Enables http proxy settings for aws datasources
+  * @default false
+  */
+  awsDatasourcesHttpProxy?: boolean;
 }
