@@ -624,6 +624,10 @@ type GrafanaOpts struct {
 	APIServerRuntimeConfig                string
 	DisableProvisioningControllers        bool
 
+	// Allow creating grafana dir beforehand
+	Dir     string
+	DirPath string
+
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType
 
