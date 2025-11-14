@@ -2437,7 +2437,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:12.4.0-pre"
     "@grafana/i18n": "npm:12.4.0-pre"
     "@grafana/plugin-configs": "npm:12.4.0-pre"
-    "@grafana/plugin-ui": "npm:^0.10.10"
+    "@grafana/plugin-ui": "npm:^0.11.0"
     "@grafana/runtime": "npm:12.4.0-pre"
     "@grafana/schema": "npm:12.4.0-pre"
     "@grafana/ui": "npm:12.4.0-pre"
@@ -2483,7 +2483,7 @@ __metadata:
     "@grafana/data": "npm:12.4.0-pre"
     "@grafana/e2e-selectors": "npm:12.4.0-pre"
     "@grafana/plugin-configs": "npm:12.4.0-pre"
-    "@grafana/plugin-ui": "npm:^0.10.10"
+    "@grafana/plugin-ui": "npm:^0.11.0"
     "@grafana/runtime": "npm:12.4.0-pre"
     "@grafana/sql": "npm:12.4.0-pre"
     "@grafana/ui": "npm:12.4.0-pre"
@@ -2597,7 +2597,7 @@ __metadata:
     "@grafana/data": "npm:12.4.0-pre"
     "@grafana/e2e-selectors": "npm:12.4.0-pre"
     "@grafana/plugin-configs": "npm:12.4.0-pre"
-    "@grafana/plugin-ui": "npm:^0.10.10"
+    "@grafana/plugin-ui": "npm:^0.11.0"
     "@grafana/runtime": "npm:12.4.0-pre"
     "@grafana/schema": "npm:12.4.0-pre"
     "@grafana/ui": "npm:12.4.0-pre"
@@ -2641,7 +2641,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
-    "@grafana/plugin-ui": "npm:^0.10.10"
+    "@grafana/plugin-ui": "npm:^0.11.0"
     "@grafana/runtime": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.1"
@@ -2728,7 +2728,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:12.4.0-pre"
     "@grafana/i18n": "npm:12.4.0-pre"
     "@grafana/plugin-configs": "npm:12.4.0-pre"
-    "@grafana/plugin-ui": "npm:^0.10.10"
+    "@grafana/plugin-ui": "npm:^0.11.0"
     "@grafana/runtime": "npm:12.4.0-pre"
     "@grafana/sql": "npm:12.4.0-pre"
     "@grafana/ui": "npm:12.4.0-pre"
@@ -2760,7 +2760,7 @@ __metadata:
     "@grafana/data": "npm:12.4.0-pre"
     "@grafana/e2e-selectors": "npm:12.4.0-pre"
     "@grafana/plugin-configs": "npm:12.4.0-pre"
-    "@grafana/plugin-ui": "npm:^0.10.10"
+    "@grafana/plugin-ui": "npm:^0.11.0"
     "@grafana/runtime": "npm:12.4.0-pre"
     "@grafana/sql": "npm:12.4.0-pre"
     "@grafana/ui": "npm:12.4.0-pre"
@@ -2866,7 +2866,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:12.4.0-pre"
     "@grafana/google-sdk": "npm:0.3.5"
     "@grafana/plugin-configs": "npm:12.4.0-pre"
-    "@grafana/plugin-ui": "npm:^0.10.10"
+    "@grafana/plugin-ui": "npm:^0.11.0"
     "@grafana/runtime": "npm:12.4.0-pre"
     "@grafana/schema": "npm:12.4.0-pre"
     "@grafana/ui": "npm:12.4.0-pre"
@@ -2915,11 +2915,11 @@ __metadata:
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "npm:12.4.0-pre"
-    "@grafana/plugin-ui": "npm:^0.10.10"
+    "@grafana/plugin-ui": "npm:^0.11.0"
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/ui": "workspace:*"
-    "@lezer/common": "npm:1.2.3"
+    "@lezer/common": "npm:1.3.0"
     "@lezer/lr": "npm:1.4.3"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
@@ -2973,7 +2973,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
-    "@grafana/plugin-ui": "npm:^0.10.10"
+    "@grafana/plugin-ui": "npm:^0.11.0"
     "@grafana/runtime": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.1"
@@ -3130,7 +3130,7 @@ __metadata:
     history: "npm:4.10.1"
     lodash: "npm:4.17.21"
     marked: "npm:16.3.0"
-    marked-mangle: "npm:1.1.11"
+    marked-mangle: "npm:1.1.12"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.47"
     ol: "npm:10.6.1"
@@ -3379,7 +3379,7 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:12.4.0-pre"
     "@grafana/e2e-selectors": "npm:12.4.0-pre"
-    "@grafana/plugin-ui": "npm:^0.10.10"
+    "@grafana/plugin-ui": "npm:^0.11.0"
     "@grafana/runtime": "npm:12.4.0-pre"
     "@grafana/schema": "npm:12.4.0-pre"
     "@grafana/ui": "npm:12.4.0-pre"
@@ -3452,34 +3452,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:^0.10.10":
-  version: 0.10.10
-  resolution: "@grafana/plugin-ui@npm:0.10.10"
-  dependencies:
-    "@emotion/css": "npm:^11.11.2"
-    "@hello-pangea/dnd": "npm:^17.0.0"
-    "@react-awesome-query-builder/ui": "npm:^6.6.4"
-    "@types/prismjs": "npm:^1.26.4"
-    lodash: "npm:^4.17.21"
-    prismjs: "npm:^1.30.0"
-    react-calendar: "npm:^4.8.0"
-    react-popper-tooltip: "npm:^4.4.2"
-    react-use: "npm:^17.3.1"
-    react-virtualized-auto-sizer: "npm:^1.0.6"
-    sql-formatter-plus: "npm:^1.3.6"
-    uuid: "npm:^11.0.0"
-  peerDependencies:
-    "@grafana/data": ">=10.4.0"
-    "@grafana/e2e-selectors": ">=10.4.0"
-    "@grafana/runtime": ">=10.4.0"
-    "@grafana/ui": ">=10.4.0"
-    react: ^18.2.0
-    react-dom: ^18.2.0
-    rxjs: ^7.8.1
-  checksum: 10/69a663e07ba28c42e5ea1f884d6e83a60b5324a30b3a96b3b0c86c56c44c26332431d51f564700162ab06a031d27126d5f86e3fdc9931d48289649bae61cbe1c
-  languageName: node
-  linkType: hard
-
 "@grafana/plugin-ui@npm:^0.11.0, @grafana/plugin-ui@npm:^0.11.1":
   version: 0.11.1
   resolution: "@grafana/plugin-ui@npm:0.11.1"
@@ -3517,14 +3489,14 @@ __metadata:
     "@grafana/data": "npm:12.4.0-pre"
     "@grafana/e2e-selectors": "npm:12.4.0-pre"
     "@grafana/i18n": "npm:12.4.0-pre"
-    "@grafana/plugin-ui": "npm:^0.10.10"
+    "@grafana/plugin-ui": "npm:^0.11.0"
     "@grafana/runtime": "npm:12.4.0-pre"
     "@grafana/schema": "npm:12.4.0-pre"
     "@grafana/ui": "npm:12.4.0-pre"
     "@hello-pangea/dnd": "npm:18.0.1"
     "@leeoniya/ufuzzy": "npm:1.0.19"
-    "@lezer/common": "npm:1.2.3"
-    "@lezer/highlight": "npm:1.2.1"
+    "@lezer/common": "npm:1.3.0"
+    "@lezer/highlight": "npm:1.2.3"
     "@lezer/lr": "npm:1.4.3"
     "@prometheus-io/lezer-promql": "npm:0.305.0"
     "@reduxjs/toolkit": "npm:2.9.0"
@@ -3721,7 +3693,7 @@ __metadata:
     "@grafana/data": "npm:12.4.0-pre"
     "@grafana/e2e-selectors": "npm:12.4.0-pre"
     "@grafana/i18n": "npm:12.4.0-pre"
-    "@grafana/plugin-ui": "npm:^0.10.10"
+    "@grafana/plugin-ui": "npm:^0.11.0"
     "@grafana/runtime": "npm:12.4.0-pre"
     "@grafana/ui": "npm:12.4.0-pre"
     "@react-awesome-query-builder/ui": "npm:6.6.15"
@@ -5205,19 +5177,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/common@npm:1.2.3, @lezer/common@npm:^1.0.0":
-  version: 1.2.3
-  resolution: "@lezer/common@npm:1.2.3"
-  checksum: 10/dad24e353e4e67d88b203191361ca1dff26c01c2b7b4ae829b668a1d115929334d077217367683e39180c0556510ed2066ea8ddba2b079be7c08a7152208cc87
+"@lezer/common@npm:1.3.0, @lezer/common@npm:^1.0.0, @lezer/common@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "@lezer/common@npm:1.3.0"
+  checksum: 10/8e195a8e426bc18d4339b3f2a1a7ad39c3b2cfa740c7108657a241985f63bdee5255a5f5cf8d863b878881744288bcb679d16170f0e5bcebb141188b53cfd8c0
   languageName: node
   linkType: hard
 
-"@lezer/highlight@npm:1.2.1":
-  version: 1.2.1
-  resolution: "@lezer/highlight@npm:1.2.1"
+"@lezer/highlight@npm:1.2.3":
+  version: 1.2.3
+  resolution: "@lezer/highlight@npm:1.2.3"
   dependencies:
-    "@lezer/common": "npm:^1.0.0"
-  checksum: 10/fec3082419ee87fb265039b680fbac6796f862d8e3042dcb860e8c5a34291503a74927302b568ff1a626f0d2b5cf8dae02a51cfd200084eb329e5fd1236c3163
+    "@lezer/common": "npm:^1.3.0"
+  checksum: 10/8f787d464f8a036f117a0b23e73ac034d224a57d72501c6559089098a28f127c9e495b90ac7d132acc86199e0b64d4c038f75f9293a37c7c61add52fa1acdb4e
   languageName: node
   linkType: hard
 
@@ -18922,8 +18894,8 @@ __metadata:
     "@hello-pangea/dnd": "npm:18.0.1"
     "@kusto/monaco-kusto": "npm:^10.0.0"
     "@leeoniya/ufuzzy": "npm:1.0.19"
-    "@lezer/common": "npm:1.2.3"
-    "@lezer/highlight": "npm:1.2.1"
+    "@lezer/common": "npm:1.3.0"
+    "@lezer/highlight": "npm:1.2.3"
     "@lezer/lr": "npm:1.4.3"
     "@locker/near-membrane-dom": "npm:0.14.0"
     "@locker/near-membrane-shared": "npm:0.14.0"
@@ -22090,7 +22062,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"js-yaml@npm:4.1.0, js-yaml@npm:=4.1.0, js-yaml@npm:^4.1.0":
+"js-yaml@npm:4.1.0, js-yaml@npm:=4.1.0":
   version: 4.1.0
   resolution: "js-yaml@npm:4.1.0"
   dependencies:
@@ -22110,6 +22082,17 @@ __metadata:
   bin:
     js-yaml: bin/js-yaml.js
   checksum: 10/9e22d80b4d0105b9899135365f746d47466ed53ef4223c529b3c0f7a39907743fdbd3c4379f94f1106f02755b5e90b2faaf84801a891135544e1ea475d1a1379
+  languageName: node
+  linkType: hard
+
+"js-yaml@npm:^4.1.0":
+  version: 4.1.1
+  resolution: "js-yaml@npm:4.1.1"
+  dependencies:
+    argparse: "npm:^2.0.1"
+  bin:
+    js-yaml: bin/js-yaml.js
+  checksum: 10/a52d0519f0f4ef5b4adc1cde466cb54c50d56e2b4a983b9d5c9c0f2f99462047007a6274d7e95617a21d3c91fde3ee6115536ed70991cd645ba8521058b78f77
   languageName: node
   linkType: hard
 
@@ -23427,12 +23410,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked-mangle@npm:1.1.11":
-  version: 1.1.11
-  resolution: "marked-mangle@npm:1.1.11"
+"marked-mangle@npm:1.1.12":
+  version: 1.1.12
+  resolution: "marked-mangle@npm:1.1.12"
   peerDependencies:
-    marked: ">=4 <17"
-  checksum: 10/e2872cbe62dc60347eaef2494049a3fb65bcef3f1097407dd8e3f946856085d3ce05b516ba0d2307cbf91019fd38ad25704200c9dc601a0da29d64c76c803027
+    marked: ">=4 <18"
+  checksum: 10/3340af16fb4247142a6cb803e89a8e1650f2f4878da0d05344dd80780abd575288015e3f9ff831e075a0b09cc5947fce39fd68bcdce2fc8ed2f727a603d78ada
   languageName: node
   linkType: hard
 
@@ -24333,11 +24316,11 @@ __metadata:
   linkType: hard
 
 "nanoid@npm:^5.0.9":
-  version: 5.1.5
-  resolution: "nanoid@npm:5.1.5"
+  version: 5.1.6
+  resolution: "nanoid@npm:5.1.6"
   bin:
     nanoid: bin/nanoid.js
-  checksum: 10/6de2d006b51c983be385ef7ee285f7f2a57bd96f8c0ca881c4111461644bd81fafc2544f8e07cb834ca0f3e0f3f676c1fe78052183f008b0809efe6e273119f5
+  checksum: 10/4109dbcf596d7f297a9b42f459b8f01694a03ebbdd2f41408d963ad54e5ec7234cbe7b4acad137751f31add11bb4fb3415a3e688082516745812811f05570014
   languageName: node
   linkType: hard
 
@@ -25326,14 +25309,14 @@ __metadata:
   linkType: hard
 
 "ol-mapbox-style@npm:^13.0.1":
-  version: 13.1.0
-  resolution: "ol-mapbox-style@npm:13.1.0"
+  version: 13.1.1
+  resolution: "ol-mapbox-style@npm:13.1.1"
   dependencies:
     "@maplibre/maplibre-gl-style-spec": "npm:^23.1.0"
     mapbox-to-css-font: "npm:^3.2.0"
   peerDependencies:
     ol: "*"
-  checksum: 10/a6dba04dcfc9e0344fed9ad1a76b875eb1a1286d2b6c0f9d9d6004bb5376227fa7dee15bbe38966429ab479bec3109b39e92541a20e0e175e8205cc78c039ed2
+  checksum: 10/9182bebfee63881465a9dbeecaeab361b70f4fe3abf406d755adde02cf50c765b6e5de072716e627b777ffb2b98fc72dde12bee470996139438a6b1133c370f3
   languageName: node
   linkType: hard
 
