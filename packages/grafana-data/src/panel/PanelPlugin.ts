@@ -363,7 +363,7 @@ export class PanelPlugin<
   }
 
   /**
-   * @deprecated use setSuggestionsHandler
+   * @deprecated use VisualizationSuggestionsSupplierFn
    */
   setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier): PanelPlugin<TOptions, TFieldConfigOptions>;
   /**
