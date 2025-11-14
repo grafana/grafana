@@ -1239,6 +1239,10 @@ func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.
 	}
 }
 
+func (b *kvStorageBackend) updateLastImportTime(ctx, now time.Time) error {
+	return nil
+}
+
 func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
 	// TODO cross-node lock
 	err := b.bulkLock.Start(setting.Collection)
