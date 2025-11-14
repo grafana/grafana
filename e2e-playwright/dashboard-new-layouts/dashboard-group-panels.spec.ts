@@ -538,13 +538,13 @@ test.describe(
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
       ).toBeVisible();
-      
+
       // edit row title to a non-default and click away to trigger onBlur
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput)
         .fill('Test row 2');
       await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
-      
+
       // clear the title input to simulate no title and click away to trigger onBlur
       await dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('Test row 2')).click();
       await dashboardPage
@@ -911,7 +911,7 @@ test.describe(
         .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput)
         .fill('');
       await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click();
-      
+
       // title should be set to a default name
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab'))).toBeVisible();
 
