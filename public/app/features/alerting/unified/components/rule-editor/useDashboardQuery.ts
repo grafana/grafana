@@ -17,6 +17,8 @@ export interface UnifiedDashboardDTO {
     title: string;
     type: string;
     collapsed?: boolean;
+    // this is only used for v1 dashboards, because in v2 there is not concept of panel.panels,
+    // and rows are determined by the layout mode
     rows?: PanelModel[];
   }>;
   title: string;
