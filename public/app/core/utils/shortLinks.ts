@@ -33,15 +33,16 @@ function getRelativeURLPath(url: string) {
   return path.startsWith('/') ? path.substring(1, path.length) : path;
 }
 
-// Memoized legacy API call - preserves original behavior
-const createShortLinkLegacy = memoizeOne(async (path: string): Promise<string> => {
+const createShortLinkLegacy = async (path: string): Promise<string> => {
   const shortLink = await getBackendSrv().post(`/api/short-urls`, {
     path: getRelativeURLPath(path),
   });
   return shortLink.url;
-});
+};
 
-export const createShortLink = async function (path: string) {
+// Memoized API call, to not re-execute the same request multiple times
+// this function creates a shortURL using the legacy or the new k8s api depending on the feature toggle
+export const createShortLink = memoizeOne(async (path: string): Promise<string> => {
   try {
     if (config.featureToggles.useKubernetesShortURLsAPI) {
       // Use RTK API - it handles caching/failures/retries automatically
@@ -69,7 +70,6 @@ export const createShortLink = async function (path: string) {
 
       throw new Error('Failed to create short URL');
     } else {
-      // Old API - use memoized function (preserves original behavior)
       return await createShortLinkLegacy(path);
     }
   } catch (err) {
@@ -77,7 +77,7 @@ export const createShortLink = async function (path: string) {
     dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
     throw err; // Re-throw so callers know it failed
   }
-};
+});
 
 /**
  * Creates a ClipboardItem for the shortened link. This is used due to clipboard issues in Safari after making async calls.
