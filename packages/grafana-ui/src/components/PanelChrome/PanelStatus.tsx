@@ -31,17 +31,15 @@ export function PanelStatus({ message, onClick, ariaLabel = 'status' }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { headerHeight, padding } = theme.components.panel;
-
   return {
     buttonStyles: css({
       label: 'panel-header-state-button',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: theme.spacing(padding),
-      width: theme.spacing(headerHeight),
-      height: theme.spacing(headerHeight),
+      padding: theme.spacing(1),
+      width: theme.spacing(theme.components.height.md),
+      height: theme.spacing(theme.components.height.md),
       borderRadius: theme.shape.radius.default,
     }),
   };

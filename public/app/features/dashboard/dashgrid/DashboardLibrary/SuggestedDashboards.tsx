@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
@@ -12,7 +12,14 @@ import { PluginDashboard } from 'app/types/plugins';
 import { DashboardCard } from './DashboardCard';
 import { MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
 import { fetchCommunityDashboards, fetchProvisionedDashboards } from './api/dashboardLibraryApi';
-import { DashboardLibraryInteractions } from './interactions';
+import {
+  CONTENT_KINDS,
+  CREATION_ORIGINS,
+  DashboardLibraryInteractions,
+  DISCOVERY_METHODS,
+  EVENT_LOCATIONS,
+  SOURCE_ENTRY_POINTS,
+} from './interactions';
 import { GnetDashboard } from './types';
 import {
   getThumbnailUrl,
@@ -44,6 +51,7 @@ const INCLUDE_LOGO = true;
 
 export const SuggestedDashboards = ({ datasourceUid }: Props) => {
   const styles = useStyles2(getStyles);
+  const hasTrackedLoaded = useRef(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const showLibraryModal = searchParams.get('dashboardLibraryModal') === 'open';
 
@@ -144,22 +152,24 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
   }, [result, loading]);
 
   // Track analytics only once on first successful load
-  const hasTrackedRef = useRef(false);
   useEffect(() => {
-    if (!loading && !hasTrackedRef.current && result && result.dashboards.length > 0) {
-      const contentKinds: Array<'datasource_dashboard' | 'community_dashboard'> = [
+    if (!loading && !hasTrackedLoaded.current && result && result.dashboards.length > 0) {
+      const contentKinds = [
         ...new Set(
-          result.dashboards.map((m) => (m.type === 'provisioned' ? 'datasource_dashboard' : 'community_dashboard'))
+          result.dashboards.map((m) =>
+            m.type === 'provisioned' ? CONTENT_KINDS.DATASOURCE_DASHBOARD : CONTENT_KINDS.COMMUNITY_DASHBOARD
+          )
         ),
       ];
+
       DashboardLibraryInteractions.loaded({
         numberOfItems: result.dashboards.length,
         contentKinds,
         datasourceTypes: [datasourceType],
-        sourceEntryPoint: 'datasource_page',
-        eventLocation: 'empty_dashboard',
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+        eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
       });
-      hasTrackedRef.current = true;
+      hasTrackedLoaded.current = true;
     }
   }, [loading, result, datasourceType]);
 
@@ -198,12 +208,13 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
     }
 
     DashboardLibraryInteractions.itemClicked({
-      contentKind: 'datasource_dashboard',
+      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
       datasourceTypes: [ds.type],
       libraryItemId: dashboard.uid,
       libraryItemTitle: dashboard.title,
-      sourceEntryPoint: 'datasource_page',
-      eventLocation: 'empty_dashboard',
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+      eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+      discoveryMethod: DISCOVERY_METHODS.BROWSE,
     });
 
     // Navigate to template route (existing flow)
@@ -212,9 +223,11 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
       title: dashboard.title || 'Template',
       pluginId: dashboard.pluginId,
       path: dashboard.path,
-      sourceEntryPoint: 'datasource_page',
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       libraryItemId: dashboard.uid,
-      creationOrigin: 'dashboard_library_datasource_dashboard',
+      creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_DATASOURCE_DASHBOARD,
+      eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
     });
 
     locationService.push(`/dashboard/template?${params.toString()}`);
@@ -230,11 +243,22 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
       return;
     }
 
+    // Track item click
+    DashboardLibraryInteractions.itemClicked({
+      contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+      datasourceTypes: [ds.type],
+      libraryItemId: String(dashboard.id),
+      libraryItemTitle: dashboard.name,
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+      eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+      discoveryMethod: DISCOVERY_METHODS.BROWSE,
+    });
+
     onUseCommunityDashboard({
       dashboard,
       datasourceUid,
       datasourceType: ds.type,
-      eventLocation: 'empty_dashboard',
+      eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
       onShowMapping: onShowMapping,
     });
   };

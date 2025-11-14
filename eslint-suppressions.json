@@ -237,7 +237,7 @@
   },
   "packages/grafana-data/src/types/panel.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 13
+      "count": 11
     }
   },
   "packages/grafana-data/src/types/plugin.ts": {
@@ -602,30 +602,12 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/DataSourceSettings/AlertingSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "packages/grafana-ui/src/components/DataSourceSettings/CustomHeadersSettings.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
     },
-    "no-restricted-syntax": {
-      "count": 3
-    },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/DataSourceSettings/SecureSocksProxySettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
-  "packages/grafana-ui/src/components/DataSourceSettings/TLSAuthSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "packages/grafana-ui/src/components/DataSourceSettings/types.ts": {
@@ -744,11 +726,6 @@
   },
   "packages/grafana-ui/src/components/MatchersUI/fieldMatchersUI.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Menu/Menu.story.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -1912,26 +1889,6 @@
       "count": 1
     }
   },
-  "public/app/features/canvas/runtime/element.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/canvas/runtime/frame.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/canvas/runtime/root.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/canvas/runtime/scene.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/commandPalette/actions/scopeActions.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 4
@@ -2025,11 +1982,6 @@
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
     },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/pages/DashboardScenePageStateManager.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
@@ -2273,10 +2225,10 @@
   },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 4
+      "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 3
+      "count": 1
     }
   },
   "public/app/features/dashboard/components/AnnotationSettings/AnnotationSettingsEdit.tsx": {
@@ -2360,11 +2312,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor.tsx": {
     "@grafana/no-aria-label-selectors": {
       "count": 1
@@ -2373,14 +2320,6 @@
       "count": 1
     },
     "no-restricted-syntax": {
-      "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/PanelEditor/OptionsPaneOptions.test.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -4546,16 +4485,6 @@
     }
   },
   "public/app/plugins/panel/canvas/CanvasPanel.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/canvas/components/connections/Connections.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/canvas/components/connections/Connections2.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }

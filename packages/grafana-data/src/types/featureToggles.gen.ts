@@ -50,11 +50,6 @@ export interface FeatureToggles {
   */
   storage?: boolean;
   /**
-  * Correlations page
-  * @default true
-  */
-  correlations?: boolean;
-  /**
   * Allow elements nesting
   */
   canvasPanelNesting?: boolean;
@@ -83,10 +78,6 @@ export interface FeatureToggles {
   * Rule backtesting API for alerting
   */
   alertingBacktesting?: boolean;
-  /**
-  * Enables drag and drop for CSV and Excel files
-  */
-  editPanelCSVDragAndDrop?: boolean;
   /**
   * Allow datasource to provide custom UI for context view
   * @default true
@@ -354,6 +345,10 @@ export interface FeatureToggles {
   */
   alertingProvenanceLockWrites?: boolean;
   /**
+  * Enables the UI to use certain backend-side filters
+  */
+  alertingUIUseBackendFilters?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
   alertmanagerRemotePrimary?: boolean;
@@ -362,10 +357,6 @@ export interface FeatureToggles {
   * @default true
   */
   annotationPermissionUpdate?: boolean;
-  /**
-  * Make sure extracted field names are unique in the dataframe
-  */
-  extractFieldsNameDeduplication?: boolean;
   /**
   * Enables dashboard rendering using Scenes for viewer roles
   * @default true
@@ -419,10 +410,6 @@ export interface FeatureToggles {
   * @default true
   */
   logRowsPopoverMenu?: boolean;
-  /**
-  * Disables passing host environment variable to plugin processes
-  */
-  pluginsSkipHostEnvVars?: boolean;
   /**
   * Enables shared crosshair in table panel
   */
@@ -508,11 +495,6 @@ export interface FeatureToggles {
   * @default true
   */
   newPDFRendering?: boolean;
-  /**
-  * Use TLS-enabled memcached in the enterprise caching feature
-  * @default true
-  */
-  tlsMemcached?: boolean;
   /**
   * Enable grafana's embedded kube-aggregator
   */
@@ -852,10 +834,6 @@ export interface FeatureToggles {
   */
   teamHttpHeadersTempo?: boolean;
   /**
-  * Use new **Combobox** component for template variables
-  */
-  templateVariablesUsesCombobox?: boolean;
-  /**
   * Enables Advisor app
   */
   grafanaAdvisor?: boolean;
@@ -1127,11 +1105,6 @@ export interface FeatureToggles {
   */
   restrictedPluginApis?: boolean;
   /**
-  * Enable adhoc filter buttons in visualization tooltips
-  * @default true
-  */
-  adhocFiltersInTooltips?: boolean;
-  /**
   * Enable favorite datasources
   */
   favoriteDatasources?: boolean;
@@ -1204,6 +1177,11 @@ export interface FeatureToggles {
   */
   newGauge?: boolean;
   /**
+  * Enable new visualization suggestions
+  * @default false
+  */
+  newVizSuggestions?: boolean;
+  /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
   */
@@ -1218,6 +1196,11 @@ export interface FeatureToggles {
   */
   pluginStoreServiceLoading?: boolean;
   /**
+  * Increases panel padding globally
+  * @default false
+  */
+  newPanelPadding?: boolean;
+  /**
   * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
   * @default true
   */
@@ -1231,8 +1214,17 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
+  * Enables Advisor app installer
+  */
+  grafanaAdvisorAppInstaller?: boolean;
+  /**
   * Enables app platform API for annotations
   * @default false
   */
   kubernetesAnnotations?: boolean;
+  /**
+  * Enables http proxy settings for aws datasources
+  * @default false
+  */
+  awsDatasourcesHttpProxy?: boolean;
 }
