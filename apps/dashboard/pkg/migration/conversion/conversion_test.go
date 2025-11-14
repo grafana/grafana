@@ -492,11 +492,11 @@ func TestConversionMetrics(t *testing.T) {
 			}
 
 			if tt.expectAPISuccess && tt.expectMetricsSuccess {
-				require.GreaterOrEqual(t, successTotal, float64(1), "success metric should be incremented")
+				require.Equal(t, float64(1), successTotal, "success metric should be incremented")
 				require.Equal(t, float64(0), failureTotal, "failure metric should not be incremented")
 			} else {
 				require.Equal(t, float64(0), successTotal, "success metric should not be incremented")
-				require.GreaterOrEqual(t, failureTotal, float64(1), "failure metric should be incremented")
+				require.Equal(t, float64(1), failureTotal, "failure metric should be incremented")
 			}
 		})
 	}

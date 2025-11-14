@@ -238,6 +238,6 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 			logger.Debug("Dashboard conversion succeeded", successLogFields...)
 		}
 
-		return err
+		return nil
 	}
 }

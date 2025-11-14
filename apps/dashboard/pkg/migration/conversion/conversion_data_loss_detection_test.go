@@ -852,8 +852,11 @@ func TestDataLossDetectionOnAllInputFiles(t *testing.T) {
 			inputData, err := os.ReadFile(inputFile)
 			require.NoError(t, err, "Failed to read input file")
 
+			// Parse the input dashboard to get its version
+			var rawDash map[string]interface{}
 			err = json.Unmarshal(inputData, &rawDash)
 			require.NoError(t, err, "Failed to unmarshal dashboard JSON")
+
 			// Extract apiVersion
 			apiVersion, ok := rawDash["apiVersion"].(string)
 			require.True(t, ok, "apiVersion not found or not a string")
