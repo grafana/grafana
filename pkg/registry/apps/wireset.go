@@ -22,7 +22,7 @@ var WireSet = wire.NewSet(
 	playlist.RegisterAppInstaller,
 	investigations.RegisterApp,
 	advisor.RegisterApp,
-	plugins.RegisterAppInstaller,
+	plugins.ProvideAppInstaller,
 	shorturl.RegisterAppInstaller,
 	correlations.RegisterAppInstaller,
 	rules.RegisterAppInstaller,

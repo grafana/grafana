@@ -2,16 +2,10 @@ package plugins
 
 import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	restclient "k8s.io/client-go/rest"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"github.com/grafana/grafana-app-sdk/simple"
-	pluginsappapis "github.com/grafana/grafana/apps/plugins/pkg/apis"
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -23,19 +17,9 @@ type PluginsAppInstaller struct {
 	appsdkapiserver.AppInstaller
 }
 
-func RegisterAppInstaller(
-	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
-) (*PluginsAppInstaller, error) {
+func ProvideAppInstaller() (*PluginsAppInstaller, error) {
 	installer := &PluginsAppInstaller{}
-	specificConfig := any(nil)
-	provider := simple.NewAppProvider(pluginsappapis.LocalManifest(), specificConfig, pluginsapp.New)
-	appConfig := app.Config{
-		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
-		ManifestData:   *pluginsappapis.LocalManifest().ManifestData,
-		SpecificConfig: specificConfig,
-	}
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, pluginsappapis.NewGoTypeAssociator())
+	i, err := pluginsapp.ProvideAppInstaller(nil)
 	if err != nil {
 		return nil, err
 	}
