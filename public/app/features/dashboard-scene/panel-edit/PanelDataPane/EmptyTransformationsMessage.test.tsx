@@ -5,7 +5,7 @@ import { standardTransformersRegistry } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
-import { EmptyTransformationsMessage, LegacyEmptyTransformationsMessage } from './EmptyTransformationsMessage';
+import { LegacyEmptyTransformationsMessage, NewEmptyTransformationsMessage } from './EmptyTransformationsMessage';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -41,10 +41,10 @@ describe('EmptyTransformationsMessage', () => {
     });
   });
 
-  describe('EmptyTransformationsMessage', () => {
+  describe('NewEmptyTransformationsMessage', () => {
     it('should render transformation cards when both onGoToQueries and onAddTransformation are provided', () => {
       render(
-        <EmptyTransformationsMessage
+        <NewEmptyTransformationsMessage
           onShowPicker={onShowPicker}
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
@@ -62,7 +62,7 @@ describe('EmptyTransformationsMessage', () => {
     it('should call onShowPicker when "Show more" button is clicked', async () => {
       const user = userEvent.setup();
       render(
-        <EmptyTransformationsMessage
+        <NewEmptyTransformationsMessage
           onShowPicker={onShowPicker}
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
@@ -76,13 +76,13 @@ describe('EmptyTransformationsMessage', () => {
     });
 
     it('should not show SQL transformation card when onGoToQueries is not provided', () => {
-      render(<EmptyTransformationsMessage onShowPicker={onShowPicker} onAddTransformation={onAddTransformation} />);
+      render(<NewEmptyTransformationsMessage onShowPicker={onShowPicker} onAddTransformation={onAddTransformation} />);
 
       expect(screen.queryByText('SQL Expressions')).not.toBeInTheDocument();
     });
 
     it('should not show transformation cards grid when neither onGoToQueries nor onAddTransformation are provided', () => {
-      render(<EmptyTransformationsMessage onShowPicker={onShowPicker} />);
+      render(<NewEmptyTransformationsMessage onShowPicker={onShowPicker} />);
 
       expect(screen.queryByText('SQL Expressions')).not.toBeInTheDocument();
 

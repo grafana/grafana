@@ -54,7 +54,7 @@ export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPick
   );
 }
 
-export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
+export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
   const hasGoToQueries = props.onGoToQueries != null;
   const hasAddTransformation = props.onAddTransformation != null;
 
@@ -116,4 +116,12 @@ export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
       </Stack>
     </Box>
   );
+}
+
+export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
+  if (config.featureToggles.transformationsEmptyPlaceholder) {
+    return <NewEmptyTransformationsMessage {...props} />;
+  }
+
+  return <LegacyEmptyTransformationsMessage onShowPicker={props.onShowPicker} />;
 }
