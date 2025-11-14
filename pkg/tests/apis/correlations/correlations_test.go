@@ -76,7 +76,7 @@ func TestIntegrationCorrelations(t *testing.T) {
 				Type:        correlations.CorrelationType("query"),
 				Config: correlations.CorrelationConfig{
 					Field:  "a",
-					Target: map[string]any{ "test": "hi"},
+					Target: map[string]any{},
 					Transformations: correlations.Transformations{{
 						Type:       "logfmt",
 						Expression: "aaaa",
