@@ -4378,8 +4378,6 @@
       "next-button": "Következő",
       "save-button": "Mentés"
     },
-    "page-content": "A korrelációk engedélyezéséhez adja hozzá a Grafana-konfigurációban:",
-    "page-heading": "A korrelációk le vannak tiltva",
     "query-editor": {
       "control-rules": "A kijelölt céladatforrásnak lekérdezésszerkesztőt kell exportálnia.",
       "data-source-text": "Először jelöljön ki egy céladatforrást.",
@@ -7467,6 +7465,7 @@
       "label-resource-attributes": "Erőforrás-attribútumok",
       "label-span-attributes": "Terjedelemattribútumok",
       "label-stack-trace": "Stack nyomvonala",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Gyermekek száma:",
@@ -7475,8 +7474,7 @@
           "start-time": "Kezdés időpontja:"
         }
       },
-      "share-span": "Megosztás",
-      "warnings": "Figyelmeztetések"
+      "share-span": "Megosztás"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Max. terjedelem operátor kijelölése",

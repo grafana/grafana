@@ -4378,8 +4378,6 @@
       "next-button": "İleri",
       "save-button": "Kaydet"
     },
-    "page-content": "Korelasyonları etkinleştirmek için Grafana yapılandırmasına ekleyin:",
-    "page-heading": "Korelasyonlar devre dışı bırakıldı",
     "query-editor": {
       "control-rules": "Seçilen hedef veri kaynağı bir sorgu düzenleyici dışa aktarmalıdır.",
       "data-source-text": "Lütfen önce bir hedef veri kaynağı seçin.",
@@ -7467,6 +7465,7 @@
       "label-resource-attributes": "Kaynak öznitelikleri",
       "label-span-attributes": "Zaman aralığı öznitelikleri",
       "label-stack-trace": "Yığın izleme",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Alt Öge Sayısı:",
@@ -7475,8 +7474,7 @@
           "start-time": "Başlangıç Tarihi:"
         }
       },
-      "share-span": "Paylaş",
-      "warnings": "Uyarılar"
+      "share-span": "Paylaş"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Maksimum zaman aralığı işlecini seçin",
