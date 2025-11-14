@@ -62,7 +62,6 @@ export const enrichWithInteractionTracking = (
       path: newItem.url ?? newItem.id,
       menuIsDocked: megaMenuDockedState,
       itemIsBookmarked: newItem?.parentItem?.id === 'bookmarks',
-      bookmarkToggleOn: true,
       isNew,
     });
     onClick?.();
