@@ -3130,7 +3130,7 @@ __metadata:
     history: "npm:4.10.1"
     lodash: "npm:4.17.21"
     marked: "npm:16.3.0"
-    marked-mangle: "npm:1.1.11"
+    marked-mangle: "npm:1.1.12"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.47"
     ol: "npm:10.6.1"
@@ -23399,12 +23399,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked-mangle@npm:1.1.11":
-  version: 1.1.11
-  resolution: "marked-mangle@npm:1.1.11"
+"marked-mangle@npm:1.1.12":
+  version: 1.1.12
+  resolution: "marked-mangle@npm:1.1.12"
   peerDependencies:
-    marked: ">=4 <17"
-  checksum: 10/e2872cbe62dc60347eaef2494049a3fb65bcef3f1097407dd8e3f946856085d3ce05b516ba0d2307cbf91019fd38ad25704200c9dc601a0da29d64c76c803027
+    marked: ">=4 <18"
+  checksum: 10/3340af16fb4247142a6cb803e89a8e1650f2f4878da0d05344dd80780abd575288015e3f9ff831e075a0b09cc5947fce39fd68bcdce2fc8ed2f727a603d78ada
   languageName: node
   linkType: hard
 
