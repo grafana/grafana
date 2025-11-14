@@ -475,6 +475,10 @@ This setting applies to `sqlite` only and controls the number of times the syste
 
 Set to `true` to add metrics and tracing for database queries. The default value is `false`.
 
+#### `skip_dashboard_uid_migration_on_startup`
+
+Set to true to skip dashboard UID migrations on startup. Improves startup performance for instances with large numbers of annotations who do not plan to downgrade Grafana. The default value is `false`.
+
 <hr />
 
 ### `[remote_cache]`
