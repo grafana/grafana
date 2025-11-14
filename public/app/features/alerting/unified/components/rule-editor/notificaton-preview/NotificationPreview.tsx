@@ -4,7 +4,7 @@ import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, LoadingPlaceholder, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { AlertQuery, Labels } from 'app/types/unified-alerting-dto';
 
@@ -67,7 +67,9 @@ export const NotificationPreview = ({
   };
 
   useEffectOnce(() => {
-    onPreview();
+    if (!disabled) {
+      onPreview();
+    }
   });
 
   //  Get alert managers's data source information
@@ -102,9 +104,21 @@ export const NotificationPreview = ({
             </Text>
           )}
         </Stack>
-        <Button icon="sync" variant="secondary" type="button" onClick={onPreview} disabled={disabled}>
-          <Trans i18nKey="alerting.notification-preview.preview-routing">Preview routing</Trans>
-        </Button>
+        <Tooltip
+          content={
+            disabled ? (
+              <Trans i18nKey="alerting.notification-preview.disabled-tooltip">
+                You don&apos;t have sufficient permissions to preview
+              </Trans>
+            ) : (
+              ''
+            )
+          }
+        >
+          <Button icon="sync" variant="secondary" type="button" onClick={onPreview} disabled={disabled}>
+            <Trans i18nKey="alerting.notification-preview.preview-routing">Preview routing</Trans>
+          </Button>
+        </Tooltip>
       </Stack>
       {potentialInstances.length > 0 && (
         <Suspense

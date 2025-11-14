@@ -834,17 +834,20 @@ export type CheckSpec = {
     [key: string]: string;
   };
 };
-export type CheckstatusOperatorState = {
+export type CheckOperatorState = {
   /** descriptiveState is an optional more descriptive state field which has no requirements on format */
   descriptiveState?: string;
   /** details contains any extra information that is operator-specific */
   details?: {
-    [key: string]: object;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
   /** lastEvaluation is the ResourceVersion last evaluated */
   lastEvaluation: string;
-  /** state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation. */
-  state: string;
+  /** state describes the state of the lastEvaluation.
+    It is limited to three possible states for machine evaluation. */
+  state: 'success' | 'in_progress' | 'failed';
 };
 export type CheckErrorLink = {
   /** Human readable error message */
@@ -862,7 +865,7 @@ export type CheckReportFailure = {
   /** More information about the failure, not meant to be displayed to the user. Used for LLM suggestions. */
   moreInfo?: string;
   /** Severity of the failure */
-  severity: string;
+  severity: 'high' | 'low';
   /** Step ID that the failure is associated with */
   stepID: string;
 };
@@ -875,23 +878,25 @@ export type CheckReport = {
 export type CheckStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: object;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
-  /** operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
+  /** operatorStates is a map of operator ID to operator state evaluations.
+    Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
   operatorStates?: {
-    [key: string]: CheckstatusOperatorState;
+    [key: string]: CheckOperatorState;
   };
   report: CheckReport;
 };
 export type Check = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
+  apiVersion: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
+  kind: string;
   metadata: ObjectMeta;
-  /** Spec is the spec of the Check */
   spec: CheckSpec;
-  status: CheckStatus;
+  status?: CheckStatus;
 };
 export type ListMeta = {
   /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
@@ -966,37 +971,42 @@ export type CheckTypeSpec = {
   name: string;
   steps: CheckTypeStep[];
 };
-export type CheckTypestatusOperatorState = {
+export type CheckTypeOperatorState = {
   /** descriptiveState is an optional more descriptive state field which has no requirements on format */
   descriptiveState?: string;
   /** details contains any extra information that is operator-specific */
   details?: {
-    [key: string]: object;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
   /** lastEvaluation is the ResourceVersion last evaluated */
   lastEvaluation: string;
-  /** state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation. */
-  state: string;
+  /** state describes the state of the lastEvaluation.
+    It is limited to three possible states for machine evaluation. */
+  state: 'success' | 'in_progress' | 'failed';
 };
 export type CheckTypeStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: object;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
-  /** operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
+  /** operatorStates is a map of operator ID to operator state evaluations.
+    Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
   operatorStates?: {
-    [key: string]: CheckTypestatusOperatorState;
+    [key: string]: CheckTypeOperatorState;
   };
 };
 export type CheckType = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
+  apiVersion: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
+  kind: string;
   metadata: ObjectMeta;
-  /** Spec is the spec of the CheckType */
   spec: CheckTypeSpec;
-  status: CheckTypeStatus;
+  status?: CheckTypeStatus;
 };
 export type CheckTypeList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */

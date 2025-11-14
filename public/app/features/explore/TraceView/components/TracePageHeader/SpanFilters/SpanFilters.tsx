@@ -89,13 +89,6 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
     [search, setSearch]
   );
 
-  const setShowCriticalPathSpansOnly = useCallback(
-    (showCriticalPathSpansOnly: boolean) => {
-      setSearch({ ...search, criticalPathOnly: showCriticalPathSpansOnly });
-    },
-    [search, setSearch]
-  );
-
   if (!trace) {
     return null;
   }
@@ -276,12 +269,10 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           search={search}
           spanFilterMatches={spanFilterMatches}
           setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
-          setShowCriticalPathSpansOnly={setShowCriticalPathSpansOnly}
           setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
           focusedSpanIndexForSearch={focusedSpanIndexForSearch}
           setFocusedSpanIndexForSearch={setFocusedSpanIndexForSearch}
           datasourceType={datasourceType}
-          clear={clear}
           showSpanFilters={showSpanFilters}
         />
       </Collapse>
