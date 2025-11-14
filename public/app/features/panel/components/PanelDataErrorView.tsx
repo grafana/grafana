@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import {
   CoreApp,
+  FieldType,
   getPanelDataSummary,
   GrafanaTheme2,
   PanelDataSummary,
@@ -134,15 +135,15 @@ function getMessageFor(
     return fieldConfig?.defaults.noValue ?? t('panel.panel-data-error-view.no-value.default', 'No data');
   }
 
-  if (needsStringField && !dataSummary.hasStringField) {
+  if (needsStringField && !dataSummary.hasFieldType(FieldType.string)) {
     return t('panel.panel-data-error-view.missing-value.string', 'Data is missing a string field');
   }
 
-  if (needsNumberField && !dataSummary.hasNumberField) {
+  if (needsNumberField && !dataSummary.hasFieldType(FieldType.number)) {
     return t('panel.panel-data-error-view.missing-value.number', 'Data is missing a number field');
   }
 
-  if (needsTimeField && !dataSummary.hasTimeField) {
+  if (needsTimeField && !dataSummary.hasFieldType(FieldType.time)) {
     return t('panel.panel-data-error-view.missing-value.time', 'Data is missing a time field');
   }
 

@@ -8,7 +8,7 @@ import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 import { CandlestickPanel } from './CandlestickPanel';
 import { CandlestickData, getCandlestickFieldsInfo, FieldPickerInfo, prepareCandlestickFields } from './fields';
-import { CandlestickSuggestionsSupplier } from './suggestions';
+import { candlestickSuggestionSupplier } from './suggestions';
 import { defaultCandlestickColors, defaultOptions, Options, VizDisplayMode, ColorStrategy, CandleStyle } from './types';
 
 const numericFieldFilter = (f: Field) => f.type === FieldType.number;
@@ -147,4 +147,4 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(CandlestickPane
     commonOptionsBuilder.addLegendOptions(builder);
   })
   .setDataSupport({ annotations: true, alertStates: true })
-  .setSuggestionsSupplier(new CandlestickSuggestionsSupplier());
+  .setSuggestionsSupplier(candlestickSuggestionSupplier);

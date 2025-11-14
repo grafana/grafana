@@ -3464,6 +3464,14 @@
         "label-negative-y": "Negative Y"
       }
     },
+    "suggestions": {
+      "horizontal": "Horizontal bar chart",
+      "hz-stacked": "Horizontal bar chart - stacked",
+      "hz-stacked-percent": "Horizontal bar chart - stacked by percentage",
+      "vert-stacked": "Bar chart - stacked",
+      "vert-stacked-percent": "Bar chart - stacked by percentage",
+      "vertical": "Bar chart"
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Require space from the right side",
       "gaps-options": {
@@ -3508,6 +3516,10 @@
     },
     "name-show-unfilled-area": "Show unfilled area",
     "name-value-display": "Value display",
+    "suggestions": {
+      "basic": "Bar gauge",
+      "lcd": "Bar gauge - LCD"
+    },
     "value-display-options": {
       "label-hidden": "Hidden",
       "label-text-color": "Text color",
@@ -7784,6 +7796,7 @@
     "suggestions": {
       "arc": "Gauge",
       "circular": "Circular gauge",
+      "no-thresholds": "Gauge - no thresholds",
       "style": {
         "circular": "Glowing",
         "simple": "Simple"
@@ -11026,6 +11039,10 @@
     "pie-chart-type-options": {
       "label-donut": "Donut",
       "label-pie": "Pie"
+    },
+    "suggestions": {
+      "donut": "Donut chart",
+      "pie": "Pie chart"
     }
   },
   "playlist": {
@@ -12951,6 +12968,12 @@
       "label-same-as-value": "Same as Value",
       "label-standard": "Standard"
     },
+    "suggestions": {
+      "stat-color-background": "Stat - color background",
+      "stat-discrete-values": "Stat - discrete values",
+      "stat-discrete-values-color-background": "Stat - discrete values - color background",
+      "stat-single-string": "Stat - single string"
+    },
     "text-alignment-options": {
       "label-auto": "Auto",
       "label-center": "Center"
@@ -13389,6 +13412,16 @@
         "label-never": "Never",
         "label-threshold": "Threshold"
       }
+    },
+    "suggestions": {
+      "area": "Area chart",
+      "area-stacked": "Area chart - stacked",
+      "area-stacked-percentage": "Area chart - stacked by percentage",
+      "bar": "Bar chart",
+      "bar-stacked": "Bar chart - stacked",
+      "bar-stacked-percent": "Bar chart - stacked by percentage",
+      "line": "Line chart",
+      "line-smooth": "Line chart - smooth"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Add timezone",
@@ -14225,7 +14258,11 @@
     "category-x-axis": "X axis",
     "description-x-field": "An increasing numeric value",
     "name-x-field": "X field",
-    "placeholder-x-field": "First numeric value"
+    "placeholder-x-field": "First numeric value",
+    "suggestions": {
+      "default": "Trend",
+      "default-description": "A panel for visualizing trends over dimensions other than time."
+    }
   },
   "upgrade-box": {
     "discovery-text": "You’ve discovered a Pro feature!",

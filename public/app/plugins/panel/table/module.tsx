@@ -1,4 +1,10 @@
-import { PanelPlugin, standardEditorsRegistry, identityOverrideProcessor, FieldConfigProperty } from '@grafana/data';
+import {
+  PanelPlugin,
+  standardEditorsRegistry,
+  identityOverrideProcessor,
+  FieldConfigProperty,
+  VisualizationSuggestionScore,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   defaultTableFieldOptions,
@@ -7,13 +13,13 @@ import {
   TableCellHeight,
   TableCellTooltipPlacement,
 } from '@grafana/schema';
+import icnTablePanelSvg from 'app/plugins/panel/table/img/icn-table-panel.svg';
 
 import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { Options, defaultOptions, FieldConfig } from './panelcfg.gen';
-import { TableSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
@@ -227,4 +233,22 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         defaultValue: defaultOptions?.enablePagination,
       });
   })
-  .setSuggestionsSupplier(new TableSuggestionsSupplier());
+  .setSuggestionsSupplier((dataSummary) => [
+    {
+      // table is best suited to showing many fields with many rows.
+      score:
+        dataSummary.fieldCountMax > 5 && dataSummary.rowCountMax > 50 && !dataSummary.preferredVisualisationType
+          ? VisualizationSuggestionScore.Good
+          : VisualizationSuggestionScore.OK,
+      cardOptions: {
+        previewModifier: (s) => {
+          if (s.fieldConfig && s.fieldConfig.defaults.custom) {
+            s.fieldConfig.defaults.custom.minWidth = 50;
+          }
+        },
+        // If there is no data, suggest table anyway, but use icon instead of real preview
+        // TODO: delete this in once "new" suggestions are fully rolled out
+        imgSrc: dataSummary.fieldCount === 0 ? icnTablePanelSvg : undefined,
+      },
+    },
+  ]);

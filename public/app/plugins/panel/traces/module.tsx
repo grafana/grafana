@@ -1,12 +1,12 @@
 import { PanelPlugin, toOption } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { showDefaultSuggestion } from 'app/features/panel/suggestions/utils';
 
 import { getTraceServiceNames, getTraceSpanNames } from '../../../features/explore/TraceView/utils/tags';
 import { transformDataFrames } from '../../../features/explore/TraceView/utils/transform';
 
 import { TagsEditor } from './TagsEditor';
 import { TracesPanel } from './TracesPanel';
-import { TracesSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin(TracesPanel)
   .setPanelOptions((builder, context) => {
@@ -105,4 +105,4 @@ export const plugin = new PanelPlugin(TracesPanel)
       defaultValue: undefined,
     });
   })
-  .setSuggestionsSupplier(new TracesSuggestionsSupplier());
+  .setSuggestionsSupplier(showDefaultSuggestion((ds) => ds.preferredVisualisationType === 'trace'));

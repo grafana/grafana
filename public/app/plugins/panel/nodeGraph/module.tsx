@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 import { NodeGraphPanel } from './NodeGraphPanel';
 import { ArcOptionsEditor } from './editor/ArcOptionsEditor';
 import { LayoutAlgorithm, Options as NodeGraphOptions } from './panelcfg.gen';
-import { NodeGraphSuggestionsSupplier } from './suggestions';
+import { nodeGraphSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
   .useFieldConfig({
@@ -92,4 +92,4 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
       },
     });
   })
-  .setSuggestionsSupplier(new NodeGraphSuggestionsSupplier());
+  .setSuggestionsSupplier(nodeGraphSuggestionsSupplier);
