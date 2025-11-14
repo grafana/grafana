@@ -87,21 +87,21 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
       case OptionFilter.All:
         if (libraryPanelOptions) {
           // Library Panel options first
-          mainBoxElements.push(libraryPanelOptions.render());
+          mainBoxElements.push(libraryPanelOptions.renderElement());
         }
-        mainBoxElements.push(panelFrameOptions.render());
+        mainBoxElements.push(panelFrameOptions.renderElement());
 
         for (const item of visualizationOptions ?? []) {
-          mainBoxElements.push(item.render());
+          mainBoxElements.push(item.renderElement());
         }
 
         for (const item of justOverrides) {
-          mainBoxElements.push(item.render());
+          mainBoxElements.push(item.renderElement());
         }
         break;
       case OptionFilter.Overrides:
         for (const item of justOverrides) {
-          mainBoxElements.push(item.render());
+          mainBoxElements.push(item.renderElement());
         }
       default:
         break;

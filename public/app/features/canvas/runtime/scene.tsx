@@ -370,7 +370,7 @@ export class Scene {
     }
   };
 
-  render() {
+  renderElement() {
     const hasDataLinks = this.tooltipPayload?.element?.getLinks && this.tooltipPayload.element.getLinks({}).length > 0;
     const hasActions =
       this.tooltipPayload?.element?.options.actions &&
@@ -388,8 +388,8 @@ export class Scene {
 
     const sceneDiv = (
       <>
-        {this.connections.render()}
-        {this.root.render()}
+        {this.connections.renderElement()}
+        {this.root.renderElement()}
         {this.isEditingEnabled && (
           <Portal>
             <CanvasContextMenu
