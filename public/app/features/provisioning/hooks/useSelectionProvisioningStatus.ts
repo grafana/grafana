@@ -12,8 +12,6 @@ import { useSelector } from 'app/types/store';
 import { findItem } from '../../browse-dashboards/state/utils';
 import { DashboardTreeSelection } from '../../browse-dashboards/types';
 
-// TODO: This will soon be remove after bulk action is merged in
-
 // This hook can be remove once searching endpoint returns provisioning status
 // It is used to determine if the selected items are provisioned or not, which is currently missing from the search API
 export function useSelectionProvisioningStatus(
@@ -40,8 +38,6 @@ export function useSelectionProvisioningStatus(
       }),
     []
   );
-
-  // Simplified: removed complex root folder tracking logic
 
   const findItemInState = useCallback(
     (uid: string) => {
