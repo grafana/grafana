@@ -93,8 +93,13 @@ test.use({
 });
 
 test.describe('Panels test: Status History X-axis panning', { tag: ['@panels', '@status-history'] }, () => {
-  test('cursor changes to grab hand over x-axis', async ({ gotoDashboardPage, page }) => {
-    await test.step('Load dashboard and verify cursor changes to grab', async () => {
+  test('x-axis panning functionality', async ({ gotoDashboardPage, page, selectors }) => {
+    let centerX: number;
+    let centerY: number;
+    let initialFromTime: number;
+    let initialToTime: number;
+
+    const dashboardPage = await test.step('Load dashboard and verify cursor changes to grab', async () => {
       const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
 
       const statusHistoryPanel = page.locator('.uplot').first();
@@ -107,23 +112,13 @@ test.describe('Panels test: Status History X-axis panning', { tag: ['@panels', '
 
       const cursorStyle = await xAxis.evaluate((el: HTMLElement) => window.getComputedStyle(el).cursor);
       expect(cursorStyle, 'cursor is grab').toBe('grab');
+
+      return dashboardPage;
     });
-  });
 
-  test('drag right pans backward in time, drag left pans forward', async ({ gotoDashboardPage, page, selectors }) => {
-    let centerX: number;
-    let centerY: number;
-    let initialFromTime: number;
-    let initialToTime: number;
-
-    const dashboardPage = await test.step('Load dashboard and capture initial time range', async () => {
-      const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
-
+    await test.step('Capture initial time range', async () => {
       const statusHistoryPanel = page.locator('.uplot').first();
-      await expect(statusHistoryPanel, 'panel rendered').toBeVisible();
-
       const xAxis = statusHistoryPanel.locator('.u-axis').first();
-      await expect(xAxis, 'x-axis rendered').toBeVisible();
 
       const timePickerButton = dashboardPage.getByGrafanaSelector(selectors.components.TimePicker.openButton);
       await timePickerButton.click();
@@ -145,8 +140,6 @@ test.describe('Panels test: Status History X-axis panning', { tag: ['@panels', '
 
       centerX = axisBox.x + axisBox.width / 2;
       centerY = axisBox.y + axisBox.height / 2;
-
-      return dashboardPage;
     });
 
     await test.step('Drag right pans backward in time', async () => {
