@@ -102,7 +102,6 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
 
     const queries = queriesTab.getQueries();
     const existingSqlQuery = findSqlExpression(queries);
-    // const shouldCreateSqlQuery = !existingSqlQuery;
 
     if (!existingSqlQuery) {
       // Create new SQL expression
