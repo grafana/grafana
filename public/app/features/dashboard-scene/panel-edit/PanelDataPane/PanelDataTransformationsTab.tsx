@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -14,7 +14,6 @@ import {
   VizPanel,
   SceneObjectState,
 } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
 import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 import { ExpressionQueryType } from 'app/features/expressions/types';
@@ -26,6 +25,9 @@ import { PanelDataPane } from './PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
+import { findSqlExpression, scrollToQueryRow } from './utils';
+
+const SET_TIMEOUT = 750;
 
 interface PanelDataTransformationsTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -70,18 +72,62 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   const styles = useStyles2(getStyles);
   const sourceData = model.getQueryRunner().useState();
   const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
+
   // Type guard to ensure transformations are DataTransformerConfig[]
-  const transformations: DataTransformerConfig[] = Array.isArray(transformsWrongType)
-    ? transformsWrongType.filter(
-        (t): t is DataTransformerConfig => t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
-      )
-    : [];
+  const transformations = useMemo<DataTransformerConfig[]>(() => {
+    return Array.isArray(transformsWrongType)
+      ? transformsWrongType.filter(
+          (t): t is DataTransformerConfig =>
+            t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
+        )
+      : [];
+  }, [transformsWrongType]);
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
 
   const openDrawer = () => setDrawerOpen(true);
   const closeDrawer = () => setDrawerOpen(false);
+
+  const onGoToQueries = useCallback(() => {
+    const parent = model.parent;
+    if (!(parent instanceof PanelDataPane)) {
+      return;
+    }
+
+    const queriesTab = parent.state.tabs.find((tab) => tab.tabId === TabId.Queries);
+    if (!(queriesTab instanceof PanelDataQueriesTab)) {
+      return;
+    }
+
+    const queries = queriesTab.getQueries();
+    const existingSqlQuery = findSqlExpression(queries);
+    // const shouldCreateSqlQuery = !existingSqlQuery;
+
+    if (!existingSqlQuery) {
+      // Create new SQL expression
+      queriesTab.onAddExpressionOfType(ExpressionQueryType.sql);
+    }
+
+    // Navigate to the Queries tab
+    parent.onChangeTab(queriesTab);
+
+    // Scroll to SQL query after tab renders
+    setTimeout(() => {
+      // If SQL already existed, use it; otherwise find the newly created one
+      const targetRefId = existingSqlQuery?.refId || findSqlExpression(queriesTab.getQueries())?.refId;
+      if (targetRefId) {
+        scrollToQueryRow(targetRefId);
+      }
+    }, SET_TIMEOUT);
+  }, [model]);
+
+  const onAddTransformation = useCallback(
+    (transformationId: string) => {
+      model.onChangeTransformations([...transformations, { id: transformationId, options: {} }]);
+    },
+    [model, transformations]
+  );
 
   if (!data || !sourceData.data) {
     return;
@@ -99,46 +145,10 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
       }}
       isOpen={drawerOpen}
       series={data.series}
-    ></TransformationsDrawer>
+    />
   );
 
   if (transformations.length < 1) {
-    const onGoToQueries = () => {
-      const parent = model.parent;
-      if (!(parent instanceof PanelDataPane)) {
-        return;
-      }
-
-      const queriesTab = parent.state.tabs.find((tab) => tab.tabId === TabId.Queries);
-      if (!(queriesTab instanceof PanelDataQueriesTab)) {
-        return;
-      }
-
-      const existingQueries = queriesTab.getQueries();
-      const sqlQuery = findSqlExpression(existingQueries);
-
-      if (!sqlQuery) {
-        // Create new SQL expression and scroll to it after creation
-        queriesTab.onAddExpressionOfType(ExpressionQueryType.sql);
-      }
-
-      // Navigate to the Queries tab
-      parent.onChangeTab(queriesTab);
-
-      // Scroll to SQL query after tab renders
-      setTimeout(() => {
-        const queries = queriesTab.getQueries();
-        const targetQuery = sqlQuery || findSqlExpression(queries);
-        if (targetQuery) {
-          scrollToQuery(targetQuery.refId);
-        }
-      }, 750);
-    };
-
-    const onAddTransformation = (transformationId: string) => {
-      model.onChangeTransformations([...transformations, { id: transformationId, options: {} }]);
-    };
-
     return (
       <>
         <EmptyTransformationsMessage
@@ -258,28 +268,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginLeft: theme.spacing(2),
   }),
 });
-
-function findSqlExpression(queries: DataQuery[]) {
-  return queries.find((query) => {
-    return typeof query === 'object' && query !== null && 'type' in query && query.type === ExpressionQueryType.sql;
-  });
-}
-
-function scrollToQuery(refId: string) {
-  // Query rows use uniqueId(refId + '_') for their internal id
-  // The aria-controls attribute will be like "A_1" for refId "A"
-  // So we need to search for aria-controls starting with "refId_"
-  const queryRowHeader = document.querySelector(`[aria-controls^="${refId}_"]`);
-
-  if (queryRowHeader) {
-    // Find the parent query row wrapper
-    const queryRow = queryRowHeader.closest('[data-testid="query-editor-row"]');
-
-    if (queryRow instanceof HTMLElement) {
-      queryRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }
-}
 
 interface TransformationsTabProps extends PanelDataTabHeaderProps {
   model: PanelDataTransformationsTab;
