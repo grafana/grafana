@@ -4358,8 +4358,6 @@
       "next-button": "下一步",
       "save-button": "保存"
     },
-    "page-content": "要启用 Correlations，请将其在 Grafana 配置中添加：",
-    "page-heading": "Correlations 已禁用",
     "query-editor": {
       "control-rules": "选定的目标数据源必须导出查询编辑器。",
       "data-source-text": "请首先选择目标数据源。",
@@ -6726,9 +6724,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "有关错误的更多详情"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "添加 csv 或电子表格"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Adobe Analytics 数据源",
@@ -7444,6 +7439,7 @@
       "label-resource-attributes": "资源属性",
       "label-span-attributes": "跨度属性",
       "label-stack-trace": "堆栈跟踪",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "子级计数：",
@@ -7452,8 +7448,7 @@
           "start-time": "开始时间："
         }
       },
-      "share-span": "共享",
-      "warnings": "警告"
+      "share-span": "共享"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "选择最大跨度运算符",
@@ -11709,6 +11704,11 @@
       "path-description": "存储库的本地文件系统路径",
       "path-label": "存储库路径",
       "path-required": "存储库路径为必填项"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {
