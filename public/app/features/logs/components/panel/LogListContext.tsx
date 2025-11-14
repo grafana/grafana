@@ -302,10 +302,8 @@ export const LogListContextProvider = ({
     // 3. Always add LOG_LINE_BODY
     orderedFields.push(LOG_LINE_BODY_FIELD_NAME);
 
-    // 4. Add OTEL_LOG_ATTRIBUTES if it's in OTel fields
-    if (otelDisplayedFields.includes(OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME)) {
-      orderedFields.push(OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME);
-    }
+    // 4. Always add OTEL_LOG_ATTRIBUTES
+    orderedFields.push(OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME);
 
     // 5. Add any other OTel fields that aren't already included
     otelDisplayedFields.forEach((field) => {
@@ -321,12 +319,12 @@ export const LogListContextProvider = ({
     return orderedFields;
   }, [tableDefaultFields, otelDisplayedFields]);
 
-  // OTel displayed fields
+  // Pass default displayed fields (table defaults + OTel defaults) to parent
   useEffect(() => {
-    if (config.featureToggles.otelLogsFormatting && showLogAttributes !== false) {
-      onLogOptionsChange?.('defaultDisplayedFields', otelDisplayedFields);
+    if (defaultDisplayedFields.length > 0) {
+      onLogOptionsChange?.('defaultDisplayedFields', defaultDisplayedFields);
     }
-  }, [onLogOptionsChange, otelDisplayedFields, showLogAttributes]);
+  }, [onLogOptionsChange, defaultDisplayedFields]);
 
   // Set default displayed fields (table defaults + OTel defaults) when displayedFields is empty or missing table defaults
   useEffect(() => {
