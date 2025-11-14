@@ -28,10 +28,12 @@ type RuleFilterConfig = Record<
 type GroupFilterConfig = Record<keyof Pick<RulesFilter, 'namespace' | 'groupName'>, GroupFilterHandler | null>;
 
 export function getGrafanaFilter(filterState: RulesFilter) {
+  const normalizedFilterState = normalizeFilterState(filterState);
+
   const backendFilter: GrafanaPromRulesOptions = {
-    state: filterState.ruleState ? [filterState.ruleState] : [],
-    health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
-    contactPoint: filterState.contactPoint ?? undefined,
+    state: normalizedFilterState.ruleState ? [normalizedFilterState.ruleState] : [],
+    health: normalizedFilterState.ruleHealth ? [normalizedFilterState.ruleHealth] : [],
+    contactPoint: normalizedFilterState.contactPoint ?? undefined,
   };
 
   const grafanaFilterProcessingConfig: RuleFilterConfig = {
@@ -55,13 +57,15 @@ export function getGrafanaFilter(filterState: RulesFilter) {
   return {
     backendFilter,
     frontendFilter: {
-      groupMatches: (group: PromRuleGroupDTO) => groupMatches(group, filterState, grafanaGroupFilterConfig),
-      ruleMatches: (rule: PromRuleDTO) => ruleMatches(rule, filterState, grafanaFilterProcessingConfig),
+      groupMatches: (group: PromRuleGroupDTO) => groupMatches(group, normalizedFilterState, grafanaGroupFilterConfig),
+      ruleMatches: (rule: PromRuleDTO) => ruleMatches(rule, normalizedFilterState, grafanaFilterProcessingConfig),
     },
   };
 }
 
 export function getDatasourceFilter(filterState: RulesFilter) {
+  const normalizedFilterState = normalizeFilterState(filterState);
+
   const dsRuleFilterConfig: RuleFilterConfig = {
     freeFormWords: freeFormFilter,
     ruleName: ruleNameFilter,
@@ -81,8 +85,8 @@ export function getDatasourceFilter(filterState: RulesFilter) {
   };
 
   return {
-    groupMatches: (group: PromRuleGroupDTO) => groupMatches(group, filterState, dsGroupFilterConfig),
-    ruleMatches: (rule: PromRuleDTO) => ruleMatches(rule, filterState, dsRuleFilterConfig),
+    groupMatches: (group: PromRuleGroupDTO) => groupMatches(group, normalizedFilterState, dsGroupFilterConfig),
+    ruleMatches: (rule: PromRuleDTO) => ruleMatches(rule, normalizedFilterState, dsRuleFilterConfig),
   };
 }
 
@@ -319,3 +323,17 @@ const mapDataSourceNamesToUids = memoize(
   },
   { maxSize: 1 }
 );
+
+/**
+ * Normalize filter state for case-insensitive matching
+ * Lowercase free form words, rule name, group name and namespace
+ */
+function normalizeFilterState(filterState: RulesFilter): RulesFilter {
+  return {
+    ...filterState,
+    freeFormWords: filterState.freeFormWords.map((word) => word.toLowerCase()),
+    ruleName: filterState.ruleName?.toLowerCase(),
+    groupName: filterState.groupName?.toLowerCase(),
+    namespace: filterState.namespace?.toLowerCase(),
+  };
+}

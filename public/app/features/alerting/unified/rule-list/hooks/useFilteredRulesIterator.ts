@@ -77,7 +77,6 @@ export function useFilteredRulesIteratorProvider() {
     /* this is the abort controller that allows us to stop an AsyncIterable */
     const abortController = new AbortController();
 
-    const normalizedFilterState = normalizeFilterState(filterState);
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
     const { backendFilter, frontendFilter } = getGrafanaFilter(filterState);
@@ -105,7 +104,7 @@ export function useFilteredRulesIteratorProvider() {
       return { iterable: grafanaRulesGenerator, abortController };
     }
 
-    const { groupMatches, ruleMatches } = getDatasourceFilter(normalizedFilterState);
+    const { groupMatches, ruleMatches } = getDatasourceFilter(filterState);
 
     const dataSourceGenerators: Array<AsyncIterableX<RuleWithOrigin>> = externalRulesSourcesToFetchFrom.map(
       (dataSourceIdentifier) => {
@@ -212,18 +211,5 @@ function mapGrafanaRuleToRuleWithOrigin(
     },
     namespaceName: group.file,
     origin: 'grafana',
-  };
-}
-
-/**
- * Lowercase free form words, rule name, group name and namespace
- */
-function normalizeFilterState(filterState: RulesFilter): RulesFilter {
-  return {
-    ...filterState,
-    freeFormWords: filterState.freeFormWords.map((word) => word.toLowerCase()),
-    ruleName: filterState.ruleName?.toLowerCase(),
-    groupName: filterState.groupName?.toLowerCase(),
-    namespace: filterState.namespace?.toLowerCase(),
   };
 }
