@@ -1,5 +1,5 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/monitor-status/alert-page/
+canonical: https://grafana.com/docs/grafana/latest/alerting/monitor-status/alerts-page/
 title: Alerts overview page
 description: Use the Alert page to assess, prioritize, and take action on alerts quickly in Grafana Cloud.
 weight: 405
