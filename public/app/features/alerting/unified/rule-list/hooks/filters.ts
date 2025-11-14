@@ -33,13 +33,14 @@ export function getGrafanaFilter(filterState: RulesFilter) {
   const useBackendFilters = shouldUseBackendFilters();
 
   // Build title search for backend filtering
-  const titleSearch = useBackendFilters ? buildTitleSearch(normalizedFilterState) : undefined;
+  const titleSearch = buildTitleSearch(normalizedFilterState);
 
   const backendFilter: GrafanaPromRulesOptions = {
     state: normalizedFilterState.ruleState ? [normalizedFilterState.ruleState] : [],
     health: normalizedFilterState.ruleHealth ? [normalizedFilterState.ruleHealth] : [],
     contactPoint: normalizedFilterState.contactPoint ?? undefined,
-    title: titleSearch,
+    title: useBackendFilters ? titleSearch : undefined,
+    type: useBackendFilters ? normalizedFilterState.ruleType : undefined,
   };
 
   const grafanaFilterProcessingConfig: RuleFilterConfig = {
@@ -47,7 +48,7 @@ export function getGrafanaFilter(filterState: RulesFilter) {
     freeFormWords: useBackendFilters ? null : freeFormFilter,
     ruleName: useBackendFilters ? null : ruleNameFilter,
     ruleState: null,
-    ruleType: ruleTypeFilter,
+    ruleType: useBackendFilters ? null : ruleTypeFilter,
     dataSourceNames: dataSourceNamesFilter,
     labels: labelsFilter,
     ruleHealth: null,

@@ -153,8 +153,9 @@ export function hasClientSideFilters(filterState: RulesFilter): boolean {
   const useBackendFilters = shouldUseBackendFilters();
 
   return (
-    // When backend filters are disabled, title search needs client-side filtering
-    (!useBackendFilters && (filterState.freeFormWords.length > 0 || Boolean(filterState.ruleName))) ||
+    // When backend filters are disabled, title search and type filter need client-side filtering
+    (!useBackendFilters &&
+      (filterState.freeFormWords.length > 0 || Boolean(filterState.ruleName) || Boolean(filterState.ruleType))) ||
     // Client-side only filters:
     Boolean(filterState.namespace) ||
     filterState.dataSourceNames.length > 0 ||

@@ -605,6 +605,28 @@ describe('grafana-managed rules', () => {
         expect(frontendFilter.ruleMatches(rule)).toBe(true);
       });
 
+      it('should include ruleType in backend filter when provided', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({ ruleType: PromRuleType.Alerting }));
+
+        expect(backendFilter.type).toBe(PromRuleType.Alerting);
+      });
+
+      it('should not include ruleType in backend filter when not provided', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({}));
+
+        expect(backendFilter.type).toBeUndefined();
+      });
+
+      it('should skip ruleType filtering on frontend when backend filtering is enabled', () => {
+        const alertingRule = mockGrafanaPromAlertingRule({ name: 'Test Alert' });
+        const recordingRule = mockPromRecordingRule({ name: 'Test Recording' });
+
+        const { frontendFilter } = getGrafanaFilter(getFilter({ ruleType: PromRuleType.Alerting }));
+        // Should return true for both because ruleType filter is null (handled by backend)
+        expect(frontendFilter.ruleMatches(alertingRule)).toBe(true);
+        expect(frontendFilter.ruleMatches(recordingRule)).toBe(true);
+      });
+
       it('should still apply other frontend filters', () => {
         const rule = mockGrafanaPromAlertingRule({
           name: 'High CPU Usage',
@@ -648,6 +670,25 @@ describe('grafana-managed rules', () => {
 
         const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ ruleName: 'memory' }));
         expect(frontendFilter2.ruleMatches(rule)).toBe(false);
+      });
+
+      it('should not include ruleType in backend filter', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({ ruleType: PromRuleType.Alerting }));
+
+        expect(backendFilter.type).toBeUndefined();
+      });
+
+      it('should perform ruleType filtering on frontend', () => {
+        const alertingRule = mockGrafanaPromAlertingRule({ name: 'Test Alert' });
+        const recordingRule = mockPromRecordingRule({ name: 'Test Recording' });
+
+        const { frontendFilter } = getGrafanaFilter(getFilter({ ruleType: PromRuleType.Alerting }));
+        expect(frontendFilter.ruleMatches(alertingRule)).toBe(true);
+        expect(frontendFilter.ruleMatches(recordingRule)).toBe(false);
+
+        const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ ruleType: PromRuleType.Recording }));
+        expect(frontendFilter2.ruleMatches(alertingRule)).toBe(false);
+        expect(frontendFilter2.ruleMatches(recordingRule)).toBe(true);
       });
     });
   });
