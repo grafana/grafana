@@ -470,7 +470,7 @@
   "engines": {
     "node": ">= 22 <23"
   },
-  "packageManager": "yarn@4.10.3",
+  "packageManager": "yarn@4.11.0",
   "dependenciesMeta": {
     "cypress": {
       "built": true
