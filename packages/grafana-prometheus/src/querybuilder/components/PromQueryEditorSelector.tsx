@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryEditorSelector.tsx
 import { isEqual } from 'lodash';
-import { memo, SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import { memo, SyntheticEvent, useCallback, useEffect, useState, useMemo} from 'react';
 
 import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -89,6 +89,16 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
     setQueryPatternsModalOpen(true);
   }, [app]);
 
+  const hasPreviousQuery = useMemo(() => {
+    const visualQuery = buildVisualQueryFromString(query.expr ?? '');
+    const hasOperations = visualQuery.query.operations.length > 0,
+      hasMetric = visualQuery.query.metric,
+      hasLabels = visualQuery.query.labels.length > 0,
+      hasBinaryQueries = visualQuery.query.binaryQueries ? visualQuery.query.binaryQueries.length > 0 : false;
+  
+    return hasOperations || hasMetric || hasLabels || hasBinaryQueries;
+  }, [query.expr]);
+
   return (
     <>
       <ConfirmModal
@@ -118,16 +128,18 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
         onAddQuery={onAddQuery}
       />
       <EditorHeader>
-        <Button
-          data-testid={selectors.components.QueryBuilder.queryPatterns}
-          variant="secondary"
-          size="sm"
-          onClick={handleOpenQueryPatternsModal}
-        >
+        {!hasPreviousQuery && (
+          <Button
+            data-testid={selectors.components.QueryBuilder.queryPatterns}
+            variant="secondary"
+            size="sm"
+            onClick={handleOpenQueryPatternsModal}
+          >
           <Trans i18nKey="grafana-prometheus.querybuilder.prom-query-editor-selector.kick-start-your-query">
             Kick start your query
           </Trans>
         </Button>
+        )}
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.explain}>
           <QueryHeaderSwitch
             label={t('grafana-prometheus.querybuilder.prom-query-editor-selector.label-explain', 'Explain')}
