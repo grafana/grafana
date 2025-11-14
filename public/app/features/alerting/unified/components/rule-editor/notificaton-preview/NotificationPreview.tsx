@@ -78,11 +78,13 @@ export const NotificationPreview = ({
 
   const getTooltipContent = () => {
     if (!folder) {
-      return <Trans i18nKey="alerting.notification-preview.disabled-tooltip">Select a folder to preview routing</Trans>;
+      return (
+        <Trans i18nKey="alerting.notification-preview.select-folder-tooltip">Select a folder to preview routing</Trans>
+      );
     }
     if (previewRoutingDisabled) {
       return (
-        <Trans i18nKey="alerting.notification-preview.select-folder-tooltip">
+        <Trans i18nKey="alerting.notification-preview.disabled-tooltip">
           You don&apos;t have sufficient permissions to preview
         </Trans>
       );
