@@ -2050,8 +2050,6 @@ providers:
 				GVR:  gvr,
 			})
 
-			time.Sleep(1 * time.Second) // Give provisioner time to process
-
 			var folderUID string
 			var dashboardUID string
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -2122,7 +2120,7 @@ providers:
 				// Verify folders was deleted
 				_, err := client.Resource.Get(context.Background(), folderUID, metav1.GetOptions{})
 				require.Error(t, err, "parent folder %s should not exist", folderUID)
-				// Verify all provisioned dashboards are deleted in both legacy and unified storage
+				// Verify provisioned dashboard is deleted
 				verifyDashboardExists(false)
 			})
 		})
