@@ -10,30 +10,30 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestSettingStore(t *testing.T) *settingStore {
+func setupTestMetadataStore(t *testing.T) *metadataStore {
 	db := setupTestBadgerDB(t)
 	t.Cleanup(func() {
 		err := db.Close()
 		require.NoError(t, err)
 	})
 	kv := NewBadgerKV(db)
-	return newSettingStore(kv)
+	return newMetadataStore(kv)
 }
 
-func TestNewSettingStore(t *testing.T) {
-	store := setupTestSettingStore(t)
+func TestNewMetadataStore(t *testing.T) {
+	store := setupTestMetadataStore(t)
 	assert.NotNil(t, store.kv)
 }
 
-func TestSettingStore_SettingKey_String(t *testing.T) {
+func TestMetadataStore_MetadataKey_String(t *testing.T) {
 	tests := []struct {
 		name       string
-		settingKey SettingKey
+		metadataKey MetadataKey
 		expected   string
 	}{
 		{
 			name: "basic event key",
-			settingKey: SettingKey{
+			metadataKey: MetadataKey{
 				Namespace: "default",
 				Group:     "apps",
 				Resource:  "resource",
@@ -42,7 +42,7 @@ func TestSettingStore_SettingKey_String(t *testing.T) {
 		},
 		{
 			name: "empty namespace",
-			settingKey: SettingKey{
+			metadataKey: MetadataKey{
 				Namespace: "",
 				Group:     "apps",
 				Resource:  "resource",
@@ -53,21 +53,21 @@ func TestSettingStore_SettingKey_String(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.settingKey.String()
+			result := tt.metadataKey.String()
 			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
 
-func TestSettingStore_SettingKey_Validate(t *testing.T) {
+func TestMetadataStore_MetadataKey_Validate(t *testing.T) {
 	tests := []struct {
 		name  string
-		key   SettingKey
+		key   MetadataKey
 		error error
 	}{
 		{
 			name: "valid key",
-			key: SettingKey{
+			key: MetadataKey{
 				Namespace: "default",
 				Group:     "apps",
 				Resource:  "resource",
@@ -76,7 +76,7 @@ func TestSettingStore_SettingKey_Validate(t *testing.T) {
 		},
 		{
 			name: "empty namespace",
-			key: SettingKey{
+			key: MetadataKey{
 				Namespace: "",
 				Group:     "apps",
 				Resource:  "resource",
@@ -85,7 +85,7 @@ func TestSettingStore_SettingKey_Validate(t *testing.T) {
 		},
 		{
 			name: "empty group",
-			key: SettingKey{
+			key: MetadataKey{
 				Namespace: "default",
 				Group:     "",
 				Resource:  "resource",
@@ -94,7 +94,7 @@ func TestSettingStore_SettingKey_Validate(t *testing.T) {
 		},
 		{
 			name: "empty resource",
-			key: SettingKey{
+			key: MetadataKey{
 				Namespace: "default",
 				Group:     "apps",
 				Resource:  "",
@@ -116,27 +116,27 @@ func TestSettingStore_SettingKey_Validate(t *testing.T) {
 	}
 }
 
-func TestSettingStore_Save_Get(t *testing.T) {
+func TestMetadataStore_Save_Get(t *testing.T) {
 	ctx := context.Background()
-	store := setupTestSettingStore(t)
+	store := setupTestMetadataStore(t)
 
-	setting := Setting{
+	metadata := Metadata{
 		Namespace:      "default",
 		Group:          "apps",
 		Resource:       "resource",
 		LastImportTime: time.Now().Truncate(time.Microsecond),
 	}
 
-	err := store.Save(ctx, setting)
+	err := store.Save(ctx, metadata)
 	require.NoError(t, err)
 
-	settingKey := SettingKey{
+	metadataKey := MetadataKey{
 		Namespace: "default",
 		Group:     "apps",
 		Resource:  "resource",
 	}
 
-	retrievedSetting, err := store.Get(ctx, settingKey)
+	retrievedMetadata, err := store.Get(ctx, metadataKey)
 	require.NoError(t, err)
-	assert.Equal(t, setting, retrievedSetting)
+	assert.Equal(t, metadata, retrievedMetadata)
 }

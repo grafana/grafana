@@ -10,24 +10,24 @@ import (
 )
 
 const (
-	settingsSection = "unified/settings"
+	metadatasSection = "unified/metadata"
 )
 
-type settingStore struct {
+type metadataStore struct {
 	kv KV
 }
 
-type SettingKey struct {
+type MetadataKey struct {
 	Namespace string
 	Group     string
 	Resource  string
 }
 
-func (k SettingKey) String() string {
+func (k MetadataKey) String() string {
 	return fmt.Sprintf("%s/%s/%s", k.Group, k.Resource, k.Namespace)
 }
 
-func (k SettingKey) Validate() error {
+func (k MetadataKey) Validate() error {
 	if k.Namespace == "" {
 		return NewValidationError("namespace", k.Namespace, ErrNamespaceRequired)
 	}
@@ -40,53 +40,53 @@ func (k SettingKey) Validate() error {
 	return nil
 }
 
-type Setting struct {
+type Metadata struct {
 	Namespace      string    `json:"namespace"`
 	Group          string    `json:"group"`
 	Resource       string    `json:"resource"`
 	LastImportTime time.Time `json:"lastImportTime"`
 }
 
-func newSettingStore(kv KV) *settingStore {
-	return &settingStore{
+func newMetadataStore(kv KV) *metadataStore {
+	return &metadataStore{
 		kv: kv,
 	}
 }
 
-func (d *settingStore) Get(ctx context.Context, key SettingKey) (Setting, error) {
+func (d *metadataStore) Get(ctx context.Context, key MetadataKey) (Metadata, error) {
 	if err := key.Validate(); err != nil {
-		return Setting{}, fmt.Errorf("invalid setting key: %w", err)
+		return Metadata{}, fmt.Errorf("invalid metadata key: %w", err)
 	}
 
-	reader, err := d.kv.Get(ctx, settingsSection, key.String())
+	reader, err := d.kv.Get(ctx, metadatasSection, key.String())
 	if err != nil {
-		return Setting{}, err
+		return Metadata{}, err
 	}
 	defer func() { _ = reader.Close() }()
-	var setting Setting
-	if err = json.NewDecoder(reader).Decode(&setting); err != nil {
-		return Setting{}, err
+	var metadata Metadata
+	if err = json.NewDecoder(reader).Decode(&metadata); err != nil {
+		return Metadata{}, err
 	}
-	return setting, nil
+	return metadata, nil
 }
 
-func (d *settingStore) Save(ctx context.Context, setting Setting) error {
-	settingKey := SettingKey{
-		Namespace: setting.Namespace,
-		Group:     setting.Group,
-		Resource:  setting.Resource,
+func (d *metadataStore) Save(ctx context.Context, metadata Metadata) error {
+	metadataKey := MetadataKey{
+		Namespace: metadata.Namespace,
+		Group:     metadata.Group,
+		Resource:  metadata.Resource,
 	}
 
-	if err := settingKey.Validate(); err != nil {
-		return fmt.Errorf("invalid settingKey key: %w", err)
+	if err := metadataKey.Validate(); err != nil {
+		return fmt.Errorf("invalid metadataKey key: %w", err)
 	}
 
-	writer, err := d.kv.Save(ctx, settingsSection, settingKey.String())
+	writer, err := d.kv.Save(ctx, metadatasSection, metadataKey.String())
 	if err != nil {
 		return err
 	}
 	encoder := json.NewEncoder(writer)
-	if err := encoder.Encode(setting); err != nil {
+	if err := encoder.Encode(metadata); err != nil {
 		_ = writer.Close()
 		return err
 	}
