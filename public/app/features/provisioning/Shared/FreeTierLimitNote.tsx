@@ -8,11 +8,16 @@ import { isFreeTierLicense } from '../utils/isFreeTierLicense';
 
 const UPGRADE_URL = 'https://grafana.com/profile/org/subscription';
 
+export interface FreeTierLimitNoteProps {
+  /** The type of limit to display: connection limit or resource limit */
+  limitType?: 'connection' | 'resource';
+}
+
 /**
  * Displays a free tier limit notification with an icon and "Note:" prefix
  * Only visible for free tier users
  */
-export function FreeTierLimitNote() {
+export function FreeTierLimitNote({ limitType = 'resource' }: FreeTierLimitNoteProps) {
   const styles = useStyles2(getStyles);
 
   if (!isFreeTierLicense()) {
@@ -24,10 +29,15 @@ export function FreeTierLimitNote() {
       <Icon name="exclamation-triangle" className={styles.warningIcon} size="sm" />
       <Text variant="bodySmall">
         <Trans i18nKey="provisioning.free-tier-limit.note">Note:</Trans>{' '}
-        <Trans i18nKey="provisioning.free-tier-limit.message-prefix">
-          Free-tier accounts are capped to 1 connection, and 20 resources per folder. To add more connections,
-        </Trans>{' '}
-        {/*We are using the 'a' tag here instead of the external link component because we need the text inside the link to wrap */}
+        {limitType === 'connection' ? (
+          <Trans i18nKey="provisioning.free-tier-limit.message-connection">
+            Free-tier accounts are limited to 1 connection. To add more connections,
+          </Trans>
+        ) : (
+          <Trans i18nKey="provisioning.free-tier-limit.message-resource">
+            Free-tier accounts are limited to 20 resources per folder. To add more resources,
+          </Trans>
+        )}{' '}
         <a href={UPGRADE_URL} target="_blank" rel="noopener noreferrer" className={styles.link}>
           <Trans i18nKey="provisioning.free-tier-limit.upgrade-link">upgrade your account</Trans>{' '}
           <Icon name="external-link-alt" size="xs" />

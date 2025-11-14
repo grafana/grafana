@@ -175,7 +175,7 @@ export const ConnectStep = memo(function ConnectStep() {
         </Field>
       )}
 
-      <FreeTierLimitNote />
+      <FreeTierLimitNote limitType="connection" />
     </Stack>
   );
 });

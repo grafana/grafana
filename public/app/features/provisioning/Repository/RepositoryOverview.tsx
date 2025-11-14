@@ -68,7 +68,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                   />
                 ) : null}
                 <Box paddingTop={2}>
-                  <FreeTierLimitNote />
+                  <FreeTierLimitNote limitType="resource" />
                 </Box>
               </Card.Description>
               <Card.Actions className={styles.actions}>

@@ -95,7 +95,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
                     <Stack direction="column" gap={3}>
                       {action.description}
                       <Text color="primary">{action.subtitle}</Text>
-                      <FreeTierLimitNote />
+                      <FreeTierLimitNote limitType="resource" />
                     </Stack>
 
                     <div className={styles.divider} />
