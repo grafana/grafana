@@ -4378,8 +4378,6 @@
       "next-button": "Avançar",
       "save-button": "Salvar"
     },
-    "page-content": "Para ativar as correlações, adicione-as nas configurações do Grafana:",
-    "page-heading": "Correlações desativadas",
     "query-editor": {
       "control-rules": "A fonte de dados de destino selecionada deve exportar um editor de consulta.",
       "data-source-text": "Selecione uma fonte de dados alvo primeiro.",
@@ -7467,6 +7465,7 @@
       "label-resource-attributes": "Atributos do recurso",
       "label-span-attributes": "Atributos de intervalo",
       "label-stack-trace": "Rastro de pilha",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Contagem de estruturas subordinadas:",
@@ -7475,8 +7474,7 @@
           "start-time": "Horário de início:"
         }
       },
-      "share-span": "Compartilhar",
-      "warnings": "Avisos"
+      "share-span": "Compartilhar"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Selecionar operador de intervalo máximo",

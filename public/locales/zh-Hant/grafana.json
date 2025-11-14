@@ -4358,8 +4358,6 @@
       "next-button": "繼續",
       "save-button": "儲存"
     },
-    "page-content": "若要啟用「相關性」，請在 Grafana 設定中新增：",
-    "page-heading": "相關性已停用",
     "query-editor": {
       "control-rules": "所選目標資料來源必須匯出查詢編輯器。",
       "data-source-text": "請先選擇目標資料來源。",
@@ -7441,6 +7439,7 @@
       "label-resource-attributes": "資源屬性",
       "label-span-attributes": "範圍屬性",
       "label-stack-trace": "堆疊追蹤",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "子項目數量：",
@@ -7449,8 +7448,7 @@
           "start-time": "開始時間："
         }
       },
-      "share-span": "分享",
-      "warnings": "警告"
+      "share-span": "分享"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "選擇最大範圍的運算子",

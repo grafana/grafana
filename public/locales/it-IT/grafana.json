@@ -4378,8 +4378,6 @@
       "next-button": "Avanti",
       "save-button": "Salva"
     },
-    "page-content": "Per abilitare le correlazioni, aggiungile nella configurazione di Grafana:",
-    "page-heading": "Le correlazioni sono disabilitate",
     "query-editor": {
       "control-rules": "L'origine dati di destinazione selezionata deve esportare un editor di query.",
       "data-source-text": "Seleziona prima un'origine dei dati di destinazione.",
@@ -7467,6 +7465,7 @@
       "label-resource-attributes": "Attributi risorsa",
       "label-span-attributes": "Attributi intervallo",
       "label-stack-trace": "Analisi stack",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Numero figli:",
@@ -7475,8 +7474,7 @@
           "start-time": "Ora di inizio:"
         }
       },
-      "share-span": "Condividi",
-      "warnings": "Allarmi"
+      "share-span": "Condividi"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Seleziona l'operatore di intervallo massimo",

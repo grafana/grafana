@@ -4358,8 +4358,6 @@
       "next-button": "다음",
       "save-button": "저장"
     },
-    "page-content": "상관 관계를 활성화하려면 Grafana 구성에 추가하세요.",
-    "page-heading": "상관 관계 비활성화됨",
     "query-editor": {
       "control-rules": "선택한 대상 데이터 소스는 쿼리 편집기를 내보내야 합니다.",
       "data-source-text": "먼저 대상 데이터 소스를 선택하세요.",
@@ -7441,6 +7439,7 @@
       "label-resource-attributes": "리소스 속성",
       "label-span-attributes": "스팬 속성",
       "label-stack-trace": "스택 트레이스",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "하위 개수:",
@@ -7449,8 +7448,7 @@
           "start-time": "시작 시간:"
         }
       },
-      "share-span": "공유",
-      "warnings": "경고"
+      "share-span": "공유"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "최대 스팬 연산자 선택",

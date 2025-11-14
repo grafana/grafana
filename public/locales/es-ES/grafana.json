@@ -4378,8 +4378,6 @@
       "next-button": "Siguiente",
       "save-button": "Guardar"
     },
-    "page-content": "Para habilitar las correlaciones, añádala en la configuración de Grafana:",
-    "page-heading": "Las correlaciones están deshabilitadas",
     "query-editor": {
       "control-rules": "La fuente de datos de destino seleccionada debe exportar un editor de consultas.",
       "data-source-text": "Seleccione primero una fuente de datos de destino.",
@@ -7467,6 +7465,7 @@
       "label-resource-attributes": "Atributos de recursos",
       "label-span-attributes": "Atributos de intervalo",
       "label-stack-trace": "Traza de pilas",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Recuento de secundarios:",
@@ -7475,8 +7474,7 @@
           "start-time": "Hora de comienzo:"
         }
       },
-      "share-span": "Compartir",
-      "warnings": "Advertencias"
+      "share-span": "Compartir"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Seleccionar operador de intervalo máximo",

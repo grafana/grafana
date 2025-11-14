@@ -4418,8 +4418,6 @@
       "next-button": "Далее",
       "save-button": "Сохранить"
     },
-    "page-content": "Чтобы включить корреляции, добавьте функцию в конфигурацию Grafana:",
-    "page-heading": "Корреляции отключены",
     "query-editor": {
       "control-rules": "Выбранный целевой источник данных должен экспортировать редактор запросов.",
       "data-source-text": "Сначала выберите целевой источник данных.",
@@ -7519,6 +7517,7 @@
       "label-resource-attributes": "Атрибуты ресурса",
       "label-span-attributes": "Атрибуты диапазона",
       "label-stack-trace": "Трассировка стека",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Число дочерних элементов:",
@@ -7527,8 +7526,7 @@
           "start-time": "Время начала:"
         }
       },
-      "share-span": "Поделиться",
-      "warnings": "Предупреждения"
+      "share-span": "Поделиться"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Выбрать оператора макс. диапазона",

@@ -4358,8 +4358,6 @@
       "next-button": "下一步",
       "save-button": "保存"
     },
-    "page-content": "要启用 Correlations，请将其在 Grafana 配置中添加：",
-    "page-heading": "Correlations 已禁用",
     "query-editor": {
       "control-rules": "选定的目标数据源必须导出查询编辑器。",
       "data-source-text": "请首先选择目标数据源。",
@@ -7441,6 +7439,7 @@
       "label-resource-attributes": "资源属性",
       "label-span-attributes": "跨度属性",
       "label-stack-trace": "堆栈跟踪",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "子级计数：",
@@ -7449,8 +7448,7 @@
           "start-time": "开始时间："
         }
       },
-      "share-span": "共享",
-      "warnings": "警告"
+      "share-span": "共享"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "选择最大跨度运算符",
