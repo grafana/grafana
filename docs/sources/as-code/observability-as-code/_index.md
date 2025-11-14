@@ -20,7 +20,7 @@ cards:
     - title: Grafana CLI
       height: 24
       href: ./grafana-cli/
-      description: Grafana CLI (`grafanactl`) is a command-line tool designed to simplify interaction with Grafana instances using the new REST APIs. You can authenticate, manage multiple environments, and perform administrative tasks from the terminal. It's suitable for CI/CD pipelines, local development, or free-form tasks. 
+      description: Grafana CLI (`grafanactl`) is a command-line tool designed to simplify interaction with Grafana instances using the new REST APIs. You can authenticate, manage multiple environments, and perform administrative tasks from the terminal. It's suitable for CI/CD pipelines, local development, or free-form tasks.
     - title: Foundation SDK
       height: 24
       href: ./foundation-sdk/
@@ -32,7 +32,7 @@ cards:
     - title: Git Sync (private preview)
       height: 24
       href: ./provision-resources/intro-git-sync/
-      description: Git Sync lets you store your dashboard files in a GitHub repository and synchronize those changes with your Grafana instance, enabling version control, branching, and pull requests directly from Grafana. 
+      description: Git Sync lets you store your dashboard files in a GitHub repository and synchronize those changes with your Grafana instance, enabling version control, branching, and pull requests directly from Grafana.
     - title: File provisioning (private preview)
       height: 24
       href: ./provision-resources/
@@ -47,7 +47,7 @@ hero:
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/
 aliases:
   - ../observability-as-code/ # /docs/grafana/next/observability-as-code/
-  - ../observability-as-code/get-started/  
+  - ../observability-as-code/get-started/
 refs:
   infra-as-code:
     - pattern: /docs/grafana/
@@ -64,7 +64,7 @@ refs:
 
 Grafana provides a suite of tools for **Observability as code** to help you manage your Grafana resources programmatically and at scale. This approach lets you define dashboards, data sources, and other configurations in code, enabling version control, automated testing, and reliable deployments through CI/CD pipelines. You can apply code management best practices to your observability resources, and integrate them into existing infrastructure-as-code workflows.
 
-Historically, managing Grafana as code involved various community and Grafana Labs tools, but lacked a single, cohesive story. Grafana 12 introduces foundational improvements, including new versioned APIs and official tooling, to provide a clearer path forward: 
+Historically, managing Grafana as code involved various community and Grafana Labs tools, but lacked a single, cohesive story. Grafana 12 introduces foundational improvements, including new versioned APIs and official tooling, to provide a clearer path forward:
 
 - This approach requires handling HTTP requests and responses but provides complete control over resource management.
 - `grafanactl`, Git Sync, and the Foundation SDK are all built on top of these APIs.
@@ -91,11 +91,3 @@ If you're already using established [Infrastructure as code](ref:infra-as-code) 
 - [Crossplane](https://github.com/grafana/crossplane-provider-grafana) lets you manage Grafana resources using Kubernetes manifests with the Grafana Crossplane provider.
 - [Grafonnet](https://github.com/grafana/grafonnet) is a Jsonnet library for generating Grafana dashboard JSON definitions programmatically.
 - [Grizzly](https://grafana.com/docs/grafana-cloud/as-code/infrastructure-as-code/grizzly/dashboards-folders-datasources/) is a deprecated command-line tool that simplifies managing Grafana resources using Kubernetes-inspired YAML syntax.
-
-
-
-
-
-
-
-
