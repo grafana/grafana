@@ -855,6 +855,16 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		}
 	}
 
+	if query.SearchTitle != "" {
+		words := strings.Fields(query.SearchTitle)
+		if len(words) > 0 {
+			// Build sequential pattern: %word1%word2%word3%
+			pattern := strings.Join(words, "%")
+			sql, param := st.SQLStore.GetDialect().LikeOperator("title", true, pattern, true)
+			q = q.And(sql, param)
+		}
+	}
+
 	if query.HasPrometheusRuleDefinition != nil {
 		q, err = st.filterWithPrometheusRuleDefinition(*query.HasPrometheusRuleDefinition, q)
 		if err != nil {

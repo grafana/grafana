@@ -76,6 +76,7 @@ cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-e
 addFieldFromCalculationStatFunctions,GA,@grafana/datapro,false,false,true
 alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
 alertingProvenanceLockWrites,experimental,@grafana/alerting-squad,false,false,false
+alertingUIUseBackendFilters,experimental,@grafana/alerting-squad,false,false,false
 alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
 annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
 dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true
@@ -90,7 +91,6 @@ canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 timeComparison,experimental,@grafana/dataviz-squad,false,false,true
 logsInfiniteScrolling,GA,@grafana/observability-logs,false,false,true
 logRowsPopoverMenu,GA,@grafana/observability-logs,false,false,true
-pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false
 tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
 regressionTransformation,preview,@grafana/datapro,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,false,false,true

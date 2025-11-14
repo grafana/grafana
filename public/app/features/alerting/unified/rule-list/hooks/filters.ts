@@ -36,18 +36,20 @@ export function groupFilter(
 
 /**
  * @returns True if the rule matches the filter, false otherwise
+ * @param backendFiltered - If true, title search is skipped (already filtered by backend)
  */
-export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
+export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter, backendFiltered?: boolean) {
   const { name, labels = {}, health, type } = rule;
 
-  if (filterState.freeFormWords.length > 0) {
+  if (filterState.freeFormWords.length > 0 && !backendFiltered) {
     const nameMatches = fuzzyMatches(name, filterState.freeFormWords.join(' '));
     if (!nameMatches) {
       return false;
     }
   }
 
-  if (filterState.ruleName && !fuzzyMatches(name, filterState.ruleName)) {
+  // Rule name search: Backend-supported for backend-filtered rules, client-side otherwise
+  if (filterState.ruleName && !backendFiltered && !fuzzyMatches(name, filterState.ruleName)) {
     return false;
   }
 

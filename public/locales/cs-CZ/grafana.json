@@ -4418,8 +4418,6 @@
       "next-button": "Další",
       "save-button": "Uložit"
     },
-    "page-content": "Chcete-li povolit korelace, přidejte je do konfigurace Grafany:",
-    "page-heading": "Korelace jsou zakázány",
     "query-editor": {
       "control-rules": "Vybraný cílový zdroj dat musí exportovat editor dotazů.",
       "data-source-text": "Nejprve vyberte cílový zdroj dat.",
@@ -7519,6 +7517,7 @@
       "label-resource-attributes": "Atributy zdroje",
       "label-span-attributes": "Atributy rozsahu",
       "label-stack-trace": "Trasování zásobníku",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Počet podřízených:",
@@ -7527,8 +7526,7 @@
           "start-time": "Čas zahájení:"
         }
       },
-      "share-span": "Sdílet",
-      "warnings": "Varování"
+      "share-span": "Sdílet"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Vyberte operátor max. rozsahu",

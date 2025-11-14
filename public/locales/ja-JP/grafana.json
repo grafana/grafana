@@ -4358,8 +4358,6 @@
       "next-button": "次へ",
       "save-button": "保存"
     },
-    "page-content": "相関を有効にするには、次のGrafana構成に相関を追加します。",
-    "page-heading": "相関は無効です",
     "query-editor": {
       "control-rules": "選択したターゲットデータソースは、クエリエディタをエクスポートする必要があります。",
       "data-source-text": "最初にターゲットデータソースを選択してください。",
@@ -7441,6 +7439,7 @@
       "label-resource-attributes": "リソース属性",
       "label-span-attributes": "スパン属性",
       "label-stack-trace": "スタックトレース",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "子カウント:",
@@ -7449,8 +7448,7 @@
           "start-time": "開始時間:"
         }
       },
-      "share-span": "共有",
-      "warnings": "警告"
+      "share-span": "共有"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "最大スパン演算子を選択",

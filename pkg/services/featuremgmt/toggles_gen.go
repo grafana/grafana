@@ -315,6 +315,10 @@ const (
 	// Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
 	FlagAlertingProvenanceLockWrites = "alertingProvenanceLockWrites"
 
+	// FlagAlertingUIUseBackendFilters
+	// Enables the UI to use certain backend-side filters
+	FlagAlertingUIUseBackendFilters = "alertingUIUseBackendFilters"
+
 	// FlagAlertmanagerRemotePrimary
 	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
 	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
@@ -370,10 +374,6 @@ const (
 	// FlagLogRowsPopoverMenu
 	// Enable filtering menu displayed when text of a log line is selected
 	FlagLogRowsPopoverMenu = "logRowsPopoverMenu"
-
-	// FlagPluginsSkipHostEnvVars
-	// Disables passing host environment variable to plugin processes
-	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
 
 	// FlagTableSharedCrosshair
 	// Enables shared crosshair in table panel

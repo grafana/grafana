@@ -576,6 +576,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "alertingUIUseBackendFilters",
+			Description:       "Enables the UI to use certain backend-side filters",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:        "alertmanagerRemotePrimary",
 			Description: "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
 			Stage:       FeatureStageExperimental,
@@ -678,13 +686,6 @@ var (
 			FrontendOnly: true,
 			Expression:   "true",
 			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
-			Name:         "pluginsSkipHostEnvVars",
-			Description:  "Disables passing host environment variable to plugin processes",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:         "tableSharedCrosshair",
