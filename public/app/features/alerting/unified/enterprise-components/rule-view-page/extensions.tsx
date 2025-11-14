@@ -15,19 +15,17 @@ type RuleViewTabBuilderArgs = {
   setActiveTab: SetActiveTab;
 };
 
-type RuleViewTabBuilder = (args: RuleViewTabBuilderArgs) => NavModelItem;
+type RuleViewTabBuilder = (args: RuleViewTabBuilderArgs) => NavModelItem | null;
 type RuleViewTabBuilderConfig = {
   filterOnlyGrafanaAlertRules: boolean;
-  requiresEnrichmentReadPermission?: boolean;
   ruleViewTabBuilder: RuleViewTabBuilder;
 };
 
 const ruleViewTabBuilders: RuleViewTabBuilderConfig[] = [];
 
-function registerRuleViewTab(builder: RuleViewTabBuilder, requiresEnrichmentReadPermission = false) {
+function registerRuleViewTab(builder: RuleViewTabBuilder) {
   ruleViewTabBuilders.push({
     filterOnlyGrafanaAlertRules: true,
-    requiresEnrichmentReadPermission,
     ruleViewTabBuilder: builder,
   });
 }
@@ -35,7 +33,6 @@ function registerRuleViewTab(builder: RuleViewTabBuilder, requiresEnrichmentRead
 export function useRuleViewExtensionTabs(args: RuleViewTabBuilderArgs): NavModelItem[] {
   const { rule } = useAlertRule();
   const isGrafanaAlertRule = rulerRuleType.grafana.alertingRule(rule.rulerRule);
-  const [, canReadEnrichments] = useEnrichmentAbility(EnrichmentAction.Read);
 
   return ruleViewTabBuilders
     .filter((config) => {
@@ -43,28 +40,29 @@ export function useRuleViewExtensionTabs(args: RuleViewTabBuilderArgs): NavModel
       if (config.filterOnlyGrafanaAlertRules && !isGrafanaAlertRule) {
         return false;
       }
-      // Check if enrichment read permission is required and granted
-      if (config.requiresEnrichmentReadPermission && !canReadEnrichments) {
-        return false;
-      }
       return true;
     })
-    .map((config) => config.ruleViewTabBuilder(args));
+    .map((config) => config.ruleViewTabBuilder(args))
+    .filter((item): item is NavModelItem => item !== null);
 }
 
 export function addEnrichmentSection() {
-  registerRuleViewTab(
-    ({ activeTab, setActiveTab }) => {
-      const tabId = 'enrichment';
-      return {
-        text: t('alerting.use-page-nav.page-nav.text.enrichment', 'Alert enrichment'),
-        active: activeTab === tabId,
-        onClick: () => setActiveTab(tabId),
-        tabSuffix: () => <EnrichmentTabSuffix />,
-      };
-    },
-    true // Requires enrichment read permission
-  );
+  registerRuleViewTab(({ activeTab, setActiveTab }) => {
+    const [, canReadEnrichments] = useEnrichmentAbility(EnrichmentAction.Read);
+
+    // Return null if user doesn't have permission (will be filtered out)
+    if (!canReadEnrichments) {
+      return null;
+    }
+
+    const tabId = 'enrichment';
+    return {
+      text: t('alerting.use-page-nav.page-nav.text.enrichment', 'Alert enrichment'),
+      active: activeTab === tabId,
+      onClick: () => setActiveTab(tabId),
+      tabSuffix: () => <EnrichmentTabSuffix />,
+    };
+  });
 }
 
 // ONLY FOR TESTS: resets the registered tabs between tests
@@ -73,24 +71,17 @@ export function __clearRuleViewTabsForTests() {
 }
 
 // ONLY FOR TESTS: non-hook version for testing
-export function getRuleViewExtensionTabs(
-  args: RuleViewTabBuilderArgs,
-  isGrafanaAlertRule: boolean,
-  canReadEnrichments = true
-): NavModelItem[] {
+export function getRuleViewExtensionTabs(args: RuleViewTabBuilderArgs, isGrafanaAlertRule: boolean): NavModelItem[] {
   return ruleViewTabBuilders
     .filter((config) => {
       // Check if rule type matches requirement
       if (config.filterOnlyGrafanaAlertRules && !isGrafanaAlertRule) {
         return false;
       }
-      // Check if enrichment read permission is required and granted
-      if (config.requiresEnrichmentReadPermission && !canReadEnrichments) {
-        return false;
-      }
       return true;
     })
-    .map((config) => config.ruleViewTabBuilder(args));
+    .map((config) => config.ruleViewTabBuilder(args))
+    .filter((item): item is NavModelItem => item !== null);
 }
 
 function getStyles() {
