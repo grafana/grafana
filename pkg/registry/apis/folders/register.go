@@ -168,6 +168,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		b.storage = &folderStorage{
 			tableConverter:       resourceInfo.TableConverter(),
 			folderPermissionsSvc: b.folderPermissionsSvc,
+			features:             b.features,
 			acService:            b.acService,
 			permissionsOnCreate:  b.permissionsOnCreate,
 			store:                dw,
@@ -287,6 +288,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 
 func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store) {
 	log := logging.FromContext(context.Background())
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		log.Info("Enabling Zanzana folder propagation hooks")
 		store.BeginCreate = b.beginCreate

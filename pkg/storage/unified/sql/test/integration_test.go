@@ -53,6 +53,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 		DBProvider:              eDB,
 		IsHA:                    isHA,
 		SimulatedNetworkLatency: simulatedNetworkLatency,
+		LastImportTimeMaxAge:    24 * time.Hour,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, backend)
@@ -130,7 +131,7 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil)
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 

@@ -124,7 +124,7 @@ func testGoFFProvider(t *testing.T, failSigning bool) {
 
 	// Test that the flag evaluation can be attempted (though it will fail due to non-existent service)
 	// The important thing is that the authentication middleware is properly integrated
-	_, err := openfeature.GetApiInstance().GetClient().BooleanValueDetails(ctx, "test", false, openfeature.NewEvaluationContext("test", map[string]interface{}{"test": "test"}))
+	_, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, "test", false, openfeature.NewEvaluationContext("test", map[string]interface{}{"test": "test"}))
 
 	// Error related to the token exchange should be returned if signing fails
 	// otherwise, it should return a connection refused error since the goff URL is not set

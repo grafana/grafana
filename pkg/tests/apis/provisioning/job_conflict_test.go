@@ -21,7 +21,7 @@ func TestIntegrationProvisioning_JobConflict(t *testing.T) {
 
 	// disable the controllers so the jobs don't get auto-processed
 	helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
-		opts.DisableProvisioningControllers = true
+		opts.DisableControllers = true
 	})
 	ctx := context.Background()
 

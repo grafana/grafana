@@ -29,7 +29,7 @@ import { SpanLinkFunc } from '../types/links';
 import { TraceSpan, Trace, TraceSpanReference, CriticalPathSection } from '../types/trace';
 
 import { TraceFlameGraphs } from './SpanDetail';
-import TimelineHeaderRow from './TimelineHeaderRow';
+import TimelineHeaderRow from './TimelineHeaderRow/TimelineHeaderRow';
 import VirtualizedTraceView from './VirtualizedTraceView';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
 

@@ -20,6 +20,7 @@ import (
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -30,6 +31,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboards" // TODO: Check if we can remove this import
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
@@ -778,6 +780,76 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			err = adminClient.Resource.Delete(context.Background(), specificUID, v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
+	})
+
+	t.Run("Dashboard upsert propagates legacy id", func(t *testing.T) {
+		// ensures that the internal ID is propogated from legacy to unified on upsert even in mode 3
+		if ctx.DualWriterMode != rest.Mode3 {
+			t.Skip("Skipping upsert metadata test")
+		}
+
+		// create via the service, so that upsert is used
+		specificUID := "upsert-metadata-test"
+		dashboardService := ctx.Helper.GetEnv().Server.HTTPServer.DashboardService
+		require.NotNil(t, dashboardService)
+		provisioningService, ok := dashboardService.(dashboards.DashboardProvisioningService)
+		require.True(t, ok, "DashboardService should also implement DashboardProvisioningService")
+		dashboardData := simplejson.NewFromAny(map[string]interface{}{
+			"title": "Dashboard for Upsert Metadata Test",
+			"uid":   specificUID,
+		})
+		result, err := provisioningService.SaveProvisionedDashboard(context.Background(), &dashboards.SaveDashboardDTO{
+			OrgID: ctx.OrgID,
+			Dashboard: &dashboards.Dashboard{
+				Title: "Dashboard for Upsert Metadata Test",
+				UID:   specificUID,
+				Data:  dashboardData,
+			},
+		}, &dashboards.DashboardProvisioning{
+			Name:       "test-provisioner",
+			ExternalID: "/test/path/dashboard.json",
+			CheckSum:   "abc123",
+		})
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		// get the internal id from legacy directly from the db
+		sqlStore := ctx.Helper.GetEnv().Server.HTTPServer.SQLStore
+		require.NotNil(t, sqlStore)
+
+		var legacyID int64
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			has, innerErr := sess.Table("dashboard").
+				Where("uid = ? AND org_id = ?", specificUID, ctx.OrgID).
+				Cols("id").
+				Get(&legacyID)
+			if innerErr != nil {
+				return innerErr
+			}
+			if !has {
+				return fmt.Errorf("dashboard not found in legacy storage")
+			}
+			return nil
+		})
+		require.NoError(t, err)
+		require.NotZero(t, legacyID)
+
+		// then compare what unistore returns
+		dashboardObj, err := adminClient.Resource.Get(context.Background(), specificUID, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, dashboardObj)
+		labels := dashboardObj.GetLabels()
+		require.NotNil(t, labels)
+		deprecatedIDStr, exists := labels[utils.LabelKeyDeprecatedInternalID]
+		require.True(t, exists)
+
+		legacyIDStr := strconv.FormatInt(legacyID, 10)
+		require.Equal(t, legacyIDStr, deprecatedIDStr)
+
+		// clean up - with force so the provisioned dashboard deletion check is skipped
+		zeroPtr := int64(0)
+		err = adminClient.Resource.Delete(context.Background(), specificUID, v1.DeleteOptions{GracePeriodSeconds: &zeroPtr})
+		require.NoError(t, err)
 	})
 }
 

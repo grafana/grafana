@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 
 import {
   CoreApp,
@@ -33,7 +33,7 @@ import { t } from '@grafana/i18n';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { usePluginLinks } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
@@ -41,7 +41,7 @@ import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
 import { SpanLinkFunc } from '../../types/links';
 import { TraceProcess, TraceSpan, TraceSpanReference } from '../../types/trace';
-import { formatDuration } from '../utils';
+import { formatDuration } from '../../utils/date';
 
 import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
@@ -114,17 +114,32 @@ const useResourceAttributesExtensionLinks = ({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    card: css({
+      ':not(:empty)': {
+        border: '1px solid ' + theme.colors.border.weak,
+        '&:hover': {
+          border: '1px solid ' + theme.colors.border.strong,
+        },
+      },
+      borderRadius: theme.shape.radius.md,
+      margin: '6px',
+      padding: '5px',
+    }),
     header: css({
+      label: 'SpanDetailHeader',
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'space-between',
       gap: '0 1rem',
       marginBottom: '0.25rem',
+      flexDirection: 'column',
     }),
     content: css({
+      label: 'SpanDetailContent',
       fontSize: theme.typography.bodySmall.fontSize,
     }),
     listWrapper: css({
+      label: 'SpanDetailListWrapper',
       overflow: 'hidden',
       flexGrow: 1,
       display: 'flex',
@@ -133,13 +148,25 @@ const getStyles = (theme: GrafanaTheme2) => {
     list: css({
       textAlign: 'left',
     }),
+    spanDetailComponent: css({
+      label: 'SpanDetailComponent',
+      display: 'flex',
+      flexDirection: 'column', // On bigger screens display attributes below service name
+    }),
+    serviceNameAndLinks: css({
+      label: 'ServiceNameAndLinks',
+      display: 'flex',
+      width: '100%',
+      marginBottom: '16px',
+    }),
     operationName: css({
+      label: 'SpanDetailOperationName',
       margin: 0,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
       maxWidth: '50%',
-      flexGrow: 0,
+      flexGrow: 1,
       flexShrink: 0,
     }),
     AccordianWarnings: css({
@@ -152,9 +179,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'AccordianWarningsHeader',
       background: autoColor(theme, '#fff7e6'),
       padding: '0.25rem 0.5rem',
-      '&:hover': {
-        background: autoColor(theme, '#ffe7ba'),
-      },
     }),
     AccordianWarningsHeaderOpen: css({
       label: 'AccordianWarningsHeaderOpen',
@@ -173,6 +197,24 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexWrap: 'wrap',
       gap: '10px',
       marginBottom: theme.spacing(2),
+    }),
+    debugInfo: css({
+      label: 'debugInfo',
+      display: 'block',
+      letterSpacing: '0.25px',
+      margin: '0.5em 0 -0.75em',
+      textAlign: 'right',
+      clear: 'both',
+    }),
+    debugLabel: css({
+      label: 'debugLabel',
+      '&::before': {
+        color: autoColor(theme, '#bbb'),
+        content: 'attr(data-label)',
+      },
+    }),
+    LinkIcon: css({
+      fontSize: '1.5em',
     }),
   };
 };
@@ -297,6 +339,8 @@ export default function SpanDetail(props: SpanDetailProps) {
       : []),
   ];
 
+  const mainContainerRef = useRef<HTMLDivElement>(null);
+
   const styles = useStyles2(getStyles);
   if (span.kind) {
     overviewItems.push({
@@ -341,16 +385,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     });
   }
 
-  const linksComponent = getSpanDetailLinkButtons({
-    span,
-    createSpanLink,
-    datasourceType,
-    traceToProfilesOptions,
-    timeRange,
-    app,
-  });
-
-  const focusSpanLink = createFocusSpanLink(traceID, spanID);
+  const { interpolatedParams, ...focusSpanLink } = createFocusSpanLink(traceID, spanID);
   const resourceLinksGetter = useResourceAttributesExtensionLinks({
     process,
     spanTags: tags,
@@ -359,102 +394,156 @@ export default function SpanDetail(props: SpanDetailProps) {
     timeRange,
   });
 
+  const linksComponent = getSpanDetailLinkButtons({
+    span,
+    createSpanLink,
+    datasourceType,
+    traceToProfilesOptions,
+    timeRange,
+    app,
+    shareButton: <ShareSpanButton focusSpanLink={focusSpanLink} />,
+  });
+
+  const listOfContentCards = [];
+
+  listOfContentCards.push(
+    <AccordianKeyValues
+      data={tags}
+      label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
+      isOpen={isTagsOpen}
+      linksGetter={resourceLinksGetter}
+      onToggle={() => tagsToggle(spanID)}
+    />
+  );
+
+  if (process.tags) {
+    listOfContentCards.push(
+      <AccordianKeyValues
+        data={process.tags}
+        label={t('explore.span-detail.label-resource-attributes', 'Resource attributes')}
+        linksGetter={resourceLinksGetter}
+        isOpen={isProcessOpen}
+        onToggle={() => processToggle(spanID)}
+      />
+    );
+  }
+
+  if (logs && logs.length > 0) {
+    listOfContentCards.push(
+      <AccordianLogs
+        logs={logs}
+        isOpen={logsState.isOpen}
+        openedItems={logsState.openedItems}
+        onToggle={() => logsToggle(spanID)}
+        onItemToggle={(logItem) => logItemToggle(spanID, logItem)}
+        timestamp={traceStartTime}
+      />
+    );
+  }
+
+  if (warnings && warnings.length > 0) {
+    listOfContentCards.push(
+      <AccordianKeyValues
+        data={warnings.map((warning) => ({
+          key: '',
+          value: warning,
+          type: 'warning',
+        }))}
+        onlyValues={true}
+        showSummary={false}
+        showCountBadge={true}
+        isOpen={isWarningsOpen}
+        onToggle={() => warningsToggle(spanID)}
+        label={t('explore.span-detail.label-warnings', 'Warnings')}
+      />
+    );
+  }
+
+  if (stackTraces?.length) {
+    listOfContentCards.push(
+      <AccordianKeyValues
+        data={stackTraces.map((stackTrace) => ({
+          key: '',
+          value: stackTrace,
+          type: 'code',
+        }))}
+        onlyValues={true}
+        showSummary={false}
+        showCountBadge={true}
+        isOpen={isStackTracesOpen}
+        onToggle={() => stackTracesToggle(spanID)}
+        label={t('explore.span-detail.label-stack-trace', 'Stack trace')}
+      />
+    );
+  }
+
+  if (references && references.length > 0 && (references.length > 1 || references[0].refType !== 'CHILD_OF')) {
+    listOfContentCards.push(
+      <AccordianReferences
+        data={references}
+        isOpen={referencesState.isOpen}
+        openedItems={referencesState.openedItems}
+        onToggle={() => referencesToggle(spanID)}
+        onItemToggle={(reference) => referenceItemToggle(spanID, reference)}
+        createFocusSpanLink={createFocusSpanLink}
+      />
+    );
+  }
+
+  if (span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey)) {
+    listOfContentCards.push(
+      <SpanFlameGraph
+        span={span}
+        timeZone={timeZone}
+        traceFlameGraphs={traceFlameGraphs}
+        setTraceFlameGraphs={setTraceFlameGraphs}
+        traceToProfilesOptions={traceToProfilesOptions}
+        setRedrawListView={setRedrawListView}
+        traceDuration={traceDuration}
+        traceName={traceName}
+      />
+    );
+  }
+
   return (
-    <div data-testid="span-detail-component">
+    <div data-testid="span-detail-component" ref={mainContainerRef} className={styles.spanDetailComponent}>
       <div className={styles.header}>
-        <h6 className={styles.operationName} title={operationName}>
-          {operationName}
-        </h6>
+        <div className={styles.serviceNameAndLinks}>
+          <h6 className={styles.operationName} title={operationName}>
+            {operationName}
+          </h6>
+          {linksComponent}
+        </div>
         <div className={styles.listWrapper}>
           <LabeledList className={styles.list} divider={false} items={overviewItems} color={color} />
         </div>
-        <ShareSpanButton focusSpanLink={focusSpanLink} />
       </div>
-      <div className={styles.linkList}>{linksComponent}</div>
       <div className={styles.content}>
-        <div>
-          <AccordianKeyValues
-            data={tags}
-            label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
-            isOpen={isTagsOpen}
-            linksGetter={resourceLinksGetter}
-            onToggle={() => tagsToggle(spanID)}
-          />
-          {process.tags && (
-            <AccordianKeyValues
-              data={process.tags}
-              label={t('explore.span-detail.label-resource-attributes', 'Resource attributes')}
-              linksGetter={resourceLinksGetter}
-              isOpen={isProcessOpen}
-              onToggle={() => processToggle(spanID)}
-            />
-          )}
-        </div>
-        {logs && logs.length > 0 && (
-          <AccordianLogs
-            logs={logs}
-            isOpen={logsState.isOpen}
-            openedItems={logsState.openedItems}
-            onToggle={() => logsToggle(spanID)}
-            onItemToggle={(logItem) => logItemToggle(spanID, logItem)}
-            timestamp={traceStartTime}
-          />
-        )}
+        <CardsContainer listOfContentCards={listOfContentCards} mainContainerRef={mainContainerRef} />
 
-        {warnings && warnings.length > 0 && (
-          <AccordianKeyValues
-            data={warnings.map((warning) => ({
-              key: '',
-              value: warning,
-              type: 'text',
-            }))}
-            showSummary={false}
-            showCountBadge={true}
-            isOpen={isWarningsOpen}
-            onlyValues={true}
-            onToggle={() => warningsToggle(spanID)}
-            label={t('explore.span-detail.warnings', 'Warnings')}
-          />
-        )}
-
-        {stackTraces?.length ? (
-          <AccordianKeyValues
-            data={stackTraces.map((stackTrace) => ({
-              key: '',
-              value: stackTrace,
-              type: 'code',
-            }))}
-            onlyValues={true}
-            showSummary={false}
-            showCountBadge={true}
-            isOpen={isStackTracesOpen}
-            onToggle={() => stackTracesToggle(spanID)}
-            label={t('explore.span-detail.label-stack-trace', 'Stack trace')}
-          />
-        ) : null}
-
-        {references && references.length > 0 && (references.length > 1 || references[0].refType !== 'CHILD_OF') && (
-          <AccordianReferences
-            data={references}
-            isOpen={referencesState.isOpen}
-            openedItems={referencesState.openedItems}
-            onToggle={() => referencesToggle(spanID)}
-            onItemToggle={(reference) => referenceItemToggle(spanID, reference)}
-            createFocusSpanLink={createFocusSpanLink}
-          />
-        )}
-        {span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey) && (
-          <SpanFlameGraph
-            span={span}
-            timeZone={timeZone}
-            traceFlameGraphs={traceFlameGraphs}
-            setTraceFlameGraphs={setTraceFlameGraphs}
-            traceToProfilesOptions={traceToProfilesOptions}
-            setRedrawListView={setRedrawListView}
-            traceDuration={traceDuration}
-            traceName={traceName}
-          />
-        )}
+        <small className={styles.debugInfo}>
+          {/* TODO: fix keyboard a11y */}
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+          <a
+            {...focusSpanLink}
+            onClick={(e) => {
+              // click handling logic copied from react router:
+              // https://github.com/remix-run/react-router/blob/997b4d67e506d39ac6571cb369d6d2d6b3dda557/packages/react-router-dom/index.tsx#L392-L394s
+              if (
+                focusSpanLink.onClick &&
+                e.button === 0 && // Ignore everything but left clicks
+                (!e.currentTarget.target || e.currentTarget.target === '_self') && // Let browser handle "target=_blank" etc.
+                !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) // Ignore clicks with modifier keys
+              ) {
+                e.preventDefault();
+                focusSpanLink.onClick(e);
+              }
+            }}
+          >
+            <Icon name={'link'} className={cx(alignIcon, styles.LinkIcon)}></Icon>
+          </a>
+          <span className={styles.debugLabel} data-label="SpanID:" /> {spanID}
+        </small>
       </div>
     </div>
   );
@@ -465,4 +554,53 @@ export const getAbsoluteTime = (startTime: number, timeZone: TimeZone) => {
   const match = dateStr.split(' ');
   const absoluteTime = match[1] ? match[1] : dateStr;
   return ` (${absoluteTime})`;
+};
+
+const CardsContainer = ({
+  listOfContentCards,
+  mainContainerRef,
+}: {
+  listOfContentCards: React.ReactNode[];
+  mainContainerRef?: React.RefObject<HTMLDivElement>;
+}) => {
+  const styles = useStyles2(getStyles);
+
+  const useTwoColumns =
+    mainContainerRef && mainContainerRef.current && mainContainerRef.current.getBoundingClientRect().width > 1000;
+
+  if (useTwoColumns) {
+    return (
+      <>
+        <div className={css({ float: 'left', width: '50%' })}>
+          {listOfContentCards.map((card, index) =>
+            index % 2 === 0 ? (
+              <div className={styles.card} key={index}>
+                {card}
+              </div>
+            ) : null
+          )}
+        </div>
+
+        <div className={css({ float: 'right', width: '50%' })}>
+          {listOfContentCards.map((card, index) =>
+            index % 2 === 1 ? (
+              <div className={styles.card} key={index}>
+                {card}
+              </div>
+            ) : null
+          )}
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <div className={css({ clear: 'both', width: '100%' })}>
+      {listOfContentCards.map((card, index) => (
+        <div className={styles.card} key={index}>
+          {card}
+        </div>
+      ))}
+    </div>
+  );
 };

@@ -10,17 +10,22 @@ import (
 
 func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	s.logger.Debug("Allowing access to stream", "path", req.Path, "user", req.PluginContext.User)
-	status := backend.SubscribeStreamStatusPermissionDenied
+
 	if strings.HasPrefix(req.Path, SearchPathPrefix) {
-		status = backend.SubscribeStreamStatusOK
+		return &backend.SubscribeStreamResponse{
+			Status: backend.SubscribeStreamStatusOK,
+		}, nil
 	}
+
 	if strings.HasPrefix(req.Path, MetricsPathPrefix) {
-		status = backend.SubscribeStreamStatusOK
+		return &backend.SubscribeStreamResponse{
+			Status: backend.SubscribeStreamStatusOK,
+		}, nil
 	}
 
 	return &backend.SubscribeStreamResponse{
-		Status: status,
-	}, nil
+		Status: backend.SubscribeStreamStatusPermissionDenied,
+	}, backend.DownstreamErrorf("stream path not supported: %s", req.Path)
 }
 
 func (s *Service) PublishStream(_ context.Context, _ *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
@@ -38,7 +43,7 @@ func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamReque
 
 	if strings.HasPrefix(request.Path, SearchPathPrefix) {
 		if err != nil {
-			return err
+			return backend.DownstreamErrorf("failed to get datasource information: %w", err)
 		}
 		if err = s.runSearchStream(ctx, request, sender, tempoDatasource); err != nil {
 			return sendError(err, sender)
@@ -48,7 +53,7 @@ func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamReque
 	}
 	if strings.HasPrefix(request.Path, MetricsPathPrefix) {
 		if err != nil {
-			return err
+			return backend.DownstreamErrorf("failed to get datasource information: %w", err)
 		}
 		if err = s.runMetricsStream(ctx, request, sender, tempoDatasource); err != nil {
 			return sendError(err, sender)

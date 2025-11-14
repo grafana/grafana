@@ -51,6 +51,7 @@ const CardContext = React.createContext<{
 /**
  * Generic card component
  *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-card--docs
  * @public
  */
 export const Card: CardInterface = ({

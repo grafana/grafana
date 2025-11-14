@@ -696,13 +696,13 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 	resource := cmd.Resource
 	resourceID := cmd.ResourceID
 	resourceAttribute := cmd.ResourceAttribute
-	permission := cmd.Permission
-	/*
-		Add ACTION SET of managed permissions to in-memory store
-	*/
-	if s.shouldStoreActionSet(resource, permission) {
-		actionSetName := GetActionSetName(resource, permission)
-		p := managedPermission(actionSetName, resource, resourceID, resourceAttribute)
+
+	if len(missingActions) == 0 {
+		return nil
+	}
+
+	for action := range missingActions {
+		p := managedPermission(action, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
 		p.Created = time.Now()
 		p.Updated = time.Now()
@@ -710,37 +710,10 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 		permissions = append(permissions, p)
 	}
 
-	// If there are no missing actions for the resource (in case of access level downgrade or resource removal), we don't need to insert any actions
-	// we still want to add the action set (when permission != "")
-	if len(missingActions) == 0 && !s.shouldStoreActionSet(resource, permission) {
-		return nil
-	}
-
-	// if we have actionset feature enabled and are only working with action sets
-	// skip adding the missing actions to the permissions table
-	if !s.shouldStoreActionSet(resource, permission) || !s.cfg.RBAC.OnlyStoreAccessActionSets {
-		for action := range missingActions {
-			p := managedPermission(action, resource, resourceID, resourceAttribute)
-			p.RoleID = roleID
-			p.Created = time.Now()
-			p.Updated = time.Now()
-			p.Kind, p.Attribute, p.Identifier = p.SplitScope()
-			permissions = append(permissions, p)
-		}
-	}
-
 	if _, err := sess.InsertMulti(&permissions); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (s *store) shouldStoreActionSet(resource, permission string) bool {
-	if permission == "" {
-		return false
-	}
-	actionSetName := GetActionSetName(resource, permission)
-	return isFolderOrDashboardAction(actionSetName)
 }
 
 func deletePermissions(sess *db.Session, ids []int64) error {

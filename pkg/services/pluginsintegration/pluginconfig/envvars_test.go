@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -29,7 +29,7 @@ func TestPluginEnvVarsProvider_PluginEnvVars(t *testing.T) {
 			},
 		}
 
-		licensing := &fakes.FakeLicensingService{
+		licensing := &pluginfakes.FakeLicensingService{
 			LicenseEdition: "test",
 			TokenRaw:       "token",
 			LicensePath:    "/path/to/ent/license",

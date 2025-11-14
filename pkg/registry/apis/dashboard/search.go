@@ -123,6 +123,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "libraryPanel",
+										In:          "query",
+										Description: "find dashboards that reference a given libraryPanel",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "sort",
 										In:          "query",
 										Description: "sortable field",
@@ -279,8 +288,12 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	if queryParams.Has("offset") {
 		offset, _ = strconv.Atoi(queryParams.Get("offset"))
+		if offset > 0 {
+			page = (offset / limit) + 1
+		}
 	} else if queryParams.Has("page") {
 		page, _ = strconv.Atoi(queryParams.Get("page"))
+		offset = (page - 1) * limit
 	}
 
 	searchRequest := &resourcepb.ResourceSearchRequest{
@@ -356,6 +369,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			Key:      "tags",
 			Operator: "=",
 			Values:   tags,
+		}}
+	}
+
+	// The libraryPanel filter
+	if libraryPanel, ok := queryParams["libraryPanel"]; ok {
+		searchRequest.Options.Fields = []*resourcepb.Requirement{{
+			Key:      search.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+			Operator: "=",
+			Values:   libraryPanel,
 		}}
 	}
 

@@ -176,7 +176,7 @@ function LibraryElementInfo({ data }: { data: ResourceTableItem }) {
         </Text>
 
         <Text color="secondary">
-          <Trans i18nKey="migrate-to-cloud.resource-table.error-library-element-sub">Library Element {uid}</Trans>
+          <Trans i18nKey="migrate-to-cloud.resource-table.error-library-element-sub">Library Element {{ uid }}</Trans>
         </Text>
       </>
     );

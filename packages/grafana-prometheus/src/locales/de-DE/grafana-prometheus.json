@@ -85,9 +85,9 @@
         "tooltip-classic-query": "Die ursprüngliche Implementierung des Prometheus-Variablen-Abfrageeditors. Geben Sie eine Zeichenfolge mit dem richtigen Abfragetyp und den richtigen Parametern ein, wie in diesen Dokumenten beschrieben. Zum Beispiel: {{exampleQuery}}.",
         "tooltip-label": "Gibt eine Liste von Label-Werten für den Label-Namen in allen Metriken zurück, es sei denn, die Metrik ist angegeben.",
         "tooltip-metric-regex": "Gibt eine Liste von Label-Namen zurück, die optional gemäß dem angegebenen Metrik-Regex gefiltert werden.",
-        "tooltip-query": "Gibt eine Liste der Prometheus-Abfrageergebnisse für die Abfrage zurück. Dies kann Prometheus-Funktionen umfassen, z. B. {{exampleQuery}}.",
+        "tooltip-query": "",
         "tooltip-query-type": "Das Prometheus-Datenquellen-Plugin bietet die folgenden Abfragetypen für Vorlagenvariablen.",
-        "tooltip-series-query": "Geben Sie eine Metrik mit Labels ein, nur eine Metrik oder nur Labels, z. B. {{example1}}, {{example2}} oder {{example3}}. Gibt eine Liste der Zeitreihen zurück, die den eingegebenen Daten zugeordnet sind."
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "Selektor",
@@ -175,16 +175,16 @@
         "label-scrape-interval": "Scrape-Intervall",
         "label-series-limit": "Reihengrenze",
         "label-use-series-endpoint": "Reihenendpunkt verwenden",
-        "more-info": "Weitere Informationen zur Konfiguration des Typs und der Version von Prometheus in Datenquellen finden Sie in der <2>Bereitstellungsdokumentation</2>.",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "Beispiel: {{example}}",
         "title-interval-behaviour": "Intervallverhalten",
         "title-other": "Sonstiges",
         "title-performance": "Leistung",
         "title-query-editor": "Abfrage-Editor",
         "tooltip-cache-level": "Legt die Browser-Cache-Level für Editor-Abfragen fest. Für Datenquellen mit hoher Kardinalität werden höhere Cache-Einstellungen empfohlen.",
-        "tooltip-custom-query-parameters": "Fügen Sie der URL der Prometheus-Abfrage benutzerdefinierte Parameter hinzu. Zum Beispiel {{example1}}, {{example2}}, {{example3}} oder {{example4}}. Mehrere Parameter sollten mit {{concatenationChar}} verknüpft werden.",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "Legen Sie die Standard-Editoroption für alle Nutzer dieser Datenquelle fest.",
-        "tooltip-disable-metrics-lookup": "Wenn diese Option aktiviert ist, werden die Metrikauswahl und die Unterstützung für Metriken/Labels im Rahmen der Autovervollständigung des Abfragefelds deaktiviert. Dies hilft, wenn Sie Leistungsprobleme mit größeren Prometheus-Instanzen haben. ",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "Diese Funktion deaktiviert die Aufnahmeregeln. Wenn Sie dies aktivieren, wird die Dashboard-Leistung verbessert",
         "tooltip-http-method": "Sie können entweder die HTTP-Methode POST oder GET für die Abfrage Ihrer Prometheus-Datenquelle verwenden. POST ist die empfohlene Methode, da sie größere Abfragen ermöglicht. Ändern Sie dies zu GET, wenn Ihre Prometheus-Version älter als 2.1 ist oder POST-Abfragen in Ihrem Netzwerk beschränkt sind.",
         "tooltip-incremental-querying-beta": "Diese Funktion ändert das Standardverhalten von relativen Abfragen, sodass immer neue Daten von der Prometheus-Instanz abgefragt werden. Stattdessen werden Abfrageergebnisse zwischengespeichert und nur neue Datensätze abgefragt. Wenn Sie dies aktivieren, wird die Datenbank- und Netzwerklast reduziert.",
@@ -479,18 +479,13 @@
         "aria-label-selector": "Selektor"
       },
       "results-table": {
-        "content-descriptive-type": "Bei der Erstellung von {{descriptiveType}} zeigt Prometheus mehrere Reihen mit dem Typ Counter. ",
+        "content-descriptive-type": "",
         "description": "Beschreibung",
         "message-expand-label-filters": "Es wurden keine Metriken gefunden. Versuchen Sie, Ihre Label-Filter zu erweitern.",
         "message-expand-search": "Es wurden keine Metriken gefunden. Versuchen Sie, Ihre Suche und Ihre Filter zu erweitern.",
         "message-no-metrics-found": "Es wurden keine Metriken in der Datenquelle gefunden.",
         "name": "Name",
         "type": "Typ"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Das Abfrage-Parsing ist unklar."
-        }
       }
     }
   }

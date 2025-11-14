@@ -63,7 +63,8 @@ export const INFLUXDB_VERSION_MAP: InfluxDBProduct[] = [
     ],
     detectionMethod: {
       pingHeaderResponse: {
-        'x-influxdb-build': 'Enterprise (needs confirmation)',
+        'x-influxdb-version': '^v?1\\.',
+        'x-influxdb-build': 'Enterprise',
       },
     },
   },
@@ -75,7 +76,8 @@ export const INFLUXDB_VERSION_MAP: InfluxDBProduct[] = [
     ],
     detectionMethod: {
       pingHeaderResponse: {
-        'x-influxdb-build': 'TBD',
+        'x-influxdb-version': '^v?3\\.',
+        'x-influxdb-build': 'Enterprise',
       },
     },
   },
@@ -113,7 +115,7 @@ export const INFLUXDB_VERSION_MAP: InfluxDBProduct[] = [
     detectionMethod: {
       pingHeaderResponse: {
         'x-influxdb-build': 'OSS',
-        'x-influxdb-version': '^1\\.',
+        'x-influxdb-version': '^v?1\\.',
       },
     },
   },
@@ -134,7 +136,20 @@ export const INFLUXDB_VERSION_MAP: InfluxDBProduct[] = [
     detectionMethod: {
       pingHeaderResponse: {
         'x-influxdb-build': 'OSS',
-        'x-influxdb-version': '^2\\.',
+        'x-influxdb-version': '^v?2\\.',
+      },
+    },
+  },
+  {
+    name: 'InfluxDB OSS 3.x',
+    queryLanguages: [
+      { name: InfluxVersion.SQL, fields: ['URL', 'Token'] },
+      { name: InfluxVersion.InfluxQL, fields: ['URL', 'Token'] },
+    ],
+    detectionMethod: {
+      pingHeaderResponse: {
+        'x-influxdb-build': 'OSS',
+        'x-influxdb-version': '^v?3\\.',
       },
     },
   },

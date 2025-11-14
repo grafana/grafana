@@ -85,7 +85,8 @@ export const usePluginDetailsTabs = (
     }
 
     // Not extending the tabs with the config pages if the plugin is not installed
-    if (!pluginConfig) {
+    // also wait if the plugin config is still loading to avoid showing default tabs prematurely
+    if (!pluginConfig || loading) {
       return navModelChildren;
     }
 
@@ -151,7 +152,7 @@ export const usePluginDetailsTabs = (
     }
 
     return navModelChildren;
-  }, [plugin, pluginConfig, pathname, isPublished, currentPageId, isNarrowScreen]);
+  }, [plugin, pluginConfig, pathname, isPublished, currentPageId, isNarrowScreen, loading]);
 
   const navModel: NavModelItem = {
     text: plugin?.name ?? '',

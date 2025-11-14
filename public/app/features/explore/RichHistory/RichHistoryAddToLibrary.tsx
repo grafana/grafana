@@ -31,7 +31,7 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
 
   const buttonLabel = t('explore.rich-history-card.add-to-library', 'Save query');
 
-  if (contextSrv.hasRole('Viewer')) {
+  if (!contextSrv.isEditor) {
     return null;
   }
 

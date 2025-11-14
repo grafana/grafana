@@ -50,11 +50,6 @@ export interface FeatureToggles {
   */
   storage?: boolean;
   /**
-  * Correlations page
-  * @default true
-  */
-  correlations?: boolean;
-  /**
   * Allow elements nesting
   */
   canvasPanelNesting?: boolean;
@@ -83,10 +78,6 @@ export interface FeatureToggles {
   * Rule backtesting API for alerting
   */
   alertingBacktesting?: boolean;
-  /**
-  * Enables drag and drop for CSV and Excel files
-  */
-  editPanelCSVDragAndDrop?: boolean;
   /**
   * Allow datasource to provide custom UI for context view
   * @default true
@@ -164,15 +155,6 @@ export interface FeatureToggles {
   * Enables extra themes
   */
   extraThemes?: boolean;
-  /**
-  * Enables the plugins frontend sandbox
-  */
-  pluginsFrontendSandbox?: boolean;
-  /**
-  * Enables writing multiple items from a single query within Recorded Queries
-  * @default true
-  */
-  recordedQueriesMulti?: boolean;
   /**
   * A table visualisation for logs in Explore
   * @default true
@@ -252,11 +234,6 @@ export interface FeatureToggles {
   */
   externalServiceAccounts?: boolean;
   /**
-  * Enables panel monitoring through logs and measurements
-  * @default true
-  */
-  panelMonitoring?: boolean;
-  /**
   * Enables native HTTP Histograms
   */
   enableNativeHTTPHistogram?: boolean;
@@ -298,6 +275,14 @@ export interface FeatureToggles {
   * Adds support for Kubernetes correlations
   */
   kubernetesCorrelations?: boolean;
+  /**
+  * Adds support for Kubernetes logs drilldown
+  */
+  kubernetesLogsDrilldown?: boolean;
+  /**
+  * Adds support for Kubernetes querycaching
+  */
+  kubernetesQueryCaching?: boolean;
   /**
   * Disable schema validation for dashboards/v1
   */
@@ -360,6 +345,10 @@ export interface FeatureToggles {
   */
   alertingProvenanceLockWrites?: boolean;
   /**
+  * Enables the UI to use certain backend-side filters
+  */
+  alertingUIUseBackendFilters?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
   alertmanagerRemotePrimary?: boolean;
@@ -368,10 +357,6 @@ export interface FeatureToggles {
   * @default true
   */
   annotationPermissionUpdate?: boolean;
-  /**
-  * Make sure extracted field names are unique in the dataframe
-  */
-  extractFieldsNameDeduplication?: boolean;
   /**
   * Enables dashboard rendering using Scenes for viewer roles
   * @default true
@@ -425,10 +410,6 @@ export interface FeatureToggles {
   * @default true
   */
   logRowsPopoverMenu?: boolean;
-  /**
-  * Disables passing host environment variable to plugin processes
-  */
-  pluginsSkipHostEnvVars?: boolean;
   /**
   * Enables shared crosshair in table panel
   */
@@ -515,11 +496,6 @@ export interface FeatureToggles {
   */
   newPDFRendering?: boolean;
   /**
-  * Use TLS-enabled memcached in the enterprise caching feature
-  * @default true
-  */
-  tlsMemcached?: boolean;
-  /**
   * Enable grafana's embedded kube-aggregator
   */
   kubernetesAggregator?: boolean;
@@ -561,9 +537,13 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
-  * Enable suggested dashboards when creating new dashboards
+  * Enable dashboard library experiments that are production ready
   */
   dashboardLibrary?: boolean;
+  /**
+  * Enable suggested dashboards when creating new dashboards
+  */
+  suggestedDashboards?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
@@ -612,6 +592,10 @@ export interface FeatureToggles {
   * Use openFGA as authorization engine.
   */
   zanzana?: boolean;
+  /**
+  * Use openFGA as main authorization engine and disable legacy RBAC clietn.
+  */
+  zanzanaNoLegacyClient?: boolean;
   /**
   * Enables reload of dashboards on scopes, time range and variables changes
   */
@@ -700,10 +684,6 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchSprinkles?: boolean;
   /**
-  * Use full n-gram indexing instead of edge n-gram for unified storage search
-  */
-  unifiedStorageUseFullNgram?: boolean;
-  /**
   * Pick the dual write mode from database configs
   */
   managedDualWriter?: boolean;
@@ -721,15 +701,14 @@ export interface FeatureToggles {
   */
   timeRangeProvider?: boolean;
   /**
+  * Enables time range panning functionality
+  */
+  timeRangePan?: boolean;
+  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */
   azureMonitorDisableLogLimit?: boolean;
-  /**
-  * Enables automatic updates for pre-installed plugins
-  * @default true
-  */
-  preinstallAutoUpdate?: boolean;
   /**
   * Enables experimental reconciler for playlists
   */
@@ -855,10 +834,6 @@ export interface FeatureToggles {
   */
   teamHttpHeadersTempo?: boolean;
   /**
-  * Use new **Combobox** component for template variables
-  */
-  templateVariablesUsesCombobox?: boolean;
-  /**
   * Enables Advisor app
   */
   grafanaAdvisor?: boolean;
@@ -875,7 +850,8 @@ export interface FeatureToggles {
   */
   fetchRulesUsingPost?: boolean;
   /**
-  * Enables the new logs panel in Explore
+  * Enables the new logs panel
+  * @default true
   */
   newLogsPanel?: boolean;
   /**
@@ -1030,6 +1006,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzResourcePermissionApis?: boolean;
   /**
+  * Enable sync of Zanzana authorization store on AuthZ CRD mutations
+  */
+  kubernetesAuthzZanzanaSync?: boolean;
+  /**
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
   kubernetesAuthnMutation?: boolean;
@@ -1038,11 +1018,6 @@ export interface FeatureToggles {
   * @default false
   */
   restoreDashboards?: boolean;
-  /**
-  * Skip token rotation if it was already rotated less than 5 seconds ago
-  * @default true
-  */
-  skipTokenRotationIfRecent?: boolean;
   /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
@@ -1070,6 +1045,7 @@ export interface FeatureToggles {
   alertingImportAlertmanagerUI?: boolean;
   /**
   * Enables image sharing functionality for dashboards
+  * @default true
   */
   sharingDashboardImage?: boolean;
   /**
@@ -1093,15 +1069,15 @@ export interface FeatureToggles {
   */
   enableAppChromeExtensions?: boolean;
   /**
+  * Set this to true to enable all dashboard empty state extensions registered by plugins.
+  * @default false
+  */
+  enableDashboardEmptyExtensions?: boolean;
+  /**
   * Enables use of app platform API for folders
   * @default false
   */
   foldersAppPlatformAPI?: boolean;
-  /**
-  * Set this to true to use the new PluginImporter functionality
-  * @default false
-  */
-  enablePluginImporter?: boolean;
   /**
   * Applies OTel formatting templates to displayed logs
   */
@@ -1116,11 +1092,6 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchDualReaderEnabled?: boolean;
   /**
-  * Enables adhoc filtering support for the dashboard datasource
-  * @default true
-  */
-  dashboardDsAdHocFiltering?: boolean;
-  /**
   * Supports __from and __to macros that always use the dashboard level time range
   */
   dashboardLevelTimeMacros?: boolean;
@@ -1133,11 +1104,6 @@ export interface FeatureToggles {
   * @default false
   */
   restrictedPluginApis?: boolean;
-  /**
-  * Enable adhoc filter buttons in visualization tooltips
-  * @default true
-  */
-  adhocFiltersInTooltips?: boolean;
   /**
   * Enable favorite datasources
   */
@@ -1156,6 +1122,10 @@ export interface FeatureToggles {
   * @default false
   */
   teamFolders?: boolean;
+  /**
+  * Enables the interactive learning app
+  */
+  interactiveLearning?: boolean;
   /**
   * Enables the alerting triage feature
   * @default false
@@ -1187,11 +1157,6 @@ export interface FeatureToggles {
   */
   tempoSearchBackendMigration?: boolean;
   /**
-  * Filter out bots from collecting data for Frontend Observability
-  * @default false
-  */
-  filterOutBotsFromFrontendLogs?: boolean;
-  /**
   * Prioritize loading plugins from the CDN before other sources
   * @default false
   */
@@ -1201,4 +1166,65 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsUrls?: boolean;
+  /**
+  * Enable syncing plugin installations to the installs API
+  * @default false
+  */
+  pluginInstallAPISync?: boolean;
+  /**
+  * Enable new gauge visualization
+  * @default false
+  */
+  newGauge?: boolean;
+  /**
+  * Enable new visualization suggestions
+  * @default false
+  */
+  newVizSuggestions?: boolean;
+  /**
+  * Restrict PanelChrome contents with overflow: hidden;
+  * @default true
+  */
+  preventPanelChromeOverflow?: boolean;
+  /**
+  * Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
+  */
+  jaegerEnableGrpcEndpoint?: boolean;
+  /**
+  * Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
+  * @default false
+  */
+  pluginStoreServiceLoading?: boolean;
+  /**
+  * Increases panel padding globally
+  * @default false
+  */
+  newPanelPadding?: boolean;
+  /**
+  * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
+  * @default true
+  */
+  onlyStoreActionSets?: boolean;
+  /**
+  * Enables a new panel time settings drawer
+  */
+  panelTimeSettings?: boolean;
+  /**
+  * Enable template dashboards
+  */
+  dashboardTemplates?: boolean;
+  /**
+  * Enables Advisor app installer
+  */
+  grafanaAdvisorAppInstaller?: boolean;
+  /**
+  * Enables app platform API for annotations
+  * @default false
+  */
+  kubernetesAnnotations?: boolean;
+  /**
+  * Enables http proxy settings for aws datasources
+  * @default false
+  */
+  awsDatasourcesHttpProxy?: boolean;
 }

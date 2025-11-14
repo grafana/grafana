@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
+
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/require"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 )
 
 func NewAlertRuleClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.AlertRule, v0alpha1.AlertRuleList] {
@@ -22,11 +22,7 @@ func NewAlertRuleClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1
 
 	return &apis.TypedClient[v0alpha1.AlertRule, v0alpha1.AlertRuleList]{
 		Client: client.Resource(
-			schema.GroupVersionResource{
-				Group:    v0alpha1.AlertRuleKind().Group(),
-				Version:  v0alpha1.AlertRuleKind().Version(),
-				Resource: v0alpha1.AlertRuleKind().Plural(),
-			}).Namespace("default"),
+			v0alpha1.AlertRuleKind().GroupVersionResource()).Namespace("default"),
 	}
 }
 
@@ -38,11 +34,7 @@ func NewRecordingRuleClient(t *testing.T, user apis.User) *apis.TypedClient[v0al
 
 	return &apis.TypedClient[v0alpha1.RecordingRule, v0alpha1.RecordingRuleList]{
 		Client: client.Resource(
-			schema.GroupVersionResource{
-				Group:    v0alpha1.RecordingRuleKind().Group(),
-				Version:  v0alpha1.RecordingRuleKind().Version(),
-				Resource: v0alpha1.RecordingRuleKind().Plural(),
-			}).Namespace("default"),
+			v0alpha1.RecordingRuleKind().GroupVersionResource()).Namespace("default"),
 	}
 }
 
@@ -54,11 +46,7 @@ func NewFolderClient(t *testing.T, user apis.User) *apis.TypedClient[folders.Fol
 
 	return &apis.TypedClient[folders.Folder, folders.FolderList]{
 		Client: client.Resource(
-			schema.GroupVersionResource{
-				Group:    folders.FolderKind().Group(),
-				Version:  folders.FolderKind().Version(),
-				Resource: folders.FolderKind().Plural(),
-			}).Namespace("default"),
+			folders.FolderKind().GroupVersionResource()).Namespace("default"),
 	}
 }
 

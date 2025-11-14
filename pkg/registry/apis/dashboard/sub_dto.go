@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -28,13 +29,14 @@ type dtoBuilder = func(dashboard runtime.Object, access *dashboard.DashboardAcce
 
 // The DTO returns everything the UI needs in a single request
 type DTOConnector struct {
-	getter        rest.Getter
-	legacy        legacy.DashboardAccess
-	unified       resource.ResourceClient
-	largeObjects  apistore.LargeObjectSupport
-	accessControl accesscontrol.AccessControl
-	scheme        *runtime.Scheme
-	builder       dtoBuilder
+	getter                 rest.Getter
+	legacy                 legacy.DashboardAccess
+	unified                resource.ResourceClient
+	largeObjects           apistore.LargeObjectSupport
+	accessControl          accesscontrol.AccessControl
+	scheme                 *runtime.Scheme
+	builder                dtoBuilder
+	publicDashboardService publicdashboards.Service
 }
 
 func NewDTOConnector(
@@ -45,15 +47,17 @@ func NewDTOConnector(
 	accessControl accesscontrol.AccessControl,
 	scheme *runtime.Scheme,
 	builder dtoBuilder,
+	publicDashboardService publicdashboards.Service,
 ) (rest.Storage, error) {
 	return &DTOConnector{
-		getter:        getter,
-		legacy:        legacyAccess,
-		accessControl: accessControl,
-		unified:       resourceClient,
-		largeObjects:  largeObjects,
-		builder:       builder,
-		scheme:        scheme,
+		getter:                 getter,
+		legacy:                 legacyAccess,
+		accessControl:          accessControl,
+		unified:                resourceClient,
+		largeObjects:           largeObjects,
+		builder:                builder,
+		scheme:                 scheme,
+		publicDashboardService: publicDashboardService,
 	}, nil
 }
 
@@ -147,12 +151,17 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		access.CanStar = user.IsIdentityType(authlib.TypeUser)
 
 		access.AnnotationsPermissions = &dashboard.AnnotationPermission{}
-		r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
+		r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Dashboard, dashScope)
 		r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 
 		title := obj.FindTitle("")
 		access.Slug = slugify.Slugify(title)
 		access.Url = dashboards.GetDashboardFolderURL(false, name, access.Slug)
+
+		pubDash, err := r.publicDashboardService.FindByDashboardUid(ctx, user.GetOrgID(), name)
+		if err == nil && pubDash != nil {
+			access.IsPublic = true
+		}
 
 		dash, err := r.builder(rawobj, access)
 		if err != nil {

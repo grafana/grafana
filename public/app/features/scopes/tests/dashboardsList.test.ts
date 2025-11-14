@@ -4,6 +4,7 @@ import { config, locationService } from '@grafana/runtime';
 
 import { ScopesService } from '../ScopesService';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
+import { ScopeNavigation } from '../dashboards/types';
 
 import {
   clearNotFound,
@@ -259,6 +260,35 @@ describe('Dashboards list', () => {
     expectDashboardLength('usage-insights-overview', 1);
     expectDashboardLength('usage-insights-query-errors', 1);
     expectDashboardLength('billing-usage', 1);
+  });
+
+  it('does not redirect when scopes are set programmatically on dashboard not in scope navigation list', async () => {
+    // Render another dashboard, which is not a scope navigation
+    const mockNavigations: ScopeNavigation[] = [
+      {
+        spec: {
+          scope: 'grafana',
+          url: '/d/dashboard1',
+        },
+        status: {
+          title: 'Dashboard 1',
+          groups: ['group1'],
+        },
+        metadata: {
+          name: 'dashboard1',
+        },
+      },
+    ];
+    fetchDashboardsSpy.mockResolvedValue(mockNavigations);
+
+    await renderDashboard();
+    expect(locationService.getLocation().pathname).toBe('/');
+
+    // When scopes are set programmatically (not through UI), redirects should not happen
+    await updateScopes(scopesService, ['grafana']);
+    // Should stay on the current page, not redirect
+    expect(locationService.getLocation().pathname).toBe('/');
+    expect(fetchDashboardsSpy).toHaveBeenCalled();
   });
 
   it('Shows a proper message when no scopes are selected', async () => {

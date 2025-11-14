@@ -1,7 +1,6 @@
 import 'symbol-observable';
 import 'regenerator-runtime/runtime';
 
-import '@formatjs/intl-durationformat/polyfill';
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';
@@ -102,6 +101,7 @@ import { usePluginFunctions } from './features/plugins/extensions/usePluginFunct
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { getAppPluginsToAwait, getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
+import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
@@ -135,6 +135,8 @@ export class GrafanaApp {
 
       // Let iframe container know grafana has started loading
       window.parent.postMessage('GrafanaAppInit', '*');
+
+      initSystemJSHooks();
 
       // Currently the OpenFeature API requires a signed in user. This means feature flags cannot be used
       // on the login page.

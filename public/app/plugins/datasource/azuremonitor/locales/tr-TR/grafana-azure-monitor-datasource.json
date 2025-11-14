@@ -13,11 +13,11 @@
       "label-resource-group": "Kaynak Grubu",
       "label-resource-name": "Kaynak Adı",
       "label-resource-number": "Kaynak {{resourceNum}}",
-      "label-resource-uri": "Kaynak URI'leri ",
+      "label-resource-uri": "",
       "label-subscription": "Abonelik",
       "placeholder-resource-name": "ad",
       "tooltip-region": "Kaynağın kod bölgesi. Bir kaynak için isteğe bağlıdır ancak birden fazla kaynak seçildiğinde zorunludur.",
-      "tooltip-resource-uri": "<2>Kaynak URI'sini</2> manuel olarak düzenleyin. Birden fazla şablon değişkeni kullanımını destekler (örnek: /subscriptions/$subId/resourceGroups/$rg)"
+      "tooltip-resource-uri": ""
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Toplama işlevi",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Temel Günlükler",
-      "description-basic-logs": "Bu özelliğin etkinleştirilmesi, <2>Temel Günlükler</2> için yapılandırılmış tabloları sorgulayan pano panellerinde Azure Monitor sorgu başına maliyetlerinin oluşmasına neden olur.",
+      "description-basic-logs": "",
       "label-enable-basic-logs": "Temel Günlükleri Etkinleştir"
     },
     "config-editor": {

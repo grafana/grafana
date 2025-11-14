@@ -822,7 +822,7 @@ func TestEncodeDecode(t *testing.T) {
 		Private: grafanaPrivateKey[:],
 	},
 		crypto.NewNacl(),
-		"",
+		t.TempDir(),
 	)
 	require.NoError(t, err)
 

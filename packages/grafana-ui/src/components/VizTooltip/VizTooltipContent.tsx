@@ -43,7 +43,6 @@ export const VizTooltipContent = ({
           colorIndicator={colorIndicator}
           colorPlacement={colorPlacement}
           isActive={isActive}
-          justify={'space-between'}
           isPinned={isPinned}
           lineStyle={lineStyle}
           showValueScroll={!scrollable}

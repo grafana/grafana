@@ -117,6 +117,10 @@ DashboardLink: {
 // - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
 DashboardLinkPlacement: "inControlsMenu"
 
+// Annotation Query placement. Defines where the annotation query should be displayed.
+// - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+AnnotationQueryPlacement: "inControlsMenu"
+
 // A topic is attached to DataFrame metadata in query results.
 // This specifies where the data should be used.
 DataTopic: "series" | "annotations" | "alertStates" @cog(kind="enum",memberNames="Series|Annotations|AlertStates")
@@ -152,6 +156,8 @@ FieldConfigSource: {
 	defaults: FieldConfig
 	// Overrides are the options applied to specific fields overriding the defaults.
 	overrides: [...{
+		// Describes config override rules created when interacting with Grafana.
+		"__systemRef"?: string
 		matcher: MatcherConfig
 		properties: [...DynamicConfigValue]
 	}]
@@ -245,7 +251,8 @@ MatcherConfig: {
 }
 
 Threshold: {
-	value: number
+	// Value null means -Infinity
+	value: number | null
 	color: string
 }
 
@@ -436,6 +443,8 @@ AnnotationQuerySpec: {
 	name:        string
 	builtIn?:    bool | *false
 	filter?:     AnnotationPanelFilter
+	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+	placement?:  AnnotationQueryPlacement
 	legacyOptions?:     [string]: _ // Catch-all field for datasource-specific properties. Should not be available in as code tooling.
 }
 
@@ -452,6 +461,7 @@ QueryOptionsSpec: {
 	interval?:         string
 	cacheTimeout?:     string
 	hideTimeOverride?: bool
+	timeCompare?:      string
 }
 
 DataQueryKind: {
@@ -468,7 +478,7 @@ DataQueryKind: {
 
 PanelQuerySpec: {
 	query:       DataQueryKind
-	refId:  string
+	refId:  string | *"A"
 	hidden: bool
 }
 
@@ -869,7 +879,7 @@ IntervalVariableSpec: {
 	auto:         bool | *false
 	auto_min:     string | *""
 	auto_count:   int | *0
-	refresh:      VariableRefresh
+	refresh:      "onTimeRangeChanged"
 	label?:       string
 	hide:         VariableHide
 	skipUrlSync:  bool | *false

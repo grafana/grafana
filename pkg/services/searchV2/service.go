@@ -117,6 +117,7 @@ func ProvideService(cfg *setting.Cfg, sql db.DB, entityEventStore store.EntityEv
 }
 
 func (s *StandardSearchService) IsDisabled() bool {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	return !s.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch)
 }
 

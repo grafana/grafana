@@ -55,12 +55,14 @@ func (s *Server) write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 	}
 	if len(writeTuples) > 0 {
 		writeReq.Writes = &openfgav1.WriteRequestWrites{
-			TupleKeys: writeTuples,
+			TupleKeys:   writeTuples,
+			OnDuplicate: "ignore",
 		}
 	}
 	if len(deleteTuples) > 0 {
 		writeReq.Deletes = &openfgav1.WriteRequestDeletes{
 			TupleKeys: deleteTuples,
+			OnMissing: "ignore",
 		}
 	}
 

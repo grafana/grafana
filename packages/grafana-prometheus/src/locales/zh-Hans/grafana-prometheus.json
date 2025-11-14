@@ -85,9 +85,9 @@
         "tooltip-classic-query": "Prometheus 变量查询编辑器的原始执行操作。按照这些文档中所述，输入包含正确查询类型和参数的字符串。例如，{{exampleQuery}}。",
         "tooltip-label": "返回所有指标中标签名称的标签值列表，除非指定了指标。",
         "tooltip-metric-regex": "返回标签名称列表，可选择按指定的指标正则表达式进行筛选。",
-        "tooltip-query": "返回查询的 Prometheus 查询结果列表。这可以包含 Prometheus 函数，即 {{exampleQuery}}。",
+        "tooltip-query": "",
         "tooltip-query-type": "Prometheus 数据源插件为模板变量提供以下查询类型。",
-        "tooltip-series-query": "输入带有标签的指标、仅指标或仅标签，即 {{example1}}、{{example2}} 或 {{example3}}。返回与输入数据关联的时间序列列表。"
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "选择器",
@@ -175,16 +175,16 @@
         "label-scrape-interval": "抓取间隔",
         "label-series-limit": "序列限制",
         "label-use-series-endpoint": "使用序列端点",
-        "more-info": "有关在数据源中配置 prometheus 类型和版本的更多信息，请参阅<2>预配文档</2>。",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "示例：{{example}}",
         "title-interval-behaviour": "间隔行为",
         "title-other": "其他",
         "title-performance": "性能",
         "title-query-editor": "查询编辑器",
         "tooltip-cache-level": "设置编辑器查询的浏览器缓存级别。对于高基数数据源，建议使用更高的缓存设置。",
-        "tooltip-custom-query-parameters": "将自定义参数添加到 Prometheus 查询网址。例如 {{example1}}、{{example2}}、{{example3}} 或 {{example4}}。多个参数应使用 {{concatenationChar}} 连接起来。",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "为此数据源的所有用户设置默认编辑器选项。",
-        "tooltip-disable-metrics-lookup": "选中此选项将禁用查询字段自动完成中的指标选择器和指标/标签支持。如果您在使用较大的 Prometheus 实例时遇到性能问题，这样做会有所帮助。",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "此功能将禁用录制规则。开启此选项可提高数据面板性能",
         "tooltip-http-method": "您可以使用 POST 或 GET HTTP 方法来查询 Prometheus 数据源。POST 是推荐的方法，因为它允许更大的查询。如果您的 Prometheus 版本低于 2.1，或者您的网络中限制了 POST 请求，请将其更改为 GET。",
         "tooltip-incremental-querying-beta": "此功能将改变相对查询的默认行为，使其总是从 Prometheus 实例请求新数据，而不会缓存查询结果，且只请求新数据。开启此选项可减少数据库和网络负载。",
@@ -479,18 +479,13 @@
         "aria-label-selector": "选择器"
       },
       "results-table": {
-        "content-descriptive-type": "创建 {{descriptiveType}} 时，Prometheus 会使用类型计数器公开多个序列。",
+        "content-descriptive-type": "",
         "description": "描述",
         "message-expand-label-filters": "未找到指标。尝试展开您的标签筛选条件。",
         "message-expand-search": "未找到指标。尝试展开您的搜索和筛选条件。",
         "message-no-metrics-found": "数据源中未找到指标。",
         "name": "名称",
         "type": "类型"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "查询解析不明确。"
-        }
       }
     }
   }

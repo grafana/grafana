@@ -153,13 +153,15 @@ export class GrafanaBootConfig {
   dateFormats?: SystemDateFormatSettings;
   grafanaJavascriptAgent = {
     enabled: false,
-    customEndpoint: '',
     apiKey: '',
-    allInstrumentationsEnabled: false,
-    errorInstrumentalizationEnabled: true,
+    customEndpoint: '',
     consoleInstrumentalizationEnabled: false,
-    webVitalsInstrumentalizationEnabled: false,
+    performanceInstrumentalizationEnabled: false,
+    cspInstrumentalizationEnabled: false,
     tracingInstrumentalizationEnabled: false,
+    webVitalsAttribution: false,
+    internalLoggerLevel: 0,
+    botFilterEnabled: false,
   };
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = true;
@@ -167,6 +169,7 @@ export class GrafanaBootConfig {
   pluginCatalogHiddenPlugins: string[] = [];
   pluginCatalogManagedPlugins: string[] = [];
   pluginCatalogPreinstalledPlugins: PreinstalledPluginGrafanaData[] = [];
+  pluginCatalogPreinstalledAutoUpdate?: boolean;
   pluginsCDNBaseURL = '';
   expressionsEnabled = false;
   awsAllowedAuthProviders: string[] = [];
@@ -180,6 +183,7 @@ export class GrafanaBootConfig {
   };
   caching = {
     enabled: false,
+    cleanCacheEnabled: true,
   };
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
@@ -201,6 +205,7 @@ export class GrafanaBootConfig {
   };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
+  applicationInsightsAutoRouteTracking?: boolean;
   recordedQueries = {
     enabled: true,
   };
@@ -276,6 +281,8 @@ export class GrafanaBootConfig {
 
     overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
+
+    this.bootData.settings.featureToggles = this.featureToggles;
 
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
     this.theme2 = getThemeById(this.bootData.user.theme);

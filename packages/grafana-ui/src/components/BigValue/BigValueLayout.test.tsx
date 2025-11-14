@@ -100,6 +100,28 @@ describe('BigValueLayout', () => {
       );
       expect(layout).toBeInstanceOf(WideWithChartLayout);
     });
+
+    it.each([
+      ['wide layout', {}],
+      ['non-wide layout', { disableWideLayout: true }],
+    ])('should shrink the value if percent change is shown for %s', (_, propsOverride) => {
+      const baseProps: Partial<Props> = {
+        width: 300,
+        height: 100,
+        sparkline: undefined,
+        alignmentFactors: {
+          text: '1000',
+          title: '12',
+        },
+        ...propsOverride,
+      };
+      const layout = buildLayout(getProps(baseProps));
+      const layoutWithPercentChange = buildLayout(
+        getProps({ ...baseProps, value: { text: '25', numeric: 25, percentChange: 20 } })
+      );
+
+      expect(layoutWithPercentChange.valueFontSize).toBeLessThan(layout.valueFontSize);
+    });
   });
 
   describe('percentChangeColor', () => {

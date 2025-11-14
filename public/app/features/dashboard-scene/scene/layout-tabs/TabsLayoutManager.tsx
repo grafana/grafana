@@ -13,11 +13,18 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getTabFromClipboard } from '../layouts-shared/paste';
-import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
+import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
+import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
+import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
+import { DashboardLayoutGroup, isDashboardLayoutGroup } from '../types/DashboardLayoutGroup';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { TabItem } from './TabItem';
@@ -28,7 +35,7 @@ interface TabsLayoutManagerState extends SceneObjectState {
   currentTabSlug?: string;
 }
 
-export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> implements DashboardLayoutManager {
+export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> implements DashboardLayoutGroup {
   public static Component = TabsLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;
@@ -123,7 +130,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public addPanel(vizPanel: VizPanel) {
-    const tab = this.getCurrentTab();
+    const tab = this.getCurrentTab() ?? this.state.tabs[0];
 
     if (tab) {
       tab.getLayout().addPanel(vizPanel);
@@ -203,36 +210,136 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     return this.state.tabs.length === 1;
   }
 
-  public removeTab(tabToRemove: TabItem) {
-    // When removing last tab replace ourselves with the inner tab layout
-    if (this.shouldUngroup()) {
-      ungroupLayout(this, tabToRemove.state.layout);
-      return;
+  public convertAllGridLayouts(gridLayoutType: GridLayoutType) {
+    for (const tab of this.state.tabs) {
+      switch (gridLayoutType) {
+        case GridLayoutType.AutoGridLayout:
+          if (!(tab.getLayout() instanceof AutoGridLayoutManager)) {
+            tab.switchLayout(AutoGridLayoutManager.createFromLayout(tab.getLayout()));
+          }
+          break;
+        case GridLayoutType.GridLayout:
+          if (!(tab.getLayout() instanceof DefaultGridLayoutManager)) {
+            tab.switchLayout(DefaultGridLayoutManager.createFromLayout(tab.getLayout()));
+          }
+          break;
+      }
     }
+  }
 
-    const tabIndex = this.state.tabs.findIndex((t) => t === tabToRemove);
+  public ungroupTabs() {
+    const hasNonGridLayout = this.state.tabs.some((tab) => !tab.getLayout().descriptor.isGridLayout);
+    const gridTypes = new Set(findAllGridTypes(this));
 
-    dashboardEditActions.removeElement({
-      removedObject: tabToRemove,
-      source: this,
-      perform: () => {
-        const tabs = this.state.tabs;
-        const tabIndex = tabs.findIndex((t) => t === tabToRemove);
-        const newCurrentTabIndex = tabIndex > 0 ? tabIndex - 1 : 0;
-
-        const newTabsState = tabs.filter((t) => t !== tabToRemove);
-
-        this.setState({
-          tabs: newTabsState,
-          currentTabSlug: newTabsState[newCurrentTabIndex]?.getSlug(),
-        });
+    showUngroupConfirmation({
+      hasNonGridLayout,
+      gridTypes,
+      onConfirm: (gridLayoutType) => {
+        this.wrapUngroupTabsInEdit(gridLayoutType);
       },
-      undo: () => {
-        const tabs = [...this.state.tabs];
-        tabs.splice(tabIndex, 0, tabToRemove);
-        this.setState({ tabs, currentTabSlug: tabToRemove.getSlug() });
+      onConvertMixedGrids: (availableIds) => {
+        this._confirmConvertMixedGrids(availableIds);
       },
     });
+  }
+
+  private _confirmConvertMixedGrids(availableIds: Set<string>) {
+    showConvertMixedGridsModal(availableIds, (id: string) => {
+      const selected = mapIdToGridLayoutType(id);
+      if (selected) {
+        this.wrapUngroupTabsInEdit(selected);
+      }
+    });
+  }
+
+  private wrapUngroupTabsInEdit(gridLayoutType: GridLayoutType) {
+    const parent = this.parent;
+    if (!parent || !isLayoutParent(parent)) {
+      throw new Error('Ungroup tabs failed: parent is not a layout container');
+    }
+
+    const previousLayout = this.clone({});
+    const scene = getDashboardSceneFor(this);
+
+    dashboardEditActions.edit({
+      description: t('dashboard.tabs-layout.edit.ungroup-tabs', 'Ungroup tabs'),
+      source: scene,
+      perform: () => {
+        this.ungroup(gridLayoutType);
+      },
+      undo: () => {
+        parent.switchLayout(previousLayout);
+      },
+    });
+  }
+
+  public ungroup(gridLayoutType: GridLayoutType) {
+    const hasNonGridLayout = this.state.tabs.some((tab) => !tab.getLayout().descriptor.isGridLayout);
+
+    if (hasNonGridLayout) {
+      for (const tab of this.state.tabs) {
+        const layout = tab.getLayout();
+        if (!layout.descriptor.isGridLayout) {
+          if (isDashboardLayoutGroup(layout)) {
+            layout.ungroup(gridLayoutType);
+          } else {
+            throw new Error(`Ungrouping not supported for layout type: ${layout.descriptor.name}`);
+          }
+        }
+      }
+    }
+
+    this.convertAllGridLayouts(gridLayoutType);
+
+    const firstTab = this.state.tabs[0];
+    const firstTabLayout = firstTab.getLayout();
+    const otherTabs = this.state.tabs.slice(1);
+
+    for (const tab of otherTabs) {
+      const layout = tab.getLayout();
+      if (isDashboardLayoutGrid(firstTabLayout) && isDashboardLayoutGrid(layout)) {
+        firstTabLayout.mergeGrid(layout);
+      } else {
+        throw new Error(`Layout type ${firstTabLayout.descriptor.name} does not support merging`);
+      }
+    }
+
+    this.setState({ tabs: [firstTab] });
+    ungroupLayout(this, firstTab.state.layout, true);
+  }
+
+  public removeTab(tabToRemove: TabItem, skipUndo?: boolean) {
+    const tabIndex = this.state.tabs.findIndex((t) => t === tabToRemove);
+
+    const perform = () => {
+      const tabs = this.state.tabs;
+      const tabIndex = tabs.findIndex((t) => t === tabToRemove);
+      const newCurrentTabIndex = tabIndex > 0 ? tabIndex - 1 : 0;
+
+      const newTabsState = tabs.filter((t) => t !== tabToRemove);
+
+      this.setState({
+        tabs: newTabsState,
+        currentTabSlug: newTabsState[newCurrentTabIndex]?.getSlug(),
+      });
+    };
+
+    const undo = () => {
+      const tabs = [...this.state.tabs];
+      tabs.splice(tabIndex, 0, tabToRemove);
+      this.setState({ tabs, currentTabSlug: tabToRemove.getSlug() });
+    };
+
+    if (skipUndo) {
+      perform();
+    } else {
+      dashboardEditActions.removeElement({
+        removedObject: tabToRemove,
+        source: this,
+        perform,
+        undo,
+      });
+    }
   }
 
   public moveTab(fromIndex: number, toIndex: number) {

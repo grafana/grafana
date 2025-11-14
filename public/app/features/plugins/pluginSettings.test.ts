@@ -22,8 +22,8 @@ describe('PluginSettings', () => {
       id: 'test-plugin',
       enabled: true,
     };
-    getBackendSrv().get = jest.fn().mockResolvedValue(testPluginResponse);
-    const getRequestSpy = jest.spyOn(getBackendSrv(), 'get');
+
+    const getRequestSpy = jest.spyOn(getBackendSrv(), 'get').mockResolvedValue(testPluginResponse);
     // act
     const response = await getPluginSettings('test');
     // assert
@@ -42,8 +42,7 @@ describe('PluginSettings', () => {
       id: 'test-plugin',
       enabled: true,
     };
-    getBackendSrv().get = jest.fn().mockResolvedValue(testPluginResponse);
-    const getRequestSpy = jest.spyOn(getBackendSrv(), 'get');
+    const getRequestSpy = jest.spyOn(getBackendSrv(), 'get').mockResolvedValue(testPluginResponse);
     // act
     const response1 = await getPluginSettings('test');
     const response2 = await getPluginSettings('test');
@@ -62,8 +61,8 @@ describe('PluginSettings', () => {
       id: 'test-plugin',
       enabled: true,
     };
-    getBackendSrv().get = jest.fn().mockResolvedValue(testPluginResponse);
-    const getRequestSpy = jest.spyOn(getBackendSrv(), 'get');
+
+    const getRequestSpy = jest.spyOn(getBackendSrv(), 'get').mockResolvedValue(testPluginResponse);
 
     // act
     const response1 = await getPluginSettings('test');
@@ -83,8 +82,7 @@ describe('PluginSettings', () => {
       id: 'test-plugin',
       enabled: true,
     };
-    getBackendSrv().get = jest.fn().mockResolvedValue(testPluginResponse);
-    const getRequestSpy = jest.spyOn(getBackendSrv(), 'get');
+    const getRequestSpy = jest.spyOn(getBackendSrv(), 'get').mockResolvedValue(testPluginResponse);
     // act
     const response1 = await getPluginSettings('test');
     await clearPluginSettingsCache('another-test');
@@ -103,8 +101,8 @@ describe('PluginSettings', () => {
       id: 'test-plugin',
       enabled: true,
     };
-    getBackendSrv().get = jest.fn().mockResolvedValue(testPluginResponse);
-    const getRequestSpy = jest.spyOn(getBackendSrv(), 'get');
+
+    const getRequestSpy = jest.spyOn(getBackendSrv(), 'get').mockResolvedValue(testPluginResponse);
 
     // act
     const response1 = await getPluginSettings('test');
@@ -115,5 +113,26 @@ describe('PluginSettings', () => {
     expect(response1).toEqual(testPluginResponse);
     expect(response2).toEqual(testPluginResponse);
     expect(getRequestSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('should reject with Unknown Plugin message if error status is not 403 or 401', async () => {
+    const error = { status: 404, message: 'Not found' };
+    jest.spyOn(getBackendSrv(), 'get').mockRejectedValue(error);
+
+    await expect(getPluginSettings('test')).rejects.toEqual(new Error('Unknown Plugin'));
+  });
+
+  it('should reject thrown error if error status is 403', async () => {
+    const error = { status: 403, message: 'Forbidden' };
+    jest.spyOn(getBackendSrv(), 'get').mockRejectedValue(error);
+
+    await expect(getPluginSettings('test')).rejects.toEqual({ ...error, isHandled: true });
+  });
+
+  it('should reject thrown error if error status is 401', async () => {
+    const error = { status: 401, message: 'Unauthorized' };
+    jest.spyOn(getBackendSrv(), 'get').mockRejectedValue(error);
+
+    await expect(getPluginSettings('test')).rejects.toEqual({ ...error, isHandled: true });
   });
 });

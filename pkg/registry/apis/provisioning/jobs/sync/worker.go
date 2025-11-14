@@ -41,6 +41,8 @@ type SyncWorker struct {
 	metrics jobs.JobMetrics
 
 	tracer tracing.Tracer
+
+	maxSyncWorkers int
 }
 
 func NewSyncWorker(
@@ -51,6 +53,7 @@ func NewSyncWorker(
 	syncer Syncer,
 	metrics jobs.JobMetrics,
 	tracer tracing.Tracer,
+	maxSyncWorkers int,
 ) *SyncWorker {
 	return &SyncWorker{
 		clients:             clients,
@@ -60,6 +63,7 @@ func NewSyncWorker(
 		syncer:              syncer,
 		metrics:             metrics,
 		tracer:              tracer,
+		maxSyncWorkers:      maxSyncWorkers,
 	}
 }
 
@@ -106,25 +110,35 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	syncStatus := job.Status.ToSyncStatus(job.Name)
-	// Preserve last ref as we use replace operation
+	// Preserve last ref
 	lastRef := repo.Config().Status.Sync.LastRef
 	syncStatus.LastRef = lastRef
 
-	if syncStatus.State == "" {
-		syncStatus.State = provisioning.JobStateWorking
-	}
+	// Ensure the sync state is set to 'working' if not already set or still pending.
+	// FIXME: This should not be needed as the progress recorder should have set it to 'working' by now.
+	syncStatus.State = provisioning.JobStateWorking
 
-	// Update sync status at start using JSON patch
+	// Update sync status at start using granular JSON patch operations
+	// Only patch fields that are actually being set to avoid overwriting with zero values
 	patchOperations := []map[string]interface{}{
 		{
 			"op":    "replace",
-			"path":  "/status/sync",
-			"value": syncStatus,
+			"path":  "/status/sync/state",
+			"value": syncStatus.State,
+		},
+		{
+			"op":    "replace",
+			"path":  "/status/sync/job",
+			"value": syncStatus.JobID,
+		},
+		{
+			"op":    "replace",
+			"path":  "/status/sync/started",
+			"value": syncStatus.Started,
 		},
 	}
 
 	progress.SetMessage(ctx, "update sync status at start")
-
 	statusCtx, statusSpan := r.tracer.Start(ctx, "provisioning.sync.update_start_status")
 	if err := r.patchStatus(statusCtx, cfg, patchOperations...); err != nil {
 		statusSpan.End()
@@ -170,14 +184,13 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 	syncSpan.End()
 
-	// Create sync status and set hash if successful
-	if syncStatus.State == provisioning.JobStateSuccess {
+	if syncStatus.State != provisioning.JobStateError {
 		syncStatus.LastRef = currentRef
 	} else {
+		// Preserve the original lastRef on error
 		syncStatus.LastRef = lastRef
 	}
 
-	// Update final status using JSON patch
 	progress.SetMessage(ctx, "update status and stats")
 	patchOperations = []map[string]interface{}{
 		{

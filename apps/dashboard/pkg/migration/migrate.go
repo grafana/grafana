@@ -13,11 +13,20 @@ func Initialize(dsInfoProvider schemaversion.DataSourceInfoProvider) {
 	migratorInstance.init(dsInfoProvider)
 }
 
+// GetDataSourceInfoProvider returns the datasource info provider instance that was initialized.
+// This allows reuse of the same provider instance across migrations and conversions.
+func GetDataSourceInfoProvider() schemaversion.DataSourceInfoProvider {
+	// Wait for initialization to complete
+	<-migratorInstance.ready
+	return migratorInstance.dsInfoProvider
+}
+
 // ResetForTesting resets the migrator singleton for testing purposes.
 func ResetForTesting() {
 	migratorInstance = &migrator{
-		migrations: map[int]schemaversion.SchemaVersionMigrationFunc{},
-		ready:      make(chan struct{}),
+		migrations:     map[int]schemaversion.SchemaVersionMigrationFunc{},
+		ready:          make(chan struct{}),
+		dsInfoProvider: nil,
 	}
 	initOnce = sync.Once{}
 }
@@ -37,12 +46,14 @@ var (
 )
 
 type migrator struct {
-	ready      chan struct{}
-	migrations map[int]schemaversion.SchemaVersionMigrationFunc
+	ready          chan struct{}
+	migrations     map[int]schemaversion.SchemaVersionMigrationFunc
+	dsInfoProvider schemaversion.DataSourceInfoProvider
 }
 
 func (m *migrator) init(dsInfoProvider schemaversion.DataSourceInfoProvider) {
 	initOnce.Do(func() {
+		m.dsInfoProvider = dsInfoProvider
 		m.migrations = schemaversion.GetMigrations(dsInfoProvider)
 		close(m.ready)
 	})
@@ -126,7 +137,11 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 		}
 	}
 
-	// 6. Clean up the dashboard to match frontend getSaveModel behavior
+	// 6. Add built-in annotation query after all migrations are complete
+	// This matches the frontend DashboardModel constructor behavior
+	addBuiltInAnnotationQuery(dash)
+
+	// 7. Clean up the dashboard to match frontend getSaveModel behavior
 	// This removes properties that shouldn't be persisted and filters out default values
 	cleanupDashboardForSave(dash)
 

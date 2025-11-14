@@ -97,13 +97,6 @@ export function RecentlyDeletedActions() {
     return origins;
   }, [selectedDashboards, searchState.result]);
 
-  const onActionComplete = () => {
-    dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
-
-    deletedDashboardsCache.clear();
-    stateManager.doSearchWithDebounce();
-  };
-
   const getErrorMessage = (error: unknown) => {
     if (error instanceof Error) {
       return error.message;
@@ -168,9 +161,6 @@ export function RecentlyDeletedActions() {
       }
     });
 
-    // Show consolidated notification
-    showRestoreNotifications(successful, failed);
-
     const parentUIDs = new Set<string | undefined>();
     for (const uid of selectedDashboards) {
       const foundItem = resultsView.find((v) => v.uid === uid);
@@ -183,8 +173,12 @@ export function RecentlyDeletedActions() {
       parentUIDs.add(folderUID);
     }
     dispatch(clearFolders(Array.from(parentUIDs)));
+    dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
 
-    onActionComplete();
+    deletedDashboardsCache.clear();
+    await stateManager.doSearch();
+
+    showRestoreNotifications(successful, failed);
     setIsBulkRestoreLoading(false);
     setIsRestoreModalOpen(false);
   };

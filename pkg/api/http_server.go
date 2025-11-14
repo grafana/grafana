@@ -12,6 +12,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	stdlog "log"
 	"math/big"
 	"net"
 	"net/http"
@@ -163,7 +164,6 @@ type HTTPServer struct {
 	LoggerMiddleware             loggermw.Logger
 	SQLStore                     db.DB
 	AlertNG                      *ngalert.AlertNG
-	LibraryPanelService          librarypanels.Service
 	LibraryElementService        libraryelements.Service
 	SocialService                social.Service
 	Listener                     net.Listener
@@ -318,7 +318,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		ContextHandler:               contextHandler,
 		LoggerMiddleware:             loggerMiddleware,
 		AlertNG:                      alertNG,
-		LibraryPanelService:          libraryPanelService,
 		LibraryElementService:        libraryElementService,
 		QuotaService:                 quotaService,
 		tracer:                       tracer,
@@ -399,6 +398,26 @@ func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddlew
 	hs.namedMiddlewares = append(hs.namedMiddlewares, middleware)
 }
 
+type customErrorLogger struct {
+	log log.Logger
+}
+
+const tlsHandshakeErrorPrefix = "http: TLS handshake error from"
+const tlsHandshakeErrorSuffix = "EOF"
+
+func (w *customErrorLogger) Write(msg []byte) (int, error) {
+	// checks if the error is a TLS handshake error that ends with EOF
+	if strings.Contains(string(msg), tlsHandshakeErrorPrefix) && strings.Contains(string(msg), tlsHandshakeErrorSuffix) {
+		// log at debug level and remove new lines
+		w.log.Debug(strings.ReplaceAll(string(msg), "\n", ""))
+	} else {
+		// log the error as is using the standard logger (the same way as the default http server does)
+		stdlog.Print(string(msg))
+	}
+
+	return len(msg), nil
+}
+
 func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.context = ctx
 
@@ -411,6 +430,12 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		Handler:     hs.web,
 		ReadTimeout: hs.Cfg.ReadTimeout,
 	}
+
+	customErrorLogger := &customErrorLogger{
+		log: hs.log,
+	}
+	hs.httpSrv.ErrorLog = stdlog.New(customErrorLogger, "", 0)
+
 	switch hs.Cfg.Protocol {
 	case setting.HTTP2Scheme, setting.HTTPSScheme:
 		if err := hs.configureTLS(); err != nil {

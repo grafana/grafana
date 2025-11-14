@@ -1,8 +1,7 @@
+import { generatedAPI } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 import { t } from '@grafana/i18n';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification, createErrorNotification } from 'app/core/copy/appNotification';
-
-import { generatedAPI } from './endpoints.gen';
 
 export const preferencesAPIv1alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
@@ -40,4 +39,4 @@ export const preferencesAPIv1alpha1 = generatedAPI.enhanceEndpoints({
 });
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export * from './endpoints.gen';
+export * from '@grafana/api-clients/rtkq/preferences/v1alpha1';
