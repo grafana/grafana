@@ -16,12 +16,48 @@ type AggregationParser interface {
 // aggregationTypeParser handles parsing of specific aggregation types
 type aggregationTypeParser interface {
 	CanParse(aggType string) bool
-	Parse(id, aggType string, aggValue map[string]any) (*dsa, error)
+	Parse(id, aggType string, aggValue map[string]any) (*dslAgg, error)
 }
 
-type dsa struct {
-	b *BucketAgg
-	m *MetricAgg
+type AggType string
+
+const (
+	aggTypeBucket = AggType("bucket")
+	aggTypeMetric = AggType("metric")
+)
+
+type dslAgg struct {
+	Field             string            `json:"field"`
+	Hide              bool              `json:"hide"`
+	ID                string            `json:"id"`
+	PipelineAggregate string            `json:"pipelineAgg"`
+	PipelineVariables map[string]string `json:"pipelineVariables"`
+	Settings          *simplejson.Json  `json:"settings"`
+	Meta              *simplejson.Json  `json:"meta"`
+	Type              string            `json:"type"`
+	AggType           AggType
+}
+
+func (a *dslAgg) toBucketAgg() *BucketAgg {
+	return &BucketAgg{
+		Field:    a.Field,
+		ID:       a.ID,
+		Settings: a.Settings,
+		Type:     a.Type,
+	}
+}
+
+func (a *dslAgg) toMetricAgg() *MetricAgg {
+	return &MetricAgg{
+		Field:             a.Field,
+		Hide:              a.Hide,
+		ID:                a.ID,
+		PipelineAggregate: a.PipelineAggregate,
+		PipelineVariables: a.PipelineVariables,
+		Settings:          a.Settings,
+		Meta:              a.Meta,
+		Type:              a.Type,
+	}
 }
 
 // fieldExtractor handles extracting and converting field values
@@ -107,7 +143,7 @@ func (p *dateHistogramParser) CanParse(aggType string) bool {
 	return aggType == dateHistType
 }
 
-func (p *dateHistogramParser) Parse(id, aggType string, aggValue map[string]any) (*dsa, error) {
+func (p *dateHistogramParser) Parse(id, aggType string, aggValue map[string]any) (*dslAgg, error) {
 	field := p.extractor.getString(aggValue, "field")
 
 	settings := make(map[string]any)
@@ -127,12 +163,13 @@ func (p *dateHistogramParser) Parse(id, aggType string, aggValue map[string]any)
 		settings["time_zone"] = timeZone
 	}
 
-	return &dsa{b: &BucketAgg{
+	return &dslAgg{
 		ID:       id,
 		Type:     dateHistType,
 		Field:    field,
 		Settings: simplejson.NewFromAny(settings),
-	}}, nil
+		AggType:  aggTypeBucket,
+	}, nil
 }
 
 // termsParser handles terms aggregations
@@ -144,7 +181,7 @@ func (p *termsParser) CanParse(aggType string) bool {
 	return aggType == termsType
 }
 
-func (p *termsParser) Parse(id, aggType string, aggValue map[string]any) (*dsa, error) {
+func (p *termsParser) Parse(id, aggType string, aggValue map[string]any) (*dslAgg, error) {
 	field := p.extractor.getString(aggValue, "field")
 
 	settings := make(map[string]any)
@@ -161,12 +198,13 @@ func (p *termsParser) Parse(id, aggType string, aggValue map[string]any) (*dsa, 
 		settings["missing"] = missing
 	}
 
-	return &dsa{b: &BucketAgg{
+	return &dslAgg{
 		ID:       id,
 		Type:     termsType,
 		Field:    field,
 		Settings: simplejson.NewFromAny(settings),
-	}}, nil
+		AggType:  aggTypeBucket,
+	}, nil
 }
 
 // histogramParser handles histogram aggregations
@@ -178,7 +216,7 @@ func (p *histogramParser) CanParse(aggType string) bool {
 	return aggType == histogramType
 }
 
-func (p *histogramParser) Parse(id, aggType string, aggValue map[string]any) (*dsa, error) {
+func (p *histogramParser) Parse(id, aggType string, aggValue map[string]any) (*dslAgg, error) {
 	field := p.extractor.getString(aggValue, "field")
 
 	settings := make(map[string]any)
@@ -190,12 +228,13 @@ func (p *histogramParser) Parse(id, aggType string, aggValue map[string]any) (*d
 		settings["min_doc_count"] = strconv.Itoa(minDocCount)
 	}
 
-	return &dsa{b: &BucketAgg{
+	return &dslAgg{
 		ID:       id,
 		Type:     histogramType,
 		Field:    field,
 		Settings: simplejson.NewFromAny(settings),
-	}}, nil
+		AggType:  aggTypeBucket,
+	}, nil
 }
 
 // simpleMetricParser handles simple metric aggregations (avg, sum, min, max, cardinality)
@@ -221,16 +260,17 @@ func (p *simpleMetricParser) CanParse(aggType string) bool {
 	return p.types[aggType]
 }
 
-func (p *simpleMetricParser) Parse(id, aggType string, aggValue map[string]any) (*dsa, error) {
+func (p *simpleMetricParser) Parse(id, aggType string, aggValue map[string]any) (*dslAgg, error) {
 	field := p.extractor.getString(aggValue, "field")
 	settings := p.extractor.getSettings(aggValue)
 
-	return &dsa{m: &MetricAgg{
+	return &dslAgg{
 		ID:       id,
 		Type:     aggType,
 		Field:    field,
 		Settings: settings,
-	}}, nil
+		AggType:  aggTypeMetric,
+	}, nil
 }
 
 // filtersParser handles filters aggregations
@@ -242,7 +282,7 @@ func (p *filtersParser) CanParse(aggType string) bool {
 	return aggType == filtersType
 }
 
-func (p *filtersParser) Parse(id, aggType string, aggValue map[string]any) (*dsa, error) {
+func (p *filtersParser) Parse(id, aggType string, aggValue map[string]any) (*dslAgg, error) {
 	settings := make(map[string]any)
 
 	if filters := p.extractor.getMap(aggValue, "filters"); filters != nil {
@@ -250,12 +290,13 @@ func (p *filtersParser) Parse(id, aggType string, aggValue map[string]any) (*dsa
 		settings["filters"] = string(filtersJSON)
 	}
 
-	return &dsa{b: &BucketAgg{
+	return &dslAgg{
 		ID:       id,
 		Type:     filtersType,
 		Field:    "",
 		Settings: simplejson.NewFromAny(settings),
-	}}, nil
+		AggType:  aggTypeBucket,
+	}, nil
 }
 
 // geohashGridParser handles geohash_grid aggregations
@@ -267,7 +308,7 @@ func (p *geohashGridParser) CanParse(aggType string) bool {
 	return aggType == geohashGridType
 }
 
-func (p *geohashGridParser) Parse(id, aggType string, aggValue map[string]any) (*dsa, error) {
+func (p *geohashGridParser) Parse(id, aggType string, aggValue map[string]any) (*dslAgg, error) {
 	field := p.extractor.getString(aggValue, "field")
 
 	settings := make(map[string]any)
@@ -275,12 +316,13 @@ func (p *geohashGridParser) Parse(id, aggType string, aggValue map[string]any) (
 		settings["precision"] = strconv.Itoa(precision)
 	}
 
-	return &dsa{b: &BucketAgg{
+	return &dslAgg{
 		ID:       id,
 		Type:     geohashGridType,
 		Field:    field,
 		Settings: simplejson.NewFromAny(settings),
-	}}, nil
+		AggType:  aggTypeBucket,
+	}, nil
 }
 
 // nestedParser handles nested aggregations
@@ -292,15 +334,16 @@ func (p *nestedParser) CanParse(aggType string) bool {
 	return aggType == nestedType
 }
 
-func (p *nestedParser) Parse(id, aggType string, aggValue map[string]any) (*dsa, error) {
+func (p *nestedParser) Parse(id, aggType string, aggValue map[string]any) (*dslAgg, error) {
 	path := p.extractor.getString(aggValue, "path")
 
-	return &dsa{b: &BucketAgg{
+	return &dslAgg{
 		ID:       id,
 		Type:     nestedType,
 		Field:    path,
 		Settings: simplejson.NewFromAny(map[string]any{}),
-	}}, nil
+		AggType:  aggTypeBucket,
+	}, nil
 }
 
 // extendedStatsParser handles extended_stats aggregations
@@ -312,16 +355,17 @@ func (p *extendedStatsParser) CanParse(aggType string) bool {
 	return aggType == extendedStatsType
 }
 
-func (p *extendedStatsParser) Parse(id, aggType string, aggValue map[string]any) (*dsa, error) {
+func (p *extendedStatsParser) Parse(id, aggType string, aggValue map[string]any) (*dslAgg, error) {
 	field := p.extractor.getString(aggValue, "field")
 	settings := p.extractor.getSettings(aggValue)
 
-	return &dsa{m: &MetricAgg{
+	return &dslAgg{
 		ID:       id,
 		Type:     extendedStatsType,
 		Field:    field,
 		Settings: settings,
-	}}, nil
+		AggType:  aggTypeMetric,
+	}, nil
 }
 
 // percentilesParser handles percentiles aggregations
@@ -333,16 +377,17 @@ func (p *percentilesParser) CanParse(aggType string) bool {
 	return aggType == percentilesType
 }
 
-func (p *percentilesParser) Parse(id, aggType string, aggValue map[string]any) (*dsa, error) {
+func (p *percentilesParser) Parse(id, aggType string, aggValue map[string]any) (*dslAgg, error) {
 	field := p.extractor.getString(aggValue, "field")
 	settings := p.extractor.getSettings(aggValue)
 
-	return &dsa{m: &MetricAgg{
+	return &dslAgg{
 		ID:       id,
 		Type:     percentilesType,
 		Field:    field,
 		Settings: settings,
-	}}, nil
+		AggType:  aggTypeMetric,
+	}, nil
 }
 
 // topMetricsParser handles top_metrics aggregations
@@ -354,7 +399,7 @@ func (p *topMetricsParser) CanParse(aggType string) bool {
 	return aggType == topMetricsType
 }
 
-func (p *topMetricsParser) Parse(id, aggType string, aggValue map[string]any) (*dsa, error) {
+func (p *topMetricsParser) Parse(id, aggType string, aggValue map[string]any) (*dslAgg, error) {
 	settings := p.extractor.getSettings(aggValue)
 
 	// Extract metrics field if present
@@ -365,12 +410,13 @@ func (p *topMetricsParser) Parse(id, aggType string, aggValue map[string]any) (*
 		}
 	}
 
-	return &dsa{m: &MetricAgg{
+	return &dslAgg{
 		ID:       id,
 		Type:     topMetricsType,
 		Field:    field,
 		Settings: settings,
-	}}, nil
+		AggType:  aggTypeMetric,
+	}, nil
 }
 
 // pipelineParser handles pipeline aggregations
@@ -396,16 +442,17 @@ func (p *pipelineParser) CanParse(aggType string) bool {
 	return p.types[aggType]
 }
 
-func (p *pipelineParser) Parse(id, aggType string, aggValue map[string]any) (*dsa, error) {
+func (p *pipelineParser) Parse(id, aggType string, aggValue map[string]any) (*dslAgg, error) {
 	bucketsPath := p.extractor.getString(aggValue, "buckets_path")
 	settings := p.extractor.getSettings(aggValue)
 
-	return &dsa{m: &MetricAgg{
+	return &dslAgg{
 		ID:       id,
 		Type:     aggType,
 		Field:    bucketsPath, // For pipeline aggs, buckets_path goes in Field
 		Settings: settings,
-	}}, nil
+		AggType:  aggTypeMetric,
+	}, nil
 }
 
 // bucketScriptParser handles bucket_script aggregations
@@ -417,7 +464,7 @@ func (p *bucketScriptParser) CanParse(aggType string) bool {
 	return aggType == "bucket_script"
 }
 
-func (p *bucketScriptParser) Parse(id, aggType string, aggValue map[string]any) (*dsa, error) {
+func (p *bucketScriptParser) Parse(id, aggType string, aggValue map[string]any) (*dslAgg, error) {
 	settings := p.extractor.getSettings(aggValue)
 
 	// Extract buckets_path (can be a string or map)
@@ -437,13 +484,14 @@ func (p *bucketScriptParser) Parse(id, aggType string, aggValue map[string]any) 
 		}
 	}
 
-	return &dsa{m: &MetricAgg{
+	return &dslAgg{
 		ID:                id,
 		Type:              "bucket_script",
 		Field:             "",
 		PipelineVariables: pipelineVariables,
 		Settings:          settings,
-	}}, nil
+		AggType:           aggTypeMetric,
+	}, nil
 }
 
 // compositeParser combines multiple parsers
@@ -508,10 +556,11 @@ func (p *compositeParser) Parse(rawQuery string) ([]*BucketAgg, []*MetricAgg, er
 		return nil, nil, nil
 	}
 
-	return p.parseAggregations(aggsData)
+	b, m := p.parseAggregations(aggsData)
+	return b, m, nil
 }
 
-func (p *compositeParser) parseAggregations(aggsData map[string]any) ([]*BucketAgg, []*MetricAgg, error) {
+func (p *compositeParser) parseAggregations(aggsData map[string]any) ([]*BucketAgg, []*MetricAgg) {
 	var bucketAggs []*BucketAgg
 	var metricAggs []*MetricAgg
 
@@ -545,29 +594,26 @@ func (p *compositeParser) parseAggregations(aggsData map[string]any) ([]*BucketA
 			continue
 		}
 
-		// Try to parse as bucket aggregation
-		if bucket, err := parser.Parse(aggID, aggType, aggValue); err == nil && bucket.b != nil {
-			bucketAggs = append(bucketAggs, bucket.b)
-		}
-
-		// Try to parse as metric aggregation
-		if metric, err := parser.Parse(aggID, aggType, aggValue); err == nil && metric.m != nil {
-			metricAggs = append(metricAggs, metric.m)
+		// Try to parse as agg aggregation
+		if agg, err := parser.Parse(aggID, aggType, aggValue); err == nil && agg != nil {
+			if agg.AggType == aggTypeBucket {
+				bucketAggs = append(bucketAggs, agg.toBucketAgg())
+			} else if agg.AggType == aggTypeMetric {
+				metricAggs = append(metricAggs, agg.toMetricAgg())
+			}
 		}
 
 		// Parse nested aggregations
-		if nestedAggs := p.extractor.getMap(aggMap, "aggs"); nestedAggs != nil {
-			nestedBuckets, nestedMetrics, _ := p.parseAggregations(nestedAggs)
-			bucketAggs = append(bucketAggs, nestedBuckets...)
-			metricAggs = append(metricAggs, nestedMetrics...)
-		} else if nestedAggs := p.extractor.getMap(aggMap, "aggregations"); nestedAggs != nil {
-			nestedBuckets, nestedMetrics, _ := p.parseAggregations(nestedAggs)
-			bucketAggs = append(bucketAggs, nestedBuckets...)
-			metricAggs = append(metricAggs, nestedMetrics...)
+		nestedAggs := p.extractor.getMap(aggMap, "aggs")
+		if nestedAggs == nil {
+			nestedAggs = p.extractor.getMap(aggMap, "aggregations")
 		}
+		nestedBuckets, nestedMetrics := p.parseAggregations(nestedAggs)
+		bucketAggs = append(bucketAggs, nestedBuckets...)
+		metricAggs = append(metricAggs, nestedMetrics...)
 	}
 
-	return bucketAggs, metricAggs, nil
+	return bucketAggs, metricAggs
 }
 
 // NewAggregationParser creates a new aggregation parser
