@@ -1,8 +1,48 @@
 package schemaversion
 
+import (
+	"context"
+	"sync"
+)
+
 // Shared utility functions for datasource migrations across different schema versions.
 // These functions handle the common logic for migrating datasource references from
 // string names/UIDs to structured reference objects with uid, type, and apiVersion.
+
+// onceIndexProvider wraps a DataSourceIndexProvider to ensure Index() is only called once.
+// This prevents multiple DB queries and index builds during operations that may call
+// provider.Index() multiple times (e.g., dashboard conversions with many datasource lookups).
+//
+// Thread-safe: Uses sync.Once to guarantee single execution even under concurrent access.
+type onceIndexProvider struct {
+	provider DataSourceIndexProvider
+	once     sync.Once
+	index    *DatasourceIndex
+}
+
+// Index returns the cached index, building it exactly once on first call.
+func (p *onceIndexProvider) Index(ctx context.Context) *DatasourceIndex {
+	p.once.Do(func() {
+		p.index = p.provider.Index(ctx)
+	})
+	return p.index
+}
+
+// WrapIndexProviderWithOnce wraps a provider to cache the index for a single operation.
+// Useful for conversions or migrations that may call provider.Index() multiple times.
+//
+// Example usage in dashboard conversion:
+//
+//	onceDsIndexProvider := schemaversion.WrapIndexProviderWithOnce(dsIndexProvider)
+//	// Now all calls to onceDsIndexProvider.Index(ctx) return the same cached index
+func WrapIndexProviderWithOnce(provider DataSourceIndexProvider) DataSourceIndexProvider {
+	if provider == nil {
+		return nil
+	}
+	return &onceIndexProvider{
+		provider: provider,
+	}
+}
 
 // DatasourceIndex provides O(1) lookup of datasources by name or UID.
 type DatasourceIndex struct {
