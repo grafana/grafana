@@ -77,4 +77,3 @@ class UnthemedValueContainer<Option, isMulti extends boolean, Group extends Grou
 }
 
 export const ValueContainer = withTheme2(UnthemedValueContainer);
-export { UnthemedValueContainer };
