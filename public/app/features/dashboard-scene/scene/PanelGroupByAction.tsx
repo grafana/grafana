@@ -2,13 +2,14 @@ import { css, cx } from '@emotion/css';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { GrafanaTheme2, fuzzySearch } from '@grafana/data';
+import { GrafanaTheme2, LoadingState, fuzzySearch } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
   GroupByVariable,
   SceneComponentProps,
   sceneGraph,
   SceneObjectBase,
+  SceneObjectState,
   VariableValueOption,
   VariableValueSingle,
   VizPanel,
@@ -18,13 +19,19 @@ import { Button, Icon, Input, useStyles2, Checkbox, Dropdown, Stack } from '@gra
 interface OptionWithChecked extends VariableValueOption {
   checked: boolean;
 }
-export class PanelGroupByAction extends SceneObjectBase {
+
+export interface PanelGroupByActionState extends SceneObjectState {
+  hasGroupBy?: boolean;
+}
+export class PanelGroupByAction extends SceneObjectBase<PanelGroupByActionState> {
   static Component = PanelGroupByActionRenderer;
 
-  private _groupByVariable: GroupByVariable | undefined;
+  private _groupByVariable: GroupByVariable | undefined = undefined;
 
   constructor() {
-    super({});
+    super({
+      hasGroupBy: false,
+    });
     this.addActivationHandler(this.onActivate);
   }
 
@@ -34,9 +41,12 @@ export class PanelGroupByAction extends SceneObjectBase {
       throw new Error('PanelGroupByAction can be used only for VizPanel');
     }
 
-    this._groupByVariable = sceneGraph
+    const groupByVar = sceneGraph
       .getVariables(this)
       .state.variables.find((variable) => variable instanceof GroupByVariable);
+
+    this._groupByVariable = groupByVar;
+    this.setState({ hasGroupBy: !!groupByVar });
   };
 
   public getGroupByVariable() {
@@ -49,11 +59,11 @@ export class PanelGroupByAction extends SceneObjectBase {
       throw new Error('PanelGroupByAction can be used only for VizPanel');
     }
 
-    const dsUid = sceneGraph.getData(panel).state.data?.request?.targets?.[0]?.datasource?.uid;
-
     if (!this._groupByVariable) {
       return false;
     }
+
+    const dsUid = sceneGraph.getData(panel).state.data?.request?.targets?.[0]?.datasource?.uid;
 
     return sceneGraph.interpolate(this._groupByVariable, this._groupByVariable.state.datasource?.uid) === dsUid;
   }
@@ -90,11 +100,22 @@ export class PanelGroupByAction extends SceneObjectBase {
   }
 }
 
+// additional wrapper to avoid triggering useEffects in PanelGroupByHeader when no groupBy
 function PanelGroupByActionRenderer({ model }: SceneComponentProps<PanelGroupByAction>) {
+  const { hasGroupBy } = model.useState();
+
+  if (!hasGroupBy) {
+    return null;
+  }
+
+  return <PanelGroupByHeader model={model} />;
+}
+
+function PanelGroupByHeader({ model }: SceneComponentProps<PanelGroupByAction>) {
   const groupByState = model.getGroupByVariable()?.useState();
   const dataState = sceneGraph.getData(model).useState();
   const styles = useStyles2(getStyles);
-  const panelHasGroupBy = model.doesPanelSupportGroupByVariable();
+  const [panelSupportsGroupBy, setPanelSupportsGroupBy] = useState<boolean | undefined>(undefined);
 
   const [options, setOptions] = useState<OptionWithChecked[]>([]);
   const [searchValue, setSearchValue] = useState('');
@@ -136,31 +157,38 @@ function PanelGroupByActionRenderer({ model }: SceneComponentProps<PanelGroupByA
     }
   }, []);
 
-  useEffect(() => {
-    const fetchOptions = async () => {
-      setIsLoading(true);
-      try {
-        const applicableOptions = await model.getGroupByOptions();
-        const currentValue = groupByState?.value || [];
-        const currentValues = Array.isArray(currentValue) ? currentValue : [currentValue];
+  const handleFetchOptions = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const applicableOptions = await model.getGroupByOptions();
+      const currentValue = groupByState?.value || [];
+      const currentValues = Array.isArray(currentValue) ? currentValue : [currentValue];
 
-        const optionsWithChecked: OptionWithChecked[] = applicableOptions.map((opt) => ({
-          ...opt,
-          checked: currentValues.includes(opt.value),
-        }));
+      const optionsWithChecked: OptionWithChecked[] = applicableOptions.map((opt) => ({
+        ...opt,
+        checked: currentValues.includes(opt.value),
+      }));
 
-        setOptions(optionsWithChecked);
-      } catch (error) {
-        setOptions([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (isOpen) {
-      fetchOptions();
+      setOptions(optionsWithChecked);
+    } catch (error) {
+      setOptions([]);
+    } finally {
+      setIsLoading(false);
     }
-  }, [model, groupByState?.value, dataState.data?.request?.targets, isOpen]);
+  }, [groupByState?.value, model]);
+
+  useEffect(() => {
+    if (panelSupportsGroupBy === undefined && dataState.data?.state === LoadingState.Done) {
+      const hasGroupByDs = model.doesPanelSupportGroupByVariable();
+      setPanelSupportsGroupBy(hasGroupByDs);
+    }
+  }, [dataState.data?.state, model, panelSupportsGroupBy]);
+
+  useEffect(() => {
+    if (isOpen) {
+      handleFetchOptions();
+    }
+  }, [isOpen, handleFetchOptions]);
 
   const filteredOptions = useMemo(() => {
     if (!searchValue) {
@@ -176,7 +204,7 @@ function PanelGroupByActionRenderer({ model }: SceneComponentProps<PanelGroupByA
     return options.some((opt) => opt.checked);
   }, [options]);
 
-  if (!groupByState || !panelHasGroupBy) {
+  if (!panelSupportsGroupBy) {
     return null;
   }
 
