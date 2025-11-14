@@ -9,7 +9,6 @@ export enum SuggestionName {
   BarChartGradientColorScheme = 'Bar chart with gradient color scheme',
   BarChartStacked = 'Bar chart stacked',
   BarChartStackedPercent = 'Bar chart 100% stacked',
-  Candlestick = 'Candlestick',
   TextPanel = 'Text',
   DashboardList = 'Dashboard list',
 }
