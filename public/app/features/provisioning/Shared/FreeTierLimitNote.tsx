@@ -37,6 +37,7 @@ export function FreeTierLimitNote({ limitType = 'resource' }: FreeTierLimitNoteP
             Free-tier accounts are limited to 20 resources per folder. To add more resources,
           </Trans>
         )}{' '}
+        {/* We are using a custom "a" tag here instead of the TextLink component because we need the link text to wrap*/}
         <a href={UPGRADE_URL} target="_blank" rel="noopener noreferrer" className={styles.link}>
           <Trans i18nKey="provisioning.free-tier-limit.upgrade-link">upgrade your account</Trans>{' '}
           <Icon name="external-link-alt" size="xs" />
