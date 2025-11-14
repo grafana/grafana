@@ -10,10 +10,6 @@ import {
   PERMISSIONS_NOTIFICATION_POLICIES_MODIFY,
   PERMISSIONS_NOTIFICATION_POLICIES_READ,
 } from 'app/features/alerting/unified/components/notification-policies/permissions';
-import {
-  PERMISSIONS_ENRICHMENTS_READ,
-  PERMISSIONS_ENRICHMENTS_WRITE,
-} from 'app/features/alerting/unified/enterprise-components/enrichments/permissions';
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -188,12 +184,8 @@ export const useAlertingAbility = (action: AlertingAction): Ability => {
  */
 export const useEnrichmentAbilities = (): Abilities<EnrichmentAction> => {
   const userIsAdmin = isAdmin();
-  const hasReadPermission = PERMISSIONS_ENRICHMENTS_READ.some((action) => ctx.hasPermission(action));
-  const hasWritePermission = PERMISSIONS_ENRICHMENTS_WRITE.some((action) => ctx.hasPermission(action));
-
-  // TODO: Remove this temporary bypass once backend permissions are implemented
-  // For now, allow all users to test the UI
-  // const TEMP_BYPASS_FOR_TESTING = true;
+  const hasReadPermission = ctx.hasPermission(AccessControlAction.AlertingEnrichmentsRead);
+  const hasWritePermission = ctx.hasPermission(AccessControlAction.AlertingEnrichmentsWrite);
 
   return {
     [EnrichmentAction.Read]: [AlwaysSupported, userIsAdmin || hasReadPermission],
