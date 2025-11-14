@@ -2,14 +2,20 @@ package iam
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -61,6 +67,178 @@ func TestTeamSearchFallback(t *testing.T) {
 	}
 }
 
+func TestTeamSearchHandler(t *testing.T) {
+	t.Run("Multiple comma separated fields will be appended to default team search fields", func(t *testing.T) {
+		mockClient := &MockClient{}
+
+		features := featuremgmt.WithFeatures()
+		searchHandler := TeamSearchHandler{
+			log:      log.New("grafana-apiserver.teams.search"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/teams/search?field=field1&field=field2&field=field3", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+		searchHandler.DoTeamSearch(rr, req)
+
+		if mockClient.LastSearchRequest == nil {
+			t.Fatalf("expected Search to be called, but it was not")
+		}
+		expectedFields := []string{"title", "email", "provisioned", "externalUID", "field1", "field2", "field3"}
+		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
+			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
+		}
+	})
+
+	t.Run("Passing no fields will search using default team search fields", func(t *testing.T) {
+		mockClient := &MockClient{}
+
+		features := featuremgmt.WithFeatures()
+		searchHandler := TeamSearchHandler{
+			log:      log.New("grafana-apiserver.teams.search"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/teams/search", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+		searchHandler.DoTeamSearch(rr, req)
+
+		if mockClient.LastSearchRequest == nil {
+			t.Fatalf("expected Search to be called, but it was not")
+		}
+		expectedFields := []string{"title", "email", "provisioned", "externalUID"}
+		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
+			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
+		}
+	})
+
+	t.Run("returns error if search fails", func(t *testing.T) {
+		mockClient := &MockClient{
+			MockError: errors.New("search failed"),
+		}
+
+		features := featuremgmt.WithFeatures()
+		searchHandler := TeamSearchHandler{
+			log:      log.New("grafana-apiserver.teams.search"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/teams/search?query=test", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+		searchHandler.DoTeamSearch(rr, req)
+
+		if rr.Code != http.StatusInternalServerError {
+			t.Fatalf("expected StatusInternalServerError, got %d", rr.Code)
+		}
+	})
+
+	t.Run("should calculate offset and page parameters", func(t *testing.T) {
+		limit := 50
+		for i, tt := range []struct {
+			offset         int
+			page           int
+			expectedOffset int
+			expectedPage   int
+		}{
+			{
+				offset:         0,
+				page:           0,
+				expectedOffset: 0,
+				expectedPage:   1,
+			},
+			{
+				offset:         0,
+				page:           1,
+				expectedOffset: 0,
+				expectedPage:   1,
+			},
+			{
+				offset:         0,
+				page:           2,
+				expectedOffset: 50,
+				expectedPage:   2,
+			},
+			{
+				offset:         0,
+				page:           3,
+				expectedOffset: 100,
+				expectedPage:   3,
+			},
+			{
+				offset:         50,
+				page:           0,
+				expectedOffset: 50,
+				expectedPage:   2,
+			},
+			{
+				offset:         100,
+				page:           0,
+				expectedOffset: 100,
+				expectedPage:   3,
+			},
+			{
+				offset:         149,
+				page:           0,
+				expectedOffset: 149,
+				expectedPage:   3,
+			},
+			{
+				offset:         150,
+				page:           0,
+				expectedOffset: 150,
+				expectedPage:   4,
+			},
+		} {
+			mockClient := &MockClient{}
+
+			cfg := &setting.Cfg{
+				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+					"teams.iam.grafana.app": {DualWriterMode: rest.Mode0},
+				},
+			}
+			dual := dualwrite.ProvideStaticServiceForTests(cfg)
+			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil)
+
+			rr := httptest.NewRecorder()
+			endpoint := fmt.Sprintf("/teams/search?limit=%d", limit)
+			if tt.offset > 0 {
+				endpoint = fmt.Sprintf("%s&offset=%d", endpoint, tt.offset)
+			}
+			if tt.page > 0 {
+				endpoint = fmt.Sprintf("%s&page=%d", endpoint, tt.page)
+			}
+
+			req := httptest.NewRequest("GET", endpoint, nil)
+			req.Header.Add("content-type", "application/json")
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+			searchHandler.DoTeamSearch(rr, req)
+
+			if mockClient.LastSearchRequest == nil {
+				t.Fatalf("expected Team Search to be called, but it was not")
+			}
+
+			require.Equal(t, tt.expectedOffset, int(mockClient.LastSearchRequest.Offset), fmt.Sprintf("mismatch offset in test %d", i))
+			require.Equal(t, tt.expectedPage, int(mockClient.LastSearchRequest.Page), fmt.Sprintf("mismatch page in test %d", i))
+		}
+	})
+}
+
 type MockClient struct {
 	resourcepb.ResourceIndexClient
 	resource.ResourceIndex
@@ -69,11 +247,16 @@ type MockClient struct {
 	LastSearchRequest *resourcepb.ResourceSearchRequest
 
 	MockResponses []*resourcepb.ResourceSearchResponse
+	MockError     error
 	MockCalls     []*resourcepb.ResourceSearchRequest
 	CallCount     int
 }
 
 func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if m.MockError != nil {
+		return nil, m.MockError
+	}
+
 	m.LastSearchRequest = in
 	m.MockCalls = append(m.MockCalls, in)
 
