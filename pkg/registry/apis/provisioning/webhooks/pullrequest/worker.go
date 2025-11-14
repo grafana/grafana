@@ -38,7 +38,7 @@ func ProvidePullRequestWorker(
 	parsers := resources.NewParserFactory(clients)
 	screenshotRenderer := NewScreenshotRenderer(renderer, blobstore)
 	evaluator := NewEvaluator(screenshotRenderer, parsers, urlProvider, registry)
-	commenter := NewCommenter()
+	commenter := NewCommenter(cfg.ProvisioningAllowImageRendering)
 
 	return NewPullRequestWorker(evaluator, commenter, registry)
 }
