@@ -62,6 +62,7 @@ const convertV1ToUnifiedDashboardDTO = memoizeOne((dashboardDTO: DashboardDTO) =
 
 const convertV2ToUnifiedDashboardDTO = (dashboardDTO: DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO) => {
   let unifiedDashboard: UnifiedDashboardDTO;
+  // v1 api can return a v2 dashboard as a dashboardDTO, so we need to check if the dashboard is a v2 spec
   if ('dashboard' in dashboardDTO && isDashboardV2Spec(dashboardDTO.dashboard)) {
     const elements = Object.values(dashboardDTO.dashboard.elements);
     unifiedDashboard = {
@@ -75,6 +76,7 @@ const convertV2ToUnifiedDashboardDTO = (dashboardDTO: DashboardWithAccessInfo<Da
       folderTitle: dashboardDTO.meta.folderTitle ?? '',
       folderUid: dashboardDTO.meta.folderUid ?? '',
     };
+    // v2 api returns a v2 resource
   } else if (isDashboardV2Resource(dashboardDTO)) {
     unifiedDashboard = {
       panels: Object.values(dashboardDTO.spec.elements).map((element: PanelKind | LibraryPanelKind) => ({
