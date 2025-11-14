@@ -47,6 +47,7 @@ hero:
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/
 aliases:
   - ../observability-as-code/ # /docs/grafana/next/observability-as-code/
+  - ../observability-as-code/get-started/  
 refs:
   infra-as-code:
     - pattern: /docs/grafana/
