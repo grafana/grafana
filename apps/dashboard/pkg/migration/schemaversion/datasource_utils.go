@@ -119,8 +119,6 @@ func isDataSourceRef(ref interface{}) bool {
 // Options:
 //   - returnDefaultAsNull: if true, returns nil for "default" datasources (used in V33)
 //   - returnDefaultAsNull: if false, returns reference for "default" datasources (used in V36)
-//
-// The index parameter provides O(1) lookups. If nil, falls back to O(n) linear search.
 func MigrateDatasourceNameToRef(nameOrRef interface{}, options map[string]bool, index *DatasourceIndex) map[string]interface{} {
 	if options["returnDefaultAsNull"] && (nameOrRef == nil || nameOrRef == "default") {
 		return nil
