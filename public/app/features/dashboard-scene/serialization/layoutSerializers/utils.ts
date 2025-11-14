@@ -72,7 +72,7 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     $data: createPanelDataProvider(panel),
     titleItems,
     subHeader: new VizPanelSubHeader({
-      enableNonApplicableDrilldowns: config.featureToggles.perPanelNonApplicableDrilldowns,
+      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
     }),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
@@ -111,7 +111,7 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     titleItems,
     subHeader: new VizPanelSubHeader({
-      enableNonApplicableDrilldowns: config.featureToggles.perPanelNonApplicableDrilldowns,
+      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
     }),
     seriesLimit: config.panelSeriesLimit,
     $behaviors: [

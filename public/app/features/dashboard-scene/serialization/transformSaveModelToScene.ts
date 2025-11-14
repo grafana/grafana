@@ -442,7 +442,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     $data: createPanelDataProvider(panel),
     titleItems,
     subHeader: new VizPanelSubHeader({
-      enableNonApplicableDrilldowns: config.featureToggles.perPanelNonApplicableDrilldowns,
+      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
     }),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,

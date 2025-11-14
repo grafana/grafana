@@ -12,7 +12,7 @@ import {
 import { PanelNonApplicableFiltersSubHeader } from './PanelNonApplicableFiltersSubHeader';
 
 export interface VizPanelSubHeaderState extends SceneObjectState {
-  enableNonApplicableDrilldowns?: boolean;
+  hideNonApplicableDrilldowns?: boolean;
 }
 
 export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
@@ -20,15 +20,13 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
 
   constructor(state: Partial<VizPanelSubHeaderState>) {
     super({
-      enableNonApplicableDrilldowns: state.enableNonApplicableDrilldowns ?? false,
+      hideNonApplicableDrilldowns: state.hideNonApplicableDrilldowns ?? false,
       ...state,
     });
   }
 }
 
 export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHeader>) {
-  const { enableNonApplicableDrilldowns } = model.useState();
-
   const panel = model.parent;
 
   if (!panel || !(panel instanceof VizPanel)) {
@@ -59,7 +57,7 @@ export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPane
 
   if (
     !dsUid ||
-    !enableNonApplicableDrilldowns ||
+    !model.state.hideNonApplicableDrilldowns ||
     !supportsDrilldownsApplicability(dsUid, adhocFiltersVariable, groupByVariable)
   ) {
     return null;
