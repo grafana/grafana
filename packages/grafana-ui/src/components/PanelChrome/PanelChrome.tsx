@@ -98,6 +98,7 @@ interface Collapsible {
    */
   onToggleCollapse?: (collapsed: boolean) => void;
   hoverHeader?: never;
+  /** @deprecated */
   hoverHeaderOffset?: never;
 }
 
@@ -107,6 +108,7 @@ interface HoverHeader {
   showMenuAlways?: never;
   onToggleCollapse?: never;
   hoverHeader?: boolean;
+  /** @deprecated */
   hoverHeaderOffset?: number;
 }
 
@@ -329,6 +331,10 @@ export function PanelChrome({
     </>
   );
 
+  // Ignores streaming and loading (cancel query) states for simplicity
+  // If you need to cancel streaming / loading panels set a title
+  const hasHeaderContent = title !== '' || description !== '' || titleItems || menu || dragClass || actions;
+
   return (
     // tabIndex={0} is needed for keyboard accessibility in the plot area
     <section
@@ -358,15 +364,16 @@ export function PanelChrome({
 
       {hoverHeader && (
         <>
-          <HoverWidget
-            menu={menu}
-            title={typeof title === 'string' ? title : undefined}
-            offset={hoverHeaderOffset}
-            dragClass={dragClass}
-            onOpenMenu={onOpenMenu}
-          >
-            {headerContent}
-          </HoverWidget>
+          {hasHeaderContent && (
+            <HoverWidget
+              menu={menu}
+              title={typeof title === 'string' ? title : undefined}
+              dragClass={dragClass}
+              onOpenMenu={onOpenMenu}
+            >
+              {headerContent}
+            </HoverWidget>
+          )}
 
           {statusMessage && (
             <div className={styles.errorContainerFloating}>

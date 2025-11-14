@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { getFeatureToggle } from '../../utils/featureToggle';
 import { Icon } from '../Icon/Icon';
 
 import { PanelMenu } from './PanelMenu';
@@ -14,12 +15,11 @@ interface Props {
   children?: React.ReactNode;
   menu?: ReactElement | (() => ReactElement);
   title?: string;
-  offset?: number;
   dragClass?: string;
   onOpenMenu?: () => void;
 }
 
-export function HoverWidget({ menu, title, dragClass, children, offset = -32, onOpenMenu }: Props) {
+export function HoverWidget({ menu, title, dragClass, children, onOpenMenu }: Props) {
   const styles = useStyles2(getStyles);
   const draggableRef = useRef<HTMLDivElement>(null);
   const selectors = e2eSelectors.components.Panels.Panel.HoverWidget;
@@ -37,7 +37,7 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32, on
   }
 
   return (
-    <div className={cx(styles.container, 'show-on-hover')} style={{ top: offset }} data-testid={selectors.container}>
+    <div className={cx(styles.container, 'show-on-hover')} data-testid={selectors.container}>
       {dragClass && (
         <div
           className={cx(styles.square, styles.draggable, dragClass)}
@@ -64,6 +64,8 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32, on
 }
 
 function getStyles(theme: GrafanaTheme2) {
+  const newPanelPadding = getFeatureToggle('newPanelPadding');
+
   return {
     container: css({
       label: 'hover-container-widget',
@@ -73,15 +75,18 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       position: 'absolute',
       zIndex: 1,
-      right: 0,
+      right: -1,
+      top: -1,
       boxSizing: 'content-box',
       alignItems: 'center',
       background: theme.colors.background.secondary,
       color: theme.colors.text.primary,
       border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
+      borderBottomLeftRadius: theme.shape.radius.default,
       height: theme.spacing(4),
       boxShadow: theme.shadows.z1,
+      gap: theme.spacing(1),
+      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1.5) : theme.spacing(0, 0.5, 0, 1),
     }),
     square: css({
       display: 'flex',
