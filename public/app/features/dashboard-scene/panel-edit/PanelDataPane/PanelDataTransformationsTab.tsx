@@ -15,12 +15,13 @@ import {
   SceneObjectState,
 } from '@grafana/scenes';
 import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
+import config from 'app/core/config';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../utils/utils';
 
-import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
+import { EmptyTransformationsMessage, LegacyEmptyTransformationsMessage } from './EmptyTransformationsMessage';
 import { PanelDataPane } from './PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { TransformationsDrawer } from './TransformationsDrawer';
@@ -151,11 +152,15 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   if (transformations.length < 1) {
     return (
       <>
-        <EmptyTransformationsMessage
-          onShowPicker={openDrawer}
-          onGoToQueries={onGoToQueries}
-          onAddTransformation={onAddTransformation}
-        />
+        {config.featureToggles.transformationsEmptyPlaceholder ? (
+          <EmptyTransformationsMessage
+            onShowPicker={openDrawer}
+            onGoToQueries={onGoToQueries}
+            onAddTransformation={onAddTransformation}
+          />
+        ) : (
+          <LegacyEmptyTransformationsMessage onShowPicker={openDrawer} />
+        )}
         {transformationsDrawer}
       </>
     );

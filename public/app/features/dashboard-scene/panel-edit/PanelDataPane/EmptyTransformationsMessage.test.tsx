@@ -3,10 +3,9 @@ import userEvent from '@testing-library/user-event';
 
 import { standardTransformersRegistry } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import config from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
-import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
+import { EmptyTransformationsMessage, LegacyEmptyTransformationsMessage } from './EmptyTransformationsMessage';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -21,20 +20,11 @@ describe('EmptyTransformationsMessage', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Set initial feature toggle values
-    config.featureToggles = config.featureToggles || {};
-    config.featureToggles.transformationsEmptyPlaceholder = false;
-    config.featureToggles.sqlExpressions = false;
   });
 
-  describe('Legacy UI (feature toggle disabled)', () => {
-    beforeEach(() => {
-      config.featureToggles.transformationsEmptyPlaceholder = false;
-    });
-
+  describe('LegacyEmptyTransformationsMessage', () => {
     it('should render the legacy empty state message', () => {
-      render(<EmptyTransformationsMessage onShowPicker={onShowPicker} />);
+      render(<LegacyEmptyTransformationsMessage onShowPicker={onShowPicker} />);
 
       expect(screen.getByText('Start transforming data')).toBeInTheDocument();
       expect(screen.getByText(/Transformations allow data to be changed in various ways/)).toBeInTheDocument();
@@ -42,7 +32,7 @@ describe('EmptyTransformationsMessage', () => {
 
     it('should call onShowPicker when "Add transformation" button is clicked', async () => {
       const user = userEvent.setup();
-      render(<EmptyTransformationsMessage onShowPicker={onShowPicker} />);
+      render(<LegacyEmptyTransformationsMessage onShowPicker={onShowPicker} />);
 
       const button = screen.getByTestId(selectors.components.Transforms.addTransformationButton);
       await user.click(button);
@@ -51,12 +41,7 @@ describe('EmptyTransformationsMessage', () => {
     });
   });
 
-  describe('New placeholder UI (feature toggle enabled)', () => {
-    beforeEach(() => {
-      config.featureToggles.transformationsEmptyPlaceholder = true;
-      config.featureToggles.sqlExpressions = true;
-    });
-
+  describe('EmptyTransformationsMessage', () => {
     it('should render transformation cards when both onGoToQueries and onAddTransformation are provided', () => {
       render(
         <EmptyTransformationsMessage
@@ -74,6 +59,22 @@ describe('EmptyTransformationsMessage', () => {
       expect(screen.getByText('Filter data by values')).toBeInTheDocument();
     });
 
+    it('should call onShowPicker when "Show more" button is clicked', async () => {
+      const user = userEvent.setup();
+      render(
+        <EmptyTransformationsMessage
+          onShowPicker={onShowPicker}
+          onGoToQueries={onGoToQueries}
+          onAddTransformation={onAddTransformation}
+        />
+      );
+
+      const button = screen.getByTestId(selectors.components.Transforms.addTransformationButton);
+      await user.click(button);
+
+      expect(onShowPicker).toHaveBeenCalledTimes(1);
+    });
+
     it('should not show SQL transformation card when onGoToQueries is not provided', () => {
       render(<EmptyTransformationsMessage onShowPicker={onShowPicker} onAddTransformation={onAddTransformation} />);
 
@@ -85,7 +86,7 @@ describe('EmptyTransformationsMessage', () => {
 
       expect(screen.queryByText('SQL Expressions')).not.toBeInTheDocument();
 
-      // But should still show the "See more" button
+      // But should still show the "Show more" button
       expect(screen.getByTestId(selectors.components.Transforms.addTransformationButton)).toBeInTheDocument();
     });
   });
