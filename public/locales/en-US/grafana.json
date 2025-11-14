@@ -11531,9 +11531,8 @@
     },
     "connect-repository-button": {
       "configure": "Configure",
-      "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed",
-      "repository-limit-reached-tooltip_one": "Repository limit reached {{count}}",
-      "repository-limit-reached-tooltip_other": "Repository limit reached {{count}}"
+      "free-tier-limit-tooltip": "Free-tier accounts are restricted to one connection",
+      "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
     },
     "delete-repository-button": {
       "button-delete": "Delete",
@@ -11625,6 +11624,13 @@
       "placeholder-search": "Search",
       "unmanaged-resources_one": "{{count}} resource isn't managed by git sync.",
       "unmanaged-resources_other": "{{count}} resources aren't managed by git sync."
+    },
+    "free-tier-limit": {
+      "message": "Free-tier accounts are capped to 1 connection, and 20 resources per folder",
+      "message-connection": "Free-tier accounts are limited to 20 resources per folder. To add more resources per folder,",
+      "message-resource": "Free-tier accounts are limited to 20 resources per folder. To add more resources,",
+      "note": "Note:",
+      "upgrade-link": "upgrade your account"
     },
     "get-default-values": {
       "title": {
@@ -11767,7 +11773,7 @@
       "folder": {
         "description": "After setup, a new Grafana folder will be created and synced with external storage. If any resources are present in external storage, they will be provisioned to this new folder. All new resources created in this folder will be stored and versioned in external storage.",
         "label": "Sync external storage to a new Grafana folder",
-        "subtitle": "Use this option to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 folders."
+        "subtitle": "Use this option to sync external resources into a new folder without affecting the rest of your instance."
       },
       "instance": {
         "description": "Resources will be synced with external storage and provisioned into this instance. Existing Grafana resources will be migrated and merged if needed. After setup, all new resources and changes will be saved to external storage and automatically provisioned back into the instance.",
