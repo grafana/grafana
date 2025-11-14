@@ -36,7 +36,7 @@ export const NotificationPreview = ({
   alertUid,
 }: NotificationPreviewProps) => {
   const styles = useStyles2(getStyles);
-  const disabled = !condition || !folder;
+  const previewRoutingDisabled = !condition || !folder;
 
   const [trigger, { data = [], isLoading, isUninitialized: previewUninitialized }] = preview.useMutation();
 
@@ -51,7 +51,7 @@ export const NotificationPreview = ({
   }, []);
 
   const onPreview = () => {
-    if (!folder || !condition) {
+    if (previewRoutingDisabled) {
       return;
     }
 
@@ -67,7 +67,7 @@ export const NotificationPreview = ({
   };
 
   useEffectOnce(() => {
-    if (!disabled) {
+    if (!previewRoutingDisabled) {
       onPreview();
     }
   });
@@ -75,6 +75,20 @@ export const NotificationPreview = ({
   //  Get alert managers's data source information
   const alertManagerDataSources = useGetAlertManagerDataSourcesByPermissionAndConfig('notification');
   const singleAlertManagerConfigured = alertManagerDataSources.length === 1;
+
+  const getTooltipContent = () => {
+    if (!folder) {
+      return <Trans i18nKey="alerting.notification-preview.disabled-tooltip">Select a folder to preview routing</Trans>;
+    }
+    if (previewRoutingDisabled) {
+      return (
+        <Trans i18nKey="alerting.notification-preview.select-folder-tooltip">
+          You don&apos;t have sufficient permissions to preview
+        </Trans>
+      );
+    }
+    return '';
+  };
 
   return (
     <Stack direction="column">
@@ -104,18 +118,8 @@ export const NotificationPreview = ({
             </Text>
           )}
         </Stack>
-        <Tooltip
-          content={
-            disabled ? (
-              <Trans i18nKey="alerting.notification-preview.disabled-tooltip">
-                You don&apos;t have sufficient permissions to preview
-              </Trans>
-            ) : (
-              ''
-            )
-          }
-        >
-          <Button icon="sync" variant="secondary" type="button" onClick={onPreview} disabled={disabled}>
+        <Tooltip content={getTooltipContent()}>
+          <Button icon="sync" variant="secondary" type="button" onClick={onPreview} disabled={previewRoutingDisabled}>
             <Trans i18nKey="alerting.notification-preview.preview-routing">Preview routing</Trans>
           </Button>
         </Tooltip>
