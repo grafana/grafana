@@ -1,14 +1,6 @@
-import { DataTransformerConfig, TransformerRegistryItem } from '@grafana/data';
+import { DataTransformerConfig } from '@grafana/data';
 
 export interface TransformationsEditorTransformation {
   transformation: DataTransformerConfig;
   id: string;
 }
-
-export type TransformationCardTransform =
-  | TransformerRegistryItem
-  | {
-      id: string;
-      name: string;
-      description: string;
-    };

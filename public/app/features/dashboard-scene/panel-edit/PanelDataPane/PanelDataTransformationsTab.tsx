@@ -145,7 +145,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           onShowPicker={openDrawer}
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
-        ></EmptyTransformationsMessage>
+        />
         {transformationsDrawer}
       </>
     );

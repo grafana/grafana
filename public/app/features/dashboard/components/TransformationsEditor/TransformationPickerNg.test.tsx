@@ -4,8 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { standardTransformersRegistry } from '@grafana/data';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
-import { TransformationCard } from './TransformationPickerNg';
-import { TransformationCardTransform } from './types';
+import { SqlExpressionCard } from './SqlExpressionCard';
+import { TransformationCard } from './TransformationCard';
 
 describe('TransformationCard', () => {
   standardTransformersRegistry.setInit(getStandardTransformers);
@@ -53,19 +53,6 @@ describe('TransformationCard', () => {
     expect(container.querySelector('img')).not.toBeInTheDocument();
   });
 
-  it('works with simple transform object without full TransformerRegistryItem', () => {
-    const simpleTransform: TransformationCardTransform = {
-      id: 'custom',
-      name: 'Custom Transform',
-      description: 'A custom transformation',
-    };
-
-    render(<TransformationCard transform={simpleTransform} onClick={onClick} />);
-
-    expect(screen.getByText('Custom Transform')).toBeInTheDocument();
-    expect(screen.getByText('A custom transformation')).toBeInTheDocument();
-  });
-
   it('hides plugin state when showPluginState is false', () => {
     const transform = standardTransformersRegistry.get('organize');
     const { container } = render(
@@ -80,5 +67,40 @@ describe('TransformationCard', () => {
     const { container } = render(<TransformationCard transform={transform} onClick={onClick} showTags={false} />);
 
     expect(container.querySelector('[class*="tagsWrapper"]')).not.toBeInTheDocument();
+  });
+});
+
+describe('SqlExpressionCard', () => {
+  const onClick = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('renders SQL expression name and description', () => {
+    render(<SqlExpressionCard name="SQL Expressions" description="Manipulate data with SQL" onClick={onClick} />);
+
+    expect(screen.getByText('SQL Expressions')).toBeInTheDocument();
+    expect(screen.getByText('Manipulate data with SQL')).toBeInTheDocument();
+  });
+
+  it('calls onClick when clicked', async () => {
+    const user = userEvent.setup();
+    render(<SqlExpressionCard name="SQL Expressions" description="Test" onClick={onClick} />);
+
+    const card = screen.getByText('SQL Expressions').closest('button');
+    await user.click(card!);
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders image when imageUrl is provided', () => {
+    const { container } = render(
+      <SqlExpressionCard name="SQL" description="Test" imageUrl="/test.svg" onClick={onClick} />
+    );
+
+    const img = container.querySelector('img');
+    expect(img).toBeInTheDocument();
+    expect(img?.src).toContain('/test.svg');
   });
 });

@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { DataTransformerID, standardTransformersRegistry, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
@@ -5,7 +7,8 @@ import { reportInteraction } from '@grafana/runtime';
 import { Box, Button, Grid, Stack, Text } from '@grafana/ui';
 import config from 'app/core/config';
 
-import { TransformationCard } from '../../../dashboard/components/TransformationsEditor/TransformationPickerNg';
+import { SqlExpressionCard } from '../../../dashboard/components/TransformationsEditor/SqlExpressionCard';
+import { TransformationCard } from '../../../dashboard/components/TransformationsEditor/TransformationCard';
 import sqlDarkImage from '../../../transformers/images/dark/sqlExpression.svg';
 import sqlLightImage from '../../../transformers/images/light/sqlExpression.svg';
 
@@ -22,39 +25,16 @@ const TRANSFORMATION_IDS = [
   DataTransformerID.filterByValue,
 ];
 
-interface SQLTransformationTile {
-  id: 'sql-transformation';
-  name: string;
-  description: string;
-  imageLight: string;
-  imageDark: string;
-  isSQL: true;
-}
-
 export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
   const hasGoToQueries = props.onGoToQueries != null;
   const hasAddTransformation = props.onAddTransformation != null;
 
-  // Get full registry items with images
-  const transformations = standardTransformersRegistry.list().filter((t): t is TransformerRegistryItem => {
-    return TRANSFORMATION_IDS.some((id) => t.id === id);
-  });
-
-  // Create SQL Transformation tile
-  const sqlTransformationTile: SQLTransformationTile = {
-    id: 'sql-transformation',
-    name: 'SQL Expressions',
-    description: t(
-      'dashboard-scene.empty-transformations-message.sql-transformation-description',
-      'Manipulate your data using MySQL-like syntax'
-    ),
-    imageLight: sqlLightImage,
-    imageDark: sqlDarkImage,
-    isSQL: true,
-  };
-
-  // Combine SQL tile with other transformations, SQL tile first
-  const allTiles = hasGoToQueries ? [sqlTransformationTile, ...transformations] : transformations;
+  // Get transformations from registry
+  const transformations = useMemo(() => {
+    return standardTransformersRegistry.list().filter((t): t is TransformerRegistryItem => {
+      return TRANSFORMATION_IDS.some((id) => t.id === id);
+    });
+  }, []);
 
   const handleSqlTransformationClick = () => {
     reportInteraction('grafana_panel_transformations_sql_transformation_clicked', {
@@ -70,21 +50,29 @@ export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
           <Stack direction="column" alignItems="center" gap={4}>
             {(hasAddTransformation || hasGoToQueries) && (
               <Grid columns={5} gap={1}>
-                {allTiles.map((tile) => {
-                  const isSQL = 'isSQL' in tile && tile.isSQL;
-
-                  return (
+                {hasGoToQueries && (
+                  <SqlExpressionCard
+                    name={t('dashboard-scene.empty-transformations-message.sql-name', 'SQL Expressions')}
+                    description={t(
+                      'dashboard-scene.empty-transformations-message.sql-transformation-description',
+                      'Manipulate your data using MySQL-like syntax'
+                    )}
+                    imageUrl={config.theme2.isDark ? sqlDarkImage : sqlLightImage}
+                    onClick={handleSqlTransformationClick}
+                    testId="go-to-queries-button"
+                  />
+                )}
+                {hasAddTransformation &&
+                  transformations.map((transform) => (
                     <TransformationCard
-                      key={tile.id}
-                      transform={tile}
-                      onClick={isSQL ? handleSqlTransformationClick : (id) => props.onAddTransformation?.(id)}
+                      key={transform.id}
+                      transform={transform}
+                      onClick={(id) => props.onAddTransformation?.(id)}
                       showIllustrations={true}
                       showPluginState={false}
                       showTags={false}
-                      testId={isSQL ? 'go-to-queries-button' : undefined}
                     />
-                  );
-                })}
+                  ))}
               </Grid>
             )}
             <Stack direction="row" gap={2}>
