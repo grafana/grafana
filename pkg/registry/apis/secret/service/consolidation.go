@@ -53,6 +53,9 @@ func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
 		return fmt.Errorf("disabling all data keys: %w", err)
 	}
 
+	// Keep track of which namespaces we have already flushed so we get to take advantage of caching the new values
+	flushedNamespaces := make(map[string]bool)
+
 	// List all encrypted values.
 	encryptedValues, err := s.globalEncryptedValueStore.ListAll(ctx, contracts.ListOpts{}, nil)
 	if err != nil {
@@ -60,6 +63,12 @@ func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
 	}
 
 	for _, ev := range encryptedValues {
+		// Flush the cache for this namespace if we haven't already
+		if !flushedNamespaces[ev.Namespace] {
+			s.encryptionManager.FlushCache(xkube.Namespace(ev.Namespace))
+			flushedNamespaces[ev.Namespace] = true
+		}
+
 		// Decrypt the value using its old data key.
 		decryptedValue, err := s.encryptionManager.Decrypt(ctx, xkube.Namespace(ev.Namespace), ev.EncryptedPayload)
 		if err != nil {
