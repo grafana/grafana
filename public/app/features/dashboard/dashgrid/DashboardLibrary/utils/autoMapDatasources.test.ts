@@ -192,6 +192,28 @@ describe('autoMapDatasources', () => {
       expect(result.mappings).toHaveLength(0);
       expect(result.unmappedDsInputs).toHaveLength(0);
     });
+
+    it('should filter out datasources without UIDs', () => {
+      const input = createMockDataSourceInput({ pluginId: 'prometheus' });
+      const currentDatasourceUid = 'prom-uid'; // Current datasource matches the required type
+
+      mockGetDataSourceSrv.mockReturnValue(
+        createMockDataSourceSrv({
+          getList: jest.fn().mockReturnValue([
+            { uid: 'prom-uid', type: 'prometheus' },
+            { type: 'prometheus' }, // Missing UID - should be filtered
+            { uid: undefined, type: 'prometheus' }, // Undefined UID - should be filtered
+          ]),
+        })
+      );
+
+      const result = tryAutoMapDatasources([input], currentDatasourceUid);
+
+      // Should auto-map since current datasource matches and there's only one valid datasource with UID
+      expect(result.allMapped).toBe(true);
+      expect(result.mappings).toHaveLength(1);
+      expect(result.mappings[0].value).toBe('prom-uid');
+    });
   });
 
   describe('parseConstantInputs', () => {
@@ -239,8 +261,14 @@ describe('autoMapDatasources', () => {
       expect(result).toHaveLength(0);
     });
 
-    it('should handle undefined inputs', () => {
+    it('should handle null inputs', () => {
       const result = parseConstantInputs(null!);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should handle undefined inputs', () => {
+      const result = parseConstantInputs(undefined!);
 
       expect(result).toHaveLength(0);
     });

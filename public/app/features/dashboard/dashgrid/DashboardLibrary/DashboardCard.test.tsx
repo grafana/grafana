@@ -248,7 +248,7 @@ describe('DashboardCard', () => {
   });
 
   describe('Image handling', () => {
-    it('should apply correct styling for logo vs thumbnail', () => {
+    it('should render image correctly for logo vs thumbnail', () => {
       const { rerender } = render(
         <DashboardCard
           title="Test Dashboard"
@@ -261,6 +261,7 @@ describe('DashboardCard', () => {
 
       let image = screen.getByRole('img');
       expect(image).toBeInTheDocument();
+      expect(image).toHaveAttribute('src', 'https://example.com/logo.png');
 
       rerender(
         <DashboardCard
@@ -274,6 +275,24 @@ describe('DashboardCard', () => {
 
       image = screen.getByRole('img');
       expect(image).toBeInTheDocument();
+      expect(image).toHaveAttribute('src', 'https://example.com/screenshot.png');
+    });
+
+    it('should render image when dimThumbnail is true', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          imageUrl="https://example.com/screenshot.png"
+          dashboard={createMockPluginDashboard()}
+          onClick={mockOnClick}
+          dimThumbnail={true}
+          showDatasourceProvidedBadge={true}
+        />
+      );
+
+      const image = screen.getByRole('img');
+      expect(image).toBeInTheDocument();
+      expect(image).toHaveAttribute('src', 'https://example.com/screenshot.png');
     });
   });
 
