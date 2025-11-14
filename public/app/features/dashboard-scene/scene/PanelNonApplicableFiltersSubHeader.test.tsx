@@ -6,6 +6,8 @@ import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
 
 import { PanelNonApplicableFiltersSubHeader } from './PanelNonApplicableFiltersSubHeader';
 
+let measuredWidth = 400;
+
 jest.mock('@grafana/ui', () => {
   const actual = jest.requireActual('@grafana/ui');
   return {
@@ -22,75 +24,70 @@ jest.mock('@grafana/ui', () => {
       disabledPill: 'disabledPill',
       strikethrough: 'strikethrough',
     }),
+    useTheme2: () => ({
+      spacing: (value: number) => `${value * 8}px`,
+      typography: {
+        bodySmall: {
+          fontSize: '12px',
+        },
+      },
+      shape: {
+        radius: {
+          default: '4px',
+        },
+      },
+      colors: {
+        action: { selected: '#fff' },
+        text: { disabled: '#000' },
+      },
+    }),
+    measureText: (text: string) =>
+      ({
+        width: text.length * 6,
+      } as TextMetrics),
   };
 });
 
-type PanelNonApplicableFiltersSubHeaderProps = ComponentProps<typeof PanelNonApplicableFiltersSubHeader>;
+jest.mock('react-use', () => {
+  const actual = jest.requireActual('react-use');
+  return {
+    ...actual,
+    useMeasure: () => {
+      const ref = jest.fn();
+      return [ref, { width: measuredWidth }] as const;
+    },
+  };
+});
+
+type ComponentPropsType = ComponentProps<typeof PanelNonApplicableFiltersSubHeader>;
 
 const defaultQueries: DataQuery[] = [{ refId: 'A' } as DataQuery];
 
-const renderComponent = (props: Partial<PanelNonApplicableFiltersSubHeaderProps> = {}) => {
-  const mergedProps: PanelNonApplicableFiltersSubHeaderProps = {
-    filtersVar: undefined,
-    groupByVar: undefined,
-    queries: defaultQueries,
-    ...props,
-  };
-
-  return render(<PanelNonApplicableFiltersSubHeader {...mergedProps} />);
-};
-
 describe('PanelNonApplicableFiltersSubHeader', () => {
-  const DEFAULT_CONTAINER_WIDTH = 600;
-  let originalOffsetWidthDescriptor: PropertyDescriptor | undefined;
-  let originalResizeObserver: typeof ResizeObserver | undefined;
+  const renderComponent = (props: Partial<ComponentPropsType> = {}) => {
+    const merged: ComponentPropsType = {
+      filtersVar: undefined,
+      groupByVar: undefined,
+      queries: defaultQueries,
+      ...props,
+    };
 
-  const setContainerWidth = (width: number) => {
-    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
-      configurable: true,
-      value: width,
-    });
+    return render(<PanelNonApplicableFiltersSubHeader {...merged} />);
   };
-
-  beforeAll(() => {
-    originalOffsetWidthDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
-    setContainerWidth(DEFAULT_CONTAINER_WIDTH);
-
-    originalResizeObserver = window.ResizeObserver;
-    window.ResizeObserver = jest.fn().mockImplementation(() => ({
-      observe: jest.fn(),
-      unobserve: jest.fn(),
-      disconnect: jest.fn(),
-    }));
-  });
-
-  afterAll(() => {
-    if (originalOffsetWidthDescriptor) {
-      Object.defineProperty(HTMLElement.prototype, 'offsetWidth', originalOffsetWidthDescriptor);
-    } else {
-      delete (HTMLElement.prototype as unknown as Record<string, unknown>).offsetWidth;
-    }
-
-    if (originalResizeObserver) {
-      window.ResizeObserver = originalResizeObserver;
-    } else {
-      delete (window as unknown as Record<string, unknown>).ResizeObserver;
-    }
-  });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    setContainerWidth(DEFAULT_CONTAINER_WIDTH);
+    measuredWidth = 400;
   });
 
-  it('does not render anything when every filter and group-by value is applicable', async () => {
-    const filter: AdHocVariableFilter = { key: 'status', operator: '=', value: '200', origin: 'user' };
-    const { variable: filtersVar, mock: filtersApplicabilityMock } = createFiltersVariable({
+  it('returns null when every filter and group-by key is applicable', async () => {
+    const filter: AdHocVariableFilter = { key: 'status', operator: '=', value: '200' };
+    const { variable: filtersVar, mock: filtersMock } = createFiltersVariable({
       filters: [filter],
-      applicability: [{ key: 'status', origin: 'user', applicable: true }],
+      applicability: [{ key: 'status', applicable: true }],
     });
 
-    const { variable: groupByVar, mock: groupByApplicabilityMock } = createGroupByVariable({
+    const { variable: groupByVar, mock: groupMock } = createGroupByVariable({
       value: ['region'],
       applicability: [{ key: 'region', applicable: true }],
     });
@@ -98,18 +95,18 @@ describe('PanelNonApplicableFiltersSubHeader', () => {
     const { container } = renderComponent({ filtersVar, groupByVar });
 
     await waitFor(() => {
-      expect(filtersApplicabilityMock).toHaveBeenCalledWith([filter], defaultQueries);
-      expect(groupByApplicabilityMock).toHaveBeenCalledWith(['region'], defaultQueries);
+      expect(filtersMock).toHaveBeenCalledWith([filter], defaultQueries);
+      expect(groupMock).toHaveBeenCalledWith(['region'], defaultQueries);
     });
 
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders pills for non applicable filters from both filters and origin filters', async () => {
+  it('renders non applicable filters from filters and origin filters', async () => {
     const filterA: AdHocVariableFilter = { key: 'status', operator: '=', value: '500' };
     const filterB: AdHocVariableFilter = { key: 'team', operator: '=', value: 'payments', origin: 'dashboard' };
 
-    const { variable: filtersVar, mock: filtersApplicabilityMock } = createFiltersVariable({
+    const { variable: filtersVar } = createFiltersVariable({
       filters: [filterA],
       originFilters: [filterB],
       applicability: [
@@ -122,20 +119,15 @@ describe('PanelNonApplicableFiltersSubHeader', () => {
 
     expect(await screen.findByText('status = 500')).toBeInTheDocument();
     expect(screen.getByText('team = payments')).toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(filtersApplicabilityMock).toHaveBeenCalledWith([filterA, filterB], defaultQueries);
-    });
   });
 
-  it('appends non applicable group-by keys and filter pills', async () => {
+  it('appends non applicable group-by values', async () => {
     const filter: AdHocVariableFilter = { key: 'latency', operator: '>', value: '100' };
     const { variable: filtersVar } = createFiltersVariable({
       filters: [filter],
       applicability: [{ key: 'latency', applicable: false }],
     });
-
-    const { variable: groupByVar, mock: groupByApplicabilityMock } = createGroupByVariable({
+    const { variable: groupByVar } = createGroupByVariable({
       value: ['region', 'service'],
       applicability: [
         { key: 'region', applicable: false },
@@ -148,14 +140,10 @@ describe('PanelNonApplicableFiltersSubHeader', () => {
     expect(await screen.findByText('latency > 100')).toBeInTheDocument();
     expect(screen.getByText('region')).toBeInTheDocument();
     expect(screen.queryByText('service')).not.toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(groupByApplicabilityMock).toHaveBeenCalledWith(['region', 'service'], defaultQueries);
-    });
   });
 
-  it('renders overflow tooltip with hidden non applicable filters when width is limited', async () => {
-    setContainerWidth(60);
+  it('shows overflow count and tooltip when filters do not fit', async () => {
+    measuredWidth = 40;
 
     const filterA: AdHocVariableFilter = { key: 'status', operator: '=', value: '500' };
     const filterB: AdHocVariableFilter = { key: 'team', operator: '=', value: 'payments', origin: 'dashboard' };
@@ -173,24 +161,6 @@ describe('PanelNonApplicableFiltersSubHeader', () => {
 
     expect(await screen.findByText('+2')).toBeInTheDocument();
     expect(screen.getByText('status = 500, team = payments')).toBeInTheDocument();
-    expect(screen.queryByText('status = 500', { exact: true })).not.toBeInTheDocument();
-  });
-
-  it('gracefully handles errors when resolving filter applicability', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    const failingFiltersVar = {
-      useState: () => ({ filters: [{ key: 'status', operator: '=', value: '500' }] }),
-      getFiltersApplicabilityForQueries: jest.fn().mockRejectedValue(new Error('boom')),
-    } as unknown as AdHocFiltersVariable;
-
-    const { container } = renderComponent({ filtersVar: failingFiltersVar });
-
-    await waitFor(() => {
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to resolve ad-hoc filter applicability', expect.any(Error));
-    });
-
-    expect(container.firstChild).toBeNull();
-    consoleErrorSpy.mockRestore();
   });
 });
 

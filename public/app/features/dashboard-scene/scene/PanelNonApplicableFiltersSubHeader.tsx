@@ -1,17 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useMeasure } from 'react-use';
 
 import { DataQuery, GrafanaTheme2 } from '@grafana/data';
 import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
-import { Tooltip, useStyles2 } from '@grafana/ui';
+import { Tooltip, measureText, useStyles2, useTheme2 } from '@grafana/ui';
 
-const CHAR_WIDTH_ESTIMATE = 6;
-const PILL_PADDING = 8;
 const GAP_SIZE = 8;
-
-function estimatePillWidth(text: string): number {
-  return text.length * CHAR_WIDTH_ESTIMATE + PILL_PADDING;
-}
+const FONT_SIZE = 12;
 
 interface Props {
   filtersVar?: AdHocFiltersVariable;
@@ -21,7 +17,8 @@ interface Props {
 
 export function PanelNonApplicableFiltersSubHeader({ filtersVar, groupByVar, queries }: Props) {
   const styles = useStyles2(getStyles);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const theme = useTheme2();
+  const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
 
   const filtersState = filtersVar?.useState();
   const groupByState = groupByVar?.useState();
@@ -63,48 +60,14 @@ export function PanelNonApplicableFiltersSubHeader({ filtersVar, groupByVar, que
     fetchApplicability();
   }, [filtersVar, groupByVar, filters, groupByValues, queries]);
 
-  useEffect(() => {
-    if (!containerRef.current || nonApplicable.length === 0) {
+  useLayoutEffect(() => {
+    if (!nonApplicable.length) {
+      setVisibleCount(0);
       return;
     }
 
-    const calculateVisiblePills = () => {
-      const containerWidth = containerRef.current?.offsetWidth || 0;
-      let totalWidth = 0;
-      let count = 0;
-
-      for (let i = 0; i < nonApplicable.length; i++) {
-        const pillWidth = estimatePillWidth(nonApplicable[i]);
-        const gapWidth = count > 0 ? GAP_SIZE : 0;
-        const neededWidth = totalWidth + pillWidth + gapWidth;
-
-        const isLastPill = i === nonApplicable.length - 1;
-
-        let availableWidth = containerWidth;
-        if (!isLastPill) {
-          const remainingAfterThis = nonApplicable.length - (i + 1);
-          const overflowPillWidth = estimatePillWidth(`+${remainingAfterThis}`);
-          availableWidth = containerWidth - overflowPillWidth - GAP_SIZE;
-        }
-
-        if (neededWidth > availableWidth) {
-          break;
-        }
-
-        totalWidth = neededWidth;
-        count++;
-      }
-
-      setVisibleCount(count);
-    };
-
-    calculateVisiblePills();
-
-    const resizeObserver = new ResizeObserver(calculateVisiblePills);
-    resizeObserver.observe(containerRef.current);
-
-    return () => resizeObserver.disconnect();
-  }, [nonApplicable]);
+    setVisibleCount(calculateVisibleCount(nonApplicable, containerWidth, theme));
+  }, [containerWidth, nonApplicable, theme]);
 
   if (nonApplicable.length === 0) {
     return null;
@@ -116,7 +79,7 @@ export function PanelNonApplicableFiltersSubHeader({ filtersVar, groupByVar, que
   const remainingFilters = nonApplicable.slice(visibleCount);
 
   return (
-    <div ref={containerRef} className={styles.container}>
+    <div ref={sizeRef} className={styles.container}>
       {visibleFilters.map((filter, index) => (
         <div key={`${filter}-${index}`} className={cx(styles.disabledPill, styles.strikethrough, styles.pill)}>
           {filter}
@@ -129,6 +92,36 @@ export function PanelNonApplicableFiltersSubHeader({ filtersVar, groupByVar, que
       )}
     </div>
   );
+}
+
+function getPillWidth(label: string) {
+  return Math.ceil(measureText(label, FONT_SIZE).width) + GAP_SIZE;
+}
+
+function calculateVisibleCount(labels: string[], containerWidth: number, theme: GrafanaTheme2) {
+  let usedWidth = 0;
+  let visible = 0;
+
+  for (let i = 0; i < labels.length; i++) {
+    const pillWidth = getPillWidth(labels[i]);
+    const gapBefore = visible > 0 ? GAP_SIZE : 0;
+    const nextWidth = usedWidth + gapBefore + pillWidth;
+    const remaining = labels.length - (i + 1);
+
+    if (remaining > 0) {
+      const overflowWidth = getPillWidth(`+${remaining}`);
+      if (nextWidth + GAP_SIZE + overflowWidth > containerWidth) {
+        break;
+      }
+    } else if (nextWidth > containerWidth) {
+      break;
+    }
+
+    usedWidth = nextWidth;
+    visible++;
+  }
+
+  return visible;
 }
 
 function getStyles(theme: GrafanaTheme2) {
