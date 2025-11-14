@@ -31,9 +31,6 @@ const mockConfig = jest.mocked(config);
 const mockContextSrv = jest.mocked(contextSrv);
 const mockGetExternalUserMngLinkUrl = jest.mocked(getExternalUserMngLinkUrl);
 
-// Type assertion to make mockConfig.featureToggles assignable
-const mockFeatureToggles = mockConfig.featureToggles as Partial<FeatureToggles>;
-
 // Mock window.open
 const mockWindowOpen = jest.fn();
 Object.defineProperty(window, 'open', {
@@ -46,7 +43,6 @@ describe('InviteUserButtonUtils', () => {
     jest.clearAllMocks();
 
     // Set up default mocks
-    mockFeatureToggles.inviteUserExperimental = true;
     mockConfig.externalUserMngLinkUrl = 'https://example.com/invite';
     mockContextSrv.hasPermission.mockReturnValue(true);
 
@@ -58,12 +54,6 @@ describe('InviteUserButtonUtils', () => {
     it('should return true when all conditions are met', () => {
       expect(shouldRenderInviteUserButton()).toBe(true);
       expect(mockContextSrv.hasPermission).toHaveBeenCalledWith(AccessControlAction.OrgUsersAdd);
-    });
-
-    it('should return false when feature toggle is disabled', () => {
-      mockFeatureToggles.inviteUserExperimental = false;
-
-      expect(shouldRenderInviteUserButton()).toBe(false);
     });
 
     it('should return false when URL is not configured', () => {

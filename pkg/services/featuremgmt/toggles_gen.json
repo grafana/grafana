@@ -2108,7 +2108,8 @@
       "metadata": {
         "name": "inviteUserExperimental",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-07T19:09:59Z"
+        "creationTimestamp": "2025-03-07T19:09:59Z",
+        "deletionTimestamp": "2025-11-14T10:29:28Z"
       },
       "spec": {
         "description": "Renders invite user button along the app",

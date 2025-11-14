@@ -1565,15 +1565,6 @@ var (
 			Owner:        grafanaOSSBigTent,
 		},
 		{
-			Name:              "inviteUserExperimental",
-			Description:       "Renders invite user button along the app",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaSharingSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			FrontendOnly:      true,
-		},
-		{
 			Name:         "alertingMigrationUI",
 			Description:  "Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules",
 			FrontendOnly: true,
