@@ -4378,8 +4378,6 @@
       "next-button": "Volgende",
       "save-button": "Opslaan"
     },
-    "page-content": "Om Correlaties in te schakelen, voeg je het toe aan de Grafana-configuratie:",
-    "page-heading": "Correlaties zijn uitgeschakeld",
     "query-editor": {
       "control-rules": "De geselecteerde doelgegevensbron moet een query-editor exporteren.",
       "data-source-text": "Selecteer eerst een doelgegevensbron.",
@@ -6750,9 +6748,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Meer informatie over de fout"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "Csv of spreadsheet toevoegen"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Adobe Analytics-gegevensbron",
@@ -7470,6 +7465,7 @@
       "label-resource-attributes": "Broneigenschappen",
       "label-span-attributes": "Spaneigenschappen",
       "label-stack-trace": "Stackspoor",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Tellen van onderliggenden:",
@@ -7478,8 +7474,7 @@
           "start-time": "Starttijd:"
         }
       },
-      "share-span": "Delen",
-      "warnings": "Waarschuwingen"
+      "share-span": "Delen"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Operator voor maximale span selecteren",
@@ -11762,6 +11757,11 @@
       "path-description": "Lokaal bestandssysteempad naar de repository",
       "path-label": "Repository-pad",
       "path-required": "Repository-pad is vereist"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {

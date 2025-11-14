@@ -86,7 +86,7 @@ services:
       - 'alloy.logs=true'
 
   alloy:
-    image: grafana/alloy:v1.11.2@sha256:6ab34b8201f0e8b0c4346be4934c9965723af3f7f21dd9a65fd73f270f69b451
+    image: grafana/alloy:v1.11.3@sha256:8c7256f412feb9f5f48f9f6f9394dc97ca887f63dea9304f347970ecc1787669
     volumes:
       - ./configs/alloy:/alloy-config
       - /var/run/docker.sock:/var/run/docker.sock # To scrape Docker container logs
@@ -104,7 +104,7 @@ services:
       - 'alloy.logs=true'
 
   prometheus:
-    image: prom/prometheus:v3.7.2@sha256:23031bfe0e74a13004252caaa74eccd0d62b6c6e7a04711d5b8bf5b7e113adc7
+    image: prom/prometheus:v3.7.3@sha256:49214755b6153f90a597adcbff0252cc61069f8ab69ce8411285cd4a560e8038
     volumes:
       - prometheus-data:/prometheus
     command:

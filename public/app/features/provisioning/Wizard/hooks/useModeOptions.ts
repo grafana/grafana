@@ -61,7 +61,7 @@ export function useModeOptions(repoName: string, settings?: RepositoryViewList) 
         ),
         subtitle: t(
           'provisioning.mode-options.folder.subtitle',
-          'Use this option to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 folders.'
+          'Use this option to sync external resources into a new folder without affecting the rest of your instance.'
         ),
       },
     ];

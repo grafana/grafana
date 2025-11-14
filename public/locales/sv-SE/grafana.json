@@ -4378,8 +4378,6 @@
       "next-button": "Nästa",
       "save-button": "Spara"
     },
-    "page-content": "Om du vill aktivera korrelationer lägger du till den i Grafana-konfigurationen:",
-    "page-heading": "Korrelationer är inaktiverade",
     "query-editor": {
       "control-rules": "Den valda måldatakällan måste exportera en frågeredigerare.",
       "data-source-text": "Vänligen välj en måldatakälla först.",
@@ -6750,9 +6748,6 @@
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Mer information om felet"
     },
-    "footer": {
-      "add-csv-or-spreadsheet": "Lägg till csv eller kalkylblad"
-    },
     "get-enterprise-phantom-plugins": {
       "description": {
         "adobe-analytics-datasource": "Adobe Analytics-datakälla",
@@ -7470,6 +7465,7 @@
       "label-resource-attributes": "Resursattribut",
       "label-span-attributes": "Intervallattribut",
       "label-stack-trace": "Stackspårning",
+      "label-warnings": "",
       "overview-items": {
         "label": {
           "child-count": "Antal barn:",
@@ -7478,8 +7474,7 @@
           "start-time": "Starttid:"
         }
       },
-      "share-span": "Dela",
-      "warnings": "Varningar"
+      "share-span": "Dela"
     },
     "span-filters": {
       "aria-label-select-max-span-operator": "Välj operator för maximalt intervall",
@@ -11762,6 +11757,11 @@
       "path-description": "Lokal filsystemväg till lagringsplatsen",
       "path-label": "Sökväg till lagringsplats",
       "path-required": "Sökväg till lagringsplats krävs"
+    },
+    "message": {
+      "show-less": "",
+      "show-more": "",
+      "truncated": ""
     },
     "mode-options": {
       "folder": {

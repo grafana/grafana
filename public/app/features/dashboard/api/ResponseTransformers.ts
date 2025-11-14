@@ -1,4 +1,4 @@
-import { TypedVariableModel } from '@grafana/data';
+import { MetricFindValue, TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   AnnotationQuery,
@@ -20,7 +20,6 @@ import {
   DataLink,
   DatasourceVariableKind,
   defaultSpec as defaultDashboardV2Spec,
-  defaultFieldConfigSource,
   defaultTimeSettingsSpec,
   PanelQueryKind,
   QueryVariableKind,
@@ -41,6 +40,10 @@ import {
   defaultDataQueryKind,
   RowsLayoutRowKind,
   GridLayoutKind,
+  defaultDashboardLinkType,
+  defaultDashboardLink,
+  defaultFieldConfigSource,
+  defaultPanelQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
@@ -182,9 +185,11 @@ export function ensureV2Response(
     tags: dashboard.tags ?? [],
     cursorSync: transformCursorSynctoEnum(dashboard.graphTooltip),
     preload: dashboard.preload || dashboardDefaults.preload,
-    liveNow: dashboard.liveNow,
-    editable: dashboard.editable,
-    revision: dashboard.revision,
+    // transformSceneToSaveModelSchemaV2.ts sets liveNow and editable to default values if they are not set
+    // so we are matching that behavior here so conversion pipeline tests like ResponseTransformersToBackend.test.ts pass
+    liveNow: dashboard.liveNow ?? Boolean(dashboardDefaults.liveNow),
+    editable: dashboard.editable ?? dashboardDefaults.editable,
+    ...(dashboard.revision !== undefined && { revision: dashboard.revision }),
     timeSettings: {
       from: dashboard.time?.from || timeSettingsDefaults.from,
       to: dashboard.time?.to || timeSettingsDefaults.to,
@@ -193,11 +198,24 @@ export function ensureV2Response(
       autoRefreshIntervals: dashboard.timepicker?.refresh_intervals || timeSettingsDefaults.autoRefreshIntervals,
       fiscalYearStartMonth: dashboard.fiscalYearStartMonth || timeSettingsDefaults.fiscalYearStartMonth,
       hideTimepicker: dashboard.timepicker?.hidden || timeSettingsDefaults.hideTimepicker,
-      quickRanges: dashboard.timepicker?.quick_ranges,
-      weekStart: getWeekStart(dashboard.weekStart, timeSettingsDefaults.weekStart),
-      nowDelay: dashboard.timepicker?.nowDelay || timeSettingsDefaults.nowDelay,
+      ...(dashboard.timepicker?.quick_ranges !== undefined && { quickRanges: dashboard.timepicker.quick_ranges }),
+      ...(dashboard.weekStart !== undefined && {
+        weekStart: getWeekStart(dashboard.weekStart, timeSettingsDefaults.weekStart),
+      }),
+      ...(dashboard.timepicker?.nowDelay !== undefined && { nowDelay: dashboard.timepicker.nowDelay }),
     },
-    links: dashboard.links || [],
+    links: (dashboard.links || []).map((link) => ({
+      title: link.title ?? defaultDashboardLink().title,
+      url: link.url ?? defaultDashboardLink().url,
+      type: link.type ?? defaultDashboardLinkType(),
+      icon: link.icon ?? defaultDashboardLink().icon,
+      tooltip: link.tooltip ?? defaultDashboardLink().tooltip,
+      tags: link.tags ?? defaultDashboardLink().tags,
+      asDropdown: link.asDropdown ?? defaultDashboardLink().asDropdown,
+      keepTime: link.keepTime ?? defaultDashboardLink().keepTime,
+      includeVars: link.includeVars ?? defaultDashboardLink().includeVars,
+      targetBlank: link.targetBlank ?? defaultDashboardLink().targetBlank,
+    })),
     annotations,
     variables,
     elements,
@@ -389,7 +407,7 @@ function buildRowKind(p: RowPanel, elements: GridLayoutItemKind[]): RowsLayoutRo
     spec: {
       collapse: p.collapsed,
       title: p.title ?? '',
-      repeat: p.repeat ? { value: p.repeat, mode: 'variable' } : undefined,
+      ...(p.repeat ? { repeat: { value: p.repeat, mode: 'variable' } } : {}),
       layout: {
         kind: 'GridLayout',
         spec: {
@@ -408,9 +426,16 @@ function buildGridItemKind(p: Panel, elementName: string, yOverride?: number): G
       y: yOverride ?? p.gridPos!.y,
       width: p.gridPos!.w,
       height: p.gridPos!.h,
-      repeat: p.repeat
-        ? { value: p.repeat, mode: 'variable', direction: p.repeatDirection, maxPerRow: p.maxPerRow }
-        : undefined,
+      ...(p.repeat
+        ? {
+            repeat: {
+              value: p.repeat,
+              mode: 'variable',
+              ...(p.repeatDirection !== undefined && { direction: p.repeatDirection }),
+              ...(p.maxPerRow !== undefined && { maxPerRow: p.maxPerRow }),
+            },
+          }
+        : {}),
       element: {
         kind: 'ElementReference',
         name: elementName!,
@@ -454,24 +479,26 @@ function getDefaultDatasourceType() {
 }
 
 export function getDefaultDatasource(): DataSourceRef {
-  const configDefaultDS = getDefaultDataSourceRef() ?? { type: 'grafana', uid: '-- Grafana --' };
+  const defaultDataSourceRef = getDefaultDataSourceRef() ?? { type: 'grafana', uid: '-- Grafana --' };
 
-  if (configDefaultDS.uid && !configDefaultDS.apiVersion) {
+  if (defaultDataSourceRef.uid && !defaultDataSourceRef.apiVersion) {
     // get api version from config
-    const dsInstance = config.datasources[configDefaultDS.uid];
-    configDefaultDS.apiVersion = dsInstance.apiVersion ?? undefined;
+    const defaultDatasource = config.defaultDatasource;
+    const dsInstance = config.datasources[defaultDatasource];
+    defaultDataSourceRef.apiVersion = dsInstance.apiVersion ?? undefined;
   }
 
   return {
-    apiVersion: configDefaultDS.apiVersion,
-    type: configDefaultDS.type,
-    uid: configDefaultDS.uid,
+    apiVersion: defaultDataSourceRef.apiVersion,
+    type: defaultDataSourceRef.type,
+    uid: defaultDataSourceRef.uid,
   };
 }
 
-export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] {
+export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] | undefined {
   return targets.map((t) => {
     const { refId, hide, datasource, ...query } = t;
+    const ds = t.datasource || panelDatasource;
     const q: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
@@ -480,10 +507,12 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
         query: {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
-          group: t.datasource?.type || panelDatasource.type!,
-          datasource: {
-            name: t.datasource?.uid || panelDatasource.uid!,
-          },
+          group: ds.type ?? '',
+          ...(ds.uid && {
+            datasource: {
+              name: ds.uid,
+            },
+          }),
           spec: {
             ...query,
           },
@@ -495,44 +524,65 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
 }
 
 export function buildPanelKind(p: Panel): PanelKind {
-  const queries = getPanelQueries((p.targets as unknown as DataQuery[]) || [], p.datasource || getDefaultDatasource());
+  const queries = getPanelQueries((p.targets as unknown as DataQuery[]) || [], p.datasource ?? { type: '', uid: '' });
 
   const transformations = getPanelTransformations(p.transformations || []);
+
+  const fieldConfig = p.fieldConfig || defaultFieldConfigSource();
+
+  // match backend conversion behavior
+  if (fieldConfig.defaults.mappings && fieldConfig.defaults.mappings.length === 0) {
+    delete fieldConfig.defaults.mappings;
+  }
+  // match backend conversion behavior
+  if (fieldConfig.defaults.custom && Object.keys(fieldConfig.defaults.custom).length === 0) {
+    delete fieldConfig.defaults.custom;
+  }
+
+  // match backend conversion behavior
+  if (
+    fieldConfig.defaults.thresholds?.steps &&
+    fieldConfig.defaults.thresholds.steps.length > 0 &&
+    !fieldConfig.defaults.thresholds.steps[0]?.value
+  ) {
+    fieldConfig.defaults.thresholds.steps[0]!.value = null;
+  }
 
   const panelKind: PanelKind = {
     kind: 'Panel',
     spec: {
       title: p.title || '',
       description: p.description || '',
+      ...(p.transparent !== undefined && { transparent: p.transparent }),
       vizConfig: {
         kind: 'VizConfig',
         group: p.type,
-        version: p.pluginVersion!,
+        version: p.pluginVersion ?? '',
         spec: {
-          fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
-          options: p.options as any,
+          fieldConfig: p.fieldConfig || defaultFieldConfigSource(),
+          options: p.options ?? {},
         },
       },
       links:
         p.links?.map<DataLink>((l) => ({
           title: l.title,
           url: l.url || '',
-          targetBlank: l.targetBlank,
+          ...(l.targetBlank !== undefined && { targetBlank: l.targetBlank }),
         })) || [],
       id: p.id!,
       data: {
         kind: 'QueryGroup',
         spec: {
-          queries,
+          queries: queries || [defaultPanelQueryKind()],
           transformations,
           queryOptions: {
-            cacheTimeout: p.cacheTimeout,
-            maxDataPoints: p.maxDataPoints,
-            interval: p.interval,
-            hideTimeOverride: p.hideTimeOverride,
-            queryCachingTTL: p.queryCachingTTL,
-            timeFrom: p.timeFrom,
-            timeShift: p.timeShift,
+            ...(p.cacheTimeout !== undefined && { cacheTimeout: p.cacheTimeout }),
+            ...(p.maxDataPoints !== undefined && { maxDataPoints: p.maxDataPoints }),
+            ...(p.interval !== undefined && { interval: p.interval }),
+            ...(p.hideTimeOverride !== undefined && { hideTimeOverride: p.hideTimeOverride }),
+            ...(p.queryCachingTTL !== undefined && { queryCachingTTL: p.queryCachingTTL }),
+            ...(p.timeFrom !== undefined && { timeFrom: p.timeFrom }),
+            ...(p.timeShift !== undefined && { timeShift: p.timeShift }),
           },
         },
       },
@@ -547,7 +597,7 @@ function getPanelTransformations(transformations: DataTransformerConfig[]): Tran
       kind: t.id,
       spec: {
         ...t,
-        topic: transformDataTopic(t.topic),
+        ...(t.topic !== undefined && { topic: transformDataTopic(t.topic) }),
       },
     };
   });
@@ -558,7 +608,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
   for (const v of vars) {
     const commonProperties = {
       name: v.name,
-      label: v.label,
+      ...(v.label !== undefined && { label: v.label }),
       ...(v.description && { description: v.description }),
       skipUrlSync: Boolean(v.skipUrlSync),
       hide: transformVariableHideToEnum(v.hide),
@@ -584,25 +634,27 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
           kind: 'QueryVariable',
           spec: {
             ...commonProperties,
-            multi: Boolean(v.multi),
-            includeAll: Boolean(v.includeAll),
+            multi: v.multi ?? false,
+            includeAll: v.includeAll ?? false,
             ...(v.allValue && { allValue: v.allValue }),
             current: {
               value: v.current?.value,
               text: v.current?.text,
             },
-            options: v.options || [],
+            options: v.options ?? [],
+            ...(v.definition && { definition: v.definition }),
             refresh: transformVariableRefreshToEnum(v.refresh),
-            ...(v.datasource && { datasource: v.datasource }),
-            regex: v.regex || '',
-            sort: transformSortVariableToEnum(v.sort),
+            regex: v.regex ?? '',
+            sort: v.sort ? transformSortVariableToEnum(v.sort) : 'disabled',
             query: {
               kind: 'DataQuery',
               version: defaultDataQueryKind().version,
               group: v.datasource?.type ?? getDefaultDatasourceType(),
-              datasource: {
-                name: v.datasource?.uid,
-              },
+              ...(v.datasource?.uid && {
+                datasource: {
+                  name: v.datasource.uid,
+                },
+              }),
               spec: query,
             },
             allowCustomValue: v.allowCustomValue ?? true,
@@ -621,17 +673,17 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
           kind: 'DatasourceVariable',
           spec: {
             ...commonProperties,
-            multi: Boolean(v.multi),
-            includeAll: Boolean(v.includeAll),
+            multi: v.multi ?? false,
+            includeAll: v.includeAll ?? false,
             ...(v.allValue && { allValue: v.allValue }),
             current: {
               value: v.current.value,
               text: v.current.text,
             },
-            options: v.options || [],
+            options: v.options ?? [],
             refresh: transformVariableRefreshToEnum(v.refresh),
             pluginId,
-            regex: v.regex || '',
+            regex: v.regex ?? '',
             allowCustomValue: v.allowCustomValue ?? true,
           },
         };
@@ -647,9 +699,9 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
               value: v.current.value,
               text: v.current.text,
             },
-            options: v.options,
-            multi: v.multi,
-            includeAll: v.includeAll,
+            options: v.options ?? [],
+            multi: v.multi ?? false,
+            includeAll: v.includeAll ?? false,
             ...(v.allValue && { allValue: v.allValue }),
             allowCustomValue: v.allowCustomValue ?? true,
           },
@@ -663,20 +715,22 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
         const av: AdhocVariableKind = {
           kind: 'AdhocVariable',
           group: dsType,
+          ...(ds.uid && {
+            datasource: {
+              name: ds.uid,
+            },
+          }),
           spec: {
             ...commonProperties,
-            baseFilters: validateFiltersOrigin(v.baseFilters) || [],
-            filters: validateFiltersOrigin(v.filters) || [],
-            defaultKeys: v.defaultKeys || [],
+            baseFilters: validateFiltersOrigin(v.baseFilters ?? []),
+            filters: validateFiltersOrigin(v.filters ?? []),
+            defaultKeys:
+              v.defaultKeys?.map((key: string | MetricFindValue) =>
+                typeof key === 'string' ? { text: key, value: key } : key
+              ) ?? [],
             allowCustomValue: v.allowCustomValue ?? true,
           },
         };
-
-        if (ds.uid) {
-          av.datasource = {
-            name: ds.uid,
-          };
-        }
 
         variables.push(av);
         break;
@@ -737,6 +791,11 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
         const gb: GroupByVariableKind = {
           kind: 'GroupByVariable',
           group: dsType,
+          ...(ds.uid && {
+            datasource: {
+              name: ds.uid,
+            },
+          }),
           spec: {
             ...commonProperties,
             options: v.options,
@@ -747,12 +806,6 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             multi: v.multi,
           },
         };
-
-        if (ds.uid) {
-          gb.datasource = {
-            name: ds.uid,
-          };
-        }
 
         variables.push(gb);
         break;
@@ -766,27 +819,34 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
 
 function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annotations'] {
   return annotations.map((a) => {
+    // Extract properties that are explicitly handled
+    const { name, enable, hide, iconColor, builtIn, datasource, target, filter, ...legacyOptions } = a;
+
     const aq: AnnotationQueryKind = {
       kind: 'AnnotationQuery',
       spec: {
-        name: a.name,
-        ...(a.datasource && { datasource: a.datasource }),
-        enable: a.enable,
-        hide: Boolean(a.hide),
-        iconColor: a.iconColor,
-        builtIn: Boolean(a.builtIn),
+        name,
+        enable,
+        hide: Boolean(hide),
+        iconColor: iconColor,
+        builtIn: Boolean(builtIn),
         query: {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
-          group: a.datasource?.type || getDefaultDatasourceType(),
-          datasource: {
-            name: a.datasource?.uid,
-          },
+          group: datasource?.type || (builtIn ? 'grafana' : ''),
+          ...(datasource?.uid && {
+            datasource: {
+              name: datasource.uid,
+            },
+          }),
           spec: {
-            ...a.target,
+            ...target,
           },
         },
-        filter: a.filter,
+        ...(filter !== undefined && { filter }),
+
+        // Include any additional properties as legacyOptions
+        ...(Object.keys(legacyOptions).length > 0 && { legacyOptions }),
       },
     };
     return aq;
@@ -810,7 +870,10 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
       case 'QueryVariable':
         const qv: VariableModel = {
           ...commonProperties,
-          current: v.spec.current,
+          current: {
+            text: v.spec.current.text,
+            value: v.spec.current.value,
+          },
           options: v.spec.options,
           query:
             LEGACY_STRING_VALUE_KEY in v.spec.query.spec
@@ -996,7 +1059,7 @@ function transformV2PanelToV1Panel(
         panel.links?.map<DashboardLink>((l) => ({
           title: l.title,
           url: l.url,
-          ...(l.targetBlank && { targetBlank: l.targetBlank }),
+          ...(l.targetBlank !== undefined && { targetBlank: l.targetBlank }),
         })) || [],
       targets: panel.data.spec.queries.map((q) => {
         return {
@@ -1011,17 +1074,27 @@ function transformV2PanelToV1Panel(
       }),
       transformations: panel.data.spec.transformations.map((t) => t.spec),
       gridPos,
-      cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
-      maxDataPoints: panel.data.spec.queryOptions.maxDataPoints,
-      interval: panel.data.spec.queryOptions.interval,
-      hideTimeOverride: panel.data.spec.queryOptions.hideTimeOverride,
-      queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
-      timeFrom: panel.data.spec.queryOptions.timeFrom,
-      timeShift: panel.data.spec.queryOptions.timeShift,
-      transparent: panel.transparent,
-      ...(repeat?.value && { repeat: repeat.value }),
-      ...(repeat?.direction && { repeatDirection: repeat.direction }),
-      ...(repeat?.maxPerRow && { maxPerRow: repeat.maxPerRow }),
+      ...(panel.data.spec.queryOptions.cacheTimeout !== undefined && {
+        cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
+      }),
+      ...(panel.data.spec.queryOptions.maxDataPoints !== undefined && {
+        maxDataPoints: panel.data.spec.queryOptions.maxDataPoints,
+      }),
+      ...(panel.data.spec.queryOptions.interval !== undefined && { interval: panel.data.spec.queryOptions.interval }),
+      ...(panel.data.spec.queryOptions.hideTimeOverride !== undefined && {
+        hideTimeOverride: panel.data.spec.queryOptions.hideTimeOverride,
+      }),
+      ...(panel.data.spec.queryOptions.queryCachingTTL !== undefined && {
+        queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
+      }),
+      ...(panel.data.spec.queryOptions.timeFrom !== undefined && { timeFrom: panel.data.spec.queryOptions.timeFrom }),
+      ...(panel.data.spec.queryOptions.timeShift !== undefined && {
+        timeShift: panel.data.spec.queryOptions.timeShift,
+      }),
+      ...(panel.transparent !== undefined && { transparent: panel.transparent }),
+      ...(repeat?.value !== undefined && { repeat: repeat.value }),
+      ...(repeat?.direction !== undefined && { repeatDirection: repeat.direction }),
+      ...(repeat?.maxPerRow !== undefined && { maxPerRow: repeat.maxPerRow }),
     };
   } else if (p.kind === 'LibraryPanel') {
     const panel = p.spec;
@@ -1056,7 +1129,7 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
     ...fieldConfig.defaults,
   };
 
-  if (fieldConfig.defaults.mappings) {
+  if (fieldConfig.defaults.mappings && fieldConfig.defaults.mappings.length > 0) {
     transformedDefaults.mappings = fieldConfig.defaults.mappings.map((mapping) => {
       switch (mapping.type) {
         case 'value':

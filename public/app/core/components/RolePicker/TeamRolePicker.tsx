@@ -44,23 +44,25 @@ export const TeamRolePicker = ({
   width,
   isLoading,
 }: Props) => {
-  const [{ loading, value: appliedRoles = roles || [] }, getTeamRoles] = useAsyncFn(async () => {
-    try {
-      if (roles) {
-        return roles;
+  const [{ loading, value: appliedRoles = roles || [] }, getTeamRoles] = useAsyncFn(
+    async (force = false) => {
+      try {
+        if (!force && roles) {
+          return roles;
+        }
+        if (!force && apply && Boolean(pendingRoles?.length)) {
+          return pendingRoles;
+        }
+        if (contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) && teamId > 0) {
+          return await fetchTeamRoles(teamId);
+        }
+      } catch (e) {
+        console.error('Error fetching roles', e);
       }
-      if (apply && Boolean(pendingRoles?.length)) {
-        return pendingRoles;
-      }
-
-      if (contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) && teamId > 0) {
-        return await fetchTeamRoles(teamId);
-      }
-    } catch (e) {
-      console.error('Error loading options', e);
-    }
-    return [];
-  }, [teamId, pendingRoles, roles]);
+      return [];
+    },
+    [teamId, pendingRoles, roles]
+  );
 
   useEffect(() => {
     getTeamRoles();
@@ -69,7 +71,7 @@ export const TeamRolePicker = ({
   const onRolesChange = async (roles: Role[]) => {
     if (!apply) {
       await updateTeamRoles(roles, teamId);
-      await getTeamRoles();
+      await getTeamRoles(true); // Force fetch from backend after update
     } else if (onApplyRoles) {
       onApplyRoles(roles);
     }
