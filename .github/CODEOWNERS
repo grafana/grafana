@@ -39,13 +39,18 @@
 /docs/sources/                                                                    @irenerl24
 
 /docs/sources/alerting/                                                           @JohnnyK-Grafana
+
 /docs/sources/dashboards/                                                         @imatwawana
+/docs/sources/as-code/                                                            @urbiz-grafana
+/docs/sources/developer-resources/                                                @urbiz-grafana
 /docs/sources/datasources/                                                        @lwandz13
 /docs/sources/panels-visualizations/                                              @imatwawana
 /docs/sources/upgrade-guide/                                                      @jtvdez
 /docs/sources/whatsnew/                                                           @jtvdez
 
-/docs/sources/developers/plugins/                                                 @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+/docs/sources/developer-resources/plugins/                                        @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+/docs/sources/visualizations/dashboards/                                          @imatwawana
+/docs/sources/visualizations/panels-visualizations/                               @imatwawana
 
 /docs/sources/dashboards/share-dashboards-panels/_index.md                        @imatwawana @jtvdez
 /docs/sources/dashboards/share-dashboards-panels/shared-dashboards/index.md       @jtvdez
