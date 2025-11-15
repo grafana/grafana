@@ -15,8 +15,7 @@ import {
   usePanelContext,
 } from '@grafana/ui';
 import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
-
-import { getDataLinks } from '../status-history/utils';
+import { getDataLinks } from 'app/features/datalinks/utils';
 
 import { XYChartTooltip } from './XYChartTooltip';
 import { Options } from './panelcfg.gen';
