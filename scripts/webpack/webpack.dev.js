@@ -14,6 +14,7 @@ const { merge } = require('webpack-merge');
 const WebpackBar = require('webpackbar');
 
 const getEnvConfig = require('./env-util.js');
+const HttpReadinessPlugin = require('./plugins/HttpReadinessPlugin.js');
 const common = require('./webpack.common.js');
 const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
 // esbuild-loader 3.0.0+ requires format to be set to prevent it
@@ -48,6 +49,8 @@ function scenesModule() {
 const envConfig = getEnvConfig();
 
 module.exports = (env = {}) => {
+  console.log('env', env);
+  const httpReadinessPort = parseInt(env.httpReadinessPort, 10);
   return merge(common, {
     devtool: 'source-map',
     mode: 'development',
@@ -170,6 +173,12 @@ module.exports = (env = {}) => {
         name: 'Grafana',
       }),
       new EnvironmentPlugin(envConfig),
+      httpReadinessPort
+        ? new HttpReadinessPlugin({
+            port: httpReadinessPort,
+            host: 'localhost',
+          })
+        : new DefinePlugin({}), // bogus plugin to satisfy webpack API
     ],
 
     stats: 'minimal',
