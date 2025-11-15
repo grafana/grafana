@@ -289,7 +289,7 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 	if ds.JsonData != nil {
 		impl := ds.JsonData.Get("implementation").MustString("")
 		switch impl {
-		case "mimir", "cortex":
+		case "mimir", "cortex", "":
 			if parsed.Path == "" {
 				parsed.Path = "/"
 			}
