@@ -238,6 +238,36 @@ func (st DBstore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid st
 	return alertRules, nil
 }
 
+// GetAlertRuleVersionFolders retrieves a list of unique folder UIDs that the given rule guid has belonged to.
+// Returned slice is ordered with more recent folders first.
+func (st DBstore) GetAlertRuleVersionFolders(ctx context.Context, orgID int64, guid string) ([]string, error) {
+	folders := make([]string, 0)
+	dedup := make(map[string]struct{})
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		rows, err := sess.Table(new(alertRuleVersion)).Where("rule_org_id = ? AND rule_guid = ?", orgID, guid).Desc("id").Cols("rule_namespace_uid").Rows(new(alertRuleVersion))
+		if err != nil {
+			return err
+		}
+		for rows.Next() {
+			rule := new(alertRuleVersion)
+			err = rows.Scan(rule)
+			if err != nil {
+				st.Logger.Error("Invalid rule version found in DB store, ignoring it", "func", "GetAlertRuleVersionFolders", "error", err)
+				continue
+			}
+			if _, ok := dedup[rule.RuleNamespaceUID]; !ok {
+				dedup[rule.RuleNamespaceUID] = struct{}{}
+				folders = append(folders, rule.RuleNamespaceUID)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return folders, nil
+}
+
 // ListDeletedRules retrieves a list of deleted alert rules for the specified organization ID from the database.
 // It ensures that only the latest version of each rule is included and filters out invalid or duplicated versions.
 // Returns a slice of *models.AlertRule  or an error if the operation fails.
