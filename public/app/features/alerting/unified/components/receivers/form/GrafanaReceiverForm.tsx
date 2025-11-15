@@ -185,6 +185,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
           isOpen={!!testReceivers}
           alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
           receivers={testReceivers}
+          channelValues={testReceivers[0]?.grafana_managed_receiver_configs?.[0]}
         />
       )}
     </>

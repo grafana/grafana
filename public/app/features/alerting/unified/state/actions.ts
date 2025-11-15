@@ -1,14 +1,27 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
+import { AppEvents } from '@grafana/data';
 import { locationService, logMeasurement } from '@grafana/runtime';
-import { AlertManagerCortexConfig, AlertmanagerGroup, Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { appEvents } from 'app/core/core';
+import {
+  AlertManagerCortexConfig,
+  AlertmanagerGroup,
+  Matcher,
+  Receiver,
+  TestReceiversAlert,
+} from 'app/plugins/datasource/alertmanager/types';
 import { ThunkResult } from 'app/types/store';
 import { RuleIdentifier, RuleNamespace, StateHistoryItem } from 'app/types/unified-alerting';
 import { RulerRuleDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { withPromRulesMetadataLogging, withRulerRulesMetadataLogging } from '../Analytics';
-import { deleteAlertManagerConfig, fetchAlertGroups, updateAlertManagerConfig } from '../api/alertmanager';
+import {
+  deleteAlertManagerConfig,
+  fetchAlertGroups,
+  testReceivers,
+  updateAlertManagerConfig,
+} from '../api/alertmanager';
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { fetchAnnotations } from '../api/annotations';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
@@ -17,6 +30,7 @@ import { FetchRulerRulesFilter, fetchRulerRules } from '../api/ruler';
 import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
 import { getAllRulesSourceNames } from '../utils/datasource';
 import { makeAMLink } from '../utils/misc';
+import { receiverHasPlaceholderEmail } from '../utils/receiver-form';
 import { withAppEvents, withSerializedError } from '../utils/redux';
 import { getAlertInfo } from '../utils/rules';
 import { safeParsePrometheusDuration } from '../utils/time';
@@ -250,6 +264,39 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
         successMessage: 'Alertmanager configuration reset.',
       }
     );
+  }
+);
+
+interface TestReceiversOptions {
+  alertManagerSourceName: string;
+  receivers: Receiver[];
+  alert?: TestReceiversAlert;
+}
+
+export const testReceiversAction = createAsyncThunk(
+  'unifiedalerting/testReceivers',
+  async ({ alertManagerSourceName, receivers, alert }: TestReceiversOptions): Promise<void> => {
+    const usesPlaceholder = receiverHasPlaceholderEmail(receivers);
+    
+    if (usesPlaceholder) {
+      // Handle placeholder email case with custom warning message
+      try {
+        await withSerializedError(testReceivers(alertManagerSourceName, receivers, alert));
+        appEvents.emit(AppEvents.alertWarning, [
+          'Test completed, but no email was sent because a placeholder email address is configured. Please update your contact point with a valid email address to receive alerts.',
+        ]);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Unknown error';
+        appEvents.emit(AppEvents.alertError, [`Failed to send test alert: ${msg}`]);
+        throw e;
+      }
+      return;
+    }
+    
+    return withAppEvents(withSerializedError(testReceivers(alertManagerSourceName, receivers, alert)), {
+      errorMessage: 'Failed to send test alert.',
+      successMessage: 'Test alert sent.',
+    });
   }
 );
 
