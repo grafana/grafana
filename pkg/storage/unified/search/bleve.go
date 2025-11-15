@@ -1854,6 +1854,7 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 			return false
 		}
 		ns := parts[0]
+		group := parts[1]
 		resource := parts[2]
 		name := parts[3]
 		folder := ""
@@ -1863,16 +1864,16 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 			}
 		})
 		if err != nil {
-			logger.Debug("Error reading doc values", "error", err)
+			logger.Debug("Error reading doc values", "namespace", ns, "group", group, "resource", resource, "name", name, "folder", folder, "error", err)
 			return false
 		}
 		if _, ok := q.checkers[resource]; !ok {
-			logger.Debug("No resource checker found", "resource", resource)
+			logger.Debug("No resource checker found", "namespace", ns, "group", group, "resource", resource, "name", name, "folder", folder)
 			return false
 		}
 		allowed := q.checkers[resource](name, folder)
 		if !allowed {
-			logger.Debug("Denying access", "ns", ns, "name", name, "folder", folder)
+			logger.Debug("Denying access", "namespace", ns, "group", group, "resource", resource, "name", name, "folder", folder)
 		}
 		return allowed
 	})
