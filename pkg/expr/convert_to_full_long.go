@@ -14,8 +14,8 @@ const (
 	SQLDisplayFieldName = "__display_name__"
 
 	// These are not types in the SDK or dataplane contract yet.
-	numericFullLongType    = "numeric_full_long"
-	timeseriesFullLongType = "time_series_full_long"
+	numericFullLongType    = "numeric-full-long"
+	timeseriesFullLongType = "timeseries-full-long"
 )
 
 func ConvertToFullLong(frames data.Frames) (data.Frames, error) {

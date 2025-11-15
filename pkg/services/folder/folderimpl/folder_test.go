@@ -1,11 +1,15 @@
 package folderimpl
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -126,4 +130,52 @@ func TestSplitFullpath(t *testing.T) {
 			assert.Equal(t, tt.expected, actual)
 		})
 	}
+}
+
+func TestNestedFolderDeleteUsesCorrectStorage(t *testing.T) {
+	// This is a regression test for a bug where nestedFolderDelete was calling s.Get()
+	// (which goes through the API server/unified storage) instead of s.store.Get()
+
+	ctx := context.Background()
+	tracer := noop.NewTracerProvider().Tracer("TestNestedFolderDeleteUsesCorrectStorage")
+
+	testUID := "test-folder-uid"
+	testOrgID := int64(1)
+	testUser := &user.SignedInUser{UserID: 1, OrgID: testOrgID}
+
+	testFolder := &folder.Folder{
+		UID:   testUID,
+		OrgID: testOrgID,
+		Title: "Test Folder",
+	}
+
+	// Create fake stores - the direct store will have the folder, unified store will not
+	store := folder.NewFakeStore()
+	store.ExpectedFolder = testFolder          // Get will return the folder
+	store.ExpectedFolders = []*folder.Folder{} // GetDescendants returns empty list
+	store.ExpectedError = nil                  // No errors
+
+	unifiedStore := folder.NewFakeStore()
+	unifiedStore.ExpectedFolder = nil                     // This store doesn't have the folder
+	unifiedStore.ExpectedError = folder.ErrFolderNotFound // Would return not found
+
+	// Set up the service with both stores
+	service := &Service{
+		store:        store,
+		unifiedStore: unifiedStore,
+		tracer:       tracer,
+		log:          slog.Default(),
+	}
+
+	cmd := &folder.DeleteFolderCommand{
+		UID:          testUID,
+		OrgID:        testOrgID,
+		SignedInUser: testUser,
+	}
+
+	descendants, err := service.nestedFolderDelete(ctx, cmd)
+
+	require.NoError(t, err, "nestedFolderDelete should succeed")
+	assert.Empty(t, descendants, "Expected no descendants for this test")
+	assert.True(t, store.DeleteCalled, "store Delete should have been called")
 }

@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
+import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Text, Box, Button, useStyles2 } from '@grafana/ui';
+import { Text, Box, Button, useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
@@ -30,7 +31,6 @@ type ResourceId = string | number;
 type Type = 'users' | 'teams' | 'serviceAccounts' | 'builtInRoles';
 
 export type Props = {
-  title?: string;
   buttonLabel?: string;
   emptyLabel?: string;
   addPermissionTitle?: string;
@@ -42,7 +42,6 @@ export type Props = {
 };
 
 export const Permissions = ({
-  title = t('access-control.permissions.title', 'Permissions'),
   buttonLabel = t('access-control.permissions.add-label', 'Add a permission'),
   emptyLabel = t('access-control.permissions.no-permissions', 'There are no permissions'),
   resource,
@@ -54,23 +53,22 @@ export const Permissions = ({
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [isAdding, setIsAdding] = useState(false);
-  const [items, setItems] = useState<ResourcePermission[]>([]);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
 
-  const fetchItems = useCallback(async () => {
+  const [permissions, fetchPermissions] = useAsyncFn(async () => {
     let items = await getPermissions(resource, resourceId);
     if (getWarnings) {
       items = getWarnings(items);
     }
-    setItems(items);
+    return items;
   }, [resource, resourceId, getWarnings]);
 
   useEffect(() => {
     getDescription(resource).then((r) => {
       setDesc(r);
-      return fetchItems();
+      return fetchPermissions();
     });
-  }, [resource, resourceId, fetchItems]);
+  }, [resource, fetchPermissions]);
 
   const onAdd = (state: SetPermission) => {
     let promise: Promise<void> | null = null;
@@ -83,7 +81,7 @@ export const Permissions = ({
     }
 
     if (promise !== null) {
-      promise.then(fetchItems);
+      promise.then(fetchPermissions);
     }
   };
 
@@ -98,7 +96,7 @@ export const Permissions = ({
     }
 
     if (promise !== null) {
-      promise.then(fetchItems);
+      promise.then(fetchPermissions);
     }
   };
 
@@ -119,40 +117,44 @@ export const Permissions = ({
   const teams = useMemo(
     () =>
       sortBy(
-        items.filter((i) => i.teamId),
+        (permissions.value || []).filter((i) => i.teamId),
         ['team', 'isManaged']
       ),
-    [items]
+    [permissions.value]
   );
   const users = useMemo(
     () =>
       sortBy(
-        items.filter((i) => i.userId && !i.isServiceAccount),
+        (permissions.value || []).filter((i) => i.userId && !i.isServiceAccount),
         ['userLogin', 'isManaged']
       ),
-    [items]
+    [permissions.value]
   );
   const serviceAccounts = useMemo(
     () =>
       sortBy(
-        items.filter((i) => i.userId && i.isServiceAccount),
+        (permissions.value || []).filter((i) => i.userId && i.isServiceAccount),
         ['userLogin', 'isManaged']
       ),
-    [items]
+    [permissions.value]
   );
   const builtInRoles = useMemo(
     () =>
       sortBy(
-        items.filter((i) => i.builtInRole),
+        (permissions.value || []).filter((i) => i.builtInRole),
         ['builtInRole', 'isManaged']
       ),
-    [items]
+    [permissions.value]
   );
 
   const titleRole = t('access-control.permissions.role', 'Role');
   const titleUser = t('access-control.permissions.user', 'User');
   const titleServiceAccount = t('access-control.permissions.serviceaccount', 'Service Account');
   const titleTeam = t('access-control.permissions.team', 'Team');
+
+  if (permissions.loading) {
+    return <LoadingPlaceholder text={t('access-control.permissions.loading', 'Loading permissions...')} />;
+  }
 
   return (
     <>
@@ -172,7 +174,7 @@ export const Permissions = ({
             />
           </Box>
         )}
-        {items.length === 0 && (
+        {permissions.value?.length === 0 && (
           <Box>
             <Text>{emptyLabel}</Text>
           </Box>
@@ -236,7 +238,7 @@ export const Permissions = ({
           </>
         )}
       </div>
-      {epilogue && epilogue(items)}
+      {epilogue && epilogue(permissions.value || [])}
     </>
   );
 };

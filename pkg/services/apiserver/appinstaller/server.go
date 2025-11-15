@@ -60,25 +60,41 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 				continue
 			}
 			storage := s.configureStorage(gr, dualWriteSupported, restStorage)
-			if unifiedStorage, ok := storage.(grafanarest.Storage); ok && dualWriteSupported {
-				log.Debug("Configuring dual writer for storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
-				dw, err := NewDualWriter(
-					s.ctx,
-					gr,
-					s.storageOpts,
-					legacyProvider.GetLegacyStorage(gr.WithVersion(v)),
-					unifiedStorage,
-					s.kvStore,
-					s.lock,
-					s.namespaceMapper,
-					s.dualWriteService,
-					s.dualWriterMetrics,
-					s.builderMetrics,
-				)
-				if err != nil {
-					return err
+			if dualWriteSupported {
+				if unifiedStorage, ok := storage.(grafanarest.Storage); ok {
+					log.Debug("Configuring dual writer for storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
+					storage, err = NewDualWriter(
+						s.ctx,
+						gr,
+						s.storageOpts,
+						legacyProvider.GetLegacyStorage(gr.WithVersion(v)),
+						unifiedStorage,
+						s.kvStore,
+						s.lock,
+						s.namespaceMapper,
+						s.dualWriteService,
+						s.dualWriterMetrics,
+						s.builderMetrics,
+					)
+					if err != nil {
+						return err
+					}
+				} else if statusRest, ok := storage.(*appsdkapiserver.StatusREST); ok {
+					parentPath := strings.TrimSuffix(storagePath, "/status")
+					parentStore, ok := apiGroupInfo.VersionedResourcesStorageMap[v][parentPath]
+					if ok {
+						if _, isMode4or5 := parentStore.(*genericregistry.Store); !isMode4or5 {
+							// When legacy resources have status, the dual writing must be handled explicitly
+							if statusProvider, ok := s.installer.(LegacyStatusProvider); ok {
+								storage = statusProvider.GetLegacyStatus(gr.WithVersion(v), statusRest)
+							} else {
+								log.Warn("skipped registering status sub-resource that does not support dual writing",
+									"resource", gr.String(), "version", v, "storagePath", storagePath)
+								continue
+							}
+						}
+					}
 				}
-				storage = dw
 			}
 			apiGroupInfo.VersionedResourcesStorageMap[v][storagePath] = storage
 		}
@@ -116,9 +132,19 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 		return statusStore
 	}
 
+	// if the storage is a subresource store, we need to extract the underlying generic registry store
+	if subresourceStore, ok := storage.(*appsdkapiserver.SubresourceREST); ok {
+		subresourceStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
+		subresourceStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
+		return subresourceStore
+	}
+
 	return storage
 }
 
 func (s *serverWrapper) RegisteredWebServices() []*restful.WebService {
-	return []*restful.WebService{}
+	if s.Handler != nil && s.Handler.GoRestfulContainer != nil {
+		return s.Handler.GoRestfulContainer.RegisteredWebServices()
+	}
+	return nil
 }

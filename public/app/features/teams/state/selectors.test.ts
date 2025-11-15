@@ -11,7 +11,6 @@ describe('Team selectors', () => {
     it('should return team if matching with location team', () => {
       const mockState: TeamState = {
         team: mockTeam,
-        searchMemberQuery: '',
         members: [],
         groups: [],
       };

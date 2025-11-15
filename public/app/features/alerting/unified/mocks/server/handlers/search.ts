@@ -29,6 +29,7 @@ const defaultSearchResponse = [
 export const searchHandler = (response = defaultSearchResponse) =>
   http.get(`/api/search`, () => HttpResponse.json(response));
 
+/** @deprecated Move to or use inbuilt handlers from `@grafana/test-utils` instead */
 const handlers = [searchHandler()];
 
 export default handlers;

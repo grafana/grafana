@@ -7,6 +7,7 @@ import (
 	"maps"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -26,7 +27,7 @@ func IntegrationToPostableGrafanaReceiver(integration *models.Integration) (*api
 	postable := &apimodels.PostableGrafanaReceiver{
 		UID:                   integration.UID,
 		Name:                  integration.Name,
-		Type:                  integration.Config.Type,
+		Type:                  string(integration.Config.Type()),
 		DisableResolveMessage: integration.DisableResolveMessage,
 		SecureSettings:        maps.Clone(integration.SecureSettings),
 	}
@@ -69,6 +70,13 @@ func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, prov
 	integrations, err := PostableGrafanaReceiversToIntegrations(postable.GrafanaManagedReceivers)
 	if err != nil {
 		return nil, err
+	}
+	if postable.HasMimirIntegrations() {
+		mimir, err := PostableMimirReceiverToIntegrations(postable.Receiver)
+		if err != nil {
+			return nil, err
+		}
+		integrations = append(integrations, mimir...)
 	}
 	r := &models.Receiver{
 		UID:          NameToUid(postable.GetName()), // TODO replace with stable UID.
@@ -116,10 +124,34 @@ func PostableGrafanaReceiversToIntegrations(postables []*apimodels.PostableGrafa
 	return integrations, nil
 }
 
+func PostableMimirReceiverToIntegrations(r alertingNotify.ConfigReceiver) ([]*models.Integration, error) {
+	v0, err := alertingNotify.ConfigReceiverToMimirIntegrations(r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert v0 receiver to integrations: %w", err)
+	}
+	result := make([]*models.Integration, 0, len(v0))
+	for _, config := range v0 {
+		s, err := config.ConfigMap()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get settings of v0 receiver %s (version %s): %w", config.Schema.Type(), config.Schema.Version, err)
+		}
+		result = append(result, &models.Integration{
+			Config:         config.Schema,
+			Settings:       s,
+			SecureSettings: map[string]string{},
+		})
+	}
+	return result, nil
+}
+
 func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) (*models.Integration, error) {
-	config, err := models.IntegrationConfigFromType(p.Type, nil)
+	integrationType, err := alertingNotify.IntegrationTypeFromString(p.Type)
 	if err != nil {
 		return nil, err
+	}
+	config, ok := alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+	if !ok {
+		return nil, fmt.Errorf("integration type [%s] does not have schema of version %s", integrationType, schema.V1)
 	}
 	integration := &models.Integration{
 		UID:                   p.UID,
@@ -132,7 +164,7 @@ func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) 
 
 	if p.Settings != nil {
 		if err := json.Unmarshal(p.Settings, &integration.Settings); err != nil {
-			return nil, fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", integration.Config.Type, p.Name, err)
+			return nil, fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", integration.Config.Type(), p.Name, err)
 		}
 	}
 

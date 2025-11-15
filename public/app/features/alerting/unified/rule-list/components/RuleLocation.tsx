@@ -2,7 +2,7 @@ import { Icon, Stack, TextLink, Tooltip } from '@grafana/ui';
 import { RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
-import { DataSourceIcon } from './Namespace';
+import { DataSourceIcon } from './DataSourceIcon';
 
 interface RuleLocationProps {
   namespace: string;

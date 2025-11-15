@@ -26,10 +26,12 @@ const defaultProps: LogsMetaRowProps = {
   dedupCount: 0,
   displayedFields: [],
   logRows: [],
-  clearDetectedFields: jest.fn(),
+  clearDisplayedFields: jest.fn(),
+  defaultDisplayedFields: [],
+  visualisationType: 'logs',
 };
 
-const setup = (propOverrides?: object, disableDownload = false) => {
+const setup = (propOverrides?: Partial<LogsMetaRowProps>, disableDownload = false) => {
   const props = {
     ...defaultProps,
     ...propOverrides,
@@ -54,6 +56,15 @@ describe('LogsMetaRow', () => {
     ).toBeInTheDocument();
   });
 
+  it('does not render the show original line button if the current viz is the table', () => {
+    setup({ displayedFields: ['test'], visualisationType: 'table' });
+    expect(
+      screen.queryByRole('button', {
+        name: 'Show original line',
+      })
+    ).not.toBeInTheDocument();
+  });
+
   it('renders the displayed fields', async () => {
     setup({ displayedFields: ['testField1234'] });
     expect(await screen.findByText('testField1234')).toBeInTheDocument();
@@ -61,7 +72,7 @@ describe('LogsMetaRow', () => {
 
   it('renders a button to clear displayedfields', () => {
     const clearSpy = jest.fn();
-    setup({ displayedFields: ['testField1234'], clearDetectedFields: clearSpy });
+    setup({ displayedFields: ['testField1234'], clearDisplayedFields: clearSpy });
     fireEvent(
       screen.getByRole('button', {
         name: 'Show original line',

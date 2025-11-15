@@ -104,7 +104,7 @@ func (w *Worker) Cleanup(ctx context.Context, sv *secretv1beta1.SecureValue) err
 	}
 
 	// Keeper deletion is idempotent
-	if err := keeper.Delete(ctx, keeperCfg, sv.Namespace, sv.Name, sv.Status.Version); err != nil {
+	if err := keeper.Delete(ctx, keeperCfg, xkube.Namespace(sv.Namespace), sv.Name, sv.Status.Version); err != nil {
 		return fmt.Errorf("deleting secure value from keeper: %w", err)
 	}
 

@@ -11,6 +11,7 @@ import {
   SceneVariable,
   SceneVariableSet,
   ScopesVariable,
+  SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -35,7 +36,8 @@ export function createVariablesForDashboard(oldModel: DashboardModel) {
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
 
-  if (config.featureToggles.scopeFilters) {
+  // Explicitly disable scopes for public dashboards
+  if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
 
@@ -65,7 +67,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             useQueriesAsFilterForOptions: true,
             layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
             supportsMultiValueOperators: Boolean(
-              getDataSourceSrv().getInstanceSettings(v.datasource)?.meta.multiValueFilterOperators
+              getDataSourceSrv().getInstanceSettings({ type: v.datasource?.type })?.meta.multiValueFilterOperators
             ),
           });
         }
@@ -90,7 +92,17 @@ export function createSnapshotVariable(variable: TypedVariableModel): SceneVaria
   let snapshotVariable: SnapshotVariable;
   let current: { value: string | string[]; text: string | string[] };
   if (variable.type === 'interval') {
-    const intervals = getIntervalsFromQueryString(variable.query);
+    // If query is missing, extract intervals from options instead of using defaults
+    let intervals: string[];
+    if (variable.query) {
+      intervals = getIntervalsFromQueryString(variable.query);
+    } else if (variable.options && variable.options.length > 0) {
+      // Extract intervals from options when query is missing
+      intervals = variable.options.map((opt) => String(opt.value || opt.text)).filter(Boolean);
+    } else {
+      // Fallback to default intervals only if both query and options are missing
+      intervals = getIntervalsFromQueryString('');
+    }
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     snapshotVariable = new SnapshotVariable({
       name: variable.name,
@@ -152,17 +164,17 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       useQueriesAsFilterForOptions: true,
       layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
       supportsMultiValueOperators: Boolean(
-        getDataSourceSrv().getInstanceSettings(variable.datasource)?.meta.multiValueFilterOperators
+        getDataSourceSrv().getInstanceSettings({ type: variable.datasource?.type })?.meta.multiValueFilterOperators
       ),
     });
   }
+  // Custom variable
   if (variable.type === 'custom') {
     return new CustomVariable({
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-
-      query: variable.query,
+      query: variable.query || '',
       isMulti: variable.multi,
       allValue: variable.allValue || undefined,
       includeAll: variable.includeAll,
@@ -171,13 +183,14 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
       allowCustomValue: variable.allowCustomValue,
     });
+    // Query variable
   } else if (variable.type === 'query') {
     return new QueryVariable({
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
 
-      query: variable.query,
+      query: variable.query ?? {},
       datasource: variable.datasource,
       sort: variable.sort,
       refresh: variable.refresh,
@@ -196,6 +209,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       })),
       staticOptionsOrder: variable.staticOptionsOrder,
     });
+    // Datasource variable
   } else if (variable.type === 'datasource') {
     return new DataSourceVariable({
       ...commonProperties,
@@ -212,8 +226,19 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultOptionEnabled: variable.current?.value === DEFAULT_DATASOURCE && variable.current?.text === 'default',
       allowCustomValue: variable.allowCustomValue,
     });
+    // Interval variable
   } else if (variable.type === 'interval') {
-    const intervals = getIntervalsFromQueryString(variable.query);
+    // If query is missing, extract intervals from options instead of using defaults
+    let intervals: string[];
+    if (variable.query) {
+      intervals = getIntervalsFromQueryString(variable.query);
+    } else if (variable.options && variable.options.length > 0) {
+      // Extract intervals from options when query is missing (matches backend behavior)
+      intervals = variable.options.map((opt) => String(opt.value || opt.text)).filter(Boolean);
+    } else {
+      // Fallback to default intervals only if both query and options are missing
+      intervals = getIntervalsFromQueryString('');
+    }
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     return new IntervalVariable({
       ...commonProperties,
@@ -226,6 +251,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
+    // Constant variable
   } else if (variable.type === 'constant') {
     return new ConstantVariable({
       ...commonProperties,
@@ -233,6 +259,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
+    // Textbox variable
   } else if (variable.type === 'textbox') {
     let val;
     if (!variable?.current?.value) {
@@ -251,6 +278,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
+    // Groupby variable
   } else if (config.featureToggles.groupByVariable && variable.type === 'groupby') {
     return new GroupByVariable({
       ...commonProperties,
@@ -263,6 +291,25 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultOptions: variable.options,
       defaultValue: variable.defaultValue,
       allowCustomValue: variable.allowCustomValue,
+    });
+    // Switch variable
+    // In the old variable model we are storing the enabled and disabled values in the options:
+    // the first option is the enabled value and the second is the disabled value
+  } else if (variable.type === 'switch') {
+    const pickFirstValue = (value: string | string[]) => {
+      if (Array.isArray(value)) {
+        return value[0];
+      }
+      return value;
+    };
+
+    return new SwitchVariable({
+      ...commonProperties,
+      value: pickFirstValue(variable.current?.value),
+      enabledValue: pickFirstValue(variable.options?.[0]?.value),
+      disabledValue: pickFirstValue(variable.options?.[1]?.value),
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
     });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.type}`);

@@ -37,7 +37,7 @@ export const LogLineDetailsComponent = memo(
     const inputRef = useRef('');
     const styles = useStyles2(getStyles);
 
-    const extensionLinks = useAttributesExtensionLinks(log);
+    const extensionLinks = useAttributesExtensionLinks(log, timeRange);
 
     const fieldsWithLinks = useMemo(() => {
       const fieldsWithLinks = log.fields.filter((f) => f.links?.length);
@@ -131,7 +131,6 @@ export const LogLineDetailsComponent = memo(
           <ControlledCollapse
             className={styles.collapsable}
             label={t('logs.log-line-details.log-line-section', 'Log line')}
-            collapsible
             isOpen={logLineOpen}
             onToggle={(isOpen: boolean) => handleToggle('logLineOpen', isOpen)}
           >
@@ -140,7 +139,6 @@ export const LogLineDetailsComponent = memo(
           {displayedFields.length > 0 && setDisplayedFields && (
             <ControlledCollapse
               label={t('logs.log-line-details.displayed-fields-section', 'Organize displayed fields')}
-              collapsible
               isOpen={displayedFieldsOpen}
               onToggle={(isOpen: boolean) => handleToggle('displayedFieldsOpen', isOpen)}
             >
@@ -151,7 +149,6 @@ export const LogLineDetailsComponent = memo(
             <ControlledCollapse
               className={styles.collapsable}
               label={t('logs.log-line-details.links-section', 'Links')}
-              collapsible
               isOpen={linksOpen}
               onToggle={(isOpen: boolean) => handleToggle('linksOpen', isOpen)}
             >
@@ -161,7 +158,6 @@ export const LogLineDetailsComponent = memo(
           {trace && (
             <ControlledCollapse
               label={t('logs.log-line-details.trace-section', 'Trace')}
-              collapsible
               isOpen={traceOpen}
               onToggle={(isOpen: boolean) => handleToggle('traceOpen', isOpen)}
             >
@@ -174,7 +170,6 @@ export const LogLineDetailsComponent = memo(
                 className={styles.collapsable}
                 key={'fields'}
                 label={t('logs.log-line-details.fields-section', 'Fields')}
-                collapsible
                 isOpen={fieldsOpen}
                 onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
               >
@@ -186,7 +181,6 @@ export const LogLineDetailsComponent = memo(
                 className={styles.collapsable}
                 key={group}
                 label={group}
-                collapsible
                 isOpen={store.getBool(`${logOptionsStorageKey}.log-details.${groupOptionName(group)}`, true)}
                 onToggle={(isOpen: boolean) => handleToggle(groupOptionName(group), isOpen)}
               >
@@ -199,7 +193,6 @@ export const LogLineDetailsComponent = memo(
               className={styles.collapsable}
               key={'fields'}
               label={t('logs.log-line-details.fields-section', 'Fields')}
-              collapsible
               isOpen={fieldsOpen}
               onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
             >

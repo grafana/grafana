@@ -84,9 +84,14 @@ func upgradePanelLink(link map[string]interface{}) map[string]interface{} {
 	url := buildPanelLinkURL(link)
 
 	result := map[string]interface{}{
-		"url":         url,
-		"title":       GetStringValue(link, "title"),
-		"targetBlank": GetBoolValue(link, "targetBlank"),
+		"url":   url,
+		"title": GetStringValue(link, "title"),
+	}
+
+	// Only add targetBlank if it's explicitly set to true (matches frontend behavior)
+	// Frontend filters out targetBlank: false as a default, so we shouldn't add it
+	if GetBoolValue(link, "targetBlank") {
+		result["targetBlank"] = true
 	}
 
 	return result
@@ -97,12 +102,12 @@ func buildPanelLinkURL(link map[string]interface{}) string {
 	var url string
 
 	// Check for existing URL first
-	if existingURL, ok := link["url"].(string); ok && existingURL != "" {
+	if existingURL := GetStringValue(link, "url"); existingURL != "" {
 		url = existingURL
-	} else if dashboard, ok := link["dashboard"].(string); ok && dashboard != "" {
+	} else if dashboard := GetStringValue(link, "dashboard"); dashboard != "" {
 		// Convert dashboard name to slugified URL
 		url = "dashboard/db/" + slugifyForURL(dashboard)
-	} else if dashUri, ok := link["dashUri"].(string); ok && dashUri != "" {
+	} else if dashUri := GetStringValue(link, "dashUri"); dashUri != "" {
 		url = "dashboard/" + dashUri
 	} else {
 		// Default fallback
@@ -120,7 +125,7 @@ func buildPanelLinkURL(link map[string]interface{}) string {
 		params = append(params, "$__all_variables")
 	}
 
-	if customParams, ok := link["params"].(string); ok && customParams != "" {
+	if customParams := GetStringValue(link, "params"); customParams != "" {
 		params = append(params, customParams)
 	}
 

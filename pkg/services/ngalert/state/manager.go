@@ -72,6 +72,10 @@ type ManagerCfg struct {
 	// StatePeriodicSaveBatchSize controls the size of the alert instance batch that is saved periodically when the
 	// alertingSaveStatePeriodic feature flag is enabled.
 	StatePeriodicSaveBatchSize int
+	// StatePeriodicSaveInterval controls the interval for periodic state saves.
+	StatePeriodicSaveInterval time.Duration
+	// StatePeriodicSaveJitterEnabled enables jitter for periodic state saves to distribute database load.
+	StatePeriodicSaveJitterEnabled bool
 
 	RulesPerRuleGroupLimit int64
 

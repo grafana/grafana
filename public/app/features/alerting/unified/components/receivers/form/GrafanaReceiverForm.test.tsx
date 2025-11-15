@@ -387,7 +387,7 @@ describe('GrafanaReceiverForm', () => {
       await user.click(newIntegrationRadio.get());
       expect(newIntegrationRadio.get()).toBeChecked();
 
-      await user.type(ui.newOnCallIntegrationName.get(), 'emea-oncall');
+      await user.type(await ui.newOnCallIntegrationName.find(), 'emea-oncall');
 
       // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({

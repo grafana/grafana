@@ -18,17 +18,20 @@ import { Icon } from '../Icon/Icon';
 import { Input } from '../Input/Input';
 import { BackgroundColor, BorderColor, Box, BoxShadow } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Switch } from '../Switch/Switch';
 import { Text, TextProps } from '../Text/Text';
 
 interface DemoBoxProps {
   bg?: BackgroundColor;
   border?: BorderColor;
+  scrollable?: boolean;
   shadow?: BoxShadow;
   textColor?: TextProps['color'];
 }
 
-const DemoBox = ({ bg, border, children, shadow }: React.PropsWithChildren<DemoBoxProps>) => {
+const DemoBox = ({ bg, border, children, shadow, scrollable }: React.PropsWithChildren<DemoBoxProps>) => {
+  const MaybeScroll = scrollable ? ScrollContainer : React.Fragment;
   return (
     <Box
       backgroundColor={bg ? bg : undefined}
@@ -36,9 +39,9 @@ const DemoBox = ({ bg, border, children, shadow }: React.PropsWithChildren<DemoB
       borderStyle={border ? 'solid' : undefined}
       borderColor={border}
       boxShadow={shadow}
-      borderRadius={'default'}
+      borderRadius={'lg'}
     >
-      {children}
+      <MaybeScroll>{children}</MaybeScroll>
     </Box>
   );
 };
@@ -121,7 +124,7 @@ export const ThemeDemo = () => {
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Text colors" isOpen={true}>
-          <Stack justifyContent="flex-start">
+          <Stack justifyContent="flex-start" wrap="wrap">
             <DemoBox>
               <TextColors t={t} />
             </DemoBox>
@@ -134,8 +137,8 @@ export const ThemeDemo = () => {
           </Stack>
         </CollapsableSection>
         <CollapsableSection label="Rich colors" isOpen={true}>
-          <DemoBox bg="primary">
-            <table className={colorsTableStyle}>
+          <DemoBox bg="primary" scrollable>
+            <table className={colorsTableStyle(t)}>
               <thead>
                 <tr>
                   <td>name</td>
@@ -154,8 +157,8 @@ export const ThemeDemo = () => {
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Viz hues" isOpen={true}>
-          <DemoBox bg="primary">
-            <table className={colorsTableStyle}>
+          <DemoBox bg="primary" scrollable>
+            <table className={colorsTableStyle(t)}>
               <thead>
                 <tr>
                   <td>name</td>
@@ -229,7 +232,7 @@ export const ThemeDemo = () => {
         <CollapsableSection label="Buttons" isOpen={true}>
           <DemoBox bg="primary">
             <Stack direction="column" gap={3}>
-              <Stack>
+              <Stack wrap="wrap">
                 {allButtonVariants.map((variant) => (
                   <Button variant={variant} key={variant}>
                     {variant}
@@ -305,7 +308,7 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
             background: color.main,
             borderRadius: theme.shape.radius.default,
             color: color.contrastText,
-            padding: '8px',
+            padding: theme.spacing(1),
             fontWeight: 500,
           })}
         >
@@ -318,7 +321,7 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
             background: color.shade,
             color: theme.colors.getContrastText(color.shade, 4.5),
             borderRadius: theme.shape.radius.default,
-            padding: '8px',
+            padding: theme.spacing(1),
           })}
         >
           {color.shade}
@@ -329,7 +332,7 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
           className={css({
             background: color.transparent,
             borderRadius: theme.shape.radius.default,
-            padding: '8px',
+            padding: theme.spacing(1),
           })}
         >
           {color.shade}
@@ -341,7 +344,7 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
             border: `1px solid ${color.border}`,
             color: color.text,
             borderRadius: theme.shape.radius.default,
-            padding: '8px',
+            padding: theme.spacing(1),
           })}
         >
           {color.text}
@@ -351,14 +354,16 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
   );
 }
 
-const colorsTableStyle = css({
-  textAlign: 'center',
-
-  td: {
-    padding: '8px',
+const colorsTableStyle = (theme: GrafanaTheme2) =>
+  css({
     textAlign: 'center',
-  },
-});
+    overflow: 'auto',
+
+    td: {
+      padding: theme.spacing(1),
+      textAlign: 'center',
+    },
+  });
 
 export function TextColors({ t }: { t: GrafanaTheme2 }) {
   return (
@@ -380,8 +385,10 @@ export function TextColors({ t }: { t: GrafanaTheme2 }) {
 }
 
 export function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
+  const t = useTheme2();
   const style = css({
-    padding: '16px',
+    padding: t.spacing(2),
+    borderRadius: t.shape.radius.default,
     boxShadow: shadow,
   });
   return <div className={style}>{name}</div>;
@@ -391,7 +398,8 @@ export function ActionsDemo() {
   const t = useTheme2();
 
   const item = css({
-    padding: '8px',
+    borderRadius: t.shape.radius.default,
+    padding: t.spacing(1),
     ':hover': {
       background: t.colors.action.hover,
     },

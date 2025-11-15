@@ -76,7 +76,7 @@ func (c *InvestigationIndexClient) Patch(ctx context.Context, identifier resourc
 	return c.client.Patch(ctx, identifier, req, opts)
 }
 
-func (c *InvestigationIndexClient) UpdateStatus(ctx context.Context, newStatus InvestigationIndexStatus, opts resource.UpdateOptions) (*InvestigationIndex, error) {
+func (c *InvestigationIndexClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus InvestigationIndexStatus, opts resource.UpdateOptions) (*InvestigationIndex, error) {
 	return c.client.Update(ctx, &InvestigationIndex{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       InvestigationIndexKind().Kind(),
@@ -84,6 +84,8 @@ func (c *InvestigationIndexClient) UpdateStatus(ctx context.Context, newStatus I
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: opts.ResourceVersion,
+			Namespace:       identifier.Namespace,
+			Name:            identifier.Name,
 		},
 		Status: newStatus,
 	}, resource.UpdateOptions{

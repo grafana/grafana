@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type RoleBindingClient struct {
@@ -74,24 +73,6 @@ func (c *RoleBindingClient) Update(ctx context.Context, obj *RoleBinding, opts r
 
 func (c *RoleBindingClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*RoleBinding, error) {
 	return c.client.Patch(ctx, identifier, req, opts)
-}
-
-func (c *RoleBindingClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus RoleBindingStatus, opts resource.UpdateOptions) (*RoleBinding, error) {
-	return c.client.Update(ctx, &RoleBinding{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       RoleBindingKind().Kind(),
-			APIVersion: GroupVersion.Identifier(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			ResourceVersion: opts.ResourceVersion,
-			Namespace:       identifier.Namespace,
-			Name:            identifier.Name,
-		},
-		Status: newStatus,
-	}, resource.UpdateOptions{
-		Subresource:     "status",
-		ResourceVersion: opts.ResourceVersion,
-	})
 }
 
 func (c *RoleBindingClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {

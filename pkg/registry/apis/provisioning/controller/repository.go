@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -22,9 +23,11 @@ import (
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const loggerName = "provisioning-repository-controller"
@@ -39,6 +42,11 @@ type queueItem struct {
 	attempts int
 }
 
+//go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock.go --with-expecter
+type finalizerProcessor interface {
+	process(ctx context.Context, repo repository.Repository, finalizers []string) error
+}
+
 // RepositoryController controls how and when CRD is established.
 type RepositoryController struct {
 	client     client.ProvisioningV0alpha1Interface
@@ -47,8 +55,11 @@ type RepositoryController struct {
 	logger     logging.Logger
 	dualwrite  dualwrite.Service
 
-	jobs          jobs.Queue
-	finalizer     *finalizer
+	jobs interface {
+		jobs.Queue
+		jobs.Store
+	}
+	finalizer     finalizerProcessor
 	statusPatcher StatusPatcher
 
 	repoFactory   repository.Factory
@@ -59,6 +70,9 @@ type RepositoryController struct {
 	keyFunc           func(obj any) (string, error)
 
 	queue workqueue.TypedRateLimitingInterface[*queueItem]
+
+	registry prometheus.Registerer
+	tracer   tracing.Tracer
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -68,11 +82,19 @@ func NewRepositoryController(
 	repoFactory repository.Factory,
 	resourceLister resources.ResourceLister,
 	clients resources.ClientFactory,
-	jobs jobs.Queue,
+	jobs interface {
+		jobs.Queue
+		jobs.Store
+	},
 	dualwrite dualwrite.Service,
 	healthChecker *HealthChecker,
 	statusPatcher StatusPatcher,
+	registry prometheus.Registerer,
+	tracer tracing.Tracer,
+	parallelOperations int,
 ) (*RepositoryController, error) {
+	finalizerMetrics := registerFinalizerMetrics(registry)
+
 	rc := &RepositoryController{
 		client:     provisioningClient,
 		repoLister: repoInformer.Lister(),
@@ -89,10 +111,14 @@ func NewRepositoryController(
 		finalizer: &finalizer{
 			lister:        resourceLister,
 			clientFactory: clients,
+			metrics:       &finalizerMetrics,
+			maxWorkers:    parallelOperations,
 		},
 		jobs:      jobs,
 		logger:    logging.DefaultLogger.With("logger", loggerName),
 		dualwrite: dualwrite,
+		registry:  registry,
+		tracer:    tracer,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -121,6 +147,9 @@ func repoKeyFunc(obj any) (string, error) {
 }
 
 // Run starts the RepositoryController.
+//
+// Note: This function intentionally does NOT create a tracing span because it runs indefinitely
+// until shutdown. Individual processing operations already have their own spans.
 func (rc *RepositoryController) Run(ctx context.Context, workerCount int) {
 	defer utilruntime.HandleCrash()
 	defer rc.queue.ShutDown()
@@ -211,12 +240,15 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 	if len(obj.Finalizers) > 0 {
 		repo, err := rc.repoFactory.Build(ctx, obj)
 		if err != nil {
-			logger.Warn("unable to get repository for cleanup")
-		} else {
-			err := rc.finalizer.process(ctx, repo, obj.Finalizers)
-			if err != nil {
-				logger.Warn("error running finalizer", "err", err)
+			return fmt.Errorf("create repository from configuration: %w", err)
+		}
+
+		err = rc.finalizer.process(ctx, repo, obj.Finalizers)
+		if err != nil {
+			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
+				logger.Error("failed to update repository status after finalizer removal error", "error", statusErr)
 			}
+			return fmt.Errorf("process finalizers: %w", err)
 		}
 
 		// remove the finalizers
@@ -226,13 +258,28 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 				]`), v1.PatchOptions{
 				FieldManager: "provisioning-controller",
 			})
-		return err // delete will be called again
+		if err != nil {
+			return fmt.Errorf("remove finalizers: %w", err)
+		}
+		return nil
+	} else {
+		logger.Info("no finalizers to process")
 	}
 
 	return nil
 }
 
-func (rc *RepositoryController) shouldResync(obj *provisioning.Repository) bool {
+func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *provisioning.Repository, err error) error {
+	logger := logging.FromContext(ctx)
+	logger.Info("updating repository status with deletion error", "error", err.Error())
+	return rc.statusPatcher.Patch(ctx, obj, map[string]interface{}{
+		"op":    "replace",
+		"path":  "/status/deleteError",
+		"value": err.Error(),
+	})
+}
+
+func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provisioning.Repository) bool {
 	// don't trigger resync if a sync was never started
 	if obj.Status.Sync.Finished == 0 && obj.Status.Sync.State == "" {
 		return false
@@ -241,6 +288,30 @@ func (rc *RepositoryController) shouldResync(obj *provisioning.Repository) bool 
 	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
 	syncInterval := time.Duration(obj.Spec.Sync.IntervalSeconds) * time.Second
 	tolerance := time.Second
+
+	// Check for stale sync status - if sync status indicates a job is running but the job no longer exists
+	// Only check if Finished is set (meaning a sync has completed before) to avoid interfering with initial syncs
+	// Only trigger resync if sync is enabled and sync interval has elapsed (to avoid unnecessary operations)
+	if obj.Status.Sync.Finished > 0 &&
+		obj.Spec.Sync.Enabled &&
+		(obj.Status.Sync.State == provisioning.JobStatePending || obj.Status.Sync.State == provisioning.JobStateWorking) &&
+		obj.Status.Sync.JobID != "" {
+		_, err := rc.jobs.Get(ctx, obj.Namespace, obj.Status.Sync.JobID)
+		if apierrors.IsNotFound(err) {
+			// Job was cleaned up but sync status wasn't updated - trigger resync to reconcile
+			// Only trigger if sync interval has elapsed to avoid unnecessary operations
+			if syncAge >= (syncInterval - tolerance) {
+				logger := logging.FromContext(ctx)
+				logger.Info("detected stale sync status", "job_id", obj.Status.Sync.JobID)
+				return true
+			}
+		}
+		// For other errors, log but continue with normal logic
+		if err != nil {
+			logger := logging.FromContext(ctx)
+			logger.Warn("failed to check job existence for stale sync status", "error", err, "job_id", obj.Status.Sync.JobID)
+		}
+	}
 
 	// HACK: how would this work in a multi-tenant world or under heavy load?
 	// It will start queueing up jobs and we will have to deal with that
@@ -305,7 +376,6 @@ func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *
 			logger.Info("full sync on interval for non-versioned repository")
 			return &provisioning.SyncJobOptions{}
 		}
-
 		latestRef, err := versioned.LatestRef(ctx)
 		if err != nil {
 			logger.Warn("incremental sync on interval without knowing if ref has actually changed", "error", err)
@@ -318,58 +388,107 @@ func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *
 			return nil
 		}
 
-		logger.Info("incremental sync on interval")
-		return &provisioning.SyncJobOptions{Incremental: true}
+		// Whenever possible, we try to keep it as an incremental sync to keep things performant.
+		// However, if there are any .keep file deletions inside a folder with no other deletions, we need
+		// to do a full sync to see if the folder was deleted as well in git.
+		incremental, err := shouldUseIncrementalSync(ctx, versioned, obj, latestRef)
+		if err != nil {
+			logger.Warn("unable to compare files for incremental sync, doing full sync", "error", err)
+			return &provisioning.SyncJobOptions{}
+		}
+
+		logger.Info("sync on interval", "incremental", incremental)
+		return &provisioning.SyncJobOptions{Incremental: incremental}
 	default:
 		return nil
 	}
 }
 
+func shouldUseIncrementalSync(ctx context.Context, versioned repository.Versioned, obj *provisioning.Repository, latestRef string) (bool, error) {
+	changes, err := versioned.CompareFiles(ctx, obj.Status.Sync.LastRef, latestRef)
+	if err != nil {
+		return false, err
+	}
+	var deletedPaths []string
+	for _, change := range changes {
+		if change.Action == repository.FileActionDeleted {
+			deletedPaths = append(deletedPaths, change.Path)
+		}
+	}
+
+	return repository.CanUseIncrementalSync(deletedPaths), nil
+}
+
 func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions) error {
+	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.add_sync_job")
+	defer span.End()
+
+	span.SetAttributes(
+		attribute.String("repository", obj.GetName()),
+		attribute.String("namespace", obj.Namespace),
+		attribute.Bool("incremental", syncOptions != nil && syncOptions.Incremental),
+	)
+
 	job, err := rc.jobs.Insert(ctx, obj.Namespace, provisioning.JobSpec{
 		Repository: obj.GetName(),
 		Action:     provisioning.JobActionPull,
 		Pull:       syncOptions,
 	})
 	if apierrors.IsAlreadyExists(err) {
-		logging.FromContext(ctx).Info("sync job already exists, nothing triggered")
+		logging.FromContext(ctx).Info("sync job already exists")
 		return nil
 	}
 	if err != nil {
+		span.RecordError(err)
 		// FIXME: should we update the status of the repository if we fail to add the job?
 		return fmt.Errorf("error adding sync job: %w", err)
 	}
 
-	logging.FromContext(ctx).Info("sync job triggered", "job", job.Name)
+	span.SetAttributes(attribute.String("job.name", job.Name))
 	return nil
 }
 
-func (rc *RepositoryController) determineSyncStatus(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions, healthStatus provisioning.HealthStatus) *provisioning.SyncStatus {
+func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions, healthStatus provisioning.HealthStatus) []map[string]interface{} {
 	const unhealthyMessage = "Repository is unhealthy"
 
 	hasUnhealthyMessage := len(obj.Status.Sync.Message) > 0 && obj.Status.Sync.Message[0] == unhealthyMessage
+	var patchOperations []map[string]interface{}
+
 	switch {
 	case syncOptions != nil:
-		return &provisioning.SyncStatus{
-			State:   provisioning.JobStatePending,
-			LastRef: obj.Status.Sync.LastRef,
-			Started: time.Now().UnixMilli(),
-		}
+		// We will try to trigger a new sync job if we have sync options
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/sync/state",
+			"value": provisioning.JobStatePending,
+		})
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/sync/started",
+			"value": int64(0),
+		})
 	case healthStatus.Healthy && hasUnhealthyMessage: // if the repository is healthy and the message is set, clear it
 		// FIXME: is this the clearest way to do this? Should we introduce another status or way of way of handling more
 		// specific errors?
-		return &provisioning.SyncStatus{
-			LastRef: obj.Status.Sync.LastRef,
-		}
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/sync/message",
+			"value": []string{},
+		})
 	case !healthStatus.Healthy && !hasUnhealthyMessage: // if the repository is unhealthy and the message is not already set, set it
-		return &provisioning.SyncStatus{
-			State:   provisioning.JobStateError,
-			Message: []string{unhealthyMessage},
-			LastRef: obj.Status.Sync.LastRef,
-		}
-	default:
-		return nil
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/sync/state",
+			"value": provisioning.JobStateError,
+		})
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/sync/message",
+			"value": []string{unhealthyMessage},
+		})
 	}
+
+	return patchOperations
 }
 
 //nolint:gocyclo
@@ -401,7 +520,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return rc.handleDelete(ctx, obj)
 	}
 
-	shouldResync := rc.shouldResync(obj)
+	shouldResync := rc.shouldResync(ctx, obj)
 	shouldCheckHealth := rc.healthChecker.ShouldCheckHealth(obj)
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 	patchOperations := []map[string]interface{}{}
@@ -449,13 +568,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	// determine the sync strategy and sync status to apply
 	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, healthStatus)
-	if syncStatus := rc.determineSyncStatus(obj, syncOptions, healthStatus); syncStatus != nil {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/sync",
-			"value": syncStatus,
-		})
-	}
+	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus)...)
 
 	// Apply all patch operations
 	if len(patchOperations) > 0 {
@@ -465,6 +578,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		}
 	}
 
+	// QUESTION: should we trigger the sync job after we have applied all patch operations or before?
+	// Is there are risk of race condition here?
 	// Trigger sync job after we have applied all patch operations
 	if syncOptions != nil {
 		if err := rc.addSyncJob(ctx, obj, syncOptions); err != nil {

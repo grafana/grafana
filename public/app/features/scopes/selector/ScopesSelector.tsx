@@ -65,10 +65,11 @@ export const ScopesSelector = () => {
     removeAllScopes,
     closeAndApply,
     closeAndReset,
-    updateNode,
+    filterNode,
     selectScope,
     deselectScope,
     getRecentScopes,
+    toggleExpandedNode,
   } = scopesSelectorService;
 
   const recentScopes = getRecentScopes();
@@ -107,7 +108,7 @@ export const ScopesSelector = () => {
 
       {opened && (
         <Drawer title={t('scopes.selector.title', 'Select scopes')} size="sm" onClose={closeAndReset}>
-          <ErrorBoundary>
+          <ErrorBoundary boundaryName="scopes-selector">
             {({ error, errorInfo }) => {
               if (error) {
                 return (
@@ -128,12 +129,13 @@ export const ScopesSelector = () => {
                         <ScopesTree
                           tree={tree}
                           loadingNodeName={loadingNodeName}
-                          onNodeUpdate={updateNode}
+                          filterNode={filterNode}
                           recentScopes={recentScopes}
                           selectedScopes={selectedScopes}
                           scopeNodes={nodes}
                           selectScope={selectScope}
                           deselectScope={deselectScope}
+                          toggleExpandedNode={toggleExpandedNode}
                           onRecentScopesSelect={(scopeIds: string[], parentNodeId?: string) => {
                             scopesSelectorService.changeScopes(scopeIds, parentNodeId);
                             scopesSelectorService.closeAndReset();

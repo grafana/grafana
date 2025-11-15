@@ -6,7 +6,11 @@ interface InfoTooltipProps extends Omit<TooltipProps, 'children' | 'content'> {
   children: PopoverContent;
 }
 
-/** @deprecated Use <IconButton name="info-circle" tooltip={children} /> instead */
+/**
+ * @deprecated Use <IconButton name="info-circle" tooltip={children} /> instead.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-deprecated-infotooltip--docs
+ */
 export const InfoTooltip = ({ children, ...restProps }: InfoTooltipProps) => {
   return <IconButton name="info-circle" tooltip={children} {...restProps} />;
 };

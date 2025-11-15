@@ -69,15 +69,31 @@ export function generateUniqueTitle(title: string | undefined, existingTitles: S
   return baseTitle;
 }
 
-export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: DashboardLayoutManager) {
+export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: DashboardLayoutManager, skipUndo?: boolean) {
   const layoutParent = layout.parent!;
   if (isLayoutParent(layoutParent)) {
     innerLayout.clearParent();
-    layoutParent.switchLayout(innerLayout);
+    layoutParent.switchLayout(innerLayout, skipUndo);
   }
 }
 
 export function getIsLazy(preload: boolean | undefined): boolean {
   // We don't want to lazy load panels in the case of image renderer
   return !(preload || (contextSrv.user && contextSrv.user.authenticatedBy === 'render'));
+}
+
+export enum GridLayoutType {
+  AutoGridLayout = 'AutoGridLayout',
+  GridLayout = 'GridLayout',
+}
+
+export function mapIdToGridLayoutType(id?: string): GridLayoutType | undefined {
+  switch (id) {
+    case GridLayoutType.AutoGridLayout:
+      return GridLayoutType.AutoGridLayout;
+    case GridLayoutType.GridLayout:
+      return GridLayoutType.GridLayout;
+    default:
+      return undefined;
+  }
 }

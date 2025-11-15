@@ -135,7 +135,7 @@ While Grafana integrates with many different auth providers, we have received re
 
 This option enables you to skip synchronization from your configured OAuth provider specifically in the auth provider section under `skip_org_role_sync`. Previously users could only do this for certain providers using the `oauth_skip_org_role_sync_update` option, but this would include all of the configured providers.
 
-Learn more about Oauth in our [Oauth configuration guide](../../setup-grafana/configure-security/configure-authentication/generic-oauth/).
+Learn more about Oauth in our [Oauth configuration guide](../../setup-grafana/configure-access/configure-authentication/generic-oauth/).
 
 ### RBAC support for Grafana OnCall plugin
 
@@ -154,7 +154,7 @@ We've added auto-login support for SAML authentication, which you can turn on wi
 have a unified configuration style among all authentication providers. Instead of using
 `oauth_auto_login`, use the new `auto_login` option to enable automatic login for specific OAuth providers.
 
-Learn more about SAML setup in our [SAML configuration guide](../../setup-grafana/configure-security/configure-authentication/saml/).
+Learn more about SAML setup in our [SAML configuration guide](../../setup-grafana/configure-access/configure-authentication/saml/).
 
 ## Auditing and Usage Insights: Support for Loki multi-tenancy
 

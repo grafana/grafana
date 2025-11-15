@@ -170,7 +170,6 @@ aliases:
 description: Learn about new and updated features in Grafana.
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 menuTitle: What's new
@@ -180,7 +179,9 @@ weight: 1
 
 # What's new in Grafana
 
-For release highlights, deprecations, and breaking changes in Grafana releases, refer to these "What's new" pages for each version.
+For release highlights, deprecations, and breaking changes in self-managed Grafana releases, refer to these "What's new" pages for each version.
+
+For information on new Grafana Cloud highlights, refer to [What's new from Grafana Labs](https://grafana.com/whats-new).
 
 {{< admonition type="note" >}}
 For Grafana versions prior to v9.2, additional information might also be available in the archived release notes. To access archived release notes, use the documentation for the minor version you want to see.
@@ -192,6 +193,7 @@ For a complete list of every change, with links to pull requests and related iss
 
 ## Grafana 12
 
+- [What's new in 12.2](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-2)
 - [What's new in 12.1](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-1)
 - [What's new in 12.0](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-0)
 

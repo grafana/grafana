@@ -12,7 +12,7 @@ labels:
     - oss
     - cloud
 title: Roles and permissions
-weight: 300
+weight: 3100
 ---
 
 # Roles and permissions
@@ -119,7 +119,7 @@ You can specify the following permissions to dashboards and folders.
 - **Edit**: Can create, edit, or delete a dashboard. Can edit or delete a folder, and create dashboards and subfolders in a folder. Editors _cannot_ change folder or dashboard permissions.
 - **View**: Can only view dashboards and folders.
 
-> Important: When a user creates a dashboard or a folder they are automatically granted **Admin** permissions for it.
+> Important: When a user creates a dashboard or folder at the top level, they are automatically granted Admin permissions for it. This does not apply to dashboards within a folder or to subfolders.
 
 For more information about assigning dashboard folder permissions, refer to [Grant dashboard folder permissions](../user-management/manage-dashboard-permissions/#grant-dashboard-folder-permissions).
 

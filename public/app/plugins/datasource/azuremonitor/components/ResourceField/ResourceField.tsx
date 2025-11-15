@@ -10,7 +10,7 @@ import { selectors } from '../../e2e/selectors';
 import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 import { AzureMonitorResource } from '../../types/query';
 import { AzureQueryEditorFieldProps } from '../../types/types';
-import ResourcePicker from '../ResourcePicker';
+import ResourcePicker from '../ResourcePicker/ResourcePicker';
 import getStyles from '../ResourcePicker/styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseMultipleResourceDetails, setResources } from '../ResourcePicker/utils';

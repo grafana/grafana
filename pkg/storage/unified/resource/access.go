@@ -107,7 +107,7 @@ func NewAuthzLimitedClient(client claims.AccessClient, opts AuthzOptions) claims
 }
 
 // Check implements claims.AccessClient.
-func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req claims.CheckRequest) (claims.CheckResponse, error) {
+func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req claims.CheckRequest, folder string) (claims.CheckResponse, error) {
 	t := time.Now()
 	ctx, span := c.tracer.Start(ctx, "authzLimitedClient.Check", trace.WithAttributes(
 		attribute.String("group", req.Group),
@@ -115,7 +115,7 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		attribute.String("namespace", req.Namespace),
 		attribute.String("name", req.Name),
 		attribute.String("verb", req.Verb),
-		attribute.String("folder", req.Folder),
+		attribute.String("folder", folder),
 		attribute.Bool("fallback_used", FallbackUsed(ctx)),
 	))
 	defer span.End()
@@ -145,7 +145,7 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		span.SetAttributes(attribute.Bool("allowed", true))
 		return claims.CheckResponse{Allowed: true}, nil
 	}
-	resp, err := c.client.Check(ctx, id, req)
+	resp, err := c.client.Check(ctx, id, req, folder)
 	if err != nil {
 		c.logger.Error("Check", "group", req.Group, "resource", req.Resource, "error", err, "duration", time.Since(t), "traceid", trace.SpanContextFromContext(ctx).TraceID().String())
 		c.metrics.errorsTotal.WithLabelValues(req.Group, req.Resource, req.Verb).Inc()

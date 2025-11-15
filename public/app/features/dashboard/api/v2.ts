@@ -2,9 +2,8 @@ import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
-import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   AnnoKeyFolder,
@@ -60,7 +59,7 @@ export class K8sDashboardV2API
       // load folder info if available
       if (dashboard.metadata.annotations && dashboard.metadata.annotations[AnnoKeyFolder]) {
         try {
-          const folder = await backendSrv.getFolderByUid(dashboard.metadata.annotations[AnnoKeyFolder]);
+          const folder = await getFolderByUidFacade(dashboard.metadata.annotations[AnnoKeyFolder]);
           dashboard.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
           dashboard.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
         } catch (e) {
@@ -74,12 +73,6 @@ export class K8sDashboardV2API
         // This ensures NestedFolderPicker correctly identifies it as being in the "Dashboard" root folder
         // AnnoKeyFolder undefined -> top-level dashboard -> empty string
         dashboard.metadata.annotations[AnnoKeyFolder] = '';
-      }
-
-      // Ensure a consistent dashboard slug
-      if (!dashboard.access?.slug) {
-        dashboard.access = dashboard.access ?? {};
-        dashboard.access.slug = kbn.slugifyForUrl(dashboard.spec.title.trim());
       }
 
       return dashboard;
@@ -130,7 +123,7 @@ export class K8sDashboardV2API
     }
 
     // add folder annotation
-    if (options.folderUid) {
+    if (options.folderUid !== undefined) {
       // remove frontend folder annotations
       delete obj.metadata.annotations?.[AnnoKeyFolderTitle];
       delete obj.metadata.annotations?.[AnnoKeyFolderUrl];
@@ -154,7 +147,8 @@ export class K8sDashboardV2API
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardV2Spec>): SaveDashboardResponseDTO {
-    const slug = kbn.slugifyForUrl(v.spec.title.trim());
+    //TODO: use slug from response once implemented
+    const slug = '';
 
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({

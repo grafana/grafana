@@ -41,7 +41,11 @@ export interface Props<TOptions = undefined> {
   children?: React.ReactNode;
 }
 
-export function AddToDashboardForm<TOptions = undefined>({
+/**
+ * Internal implementation used by the exposed versioned wrapper.
+ * For stability/versioning guidance, refer to AddToDashboardFormExposedComponent.
+ */
+export function AddToDashboardForm<TOptions extends AbsolutePathOptions | undefined = undefined>({
   onClose,
   buildPanel,
   timeRange,
@@ -91,7 +95,7 @@ export function AddToDashboardForm<TOptions = undefined>({
       queries: panel.targets,
     });
 
-    const error = addToDashboard({ dashboardUid, panel, openInNewTab, timeRange });
+    const error = addToDashboard({ dashboardUid, panel, openInNewTab, timeRange, options });
     if (error) {
       setSubmissionError(error);
       return;
@@ -202,3 +206,9 @@ function assertIsSaveToExistingDashboardError(
   // explicitly assert its type so that TS can narrow down FormDTO to SaveToExistingDashboard
   // when we use it in the form.
 }
+
+export interface AbsolutePathOptions {
+  useAbsolutePath: boolean;
+}
+
+export default AddToDashboardForm;

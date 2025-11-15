@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -29,7 +29,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			Class: plugins.ClassCore,
 		}
 
-		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p}, fakes.InitializeNoopTracerForTest())
+		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p}, pluginfakes.InitializeNoopTracerForTest())
 
 		var err error
 		p, err = stepFunc(context.Background(), p)
@@ -53,7 +53,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			Class: plugins.ClassExternal,
 		}
 
-		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p}, fakes.InitializeNoopTracerForTest())
+		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p}, pluginfakes.InitializeNoopTracerForTest())
 
 		var err error
 		p, err = stepFunc(context.Background(), p)
@@ -73,7 +73,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{
 			plugin: p,
-		}, fakes.InitializeNoopTracerForTest())
+		}, pluginfakes.InitializeNoopTracerForTest())
 
 		var err error
 		p, err = i(context.Background(), p)

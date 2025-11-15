@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 import { PureComponent } from 'react';
 
@@ -136,7 +136,7 @@ class UnthemedCodeEditor extends PureComponent<Props> {
     const value = this.props.value ?? '';
     const longText = value.length > 100;
 
-    const containerStyles = this.props.containerStyles ?? getStyles(theme).container;
+    const containerStyles = cx(getStyles(theme).container, this.props.containerStyles);
 
     const options: MonacoOptions = {
       wordWrap: wordWrap ? 'on' : 'off',
@@ -196,6 +196,11 @@ class UnthemedCodeEditor extends PureComponent<Props> {
   }
 }
 
+/**
+ * Monaco Code editor.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-codeeditor--docs
+ */
 export const CodeEditor = withTheme2(UnthemedCodeEditor);
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -203,6 +208,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     container: css({
       borderRadius: theme.shape.radius.default,
       border: `1px solid ${theme.components.input.borderColor}`,
+      overflow: 'hidden',
     }),
   };
 };

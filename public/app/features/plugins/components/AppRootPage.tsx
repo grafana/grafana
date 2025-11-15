@@ -32,7 +32,7 @@ import {
   useExposedComponentsRegistry,
   useAddedFunctionsRegistry,
 } from '../extensions/ExtensionRegistriesContext';
-import { importAppPlugin } from '../pluginLoader';
+import { pluginImporter } from '../importer/pluginImporter';
 import { getPluginSettings } from '../pluginSettings';
 import { buildPluginSectionNav, pluginsLogger } from '../utils';
 
@@ -234,7 +234,7 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
         dispatch(stateSlice.actions.setState({ pluginNav: getWarningNav(error) }));
         return null;
       }
-      return importAppPlugin(info);
+      return pluginImporter.importApp(info);
     });
     dispatch(stateSlice.actions.setState({ plugin: app, loading: false, loadingError: false, pluginNav: null }));
   } catch (err) {

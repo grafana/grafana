@@ -846,7 +846,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 							Format: "",
 						},
 					},
-					"resource": {
+					"kind": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -1585,6 +1585,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 						SchemaProps: spec.SchemaProps{
 							Description: "Webhook Information (if applicable)",
 							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.WebhookStatus"),
+						},
+					},
+					"deleteError": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Error information during repository deletion (if any)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},

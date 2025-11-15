@@ -70,7 +70,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'row',
     border: `solid 1px ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.lg,
     padding: `${theme.spacing(2)} ${theme.spacing(3)}`,
   }),
   description: css({

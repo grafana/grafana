@@ -26,6 +26,8 @@ const (
 	TestKVKeysWithSort   = "keys with sorting"
 	TestKVConcurrent     = "concurrent operations"
 	TestKVUnixTimestamp  = "unix timestamp"
+	TestKVBatchGet       = "batch get operations"
+	TestKVBatchDelete    = "batch delete operations"
 )
 
 // NewKVFunc is a function that creates a new KV instance for testing
@@ -65,6 +67,8 @@ func RunKVTest(t *testing.T, newKV NewKVFunc, opts *KVTestOptions) {
 		{TestKVKeysWithSort, runTestKVKeysWithSort},
 		{TestKVConcurrent, runTestKVConcurrent},
 		{TestKVUnixTimestamp, runTestKVUnixTimestamp},
+		{TestKVBatchGet, runTestKVBatchGet},
+		{TestKVBatchDelete, runTestKVBatchDelete},
 	}
 
 	for _, tc := range cases {
@@ -524,6 +528,266 @@ func runTestKVUnixTimestamp(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		// Should be very close (within 1 second)
 		require.InDelta(t, timestamp1, timestamp2, 1)
+	})
+}
+
+func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	section := nsPrefix + "-batchget"
+
+	t.Run("batch get existing keys", func(t *testing.T) {
+		// Setup test data
+		testData := map[string]string{
+			"key1": "value1",
+			"key2": "value2",
+			"key3": "value3",
+		}
+
+		// Save test data
+		for key, value := range testData {
+			saveKVHelper(t, kv, ctx, section, key, strings.NewReader(value))
+		}
+
+		// Batch get all keys
+		keys := []string{"key1", "key2", "key3"}
+		type result struct {
+			key   string
+			value string
+		}
+		var results []result
+		for kv, err := range kv.BatchGet(ctx, section, keys) {
+			require.NoError(t, err)
+			value, err := io.ReadAll(kv.Value)
+			require.NoError(t, err)
+			err = kv.Value.Close()
+			require.NoError(t, err)
+			results = append(results, result{key: kv.Key, value: string(value)})
+		}
+
+		// Verify results
+		assert.Len(t, results, 3)
+
+		// Check that all keys are present and in order
+		expectedKeys := []string{"key1", "key2", "key3"}
+		actualKeys := make([]string, len(results))
+		for i, r := range results {
+			actualKeys[i] = r.key
+		}
+		assert.Equal(t, expectedKeys, actualKeys)
+
+		// Verify values
+		for _, r := range results {
+			assert.Equal(t, testData[r.key], r.value)
+		}
+	})
+
+	t.Run("batch get with non-existent keys", func(t *testing.T) {
+		// Setup some test data
+		saveKVHelper(t, kv, ctx, section, "existing-key", strings.NewReader("existing-value"))
+
+		// Batch get with mix of existing and non-existent keys
+		keys := []string{"existing-key", "non-existent-1", "non-existent-2"}
+		type result struct {
+			key   string
+			value string
+		}
+		var results []result
+		for kv, err := range kv.BatchGet(ctx, section, keys) {
+			require.NoError(t, err)
+			value, err := io.ReadAll(kv.Value)
+			require.NoError(t, err)
+			err = kv.Value.Close()
+			require.NoError(t, err)
+			results = append(results, result{key: kv.Key, value: string(value)})
+		}
+
+		// Should only return the existing key
+		assert.Len(t, results, 1)
+		assert.Equal(t, "existing-key", results[0].key)
+		assert.Equal(t, "existing-value", results[0].value)
+	})
+
+	t.Run("batch get with all non-existent keys", func(t *testing.T) {
+		keys := []string{"non-existent-1", "non-existent-2", "non-existent-3"}
+		var results []resource.KeyValue
+		for kv, err := range kv.BatchGet(ctx, section, keys) {
+			require.NoError(t, err)
+			results = append(results, kv)
+		}
+
+		// Should return no results
+		assert.Empty(t, results)
+	})
+
+	t.Run("batch get with empty keys list", func(t *testing.T) {
+		keys := []string{}
+		var results []resource.KeyValue
+		for kv, err := range kv.BatchGet(ctx, section, keys) {
+			require.NoError(t, err)
+			results = append(results, kv)
+		}
+
+		// Should return no results
+		assert.Empty(t, results)
+	})
+
+	t.Run("batch get with empty section", func(t *testing.T) {
+		keys := []string{"some-key"}
+		var errors []error
+		for kv, err := range kv.BatchGet(ctx, "", keys) {
+			if err != nil {
+				errors = append(errors, err)
+				break
+			}
+			_ = kv // unused
+		}
+		assert.Len(t, errors, 1)
+		assert.Contains(t, errors[0].Error(), "section is required")
+	})
+
+	t.Run("batch get preserves order", func(t *testing.T) {
+		// Setup test data
+		testData := map[string]string{
+			"z-key": "z-value",
+			"a-key": "a-value",
+			"m-key": "m-value",
+		}
+
+		// Save test data
+		for key, value := range testData {
+			saveKVHelper(t, kv, ctx, section, key, strings.NewReader(value))
+		}
+
+		// Batch get in specific order
+		keys := []string{"z-key", "a-key", "m-key"}
+		var results []string
+		for kv, err := range kv.BatchGet(ctx, section, keys) {
+			require.NoError(t, err)
+			err = kv.Value.Close()
+			require.NoError(t, err)
+			results = append(results, kv.Key)
+		}
+
+		// Verify order is preserved
+		assert.Len(t, results, 3)
+		expectedOrder := []string{"z-key", "a-key", "m-key"}
+		assert.Equal(t, expectedOrder, results)
+	})
+}
+
+func runTestKVBatchDelete(t *testing.T, kv resource.KV, nsPrefix string) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	section := nsPrefix + "-batchdelete"
+
+	t.Run("batch delete existing keys", func(t *testing.T) {
+		// Setup test data
+		testData := map[string]string{
+			"key1": "value1",
+			"key2": "value2",
+			"key3": "value3",
+		}
+
+		// Save test data
+		for key, value := range testData {
+			saveKVHelper(t, kv, ctx, section, key, strings.NewReader(value))
+		}
+
+		// Verify keys exist before deletion
+		for key := range testData {
+			_, err := kv.Get(ctx, section, key)
+			require.NoError(t, err)
+		}
+
+		// Batch delete all keys
+		keys := []string{"key1", "key2", "key3"}
+		err := kv.BatchDelete(ctx, section, keys)
+		require.NoError(t, err)
+
+		// Verify all keys are deleted
+		for _, key := range keys {
+			_, err := kv.Get(ctx, section, key)
+			assert.Error(t, err)
+			assert.Equal(t, resource.ErrNotFound, err)
+		}
+	})
+
+	t.Run("batch delete with non-existent keys", func(t *testing.T) {
+		// Setup some test data
+		saveKVHelper(t, kv, ctx, section, "existing-key-1", strings.NewReader("value1"))
+		saveKVHelper(t, kv, ctx, section, "existing-key-2", strings.NewReader("value2"))
+
+		// Batch delete with mix of existing and non-existent keys
+		keys := []string{"existing-key-1", "non-existent-1", "existing-key-2", "non-existent-2"}
+		err := kv.BatchDelete(ctx, section, keys)
+		require.NoError(t, err)
+
+		// Verify existing keys are deleted
+		_, err = kv.Get(ctx, section, "existing-key-1")
+		assert.Error(t, err)
+		assert.Equal(t, resource.ErrNotFound, err)
+
+		_, err = kv.Get(ctx, section, "existing-key-2")
+		assert.Error(t, err)
+		assert.Equal(t, resource.ErrNotFound, err)
+	})
+
+	t.Run("batch delete with all non-existent keys", func(t *testing.T) {
+		// Batch delete keys that don't exist
+		keys := []string{"non-existent-1", "non-existent-2", "non-existent-3"}
+		err := kv.BatchDelete(ctx, section, keys)
+		require.NoError(t, err)
+	})
+
+	t.Run("batch delete with empty keys list", func(t *testing.T) {
+		keys := []string{}
+		err := kv.BatchDelete(ctx, section, keys)
+		require.NoError(t, err)
+	})
+
+	t.Run("batch delete with empty section", func(t *testing.T) {
+		keys := []string{"some-key"}
+		err := kv.BatchDelete(ctx, "", keys)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "section is required")
+	})
+
+	t.Run("batch delete preserves other keys", func(t *testing.T) {
+		// Setup test data
+		saveKVHelper(t, kv, ctx, section, "keep-key-1", strings.NewReader("keep-value-1"))
+		saveKVHelper(t, kv, ctx, section, "delete-key-1", strings.NewReader("delete-value-1"))
+		saveKVHelper(t, kv, ctx, section, "keep-key-2", strings.NewReader("keep-value-2"))
+		saveKVHelper(t, kv, ctx, section, "delete-key-2", strings.NewReader("delete-value-2"))
+
+		// Batch delete specific keys
+		keys := []string{"delete-key-1", "delete-key-2"}
+		err := kv.BatchDelete(ctx, section, keys)
+		require.NoError(t, err)
+
+		// Verify deleted keys are gone
+		_, err = kv.Get(ctx, section, "delete-key-1")
+		assert.Error(t, err)
+		assert.Equal(t, resource.ErrNotFound, err)
+
+		_, err = kv.Get(ctx, section, "delete-key-2")
+		assert.Error(t, err)
+		assert.Equal(t, resource.ErrNotFound, err)
+
+		// Verify kept keys still exist
+		reader, err := kv.Get(ctx, section, "keep-key-1")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "keep-value-1", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+
+		reader, err = kv.Get(ctx, section, "keep-key-2")
+		require.NoError(t, err)
+		value, err = io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "keep-value-2", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
 	})
 }
 

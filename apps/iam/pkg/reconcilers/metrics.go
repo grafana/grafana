@@ -22,7 +22,6 @@ func NewReconcilerMetrics(registerer prometheus.Registerer, namespace string) *R
 			"success_no_changes_needed",
 			"failure_informer",
 			"failure_permission_store",
-			"failure_folder_store",
 			"failure_unknown",
 		},
 	}

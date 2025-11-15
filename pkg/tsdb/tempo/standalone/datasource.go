@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	_ backend.CheckHealthHandler  = (*Datasource)(nil)
 	_ backend.QueryDataHandler    = (*Datasource)(nil)
 	_ backend.StreamHandler       = (*Datasource)(nil)
 	_ backend.CallResourceHandler = (*Datasource)(nil)
@@ -26,6 +27,10 @@ func NewDatasource(c context.Context, b backend.DataSourceInstanceSettings) (ins
 	return &Datasource{
 		Service: tempo.ProvideService(httpclient.NewProvider(), noop.NewTracerProvider().Tracer("tempo")),
 	}, nil
+}
+
+func (d *Datasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	return d.Service.CheckHealth(ctx, req)
 }
 
 func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

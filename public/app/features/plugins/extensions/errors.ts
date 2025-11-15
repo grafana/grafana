@@ -22,8 +22,6 @@ export const INVALID_CONFIGURE_FUNCTION = 'The "configure" function is invalid. 
 
 export const INVALID_PATH_OR_ON_CLICK = 'Either "path" or "onClick" is required.';
 
-export const INVALID_PATH = 'The "path" is required and should start with "/a/<pluginId>".';
-
 export const INVALID_EXPOSED_COMPONENT_ID =
   "The component id does not match the id naming convention. Id should be prefixed with plugin id. e.g 'myorg-basic-app/my-component-id/v1'.";
 

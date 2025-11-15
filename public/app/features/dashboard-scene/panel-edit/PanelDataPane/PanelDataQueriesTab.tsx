@@ -34,7 +34,7 @@ import { useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibra
 import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
-import { PanelTimeRange } from '../../scene/PanelTimeRange';
+import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
@@ -406,7 +406,6 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
                 icon="plus"
                 onClick={() =>
                   openQueryLibraryDrawer({
-                    datasourceFilters: getDatasourceNames(datasource, queries),
                     onSelectQuery: onSelectQueryFromLibrary,
                     options: {
                       context: CoreApp.PanelEditor,
@@ -432,16 +431,6 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
       </Stack>
     </div>
   );
-}
-
-function getDatasourceNames(datasource: DataSourceApi, queries: DataQuery[]): string[] {
-  if (datasource.uid === '-- Mixed --') {
-    // If datasource is mixed, the datasource UID is on the query. Here we map the UIDs to datasource names.
-    const dsSrv = getDataSourceSrv();
-    return queries.map((ds) => dsSrv.getInstanceSettings(ds.datasource)?.name).filter((name) => name !== undefined);
-  } else {
-    return [datasource.name];
-  }
 }
 
 interface QueriesTabProps extends PanelDataTabHeaderProps {

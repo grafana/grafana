@@ -5,8 +5,18 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
+	"github.com/prometheus/client_golang/prometheus"
+)
+
+const (
+	// recentHealthyDuration defines how recent a health check must be to be considered "recent" when healthy
+	recentHealthyDuration = 5 * time.Minute
+	// recentHealthyDuration defines how recent a health check must be to be considered "recent" when unhealthy
+	recentUnhealthyDuration = 1 * time.Minute
 )
 
 // StatusPatcher defines the interface for updating repository status
@@ -19,12 +29,17 @@ type StatusPatcher interface {
 // HealthChecker provides unified health checking for repositories
 type HealthChecker struct {
 	statusPatcher StatusPatcher
+	healthMetrics healthMetrics
+	tester        repository.SimpleRepositoryTester
 }
 
 // NewHealthChecker creates a new health checker
-func NewHealthChecker(statusPatcher StatusPatcher) *HealthChecker {
+func NewHealthChecker(statusPatcher StatusPatcher, registry prometheus.Registerer, tester repository.SimpleRepositoryTester) *HealthChecker {
+	healthMetrics := registerHealthMetrics(registry)
 	return &HealthChecker{
 		statusPatcher: statusPatcher,
+		healthMetrics: healthMetrics,
+		tester:        tester,
 	}
 }
 
@@ -52,9 +67,9 @@ func (hc *HealthChecker) hasRecentHealthCheck(healthStatus provisioning.HealthSt
 
 	age := time.Since(time.UnixMilli(healthStatus.Checked))
 	if healthStatus.Healthy {
-		return age <= time.Minute*5 // Recent if checked within 5 minutes when healthy
+		return age <= recentHealthyDuration
 	}
-	return age <= time.Minute // Recent if checked within 1 minute when unhealthy
+	return age <= recentUnhealthyDuration // Recent if checked within 1 minute when unhealthy
 }
 
 // HasRecentFailure checks if there's a recent failure of a specific type
@@ -64,7 +79,7 @@ func (hc *HealthChecker) HasRecentFailure(healthStatus provisioning.HealthStatus
 	}
 
 	age := time.Since(time.UnixMilli(healthStatus.Checked))
-	return age <= time.Minute // Recent if within 1 minute
+	return age <= recentUnhealthyDuration
 }
 
 // RecordFailureAndUpdate records a failure and updates the repository status
@@ -103,7 +118,11 @@ func (hc *HealthChecker) hasHealthStatusChanged(old, new provisioning.HealthStat
 		return true
 	}
 
-	if old.Checked != new.Checked {
+	recent := recentUnhealthyDuration
+	if new.Healthy {
+		recent = recentHealthyDuration
+	}
+	if time.UnixMilli(new.Checked).Sub(time.UnixMilli(old.Checked)) > recent {
 		return true
 	}
 
@@ -163,8 +182,17 @@ func (hc *HealthChecker) RefreshTimestamp(ctx context.Context, repo *provisionin
 // refreshHealth performs a comprehensive health check
 // Returns test results, health status, and any error
 func (hc *HealthChecker) refreshHealth(ctx context.Context, repo repository.Repository, existingStatus provisioning.HealthStatus) (*provisioning.TestResults, provisioning.HealthStatus, error) {
-	res, err := repository.TestRepository(ctx, repo)
+	logger := logging.FromContext(ctx).With("repo", repo.Config().GetName(), "namespace", repo.Config().GetNamespace())
+	start := time.Now()
+	outcome := utils.SuccessOutcome
+	defer func() {
+		hc.healthMetrics.RecordHealthCheck(outcome, time.Since(start).Seconds())
+	}()
+
+	res, err := hc.tester.TestRepository(ctx, repo)
 	if err != nil {
+		outcome = utils.ErrorOutcome
+		logger.Error("failed to test repository", "error", err)
 		return nil, existingStatus, fmt.Errorf("failed to test repository: %w", err)
 	}
 

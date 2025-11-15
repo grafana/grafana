@@ -74,7 +74,7 @@ export const defaultStyleConfig = Object.freeze({
   opacity: 0.4,
   symbol: {
     mode: ResourceDimensionMode.Fixed,
-    fixed: 'build/img/icons/marker/circle.svg',
+    fixed: 'img/icons/marker/circle.svg',
   },
   symbolAlign: {
     horizontal: HorizontalAlign.Center,

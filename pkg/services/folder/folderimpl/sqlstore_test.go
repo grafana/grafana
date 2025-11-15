@@ -840,7 +840,7 @@ func TestIntegrationGetHeight(t *testing.T) {
 
 	t.Run("should failed when the parent folder exist in the subtree", func(t *testing.T) {
 		_, err = folderStore.GetHeight(context.Background(), parent.UID, orgID, &subTree[0])
-		require.Error(t, err, folder.ErrCircularReference)
+		require.Error(t, err, folder.ErrCircularReference.Errorf("circular reference detected"))
 	})
 }
 

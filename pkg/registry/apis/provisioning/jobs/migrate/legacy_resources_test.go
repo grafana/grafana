@@ -667,7 +667,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			return result.Action == repository.FileActionCreated &&
 				result.Name == "test" &&
 				result.Error == nil &&
-				result.Resource == "tests" &&
+				result.Kind == "" && // empty kind
 				result.Group == "test.grafana.app" &&
 				result.Path == "test/path"
 		})).Return()

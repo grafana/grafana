@@ -7,6 +7,7 @@ import { LogMessageAnsi } from '../LogMessageAnsi';
 
 import { HighlightedLogRenderer } from './HighlightedLogRenderer';
 import { getStyles } from './LogLine';
+import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 
 interface Props {
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export const LogLineDetailsLog = memo(({ log: originalLog, syntaxHighlighting }: Props) => {
+  const { fontSize } = useLogListContext();
   const logStyles = useStyles2(getStyles);
   const log = useMemo(() => {
     const log = originalLog.clone();
@@ -23,7 +25,7 @@ export const LogLineDetailsLog = memo(({ log: originalLog, syntaxHighlighting }:
 
   return (
     <div className={styles.logLineWrapper}>
-      <div className={logStyles.logLine}>
+      <div className={`${logStyles.logLine} ${fontSize === 'small' ? logStyles.fontSizeSmall : ''} ${styles.noHover}`}>
         <div className={logStyles.wrappedLogLine}>
           {log.hasAnsi ? (
             <span className="field no-highlighting">
@@ -33,7 +35,9 @@ export const LogLineDetailsLog = memo(({ log: originalLog, syntaxHighlighting }:
             <>
               {!syntaxHighlighting && <div className="field no-highlighting">{log.body}</div>}
               {syntaxHighlighting && (
-                <div className="field log-syntax-highlight">{<HighlightedLogRenderer log={log} />}</div>
+                <div className="field log-syntax-highlight">
+                  {<HighlightedLogRenderer tokens={log.highlightedBodyTokens} />}
+                </div>
               )}
             </>
           )}
@@ -49,5 +53,9 @@ const styles = {
   logLineWrapper: css({
     maxHeight: '50vh',
     overflow: 'auto',
+  }),
+  noHover: css({
+    // Disable hover style
+    pointerEvents: 'none',
   }),
 };

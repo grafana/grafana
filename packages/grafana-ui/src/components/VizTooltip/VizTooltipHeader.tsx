@@ -11,13 +11,11 @@ interface Props {
   item: VizTooltipItem;
   isPinned: boolean;
 }
-export const VizTooltipHeader = ({ item, isPinned }: Props) => {
+
+export const VizTooltipHeader = ({ item: { label, value, color, colorIndicator }, isPinned }: Props) => {
   const styles = useStyles2(getStyles);
-
-  const { label, value, color, colorIndicator } = item;
-
   return (
-    <div className={styles.wrapper}>
+    <div className={styles}>
       <VizTooltipRow
         label={label}
         value={value}
@@ -30,12 +28,11 @@ export const VizTooltipHeader = ({ item, isPinned }: Props) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
+const getStyles = (theme: GrafanaTheme2) =>
+  css({
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
     padding: theme.spacing(1),
     lineHeight: 1,
-  }),
-});
+  });

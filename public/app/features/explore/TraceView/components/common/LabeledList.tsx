@@ -55,6 +55,8 @@ const getStyles = (divider: boolean) => (theme: GrafanaTheme2) => {
     LabeledListValue: css({
       label: 'LabeledListValue',
       marginRight: divider ? undefined : '0.55rem',
+      wordWrap: 'break-word',
+      wordBreak: 'break-all',
     }),
     LabeledListIcon: css({
       label: 'LabeledListIcon',

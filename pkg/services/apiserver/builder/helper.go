@@ -37,7 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-type BuildHandlerChainFuncFromBuilders = func([]APIGroupBuilder) BuildHandlerChainFunc
+type BuildHandlerChainFuncFromBuilders = func([]APIGroupBuilder, prometheus.Registerer) BuildHandlerChainFunc
 type BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler
 
 func ProvideDefaultBuildHandlerChainFuncFromBuilders() BuildHandlerChainFuncFromBuilders {
@@ -59,6 +59,12 @@ var PathRewriters = []filters.PathRewriter{
 		},
 	},
 	{
+		Pattern: regexp.MustCompile(`(/apis/query.grafana.app/v0alpha1/namespaces/.*/sqlschemas$)`),
+		ReplaceFunc: func(matches []string) string {
+			return matches[1] + "/name" // connector requires a name
+		},
+	},
+	{
 		Pattern: regexp.MustCompile(`(/apis/.*/v0alpha1/namespaces/.*/queryconvert$)`),
 		ReplaceFunc: func(matches []string) string {
 			return matches[1] + "/name" // connector requires a name
@@ -66,12 +72,13 @@ var PathRewriters = []filters.PathRewriter{
 	},
 }
 
-func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder) BuildHandlerChainFunc {
+func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		requestHandler, err := GetCustomRoutesHandler(
 			delegateHandler,
 			c.LoopbackClientConfig,
-			builders)
+			builders,
+			reg)
 		if err != nil {
 			panic(fmt.Sprintf("could not build the request handler for specified API builders: %s", err.Error()))
 		}
@@ -106,6 +113,7 @@ func SetupConfig(
 	buildHandlerChainFuncFromBuilders BuildHandlerChainFuncFromBuilders,
 	gvs []schema.GroupVersion,
 	additionalOpenAPIDefGetters []common.GetOpenAPIDefinitions,
+	reg prometheus.Registerer,
 ) error {
 	serverConfig.AdmissionControl = NewAdmissionFromBuilders(builders)
 	defsGetter := GetOpenAPIDefinitions(builders, additionalOpenAPIDefGetters...)
@@ -229,7 +237,7 @@ func SetupConfig(
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
-	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders)
+	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders, reg)
 
 	// set priority for aggregated discovery
 	for i, b := range builders {
@@ -300,6 +308,7 @@ func InstallAPIs(
 			var mode = grafanarest.DualWriterMode(0)
 
 			var (
+				err                                  error
 				dualWriterPeriodicDataSyncJobEnabled bool
 				dualWriterMigrationDataSyncDisabled  bool
 				dataSyncerInterval                   = time.Hour
@@ -321,29 +330,45 @@ func InstallAPIs(
 				return storage, nil
 			}
 
-			// TODO: inherited context from main Grafana process
-			ctx := context.Background()
+			currentMode := mode
+			if !dualWriterMigrationDataSyncDisabled || dualWriterPeriodicDataSyncJobEnabled {
+				// TODO: inherited context from main Grafana process
+				ctx := context.Background()
 
-			// Moving from one version to the next can only happen after the previous step has
-			// successfully synchronized.
-			requestInfo := getRequestInfo(gr, namespaceMapper)
+				// Moving from one version to the next can only happen after the previous step has
+				// successfully synchronized.
+				requestInfo := getRequestInfo(gr, namespaceMapper)
 
-			syncerCfg := &grafanarest.SyncerConfig{
-				Kind:                   key,
-				RequestInfo:            requestInfo,
-				Mode:                   mode,
-				SkipDataSync:           dualWriterMigrationDataSyncDisabled,
-				LegacyStorage:          legacy,
-				Storage:                storage,
-				ServerLockService:      serverLock,
-				DataSyncerInterval:     dataSyncerInterval,
-				DataSyncerRecordsLimit: dataSyncerRecordsLimit,
-			}
+				syncerCfg := &grafanarest.SyncerConfig{
+					Kind:                   key,
+					RequestInfo:            requestInfo,
+					Mode:                   mode,
+					SkipDataSync:           dualWriterMigrationDataSyncDisabled,
+					LegacyStorage:          legacy,
+					Storage:                storage,
+					ServerLockService:      serverLock,
+					DataSyncerInterval:     dataSyncerInterval,
+					DataSyncerRecordsLimit: dataSyncerRecordsLimit,
+				}
 
-			// This also sets the currentMode on the syncer config.
-			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg, dualWriterMetrics)
-			if err != nil {
-				return nil, err
+				// This also sets the currentMode on the syncer config.
+				currentMode, err = grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg, dualWriterMetrics)
+				if err != nil {
+					return nil, err
+				}
+
+				// when unable to use
+				if currentMode != mode {
+					klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
+				}
+
+				if dualWriterPeriodicDataSyncJobEnabled && (currentMode >= grafanarest.Mode1 && currentMode <= grafanarest.Mode3) {
+					// The mode might have changed in SetDualWritingMode, so apply current mode first.
+					syncerCfg.Mode = currentMode
+					if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg, dualWriterMetrics); err != nil {
+						return nil, err
+					}
+				}
 			}
 
 			builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode, currentMode)
@@ -354,21 +379,8 @@ func InstallAPIs(
 			case grafanarest.Mode4, grafanarest.Mode5:
 				return storage, nil
 			default:
+				return dualwrite.NewDualWriter(gr, currentMode, legacy, storage)
 			}
-
-			if dualWriterPeriodicDataSyncJobEnabled {
-				// The mode might have changed in SetDualWritingMode, so apply current mode first.
-				syncerCfg.Mode = currentMode
-				if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg, dualWriterMetrics); err != nil {
-					return nil, err
-				}
-			}
-
-			// when unable to use
-			if currentMode != mode {
-				klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
-			}
-			return dualwrite.NewDualWriter(gr, currentMode, legacy, storage)
 		}
 	}
 
@@ -404,6 +416,7 @@ func InstallAPIs(
 			}
 
 			// if grafanaAPIServerWithExperimentalAPIs is not enabled, remove v0alpha1 resources unless explicitly allowed
+			//nolint:staticcheck // not yet migrated to OpenFeature
 			if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 				if resources, ok := g.VersionedResourcesStorageMap["v0alpha1"]; ok {
 					for name := range resources {

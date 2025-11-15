@@ -169,13 +169,15 @@ func TestUpdateTeamMembersAPIEndpoint(t *testing.T) {
 	})
 }
 
-func TestUpdateTeamMembersFromProvisionedTeam(t *testing.T) {
+func TestUpdateTeamMembersFromProvisionedTeamWhenGroupSyncIsEnabled(t *testing.T) {
 	server := SetupAPITestServer(t, &teamtest.FakeService{
 		ExpectedIsMember: true,
 		ExpectedTeamDTO:  &team.TeamDTO{ID: 1, UID: "a00001", IsProvisioned: true},
+	}, func(tapi *TeamAPI) {
+		tapi.cfg.Raw.Section("auth.scim").Key("group_sync_enabled").SetValue("true")
 	})
 
-	t.Run("should not be able to update team member from a provisioned team", func(t *testing.T) {
+	t.Run("should not be able to update team member from a provisioned team if team sync is enabled", func(t *testing.T) {
 		req := webtest.RequestWithSignedInUser(
 			server.NewRequest(http.MethodPut, "/api/teams/1/members/1", strings.NewReader("{\"permission\": 1}")),
 			authedUserWithPermissions(1, 1, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}),
@@ -186,7 +188,7 @@ func TestUpdateTeamMembersFromProvisionedTeam(t *testing.T) {
 		require.NoError(t, res.Body.Close())
 	})
 
-	t.Run("should not be able to update team member from a provisioned team by team UID", func(t *testing.T) {
+	t.Run("should not be able to update team member from a provisioned team by team UID if team sync is enabled", func(t *testing.T) {
 		req := webtest.RequestWithSignedInUser(
 			server.NewRequest(http.MethodPut, "/api/teams/a00001/members/1", strings.NewReader("{\"permission\": 1}")),
 			authedUserWithPermissions(1, 1, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}),
@@ -194,6 +196,27 @@ func TestUpdateTeamMembersFromProvisionedTeam(t *testing.T) {
 		res, err := server.SendJSON(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+}
+
+func TestUpdateTeamMembersFromProvisionedTeamWhenGroupSyncIsDisabled(t *testing.T) {
+	t.Run("should be able to delete team member from a provisioned team when SCIM group sync is disabled", func(t *testing.T) {
+		server := SetupAPITestServer(t, nil, func(hs *TeamAPI) {
+			hs.teamService = &teamtest.FakeService{
+				ExpectedIsMember: true,
+				ExpectedTeamDTO:  &team.TeamDTO{ID: 1, UID: "a00001", IsProvisioned: true},
+			}
+			hs.teamPermissionsService = &actest.FakePermissionsService{}
+		})
+
+		req := webtest.RequestWithSignedInUser(
+			server.NewRequest(http.MethodDelete, "/api/teams/1/members/1", nil),
+			authedUserWithPermissions(1, 1, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}),
+		)
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
 		require.NoError(t, res.Body.Close())
 	})
 }
@@ -236,6 +259,8 @@ func TestDeleteTeamMembersFromProvisionedTeam(t *testing.T) {
 			ExpectedTeamDTO:  &team.TeamDTO{ID: 1, UID: "a00001", IsProvisioned: true},
 		}
 		hs.teamPermissionsService = &actest.FakePermissionsService{}
+	}, func(hs *TeamAPI) {
+		hs.cfg.Raw.Section("auth.scim").Key("group_sync_enabled").SetValue("true")
 	})
 
 	t.Run("should not be able to delete team member from a provisioned team", func(t *testing.T) {
