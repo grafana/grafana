@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
@@ -92,11 +92,12 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
   const ruleType = translateRouteParamToRuleType(routeParams.type);
 
-  const defaultValues: RuleFormValues = useMemo(() => {
+  const defaultValues = useCallback(async () => {
     // If we have an existing AND a prefill, then we're coming from the restore dialog
     // and we want to merge the two
     if (existing && prefill) {
-      return { ...formValuesFromExistingRule(existing), ...formValuesFromPrefill(prefill) };
+      const prefillValues = await formValuesFromPrefill(prefill);
+      return { ...formValuesFromExistingRule(existing), ...prefillValues };
     }
     if (existing) {
       return formValuesFromExistingRule(existing);

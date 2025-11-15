@@ -21,7 +21,6 @@ import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { getCreateAlertInMenuAvailability } from 'app/features/alerting/unified/utils/access-control';
-import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
@@ -527,6 +526,8 @@ export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
 
 const onCreateAlert = async (panel: VizPanel) => {
   try {
+    // ⚠️ Dynamically importing this to prevent Zod from being bundled into the dashboard bundle
+    const { scenesPanelToRuleFormValues } = await import('app/features/alerting/unified/utils/rule-form');
     const formValues = await scenesPanelToRuleFormValues(panel);
     const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
       defaults: JSON.stringify(formValues),
