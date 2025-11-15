@@ -114,7 +114,8 @@ export const generateColumns = (
   columns.push({
     Cell: (p) => {
       let classNames = cx(styles.nameCellStyle);
-      let name = access.name.values[p.row.index];
+      //use title
+      let name = access.title?.values[p.row.index] ?? access.name?.values[p.row.index];
       const isDeleted = access.isDeleted?.values[p.row.index];
 
       if (!name?.length) {
@@ -139,7 +140,7 @@ export const generateColumns = (
       );
     },
     id: `column-name`,
-    field: access.name!,
+    field: (access.title as any) ?? access.name!,
     Header: () => <div>{t('search.results-table.name-header', 'Name')}</div>,
     width,
   });
@@ -270,7 +271,7 @@ export const generateColumns = (
         new ShowModalReactEvent({
           component: ExplainScorePopup,
           props: {
-            name: access.name.values[row],
+            name: (access.title?.values[row] ?? access.name?.values[row]) as any,
             explain: access.explain.values[row],
             frame: response.view.dataFrame,
             row: row,
