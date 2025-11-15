@@ -101,6 +101,7 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 		return
 	}
 
+	htmlHandlerRequestsCounter.WithLabelValues("login").Inc()
 	viewData, err := setIndexViewData(hs, c)
 	if err != nil {
 		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)

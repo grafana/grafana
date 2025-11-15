@@ -22,6 +22,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+)
+
+var (
+	htmlHandlerRequestsCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name:      "html_handler_requests_total",
+		Help:      "Number of requests handled by the index.go HTML handler",
+		Namespace: "grafana",
+	}, []string{"handler"})
 )
 
 type URLPrefs struct {
@@ -271,6 +281,7 @@ func hashUserIdentifier(identifier string, secret string) string {
 func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {
 	c, span := hs.injectSpan(c, "api.Index")
 	defer span.End()
+	htmlHandlerRequestsCounter.WithLabelValues("index").Inc()
 
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
@@ -286,6 +297,7 @@ func (hs *HTTPServer) NotFoundHandler(c *contextmodel.ReqContext) {
 		return
 	}
 
+	htmlHandlerRequestsCounter.WithLabelValues("not_found").Inc()
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
 		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)
