@@ -10,16 +10,16 @@ local_resource(
 
 local_resource(
   'yarn start',
-  cmd='rm -rf public/build/assets-manifest.json',
-  serve_cmd='yarn start:noLint',
+  serve_cmd='yarn start:noLint --env httpReadinessPort=9080',
   resource_deps=['yarn install'],
 
-  # Note: this doesn't seem to work as expected - the assets-manifest is somehow created before
-  # the webpack build is complete?
   readiness_probe=probe(
-    initial_delay_secs=10,
     period_secs=1,
-    exec=exec_action(["bash", "-c", "stat public/build/assets-manifest.json"]),
+    failure_threshold=1,
+    http_get=http_get_action(
+      host='localhost',
+      port=9080,
+    ),
   ),
   allow_parallel=True,
   labels=["local"]
