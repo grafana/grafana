@@ -90,3 +90,5 @@ injectGlobal`
     display: none;
   }
 `;
+
+export default WhereRow;

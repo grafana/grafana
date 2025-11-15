@@ -1,3 +1,4 @@
+import React, { Suspense } from 'react';
 import { useAsync } from 'react-use';
 
 import { SelectableValue, TypedVariableModel } from '@grafana/data';
@@ -7,8 +8,9 @@ import { QueryWithDefaults } from '../../defaults';
 import { DB, SQLExpression, SQLQuery, SQLSelectableValue } from '../../types';
 import { useSqlChange } from '../../utils/useSqlChange';
 
-import { Config } from './AwesomeQueryBuilder';
-import { WhereRow } from './WhereRow';
+import type { Config } from './AwesomeQueryBuilder';
+
+const LazyWhereRow = React.lazy(() => import(/* webpackChunkName: "sql-editor-where-row" */ './WhereRow'));
 
 interface WhereRowProps {
   query: QueryWithDefaults;
@@ -25,19 +27,21 @@ export function SQLWhereRow({ query, fields, onQueryChange, db }: WhereRowProps)
   const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
 
   return (
-    <WhereRow
-      // TODO: fix key that's used to force clean render or SQLWhereRow - otherwise it doesn't render operators correctly
-      key={JSON.stringify(state.value)}
-      config={{ fields: state.value || {} }}
-      sql={query.sql!}
-      onSqlChange={(val: SQLExpression) => {
-        const templateVars = getTemplateSrv().getVariables();
+    <Suspense>
+      <LazyWhereRow
+        // TODO: fix key that's used to force clean render or SQLWhereRow - otherwise it doesn't render operators correctly
+        key={JSON.stringify(state.value)}
+        config={{ fields: state.value || {} }}
+        sql={query.sql!}
+        onSqlChange={(val: SQLExpression) => {
+          const templateVars = getTemplateSrv().getVariables();
 
-        removeQuotesForMultiVariables(val, templateVars);
+          removeQuotesForMultiVariables(val, templateVars);
 
-        onSqlChange(val);
-      }}
-    />
+          onSqlChange(val);
+        }}
+      />
+    </Suspense>
   );
 }
 
