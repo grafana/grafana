@@ -1,4 +1,4 @@
-package dashboardsnapshot
+package snapshot
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
+	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,32 +22,32 @@ var (
 	_ rest.Storage              = (*optionsStorage)(nil)
 )
 
-type sharingOptionsGetter = func(namespace string) (*dashboardsnapshot.SharingOptions, error)
+type SharingOptionGetter = func(namespace string) (*snapshot.SharingOption, error)
 
-func newSharingOptionsGetter(cfg *setting.Cfg) sharingOptionsGetter {
-	s := &dashboardsnapshot.SharingOptions{
+func NewSharingOptionGetter(cfg *setting.Cfg) SharingOptionGetter {
+	s := &snapshot.SharingOption{
 		ObjectMeta: metav1.ObjectMeta{
 			CreationTimestamp: metav1.Now(),
 		},
-		Spec: dashboardsnapshot.SnapshotSharingOptions{
-			SnapshotsEnabled:     cfg.SnapshotEnabled,
-			ExternalSnapshotURL:  cfg.ExternalSnapshotUrl,
-			ExternalSnapshotName: cfg.ExternalSnapshotName,
-			ExternalEnabled:      cfg.ExternalEnabled,
+		Spec: snapshot.SharingOptionSpec{
+			SnapshotsEnabled:     &cfg.SnapshotEnabled,
+			ExternalSnapshotURL:  &cfg.ExternalSnapshotUrl,
+			ExternalSnapshotName: &cfg.ExternalSnapshotName,
+			ExternalEnabled:      &cfg.ExternalEnabled,
 		},
 	}
-	return func(namespace string) (*dashboardsnapshot.SharingOptions, error) {
+	return func(namespace string) (*snapshot.SharingOption, error) {
 		return s, nil
 	}
 }
 
 type optionsStorage struct {
-	getter         sharingOptionsGetter
+	getter         SharingOptionGetter
 	tableConverter rest.TableConvertor
 }
 
 func (s *optionsStorage) New() runtime.Object {
-	return &dashboardsnapshot.SharingOptions{}
+	return &snapshot.SharingOption{}
 }
 
 func (s *optionsStorage) Destroy() {}
@@ -61,7 +61,7 @@ func (s *optionsStorage) GetSingularName() string {
 }
 
 func (s *optionsStorage) NewList() runtime.Object {
-	return &dashboardsnapshot.SharingOptionsList{}
+	return &snapshot.SharingOptionList{}
 }
 
 func (s *optionsStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -80,8 +80,8 @@ func (s *optionsStorage) List(ctx context.Context, options *internalversion.List
 	if err != nil {
 		return nil, err
 	}
-	list := &dashboardsnapshot.SharingOptionsList{
-		Items: []dashboardsnapshot.SharingOptions{*v},
+	list := &snapshot.SharingOptionList{
+		Items: []snapshot.SharingOption{*v},
 	}
 	return list, nil
 }

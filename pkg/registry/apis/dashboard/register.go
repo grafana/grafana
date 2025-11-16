@@ -2,11 +2,14 @@ package dashboard
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
+	"net/http"
 	"strings"
 
+	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,14 +43,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -63,6 +69,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errhttp"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var (
@@ -114,8 +122,10 @@ type DashboardsAPIBuilder struct {
 	folderClientProvider         client.K8sHandlerProvider
 	libraryPanels                libraryelements.Service // for legacy library panels
 	publicDashboardService       publicdashboards.Service
-
-	isStandalone bool // skips any handling including anything to do with legacy storage
+	snapshotService              dashboardsnapshots.Service
+	snapshotOptions              snapshot.SharingOptionGetter
+	namespacer                   request.NamespaceMapper
+	isStandalone                 bool // skips any handling including anything to do with legacy storage
 }
 
 func RegisterAPIService(
@@ -143,6 +153,7 @@ func RegisterAPIService(
 	userService user.Service,
 	libraryPanels libraryelements.Service,
 	publicDashboardService publicdashboards.Service,
+	snapshotService dashboardsnapshots.Service,
 ) *DashboardsAPIBuilder {
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -167,7 +178,9 @@ func RegisterAPIService(
 		folderClientProvider:         newSimpleFolderClientProvider(folderClient),
 		libraryPanels:                libraryPanels,
 		publicDashboardService:       publicDashboardService,
-
+		snapshotService:              snapshotService,
+		snapshotOptions:              snapshot.NewSharingOptionGetter(cfg),
+		namespacer:                   namespacer,
 		legacy: &DashboardStorage{
 			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
 			DashboardService: dashboardService,
@@ -242,6 +255,7 @@ func (b *DashboardsAPIBuilder) AllowedV0Alpha1Resources() []string {
 	return []string{
 		dashv0.DashboardKind().Plural(),
 		dashv0.LIBRARY_PANEL_RESOURCE,
+		dashv0.SNAPSHOT_RESOURCE,
 	}
 }
 
@@ -264,6 +278,8 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		}
 
 	case dashv0.LIBRARY_PANEL_RESOURCE:
+		return nil // OK for now
+	case dashv0.SNAPSHOT_RESOURCE:
 		return nil // OK for now
 	}
 
@@ -533,6 +549,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashv0.DashboardResourceInfo,
 		&dashv0.LibraryPanelResourceInfo,
+		&dashv0.SnapshotResourceInfo,
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
 			dto := &dashv0.DashboardWithAccessInfo{}
 			dash, ok := obj.(*dashv0.Dashboard)
@@ -551,6 +568,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashv1.DashboardResourceInfo,
 		nil, // do not register library panel
+		nil,
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
 			dto := &dashv1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*dashv1.Dashboard)
@@ -569,6 +587,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashv2alpha1.DashboardResourceInfo,
 		nil, // do not register library panel
+		nil,
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
 			dto := &dashv2alpha1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*dashv2alpha1.Dashboard)
@@ -586,6 +605,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashv2beta1.DashboardResourceInfo,
 		nil, // do not register library panel
+		nil,
 		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
 			dto := &dashv2beta1.DashboardWithAccessInfo{}
 			dash, ok := obj.(*dashv2beta1.Dashboard)
@@ -609,6 +629,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	largeObjects apistore.LargeObjectSupport,
 	dashboards utils.ResourceInfo,
 	libraryPanels *utils.ResourceInfo,
+	snapshots *utils.ResourceInfo,
 	newDTOFunc dtoBuilder,
 ) error {
 	// Register the versioned storage
@@ -683,6 +704,24 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		}
 	}
 
+	if snapshots != nil {
+		snapshotLegacyStore := &snapshot.SnapshotLegacyStore{
+			ResourceInfo: *snapshots,
+			Service:      b.snapshotService,
+			Namespacer:   b.namespacer,
+		}
+
+		snapshotUnifiedStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, *snapshots, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		snapshotGr := snapshots.GroupResource()
+		storage[snapshots.StoragePath()], err = opts.DualWriteBuilder(snapshotGr, snapshotLegacyStore, snapshotUnifiedStore)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -780,7 +819,163 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 	}
 
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	return b.search.GetAPIRoutes(defs)
+	searchAPIRoutes := b.search.GetAPIRoutes(defs)
+
+	prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
+	createCmd := defs["github.com/grafana/grafana/apps/dashboard/pkg/apissnapshot/v0alpha1.DashboardCreateCommand"].Schema
+	createExample := `{"dashboard":{"annotations":{"list":[{"name":"Annotations & Alerts","enable":true,"iconColor":"rgba(0, 211, 255, 1)","snapshotData":[],"type":"dashboard","builtIn":1,"hide":true}]},"editable":true,"fiscalYearStartMonth":0,"graphTooltip":0,"id":203,"links":[],"liveNow":false,"panels":[{"datasource":null,"fieldConfig":{"defaults":{"color":{"mode":"palette-classic"},"custom":{"axisBorderShow":false,"axisCenteredZero":false,"axisColorMode":"text","axisLabel":"","axisPlacement":"auto","barAlignment":0,"drawStyle":"line","fillOpacity":43,"gradientMode":"opacity","hideFrom":{"legend":false,"tooltip":false,"viz":false},"insertNulls":false,"lineInterpolation":"smooth","lineWidth":1,"pointSize":5,"scaleDistribution":{"type":"linear"},"showPoints":"auto","spanNulls":false,"stacking":{"group":"A","mode":"none"},"thresholdsStyle":{"mode":"off"}},"mappings":[],"thresholds":{"mode":"absolute","steps":[{"color":"green","value":null},{"color":"red","value":80}]},"unitScale":true},"overrides":[]},"gridPos":{"h":8,"w":12,"x":0,"y":0},"id":1,"options":{"legend":{"calcs":[],"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"single","sort":"none"}},"pluginVersion":"10.4.0-pre","snapshotData":[{"fields":[{"config":{"color":{"mode":"palette-classic"},"custom":{"axisBorderShow":false,"axisCenteredZero":false,"axisColorMode":"text","axisPlacement":"auto","barAlignment":0,"drawStyle":"line","fillOpacity":43,"gradientMode":"opacity","hideFrom":{"legend":false,"tooltip":false,"viz":false},"lineInterpolation":"smooth","lineWidth":1,"pointSize":5,"showPoints":"auto","thresholdsStyle":{"mode":"off"}},"thresholds":{"mode":"absolute","steps":[{"color":"green","value":null},{"color":"red","value":80}]},"unitScale":true},"name":"time","type":"time","values":[1706030536378,1706034856378,1706039176378,1706043496378,1706047816378,1706052136378]},{"config":{"color":{"mode":"palette-classic"},"custom":{"axisBorderShow":false,"axisCenteredZero":false,"axisColorMode":"text","axisLabel":"","axisPlacement":"auto","barAlignment":0,"drawStyle":"line","fillOpacity":43,"gradientMode":"opacity","hideFrom":{"legend":false,"tooltip":false,"viz":false},"insertNulls":false,"lineInterpolation":"smooth","lineWidth":1,"pointSize":5,"scaleDistribution":{"type":"linear"},"showPoints":"auto","spanNulls":false,"stacking":{"group":"A","mode":"none"},"thresholdsStyle":{"mode":"off"}},"mappings":[],"thresholds":{"mode":"absolute","steps":[{"color":"green","value":null},{"color":"red","value":80}]},"unitScale":true},"name":"A-series","type":"number","values":[1,20,90,30,50,0]}],"refId":"A"}],"targets":[],"title":"Simple example","type":"timeseries","links":[]}],"refresh":"","schemaVersion":39,"snapshot":{"timestamp":"2024-01-23T23:22:16.377Z"},"tags":[],"templating":{"list":[]},"time":{"from":"2024-01-23T17:22:20.380Z","to":"2024-01-23T23:22:20.380Z","raw":{"from":"now-6h","to":"now"}},"timepicker":{},"timezone":"","title":"simple and small","uid":"b22ec8db-399b-403b-b6c7-b0fb30ccb2a5","version":1,"weekStart":""},"name":"simple and small","expires":86400}`
+	createRsp := defs["github.com/grafana/grafana/apps/dashboard/pkg/apissnapshot/v0alpha1.DashboardCreateResponse"].Schema
+
+	tags := []string{dashv0.SnapshotResourceInfo.GroupVersionKind().Kind}
+	snapshotAPIRouteHandlers := []builder.APIRouteHandler{
+		{
+			Path: prefix + "/create",
+			Spec: &spec3.PathProps{
+				Post: &spec3.Operation{
+					VendorExtensible: spec.VendorExtensible{
+						Extensions: map[string]any{
+							"x-grafana-action": "create",
+							"x-kubernetes-group-version-kind": metav1.GroupVersionKind{
+								Group:   dashv0.GROUP,
+								Version: dashv0.VERSION,
+								Kind:    "DashboardCreateResponse",
+							},
+						},
+					},
+					OperationProps: spec3.OperationProps{
+						Tags:        tags,
+						Summary:     "Full dashboard",
+						Description: "longer description here?",
+						Parameters: []*spec3.Parameter{
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "namespace",
+									In:          "path",
+									Required:    true,
+									Example:     "default",
+									Description: "workspace",
+									Schema:      spec.StringProperty(),
+								},
+							},
+						},
+						RequestBody: &spec3.RequestBody{
+							RequestBodyProps: spec3.RequestBodyProps{
+								Content: map[string]*spec3.MediaType{
+									"application/json": {
+										MediaTypeProps: spec3.MediaTypeProps{
+											Schema:  &createCmd,
+											Example: createExample, // raw JSON body
+										},
+									},
+								},
+							},
+						},
+						Responses: &spec3.Responses{
+							ResponsesProps: spec3.ResponsesProps{
+								StatusCodeResponses: map[int]*spec3.Response{
+									200: {
+										ResponseProps: spec3.ResponseProps{
+											Content: map[string]*spec3.MediaType{
+												"application/json": {
+													MediaTypeProps: spec3.MediaTypeProps{
+														Schema: &createRsp,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Handler: func(w http.ResponseWriter, r *http.Request) {
+				user, err := identity.GetRequester(r.Context())
+				if err != nil {
+					errhttp.Write(r.Context(), err, w)
+					return
+				}
+				wrap := &contextmodel.ReqContext{
+					Context: &web.Context{
+						Req:  r,
+						Resp: web.NewResponseWriter(r.Method, w),
+					},
+					// SignedInUser: user, ????????????
+				}
+
+				vars := mux.Vars(r)
+				info, err := authlib.ParseNamespace(vars["namespace"])
+				if err != nil {
+					wrap.JsonApiErr(http.StatusBadRequest, "expected namespace", nil)
+					return
+				}
+				if info.OrgID != user.GetOrgID() {
+					wrap.JsonApiErr(http.StatusBadRequest,
+						fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, user.GetOrgID()), nil)
+					return
+				}
+
+				cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{}
+				if err := web.Bind(wrap.Req, &cmd); err != nil {
+					wrap.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+					return
+				}
+
+				opts, err := b.snapshotOptions(info.Value)
+				if err != nil {
+					wrap.JsonApiErr(http.StatusBadRequest, "error getting options", err)
+					return
+				}
+
+				// Use the existing snapshot service
+				dashboardsnapshots.CreateDashboardSnapshot(wrap, opts.Spec, cmd, b.snapshotService)
+			},
+		},
+		{
+			Path: prefix + "/delete/{deleteKey}",
+			Spec: &spec3.PathProps{
+				Summary:     "an example at the root level",
+				Description: "longer description here?",
+				Delete: &spec3.Operation{
+					OperationProps: spec3.OperationProps{
+						Tags: tags,
+						Parameters: []*spec3.Parameter{
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "deleteKey",
+									In:          "path",
+									Required:    true,
+									Description: "unique key returned in create",
+									Schema:      spec.StringProperty(),
+								},
+							},
+						},
+					},
+				},
+			},
+			Handler: func(w http.ResponseWriter, r *http.Request) {
+				ctx := r.Context()
+				vars := mux.Vars(r)
+				key := vars["deleteKey"]
+
+				err := dashboardsnapshots.DeleteWithKey(ctx, key, b.snapshotService)
+				if err != nil {
+					errhttp.Write(ctx, fmt.Errorf("failed to delete external dashboard (%w)", err), w)
+					return
+				}
+				_ = json.NewEncoder(w).Encode(&util.DynMap{
+					"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches.",
+				})
+			},
+		},
+	}
+
+	apiRoutesHandler := append(append([]builder.APIRouteHandler{}, searchAPIRoutes.Namespace...), snapshotAPIRouteHandlers...)
+
+	return &builder.APIRoutes{
+		Namespace: apiRoutesHandler,
+	}
 }
 
 // The default authorizer is fine because authorization happens in storage where we know the parent folder
