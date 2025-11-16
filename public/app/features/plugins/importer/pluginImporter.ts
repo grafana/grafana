@@ -20,6 +20,7 @@ import {
   addedComponentsRegistry,
   addedFunctionsRegistry,
   addedLinksRegistry,
+  commandPaletteDynamicRegistry,
   exposedComponentsRegistry,
 } from '../extensions/registry/setup';
 import { pluginsLogger } from '../utils';
@@ -102,6 +103,7 @@ const appPluginPostImport: PostImportStrategy<AppPlugin, AppPluginMeta> = async 
   addedComponentsRegistry.register({ pluginId: meta.id, configs: plugin.addedComponentConfigs || [] });
   addedLinksRegistry.register({ pluginId: meta.id, configs: plugin.addedLinkConfigs || [] });
   addedFunctionsRegistry.register({ pluginId: meta.id, configs: plugin.addedFunctionConfigs || [] });
+  commandPaletteDynamicRegistry.register({ pluginId: meta.id, configs: plugin.commandPaletteDynamicConfigs || [] });
 
   pluginsCache.set(meta.id, plugin);
   return plugin;

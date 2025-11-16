@@ -17,7 +17,11 @@ import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
 import { useRegisterRecentScopesActions, useRegisterScopesActions } from './actions/scopeActions';
-import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
+import {
+  useRegisterDynamicActions,
+  useRegisterRecentDashboardsActions,
+  useRegisterStaticActions,
+} from './actions/useActions';
 import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
@@ -47,6 +51,9 @@ function CommandPaletteContents() {
 
   useRegisterRecentDashboardsActions();
   useRegisterRecentScopesActions();
+
+  // Register dynamic actions from plugins based on search query
+  const { isLoading: isDynamicLoading } = useRegisterDynamicActions(searchQuery);
 
   const queryToggle = useCallback(() => query.toggle(), [query]);
   const { scopesRow } = useRegisterScopesActions(searchQuery, queryToggle, currentRootActionId);
@@ -84,7 +91,7 @@ function CommandPaletteContents() {
                 className={styles.search}
               />
               <div className={styles.loadingBarContainer}>
-                {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
+                {(isFetchingSearchResults || isDynamicLoading) && <LoadingBar width={500} delay={0} />}
               </div>
             </div>
             {scopesRow ? <div className={styles.searchContainer}>{scopesRow}</div> : null}
