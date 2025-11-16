@@ -124,6 +124,12 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: withFocusedPanel(scene, toggleVizPanelLegend),
   });
 
+  // Toggle all legends
+  keybindings.addBinding({
+    key: 'd l',
+    onTrigger: () => scene.getDashboardPanels().forEach((panel) => toggleVizPanelLegend(panel)),
+  });
+
   // Refresh
   keybindings.addBinding({
     key: 'd r',
