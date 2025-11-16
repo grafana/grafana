@@ -7,6 +7,7 @@ import {
   EventBusPlugin,
   TooltipDisplayMode,
   TooltipPlugin2,
+  XAxisInteractionAreaPlugin,
   usePanelContext,
   useTheme2,
 } from '@grafana/ui';
@@ -102,6 +103,7 @@ export const StateTimelinePanel = ({
               {cursorSync !== DashboardCursorSync.Off && (
                 <EventBusPlugin config={builder} eventBus={eventBus} frame={alignedFrame} />
               )}
+              <XAxisInteractionAreaPlugin config={builder} queryZoom={onChangeTimeRange} />
               {options.tooltip.mode !== TooltipDisplayMode.None && (
                 <TooltipPlugin2
                   config={builder}
