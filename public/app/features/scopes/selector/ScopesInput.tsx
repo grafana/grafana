@@ -1,10 +1,23 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Icon, Input, LinkButton, measureText, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import {
+  Button,
+  getInputStyles,
+  Icon,
+  Input,
+  LinkButton,
+  measureText,
+  Spinner,
+  Tooltip,
+  useStyles2,
+  Text,
+  useTheme2,
+} from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 
 import { getPathOfNode } from './scopesTreeUtils';
 import { NodesMap, ScopesMap, SelectedScope } from './types';
@@ -36,14 +49,14 @@ export function ScopesInput({
   const parentNodeIdFromUrl = appliedScopes[0]?.parentNodeId;
   const styles = useStyles2(getStyles);
   const { node: scopeNode, isLoading: scopeNodeLoading } = useScopeNode(scopeNodeId);
-  const theme = useTheme2();
+  //const theme = useTheme2();
 
   // Get parent from scope node if available, otherwise use parentNodeId from URL (for backward compatibility)
   const parentNodeId = scopeNode?.spec.parentName ?? parentNodeIdFromUrl;
   const { node: parentNode, isLoading: parentNodeLoading } = useScopeNode(parentNodeId);
 
   // Prioritize scope node subtitle over parent node title
-  const displayTitle = scopeNode?.spec.subTitle ?? parentNode?.spec.title ?? 'Loki';
+  const displayTitle = scopeNode?.spec.subTitle ?? parentNode?.spec.title ?? 'Borg user';
   const isLoadingTitle = scopeNodeLoading || parentNodeLoading;
   const placeholderText = t('scopes.selector.input.placeholder', 'No scopes');
 
@@ -78,36 +91,41 @@ export function ScopesInput({
     [appliedScopes, scopes]
   );
 
-  const parentNodePrefix = useMemo(
-    () =>
-      isLoadingTitle ? <Skeleton width={30} height={14} /> : displayTitle ? <span>{displayTitle}:</span> : undefined,
-    [isLoadingTitle, displayTitle]
-  );
+  //const inputText = scopesTitles || placeholderText;
+  //const lengthInGridUnits = measureText(inputText, theme.typography.fontSize).width / theme.spacing.gridSize + 2;
+  //const inputWidth = Math.min(Math.max(lengthInGridUnits, 18), 30); // min width for empty input, max width for long texts
 
-  const inputText = scopesTitles || placeholderText;
-  const lengthInGridUnits = measureText(inputText, theme.typography.fontSize).width / theme.spacing.gridSize + 2;
-  const inputWidth = Math.min(Math.max(lengthInGridUnits, 18), 30); // min width for empty input, max width for long texts
+  const onClick = () => {
+    if (!disabled) {
+      onInputClick();
+    }
+  };
 
   return (
     <Tooltip content={tooltipContent} interactive>
-      <Input
-        readOnly
-        placeholder={placeholderText}
-        disabled={disabled}
-        loading={loading}
-        value={scopesTitles}
-        aria-label={placeholderText}
-        data-testid="scopes-selector-input"
-        className={styles.input}
-        prefix={parentNodePrefix}
-        suffix={<Icon name="angle-down" />}
-        width={inputWidth}
-        onClick={() => {
-          if (!disabled) {
-            onInputClick();
-          }
-        }}
-      />
+      <div className={styles.wrapper}>
+        <button
+          className={styles.fakeInput}
+          onClick={onClick}
+          aria-label={placeholderText}
+          data-testid="scopes-selector-input"
+        >
+          {loading && (
+            <div className={styles.prefix}>
+              <Spinner />
+            </div>
+          )}
+
+          <span className={styles.text}>
+            {!scopesTitles && !loading && <Text color="secondary">{placeholderText}</Text>}
+            {scopesTitles && <span>{scopesTitles}</span>}
+            {!isLoadingTitle && displayTitle && <span className={styles.parentNode}>{displayTitle}</span>}
+          </span>
+        </button>
+        <div className={styles.suffix}>
+          <Icon name="angle-down" />
+        </div>
+      </div>
     </Tooltip>
   );
 }
@@ -148,12 +166,60 @@ function ScopesTooltip({ nodes, scopes, appliedScopes }: ScopesTooltipProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const baseStyles = getInputStyles({ theme });
+
   return {
-    input: css({
-      // it's readonly but should have normal input bg
-      'input:not(disabled)': {
-        background: theme.components.input.background,
+    wrapper: cx(
+      baseStyles.wrapper,
+      css({
+        width: 'auto',
+        minWidth: 60,
+        maxWidth: 250,
+        position: 'relative',
+      })
+    ),
+    prefix: baseStyles.prefix,
+    suffix: css([
+      baseStyles.suffix,
+      {
+        display: 'flex',
+        gap: theme.spacing(0.5),
       },
+    ]),
+    fakeInput: css([
+      baseStyles.input,
+      {
+        display: 'flex',
+        alignItems: 'center',
+        textAlign: 'left',
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        paddingRight: 28,
+
+        '&:not(disabled)': {
+          cursor: 'pointer',
+          background: theme.components.input.background,
+        },
+
+        // We want the focus styles to appear only when tabbing through, not when clicking the button
+        // (and when focus is restored after command palette closes)
+        '&:focus': {
+          outline: 'unset',
+          boxShadow: 'unset',
+        },
+
+        '&:focus-visible': getFocusStyles(theme),
+      },
+    ]),
+    text: css({
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+    }),
+    parentNode: css({
+      marginLeft: theme.spacing(1),
+      paddingLeft: theme.spacing(1),
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
+      color: theme.colors.text.secondary,
     }),
   };
 };
