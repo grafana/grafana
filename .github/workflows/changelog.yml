@@ -61,7 +61,7 @@ jobs:
     env:
       RUN_ID: ${{ github.run_id }}
       VERSION: ${{ inputs.version }}
-      PREVIOUS_VERISON: ${{ inputs.previous_version }}
+      PREVIOUS_VERSION: ${{ inputs.previous_version }}
       TARGET: ${{ inputs.target }}
       DRY_RUN: ${{ inputs.dry_run }}
     runs-on: ubuntu-latest
