@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { usePluginComponents } from '@grafana/runtime';
+import { usePluginComponents, usePluginLinks } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -15,6 +15,7 @@ interface Props {
 }
 
 const EXTENSION_ID = (nodeId: string) => `grafana/dynamic/nav-landing-page/nav-id-${nodeId}/v1`;
+const CARD_EXTENSION_ID = (nodeId: string) => `grafana/dynamic/nav-landing-page/nav-id-${nodeId}/card/v1`;
 
 export function NavLandingPage({ navId, header }: Props) {
   const { node } = useNavModel(navId);
@@ -27,7 +28,12 @@ export function NavLandingPage({ navId, header }: Props) {
     extensionPointId: EXTENSION_ID(node.id ?? ''),
   });
 
-  if (isLoading) {
+  const { links: additionalCards, isLoading: isLoadingCards } = usePluginLinks({
+    extensionPointId: CARD_EXTENSION_ID(node.id ?? ''),
+    context: { node },
+  });
+
+  if (isLoading || isLoadingCards) {
     return null;
   }
 
@@ -47,6 +53,16 @@ export function NavLandingPage({ navId, header }: Props) {
                     description={child.subTitle}
                     text={child.text}
                     url={child.url ?? ''}
+                  />
+                ))}
+                {additionalCards?.map((link) => (
+                  <NavLandingPageCard
+                    key={link.id}
+                    description={link.description}
+                    text={link.title}
+                    url={link.path ?? ''}
+                    category={link.category}
+                    onClick={link.onClick}
                   />
                 ))}
               </section>

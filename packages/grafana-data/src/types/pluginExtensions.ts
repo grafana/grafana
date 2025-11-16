@@ -225,6 +225,7 @@ export enum PluginExtensionPoints {
 // (They cannot be used as is. E.g. "grafana/nav-landing-page/.*/v1" becomes "grafana/nav-landing-page/observability/v1" during runtime.)
 export enum PluginExtensionPointPatterns {
   NavLandingPage = 'grafana/dynamic/nav-landing-page/nav-id-.*/v1',
+  NavLandingPageCard = 'grafana/dynamic/nav-landing-page/nav-id-.*/card/v1',
 }
 
 // Extension Points available in plugins
