@@ -125,6 +125,10 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   const xValues = xField.values;
   const yFields = opts.frame.fields.filter((f, idx) => f.type === FieldType.number && idx > 0);
 
+  if (yFields.length === 0) {
+    throw new Error(t('heatmap.error.no-y-fields', 'No numeric fields found for heatmap'));
+  }
+
   // similar to initBins() below
   const len = xValues.length * yFields.length;
   const xs = new Array(len);
