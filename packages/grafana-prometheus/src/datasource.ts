@@ -204,6 +204,46 @@ export class PrometheusDatasource
     }
   }
 
+  /**
+   * Checks if a specific metric exists in the Prometheus instance.
+   *
+   * This method uses the `/api/v1/series` endpoint to check if the specified metric
+   * has any series data within the given time range. It's useful for determining
+   * if certain metrics are available before attempting to query them.
+   *
+   * @param metricName - The name of the metric to check for existence
+   * @param timeRange - Optional time range to check within. Defaults to last hour if not provided
+   * @returns Promise<boolean> - true if the metric exists, false otherwise
+   */
+  async checkMetricExists(metricName: string, timeRange?: TimeRange): Promise<boolean> {
+    try {
+      // Use provided time range or default to last hour
+      const from = timeRange?.from || dateTime().subtract(1, 'hour');
+      const to = timeRange?.to || dateTime();
+
+      // Convert to Unix timestamps (seconds since epoch)
+      const start = Math.floor(from.valueOf() / 1000);
+      const end = Math.floor(to.valueOf() / 1000);
+
+      const params = {
+        'match[]': metricName,
+        limit: '1',
+        start: start.toString(),
+        end: end.toString(),
+      };
+
+      const options = { showErrorAlert: false };
+      const seriesResult = await this.metadataRequest('/api/v1/series', params, options);
+
+      // Check if any series exist for this metric
+      const seriesData = seriesResult?.data?.data;
+      return seriesData && Array.isArray(seriesData) && seriesData.length > 0;
+    } catch (error) {
+      console.warn(`Failed to check if metric '${metricName}' exists:`, error);
+      return false;
+    }
+  }
+
   getQueryDisplayText(query: PromQuery) {
     return query.expr;
   }
