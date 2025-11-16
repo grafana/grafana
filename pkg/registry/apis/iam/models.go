@@ -69,6 +69,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	dual             dualwrite.Service
 	unified          resource.ResourceClient
 	userSearchClient resourcepb.ResourceIndexClient
+	teamSearch       *TeamSearchHandler
 
 	// non-k8s api route
 	display *user.LegacyDisplayREST
