@@ -23,7 +23,6 @@ kubernetesStars,experimental,@grafana/grafana-app-platform-squad,false,true,fals
 influxqlStreamingParser,experimental,@grafana/partner-datasources,false,false,false
 influxdbRunQueriesInParallel,privatePreview,@grafana/partner-datasources,false,false,false
 lokiLogsDataplane,experimental,@grafana/observability-logs,false,false,false
-dataplaneFrontendFallback,GA,@grafana/observability-metrics,false,false,true
 disableSSEDataplane,experimental,@grafana/grafana-datasources-core-services,false,false,false
 unifiedRequestLog,GA,@grafana/grafana-backend-group,false,false,false
 renderAuthJWT,preview,@grafana/grafana-operator-experience-squad,false,false,false
@@ -158,7 +157,6 @@ managedDualWriter,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
-timeRangePan,experimental,@grafana/dataviz-squad,false,false,true
 azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
 playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
 passwordlessMagicLinkAuthentication,experimental,@grafana/identity-access-team,false,false,false

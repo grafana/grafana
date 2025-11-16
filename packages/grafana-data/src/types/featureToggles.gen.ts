@@ -122,11 +122,6 @@ export interface FeatureToggles {
   */
   lokiLogsDataplane?: boolean;
   /**
-  * Support dataplane contract field name change for transformations and field name matchers where the name is different
-  * @default true
-  */
-  dataplaneFrontendFallback?: boolean;
-  /**
   * Disables dataplane specific processing in server side expressions.
   */
   disableSSEDataplane?: boolean;
@@ -700,10 +695,6 @@ export interface FeatureToggles {
   * Enables time pickers sync
   */
   timeRangeProvider?: boolean;
-  /**
-  * Enables time range panning functionality
-  */
-  timeRangePan?: boolean;
   /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
