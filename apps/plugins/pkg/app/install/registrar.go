@@ -23,7 +23,6 @@ type Class = string
 const (
 	ClassCore     Class = "core"
 	ClassExternal Class = "external"
-	ClassCDN      Class = "cdn"
 )
 
 type Source = string

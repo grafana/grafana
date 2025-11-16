@@ -72,10 +72,25 @@ type UpdateInfo struct {
 type FS interface {
 	fs.FS
 
-	Type() string
+	Type() FSType
 	Base() string
 	Files() ([]string, error)
 	Rel(string) (string, error)
+}
+
+type FSType string
+
+const (
+	FSTypeLocal FSType = "local"
+	FSTypeCDN   FSType = "cdn"
+)
+
+func (f FSType) Local() bool {
+	return f == FSTypeLocal
+}
+
+func (f FSType) CDN() bool {
+	return f == FSTypeCDN
 }
 
 type FSRemover interface {

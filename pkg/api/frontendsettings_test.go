@@ -403,42 +403,6 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 				},
 			},
 		},
-		{
-			desc: "app plugin with CDN class",
-			pluginStore: func() pluginstore.Store {
-				return &pluginstore.FakePluginStore{
-					PluginList: []pluginstore.Plugin{
-						{
-							Class:  plugins.ClassCDN,
-							Module: fmt.Sprintf("/%s/module.js", "test-app"),
-							JSONData: plugins.JSONData{
-								ID:      "test-app",
-								Info:    plugins.Info{Version: "0.5.0"},
-								Type:    plugins.TypeApp,
-								Preload: true,
-							},
-						},
-					},
-				}
-			},
-			pluginSettings: func() pluginsettings.Service {
-				return &pluginsettings.FakePluginSettings{
-					Plugins: newAppSettings("test-app", true),
-				}
-			},
-			pluginAssets: newPluginAssets(),
-			expected: settings{
-				Apps: map[string]*plugins.AppDTO{
-					"test-app": {
-						ID:              "test-app",
-						Preload:         true,
-						Path:            "/test-app/module.js",
-						Version:         "0.5.0",
-						LoadingStrategy: plugins.LoadingStrategyFetch,
-					},
-				},
-			},
-		},
 	}
 
 	for _, test := range tests {
