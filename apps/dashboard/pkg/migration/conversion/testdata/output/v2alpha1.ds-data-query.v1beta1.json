@@ -222,6 +222,7 @@
                             }
                           },
                           "datasource": {
+                            "type": "grafana-testdata-datasource",
                             "uid": "gdev-testdata"
                           },
                           "refId": "A",
@@ -525,6 +526,7 @@
                             }
                           },
                           "datasource": {
+                            "type": "prometheus",
                             "uid": "gdev-prometheus"
                           },
                           "refId": "A",
@@ -639,6 +641,7 @@
                             }
                           },
                           "datasource": {
+                            "type": "prometheus",
                             "uid": "gdev-prometheus"
                           },
                           "refId": "A",
@@ -653,6 +656,7 @@
                             "spec": {}
                           },
                           "datasource": {
+                            "type": "grafana-testdata-datasource",
                             "uid": "gdev-testdata"
                           },
                           "refId": "B",
@@ -957,13 +961,14 @@
               "spec": {
                 "name": "variable-ds-prometheus",
                 "current": {
-                  "text": null,
-                  "value": null
+                  "text": "",
+                  "value": ""
                 },
                 "hide": "dontHide",
                 "refresh": "",
                 "skipUrlSync": false,
                 "datasource": {
+                  "type": "prometheus",
                   "uid": "gdev-prometheus"
                 },
                 "query": {
@@ -985,8 +990,8 @@
               "spec": {
                 "name": "variable-no-ds",
                 "current": {
-                  "text": null,
-                  "value": null
+                  "text": "",
+                  "value": ""
                 },
                 "hide": "dontHide",
                 "refresh": "",
@@ -1011,8 +1016,8 @@
               "spec": {
                 "name": "variable-no-ds-empty-query",
                 "current": {
-                  "text": null,
-                  "value": null
+                  "text": "",
+                  "value": ""
                 },
                 "hide": "dontHide",
                 "refresh": "",
@@ -1034,8 +1039,8 @@
               "spec": {
                 "name": "variable-no-default-ds",
                 "current": {
-                  "text": null,
-                  "value": null
+                  "text": "",
+                  "value": ""
                 },
                 "hide": "dontHide",
                 "refresh": "",
@@ -1056,7 +1061,12 @@
             }
           ]
         },
-        "status": {}
+        "status": {
+          "conversion": {
+            "failed": false,
+            "storedVersion": "v2beta1"
+          }
+        }
       }
     }
   }

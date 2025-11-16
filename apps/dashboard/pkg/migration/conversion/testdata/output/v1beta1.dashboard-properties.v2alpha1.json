@@ -13,7 +13,7 @@
         "kind": "AnnotationQuery",
         "spec": {
           "query": {
-            "kind": "DataQuery",
+            "kind": "",
             "spec": {
               "refId": "Anno"
             }
@@ -45,7 +45,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "DataQuery",
+                      "kind": "",
                       "spec": {}
                     },
                     "refId": "A",

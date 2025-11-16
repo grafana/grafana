@@ -17,7 +17,7 @@
           "name": "test-v2alpha1-viz-config"
         },
         "spec": {
-          "annotations": null,
+          "annotations": [],
           "cursorSync": "",
           "elements": {
             "panel-1": {
@@ -42,6 +42,7 @@
                             }
                           },
                           "datasource": {
+                            "type": "grafana-testdata-datasource",
                             "uid": "gdev-testdata"
                           },
                           "refId": "A",
@@ -218,9 +219,14 @@
             "fiscalYearStartMonth": 0
           },
           "title": "Test: V2alpha1 dashboard with viz config",
-          "variables": null
+          "variables": []
         },
-        "status": {}
+        "status": {
+          "conversion": {
+            "failed": false,
+            "storedVersion": "v2beta1"
+          }
+        }
       }
     }
   }

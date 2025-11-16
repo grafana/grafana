@@ -1062,8 +1062,11 @@ func buildDataQueryKind(query interface{}, datasourceType string) dashv2alpha1.D
 		querySpec = make(map[string]interface{})
 	}
 
+	// Use datasourceType as the kind (datasource type, e.g., "prometheus", "elasticsearch")
+	kind := datasourceType
+
 	return dashv2alpha1.DashboardDataQueryKind{
-		Kind: "DataQuery",
+		Kind: kind,
 		Spec: querySpec,
 	}
 }
@@ -1086,8 +1089,11 @@ func buildDataQueryKindForVariable(query interface{}, datasourceType string) das
 		querySpec = make(map[string]interface{})
 	}
 
+	// Use datasourceType as the kind (datasource type, e.g., "prometheus", "elasticsearch")
+	kind := datasourceType
+
 	return dashv2alpha1.DashboardDataQueryKind{
-		Kind: "DataQuery",
+		Kind: kind,
 		Spec: querySpec,
 	}
 }
@@ -1633,9 +1639,11 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 
 	// Build the query from target
 	var query *dashv2alpha1.DashboardDataQueryKind
+	// Use datasourceType as the kind (datasource type, e.g., "prometheus", "grafana")
+	kind := datasourceType
 	if target, ok := annotationMap["target"].(map[string]interface{}); ok && target != nil {
 		queryKind := dashv2alpha1.DashboardDataQueryKind{
-			Kind: "DataQuery",
+			Kind: kind,
 			Spec: target,
 		}
 		// Group field is not available in v2alpha1 DashboardDataQueryKind
@@ -1643,7 +1651,7 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 	} else {
 		// Always provide a query to match frontend behavior
 		queryKind := dashv2alpha1.DashboardDataQueryKind{
-			Kind: "DataQuery",
+			Kind: kind,
 			Spec: map[string]interface{}{},
 		}
 		// Group field is not available in v2alpha1 DashboardDataQueryKind

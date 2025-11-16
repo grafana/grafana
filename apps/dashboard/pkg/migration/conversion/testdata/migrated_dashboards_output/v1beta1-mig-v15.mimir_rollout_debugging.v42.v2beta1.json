@@ -978,7 +978,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "prometheus",
             "version": "v0",
             "spec": {
               "__legacyStringValue": "label_values(up, job)"
@@ -1007,7 +1007,7 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "prometheus",
             "version": "v0",
             "spec": {
               "__legacyStringValue": "label_values(up{job=~\"$cluster\"}, instance)"

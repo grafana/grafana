@@ -104,7 +104,7 @@
             "uid": "existing-ref-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {
               "__legacyStringValue": "label_values(up, instance)"
             }
@@ -335,7 +335,7 @@
             "uid": "existing-ref-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "prometheus",
             "spec": {
               "__legacyStringValue": "up"
             }
@@ -374,7 +374,7 @@
             "uid": "existing-target-uid"
           },
           "query": {
-            "kind": "DataQuery",
+            "kind": "elasticsearch",
             "spec": {
               "bucketAggs": [
                 {

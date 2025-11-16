@@ -85,7 +85,7 @@
                 "id": 1,
                 "title": "Panel with Conditional Rendering",
                 "description": "This panel demonstrates conditional rendering features",
-                "links": null,
+                "links": [],
                 "data": {
                   "kind": "QueryGroup",
                   "spec": {
@@ -100,6 +100,7 @@
                             }
                           },
                           "datasource": {
+                            "type": "prometheus",
                             "uid": "gdev-prometheus"
                           },
                           "refId": "A",
@@ -241,7 +242,7 @@
               ]
             }
           },
-          "links": null,
+          "links": [],
           "liveNow": true,
           "preload": true,
           "tags": [
@@ -512,7 +513,12 @@
             }
           ]
         },
-        "status": {}
+        "status": {
+          "conversion": {
+            "failed": false,
+            "storedVersion": "v2beta1"
+          }
+        }
       }
     }
   }
