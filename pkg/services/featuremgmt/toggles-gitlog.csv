@@ -254,7 +254,6 @@ pluginsSkipHostEnvVars,2023-11-15T17:09:14Z,,cb0a88a02770eaee2561fd434d8339cab26
 logRowsPopoverMenu,2023-11-16T09:48:10Z,,9cb303c3f701169e8651267744a4b5fe1695a066,Matias Chomicki
 lokiStructuredMetadata,2023-11-16T16:06:14Z,2025-06-30T14:09:44Z,a01f8c5b42bb7937139b8d52e9723cc37e5f7ae6,Sven Grossmann
 tracesEmbeddedFlameGraph,2023-11-23T13:36:53Z,2024-01-22T14:21:14Z,4f46fb412ca4e96b0b0ef3f462aead3fc146389e,Joey
-regressionTransformation,2023-11-24T14:49:16Z,2025-07-01T13:59:22Z,ab982e7bd36b86c94093bddcc31008f5dc49660e,Oscar Kilhed
 displayAnonymousStats,2023-11-29T16:58:41Z,2024-02-23T15:53:37Z,59bdff0280d52ca5d8918157d7697b9279b25501,Eric Leijonmarck
 influxqlStreamingParser,2023-11-29T17:29:35Z,,5845f140758473ab5ffe789bec4077032fd22839,ismail simsek
 kubernetesSnapshots,2023-12-05T22:31:49Z,,439edebcd605a1b63bf3a9b0ab5c2b83341cd5cd,Ryan McKinley
