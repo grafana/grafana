@@ -1,6 +1,6 @@
 import { locationUtil, SetPanelAttentionEvent, LegacyGraphHoverClearEvent } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { behaviors, sceneGraph, VizPanel } from '@grafana/scenes';
+import { AdHocFiltersVariable, behaviors, GroupByVariable, sceneGraph, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -55,6 +55,30 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         locationService.partial({ viewPanel: vizPanel.getPathId(), editPanel: undefined });
       }
     }),
+  });
+
+  keybindings.addBinding({
+    key: 'mod+shift+f',
+    onTrigger: () => {
+      const adHoc = sceneGraph
+        .getVariables(scene)
+        .state.variables.find((variable) => variable instanceof AdHocFiltersVariable);
+      if (adHoc) {
+        adHoc.focusInput();
+      }
+    },
+  });
+
+  keybindings.addBinding({
+    key: 'mod+shift+g',
+    onTrigger: () => {
+      const groupBy = sceneGraph
+        .getVariables(scene)
+        .state.variables.find((variable) => variable instanceof GroupByVariable);
+      if (groupBy) {
+        groupBy.focusInput();
+      }
+    },
   });
 
   // Panel share
