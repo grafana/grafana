@@ -28,6 +28,7 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
+import { PanelGroupByAction } from '../../scene/PanelGroupByAction';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
@@ -40,6 +41,7 @@ import { getVizPanelKeyForPanelId } from '../../utils/utils';
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 import { transformDataTopic } from '../transformToV2TypesUtils';
+import { VizPanelHeaderActions } from '../../scene/VizPanelHeaderActions';
 
 export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];
@@ -70,6 +72,9 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     seriesLimit: config.panelSeriesLimit,
     $data: createPanelDataProvider(panel),
     titleItems,
+    headerActions: new VizPanelHeaderActions({
+      hideGroupByAction: !config.featureToggles.panelGroupBy,
+    }),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
   };
@@ -114,6 +119,9 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
       }),
     ],
     extendPanelContext: setDashboardPanelContext,
+    headerActions: new VizPanelHeaderActions({
+      hideGroupByAction: !config.featureToggles.panelGroupBy,
+    }),
     pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
     title: panel.spec.title,
     options: {},

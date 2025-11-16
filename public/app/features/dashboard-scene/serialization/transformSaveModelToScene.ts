@@ -62,6 +62,7 @@ import { createVariablesForDashboard, createVariablesForSnapshot } from '../util
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
 import { GRAFANA_DATASOURCE_REF } from './const';
+import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -440,6 +441,9 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,
+    headerActions: new VizPanelHeaderActions({
+      hideGroupByAction: !config.featureToggles.panelGroupBy,
+    }),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
