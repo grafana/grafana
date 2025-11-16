@@ -96,7 +96,7 @@ func V{N}(_ context.Context, dashboard map[string]interface{}) error {
 Add your migration to `migrations.go`:
 
 ```go
-func GetMigrations(dsInfoProvider DataSourceInfoProvider) map[int]SchemaVersionMigrationFunc {
+func GetMigrations(dsIndexProvider DataSourceIndexProvider) map[int]SchemaVersionMigrationFunc {
 	return map[int]SchemaVersionMigrationFunc{
 		// ... existing migrations
 		{N}: V{N},  // Add your migration here

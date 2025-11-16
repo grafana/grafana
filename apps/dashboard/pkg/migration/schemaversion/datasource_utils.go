@@ -1,8 +1,109 @@
 package schemaversion
 
+import (
+	"context"
+	"sync"
+)
+
 // Shared utility functions for datasource migrations across different schema versions.
 // These functions handle the common logic for migrating datasource references from
 // string names/UIDs to structured reference objects with uid, type, and apiVersion.
+
+// onceIndexProvider wraps a DataSourceIndexProvider to ensure Index() is only called once.
+// This prevents multiple DB queries and index builds during operations that may call
+// provider.Index() multiple times (e.g., dashboard conversions with many datasource lookups).
+//
+// Thread-safe: Uses sync.Once to guarantee single execution even under concurrent access.
+type onceIndexProvider struct {
+	provider DataSourceIndexProvider
+	once     sync.Once
+	index    *DatasourceIndex
+}
+
+// Index returns the cached index, building it exactly once on first call.
+func (p *onceIndexProvider) Index(ctx context.Context) *DatasourceIndex {
+	p.once.Do(func() {
+		p.index = p.provider.Index(ctx)
+	})
+	return p.index
+}
+
+// WrapIndexProviderWithOnce wraps a provider to cache the index for a single operation.
+// Useful for conversions or migrations that may call provider.Index() multiple times.
+//
+// Example usage in dashboard conversion:
+//
+//	onceDsIndexProvider := schemaversion.WrapIndexProviderWithOnce(dsIndexProvider)
+//	// Now all calls to onceDsIndexProvider.Index(ctx) return the same cached index
+func WrapIndexProviderWithOnce(provider DataSourceIndexProvider) DataSourceIndexProvider {
+	if provider == nil {
+		return nil
+	}
+	return &onceIndexProvider{
+		provider: provider,
+	}
+}
+
+// DatasourceIndex provides O(1) lookup of datasources by name or UID.
+type DatasourceIndex struct {
+	ByName    map[string]*DataSourceInfo
+	ByUID     map[string]*DataSourceInfo
+	DefaultDS *DataSourceInfo
+}
+
+// NewDatasourceIndex creates an index from a list of datasources.
+// Iterates once through the list to build name and UID maps for O(1) lookups.
+func NewDatasourceIndex(datasources []DataSourceInfo) *DatasourceIndex {
+	idx := &DatasourceIndex{
+		ByName: make(map[string]*DataSourceInfo, len(datasources)),
+		ByUID:  make(map[string]*DataSourceInfo, len(datasources)),
+	}
+
+	for i := range datasources {
+		ds := &datasources[i]
+
+		// Index by name if present
+		if ds.Name != "" {
+			idx.ByName[ds.Name] = ds
+		}
+
+		// Index by UID if present
+		if ds.UID != "" {
+			idx.ByUID[ds.UID] = ds
+		}
+
+		// Track default datasource
+		if ds.Default {
+			idx.DefaultDS = ds
+		}
+	}
+
+	return idx
+}
+
+// Lookup finds a datasource by name or UID string.
+// Returns the datasource info if found, nil otherwise.
+func (idx *DatasourceIndex) Lookup(nameOrUID string) *DataSourceInfo {
+	// Try name first (most common in legacy dashboards)
+	if ds := idx.ByName[nameOrUID]; ds != nil {
+		return ds
+	}
+	// Try UID second
+	return idx.ByUID[nameOrUID]
+}
+
+func (idx *DatasourceIndex) LookupByUID(uid string) *DataSourceInfo {
+	return idx.ByUID[uid]
+}
+
+func (idx *DatasourceIndex) LookupByName(name string) *DataSourceInfo {
+	return idx.ByName[name]
+}
+
+// GetDefault returns the default datasource, if one exists.
+func (idx *DatasourceIndex) GetDefault() *DataSourceInfo {
+	return idx.DefaultDS
+}
 
 // GetDataSourceRef creates a datasource reference object with uid, type and optional apiVersion
 func GetDataSourceRef(ds *DataSourceInfo) map[string]interface{} {
@@ -17,21 +118,6 @@ func GetDataSourceRef(ds *DataSourceInfo) map[string]interface{} {
 		ref["apiVersion"] = ds.APIVersion
 	}
 	return ref
-}
-
-// GetDefaultDSInstanceSettings returns the default datasource if one exists
-func GetDefaultDSInstanceSettings(datasources []DataSourceInfo) *DataSourceInfo {
-	for _, ds := range datasources {
-		if ds.Default {
-			return &DataSourceInfo{
-				UID:        ds.UID,
-				Type:       ds.Type,
-				Name:       ds.Name,
-				APIVersion: ds.APIVersion,
-			}
-		}
-	}
-	return nil
 }
 
 // isDataSourceRef checks if the object is a valid DataSourceRef (has uid or type)
@@ -64,7 +150,7 @@ func isDataSourceRef(ref interface{}) bool {
 // Options:
 //   - returnDefaultAsNull: if true, returns nil for "default" datasources (used in V33)
 //   - returnDefaultAsNull: if false, returns reference for "default" datasources (used in V36)
-func MigrateDatasourceNameToRef(nameOrRef interface{}, options map[string]bool, datasources []DataSourceInfo) map[string]interface{} {
+func MigrateDatasourceNameToRef(nameOrRef interface{}, options map[string]bool, index *DatasourceIndex) map[string]interface{} {
 	if options["returnDefaultAsNull"] && (nameOrRef == nil || nameOrRef == "default") {
 		return nil
 	}
@@ -76,8 +162,7 @@ func MigrateDatasourceNameToRef(nameOrRef interface{}, options map[string]bool, 
 
 	// Look up datasource by name/UID
 	if nameOrRef == nil || nameOrRef == "default" {
-		ds := GetDefaultDSInstanceSettings(datasources)
-		if ds != nil {
+		if ds := index.GetDefault(); ds != nil {
 			return GetDataSourceRef(ds)
 		}
 	}
@@ -90,16 +175,8 @@ func MigrateDatasourceNameToRef(nameOrRef interface{}, options map[string]bool, 
 			return map[string]interface{}{}
 		}
 
-		// Search for matching datasource
-		for _, ds := range datasources {
-			if str == ds.Name || str == ds.UID {
-				return GetDataSourceRef(&DataSourceInfo{
-					UID:        ds.UID,
-					Type:       ds.Type,
-					Name:       ds.Name,
-					APIVersion: ds.APIVersion,
-				})
-			}
+		if ds := index.Lookup(str); ds != nil {
+			return GetDataSourceRef(ds)
 		}
 
 		// Unknown datasource name should be preserved as UID-only reference
