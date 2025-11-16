@@ -107,6 +107,7 @@ func newClient(opts options.StorageOptions,
 	ctx := context.Background()
 
 	switch opts.StorageType {
+	// skip file storage type that for now
 	case options.StorageTypeFile:
 		if opts.DataPath == "" {
 			opts.DataPath = filepath.Join(cfg.DataPath, "grafana-apiserver")
@@ -165,12 +166,8 @@ func newClient(opts options.StorageOptions,
 			indexConn = conn
 		}
 
-		// Create a client instance
-		client, err := resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
-		if err != nil {
-			return nil, err
-		}
-		return client, nil
+		// Create a resource client
+		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
 
 	default:
 		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics, nil)
