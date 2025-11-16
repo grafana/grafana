@@ -6,7 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { DashboardViewItem } from 'app/features/search/types';

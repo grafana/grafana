@@ -18,7 +18,7 @@ import {
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ServiceAccountStateFilter, ServiceAccountDTO } from 'app/types/serviceaccount';
 import { StoreState } from 'app/types/store';

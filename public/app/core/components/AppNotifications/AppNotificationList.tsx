@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { AlertErrorPayload, AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Stack } from '@grafana/ui';
 import { notifyApp, hideAppNotification } from 'app/core/actions';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { selectVisible } from 'app/core/reducers/appNotification';
 import { useSelector, useDispatch } from 'app/types/store';

@@ -1,7 +1,7 @@
 import { LegacyGraphHoverClearEvent } from '@grafana/data';
 import { behaviors, sceneGraph, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 
 import { DashboardScene } from './DashboardScene';
@@ -9,8 +9,10 @@ import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
 // Mock dependencies
 jest.mock('app/core/app_events', () => ({
-  subscribe: jest.fn(() => ({ unsubscribe: jest.fn() })),
-  publish: jest.fn(),
+  appEvents: {
+    subscribe: jest.fn(() => ({ unsubscribe: jest.fn() })),
+    publish: jest.fn(),
+  },
 }));
 jest.mock('app/core/services/KeybindingSet');
 const mockOnRefresh = jest.fn();

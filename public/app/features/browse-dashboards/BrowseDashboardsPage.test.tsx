@@ -7,8 +7,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
-import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import BrowseDashboardsPage from './BrowseDashboardsPage';
 import * as permissions from './permissions';

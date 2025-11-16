@@ -1,4 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { NestedFolderDTO } from 'app/features/search/service/types';
@@ -6,7 +7,6 @@ import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { contextSrv } from '../../../core/core';
 import { getFolderURL, isSharedWithMe } from '../components/utils';
 
 export const PAGE_SIZE = 50;

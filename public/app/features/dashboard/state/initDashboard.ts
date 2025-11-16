@@ -2,7 +2,7 @@ import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent } from '@gr
 import { t } from '@grafana/i18n';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';

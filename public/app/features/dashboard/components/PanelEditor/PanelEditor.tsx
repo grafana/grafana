@@ -20,10 +20,10 @@ import {
   withTheme2,
   Stack,
 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
-import { appEvents } from 'app/core/core';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';

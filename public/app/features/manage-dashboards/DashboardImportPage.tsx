@@ -23,7 +23,7 @@ import {
   Label,
   Stack,
 } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';

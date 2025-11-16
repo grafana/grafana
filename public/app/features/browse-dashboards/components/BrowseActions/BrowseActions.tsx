@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { BulkDeleteProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkDeleteProvisionedResource';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';

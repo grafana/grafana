@@ -2,7 +2,7 @@ import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { appEvents } from 'app/core/core';
+import { appEvents } from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { ShowModalReactEvent } from 'app/types/events';
 

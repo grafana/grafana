@@ -23,7 +23,7 @@ import {
 } from '@grafana/scenes';
 import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
