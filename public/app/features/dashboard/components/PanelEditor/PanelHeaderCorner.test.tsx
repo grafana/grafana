@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 
-import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelModel } from '../../state/PanelModel';
@@ -11,7 +10,6 @@ const setup = () => {
   const testPanel = new PanelModel({ title: 'test', description: 'test panel' });
   const props: Props = {
     panel: testPanel,
-    theme: createTheme(),
   };
   return render(<PanelHeaderCorner {...props} />);
 };
