@@ -13,7 +13,7 @@ import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { getQueryRunnerFor, useDashboard } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
-import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
+import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { TabItem } from './TabItem';
 
@@ -147,8 +147,14 @@ function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
 }
 
 function editTabTitleAction(tab: TabItem, title: string, prevTitle: string) {
-  if (title === prevTitle) {
+  if (title !== '' && title === prevTitle) {
     return;
+  }
+
+  if (title === '') {
+    const tabs = tab.getParentLayout().getTabsIncludingRepeats();
+    const existingNames = new Set(tabs.map((tab) => tab.state.title).filter((title) => title !== undefined));
+    title = generateUniqueTitle('New tab', existingNames);
   }
 
   dashboardEditActions.edit({
