@@ -106,13 +106,12 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     if (isPluginDashboardError(error)) {
       return (
         <Alert
-          title={t('dashboard-scene.save-dashboard-form.render-footer.title-plugin-dashboard', 'Plugin dashboard')}
+          title={t('dashboard-scene.save-dashboard-form.render-footer.title-plugin-dashboard', 'Plugin dashboard - changes may be lost')}
           severity="error"
         >
           <p>
             <Trans i18nKey="dashboard-scene.save-dashboard-form.render-footer.body-plugin-dashboard">
-              Your changes will be lost when you update the plugin. Use <strong>Save as</strong> to create custom
-              version.
+            This dashboard is provided by a plugin. Any changes you make here will be overwritten when the plugin is updated. To keep your modifications permanently, use <strong>Save as</strong> to create a custom copy instead.
             </Trans>
           </p>
           <Box paddingTop={2}>

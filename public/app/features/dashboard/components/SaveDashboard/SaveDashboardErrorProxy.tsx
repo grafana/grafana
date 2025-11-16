@@ -124,18 +124,14 @@ const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboard
   return (
     <Modal
       className={styles.modal}
-      title={t('dashboard.confirm-plugin-dashboard-save-modal.title-plugin-dashboard', 'Plugin dashboard')}
+      title={t('dashboard.confirm-plugin-dashboard-save-modal.title-plugin-dashboard', 'Plugin dashboard - changes may be lost')}
       icon="copy"
       isOpen={true}
       onDismiss={onDismiss}
     >
       <div className={styles.modalText}>
         <Trans i18nKey="dashboard.confirm-plugin-dashboard-save-modal.body-plugin-dashboard">
-          Your changes will be lost when you update the plugin.
-          <br />
-          <small>
-            Use <strong>Save As</strong> to create custom version.
-          </small>
+        This dashboard is provided by a plugin. Any changes you make here will be overwritten when the plugin is updated. To keep your modifications permanently, use <strong>Save as</strong> to create a custom copy instead.
         </Trans>
       </div>
       <Modal.ButtonRow>
@@ -150,7 +146,7 @@ const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboard
             onDismiss();
           }}
         >
-          <Trans i18nKey="dashboard.confirm-plugin-dashboard-save-modal.overwrite">Overwrite</Trans>
+          <Trans i18nKey="dashboard.confirm-plugin-dashboard-save-modal.overwrite">Save and overwrite anyway</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>
