@@ -1,4 +1,4 @@
-package mssql
+package sqleng
 
 import (
 	"context"

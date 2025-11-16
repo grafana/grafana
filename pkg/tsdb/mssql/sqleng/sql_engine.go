@@ -14,11 +14,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/tsdb/mssql/kerberos"
+	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
@@ -88,6 +93,10 @@ type DataSourceHandler struct {
 	dsInfo                 DataSourceInfo
 	rowLimit               int64
 	userError              string
+	azureSettings          *azsettings.AzureSettings
+	azureCredentials       azcredentials.AzureCredentials
+	kerberosAuth           kerberos.KerberosAuth
+	driverName             string
 }
 
 type QueryJson struct {
@@ -113,16 +122,38 @@ func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) er
 	return e.queryResultTransformer.TransformQueryError(logger, err)
 }
 
-func NewQueryDataHandler(userFacingDefaultError string, db *sql.DB, config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
-	macroEngine SQLMacroEngine, log log.Logger) (*DataSourceHandler, error) {
+func NewQueryDataHandler(ctx context.Context, settings backend.DataSourceInstanceSettings, userFacingDefaultError string, config DataPluginConfiguration,
+	log log.Logger, azureSettings *azsettings.AzureSettings) (*DataSourceHandler, error) {
+	queryResultTransformer := utils.MSSQLQueryResultTransformer{
+		UserError: userFacingDefaultError,
+	}
+	driverName := "mssql"
+	if config.DSInfo.JsonData.AuthenticationType == azureAuthentication {
+		driverName = "azuresql"
+	}
+
+	azureCredentials, err := utils.GetAzureCredentials(settings)
+	if err != nil {
+		return nil, fmt.Errorf("error reading azure credentials")
+	}
+
+	kerberosAuth, err := kerberos.GetKerberosSettings(settings)
+	if err != nil {
+		return nil, fmt.Errorf("error getting kerberos settings: %w", err)
+	}
+
 	queryDataHandler := DataSourceHandler{
-		queryResultTransformer: queryResultTransformer,
-		macroEngine:            macroEngine,
+		queryResultTransformer: &queryResultTransformer,
+		macroEngine:            newMssqlMacroEngine(),
 		timeColumnNames:        []string{"time"},
 		log:                    log,
 		dsInfo:                 config.DSInfo,
 		rowLimit:               config.RowLimit,
 		userError:              userFacingDefaultError,
+		azureSettings:          azureSettings,
+		azureCredentials:       azureCredentials,
+		kerberosAuth:           kerberosAuth,
+		driverName:             driverName,
 	}
 
 	if len(config.TimeColumnNames) > 0 {
@@ -133,7 +164,19 @@ func NewQueryDataHandler(userFacingDefaultError string, db *sql.DB, config DataP
 		queryDataHandler.metricColumnTypes = config.MetricColumnTypes
 	}
 
+	cnnstr, err := generateConnectionString(config.DSInfo, azureSettings.ManagedIdentityClientId, azureSettings.AzureEntraPasswordCredentialsEnabled, azureCredentials, kerberosAuth, log)
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := newMSSQL(ctx, driverName, config.RowLimit, config.DSInfo, cnnstr, log, settings)
+	if err != nil {
+		logger.Error("Failed connecting to MSSQL", "err", err)
+		return nil, err
+	}
+
 	queryDataHandler.db = db
+
 	return &queryDataHandler, nil
 }
 
