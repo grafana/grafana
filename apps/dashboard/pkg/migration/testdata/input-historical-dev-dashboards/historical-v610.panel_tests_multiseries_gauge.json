@@ -1,0 +1,296 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 6,
+      "links": [],
+      "options-gauge": {
+        "decimals": 0,
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "avg",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#1F78C1",
+            "index": 5,
+            "value": 96.875
+          },
+          {
+            "color": "#E24D42",
+            "index": 4,
+            "value": 93.75
+          },
+          {
+            "color": "#EF843C",
+            "index": 3,
+            "value": 87.5
+          },
+          {
+            "color": "#6ED0E0",
+            "index": 2,
+            "value": 75
+          },
+          {
+            "color": "#EAB839",
+            "index": 1,
+            "value": 50
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "none",
+        "valueMappings": [
+          {
+            "from": "50",
+            "id": 1,
+            "operator": "",
+            "text": "Hello :) ",
+            "to": "90",
+            "type": 2,
+            "value": ""
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "E",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Horizontal with range variable",
+      "type": "gauge"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 2,
+      "links": [],
+      "options-gauge": {
+        "decimals": 0,
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "avg",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#EAB839",
+            "index": 1,
+            "value": 50
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "none",
+        "valueMappings": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "E",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Repeat horizontal",
+      "type": "gauge"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 14,
+        "w": 5,
+        "x": 0,
+        "y": 16
+      },
+      "id": 4,
+      "links": [],
+      "options-gauge": {
+        "decimals": 0,
+        "maxValue": "200",
+        "minValue": 0,
+        "options": {
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "max",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#6ED0E0",
+            "index": 2,
+            "value": 75
+          },
+          {
+            "color": "#EAB839",
+            "index": 1,
+            "value": 50
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "none",
+        "valueMappings": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "E",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Vertical",
+      "type": "gauge"
+    }
+  ],
+  "schemaVersion": 17,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+  },
+  "timezone": "",
+  "title": "Multi series gauges",
+  "uid": "szkuR1umk",
+  "version": 7
+}

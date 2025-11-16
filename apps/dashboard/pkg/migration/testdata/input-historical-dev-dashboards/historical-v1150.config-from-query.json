@@ -1,0 +1,810 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "max": 100,
+          "min": 1,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "startValue": 50
+        },
+        {
+          "alias": "",
+          "csvContent": "min,max,threshold1\n1000,1000,8000\n0,100,80\n\n",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "config",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Min, max, threshold from separate query",
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "config",
+            "mappings": []
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "left",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "SensorA"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "11.4.0-pre",
+      "targets": [
+        {
+          "csvContent": "Name, Value, SensorA, MyUnit, MyColor\nGoogle, 10, 50, km/h, blue\nGoogle, 100, 100,km/h, orange\n",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Custom mappings and apply to self",
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "applyTo": {
+              "id": "byName",
+              "options": "SensorA"
+            },
+            "applyToConfig": true,
+            "configRefId": "A",
+            "mappings": [
+              {
+                "configProperty": "unit",
+                "fieldName": "MyUnit",
+                "handlerKey": "unit"
+              },
+              {
+                "fieldName": "MyColor",
+                "handlerKey": "color"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "basic",
+                  "type": "color-background"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "id": 7,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "11.4.0-pre",
+      "targets": [
+        {
+          "csvContent": "ID, DisplayText\n21412312312, Homer\n12421412413, Simpsons \n12321312313, Bart",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Mapping data",
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "applyToConfig": true,
+            "configRefId": "A",
+            "mappings": [
+              {
+                "fieldName": "Color",
+                "handlerKey": "mappings.color"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "mappings.value"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "basic",
+                  "type": "color-background"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "id": 6,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "11.4.0-pre",
+      "targets": [
+        {
+          "csvContent": "Value, Color\nOK, blue\nPretty bad, red\nYay it's green, green\nSomething is off, orange\nNo idea, #88AA00\nAm I purple?, purple",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Value mappings from query result applied to itself",
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "applyTo": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "applyToConfig": true,
+            "configRefId": "A",
+            "mappings": [
+              {
+                "fieldName": "Color",
+                "handlerKey": "mappings.color"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "mappings.value"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "11.4.0-pre",
+      "targets": [
+        {
+          "csvContent": "ID, Value\n21412312312, 100\n12421412413, 20\n12321312313, 10",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Display data",
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "applyToConfig": true,
+            "configRefId": "A",
+            "mappings": [
+              {
+                "fieldName": "Color",
+                "handlerKey": "mappings.color"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "mappings.value"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 19
+      },
+      "id": 9,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "stacking": "none",
+        "text": {},
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "8.1.0-pre",
+      "targets": [
+        {
+          "csvContent": "ID, Value\nA21412312312, 100\nA12421412413, 20\nA12321312313, 10\n",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "data",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "ID, DisplayText\nA21412312312, Homer\nA12421412413, Marge \nA12321312313, Bart",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "mappings",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Value mapping ID -> DisplayText from separate query",
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "applyTo": {
+              "id": "byName",
+              "options": "ID"
+            },
+            "applyToConfig": false,
+            "configRefId": "mappings",
+            "mappings": [
+              {
+                "fieldName": "ID",
+                "handlerKey": "mappings.value"
+              },
+              {
+                "fieldName": "DisplayText",
+                "handlerKey": "mappings.text"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "default": true,
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed+area"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
+      "id": 10,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"meta\": {\n        \"typeVersion\": [\n          0,\n          0\n        ],\n        \"custom\": {\n          \"customStat\": 10\n        }\n      },\n      \"fields\": [\n        {\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {\n            \"interval\": 300000\n          }\n        },\n        {\n          \"name\": \"A-series\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"labels\": {},\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1732120345536,\n          1732120645536,\n          1732120945536,\n          1732121245536,\n          1732121545536,\n          1732121845536,\n          1732122145536,\n          1732122445536,\n          1732122745536,\n          1732123045536,\n          1732123345536,\n          1732123645536,\n          1732123945536,\n          1732124245536,\n          1732124545536,\n          1732124845536,\n          1732125145536,\n          1732125445536,\n          1732125745536,\n          1732126045536,\n          1732126345536,\n          1732126645536,\n          1732126945536,\n          1732127245536,\n          1732127545536,\n          1732127845536,\n          1732128145536,\n          1732128445536,\n          1732128745536,\n          1732129045536,\n          1732129345536,\n          1732129645536,\n          1732129945536,\n          1732130245536,\n          1732130545536,\n          1732130845536,\n          1732131145536,\n          1732131445536,\n          1732131745536,\n          1732132045536,\n          1732132345536,\n          1732132645536,\n          1732132945536,\n          1732133245536,\n          1732133545536,\n          1732133845536,\n          1732134145536,\n          1732134445536,\n          1732134745536,\n          1732135045536,\n          1732135345536,\n          1732135645536,\n          1732135945536,\n          1732136245536,\n          1732136545536,\n          1732136845536,\n          1732137145536,\n          1732137445536,\n          1732137745536,\n          1732138045536,\n          1732138345536,\n          1732138645536,\n          1732138945536,\n          1732139245536,\n          1732139545536,\n          1732139845536,\n          1732140145536,\n          1732140445536,\n          1732140745536,\n          1732141045536,\n          1732141345536,\n          1732141645536\n        ],\n        [\n          36.67835770082578,\n          35.674537924065,\n          8.339763723800829,\n          16.313291374141446,\n          66.05915891584247,\n          55.975417240601566,\n          33.75563648171818,\n          10.561077849025175,\n          20.31936089572975,\n          26.11219409670694,\n          57.542750561307564,\n          67.10954340535248,\n          82.95323961635275,\n          100.9691805551439,\n          59.829706792214644,\n          94.58723331927925,\n          89.3082374466047,\n          58.69065135820439,\n          97.144192150251,\n          139.99199318295675,\n          157.9473973408396,\n          177.94452058033198,\n          188.84065573954362,\n          154.3930906887033,\n          130.14406878049226,\n          116.65818233680316,\n          100.96041794526472,\n          144.65142921584447,\n          175.75178611497054,\n          203.55271609883386,\n          238.4931714915047,\n          253.38754249911452,\n          271.1735238723396,\n          258.54418620287515,\n          260.8463123020904,\n          216.10614084307323,\n          253.30389406688175,\n          249.37108721413884,\n          243.7226799137106,\n          216.74579233434042,\n          262.50043010512826,\n          238.71564300219498,\n          218.3552317737898,\n          195.6154411937393,\n          154.1987522722987,\n          124.00066408416897,\n          146.6474694384778,\n          101.68405646311294,\n          104.5791139459948,\n          85.39428966503652,\n          78.45166775446714,\n          56.285707917841535,\n          36.22861441808941,\n          35.098428846082555,\n          68.67835646605371,\n          101.67142528391042,\n          151.04038339587296,\n          114.77414457402928,\n          72.65341528313934,\n          113.42643748928826,\n          151.09282092262364,\n          163.24422498859587,\n          183.86606816236363,\n          230.24678524811478,\n          205.94887669562561,\n          211.24387656976373,\n          217.26738326873522,\n          214.66898480692646,\n          206.95531499977153,\n          194.19724584765092,\n          146.16071387746757,\n          188.30193538777615\n        ]\n      ]\n    }\n  }\n]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "Config from query / threshold does not overwrite Base threshold",
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "A",
+            "mappings": [
+              {
+                "fieldName": "A-series",
+                "handlerArguments": {
+                  "threshold": {
+                    "color": "yellow"
+                  }
+                },
+                "handlerKey": "threshold1"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 40,
+  "tags": [
+    "gdev",
+    "transform"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "2024-11-20T16:31:51.747Z",
+    "to": "2024-11-20T22:28:15.688Z"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Transforms - Config from query",
+  "uid": "Juj4_7ink",
+  "version": 1,
+  "weekStart": ""
+}
