@@ -3,6 +3,7 @@ import { map } from 'rxjs/operators';
 
 import { getTimeField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
+import { ScopedVars } from '../../types/ScopedVars';
 import { NullValueMode } from '../../types/data';
 import { DataFrame, FieldType, Field } from '../../types/dataFrame';
 import { DataTransformContext, DataTransformerInfo } from '../../types/transformations';
@@ -23,6 +24,7 @@ export enum CalculateFieldMode {
   BinaryOperation = 'binary',
   UnaryOperation = 'unary',
   Index = 'index',
+  TemplateExpression = 'templateExpression',
 }
 
 export enum WindowSizeMode {
@@ -72,6 +74,11 @@ interface IndexOptions {
   asPercentile: boolean;
 }
 
+interface TemplateExpressionOptions {
+  expression: string;
+  replaceFn: Function;
+}
+
 const defaultReduceOptions: ReduceOptions = {
   reducer: ReducerID.sum,
 };
@@ -106,6 +113,7 @@ export interface CalculateFieldTransformerOptions {
   binary?: BinaryOptions;
   unary?: UnaryOptions;
   index?: IndexOptions;
+  template?: TemplateExpressionOptions;
 
   // Remove other fields
   replaceFields?: boolean;
@@ -113,6 +121,7 @@ export interface CalculateFieldTransformerOptions {
   // Output field properties
   alias?: string; // The output field name
   // TODO: config?: FieldConfig; or maybe field overrides? since the UI exists
+  returnType?: FieldType;
 }
 
 type ValuesCreator = (data: DataFrame) => unknown[] | undefined;
@@ -249,6 +258,33 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                 fields: options.replaceFields ? [f] : [...frame.fields, f],
               };
             });
+          case CalculateFieldMode.TemplateExpression:
+            if (options.template?.expression !== undefined) {
+              return data.map((frame) => {
+                const newFieldVals = Array.from({ length: frame.length }, (_, i) => {
+                  const fieldVars: ScopedVars = {};
+                  frame.fields.forEach((field) => {
+                    fieldVars[field.name] = {
+                      value: field.values[i],
+                    };
+                  });
+                  const replaced = ctx.interpolate(options.template!.expression, fieldVars);
+                  return replaced;
+                });
+                const f: Field = {
+                  name: options.alias ?? 'Field',
+                  type: FieldType.string,
+                  values: newFieldVals,
+                  config: {},
+                };
+                return {
+                  ...frame,
+                  fields: options.replaceFields ? [f] : [...frame.fields, f],
+                };
+              });
+            } else {
+              return data;
+            }
         }
 
         // Nothing configured
@@ -269,7 +305,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 
           const field: Field = {
             name: getNameFromOptions(options),
-            type: FieldType.number,
+            type: options.returnType ?? FieldType.number,
             config: {},
             values,
           };
@@ -713,6 +749,8 @@ export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
       break;
     case CalculateFieldMode.Index:
       return 'Row';
+    case CalculateFieldMode.TemplateExpression:
+      return 'Field';
   }
 
   return 'math';
