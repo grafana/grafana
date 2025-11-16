@@ -2112,6 +2112,13 @@ var (
 			Owner:       awsDatasourcesSquad,
 			Expression:  "false",
 		},
+		{
+			Name:         "transformationsEmptyPlaceholder",
+			Description:  "Show transformation quick-start cards in empty transformations state",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDataProSquad,
+		},
 	}
 )
 
