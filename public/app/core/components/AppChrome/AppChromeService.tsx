@@ -10,11 +10,8 @@ import { isShallowEqual } from 'app/core/utils/isShallowEqual';
 import { KioskMode } from 'app/types/dashboard';
 
 import { RouteDescriptor } from '../../navigation/types';
-import { buildBreadcrumbs } from '../Breadcrumbs/utils';
 
-import { logDuplicateUnifiedHistoryEntryEvent } from './History/eventsTracking';
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
-import { HistoryEntry } from './types';
 
 export interface AppChromeState {
   chromeless?: boolean;
@@ -34,7 +31,6 @@ export interface AppChromeState {
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
 export const DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
-export const HISTORY_LOCAL_STORAGE_KEY = 'grafana.navigation.history';
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
@@ -88,8 +84,6 @@ export class AppChromeService {
     newState.chromeless = newState.kioskMode === KioskMode.Full || this.currentRoute?.chromeless;
 
     if (!this.ignoreStateUpdate(newState, current)) {
-      config.featureToggles.unifiedHistory &&
-        store.setObject(HISTORY_LOCAL_STORAGE_KEY, this.getUpdatedHistory(newState));
       this.state.next(newState);
     }
   }
@@ -118,40 +112,6 @@ export class AppChromeService {
     window.sessionStorage.removeItem('returnToPrevious');
   };
 
-  private getUpdatedHistory(newState: AppChromeState): HistoryEntry[] {
-    const breadcrumbs = buildBreadcrumbs(newState.sectionNav.node, newState.pageNav, { text: 'Home', url: '/' }, true);
-    const newPageNav = newState.pageNav || newState.sectionNav.node;
-
-    let entries = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []);
-    const clickedHistory = store.getObject<boolean>('CLICKING_HISTORY');
-    if (clickedHistory) {
-      store.setObject('CLICKING_HISTORY', false);
-      return entries;
-    }
-    if (!newPageNav) {
-      return entries;
-    }
-
-    const lastEntry = entries[0];
-    const newEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
-    const isSamePath = lastEntry && newEntry.url.split('?')[0] === lastEntry.url.split('?')[0];
-
-    // To avoid adding an entry with the same path twice, we always use the latest one
-    if (isSamePath) {
-      entries[0] = newEntry;
-    } else {
-      if (lastEntry && lastEntry.name === newEntry.name) {
-        logDuplicateUnifiedHistoryEntryEvent({
-          entryName: newEntry.name,
-          lastEntryURL: lastEntry.url,
-          newEntryURL: newEntry.url,
-        });
-      }
-      entries = [newEntry, ...entries];
-    }
-
-    return entries;
-  }
   private ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
     if (isShallowEqual(newState, current)) {
       return true;

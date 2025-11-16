@@ -731,10 +731,6 @@ const (
 	// Enables cross cluster search in the Elasticsearch data source
 	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
 
-	// FlagUnifiedHistory
-	// Displays the navigation history so the user can navigate back to previous pages
-	FlagUnifiedHistory = "unifiedHistory"
-
 	// FlagLokiLabelNamesQueryApi
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
