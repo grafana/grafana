@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -95,6 +96,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
+			defer db.CleanupTestDB()
 			tc.fn(t, newBackend(context.Background()), opts.NSPrefix)
 		})
 	}
