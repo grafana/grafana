@@ -734,7 +734,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 	// Get the RV
 	iter := &listIter{listRV: req.ResourceVersion, sortAsc: false}
 	if req.NextPageToken != "" {
-		continueToken, err := resource.GetContinueToken(req.NextPageToken)
+		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
@@ -836,7 +836,7 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 		useCurrentRV: true, // use the current RV for the continue token instead of the listRV
 	}
 	if req.NextPageToken != "" {
-		continueToken, err := resource.GetContinueToken(req.NextPageToken)
+		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}

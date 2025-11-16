@@ -1,4 +1,4 @@
-package resource
+package sql
 
 import (
 	"encoding/base64"
@@ -7,10 +7,9 @@ import (
 )
 
 type ContinueToken struct {
-	StartKey        string `json:"k"`
-	EndKey          string `json:"e"`
-	ResourceVersion int64  `json:"v"`
-	SortAscending   bool   `json:"s"`
+	StartOffset     int64 `json:"o"`
+	ResourceVersion int64 `json:"v"`
+	SortAscending   bool  `json:"s"`
 }
 
 func (c ContinueToken) String() string {
