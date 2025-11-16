@@ -85,14 +85,37 @@ export const DataSourceHttpSettingsOverhaul = (props: DataSourceHttpSettingsProp
         // Also make sure to store the data about your component
         // being selected/unselected.
         onAuthMethodSelect={(method) => {
+          // Clean up SigV4 properties when switching away from SigV4 auth
+          let updatedJsonData = {
+            ...options.jsonData,
+            oauthPassThru: method === AuthMethod.OAuthForward,
+            sigV4Auth: false,
+          };
+          
+          let updatedSecureJsonData = { ...options.secureJsonData };
+
+          // Remove CRITICAL SigV4 properties (hardcoded for security)
+          delete (updatedJsonData as any)['assumeRoleArn'];  // Role ARN - allows role assumption
+          delete (updatedJsonData as any)['externalId'];     // External ID - cross-account security token
+          
+          // Remove CRITICAL secureJsonData properties (hardcoded for security)
+          delete (updatedSecureJsonData as any)['accessKey'];     // AWS Access Key ID - CRITICAL
+          delete (updatedSecureJsonData as any)['secretKey'];     // AWS Secret Access Key - CRITICAL  
+          delete (updatedSecureJsonData as any)['sessionToken'];  // AWS Session Token - CRITICAL
+          
+          // Remove any sigV4* prefixed secure properties (all are sensitive)
+          Object.keys(updatedSecureJsonData).forEach(key => {
+            if (key.startsWith('sigV4')) {
+              delete (updatedSecureJsonData as any)[key];
+            }
+          });
+
           onOptionsChange({
             ...options,
             basicAuth: method === AuthMethod.BasicAuth,
             withCredentials: method === AuthMethod.CrossSiteCredentials,
-            jsonData: {
-              ...options.jsonData,
-              oauthPassThru: method === AuthMethod.OAuthForward,
-            },
+            jsonData: updatedJsonData,
+            secureJsonData: updatedSecureJsonData,
           });
         }}
         // If your method is selected pass its id to `selectedMethod`,
