@@ -1,3 +1,5 @@
+import { RoleDto } from 'app/api/clients/legacy';
+
 /**
  * UserPermission is a map storing permissions in a form of
  * {
@@ -170,17 +172,6 @@ export enum AccessControlAction {
   MigrationAssistantMigrate = 'migrationassistant:migrate',
 }
 
-export interface Role {
-  uid: string;
-  name: string;
-  displayName: string;
+export interface Role extends RoleDto {
   filteredDisplayName: string; // name to be shown in filtered role list
-  description: string;
-  group: string;
-  global: boolean;
-  delegatable?: boolean;
-  mapped?: boolean;
-  version: number;
-  created: string;
-  updated: string;
 }

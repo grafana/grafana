@@ -12575,17 +12575,10 @@
       },
       "UpdateTeamCommand": {
         "properties": {
-          "Email": {
+          "email": {
             "type": "string"
           },
-          "ExternalUID": {
-            "type": "string"
-          },
-          "ID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Name": {
+          "name": {
             "type": "string"
           }
         },
@@ -24856,6 +24849,14 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "accesscontrol",
+            "schema": {
+              "default": false,
+              "type": "boolean"
             }
           }
         ],

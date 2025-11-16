@@ -1,12 +1,13 @@
-import { render, screen, waitFor } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { MOCK_TEAMS } from '@grafana/test-utils/unstable';
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { Props, TeamSettings } from './TeamSettings';
+import TeamSettings from './TeamSettings';
 
 jest.spyOn(contextSrv, 'hasPermission').mockImplementation(() => true);
 jest.spyOn(contextSrv, 'hasPermissionInMetadata').mockImplementation(() => true);
@@ -14,9 +15,9 @@ jest.spyOn(contextSrv, 'hasPermissionInMetadata').mockImplementation(() => true)
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const setup = (propOverrides?: object) => {
+const setup = () => {
   const team = MOCK_TEAMS[0];
-  const props: Props = {
+  const props = {
     team: {
       id: Number(team.metadata.labels['grafana.app/deprecatedInternalID']),
       uid: team.metadata.name,
@@ -25,12 +26,14 @@ const setup = (propOverrides?: object) => {
       orgId: 1,
       isProvisioned: false,
     },
-    updateTeam: jest.fn(),
   };
 
-  Object.assign(props, propOverrides);
-
-  return render(<TeamSettings {...props} />);
+  return render(
+    <>
+      <AppNotificationList />
+      <TeamSettings {...props} />
+    </>
+  );
 };
 
 describe('Team settings', () => {
@@ -41,8 +44,7 @@ describe('Team settings', () => {
   });
 
   it('should validate required fields', async () => {
-    const mockUpdate = jest.fn();
-    const { user } = setup({ updateTeam: mockUpdate });
+    const { user } = setup();
     await screen.findByText('Team details');
 
     await user.clear(screen.getByRole('textbox', { name: /Name/ }));
@@ -50,12 +52,10 @@ describe('Team settings', () => {
     await user.click(screen.getByRole('button', { name: 'Save team details' }));
 
     expect(await screen.findByText('Name is required')).toBeInTheDocument();
-    await waitFor(() => expect(mockUpdate).not.toHaveBeenCalled());
   });
 
   it('should submit form with correct values', async () => {
-    const mockUpdate = jest.fn();
-    const { user } = setup({ updateTeam: mockUpdate });
+    const { user } = setup();
 
     await user.clear(screen.getByRole('textbox', { name: /Name/ }));
     await user.clear(screen.getByLabelText(/Email/i));
@@ -63,6 +63,6 @@ describe('Team settings', () => {
     await user.type(screen.getByLabelText(/Email/i), 'team@test.com');
     await user.click(screen.getByRole('button', { name: 'Save team details' }));
 
-    await waitFor(() => expect(mockUpdate).toHaveBeenCalledWith('New team', 'team@test.com'));
+    expect(await screen.findByText('Team updated')).toBeInTheDocument();
   });
 });
