@@ -809,10 +809,45 @@ func (hs *HTTPServer) metricsEndpointBasicAuthEnabled() bool {
 	return hs.Cfg.MetricsEndpointBasicAuthUsername != "" && hs.Cfg.MetricsEndpointBasicAuthPassword != ""
 }
 
+func tlsCipherSuites() map[string]uint16 {
+	cipherSuites := map[string]uint16{}
+
+	for _, suite := range tls.CipherSuites() {
+		cipherSuites[suite.Name] = suite.ID
+	}
+	for _, suite := range tls.InsecureCipherSuites() {
+		cipherSuites[suite.Name] = suite.ID
+	}
+
+	return cipherSuites
+}
+
+func mapCipherNamesToIDs(cipherSuiteNames []string) []uint16 {
+	cipherSuites := []uint16{}
+	allCipherSuites := tlsCipherSuites()
+
+	for _, name := range cipherSuiteNames {
+		id, ok := allCipherSuites[name]
+		if !ok {
+			return nil
+		}
+		cipherSuites = append(cipherSuites, id)
+	}
+
+	return cipherSuites
+}
+
 func (hs *HTTPServer) getDefaultCiphers(tlsVersion uint16, protocol string) []uint16 {
 	if tlsVersion != tls.VersionTLS12 {
 		return nil
 	}
+
+	if hs.Cfg.CipherSuites != "" {
+		cleanedCipherSuiteNames := strings.ReplaceAll(hs.Cfg.CipherSuites, " ", "")
+		cipherSuitesNames := strings.Split(cleanedCipherSuiteNames, ",")
+		return mapCipherNamesToIDs(cipherSuitesNames)
+	}
+
 	if protocol == "https" {
 		return []uint16{
 			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
