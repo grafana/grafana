@@ -8,14 +8,16 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 
 	"connectrpc.com/connect"
-	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
-	"github.com/grafana/pyroscope/api/gen/proto/go/querier/v1/querierv1connect"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+
+	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
+	"github.com/grafana/pyroscope/api/gen/proto/go/querier/v1/querierv1connect"
 )
 
 type ProfileType struct {
@@ -49,6 +51,13 @@ type Point struct {
 	// Milliseconds unix timestamp
 	Timestamp   int64
 	Annotations []*typesv1.ProfileAnnotation
+	Exemplars   []*Exemplar
+}
+
+type Exemplar struct {
+	Id        string
+	Value     uint64
+	Timestamp int64
 }
 
 type ProfileResponse struct {
@@ -99,17 +108,18 @@ func (c *PyroscopeClient) ProfileTypes(ctx context.Context, start int64, end int
 	}
 }
 
-func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, limit *int64, step float64) (*SeriesResponse, error) {
+func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, limit *int64, step float64, includeExemplars *bool) (*SeriesResponse, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.GetSeries", trace.WithAttributes(attribute.String("profileTypeID", profileTypeID), attribute.String("labelSelector", labelSelector)))
 	defer span.End()
 	req := connect.NewRequest(&querierv1.SelectSeriesRequest{
-		ProfileTypeID: profileTypeID,
-		LabelSelector: labelSelector,
-		Start:         start,
-		End:           end,
-		Step:          step,
-		GroupBy:       groupBy,
-		Limit:         limit,
+		ProfileTypeID:    profileTypeID,
+		LabelSelector:    labelSelector,
+		Start:            start,
+		End:              end,
+		Step:             step,
+		GroupBy:          groupBy,
+		Limit:            limit,
+		IncludeExemplars: includeExemplars,
 	})
 
 	resp, err := c.connectClient.SelectSeries(ctx, req)
@@ -136,6 +146,14 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 				Value:       p.Value,
 				Timestamp:   p.Timestamp,
 				Annotations: p.Annotations,
+				Exemplars:   make([]*Exemplar, len(p.Exemplars)),
+			}
+			for j, e := range p.Exemplars {
+				points[i].Exemplars[j] = &Exemplar{
+					Id:        e.ProfileId,
+					Value:     e.Value,
+					Timestamp: e.Timestamp,
+				}
 			}
 		}
 

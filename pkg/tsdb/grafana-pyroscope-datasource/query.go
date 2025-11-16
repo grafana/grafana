@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/exemplar"
 	"github.com/xlab/treeprint"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -37,6 +38,8 @@ const (
 	queryTypeMetrics = string(dataquery.PyroscopeQueryTypeMetrics)
 	queryTypeBoth    = string(dataquery.PyroscopeQueryTypeBoth)
 )
+
+var identityTransformation = func(value float64) float64 { return value }
 
 // query processes single Pyroscope query transforming the response to data.Frame packaged in DataResponse
 func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
@@ -86,6 +89,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				qm.GroupBy,
 				qm.Limit,
 				math.Max(query.Interval.Seconds(), parsedInterval.Seconds()),
+				qm.IncludeExemplars,
 			)
 			if err != nil {
 				span.RecordError(err)
@@ -475,6 +479,7 @@ func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool, stepDuration
 	annotations := make([]*annotation.TimedAnnotation, 0)
 
 	for _, series := range resp.Series {
+		exemplars := make([]*exemplar.Exemplar, 0)
 		// We create separate data frames as the series may not have the same length
 		frame := data.NewFrame("series")
 		frameMeta := &data.FrameMeta{PreferredVisualization: "graph"}
@@ -516,14 +521,20 @@ func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool, stepDuration
 
 			// Apply rate calculation for cumulative profiles
 			value := point.Value
+			transformation := identityTransformation
 			if isCumulativeProfile(profileTypeID) && stepDurationSec > 0 {
-				value = value / stepDurationSec
+				transformation = func(value float64) float64 {
+					return value / stepDurationSec
+				}
 
 				// Convert CPU nanoseconds to cores
 				if isCPUTimeProfile(profileTypeID) {
-					value = value / 1e9
+					transformation = func(value float64) float64 {
+						return value / stepDurationSec / 1e9
+					}
 				}
 			}
+			value = transformation(value)
 			valueField.Append(value)
 			if withAnnotations {
 				for _, a := range point.Annotations {
@@ -533,10 +544,22 @@ func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool, stepDuration
 					})
 				}
 			}
+			for _, e := range point.Exemplars {
+				exemplars = append(exemplars, &exemplar.Exemplar{
+					Id:        e.Id,
+					Value:     transformation(float64(e.Value)),
+					Timestamp: e.Timestamp,
+				})
+			}
 		}
 
 		frame.Fields = fields
 		frames = append(frames, frame)
+
+		if len(exemplars) > 0 {
+			frame := exemplar.CreateExemplarFrame(labels, exemplars)
+			frames = append(frames, frame)
+		}
 	}
 
 	if len(annotations) > 0 {

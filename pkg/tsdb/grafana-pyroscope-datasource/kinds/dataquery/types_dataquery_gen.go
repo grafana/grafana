@@ -32,6 +32,8 @@ type GrafanaPyroscopeDataQuery struct {
 	Limit *int64 `json:"limit,omitempty"`
 	// Sets the maximum number of nodes in the flamegraph.
 	MaxNodes *int64 `json:"maxNodes,omitempty"`
+	// If set to true, the response will contain annotations
+	Annotations *bool `json:"annotations,omitempty"`
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
@@ -41,8 +43,8 @@ type GrafanaPyroscopeDataQuery struct {
 	// Specify the query flavor
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
-	// If set to true, the response will contain annotations
-	Annotations *bool `json:"annotations,omitempty"`
+	// If set to true, exemplars will be requested
+	IncludeExemplars *bool `json:"includeExemplars,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema

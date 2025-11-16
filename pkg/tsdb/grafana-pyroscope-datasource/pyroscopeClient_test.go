@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
+	"github.com/stretchr/testify/require"
+
 	googlev1 "github.com/grafana/pyroscope/api/gen/proto/go/google/v1"
 	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_PyroscopeClient(t *testing.T) {
@@ -19,7 +20,8 @@ func Test_PyroscopeClient(t *testing.T) {
 
 	t.Run("GetSeries", func(t *testing.T) {
 		limit := int64(42)
-		resp, err := client.GetSeries(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, []string{}, &limit, 15)
+		includeExemplars := false
+		resp, err := client.GetSeries(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, []string{}, &limit, 15, &includeExemplars)
 		require.Nil(t, err)
 
 		series := &SeriesResponse{
