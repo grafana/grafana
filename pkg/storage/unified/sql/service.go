@@ -265,8 +265,14 @@ func (s *service) starting(ctx context.Context) error {
 		return err
 	}
 
+	quotaSvc, err := resource.NewQuotaService(context.Background(), s.reg, resource.ReloadOptions{})
+	if err != nil {
+		return err
+	}
+
 	serverOptions := ServerOptions{
 		Backend:        s.backend,
+		QuotaService:   quotaSvc,
 		DB:             s.db,
 		Cfg:            s.cfg,
 		Tracer:         s.tracing,

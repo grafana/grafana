@@ -31,6 +31,7 @@ type QOSEnqueueDequeuer interface {
 // ServerOptions contains the options for creating a new ResourceServer
 type ServerOptions struct {
 	Backend        resource.StorageBackend
+	QuotaService   *resource.QuotaService
 	DB             infraDB.DB
 	Cfg            *setting.Cfg
 	Tracer         trace.Tracer
@@ -122,6 +123,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 	serverOptions.IndexMetrics = opts.IndexMetrics
 	serverOptions.QOSQueue = opts.QOSQueue
 	serverOptions.OwnsIndexFn = opts.OwnsIndexFn
+	serverOptions.QuotaService = opts.QuotaService
 
 	return resource.NewResourceServer(serverOptions)
 }

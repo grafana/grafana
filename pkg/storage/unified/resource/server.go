@@ -220,6 +220,9 @@ type ResourceServerOptions struct {
 	// Search options
 	Search SearchOptions
 
+	// Quota service
+	QuotaService *QuotaService
+
 	// Diagnostics
 	Diagnostics resourcepb.DiagnosticsServer
 
@@ -342,6 +345,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		reg:              opts.Reg,
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
+		quotaService:     opts.QuotaService,
 
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
@@ -379,6 +383,7 @@ type server struct {
 	mostRecentRV   atomic.Int64 // The most recent resource version seen by the server
 	storageMetrics *StorageMetrics
 	indexMetrics   *BleveIndexMetrics
+	quotaService   *QuotaService
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -409,6 +414,11 @@ func (s *server) Init(ctx context.Context) error {
 			if err != nil {
 				s.initErr = fmt.Errorf("initialize Resource Server: %w", err)
 			}
+		}
+
+		// initialize custom quotas reloader
+		if s.initErr == nil && s.quotaService != nil {
+			s.initErr = s.quotaService.init(ctx)
 		}
 
 		// initialize the search index
@@ -442,6 +452,11 @@ func (s *server) Stop(ctx context.Context) error {
 
 	if s.search != nil {
 		s.search.stop()
+	}
+
+	// stop custom quotas reloader
+	if s.quotaService != nil {
+		s.quotaService.stop()
 	}
 
 	// Stops the streaming
