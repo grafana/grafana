@@ -68,6 +68,11 @@ func (s *targetInfo) addRef(ref *DataSourceRef) {
 
 func (s *targetInfo) addTarget(iter *jsoniter.Iterator) {
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+		// Check for iterator errors after each ReadObject call
+		if iter.Error != nil {
+			break
+		}
+
 		switch l1Field {
 		case "datasource":
 			s.addDatasource(iter)
