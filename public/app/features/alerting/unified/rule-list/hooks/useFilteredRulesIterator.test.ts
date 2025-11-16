@@ -27,6 +27,7 @@ describe('hasClientSideFilters', () => {
       expect(hasClientSideFilters(getFilter({ ruleName: 'test' }))).toBe(false);
       expect(hasClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(false);
       expect(hasClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(false);
+      expect(hasClientSideFilters(getFilter({ groupName: 'my-group' }))).toBe(false);
     });
 
     it('should return true for client-side only filters', () => {
@@ -51,6 +52,7 @@ describe('hasClientSideFilters', () => {
       expect(hasClientSideFilters(getFilter({ ruleName: 'test' }))).toBe(true);
       expect(hasClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(true);
       expect(hasClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(true);
+      expect(hasClientSideFilters(getFilter({ groupName: 'my-group' }))).toBe(true);
     });
 
     it('should return true for client-side only filters', () => {
@@ -77,6 +79,7 @@ describe('hasClientSideFilters', () => {
       expect(hasClientSideFilters(getFilter({ ruleName: 'test' }))).toBe(true);
       expect(hasClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(true);
       expect(hasClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(true);
+      expect(hasClientSideFilters(getFilter({ groupName: 'my-group' }))).toBe(true);
     });
   });
 });

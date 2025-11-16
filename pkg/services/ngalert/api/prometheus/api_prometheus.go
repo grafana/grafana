@@ -480,6 +480,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 
 	receiverName := opts.Query.Get("receiver_name")
 	title := opts.Query.Get("search.rule_name")
+	searchRuleGroup := opts.Query.Get("search.rule_group")
 
 	var ruleType ngmodels.RuleTypeFilter
 	switch ngmodels.RuleType(opts.Query.Get("rule_type")) {
@@ -500,13 +501,14 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 
 	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
-			OrgID:         opts.OrgID,
-			NamespaceUIDs: namespaceUIDs,
-			DashboardUID:  dashboardUID,
-			PanelID:       panelID,
-			RuleGroups:    ruleGroups,
-			ReceiverName:  receiverName,
-			SearchTitle:   title,
+			OrgID:           opts.OrgID,
+			NamespaceUIDs:   namespaceUIDs,
+			DashboardUID:    dashboardUID,
+			PanelID:         panelID,
+			RuleGroups:      ruleGroups,
+			ReceiverName:    receiverName,
+			SearchTitle:     title,
+			SearchRuleGroup: searchRuleGroup,
 		},
 		RuleType:      ruleType,
 		Limit:         maxGroups,
@@ -638,15 +640,17 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 
 	receiverName := opts.Query.Get("receiver_name")
 	title := opts.Query.Get("search.rule_name")
+	searchRuleGroup := opts.Query.Get("search.rule_group")
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
-		OrgID:         opts.OrgID,
-		NamespaceUIDs: namespaceUIDs,
-		DashboardUID:  dashboardUID,
-		PanelID:       panelID,
-		RuleGroups:    ruleGroups,
-		ReceiverName:  receiverName,
-		SearchTitle:   title,
+		OrgID:           opts.OrgID,
+		NamespaceUIDs:   namespaceUIDs,
+		DashboardUID:    dashboardUID,
+		PanelID:         panelID,
+		RuleGroups:      ruleGroups,
+		ReceiverName:    receiverName,
+		SearchTitle:     title,
+		SearchRuleGroup: searchRuleGroup,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {
