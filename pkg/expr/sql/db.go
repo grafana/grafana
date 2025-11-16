@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	sqle "github.com/dolthub/go-mysql-server"
@@ -74,7 +75,17 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 	mCtx.SetCurrentDatabase(dbName)
 
 	// Empty dir does not disable secure_file_priv
-	//ctx.SetSessionVariable(ctx, "secure_file_priv", "")
+	// ctx.SetSessionVariable(ctx, "secure_file_priv", "")
+
+	// remove only_full_group_by from the sql mode
+	defaultSqlMode := strings.Join([]string{
+		mysql.NoEngineSubstitution,
+		mysql.StrictTransTables,
+	}, ",")
+	err := mCtx.SetSessionVariable(mCtx, mysql.SqlModeSessionVar, defaultSqlMode)
+	if err != nil {
+		return nil, err
+	}
 
 	// TODO: Check if it's wise to reuse the existing provider, rather than creating a new one
 	a := analyzer.NewDefault(pro)
