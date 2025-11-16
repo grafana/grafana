@@ -31,9 +31,10 @@ import (
 )
 
 func TestConversionMatrixExist(t *testing.T) {
-	// Initialize the migrator with a test data source provider
+	// Initialize the migrator with a test data source provider and library panel provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	libPanelProvider := migrationtestutil.NewFakeLibraryPanelProvider()
+	migration.Initialize(dsProvider, libPanelProvider)
 
 	versions := []metav1.Object{
 		&dashv0.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
@@ -43,7 +44,7 @@ func TestConversionMatrixExist(t *testing.T) {
 	}
 
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, libPanelProvider)
 	require.NoError(t, err)
 
 	for idx, in := range versions {
@@ -83,13 +84,14 @@ func TestDeepCopyValid(t *testing.T) {
 }
 
 func TestDashboardConversionToAllVersions(t *testing.T) {
-	// Initialize the migrator with a test data source provider
+	// Initialize the migrator with a test data source provider and library panel provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	libPanelProvider := migrationtestutil.NewStandardLibraryPanelProvider()
+	migration.Initialize(dsProvider, libPanelProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, libPanelProvider)
 	require.NoError(t, err)
 
 	// Read all files from input directory
@@ -242,13 +244,14 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 // TestMigratedDashboardsConversion tests conversion of already-migrated dashboards
 // from the migration package's latest_version output directory
 func TestMigratedDashboardsConversion(t *testing.T) {
-	// Initialize the migrator with a test data source provider
+	// Initialize the migrator with a test data source provider and library panel provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	libPanelProvider := migrationtestutil.NewFakeLibraryPanelProvider()
+	migration.Initialize(dsProvider, libPanelProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, libPanelProvider)
 	require.NoError(t, err)
 
 	// Read all files from migration package's latest_version directory
@@ -378,7 +381,8 @@ func testConversion(t *testing.T, convertedDash metav1.Object, filename, outputD
 func TestConversionMetrics(t *testing.T) {
 	// Initialize migration with test providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	libPanelProvider := migrationtestutil.NewFakeLibraryPanelProvider()
+	migration.Initialize(dsProvider, libPanelProvider)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -386,7 +390,7 @@ func TestConversionMetrics(t *testing.T) {
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, libPanelProvider)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -505,7 +509,7 @@ func TestConversionMetrics(t *testing.T) {
 // TestConversionMetricsWrapper tests the withConversionMetrics wrapper function
 func TestConversionMetricsWrapper(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	migration.Initialize(dsProvider, migrationtestutil.NewFakeLibraryPanelProvider())
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -673,7 +677,7 @@ func TestSchemaVersionExtraction(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test the schema version extraction logic by creating a wrapper and checking the metrics labels
 			dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-			migration.Initialize(dsProvider)
+			migration.Initialize(dsProvider, migrationtestutil.NewFakeLibraryPanelProvider())
 
 			// Create a test registry for metrics
 			registry := prometheus.NewRegistry()
@@ -717,7 +721,8 @@ func TestSchemaVersionExtraction(t *testing.T) {
 // TestConversionLogging tests that conversion-level logging works correctly
 func TestConversionLogging(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	libPanelProvider := migrationtestutil.NewFakeLibraryPanelProvider()
+	migration.Initialize(dsProvider, libPanelProvider)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -725,7 +730,7 @@ func TestConversionLogging(t *testing.T) {
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
-	err := RegisterConversions(scheme, dsProvider)
+	err := RegisterConversions(scheme, dsProvider, libPanelProvider)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -808,7 +813,7 @@ func TestConversionLogging(t *testing.T) {
 // TestConversionLogLevels tests that appropriate log levels are used
 func TestConversionLogLevels(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	migration.Initialize(dsProvider, migrationtestutil.NewFakeLibraryPanelProvider())
 
 	t.Run("log levels and structured fields verification", func(t *testing.T) {
 		// Create test wrapper to verify logging behavior
@@ -879,7 +884,7 @@ func TestConversionLogLevels(t *testing.T) {
 // TestConversionLoggingFields tests that all expected fields are included in log messages
 func TestConversionLoggingFields(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	migration.Initialize(dsProvider)
+	migration.Initialize(dsProvider, migrationtestutil.NewFakeLibraryPanelProvider())
 
 	t.Run("verify all log fields are present", func(t *testing.T) {
 		// Test that the conversion wrapper includes all expected structured fields

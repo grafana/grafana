@@ -1,0 +1,108 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "library-panel-repeat-test",
+    "labels": {
+      "test": "library-panel-repeat"
+    }
+  },
+  "spec": {
+    "description": "Testing library panel repeat options extraction during conversion",
+    "editable": true,
+    "panels": [
+      {
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "libraryPanel": {
+          "name": "Library Panel No Repeat",
+          "uid": "lib-panel-no-repeat"
+        },
+        "title": "Library Panel Without Repeat",
+        "type": "timeseries"
+      },
+      {
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        },
+        "id": 2,
+        "libraryPanel": {
+          "name": "Library Panel With Repeat",
+          "uid": "lib-panel-with-repeat"
+        },
+        "title": "Library Panel With Repeat",
+        "type": "timeseries"
+      },
+      {
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        },
+        "id": 3,
+        "libraryPanel": {
+          "name": "Library Panel Repeat Horizontal",
+          "uid": "lib-panel-repeat-h"
+        },
+        "title": "Library Panel With Repeat and Direction",
+        "type": "timeseries"
+      },
+      {
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        },
+        "id": 4,
+        "libraryPanel": {
+          "name": "Library Panel Repeat Complete",
+          "uid": "lib-panel-repeat-complete"
+        },
+        "title": "Library Panel With All Repeat Options",
+        "type": "timeseries"
+      },
+      {
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 32
+        },
+        "id": 5,
+        "libraryPanel": {
+          "name": "Library Panel With Repeat",
+          "uid": "lib-panel-with-repeat"
+        },
+        "maxPerRow": 4,
+        "repeat": "server",
+        "repeatDirection": "v",
+        "title": "Panel With Direct Repeat (should not be overridden)",
+        "type": "timeseries"
+      }
+    ],
+    "preload": false,
+    "schemaVersion": 38,
+    "tags": [
+      "test",
+      "library-panels",
+      "repeat"
+    ],
+    "title": "Library Panel Repeat Options Test Dashboard"
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
+}

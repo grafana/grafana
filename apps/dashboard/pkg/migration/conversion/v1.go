@@ -25,8 +25,8 @@ func Convert_V1beta1_to_V0(in *dashv1.Dashboard, out *dashv0.Dashboard, scope co
 	return nil
 }
 
-func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope, dsInfoProvider schemaversion.DataSourceInfoProvider) error {
-	if err := ConvertDashboard_V1beta1_to_V2alpha1(in, out, scope, dsInfoProvider); err != nil {
+func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope, dsInfoProvider schemaversion.DataSourceInfoProvider, libPanelProvider schemaversion.LibraryPanelInfoProvider) error {
+	if err := ConvertDashboard_V1beta1_to_V2alpha1(in, out, scope, dsInfoProvider, libPanelProvider); err != nil {
 		out.Status = dashv2alpha1.DashboardStatus{
 			Conversion: &dashv2alpha1.DashboardConversionStatus{
 				StoredVersion: ptr.To(dashv1.VERSION),
@@ -60,9 +60,9 @@ func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboa
 	return nil
 }
 
-func Convert_V1beta1_to_V2beta1(in *dashv1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope, dsInfoProvider schemaversion.DataSourceInfoProvider) error {
+func Convert_V1beta1_to_V2beta1(in *dashv1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope, dsInfoProvider schemaversion.DataSourceInfoProvider, libPanelProvider schemaversion.LibraryPanelInfoProvider) error {
 	v2alpha1 := &dashv2alpha1.Dashboard{}
-	if err := ConvertDashboard_V1beta1_to_V2alpha1(in, v2alpha1, scope, dsInfoProvider); err != nil {
+	if err := ConvertDashboard_V1beta1_to_V2alpha1(in, v2alpha1, scope, dsInfoProvider, libPanelProvider); err != nil {
 		out.Status = dashv2beta1.DashboardStatus{
 			Conversion: &dashv2beta1.DashboardConversionStatus{
 				StoredVersion: ptr.To(dashv1.VERSION),

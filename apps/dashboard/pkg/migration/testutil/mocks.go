@@ -168,3 +168,60 @@ func (p *ConfigurableDataSourceProvider) getDevDashboardDataSources() []schemave
 		},
 	}
 }
+
+// FakeLibraryPanelProvider provides a fake implementation of LibraryPanelInfoProvider for testing
+type FakeLibraryPanelProvider struct {
+	panels map[string]map[string]interface{}
+}
+
+// NewFakeLibraryPanelProvider creates a new fake library panel provider
+func NewFakeLibraryPanelProvider() *FakeLibraryPanelProvider {
+	return &FakeLibraryPanelProvider{
+		panels: make(map[string]map[string]interface{}),
+	}
+}
+
+// AddPanelModel adds a panel model for a given UID
+func (p *FakeLibraryPanelProvider) AddPanelModel(uid string, model map[string]interface{}) {
+	p.panels[uid] = model
+}
+
+// GetPanelModelByUID returns the panel model for a library panel by its UID
+func (p *FakeLibraryPanelProvider) GetPanelModelByUID(_ context.Context, uid string) (map[string]interface{}, error) {
+	if model, ok := p.panels[uid]; ok {
+		return model, nil
+	}
+	return nil, nil
+}
+
+// NewStandardLibraryPanelProvider creates a library panel provider with standard test library panel models
+// This includes library panels used in test fixtures for repeat options testing
+func NewStandardLibraryPanelProvider() *FakeLibraryPanelProvider {
+	provider := NewFakeLibraryPanelProvider()
+
+	// Add library panel models for the test fixture v1beta1.library-panel-repeat.json
+	provider.AddPanelModel("lib-panel-no-repeat", map[string]interface{}{
+		"type":  "timeseries",
+		"title": "Library Panel No Repeat",
+	})
+	provider.AddPanelModel("lib-panel-with-repeat", map[string]interface{}{
+		"type":   "timeseries",
+		"title":  "Library Panel With Repeat",
+		"repeat": "server",
+	})
+	provider.AddPanelModel("lib-panel-repeat-h", map[string]interface{}{
+		"type":            "timeseries",
+		"title":           "Library Panel Repeat Horizontal",
+		"repeat":          "server",
+		"repeatDirection": "h",
+	})
+	provider.AddPanelModel("lib-panel-repeat-complete", map[string]interface{}{
+		"type":            "timeseries",
+		"title":           "Library Panel Repeat Complete",
+		"repeat":          "server",
+		"repeatDirection": "h",
+		"maxPerRow":       3,
+	})
+
+	return provider
+}

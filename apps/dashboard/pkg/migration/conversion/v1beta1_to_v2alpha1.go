@@ -84,7 +84,7 @@ func prepareV1beta1ConversionContext(in *dashv1.Dashboard, dsInfoProvider schema
 	return ctx, &nsInfo, nil
 }
 
-func ConvertDashboard_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope, dsInfoProvider schemaversion.DataSourceInfoProvider) error {
+func ConvertDashboard_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope, dsInfoProvider schemaversion.DataSourceInfoProvider, libPanelProvider schemaversion.LibraryPanelInfoProvider) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.APIVersion = dashv2alpha1.APIVERSION
 	out.Kind = in.Kind
@@ -98,10 +98,10 @@ func ConvertDashboard_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha
 		return fmt.Errorf("failed to prepare conversion context: %w", err)
 	}
 
-	return convertDashboardSpec_V1beta1_to_V2alpha1(&in.Spec, &out.Spec, scope, ctx, dsInfoProvider)
+	return convertDashboardSpec_V1beta1_to_V2alpha1(&in.Spec, &out.Spec, scope, ctx, dsInfoProvider, libPanelProvider)
 }
 
-func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope, ctx context.Context, dsInfoProvider schemaversion.DataSourceInfoProvider) error {
+func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope, ctx context.Context, dsInfoProvider schemaversion.DataSourceInfoProvider, libPanelProvider schemaversion.LibraryPanelInfoProvider) error {
 	// Parse the unstructured spec into a dashboard JSON structure
 	dashboardJSON, ok := in.Object["dashboard"]
 	if !ok {
@@ -165,7 +165,7 @@ func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *das
 	out.Links = transformLinks(dashboard)
 
 	// Transform panels to elements and layout
-	elements, layout, err := transformPanelsToElementsAndLayout(ctx, dashboard, dsInfoProvider)
+	elements, layout, err := transformPanelsToElementsAndLayout(ctx, dashboard, dsInfoProvider, libPanelProvider)
 	if err != nil {
 		return fmt.Errorf("failed to transform panels: %w", err)
 	}
@@ -391,7 +391,7 @@ func transformLinks(dashboard map[string]interface{}) []dashv2alpha1.DashboardDa
 // Panel transformation constants
 const GRID_ROW_HEIGHT = 1
 
-func transformPanelsToElementsAndLayout(ctx context.Context, dashboard map[string]interface{}, dsInfoProvider schemaversion.DataSourceInfoProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
+func transformPanelsToElementsAndLayout(ctx context.Context, dashboard map[string]interface{}, dsInfoProvider schemaversion.DataSourceInfoProvider, libPanelProvider schemaversion.LibraryPanelInfoProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
 	panels, ok := dashboard["panels"].([]interface{})
 	if !ok {
 		// Return empty elements and default grid layout
@@ -419,13 +419,13 @@ func transformPanelsToElementsAndLayout(ctx context.Context, dashboard map[strin
 	}
 
 	if hasRowPanels {
-		return convertToRowsLayout(ctx, panels, dsInfoProvider)
+		return convertToRowsLayout(ctx, panels, dsInfoProvider, libPanelProvider)
 	}
 
-	return convertToGridLayout(ctx, panels, dsInfoProvider)
+	return convertToGridLayout(ctx, panels, dsInfoProvider, libPanelProvider)
 }
 
-func convertToGridLayout(ctx context.Context, panels []interface{}, dsInfoProvider schemaversion.DataSourceInfoProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
+func convertToGridLayout(ctx context.Context, panels []interface{}, dsInfoProvider schemaversion.DataSourceInfoProvider, libPanelProvider schemaversion.LibraryPanelInfoProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
 	elements := make(map[string]dashv2alpha1.DashboardElement)
 	items := make([]dashv2alpha1.DashboardGridLayoutItemKind, 0, len(panels))
 
@@ -441,7 +441,7 @@ func convertToGridLayout(ctx context.Context, panels []interface{}, dsInfoProvid
 		}
 
 		elements[elementName] = element
-		items = append(items, buildGridItemKind(panelMap, elementName, nil))
+		items = append(items, buildGridItemKind(ctx, panelMap, elementName, nil, libPanelProvider))
 	}
 
 	layout := dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
@@ -456,7 +456,7 @@ func convertToGridLayout(ctx context.Context, panels []interface{}, dsInfoProvid
 	return elements, layout, nil
 }
 
-func convertToRowsLayout(ctx context.Context, panels []interface{}, dsInfoProvider schemaversion.DataSourceInfoProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
+func convertToRowsLayout(ctx context.Context, panels []interface{}, dsInfoProvider schemaversion.DataSourceInfoProvider, libPanelProvider schemaversion.LibraryPanelInfoProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
 	elements := make(map[string]dashv2alpha1.DashboardElement)
 	rows := make([]dashv2alpha1.DashboardRowsLayoutRowKind, 0)
 
@@ -495,7 +495,7 @@ func convertToRowsLayout(ctx context.Context, panels []interface{}, dsInfoProvid
 						element, name, err := buildElement(ctx, collapsedPanelMap, dsInfoProvider)
 						if err == nil {
 							elements[name] = element
-							rowElements = append(rowElements, buildGridItemKind(collapsedPanelMap, name, int64Ptr(yOffsetInRows(collapsedPanelMap, legacyRowY))))
+							rowElements = append(rowElements, buildGridItemKind(ctx, collapsedPanelMap, name, int64Ptr(yOffsetInRows(collapsedPanelMap, legacyRowY)), libPanelProvider))
 						}
 					}
 				}
@@ -516,7 +516,7 @@ func convertToRowsLayout(ctx context.Context, panels []interface{}, dsInfoProvid
 				if currentRow.Spec.Layout.GridLayoutKind != nil {
 					currentRow.Spec.Layout.GridLayoutKind.Spec.Items = append(
 						currentRow.Spec.Layout.GridLayoutKind.Spec.Items,
-						buildGridItemKind(panelMap, elementName, int64Ptr(yOffsetInRows(panelMap, legacyRowY))),
+						buildGridItemKind(ctx, panelMap, elementName, int64Ptr(yOffsetInRows(panelMap, legacyRowY)), libPanelProvider),
 					)
 				}
 			} else {
@@ -525,7 +525,7 @@ func convertToRowsLayout(ctx context.Context, panels []interface{}, dsInfoProvid
 				// The Y position does not matter for the rows layout, but it's used to calculate the position of the panels in the grid layout in the row.
 				legacyRowY = -1
 				gridItems := []dashv2alpha1.DashboardGridLayoutItemKind{
-					buildGridItemKind(panelMap, elementName, int64Ptr(0)),
+					buildGridItemKind(ctx, panelMap, elementName, int64Ptr(0), libPanelProvider),
 				}
 
 				hideHeader := true
@@ -649,7 +649,7 @@ func buildPanelKind(ctx context.Context, panelMap map[string]interface{}, dsInfo
 	return panelKind, nil
 }
 
-func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOverride *int64) dashv2alpha1.DashboardGridLayoutItemKind {
+func buildGridItemKind(ctx context.Context, panelMap map[string]interface{}, elementName string, yOverride *int64, libPanelProvider schemaversion.LibraryPanelInfoProvider) dashv2alpha1.DashboardGridLayoutItemKind {
 	// Default grid position (matches frontend PanelModel defaults: w=6, h=3)
 	x, y, width, height := int64(0), int64(0), int64(6), int64(3)
 
@@ -681,13 +681,40 @@ func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOve
 	}
 
 	// Handle repeat options
-	if repeat := schemaversion.GetStringValue(panelMap, "repeat"); repeat != "" {
+	// First check if panel already has repeat options
+	repeat := schemaversion.GetStringValue(panelMap, "repeat")
+	repeatDirection := schemaversion.GetStringValue(panelMap, "repeatDirection")
+	maxPerRow := getIntField(panelMap, "maxPerRow", 0)
+
+	// If panel doesn't have repeat options, check if it's a library panel and get repeat options from library panel
+	if repeat == "" && libPanelProvider != nil {
+		if libraryPanel, ok := panelMap["libraryPanel"].(map[string]interface{}); ok {
+			if uid := schemaversion.GetStringValue(libraryPanel, "uid"); uid != "" {
+				libPanelModel, err := libPanelProvider.GetPanelModelByUID(ctx, uid)
+				if err == nil && libPanelModel != nil {
+					// Get repeat options from library panel model
+					if libRepeat := schemaversion.GetStringValue(libPanelModel, "repeat"); libRepeat != "" {
+						repeat = libRepeat
+					}
+					if libRepeatDirection := schemaversion.GetStringValue(libPanelModel, "repeatDirection"); libRepeatDirection != "" {
+						repeatDirection = libRepeatDirection
+					}
+					if libMaxPerRow := getIntField(libPanelModel, "maxPerRow", 0); libMaxPerRow > 0 {
+						maxPerRow = libMaxPerRow
+					}
+				}
+			}
+		}
+	}
+
+	// Create repeat options if we have a repeat value
+	if repeat != "" {
 		repeatOptions := &dashv2alpha1.DashboardRepeatOptions{
 			Mode:  "variable",
 			Value: repeat,
 		}
 
-		if repeatDirection := schemaversion.GetStringValue(panelMap, "repeatDirection"); repeatDirection != "" {
+		if repeatDirection != "" {
 			switch repeatDirection {
 			case "h":
 				direction := dashv2alpha1.DashboardRepeatOptionsDirectionH
@@ -698,7 +725,7 @@ func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOve
 			}
 		}
 
-		if maxPerRow := getIntField(panelMap, "maxPerRow", 0); maxPerRow > 0 {
+		if maxPerRow > 0 {
 			maxPerRowInt64 := int64(maxPerRow)
 			repeatOptions.MaxPerRow = &maxPerRowInt64
 		}

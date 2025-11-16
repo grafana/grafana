@@ -28,6 +28,14 @@ type DataSourceInfoProvider interface {
 	GetDataSourceInfo(ctx context.Context) []DataSourceInfo
 }
 
+// LibraryPanelInfoProvider provides access to library panel models
+type LibraryPanelInfoProvider interface {
+	// GetPanelModelByUID returns the panel model for a library panel by its UID
+	// The context must have the namespace in it
+	// Returns the panel model as a map[string]interface{} or nil if not found
+	GetPanelModelByUID(ctx context.Context, uid string) (map[string]interface{}, error)
+}
+
 type PanelPluginInfo struct {
 	ID      string
 	Version string

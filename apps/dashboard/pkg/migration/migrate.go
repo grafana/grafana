@@ -9,8 +9,9 @@ import (
 )
 
 // Initialize provides the migrator singleton with required dependencies and builds the map of migrations.
-func Initialize(dsInfoProvider schemaversion.DataSourceInfoProvider) {
-	migratorInstance.init(dsInfoProvider)
+// The library panel provider is optional and can be nil if library panel support is not needed.
+func Initialize(dsInfoProvider schemaversion.DataSourceInfoProvider, libPanelProvider schemaversion.LibraryPanelInfoProvider) {
+	migratorInstance.init(dsInfoProvider, libPanelProvider)
 }
 
 // GetDataSourceInfoProvider returns the datasource info provider instance that was initialized.
@@ -21,12 +22,21 @@ func GetDataSourceInfoProvider() schemaversion.DataSourceInfoProvider {
 	return migratorInstance.dsInfoProvider
 }
 
+// GetLibraryPanelInfoProvider returns the library panel info provider instance that was initialized.
+// This allows reuse of the same provider instance across migrations and conversions.
+func GetLibraryPanelInfoProvider() schemaversion.LibraryPanelInfoProvider {
+	// Wait for initialization to complete
+	<-migratorInstance.ready
+	return migratorInstance.libPanelProvider
+}
+
 // ResetForTesting resets the migrator singleton for testing purposes.
 func ResetForTesting() {
 	migratorInstance = &migrator{
-		migrations:     map[int]schemaversion.SchemaVersionMigrationFunc{},
-		ready:          make(chan struct{}),
-		dsInfoProvider: nil,
+		migrations:       map[int]schemaversion.SchemaVersionMigrationFunc{},
+		ready:            make(chan struct{}),
+		dsInfoProvider:   nil,
+		libPanelProvider: nil,
 	}
 	initOnce = sync.Once{}
 }
@@ -46,14 +56,16 @@ var (
 )
 
 type migrator struct {
-	ready          chan struct{}
-	migrations     map[int]schemaversion.SchemaVersionMigrationFunc
-	dsInfoProvider schemaversion.DataSourceInfoProvider
+	ready            chan struct{}
+	migrations       map[int]schemaversion.SchemaVersionMigrationFunc
+	dsInfoProvider   schemaversion.DataSourceInfoProvider
+	libPanelProvider schemaversion.LibraryPanelInfoProvider
 }
 
-func (m *migrator) init(dsInfoProvider schemaversion.DataSourceInfoProvider) {
+func (m *migrator) init(dsInfoProvider schemaversion.DataSourceInfoProvider, libPanelProvider schemaversion.LibraryPanelInfoProvider) {
 	initOnce.Do(func() {
 		m.dsInfoProvider = dsInfoProvider
+		m.libPanelProvider = libPanelProvider
 		m.migrations = schemaversion.GetMigrations(dsInfoProvider)
 		close(m.ready)
 	})
