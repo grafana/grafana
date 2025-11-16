@@ -84,6 +84,8 @@ export class PanelQueryRunner {
   private dataConfigSource: DataConfigSource;
   private lastRequest?: DataQueryRequest;
   private templateSrv = getTemplateSrv();
+  private processedFrameCache: Map<string, DataFrame[]> = new Map();
+  private maxCacheSize = 10; // Limit cache size to prevent memory buildup
 
   constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
@@ -102,6 +104,17 @@ export class PanelQueryRunner {
     let lastTransformations: DataTransformerConfig[] | undefined;
     let isFirstPacket = true;
     let lastConfigRev = -1;
+
+    // Generate cache key for this configuration
+    const cacheKey = `${withTransforms}-${withFieldConfig}-${this.dataConfigSource.configRev}`;
+    
+    // Clean cache if it exceeds max size
+    if (this.processedFrameCache.size >= this.maxCacheSize) {
+      const firstKey = this.processedFrameCache.keys().next().value;
+      if (firstKey) {
+        this.processedFrameCache.delete(firstKey);
+      }
+    }
 
     if (this.dataConfigSource.snapshotData) {
       const snapshotPanelData: PanelData = {
@@ -454,7 +467,12 @@ export class PanelQueryRunner {
 
   clearLastResult() {
     this.lastResult = undefined;
+    // Clear processed frame cache to prevent memory buildup
+    this.processedFrameCache.clear();
     // A new subject is also needed since it's a replay subject that remembers/sends last value
+    if (this.subject && !this.subject.closed) {
+      this.subject.complete();
+    }
     this.subject = new ReplaySubject(1);
   }
 
@@ -462,14 +480,23 @@ export class PanelQueryRunner {
    * Called when the panel is closed
    */
   destroy() {
+    // Clear cache to prevent memory leaks
+    this.processedFrameCache.clear();
+    
+    // Cancel any ongoing subscription
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+      this.subscription = undefined;
+    }
+
     // Tell anyone listening that we are done
-    if (this.subject) {
+    if (this.subject && !this.subject.closed) {
       this.subject.complete();
     }
 
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-    }
+    // Clear references
+    this.lastResult = undefined;
+    this.lastRequest = undefined;
   }
 
   useLastResultFrom(runner: PanelQueryRunner) {
