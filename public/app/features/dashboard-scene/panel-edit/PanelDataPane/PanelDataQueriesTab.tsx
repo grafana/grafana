@@ -1,3 +1,6 @@
+import { css, cx } from '@emotion/css';
+import { useState } from 'react';
+
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
@@ -13,7 +16,7 @@ import {
   SceneDataQuery,
 } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
-import { Button, Stack, Tab } from '@grafana/ui';
+import { Button, Stack, Tab, useStyles2 } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
@@ -91,7 +94,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
         // do we have a last used datasource for this dashboard
         if (lastUsedDatasource?.datasourceUid !== null) {
-          // get datasource from dashbopard uid
+          // get datasource from dashboard uid
           dsSettings = getDataSourceSrv().getInstanceSettings({ uid: lastUsedDatasource?.datasourceUid });
           if (dsSettings) {
             datasource = await getDataSourceSrv().get({
@@ -336,12 +339,16 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   const { datasource, dsSettings } = model.useState();
   const { data, queries } = model.queryRunner.useState();
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
+  const [hasFocusedQuery, setHasFocusedQuery] = useState(false);
+  const styles = useStyles2(getStyles);
 
   if (!datasource || !dsSettings || !data) {
     return null;
   }
 
-  const showAddButton = !isSharedDashboardQuery(dsSettings.name);
+  const showAddButton = !isSharedDashboardQuery(dsSettings.name) && !hasFocusedQuery;
+  const showExpressionButton =
+    config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && !hasFocusedQuery;
   const onSelectQueryFromLibrary = async (query: DataQuery) => {
     // ensure all queries explicitly define a datasource
     const enrichedQueries = queries.map((q) =>
@@ -368,22 +375,28 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   };
 
   return (
-    <div data-testid={selectors.components.QueryTab.content}>
-      <QueryGroupTopSection
-        data={data}
-        dsSettings={dsSettings}
-        dataSource={datasource}
-        options={model.buildQueryOptions()}
-        onDataSourceChange={model.onChangeDataSource}
-        onOptionsChange={model.onQueryOptionsChange}
-        onOpenQueryInspector={model.onOpenInspector}
-      />
+    <div
+      data-testid={selectors.components.QueryTab.content}
+      className={cx(styles.container, { [styles.focused]: hasFocusedQuery })}
+    >
+      {!hasFocusedQuery && (
+        <QueryGroupTopSection
+          data={data}
+          dsSettings={dsSettings}
+          dataSource={datasource}
+          options={model.buildQueryOptions()}
+          onDataSourceChange={model.onChangeDataSource}
+          onOptionsChange={model.onQueryOptionsChange}
+          onOpenQueryInspector={model.onOpenInspector}
+        />
+      )}
 
       <QueryEditorRows
         data={data}
         queries={queries}
         dsSettings={dsSettings}
         onAddQuery={model.onAddQuery}
+        onFocusQuery={setHasFocusedQuery}
         onQueriesChange={model.onQueriesChange}
         onRunQueries={model.onRunQueries}
         onUpdateDatasources={queryLibraryEnabled ? model.updateDatasourceIfNeeded : undefined}
@@ -420,7 +433,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
             )}
           </>
         )}
-        {config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && (
+        {showExpressionButton && (
           <ExpressionTypeDropdown handleOnSelect={model.onAddExpressionOfType}>
             <Button icon="plus" variant="secondary" data-testid={selectors.components.QueryTab.addExpression}>
               <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.expression">Expression&nbsp;</Trans>
@@ -452,3 +465,14 @@ function QueriesTab(props: QueriesTabProps) {
     />
   );
 }
+
+const getStyles = () => ({
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+  focused: css({
+    height: '100%',
+    flex: '1 1 auto',
+  }),
+});

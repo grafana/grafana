@@ -20,6 +20,7 @@ export interface QueryOperationRowHeaderProps {
   title?: string;
   id: string;
   expanderMessages?: ExpanderMessages;
+  isFocused?: boolean;
 }
 
 export interface ExpanderMessages {
@@ -40,6 +41,7 @@ export const QueryOperationRowHeader = ({
   title,
   id,
   expanderMessages,
+  isFocused = false,
 }: QueryOperationRowHeaderProps) => {
   const styles = useStyles2(getStyles);
 
@@ -55,7 +57,7 @@ export const QueryOperationRowHeader = ({
   const dragAndDropLabel = t('query-operation.header.drag-and-drop', 'Drag and drop to reorder');
 
   return (
-    <div className={styles.header}>
+    <div className={cx(styles.header, isFocused && styles.focused)}>
       <div className={styles.column}>
         {collapsable && (
           <IconButton
@@ -106,6 +108,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:focus': {
       outline: 'none',
     },
+  }),
+  focused: css({
+    border: `2px solid ${theme.colors.primary.border}`,
   }),
   column: css({
     label: 'Column',
