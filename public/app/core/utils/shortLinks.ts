@@ -170,14 +170,6 @@ function getPreviousLog(row: LogRowModel, allLogs: LogRowModel[]): LogRowModel |
 }
 
 export function getLogsPermalinkRange(row: LogRowModel, rows: LogRowModel[], absoluteRange: AbsoluteTimeRange) {
-  const range = {
-    from: new Date(absoluteRange.from).toISOString(),
-    to: new Date(absoluteRange.to).toISOString(),
-  };
-  if (!config.featureToggles.logsInfiniteScrolling) {
-    return range;
-  }
-
   // With infinite scrolling, the time range of the log line can be after the absolute range or beyond the request line limit, so we need to adjust
   // Look for the previous sibling log, and use its timestamp
   const allLogs = rows.filter((logRow) => logRow.dataFrame.refId === row.dataFrame.refId);

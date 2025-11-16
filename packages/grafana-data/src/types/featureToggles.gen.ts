@@ -401,11 +401,6 @@ export interface FeatureToggles {
   */
   timeComparison?: boolean;
   /**
-  * Enables infinite scrolling for the Logs panel in Explore and Dashboards
-  * @default true
-  */
-  logsInfiniteScrolling?: boolean;
-  /**
   * Enable filtering menu displayed when text of a log line is selected
   * @default true
   */

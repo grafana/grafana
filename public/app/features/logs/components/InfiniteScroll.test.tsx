@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { useEffect, useRef, useState } from 'react';
 
 import { CoreApp, LogRowModel, dateTimeForTimeZone, rangeUtil } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { LogsSortOrder } from '@grafana/schema';
 
 import { InfiniteScroll, Props, SCROLLING_THRESHOLD } from './InfiniteScroll';
@@ -105,14 +104,6 @@ function setup(
 
   return { element, events, scrollTo, wheel };
 }
-
-const originalState = config.featureToggles.logsInfiniteScrolling;
-beforeAll(() => {
-  config.featureToggles.logsInfiniteScrolling = true;
-});
-afterAll(() => {
-  config.featureToggles.logsInfiniteScrolling = originalState;
-});
 
 describe('InfiniteScroll', () => {
   test('Wraps components without adding DOM elements', async () => {

@@ -2,7 +2,6 @@ import { act, render, screen } from '@testing-library/react';
 import { VariableSizeList } from 'react-window';
 
 import { createTheme, dateTimeForTimeZone, rangeUtil } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { LogsSortOrder } from '@grafana/schema';
 
 import { ScrollDirection, SCROLLING_THRESHOLD } from '../InfiniteScroll';
@@ -109,14 +108,6 @@ function setup(
 
   return { element, events, scrollTo, wheel };
 }
-
-const originalState = config.featureToggles.logsInfiniteScrolling;
-beforeAll(() => {
-  config.featureToggles.logsInfiniteScrolling = true;
-});
-afterAll(() => {
-  config.featureToggles.logsInfiniteScrolling = originalState;
-});
 
 describe('InfiniteScroll', () => {
   describe.each([LogsSortOrder.Descending, LogsSortOrder.Ascending])(

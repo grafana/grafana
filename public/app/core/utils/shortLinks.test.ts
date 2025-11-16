@@ -164,7 +164,6 @@ describe('buildShortUrl', () => {
 describe('getLogsPermalinkRange', () => {
   let row: LogRowModel, rows: LogRowModel[];
   beforeEach(() => {
-    config.featureToggles.logsInfiniteScrolling = true;
     row = createLogRow({
       timeEpochMs: 1111112222222,
     });
@@ -174,22 +173,6 @@ describe('getLogsPermalinkRange', () => {
       }),
       row,
     ];
-  });
-  afterAll(() => {
-    config.featureToggles.logsInfiniteScrolling = false;
-  });
-
-  it('returns the original range if infinite scrolling is not enabled', () => {
-    config.featureToggles.logsInfiniteScrolling = false;
-    const range = {
-      from: 1111111111111,
-      to: 1111112222222,
-    };
-    const expectedRange = {
-      from: new Date(1111111111111).toISOString(),
-      to: new Date(1111112222222).toISOString(),
-    };
-    expect(getLogsPermalinkRange(row, [row], range)).toEqual(expectedRange);
   });
 
   it('returns the range relative to the previous log line', () => {

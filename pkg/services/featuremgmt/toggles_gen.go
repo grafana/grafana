@@ -367,10 +367,6 @@ const (
 	// Enables time comparison option in supported panels
 	FlagTimeComparison = "timeComparison"
 
-	// FlagLogsInfiniteScrolling
-	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
-	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
-
 	// FlagLogRowsPopoverMenu
 	// Enable filtering menu displayed when text of a log line is selected
 	FlagLogRowsPopoverMenu = "logRowsPopoverMenu"
