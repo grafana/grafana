@@ -28,7 +28,9 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
     .variables.filter((v) => v.state.hide === VariableHide.inControlsMenu);
   const dataState = sceneGraph.getData(dashboard).useState();
   const annotationLayers = isDashboardDataLayerSetState(dataState) ? dataState.annotationLayers : [];
-  const filteredAnnotationLayers = annotationLayers.filter((layer) => layer.state.placement === 'inControlsMenu');
+  const filteredAnnotationLayers = annotationLayers.filter(
+    (layer) => layer.state.placement === 'inControlsMenu' && !layer.state.isHidden
+  );
 
   if ((variables.length === 0 && filteredLinks.length === 0 && filteredAnnotationLayers.length === 0) || !uid) {
     return null;

@@ -97,6 +97,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
       keepTime: link.keepTime ?? defaultDashboardLink().keepTime,
       includeVars: link.includeVars ?? defaultDashboardLink().includeVars,
       targetBlank: link.targetBlank ?? defaultDashboardLink().targetBlank,
+      placement: link.placement,
     })),
     tags: sceneDash.tags ?? defaultDashboardV2Spec().tags,
     // EOF dashboard settings
