@@ -73,7 +73,7 @@ describe('dashboard tracking', () => {
         maxNestingLevel: 3,
         panel_type_timeseries_count: 6,
         panels_count: 6,
-        schemaVersion: 42,
+        schemaVersion: 43,
         settings_livenow: true,
         settings_nowdelay: undefined,
         dashStructure:

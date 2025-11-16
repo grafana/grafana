@@ -2545,4 +2545,422 @@ describe('when migrating to specific target versions', () => {
     // Schema version should remain unchanged when no migrations are needed
     expect(model.schemaVersion).toBe(25);
   });
+
+  describe('formatTime transformation migration (v43)', () => {
+    describe('Panel with formatTime transformation should convert to convertFieldType', () => {
+      let model: DashboardModel;
+
+      beforeEach(() => {
+        model = new DashboardModel({
+          schemaVersion: 42,
+          panels: [
+            {
+              id: 1,
+              type: 'table',
+              transformations: [
+                {
+                  id: 'formatTime',
+                  options: {
+                    timeField: 'timestamp',
+                    outputFormat: 'YYYY-MM-DD HH:mm:ss',
+                    timezone: 'UTC',
+                  },
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      it('should convert formatTime to convertFieldType', () => {
+        const transformations = model.panels[0].transformations;
+        expect(transformations).toHaveLength(1);
+        expect(transformations![0]).toMatchObject({
+          id: 'convertFieldType',
+          options: {
+            conversions: [
+              {
+                targetField: 'timestamp',
+                destinationType: 'string',
+                dateFormat: 'YYYY-MM-DD HH:mm:ss',
+                timezone: 'UTC',
+              },
+            ],
+          },
+        });
+      });
+
+      it('should update schema version to 43', () => {
+        expect(model.schemaVersion).toBe(43);
+      });
+    });
+
+    describe('Panel with minimal formatTime options', () => {
+      let model: DashboardModel;
+
+      beforeEach(() => {
+        model = new DashboardModel({
+          schemaVersion: 42,
+          panels: [
+            {
+              id: 1,
+              type: 'table',
+              transformations: [
+                {
+                  id: 'formatTime',
+                  options: {
+                    timeField: 'time',
+                  },
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      it('should convert with minimal options', () => {
+        const transformations = model.panels[0].transformations;
+        expect(transformations![0]).toMatchObject({
+          id: 'convertFieldType',
+          options: {
+            conversions: [
+              {
+                targetField: 'time',
+                destinationType: 'string',
+              },
+            ],
+          },
+        });
+      });
+    });
+
+    describe('Panel with empty formatTime options', () => {
+      let model: DashboardModel;
+
+      beforeEach(() => {
+        model = new DashboardModel({
+          schemaVersion: 42,
+          panels: [
+            {
+              id: 1,
+              type: 'table',
+              transformations: [
+                {
+                  id: 'formatTime',
+                  options: {},
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      it('should convert with empty options', () => {
+        const transformations = model.panels[0].transformations;
+        expect(transformations![0]).toMatchObject({
+          id: 'convertFieldType',
+          options: {
+            conversions: [
+              {
+                destinationType: 'string',
+              },
+            ],
+          },
+        });
+      });
+    });
+
+    describe('Panel with multiple formatTime transformations', () => {
+      let model: DashboardModel;
+
+      beforeEach(() => {
+        model = new DashboardModel({
+          schemaVersion: 42,
+          panels: [
+            {
+              id: 1,
+              type: 'table',
+              transformations: [
+                {
+                  id: 'formatTime',
+                  options: {
+                    timeField: 'created_at',
+                    outputFormat: 'MM/DD/YYYY',
+                    timezone: 'America/New_York',
+                  },
+                },
+                {
+                  id: 'formatTime',
+                  options: {
+                    timeField: 'updated_at',
+                    outputFormat: 'HH:mm:ss',
+                  },
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      it('should convert both formatTime transformations', () => {
+        const transformations = model.panels[0].transformations;
+        expect(transformations).toHaveLength(2);
+
+        expect(transformations![0]).toMatchObject({
+          id: 'convertFieldType',
+          options: {
+            conversions: [
+              {
+                targetField: 'created_at',
+                destinationType: 'string',
+                dateFormat: 'MM/DD/YYYY',
+                timezone: 'America/New_York',
+              },
+            ],
+          },
+        });
+
+        expect(transformations![1]).toMatchObject({
+          id: 'convertFieldType',
+          options: {
+            conversions: [
+              {
+                targetField: 'updated_at',
+                destinationType: 'string',
+                dateFormat: 'HH:mm:ss',
+              },
+            ],
+          },
+        });
+      });
+    });
+
+    describe('Panel with mixed transformations', () => {
+      let model: DashboardModel;
+
+      beforeEach(() => {
+        model = new DashboardModel({
+          schemaVersion: 42,
+          panels: [
+            {
+              id: 1,
+              type: 'table',
+              transformations: [
+                {
+                  id: 'organize',
+                  options: {},
+                },
+                {
+                  id: 'formatTime',
+                  options: {
+                    timeField: 'timestamp',
+                    outputFormat: 'YYYY-MM-DD',
+                    timezone: 'Europe/London',
+                  },
+                },
+                {
+                  id: 'calculateField',
+                  options: {},
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      it('should only convert formatTime and preserve other transformations', () => {
+        const transformations = model.panels[0].transformations;
+        expect(transformations).toHaveLength(3);
+
+        expect(transformations![0]).toEqual({
+          id: 'organize',
+          options: {},
+        });
+
+        expect(transformations![1]).toMatchObject({
+          id: 'convertFieldType',
+          options: {
+            conversions: [
+              {
+                targetField: 'timestamp',
+                destinationType: 'string',
+                dateFormat: 'YYYY-MM-DD',
+                timezone: 'Europe/London',
+              },
+            ],
+          },
+        });
+
+        expect(transformations![2]).toEqual({
+          id: 'calculateField',
+          options: {},
+        });
+      });
+    });
+
+    describe('Nested panels in rows with formatTime', () => {
+      let model: DashboardModel;
+
+      beforeEach(() => {
+        model = new DashboardModel({
+          schemaVersion: 42,
+          panels: [
+            {
+              id: 1,
+              type: 'row',
+              panels: [
+                {
+                  id: 2,
+                  type: 'table',
+                  transformations: [
+                    {
+                      id: 'formatTime',
+                      options: {
+                        timeField: 'timestamp',
+                        outputFormat: 'DD/MM/YYYY HH:mm',
+                        timezone: 'Asia/Tokyo',
+                      },
+                    },
+                  ],
+                },
+                {
+                  id: 3,
+                  type: 'table',
+                  transformations: [
+                    {
+                      id: 'organize',
+                      options: {},
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      it('should convert formatTime in nested panels', () => {
+        const nestedPanels = model.panels[0].panels;
+        expect(nestedPanels).toBeDefined();
+        expect(nestedPanels!).toHaveLength(2);
+
+        // First nested panel should have converted formatTime
+        expect(nestedPanels![0].transformations![0]).toMatchObject({
+          id: 'convertFieldType',
+          options: {
+            conversions: [
+              {
+                targetField: 'timestamp',
+                destinationType: 'string',
+                dateFormat: 'DD/MM/YYYY HH:mm',
+                timezone: 'Asia/Tokyo',
+              },
+            ],
+          },
+        });
+
+        // Second nested panel should remain unchanged
+        expect(nestedPanels![1].transformations![0]).toEqual({
+          id: 'organize',
+          options: {},
+        });
+      });
+    });
+
+    describe('Panel with no transformations', () => {
+      let model: DashboardModel;
+
+      beforeEach(() => {
+        model = new DashboardModel({
+          schemaVersion: 42,
+          panels: [
+            {
+              id: 1,
+              type: 'table',
+            },
+          ],
+        });
+      });
+
+      it('should remain unchanged', () => {
+        expect(model.panels[0].transformations).toEqual([]);
+        expect(model.schemaVersion).toBe(43);
+      });
+    });
+
+    describe('Panel with non-formatTime transformations', () => {
+      let model: DashboardModel;
+
+      beforeEach(() => {
+        model = new DashboardModel({
+          schemaVersion: 42,
+          panels: [
+            {
+              id: 1,
+              type: 'table',
+              transformations: [
+                {
+                  id: 'organize',
+                  options: {},
+                },
+                {
+                  id: 'reduce',
+                  options: {},
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      it('should remain unchanged', () => {
+        const transformations = model.panels[0].transformations;
+        expect(transformations).toHaveLength(2);
+        expect(transformations![0]).toEqual({
+          id: 'organize',
+          options: {},
+        });
+        expect(transformations![1]).toEqual({
+          id: 'reduce',
+          options: {},
+        });
+      });
+    });
+
+    describe('formatTime transformation without options property', () => {
+      let model: DashboardModel;
+
+      beforeEach(() => {
+        model = new DashboardModel({
+          schemaVersion: 42,
+          panels: [
+            {
+              id: 1,
+              type: 'table',
+              transformations: [
+                // @ts-expect-error
+                {
+                  id: 'formatTime',
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      it('should convert with default options', () => {
+        const transformations = model.panels[0].transformations;
+        expect(transformations![0]).toMatchObject({
+          id: 'convertFieldType',
+          options: {
+            conversions: [
+              {
+                destinationType: 'string',
+              },
+            ],
+          },
+        });
+      });
+    });
+  });
 });
