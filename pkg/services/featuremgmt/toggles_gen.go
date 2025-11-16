@@ -447,10 +447,6 @@ const (
 	// Enables the group to nested table transformation
 	FlagGroupToNestedTableTransformation = "groupToNestedTableTransformation"
 
-	// FlagNewPDFRendering
-	// New implementation for the dashboard-to-PDF rendering
-	FlagNewPDFRendering = "newPDFRendering"
-
 	// FlagKubernetesAggregator
 	// Enable grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
