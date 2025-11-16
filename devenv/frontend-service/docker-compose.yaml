@@ -31,6 +31,8 @@ services:
       - ./provisioning/dashboards:/grafana/conf/provisioning/dashboards
       - ../dev-dashboards:/grafana/conf/dev-dashboards
       - ./configs/grafana-api.local.ini:/grafana/conf/custom.ini
+      - ../../public/openapi3.json:/grafana/public/openapi3.json
+      - ../../public/api-merged.json:/grafana/public/api-merged.json
     environment:
       OTEL_BSP_SCHEDULE_DELAY: 500
       GF_DEFAULT_APP_MODE: development
