@@ -262,3 +262,31 @@ export function convertObjectMatcherToAlertingPackageMatcher(matcher: ObjectMatc
     value,
   };
 }
+
+/**
+ * Inverts a MatcherOperator to its opposite
+ * = becomes !=, =~ becomes !~, and vice versa
+ */
+export function invertMatcherOperator(operator: MatcherOperator): MatcherOperator {
+  switch (operator) {
+    case MatcherOperator.equal:
+      return MatcherOperator.notEqual;
+    case MatcherOperator.notEqual:
+      return MatcherOperator.equal;
+    case MatcherOperator.regex:
+      return MatcherOperator.notRegex;
+    case MatcherOperator.notRegex:
+      return MatcherOperator.regex;
+  }
+}
+
+/**
+ * Inverts a Matcher by flipping its isEqual property
+ * This is useful for creating filters that exclude alerts matching a silence
+ */
+export function invertMatcher(matcher: Matcher): Matcher {
+  return {
+    ...matcher,
+    isEqual: !matcher.isEqual,
+  };
+}
