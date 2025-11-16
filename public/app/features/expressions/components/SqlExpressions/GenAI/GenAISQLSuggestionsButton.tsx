@@ -2,9 +2,9 @@ import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
 
-import { GenAIButton } from '../../../dashboard/components/GenAI/GenAIButton';
-import { EventTrackingSrc } from '../../../dashboard/components/GenAI/tracking';
-import { Message, Role } from '../../../dashboard/components/GenAI/utils';
+import { GenAIButton } from '../../../../dashboard/components/GenAI/GenAIButton';
+import { EventTrackingSrc } from '../../../../dashboard/components/GenAI/tracking';
+import { Message, Role } from '../../../../dashboard/components/GenAI/utils';
 
 import { getSQLSuggestionSystemPrompt, QueryUsageContext } from './sqlPromptConfig';
 

@@ -11,14 +11,16 @@ import { DataQuery } from '@grafana/schema/dist/esm/index';
 import { formatSQL } from '@grafana/sql';
 import { useStyles2, Stack, Button, Modal } from '@grafana/ui';
 
-import { ExpressionQueryEditorProps } from '../ExpressionQueryEditor';
-import { SqlExpressionQuery } from '../types';
-import { fetchSQLFields } from '../utils/metaSqlExpr';
+import { ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
+import { SqlExpressionQuery } from '../../types';
+import { fetchSQLFields } from '../../utils/metaSqlExpr';
+import { QueryToolbox } from '../QueryToolbox';
 
+import { getSqlCompletionProvider } from './CompletionProvider/sqlCompletionProvider';
 import { useSQLExplanations } from './GenAI/hooks/useSQLExplanations';
 import { useSQLSuggestions } from './GenAI/hooks/useSQLSuggestions';
-import { QueryToolbox } from './QueryToolbox';
-import { getSqlCompletionProvider } from './sqlCompletionProvider';
+import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
+import { useSQLSchemas } from './hooks/useSQLSchemas';
 
 // Lazy load the GenAI components to avoid circular dependencies
 const GenAISQLSuggestionsButton = lazy(() =>
@@ -53,6 +55,7 @@ const GenAIExplanationDrawer = lazy(() =>
 
 // Account for Monaco editor's border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
+const EDITOR_HEIGHT = 300;
 
 export interface SqlExprProps {
   refIds: Array<SelectableValue<string>>;
@@ -90,11 +93,12 @@ FROM
 LIMIT
   10`;
 
-  const styles = useStyles2(getStyles);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ height: 0 });
+  const styles = useStyles2((theme) => getStyles(theme, dimensions.height || EDITOR_HEIGHT));
+  const containerRef = useRef<HTMLDivElement>(null);
   const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isSchemaInspectorOpen, setIsSchemaInspectorOpen] = useState(true);
 
   const { handleApplySuggestion, handleHistoryUpdate, handleCloseDrawer, handleOpenDrawer, isDrawerOpen, suggestions } =
     useSQLSuggestions();
@@ -108,6 +112,18 @@ LIMIT
     shouldShowViewExplanation,
     updatePrevExpression,
   } = useSQLExplanations(query.expression || '');
+
+  const {
+    schemas,
+    loading: schemasLoading,
+    error: schemasError,
+    isFeatureEnabled: isSchemasFeatureEnabled,
+    refetch: refetchSchemas,
+  } = useSQLSchemas({
+    queries,
+    enabled: isSchemaInspectorOpen,
+    timeRange: metadata?.range,
+  });
 
   const queryContext = useMemo(
     () => ({
@@ -172,7 +188,12 @@ LIMIT
 
       onRunQuery();
     }
-  }, [onRunQuery]);
+
+    // Refetch schemas when query is run (only if inspector is open)
+    if (isSchemaInspectorOpen) {
+      refetchSchemas();
+    }
+  }, [onRunQuery, refetchSchemas, isSchemaInspectorOpen]);
 
   // Set up resize observer to handle container resizing
   useEffect(() => {
@@ -224,6 +245,21 @@ LIMIT
   const renderSQLButtons = () => (
     <div className={styles.sqlButtons}>
       <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
+        {isSchemasFeatureEnabled && (
+          <Button
+            icon={isSchemaInspectorOpen ? 'table-collapse-all' : 'table-expand-all'}
+            onClick={() => setIsSchemaInspectorOpen(!isSchemaInspectorOpen)}
+            size="sm"
+            variant="secondary"
+            fill="outline"
+          >
+            {isSchemaInspectorOpen ? (
+              <Trans i18nKey="expressions.sql-schema.close-button">Close schema</Trans>
+            ) : (
+              <Trans i18nKey="expressions.sql-schema.inspect-button">Inspect schema</Trans>
+            )}
+          </Button>
+        )}
         <Button icon="play" onClick={executeQuery} size="sm">
           {t('expressions.sql-expr.button-run-query', 'Run query')}
         </Button>
@@ -273,16 +309,27 @@ LIMIT
     <>
       <div className={styles.sqlContainer}>
         {renderSQLButtons()}
-        <div ref={containerRef} className={styles.editorContainer}>
-          <SQLEditor
-            query={query.expression || initialQuery}
-            onChange={onEditorChange}
-            width={width}
-            height={height ?? dimensions.height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
-            language={EDITOR_LANGUAGE_DEFINITION}
-          >
-            {({ formatQuery }) => renderToolbox(formatQuery)}
-          </SQLEditor>
+        <div className={`${styles.contentContainer} ${isSchemaInspectorOpen ? styles.contentContainerWithSchema : ''}`}>
+          <div ref={containerRef} className={styles.editorContainer}>
+            <SQLEditor
+              query={query.expression || initialQuery}
+              onChange={onEditorChange}
+              width={width}
+              height={height ?? dimensions.height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
+              language={EDITOR_LANGUAGE_DEFINITION}
+            >
+              {({ formatQuery }) => renderToolbox(formatQuery)}
+            </SQLEditor>
+          </div>
+          <div className={`${styles.schemaInspector} ${isSchemaInspectorOpen ? styles.schemaInspectorOpen : ''}`}>
+            {isSchemaInspectorOpen && (
+              <SchemaInspectorPanel
+                schemas={schemas?.sqlSchemas ?? null}
+                loading={schemasLoading}
+                error={schemasError}
+              />
+            )}
+          </div>
         </div>
       </div>
       <Suspense fallback={null}>
@@ -335,19 +382,35 @@ LIMIT
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, editorHeight: number) => ({
   sqlContainer: css({
     display: 'grid',
+    gap: theme.spacing(1),
     gridTemplateRows: 'auto 1fr',
     gridTemplateAreas: `
       "buttons"
-      "editor"
+      "content"
     `,
-    gap: theme.spacing(0.5),
+  }),
+
+  contentContainer: css({
+    gridArea: 'content',
+    display: 'grid',
+    gap: theme.spacing(1),
+    gridTemplateColumns: '1fr 0fr',
+    gridTemplateAreas: '"editor schema"',
+    [theme.transitions.handleMotion('no-preference')]: {
+      transition: theme.transitions.create(['grid-template-columns'], {
+        duration: theme.transitions.duration.standard,
+      }),
+    },
+  }),
+  contentContainerWithSchema: css({
+    gridTemplateColumns: '1fr 1fr',
   }),
   editorContainer: css({
     gridArea: 'editor',
-    height: '240px',
+    height: editorHeight, // Use dynamic height from ResizeObserver
     resize: 'vertical',
     overflow: 'auto',
     minHeight: '100px',
@@ -373,6 +436,36 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
+  }),
+  schemaInspector: css({
+    gridArea: 'schema',
+    height: editorHeight,
+    overflow: 'hidden',
+    minWidth: 0,
+  }),
+  schemaInspectorOpen: css({
+    border: `1px solid ${theme.colors.border.weak}`,
+  }),
+  schemaFields: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    padding: theme.spacing(1),
+    maxHeight: '120px',
+    overflowY: 'auto',
+  }),
+  fieldItem: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+    padding: theme.spacing(1),
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.colors.border.weak}`,
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
+  responseContainer: css({
+    padding: theme.spacing(2),
   }),
 });
 
