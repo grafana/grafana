@@ -463,4 +463,39 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
     ).not.toBeVisible();
   });
+
+  test('invalid data for field type', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+    ).toBeVisible();
+
+    await waitForTableLoad(page);
+
+    const gaugeColumnIdx = await getColumnIdx(page, 'Gauge');
+
+    const gaugeCell = await getCell(page, 1, gaugeColumnIdx);
+    await expect(gaugeCell).toBeVisible();
+    await expect(gaugeCell.getByText('Invalid data for Gauge cell')).not.toBeVisible();
+
+    // change the number field powering gauge cell to a string using a transformation
+    await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Transformations')).click();
+    await page.getByText('Add another transformation').click();
+    await page.getByText('Convert field type').click();
+
+    const transformationEditor = dashboardPage.getByGrafanaSelector(
+      selectors.components.TransformTab.transformationEditor('Convert field type')
+    );
+
+    await transformationEditor.getByLabel('Field', { exact: true }).fill('Gauge');
+    await page.keyboard.press('Enter');
+    await transformationEditor.getByLabel('as', { exact: true }).fill('string');
+    await page.keyboard.press('Enter');
+
+    await expect(gaugeCell.getByText('Invalid data for Gauge cell')).toBeVisible();
+  });
 });
