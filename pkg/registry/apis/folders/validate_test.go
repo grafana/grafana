@@ -581,3 +581,8 @@ func (m *mockSearchClient) GetStats(ctx context.Context, in *resourcepb.Resource
 func (m *mockSearchClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	return m.search, m.searchErr
 }
+
+// RebuildIndexes implements resourcepb.ResourceIndexClient.
+func (m *mockSearchClient) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest, opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}

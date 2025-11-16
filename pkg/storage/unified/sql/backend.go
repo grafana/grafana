@@ -976,7 +976,8 @@ func (b *backend) fetchLatestHistoryRV(ctx context.Context, x db.ContextExecer, 
 // Don't run deletion of "last import times" more often than this duration.
 const limitLastImportTimesDeletion = 1 * time.Hour
 
-func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
+// GetResourceLastImportTimes provides an iterator for Last Import times and accepts an optional filter for NamespacedResources
+func (b *backend) GetResourceLastImportTimes(ctx context.Context, filterKeys []resource.NamespacedResource) iter.Seq2[resource.ResourceLastImportTime, error] {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetLastImportTimes")
 	defer span.End()
 
@@ -1003,7 +1004,10 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 		b.lastImportTimeDeletionTime.Store(now)
 	}
 
-	rows, err := dbutil.QueryRows(ctx, b.db, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{SQLTemplate: sqltemplate.New(b.dialect)})
+	rows, err := dbutil.QueryRows(ctx, b.db, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		FilterKeys:  filterKeys,
+	})
 	if err != nil {
 		return func(yield func(resource.ResourceLastImportTime, error) bool) {
 			yield(resource.ResourceLastImportTime{}, err)
@@ -1045,4 +1049,8 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 			yield(resource.ResourceLastImportTime{}, err)
 		}
 	}
+}
+
+func (b *backend) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	return nil, fmt.Errorf("rebuild indexes not supported by unistore sql backend")
 }
