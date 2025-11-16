@@ -183,7 +183,7 @@ func (proxy PluginProxy) director(req *http.Request) {
 
 	req.Header.Set("X-Grafana-Context", string(ctxJSON))
 
-	proxyutil.ApplyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
+	proxyutil.ApplyUserHeader(proxy.cfg.DataProxy.SendUserHeader, req, proxy.ctx.SignedInUser)
 	proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
 
 	if err := addHeaders(&req.Header, proxy.matchedRoute, data); err != nil {
@@ -197,7 +197,7 @@ func (proxy PluginProxy) director(req *http.Request) {
 }
 
 func (proxy PluginProxy) logRequest() {
-	if !proxy.cfg.DataProxyLogging {
+	if !proxy.cfg.DataProxy.Logging {
 		return
 	}
 
