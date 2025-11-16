@@ -88,6 +88,8 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 
 	var dialOps []grpc.DialOption
 
+	// Set maximum receive message size to 100MB to handle large trace responses
+	dialOps = append(dialOps, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(100*1024*1024)))
 	dialOps = append(dialOps, grpc.WithChainStreamInterceptor(CustomHeadersStreamInterceptor(opts)))
 	if settings.BasicAuthEnabled {
 		// If basic authentication is enabled, it uses TLS transport credentials and sets the basic authentication header for each RPC call.
