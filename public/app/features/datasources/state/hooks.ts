@@ -42,10 +42,10 @@ export const useInitDataSourceSettings = (uid: string) => {
   }, [uid, dispatch]);
 };
 
-export const useTestDataSource = (uid: string) => {
+export const useTestDataSource = (uid: string, editRoute: string) => {
   const dispatch = useDispatch();
 
-  return () => dispatch(testDataSource(uid, ROUTES.DataSourcesEdit));
+  return () => dispatch(testDataSource(uid, editRoute));
 };
 
 export const useLoadDataSources = () => {

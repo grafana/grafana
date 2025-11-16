@@ -10,7 +10,7 @@ import {
   PluginExtensionDataSourceConfigContext,
   DataSourceUpdatedSuccessfully,
 } from '@grafana/data';
-import { getDataSourceSrv, usePluginComponents, UsePluginComponentsResult } from '@grafana/runtime';
+import { getDataSourceSrv, usePluginComponents, UsePluginComponentsResult, config } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { DataSourceSettingsState } from 'app/types/datasources';
@@ -30,6 +30,7 @@ import {
 import { setIsDefault, setDataSourceName, dataSourceLoaded } from '../state/reducers';
 import { trackDsConfigClicked, trackDsConfigUpdated } from '../tracking';
 import { DataSourceRights } from '../types';
+import { ROUTES } from '../../connections/constants';
 
 import { BasicSettings } from './BasicSettings';
 import { ButtonRow } from './ButtonRow';
@@ -59,7 +60,8 @@ export function EditDataSource({ uid, pageId }: Props) {
   const dataSourceRights = useDataSourceRights(uid);
   const exploreUrl = useDataSourceExploreUrl(uid);
   const onDelete = useDeleteLoadedDataSource();
-  const onTest = useTestDataSource(uid);
+  const onTest = config.featureToggles.queryServiceWithConnections ? useTestDataSource(uid, ROUTES.DataSourcesEdit) :
+    useTestDataSource(uid, ROUTES.DataSourcesEdit);
   const onUpdate = useUpdateDatasource();
   const onDefaultChange = (value: boolean) => dispatch(setIsDefault(value));
   const onNameChange = (name: string) => dispatch(setDataSourceName(name));
