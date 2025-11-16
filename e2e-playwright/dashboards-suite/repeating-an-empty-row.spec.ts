@@ -4,7 +4,8 @@ const PAGE_UNDER_TEST = 'dtpl2Ctnk/repeating-an-empty-row';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    v2DashboardAPIVersion: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });
 

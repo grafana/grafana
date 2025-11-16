@@ -5,7 +5,8 @@ import { SnapshotCreateResponse } from '../../public/app/features/dashboard/serv
 test.use({
   featureToggles: {
     scenes: true,
-    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    v2DashboardAPIVersion: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });
 

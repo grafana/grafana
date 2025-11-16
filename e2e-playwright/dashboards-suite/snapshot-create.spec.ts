@@ -4,7 +4,8 @@ const DASHBOARD_UID = 'ZqZnVvFZz';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    v2DashboardAPIVersion: process.env.FORCE_V2_DASHBOARDS_API === 'true',
     dashboardScene: false, // this test is for the old sharing modal only used when scenes is turned off
   },
 });
