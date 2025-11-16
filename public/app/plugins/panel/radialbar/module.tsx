@@ -8,7 +8,7 @@ import { EffectsEditor } from './EffectsEditor';
 import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldMigrateGauge } from './GaugeMigrations';
 import { RadialBarPanel } from './RadialBarPanel';
 import { defaultGaugePanelEffects, defaultOptions, Options } from './panelcfg.gen';
-import { GaugeSuggestionsSupplier } from './suggestions';
+import { radialBarSuggestionsHandler } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(RadialBarPanel)
   .useFieldConfig({})
@@ -112,6 +112,6 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       defaultValue: defaultGaugePanelEffects,
     });
   })
-  .setSuggestionsSupplier(new GaugeSuggestionsSupplier())
+  .setSuggestionsSupplier(radialBarSuggestionsHandler)
   .setMigrationHandler(gaugePanelMigrationHandler, shouldMigrateGauge)
   .setPanelChangeHandler(gaugePanelChangedHandler);
