@@ -3,19 +3,14 @@ package sql
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -27,80 +22,6 @@ import (
 var (
 	_ resource.BulkProcessingBackend = (*backend)(nil)
 )
-
-type bulkRV struct {
-	max     int64
-	counter int64
-}
-
-// When executing a bulk import we can fake the RV values
-func newBulkRV() *bulkRV {
-	t := time.Now().Truncate(time.Second * 10)
-	return &bulkRV{
-		max:     (t.UnixMicro() / 10000000) * 10000000,
-		counter: 0,
-	}
-}
-
-func (x *bulkRV) next(obj metav1.Object) int64 {
-	ts := obj.GetCreationTimestamp().UnixMicro()
-	anno := obj.GetAnnotations()
-	if anno != nil {
-		v := anno[utils.AnnoKeyUpdatedTimestamp]
-		t, err := time.Parse(time.RFC3339, v)
-		if err == nil {
-			ts = t.UnixMicro()
-		}
-	}
-	if ts > x.max || ts < 10000000 {
-		ts = x.max
-	}
-	x.counter++
-	return (ts/10000000)*10000000 + x.counter
-}
-
-type bulkLock struct {
-	running map[string]bool
-	mu      sync.Mutex
-}
-
-func (x *bulkLock) Start(keys []*resourcepb.ResourceKey) error {
-	x.mu.Lock()
-	defer x.mu.Unlock()
-
-	// First verify that it is not already running
-	ids := make([]string, len(keys))
-	for i, k := range keys {
-		id := resource.NSGR(k)
-		if x.running[id] {
-			return &apierrors.StatusError{ErrStatus: metav1.Status{
-				Code:    http.StatusPreconditionFailed,
-				Message: "bulk export is already running",
-			}}
-		}
-		ids[i] = id
-	}
-
-	// Then add the keys to the lock
-	for _, k := range ids {
-		x.running[k] = true
-	}
-	return nil
-}
-
-func (x *bulkLock) Finish(keys []*resourcepb.ResourceKey) {
-	x.mu.Lock()
-	defer x.mu.Unlock()
-	for _, k := range keys {
-		delete(x.running, resource.NSGR(k))
-	}
-}
-
-func (x *bulkLock) Active() bool {
-	x.mu.Lock()
-	defer x.mu.Unlock()
-	return len(x.running) > 0
-}
 
 func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
 	err := b.bulkLock.Start(setting.Collection)
@@ -168,7 +89,7 @@ func (b *backend) processBulk(ctx context.Context, setting resource.BulkSettings
 		}
 
 		// Calculate the RV based on incoming request timestamps
-		rv := newBulkRV()
+		rv := resource.NewBulkRV()
 
 		summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection))
 
@@ -235,7 +156,7 @@ func (b *backend) processBulk(ctx context.Context, setting resource.BulkSettings
 				},
 				Folder:          req.Folder,
 				GUID:            uuid.New().String(),
-				ResourceVersion: rv.next(obj),
+				ResourceVersion: rv.Next(obj),
 			}); err != nil {
 				return rollbackWithError(fmt.Errorf("insert into resource history: %w", err))
 			}
