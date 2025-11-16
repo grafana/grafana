@@ -213,7 +213,7 @@ func (st DBstore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid st
 			if previousVersion != nil && previousVersion.EqualSpec(*rule) {
 				continue
 			}
-			converted, err := alertRuleToModelsAlertRule(alertRuleVersionToAlertRule(*rule), st.Logger)
+			converted, err := alertRuleVersionToModelsAlertRule(*rule, st.Logger)
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "GetAlertRuleVersions", "error", err, "version_id", rule.ID)
 				continue
@@ -257,7 +257,7 @@ func (st DBstore) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmodel
 				st.Logger.Error("Invalid rule version found in DB store, ignoring it", "func", "GetAlertRuleVersions", "error", err)
 				continue
 			}
-			converted, err := alertRuleToModelsAlertRule(alertRuleVersionToAlertRule(*rule), st.Logger)
+			converted, err := alertRuleVersionToModelsAlertRule(*rule, st.Logger)
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "GetAlertRuleVersions", "error", err, "version_id", rule.ID)
 				continue
@@ -368,7 +368,9 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			converted.GUID = uuid.NewString()
 
 			newRules = append(newRules, converted)
-			ruleVersions = append(ruleVersions, alertRuleToAlertRuleVersion(converted))
+			v := alertRuleToAlertRuleVersion(converted)
+			v.Message = r.Message
+			ruleVersions = append(ruleVersions, v)
 		}
 		if len(newRules) > 0 {
 			// we have to insert the rules one by one as otherwise we are
@@ -443,6 +445,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			v := alertRuleToAlertRuleVersion(converted)
 			v.Version++
 			v.ParentVersion = r.Existing.Version
+			v.Message = r.New.Message
 
 			// check if there is diff between existing and new, and if no, skip saving version.
 			existingConverted, err := alertRuleFromModelsAlertRule(*r.Existing)
