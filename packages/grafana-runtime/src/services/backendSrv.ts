@@ -29,7 +29,8 @@ export type BackendSrvRequest = {
   method?: string;
 
   /**
-   * Set to false an success application alert box will not be shown for successful PUT, DELETE, POST requests
+   * Set to true to show a success application alert box for successful requests.
+   * By default, success alerts are not shown (opt-in behavior).
    */
   showSuccessAlert?: boolean;
 
@@ -154,6 +155,8 @@ export function isFetchError<T = any>(e: unknown): e is FetchError<T> {
  * @remarks
  * By default, Grafana displays an error message alert if the remote call fails. To prevent this from
  * happening `showErrorAlert = false` on the options object.
+ * 
+ * Success alerts are opt-in. To show a success alert, set `showSuccessAlert = true` on the options object.
  *
  * @public
  */
