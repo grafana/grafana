@@ -67,7 +67,7 @@ describe('LogsTableWrap', () => {
     setup({
       panelState: {
         visualisationType: 'table',
-        columns: undefined,
+        displayedFields: undefined,
       },
       updatePanelState: updatePanelState,
     });
@@ -109,7 +109,7 @@ describe('LogsTableWrap', () => {
     setup({
       panelState: {
         visualisationType: 'table',
-        columns: undefined,
+        displayedFields: undefined,
       },
       updatePanelState: updatePanelState,
     });

@@ -31,6 +31,11 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
 
 export const LOG_LINE_BODY_FIELD_NAME = '___LOG_LINE_BODY___';
 
+// Table view field constants
+export const TABLE_TIME_FIELD_NAME = 'Time';
+export const TABLE_LINE_FIELD_NAME = 'Line';
+export const TABLE_DETECTED_LEVEL_FIELD_NAME = 'detected_level';
+
 export const LogDetailsBody = (props: Props) => {
   const showField = () => {
     const { onClickShowField, row } = props;

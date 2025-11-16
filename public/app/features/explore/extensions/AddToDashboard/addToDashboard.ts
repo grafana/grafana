@@ -24,7 +24,7 @@ function getLogsTableTransformations(
   options: ExploreToDashboardPanelOptions
 ): DataTransformerConfig[] {
   let transformations: DataTransformerConfig[] = [];
-  if (panelType === 'table' && options.panelState?.logs?.columns) {
+  if (panelType === 'table' && options.panelState?.logs?.displayedFields) {
     // If we have a labels column, we need to extract the fields from it
     if (options.panelState.logs?.labelFieldName) {
       transformations.push({
@@ -34,19 +34,18 @@ function getLogsTableTransformations(
         },
       });
     }
-
     // Show the columns that the user selected in explore
     transformations.push({
       id: 'organize',
       options: {
-        indexByName: Object.values(options.panelState.logs.columns).reduce(
+        indexByName: options.panelState.logs.displayedFields.reduce(
           (acc: Record<string, number>, value: string, idx) => ({
             ...acc,
             [value]: idx,
           }),
           {}
         ),
-        includeByName: Object.values(options.panelState.logs.columns).reduce(
+        includeByName: options.panelState.logs.displayedFields.reduce(
           (acc: Record<string, boolean>, value: string) => ({
             ...acc,
             [value]: true,
