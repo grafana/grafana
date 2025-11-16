@@ -238,6 +238,7 @@ type ReleaseState string
 
 const (
 	ReleaseStateAlpha ReleaseState = "alpha"
+	ReleaseStateBeta  ReleaseState = "beta"
 )
 
 type SignatureType string
