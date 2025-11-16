@@ -112,6 +112,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
         allowCustomValue: variable.state.allowCustomValue,
+        valuesFormat: variable.state.valuesFormat,
       });
     } else if (sceneUtils.isDataSourceVariable(variable)) {
       variables.push({
@@ -397,6 +398,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           allValue: variable.state.allValue,
           includeAll: variable.state.includeAll ?? false,
           allowCustomValue: variable.state.allowCustomValue ?? true,
+          valuesFormat: variable.state.valuesFormat,
         },
       };
       variables.push(customVariable);
