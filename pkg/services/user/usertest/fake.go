@@ -86,6 +86,10 @@ func (f *FakeUserService) GetByEmail(ctx context.Context, query *user.GetUserByE
 	return f.ExpectedUser, f.ExpectedError
 }
 
+func (f *FakeUserService) GetByExternalID(ctx context.Context, query *user.GetUserByExternalIDQuery) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
 func (f *FakeUserService) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
 	if f.UpdateFn != nil {
 		return f.UpdateFn(ctx, cmd)
