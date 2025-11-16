@@ -24,8 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type ServiceImpl struct {
@@ -86,7 +84,6 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Preference) (*navtree.NavTreeRoot, error) {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	treeRoot := &navtree.NavTreeRoot{}
-	ctx := c.Req.Context()
 
 	treeRoot.AddSection(s.getHomeNode(c, prefs))
 
@@ -188,9 +185,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.RemoveSectionByID(navtree.NavIDCfg)
 	}
 
-	flagDetails, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, featuremgmt.FlagPinNavItems, true, openfeature.TransactionContext(ctx))
-	s.log.Debug("flag evaluation: ", "flagDetails", flagDetails, "err", err)
-	if flagDetails.Value && c.IsSignedIn {
+	if c.IsSignedIn {
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:           "Bookmarks",
 			Id:             navtree.NavIDBookmarks,
