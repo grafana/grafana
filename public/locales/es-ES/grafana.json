@@ -1982,9 +1982,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
+      "disabled-tooltip": "",
       "error": "No se ha podido cargar la vista previa del enrutamiento para {{alertmanager}}",
       "initialized": "Según las etiquetas añadidas, las instancias de alerta se enrutan a las siguientes políticas de notificación. Amplía cada política de notificación a continuación para ver más detalles.",
       "preview-routing": "Vista previa del enrutamiento",
+      "select-folder-tooltip": "",
       "text-loading-preview": "Cargando vista previa...",
       "title": "Vista previa del enrutamiento de la instancia de alerta",
       "uninitialized": "Cuando hayas seleccionado la carpeta y configurado la consulta y las etiquetas, haz clic en «Vista previa del enrutamiento» para ver los resultados aquí."
@@ -2945,6 +2947,7 @@
     "triage": {
       "alert-instances": "",
       "error-loading-rule": "",
+      "firing-instances-count": "",
       "instance-details-drawer": {
         "instance-details": ""
       },
@@ -2954,6 +2957,7 @@
       "no-matching-instances-with-filters": "",
       "open-in-sidebar": "",
       "open-rule-details": "",
+      "pending-instances-count": "",
       "rule-details": {
         "subtitle": "",
         "title": ""
@@ -2961,7 +2965,9 @@
       "rule-not-found": {
         "description": "",
         "title": ""
-      }
+      },
+      "rules-with-firing-instances": "",
+      "rules-with-pending-instances": ""
     },
     "type-selector-button": {
       "add-expression": "Añadir expresión"
@@ -4126,6 +4132,7 @@
     "action": {
       "change-theme": "Cambiar tema",
       "dark-theme": "Oscuro",
+      "dashboard-from-template": "",
       "light-theme": "Claro",
       "scopes": "Alcances"
     },
@@ -5712,6 +5719,10 @@
     "suggested-dashboards-subtitle": "",
     "suggested-dashboards-title": "",
     "suggested-dashboards-title-with-datasource": "",
+    "template-dashboard-modal": {
+      "description": "",
+      "title": ""
+    },
     "view-all": ""
   },
   "dashboard-links": {
@@ -7041,7 +7052,6 @@
         "new-panel": "Nuevo panel"
       }
     },
-    "clear": "Borrar",
     "confirm-navigation-modal": {
       "cancel": "Cancelar",
       "new-tab": "¿Quieres continuar en la pestaña actual o abrir una nueva?",
@@ -7265,7 +7275,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No hay información de volumen disponible para las consultas y el intervalo de tiempo actuales."
     },
-    "next": "Siguiente",
     "next-prev-result": {
       "aria-label-next": "Botón de siguiente resultado",
       "aria-label-prev": "Botón de resultado anterior",
@@ -7286,7 +7295,6 @@
     "pane": {
       "loading-placeholder": "Cargando..."
     },
-    "prev": "Ant.",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Seguir sin consulta"
     },
@@ -7435,8 +7443,7 @@
       "query-inspector-button": "Inspector de consultas",
       "query-inspector-button-aria-label": "Inspector de consultas"
     },
-    "show-critical-path-only": "Mostrar solo la ruta crítica",
-    "show-matches-only": "Mostrar solo las coincidencias",
+    "show-all-spans": "",
     "span-bar": {
       "tooltip-critical-path": "Un segmento en la <1>ruta crítica</1> de la traza/solicitud/flujo de trabajo general."
     },
@@ -7556,10 +7563,18 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "Abrir menú de opciones de compartir traza",
+      "critical-path": "",
+      "critical-path-tooltip": "",
       "duration": "Duración",
+      "errors": "",
+      "errors-tooltip": "",
       "export-started": "Exportación iniciada",
+      "filters": "",
       "give-feedback": "Comentarios",
+      "high-latency": "",
+      "high-latency-tooltip": "",
       "link-copied": "Enlace copiado al portapapeles",
+      "overview": "",
       "path": "Ruta",
       "route": "Ruta",
       "services": "Servicios",
@@ -7573,11 +7588,6 @@
       "tooltip-url": "{{route}} o {{url}} o {{target}} o {{path}}",
       "trace-id": "ID de traza",
       "url": "URL"
-    },
-    "trace-page-search-bar": {
-      "aria-label-clear-filters": "Botón para borrar filtros",
-      "label-show-matches": "Interruptor para mostrar solo las coincidencias",
-      "label-show-paths": "Interruptor para mostrar solo la ruta crítica"
     },
     "trace-view": {
       "aria-label-copy": "Copiar al portapapeles",
@@ -10523,6 +10533,7 @@
       "title": "Nuevo"
     },
     "new-dashboard": {
+      "empty-title": "",
       "title": "Nuevo panel de control"
     },
     "new-folder": {
@@ -10688,7 +10699,8 @@
       "aria-label": "Perfil"
     },
     "quick-add": {
-      "aria-label": "Nuevo"
+      "aria-label": "Nuevo",
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Últimas entradas del blog"
   },
@@ -11483,6 +11495,9 @@
       "label-display-name": "Nombre que mostrar",
       "placeholder-my-repository-connection": "Mi conexión de repositorio",
       "text-loading-resource-information": "Cargando información de recursos...",
+      "unavailable-options": {
+        "title": ""
+      },
       "unmanaged-resources-label": "",
       "dashboards-count_one": "{{count}} dashboard",
       "dashboards-count_other": "{{count}} dashboards",
@@ -11531,9 +11546,8 @@
     },
     "connect-repository-button": {
       "configure": "Configurar",
-      "instance-fully-managed-tooltip": "",
-      "repository-limit-reached-tooltip_one": "",
-      "repository-limit-reached-tooltip_other": ""
+      "free-tier-limit-tooltip": "",
+      "instance-fully-managed-tooltip": ""
     },
     "delete-repository-button": {
       "button-delete": "Eliminar",
@@ -11625,6 +11639,13 @@
       "all-resources-managed_other": "",
       "unmanaged-resources_one": "",
       "unmanaged-resources_other": ""
+    },
+    "free-tier-limit": {
+      "message": "",
+      "message-connection": "",
+      "message-resource": "",
+      "note": "",
+      "upgrade-link": ""
     },
     "get-default-values": {
       "title": {
@@ -11764,10 +11785,16 @@
       "truncated": ""
     },
     "mode-options": {
+      "disabled": {
+        "folder-connected": "",
+        "legacy-storage": "",
+        "not-allowed": "",
+        "not-supported": ""
+      },
       "folder": {
         "description": "Después de la configuración, se creará una nueva carpeta de Grafana y se sincronizará con el almacenamiento externo. Si hay recursos presentes en el almacenamiento externo, se aprovisionarán en esta nueva carpeta. Todos los recursos nuevos creados en esta carpeta se almacenarán y versionarán en un almacenamiento externo.",
         "label": "Sincronizar el almacenamiento externo con una nueva carpeta de Grafana",
-        "subtitle": "Utiliza esta opción para sincronizar recursos externos en una nueva carpeta sin afectar el resto de tu instancia. Puedes repetir este proceso para un máximo de 10 carpetas."
+        "subtitle": ""
       },
       "instance": {
         "description": "Los recursos se sincronizarán con el almacenamiento externo y se aprovisionarán en esta instancia. Los recursos de Grafana existentes se migrarán y fusionarán si es necesario. Después de la configuración, todos los nuevos recursos y cambios se guardarán en el almacenamiento externo y se aprovisionarán automáticamente de nuevo en la instancia.",
@@ -12407,10 +12434,12 @@
       }
     },
     "dashboard-actions": {
+      "empty-dashboard": "",
       "import": "Importar",
       "new": "Nuevo",
       "new-dashboard": "Nuevo panel de control",
-      "new-folder": "Nueva carpeta"
+      "new-folder": "Nueva carpeta",
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Puntuación"
@@ -13386,17 +13415,20 @@
     }
   },
   "traces": {
+    "adhocFilters": {
+      "customValue": "",
+      "duration1h": "",
+      "duration1m": "",
+      "duration1ms": "",
+      "duration1s": "",
+      "durationLabel": "",
+      "textSearchDescription": "",
+      "textSearchLabel": ""
+    },
     "category-span-filters": "Filtros de intervalo",
-    "name-critical-path-only": "Mostrar solo la ruta crítica",
-    "name-find-in-trace": "Buscar en el rastro",
-    "name-max-duration": "Duración máx.",
-    "name-min-duration": "Duración mín.",
-    "name-service-name": "Nombre de servicio",
-    "name-service-name-operator": "Operador de nombre de servicio",
+    "name-critical-path-only": "",
+    "name-filters": "",
     "name-show-matches-only": "Mostrar solo las coincidencias",
-    "name-span-name": "Nombre del intervalo",
-    "name-span-name-operator": "Operador de nombre de intervalo",
-    "name-tags": "Etiquetas",
     "traces-panel": {
       "no-data-found-in-response": "No se han encontrado datos en la respuesta"
     }
