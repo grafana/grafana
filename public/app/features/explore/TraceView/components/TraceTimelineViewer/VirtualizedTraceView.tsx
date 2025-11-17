@@ -101,7 +101,6 @@ type TVirtualizedTraceViewOwnProps = {
   focusedSpanId?: string;
   focusedSpanIdForSearch: string;
   showSpanFilterMatchesOnly: boolean;
-  showCriticalPathSpansOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
   datasourceType: string;
@@ -134,18 +133,15 @@ function generateRowStates(
   detailStates: Map<string, DetailState | TNil>,
   findMatchesIDs: Set<string> | TNil,
   showSpanFilterMatchesOnly: boolean,
-  showCriticalPathSpansOnly: boolean,
   criticalPath: CriticalPathSection[]
 ): RowState[] {
   if (!spans) {
     return [];
   }
+  // Apply filtering when matchesOnly is enabled
+  // Critical path filtering is now integrated into findMatchesIDs
   if (showSpanFilterMatchesOnly && findMatchesIDs) {
     spans = spans.filter((span) => findMatchesIDs.has(span.spanID));
-  }
-
-  if (showCriticalPathSpansOnly && criticalPath) {
-    spans = spans.filter((span) => criticalPath.find((section) => section.spanId === span.spanID));
   }
 
   let collapseDepth = null;
@@ -197,7 +193,6 @@ function generateRowStatesFromTrace(
   detailStates: Map<string, DetailState | TNil>,
   findMatchesIDs: Set<string> | TNil,
   showSpanFilterMatchesOnly: boolean,
-  showCriticalPathSpansOnly: boolean,
   criticalPath: CriticalPathSection[]
 ): RowState[] {
   return trace
@@ -207,7 +202,6 @@ function generateRowStatesFromTrace(
         detailStates,
         findMatchesIDs,
         showSpanFilterMatchesOnly,
-        showCriticalPathSpansOnly,
         criticalPath
       )
     : [];
@@ -269,22 +263,14 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   }
 
   getRowStates(): RowState[] {
-    const {
-      childrenHiddenIDs,
-      detailStates,
-      trace,
-      findMatchesIDs,
-      showSpanFilterMatchesOnly,
-      showCriticalPathSpansOnly,
-      criticalPath,
-    } = this.props;
+    const { childrenHiddenIDs, detailStates, trace, findMatchesIDs, showSpanFilterMatchesOnly, criticalPath } =
+      this.props;
     return memoizedGenerateRowStates(
       trace,
       childrenHiddenIDs,
       detailStates,
       findMatchesIDs,
       showSpanFilterMatchesOnly,
-      showCriticalPathSpansOnly,
       criticalPath
     );
   }
