@@ -15,7 +15,7 @@ func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSo
 	// Wrap the provider once with 10s caching for all conversions.
 	// This prevents repeated DB queries across multiple conversion calls while allowing
 	// the cache to refresh periodically, making it suitable for long-lived singleton usage.
-	dsIndexProvider = schemaversion.WrapIndexProviderWithOnce(dsIndexProvider)
+	dsIndexProvider = schemaversion.WrapIndexProviderWithCache(dsIndexProvider)
 
 	// v0 conversions
 	if err := s.AddConversionFunc((*dashv0.Dashboard)(nil), (*dashv1.Dashboard)(nil),

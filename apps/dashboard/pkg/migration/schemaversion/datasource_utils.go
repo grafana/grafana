@@ -10,14 +10,14 @@ import (
 // These functions handle the common logic for migrating datasource references from
 // string names/UIDs to structured reference objects with uid, type, and apiVersion.
 
-// onceIndexProvider wraps a DataSourceIndexProvider with time-based caching.
+// cachedIndexProvider wraps a DataSourceIndexProvider with time-based caching.
 // This prevents multiple DB queries and index builds during operations that may call
 // provider.Index() multiple times (e.g., dashboard conversions with many datasource lookups).
 // The cache expires after 10 seconds, allowing it to be used as a long-lived singleton
 // while still refreshing periodically.
 //
 // Thread-safe: Uses sync.RWMutex to guarantee safe concurrent access.
-type onceIndexProvider struct {
+type cachedIndexProvider struct {
 	provider DataSourceIndexProvider
 	mu       sync.RWMutex
 	index    *DatasourceIndex
@@ -27,7 +27,7 @@ type onceIndexProvider struct {
 
 // Index returns the cached index if it's still valid (< 10s old), otherwise rebuilds it.
 // Uses RWMutex for efficient concurrent reads when cache is valid.
-func (p *onceIndexProvider) Index(ctx context.Context) *DatasourceIndex {
+func (p *cachedIndexProvider) Index(ctx context.Context) *DatasourceIndex {
 	// Fast path: check if cache is still valid using read lock
 	p.mu.RLock()
 	if p.index != nil && time.Since(p.cachedAt) < p.cacheTTL {
@@ -53,21 +53,21 @@ func (p *onceIndexProvider) Index(ctx context.Context) *DatasourceIndex {
 	return p.index
 }
 
-// WrapIndexProviderWithOnce wraps a provider to cache the index with a 10-second TTL.
+// WrapIndexProviderWithCache wraps a provider to cache the index with a 10-second TTL.
 // Useful for conversions or migrations that may call provider.Index() multiple times.
 // The cache expires after 10 seconds, making it suitable for use as a long-lived singleton
 // at the top level of dependency injection while still refreshing periodically.
 //
 // Example usage in dashboard conversion:
 //
-//	onceDsIndexProvider := schemaversion.WrapIndexProviderWithOnce(dsIndexProvider)
-//	// Now all calls to onceDsIndexProvider.Index(ctx) return the same cached index
+//	cachedDsIndexProvider := schemaversion.WrapIndexProviderWithCache(dsIndexProvider)
+//	// Now all calls to cachedDsIndexProvider.Index(ctx) return the same cached index
 //	// for up to 10 seconds before refreshing
-func WrapIndexProviderWithOnce(provider DataSourceIndexProvider) DataSourceIndexProvider {
+func WrapIndexProviderWithCache(provider DataSourceIndexProvider) DataSourceIndexProvider {
 	if provider == nil {
 		return nil
 	}
-	return &onceIndexProvider{
+	return &cachedIndexProvider{
 		provider: provider,
 		cacheTTL: 10 * time.Second,
 	}
