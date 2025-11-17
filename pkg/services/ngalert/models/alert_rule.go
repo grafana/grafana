@@ -991,6 +991,7 @@ type ListAlertRulesExtendedQuery struct {
 	RuleType RuleTypeFilter
 
 	Limit         int64
+	RuleLimit     int64
 	ContinueToken string
 }
 

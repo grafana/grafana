@@ -618,6 +618,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 
 		// Process rules and implement per-group pagination
 		var groupsFetched int64
+		var rulesFetched int64
 		for rows.Next() {
 			rule := new(alertRule)
 			err = rows.Scan(rule)
@@ -644,6 +645,11 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 					nextToken = ngmodels.EncodeGroupCursor(cursor)
 					break
 				}
+				// Check if we've reached the rule limit
+				if query.RuleLimit > 0 && rulesFetched >= query.RuleLimit {
+					nextToken = ngmodels.EncodeGroupCursor(cursor)
+					break
+				}
 
 				// Reset for new group
 				cursor = key
@@ -656,6 +662,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			}
 
 			alertRules = append(alertRules, &converted)
+			rulesFetched++
 		}
 
 		result = alertRules
