@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { DataQuery, GrafanaTheme2 } from '@grafana/data';
@@ -35,30 +35,30 @@ export function PanelNonApplicableFiltersSubHeader({ filtersVar, groupByVar, que
   const [nonApplicable, setNonApplicable] = useState<string[]>([]);
   const [visibleCount, setVisibleCount] = useState<number>(0);
 
-  useEffect(() => {
-    const fetchApplicability = async () => {
-      const labels: string[] = [];
+  const fetchApplicability = useCallback(async () => {
+    const labels: string[] = [];
 
-      if (filtersVar && filters.length) {
-        const applicability = await filtersVar.getFiltersApplicabilityForQueries(filters, queries);
-        const nonApplicableFilters = filters.filter((filter) => {
-          const result = applicability?.find((entry) => entry.key === filter.key && entry.origin === filter.origin);
-          return !result?.applicable;
-        });
-        labels.push(...nonApplicableFilters.map((filter) => `${filter.key} ${filter.operator} ${filter.value}`));
-      }
+    if (filtersVar && filters.length) {
+      const applicability = await filtersVar.getFiltersApplicabilityForQueries(filters, queries);
+      const nonApplicableFilters = filters.filter((filter) => {
+        const result = applicability?.find((entry) => entry.key === filter.key && entry.origin === filter.origin);
+        return !result?.applicable;
+      });
+      labels.push(...nonApplicableFilters.map((filter) => `${filter.key} ${filter.operator} ${filter.value}`));
+    }
 
-      if (groupByVar && groupByValues.length) {
-        const applicability = await groupByVar.getGroupByApplicabilityForQueries(groupByValues, queries);
-        const nonApplicableKeys = applicability?.filter((entry) => !entry.applicable).map((entry) => entry.key) ?? [];
-        labels.push(...nonApplicableKeys);
-      }
+    if (groupByVar && groupByValues.length) {
+      const applicability = await groupByVar.getGroupByApplicabilityForQueries(groupByValues, queries);
+      const nonApplicableKeys = applicability?.filter((entry) => !entry.applicable).map((entry) => entry.key) ?? [];
+      labels.push(...nonApplicableKeys);
+    }
 
-      setNonApplicable(labels);
-    };
-
-    fetchApplicability();
+    setNonApplicable(labels);
   }, [filtersVar, groupByVar, filters, groupByValues, queries]);
+
+  useEffect(() => {
+    fetchApplicability();
+  }, [fetchApplicability]);
 
   useLayoutEffect(() => {
     if (!nonApplicable.length) {
