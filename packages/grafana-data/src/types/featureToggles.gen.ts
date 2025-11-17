@@ -1200,4 +1200,8 @@ export interface FeatureToggles {
   * @default false
   */
   awsDatasourcesHttpProxy?: boolean;
+  /**
+  * Show transformation quick-start cards in empty transformations state
+  */
+  transformationsEmptyPlaceholder?: boolean;
 }
