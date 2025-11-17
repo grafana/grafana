@@ -75,11 +75,10 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
 
   interpolateVariable = (value: string | string[] | number, variable: VariableWithMultiSupport) => {
     if (typeof value === 'string') {
-      if (variable.multi || variable.includeAll) {
-        return this.getQueryModel().quoteLiteral(value);
-      } else {
-        return String(value).replace(/'/g, "''");
-      }
+      // For single string values, just escape quotes (don't add outer quotes)
+      // The quotes are provided by the query template: WHERE x = '$var'
+      // We only escape internal single quotes: O'Brien -> O''Brien
+      return String(value).replace(/'/g, "''");
     }
 
     if (typeof value === 'number') {
@@ -87,6 +86,8 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     }
 
     if (Array.isArray(value)) {
+      // For arrays, quote each value individually and join with comma
+      // Used in: WHERE x IN ($var) -> WHERE x IN ('val1','val2','val3')
       const quotedValues = value.map((v) => this.getQueryModel().quoteLiteral(v));
       return quotedValues.join(',');
     }
