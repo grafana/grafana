@@ -546,14 +546,6 @@ var (
 			FrontendOnly: false,
 		},
 		{
-			Name:         "addFieldFromCalculationStatFunctions",
-			Description:  "Add cumulative and window functions to the add field from calculation transformation",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDataProSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:        "alertmanagerRemoteSecondary",
 			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
 			Stage:       FeatureStageExperimental,
@@ -2081,6 +2073,13 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
 			Expression:  "false",
+		},
+		{
+			Name:         "transformationsEmptyPlaceholder",
+			Description:  "Show transformation quick-start cards in empty transformations state",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDataProSquad,
 		},
 	}
 )
