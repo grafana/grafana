@@ -27,7 +27,7 @@ if [ ! -d "$GF_PATHS_PLUGINS" ]; then
 fi
 
 if [ ! -z ${GF_AWS_PROFILES+x} ]; then
-    > "$GF_PATHS_HOME/.aws/credentials"
+    :> "$GF_PATHS_HOME/.aws/credentials"
 
     for profile in ${GF_AWS_PROFILES}; do
         access_key_varname="GF_AWS_${profile}_ACCESS_KEY_ID"
