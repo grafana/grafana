@@ -3,10 +3,11 @@ import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps, VizPanel, sceneGraph } from '@grafana/scenes';
-import { Button, Icon, Spinner, Text, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { SceneComponentProps, VizPanel } from '@grafana/scenes';
+import { Button, Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { PanelEmptyState } from 'app/features/panel/components/PanelEmptyState';
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
@@ -168,29 +169,12 @@ function VizWrapper({ panel, tableView }: VizWrapperProps) {
   const panelToShow = tableView ?? panel;
   const { pluginId } = panel.useState();
 
-  const { data } = sceneGraph.getData(panel).useState();
-  const hasData = data?.series && data.series.length > 0 && !data.series.every((frame) => frame.length === 0);
-
   const showEmptyState =
     config.featureToggles.newVizSuggestions && pluginId === UNCONFIGURED_PANEL_PLUGIN_ID && !tableView;
 
   return (
     <div className={styles.vizWrapper}>
-      {showEmptyState ? (
-        <div className={styles.emptyStateWrapper}>
-          {/*@TODO: Remove icon; Add link*/}
-          <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
-          <Text element="p" textAlignment="center" color="secondary">
-            {!hasData && (
-              <Trans i18nKey="dashboard.new-panel.empty-state-message">
-                Run a query to visualize it here or go to all visualizations to add other panel types
-              </Trans>
-            )}
-          </Text>
-        </div>
-      ) : (
-        <panelToShow.Component model={panelToShow} />
-      )}
+      {showEmptyState ? <PanelEmptyState type="panel" /> : <panelToShow.Component model={panelToShow} />}
     </div>
   );
 }
@@ -293,20 +277,6 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       width: '100%',
       paddingLeft: theme.spacing(2),
-    }),
-    emptyStateWrapper: css({
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100%',
-      backgroundColor: theme.colors.background.primary,
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
-    }),
-    emptyStateIcon: css({
-      color: theme.colors.text.secondary,
-      marginBottom: theme.spacing(1),
     }),
     fixedSizeViz: css({
       height: '100vh',

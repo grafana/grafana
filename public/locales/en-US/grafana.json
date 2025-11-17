@@ -5090,7 +5090,10 @@
       "configure-button-menu": "Toggle menu",
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
       "menu-open-panel-editor": "Configure",
-      "menu-use-library-panel": "Use library panel"
+      "menu-use-library-panel": "Use library panel",
+      "suggestions": {
+        "empty-state-message": "Run a query to start seeing suggested visualizations"
+      }
     },
     "new-panel-title": "New panel",
     "on-create-new-row": {

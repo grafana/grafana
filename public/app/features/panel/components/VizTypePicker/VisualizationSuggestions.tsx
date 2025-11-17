@@ -5,7 +5,9 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, PanelData, PanelModel, VisualizationSuggestion } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import { PanelEmptyState } from 'app/features/panel/components/PanelEmptyState';
 
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 
@@ -30,6 +32,17 @@ export function VisualizationSuggestions({ searchQuery, onChange, data, panel, t
     }
     return result;
   }, [searchQuery, suggestions, trackSearch]);
+
+  const hasData = data?.series && data.series.length > 0 && !data.series.every((frame) => frame.length === 0);
+
+  if (config.featureToggles.newVizSuggestions && !hasData && !searchQuery) {
+    const content = (
+      <Trans i18nKey="dashboard.new-panel.suggestions.empty-state-message">
+        Run a query to start seeing suggested visualizations
+      </Trans>
+    );
+    return <PanelEmptyState type="suggestions" content={content} />;
+  }
 
   return (
     // This div is needed in some places to make AutoSizer work
