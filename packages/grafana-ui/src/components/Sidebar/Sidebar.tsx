@@ -84,10 +84,11 @@ export function useSiderbar({ isPaneOpen, position = 'right', tabsMode, compact 
   const onDockChange = () => setIsDocked(!isDocked);
 
   const prop = position === 'right' ? 'paddingRight' : 'paddingLeft';
+  const toolbarWidth = 40 + 16 * 2; // button width + padding
 
   const containerProps = {
     style: {
-      [prop]: isDocked && isPaneOpen ? '350px' : compact ? '55px' : '68px',
+      [prop]: isDocked && isPaneOpen ? '350px' : compact ? toolbarWidth : '68px',
     },
   };
 
@@ -136,20 +137,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.primary,
       borderRadius: theme.shape.radius.default,
       zIndex: theme.zIndex.navbarFixed,
-      boxShadow: theme.shadows.z3,
       bottom: 0,
       top: 0,
-      right: theme.spacing(1),
+      right: theme.spacing(2),
       overflow: 'hidden',
     }),
     containerTabsMode: css({
       position: 'relative',
-      boxShadow: 'none',
     }),
     containerLeft: css({
       right: 'unset',
       flexDirection: 'row-reverse',
-      left: theme.spacing(1),
+      left: theme.spacing(2),
       borderRadius: theme.shape.radius.default,
     }),
     containerDocked: css({

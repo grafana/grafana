@@ -34,6 +34,7 @@ export const Example: StoryFn<typeof Sidebar> = (args) => {
     flexDirection: 'column',
     position: 'relative',
     overflow: 'hidden',
+    padding: '0 8px',
   });
 
   const gridStyle = css({
@@ -41,7 +42,6 @@ export const Example: StoryFn<typeof Sidebar> = (args) => {
     gridTemplateColumns: 'repeat(2, 1fr)',
     gridAutoRows: '300px',
     gap: '8px',
-    padding: '0 8px',
     flexGrow: 1,
     overflow: 'auto',
   });
