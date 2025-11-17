@@ -1788,6 +1788,7 @@
         "name": "formatString",
         "resourceVersion": "1762442825881",
         "creationTimestamp": "2023-10-13T18:17:12Z",
+        "deletionTimestamp": "2025-11-12T00:00:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
         }
@@ -1837,18 +1838,6 @@
       "spec": {
         "description": "Enables Advisor app",
         "stage": "privatePreview",
-        "codeowner": "@grafana/plugins-platform-backend"
-      }
-    },
-    {
-      "metadata": {
-        "name": "grafanaAdvisorAppInstaller",
-        "resourceVersion": "1762790554324",
-        "creationTimestamp": "2025-11-10T16:02:34Z"
-      },
-      "spec": {
-        "description": "Enables Advisor app installer",
-        "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend"
       }
     },
@@ -1975,6 +1964,7 @@
         "name": "groupToNestedTableTransformation",
         "resourceVersion": "1762442825881",
         "creationTimestamp": "2024-02-07T14:28:26Z",
+        "deletionTimestamp": "2025-11-12T14:33:44Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
         }
@@ -2120,7 +2110,8 @@
       "metadata": {
         "name": "inviteUserExperimental",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-07T19:09:59Z"
+        "creationTimestamp": "2025-03-07T19:09:59Z",
+        "deletionTimestamp": "2025-11-14T10:29:28Z"
       },
       "spec": {
         "description": "Renders invite user button along the app",
@@ -3094,6 +3085,7 @@
         "name": "pinNavItems",
         "resourceVersion": "1762958248290",
         "creationTimestamp": "2024-06-10T11:40:03Z",
+        "deletionTimestamp": "2025-11-13T14:52:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
         }
@@ -4114,6 +4106,22 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "transformationsEmptyPlaceholder",
+        "resourceVersion": "1763373021129",
+        "creationTimestamp": "2025-11-11T13:14:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-17 09:50:21.129721 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Show transformation quick-start cards in empty transformations state",
+        "stage": "preview",
+        "codeowner": "@grafana/datapro",
+        "frontend": true
       }
     },
     {

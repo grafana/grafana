@@ -481,6 +481,16 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	receiverName := opts.Query.Get("receiver_name")
 	title := opts.Query.Get("search.rule_name")
 
+	var ruleType ngmodels.RuleTypeFilter
+	switch ngmodels.RuleType(opts.Query.Get("rule_type")) {
+	case ngmodels.RuleTypeAlerting:
+		ruleType = ngmodels.RuleTypeFilterAlerting
+	case ngmodels.RuleTypeRecording:
+		ruleType = ngmodels.RuleTypeFilterRecording
+	default:
+		ruleType = ngmodels.RuleTypeFilterAll
+	}
+
 	maxGroups := getInt64WithDefault(opts.Query, "group_limit", -1)
 	nextToken := opts.Query.Get("group_next_token")
 
@@ -498,6 +508,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 			ReceiverName:  receiverName,
 			SearchTitle:   title,
 		},
+		RuleType:      ruleType,
 		Limit:         maxGroups,
 		ContinueToken: nextToken,
 	}

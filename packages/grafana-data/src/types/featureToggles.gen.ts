@@ -242,11 +242,6 @@ export interface FeatureToggles {
   */
   disableClassicHTTPHistogram?: boolean;
   /**
-  * Enable format string transformer
-  * @default true
-  */
-  formatString?: boolean;
-  /**
   * Routes snapshot requests from /api to the /apis endpoint
   */
   kubernetesSnapshots?: boolean;
@@ -415,10 +410,6 @@ export interface FeatureToggles {
   */
   tableSharedCrosshair?: boolean;
   /**
-  * Enables regression analysis transformation
-  */
-  regressionTransformation?: boolean;
-  /**
   * Use the kubernetes API for feature toggle management in the frontend
   */
   kubernetesFeatureToggles?: boolean;
@@ -485,11 +476,6 @@ export interface FeatureToggles {
   * Enables column autocomplete for SQL Expressions
   */
   sqlExpressionsColumnAutoComplete?: boolean;
-  /**
-  * Enables the group to nested table transformation
-  * @default true
-  */
-  groupToNestedTableTransformation?: boolean;
   /**
   * New implementation for the dashboard-to-PDF rendering
   * @default true
@@ -574,11 +560,6 @@ export interface FeatureToggles {
   * @default true
   */
   azureMonitorPrometheusExemplars?: boolean;
-  /**
-  * Enables pinning of nav items
-  * @default true
-  */
-  pinNavItems?: boolean;
   /**
   * Enables the gRPC server for authorization
   */
@@ -903,10 +884,6 @@ export interface FeatureToggles {
   */
   infinityRunQueriesInParallel?: boolean;
   /**
-  * Renders invite user button along the app
-  */
-  inviteUserExperimental?: boolean;
-  /**
   * Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
   * @default true
   */
@@ -1214,10 +1191,6 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
-  * Enables Advisor app installer
-  */
-  grafanaAdvisorAppInstaller?: boolean;
-  /**
   * Enables app platform API for annotations
   * @default false
   */
@@ -1227,4 +1200,8 @@ export interface FeatureToggles {
   * @default false
   */
   awsDatasourcesHttpProxy?: boolean;
+  /**
+  * Show transformation quick-start cards in empty transformations state
+  */
+  transformationsEmptyPlaceholder?: boolean;
 }

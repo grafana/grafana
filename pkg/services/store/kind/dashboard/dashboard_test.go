@@ -72,6 +72,7 @@ func TestReadDashboard(t *testing.T) {
 		"panels-without-datasources",
 		"panel-with-library-panel-field",
 		"k8s-wrapper",
+		"k8s-wrapper-editable-string",
 	}
 
 	devdash := "../../../../../devenv/dev-dashboards/"

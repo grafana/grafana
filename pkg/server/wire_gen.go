@@ -807,7 +807,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	advisorAppInstaller, err := advisor2.ProvideAppInstaller()
+	checkregistryService := checkregistry.ProvideService(service15, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, managedpluginsNoop, noop, ssosettingsimplService, cfg, pluginerrsStore)
+	advisorAppInstaller, err := advisor2.ProvideAppInstaller(checkregistryService, cfg, orgService)
 	if err != nil {
 		return nil, err
 	}
@@ -827,9 +828,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, zanzanaClient, sqlStore, serverLockService, folderimplService)
 	investigationsAppProvider := investigations.RegisterApp(cfg)
-	checkregistryService := checkregistry.ProvideService(service15, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, managedpluginsNoop, noop, ssosettingsimplService, cfg, pluginerrsStore)
-	advisorAppProvider := advisor2.RegisterApp(checkregistryService, cfg, orgService)
-	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, advisorAppProvider, cfg)
+	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -1449,7 +1448,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	advisorAppInstaller, err := advisor2.ProvideAppInstaller()
+	checkregistryService := checkregistry.ProvideService(service15, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, managedpluginsNoop, noop, ssosettingsimplService, cfg, pluginerrsStore)
+	advisorAppInstaller, err := advisor2.ProvideAppInstaller(checkregistryService, cfg, orgService)
 	if err != nil {
 		return nil, err
 	}
@@ -1469,9 +1469,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, zanzanaClient, sqlStore, serverLockService, folderimplService)
 	investigationsAppProvider := investigations.RegisterApp(cfg)
-	checkregistryService := checkregistry.ProvideService(service15, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, managedpluginsNoop, noop, ssosettingsimplService, cfg, pluginerrsStore)
-	advisorAppProvider := advisor2.RegisterApp(checkregistryService, cfg, orgService)
-	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, advisorAppProvider, cfg)
+	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, cfg)
 	if err != nil {
 		return nil, err
 	}
