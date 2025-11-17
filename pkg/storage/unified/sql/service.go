@@ -12,13 +12,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/search/sort"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/unifiedstorage"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel"
@@ -206,8 +199,8 @@ func ProvideUnifiedStorageGrpcService(
 	}
 
 	// This will be used when running as a dskit service
-	// Hook Data migration on start
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.StorageServer)
+
 	return s, nil
 }
 
@@ -340,94 +333,7 @@ func (s *service) starting(ctx context.Context) error {
 		}
 	}()
 
-	// Move this to its own server
-	// if !s.cfg.SkipDataMigrations { // replace with s.cfg.StackID == ""
-	go func() {
-		mg := migrator.NewMigrator(s.db.GetEngine(), s.cfg)
-
-		featureManager, err := featuremgmt.ProvideManagerService(s.cfg)
-		if err != nil {
-			s.log.Error("Failed to create feature manager for data migration", "error", err)
-			return
-		}
-		featureToggles := featuremgmt.ProvideToggles(featureManager)
-
-		// TODO: create stub/real provisioning service
-		//func newStubProvisioning(path string) (provisioning.ProvisioningService, error) {
-		//	cfgs, err := dashboards.ReadDashboardConfig(filepath.Join(path, "dashboards"))
-		//	if err != nil {
-		//		return nil, err
-		//	}
-		//	stub := &stubProvisioning{
-		//		path: make(map[string]string),
-		//	}
-		//	for _, cfg := range cfgs {
-		//		stub.path[cfg.Name] = cfg.Options["path"].(string)
-		//	}
-		//	return &stubProvisioning{}, nil
-		//}
-		// Migration uses:
-		//	GetDashboardProvisionerResolvedPath(name string) string
-		//	GetAllowUIUpdatesFromConfig(name string) bool
-
-		migrator := legacy.NewDashboardAccess(
-			legacysql.NewDatabaseProvider(s.db),
-			authlib.OrgNamespaceFormatter,
-			nil, // no dashboards.Store
-			nil, // no provisioning.Service // TODO: pass provisioning service
-			nil, // no librarypanels.Service
-			sort.ProvideService(),
-			nil, // we don't delete during migration, and this is only need to delete permission.
-			acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
-			featureToggles,
-		)
-
-		unifiedstorage.AddMigration(mg, &unifiedstorage.Dependencies{
-			Migrator:        &migratorWrapper{migrator: migrator},
-			BulkStoreClient: nil, // send client via wire dependencies after inside its own server, or:
-			// client, err := unified.ProvideUnifiedStorageClient(cfg, sqlStore, featureToggles)
-			//	unified.ProvideUnifiedStorageClient(&unified.Options{
-			//		Cfg:      cfg,
-			//		Features: featuremgmt.ProvideToggles(featureManager),
-			//		DB:       sqlStore,
-			//		Tracer:   tracing.NewNoopTracerService(),
-			//		Reg:      prometheus.NewPedanticRegistry(),
-			//		Authzc:   authlib.FixedAccessClient(true), // always true!
-			//		Docs:     nil,                             // document supplier
-			//	}, nil, nil)
-		})
-		if err := prometheus.Register(mg); err != nil {
-			s.log.Warn("Failed to register migrator metrics", "error", err)
-		}
-		ctx, span := s.tracing.Start(context.Background(), "SQLStore.Migrate")
-		defer span.End()
-		sec := s.cfg.Raw.Section("database")
-		err = mg.RunMigrations(ctx, sec.Key("migration_locking").MustBool(true), sec.Key("locking_attempt_timeout_sec").MustInt())
-		if err != nil {
-			s.log.Error("Unified storage data migration failed", "error", err)
-		}
-	}()
-	// }
 	return nil
-}
-
-// migratorWrapper wraps legacy migrator to avoid import cycles
-type migratorWrapper struct {
-	migrator legacy.LegacyMigrator
-}
-
-func (m *migratorWrapper) Migrate(ctx context.Context, opts unifiedstorage.MigrateOptions) (*resourcepb.BulkResponse, error) {
-	return m.migrator.Migrate(ctx, legacy.MigrateOptions{
-		Namespace:    "",
-		Store:        nil,
-		LargeObjects: nil,
-		BlobStore:    nil,
-		Resources:    nil,
-		WithHistory:  false,
-		OnlyCount:    false,
-		StackID:      "",
-		Progress:     nil,
-	})
 }
 
 // GetAddress returns the address of the gRPC server.
