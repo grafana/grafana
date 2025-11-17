@@ -1982,9 +1982,11 @@
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
+      "disabled-tooltip": "You don't have sufficient permissions to preview",
       "error": "Could not load routing preview for {{alertmanager}}",
       "initialized": "Based on the labels added, alert instances are routed to the following notification policies. Expand each notification policy below to view more details.",
       "preview-routing": "Preview routing",
+      "select-folder-tooltip": "Select a folder to preview routing",
       "text-loading-preview": "Loading preview...",
       "title": "Alert instance routing preview",
       "uninitialized": "When you have your folder selected and your query and labels are configured, click \"Preview routing\" to see the results here."
@@ -4130,6 +4132,7 @@
     "action": {
       "change-theme": "Change theme",
       "dark-theme": "Dark",
+      "dashboard-from-template": "Dashboard from template",
       "light-theme": "Light",
       "scopes": "Scopes"
     },
@@ -5716,6 +5719,10 @@
     "suggested-dashboards-subtitle": "Browse and select from data-source provided or community dashboards",
     "suggested-dashboards-title": "Build a dashboard using suggested options for your selected data source",
     "suggested-dashboards-title-with-datasource": "Build a dashboard using suggested options for your {{datasourceType}} data source",
+    "template-dashboard-modal": {
+      "description": "Get started with Grafana templates using sample data. Connect your data to power them with real metrics.",
+      "title": "Start a dashboard from a template"
+    },
     "view-all": "View all"
   },
   "dashboard-links": {
@@ -10526,6 +10533,7 @@
       "title": "New"
     },
     "new-dashboard": {
+      "empty-title": "Empty dashboard",
       "title": "New dashboard"
     },
     "new-folder": {
@@ -10691,7 +10699,8 @@
       "aria-label": "Profile"
     },
     "quick-add": {
-      "aria-label": "New"
+      "aria-label": "New",
+      "new-template-dashboard-button": "Dashboard from template"
     },
     "rss-button": "Latest from the blog"
   },
@@ -11500,6 +11509,9 @@
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
       "text-loading-resource-information": "Loading resource information...",
+      "unavailable-options": {
+        "title": "Unavailable options"
+      },
       "unmanaged-resources-label": "Unmanaged resources"
     },
     "check-repository": {
@@ -11781,6 +11793,12 @@
       "truncated": "Message truncated"
     },
     "mode-options": {
+      "disabled": {
+        "folder-connected": "Full instance synchronization is disabled because another folder is already synced with a repository.",
+        "legacy-storage": "Legacy storage mode only supports syncing the entire Grafana instance.",
+        "not-allowed": "Provisioning settings for this repository restrict syncing to specific targets. Update the repository configuration to enable this option.",
+        "not-supported": "This option is not supported yet."
+      },
       "folder": {
         "description": "After setup, a new Grafana folder will be created and synced with external storage. If any resources are present in external storage, they will be provisioned to this new folder. All new resources created in this folder will be stored and versioned in external storage.",
         "label": "Sync external storage to a new Grafana folder",
@@ -12424,10 +12442,12 @@
       }
     },
     "dashboard-actions": {
+      "empty-dashboard": "Empty dashboard",
       "import": "Import",
       "new": "New",
       "new-dashboard": "New dashboard",
-      "new-folder": "New folder"
+      "new-folder": "New folder",
+      "new-template-dashboard": "Dashboard from template"
     },
     "generate-columns": {
       "score": "Score"
