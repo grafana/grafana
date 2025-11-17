@@ -13,14 +13,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-type LargeObjectSupport interface {
-	GroupResource() schema.GroupResource
-	Threshold() int
-}
-
-type Dependencies struct {
-	Migrator        legacy.LegacyMigrator
-	BulkStoreClient resourcepb.BulkStoreClient
+// StorageMigrator defines the interface for executing unified storage migrations
+type StorageMigrator interface {
+	executeMigration(ctx context.Context, sess *xorm.Session, mg *migrator.Migrator, namespace string) error
 }
 
 type unifiedStorageMigrator struct {
@@ -30,7 +25,7 @@ type unifiedStorageMigrator struct {
 	log             log.Logger
 }
 
-func newUnifiedStorageMigrator(migrator legacy.LegacyMigrator, bulkStoreClient resourcepb.BulkStoreClient, resources []schema.GroupResource, logPrefix string) *unifiedStorageMigrator {
+func newUnifiedStorageMigrator(migrator legacy.LegacyMigrator, bulkStoreClient resourcepb.BulkStoreClient, resources []schema.GroupResource, logPrefix string) StorageMigrator {
 	return &unifiedStorageMigrator{
 		migrator:        migrator,
 		bulkStoreClient: bulkStoreClient,
@@ -50,7 +45,6 @@ func (m *unifiedStorageMigrator) executeMigration(ctx context.Context, sess *xor
 		Resources:    m.resources,
 		WithHistory:  true, // Migrate with full history
 		OnlyCount:    false,
-		StackID:      "onprem",
 		Progress: func(count int, msg string) {
 			m.log.Info("Migration progress", "count", count, "message", msg)
 		},
@@ -64,7 +58,7 @@ func (m *unifiedStorageMigrator) executeMigration(ctx context.Context, sess *xor
 	}
 
 	// Validate the migration results
-	if err := m.validateMigrationResults(sess, response); err != nil {
+	if err := m.validateMigration(sess, response); err != nil {
 		m.log.Error("Migration validation failed", "error", err, "duration", time.Since(startTime))
 		return fmt.Errorf("migration validation failed: %w", err)
 	}
@@ -78,7 +72,7 @@ func (m *unifiedStorageMigrator) executeMigration(ctx context.Context, sess *xor
 	return nil
 }
 
-func (m *unifiedStorageMigrator) validateMigrationResults(sess *xorm.Session, response *resourcepb.BulkResponse) error {
+func (m *unifiedStorageMigrator) validateMigration(sess *xorm.Session, response *resourcepb.BulkResponse) error {
 	// Check for rejected items
 	if len(response.Rejected) > 0 {
 		m.log.Warn("Migration had rejected items", "count", len(response.Rejected))

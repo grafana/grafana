@@ -16,21 +16,22 @@ const (
 	CodeMigrationSQL                = "code migration"
 )
 
-type foldersAndDashboardsMigrator struct {
+type dashboardAndFolderMigration struct {
 	migrator.MigrationBase
 	legacyMigrator  legacy.LegacyMigrator
 	bulkStoreClient resourcepb.BulkStoreClient
 }
 
-var _ migrator.CodeMigration = (*foldersAndDashboardsMigrator)(nil)
+var _ migrator.CodeMigration = (*dashboardAndFolderMigration)(nil)
 
 // SQL implements migrator.Migration interface. Returns a description string.
-func (sp *foldersAndDashboardsMigrator) SQL(dialect migrator.Dialect) string {
+func (sp *dashboardAndFolderMigration) SQL(dialect migrator.Dialect) string {
 	return CodeMigrationSQL
 }
 
-func (sp *foldersAndDashboardsMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+func (sp *dashboardAndFolderMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	ctx := context.Background()
+	logger := mg.Logger
 
 	resources := []schema.GroupResource{
 		{
@@ -43,27 +44,28 @@ func (sp *foldersAndDashboardsMigrator) Exec(sess *xorm.Session, mg *migrator.Mi
 		},
 	}
 
-	mig := newUnifiedStorageMigrator(sp.legacyMigrator, sp.bulkStoreClient, resources, "unified-storage-migration.folders-dashboards")
+	storageMigrator := newUnifiedStorageMigrator(sp.legacyMigrator, sp.bulkStoreClient, resources, "unified-storage-migration.folders-dashboards")
 
 	orgs, err := sp.getAllOrgs(sess)
 	if err != nil {
+		logger.Error("failed to get organizations for folders and dashboards migration", "error", err)
 		return fmt.Errorf("failed to get organizations: %w", err)
 	}
 
-	mig.log.Info("Starting migration for all organizations", "org_count", len(orgs))
+	logger.Info("Starting migration for all organizations", "org_count", len(orgs))
 
 	for _, org := range orgs {
 		namespace := fmt.Sprintf("org-%d", org.ID)
-		mig.log.Info("Migrating organization", "org_id", org.ID, "org_name", org.Name, "namespace", namespace)
+		logger.Info("Migrating organization", "org_id", org.ID, "org_name", org.Name, "namespace", namespace)
 
-		if err := mig.executeMigration(ctx, sess, mg, namespace); err != nil {
+		if err := storageMigrator.executeMigration(ctx, sess, mg, namespace); err != nil {
 			return fmt.Errorf("migration failed for org %d (%s): %w", org.ID, org.Name, err)
 		}
 	}
 
-	mig.log.Info("Migration completed successfully for all organizations", "org_count", len(orgs))
-	mig.log.Info("IMPORTANT: After verifying the migration, update your configuration to enable Mode 5 (unified storage only)")
-	mig.log.Info("Set dualWriterMode=5 for dashboard.grafana.app and folder.grafana.app resources in your configuration")
+	logger.Info("Migration completed successfully for all organizations", "org_count", len(orgs))
+	logger.Info("IMPORTANT: After verifying the migration, update your configuration to enable Mode 5 (unified storage only)")
+	logger.Info("Set dualWriterMode=5 for dashboard.grafana.app and folder.grafana.app resources in your configuration")
 	return nil
 }
 
@@ -72,7 +74,7 @@ type orgInfo struct {
 	Name string
 }
 
-func (sp *foldersAndDashboardsMigrator) getAllOrgs(sess *xorm.Session) ([]orgInfo, error) {
+func (sp *dashboardAndFolderMigration) getAllOrgs(sess *xorm.Session) ([]orgInfo, error) {
 	var orgs []orgInfo
 	err := sess.Table("org").Cols("id", "name").Find(&orgs)
 	if err != nil {
