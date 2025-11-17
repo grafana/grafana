@@ -21,6 +21,7 @@ export const pluginExtensionRegistries: PluginExtensionRegistries = {
   exposedComponentsRegistry,
   addedLinksRegistry,
   addedFunctionsRegistry,
+  commandPaletteDynamicRegistry,
 };
 
 // Registering core extension links

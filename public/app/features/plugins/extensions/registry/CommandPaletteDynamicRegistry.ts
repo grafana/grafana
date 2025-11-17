@@ -143,4 +143,13 @@ export class CommandPaletteDynamicRegistry extends Registry<
     await Promise.all(searchPromises);
     return results;
   }
+
+  /**
+   * Returns a read-only version of the registry.
+   */
+  readOnly() {
+    return new CommandPaletteDynamicRegistry({
+      registrySubject: this.registrySubject,
+    });
+  }
 }
