@@ -714,47 +714,45 @@ export function populateMarkerList(
     if (
       marker.groupIdx !== dataIdx ||
       seriesIdx !== marker.seriesIdx //match to bar
-    ) {
-      continue;
-    }
-    {
-      if (xOri === ScaleOrientation.Horizontal) {
-        // Compute marker position at center of bar
-        const markerX = barX + wid / 2;
-        const markerY = marker.yValue;
+    ) continue;
+    
+    if (xOri === ScaleOrientation.Horizontal) {
+      // Compute marker position at center of bar
+      const markerX = barX + wid / 2;
+      const markerY = marker.yValue;
 
-        let resolvedY: number;
-        if (markerY != null && marker.yScaleKey !== '' && marker.yScaleKey != null) {
-          resolvedY = u.valToPos(markerY, marker.yScaleKey, true);
-        } else {
-          resolvedY = Infinity;
-        }
-        const m: MarkerDrawingArgs = {
-          x: markerX!,
-          y: resolvedY,
-          opts: { ...marker.opts, size: marker.opts.size * wid },
-          isRotated: false,
-        };
-        resolvedMarkerList.push(m);
+      let resolvedY: number;
+      if (markerY != null && marker.yScaleKey !== '' && marker.yScaleKey != null) {
+        resolvedY = u.valToPos(markerY, marker.yScaleKey, true);
       } else {
-        const markerY = barY + hgt / 2;
-        const markerX = marker.yValue;
-
-        let resolvedX: number;
-        if (markerX != null && marker.yScaleKey !== '' && marker.yScaleKey != null) {
-          resolvedX = u.valToPos(markerX, marker.yScaleKey, true);
-        } else {
-          resolvedX = Infinity;
-        }
-        const m: MarkerDrawingArgs = {
-          x: resolvedX!,
-          y: markerY!,
-          opts: { ...marker.opts, size: marker.opts.size * hgt },
-          isRotated: true,
-        };
-        resolvedMarkerList.push(m);
+        resolvedY = Infinity;
       }
+      const m: MarkerDrawingArgs = {
+        x: markerX!,
+        y: resolvedY,
+        opts: { ...marker.opts, size: marker.opts.size * wid },
+        isRotated: false,
+      };
+      resolvedMarkerList.push(m);
+    } else {
+      const markerY = barY + hgt / 2;
+      const markerX = marker.yValue;
+
+      let resolvedX: number;
+      if (markerX != null && marker.yScaleKey !== '' && marker.yScaleKey != null) {
+        resolvedX = u.valToPos(markerX, marker.yScaleKey, true);
+      } else {
+        resolvedX = Infinity;
+      }
+      const m: MarkerDrawingArgs = {
+        x: resolvedX!,
+        y: markerY!,
+        opts: { ...marker.opts, size: marker.opts.size * hgt },
+        isRotated: true,
+      };
+      resolvedMarkerList.push(m);
     }
+    
   }
   return resolvedMarkerList;
 }

@@ -19,7 +19,7 @@ import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
 import { Options } from './panelcfg.gen';
-import { seperateMarkerSeries, prepConfig, prepSeries, prepMarkers, mergeLegendData } from './utils';
+import { seperateMarkerSeries, prepConfig, prepSeries, prepMarkers} from './utils';
 
 const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;
 const toRads = Math.PI / 180;
@@ -157,14 +157,9 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     );
   }
 
-  const legendData = useMemo(
-    () => (props.options.showMarkersInLegend ? mergeLegendData(info, markerData, markers) : info),
-    [props.options.showMarkersInLegend, info, markerData, markers]
-  );
-
   const legendComp =
     legend.showLegend && hasVisibleLegendSeries(builder, info.series!) ? (
-      <BarChartLegend data={legendData.series} colorField={legendData.color} {...legend} />
+      <BarChartLegend data={info.series} colorField={info.color} {...legend} />
     ) : null;
 
   return (

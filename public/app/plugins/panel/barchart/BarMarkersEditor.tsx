@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
 
 import { StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -23,12 +22,11 @@ import { BarMarkerOpts, MarkerGroup } from './markerTypes';
 export const BarMarkersEditor = ({ context, onChange, value }: StandardEditorProps<MarkerGroup[]>) => {
   const theme = useTheme2();
 
-  let [markers, setMarkers] = useState<MarkerGroup[]>(value || []);
+  let markers = value || [];
 
   const handleRemoveMarker = (id: number) => {
-    const updatedMarkers = markers.filter((marker: MarkerGroup) => marker.id !== id);
-    setMarkers(updatedMarkers);
-    onChange(updatedMarkers);
+    markers = markers.filter((marker: MarkerGroup) => marker.id !== id);
+    onChange(markers);
   };
 
   const handleAddMarker = () => {
@@ -46,9 +44,9 @@ export const BarMarkersEditor = ({ context, onChange, value }: StandardEditorPro
         opacity: 0.7,
       },
     };
-    const updatedMarkers = [...markers, newMarker];
-    setMarkers(updatedMarkers);
-    onChange(updatedMarkers);
+    markers = [...markers, newMarker];
+    
+    onChange(markers);
   };
 
   const fields = context?.data[0]?.fields ?? [];
@@ -69,19 +67,17 @@ export const BarMarkersEditor = ({ context, onChange, value }: StandardEditorPro
 
   // Update a field in marker.opts
   const handleOptsSettingChange = (id: number, field: keyof BarMarkerOpts, newValue: string | number | undefined) => {
-    const updatedMarkers = markers.map((marker: MarkerGroup) =>
+    markers = markers.map((marker: MarkerGroup) =>
       marker.id === id ? { ...marker, opts: { ...marker.opts, [field]: newValue } } : marker
     );
-    setMarkers(updatedMarkers);
-    onChange(updatedMarkers);
+    onChange(markers);
   };
 
   const handleSettingChange = (id: number, field: keyof MarkerGroup, newValue: string | number | undefined) => {
-    const updatedMarkers = markers.map((marker: MarkerGroup) =>
+    markers = markers.map((marker: MarkerGroup) =>
       marker.id === id ? { ...marker, [field]: newValue } : marker
     );
-    setMarkers(updatedMarkers);
-    onChange(updatedMarkers);
+    onChange(markers);
   };
 
   const shapeOptions: Array<ComboboxOption<string>> = [

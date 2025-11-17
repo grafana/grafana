@@ -247,12 +247,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         showIf: (c) => c.stacking === StackingMode.None,
       });
 
-    builder.addBooleanSwitch({
-      category: markersCategory,
-      path: 'showMarkersInLegend',
-      name: 'Show markers in legend',
-      defaultValue: true,
-    });
     builder.addCustomEditor({
       category: markersCategory,
       id: 'markerGroups',

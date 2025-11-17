@@ -1,4 +1,4 @@
-import { cloneDeep, isFinite } from 'lodash';
+import { cloneDeep } from 'lodash';
 import uPlot, { Padding } from 'uplot';
 
 import {
@@ -388,7 +388,7 @@ export const prepConfig = ({
     let softMin = customConfig.axisSoftMin;
     let softMax = customConfig.axisSoftMax;
 
-    //move soft min and max to accomodate marker values
+    //move soft min and max to accomodate marker values if not overridden
     if (softMin == null && field.config.min == null) {
       if (stacking === StackingMode.Percent) {
         softMin = 0;

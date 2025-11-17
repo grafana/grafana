@@ -101,7 +101,6 @@ describe('BarChart utils', () => {
       orientation: VizOrientation.Auto,
 
       options: {
-        showMarkersInLegend: false,
         orientation: VizOrientation.Auto,
         groupWidth: 20,
         barWidth: 2,
