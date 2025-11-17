@@ -403,14 +403,6 @@ var (
 			RequiresRestart:   true,
 		},
 		{
-			Name:         "formatString",
-			Description:  "Enable format string transformer",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDataProSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:            "kubernetesSnapshots",
 			Description:     "Routes snapshot requests from /api to the /apis endpoint",
 			Stage:           FeatureStageExperimental,
@@ -2081,6 +2073,13 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
 			Expression:  "false",
+		},
+		{
+			Name:         "transformationsEmptyPlaceholder",
+			Description:  "Show transformation quick-start cards in empty transformations state",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDataProSquad,
 		},
 	}
 )
