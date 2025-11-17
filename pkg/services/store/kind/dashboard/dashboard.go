@@ -168,7 +168,14 @@ func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*Dashb
 			dash.TimeZone = iter.ReadString()
 
 		case "editable":
-			dash.ReadOnly = !iter.ReadBool()
+			switch iter.WhatIsNext() {
+			case jsoniter.BoolValue:
+				dash.ReadOnly = !iter.ReadBool()
+			case jsoniter.StringValue:
+				dash.ReadOnly = iter.ReadString() != "true"
+			default:
+				iter.Skip()
+			}
 
 		case "refresh":
 			nxt := iter.WhatIsNext()
