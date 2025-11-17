@@ -41,12 +41,14 @@
 /docs/sources/                                                                    @irenerl24
 
 /docs/sources/alerting/                                                           @JohnnyK-Grafana
+/docs/sources/as-code/                                                            @urbiz-grafana
+/docs/sources/developer-resources/                                                @urbiz-grafana
 /docs/sources/datasources/                                                        @lwandz13
 /docs/sources/upgrade-guide/                                                      @jtvdez
 /docs/sources/whatsnew/                                                           @jtvdez
 
 
-/docs/sources/developers/plugins/                                                 @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+/docs/sources/developer-resources/plugins/                                        @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/visualizations/dashboards/                                          @imatwawana
 /docs/sources/visualizations/panels-visualizations/                               @imatwawana
 
@@ -834,7 +836,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/constants.ts @grafana/grafana-frontend-platform
 /public/app/core/context/ @grafana/grafana-frontend-platform
 /public/app/core/copy/appNotification.ts @grafana/grafana-search-navigate-organise
-/public/app/core/core.ts @grafana/grafana-frontend-platform
 /public/app/core/crash/ @grafana/observability-traces-and-profiling
 /public/app/core/history/ @grafana/observability-traces-and-profiling
 /public/app/core/hooks/useBusEvent.ts @grafana/grafana-frontend-platform

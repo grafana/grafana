@@ -242,11 +242,6 @@ export interface FeatureToggles {
   */
   disableClassicHTTPHistogram?: boolean;
   /**
-  * Enable format string transformer
-  * @default true
-  */
-  formatString?: boolean;
-  /**
   * Routes snapshot requests from /api to the /apis endpoint
   */
   kubernetesSnapshots?: boolean;
@@ -345,6 +340,10 @@ export interface FeatureToggles {
   */
   alertingProvenanceLockWrites?: boolean;
   /**
+  * Enables the UI to use certain backend-side filters
+  */
+  alertingUIUseBackendFilters?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
   alertmanagerRemotePrimary?: boolean;
@@ -407,17 +406,9 @@ export interface FeatureToggles {
   */
   logRowsPopoverMenu?: boolean;
   /**
-  * Disables passing host environment variable to plugin processes
-  */
-  pluginsSkipHostEnvVars?: boolean;
-  /**
   * Enables shared crosshair in table panel
   */
   tableSharedCrosshair?: boolean;
-  /**
-  * Enables regression analysis transformation
-  */
-  regressionTransformation?: boolean;
   /**
   * Use the kubernetes API for feature toggle management in the frontend
   */
@@ -485,11 +476,6 @@ export interface FeatureToggles {
   * Enables column autocomplete for SQL Expressions
   */
   sqlExpressionsColumnAutoComplete?: boolean;
-  /**
-  * Enables the group to nested table transformation
-  * @default true
-  */
-  groupToNestedTableTransformation?: boolean;
   /**
   * New implementation for the dashboard-to-PDF rendering
   * @default true
@@ -574,11 +560,6 @@ export interface FeatureToggles {
   * @default true
   */
   azureMonitorPrometheusExemplars?: boolean;
-  /**
-  * Enables pinning of nav items
-  * @default true
-  */
-  pinNavItems?: boolean;
   /**
   * Enables the gRPC server for authorization
   */
@@ -903,10 +884,6 @@ export interface FeatureToggles {
   */
   infinityRunQueriesInParallel?: boolean;
   /**
-  * Renders invite user button along the app
-  */
-  inviteUserExperimental?: boolean;
-  /**
   * Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
   * @default true
   */
@@ -1213,10 +1190,6 @@ export interface FeatureToggles {
   * Enable template dashboards
   */
   dashboardTemplates?: boolean;
-  /**
-  * Enables Advisor app installer
-  */
-  grafanaAdvisorAppInstaller?: boolean;
   /**
   * Enables app platform API for annotations
   * @default false

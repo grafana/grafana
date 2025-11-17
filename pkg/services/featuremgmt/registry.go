@@ -403,14 +403,6 @@ var (
 			RequiresRestart:   true,
 		},
 		{
-			Name:         "formatString",
-			Description:  "Enable format string transformer",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDataProSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:            "kubernetesSnapshots",
 			Description:     "Routes snapshot requests from /api to the /apis endpoint",
 			Stage:           FeatureStageExperimental,
@@ -576,6 +568,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "alertingUIUseBackendFilters",
+			Description:       "Enables the UI to use certain backend-side filters",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:        "alertmanagerRemotePrimary",
 			Description: "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
 			Stage:       FeatureStageExperimental,
@@ -680,25 +680,11 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "pluginsSkipHostEnvVars",
-			Description:  "Disables passing host environment variable to plugin processes",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:         "tableSharedCrosshair",
 			Description:  "Enables shared crosshair in table panel",
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDatavizSquad,
-		},
-		{
-			Name:         "regressionTransformation",
-			Description:  "Enables regression analysis transformation",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDataProSquad,
 		},
 		{
 			Name:              "kubernetesFeatureToggles",
@@ -822,14 +808,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDataProSquad,
-		},
-		{
-			Name:         "groupToNestedTableTransformation",
-			Description:  "Enables the group to nested table transformation",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDataProSquad,
-			Expression:   "true", // enabled by default,
 		},
 		{
 			Name:        "newPDFRendering",
@@ -987,13 +965,6 @@ var (
 			Description: "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPartnerPluginsSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
-			Name:        "pinNavItems",
-			Description: "Enables pinning of nav items",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaFrontendSearchNavOrganise,
 			Expression:  "true", // enabled by default
 		},
 		{
@@ -1564,15 +1535,6 @@ var (
 			Owner:        grafanaOSSBigTent,
 		},
 		{
-			Name:              "inviteUserExperimental",
-			Description:       "Renders invite user button along the app",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaSharingSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			FrontendOnly:      true,
-		},
-		{
 			Name:         "alertingMigrationUI",
 			Description:  "Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules",
 			FrontendOnly: true,
@@ -2105,12 +2067,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
-		},
-		{
-			Name:        "grafanaAdvisorAppInstaller",
-			Description: "Enables Advisor app installer",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:        "kubernetesAnnotations",
