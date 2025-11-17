@@ -261,7 +261,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 
 		_, err := keeperMetadataStorage.Read(ctx, "ns", "non-existent", contracts.ReadOpts{})
 		require.Error(t, err)
-		require.Equal(t, contracts.ErrKeeperNotFound, err)
+		require.ErrorIs(t, err, contracts.ErrKeeperNotFound)
 	})
 
 	t.Run("update keeper with different namespace", func(t *testing.T) {
