@@ -4,6 +4,7 @@ import { FormEventHandler, KeyboardEventHandler, ReactNode, useCallback } from '
 import { DataFrame, GrafanaTheme2, TransformerRegistryItem, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Drawer, FilterPill, Grid, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { getCategoriesLabels } from 'app/features/transformers/utils';
@@ -113,6 +114,10 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
           transformations={xforms}
           data={data}
           onClick={(id) => {
+            reportInteraction('grafana_panel_transformations_clicked', {
+              type: id,
+              location: 'transformations_drawer',
+            });
             onTransformationAdd({ value: id });
           }}
         />

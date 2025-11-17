@@ -72,6 +72,21 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
     props.onGoToQueries?.();
   };
 
+  const handleTransformationClick = (transformationId: string) => {
+    reportInteraction('grafana_panel_transformations_clicked', {
+      type: transformationId,
+      location: 'empty_transformations_placeholder',
+    });
+    props.onAddTransformation?.(transformationId);
+  };
+
+  const handleShowMoreClick = () => {
+    reportInteraction('grafana_panel_transformations_show_more_clicked', {
+      location: 'empty_transformations_placeholder',
+    });
+    props.onShowPicker();
+  };
+
   return (
     <Box alignItems="center" padding={4}>
       <Stack direction="column" alignItems="center" gap={4}>
@@ -94,7 +109,7 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
                 <TransformationCard
                   key={transform.id}
                   transform={transform}
-                  onClick={(id) => props.onAddTransformation?.(id)}
+                  onClick={handleTransformationClick}
                   showIllustrations={true}
                   showPluginState={false}
                   showTags={false}
@@ -107,7 +122,7 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
             icon="plus"
             variant="primary"
             size="md"
-            onClick={props.onShowPicker}
+            onClick={handleShowMoreClick}
             data-testid={selectors.components.Transforms.addTransformationButton}
           >
             <Trans i18nKey="dashboard-scene.empty-transformations-message.show-more">Show more</Trans>
