@@ -273,4 +273,4 @@ dashboardTemplates,experimental,@grafana/sharing-squad,false,false,false
 grafanaAdvisorAppInstaller,experimental,@grafana/plugins-platform-backend,false,false,false
 kubernetesAnnotations,experimental,@grafana/grafana-backend-services-squad,false,false,false
 awsDatasourcesHttpProxy,experimental,@grafana/aws-datasources,false,false,false
-transformationsEmptyPlaceholder,experimental,@grafana/datapro,false,false,true
+transformationsEmptyPlaceholder,preview,@grafana/datapro,false,false,true

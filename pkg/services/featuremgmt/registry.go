@@ -2129,7 +2129,7 @@ var (
 		{
 			Name:         "transformationsEmptyPlaceholder",
 			Description:  "Show transformation quick-start cards in empty transformations state",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDataProSquad,
 		},
