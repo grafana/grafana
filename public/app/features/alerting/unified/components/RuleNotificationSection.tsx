@@ -245,7 +245,7 @@ export function RuleNotificationSection() {
                   try {
                     const url = new URL(value);
                     // Reject dangerous URL schemes
-                    if (url.protocol === 'javascript:' || url.protocol === 'data:') {
+                    if (url.protocol === 'javascript:' || url.protocol === 'data:' || url.protocol === 'vbscript:') {
                       notifyApp.error(
                         t(
                           'alerting.simplified.notification.runbook-url.invalid-protocol',
