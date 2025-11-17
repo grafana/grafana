@@ -108,4 +108,17 @@ describe('Heatmap transformer', () => {
       ]
     `);
   });
+
+  it('throws error if no numeric fields are present', async () => {
+    expect(() =>
+      rowsToCellsHeatmap({
+        frame: toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3, 4] },
+            { name: 'label', type: FieldType.string, values: ['a', 'b', 'c', 'd'] },
+          ],
+        }),
+      })
+    ).toThrowErrorMatchingInlineSnapshot(`"No numeric fields found for heatmap"`);
+  });
 });
