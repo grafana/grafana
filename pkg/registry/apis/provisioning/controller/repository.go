@@ -55,7 +55,10 @@ type RepositoryController struct {
 	logger     logging.Logger
 	dualwrite  dualwrite.Service
 
-	jobs          jobs.Queue
+	jobs interface {
+		jobs.Queue
+		jobs.Store
+	}
 	finalizer     finalizerProcessor
 	statusPatcher StatusPatcher
 
@@ -79,7 +82,10 @@ func NewRepositoryController(
 	repoFactory repository.Factory,
 	resourceLister resources.ResourceLister,
 	clients resources.ClientFactory,
-	jobs jobs.Queue,
+	jobs interface {
+		jobs.Queue
+		jobs.Store
+	},
 	dualwrite dualwrite.Service,
 	healthChecker *HealthChecker,
 	statusPatcher StatusPatcher,
@@ -273,7 +279,7 @@ func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *pro
 	})
 }
 
-func (rc *RepositoryController) shouldResync(obj *provisioning.Repository) bool {
+func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provisioning.Repository) bool {
 	// don't trigger resync if a sync was never started
 	if obj.Status.Sync.Finished == 0 && obj.Status.Sync.State == "" {
 		return false
@@ -282,6 +288,30 @@ func (rc *RepositoryController) shouldResync(obj *provisioning.Repository) bool 
 	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
 	syncInterval := time.Duration(obj.Spec.Sync.IntervalSeconds) * time.Second
 	tolerance := time.Second
+
+	// Check for stale sync status - if sync status indicates a job is running but the job no longer exists
+	// Only check if Finished is set (meaning a sync has completed before) to avoid interfering with initial syncs
+	// Only trigger resync if sync is enabled and sync interval has elapsed (to avoid unnecessary operations)
+	if obj.Status.Sync.Finished > 0 &&
+		obj.Spec.Sync.Enabled &&
+		(obj.Status.Sync.State == provisioning.JobStatePending || obj.Status.Sync.State == provisioning.JobStateWorking) &&
+		obj.Status.Sync.JobID != "" {
+		_, err := rc.jobs.Get(ctx, obj.Namespace, obj.Status.Sync.JobID)
+		if apierrors.IsNotFound(err) {
+			// Job was cleaned up but sync status wasn't updated - trigger resync to reconcile
+			// Only trigger if sync interval has elapsed to avoid unnecessary operations
+			if syncAge >= (syncInterval - tolerance) {
+				logger := logging.FromContext(ctx)
+				logger.Info("detected stale sync status", "job_id", obj.Status.Sync.JobID)
+				return true
+			}
+		}
+		// For other errors, log but continue with normal logic
+		if err != nil {
+			logger := logging.FromContext(ctx)
+			logger.Warn("failed to check job existence for stale sync status", "error", err, "job_id", obj.Status.Sync.JobID)
+		}
+	}
 
 	// HACK: how would this work in a multi-tenant world or under heavy load?
 	// It will start queueing up jobs and we will have to deal with that
@@ -490,7 +520,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return rc.handleDelete(ctx, obj)
 	}
 
-	shouldResync := rc.shouldResync(obj)
+	shouldResync := rc.shouldResync(ctx, obj)
 	shouldCheckHealth := rc.healthChecker.ShouldCheckHealth(obj)
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 	patchOperations := []map[string]interface{}{}

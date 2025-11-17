@@ -4,7 +4,7 @@ import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, ComponentSize, Dropdown, Menu } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { useRulePluginLinkExtension } from 'app/features/alerting/unified/plugins/useRulePluginLinkExtensions';

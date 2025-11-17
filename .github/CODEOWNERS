@@ -836,7 +836,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/constants.ts @grafana/grafana-frontend-platform
 /public/app/core/context/ @grafana/grafana-frontend-platform
 /public/app/core/copy/appNotification.ts @grafana/grafana-search-navigate-organise
-/public/app/core/core.ts @grafana/grafana-frontend-platform
 /public/app/core/crash/ @grafana/observability-traces-and-profiling
 /public/app/core/history/ @grafana/observability-traces-and-profiling
 /public/app/core/hooks/useBusEvent.ts @grafana/grafana-frontend-platform
@@ -1102,6 +1101,7 @@ eslint-suppressions.json @grafanabot
 # Grafana Sharing Squad
 /public/app/features/dashboard-scene/sharing/ @grafana/sharing-squad
 /public/app/features/dashboard/components/ShareModal/ @grafana/sharing-squad
+/public/app/features/dashboard/dashgrid/DashboardLibrary/ @grafana/sharing-squad
 /public/app/features/manage-dashboards/components/SnapshotListTable.tsx @grafana/sharing-squad
 /pkg/services/dashboardsnapshots/ @grafana/sharing-squad
 /public/app/features/explore/QueryLibrary/ @grafana/sharing-squad
