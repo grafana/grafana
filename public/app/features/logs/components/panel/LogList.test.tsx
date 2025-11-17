@@ -125,8 +125,18 @@ describe('LogList', () => {
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
+      const logsWithDetectedLevel = [
+        createLogRow({ uid: '1', labels: { [TABLE_DETECTED_LEVEL_FIELD_NAME]: 'info' } }),
+        createLogRow({ uid: '2', labels: { [TABLE_DETECTED_LEVEL_FIELD_NAME]: 'debug' } }),
+      ];
+
       render(
-        <LogList {...defaultProps} onLogOptionsChange={onLogOptionsChange} setDisplayedFields={setDisplayedFields} />
+        <LogList
+          {...defaultProps}
+          logs={logsWithDetectedLevel}
+          onLogOptionsChange={onLogOptionsChange}
+          setDisplayedFields={setDisplayedFields}
+        />
       );
       expect(screen.getByText('log message 1')).toBeInTheDocument();
       // Even when OTel is disabled, we still report table defaults
@@ -150,8 +160,18 @@ describe('LogList', () => {
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
+      const logsWithDetectedLevel = [
+        createLogRow({ uid: '1', labels: { [TABLE_DETECTED_LEVEL_FIELD_NAME]: 'info' } }),
+        createLogRow({ uid: '2', labels: { [TABLE_DETECTED_LEVEL_FIELD_NAME]: 'debug' } }),
+      ];
+
       render(
-        <LogList {...defaultProps} onLogOptionsChange={onLogOptionsChange} setDisplayedFields={setDisplayedFields} />
+        <LogList
+          {...defaultProps}
+          logs={logsWithDetectedLevel}
+          onLogOptionsChange={onLogOptionsChange}
+          setDisplayedFields={setDisplayedFields}
+        />
       );
       expect(screen.getByText('log message 1')).toBeInTheDocument();
       // For non-OTel logs, we report table defaults only (no OTel attributes field)
@@ -176,7 +196,12 @@ describe('LogList', () => {
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
-      const logs = [createLogRow({ uid: '1', labels: { [OTEL_PROBE_FIELD]: '1' } })];
+      const logs = [
+        createLogRow({
+          uid: '1',
+          labels: { [OTEL_PROBE_FIELD]: '1', [TABLE_DETECTED_LEVEL_FIELD_NAME]: 'info' },
+        }),
+      ];
 
       render(
         <LogList
