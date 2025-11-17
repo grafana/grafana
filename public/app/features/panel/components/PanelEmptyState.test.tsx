@@ -24,7 +24,7 @@ describe('PanelEmptyState', () => {
   });
 
   it('should render Trans component content', () => {
-    const content = <Trans i18nKey="custom.empty-state">Custom translated message</Trans>;
+    const content = <Trans i18nKey="">Custom translated message</Trans>;
     render(<PanelEmptyState content={content} />);
 
     expect(screen.getByText('Custom translated message')).toBeInTheDocument();
