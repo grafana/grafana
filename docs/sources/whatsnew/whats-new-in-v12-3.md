@@ -31,6 +31,7 @@ posts:
   - title: Data sources
     items:
       - whats-new/2025-10-16-unity-catalog-support-in-grafana-databricks-plugin.md
+      - whats-new/2025-10-01-raw-query-support-in-honeycomb-data-source.md
       - whats-new/2025-11-04-cloudwatch-logs-anomaly-detection-and-pattern-analysis.md
       - whats-new/2025-11-04-opensearch-ppl-language-support-and-sample-queries.md
   - title: Breaking changes
@@ -46,6 +47,12 @@ weight: -52
 
 Welcome to Grafana 12.3!
 
-For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v12.2, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v12.2/).
+This release reimagines how you explore logs, more ways to connect your data and more intuitive sharing, so you can spend less time navigating tools and more time turning signals into action. It starts with a completely redesigned logs panel that brings faster pattern recognition, clearer context, and a smoother exploration experience. We’ve also expanded what you can do with new data sources and query improvements, from SolarWinds Enterprise to advanced Honeycomb and OpenSearch capabilities.
+
+Sharing insights is easier too, with streamlined dashboard image exports and consolidated panel time controls that make comparisons and overrides more intuitive. And to help you learn as you go, a new interactive learning experience now brings contextual guidance directly into Grafana, giving you tips, tutorials, and documentation right when you need them. All of this comes together to make open observability easier, more accessible, and more powerful for every team.
+
+{{< youtube id=6jktlNhEdk4 >}}
+
+For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v12.3, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v12.3/).
 
 {{< docs/whats-new  >}}
