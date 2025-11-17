@@ -24,7 +24,7 @@ export async function initOpenFeature() {
 
   await OpenFeature.setProviderAndWait(ofProvider, {
     targetingKey: config.namespace,
-    namespace: config.namespace,
+    ...config.openFeatureContext,
   });
 }
 

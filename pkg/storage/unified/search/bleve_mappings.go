@@ -7,12 +7,13 @@ import (
 	"github.com/blevesearch/bleve/v2/mapping"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func GetBleveMappings(fields resource.SearchableDocumentFields, useFullNgram bool) (mapping.IndexMapping, error) {
+func GetBleveMappings(fields resource.SearchableDocumentFields) (mapping.IndexMapping, error) {
 	mapper := bleve.NewIndexMapping()
 
-	err := RegisterCustomAnalyzers(mapper, useFullNgram)
+	err := RegisterCustomAnalyzers(mapper)
 	if err != nil {
 		return nil, err
 	}
@@ -21,7 +22,7 @@ func GetBleveMappings(fields resource.SearchableDocumentFields, useFullNgram boo
 	return mapper, nil
 }
 
-func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentMapping {
+func getBleveDocMappings(fields resource.SearchableDocumentFields) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
 
 	nameMapping := &mapping.FieldMapping{
@@ -145,6 +146,23 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)
 
 	fieldMapper := bleve.NewDocumentMapping()
+	if fields != nil {
+		for _, field := range fields.Fields() {
+			def := fields.Field(field)
+
+			// Filterable should use keyword analyzer for exact matches
+			if def.Properties != nil && def.Properties.Filterable && def.Type == resourcepb.ResourceTableColumnDefinition_STRING {
+				keywordMapping := bleve.NewKeywordFieldMapping()
+				keywordMapping.Store = true
+
+				fieldMapper.AddFieldMappingsAt(def.Name, keywordMapping)
+			}
+			// For all other fields, we do nothing.
+			// Bleve will see them at index time and dynamically map them as
+			// numeric, datetime, boolean, or standard text based on their content.
+		}
+	}
+
 	mapper.AddSubDocumentMapping("fields", fieldMapper)
 
 	return mapper

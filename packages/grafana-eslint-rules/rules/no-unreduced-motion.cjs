@@ -1,4 +1,5 @@
 // @ts-check
+/** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleContext<string, []>} RuleContext */
 const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
 
 const createRule = ESLintUtils.RuleCreator(
@@ -6,9 +7,38 @@ const createRule = ESLintUtils.RuleCreator(
 );
 
 const restrictedProperties = ['animation', 'transition'];
+const excludedProperties = ['transitionProperty'];
 
 const isRestrictedProperty = (/** @type string */ propertyName) => {
-  return restrictedProperties.some((prop) => propertyName.startsWith(prop));
+  return (
+    !excludedProperties.includes(propertyName) && restrictedProperties.some((prop) => propertyName.startsWith(prop))
+  );
+};
+
+/**
+ * @param {import('@typescript-eslint/utils').TSESTree.ObjectExpression} obj
+ * @param {import('@typescript-eslint/utils/ts-eslint').RuleContext<string, []>} context
+ */
+const checkProperties = (obj, context) => {
+  for (const property of obj.properties) {
+    if (property.type !== AST_NODE_TYPES.Property) {
+      continue;
+    }
+
+    if (
+      property.value.type === AST_NODE_TYPES.ObjectExpression &&
+      property.key.type !== AST_NODE_TYPES.CallExpression
+    ) {
+      checkProperties(property.value, context);
+    }
+
+    if (property.key.type === AST_NODE_TYPES.Identifier && isRestrictedProperty(property.key.name)) {
+      context.report({
+        node: property,
+        messageId: 'noUnreducedMotion',
+      });
+    }
+  }
 };
 
 const rule = createRule({
@@ -29,18 +59,7 @@ const rule = createRule({
 
           for (const cssObject of cssObjects) {
             if (cssObject?.type === AST_NODE_TYPES.ObjectExpression) {
-              for (const property of cssObject.properties) {
-                if (
-                  property.type === AST_NODE_TYPES.Property &&
-                  property.key.type === AST_NODE_TYPES.Identifier &&
-                  isRestrictedProperty(property.key.name)
-                ) {
-                  context.report({
-                    node: property,
-                    messageId: 'noUnreducedMotion',
-                  });
-                }
-              }
+              checkProperties(cssObject, context);
             }
           }
         }

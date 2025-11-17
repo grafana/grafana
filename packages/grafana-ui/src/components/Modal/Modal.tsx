@@ -15,13 +15,11 @@ import { Stack } from '../Layout/Stack/Stack';
 import { ModalHeader } from './ModalHeader';
 import { getModalStyles } from './getModalStyles';
 
-export interface Props {
+interface BaseProps {
   /** @deprecated no longer used */
   icon?: IconName;
   /** @deprecated no longer used */
   iconTooltip?: string;
-  /** Title for the modal or custom header element */
-  title: string | JSX.Element;
   className?: string;
   contentClassName?: string;
   closeOnEscape?: boolean;
@@ -35,9 +33,28 @@ export interface Props {
   onClickBackdrop?: () => void;
 }
 
+interface WithStringTitleProps extends BaseProps {
+  /** Title for the modal or custom header element */
+  title: string;
+  ariaLabel?: never;
+}
+
+interface WithCustomTitleProps extends BaseProps {
+  /** Title for the modal or custom header element */
+  title: JSX.Element;
+  /** aria-label for the dialog. only needed when passing a custom title element */
+  ariaLabel: string;
+}
+
+export type Props = WithStringTitleProps | WithCustomTitleProps;
+
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-modal--docs
+ */
 export function Modal(props: PropsWithChildren<Props>) {
   const {
     title,
+    ariaLabel,
     children,
     isOpen = false,
     closeOnEscape = true,
@@ -60,7 +77,12 @@ export function Modal(props: PropsWithChildren<Props>) {
   );
 
   // Get props for the dialog and its title
-  const { dialogProps, titleProps } = useDialog({}, ref);
+  const { dialogProps, titleProps } = useDialog(
+    {
+      'aria-label': ariaLabel,
+    },
+    ref
+  );
 
   if (!isOpen) {
     return null;

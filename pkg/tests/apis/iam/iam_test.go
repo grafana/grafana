@@ -27,6 +27,12 @@ var gvrUsers = schema.GroupVersionResource{
 	Resource: "users",
 }
 
+var gvrTeamBindings = schema.GroupVersionResource{
+	Group:    "iam.grafana.app",
+	Version:  "v0alpha1",
+	Resource: "teambindings",
+}
+
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
@@ -91,7 +97,7 @@ func TestIntegrationIdentity(t *testing.T) {
 				"emailVerified": false,
 				"grafanaAdmin": true,
 				"login": "admin",
-				"name": "",
+				"title": "",
 				"provisioned": false,
 				"role": "Admin"
 			},
@@ -101,7 +107,7 @@ func TestIntegrationIdentity(t *testing.T) {
 				"emailVerified": false,
 				"grafanaAdmin": true,
 				"login": "grafana-admin",
-				"name": "admin2",
+				"title": "admin2",
 				"provisioned": false,
 				"role": "Admin"
 			},
@@ -111,7 +117,7 @@ func TestIntegrationIdentity(t *testing.T) {
 				"emailVerified": false,
 				"grafanaAdmin": false,
 				"login": "editor",
-				"name": "editor",
+				"title": "editor",
 				"provisioned": false,
 				"role": "Editor"
 			},
@@ -121,7 +127,7 @@ func TestIntegrationIdentity(t *testing.T) {
 				"emailVerified": false,
 				"grafanaAdmin": false,
 				"login": "viewer",
-				"name": "viewer",
+				"title": "viewer",
 				"provisioned": false,
 				"role": "Viewer"
 			},
@@ -131,7 +137,7 @@ func TestIntegrationIdentity(t *testing.T) {
 				"emailVerified": false,
 				"grafanaAdmin": false,
 				"login": "none",
-				"name": "none",
+				"title": "none",
 				"provisioned": false,
 				"role": "None"
 			}
@@ -155,7 +161,7 @@ func TestIntegrationIdentity(t *testing.T) {
 				"emailVerified": false,
 				"grafanaAdmin": true,
 				"login": "grafana-admin",
-				"name": "admin2",
+				"title": "admin2",
 				"provisioned": false,
 				"role": "Admin"
 			},
@@ -165,7 +171,7 @@ func TestIntegrationIdentity(t *testing.T) {
 				"emailVerified": false,
 				"grafanaAdmin": false,
 				"login": "admin2-org-2",
-				"name": "admin2",
+				"title": "admin2",
 				"provisioned": false,
 				"role": "Admin"
 			},
@@ -175,7 +181,7 @@ func TestIntegrationIdentity(t *testing.T) {
 				"emailVerified": false,
 				"grafanaAdmin": false,
 				"login": "editor-org-2",
-				"name": "editor",
+				"title": "editor",
 				"provisioned": false,
 				"role": "Editor"
 			},
@@ -185,7 +191,7 @@ func TestIntegrationIdentity(t *testing.T) {
 				"emailVerified": false,
 				"grafanaAdmin": false,
 				"login": "viewer-org-2",
-				"name": "viewer",
+				"title": "viewer",
 				"provisioned": false,
 				"role": "Viewer"
 			},
@@ -195,7 +201,7 @@ func TestIntegrationIdentity(t *testing.T) {
 				"emailVerified": false,
 				"grafanaAdmin": false,
 				"login": "none-org-2",
-				"name": "none",
+				"title": "none",
 				"provisioned": false,
 				"role": "None"
 			}

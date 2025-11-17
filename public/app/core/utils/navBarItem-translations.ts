@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
 // Because the navigation content is dynamic (defined in the backend), we can not use
 // the normal inline message definition method.
@@ -48,7 +49,9 @@ export function getNavTitle(navId: string | undefined) {
     case 'dashboards/recently-deleted':
       return t('nav.recently-deleted.title', 'Recently deleted');
     case 'dashboards/new':
-      return t('nav.new-dashboard.title', 'New dashboard');
+      return config.featureToggles.dashboardTemplates
+        ? t('nav.new-dashboard.empty-title', 'Empty dashboard')
+        : t('nav.new-dashboard.title', 'New dashboard');
     case 'dashboards/folder/new':
       return t('nav.new-folder.title', 'New folder');
     case 'dashboards/import':
@@ -220,7 +223,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'dashboards/recently-deleted':
       return t(
         'nav.recently-deleted.subtitle',
-        'Any items listed here for more than 30 days will be automatically deleted.'
+        'Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.'
       );
     case 'alerting':
       return t('nav.alerting.subtitle', 'Learn about problems in your systems moments after they occur');

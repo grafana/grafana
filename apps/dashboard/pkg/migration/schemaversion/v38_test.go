@@ -440,6 +440,164 @@ func TestV38(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "table with missing defaults.custom but overrides with custom.displayMode",
+			input: map[string]interface{}{
+				"title":         "V38 Missing Defaults Custom Test",
+				"schemaVersion": 37,
+				"panels": []interface{}{
+					// Table with no custom in defaults but custom.displayMode in overrides
+					map[string]interface{}{
+						"type":  "table",
+						"title": "Table with Missing Defaults Custom",
+						"id":    1,
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{}, // No custom object
+							"overrides": []interface{}{
+								map[string]interface{}{
+									"matcher": map[string]interface{}{
+										"id":      "byName",
+										"options": "name",
+									},
+									"properties": []interface{}{
+										map[string]interface{}{
+											"id": "color",
+											"value": map[string]interface{}{
+												"fixedColor": "yellow",
+												"mode":       "fixed",
+											},
+										},
+										map[string]interface{}{
+											"id":    "custom.displayMode",
+											"value": "color-background",
+										},
+									},
+								},
+							},
+						},
+					},
+					// Table with empty custom in defaults but custom.displayMode in overrides
+					map[string]interface{}{
+						"type":  "table",
+						"title": "Table with Empty Custom",
+						"id":    2,
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"custom": map[string]interface{}{}, // Empty custom object
+							},
+							"overrides": []interface{}{
+								map[string]interface{}{
+									"matcher": map[string]interface{}{
+										"id":      "byName",
+										"options": "status",
+									},
+									"properties": []interface{}{
+										map[string]interface{}{
+											"id":    "custom.displayMode",
+											"value": "gradient-gauge",
+										},
+									},
+								},
+								map[string]interface{}{
+									"matcher": map[string]interface{}{
+										"id":      "byName",
+										"options": "value",
+									},
+									"properties": []interface{}{
+										map[string]interface{}{
+											"id":    "custom.displayMode",
+											"value": "lcd-gauge",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"title":         "V38 Missing Defaults Custom Test",
+				"schemaVersion": 38,
+				"panels": []interface{}{
+					// Table with no custom in defaults but custom.displayMode in overrides (migrated)
+					map[string]interface{}{
+						"type":  "table",
+						"title": "Table with Missing Defaults Custom",
+						"id":    1,
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{}, // Still no custom object
+							"overrides": []interface{}{
+								map[string]interface{}{
+									"matcher": map[string]interface{}{
+										"id":      "byName",
+										"options": "name",
+									},
+									"properties": []interface{}{
+										map[string]interface{}{
+											"id": "color",
+											"value": map[string]interface{}{
+												"fixedColor": "yellow",
+												"mode":       "fixed",
+											},
+										},
+										map[string]interface{}{
+											"id": "custom.cellOptions",
+											"value": map[string]interface{}{
+												"type": "color-background",
+												"mode": "gradient",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					// Table with empty custom in defaults but custom.displayMode in overrides (migrated)
+					map[string]interface{}{
+						"type":  "table",
+						"title": "Table with Empty Custom",
+						"id":    2,
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"custom": map[string]interface{}{}, // Empty custom object
+							},
+							"overrides": []interface{}{
+								map[string]interface{}{
+									"matcher": map[string]interface{}{
+										"id":      "byName",
+										"options": "status",
+									},
+									"properties": []interface{}{
+										map[string]interface{}{
+											"id": "custom.cellOptions",
+											"value": map[string]interface{}{
+												"type": "gauge",
+												"mode": "gradient",
+											},
+										},
+									},
+								},
+								map[string]interface{}{
+									"matcher": map[string]interface{}{
+										"id":      "byName",
+										"options": "value",
+									},
+									"properties": []interface{}{
+										map[string]interface{}{
+											"id": "custom.cellOptions",
+											"value": map[string]interface{}{
+												"type": "gauge",
+												"mode": "lcd",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	runMigrationTests(t, tests, schemaversion.V38)
 }

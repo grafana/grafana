@@ -1,6 +1,9 @@
 {
   extends: ["config:recommended"],
-  enabledManagers: ["npm"],
+  enabledManagers: ["npm", "docker-compose"],
+  ignorePresets: [
+    "github>grafana/grafana-renovate-config//presets/labels",
+  ],
   ignoreDeps: [
     // ignoring these until we can upgrade to react 19
     // see epic here: https://github.com/grafana/grafana/issues/98813
@@ -23,7 +26,7 @@
     "@types/slate-react", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
     "@types/slate", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
   ],
-  includePaths: ["package.json", "packages/**", "public/app/plugins/**"],
+  includePaths: ["package.json", "packages/**", "public/app/plugins/**", "devenv/frontend-service/docker-compose.yaml"],
   ignorePaths: ["emails/**", "**/mocks/**"],
   labels: ["area/frontend", "dependencies", "no-changelog"],
   postUpdateOptions: ["yarnDedupeHighest"],

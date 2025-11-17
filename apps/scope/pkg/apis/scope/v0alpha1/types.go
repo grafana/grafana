@@ -146,13 +146,21 @@ type ScopeNodeSpec struct {
 
 	NodeType NodeType `json:"nodeType"` // container | leaf
 
-	Title              string `json:"title"`
+	Title string `json:"title"`
+	//+optional
+	// Displays next to the title to provide more context.
+	SubTitle string `json:"subTitle,omitempty"`
+
+	//+optional
 	Description        string `json:"description,omitempty"`
 	DisableMultiSelect bool   `json:"disableMultiSelect"`
 
 	LinkType LinkType `json:"linkType,omitempty"` // scope (later more things)
 	LinkID   string   `json:"linkId,omitempty"`   // the k8s name
 	// ?? should this be a slice of links
+
+	// Redirect to a specific path when this node is selected.
+	RedirectPath string `json:"redirectPath,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

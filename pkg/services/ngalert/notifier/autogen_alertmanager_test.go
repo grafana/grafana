@@ -289,8 +289,11 @@ func TestAddAutogenConfig(t *testing.T) {
 			for _, setting := range tt.storeSettings {
 				store.notificationSettings[orgId][models.AlertRuleKey{OrgID: orgId, UID: util.GenerateShortUID()}] = []models.NotificationSettings{setting}
 			}
-
-			err := AddAutogenConfig(context.Background(), &logtest.Fake{}, store, orgId, tt.existingConfig, tt.skipInvalid, nil)
+			onInvalid := ErrorOnInvalidReceivers
+			if tt.skipInvalid {
+				onInvalid = IgnoreInvalidReceivers
+			}
+			err := AddAutogenConfig(context.Background(), &logtest.Fake{}, store, orgId, tt.existingConfig, onInvalid, nil)
 			if tt.expErrorContains != "" {
 				require.Error(t, err)
 				require.ErrorContains(t, err, tt.expErrorContains)

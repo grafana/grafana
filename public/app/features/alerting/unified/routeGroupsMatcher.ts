@@ -1,4 +1,4 @@
-import { InstanceMatchResult, matchInstancesToRoute } from '@grafana/alerting/unstable';
+import { InstanceMatchResult, matchInstancesToRoute } from '@grafana/alerting';
 
 import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../types/unified-alerting-dto';
@@ -16,7 +16,7 @@ export const routeGroupsMatcher = {
     groups: AlertmanagerGroup[],
     options?: MatchOptions
   ): Map<string, AlertmanagerGroup[]> {
-    const normalizedRootRoute = getNormalizedRoute(rootRoute, options);
+    const normalizedRootRoute: RouteWithID = getNormalizedRoute(rootRoute, options);
 
     function addRouteGroups(route: RouteWithID, acc: Map<string, AlertmanagerGroup[]>) {
       const routeGroups = findMatchingAlertGroups(normalizedRootRoute, route, groups);

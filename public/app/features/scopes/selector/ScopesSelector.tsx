@@ -108,7 +108,7 @@ export const ScopesSelector = () => {
 
       {opened && (
         <Drawer title={t('scopes.selector.title', 'Select scopes')} size="sm" onClose={closeAndReset}>
-          <ErrorBoundary>
+          <ErrorBoundary boundaryName="scopes-selector">
             {({ error, errorInfo }) => {
               if (error) {
                 return (

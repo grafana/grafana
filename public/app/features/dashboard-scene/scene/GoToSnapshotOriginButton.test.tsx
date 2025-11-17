@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { config, locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 
-import appEvents from '../../../core/app_events';
+import { appEvents } from '../../../core/app_events';
 import { ShowModalReactEvent } from '../../../types/events';
 
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';

@@ -1,13 +1,12 @@
-import { ArrayValues } from 'type-fest';
+import { useEffect, useState, useTransition } from 'react';
 
-import { DataFrame, PanelData } from '@grafana/data';
-import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneObjectBase, SceneObjectState, sceneGraph, sceneUtils } from '@grafana/scenes';
 import { useQueryRunner, useTimeRange, useVariableValues } from '@grafana/scenes-react';
 
 import { Workbench } from '../Workbench';
 import { DEFAULT_FIELDS, METRIC_NAME, VARIABLES } from '../constants';
-import { AlertRuleRow, GenericGroupedRow, WorkbenchRow } from '../types';
 
+import { convertToWorkbenchRows } from './dataTransform';
 import { convertTimeRangeToDomain, getDataQuery, useQueryFilter } from './utils';
 
 export class WorkbenchSceneObject extends SceneObjectBase<SceneObjectState> {
@@ -19,7 +18,6 @@ export function WorkbenchRenderer() {
   const domain = convertTimeRangeToDomain(timeRange);
 
   const [groupByKeys = []] = useVariableValues<string>(VARIABLES.groupBy);
-
   const countBy = [...DEFAULT_FIELDS, ...groupByKeys].join(',');
   const queryFilter = useQueryFilter();
 
@@ -31,103 +29,62 @@ export function WorkbenchRenderer() {
     ],
   });
   const { data } = runner.useState();
-  const rows = data ? convertToWorkbenchRows(data, groupByKeys) : [];
 
-  return <Workbench data={rows} domain={domain} queryRunner={runner} />;
-}
+  const [rows, setRows] = useState<ReturnType<typeof convertToWorkbenchRows>>([]);
+  const [isPending, startTransition] = useTransition();
+  const hasFiltersApplied = queryFilter.length > 0;
 
-type DataPoint = Record<ArrayValues<typeof DEFAULT_FIELDS>, string> & Record<string, string | undefined>;
+  // convertToWorkbenchRows is expensive when processing large datasets.
+  // We use runner.subscribeToState() instead of runner.useState() to transform data
+  // only when it actually changes. Using useState() triggers 2-3 unnecessary calls
+  // to convertToWorkbenchRows per update, even when wrapped in useMemo.
+  // Subscribe to runner state changes and transform data
+  useEffect(() => {
+    const transformData = (newState: typeof runner.state) => {
+      if (newState.data?.state !== 'Done' || !newState.data?.series) {
+        return;
+      }
 
-function createAlertRuleRows(dataPoints: DataPoint[]): AlertRuleRow[] {
-  const rules = new Map<
-    string,
-    {
-      alertname: string;
-      folder: string;
-      ruleUID: string;
-    }
-  >();
+      // Get the groupBy from the scene directly to avoid having groupByVariable in the dependency array
+      let currentGroupByKeys: string[] = [];
+      const groupByVariable = sceneGraph.lookupVariable(VARIABLES.groupBy, runner);
 
-  for (const dp of dataPoints) {
-    const ruleUID = dp.grafana_rule_uid;
-    if (!rules.has(ruleUID)) {
-      rules.set(ruleUID, {
-        alertname: dp.alertname,
-        folder: dp.grafana_folder,
-        ruleUID: ruleUID,
+      if (groupByVariable && sceneUtils.isGroupByVariable(groupByVariable)) {
+        const value = groupByVariable.getValue();
+        if (Array.isArray(value)) {
+          currentGroupByKeys = value.map((value) => String(value));
+        }
+      }
+
+      const { series } = newState.data;
+      // Use transition for non-blocking update
+      startTransition(() => {
+        setRows(convertToWorkbenchRows(series, currentGroupByKeys));
       });
-    }
-  }
+    };
 
-  const result: AlertRuleRow[] = [];
-  for (const rule of rules.values()) {
-    result.push({
-      type: 'alertRule',
-      metadata: {
-        title: rule.alertname,
-        folder: rule.folder,
-        ruleUID: rule.ruleUID,
-      },
+    // Subscribe to state changes
+    const subscription = runner.subscribeToState((newState, prevState) => {
+      // Only transform if data actually changed
+      if (newState.data !== prevState.data) {
+        transformData(newState);
+      }
     });
-  }
-  return result;
-}
 
-function groupData(dataPoints: DataPoint[], groupBy: string[], depth: number): WorkbenchRow[] {
-  if (depth >= groupBy.length) {
-    return createAlertRuleRows(dataPoints);
-  }
+    return () => subscription.unsubscribe();
+  }, [runner]);
 
-  const groupByKey = groupBy[depth];
-  const grouped = new Map<string, DataPoint[]>();
+  const isDataLoading = data?.state === 'Loading';
+  const isLoading = isDataLoading || isPending;
 
-  for (const dp of dataPoints) {
-    const key = String(dp[groupByKey] ?? 'undefined');
-    if (!grouped.has(key)) {
-      grouped.set(key, []);
-    }
-    grouped.get(key)?.push(dp);
-  }
-
-  const result: GenericGroupedRow[] = [];
-  for (const [value, rows] of grouped.entries()) {
-    result.push({
-      type: 'group',
-      metadata: {
-        label: groupByKey,
-        value: value,
-      },
-      rows: groupData(rows, groupBy, depth + 1),
-    });
-  }
-
-  return result;
-}
-
-// @TODO narrower types for PanelData! (if possible)
-export function convertToWorkbenchRows(data: PanelData, groupBy: string[] = []): WorkbenchRow[] {
-  if (!data.series.at(0)?.fields.length) {
-    return [];
-  }
-
-  const frame = data.series[0];
-  if (!isValidFrame(frame)) {
-    return [];
-  }
-
-  const allDataPoints = Array.from({ length: frame.length }, (_, i) => {
-    const dataPoint: DataPoint = Object.create(null);
-    frame.fields.forEach((field) => {
-      dataPoint[field.name] = field.values[i];
-    });
-    return dataPoint;
-  });
-
-  return groupData(allDataPoints, groupBy, 0);
-}
-
-function isValidFrame(frame: DataFrame) {
-  const requiredFieldNames = ['Time', ...DEFAULT_FIELDS];
-  const fieldNames = new Set(frame.fields.map((f) => f.name));
-  return requiredFieldNames.every((name) => fieldNames.has(name));
+  return (
+    <Workbench
+      data={rows}
+      domain={domain}
+      queryRunner={runner}
+      groupBy={groupByKeys}
+      isLoading={isLoading}
+      hasActiveFilters={hasFiltersApplied}
+    />
+  );
 }

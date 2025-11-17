@@ -4,6 +4,9 @@ import { FeatureState, NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FeatureBadge, useStyles2 } from '@grafana/ui';
 
+import { useAlertRule } from '../../components/rule-viewer/RuleContext';
+import { rulerRuleType } from '../../utils/rules';
+
 type SetActiveTab = (tab: string) => void;
 
 type RuleViewTabBuilderArgs = {
@@ -12,15 +15,31 @@ type RuleViewTabBuilderArgs = {
 };
 
 type RuleViewTabBuilder = (args: RuleViewTabBuilderArgs) => NavModelItem;
+type RuleViewTabBuilderConfig = {
+  filterOnlyGrafanaAlertRules: boolean;
+  ruleViewTabBuilder: RuleViewTabBuilder;
+};
 
-const ruleViewTabBuilders: RuleViewTabBuilder[] = [];
+const ruleViewTabBuilders: RuleViewTabBuilderConfig[] = [];
 
-export function registerRuleViewTab(builder: RuleViewTabBuilder) {
-  ruleViewTabBuilders.push(builder);
+function registerRuleViewTab(builder: RuleViewTabBuilder) {
+  ruleViewTabBuilders.push({
+    filterOnlyGrafanaAlertRules: true,
+    ruleViewTabBuilder: builder,
+  });
 }
 
-export function getRuleViewExtensionTabs(args: RuleViewTabBuilderArgs): NavModelItem[] {
-  return ruleViewTabBuilders.map((builder) => builder(args));
+export function useRuleViewExtensionTabs(args: RuleViewTabBuilderArgs): NavModelItem[] {
+  const { rule } = useAlertRule();
+  const isGrafanaAlertRule = rulerRuleType.grafana.alertingRule(rule.rulerRule);
+  return ruleViewTabBuilders
+    .filter((config) => {
+      if (config.filterOnlyGrafanaAlertRules) {
+        return isGrafanaAlertRule;
+      }
+      return true;
+    })
+    .map((config) => config.ruleViewTabBuilder(args));
 }
 
 export function addEnrichmentSection() {
@@ -38,6 +57,18 @@ export function addEnrichmentSection() {
 // ONLY FOR TESTS: resets the registered tabs between tests
 export function __clearRuleViewTabsForTests() {
   ruleViewTabBuilders.splice(0, ruleViewTabBuilders.length);
+}
+
+// ONLY FOR TESTS: non-hook version for testing
+export function getRuleViewExtensionTabs(args: RuleViewTabBuilderArgs, isGrafanaAlertRule: boolean): NavModelItem[] {
+  return ruleViewTabBuilders
+    .filter((config) => {
+      if (config.filterOnlyGrafanaAlertRules) {
+        return isGrafanaAlertRule;
+      }
+      return true;
+    })
+    .map((config) => config.ruleViewTabBuilder(args));
 }
 
 function getStyles() {

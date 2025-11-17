@@ -1,20 +1,16 @@
 package schemaversion
 
 import (
+	"context"
 	"strconv"
-
-	"golang.org/x/net/context"
 )
 
 const (
-	MIN_VERSION    = 13
+	MIN_VERSION    = 0
 	LATEST_VERSION = 42
-
-	// The pluginVersion to set after simulating auto-migrate for angular panels
-	pluginVersionForAutoMigrate = "12.1.0"
 )
 
-type SchemaVersionMigrationFunc func(context.Context, map[string]interface{}) error
+type SchemaVersionMigrationFunc func(context.Context, map[string]any) error
 
 type DataSourceInfo struct {
 	Default    bool
@@ -25,10 +21,10 @@ type DataSourceInfo struct {
 	APIVersion string
 }
 
-type DataSourceInfoProvider interface {
-	// GetDataSourceInfo returns a list of all data sources with their info
-	// The context must have the namespace in it
-	GetDataSourceInfo(ctx context.Context) []DataSourceInfo
+type DataSourceIndexProvider interface {
+
+	// Index returns a pre-built index for O(1) datasource lookups.
+	Index(ctx context.Context) *DatasourceIndex
 }
 
 type PanelPluginInfo struct {
@@ -36,8 +32,20 @@ type PanelPluginInfo struct {
 	Version string
 }
 
-func GetMigrations(dsInfoProvider DataSourceInfoProvider) map[int]SchemaVersionMigrationFunc {
+func GetMigrations(dsIndexProvider DataSourceIndexProvider) map[int]SchemaVersionMigrationFunc {
 	return map[int]SchemaVersionMigrationFunc{
+		2:  V2,
+		3:  V3,
+		4:  V4,
+		5:  V5,
+		6:  V6,
+		7:  V7,
+		8:  V8,
+		9:  V9,
+		10: V10,
+		11: V11,
+		12: V12,
+		13: V13,
 		14: V14,
 		15: V15,
 		16: V16,
@@ -57,10 +65,10 @@ func GetMigrations(dsInfoProvider DataSourceInfoProvider) map[int]SchemaVersionM
 		30: V30,
 		31: V31,
 		32: V32,
-		33: V33(dsInfoProvider),
+		33: V33(dsIndexProvider),
 		34: V34,
 		35: V35,
-		36: V36(dsInfoProvider),
+		36: V36(dsIndexProvider),
 		37: V37,
 		38: V38,
 		39: V39,
@@ -70,7 +78,7 @@ func GetMigrations(dsInfoProvider DataSourceInfoProvider) map[int]SchemaVersionM
 	}
 }
 
-func GetSchemaVersion(dash map[string]interface{}) int {
+func GetSchemaVersion(dash map[string]any) int {
 	if v, ok := dash["schemaVersion"]; ok {
 		switch v := v.(type) {
 		case int:

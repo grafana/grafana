@@ -1,4 +1,4 @@
-import { Permissions } from 'app/core/components/AccessControl';
+import { Permissions } from 'app/core/components/AccessControl/Permissions';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { Team } from 'app/types/teams';
@@ -20,7 +20,6 @@ const TeamPermissions = (props: TeamPermissionsProps) => {
 
   return (
     <Permissions
-      title=""
       addPermissionTitle="Add member"
       buttonLabel="Add member"
       emptyLabel="There are no members in this team or you do not have the permissions to list the current members."

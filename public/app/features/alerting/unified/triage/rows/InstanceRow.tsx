@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
 import { DataFrame, GrafanaTheme2, Labels, LoadingState, TimeRange } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
 import { VizPanel } from '@grafana/scenes-react';
 import { GraphDrawStyle, VisibilityMode } from '@grafana/schema';
@@ -19,8 +19,10 @@ import {
 } from '@grafana/ui';
 
 import { overrideToFixedColor } from '../../home/Insights';
+import { InstanceDetailsDrawer } from '../instance-details/InstanceDetailsDrawer';
 
 import { GenericRow } from './GenericRow';
+import { OpenDrawerIconButton } from './OpenDrawerIconButton';
 
 interface Instance {
   labels: Labels;
@@ -32,6 +34,7 @@ interface InstanceRowProps {
   commonLabels: Labels;
   leftColumnWidth: number;
   timeRange: TimeRange;
+  ruleUID: string;
   depth?: number;
 }
 
@@ -61,8 +64,24 @@ const chartConfig = VizConfigBuilders.timeseries()
   )
   .build();
 
-export function InstanceRow({ instance, commonLabels, leftColumnWidth, timeRange, depth = 0 }: InstanceRowProps) {
+export function InstanceRow({
+  instance,
+  commonLabels,
+  leftColumnWidth,
+  timeRange,
+  ruleUID,
+  depth = 0,
+}: InstanceRowProps) {
   const styles = useStyles2(getStyles);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const handleDrawerOpen = useCallback(() => {
+    setIsDrawerOpen(true);
+  }, []);
+
+  const handleDrawerClose = useCallback(() => {
+    setIsDrawerOpen(false);
+  }, []);
 
   const dataProvider = useMemo(
     () =>
@@ -77,29 +96,48 @@ export function InstanceRow({ instance, commonLabels, leftColumnWidth, timeRange
   );
 
   return (
-    <GenericRow
-      width={leftColumnWidth}
-      title={
-        isEmpty(instance.labels) ? (
-          <div className={styles.wrapper}>
-            <Text color="secondary" variant="bodySmall">
-              <Trans i18nKey="alerting.triage.no-labels">No labels</Trans>
-            </Text>
-          </div>
-        ) : (
-          <AlertLabels
-            labels={instance.labels}
-            displayCommonLabels={true}
-            labelSets={[instance.labels, commonLabels]}
-            size="xs"
+    <>
+      <GenericRow
+        width={leftColumnWidth}
+        title={
+          isEmpty(instance.labels) ? (
+            <div className={styles.wrapper}>
+              <Text color="secondary" variant="bodySmall">
+                <Trans i18nKey="alerting.triage.no-labels">No labels</Trans>
+              </Text>
+            </div>
+          ) : (
+            <AlertLabels
+              labels={instance.labels}
+              displayCommonLabels={true}
+              labelSets={[instance.labels, commonLabels]}
+              size="xs"
+              commonLabelsMode="tooltip"
+            />
+          )
+        }
+        actions={
+          <OpenDrawerIconButton
+            aria-label={t('alerting.triage.open-in-sidebar', 'Open in sidebar')}
+            onClick={handleDrawerOpen}
           />
-        )
-      }
-      content={
-        <VizPanel title="" hoverHeader={true} viz={chartConfig} dataProvider={dataProvider} displayMode="transparent" />
-      }
-      depth={depth}
-    />
+        }
+        content={
+          <VizPanel
+            title=""
+            hoverHeader={true}
+            viz={chartConfig}
+            dataProvider={dataProvider}
+            displayMode="transparent"
+          />
+        }
+        depth={depth}
+      />
+
+      {isDrawerOpen && (
+        <InstanceDetailsDrawer ruleUID={ruleUID} instanceLabels={instance.labels} onClose={handleDrawerClose} />
+      )}
+    </>
   );
 }
 

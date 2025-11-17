@@ -44,6 +44,16 @@ func TestV24TablePanelMigration(t *testing.T) {
 			},
 			description: "V24 migration should not add empty transformations arrays to table panels",
 		},
+		{
+			name: "migrate_table_old_to_table",
+			input: map[string]interface{}{
+				"type": "table-old",
+			},
+			expected: map[string]interface{}{
+				"type": "table",
+			},
+			description: "V24 migration should migrate table-old to table",
+		},
 	}
 
 	for _, tt := range tests {

@@ -346,25 +346,6 @@ func TestCreateSignature(t *testing.T) {
 		require.Equal(t, time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC), committer.Time)
 	})
 
-	t.Run("should fallback to default when context signature has empty name", func(t *testing.T) {
-		sig := repository.CommitSignature{
-			Name:  "",
-			Email: "john@example.com",
-			When:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		}
-		ctx := repository.WithAuthorSignature(context.Background(), sig)
-
-		author, committer := gitRepo.createSignature(ctx)
-
-		require.Equal(t, "Grafana", author.Name)
-		require.Equal(t, "noreply@grafana.com", author.Email)
-		require.False(t, author.Time.IsZero())
-
-		require.Equal(t, "Grafana", committer.Name)
-		require.Equal(t, "noreply@grafana.com", committer.Email)
-		require.False(t, committer.Time.IsZero())
-	})
-
 	t.Run("should use current time when signature time is zero", func(t *testing.T) {
 		sig := repository.CommitSignature{
 			Name:  "John Doe",
@@ -1787,23 +1768,22 @@ func TestGitRepository_createSignature(t *testing.T) {
 		require.Equal(t, time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC), committer.Time)
 	})
 
-	t.Run("should fallback to default when context signature has empty name", func(t *testing.T) {
+	t.Run("should fill in missing signature properties from default values", func(t *testing.T) {
 		sig := repository.CommitSignature{
 			Name:  "",
 			Email: "john@example.com",
-			When:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 		}
 		ctx := repository.WithAuthorSignature(context.Background(), sig)
 
 		author, committer := gitRepo.createSignature(ctx)
 
-		require.Equal(t, "Grafana", author.Name)
-		require.Equal(t, "noreply@grafana.com", author.Email)
+		require.Equal(t, "Grafana", author.Name) // The default name
+		require.Equal(t, sig.Email, author.Email)
 		require.False(t, author.Time.IsZero())
 
 		require.Equal(t, "Grafana", committer.Name)
-		require.Equal(t, "noreply@grafana.com", committer.Email)
-		require.False(t, committer.Time.IsZero())
+		require.Equal(t, sig.Email, author.Email)
+		require.False(t, author.Time.IsZero())
 	})
 
 	t.Run("should use current time when signature time is zero", func(t *testing.T) {

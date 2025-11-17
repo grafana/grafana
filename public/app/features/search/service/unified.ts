@@ -1,12 +1,14 @@
 import { isEmpty } from 'lodash';
 
+import { BASE_URL as v0alphaBaseURL } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/user';
 import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { generatedAPI, ListStarsApiResponse } from 'app/api/clients/preferences/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import kbn from 'app/core/utils/kbn';
 import { dispatch } from 'app/store/store';
 
@@ -25,8 +27,7 @@ import { filterSearchResults, replaceCurrentFolderQuery } from './utils';
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
 const loadingFrameName = 'Loading';
 
-const baseURL = getAPIBaseURL('dashboard.grafana.app', 'v0alpha1');
-const searchURI = `${baseURL}/search`;
+const searchURI = `${v0alphaBaseURL}/search`;
 
 export type SearchHit = {
   resource: string; // dashboards | folders
@@ -89,7 +90,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
           (info) => info.group === 'dashboard.grafana.app' && info.kind === 'Dashboard'
         )?.names || [];
     } else {
-      starsIds = await getBackendSrv().get('api/user/stars');
+      starsIds = await dispatch(legacyUserAPI.endpoints.getStars.initiate()).unwrap();
     }
 
     if (starsIds?.length) {

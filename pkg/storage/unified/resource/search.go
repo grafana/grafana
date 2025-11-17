@@ -127,11 +127,8 @@ type SearchBackend interface {
 	GetOpenIndexes() []NamespacedResource
 }
 
-const tracingPrexfixSearch = "unified_search."
-
 // This supports indexing+search regardless of implementation
 type searchSupport struct {
-	tracer       trace.Tracer
 	log          *slog.Logger
 	storage      StorageBackend
 	search       SearchBackend
@@ -163,13 +160,10 @@ var (
 	_ resourcepb.ManagedObjectIndexServer = (*searchSupport)(nil)
 )
 
-func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (support *searchSupport, err error) {
+func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (support *searchSupport, err error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
-	}
-	if tracer == nil {
-		return nil, fmt.Errorf("missing tracer")
 	}
 
 	if opts.InitWorkerThreads < 1 {
@@ -188,7 +182,6 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 
 	support = &searchSupport{
 		access:         access,
-		tracer:         tracer,
 		storage:        storage,
 		search:         opts.Backend,
 		log:            slog.Default().With("logger", "resource-search"),
@@ -234,6 +227,11 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 	// Using higher "min build time" is stricter condition, and causes more indexes to be rebuilt.
 	if a.minBuildTime.IsZero() || (!b.minBuildTime.IsZero() && b.minBuildTime.After(a.minBuildTime)) {
 		ret.minBuildTime = b.minBuildTime
+	}
+
+	// Using higher "last import time" is stricter condition, and causes more indexes to be rebuilt.
+	if a.lastImportTime.IsZero() || (!b.lastImportTime.IsZero() && b.lastImportTime.After(a.lastImportTime)) {
+		ret.lastImportTime = b.lastImportTime
 	}
 
 	return ret, true
@@ -336,7 +334,7 @@ func (s *searchSupport) CountManagedObjects(ctx context.Context, req *resourcepb
 
 // Search implements ResourceIndexServer.
 func (s *searchSupport) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Search")
+	ctx, span := tracer.Start(ctx, "resource.searchSupport.Search")
 	defer span.End()
 
 	if req.Options.Key.Namespace == "" || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
@@ -494,7 +492,7 @@ func (s *searchSupport) buildIndexes(ctx context.Context) (int, error) {
 func (s *searchSupport) init(ctx context.Context) error {
 	origCtx := ctx
 
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Init")
+	ctx, span := tracer.Start(ctx, "resource.searchSupport.init")
 	defer span.End()
 	start := time.Now().Unix()
 
@@ -540,12 +538,16 @@ func (s *searchSupport) runPeriodicScanForIndexesToRebuild(ctx context.Context) 
 			s.log.Info("stopping periodic index rebuild due to context cancellation")
 			return
 		case <-ticker.C:
-			s.findIndexesToRebuild(time.Now())
+			importTimes, err := s.getLastImportTimes(ctx)
+			if err != nil {
+				s.log.Error("failed to get import times", "error", err)
+			}
+			s.findIndexesToRebuild(importTimes, time.Now())
 		}
 	}
 }
 
-func (s *searchSupport) findIndexesToRebuild(now time.Time) {
+func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, now time.Time) {
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
 
@@ -567,17 +569,20 @@ func (s *searchSupport) findIndexesToRebuild(now time.Time) {
 			minBuildTime = now.Add(-maxAge)
 		}
 
+		lastImportTime := lastImportTimes[key] // Will be time.Time{} if not found.
+
 		bi, err := idx.BuildInfo()
 		if err != nil {
 			s.log.Error("failed to get build info for index to rebuild", "key", key, "error", err)
 			continue
 		}
 
-		if shouldRebuildIndex(s.minBuildVersion, bi, minBuildTime, nil) {
+		if shouldRebuildIndex(bi, s.minBuildVersion, minBuildTime, lastImportTime, nil) {
 			s.rebuildQueue.Add(rebuildRequest{
 				NamespacedResource: key,
 				minBuildTime:       minBuildTime,
 				minBuildVersion:    s.minBuildVersion,
+				lastImportTime:     lastImportTime,
 			})
 
 			if s.indexMetrics != nil {
@@ -585,6 +590,18 @@ func (s *searchSupport) findIndexesToRebuild(now time.Time) {
 			}
 		}
 	}
+}
+
+func (s *searchSupport) getLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error) {
+	result := map[NamespacedResource]time.Time{}
+	for importTime, err := range s.storage.GetResourceLastImportTimes(ctx) {
+		if err != nil {
+			// We return times that we have collected so far, if any.
+			return result, err
+		}
+		result[importTime.NamespacedResource] = importTime.LastImportTime
+	}
+	return result, nil
 }
 
 // runIndexRebuilder is a goroutine waiting for rebuild requests, and rebuilds indexes specified in those requests.
@@ -608,7 +625,7 @@ func (s *searchSupport) runIndexRebuilder(ctx context.Context) {
 }
 
 func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"RebuildIndex")
+	ctx, span := tracer.Start(ctx, "resource.searchSupport.rebuildIndex")
 	defer span.End()
 
 	l := s.log.With("namespace", req.Namespace, "group", req.Group, "resource", req.Resource)
@@ -626,7 +643,7 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		l.Error("failed to get build info for index to rebuild", "error", err)
 	}
 
-	rebuild := shouldRebuildIndex(req.minBuildVersion, bi, req.minBuildTime, l)
+	rebuild := shouldRebuildIndex(bi, req.minBuildVersion, req.minBuildTime, req.lastImportTime, l)
 	if !rebuild {
 		span.AddEvent("index not rebuilt")
 		l.Info("index doesn't need to be rebuilt")
@@ -662,11 +679,21 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 }
 
-func shouldRebuildIndex(minBuildVersion *semver.Version, buildInfo IndexBuildInfo, minBuildTime time.Time, rebuildLogger *slog.Logger) bool {
+func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, rebuildLogger *slog.Logger) bool {
 	if !minBuildTime.IsZero() {
 		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(minBuildTime) {
 			if rebuildLogger != nil {
 				rebuildLogger.Info("index build time is before minBuildTime, rebuilding the index", "indexBuildTime", buildInfo.BuildTime, "minBuildTime", minBuildTime)
+			}
+			return true
+		}
+	}
+
+	// This is technically the same as minBuildTime, but we want to log a different message to make the rebuild reason clear.
+	if !lastImportTime.IsZero() {
+		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(lastImportTime) {
+			if rebuildLogger != nil {
+				rebuildLogger.Info("index build time is before lastImportTime, rebuilding the index", "indexBuildTime", buildInfo.BuildTime, "lastImportTime", lastImportTime)
 			}
 			return true
 		}
@@ -687,8 +714,9 @@ func shouldRebuildIndex(minBuildVersion *semver.Version, buildInfo IndexBuildInf
 type rebuildRequest struct {
 	NamespacedResource
 
-	minBuildTime    time.Time       // if not zero, only rebuild index if it has been built before this timestamp
-	minBuildVersion *semver.Version // if not nil, only rebuild index with build version older than this.
+	minBuildTime    time.Time       // if not zero, rebuild index if it has been built before this timestamp
+	lastImportTime  time.Time       // if not zero, rebuild index if it has been built before this timestamp.
+	minBuildVersion *semver.Version // if not nil, rebuild index with build version older than this.
 }
 
 func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedResource, reason string) (ResourceIndex, error) {
@@ -696,7 +724,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 		return nil, fmt.Errorf("search is not configured properly (missing unifiedStorageSearch feature toggle?)")
 	}
 
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"GetOrCreateIndex")
+	ctx, span := tracer.Start(ctx, "resource.searchSupport.getOrCreateIndex")
 	defer span.End()
 	span.SetAttributes(
 		attribute.String("namespace", key.Namespace),
@@ -773,7 +801,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 }
 
 func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool) (ResourceIndex, error) {
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
+	ctx, span := tracer.Start(ctx, "resource.searchSupport.build")
 	defer span.End()
 
 	span.SetAttributes(

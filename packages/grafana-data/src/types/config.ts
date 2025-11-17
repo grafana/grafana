@@ -1,3 +1,5 @@
+import type { InternalLoggerLevel } from '@grafana/faro-core';
+
 import { SystemDateFormatSettings } from '../datetime/formats';
 import { MapLayerOptions } from '../geo/layer';
 
@@ -69,6 +71,7 @@ export enum GrafanaEdition {
   OpenSource = 'Open Source',
   Pro = 'Pro',
   Enterprise = 'Enterprise',
+  Trial = 'Cloud Trial',
 }
 
 /**
@@ -93,11 +96,14 @@ export interface LicenseInfo {
 export interface GrafanaJavascriptAgentConfig {
   enabled: boolean;
   customEndpoint: string;
-  errorInstrumentalizationEnabled: boolean;
-  consoleInstrumentalizationEnabled: boolean;
-  webVitalsInstrumentalizationEnabled: boolean;
-  tracingInstrumentalizationEnabled: boolean;
   apiKey: string;
+  internalLoggerLevel: InternalLoggerLevel;
+
+  consoleInstrumentalizationEnabled: boolean;
+  performanceInstrumentalizationEnabled: boolean;
+  cspInstrumentalizationEnabled: boolean;
+  tracingInstrumentalizationEnabled: boolean;
+  webVitalsAttribution: boolean;
 }
 
 export interface UnifiedAlertingStateHistoryConfig {
@@ -286,6 +292,7 @@ export interface GrafanaConfig {
   rudderstackIntegrationsUrl: string;
   applicationInsightsConnectionString: string;
   applicationInsightsEndpointUrl: string;
+  applicationInsightsAutoRouteTracking: boolean;
   analyticsConsoleReporting: boolean;
   rendererAvailable: boolean;
   rendererVersion: string;
@@ -306,6 +313,7 @@ export interface GrafanaConfig {
   pluginCatalogHiddenPlugins: string[];
   pluginCatalogManagedPlugins: string[];
   pluginCatalogPreinstalledPlugins: PreinstalledPlugin[];
+  pluginCatalogPreinstalledAutoUpdate?: boolean;
   pluginsCDNBaseURL: string;
   tokenExpirationDayLimit: number;
   listDashboardScopesEndpoint: string;
@@ -316,6 +324,7 @@ export interface GrafanaConfig {
   quickRanges?: TimeOption[];
   pluginRestrictedAPIsAllowList?: Record<string, string[]>;
   pluginRestrictedAPIsBlockList?: Record<string, string[]>;
+  openFeatureContext: Record<string, unknown>;
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;

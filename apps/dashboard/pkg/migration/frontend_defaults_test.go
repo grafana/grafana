@@ -807,6 +807,193 @@ func TestTransformationsArrayContextAwareLogic(t *testing.T) {
 	}
 }
 
+func TestTrackOriginalFieldConfigCustom(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    map[string]interface{}
+		expected map[string]interface{}
+	}{
+		{
+			name: "track_top_level_panel_with_fieldConfig_custom",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "timeseries",
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"custom": map[string]interface{}{},
+							},
+							"overrides": []interface{}{},
+						},
+					},
+					map[string]interface{}{
+						"id":   2,
+						"type": "table",
+						"fieldConfig": map[string]interface{}{
+							"defaults":  map[string]interface{}{},
+							"overrides": []interface{}{},
+						},
+					},
+					map[string]interface{}{
+						"id":    3,
+						"type":  "stat",
+						"title": "Panel without fieldConfig",
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "timeseries",
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"custom": map[string]interface{}{},
+							},
+							"overrides": []interface{}{},
+						},
+						"_originallyHadFieldConfigCustom": true, // marker added
+					},
+					map[string]interface{}{
+						"id":   2,
+						"type": "table",
+						"fieldConfig": map[string]interface{}{
+							"defaults":  map[string]interface{}{},
+							"overrides": []interface{}{},
+						},
+						// no marker added - no custom object
+					},
+					map[string]interface{}{
+						"id":    3,
+						"type":  "stat",
+						"title": "Panel without fieldConfig",
+						// no marker added - no fieldConfig
+					},
+				},
+			},
+		},
+		{
+			name: "track_nested_panels_in_row_with_fieldConfig_custom",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    1,
+						"type":  "row",
+						"title": "Row Panel",
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":   10,
+								"type": "singlestat",
+								"fieldConfig": map[string]interface{}{
+									"defaults": map[string]interface{}{
+										"custom": map[string]interface{}{},
+									},
+									"overrides": []interface{}{},
+								},
+							},
+							map[string]interface{}{
+								"id":   11,
+								"type": "graph",
+								"fieldConfig": map[string]interface{}{
+									"defaults": map[string]interface{}{
+										"unit": "bytes",
+									},
+									"overrides": []interface{}{},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    1,
+						"type":  "row",
+						"title": "Row Panel",
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":   10,
+								"type": "singlestat",
+								"fieldConfig": map[string]interface{}{
+									"defaults": map[string]interface{}{
+										"custom": map[string]interface{}{},
+									},
+									"overrides": []interface{}{},
+								},
+								"_originallyHadFieldConfigCustom": true, // marker added to nested panel
+							},
+							map[string]interface{}{
+								"id":   11,
+								"type": "graph",
+								"fieldConfig": map[string]interface{}{
+									"defaults": map[string]interface{}{
+										"unit": "bytes",
+									},
+									"overrides": []interface{}{},
+								},
+								// no marker added - no custom object
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "track_panels_with_non_empty_custom",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "timeseries",
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"custom": map[string]interface{}{
+									"axisPlacement": "left",
+								},
+							},
+							"overrides": []interface{}{},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "timeseries",
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"custom": map[string]interface{}{
+									"axisPlacement": "left",
+								},
+							},
+							"overrides": []interface{}{},
+						},
+						"_originallyHadFieldConfigCustom": true, // marker added for non-empty custom
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a deep copy of input for testing
+			dashboard := deepCopy(tt.input).(map[string]interface{})
+
+			// Apply the tracking logic
+			trackOriginalFieldConfigCustom(dashboard)
+
+			// Verify the result
+			if !compareValues(dashboard, tt.expected) {
+				t.Errorf("Test %s failed.\nExpected: %+v\nGot: %+v", tt.name, tt.expected, dashboard)
+			}
+		})
+	}
+}
+
 func TestTrackOriginalTransformations(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -911,6 +1098,123 @@ func TestTrackOriginalTransformations(t *testing.T) {
 			if !compareValues(dashboard, tt.expected) {
 				t.Errorf("Test %s failed.\nExpected: %+v\nGot: %+v", tt.name, tt.expected, dashboard)
 			}
+		})
+	}
+}
+
+func TestCleanupPanelForSavePreservesOriginalFieldConfigCustom(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    map[string]interface{}
+		expected map[string]interface{}
+	}{
+		{
+			name: "preserve_empty_custom_when_originally_present",
+			input: map[string]interface{}{
+				"type": "singlestat",
+				"fieldConfig": map[string]interface{}{
+					"defaults": map[string]interface{}{
+						"custom": map[string]interface{}{}, // Empty but originally present
+					},
+					"overrides": []interface{}{},
+				},
+				"_originallyHadFieldConfigCustom": true, // Marker indicating it was originally present
+			},
+			expected: map[string]interface{}{
+				"type":            "stat",       // Auto-migrated from singlestat
+				"autoMigrateFrom": "singlestat", // Auto-migration marker
+				"fieldConfig": map[string]interface{}{
+					"defaults": map[string]interface{}{
+						"custom": map[string]interface{}{}, // Should be preserved
+					},
+					"overrides": []interface{}{},
+				},
+			},
+		},
+		{
+			name: "remove_empty_custom_when_not_originally_present",
+			input: map[string]interface{}{
+				"type": "timeseries",
+				"fieldConfig": map[string]interface{}{
+					"defaults": map[string]interface{}{
+						"custom": map[string]interface{}{}, // Empty and not originally present
+					},
+					"overrides": []interface{}{},
+				},
+				// No marker - custom was not originally present
+			},
+			expected: map[string]interface{}{
+				"type": "timeseries",
+				// fieldConfig should be removed entirely as it matches defaults
+			},
+		},
+		{
+			name: "preserve_non_empty_custom_regardless_of_marker",
+			input: map[string]interface{}{
+				"type": "table",
+				"fieldConfig": map[string]interface{}{
+					"defaults": map[string]interface{}{
+						"custom": map[string]interface{}{
+							"displayMode": "list",
+						},
+					},
+					"overrides": []interface{}{},
+				},
+			},
+			expected: map[string]interface{}{
+				"type": "table",
+				"fieldConfig": map[string]interface{}{
+					"defaults": map[string]interface{}{
+						"custom": map[string]interface{}{
+							"displayMode": "list",
+						},
+					},
+					"overrides": []interface{}{},
+				},
+			},
+		},
+		{
+			name: "add_custom_when_originally_present_but_missing",
+			input: map[string]interface{}{
+				"type": "stat",
+				"fieldConfig": map[string]interface{}{
+					"defaults":  map[string]interface{}{}, // custom missing
+					"overrides": []interface{}{},
+				},
+				"_originallyHadFieldConfigCustom": true, // But marker indicates it was originally present
+			},
+			expected: map[string]interface{}{
+				"type": "stat",
+				"fieldConfig": map[string]interface{}{
+					"defaults": map[string]interface{}{
+						"custom": map[string]interface{}{}, // Should be added back
+					},
+					"overrides": []interface{}{},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			panel := make(map[string]interface{})
+			for k, v := range tt.input {
+				panel[k] = v
+			}
+
+			cleanupPanelForSaveWithContext(panel, false)
+
+			// Verify expected properties exist
+			for key, expectedValue := range tt.expected {
+				if actualValue, exists := panel[key]; !exists {
+					t.Errorf("Property %s should exist but is missing", key)
+				} else if !compareValues(actualValue, expectedValue) {
+					t.Errorf("Property %s has wrong value. Expected: %v, Got: %v", key, expectedValue, actualValue)
+				}
+			}
+
+			// Verify internal markers are cleaned up
+			assertPropertyRemoved(t, panel, "_originallyHadFieldConfigCustom")
 		})
 	}
 }

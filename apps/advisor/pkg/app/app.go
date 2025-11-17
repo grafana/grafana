@@ -20,6 +20,10 @@ import (
 )
 
 func New(cfg app.Config) (app.App, error) {
+	// Needed until https://github.com/grafana/grafana-app-sdk/pull/1077
+	if cfg.KubeConfig.APIPath == "" {
+		cfg.KubeConfig.APIPath = "apis"
+	}
 	// Read config
 	specificConfig, ok := cfg.SpecificConfig.(checkregistry.AdvisorAppConfig)
 	if !ok {
@@ -69,12 +73,12 @@ func New(cfg app.Config) (app.App, error) {
 								go func() {
 									logger := log.WithContext(ctx).With("check", check.ID())
 									logger.Debug("Processing check", "namespace", req.Object.GetNamespace())
-									requester, err := identity.GetRequester(ctx)
+									orgID, err := getOrgIDFromNamespace(req.Object.GetNamespace())
 									if err != nil {
-										logger.Error("Error getting requester", "error", err)
+										logger.Error("Error getting org ID from namespace", "error", err)
 										return
 									}
-									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), requester.GetOrgID())
+									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), orgID)
 									err = processCheck(ctx, logger, client, typesClient, req.Object, check)
 									if err != nil {
 										logger.Error("Error processing check", "error", err)
@@ -85,12 +89,12 @@ func New(cfg app.Config) (app.App, error) {
 								go func() {
 									logger := log.WithContext(ctx).With("check", check.ID())
 									logger.Debug("Updating check", "namespace", req.Object.GetNamespace(), "name", req.Object.GetName())
-									requester, err := identity.GetRequester(ctx)
+									orgID, err := getOrgIDFromNamespace(req.Object.GetNamespace())
 									if err != nil {
-										logger.Error("Error getting requester", "error", err)
+										logger.Error("Error getting org ID from namespace", "error", err)
 										return
 									}
-									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), requester.GetOrgID())
+									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), orgID)
 									err = processCheckRetry(ctx, logger, client, typesClient, req.Object, check)
 									if err != nil {
 										logger.Error("Error processing check retry", "error", err)

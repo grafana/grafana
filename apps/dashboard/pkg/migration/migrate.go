@@ -9,15 +9,23 @@ import (
 )
 
 // Initialize provides the migrator singleton with required dependencies and builds the map of migrations.
-func Initialize(dsInfoProvider schemaversion.DataSourceInfoProvider) {
-	migratorInstance.init(dsInfoProvider)
+func Initialize(dsIndexProvider schemaversion.DataSourceIndexProvider) {
+	migratorInstance.init(dsIndexProvider)
+}
+
+// GetDataSourceIndexProvider returns the datasource index provider instance that was initialized.
+func GetDataSourceIndexProvider() schemaversion.DataSourceIndexProvider {
+	// Wait for initialization to complete
+	<-migratorInstance.ready
+	return migratorInstance.dsIndexProvider
 }
 
 // ResetForTesting resets the migrator singleton for testing purposes.
 func ResetForTesting() {
 	migratorInstance = &migrator{
-		migrations: map[int]schemaversion.SchemaVersionMigrationFunc{},
-		ready:      make(chan struct{}),
+		migrations:      map[int]schemaversion.SchemaVersionMigrationFunc{},
+		ready:           make(chan struct{}),
+		dsIndexProvider: nil,
 	}
 	initOnce = sync.Once{}
 }
@@ -37,13 +45,15 @@ var (
 )
 
 type migrator struct {
-	ready      chan struct{}
-	migrations map[int]schemaversion.SchemaVersionMigrationFunc
+	ready           chan struct{}
+	migrations      map[int]schemaversion.SchemaVersionMigrationFunc
+	dsIndexProvider schemaversion.DataSourceIndexProvider
 }
 
-func (m *migrator) init(dsInfoProvider schemaversion.DataSourceInfoProvider) {
+func (m *migrator) init(dsIndexProvider schemaversion.DataSourceIndexProvider) {
 	initOnce.Do(func() {
-		m.migrations = schemaversion.GetMigrations(dsInfoProvider)
+		m.dsIndexProvider = dsIndexProvider
+		m.migrations = schemaversion.GetMigrations(dsIndexProvider)
 		close(m.ready)
 	})
 }
@@ -65,6 +75,10 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 	// 1. Track which panels had transformations in original input (before any defaults applied)
 	// This is needed to match frontend hasOwnProperty behavior
 	trackOriginalTransformations(dash)
+
+	// 1.1. Track which panels had fieldConfig.defaults.custom in original input
+	// This is needed to preserve empty custom objects that were originally present
+	trackOriginalFieldConfigCustom(dash)
 
 	// 2. Apply ALL frontend defaults FIRST (DashboardModel + PanelModel defaults)
 	// This replicates the behavior of the frontend DashboardModel and PanelModel constructors
@@ -122,7 +136,11 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 		}
 	}
 
-	// 6. Clean up the dashboard to match frontend getSaveModel behavior
+	// 6. Add built-in annotation query after all migrations are complete
+	// This matches the frontend DashboardModel constructor behavior
+	addBuiltInAnnotationQuery(dash)
+
+	// 7. Clean up the dashboard to match frontend getSaveModel behavior
 	// This removes properties that shouldn't be persisted and filters out default values
 	cleanupDashboardForSave(dash)
 

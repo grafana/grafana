@@ -176,12 +176,12 @@ export function prepareGraphableFields(
             ...field.config,
             max: 1,
             min: 0,
-            custom,
+            custom: { ...custom },
           };
 
           // smooth and linear do not make sense
-          if (custom.lineInterpolation !== LineInterpolation.StepBefore) {
-            custom.lineInterpolation = LineInterpolation.StepAfter;
+          if (config.custom.lineInterpolation !== LineInterpolation.StepBefore) {
+            config.custom.lineInterpolation = LineInterpolation.StepAfter;
           }
 
           copy = {

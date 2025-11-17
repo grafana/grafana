@@ -14,8 +14,8 @@ import { migrateQuery } from '../../grafanaTemplateVariableFns';
 import { AzureMonitorQuery, AzureQueryType } from '../../types/query';
 import { AzureMonitorOption } from '../../types/types';
 import useLastError from '../../utils/useLastError';
-import ArgQueryEditor from '../ArgQueryEditor';
-import LogsQueryEditor from '../LogsQueryEditor';
+import ArgQueryEditor from '../ArgQueryEditor/ArgQueryEditor';
+import LogsQueryEditor from '../LogsQueryEditor/LogsQueryEditor';
 import { parseResourceURI } from '../ResourcePicker/utils';
 
 import GrafanaTemplateVariableFnInput from './GrafanaTemplateVariableFn';

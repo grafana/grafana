@@ -12,11 +12,7 @@ import { createTextBoxVariableAdapter } from 'app/features/variables/textbox/ada
 
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 import { DashboardModel } from './DashboardModel';
-import {
-  setupDevDashboardDataSources,
-  handleAngularPanelMigration,
-  constructLatestVersionOutputFilename,
-} from './__tests__/migrationTestUtils';
+import { setupDevDashboardDataSources, constructLatestVersionOutputFilename } from './__tests__/migrationTestUtils';
 
 /*
  * Dev Dashboard Backend / Frontend Migration Comparison Test
@@ -106,9 +102,6 @@ describe('Dev Dashboard Backend / Frontend result comparison', () => {
       const frontendModel = new DashboardModel(jsonInput, undefined, {
         getVariablesFromState: () => jsonInput?.templating?.list ?? [],
       });
-
-      // Handle angular panel migration if needed
-      await handleAngularPanelMigration(frontendModel, jsonInput.schemaVersion, DASHBOARD_SCHEMA_VERSION);
 
       const frontendMigrationResult = frontendModel.getSaveModelClone();
 

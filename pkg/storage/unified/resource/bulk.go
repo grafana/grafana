@@ -110,7 +110,7 @@ func NewBulkSettings(md metadata.MD) (BulkSettings, error) {
 // All requests must be to the same NAMESPACE/GROUP/RESOURCE
 func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) error {
 	ctx := stream.Context()
-	ctx, span := s.tracer.Start(ctx, "resource.server.BulkProcess")
+	ctx, span := tracer.Start(ctx, "resource.server.BulkProcess")
 	defer span.End()
 
 	sendAndClose := func(rsp *resourcepb.BulkResponse) error {
@@ -250,24 +250,6 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		rsp.Error = AsErrorResult(runner.err)
 	}
 
-	if rsp.Error == nil && s.search != nil {
-		// Rebuild any changed indexes
-		for _, summary := range rsp.Summary {
-			_, err := s.search.build(ctx, NamespacedResource{
-				Namespace: summary.Namespace,
-				Group:     summary.Group,
-				Resource:  summary.Resource,
-			}, summary.Count, "rebuildAfterBatchLoad", true)
-			if err != nil {
-				s.log.Warn("error building search index after batch load", "err", err)
-				rsp.Error = &resourcepb.ErrorResult{
-					Code:    http.StatusInternalServerError,
-					Message: "err building search index: " + summary.Resource,
-					Reason:  err.Error(),
-				}
-			}
-		}
-	}
 	return sendAndClose(rsp)
 }
 

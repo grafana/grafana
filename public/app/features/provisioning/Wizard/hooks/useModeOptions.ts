@@ -11,26 +11,61 @@ import { ModeOption } from '../types';
 function filterModeOptions(modeOptions: ModeOption[], repoName: string, settings?: RepositoryViewList): ModeOption[] {
   const folderConnected = settings?.items?.some((item) => item.target === 'folder' && item.name !== repoName);
   const allowedTargets = settings?.allowedTargets || ['instance', 'folder'];
+  const legacyStorageEnabled = settings?.legacyStorage;
 
-  return modeOptions.filter((option) => {
-    if (!allowedTargets.includes(option.target)) {
-      return false;
+  return modeOptions.map((option) => {
+    if (option.disabled) {
+      return option;
     }
 
-    if (settings?.legacyStorage) {
-      return option.target === 'instance';
+    const disabledReason = resolveDisabledReason(option, { allowedTargets, folderConnected, legacyStorageEnabled });
+
+    if (!disabledReason) {
+      return option;
     }
 
-    if (option.target === 'folder') {
-      return true;
-    }
-
-    if (option.target === 'instance') {
-      return !folderConnected;
-    }
-
-    return false;
+    return {
+      ...option,
+      disabled: true,
+      disabledReason,
+    };
   });
+}
+
+type DisableContext = {
+  allowedTargets: string[];
+  folderConnected?: boolean;
+  legacyStorageEnabled?: boolean;
+};
+
+// Returns a translated reason why the given mode option should be disabled.
+function resolveDisabledReason(option: ModeOption, context: DisableContext) {
+  if (!context.allowedTargets.includes(option.target)) {
+    return t(
+      'provisioning.mode-options.disabled.not-allowed',
+      'Provisioning settings for this repository restrict syncing to specific targets. Update the repository configuration to enable this option.'
+    );
+  }
+
+  if (context.legacyStorageEnabled && option.target !== 'instance') {
+    return t(
+      'provisioning.mode-options.disabled.legacy-storage',
+      'Legacy storage mode only supports syncing the entire Grafana instance.'
+    );
+  }
+
+  if (option.target === 'instance' && context.folderConnected) {
+    return t(
+      'provisioning.mode-options.disabled.folder-connected',
+      'Full instance synchronization is disabled because another folder is already synced with a repository.'
+    );
+  }
+
+  if (option.target !== 'instance' && option.target !== 'folder') {
+    return t('provisioning.mode-options.disabled.not-supported', 'This option is not supported yet.');
+  }
+
+  return undefined;
 }
 
 /**
@@ -51,6 +86,7 @@ export function useModeOptions(repoName: string, settings?: RepositoryViewList) 
           'provisioning.mode-options.instance.subtitle',
           'Use this option if you want to sync and manage your entire Grafana instance through external storage.'
         ),
+        disabled: false,
       },
       {
         target: 'folder',
@@ -61,11 +97,20 @@ export function useModeOptions(repoName: string, settings?: RepositoryViewList) 
         ),
         subtitle: t(
           'provisioning.mode-options.folder.subtitle',
-          'Use this option to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 folders.'
+          'Use this option to sync external resources into a new folder without affecting the rest of your instance.'
         ),
+        disabled: false,
       },
     ];
 
-    return filterModeOptions(modeOptions, repoName, settings);
+    const options = filterModeOptions(modeOptions, repoName, settings);
+    // Filtering 2 mode options on each render; trivial cost, so no need for useMemo here.
+    const enabledOptions = options.filter((option) => !option.disabled);
+    const disabledOptions = options.filter((option) => option.disabled);
+
+    return {
+      enabledOptions,
+      disabledOptions,
+    };
   }, [repoName, settings]);
 }

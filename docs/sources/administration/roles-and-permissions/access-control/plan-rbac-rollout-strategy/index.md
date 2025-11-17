@@ -82,7 +82,7 @@ For example:
 
 1. Map SAML, LDAP, or Oauth roles to Grafana basic roles (viewer, editor, or admin).
 
-2. Use the Grafana Enterprise team sync feature to synchronize teams from your SAML, LDAP, or Oauth provider to Grafana. For more information about team sync, refer to [Team sync](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/).
+2. Use the Grafana Enterprise team sync feature to synchronize teams from your SAML, LDAP, or OAuth provider to Grafana. For more information about team sync, refer to [Team sync](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/).
 
 3. Within Grafana, assign RBAC permissions to users and teams.
 
@@ -123,7 +123,7 @@ If you have a use case that you'd like to share, feel free to contribute to this
 
 1. In Grafana, create a team with the name `Internal employees`.
 1. Assign the `fixed:datasources:explorer` role to the `Internal employees` team.
-1. Add internal employees to the `Internal employees` team, or map them from a SAML, LDAP, or Oauth team using [Team Sync](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/).
+1. Add internal employees to the `Internal employees` team, or map them from a SAML, LDAP, or OAuth team using [Team Sync](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/).
 1. Assign the viewer role to both internal employees and contractors.
 
 ### Limit viewer, editor, or admin permissions

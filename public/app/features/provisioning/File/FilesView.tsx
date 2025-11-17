@@ -31,17 +31,12 @@ export function FilesView({ repo }: FilesViewProps) {
       sortType: 'string',
       cell: ({ row: { original } }: FileCell<'path'>) => {
         const { path } = original;
+        const isDotKeepFile = getIsDotKeepFile(path);
+        if (isDotKeepFile) {
+          return path;
+        }
         return <a href={`${PROVISIONING_URL}/${name}/file/${path}`}>{path}</a>;
       },
-    },
-    {
-      id: 'size',
-      header: 'Size (KB)',
-      cell: ({ row: { original } }: FileCell<'size'>) => {
-        const { size } = original;
-        return (parseInt(size, 10) / 1024).toFixed(2);
-      },
-      sortType: 'number',
     },
     {
       id: 'hash',
@@ -53,6 +48,10 @@ export function FilesView({ repo }: FilesViewProps) {
       header: '',
       cell: ({ row: { original } }: FileCell<'path'>) => {
         const { path } = original;
+        const isDotKeepFile = getIsDotKeepFile(path);
+        if (isDotKeepFile) {
+          return null;
+        }
         return (
           <Stack>
             {(path.endsWith('.json') || path.endsWith('.yaml') || path.endsWith('.yml')) && (
@@ -92,4 +91,9 @@ export function FilesView({ repo }: FilesViewProps) {
       <InteractiveTable columns={columns} data={data} pageSize={25} getRowId={(f: FileDetails) => String(f.path)} />
     </Stack>
   );
+}
+
+function getIsDotKeepFile(path: string): boolean {
+  // e.g. 'dashboards/.keep' → true, 'dashboards/example.keep.json' → false
+  return path.split('/').pop() === '.keep';
 }

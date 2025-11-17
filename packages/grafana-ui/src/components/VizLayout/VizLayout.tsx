@@ -29,6 +29,8 @@ export interface VizLayoutComponentType extends FC<VizLayoutProps> {
 
 /**
  * @beta
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-vizlayout--docs
  */
 export const VizLayout: VizLayoutComponentType = ({ width, height, legend, children }) => {
   const theme = useTheme2();

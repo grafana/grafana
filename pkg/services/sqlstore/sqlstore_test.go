@@ -85,19 +85,19 @@ func TestInitEngine_ParseTimeInConnectionString(t *testing.T) {
 			name:               "MySQL with parseTime already present",
 			connectionString:   "mysql://user:password@localhost:3306/alreadypresent?parseTime=false",
 			dbType:             "mysql",
-			expectedConnection: "user:password@tcp(localhost:3306)/alreadypresent?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=false",
+			expectedConnection: "user:password@tcp(localhost:3306)/alreadypresent?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=true&parseTime=false",
 		},
 		{
 			name:               "MySQL with feature enabled",
 			connectionString:   "mysql://user:password@localhost:3306/existingparams?charset=utf8",
 			dbType:             "mysql",
-			expectedConnection: "user:password@tcp(localhost:3306)/existingparams?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&charset=utf8&parseTime=true",
+			expectedConnection: "user:password@tcp(localhost:3306)/existingparams?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=true&charset=utf8",
 		},
 		{
 			name:               "MySQL with feature enabled",
 			connectionString:   "mysql://user:password@localhost:3306/existingparams?charset=utf8",
 			dbType:             "mysqlWithHooks",
-			expectedConnection: "user:password@tcp(localhost:3306)/existingparams?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&charset=utf8&parseTime=true",
+			expectedConnection: "user:password@tcp(localhost:3306)/existingparams?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=true&charset=utf8",
 		},
 		{
 			name:               "Postgres",

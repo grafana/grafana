@@ -32,10 +32,10 @@ import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
-import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import {
@@ -232,6 +232,7 @@ export function vizPanelToPanel(
     panel.timeFrom = panelTime.state.timeFrom;
     panel.timeShift = panelTime.state.timeShift;
     panel.hideTimeOverride = panelTime.state.hideTimeOverride;
+    panel.timeCompare = panelTime.state.compareWith;
   }
 
   if (gridItem instanceof DashboardGridItem) {

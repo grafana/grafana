@@ -108,6 +108,7 @@ func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 
 // Run implements registry.BackgroundService
 func (r *ZanzanaReconciler) Run(ctx context.Context) error {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if r.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		return r.Reconcile(ctx)
 	}

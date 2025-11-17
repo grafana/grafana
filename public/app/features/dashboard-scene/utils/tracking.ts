@@ -1,4 +1,6 @@
 import { store } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/dashboardLibraryHelpers';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
@@ -50,9 +52,30 @@ export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
 export function trackDashboardSceneCreatedOrSaved(
   isNew: boolean,
   dashboard: DashboardScene,
-  initialProperties: { name: string; url: string }
+  initialProperties: { name: string; url: string; expression_types?: string[] }
 ) {
+  // url values for dashboard library experiment
+  const urlParams = new URLSearchParams(window.location.search);
+  const sourceEntryPoint = urlParams.get('sourceEntryPoint') || undefined;
+  // For community dashboards, use gnetId as libraryItemId if libraryItemId is not present
+  const libraryItemId = urlParams.get('libraryItemId') || urlParams.get('gnetId') || undefined;
+  const creationOrigin = urlParams.get('creationOrigin') || undefined;
+
+  // Extract datasourceTypes from URL params (supports both community and provisioned dashboards) or dashboard panels
+  const datasourceTypes = getDatasourceTypes(dashboard);
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
+
+  const dashboardLibraryProperties =
+    config.featureToggles.dashboardLibrary ||
+    config.featureToggles.dashboardTemplates ||
+    config.featureToggles.suggestedDashboards
+      ? {
+          datasourceTypes,
+          sourceEntryPoint,
+          libraryItemId,
+          creationOrigin,
+        }
+      : {};
 
   DashboardInteractions.dashboardCreatedOrSaved(isNew, {
     ...initialProperties,
@@ -64,7 +87,10 @@ export function trackDashboardSceneCreatedOrSaved(
           autoLayoutCount: dynamicDashboardsTrackingInformation.autoLayoutCount,
           customGridLayoutCount: dynamicDashboardsTrackingInformation.customGridLayoutCount,
           panelsByDatasourceType: dynamicDashboardsTrackingInformation.panelsByDatasourceType,
+          ...dashboardLibraryProperties,
         }
-      : {}),
+      : {
+          ...dashboardLibraryProperties,
+        }),
   });
 }

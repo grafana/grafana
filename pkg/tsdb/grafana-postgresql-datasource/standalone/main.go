@@ -15,7 +15,7 @@ func main() {
 	logger := backend.NewLoggerWith()
 	// TODO: get rid of setting.NewCfg() once PostgresDSUsePGX is removed
 	cfg := setting.NewCfg()
-	if err := datasource.Manage("grafana-postgresql-datasource", postgres.NewInstanceSettings(logger, true, cfg.DataPath), datasource.ManageOpts{}); err != nil {
+	if err := datasource.Manage("grafana-postgresql-datasource", postgres.NewInstanceSettings(logger, cfg.DataPath), datasource.ManageOpts{}); err != nil {
 		log.DefaultLogger.Error(err.Error())
 		os.Exit(1)
 	}

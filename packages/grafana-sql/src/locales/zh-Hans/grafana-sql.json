@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "自动最大空闲",
-        "content-auto-max-idle": "如果启用，则自动将<1>最大空闲连接数</1>的数字设置为与<3>最大打开连接数</3>相同的值。如果未设置最大打开连接数的数字，则将其设置为默认值 ({{defaultMaxIdle}})。",
-        "content-max-idle": "空闲连接池中的最大连接数。如果<1>最大打开连接数</1>大于 0 但小于<3>最大空闲连接数</3>，则<5>最大空闲连接数</5>将减少以匹配<8>最大打开连接数</8>限制。如果设置为 0，则不保留任何空闲连接。",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
         "content-max-lifetime": "连接可以重复使用的最长时间（秒）。如果设置为 0，则连接将永久重复使用。",
-        "content-max-open": "数据库的最大打开连接数。如果<1>最大空闲连接数</1>大于 0 且<3>最大打开连接数</3>小于<5>最大空闲连接数</5>，则<7>最大空闲连接数</7>将减少以匹配<9>最大打开连接数</9>限制。如果设置为 0，则对打开的连接数没有限制。",
+        "content-max-open": "",
         "max-idle": "最大空闲",
         "max-lifetime": "最大生命周期",
         "max-open": "最大打开",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "您的查询无效。请查看下方详情。<1></1>但是，您仍然可以运行此查询。",
+        "content-invalid-query": "",
         "editor-modes": {
           "label-builder": "构建器",
           "label-code": "代码"
@@ -76,7 +76,7 @@
         "tooltip-format-query": "格式化查询"
       },
       "query-validator": {
-        "query-will-process": "<0></0> 此查询将在运行时处理 <2>{{bytes}}</2>。",
+        "query-will-process": "",
         "validating-query": "正在验证查询..."
       },
       "raw-editor": {

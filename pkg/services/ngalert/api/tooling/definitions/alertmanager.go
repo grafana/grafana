@@ -485,10 +485,12 @@ func (s *GettableStatus) UnmarshalJSON(b []byte) error {
 
 	s.Cluster = amStatus.Cluster
 	s.Config = &PostableApiAlertingConfig{Config: Config{
-		Global:       c.Global,
-		Route:        AsGrafanaRoute(c.Route),
-		InhibitRules: c.InhibitRules,
-		Templates:    c.Templates,
+		Global:            c.Global,
+		Route:             AsGrafanaRoute(c.Route),
+		InhibitRules:      c.InhibitRules,
+		Templates:         c.Templates,
+		MuteTimeIntervals: c.MuteTimeIntervals,
+		TimeIntervals:     c.TimeIntervals,
 	}}
 	s.Uptime = amStatus.Uptime
 	s.VersionInfo = amStatus.VersionInfo
