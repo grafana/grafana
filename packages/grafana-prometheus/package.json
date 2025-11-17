@@ -54,7 +54,7 @@
     "@lezer/highlight": "1.2.3",
     "@lezer/lr": "1.4.3",
     "@prometheus-io/lezer-promql": "0.307.3",
-    "@reduxjs/toolkit": "2.9.0",
+    "@reduxjs/toolkit": "2.10.1",
     "@types/debounce-promise": "3.1.9",
     "@types/lodash": "4.17.20",
     "@types/react": "18.3.18",
