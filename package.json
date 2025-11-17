@@ -296,7 +296,7 @@
     "@grafana/plugin-ui": "^0.11.1",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "^6.46.0",
+    "@grafana/scenes": "link:/Users/bogdan/Workspace/Grafana/scenes/packages/scenes",
     "@grafana/scenes-react": "^6.46.0",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
