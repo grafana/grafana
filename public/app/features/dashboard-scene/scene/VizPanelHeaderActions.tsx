@@ -12,6 +12,7 @@ import {
 } from '@grafana/scenes';
 
 import { PanelGroupByAction } from './PanelGroupByAction';
+import { DataSourceRef } from '@grafana/data';
 
 export interface VizPanelHeaderActionsState extends SceneObjectState {
   hideGroupByAction?: boolean;
@@ -80,8 +81,8 @@ export function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<Viz
   const groupByState = groupByVariable?.useState();
 
   const groupByActionRender = useMemo(
-    () => checkGroupByActionRender(queryRunner, groupByVariable, groupByState?.datasource?.uid, datasourceUid),
-    [queryRunner, groupByVariable, groupByState?.datasource?.uid, datasourceUid]
+    () => checkGroupByActionRender(queryRunner, groupByVariable, datasourceUid, groupByState),
+    [queryRunner, groupByVariable, groupByState, datasourceUid]
   );
 
   useEffect(() => {
@@ -102,8 +103,8 @@ export function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<Viz
 function checkGroupByActionRender(
   queryRunner: SceneQueryRunner | null,
   groupByVariable: GroupByVariable | undefined,
-  groupByDsUid: string | undefined,
-  panelDsUid: string | undefined
+  panelDsUid: string | undefined,
+  groupByState?: { applicabilityEnabled?: boolean; datasource?: DataSourceRef | null }
 ): boolean {
   if (!groupByVariable || !queryRunner) {
     return false;
@@ -111,6 +112,7 @@ function checkGroupByActionRender(
 
   const dsUid = sceneGraph.interpolate(queryRunner, panelDsUid);
   return Boolean(
-    dsUid === sceneGraph.interpolate(groupByVariable, groupByDsUid) && groupByVariable.isApplicabilityEnabled()
+    dsUid === sceneGraph.interpolate(groupByVariable, groupByState?.datasource?.uid) &&
+      groupByState?.applicabilityEnabled
   );
 }

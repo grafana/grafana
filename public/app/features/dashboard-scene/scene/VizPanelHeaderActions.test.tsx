@@ -90,11 +90,9 @@ function buildScene(options?: BuildSceneOptions) {
     value: [],
     text: [],
     options: [],
+    applicabilityEnabled: true,
     datasource: { uid: options?.variableDatasourceUid ?? 'ds-1' },
   });
-
-  const applicabilityEnabled = options?.applicabilityEnabled ?? true;
-  (groupByVariable as GroupByVariable).isApplicabilityEnabled = jest.fn(() => applicabilityEnabled);
 
   const dataProvider = new SceneDataTransformer({
     $data: queryRunner,
