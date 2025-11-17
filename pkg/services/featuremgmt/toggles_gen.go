@@ -375,10 +375,6 @@ const (
 	// Enable filtering menu displayed when text of a log line is selected
 	FlagLogRowsPopoverMenu = "logRowsPopoverMenu"
 
-	// FlagPluginsSkipHostEnvVars
-	// Disables passing host environment variable to plugin processes
-	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
-
 	// FlagTableSharedCrosshair
 	// Enables shared crosshair in table panel
 	FlagTableSharedCrosshair = "tableSharedCrosshair"
@@ -826,10 +822,6 @@ const (
 	// Enables running Infinity queries in parallel
 	FlagInfinityRunQueriesInParallel = "infinityRunQueriesInParallel"
 
-	// FlagInviteUserExperimental
-	// Renders invite user button along the app
-	FlagInviteUserExperimental = "inviteUserExperimental"
-
 	// FlagAlertingMigrationUI
 	// Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
 	FlagAlertingMigrationUI = "alertingMigrationUI"
@@ -1093,10 +1085,6 @@ const (
 	// FlagDashboardTemplates
 	// Enable template dashboards
 	FlagDashboardTemplates = "dashboardTemplates"
-
-	// FlagGrafanaAdvisorAppInstaller
-	// Enables Advisor app installer
-	FlagGrafanaAdvisorAppInstaller = "grafanaAdvisorAppInstaller"
 
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations

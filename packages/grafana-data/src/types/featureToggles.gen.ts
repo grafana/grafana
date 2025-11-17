@@ -411,10 +411,6 @@ export interface FeatureToggles {
   */
   logRowsPopoverMenu?: boolean;
   /**
-  * Disables passing host environment variable to plugin processes
-  */
-  pluginsSkipHostEnvVars?: boolean;
-  /**
   * Enables shared crosshair in table panel
   */
   tableSharedCrosshair?: boolean;
@@ -907,10 +903,6 @@ export interface FeatureToggles {
   */
   infinityRunQueriesInParallel?: boolean;
   /**
-  * Renders invite user button along the app
-  */
-  inviteUserExperimental?: boolean;
-  /**
   * Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
   * @default true
   */
@@ -1217,10 +1209,6 @@ export interface FeatureToggles {
   * Enable template dashboards
   */
   dashboardTemplates?: boolean;
-  /**
-  * Enables Advisor app installer
-  */
-  grafanaAdvisorAppInstaller?: boolean;
   /**
   * Enables app platform API for annotations
   * @default false

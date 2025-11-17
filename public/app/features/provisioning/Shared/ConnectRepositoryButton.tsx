@@ -77,11 +77,8 @@ export function getConfigureRepoTooltip({
 
   if (maxReposReached) {
     return t(
-      'provisioning.connect-repository-button.repository-limit-reached-tooltip',
-      'Repository limit reached {{count}}',
-      {
-        count,
-      }
+      'provisioning.connect-repository-button.free-tier-limit-tooltip',
+      'Free-tier accounts are restricted to one connection'
     );
   }
 
