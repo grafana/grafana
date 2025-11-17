@@ -277,10 +277,6 @@ func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedR
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceStats")
 	defer span.End()
 
-	if nsr.Namespace == "" {
-		return nil, fmt.Errorf("namespace is required")
-	}
-
 	req := &sqlStatsRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Namespace:   nsr.Namespace,
