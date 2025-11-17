@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { config, setPluginComponentsHook } from '@grafana/runtime';
+import { config, setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
 import { NavLandingPage } from './NavLandingPage';
@@ -10,6 +10,10 @@ describe('NavLandingPage', () => {
   beforeEach(() => {
     setPluginComponentsHook(() => ({
       components: [],
+      isLoading: false,
+    }));
+    setPluginLinksHook(() => ({
+      links: [],
       isLoading: false,
     }));
   });
