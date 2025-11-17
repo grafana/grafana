@@ -1,9 +1,8 @@
 package schemaversion
 
 import (
+	"context"
 	"strconv"
-
-	"golang.org/x/net/context"
 )
 
 const (
@@ -11,7 +10,7 @@ const (
 	LATEST_VERSION = 42
 )
 
-type SchemaVersionMigrationFunc func(context.Context, map[string]interface{}) error
+type SchemaVersionMigrationFunc func(context.Context, map[string]any) error
 
 type DataSourceInfo struct {
 	Default    bool
@@ -79,7 +78,7 @@ func GetMigrations(dsIndexProvider DataSourceIndexProvider) map[int]SchemaVersio
 	}
 }
 
-func GetSchemaVersion(dash map[string]interface{}) int {
+func GetSchemaVersion(dash map[string]any) int {
 	if v, ok := dash["schemaVersion"]; ok {
 		switch v := v.(type) {
 		case int:

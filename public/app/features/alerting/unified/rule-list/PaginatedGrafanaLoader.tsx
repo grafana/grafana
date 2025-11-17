@@ -18,7 +18,7 @@ import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { LoadMoreButton } from './components/LoadMoreButton';
 import { NoRulesFound } from './components/NoRulesFound';
-import { groupFilter as groupFilterFn } from './hooks/filters';
+import { getGrafanaFilter } from './hooks/filters';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
@@ -63,14 +63,24 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
     };
   }, []);
 
-  const filterFn = useMemo(
-    () => (group: PromRuleGroupDTO) =>
-      groupFilterFn(group, {
-        namespace: namespaceFilter,
-        groupName: groupFilter,
-      }),
-    [namespaceFilter, groupFilter]
-  );
+  const filterFn = useMemo(() => {
+    const { frontendFilter } = getGrafanaFilter({
+      namespace: namespaceFilter,
+      groupName: groupFilter,
+      freeFormWords: [],
+      ruleName: '',
+      labels: [],
+      ruleType: undefined,
+      ruleState: undefined,
+      ruleHealth: undefined,
+      dashboardUid: undefined,
+      dataSourceNames: [],
+      plugins: undefined,
+      contactPoint: undefined,
+      ruleSource: undefined,
+    });
+    return (group: PromRuleGroupDTO) => frontendFilter.groupMatches(group);
+  }, [namespaceFilter, groupFilter]);
 
   const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
     groupsGenerator.current,
