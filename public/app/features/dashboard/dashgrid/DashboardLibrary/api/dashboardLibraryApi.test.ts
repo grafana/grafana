@@ -28,7 +28,6 @@ const createMockBackendSrv = (overrides: Partial<BackendSrv> = {}): BackendSrv =
 // Helper functions for creating mock objects
 const createMockGnetDashboard = (overrides: Partial<GnetDashboard> = {}): GnetDashboard => ({
   id: 1,
-  uid: 'test-uid',
   name: 'Test Dashboard',
   description: 'Test Description',
   downloads: 100,
@@ -103,7 +102,7 @@ describe('dashboardLibraryApi', () => {
       expect(result).toEqual({
         page: 1,
         pages: 5,
-        dashboards: mockDashboards,
+        items: mockDashboards,
       });
     });
 
@@ -150,7 +149,7 @@ describe('dashboardLibraryApi', () => {
       expect(result).toEqual({
         page: 1,
         pages: 1,
-        dashboards: [],
+        items: [],
       });
     });
 

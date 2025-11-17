@@ -26,7 +26,6 @@ const createMockPluginDashboard = (overrides: Partial<PluginDashboard> = {}): Pl
 
 const createMockGnetDashboard = (overrides: Partial<GnetDashboard> = {}): GnetDashboard => ({
   id: 123,
-  uid: 'test-uid',
   name: 'Test Dashboard',
   description: 'Test description',
   datasource: 'Prometheus',
@@ -57,7 +56,9 @@ describe('DashboardCard', () => {
 
   it('should render title as heading', () => {
     const dashboard = createMockPluginDashboard();
-    render(<DashboardCard title="My Dashboard" dashboard={dashboard} onClick={mockOnClick} />);
+    render(
+      <DashboardCard title="My Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
+    );
 
     expect(screen.getByRole('heading', { name: 'My Dashboard' })).toBeInTheDocument();
   });
@@ -70,6 +71,7 @@ describe('DashboardCard', () => {
         imageUrl="https://example.com/image.png"
         dashboard={dashboard}
         onClick={mockOnClick}
+        kind="suggested_dashboard"
       />
     );
 
@@ -80,7 +82,9 @@ describe('DashboardCard', () => {
 
   it('should show "No preview available" when imageUrl is not provided', () => {
     const dashboard = createMockPluginDashboard();
-    render(<DashboardCard title="Test Dashboard" dashboard={dashboard} onClick={mockOnClick} />);
+    render(
+      <DashboardCard title="Test Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
+    );
 
     expect(screen.getByText('No preview available')).toBeInTheDocument();
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
@@ -88,44 +92,60 @@ describe('DashboardCard', () => {
 
   it('should render description when provided', () => {
     const dashboard = createMockPluginDashboard({ description: 'My custom description' });
-    render(<DashboardCard title="Test Dashboard" dashboard={dashboard} onClick={mockOnClick} />);
+    render(
+      <DashboardCard title="Test Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
+    );
 
     expect(screen.getByText('My custom description')).toBeInTheDocument();
   });
 
   it('should not render description when empty', () => {
     const dashboard = createMockPluginDashboard({ description: '' });
-    render(<DashboardCard title="Test Dashboard" dashboard={dashboard} onClick={mockOnClick} />);
+    render(
+      <DashboardCard title="Test Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
+    );
 
-    // Card should render but without description text
     expect(screen.getByRole('heading', { name: 'Test Dashboard' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Use template' })).toBeInTheDocument();
+    expect(screen.queryByTestId('dashboard-card-description')).not.toBeInTheDocument();
   });
 
   describe('Button interactions', () => {
     it('should trigger onClick when button is clicked', async () => {
       const { user } = render(
-        <DashboardCard title="Test Dashboard" dashboard={createMockPluginDashboard()} onClick={mockOnClick} />
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockPluginDashboard()}
+          onClick={mockOnClick}
+          kind="suggested_dashboard"
+        />
       );
 
-      await user.click(screen.getByRole('button', { name: 'Use template' }));
+      await user.click(screen.getByRole('button', { name: 'Use dashboard' }));
 
       expect(mockOnClick).toHaveBeenCalledTimes(1);
     });
 
-    it('should display default button text', () => {
-      render(<DashboardCard title="Test Dashboard" dashboard={createMockPluginDashboard()} onClick={mockOnClick} />);
-
-      expect(screen.getByRole('button', { name: 'Use template' })).toBeInTheDocument();
-    });
-
-    it('should display custom button text when provided', () => {
+    it('should display template button text', () => {
       render(
         <DashboardCard
           title="Test Dashboard"
           dashboard={createMockPluginDashboard()}
           onClick={mockOnClick}
-          buttonText="Use dashboard"
+          kind="template_dashboard"
+        />
+      );
+
+      expect(screen.getByRole('button', { name: 'Use template' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Use dashboard' })).not.toBeInTheDocument();
+    });
+
+    it('should display dashboard button text', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockPluginDashboard()}
+          onClick={mockOnClick}
+          kind="suggested_dashboard"
         />
       );
 
@@ -142,6 +162,7 @@ describe('DashboardCard', () => {
           dashboard={createMockPluginDashboard()}
           onClick={mockOnClick}
           showDatasourceProvidedBadge={true}
+          kind="suggested_dashboard"
         />
       );
 
@@ -155,6 +176,7 @@ describe('DashboardCard', () => {
           dashboard={createMockPluginDashboard()}
           onClick={mockOnClick}
           showDatasourceProvidedBadge={false}
+          kind="suggested_dashboard"
         />
       );
 
@@ -162,7 +184,14 @@ describe('DashboardCard', () => {
     });
 
     it('should not show badge by default', () => {
-      render(<DashboardCard title="Test Dashboard" dashboard={createMockPluginDashboard()} onClick={mockOnClick} />);
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockPluginDashboard()}
+          onClick={mockOnClick}
+          kind="suggested_dashboard"
+        />
+      );
 
       expect(screen.queryByText('Data source provided')).not.toBeInTheDocument();
     });
@@ -177,6 +206,7 @@ describe('DashboardCard', () => {
           dashboard={createMockPluginDashboard()}
           details={details}
           onClick={mockOnClick}
+          kind="suggested_dashboard"
         />
       );
 
@@ -184,7 +214,14 @@ describe('DashboardCard', () => {
     });
 
     it('should not show details icon button when details are not provided', () => {
-      render(<DashboardCard title="Test Dashboard" dashboard={createMockPluginDashboard()} onClick={mockOnClick} />);
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockPluginDashboard()}
+          onClick={mockOnClick}
+          kind="suggested_dashboard"
+        />
+      );
 
       expect(screen.queryByRole('button', { name: 'Details' })).not.toBeInTheDocument();
     });
@@ -205,6 +242,7 @@ describe('DashboardCard', () => {
           dashboard={createMockPluginDashboard()}
           details={details}
           onClick={mockOnClick}
+          kind="suggested_dashboard"
         />
       );
 
@@ -230,6 +268,7 @@ describe('DashboardCard', () => {
           dashboard={createMockPluginDashboard()}
           details={details}
           onClick={mockOnClick}
+          kind="suggested_dashboard"
         />
       );
 
@@ -249,6 +288,7 @@ describe('DashboardCard', () => {
           dashboard={createMockPluginDashboard()}
           onClick={mockOnClick}
           isLogo={true}
+          kind="suggested_dashboard"
         />
       );
 
@@ -263,6 +303,7 @@ describe('DashboardCard', () => {
           dashboard={createMockPluginDashboard()}
           onClick={mockOnClick}
           isLogo={false}
+          kind="suggested_dashboard"
         />
       );
 
@@ -280,6 +321,7 @@ describe('DashboardCard', () => {
           onClick={mockOnClick}
           dimThumbnail={true}
           showDatasourceProvidedBadge={true}
+          kind="suggested_dashboard"
         />
       );
 
@@ -292,7 +334,14 @@ describe('DashboardCard', () => {
   describe('GnetDashboard support', () => {
     it('should render with GnetDashboard', () => {
       const dashboard = createMockGnetDashboard({ name: 'Community Dashboard' });
-      render(<DashboardCard title="Community Dashboard" dashboard={dashboard} onClick={mockOnClick} />);
+      render(
+        <DashboardCard
+          title="Community Dashboard"
+          dashboard={dashboard}
+          onClick={mockOnClick}
+          kind="suggested_dashboard"
+        />
+      );
 
       expect(screen.getByRole('heading', { name: 'Community Dashboard' })).toBeInTheDocument();
     });

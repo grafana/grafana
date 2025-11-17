@@ -17,13 +17,6 @@ import {
   onUseCommunityDashboard,
 } from './communityDashboardHelpers';
 
-// Mock dependencies
-jest.mock('@grafana/runtime', () => ({
-  locationService: {
-    push: jest.fn(),
-  },
-}));
-
 jest.mock('../api/dashboardLibraryApi', () => ({
   fetchCommunityDashboard: jest.fn(),
 }));
@@ -42,7 +35,6 @@ const mockParseConstantInputs = parseConstantInputs as jest.MockedFunction<typeo
 // Helper functions for creating mock objects
 const createMockGnetDashboard = (overrides: Partial<GnetDashboard> = {}): GnetDashboard => ({
   id: 123,
-  uid: 'test-dash-uid',
   name: 'Test Dashboard',
   description: '',
   datasource: 'Prometheus',
