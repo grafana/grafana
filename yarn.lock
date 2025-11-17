@@ -3412,6 +3412,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/openapi@workspace:packages/grafana-openapi":
+  version: 0.0.0-use.local
+  resolution: "@grafana/openapi@workspace:packages/grafana-openapi"
+  dependencies:
+    prettier: "npm:3.6.2"
+  languageName: unknown
+  linkType: soft
+
 "@grafana/plugin-configs@npm:12.4.0-pre, @grafana/plugin-configs@workspace:*, @grafana/plugin-configs@workspace:packages/grafana-plugin-configs":
   version: 0.0.0-use.local
   resolution: "@grafana/plugin-configs@workspace:packages/grafana-plugin-configs"

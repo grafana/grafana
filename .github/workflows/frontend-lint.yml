@@ -152,6 +152,37 @@ jobs:
             echo "${uncommited_error_message}"
             exit 1
         fi
+  lint-frontend-openapi:
+    # Run this workflow for OSS only
+    permissions:
+      contents: read
+      id-token: write
+    name: Verify OpenAPI specs
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@v6
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'yarn'
+        cache-dependency-path: 'yarn.lock'
+    - run: yarn install --immutable --check-cache
+    - name: Generate OpenAPI specs
+      run: |
+        extract_error_message='ERROR! OpenAPI generation failed!'
+        yarn generate-openapi || (echo "${extract_error_message}" && false)
+    - name: Verify generated specs
+      run: |
+        git add -N .
+        uncommited_error_message="ERROR! OpenAPI generation has not been committed. Please run 'yarn generate-openapi', commit the changes and push again."
+        file_diff="$(git diff --name-only ':!conf')"
+        if [ -n "$file_diff" ]; then
+            echo "$file_diff"
+            echo "${uncommited_error_message}"
+            exit 1
+        fi        
   lint-frontend-api-clients-enterprise:
     permissions:
       contents: read
