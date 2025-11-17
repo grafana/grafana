@@ -10,13 +10,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	v1alpha1 "github.com/grafana/grafana/apps/preferences/pkg/apis/collections/v1alpha1"
+	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 )
 
 var (

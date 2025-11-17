@@ -26,14 +26,9 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlDashboardStarsQuery = mustTemplate("sql_dashboard_stars.sql")
-	sqlDashboardStarsRV    = mustTemplate("sql_dashboard_stars_rv.sql")
-	sqlHistoryStarsQuery   = mustTemplate("sql_history_stars.sql")
-	sqlHistoryStarsInsert  = mustTemplate("sql_history_stars_insert.sql")
-	sqlHistoryStarsDelete  = mustTemplate("sql_history_stars_delete.sql")
-	sqlPreferencesQuery    = mustTemplate("sql_preferences_query.sql")
-	sqlPreferencesRV       = mustTemplate("sql_preferences_rv.sql")
-	sqlTeams               = mustTemplate("sql_teams.sql")
+	sqlPreferencesQuery = mustTemplate("sql_preferences_query.sql")
+	sqlPreferencesRV    = mustTemplate("sql_preferences_rv.sql")
+	sqlTeams            = mustTemplate("sql_teams.sql")
 )
 
 type starQuery struct {
