@@ -627,6 +627,29 @@ describe('grafana-managed rules', () => {
         expect(frontendFilter.ruleMatches(recordingRule)).toBe(true);
       });
 
+      it('should include dashboardUid in backend filter when provided', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({ dashboardUid: 'dashboard-123' }));
+
+        expect(backendFilter.dashboardUid).toBe('dashboard-123');
+      });
+
+      it('should not include dashboardUid in backend filter when not provided', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({}));
+
+        expect(backendFilter.dashboardUid).toBeUndefined();
+      });
+
+      it('should skip dashboardUid filtering on frontend when backend filtering is enabled', () => {
+        const ruleWithDashboard = mockGrafanaPromAlertingRule({
+          name: 'Dashboard Rule',
+          annotations: { [Annotation.dashboardUID]: 'dashboard-a' },
+        });
+
+        const { frontendFilter } = getGrafanaFilter(getFilter({ dashboardUid: 'dashboard-b' }));
+        // Should return true because dashboardUid filter is null (handled by backend)
+        expect(frontendFilter.ruleMatches(ruleWithDashboard)).toBe(true);
+      });
+
       it('should still apply other frontend filters', () => {
         const rule = mockGrafanaPromAlertingRule({
           name: 'High CPU Usage',
@@ -689,6 +712,32 @@ describe('grafana-managed rules', () => {
         const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ ruleType: PromRuleType.Recording }));
         expect(frontendFilter2.ruleMatches(alertingRule)).toBe(false);
         expect(frontendFilter2.ruleMatches(recordingRule)).toBe(true);
+      });
+
+      it('should not include dashboardUid in backend filter', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({ dashboardUid: 'dashboard-123' }));
+
+        expect(backendFilter.dashboardUid).toBeUndefined();
+      });
+
+      it('should perform dashboardUid filtering on frontend', () => {
+        const ruleDashboardA = mockGrafanaPromAlertingRule({
+          name: 'Dashboard A Rule',
+          annotations: { [Annotation.dashboardUID]: 'dashboard-a' },
+        });
+
+        const ruleDashboardB = mockGrafanaPromAlertingRule({
+          name: 'Dashboard B Rule',
+          annotations: { [Annotation.dashboardUID]: 'dashboard-b' },
+        });
+
+        const { frontendFilter } = getGrafanaFilter(getFilter({ dashboardUid: 'dashboard-a' }));
+        expect(frontendFilter.ruleMatches(ruleDashboardA)).toBe(true);
+        expect(frontendFilter.ruleMatches(ruleDashboardB)).toBe(false);
+
+        const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ dashboardUid: 'dashboard-b' }));
+        expect(frontendFilter2.ruleMatches(ruleDashboardA)).toBe(false);
+        expect(frontendFilter2.ruleMatches(ruleDashboardB)).toBe(true);
       });
     });
   });

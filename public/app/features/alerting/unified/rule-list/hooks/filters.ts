@@ -41,6 +41,7 @@ export function getGrafanaFilter(filterState: RulesFilter) {
     contactPoint: normalizedFilterState.contactPoint ?? undefined,
     title: useBackendFilters ? titleSearch : undefined,
     type: useBackendFilters ? normalizedFilterState.ruleType : undefined,
+    dashboardUid: useBackendFilters ? normalizedFilterState.dashboardUid : undefined,
   };
 
   const grafanaFilterProcessingConfig: RuleFilterConfig = {
@@ -52,7 +53,7 @@ export function getGrafanaFilter(filterState: RulesFilter) {
     dataSourceNames: dataSourceNamesFilter,
     labels: labelsFilter,
     ruleHealth: null,
-    dashboardUid: dashboardUidFilter,
+    dashboardUid: useBackendFilters ? null : dashboardUidFilter,
     plugins: pluginsFilter,
     contactPoint: null,
   };

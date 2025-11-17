@@ -23,17 +23,17 @@ describe('hasClientSideFilters', () => {
       config.featureToggles.alertingUIUseBackendFilters = true;
     });
 
-    it('should return false for backend-supported filters (title and type)', () => {
+    it('should return false for backend-supported filters', () => {
       expect(hasClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(false);
       expect(hasClientSideFilters(getFilter({ ruleName: 'test' }))).toBe(false);
       expect(hasClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(false);
+      expect(hasClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(false);
     });
 
     it('should return true for client-side only filters', () => {
       expect(hasClientSideFilters(getFilter({ namespace: 'test' }))).toBe(true);
       expect(hasClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
       expect(hasClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(true);
-      expect(hasClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(true);
       expect(hasClientSideFilters(getFilter({ ruleSource: RuleSource.DataSource }))).toBe(true);
     });
 
@@ -47,10 +47,11 @@ describe('hasClientSideFilters', () => {
       config.featureToggles.alertingUIUseBackendFilters = false;
     });
 
-    it('should return true for title and type filters (client-side fallback)', () => {
+    it('should return true for backend-supported filters when backend filtering is disabled', () => {
       expect(hasClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(true);
       expect(hasClientSideFilters(getFilter({ ruleName: 'test' }))).toBe(true);
       expect(hasClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(true);
+      expect(hasClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(true);
     });
 
     it('should return true for client-side only filters', () => {
@@ -71,11 +72,12 @@ describe('hasClientSideFilters', () => {
       config.featureToggles.alertingUIUseBackendFilters = undefined;
     });
 
-    it('should return true for title and type filters (backward compatibility)', () => {
+    it('should default to client-side filtering for backward compatibility', () => {
       // Default behavior should be client-side filtering
       expect(hasClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(true);
       expect(hasClientSideFilters(getFilter({ ruleName: 'test' }))).toBe(true);
       expect(hasClientSideFilters(getFilter({ ruleType: PromRuleType.Alerting }))).toBe(true);
+      expect(hasClientSideFilters(getFilter({ dashboardUid: 'test-dashboard' }))).toBe(true);
     });
   });
 });
