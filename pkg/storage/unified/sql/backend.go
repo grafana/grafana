@@ -273,13 +273,19 @@ func (b *backend) Stop(_ context.Context) error {
 }
 
 // GetResourceStats implements Backend.
-func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
+func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedResource, minCount int) ([]resource.ResourceStats, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceStats")
 	defer span.End()
 
+	if nsr.Namespace == "" {
+		return nil, fmt.Errorf("namespace is required")
+	}
+
 	req := &sqlStatsRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
-		Namespace:   namespace,
+		Namespace:   nsr.Namespace,
+		Group:       nsr.Group,
+		Resource:    nsr.Resource,
 		MinCount:    minCount, // not used in query... yet?
 	}
 
