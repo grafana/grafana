@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, FormProvider, SubmitHandler, useForm, useFormContext } from 'react-hook-form';
 
 import { ContactPointSelector } from '@grafana/alerting/unstable';
@@ -55,6 +55,25 @@ const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlActi
 
 const radioGroupCompactClass = css({ width: 'max-content' });
 
+// Helper to create a wrapped options function that captures typed input when threshold is exceeded
+function createThresholdAwareOptions<T extends { infoOption?: boolean }>(
+  optionsFunc: (inputValue: string) => Promise<T[]>,
+  setValue: (value: string) => void,
+  fieldName: string
+) {
+  return async (inputValue: string): Promise<T[]> => {
+    const options = await optionsFunc(inputValue);
+    const exceeded = options.length === 1 && options[0].infoOption === true;
+
+    // If threshold exceeded and user is typing, capture the typed value
+    if (exceeded && inputValue) {
+      setValue(inputValue);
+    }
+
+    return options;
+  };
+}
+
 type SearchQueryForm = {
   query: string;
 };
@@ -85,11 +104,33 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   };
 
   const handleAdvancedFilters: SubmitHandler<AdvancedFilters> = (values) => {
-    const newFilter = formAdvancedFiltersToRuleFilter(values);
-    updateFilters(newFilter);
+    // Build search query parts for namespace and group when they contain free-form text
+    const searchParts: string[] = [];
+
+    if (values.namespace) {
+      searchParts.push(`namespace:${values.namespace}`);
+    }
+    if (values.groupName) {
+      searchParts.push(`group:${values.groupName}`);
+    }
+
+    // Apply filters based on whether we have search parts
+    if (searchParts.length > 0) {
+      const newQuery = [searchQuery, ...searchParts].filter(Boolean).join(' ');
+      const parsedFilter = getSearchFilterFromQuery(newQuery);
+
+      // Clear namespace and groupName from form values since they're now in the search query
+      const modifiedValues = { ...values, namespace: null, groupName: null };
+      const combinedFilter = { ...formAdvancedFiltersToRuleFilter(modifiedValues), ...parsedFilter };
+
+      updateFilters(combinedFilter);
+      setSearchQuery(newQuery);
+    } else {
+      updateFilters(formAdvancedFiltersToRuleFilter(values));
+    }
 
     trackFilterButtonApplyClick(values, pluginsFilterEnabled);
-    setIsPopupOpen(false); // Should close popup after applying filters?
+    setIsPopupOpen(false);
   };
 
   const handleClearFilters = () => {
@@ -372,11 +413,20 @@ function NamespaceField({
   namespacePlaceholder,
   portalContainer,
 }: {
-  namespaceOptions: (inputValue: string) => Promise<Array<{ label?: string; value: string; description?: string }>>;
+  namespaceOptions: (
+    inputValue: string
+  ) => Promise<Array<{ label?: string; value: string; description?: string; infoOption?: boolean }>>;
   namespacePlaceholder: string;
   portalContainer?: HTMLElement;
 }) {
-  const { control } = useFormContext<AdvancedFilters>();
+  const { control, setValue } = useFormContext<AdvancedFilters>();
+
+  const wrappedOptions = useCallback(
+    (inputValue: string) =>
+      createThresholdAwareOptions(namespaceOptions, (value) => setValue('namespace', value), 'namespace')(inputValue),
+    [namespaceOptions, setValue]
+  );
+
   return (
     <>
       <Label>
@@ -385,18 +435,20 @@ function NamespaceField({
       <Controller
         name="namespace"
         control={control}
-        render={({ field }) => {
-          return (
-            <Combobox<string>
-              placeholder={namespacePlaceholder}
-              options={namespaceOptions}
-              onChange={(option) => field.onChange(option?.value || null)}
-              value={field.value}
-              isClearable
-              portalContainer={portalContainer}
-            />
-          );
-        }}
+        render={({ field }) => (
+          <Combobox<string>
+            placeholder={namespacePlaceholder}
+            options={wrappedOptions}
+            onChange={(option) => {
+              if (!option?.infoOption) {
+                field.onChange(option?.value || null);
+              }
+            }}
+            value={field.value}
+            isClearable
+            portalContainer={portalContainer}
+          />
+        )}
       />
     </>
   );
@@ -407,11 +459,18 @@ function GroupField({
   groupPlaceholder,
   portalContainer,
 }: {
-  groupOptions: (inputValue: string) => Promise<Array<{ label?: string; value: string }>>;
+  groupOptions: (inputValue: string) => Promise<Array<{ label?: string; value: string; infoOption?: boolean }>>;
   groupPlaceholder: string;
   portalContainer?: HTMLElement;
 }) {
-  const { control } = useFormContext<AdvancedFilters>();
+  const { control, setValue } = useFormContext<AdvancedFilters>();
+
+  const wrappedOptions = useCallback(
+    (inputValue: string) =>
+      createThresholdAwareOptions(groupOptions, (value) => setValue('groupName', value), 'groupName')(inputValue),
+    [groupOptions, setValue]
+  );
+
   return (
     <>
       <Label>
@@ -438,18 +497,20 @@ function GroupField({
       <Controller
         name="groupName"
         control={control}
-        render={({ field }) => {
-          return (
-            <Combobox<string>
-              placeholder={groupPlaceholder}
-              options={groupOptions}
-              onChange={(option) => field.onChange(option?.value || null)}
-              value={field.value}
-              isClearable
-              portalContainer={portalContainer}
-            />
-          );
-        }}
+        render={({ field }) => (
+          <Combobox<string>
+            placeholder={groupPlaceholder}
+            options={wrappedOptions}
+            onChange={(option) => {
+              if (!option?.infoOption) {
+                field.onChange(option?.value || null);
+              }
+            }}
+            value={field.value}
+            isClearable
+            portalContainer={portalContainer}
+          />
+        )}
       />
     </>
   );
