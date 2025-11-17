@@ -11,6 +11,8 @@ import {
   VizPanel,
   SceneDataState,
 } from '@grafana/scenes';
+import { AdHocFiltersVariableState } from '@grafana/scenes/src/variables/adhoc/AdHocFiltersVariable';
+import { GroupByVariableState } from '@grafana/scenes/src/variables/groupby/GroupByVariable';
 
 import { PanelNonApplicableDrilldownsSubHeader } from './PanelNonApplicableDrilldownsSubHeader';
 
@@ -73,9 +75,19 @@ export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPane
   );
   const groupByVariable = useMemo(() => variables.find((variable) => variable instanceof GroupByVariable), [variables]);
 
+  const adHocFiltersState = adhocFiltersVariable?.useState();
+  const groupByState = groupByVariable?.useState();
+
   const supportsApplicability = useMemo(
-    () => supportsDrilldownsApplicability(interpolatedUid, adhocFiltersVariable, groupByVariable),
-    [interpolatedUid, adhocFiltersVariable, groupByVariable]
+    () =>
+      supportsDrilldownsApplicability(
+        interpolatedUid,
+        adhocFiltersVariable,
+        groupByVariable,
+        adHocFiltersState,
+        groupByState
+      ),
+    [interpolatedUid, adhocFiltersVariable, groupByVariable, adHocFiltersState, groupByState]
   );
 
   if (!datasourceUid || model.state.hideNonApplicableDrilldowns || !supportsApplicability) {
@@ -94,13 +106,15 @@ export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPane
 function supportsDrilldownsApplicability(
   dsUid: string | undefined,
   filtersVar?: AdHocFiltersVariable,
-  groupByVar?: GroupByVariable
+  groupByVar?: GroupByVariable,
+  adHocFiltersState?: AdHocFiltersVariableState,
+  groupByState?: GroupByVariableState
 ) {
   if (
     dsUid &&
     filtersVar &&
-    filtersVar.isApplicabilityEnabled() &&
-    dsUid === sceneGraph.interpolate(filtersVar, filtersVar.state.datasource?.uid)
+    adHocFiltersState?.applicabilityEnabled &&
+    dsUid === sceneGraph.interpolate(filtersVar, adHocFiltersState?.datasource?.uid)
   ) {
     return true;
   }
@@ -108,8 +122,8 @@ function supportsDrilldownsApplicability(
   if (
     dsUid &&
     groupByVar &&
-    groupByVar.isApplicabilityEnabled() &&
-    dsUid === sceneGraph.interpolate(groupByVar, groupByVar.state.datasource?.uid)
+    groupByState?.applicabilityEnabled &&
+    dsUid === sceneGraph.interpolate(groupByVar, groupByState?.datasource?.uid)
   ) {
     return true;
   }

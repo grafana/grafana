@@ -89,6 +89,7 @@ function buildScene(options?: BuildSceneOptions) {
     label: 'adhoc',
     filters: [{ key: 'filter-1', operator: '=', value: 'value-1' }],
     datasource: { uid: options?.variableDatasourceUid ?? 'ds-1' },
+    applicabilityEnabled: true,
   });
 
   const groupByVariable = new GroupByVariable({
@@ -97,12 +98,9 @@ function buildScene(options?: BuildSceneOptions) {
     value: ['groupBy'],
     text: ['groupBy'],
     options: [],
+    applicabilityEnabled: true,
     datasource: { uid: options?.variableDatasourceUid ?? 'ds-1' },
   });
-
-  const applicabilityEnabled = options?.applicabilityEnabled ?? true;
-  (groupByVariable as GroupByVariable).isApplicabilityEnabled = jest.fn(() => applicabilityEnabled);
-  (adhocFiltersVariable as AdHocFiltersVariable).isApplicabilityEnabled = jest.fn(() => applicabilityEnabled);
 
   const dataProvider = new SceneDataTransformer({
     $data: queryRunner,
