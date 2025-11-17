@@ -41,12 +41,19 @@ export function ScopesInput({
   const { node: parentNode, isLoading: parentNodeLoading } = useScopeNode(parentNodeId);
 
   // Prioritize scope node subtitle over parent node title
-  const displayTitle = scopeNode?.spec.subTitle ?? parentNode?.spec.title;
+  const displayTitle =
+    scopeNode?.spec.subTitle ?? parentNode?.spec.title ?? (appliedScopes.length > 0 ? 'Mimir' : undefined);
   const isLoadingTitle = scopeNodeLoading || parentNodeLoading;
   const placeholderText = t('scopes.selector.input.placeholder', 'No scopes');
 
   const tooltipContent = (
-    <ScopesTooltip nodes={nodes} scopes={scopes} appliedScopes={appliedScopes} onRemoveAllClick={onRemoveAllClick} />
+    <ScopesTooltip
+      nodes={nodes}
+      scopes={scopes}
+      appliedScopes={appliedScopes}
+      onRemoveAllClick={onRemoveAllClick}
+      disabled={disabled}
+    />
   );
 
   const scopesTitles = appliedScopes
@@ -65,28 +72,29 @@ export function ScopesInput({
 
   return (
     <Tooltip content={tooltipContent} interactive>
-      <div className={styles.wrapper}>
+      <button
+        type="button"
+        className={styles.fakeInput}
+        disabled={disabled}
+        onClick={onClick}
+        aria-label={placeholderText}
+        data-testid="scopes-selector-input"
+      >
         {loading && (
           <div className={styles.prefix}>
             <Spinner />
           </div>
         )}
-        <button
-          className={styles.fakeInput}
-          onClick={onClick}
-          aria-label={placeholderText}
-          data-testid="scopes-selector-input"
-        >
-          <span className={styles.text}>
-            {!scopesTitles && !loading && <Text color="secondary">{placeholderText}</Text>}
-            {scopesTitles && <span>{scopesTitles}</span>}
-            {!isLoadingTitle && displayTitle && <span className={styles.parentNode}>{displayTitle}</span>}
-          </span>
-        </button>
+        <span className={styles.text}>
+          {!scopesTitles && !loading && <Text color="secondary">{placeholderText}</Text>}
+          {!isLoadingTitle && displayTitle && <span className={styles.parentNode}>{displayTitle}</span>}
+          {scopesTitles && <span>{scopesTitles}</span>}
+        </span>
+
         <div className={styles.suffix}>
           <Icon name="angle-down" />
         </div>
-      </div>
+      </button>
     </Tooltip>
   );
 }
@@ -110,10 +118,11 @@ export interface ScopesTooltipProps {
   nodes: NodesMap;
   scopes: ScopesMap;
   appliedScopes: SelectedScope[];
+  disabled?: boolean;
   onRemoveAllClick?: () => void;
 }
 
-function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick }: ScopesTooltipProps) {
+function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick, disabled }: ScopesTooltipProps) {
   if (appliedScopes.length === 0) {
     return t('scopes.selector.input.tooltip', 'Select scope');
   }
@@ -132,17 +141,19 @@ function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick }: Scope
   return (
     <Stack direction="column" gap={1} justifyContent="center" alignItems={'center'}>
       <span>{parentPaths + scopeNames.join(', ')}</span>
-      <LinkButton
-        onClick={onRemoveAllClick}
-        aria-label={t('scopes.selector.input.removeAll', 'Remove all scopes')}
-        name="times"
-        data-testid="scopes-selector-input-clear"
-        size="sm"
-        fill="text"
-        icon="times"
-      >
-        <Trans i18nKey="scopes.selector.input.remove-all">Remove all</Trans>
-      </LinkButton>
+      {!disabled && (
+        <LinkButton
+          onClick={onRemoveAllClick}
+          aria-label={t('scopes.selector.input.removeAll', 'Remove all scopes')}
+          name="times"
+          data-testid="scopes-selector-input-clear"
+          size="sm"
+          fill="text"
+          icon="times"
+        >
+          <Trans i18nKey="scopes.selector.input.remove-all">Remove all</Trans>
+        </LinkButton>
+      )}
     </Stack>
   );
 }
@@ -151,37 +162,30 @@ const getStyles = (theme: GrafanaTheme2) => {
   const baseStyles = getInputStyles({ theme });
 
   return {
-    wrapper: cx(
-      baseStyles.wrapper,
-      css({
-        width: 'auto',
-        minWidth: 60,
-        maxWidth: 250,
-        position: 'relative',
-      })
-    ),
     prefix: baseStyles.prefix,
-    suffix: css([
-      baseStyles.suffix,
-      {
-        display: 'flex',
-        gap: theme.spacing(0.5),
-      },
-    ]),
+    suffix: baseStyles.suffix,
     fakeInput: css([
       baseStyles.input,
       {
+        width: 'auto',
+        minWidth: 60,
+        height: theme.spacing(theme.components.height.md),
+        maxWidth: '40%',
+        position: 'relative',
         display: 'flex',
         alignItems: 'center',
         textAlign: 'left',
         overflow: 'hidden',
         whiteSpace: 'nowrap',
         paddingRight: 28,
+        flexGrow: 0,
 
-        '&:not(disabled)': {
-          cursor: 'pointer',
-          background: theme.components.input.background,
-        },
+        '&:disabled': cx(
+          baseStyles.inputDisabled,
+          css({
+            cursor: 'not-allowed',
+          })
+        ),
 
         // We want the focus styles to appear only when tabbing through, not when clicking the button
         // (and when focus is restored after command palette closes)
@@ -198,9 +202,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
     }),
     parentNode: css({
-      marginLeft: theme.spacing(1),
-      paddingLeft: theme.spacing(1),
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
+      marginRight: theme.spacing(1),
+      paddingRight: theme.spacing(1),
+      borderRight: `1px solid ${theme.colors.border.weak}`,
       color: theme.colors.text.secondary,
     }),
   };
