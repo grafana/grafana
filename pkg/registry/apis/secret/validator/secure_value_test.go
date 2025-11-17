@@ -25,9 +25,9 @@ func TestValidateSecureValue(t *testing.T) {
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "description",
 				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
-				Keeper:      &keeper,
 				Decrypters:  []string{"app1", "app2"},
 			},
+			Status: secretv1beta1.SecureValueStatus{Keeper: keeper},
 		}
 
 		t.Run("the `description` must be present", func(t *testing.T) {
@@ -188,16 +188,14 @@ func TestValidateSecureValue(t *testing.T) {
 			keeperAnother := "another-keeper"
 			oldSv := &secretv1beta1.SecureValue{
 				ObjectMeta: objectMeta,
-				Spec: secretv1beta1.SecureValueSpec{
-					Keeper: &keeperA,
-				},
+				Spec:       secretv1beta1.SecureValueSpec{},
+				Status:     secretv1beta1.SecureValueStatus{Keeper: keeperA},
 			}
 
 			sv := &secretv1beta1.SecureValue{
 				ObjectMeta: objectMeta,
-				Spec: secretv1beta1.SecureValueSpec{
-					Keeper: &keeperAnother,
-				},
+				Spec:       secretv1beta1.SecureValueSpec{},
+				Status:     secretv1beta1.SecureValueStatus{Keeper: keeperAnother},
 			}
 
 			errs := validator.Validate(sv, oldSv, admission.Update)
