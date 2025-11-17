@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { DataSourceRef } from '@grafana/data';
 import {
   SceneComponentProps,
   SceneObjectState,
@@ -11,8 +12,6 @@ import {
   VizPanel,
   SceneDataState,
 } from '@grafana/scenes';
-import { AdHocFiltersVariableState } from '@grafana/scenes/src/variables/adhoc/AdHocFiltersVariable';
-import { GroupByVariableState } from '@grafana/scenes/src/variables/groupby/GroupByVariable';
 
 import { PanelNonApplicableDrilldownsSubHeader } from './PanelNonApplicableDrilldownsSubHeader';
 
@@ -107,8 +106,8 @@ function supportsDrilldownsApplicability(
   dsUid: string | undefined,
   filtersVar?: AdHocFiltersVariable,
   groupByVar?: GroupByVariable,
-  adHocFiltersState?: AdHocFiltersVariableState,
-  groupByState?: GroupByVariableState
+  adHocFiltersState?: { applicabilityEnabled?: boolean; datasource?: DataSourceRef | null },
+  groupByState?: { applicabilityEnabled?: boolean; datasource?: DataSourceRef | null }
 ) {
   if (
     dsUid &&
