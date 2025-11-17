@@ -187,9 +187,6 @@
       // Wrap in an IIFE to avoid polluting the global scope. Intentionally global-scope properties
       // are explicitly assigned to the `window` object.
       (() => {
-        // Needed to stop retrying boot data when custom domain error occurs
-        // TODO remove when https://github.com/grafana/grafana/pull/113717 is released in backend
-        const CUSTOM_DOMAIN_ERROR = "Custom domain error";
         window.__grafana_load_failed = function(err) {
           console.error('Failed to load Grafana', err);
           document.querySelector('.fs-variant-loader').classList.add('fs-hidden');
@@ -206,8 +203,9 @@
             console.error('Failed to report boot error to backend: ', err);
           });
         };
-
+        // Needed to stop retrying boot data when custom domain error occurs
         // TODO remove when https://github.com/grafana/grafana/pull/113717 is released in backend
+        const CUSTOM_DOMAIN_ERROR = "Custom domain error";
         window.__grafana_custom_domain_failed = function(err) {
           console.error('Failed to load Grafana due to custom domain issue', err);
           document.querySelector('.fs-variant-loader').classList.add('fs-hidden');
@@ -252,8 +250,7 @@
           if (resp.type === 'opaqueredirect') {
             window.__grafana_custom_domain_failed();
             return CUSTOM_DOMAIN_ERROR;
-          const resp = await fetch(bootDataUrl);
-
+          }
           // manual redirect for custom domains
           // see pkg/middleware/validate_host.go
           if (resp.status === 204) {
