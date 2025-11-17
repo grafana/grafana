@@ -2831,6 +2831,7 @@
       "title-the-selected-alertmanager-has-no-configuration": "The selected Alertmanager has no configuration"
     },
     "simple-condition-editor": {
+      "aria-label-reducer": "Select reducer function",
       "label-of-query": "OF QUERY",
       "label-when": "WHEN",
       "label-when-query": "WHEN QUERY"
@@ -2850,6 +2851,7 @@
       "notification": {
         "contact-point-selected": "Notifications for firing alerts are routed to a selected contact point.",
         "description": {
+          "aria-label": "Description",
           "label": "Description (optional)",
           "placeholder": "Enter a description of what the alert rule does…"
         },
@@ -2860,12 +2862,17 @@
         "recipient": {
           "label": "Recipient"
         },
+        "refresh-error": "Failed to refresh contact points",
         "runbook-url": {
+          "aria-label": "Runbook URL",
+          "invalid-format": "Invalid URL format. Please enter a valid URL.",
+          "invalid-protocol": "Invalid URL protocol. Please use http or https.",
           "label": "Runbook URL (optional)",
           "placeholder": "Enter the webpage where you keep your runbook for the alert…"
         },
         "select-contact-point": "Select a contact point...",
         "summary": {
+          "aria-label": "Summary",
           "label": "Summary (optional)",
           "placeholder": "Enter a summary of what happened and why…"
         },
