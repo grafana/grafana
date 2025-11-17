@@ -47,7 +47,7 @@ Note that in data source-managed groups, the alert rules and recording rules wit
 To create a new data source-managed recording rule:
 
 1. Click **Alerts & IRM** -> **Alerting** -> **Alert rules**.
-1. At the top of the Alert rules page, click **More** -> **New Grafana recording rule**.
+1. At the top of the Alert rules page, click **More** -> **New Data source recording rule**.
 
 ## Enter recording rule name
 

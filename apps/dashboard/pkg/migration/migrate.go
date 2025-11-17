@@ -9,15 +9,23 @@ import (
 )
 
 // Initialize provides the migrator singleton with required dependencies and builds the map of migrations.
-func Initialize(dsInfoProvider schemaversion.DataSourceInfoProvider) {
-	migratorInstance.init(dsInfoProvider)
+func Initialize(dsIndexProvider schemaversion.DataSourceIndexProvider) {
+	migratorInstance.init(dsIndexProvider)
+}
+
+// GetDataSourceIndexProvider returns the datasource index provider instance that was initialized.
+func GetDataSourceIndexProvider() schemaversion.DataSourceIndexProvider {
+	// Wait for initialization to complete
+	<-migratorInstance.ready
+	return migratorInstance.dsIndexProvider
 }
 
 // ResetForTesting resets the migrator singleton for testing purposes.
 func ResetForTesting() {
 	migratorInstance = &migrator{
-		migrations: map[int]schemaversion.SchemaVersionMigrationFunc{},
-		ready:      make(chan struct{}),
+		migrations:      map[int]schemaversion.SchemaVersionMigrationFunc{},
+		ready:           make(chan struct{}),
+		dsIndexProvider: nil,
 	}
 	initOnce = sync.Once{}
 }
@@ -37,13 +45,15 @@ var (
 )
 
 type migrator struct {
-	ready      chan struct{}
-	migrations map[int]schemaversion.SchemaVersionMigrationFunc
+	ready           chan struct{}
+	migrations      map[int]schemaversion.SchemaVersionMigrationFunc
+	dsIndexProvider schemaversion.DataSourceIndexProvider
 }
 
-func (m *migrator) init(dsInfoProvider schemaversion.DataSourceInfoProvider) {
+func (m *migrator) init(dsIndexProvider schemaversion.DataSourceIndexProvider) {
 	initOnce.Do(func() {
-		m.migrations = schemaversion.GetMigrations(dsInfoProvider)
+		m.dsIndexProvider = dsIndexProvider
+		m.migrations = schemaversion.GetMigrations(dsIndexProvider)
 		close(m.ready)
 	})
 }

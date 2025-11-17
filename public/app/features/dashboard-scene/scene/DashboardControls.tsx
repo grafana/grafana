@@ -15,12 +15,13 @@ import {
   SceneObjectUrlValues,
   CancelActivationHandler,
 } from '@grafana/scenes';
-import { Box, Stack, useStyles2 } from '@grafana/ui';
+import { Box, useStyles2 } from '@grafana/ui';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardControlsButton } from './DashboardControlsMenu';
+import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
 import { VariableControls } from './VariableControls';
@@ -153,7 +154,8 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered
-    return <Box padding={1} />;
+
+    return <Box padding={1}>{renderHiddenVariables(dashboard)}</Box>;
   }
 
   return (
@@ -161,53 +163,48 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       data-testid={selectors.pages.Dashboard.Controls}
       className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
     >
-      <Stack grow={1} wrap={'wrap'}>
-        {!hideVariableControls && (
-          <>
-            <VariableControls dashboard={dashboard} />
-            <DataLayerControls dashboard={dashboard} />
-          </>
+      <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
+        {!hideTimeControls && (
+          <div className={styles.timeControls}>
+            <timePicker.Component model={timePicker} />
+            <refreshPicker.Component model={refreshPicker} />
+          </div>
         )}
-        <Box grow={1} />
-        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
-        {editPanel && <PanelEditControls panelEditor={editPanel} />}
-      </Stack>
-      {!hideTimeControls && (
-        <div className={cx(styles.timeControls, editPanel && styles.timeControlsWrap)}>
-          <timePicker.Component model={timePicker} />
-          <refreshPicker.Component model={refreshPicker} />
-        </div>
+        {!hideDashboardControls && model.hasDashboardControls() && <DashboardControlsButton dashboard={dashboard} />}
+      </div>
+      {!hideVariableControls && (
+        <>
+          <VariableControls dashboard={dashboard} />
+          <DashboardDataLayerControls dashboard={dashboard} />
+        </>
       )}
-      {!hideDashboardControls && model.hasDashboardControls() && (
-        <Stack>
-          <DashboardControlsButton dashboard={dashboard} />
-        </Stack>
-      )}
+      {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
+      {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
   );
 }
 
-function DataLayerControls({ dashboard }: { dashboard: DashboardScene }) {
-  const layers = sceneGraph.getDataLayers(dashboard, true);
-
-  return (
-    <>
-      {layers.map((layer) => (
-        <layer.Component model={layer} key={layer.state.key} />
-      ))}
-    </>
-  );
+function renderHiddenVariables(dashboard: DashboardScene) {
+  const { variables } = sceneGraph.getVariables(dashboard).useState();
+  const renderAsHiddenVariables = variables.filter((v) => v.UNSAFE_renderAsHidden);
+  if (renderAsHiddenVariables && renderAsHiddenVariables.length > 0) {
+    return (
+      <>
+        {renderAsHiddenVariables.map((v) => (
+          <v.Component model={v} key={v.state.key} />
+        ))}
+      </>
+    );
+  }
+  return null;
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
     controls: css({
-      display: 'flex',
-      alignItems: 'flex-start',
-      flex: '100%',
       gap: theme.spacing(1),
-      padding: theme.spacing(2),
+      padding: theme.spacing(2, 2, 1, 2),
       flexDirection: 'row',
       flexWrap: 'nowrap',
       position: 'relative',
@@ -216,6 +213,10 @@ function getStyles(theme: GrafanaTheme2) {
       [theme.breakpoints.down('sm')]: {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
+      },
+      '&:hover .dashboard-canvas-add-button': {
+        opacity: 1,
+        filter: 'unset',
       },
     }),
     controlsPanelEdit: css({
@@ -227,12 +228,20 @@ function getStyles(theme: GrafanaTheme2) {
       background: 'unset',
       position: 'unset',
     }),
+    rightControls: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: theme.spacing(1),
+      marginBottom: theme.spacing(1),
+      float: 'right',
+      alignItems: 'center',
+    }),
     timeControls: css({
       display: 'flex',
       justifyContent: 'flex-end',
       gap: theme.spacing(1),
     }),
-    timeControlsWrap: css({
+    rightControlsWrap: css({
       flexWrap: 'wrap',
       marginLeft: 'auto',
     }),

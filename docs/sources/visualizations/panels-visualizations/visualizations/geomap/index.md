@@ -212,23 +212,20 @@ You can add multiple layers of data to a single geomap in order to create rich, 
 
 #### Layer type
 
-There are seven map layer types to choose from in a geomap.
+There are eight map layer types to choose from in a geomap.
 
 - [Markers](#markers-layer) renders a marker at each data point.
 - [Heatmap](#heatmap-layer) visualizes a heatmap of the data.
 - [GeoJSON](#geojson-layer) renders static data from a GeoJSON file.
 - [Night / Day](#night--day-layer) renders a night / day region.
-- [Route (Beta)](#route-layer-beta) render data points as a route.
-- [Photos (Beta)](#photos-layer-beta) renders a photo at each data point.
-- [Network (Beta)](#network-layer-beta) visualizes a network graph from the data.
+- [Route](#route-layer) render data points as a route.
+- [Photos](#photos-layer) renders a photo at each data point.
+- [Network](#network-layer) visualizes a network graph from the data.
 - [Open Street Map](#open-street-map-layer) adds a map from a collaborative free geographic world database.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
-
-{{< admonition type="note" >}}
-Beta is equivalent to the [public preview](/docs/release-life-cycle/) release stage.
-{{< /admonition >}}
+- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
 
 There are also two experimental (or alpha) layer types.
 
@@ -361,11 +358,7 @@ The Night / Day layer displays night and day regions based on the current time r
 
 [Extensions for OpenLayers - DayNight](https://viglino.github.io/ol-ext/examples/layer/map.daynight.html)
 
-#### Route layer (Beta)
-
-{{< admonition type="caution" >}}
-The Route layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-{{< /admonition >}}
+#### Route layer
 
 The Route layer renders data points as a route.
 
@@ -390,11 +383,7 @@ The layer can also render a route with arrows.
 
 [Extensions for OpenLayers - Flow Line Style](http://viglino.github.io/ol-ext/examples/style/map.style.gpxline.html)
 
-#### Photos layer (Beta)
-
-{{< admonition type="caution" >}}
-The Photos layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-{{< /admonition >}}
+#### Photos layer
 
 The Photos layer renders a photo at each data point.
 
@@ -417,11 +406,7 @@ The Photos layer renders a photo at each data point.
 
 [Extensions for OpenLayers - Image Photo Style](http://viglino.github.io/ol-ext/examples/style/map.style.photo.html)
 
-#### Network layer (Beta)
-
-{{< admonition type="caution" >}}
-The Network layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-{{< /admonition >}}
+#### Network layer
 
 The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization](ref:data-format) with the addition of [geospatial data](#location-mode) included in the nodes data. The geospatial data is used to locate and render the nodes on the map.
 
@@ -534,6 +519,13 @@ The XYZ Tile layer is a map from a generic tile layer.
 - [Tiled Web Map Wikipedia](https://en.wikipedia.org/wiki/Tiled_web_map)
 - [List of Open Street Map Tile Servers](https://wiki.openstreetmap.org/wiki/Tile_servers)
 
+#### MapLibre Style layer
+
+The MapLibre Style Layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
+
+- **URL template** - Set a valid style URL. For example: `https://demotiles.maplibre.org/style.json`
+- **Access Token** - An API token for mapbox maps. Only works for `mapbox://` URLs. Refer to [mapbox access tokens documentation](https://docs.mapbox.com/help/dive-deeper/access-tokens/) for more information. In other cases, you might have to include the token in the URL. For example: `https://example.com/map/style.json?key=XXX`.
+
 ### Basemap layer options
 
 A basemap layer provides the visual foundation for a mapping application. It typically contains data with global coverage. Several base layer options
@@ -541,12 +533,13 @@ are available each with specific configuration options to style the base map.
 
 Basemap layer types can also be added as layers. You can specify an opacity.
 
-There are four basemap layer types to choose from in a geomap.
+There are five basemap layer types to choose from in a geomap.
 
 - [Open Street Map](#open-street-map-layer) adds a map from a collaborative free geographic world database.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
+- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
 
 The default basemap layer uses the CARTO map. You can define custom default base layers in the `.ini` configuration file.
 
@@ -556,7 +549,7 @@ The default basemap layer uses the CARTO map. You can define custom default base
 
 You can configure the default base map using config files with Grafana’s provisioning system. For more information on all the settings, refer to the [provisioning docs page](ref:provisioning-docs-page).
 
-Use the JSON configuration option `default_baselayer_config` to define the default base map. There are currently four base map options to choose from: `carto`, `esri-xyz`, `osm-standard`, `xyz`. Here are some provisioning examples for each base map option.
+Use the JSON configuration option `default_baselayer_config` to define the default base map. There are currently five base map options to choose from: `carto`, `esri-xyz`, `osm-standard`, `xyz`, `maplibre`. Here are some provisioning examples for each base map option.
 
 - **carto** loads the CartoDB tile server. You can choose from `auto`, `dark`, and `light` theme for the base map and can be set as shown below. The `showLabels` tag determines whether or not Grafana shows the Country details on top of the map. Here is an example:
 
@@ -618,6 +611,17 @@ default_baselayer_config = `{
   "config": {
     "attribution": "Open street map",
     "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+  }
+}`
+```
+
+- **maplibre** loads a custom tile server defined by the user. Set a valid style `url` for this option to properly load a default base map. Here's an example:
+
+```ini
+default_baselayer_config = `{
+  "type": "maplibre",
+  "config": {
+    "url": "https://demotiles.maplibre.org/style.json"
   }
 }`
 ```
@@ -709,7 +713,7 @@ Displays debug information in the upper right corner. This can be useful for deb
 
 #### Tooltip
 
-Tooltips are supported for the **Markers**, **Heatmap**, **Photos** (beta) layers.
+Tooltips are supported for the **Markers**, **Heatmap**, **Photos** layers.
 For these layer types, choose from the following tooltip options:
 
 - **None** displays tooltips only when a data point is clicked.

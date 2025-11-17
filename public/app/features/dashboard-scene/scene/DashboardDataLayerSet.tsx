@@ -6,6 +6,7 @@ import {
 } from '@grafana/scenes';
 
 import { AlertStatesDataLayer } from './AlertStatesDataLayer';
+import { DataLayerControl } from './DataLayerControl';
 
 export interface DashboardDataLayerSetState extends SceneDataLayerProviderState {
   alertStatesLayer?: AlertStatesDataLayer;
@@ -16,6 +17,8 @@ export class DashboardDataLayerSet
   extends SceneDataLayerSetBase<DashboardDataLayerSetState>
   implements SceneDataLayerProvider
 {
+  public static Component = DashboardDataLayerSetRenderer;
+
   public constructor(state: Partial<DashboardDataLayerSetState>) {
     super({
       ...state,
@@ -56,16 +59,24 @@ export class DashboardDataLayerSet
 
     return layers;
   }
+}
 
-  public static Component = ({ model }: SceneComponentProps<DashboardDataLayerSet>) => {
-    const { annotationLayers } = model.useState();
+function DashboardDataLayerSetRenderer({ model }: SceneComponentProps<DashboardDataLayerSet>) {
+  const { annotationLayers } = model.useState();
 
-    return (
-      <>
-        {annotationLayers.map((layer) => (
-          <layer.Component model={layer} key={layer.state.key} />
-        ))}
-      </>
-    );
-  };
+  return (
+    <>
+      {annotationLayers.map((layer) => (
+        <DataLayerControl layer={layer} key={layer.state.key} />
+      ))}
+    </>
+  );
+}
+
+export function isDashboardDataLayerSetState(data: unknown): data is DashboardDataLayerSetState {
+  if (data && typeof data === 'object') {
+    return 'annotationLayers' in data;
+  }
+
+  return false;
 }

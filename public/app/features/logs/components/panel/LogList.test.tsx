@@ -104,112 +104,6 @@ describe('LogList', () => {
     expect(onLogRowHover).toHaveBeenCalledWith(expect.objectContaining(logs[0]));
   });
 
-  test('Supports showing log details', async () => {
-    jest.spyOn(store, 'get').mockImplementation((option: string) => {
-      if (option === 'storage-key.detailsMode') {
-        return 'sidebar';
-      }
-      return undefined;
-    });
-    const onClickFilterLabel = jest.fn();
-    const onClickFilterOutLabel = jest.fn();
-    const onClickShowField = jest.fn();
-
-    render(
-      <LogList
-        {...defaultProps}
-        enableLogDetails={true}
-        onClickFilterLabel={onClickFilterLabel}
-        onClickFilterOutLabel={onClickFilterOutLabel}
-        onClickShowField={onClickShowField}
-        logOptionsStorageKey="storage-key"
-      />
-    );
-
-    await userEvent.click(screen.getByText('log message 1'));
-    await screen.findByText('Fields');
-
-    expect(screen.getByText('name_of_the_label')).toBeInTheDocument();
-    expect(screen.getByText('value of the label')).toBeInTheDocument();
-
-    await userEvent.click(screen.getByLabelText('Filter for value in query A'));
-    expect(onClickFilterLabel).toHaveBeenCalledTimes(1);
-
-    await userEvent.click(screen.getByLabelText('Filter out value in query A'));
-    expect(onClickFilterOutLabel).toHaveBeenCalledTimes(1);
-
-    await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
-    expect(onClickShowField).toHaveBeenCalledTimes(1);
-
-    await userEvent.click(screen.getByLabelText('Close log details'));
-
-    expect(screen.queryByText('Fields')).not.toBeInTheDocument();
-    expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
-  });
-
-  test('Supports showing inline log details', async () => {
-    jest.spyOn(store, 'get').mockImplementation((option: string) => {
-      if (option === 'storage-key.detailsMode') {
-        return 'inline';
-      }
-      return undefined;
-    });
-    const onClickFilterLabel = jest.fn();
-    const onClickFilterOutLabel = jest.fn();
-    const onClickShowField = jest.fn();
-
-    render(
-      <LogList
-        {...defaultProps}
-        enableLogDetails={true}
-        onClickFilterLabel={onClickFilterLabel}
-        onClickFilterOutLabel={onClickFilterOutLabel}
-        onClickShowField={onClickShowField}
-        logOptionsStorageKey="storage-key"
-      />
-    );
-
-    await userEvent.click(screen.getByText('log message 1'));
-    await screen.findByText('Fields');
-
-    expect(screen.getByText('name_of_the_label')).toBeInTheDocument();
-    expect(screen.getByText('value of the label')).toBeInTheDocument();
-
-    await userEvent.click(screen.getByLabelText('Filter for value in query A'));
-    expect(onClickFilterLabel).toHaveBeenCalledTimes(1);
-
-    await userEvent.click(screen.getByLabelText('Filter out value in query A'));
-    expect(onClickFilterOutLabel).toHaveBeenCalledTimes(1);
-
-    await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
-    expect(onClickShowField).toHaveBeenCalledTimes(1);
-
-    await userEvent.click(screen.getByLabelText('Close log details'));
-
-    expect(screen.queryByText('Fields')).not.toBeInTheDocument();
-    expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
-  });
-
-  test('Allows people to select text without opening log details', async () => {
-    const spy = jest.spyOn(document, 'getSelection');
-    spy.mockReturnValue({
-      toString: () => 'selected log line',
-      removeAllRanges: () => {},
-      addRange: (range: Range) => {},
-    } as Selection);
-
-    render(<LogList {...defaultProps} enableLogDetails={true} />);
-
-    await userEvent.click(screen.getByText('log message 1'));
-
-    expect(screen.queryByText('name_of_the_label')).not.toBeInTheDocument();
-    expect(screen.queryByText('value of the label')).not.toBeInTheDocument();
-    expect(screen.queryByText('Fields')).not.toBeInTheDocument();
-    expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
-
-    spy.mockRestore();
-  });
-
   test('Shows controls with level filters based on the displayed logs', async () => {
     logs = [createLogRow({ uid: '1', logLevel: LogLevel.info }), createLogRow({ uid: '2', logLevel: LogLevel.debug })];
 
@@ -576,6 +470,195 @@ describe('LogList', () => {
       expect(screen.getByText('scope_name')).toBeInTheDocument();
 
       config.featureToggles.otelLogsFormatting = originalState;
+    });
+  });
+
+  describe('Log details', () => {
+    test('Supports showing log details', async () => {
+      jest.spyOn(store, 'get').mockImplementation((option: string) => {
+        if (option === 'storage-key.detailsMode') {
+          return 'sidebar';
+        }
+        return undefined;
+      });
+      const onClickFilterLabel = jest.fn();
+      const onClickFilterOutLabel = jest.fn();
+      const onClickShowField = jest.fn();
+
+      render(
+        <LogList
+          {...defaultProps}
+          enableLogDetails={true}
+          onClickFilterLabel={onClickFilterLabel}
+          onClickFilterOutLabel={onClickFilterOutLabel}
+          onClickShowField={onClickShowField}
+          logOptionsStorageKey="storage-key"
+        />
+      );
+
+      await userEvent.click(screen.getByText('log message 1'));
+      await screen.findByText('Fields');
+
+      expect(screen.getByText('name_of_the_label')).toBeInTheDocument();
+      expect(screen.getByText('value of the label')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Filter for value in query A'));
+      expect(onClickFilterLabel).toHaveBeenCalledTimes(1);
+
+      await userEvent.click(screen.getByLabelText('Filter out value in query A'));
+      expect(onClickFilterOutLabel).toHaveBeenCalledTimes(1);
+
+      await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
+      expect(onClickShowField).toHaveBeenCalledTimes(1);
+
+      await userEvent.click(screen.getByLabelText('Close log details'));
+
+      expect(screen.queryByText('Fields')).not.toBeInTheDocument();
+      expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+    });
+
+    test('Supports showing inline log details', async () => {
+      jest.spyOn(store, 'get').mockImplementation((option: string) => {
+        if (option === 'storage-key.detailsMode') {
+          return 'inline';
+        }
+        return undefined;
+      });
+      const onClickFilterLabel = jest.fn();
+      const onClickFilterOutLabel = jest.fn();
+      const onClickShowField = jest.fn();
+
+      render(
+        <LogList
+          {...defaultProps}
+          enableLogDetails={true}
+          onClickFilterLabel={onClickFilterLabel}
+          onClickFilterOutLabel={onClickFilterOutLabel}
+          onClickShowField={onClickShowField}
+          logOptionsStorageKey="storage-key"
+        />
+      );
+
+      await userEvent.click(screen.getByText('log message 1'));
+      await screen.findByText('Fields');
+
+      expect(screen.getByText('name_of_the_label')).toBeInTheDocument();
+      expect(screen.getByText('value of the label')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Filter for value in query A'));
+      expect(onClickFilterLabel).toHaveBeenCalledTimes(1);
+
+      await userEvent.click(screen.getByLabelText('Filter out value in query A'));
+      expect(onClickFilterOutLabel).toHaveBeenCalledTimes(1);
+
+      await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
+      expect(onClickShowField).toHaveBeenCalledTimes(1);
+
+      await userEvent.click(screen.getByLabelText('Close log details'));
+
+      expect(screen.queryByText('Fields')).not.toBeInTheDocument();
+      expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+    });
+
+    test('Allows people to select text without opening log details', async () => {
+      const spy = jest.spyOn(document, 'getSelection');
+      spy.mockReturnValue({
+        toString: () => 'selected log line',
+        removeAllRanges: () => {},
+        addRange: (range: Range) => {},
+      } as Selection);
+
+      render(<LogList {...defaultProps} enableLogDetails={true} />);
+
+      await userEvent.click(screen.getByText('log message 1'));
+
+      expect(screen.queryByText('name_of_the_label')).not.toBeInTheDocument();
+      expect(screen.queryByText('value of the label')).not.toBeInTheDocument();
+      expect(screen.queryByText('Fields')).not.toBeInTheDocument();
+      expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+
+      spy.mockRestore();
+    });
+
+    test('Renders multiple log details', async () => {
+      const logs = [
+        createLogLine({ uid: '1', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'First log' }),
+        createLogLine({ uid: '2', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'Second log' }),
+      ];
+
+      render(<LogList {...defaultProps} enableLogDetails={true} logs={logs} detailsMode="sidebar" />);
+
+      // Open details of 2 logs
+      await userEvent.click(screen.getByText('First log'));
+      await userEvent.click(screen.getByText('Second log'));
+
+      // 2 tabs
+      expect(screen.queryAllByRole('tab')).toHaveLength(2);
+
+      // Expand Log line section inside Details
+      await userEvent.click(screen.getByText('Log line'));
+
+      // Tab + log line in the list
+      expect(screen.getAllByText('First log')).toHaveLength(2);
+      // Tab + log line in the list + Log details (active tab)
+      expect(screen.getAllByText('Second log')).toHaveLength(3);
+
+      // Make first log active
+      await userEvent.click(screen.queryAllByRole('tab')[1]);
+
+      // Tab + log line in the list + Log details (active tab)
+      expect(screen.getAllByText('First log')).toHaveLength(3);
+      // Tab + log line in the list
+      expect(screen.getAllByText('Second log')).toHaveLength(2);
+    });
+
+    test('Changes details focus when logs are added and removed', async () => {
+      const logs = [
+        createLogLine({ uid: '1', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'First log' }),
+        createLogLine({ uid: '2', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'Second log' }),
+        createLogLine({ uid: '3', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'Third log' }),
+      ];
+
+      render(<LogList {...defaultProps} enableLogDetails={true} logs={logs} detailsMode="sidebar" />);
+
+      // No details shown
+      expect(screen.queryByPlaceholderText('Search field names and values')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('First log'));
+
+      // Details shown
+      expect(screen.getByPlaceholderText('Search field names and values')).toBeInTheDocument();
+
+      // No tabs, only one details displayed
+      expect(screen.queryAllByRole('tab')).toHaveLength(0);
+
+      await userEvent.click(screen.getByText('Second log'));
+
+      // 2 details displayed, Second log is the first tab
+      expect(screen.queryAllByRole('tab')).toHaveLength(2);
+      expect(screen.queryAllByRole('tab')[0]).toHaveTextContent('Second log');
+
+      await userEvent.click(screen.getByText('Third log'));
+
+      // 3 details displayed, Second log is the first tab
+      expect(screen.queryAllByRole('tab')).toHaveLength(3);
+      expect(screen.queryAllByRole('tab')[0]).toHaveTextContent('Third log');
+
+      await userEvent.click(screen.getAllByText('Third log')[1]);
+
+      // 2 details displayed, Second log is the first tab
+      expect(screen.queryAllByRole('tab')).toHaveLength(2);
+      expect(screen.queryAllByRole('tab')[0]).toHaveTextContent('Second log');
+
+      await userEvent.click(screen.getAllByText('Second log')[1]);
+
+      // No tabs, only one details displayed
+      expect(screen.queryAllByRole('tab')).toHaveLength(0);
+
+      await userEvent.click(screen.getByText('First log'));
+
+      // No details shown
+      expect(screen.queryByPlaceholderText('Search field names and values')).not.toBeInTheDocument();
     });
   });
 });

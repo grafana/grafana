@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -180,10 +179,10 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			err := b.Mutate(context.Background(), admission.NewAttributesRecord(
 				tt.inputObj,
 				nil,
-				schema.GroupVersionKind{},
+				dashv1.DashboardResourceInfo.GroupVersionKind(),
 				"",
 				"test",
-				schema.GroupVersionResource{},
+				dashv1.DashboardResourceInfo.GroupVersionResource(),
 				"",
 				tt.operation,
 				operationOptions,

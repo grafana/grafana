@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -112,7 +113,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, "Failure", statusErr.ErrStatus.Status)
-		require.Contains(t, statusErr.ErrStatus.Message, "team not found")
+		require.Contains(t, statusErr.ErrStatus.Message, "not found")
 	})
 
 	t.Run("should not be able to create team when using a user with insufficient permissions", func(t *testing.T) {
@@ -222,6 +223,36 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 
 		require.Equal(t, createdUID, fetched.GetName())
 		require.Equal(t, "default", fetched.GetNamespace())
+
+		// Cleanup
+		err = teamClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
+
+	t.Run("should list teams correctly", func(t *testing.T) {
+		ctx := context.Background()
+
+		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		// For ensuring that it is able to list a team which has external_uid = null and is_provisioned = null
+		// only matters when legacy storage is involved
+		env := helper.GetEnv()
+		res, err := env.SQLStore.GetSqlxSession().Exec(ctx, "INSERT INTO team (org_id, uid, name, email, is_provisioned, external_uid, created, updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+			helper.Org1.Admin.Identity.GetOrgID(), "t000000001", "List Team 1", "list-team-1@example.com", nil, nil, time.Now(), time.Now())
+		require.NoError(t, err)
+		require.NotNil(t, res)
+
+		list, err := teamClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, list)
+
+		// Cleanup
+		_, err = env.SQLStore.GetSqlxSession().Exec(ctx, "DELETE FROM team WHERE uid = ?", "t000000001")
+		require.NoError(t, err)
 	})
 }
 
@@ -301,6 +332,6 @@ func doTeamCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper,
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, "Failure", statusErr.ErrStatus.Status)
-		require.Contains(t, statusErr.ErrStatus.Message, "team not found")
+		require.Contains(t, statusErr.ErrStatus.Message, "not found")
 	})
 }

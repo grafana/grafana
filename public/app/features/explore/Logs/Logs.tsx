@@ -979,6 +979,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             displayedFields={displayedFields}
             clearDisplayedFields={clearDisplayedFields}
             defaultDisplayedFields={defaultDisplayedFields}
+            visualisationType={visualisationType}
           />
         </div>
         <div className={cx(styles.logsSection, visualisationType === 'table' ? styles.logsTable : undefined)}>
