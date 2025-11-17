@@ -19,7 +19,6 @@ type Service struct{}
 // and give each builder the chance to register itself with the main server
 func ProvideRegistryServiceSink(
 	_ *dashboardinternal.DashboardsAPIBuilder,
-	//_ *dashboardsnapshot.SnapshotsAPIBuilder,
 	_ *datasource.DataSourceAPIBuilder,
 	_ *folders.FolderAPIBuilder,
 	_ *iam.IdentityAccessManagementAPIBuilder,
