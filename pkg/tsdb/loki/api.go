@@ -98,13 +98,13 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 
 	// @todo better
 	if len(query.Plan.Expr) > 0 {
-		req.Header.Set("X-Query-Plan-Expr", query.Plan.Expr)
+		req.Header.Set("X-Query-Limits-Expr", query.Plan.Expr)
 	}
 	if query.Plan.From > 0 {
-		req.Header.Set("X-Query-Plan-From", strconv.FormatInt(query.Plan.From, 10))
+		req.Header.Set("X-Query-Limits-From", strconv.FormatInt(query.Plan.From, 10))
 	}
 	if query.Plan.To > 0 {
-		req.Header.Set("X-Query-Plan-To", strconv.FormatInt(query.Plan.To, 10))
+		req.Header.Set("X-Query-Limits-To", strconv.FormatInt(query.Plan.To, 10))
 	}
 
 	if query.SupportingQueryType != SupportingQueryNone {
