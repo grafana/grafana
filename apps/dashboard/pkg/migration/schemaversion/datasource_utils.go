@@ -3,44 +3,73 @@ package schemaversion
 import (
 	"context"
 	"sync"
+	"time"
 )
 
 // Shared utility functions for datasource migrations across different schema versions.
 // These functions handle the common logic for migrating datasource references from
 // string names/UIDs to structured reference objects with uid, type, and apiVersion.
 
-// onceIndexProvider wraps a DataSourceIndexProvider to ensure Index() is only called once.
+// onceIndexProvider wraps a DataSourceIndexProvider with time-based caching.
 // This prevents multiple DB queries and index builds during operations that may call
 // provider.Index() multiple times (e.g., dashboard conversions with many datasource lookups).
+// The cache expires after 10 seconds, allowing it to be used as a long-lived singleton
+// while still refreshing periodically.
 //
-// Thread-safe: Uses sync.Once to guarantee single execution even under concurrent access.
+// Thread-safe: Uses sync.RWMutex to guarantee safe concurrent access.
 type onceIndexProvider struct {
 	provider DataSourceIndexProvider
-	once     sync.Once
+	mu       sync.RWMutex
 	index    *DatasourceIndex
+	cachedAt time.Time
+	cacheTTL time.Duration
 }
 
-// Index returns the cached index, building it exactly once on first call.
+// Index returns the cached index if it's still valid (< 10s old), otherwise rebuilds it.
+// Uses RWMutex for efficient concurrent reads when cache is valid.
 func (p *onceIndexProvider) Index(ctx context.Context) *DatasourceIndex {
-	p.once.Do(func() {
-		p.index = p.provider.Index(ctx)
-	})
+	// Fast path: check if cache is still valid using read lock
+	p.mu.RLock()
+	if p.index != nil && time.Since(p.cachedAt) < p.cacheTTL {
+		idx := p.index
+		p.mu.RUnlock()
+		return idx
+	}
+	p.mu.RUnlock()
+
+	// Slow path: cache expired or not yet built, acquire write lock
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	// Double-check: another goroutine might have refreshed the cache
+	// while we were waiting for the write lock
+	if p.index != nil && time.Since(p.cachedAt) < p.cacheTTL {
+		return p.index
+	}
+
+	// Rebuild the cache
+	p.index = p.provider.Index(ctx)
+	p.cachedAt = time.Now()
 	return p.index
 }
 
-// WrapIndexProviderWithOnce wraps a provider to cache the index for a single operation.
+// WrapIndexProviderWithOnce wraps a provider to cache the index with a 10-second TTL.
 // Useful for conversions or migrations that may call provider.Index() multiple times.
+// The cache expires after 10 seconds, making it suitable for use as a long-lived singleton
+// at the top level of dependency injection while still refreshing periodically.
 //
 // Example usage in dashboard conversion:
 //
 //	onceDsIndexProvider := schemaversion.WrapIndexProviderWithOnce(dsIndexProvider)
 //	// Now all calls to onceDsIndexProvider.Index(ctx) return the same cached index
+//	// for up to 10 seconds before refreshing
 func WrapIndexProviderWithOnce(provider DataSourceIndexProvider) DataSourceIndexProvider {
 	if provider == nil {
 		return nil
 	}
 	return &onceIndexProvider{
 		provider: provider,
+		cacheTTL: 10 * time.Second,
 	}
 }
 
