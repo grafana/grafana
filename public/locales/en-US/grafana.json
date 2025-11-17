@@ -6177,6 +6177,7 @@
       "placeholder-search-for": "Search for...",
       "radio-options": {
         "label": {
+          "all-visualizations": "All visualizations",
           "suggestions": "Suggestions",
           "visualizations": "Visualizations"
         }

@@ -6,7 +6,7 @@ import { useLocalStorage } from 'react-use';
 import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Button, Field, FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
@@ -76,7 +76,9 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
 
   const radioOptions: Array<SelectableValue<VisualizationSelectPaneTab>> = [
     {
-      label: t('dashboard-scene.panel-viz-type-picker.radio-options.label.visualizations', 'Visualizations'),
+      label: config.featureToggles.newVizSuggestions
+        ? t('dashboard-scene.panel-viz-type-picker.radio-options.label.all-visualizations', 'All visualizations')
+        : t('dashboard-scene.panel-viz-type-picker.radio-options.label.visualizations', 'Visualizations'),
       value: VisualizationSelectPaneTab.Visualizations,
     },
     {
