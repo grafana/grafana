@@ -220,6 +220,16 @@
           }
 
           const resp = await fetch(bootDataUrl);
+
+          // manual redirect for custom domains
+          // see pkg/middleware/validate_host.go
+          if (resp.status === 204) {
+            const redirectDomain = resp.headers.get('Redirect-Domain');
+            if (redirectDomain) {
+              window.location.hostname = redirectDomain;
+              return;
+            }
+          }
           const textResponse = await resp.text();
 
           let rawBootData;
@@ -278,16 +288,21 @@
             user: [[.DefaultUser]],
           }
 
-          // tenant-specific config
-          // TODO split this into separate API calls
+          // Preserve a mix of values from the initial boot data, and from the backend
+          // - nav tree and user info come from the backend
+          // - merge settings from both. FS settings contains less values
+          // - build info edition comes from the backend
           const { navTree, settings, user } = await loadBootData();
 
           window.grafanaBootData.settings = {
             ...settings,
-            ...window.grafanaBootData.settings, // preserve frontend-service settings
+            ...window.grafanaBootData.settings,
           }
           window.grafanaBootData.navTree = navTree;
           window.grafanaBootData.user = user;
+          if (settings?.buildInfo?.edition) {
+            window.grafanaBootData.settings.buildInfo.edition = settings.buildInfo.edition;
+          }
 
           // The per-theme CSS still contains some global styles needed
           // to render the page correctly.

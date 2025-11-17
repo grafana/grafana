@@ -33,6 +33,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	authtypes "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -472,16 +473,36 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 
 	if v.IsNil() {
-		v.Set(reflect.MakeSlice(v.Type(), 0, 0))
+		v.Set(reflect.MakeSlice(v.Type(), 0, len(rsp.Items)))
 	}
 
-	for _, item := range rsp.Items {
+	// Pre-allocate results slice to preserve order and avoid race conditions.
+	// Each goroutine writes to its own index, no mutex needed.
+	type resultSlot struct {
+		obj          runtime.Object
+		shouldAppend bool
+	}
+	results := make([]resultSlot, len(rsp.Items))
+
+	// Concurrently process items as some may be large and take a while to process.
+	err = concurrency.ForEachJob(ctx, len(rsp.Items), 10, func(ctx context.Context, idx int) error {
+		item := rsp.Items[idx]
 		obj, shouldAppend, err := s.processItem(ctx, item, opts, predicate)
 		if err != nil {
 			return err
 		}
 		if shouldAppend {
-			v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
+			results[idx] = resultSlot{obj: obj, shouldAppend: true}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, r := range results {
+		if r.shouldAppend {
+			v.Set(reflect.Append(v, reflect.ValueOf(r.obj).Elem()))
 		}
 	}
 
