@@ -216,13 +216,13 @@ require (
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v2 v2.4.0 // @grafana/alerting-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
-	k8s.io/api v0.34.1 // @grafana/grafana-app-platform-squad
-	k8s.io/apimachinery v0.34.1 // @grafana/grafana-app-platform-squad
-	k8s.io/apiserver v0.34.1 // @grafana/grafana-app-platform-squad
-	k8s.io/client-go v0.34.1 // @grafana/grafana-app-platform-squad
-	k8s.io/component-base v0.34.1 // @grafana/grafana-app-platform-squad
+	k8s.io/api v0.34.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.34.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apiserver v0.34.2 // @grafana/grafana-app-platform-squad
+	k8s.io/client-go v0.34.2 // @grafana/grafana-app-platform-squad
+	k8s.io/component-base v0.34.2 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.130.1 // @grafana/grafana-app-platform-squad
-	k8s.io/kube-aggregator v0.34.1 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-aggregator v0.34.2 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912 // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // @grafana/partner-datasources
 	modernc.org/sqlite v1.39.1 // @grafana/grafana-backend-group
@@ -645,8 +645,8 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/src-d/go-errors.v1 v1.0.0 // indirect
 	gopkg.in/telebot.v3 v3.3.8 // indirect
-	k8s.io/apiextensions-apiserver v0.34.1 // indirect
-	k8s.io/kms v0.34.1 // indirect
+	k8s.io/apiextensions-apiserver v0.34.2 // indirect
+	k8s.io/kms v0.34.2 // indirect
 	modernc.org/libc v1.66.10 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
