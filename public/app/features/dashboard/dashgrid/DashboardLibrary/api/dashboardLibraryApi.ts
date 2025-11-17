@@ -71,7 +71,7 @@ export async function fetchCommunityDashboards(
 
   // Grafana.com API returns format: { page: number, pages: number, items: GnetDashboard[] }
   // We normalize it to use "dashboards" instead of "items" for consistency
-  if (result) {
+  if (result && Array.isArray(result.items)) {
     return {
       page: result.page || params.page,
       pages: result.pages || 1,
