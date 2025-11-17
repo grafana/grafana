@@ -6,7 +6,7 @@ import {
   CommandPaletteDynamicResultAction,
   PluginExtensionCommandPaletteContext,
 } from '@grafana/data';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
 import { commandPaletteDynamicRegistry } from '../../plugins/extensions/registry/setup';

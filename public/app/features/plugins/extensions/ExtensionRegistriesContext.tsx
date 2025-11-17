@@ -17,9 +17,7 @@ export const AddedLinksRegistryContext = createContext<AddedLinksRegistry | unde
 export const AddedComponentsRegistryContext = createContext<AddedComponentsRegistry | undefined>(undefined);
 export const AddedFunctionsRegistryContext = createContext<AddedFunctionsRegistry | undefined>(undefined);
 export const ExposedComponentsRegistryContext = createContext<ExposedComponentsRegistry | undefined>(undefined);
-export const CommandPaletteDynamicRegistryContext = createContext<CommandPaletteDynamicRegistry | undefined>(
-  undefined
-);
+export const CommandPaletteDynamicRegistryContext = createContext<CommandPaletteDynamicRegistry | undefined>(undefined);
 
 export function useAddedLinksRegistry(): AddedLinksRegistry {
   const context = useContext(AddedLinksRegistryContext);
