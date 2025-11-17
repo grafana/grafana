@@ -381,6 +381,7 @@ export function PanelChrome({
       )}
 
       {hasHeader && (
+        /* eslint-disable react/no-unknown-property */
         <div
           className={cx(styles.headerContainer, dragClass)}
           style={headerStyles}
@@ -389,6 +390,8 @@ export function PanelChrome({
           onMouseEnter={isSelectable ? onHeaderEnter : undefined}
           onMouseLeave={isSelectable ? onHeaderLeave : undefined}
           onPointerUp={onPointerUp}
+          draggable={true}
+          unselectable="on"
         >
           {statusMessage && (
             <div className={dragClassCancel}>
