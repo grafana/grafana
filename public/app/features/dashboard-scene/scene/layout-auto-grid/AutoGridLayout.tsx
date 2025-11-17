@@ -136,9 +136,6 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
       return;
     }
 
-    evt.preventDefault();
-    evt.stopPropagation();
-
     if (!(gridItem instanceof AutoGridItem)) {
       throw new Error('Dragging wrong item');
     }
