@@ -8,7 +8,9 @@ name: "CodeQL checks"
 on:
   workflow_dispatch:
   push:
-    branches: ['**'] # run on all branches
+    branches:
+      - main
+      - release-*.*.*
     paths-ignore:
       - '**/*.cue'
       - '**/*.json'
