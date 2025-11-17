@@ -35,6 +35,7 @@ export const LOG_LINE_BODY_FIELD_NAME = '___LOG_LINE_BODY___';
 export const TABLE_TIME_FIELD_NAME = 'Time';
 export const TABLE_LINE_FIELD_NAME = 'Line';
 export const TABLE_DETECTED_LEVEL_FIELD_NAME = 'detected_level';
+export const TABLE_LEVEL_FIELD_NAME = 'level';
 
 export const LogDetailsBody = (props: Props) => {
   const showField = () => {

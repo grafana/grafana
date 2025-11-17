@@ -27,9 +27,14 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
-import { LOG_LINE_BODY_FIELD_NAME, TABLE_TIME_FIELD_NAME, TABLE_DETECTED_LEVEL_FIELD_NAME } from '../LogDetailsBody';
+import {
+  LOG_LINE_BODY_FIELD_NAME,
+  TABLE_TIME_FIELD_NAME,
+  TABLE_DETECTED_LEVEL_FIELD_NAME,
+  TABLE_LEVEL_FIELD_NAME,
+} from '../LogDetailsBody';
 import { getFieldSelectorState } from '../fieldSelector/FieldSelector';
-import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME, getDisplayedFieldsForLogs } from '../otel/formats';
+import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { getDefaultDetailsMode, getDetailsWidth } from './LogDetailsContext';
 import { LogLineTimestampResolution } from './LogLine';
@@ -121,11 +126,23 @@ export const useLogIsPermalinked = (log: LogListModel) => {
 
 /**
  * Get default table fields.
- * Always returns the table field constants: Time and detected_level (excluding Line).
+ * Always returns Time, and detected_level if it exists in the logs (excluding Line).
  */
 function getTableDefaultFields(logs: LogRowModel[]): string[] {
-  // Always return the table field constants (Time and detected_level, excluding Line)
-  return [TABLE_TIME_FIELD_NAME, TABLE_DETECTED_LEVEL_FIELD_NAME];
+  const fields: string[] = [TABLE_TIME_FIELD_NAME];
+
+  // Check if detected_level exists in any log's labels, fall back to level if not found
+  const hasDetectedLevel = logs.some((log) => log.labels?.[TABLE_DETECTED_LEVEL_FIELD_NAME] !== undefined);
+  const hasLevel = !hasDetectedLevel && logs.some((log) => log.labels?.[TABLE_LEVEL_FIELD_NAME] !== undefined);
+
+  if (hasDetectedLevel) {
+    fields.push(TABLE_DETECTED_LEVEL_FIELD_NAME);
+  } else if (hasLevel) {
+    // Fall back to level if detected_level is not present
+    fields.push(TABLE_LEVEL_FIELD_NAME);
+  }
+
+  return fields;
 }
 
 export type LogListState = Pick<
@@ -273,11 +290,14 @@ export const LogListContextProvider = ({
   }, []);
 
   const otelDisplayedFields = useMemo(() => {
-    if (!config.featureToggles.otelLogsFormatting || !setDisplayedFields || showLogAttributes === false) {
+    if (!config.featureToggles.otelLogsFormatting) {
+      return [];
+    }
+    if (showLogAttributes === false) {
       return [];
     }
     return getDisplayedFieldsForLogs(logs);
-  }, [logs, setDisplayedFields, showLogAttributes]);
+  }, [logs, showLogAttributes]);
 
   // Get table default fields
   const tableDefaultFields = useMemo(() => {
@@ -287,34 +307,10 @@ export const LogListContextProvider = ({
   // Combine table defaults with OTel defaults in specific order:
   // ['Time', 'detected_level', '___LOG_LINE_BODY___', '___OTEL_LOG_ATTRIBUTES___']
   const defaultDisplayedFields = useMemo(() => {
-    const orderedFields: string[] = [];
-
-    // 1. Add Time from table defaults
-    if (tableDefaultFields.includes(TABLE_TIME_FIELD_NAME)) {
-      orderedFields.push(TABLE_TIME_FIELD_NAME);
-    }
-
-    // 2. Add detected_level from table defaults
-    if (tableDefaultFields.includes(TABLE_DETECTED_LEVEL_FIELD_NAME)) {
-      orderedFields.push(TABLE_DETECTED_LEVEL_FIELD_NAME);
-    }
-
-    // 3. Always add LOG_LINE_BODY
+    const orderedFields: string[] = tableDefaultFields;
+    // Always add LOG_LINE_BODY
     orderedFields.push(LOG_LINE_BODY_FIELD_NAME);
-
-    // 4. Always add OTEL_LOG_ATTRIBUTES
-    orderedFields.push(OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME);
-
-    // 5. Add any other OTel fields that aren't already included
-    otelDisplayedFields.forEach((field) => {
-      if (
-        field !== LOG_LINE_BODY_FIELD_NAME &&
-        field !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME &&
-        !orderedFields.includes(field)
-      ) {
-        orderedFields.push(field);
-      }
-    });
+    orderedFields.push(...otelDisplayedFields);
 
     return orderedFields;
   }, [tableDefaultFields, otelDisplayedFields]);

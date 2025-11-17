@@ -84,7 +84,7 @@ describe('LogsTableWrap', () => {
     await waitFor(() => {
       expect(updatePanelState).toBeCalledWith({
         visualisationType: 'table',
-        columns: { 0: 'app', 1: 'Line', 2: 'Time' },
+        displayedFields: ['app', '___LOG_LINE_BODY___', 'Time'],
         labelFieldName: 'labels',
       });
     });
@@ -97,7 +97,7 @@ describe('LogsTableWrap', () => {
     await waitFor(() => {
       expect(updatePanelState).toBeCalledWith({
         visualisationType: 'table',
-        columns: { 0: 'Line', 1: 'Time' },
+        displayedFields: ['___LOG_LINE_BODY___', 'Time'],
         labelFieldName: 'labels',
       });
     });
