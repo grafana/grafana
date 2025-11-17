@@ -66,8 +66,10 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
   }, []);
 
   const handleSqlTransformationClick = () => {
-    reportInteraction('grafana_panel_transformations_sql_transformation_clicked', {
-      location: 'empty_transformations_placeholder',
+    reportInteraction('dashboards_expression_interaction', {
+      action: 'add_expression',
+      expression_type: 'sql',
+      context: 'empty_transformations_placeholder',
     });
     props.onGoToQueries?.();
   };
@@ -75,14 +77,14 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
   const handleTransformationClick = (transformationId: string) => {
     reportInteraction('grafana_panel_transformations_clicked', {
       type: transformationId,
-      location: 'empty_transformations_placeholder',
+      context: 'empty_transformations_placeholder',
     });
     props.onAddTransformation?.(transformationId);
   };
 
   const handleShowMoreClick = () => {
     reportInteraction('grafana_panel_transformations_show_more_clicked', {
-      location: 'empty_transformations_placeholder',
+      context: 'empty_transformations_placeholder',
     });
     props.onShowPicker();
   };
