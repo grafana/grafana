@@ -59,6 +59,7 @@ func (sp *dashboardAndFolderMigration) Exec(sess *xorm.Session, mg *migrator.Mig
 		logger.Info("Migrating organization", "org_id", org.ID, "org_name", org.Name, "namespace", namespace)
 
 		if err := storageMigrator.executeMigration(ctx, sess, mg, namespace); err != nil {
+			logger.Error("migration failed for organization", "org_id", org.ID, "org_name", org.Name, "error", err)
 			return fmt.Errorf("migration failed for org %d (%s): %w", org.ID, org.Name, err)
 		}
 	}

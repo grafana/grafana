@@ -57,7 +57,6 @@ func ProvideUnifiedStorageClient(opts *Options,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 ) (resource.ResourceClient, error) {
-	// See: apiserver.applyAPIServerConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
 		StorageType:             options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),

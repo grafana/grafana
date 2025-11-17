@@ -16,6 +16,10 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/migrations")
 
+// MigrationService is a dummy service that ensures migrations are registered
+// in the Wire dependency graph
+type MigrationService struct{}
+
 // ProvideMigrations is a Wire provider that creates and runs unified storage migrations.
 // This function blocks Grafana startup until migrations complete. If migrations fail,
 // Grafana will not start, ensuring data consistency.
@@ -31,10 +35,6 @@ func ProvideMigrations(
 	}
 	return &MigrationService{}, nil
 }
-
-// MigrationService is a dummy service that ensures migrations are registered
-// in the Wire dependency graph
-type MigrationService struct{}
 
 // RegisterMigrations initializes and registers all unified storage migrations.
 // This function is the entry point for all data migrations from legacy storage
