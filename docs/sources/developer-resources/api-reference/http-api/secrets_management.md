@@ -113,7 +113,7 @@ Content-Length: 343
 Status Codes:
 
 - **201** – Created
-- **400** – Errors (invalid json, missing or invalid fields, etc)
+- **400** – Errors (invalid JSON, missing or invalid fields, etc)
 - **401** – Unauthorized
 - **403** – Access denied
 - **409** – Conflict (secure value with the same name already exists)
@@ -329,7 +329,7 @@ Content-Length: 282
 Status Codes:
 
 - **200** – OK
-- **400** – Errors (invalid json, missing or invalid fields, etc)
+- **400** – Errors (invalid JSON, missing or invalid fields, etc)
 - **401** – Unauthorized
 - **403** – Access denied
 - **404** – Not found
