@@ -179,6 +179,11 @@ export class QueryEditorRows extends PureComponent<Props, { focusedQueryRefId: s
     this.props.onFocusQuery?.(Boolean(refId));
   };
 
+  toggleFocusedQuery = (refId: string) => {
+    const newFocusedRefId = this.state.focusedQueryRefId === refId ? null : refId;
+    this.setFocusedQueryRefId(newFocusedRefId);
+  };
+
   render() {
     const {
       dsSettings,
@@ -252,9 +257,7 @@ export class QueryEditorRows extends PureComponent<Props, { focusedQueryRefId: s
                       onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
                       isOpen={isOpen}
                       isFocused={focusedQueryRefId === query.refId}
-                      onFocusQuery={() =>
-                        this.setFocusedQueryRefId(focusedQueryRefId === query.refId ? null : query.refId)
-                      }
+                      onFocusQuery={() => this.toggleFocusedQuery(query.refId)}
                     />
                   );
 

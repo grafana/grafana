@@ -24,7 +24,7 @@ export interface QueryOperationRowProps {
   collapsable?: boolean;
   disabled?: boolean;
   expanderMessages?: ExpanderMessages;
-  isFocused?: boolean;
+  highlight?: boolean;
 }
 
 export type QueryOperationRowRenderProp = ((props: QueryOperationRowRenderProps) => React.ReactNode) | React.ReactNode;
@@ -49,7 +49,7 @@ export function QueryOperationRow({
   index,
   id,
   expanderMessages,
-  isFocused = false,
+  highlight = false,
 }: QueryOperationRowProps) {
   const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
   const styles = useStyles2(getQueryOperationRowStyles);
@@ -129,7 +129,7 @@ export function QueryOperationRow({
                     reportDragMousePosition={reportDragMousePosition}
                     title={title}
                     expanderMessages={expanderMessages}
-                    isFocused={isFocused}
+                    highlight={highlight}
                   />
                 </div>
                 {isContentVisible && <div className={styles.content}>{children}</div>}
@@ -155,7 +155,7 @@ export function QueryOperationRow({
         reportDragMousePosition={reportDragMousePosition}
         title={title}
         expanderMessages={expanderMessages}
-        isFocused={isFocused}
+        highlight={highlight}
       />
       {isContentVisible && <div className={styles.content}>{children}</div>}
     </div>

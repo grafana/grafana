@@ -23,7 +23,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Badge, Button, Dropdown, ErrorBoundaryAlert, Icon, List, Menu, Stack, Text, TextLink } from '@grafana/ui';
+import { Badge, Button, Dropdown, ErrorBoundaryAlert, Icon, List, Menu, Stack, Text } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -393,44 +393,15 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return extraActions;
   };
 
-  renderActions = (props: QueryOperationRowRenderProps) => {
-    const {
-      query,
-      hideHideQueryButton: hideHideQueryButton = false,
-      queryLibraryRef,
-      app,
-      isFocused,
-      onFocusQuery,
-    } = this.props;
+  buildMenuItems = (): ReactNode[] => {
+    const { isFocused, onFocusQuery } = this.props;
     const { datasource, showingHelp } = this.state;
-    const isHidden = !!query.hide;
-
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
-    const isEditingQueryLibrary = queryLibraryRef !== undefined;
-    const isUnifiedAlerting = app === CoreApp.UnifiedAlerting;
-    const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
+    const isEditingQueryLibrary = this.props.queryLibraryRef !== undefined;
 
-    // Build menu items for the actions dropdown
-    const menuItems: ReactNode[] = [];
-
-    // Saved query buttons (if applicable) - keep separate as it returns complex ReactNode
-    const savedQueryButtons =
-      !isEditingQueryLibrary && !isUnifiedAlerting && !isExpressionQuery ? (
-        <SavedQueryButtons
-          query={{
-            ...query,
-            datasource: datasource ? { uid: datasource.uid, type: datasource.type } : query.datasource,
-          }}
-          app={app}
-          onUpdateSuccess={this.onExitQueryLibraryEditingMode}
-          onSelectQuery={this.onSelectQueryFromLibrary}
-          datasourceFilters={datasource?.name ? [datasource.name] : []}
-        />
-      ) : null;
-
-    // Data source help (toggle action)
-    if (hasEditorHelp) {
-      menuItems.push(
+    return [
+      // Data source help
+      hasEditorHelp && (
         <Menu.Item
           key="datasource-help"
           label={
@@ -442,24 +413,18 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           onClick={this.onToggleHelp}
           active={showingHelp}
         />
-      );
-    }
-
-    // Duplicate query
-    if (!isEditingQueryLibrary) {
-      menuItems.push(
+      ),
+      // Duplicate query
+      !isEditingQueryLibrary && (
         <Menu.Item
           key="duplicate-query"
           label={t('query-operation.header.duplicate-query', 'Duplicate query')}
           icon="copy"
           onClick={this.onCopyQuery}
         />
-      );
-    }
-
-    // Focus query
-    if (onFocusQuery) {
-      menuItems.push(
+      ),
+      // Focus query
+      onFocusQuery && (
         <Menu.Item
           key="focus-query"
           label={
@@ -472,11 +437,44 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           active={Boolean(isFocused)}
           testId={selectors.components.QueryEditorRow.actionButton('Focus query')}
         />
-      );
+      ),
+    ].filter((item): item is JSX.Element => Boolean(item));
+  };
+
+  renderSavedQueryButtons = (): ReactNode => {
+    const { query, app, queryLibraryRef } = this.props;
+    const { datasource } = this.state;
+    const isUnifiedAlerting = app === CoreApp.UnifiedAlerting;
+    const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
+    const isEditingQueryLibrary = queryLibraryRef !== undefined;
+
+    if (isEditingQueryLibrary || isUnifiedAlerting || isExpressionQuery) {
+      return null;
     }
 
-    // Extra actions (warnings, badges, etc.) - keep separate as they return complex ReactNodes
+    return (
+      <SavedQueryButtons
+        query={{
+          ...query,
+          datasource: datasource ? { uid: datasource.uid, type: datasource.type } : query.datasource,
+        }}
+        app={app}
+        onUpdateSuccess={this.onExitQueryLibraryEditingMode}
+        onSelectQuery={this.onSelectQueryFromLibrary}
+        datasourceFilters={datasource?.name ? [datasource.name] : []}
+      />
+    );
+  };
+
+  renderActions = () => {
+    const { query, hideHideQueryButton = false, queryLibraryRef } = this.props;
+    const isHidden = !!query.hide;
+    const isEditingQueryLibrary = queryLibraryRef !== undefined;
+
+    // Build all action components
+    const savedQueryButtons = this.renderSavedQueryButtons();
     const extraActions = this.renderExtraActions();
+    const menuItems = this.buildMenuItems();
 
     // Only render dropdown if there are menu items
     const actionsDropdown =
@@ -496,7 +494,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       <>
         {savedQueryButtons}
         {extraActions}
-        {!hideHideQueryButton ? (
+        {!hideHideQueryButton && (
           <QueryOperationToggleAction
             dataTestId={selectors.components.QueryEditorRow.actionButton('Hide response')}
             title={
@@ -508,7 +506,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             active={isHidden}
             onClick={this.onHideQuery}
           />
-        ) : null}
+        )}
         {!isEditingQueryLibrary && (
           <QueryOperationAction
             title={t('query-operation.header.remove-query', 'Remove query')}
@@ -586,7 +584,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         actions={hideActionButtons ? undefined : this.renderActions}
         isOpen={isOpen}
         onOpen={onQueryOpenChanged}
-        isFocused={isFocused}
+        highlight={isFocused}
       >
         <div className={rowClasses} id={this.id}>
           <ErrorBoundaryAlert boundaryName="query-editor-operation-row">

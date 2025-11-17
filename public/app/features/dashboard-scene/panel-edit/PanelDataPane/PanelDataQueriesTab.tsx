@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useState } from 'react';
 
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -47,6 +46,7 @@ interface PanelDataQueriesTabState extends SceneObjectState {
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
   panelRef: SceneObjectRef<VizPanel>;
+  hasFocusedQuery?: boolean;
 }
 export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabState> implements PanelDataPaneTab {
   static Component = PanelDataQueriesTabRendered;
@@ -251,6 +251,10 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     this.queryRunner.runQueries();
   };
 
+  public onFocusQuery = (hasFocusedQuery: boolean) => {
+    this.setState({ hasFocusedQuery });
+  };
+
   public getQueries() {
     return this.queryRunner.state.queries;
   }
@@ -336,19 +340,15 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 }
 
 export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
-  const { datasource, dsSettings } = model.useState();
+  const { datasource, dsSettings, hasFocusedQuery } = model.useState();
   const { data, queries } = model.queryRunner.useState();
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
-  const [hasFocusedQuery, setHasFocusedQuery] = useState(false);
   const styles = useStyles2(getStyles);
 
   if (!datasource || !dsSettings || !data) {
     return null;
   }
 
-  const showAddButton = !isSharedDashboardQuery(dsSettings.name) && !hasFocusedQuery;
-  const showExpressionButton =
-    config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && !hasFocusedQuery;
   const onSelectQueryFromLibrary = async (query: DataQuery) => {
     // ensure all queries explicitly define a datasource
     const enrichedQueries = queries.map((q) =>
@@ -374,6 +374,10 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
     }
   };
 
+  const canAddQueries = !isSharedDashboardQuery(dsSettings.name);
+  const canAddExpressions = config.expressionsEnabled && model.isExpressionsSupported(dsSettings);
+  const showActionButtons = !hasFocusedQuery;
+
   return (
     <div
       data-testid={selectors.components.QueryTab.content}
@@ -396,52 +400,54 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         queries={queries}
         dsSettings={dsSettings}
         onAddQuery={model.onAddQuery}
-        onFocusQuery={setHasFocusedQuery}
+        onFocusQuery={model.onFocusQuery}
         onQueriesChange={model.onQueriesChange}
         onRunQueries={model.onRunQueries}
         onUpdateDatasources={queryLibraryEnabled ? model.updateDatasourceIfNeeded : undefined}
         app={CoreApp.PanelEditor}
       />
 
-      <Stack gap={2}>
-        {showAddButton && (
-          <>
-            <Button
-              icon="plus"
-              onClick={model.addQueryClick}
-              variant="secondary"
-              data-testid={selectors.components.QueryTab.addQuery}
-            >
-              <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.add-query">Add query</Trans>
-            </Button>
-            {queryLibraryEnabled && (
+      {showActionButtons && (
+        <Stack gap={2}>
+          {canAddQueries && (
+            <>
               <Button
                 icon="plus"
-                onClick={() =>
-                  openQueryLibraryDrawer({
-                    onSelectQuery: onSelectQueryFromLibrary,
-                    options: {
-                      context: CoreApp.PanelEditor,
-                    },
-                  })
-                }
+                onClick={model.addQueryClick}
                 variant="secondary"
-                data-testid={selectors.components.QueryTab.addQueryFromLibrary}
+                data-testid={selectors.components.QueryTab.addQuery}
               >
-                <Trans i18nKey={'dashboards.panel-queries.add-from-saved-queries'}>Add from saved queries</Trans>
+                <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.add-query">Add query</Trans>
               </Button>
-            )}
-          </>
-        )}
-        {showExpressionButton && (
-          <ExpressionTypeDropdown handleOnSelect={model.onAddExpressionOfType}>
-            <Button icon="plus" variant="secondary" data-testid={selectors.components.QueryTab.addExpression}>
-              <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.expression">Expression&nbsp;</Trans>
-            </Button>
-          </ExpressionTypeDropdown>
-        )}
-        {model.renderExtraActions()}
-      </Stack>
+              {queryLibraryEnabled && (
+                <Button
+                  icon="plus"
+                  onClick={() =>
+                    openQueryLibraryDrawer({
+                      onSelectQuery: onSelectQueryFromLibrary,
+                      options: {
+                        context: CoreApp.PanelEditor,
+                      },
+                    })
+                  }
+                  variant="secondary"
+                  data-testid={selectors.components.QueryTab.addQueryFromLibrary}
+                >
+                  <Trans i18nKey={'dashboards.panel-queries.add-from-saved-queries'}>Add from saved queries</Trans>
+                </Button>
+              )}
+            </>
+          )}
+          {canAddExpressions && (
+            <ExpressionTypeDropdown handleOnSelect={model.onAddExpressionOfType}>
+              <Button icon="plus" variant="secondary" data-testid={selectors.components.QueryTab.addExpression}>
+                <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.expression">Expression&nbsp;</Trans>
+              </Button>
+            </ExpressionTypeDropdown>
+          )}
+          {model.renderExtraActions()}
+        </Stack>
+      )}
     </div>
   );
 }
