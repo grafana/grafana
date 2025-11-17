@@ -11368,14 +11368,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@welldone-software/why-did-you-render@npm:8.0.3":
-  version: 8.0.3
-  resolution: "@welldone-software/why-did-you-render@npm:8.0.3"
+"@welldone-software/why-did-you-render@npm:10.0.1":
+  version: 10.0.1
+  resolution: "@welldone-software/why-did-you-render@npm:10.0.1"
   dependencies:
     lodash: "npm:^4"
   peerDependencies:
-    react: ^18
-  checksum: 10/691f8aa87d312af393a50e2ff12497ab44a6ecbdcfb9e57e88ccc2a41c197243b61969aa8960d5e112d406d0c1de74505ddd559225e282926e166f691c3c86fb
+    react: ^19
+  checksum: 10/da37a677b7e275bf5b4b615cd45bd23c83125d04c9a292b8af5920837d5c65ebf63c8229ff963feb038787938e024dc6d3cfa6c3277e68e24b8b066292453117
   languageName: node
   linkType: hard
 
@@ -18984,7 +18984,7 @@ __metadata:
     "@visx/group": "npm:3.12.0"
     "@visx/shape": "npm:3.12.0"
     "@visx/tooltip": "npm:3.12.0"
-    "@welldone-software/why-did-you-render": "npm:8.0.3"
+    "@welldone-software/why-did-you-render": "npm:10.0.1"
     ansicolor: "npm:2.0.3"
     autoprefixer: "npm:10.4.21"
     babel-loader: "npm:10.0.0"
