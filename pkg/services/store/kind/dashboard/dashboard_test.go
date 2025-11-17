@@ -55,6 +55,7 @@ func dsLookupForTests() DatasourceLookup {
 
 func TestReadDashboard(t *testing.T) {
 	inputs := []string{
+		"absolute-garbage",
 		"check-string-datasource-id",
 		"all-panels",
 		"panel-graph/graph-shared-tooltips",

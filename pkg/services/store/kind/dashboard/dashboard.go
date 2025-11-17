@@ -8,10 +8,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-func logf(format string, a ...any) {
-	//fmt.Printf(format, a...)
-}
-
 type templateVariable struct {
 	current struct {
 		value any
@@ -48,7 +44,7 @@ func (d *datasourceVariableLookup) getDsRefsByTemplateVariableValue(value string
 	case "No data sources found":
 		return []DataSourceRef{}
 	default:
-		// some variables use `ds.name` rather `ds.uid`
+		// some variables use `ds.name` rather than `ds.uid`
 		if ref := d.dsLookup.ByRef(&DataSourceRef{
 			UID: value,
 		}); ref != nil {
@@ -134,23 +130,39 @@ func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*Dashb
 		switch l1Field {
 		// k8s metadata wrappers (skip)
 		case "metadata", "kind", "apiVersion":
-			_ = iter.Read()
+			iter.Skip()
 
 		// recursively read the spec as dashboard json
 		case "spec":
 			return readDashboardIter(iter, lookup)
 
 		case "id":
-			dash.ID = iter.ReadInt64()
+			if iter.WhatIsNext() == jsoniter.NumberValue {
+				dash.ID = iter.ReadInt64()
+			} else {
+				iter.Skip()
+			}
 
 		case "uid":
-			iter.ReadString()
+			if iter.WhatIsNext() == jsoniter.StringValue {
+				iter.ReadString()
+			} else {
+				iter.Skip()
+			}
 
 		case "title":
-			dash.Title = iter.ReadString()
+			if iter.WhatIsNext() == jsoniter.StringValue {
+				dash.Title = iter.ReadString()
+			} else {
+				iter.Skip()
+			}
 
 		case "description":
-			dash.Description = iter.ReadString()
+			if iter.WhatIsNext() == jsoniter.StringValue {
+				dash.Description = iter.ReadString()
+			} else {
+				iter.Skip()
+			}
 
 		case "schemaVersion":
 			switch iter.WhatIsNext() {
@@ -164,8 +176,13 @@ func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*Dashb
 			default:
 				iter.Skip()
 			}
+
 		case "timezone":
-			dash.TimeZone = iter.ReadString()
+			if iter.WhatIsNext() == jsoniter.StringValue {
+				dash.TimeZone = iter.ReadString()
+			} else {
+				iter.Skip()
+			}
 
 		case "editable":
 			switch iter.WhatIsNext() {
@@ -178,8 +195,7 @@ func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*Dashb
 			}
 
 		case "refresh":
-			nxt := iter.WhatIsNext()
-			if nxt == jsoniter.StringValue {
+			if iter.WhatIsNext() == jsoniter.StringValue {
 				dash.Refresh = iter.ReadString()
 			} else {
 				iter.Skip()
@@ -198,53 +214,39 @@ func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*Dashb
 			}
 
 		case "links":
-			for iter.ReadArray() {
+			if iter.WhatIsNext() == jsoniter.ArrayValue {
+				for iter.ReadArray() {
+					iter.Skip()
+					dash.LinkCount++
+				}
+			} else {
 				iter.Skip()
-				dash.LinkCount++
 			}
 
 		case "time":
-			obj, ok := iter.Read().(map[string]any)
-			if ok {
-				if timeFrom, ok := obj["from"].(string); ok {
-					dash.TimeFrom = timeFrom
-				}
-				if timeTo, ok := obj["to"].(string); ok {
-					dash.TimeTo = timeTo
-				}
-			}
-		case "panels":
-			for iter.ReadArray() {
-				dash.Panels = append(dash.Panels, readpanelInfo(iter, lookup))
-			}
-
-		case "rows":
-			for iter.ReadArray() {
-				v := iter.Read()
-				logf("[DASHBOARD.ROW???] id=%s // %v\n", dash.ID, v)
-			}
-
-		case "annotations":
-			switch iter.WhatIsNext() {
-			case jsoniter.ArrayValue:
-				// dashboards v2 is an array
-				for iter.ReadArray() {
-					v := iter.Read()
-					logf("[dash.anno] %v\n", v)
-				}
-			case jsoniter.ObjectValue:
-				// dashboards v0/v1 are an object
-				for sub := iter.ReadObject(); sub != ""; sub = iter.ReadObject() {
-					if sub == "list" {
-						for iter.ReadArray() {
-							v := iter.Read()
-							logf("[dash.anno] %v\n", v)
-						}
-					} else {
-						iter.Skip()
+			if iter.WhatIsNext() == jsoniter.ObjectValue {
+				obj, ok := iter.Read().(map[string]any)
+				if ok {
+					if timeFrom, ok := obj["from"].(string); ok {
+						dash.TimeFrom = timeFrom
+					}
+					if timeTo, ok := obj["to"].(string); ok {
+						dash.TimeTo = timeTo
 					}
 				}
-			default:
+			} else {
+				iter.Skip()
+			}
+
+		case "panels":
+			if iter.WhatIsNext() == jsoniter.ArrayValue {
+				for iter.ReadArray() {
+					p, ok := readpanelInfo(iter, lookup)
+					if ok {
+						dash.Panels = append(dash.Panels, p)
+					}
+				}
+			} else {
 				iter.Skip()
 			}
 
@@ -252,22 +254,41 @@ func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*Dashb
 			for sub := iter.ReadObject(); sub != ""; sub = iter.ReadObject() {
 				if sub == "list" {
 					for iter.ReadArray() {
-						templateVariable := templateVariable{}
+						tv := templateVariable{}
+
+						if iter.WhatIsNext() != jsoniter.ObjectValue {
+							iter.Skip()
+							continue
+						}
 
 						for k := iter.ReadObject(); k != ""; k = iter.ReadObject() {
 							switch k {
 							case "name":
+								if iter.WhatIsNext() != jsoniter.StringValue {
+									iter.Skip()
+									continue
+								}
+
 								name := iter.ReadString()
 								dash.TemplateVars = append(dash.TemplateVars, name)
-								templateVariable.name = name
+								tv.name = name
 							case "type":
-								templateVariable.variableType = iter.ReadString()
+								if iter.WhatIsNext() != jsoniter.StringValue {
+									iter.Skip()
+									continue
+								}
+								tv.variableType = iter.ReadString()
 							case "query":
-								templateVariable.query = iter.Read()
+								tv.query = iter.Read()
 							case "current":
+								if iter.WhatIsNext() != jsoniter.ObjectValue {
+									iter.Skip()
+									continue
+								}
+
 								for c := iter.ReadObject(); c != ""; c = iter.ReadObject() {
 									if c == "value" {
-										templateVariable.current.value = iter.Read()
+										tv.current.value = iter.Read()
 									} else {
 										iter.Skip()
 									}
@@ -277,8 +298,8 @@ func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*Dashb
 							}
 						}
 
-						if templateVariable.variableType == "datasource" {
-							datasourceVariablesLookup.add(templateVariable)
+						if tv.variableType == "datasource" {
+							datasourceVariablesLookup.add(tv)
 						}
 					}
 				} else {
@@ -286,17 +307,9 @@ func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*Dashb
 				}
 			}
 
-		// Ignore these properties
-		case "timepicker":
-			fallthrough
-		case "version":
-			fallthrough
-		case "iteration":
-			iter.Skip()
-
+		// Ignore everything else
 		default:
-			v := iter.Read()
-			logf("[DASHBOARD] support key: %s / %v\n", l1Field, v)
+			iter.Skip()
 		}
 	}
 
@@ -407,8 +420,13 @@ func findDatasourceRefsForVariables(dsVariableRefs []DataSourceRef, datasourceVa
 }
 
 // will always return strings for now
-func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) PanelSummaryInfo {
+func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) (PanelSummaryInfo, bool) {
 	panel := PanelSummaryInfo{}
+
+	if iter.WhatIsNext() != jsoniter.ObjectValue {
+		iter.Skip()
+		return panel, false
+	}
 
 	targets := newTargetInfo(lookup)
 
@@ -426,21 +444,46 @@ func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) PanelSummar
 
 		switch l1Field {
 		case "id":
+			if iter.WhatIsNext() != jsoniter.NumberValue {
+				iter.Skip()
+				continue
+			}
 			panel.ID = iter.ReadInt64()
 
 		case "type":
+			if iter.WhatIsNext() != jsoniter.StringValue {
+				iter.Skip()
+				continue
+			}
 			panel.Type = iter.ReadString()
 
 		case "title":
+			if iter.WhatIsNext() != jsoniter.StringValue {
+				iter.Skip()
+				continue
+			}
 			panel.Title = iter.ReadString()
 
 		case "description":
+			if iter.WhatIsNext() != jsoniter.StringValue {
+				iter.Skip()
+				continue
+			}
 			panel.Description = iter.ReadString()
 
 		case "pluginVersion":
+			if iter.WhatIsNext() != jsoniter.StringValue {
+				iter.Skip()
+				continue
+			}
 			panel.PluginVersion = iter.ReadString() // since 7x (the saved version for the plugin model)
 
 		case "libraryPanel":
+			if iter.WhatIsNext() != jsoniter.ObjectValue {
+				iter.Skip()
+				continue
+			}
+
 			var v map[string]interface{}
 			iter.ReadVal(&v)
 			if uid, ok := v["uid"]; ok {
@@ -467,9 +510,19 @@ func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) PanelSummar
 			}
 
 		case "transformations":
+			if iter.WhatIsNext() != jsoniter.ArrayValue {
+				iter.Skip()
+				continue
+			}
+
 			for iter.ReadArray() {
+				if iter.WhatIsNext() != jsoniter.ObjectValue {
+					iter.Skip()
+					continue
+				}
+
 				for sub := iter.ReadObject(); sub != ""; sub = iter.ReadObject() {
-					if sub == "id" {
+					if sub == "id" && iter.WhatIsNext() == jsoniter.StringValue {
 						panel.Transformer = append(panel.Transformer, iter.ReadString())
 					} else {
 						iter.Skip()
@@ -480,25 +533,21 @@ func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) PanelSummar
 		// Rows have nested panels
 		case "panels":
 			for iter.ReadArray() {
-				panel.Collapsed = append(panel.Collapsed, readpanelInfo(iter, lookup))
+				p, ok := readpanelInfo(iter, lookup)
+				if ok {
+					panel.Collapsed = append(panel.Collapsed, p)
+				}
 			}
 
-		case "options":
-			fallthrough
-
-		case "gridPos":
-			fallthrough
-
-		case "fieldConfig":
+		case "options", "gridPos", "fieldConfig":
 			iter.Skip()
 
 		default:
-			v := iter.Read()
-			logf("[PANEL] support key: %s / %v\n", l1Field, v)
+			iter.Skip()
 		}
 	}
 
 	panel.Datasource = targets.GetDatasourceInfo()
 
-	return panel
+	return panel, true
 }

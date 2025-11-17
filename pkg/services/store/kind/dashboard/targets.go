@@ -55,8 +55,7 @@ func (s *targetInfo) addDatasource(iter *jsoniter.Iterator) {
 		}
 
 	default:
-		v := iter.Read()
-		logf("[Panel.datasource.unknown] %v\n", v)
+		iter.Skip()
 	}
 }
 
@@ -67,6 +66,11 @@ func (s *targetInfo) addRef(ref *DataSourceRef) {
 }
 
 func (s *targetInfo) addTarget(iter *jsoniter.Iterator) {
+	if iter.WhatIsNext() != jsoniter.ObjectValue {
+		iter.Skip()
+		return
+	}
+
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		switch l1Field {
 		case "datasource":
@@ -76,8 +80,7 @@ func (s *targetInfo) addTarget(iter *jsoniter.Iterator) {
 			iter.Skip()
 
 		default:
-			v := iter.Read()
-			logf("[Panel.TARGET] %s=%v\n", l1Field, v)
+			iter.Skip()
 		}
 	}
 }
