@@ -34,7 +34,7 @@ if [ ! -z ${GF_AWS_PROFILES+x} ]; then
         secret_key_varname="GF_AWS_${profile}_SECRET_ACCESS_KEY"
         region_varname="GF_AWS_${profile}_REGION"
 
-        if [ ! -z "${!access_key_varname}" -a ! -z "${!secret_key_varname}" ]; then
+        if [ ! -z "${!access_key_varname}" ] && [ ! -z "${!secret_key_varname}" ]; then
             echo "[${profile}]" >> "$GF_PATHS_HOME/.aws/credentials"
             echo "aws_access_key_id = ${!access_key_varname}" >> "$GF_PATHS_HOME/.aws/credentials"
             echo "aws_secret_access_key = ${!secret_key_varname}" >> "$GF_PATHS_HOME/.aws/credentials"
