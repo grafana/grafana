@@ -214,14 +214,15 @@ type HTTPServer struct {
 	oauthTokenService    oauthtoken.OAuthTokenService
 	statsService         stats.Service
 	authnService         authn.Service
-	starApi              *starApi.API
-	promRegister         prometheus.Registerer
-	promGatherer         prometheus.Gatherer
-	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
-	namespacer           request.NamespaceMapper
-	anonService          anonymous.Service
-	userVerifier         user.Verifier
-	tlsCerts             TLSCerts
+	starApi                     *starApi.API
+	promRegister                prometheus.Registerer
+	promGatherer                prometheus.Gatherer
+	clientConfigProvider        grafanaapiserver.DirectRestConfigProvider
+	namespacer                  request.NamespaceMapper
+	anonService                 anonymous.Service
+	userVerifier                user.Verifier
+	tlsCerts                    TLSCerts
+	htmlHandlerRequestsCounter  *prometheus.CounterVec
 }
 
 type TLSCerts struct {
@@ -375,7 +376,15 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,
+		htmlHandlerRequestsCounter: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "grafana",
+			Name:      "html_handler_requests_total",
+			Help:      "Number of requests handled by the index.go HTML handler",
+		}, []string{"handler"}),
 	}
+
+	promRegister.MustRegister(hs.htmlHandlerRequestsCounter)
+
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
 	}
