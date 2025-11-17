@@ -18,7 +18,6 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'onChange'> {
 
 export const FilterInput = forwardRef<HTMLInputElement, Props>(
   ({ value, width, onChange, escapeRegex = true, suffix: _suffix, ...restProps }, ref) => {
-    const containerRef = useRef<HTMLDivElement>(null);
     const innerRef = useRef<HTMLInputElement | null>(null);
     const combinedRef = useCombinedRefs<HTMLInputElement>(ref, innerRef);
 
@@ -43,20 +42,18 @@ export const FilterInput = forwardRef<HTMLInputElement, Props>(
     );
 
     return (
-      <div ref={containerRef}>
-        <Input
-          prefix={<Icon name="search" />}
-          suffix={suffix}
-          width={width}
-          type="text"
-          value={escapeRegex ? unEscapeStringFromRegex(value ?? '') : value}
-          onChange={(event) =>
-            onChange(escapeRegex ? escapeStringForRegex(event.currentTarget.value) : event.currentTarget.value)
-          }
-          {...restProps}
-          ref={combinedRef}
-        />
-      </div>
+      <Input
+        prefix={<Icon name="search" />}
+        suffix={suffix}
+        width={width}
+        type="text"
+        value={escapeRegex ? unEscapeStringFromRegex(value ?? '') : value}
+        onChange={(event) =>
+          onChange(escapeRegex ? escapeStringForRegex(event.currentTarget.value) : event.currentTarget.value)
+        }
+        {...restProps}
+        ref={combinedRef}
+      />
     );
   }
 );
