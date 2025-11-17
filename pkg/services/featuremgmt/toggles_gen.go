@@ -826,10 +826,6 @@ const (
 	// Enables running Infinity queries in parallel
 	FlagInfinityRunQueriesInParallel = "infinityRunQueriesInParallel"
 
-	// FlagInviteUserExperimental
-	// Renders invite user button along the app
-	FlagInviteUserExperimental = "inviteUserExperimental"
-
 	// FlagAlertingMigrationUI
 	// Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
 	FlagAlertingMigrationUI = "alertingMigrationUI"
@@ -1093,10 +1089,6 @@ const (
 	// FlagDashboardTemplates
 	// Enable template dashboards
 	FlagDashboardTemplates = "dashboardTemplates"
-
-	// FlagGrafanaAdvisorAppInstaller
-	// Enables Advisor app installer
-	FlagGrafanaAdvisorAppInstaller = "grafanaAdvisorAppInstaller"
 
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations
