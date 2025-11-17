@@ -93,11 +93,18 @@ export function AlertRuleDrawerForm({
       const dto = formValuesToRulerGrafanaRuleDTO(effectiveValues);
       const groupIdentifier = getRuleGroupLocationFromFormValues(effectiveValues);
       const result = await addRuleToRuleGroup.execute(groupIdentifier, dto, effectiveValues.evaluateEvery);
+
       if (isGrafanaGroupUpdatedResponse(result)) {
         onClose();
         return;
       }
-      notifyApp.error('Failed to create rule', 'The rule was not created. Please review the form and try again.');
+
+      // Check if result has an error message
+      if (result && typeof result === 'object' && 'error' in result) {
+        notifyApp.error('Failed to create rule', String(result.error));
+      } else {
+        notifyApp.error('Failed to create rule', 'Please review the form and try again.');
+      }
     } catch (err) {
       const errorMessage = getMessageFromError(err);
       notifyApp.error('Failed to create rule', errorMessage);
@@ -117,7 +124,7 @@ export function AlertRuleDrawerForm({
         <FormProvider {...methods}>
           <RuleDefinitionSection type={RuleFormType.grafana} />
           <div className={styles.divider} aria-hidden="true" />
-          <RuleConditionSection type={RuleFormType.grafana} />
+          <RuleConditionSection />
           <div className={styles.divider} aria-hidden="true" />
           <RuleNotificationSection />
           <div className={styles.footer}>

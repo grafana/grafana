@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { notificationsAPIv0alpha1 } from '@grafana/alerting/unstable';
@@ -19,8 +19,10 @@ import {
   TextLink,
   useStyles2,
 } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { RuleFormValues } from '../types/rule-form';
+import { Annotation } from '../utils/constants';
 
 import { NeedHelpInfoForNotificationPolicy } from './rule-editor/NotificationsStep';
 
@@ -29,11 +31,14 @@ const CONTACT_POINT_PATH = 'contactPoints.grafana.selectedContactPoint' as const
 
 export function RuleNotificationSection() {
   const styles = useStyles2(getStyles);
+  const notifyApp = useAppNotification();
 
   const { watch, setValue } = useFormContext<RuleFormValues>();
   const manualRouting = watch('manualRouting');
   const useNotificationPolicy = !manualRouting;
   const selectedContactPoint = watch(CONTACT_POINT_PATH);
+  const annotations = watch('annotations');
+
   // Fetch contact points from Alerting API v0alpha1
   const { currentData, status, refetch } = notificationsAPIv0alpha1.endpoints.listReceiver.useQuery({});
   const options = useMemo<Array<ComboboxOption<string>>>(
@@ -44,6 +49,34 @@ export function RuleNotificationSection() {
       })),
     [currentData]
   );
+
+  // Helper functions to get and set annotation values
+  const getAnnotationValue = useCallback(
+    (key: string) => {
+      return annotations.find((a) => a.key === key)?.value ?? '';
+    },
+    [annotations]
+  );
+
+  const updateAnnotationValue = useCallback(
+    (key: string, value: string) => {
+      const updatedAnnotations = [...annotations];
+      const index = updatedAnnotations.findIndex((a) => a.key === key);
+
+      if (index >= 0) {
+        updatedAnnotations[index] = { key, value };
+      } else {
+        updatedAnnotations.push({ key, value });
+      }
+
+      setValue('annotations', updatedAnnotations, { shouldDirty: true, shouldValidate: true });
+    },
+    [annotations, setValue]
+  );
+
+  const summaryValue = getAnnotationValue(Annotation.summary);
+  const descriptionValue = getAnnotationValue(Annotation.description);
+  const runbookUrlValue = getAnnotationValue(Annotation.runbookURL);
 
   const recipientLabelId = 'recipient-label';
 
@@ -144,14 +177,17 @@ export function RuleNotificationSection() {
                     fill="text"
                     size="sm"
                     aria-label={t('alerting.common.refresh', 'Refresh')}
-                    onClick={() => {
-                      if (refetch) {
-                        refetch();
+                    onClick={async () => {
+                      try {
+                        await refetch();
+                      } catch (error) {
+                        notifyApp.error(
+                          t('alerting.simplified.notification.refresh-error', 'Failed to refresh contact points')
+                        );
                       }
                     }}
                   />
                   <TextLink
-                    external
                     href={'/alerting/notifications'}
                     aria-label={t(
                       'alerting.link-to-contact-points.aria-label-view-or-create-contact-points',
@@ -170,30 +206,68 @@ export function RuleNotificationSection() {
           <Field label={t('alerting.simplified.notification.summary.label', 'Summary (optional)')} noMargin>
             <TextArea
               id="summary-text-area"
+              value={summaryValue}
+              onChange={(e) => updateAnnotationValue(Annotation.summary, e.currentTarget.value)}
               placeholder={t(
                 'alerting.simplified.notification.summary.placeholder',
                 'Enter a summary of what happened and why…'
               )}
+              aria-label={t('alerting.simplified.notification.summary.aria-label', 'Summary')}
             />
           </Field>
 
           <Field label={t('alerting.simplified.notification.description.label', 'Description (optional)')} noMargin>
             <TextArea
               id="description-text-area"
+              value={descriptionValue}
+              onChange={(e) => updateAnnotationValue(Annotation.description, e.currentTarget.value)}
               placeholder={t(
                 'alerting.simplified.notification.description.placeholder',
                 'Enter a description of what the alert rule does…'
               )}
+              aria-label={t('alerting.simplified.notification.description.aria-label', 'Description')}
             />
           </Field>
 
           <Field label={t('alerting.simplified.notification.runbook-url.label', 'Runbook URL (optional)')} noMargin>
             <Input
               id="runbook-url-input"
+              type="url"
+              value={runbookUrlValue}
+              onChange={(e) => {
+                const value = e.currentTarget.value;
+                updateAnnotationValue(Annotation.runbookURL, value);
+              }}
+              onBlur={(e) => {
+                const value = e.currentTarget.value.trim();
+                // Validate URL on blur
+                if (value && value !== '') {
+                  try {
+                    const url = new URL(value);
+                    // Reject dangerous URL schemes
+                    if (url.protocol === 'javascript:' || url.protocol === 'data:') {
+                      notifyApp.error(
+                        t(
+                          'alerting.simplified.notification.runbook-url.invalid-protocol',
+                          'Invalid URL protocol. Please use http or https.'
+                        )
+                      );
+                    }
+                  } catch {
+                    notifyApp.warning(
+                      t(
+                        'alerting.simplified.notification.runbook-url.invalid-format',
+                        'Invalid URL format. Please enter a valid URL.'
+                      )
+                    );
+                  }
+                }
+              }}
               placeholder={t(
                 'alerting.simplified.notification.runbook-url.placeholder',
                 'Enter the webpage where you keep your runbook for the alert…'
               )}
+              aria-label={t('alerting.simplified.notification.runbook-url.aria-label', 'Runbook URL')}
             />
           </Field>
         </Stack>
