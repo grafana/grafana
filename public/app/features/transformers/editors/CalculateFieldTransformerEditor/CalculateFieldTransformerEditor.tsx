@@ -34,6 +34,7 @@ import { BinaryOperationOptionsEditor } from './BinaryOperationOptionsEditor';
 import { CumulativeOptionsEditor } from './CumulativeOptionsEditor';
 import { IndexOptionsEditor } from './IndexOptionsEditor';
 import { ReduceRowOptionsEditor } from './ReduceRowOptionsEditor';
+import { TemplateExpressionOptionsEditor } from './TemplateExpressionOptionsEditor';
 import { UnaryOperationEditor } from './UnaryOperationEditor';
 import { WindowOptionsEditor } from './WindowOptionsEditor';
 import { LABEL_WIDTH } from './constants';
@@ -88,6 +89,11 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
       }
     );
   }
+
+  calculationModes.push({
+    value: CalculateFieldMode.TemplateExpression,
+    label: t('transformers.calculate-field-transformer-editor.label.template-expression', 'Template expression'),
+  });
 
   useEffect(() => {
     const ctx = { interpolate: (v: string) => v };
@@ -243,6 +249,13 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
       )}
       {mode === CalculateFieldMode.Index && (
         <IndexOptionsEditor options={options} onChange={props.onChange}></IndexOptionsEditor>
+      )}
+      {mode === CalculateFieldMode.TemplateExpression && (
+        <TemplateExpressionOptionsEditor
+          input={input}
+          options={options}
+          onChange={props.onChange}
+        ></TemplateExpressionOptionsEditor>
       )}
       <InlineField
         labelWidth={LABEL_WIDTH}
