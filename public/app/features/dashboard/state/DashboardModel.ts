@@ -606,24 +606,25 @@ export class DashboardModel implements TimeModel {
     });
   }
 
-  clearUnsavedChanges(savedModel: Dashboard, options: CloneOptions) {
-    for (const panel of this.panels) {
-      panel.configRev = 0;
-    }
-
-    if (this.panelInEdit) {
-      // Remember that we have a saved a change in panel editor so we apply it when leaving panel edit
-      this.panelInEdit.hasSavedPanelEditChange = this.panelInEdit.configRev > 0;
-      this.panelInEdit.configRev = 0;
-    }
-
-    this.originalDashboard = savedModel;
-    this.originalTemplating = savedModel.templating;
-
-    if (options.saveTimerange) {
-      this.originalTime = savedModel.time;
-    }
+clearUnsavedChanges(savedModel: Dashboard, options: CloneOptions) {
+  for (const panel of this.panels) {
+    panel.configRev = 0;
   }
+
+  if (this.panelInEdit) {
+    // Remember that we have a saved a change in panel editor so we apply it when leaving panel edit
+    this.panelInEdit.hasSavedPanelEditChange = this.panelInEdit.configRev > 0;
+    this.panelInEdit.configRev = 0;
+  }
+  
+  this.originalDashboard = cloneDeep(savedModel);
+  this.originalTemplating = cloneDeep(savedModel.templating);
+  this.snapshot = cloneDeep(savedModel);
+
+  if (options.saveTimerange) {
+    this.originalTime = cloneDeep(savedModel.time);
+  }
+}
 
   hasUnsavedChanges() {
     const changedPanel = this.panels.find((p) => p.hasChanged);
