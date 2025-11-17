@@ -79,6 +79,7 @@ export function ScopesInput({
         onClick={onClick}
         aria-label={placeholderText}
         data-testid="scopes-selector-input"
+        data-value={scopesTitles}
       >
         {loading && (
           <div className={styles.prefix}>
