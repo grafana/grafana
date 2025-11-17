@@ -19,10 +19,8 @@ import { hoverColor } from '../../../../../packages/grafana-ui/src/themes/mixins
 
 import { BarMarkerOpts, MarkerGroup } from './markerTypes';
 
-export const BarMarkersEditor = ({ context, onChange, value }: StandardEditorProps<MarkerGroup[]>) => {
+export const BarMarkersEditor = ({ context, onChange, value: markers }: StandardEditorProps<MarkerGroup[]>) => {
   const theme = useTheme2();
-
-  let markers = value || [];
 
   const handleRemoveMarker = (id: number) => {
     markers = markers.filter((marker: MarkerGroup) => marker.id !== id);
