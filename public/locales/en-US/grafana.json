@@ -1986,6 +1986,7 @@
       "error": "Could not load routing preview for {{alertmanager}}",
       "initialized": "Based on the labels added, alert instances are routed to the following notification policies. Expand each notification policy below to view more details.",
       "preview-routing": "Preview routing",
+      "select-folder-tooltip": "Select a folder to preview routing",
       "text-loading-preview": "Loading preview...",
       "title": "Alert instance routing preview",
       "uninitialized": "When you have your folder selected and your query and labels are configured, click \"Preview routing\" to see the results here."
@@ -4131,6 +4132,7 @@
     "action": {
       "change-theme": "Change theme",
       "dark-theme": "Dark",
+      "dashboard-from-template": "Dashboard from template",
       "light-theme": "Light",
       "scopes": "Scopes"
     },
@@ -5717,6 +5719,10 @@
     "suggested-dashboards-subtitle": "Browse and select from data-source provided or community dashboards",
     "suggested-dashboards-title": "Build a dashboard using suggested options for your selected data source",
     "suggested-dashboards-title-with-datasource": "Build a dashboard using suggested options for your {{datasourceType}} data source",
+    "template-dashboard-modal": {
+      "description": "Get started with Grafana templates using sample data. Connect your data to power them with real metrics.",
+      "title": "Start a dashboard from a template"
+    },
     "view-all": "View all"
   },
   "dashboard-links": {
@@ -10527,6 +10533,7 @@
       "title": "New"
     },
     "new-dashboard": {
+      "empty-title": "Empty dashboard",
       "title": "New dashboard"
     },
     "new-folder": {
@@ -10692,7 +10699,8 @@
       "aria-label": "Profile"
     },
     "quick-add": {
-      "aria-label": "New"
+      "aria-label": "New",
+      "new-template-dashboard-button": "Dashboard from template"
     },
     "rss-button": "Latest from the blog"
   },
@@ -12426,10 +12434,12 @@
       }
     },
     "dashboard-actions": {
+      "empty-dashboard": "Empty dashboard",
       "import": "Import",
       "new": "New",
       "new-dashboard": "New dashboard",
-      "new-folder": "New folder"
+      "new-folder": "New folder",
+      "new-template-dashboard": "Dashboard from template"
     },
     "generate-columns": {
       "score": "Score"

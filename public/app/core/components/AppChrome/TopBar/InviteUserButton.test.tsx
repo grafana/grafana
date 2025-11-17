@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { config, reportInteraction } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
 
 import { InviteUserButton } from './InviteUserButton';
@@ -16,7 +16,7 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: jest.fn(),
   },

@@ -95,6 +95,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
         limitAlerts,
         groupNextToken,
         title,
+        dashboardUid,
       }) => ({
         url: `api/prometheus/grafana/api/v1/rules`,
         params: {
@@ -109,6 +110,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
           group_limit: groupLimit?.toFixed(0),
           group_next_token: groupNextToken,
           'search.rule_name': title,
+          dashboard_uid: dashboardUid,
         },
       }),
       providesTags: (_result, _error, { folderUid, groupName, ruleName }) => {

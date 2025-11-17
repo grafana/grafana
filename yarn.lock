@@ -3130,7 +3130,7 @@ __metadata:
     history: "npm:4.10.1"
     lodash: "npm:4.17.21"
     marked: "npm:16.3.0"
-    marked-mangle: "npm:1.1.11"
+    marked-mangle: "npm:1.1.12"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.47"
     ol: "npm:10.6.1"
@@ -13194,13 +13194,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"centrifuge@npm:5.4.0":
-  version: 5.4.0
-  resolution: "centrifuge@npm:5.4.0"
+"centrifuge@npm:5.5.2":
+  version: 5.5.2
+  resolution: "centrifuge@npm:5.5.2"
   dependencies:
     events: "npm:^3.3.0"
     protobufjs: "npm:^7.2.5"
-  checksum: 10/251788a36675dcc89906a158b8554f1d36869aba4236c3eeb54fe0ff819fffa6d91e5189b5bb31d48505482f6fdb3425e487f94c79a2e1f316061a229768227a
+  checksum: 10/d48bff4fe5ab9a1dfe8f1b4100a197c1e90b929f15ba4a5ff5c191c5bbd5f103aa1fe46945338e3f854174c99a90ef94412f142d84410b4c28d309e7ce73ce69
   languageName: node
   linkType: hard
 
@@ -18999,7 +18999,7 @@ __metadata:
     blob-polyfill: "npm:9.0.20240710"
     brace: "npm:0.11.1"
     browserslist: "npm:^4.21.4"
-    centrifuge: "npm:5.4.0"
+    centrifuge: "npm:5.5.2"
     chance: "npm:^1.1.13"
     chrome-remote-interface: "npm:0.33.3"
     classnames: "npm:2.5.1"
@@ -22062,7 +22062,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"js-yaml@npm:4.1.0, js-yaml@npm:=4.1.0, js-yaml@npm:^4.1.0":
+"js-yaml@npm:4.1.0, js-yaml@npm:=4.1.0":
   version: 4.1.0
   resolution: "js-yaml@npm:4.1.0"
   dependencies:
@@ -22082,6 +22082,17 @@ __metadata:
   bin:
     js-yaml: bin/js-yaml.js
   checksum: 10/9e22d80b4d0105b9899135365f746d47466ed53ef4223c529b3c0f7a39907743fdbd3c4379f94f1106f02755b5e90b2faaf84801a891135544e1ea475d1a1379
+  languageName: node
+  linkType: hard
+
+"js-yaml@npm:^4.1.0":
+  version: 4.1.1
+  resolution: "js-yaml@npm:4.1.1"
+  dependencies:
+    argparse: "npm:^2.0.1"
+  bin:
+    js-yaml: bin/js-yaml.js
+  checksum: 10/a52d0519f0f4ef5b4adc1cde466cb54c50d56e2b4a983b9d5c9c0f2f99462047007a6274d7e95617a21d3c91fde3ee6115536ed70991cd645ba8521058b78f77
   languageName: node
   linkType: hard
 
@@ -23399,12 +23410,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked-mangle@npm:1.1.11":
-  version: 1.1.11
-  resolution: "marked-mangle@npm:1.1.11"
+"marked-mangle@npm:1.1.12":
+  version: 1.1.12
+  resolution: "marked-mangle@npm:1.1.12"
   peerDependencies:
-    marked: ">=4 <17"
-  checksum: 10/e2872cbe62dc60347eaef2494049a3fb65bcef3f1097407dd8e3f946856085d3ce05b516ba0d2307cbf91019fd38ad25704200c9dc601a0da29d64c76c803027
+    marked: ">=4 <18"
+  checksum: 10/3340af16fb4247142a6cb803e89a8e1650f2f4878da0d05344dd80780abd575288015e3f9ff831e075a0b09cc5947fce39fd68bcdce2fc8ed2f727a603d78ada
   languageName: node
   linkType: hard
 
@@ -24305,11 +24316,11 @@ __metadata:
   linkType: hard
 
 "nanoid@npm:^5.0.9":
-  version: 5.1.5
-  resolution: "nanoid@npm:5.1.5"
+  version: 5.1.6
+  resolution: "nanoid@npm:5.1.6"
   bin:
     nanoid: bin/nanoid.js
-  checksum: 10/6de2d006b51c983be385ef7ee285f7f2a57bd96f8c0ca881c4111461644bd81fafc2544f8e07cb834ca0f3e0f3f676c1fe78052183f008b0809efe6e273119f5
+  checksum: 10/4109dbcf596d7f297a9b42f459b8f01694a03ebbdd2f41408d963ad54e5ec7234cbe7b4acad137751f31add11bb4fb3415a3e688082516745812811f05570014
   languageName: node
   linkType: hard
 
@@ -25298,14 +25309,14 @@ __metadata:
   linkType: hard
 
 "ol-mapbox-style@npm:^13.0.1":
-  version: 13.1.0
-  resolution: "ol-mapbox-style@npm:13.1.0"
+  version: 13.1.1
+  resolution: "ol-mapbox-style@npm:13.1.1"
   dependencies:
     "@maplibre/maplibre-gl-style-spec": "npm:^23.1.0"
     mapbox-to-css-font: "npm:^3.2.0"
   peerDependencies:
     ol: "*"
-  checksum: 10/a6dba04dcfc9e0344fed9ad1a76b875eb1a1286d2b6c0f9d9d6004bb5376227fa7dee15bbe38966429ab479bec3109b39e92541a20e0e175e8205cc78c039ed2
+  checksum: 10/9182bebfee63881465a9dbeecaeab361b70f4fe3abf406d755adde02cf50c765b6e5de072716e627b777ffb2b98fc72dde12bee470996139438a6b1133c370f3
   languageName: node
   linkType: hard
 
