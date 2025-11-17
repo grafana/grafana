@@ -18,7 +18,7 @@ labels:
 title: Secrets Management HTTP API
 ---
 
-# Secrets Management APIs
+# Secrets Management API
 
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
@@ -46,7 +46,7 @@ Creates a new secure value.
 
 **URL parameters**
 
-- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+- namespace: To read more about which namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
 
 **Request body**
 
@@ -130,7 +130,7 @@ List all secure values in a namespace.
 
 **URL parameters**
 
-- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+- namespace: To read more about which namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
 
 **Query parameters**
 
@@ -201,8 +201,8 @@ Get the details of a specific secure value. It will not return the secret value.
 
 **URL parameters**
 
-- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- name: the name of the secure value.
+- namespace: To read more about which namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+- name: The name of the secure value.
 
 **Required permissions**
 
@@ -263,12 +263,12 @@ Replace an existing secure value with a new specification.
 
 **URL parameters**
 
-- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- name: the name of the secure value.
+- namespace: To read more about which namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+- name: The name of the secure value.
 
 **Request body**
 
-- `spec.description`: short description that explains the purpose of this secure value. Required. Up to 25 characters long.
+- `spec.description`: Short description that explains the purpose of this secure value. Required. Up to 25 characters long.
 - `spec.value`: The secret value to store. Required. Up to 24576 bytes long.
 - `spec.decrypters`: List of services allowed to decrypt this secure value. Up to 64 items, see note in [decrypters]({{< ref "#decrypters" >}}) for a list of supported values.
 
@@ -338,7 +338,7 @@ Status Codes:
 
 `DELETE /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues/:name`
 
-Permanently Delete a secure value. It will also delete the underlying stored secret value.
+Permanently delete a secure value. It will also delete the underlying stored secret value.
 
 **URL parameters**
 
