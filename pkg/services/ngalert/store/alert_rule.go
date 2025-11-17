@@ -871,6 +871,8 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 
 		if len(words) > 0 {
 			pattern := "%" + strings.Join(words, "%") + "%"
+			// In MySQL rule_group field has case-sensitive collation by default,
+			// so we need to use LOWER to perform case-insensitive search.
 			q = q.And("LOWER(rule_group) LIKE ?", pattern)
 		}
 	}
