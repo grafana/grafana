@@ -42,7 +42,7 @@ For example, if you want to understand the temperature changes for the past few 
 
 {{< figure src="/static/img/docs/heatmap-panel/temperature_heatmap.png" max-width="1025px" alt="A heatmap visualization showing the random walk distribution over time" >}}
 
-{{< docs/play title="Grafana Heatmaps" url="https://play.grafana.org/d/heatmap-calculate-log/" >}}
+{{< docs/play title="Grafana Heatmaps" url="<https://play.grafana.org/d/heatmap-calculate-log/>" >}}
 
 You can use a heatmap visualization if you need to:
 
@@ -78,6 +78,10 @@ The table below is a simplified output of random walk distribution over time:
 The data is converted as follows:
 
 {{< figure src="/static/img/docs/heatmap-panel/heatmap.png" max-width="1025px" alt="A heatmap visualization showing the random walk distribution over time" >}}
+
+## Zoom panel time range
+
+{{< docs/shared lookup="visualizations/panel-zoom.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Configuration options
 

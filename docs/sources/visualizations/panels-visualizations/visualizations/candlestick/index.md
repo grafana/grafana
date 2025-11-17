@@ -65,7 +65,7 @@ Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VE
 
 {{< youtube id="IOFKBgbf3aM" >}}
 
-{{< docs/play title="Candlestick" url="https://play.grafana.org/d/candlestick/candlestick" >}}
+{{< docs/play title="Candlestick" url="<https://play.grafana.org/d/candlestick/candlestick>" >}}
 
 ## Supported data formats
 
@@ -91,6 +91,10 @@ The candlestick visualization works best with price movement data for an asset. 
 The data is converted as follows:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-candles-volume-v11.6.png" max-width="750px" alt="A candlestick visualization showing the price movements of specific asset." >}}
+
+## Zoom panel time range
+
+{{< docs/shared lookup="visualizations/panel-zoom.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Configuration options
 

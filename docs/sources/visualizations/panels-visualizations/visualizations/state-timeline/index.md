@@ -36,7 +36,7 @@ The state timeline visualization is useful when you need to monitor and analyze 
 
 {{< youtube id="a9wZHM0mdxo" >}}
 
-{{< docs/play title="Grafana State Timeline & Status History" url="https://play.grafana.org/d/qD-rVv6Mz/6-state-timeline-and-status-history?orgId=1s" >}}
+{{< docs/play title="Grafana State Timeline & Status History" url="<https://play.grafana.org/d/qD-rVv6Mz/6-state-timeline-and-status-history?orgId=1s>" >}}
 
 ## Supported data formats
 
@@ -92,6 +92,10 @@ If your query results aren't in a table format like the preceding examples, espe
 You can also create a state timeline visualization using time series data. To do this, add [thresholds](#thresholds), which turn the time series into discrete colored state regions.
 
 ![State timeline with time series](/media/docs/grafana/panels-visualizations/screenshot-state-timeline-time-series-v11.4.png)
+
+## Zoom panel time range
+
+{{< docs/shared lookup="visualizations/panel-zoom.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Configuration options
 

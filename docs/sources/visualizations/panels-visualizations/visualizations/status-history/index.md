@@ -42,7 +42,7 @@ Once you've [created a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERS
 
 {{< youtube id="a9wZHM0mdxo" >}}
 
-{{< docs/play title="Grafana State Timeline & Status History" url="https://play.grafana.org/d/qD-rVv6Mz/6-state-timeline-and-status-history?orgId=1s" >}}
+{{< docs/play title="Grafana State Timeline & Status History" url="<https://play.grafana.org/d/qD-rVv6Mz/6-state-timeline-and-status-history?orgId=1s>" >}}
 
 ## Supported data formats
 
@@ -84,6 +84,10 @@ The data is converted as follows, with the null and empty values visualized as g
 The data is converted as follows:
 
 {{< figure src="/static/img/docs/status-history-panel/status_history.png" max-width="1025px" alt="A status history panel with two time columns showing the status of two servers" >}}
+
+## Zoom panel time range
+
+{{< docs/shared lookup="visualizations/panel-zoom.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Configuration options
 
