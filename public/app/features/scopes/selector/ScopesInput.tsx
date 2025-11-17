@@ -1,22 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
-import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import {
-  Button,
-  getInputStyles,
-  Icon,
-  Input,
-  LinkButton,
-  measureText,
-  Spinner,
-  Tooltip,
-  useStyles2,
-  Text,
-  useTheme2,
-} from '@grafana/ui';
+import { getInputStyles, Icon, LinkButton, Spinner, Tooltip, useStyles2, Text, Stack } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
 import { getPathOfNode } from './scopesTreeUtils';
@@ -49,51 +35,27 @@ export function ScopesInput({
   const parentNodeIdFromUrl = appliedScopes[0]?.parentNodeId;
   const styles = useStyles2(getStyles);
   const { node: scopeNode, isLoading: scopeNodeLoading } = useScopeNode(scopeNodeId);
-  //const theme = useTheme2();
 
   // Get parent from scope node if available, otherwise use parentNodeId from URL (for backward compatibility)
   const parentNodeId = scopeNode?.spec.parentName ?? parentNodeIdFromUrl;
   const { node: parentNode, isLoading: parentNodeLoading } = useScopeNode(parentNodeId);
 
   // Prioritize scope node subtitle over parent node title
-  const displayTitle = scopeNode?.spec.subTitle ?? parentNode?.spec.title ?? 'Borg user';
+  const displayTitle = scopeNode?.spec.subTitle ?? parentNode?.spec.title;
   const isLoadingTitle = scopeNodeLoading || parentNodeLoading;
   const placeholderText = t('scopes.selector.input.placeholder', 'No scopes');
 
-  const tooltipContent =
-    appliedScopes.length > 0 ? (
-      <>
-        <ScopesTooltip nodes={nodes} scopes={scopes} appliedScopes={appliedScopes} />
-        <LinkButton
-          onClick={onRemoveAllClick}
-          aria-label={t('scopes.selector.input.removeAll', 'Remove all scopes')}
-          name="times"
-          data-testid="scopes-selector-input-clear"
-          size="sm"
-          fill="text"
-        >
-          <Trans i18nKey="scopes.selector.input.remove-all">Remove all</Trans>
-        </LinkButton>
-      </>
-    ) : (
-      t('scopes.selector.input.tooltip', 'Select scope')
-    );
-
-  const scopesTitles = useMemo(
-    () =>
-      appliedScopes
-        .map(
-          (s) =>
-            // If we are still loading the scope data just show the id
-            scopes[s.scopeId]?.spec.title || s.scopeId
-        )
-        .join(' + '),
-    [appliedScopes, scopes]
+  const tooltipContent = (
+    <ScopesTooltip nodes={nodes} scopes={scopes} appliedScopes={appliedScopes} onRemoveAllClick={onRemoveAllClick} />
   );
 
-  //const inputText = scopesTitles || placeholderText;
-  //const lengthInGridUnits = measureText(inputText, theme.typography.fontSize).width / theme.spacing.gridSize + 2;
-  //const inputWidth = Math.min(Math.max(lengthInGridUnits, 18), 30); // min width for empty input, max width for long texts
+  const scopesTitles = appliedScopes
+    .map(
+      (s) =>
+        // If we are still loading the scope data just show the id
+        scopes[s.scopeId]?.spec.title || s.scopeId
+    )
+    .join(' + ');
 
   const onClick = () => {
     if (!disabled) {
@@ -104,18 +66,17 @@ export function ScopesInput({
   return (
     <Tooltip content={tooltipContent} interactive>
       <div className={styles.wrapper}>
+        {loading && (
+          <div className={styles.prefix}>
+            <Spinner />
+          </div>
+        )}
         <button
           className={styles.fakeInput}
           onClick={onClick}
           aria-label={placeholderText}
           data-testid="scopes-selector-input"
         >
-          {loading && (
-            <div className={styles.prefix}>
-              <Spinner />
-            </div>
-          )}
-
           <span className={styles.text}>
             {!scopesTitles && !loading && <Text color="secondary">{placeholderText}</Text>}
             {scopesTitles && <span>{scopesTitles}</span>}
@@ -149,11 +110,15 @@ export interface ScopesTooltipProps {
   nodes: NodesMap;
   scopes: ScopesMap;
   appliedScopes: SelectedScope[];
+  onRemoveAllClick?: () => void;
 }
 
-function ScopesTooltip({ nodes, scopes, appliedScopes }: ScopesTooltipProps) {
-  const nicePath = getScopesPath(appliedScopes, nodes);
+function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick }: ScopesTooltipProps) {
+  if (appliedScopes.length === 0) {
+    return t('scopes.selector.input.tooltip', 'Select scope');
+  }
 
+  const nicePath = getScopesPath(appliedScopes, nodes);
   const scopeNames = appliedScopes.map((s) => {
     if (s.scopeNodeId) {
       return nodes[s.scopeNodeId]?.spec.title || s.scopeNodeId;
@@ -162,7 +127,24 @@ function ScopesTooltip({ nodes, scopes, appliedScopes }: ScopesTooltipProps) {
     }
   });
 
-  return <>{(nicePath && nicePath.length > 0 ? nicePath.join(' > ') + ' > ' : '') + scopeNames.join(', ')}</>;
+  const parentPaths = nicePath && nicePath.length > 0 ? nicePath.join(' > ') + ' > ' : '';
+
+  return (
+    <Stack direction="column" gap={1} justifyContent="center" alignItems={'center'}>
+      <span>{parentPaths + scopeNames.join(', ')}</span>
+      <LinkButton
+        onClick={onRemoveAllClick}
+        aria-label={t('scopes.selector.input.removeAll', 'Remove all scopes')}
+        name="times"
+        data-testid="scopes-selector-input-clear"
+        size="sm"
+        fill="text"
+        icon="times"
+      >
+        <Trans i18nKey="scopes.selector.input.remove-all">Remove all</Trans>
+      </LinkButton>
+    </Stack>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

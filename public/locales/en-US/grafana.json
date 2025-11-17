@@ -12378,7 +12378,7 @@
       "cancel": "Cancel",
       "error-title": "An unexpected error happened",
       "input": {
-        "placeholder": "No scope",
+        "placeholder": "No scopes",
         "remove-all": "Remove all",
         "removeAll": "Remove all scopes",
         "tooltip": "Select scope"

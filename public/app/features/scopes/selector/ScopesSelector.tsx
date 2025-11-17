@@ -6,8 +6,7 @@ import { Observable } from 'rxjs';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
-import { Button, Drawer, ErrorBoundary, ErrorWithStack, Spinner, Text, useStyles2 } from '@grafana/ui';
-import { useGrafana } from 'app/core/context/GrafanaContext';
+import { Button, Drawer, ErrorBoundary, ErrorWithStack, IconButton, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { getModKey } from 'app/core/utils/browser';
 
 import { useScopesServices } from '../ScopesContextProvider';
@@ -71,15 +70,15 @@ export const ScopesSelector = () => {
 
   const recentScopes = getRecentScopes();
 
-  // const dashboardsIconLabel = readOnly
-  //   ? t('scopes.dashboards.toggle.disabled', 'Suggested dashboards list is disabled due to read only mode')
-  //   : drawerOpened
-  //     ? t('scopes.dashboards.toggle.collapse', 'Collapse suggested dashboards list')
-  //     : t('scopes.dashboards.toggle.expand', 'Expand suggested dashboards list');
+  const dashboardsIconLabel = readOnly
+    ? t('scopes.dashboards.toggle.disabled', 'Suggested dashboards list is disabled due to read only mode')
+    : drawerOpened
+      ? t('scopes.dashboards.toggle.collapse', 'Collapse suggested dashboards list')
+      : t('scopes.dashboards.toggle.expand', 'Expand suggested dashboards list');
 
   return (
     <>
-      {/* <IconButton
+      <IconButton
         name="web-section-alt"
         className={styles.dashboards}
         aria-label={dashboardsIconLabel}
@@ -87,7 +86,7 @@ export const ScopesSelector = () => {
         data-testid="scopes-dashboards-expand"
         disabled={readOnly}
         onClick={scopesDashboardsService.toggleDrawer}
-      /> */}
+      />
 
       <ScopesInput
         nodes={nodes}
@@ -165,7 +164,6 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     dashboards: css({
       color: theme.colors.text.secondary,
-      marginRight: theme.spacing(2),
 
       '&:hover': css({
         color: theme.colors.text.primary,
