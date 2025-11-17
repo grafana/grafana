@@ -24,7 +24,7 @@ cards:
     - title: Foundation SDK
       height: 24
       href: ./foundation-sdk/
-      description: The Grafana Foundation SDK is a set of tools, types, and libraries that let you define Grafana dashboards and resources using familiar programming languages like Go, TypeScript, Python, Java, and PHP. Use in conjunction with `grafanactl` to push your programmatically generated resources.
+      description: The Grafana Foundation SDK is a set of tools, types, and libraries that let you define Grafana dashboards and resources using familiar programming languages like Go, TypeScript, Python, Java, and PHP. Use it in conjunction with `grafanactl` to push your programmatically generated resources.
     - title: JSON schema v2
       height: 24
       href: ./schema-v2/
