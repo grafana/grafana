@@ -1,4 +1,4 @@
-package preferences
+package collections
 
 import (
 	"context"
@@ -11,8 +11,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
@@ -47,10 +47,10 @@ func TestIntegrationStars(t *testing.T) {
 				"folders.folder.grafana.app": {
 					DualWriterMode: mode,
 				},
-				"stars.preferences.grafana.app": {
+				"stars.collections.grafana.app": {
 					DualWriterMode: mode,
 				},
-				"preferences.preferences.grafana.app": {
+				"collections.collections.grafana.app": {
 					DualWriterMode: mode,
 				},
 			},
@@ -60,11 +60,11 @@ func TestIntegrationStars(t *testing.T) {
 			ctx := context.Background()
 			starsClient := helper.GetResourceClient(apis.ResourceClientArgs{
 				User: helper.Org1.Admin,
-				GVR:  preferences.StarsResourceInfo.GroupVersionResource(),
+				GVR:  collections.StarsResourceInfo.GroupVersionResource(),
 			})
 			starsClientViewer := helper.GetResourceClient(apis.ResourceClientArgs{
 				User: helper.Org1.Viewer,
-				GVR:  preferences.StarsResourceInfo.GroupVersionResource(),
+				GVR:  collections.StarsResourceInfo.GroupVersionResource(),
 			})
 			dashboardClient := helper.GetResourceClient(apis.ResourceClientArgs{
 				User: helper.Org1.Admin,
@@ -126,7 +126,7 @@ func TestIntegrationStars(t *testing.T) {
 			// List values and compare results
 			rsp, err = starsClient.Resource.List(ctx, metav1.ListOptions{})
 			require.NoError(t, err)
-			stars := typed(t, rsp, &preferences.StarsList{})
+			stars := typed(t, rsp, &collections.StarsList{})
 
 			require.Len(t, stars.Items, 1, "user stars should exist")
 			require.Equal(t, "user-"+starsClient.Args.User.Identity.GetIdentifier(),
@@ -148,7 +148,7 @@ func TestIntegrationStars(t *testing.T) {
 			rspObj, err := starsClient.Resource.Get(ctx, "user-"+starsClient.Args.User.Identity.GetIdentifier(), metav1.GetOptions{})
 			require.NoError(t, err)
 
-			after := typed(t, rspObj, &preferences.Stars{})
+			after := typed(t, rspObj, &collections.Stars{})
 			resources = after.Spec.Resource
 			require.Len(t, resources, 1)
 			require.Equal(t, "dashboard.grafana.app", resources[0].Group)
@@ -175,7 +175,7 @@ func TestIntegrationStars(t *testing.T) {
 			}, metav1.UpdateOptions{})
 			require.NoError(t, err)
 
-			after = typed(t, rspObj, &preferences.Stars{})
+			after = typed(t, rspObj, &collections.Stars{})
 			resources = after.Spec.Resource
 			require.Len(t, resources, 1)
 			require.Equal(t, "dashboard.grafana.app", resources[0].Group)
@@ -196,7 +196,7 @@ func TestIntegrationStars(t *testing.T) {
 			rspObj, err = starsClient.Resource.Get(ctx, "user-"+starsClient.Args.User.Identity.GetIdentifier(), metav1.GetOptions{})
 			require.NoError(t, err)
 
-			after = typed(t, rspObj, &preferences.Stars{})
+			after = typed(t, rspObj, &collections.Stars{})
 			jj, err := json.MarshalIndent(after.Spec, "", "  ")
 			require.NoError(t, err)
 			require.JSONEq(t, `{

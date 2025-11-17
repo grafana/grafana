@@ -1,10 +1,11 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "preferences.grafana.app/v1alpha1"
+    "description": "Grafana collections",
+    "title": "collections.grafana.app/v1alpha1"
   },
   "paths": {
-    "/apis/preferences.grafana.app/v1alpha1/": {
+    "/apis/collections.grafana.app/v1alpha1/": {
       "get": {
         "tags": [
           "API Discovery"
@@ -35,13 +36,13 @@
         }
       }
     },
-    "/apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences": {
+    "/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars": {
       "get": {
         "tags": [
-          "Preferences"
+          "Stars"
         ],
-        "description": "list objects of kind Preferences",
-        "operationId": "listPreferences",
+        "description": "list objects of kind Stars",
+        "operationId": "listStars",
         "parameters": [
           {
             "name": "allowWatchBookmarks",
@@ -140,27 +141,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsList"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsList"
                 }
               },
               "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsList"
                 }
               }
             }
@@ -168,17 +169,17 @@
         },
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
-          "group": "preferences.grafana.app",
+          "group": "collections.grafana.app",
           "version": "v1alpha1",
-          "kind": "Preferences"
+          "kind": "Stars"
         }
       },
       "post": {
         "tags": [
-          "Preferences"
+          "Stars"
         ],
-        "description": "create Preferences",
-        "operationId": "createPreferences",
+        "description": "create Stars",
+        "operationId": "createStars",
         "parameters": [
           {
             "name": "dryRun",
@@ -212,17 +213,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
               }
             }
           },
@@ -234,17 +235,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               }
             }
@@ -254,17 +255,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               }
             }
@@ -274,17 +275,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               }
             }
@@ -292,9 +293,163 @@
         },
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
-          "group": "preferences.grafana.app",
+          "group": "collections.grafana.app",
           "version": "v1alpha1",
-          "kind": "Preferences"
+          "kind": "Stars"
+        }
+      },
+      "delete": {
+        "tags": [
+          "Stars"
+        ],
+        "description": "delete collection of Stars",
+        "operationId": "deletecollectionStars",
+        "parameters": [
+          {
+            "name": "continue",
+            "in": "query",
+            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldSelector",
+            "in": "query",
+            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "gracePeriodSeconds",
+            "in": "query",
+            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
+            "in": "query",
+            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "labelSelector",
+            "in": "query",
+            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "orphanDependents",
+            "in": "query",
+            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "propagationPolicy",
+            "in": "query",
+            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "resourceVersion",
+            "in": "query",
+            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "resourceVersionMatch",
+            "in": "query",
+            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "sendInitialEvents",
+            "in": "query",
+            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "timeoutSeconds",
+            "in": "query",
+            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "deletecollection",
+        "x-kubernetes-group-version-kind": {
+          "group": "collections.grafana.app",
+          "version": "v1alpha1",
+          "kind": "Stars"
         }
       },
       "parameters": [
@@ -319,60 +474,30 @@
         }
       ]
     },
-    "/apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences/merged": {
+    "/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}": {
       "get": {
         "tags": [
-          "Preferences"
+          "Stars"
         ],
-        "description": "Get preferences for requester.  This combines the user preferences with the team and global defaults",
-        "operationId": "mergedPreferences",
-        "parameters": [
-          {
-            "name": "namespace",
-            "in": "path",
-            "description": "workspace",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "default"
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      }
-    },
-    "/apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences/{name}": {
-      "get": {
-        "tags": [
-          "Preferences"
-        ],
-        "description": "read the specified Preferences",
-        "operationId": "getPreferences",
+        "description": "read the specified Stars",
+        "operationId": "getStars",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               }
             }
@@ -380,17 +505,17 @@
         },
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
-          "group": "preferences.grafana.app",
+          "group": "collections.grafana.app",
           "version": "v1alpha1",
-          "kind": "Preferences"
+          "kind": "Stars"
         }
       },
       "put": {
         "tags": [
-          "Preferences"
+          "Stars"
         ],
-        "description": "replace the specified Preferences",
-        "operationId": "replacePreferences",
+        "description": "replace the specified Stars",
+        "operationId": "replaceStars",
         "parameters": [
           {
             "name": "dryRun",
@@ -424,17 +549,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
               }
             }
           },
@@ -446,17 +571,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               }
             }
@@ -466,17 +591,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               }
             }
@@ -484,17 +609,17 @@
         },
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
-          "group": "preferences.grafana.app",
+          "group": "collections.grafana.app",
           "version": "v1alpha1",
-          "kind": "Preferences"
+          "kind": "Stars"
         }
       },
       "delete": {
         "tags": [
-          "Preferences"
+          "Stars"
         ],
-        "description": "delete Preferences",
-        "operationId": "deletePreferences",
+        "description": "delete Stars",
+        "operationId": "deleteStars",
         "parameters": [
           {
             "name": "dryRun",
@@ -586,17 +711,17 @@
         },
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
-          "group": "preferences.grafana.app",
+          "group": "collections.grafana.app",
           "version": "v1alpha1",
-          "kind": "Preferences"
+          "kind": "Stars"
         }
       },
       "patch": {
         "tags": [
-          "Preferences"
+          "Stars"
         ],
-        "description": "partially update the specified Preferences",
-        "operationId": "updatePreferences",
+        "description": "partially update the specified Stars",
+        "operationId": "updateStars",
         "parameters": [
           {
             "name": "dryRun",
@@ -666,17 +791,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               }
             }
@@ -686,17 +811,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               }
             }
@@ -704,16 +829,16 @@
         },
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
-          "group": "preferences.grafana.app",
+          "group": "collections.grafana.app",
           "version": "v1alpha1",
-          "kind": "Preferences"
+          "kind": "Stars"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the Preferences",
+          "description": "name of the Stars",
           "required": true,
           "schema": {
             "type": "string",
@@ -740,11 +865,114 @@
           }
         }
       ]
+    },
+    "/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}": {
+      "put": {
+        "tags": [
+          "Stars"
+        ],
+        "description": "Add a starred item",
+        "operationId": "addStar",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "collections.grafana.app",
+          "version": "v1alpha1",
+          "kind": "Stars"
+        }
+      },
+      "delete": {
+        "tags": [
+          "Stars"
+        ],
+        "description": "Remove a starred item",
+        "operationId": "removeStar",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "collections.grafana.app",
+          "version": "v1alpha1",
+          "kind": "Stars"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Stars",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "group",
+          "in": "path",
+          "description": "API group for stared item",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "example": "dashboard.grafana.app"
+        },
+        {
+          "name": "kind",
+          "in": "path",
+          "description": "Kind for stared item",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "example": "Dashboard"
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "description": "The k8s name for the selected item",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ]
     }
   },
   "components": {
     "schemas": {
-      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences": {
+      "com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars": {
         "type": "object",
         "required": [
           "metadata",
@@ -768,38 +996,24 @@
             ]
           },
           "spec": {
-            "description": "Spec is the spec of the Preferences",
+            "description": "Spec is the spec of the Stars",
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsSpec"
               }
             ]
           }
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "preferences.grafana.app",
-            "kind": "Preferences",
+            "group": "collections.grafana.app",
+            "kind": "Stars",
             "version": "v1alpha1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesCookiePreferences": {
-        "type": "object",
-        "properties": {
-          "analytics": {
-            "type": "object"
-          },
-          "functional": {
-            "type": "object"
-          },
-          "performance": {
-            "type": "object"
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList": {
+      "com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsList": {
         "type": "object",
         "required": [
           "metadata",
@@ -816,7 +1030,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
                 }
               ]
             }
@@ -836,86 +1050,55 @@
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "preferences.grafana.app",
-            "kind": "PreferencesList",
+            "group": "collections.grafana.app",
+            "kind": "StarsList",
             "version": "v1alpha1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesNavbarPreference": {
+      "com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsResource": {
         "type": "object",
         "required": [
-          "bookmarkUrls"
+          "group",
+          "kind",
+          "names"
         ],
         "properties": {
-          "bookmarkUrls": {
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "names": {
+            "description": "The set of resources",
             "type": "array",
             "items": {
               "type": "string",
               "default": ""
+            },
+            "x-kubernetes-list-type": "set"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsSpec": {
+        "type": "object",
+        "required": [
+          "resource"
+        ],
+        "properties": {
+          "resource": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsResource"
+                }
+              ]
             }
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesQueryHistoryPreference": {
-        "type": "object",
-        "properties": {
-          "homeTab": {
-            "description": "one of: '' | 'query' | 'starred';",
-            "type": "string"
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesSpec": {
-        "type": "object",
-        "properties": {
-          "cookiePreferences": {
-            "description": "Cookie preferences",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesCookiePreferences"
-              }
-            ]
-          },
-          "homeDashboardUID": {
-            "description": "UID for the home dashboard",
-            "type": "string"
-          },
-          "language": {
-            "description": "Selected language (beta)",
-            "type": "string"
-          },
-          "navbar": {
-            "description": "Navigation preferences",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesNavbarPreference"
-              }
-            ]
-          },
-          "queryHistory": {
-            "description": "Explore query history preferences",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesQueryHistoryPreference"
-              }
-            ]
-          },
-          "regionalFormat": {
-            "description": "Selected locale (beta)",
-            "type": "string"
-          },
-          "theme": {
-            "description": "light, dark, empty is default",
-            "type": "string"
-          },
-          "timezone": {
-            "description": "The timezone selection",
-            "type": "string"
-          },
-          "weekStart": {
-            "description": "day of the week (sunday, monday, etc)",
-            "type": "string"
           }
         }
       },
