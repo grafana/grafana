@@ -3,9 +3,9 @@ import { useCallback, useEffect, useMemo } from 'react';
 import * as React from 'react';
 
 import { CoreApp, isValidGrafanaDuration, LogSortOrderChangeEvent, LogsSortOrder, store } from '@grafana/data';
-import { EditorField, EditorRow, QueryOptionGroup } from '@grafana/plugin-ui';
+import { EditorField, QueryOptionGroup } from '@grafana/plugin-ui';
 import { getAppEvents } from '@grafana/runtime';
-import { AutoSizeInput, RadioButtonGroup } from '@grafana/ui';
+import { AutoSizeInput, Box, RadioButtonGroup } from '@grafana/ui';
 
 import {
   getQueryDirectionLabel,
@@ -133,7 +133,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     }, [query.step, datasource]);
 
     return (
-      <EditorRow>
+      <Box backgroundColor={'secondary'}>
         <QueryOptionGroup
           title="Options"
           collapsedInfo={getCollapsedInfo(query, queryType, maxLines, isLogQuery, isValidStep, query.direction)}
@@ -196,7 +196,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
             </>
           )}
         </QueryOptionGroup>
-      </EditorRow>
+      </Box>
     );
   }
 );

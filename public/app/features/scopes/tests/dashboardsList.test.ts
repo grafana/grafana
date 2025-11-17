@@ -262,7 +262,7 @@ describe('Dashboards list', () => {
     expectDashboardLength('billing-usage', 1);
   });
 
-  it('redirects to the first scope navigation if your current dashboard is not a scope navigation', async () => {
+  it('does not redirect when scopes are set programmatically on dashboard not in scope navigation list', async () => {
     // Render another dashboard, which is not a scope navigation
     const mockNavigations: ScopeNavigation[] = [
       {
@@ -284,10 +284,10 @@ describe('Dashboards list', () => {
     await renderDashboard();
     expect(locationService.getLocation().pathname).toBe('/');
 
+    // When scopes are set programmatically (not through UI), redirects should not happen
     await updateScopes(scopesService, ['grafana']);
-    expect(locationService.getLocation().pathname).toBe('/d/dashboard1');
-    // renderDashboard defaults to home dashboard
-    expect(locationService.getLocation().pathname).not.toBe('/');
+    // Should stay on the current page, not redirect
+    expect(locationService.getLocation().pathname).toBe('/');
     expect(fetchDashboardsSpy).toHaveBeenCalled();
   });
 

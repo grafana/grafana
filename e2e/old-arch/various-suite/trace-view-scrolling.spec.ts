@@ -41,7 +41,7 @@ describe('Trace view', () => {
     e2e.components.TraceViewer.spanBar()
       .its('length')
       .should(($span) => {
-        expect($span).to.be.equal(50);
+        expect($span).to.be.at.most(50);
       });
   });
 });

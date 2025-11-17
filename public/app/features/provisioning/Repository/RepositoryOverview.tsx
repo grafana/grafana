@@ -7,6 +7,7 @@ import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, 
 import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
+import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
@@ -66,6 +67,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                     getRowId={(r: ResourceCount) => `${r.group}-${r.resource}`}
                   />
                 ) : null}
+                <Box paddingTop={2}>
+                  <FreeTierLimitNote limitType="resource" />
+                </Box>
               </Card.Description>
               <Card.Actions className={styles.actions}>
                 <LinkButton size="md" href={getFolderURL(repo)} icon="folder-open" variant="secondary">
@@ -162,6 +166,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
+      gap: theme.spacing(2),
     }),
     actions: css({
       marginTop: 'auto',
@@ -174,6 +179,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gridColumn: 'span 9',
     }),
     pullStatusCard: css({
+      height: '100%',
       gridColumn: 'span 2',
 
       [theme.breakpoints.down('lg')]: {
