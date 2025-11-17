@@ -61,6 +61,7 @@ export function PluginUsage({ plugin }: Props) {
                 clearSelection={() => {}}
                 keyboardEvents={of()}
                 onTagSelected={() => {}}
+                trackingSource="PluginDetailsPage_PluginUsage"
               />
             );
           }}
