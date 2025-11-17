@@ -198,8 +198,9 @@ func initResourceTables(mg *migrator.Migrator) string {
 	// Backfill key_path column in resource_history
 	mg.AddMigration("Backfill key_path column in resource_history", &resourceHistoryKeyBackfillMigrator{})
 
-	// Make key_path column NOT NULL after backfill
-	mg.AddMigration("Make key_path column NOT NULL in resource_history", &makeKeyColumnNotNullMigrator{})
+	// Note: key_path remains nullable because the write pattern is:
+	// 1. INSERT (key_path = NULL)
+	// 2. UPDATE (key_path = actual value after RV allocation)
 
 	// Add index on key_path column
 	mg.AddMigration("Add index on key_path column in resource_history", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
@@ -352,35 +353,4 @@ func (m *resourceHistoryKeyBackfillMigrator) Exec(sess *xorm.Session, mg *migrat
 
 	logger.Info("Backfill completed", "total_processed", processed)
 	return nil
-}
-
-// makeKeyColumnNotNullMigrator makes the key_path column NOT NULL after backfill
-type makeKeyColumnNotNullMigrator struct {
-	migrator.MigrationBase
-}
-
-func (m *makeKeyColumnNotNullMigrator) SQL(dialect migrator.Dialect) string {
-	return "Make key_path column NOT NULL in resource_history"
-}
-
-func (m *makeKeyColumnNotNullMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	dialect := mg.Dialect.DriverName()
-
-	var alterSQL string
-
-	switch dialect {
-	case "mysql":
-		alterSQL = "ALTER TABLE resource_history MODIFY key_path VARCHAR(2048) NOT NULL"
-	case "postgres":
-		alterSQL = "ALTER TABLE resource_history ALTER COLUMN key_path SET NOT NULL"
-	case "sqlite3":
-		// SQLite doesn't support ALTER COLUMN directly, so we skip this for SQLite
-		// The column will remain nullable in SQLite, which is acceptable
-		return nil
-	default:
-		return fmt.Errorf("unsupported database dialect: %s", dialect)
-	}
-
-	_, err := sess.Exec(alterSQL)
-	return err
 }
