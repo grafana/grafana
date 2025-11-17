@@ -186,8 +186,15 @@ func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*Dashb
 			}
 
 		case "tags":
-			for iter.ReadArray() {
-				dash.Tags = append(dash.Tags, iter.ReadString())
+			// Only support string array tags. Ignore everything else.
+			if iter.WhatIsNext() == jsoniter.ArrayValue {
+				for iter.ReadArray() {
+					if iter.WhatIsNext() == jsoniter.StringValue {
+						dash.Tags = append(dash.Tags, iter.ReadString())
+					}
+				}
+			} else {
+				iter.Skip()
 			}
 
 		case "links":
