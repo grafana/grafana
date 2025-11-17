@@ -2141,6 +2141,75 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("filter by SearchRuleGroup", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+		rule1 := createRule(t, store, ruleGen.With(models.RuleMuts.WithGroupName("database-alerts")))
+		rule2 := createRule(t, store, ruleGen.With(models.RuleMuts.WithGroupName("application-alerts")))
+		rule3 := createRule(t, store, ruleGen.With(models.RuleMuts.WithGroupName("network-alerts")))
+		rule4 := createRule(t, store, ruleGen.With(models.RuleMuts.WithGroupName("critical-monitoring")))
+
+		tc := []struct {
+			name          string
+			groupSearch   string
+			expectedRules []*models.AlertRule
+		}{
+			{
+				name:          "should find rules",
+				groupSearch:   "alerts",
+				expectedRules: []*models.AlertRule{rule1, rule2, rule3},
+			},
+			{
+				name:          "should find rule with partial match",
+				groupSearch:   "mOnItOrInG",
+				expectedRules: []*models.AlertRule{rule4},
+			},
+			{
+				name:          "should return no rules when no match",
+				groupSearch:   "nonexistent",
+				expectedRules: []*models.AlertRule{},
+			},
+			{
+				name:          "should return all rules when empty",
+				groupSearch:   "",
+				expectedRules: []*models.AlertRule{rule1, rule2, rule3, rule4},
+			},
+			{
+				name:          "should not find rules when word order is reversed",
+				groupSearch:   "alerts database",
+				expectedRules: []*models.AlertRule{},
+			},
+			{
+				name:          "should find multiple rules matching sequential words",
+				groupSearch:   "database alert",
+				expectedRules: []*models.AlertRule{rule1},
+			},
+			{
+				name:          "should handle extra whitespace between words",
+				groupSearch:   "  network   alerts  ",
+				expectedRules: []*models.AlertRule{rule3},
+			},
+			{
+				name:          "should handle multiple words with partial matches",
+				groupSearch:   "crit mon",
+				expectedRules: []*models.AlertRule{rule4},
+			},
+		}
+
+		for _, tt := range tc {
+			t.Run(tt.name, func(t *testing.T) {
+				query := &models.ListAlertRulesQuery{
+					OrgID:           orgID,
+					SearchRuleGroup: tt.groupSearch,
+				}
+				result, err := store.ListAlertRules(context.Background(), query)
+				require.NoError(t, err)
+				require.ElementsMatch(t, tt.expectedRules, result)
+			})
+		}
+	})
 }
 
 func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
