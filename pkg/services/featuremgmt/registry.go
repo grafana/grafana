@@ -1559,15 +1559,6 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:              "unifiedStorageHistoryPruner",
-			Description:       "Enables the unified storage history pruner",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaSearchAndStorageSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			Expression:        "true", // will be removed soon
-		},
-		{
 			Name:        "azureMonitorLogsBuilderEditor",
 			Description: "Enables the logs builder mode for the Azure Monitor data source",
 			Stage:       FeatureStagePublicPreview,

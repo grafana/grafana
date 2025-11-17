@@ -818,10 +818,6 @@ const (
 	// Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules
 	FlagAlertingImportYAMLUI = "alertingImportYAMLUI"
 
-	// FlagUnifiedStorageHistoryPruner
-	// Enables the unified storage history pruner
-	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
-
 	// FlagAzureMonitorLogsBuilderEditor
 	// Enables the logs builder mode for the Azure Monitor data source
 	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"

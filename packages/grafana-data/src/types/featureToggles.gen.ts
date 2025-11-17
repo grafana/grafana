@@ -899,11 +899,6 @@ export interface FeatureToggles {
   */
   alertingImportYAMLUI?: boolean;
   /**
-  * Enables the unified storage history pruner
-  * @default true
-  */
-  unifiedStorageHistoryPruner?: boolean;
-  /**
   * Enables the logs builder mode for the Azure Monitor data source
   * @default false
   */
