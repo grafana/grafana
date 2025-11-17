@@ -45,6 +45,7 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
+import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
@@ -62,7 +63,6 @@ import { createVariablesForDashboard, createVariablesForSnapshot } from '../util
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
 import { GRAFANA_DATASOURCE_REF } from './const';
-import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;

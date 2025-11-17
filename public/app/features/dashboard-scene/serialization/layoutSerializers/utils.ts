@@ -28,10 +28,10 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
-import { PanelGroupByAction } from '../../scene/PanelGroupByAction';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
+import { VizPanelHeaderActions } from '../../scene/VizPanelHeaderActions';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
@@ -41,7 +41,6 @@ import { getVizPanelKeyForPanelId } from '../../utils/utils';
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 import { transformDataTopic } from '../transformToV2TypesUtils';
-import { VizPanelHeaderActions } from '../../scene/VizPanelHeaderActions';
 
 export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];

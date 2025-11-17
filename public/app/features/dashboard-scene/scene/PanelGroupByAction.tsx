@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { GrafanaTheme2, fuzzySearch } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { GroupByVariable, SceneDataQuery, VariableValueOption, VariableValueSingle } from '@grafana/scenes';
 import { Button, Icon, Input, Checkbox, Dropdown, Stack, useStyles2 } from '@grafana/ui';
@@ -100,7 +101,7 @@ export function PanelGroupByAction({ groupByVariable, queries }: Props) {
   }, [options]);
 
   const overlayContent = () => (
-    <div className={styles.menuContainer}>
+    <div className={styles.menuContainer} data-testid={selectors.components.Panels.Panel.PanelGroupByHeaderActions}>
       <Stack
         direction="column"
         onClick={(e) => e.stopPropagation()}
