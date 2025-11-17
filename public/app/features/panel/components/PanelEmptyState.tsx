@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, Text, useStyles2 } from '@grafana/ui';
 
 export interface PanelEmptyStateProps {
-  content?: React.ReactNode;
+  content?: string | React.ReactElement<React.ComponentProps<typeof Trans>>;
   type?: 'panel' | 'suggestions';
-  className?: string;
 }
 
-export function PanelEmptyState({ content, type = 'panel', className }: PanelEmptyStateProps) {
+export function PanelEmptyState({ content, type = 'panel' }: PanelEmptyStateProps) {
   const styles = useStyles2(getStyles);
   const wrapperClass = type === 'panel' ? styles.panelWrapper : styles.suggestionsWrapper;
 
@@ -22,7 +22,7 @@ export function PanelEmptyState({ content, type = 'panel', className }: PanelEmp
   );
 
   return (
-    <div className={`${wrapperClass} ${className || ''}`}>
+    <div className={`${wrapperClass}`}>
       <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
       <Text element="p" textAlignment="center" color="secondary">
         {content || defaultContent}
