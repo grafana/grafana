@@ -175,14 +175,14 @@ func RegisterAPIService(
 	}
 
 	migration.RegisterMetrics(reg)
-	migration.Initialize(&datasourceInfoProvider{
+	migration.Initialize(&datasourceIndexProvider{
 		datasourceService: datasourceService,
 	})
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceInfoProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *DashboardsAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider)
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     "10s",
@@ -231,7 +231,7 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	}
 
 	// Register the explicit conversions
-	if err := conversion.RegisterConversions(scheme); err != nil {
+	if err := conversion.RegisterConversions(scheme, migration.GetDataSourceIndexProvider()); err != nil {
 		return err
 	}
 

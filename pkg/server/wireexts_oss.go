@@ -20,6 +20,7 @@ import (
 	gsmKMSProviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	secretService "github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -150,6 +151,7 @@ var wireExtsBasicSet = wire.NewSet(
 	secret.ProvideSecureValueClient,
 	provisioningExtras,
 	configProviderExtras,
+	advisor.ProvideAppInstaller,
 )
 
 var wireExtsSet = wire.NewSet(

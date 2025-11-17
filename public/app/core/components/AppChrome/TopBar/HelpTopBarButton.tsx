@@ -1,10 +1,8 @@
-import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Dropdown, ToolbarButton } from '@grafana/ui';
 import { OpenExtensionSidebarEvent } from 'app/types/events';
 
 import {
@@ -23,7 +21,6 @@ interface Props {
 export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }: Props) {
   const enrichedHelpNode = useHelpNode();
   const { setDockedComponentId, dockedComponentId, availableComponents } = useExtensionSidebarContext();
-  const styles = useStyles2(getStyles);
 
   if (!enrichedHelpNode) {
     return null;
@@ -52,7 +49,7 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
       iconOnly
       icon="question-circle"
       aria-label={t('navigation.help.aria-label', 'Help')}
-      className={isOpen ? styles.helpButtonActive : undefined}
+      variant={isOpen ? 'active' : 'default'}
       tooltip={
         isOpen
           ? t(
@@ -76,13 +73,4 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
       }}
     />
   );
-});
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  helpButtonActive: css({
-    borderRadius: theme.shape.radius.circle,
-    backgroundColor: theme.colors.primary.transparent,
-    border: `1px solid ${theme.colors.primary.borderTransparent}`,
-    color: theme.colors.text.primary,
-  }),
 });

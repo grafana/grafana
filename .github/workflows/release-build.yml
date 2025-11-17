@@ -320,13 +320,21 @@ jobs:
           repositories: '["grafana"]'
           permissions: '{"issues": "write", "pull_requests": "write", "contents": "read"}'
       - name: Find PR
+        continue-on-error: true
+        id: find-pr
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
           GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
-        run: echo "ISSUE_NUMBER=$(gh api "/repos/grafana/grafana/commits/${GRAFANA_COMMIT}/pulls" | jq -r '.[0].number')" >> "$GITHUB_ENV"
+          REPO: ${{ github.repository }}
+        run: |
+          set -eo pipefail
+          gh api "/repos/${REPO}/commits/${GRAFANA_COMMIT}/pulls" | jq -r '.[0].number' | tee issue_number.txt
+          echo "ISSUE_NUMBER=$(cat issue_number.txt)" >> "$GITHUB_ENV"
       - name: Find Comment
         uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
+        if: ${{ steps.find-pr.outcome == 'success' }}
         id: fc
+        continue-on-error: true
         with:
           issue-number: ${{ env.ISSUE_NUMBER }}
           comment-author: 'grafana-delivery-bot[bot]'
@@ -334,6 +342,7 @@ jobs:
           token: ${{ steps.generate_token.outputs.token }}
       - name: Create or update comment
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v4
+        if: ${{ steps.find-pr.outcome == 'success' }} # Run even if comment wasn't found
         with:
           token: ${{ steps.generate_token.outputs.token }}
           comment-id: ${{ steps.fc.outputs.comment-id }}

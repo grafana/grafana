@@ -1,12 +1,6 @@
 import { css } from '@emotion/css';
 
-import {
-  CoreApp,
-  GrafanaTheme2,
-  PanelDataSummary,
-  VisualizationSuggestionsBuilder,
-  VisualizationSuggestion,
-} from '@grafana/data';
+import { CoreApp, getPanelDataSummary, GrafanaTheme2, PanelDataSummary, VisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
@@ -27,8 +21,7 @@ import { changePanelPlugin } from '../state/actions';
 export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   const styles = useStyles2(getStyles);
   const context = usePanelContext();
-  const builder = new VisualizationSuggestionsBuilder(props.data);
-  const { dataSummary } = builder;
+  const dataSummary = getPanelDataSummary(props.data.series);
   const message = getMessageFor(props, dataSummary);
   const dispatch = useDispatch();
 

@@ -8,7 +8,7 @@
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/o11y-ds-frontend": "workspace:*",
-    "@grafana/plugin-ui": "^0.10.10",
+    "@grafana/plugin-ui": "^0.11.0",
     "@grafana/runtime": "workspace:*",
     "@grafana/ui": "workspace:*",
     "lodash": "4.17.21",
@@ -44,5 +44,5 @@
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --maxWorkers 4"
   },
-  "packageManager": "yarn@4.10.3"
+  "packageManager": "yarn@4.11.0"
 }

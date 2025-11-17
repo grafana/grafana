@@ -20,7 +20,7 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import type { AdvancedFilters } from 'app/features/alerting/unified/rule-list/filter/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
@@ -162,6 +162,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
                     'Search by name or enter filter query...'
                   )}
                   name="searchQuery"
+                  escapeRegex={false}
                   onChange={(next) => {
                     trackRulesSearchInputCleared(field.value, next);
                     field.onChange(next);
