@@ -1,5 +1,4 @@
 import { TransformerRegistryItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { getFilterByValueTransformRegistryItem } from './FilterByValueTransformer/FilterByValueTransformerEditor';
 import { getHeatmapTransformRegistryItem } from './calculateHeatmap/HeatmapTransformerEditor';
@@ -65,7 +64,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
     getJoinByLabelsTransformRegistryItem(),
     getRegressionTransformerRegistryItem(),
     getPartitionByValuesTransformRegistryItem(),
-    ...(config.featureToggles.formatString ? [getFormatStringTransformerRegistryItem()] : []),
+    getFormatStringTransformerRegistryItem(),
     getGroupToNestedTableTransformRegistryItem(),
     getFormatTimeTransformerRegistryItem(),
     getTimeSeriesTableTransformRegistryItem(),
