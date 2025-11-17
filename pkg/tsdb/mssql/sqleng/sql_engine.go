@@ -374,12 +374,19 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		return
 	}
 
+	frame := e.processResponse(qm, rows, interpolatedQuery, errAppendDebug)
+
+	queryResult.dataResponse.Frames = data.Frames{frame}
+	ch <- queryResult
+}
+
+func (e *DataSourceHandler) processResponse(qm *dataQueryModel, rows *sql.Rows, interpolatedQuery string, errAppendDebug func(string, error, string, backend.ErrorSource)) *data.Frame {
 	// Convert row.Rows to dataframe
 	stringConverters := e.queryResultTransformer.GetConverterList()
 	frame, err := sqlutil.FrameFromRows(rows, e.rowLimit, sqlutil.ToConverters(stringConverters...)...)
 	if err != nil {
 		errAppendDebug("convert frame from rows error", err, interpolatedQuery, backend.ErrorSourcePlugin)
-		return
+		return nil
 	}
 
 	if frame.Meta == nil {
@@ -394,21 +401,19 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	// additionally-needed frame data stays intact and is correctly passed to our visulization.
 	if frame.Rows() == 0 {
 		frame.Fields = []*data.Field{}
-		queryResult.dataResponse.Frames = data.Frames{frame}
-		ch <- queryResult
-		return
+		return frame
 	}
 
 	if err := convertSQLTimeColumnsToEpochMS(frame, qm); err != nil {
 		errAppendDebug("converting time columns failed", err, interpolatedQuery, backend.ErrorSourcePlugin)
-		return
+		return nil
 	}
 
 	if qm.Format == dataQueryFormatSeries {
 		// time series has to have time column
 		if qm.timeIndex == -1 {
 			errAppendDebug("db has no time column", errors.New("time column is missing; make sure your data includes a time column for time series format or switch to a table format that doesn't require it"), interpolatedQuery, backend.ErrorSourceDownstream)
-			return
+			return nil
 		}
 
 		// Make sure to name the time field 'Time' to be backward compatible with Grafana pre-v8.
@@ -426,7 +431,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 			var err error
 			if frame, err = convertSQLValueColumnToFloat(frame, i); err != nil {
 				errAppendDebug("convert value to float failed", err, interpolatedQuery, backend.ErrorSourcePlugin)
-				return
+				return nil
 			}
 		}
 
@@ -437,7 +442,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 			frame, err = data.LongToWide(frame, qm.FillMissing)
 			if err != nil {
 				errAppendDebug("failed to convert long to wide series when converting from dataframe", err, interpolatedQuery, backend.ErrorSourcePlugin)
-				return
+				return nil
 			}
 
 			// Before 8x, a special metric column was used to name time series. The LongToWide transforms that into a metric label on the value field.
@@ -472,8 +477,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		}
 	}
 
-	queryResult.dataResponse.Frames = data.Frames{frame}
-	ch <- queryResult
+	return frame
 }
 
 // Interpolate provides global macros/substitutions for all sql datasources.
