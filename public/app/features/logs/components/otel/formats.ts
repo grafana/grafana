@@ -42,7 +42,10 @@ function getDisplayedFieldsForLanguages(logs: LogListModel[] | LogRowModel[], la
   });
 
   return displayedFields.filter(
-    (field) => field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME || logs.some((log) => log.labels[field] !== undefined)
+    (field) =>
+      field === LOG_LINE_BODY_FIELD_NAME ||
+      field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME ||
+      logs.some((log) => log.labels[field] !== undefined)
   );
 }
 

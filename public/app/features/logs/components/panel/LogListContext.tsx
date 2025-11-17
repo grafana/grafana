@@ -308,9 +308,13 @@ export const LogListContextProvider = ({
   // ['Time', 'detected_level', '___LOG_LINE_BODY___', '___OTEL_LOG_ATTRIBUTES___']
   const defaultDisplayedFields = useMemo(() => {
     const orderedFields: string[] = tableDefaultFields;
-    // Always add LOG_LINE_BODY
+
+    // Always add LOG_LINE_BODY before OTel fields
     orderedFields.push(LOG_LINE_BODY_FIELD_NAME);
-    orderedFields.push(...otelDisplayedFields);
+
+    // Add OTel fields, excluding LOG_LINE_BODY_FIELD_NAME if it's already there to avoid duplicates
+    const otelFieldsWithoutBody = otelDisplayedFields.filter((field) => field !== LOG_LINE_BODY_FIELD_NAME);
+    orderedFields.push(...otelFieldsWithoutBody);
 
     return orderedFields;
   }, [tableDefaultFields, otelDisplayedFields]);

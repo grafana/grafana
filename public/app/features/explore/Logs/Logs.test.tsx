@@ -61,6 +61,16 @@ jest.mock('../state/query', () => ({
   },
 }));
 
+jest.mock('app/core/context/GrafanaContext', () => ({
+  ...jest.requireActual('app/core/context/GrafanaContext'),
+  useGrafana: () => ({
+    location: {
+      getSearchObject: jest.fn().mockReturnValue({}),
+      partial: jest.fn(),
+    },
+  }),
+}));
+
 describe('Logs', () => {
   let originalHref = window.location.href;
 
