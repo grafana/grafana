@@ -1,4 +1,4 @@
-package unifiedstorage
+package migrations
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -17,34 +18,24 @@ type LargeObjectSupport interface {
 	Threshold() int
 }
 
-type MigrateOptions struct {
-	Namespace    string
-	Store        resourcepb.BulkStoreClient
-	LargeObjects LargeObjectSupport // Optional - can be nil
-	Resources    []schema.GroupResource
-	WithHistory  bool
-	OnlyCount    bool
-	StackID      string
-	Progress     func(count int, msg string)
-}
-
 type Dependencies struct {
-	Migrator        LegacyMigrator
+	Migrator        legacy.LegacyMigrator
 	BulkStoreClient resourcepb.BulkStoreClient
 }
 
 type unifiedStorageMigrator struct {
-	baseMigrator
-	deps      *Dependencies
-	resources []schema.GroupResource
-	log       log.Logger
+	migrator        legacy.LegacyMigrator
+	bulkStoreClient resourcepb.BulkStoreClient
+	resources       []schema.GroupResource
+	log             log.Logger
 }
 
-func newUnifiedStorageMigrator(deps *Dependencies, resources []schema.GroupResource, logPrefix string) *unifiedStorageMigrator {
+func newUnifiedStorageMigrator(migrator legacy.LegacyMigrator, bulkStoreClient resourcepb.BulkStoreClient, resources []schema.GroupResource, logPrefix string) *unifiedStorageMigrator {
 	return &unifiedStorageMigrator{
-		deps:      deps,
-		resources: resources,
-		log:       log.New(logPrefix),
+		migrator:        migrator,
+		bulkStoreClient: bulkStoreClient,
+		resources:       resources,
+		log:             log.New(logPrefix),
 	}
 }
 
@@ -52,9 +43,9 @@ func (m *unifiedStorageMigrator) executeMigration(ctx context.Context, sess *xor
 	startTime := time.Now()
 	m.log.Info("Starting unified storage migration", "namespace", namespace, "resources", m.resources)
 
-	opts := MigrateOptions{
+	opts := legacy.MigrateOptions{
 		Namespace:    namespace,
-		Store:        m.deps.BulkStoreClient,
+		Store:        m.bulkStoreClient,
 		LargeObjects: nil, // Not using large object support to avoid import cycles
 		Resources:    m.resources,
 		WithHistory:  true, // Migrate with full history
@@ -66,7 +57,7 @@ func (m *unifiedStorageMigrator) executeMigration(ctx context.Context, sess *xor
 	}
 
 	// Execute the migration via legacy migrator
-	response, err := m.deps.Migrator.Migrate(ctx, opts)
+	response, err := m.migrator.Migrate(ctx, opts)
 	if err != nil {
 		m.log.Error("Migration failed", "error", err, "duration", time.Since(startTime))
 		return fmt.Errorf("failed to migrate resources: %w", err)

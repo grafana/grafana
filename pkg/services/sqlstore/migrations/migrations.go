@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/signingkeys"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ssosettings"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/unifiedstorage"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -163,6 +162,4 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.ExpandAlertRuleUpdatedByMigration(mg)
 
 	ualert.AddAlertRuleGroupIndexMigration(mg)
-
-	unifiedstorage.AddMigration(mg, nil)
 }
