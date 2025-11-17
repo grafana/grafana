@@ -101,7 +101,7 @@ export function PanelGroupByAction({ groupByVariable, queries }: Props) {
   }, [options]);
 
   const overlayContent = () => (
-    <div className={styles.menuContainer} data-testid={selectors.components.Panels.Panel.PanelGroupByHeaderActions}>
+    <div className={styles.menuContainer}>
       <Stack
         direction="column"
         onClick={(e) => e.stopPropagation()}
@@ -165,7 +165,7 @@ export function PanelGroupByAction({ groupByVariable, queries }: Props) {
 
   return (
     <Dropdown overlay={overlayContent} placement="bottom-start" onVisibleChange={handleVisibilityChange}>
-      <Button variant="secondary" size="sm">
+      <Button variant="secondary" size="sm" data-testid={selectors.components.Panels.Panel.PanelGroupByHeaderAction}>
         <Trans i18nKey="panel-group-by.button">Group by</Trans>
         <Icon name="angle-down" />
       </Button>

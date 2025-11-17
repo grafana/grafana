@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
@@ -32,7 +32,7 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
-const groupByHeaderActionTestId = selectors.components.Panels.Panel.PanelGroupByHeaderActions;
+const groupByHeaderActionTestId = selectors.components.Panels.Panel.PanelGroupByHeaderAction;
 
 describe('VizPanelHeaderActions', () => {
   it('renders PanelGroupByAction when the group by variable applies to the panel', async () => {
@@ -40,10 +40,8 @@ describe('VizPanelHeaderActions', () => {
 
     const { unmount } = render(<headerActions.Component model={headerActions} />);
 
-    const button = await screen.findByRole('button', { name: /group by/i });
-    fireEvent.click(button);
-
-    await waitFor(() => expect(screen.getByTestId(groupByHeaderActionTestId)).toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('button', { name: /group by/i })).toBeInTheDocument());
+    expect(screen.queryByTestId(groupByHeaderActionTestId)).toBeInTheDocument();
     expect(panel.state.showMenuAlways).toBe(true);
 
     unmount();
