@@ -38,13 +38,14 @@ import { withPageErrorBoundary } from './withPageErrorBoundary';
 import { AlertmanagerGroup, Receiver, Route, ROUTES_META_SYMBOL } from '../../../plugins/datasource/alertmanager/types';
 import { stringifyErrorLike } from './utils/misc';
 import {
+  useCreateRoutingTree,
   useDeleteRoutingTree,
   useListNotificationPolicyRoutes,
   useRootRouteSearch,
 } from './components/notification-policies/useNotificationPolicyRoute';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
 import { usePagination } from './hooks/usePagination';
-import { useDeleteRoutingTreeModal } from './components/notification-policies/components/Modals';
+import { useCreateRoutingTreeModal, useDeleteRoutingTreeModal } from './components/notification-policies/components/Modals';
 import { ALL_ROUTING_TREES, useExportRoutingTree } from './components/notification-policies/useExportRoutingTree';
 import { K8sAnnotations, ROOT_ROUTE_NAME } from './utils/k8s/constants';
 import ConditionalWrap from './components/ConditionalWrap';
@@ -52,10 +53,11 @@ import { ProvisioningBadge } from './components/Provisioning';
 import { getAnnotation } from './utils/k8s/utils';
 import { Spacer } from './components/Spacer';
 import MoreButton from './components/MoreButton';
-import { useContactPointsWithStatus } from './components/contact-points/useContactPoints';
+import { useGrafanaContactPoints } from './components/contact-points/useContactPoints';
 import { useAlertGroupsModal } from './components/notification-policies/Modals';
 import { normalizeMatchers } from './utils/matchers';
 import { RoutingTreeFilter } from './components/notification-policies/components/RoutingTreeFilter';
+import {config} from '@grafana/runtime';
 
 enum ActiveTab {
   NotificationPolicies = 'notification_policies',
@@ -126,7 +128,9 @@ const NotificationPoliciesTabs = () => {
 const PolicyTreeTab = () => {
   const { isGrafanaAlertmanager } = useAlertmanager();
 
-  if (!isGrafanaAlertmanager) {
+  const useMultiplePoliciesView = config.featureToggles.alertingMultiplePolicies;
+
+  if (!isGrafanaAlertmanager || !useMultiplePoliciesView) {
     return <NotificationPoliciesTree />;
   }
 
@@ -138,7 +142,6 @@ const PolicyTreeTab = () => {
 const DEFAULT_PAGE_SIZE = 10;
 
 const PolicyTreeTabContents = () => {
-  const { selectedAlertmanager } = useAlertmanager();
   const [queryParams] = useURLSearchParams();
 
   const [[createPoliciesSupported, createPoliciesAllowed], [exportPoliciesSupported, exportPoliciesAllowed]] =
@@ -151,18 +154,21 @@ const PolicyTreeTabContents = () => {
     currentData: allPolicies,
     isLoading,
     error: fetchPoliciesError,
-  } = useListNotificationPolicyRoutes({ alertmanager: selectedAlertmanager ?? '' });
+  } = useListNotificationPolicyRoutes();
 
   const [ExportDrawer, showExportDrawer] = useExportRoutingTree();
+
+  const [createTrigger] = useCreateRoutingTree();
+  const [CreateModal, showCreateModal] = useCreateRoutingTreeModal(createTrigger.execute);
+
   const search = queryParams.get('search');
 
   const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
   const shouldFetchContactPoints = contactPointsSupported && canSeeContactPoints;
-  const { contactPoints: receivers } = useContactPointsWithStatus({
-    alertmanager: selectedAlertmanager ?? '',
-    fetchPolicies: false,
-    fetchStatuses: true,
+  const { contactPoints: receivers } = useGrafanaContactPoints({
     skip: !shouldFetchContactPoints,
+    fetchStatuses: false,
+    fetchPolicies: false,
   });
 
   if (isLoading) {
@@ -177,15 +183,15 @@ const PolicyTreeTabContents = () => {
 
         <Stack direction="row" gap={1}>
           {createPoliciesSupported && (
-            <LinkButton
+            <Button
               icon="plus"
               aria-label={'add policy'}
               variant="primary"
-              href="/alerting/routes/new"
               disabled={!createPoliciesAllowed}
+              onClick={() => showCreateModal()}
             >
               Create policy
-            </LinkButton>
+            </Button>
           )}
           {exportPoliciesSupported && (
             <Button
@@ -210,6 +216,7 @@ const PolicyTreeTabContents = () => {
           receivers={receivers}
         />
       )}
+      {CreateModal}
       {ExportDrawer}
     </>
   );
@@ -218,7 +225,7 @@ const PolicyTreeTabContents = () => {
 interface RoutingTreeListProps {
   policies: Route[];
   search?: string | null;
-  pageSize?: number;
+  pageSize: number;
   receivers?: Receiver[];
 }
 

@@ -694,9 +694,9 @@ const AllMatchesIndicator: FC = () => {
   );
 };
 
-type DefaultPolicyIndicatorProps = { route: RouteWithID };
+type DefaultPolicyIndicatorProps = { route?: RouteWithID };
 
-const DefaultPolicyIndicator: FC<DefaultPolicyIndicatorProps> = ({route}) => {
+export const DefaultPolicyIndicator: FC<DefaultPolicyIndicatorProps> = ({route={}}) => {
   const styles = useStyles2(getStyles);
   return (
     <>

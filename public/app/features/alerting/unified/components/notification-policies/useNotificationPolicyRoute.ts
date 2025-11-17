@@ -35,6 +35,7 @@ import uFuzzy from '@leeoniya/ufuzzy';
 import { useMemo } from 'react';
 
 const {
+  useCreateNamespacedRoutingTreeMutation,
   useDeleteNamespacedRoutingTreeMutation,
   useListNamespacedRoutingTreeQuery,
   useReplaceNamespacedRoutingTreeMutation,
@@ -83,13 +84,11 @@ export const useNotificationPolicyRoute = (
   return k8sApiSupported ? k8sRouteQuery : amConfigQuery;
 };
 
-export const useListNotificationPolicyRoutes = ({ alertmanager }: BaseAlertmanagerArgs, { skip }: Skippable = {}) => {
-  const k8sApiSupported = shouldUseK8sApi(alertmanager);
-
+export const useListNotificationPolicyRoutes = ({ skip }: Skippable = {}) => {
   return useListNamespacedRoutingTreeQuery(
     { namespace: getAPINamespace() },
     {
-      skip: skip || !k8sApiSupported,
+      skip: skip,
       selectFromResult: (result) => {
         return {
           ...result,
@@ -263,6 +262,48 @@ export function useDeleteRoutingTree() {
       name: name,
       namespace,
       ioK8SApimachineryPkgApisMetaV1DeleteOptions: { preconditions: { resourceVersion } },
+    }).unwrap();
+  });
+}
+
+export function useCreateRoutingTree() {
+  const [createNamespacedRoutingTree] = useCreateNamespacedRoutingTreeMutation();
+
+  return useAsync(async (partialFormRoute: Partial<FormAmRoute>) => {
+    const namespace = getAPINamespace();
+
+    const {
+      name,
+      overrideGrouping,
+      groupBy,
+      overrideTimings,
+      groupWaitValue,
+      groupIntervalValue,
+      repeatIntervalValue,
+      receiver,
+    } = partialFormRoute;
+
+    // This does not "inherit" from any existing route, as this is a new routing tree. If not set, it will use the system
+    // defaults. Currently supported by group_by, group_wait, group_interval, and repeat_interval
+    const USE_DEFAULTS = undefined;
+
+    const newRoute: Route = {
+      name: name,
+      group_by: overrideGrouping ? groupBy : USE_DEFAULTS,
+      group_wait: overrideTimings && groupWaitValue ? groupWaitValue : USE_DEFAULTS,
+      group_interval: overrideTimings && groupIntervalValue ? groupIntervalValue : USE_DEFAULTS,
+      repeat_interval: overrideTimings && repeatIntervalValue ? repeatIntervalValue : USE_DEFAULTS,
+      receiver: receiver,
+    };
+
+    // defaults(newRoute, TIMING_OPTIONS_DEFAULTS)
+
+    // Create the K8s route object
+    const routeObject = createKubernetesRoutingTreeSpec(newRoute);
+
+    return createNamespacedRoutingTree({
+      namespace,
+      comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree: cleanKubernetesRouteIDs(routeObject),
     }).unwrap();
   });
 }
