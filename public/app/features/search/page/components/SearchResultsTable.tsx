@@ -31,7 +31,7 @@ export type SearchResultsProps = {
   onDatasourceChange?: (datasource?: string) => void;
   onClickItem?: (event: React.MouseEvent<HTMLElement>) => void;
   keyboardEvents: Observable<React.KeyboardEvent>;
-  trackingSource: string;
+  trackingSource?: string;
 };
 
 export type TableColumn = Column & {
@@ -164,7 +164,6 @@ export const SearchResultsTable = React.memo(
                       parent: parentType,
                       source: trackingSource,
                     });
-               
                   } catch (e) {
                     // ignore analytics errors
                   }
