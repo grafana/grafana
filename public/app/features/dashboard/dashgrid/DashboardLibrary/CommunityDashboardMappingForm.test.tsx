@@ -1,5 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen, waitFor } from '@testing-library/react';
+import { render } from 'test/test-utils';
 
 import { DataSourceInput, DashboardInput, InputType } from 'app/features/manage-dashboards/state/reducers';
 
@@ -19,24 +19,6 @@ interface CommunityDashboardMappingFormProps {
   onBack: () => void;
   onPreview: (mappings: InputMapping[]) => void;
 }
-
-// Mock dependencies
-jest.mock('./interactions', () => ({
-  ...jest.requireActual('./interactions'),
-  DashboardLibraryInteractions: {
-    mappingFormShown: jest.fn(),
-    mappingFormCompleted: jest.fn(),
-  },
-  CONTENT_KINDS: {
-    COMMUNITY_DASHBOARD: 'community_dashboard',
-  },
-  EVENT_LOCATIONS: {
-    MODAL_COMMUNITY_TAB: 'suggested_dashboards_modal_community_tab',
-  },
-  SOURCE_ENTRY_POINTS: {
-    DATASOURCE_PAGE: 'datasource_page',
-  },
-}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -93,7 +75,7 @@ const createMockExistingMapping = (overrides: Partial<InputMapping> = {}): Input
   ...overrides,
 });
 
-function renderForm(overrides: Partial<CommunityDashboardMappingFormProps> = {}) {
+function setupForm(overrides: Partial<CommunityDashboardMappingFormProps> = {}) {
   const defaultProps: CommunityDashboardMappingFormProps = {
     dashboardName: 'Test Dashboard',
     libraryItemId: '123',
@@ -111,28 +93,6 @@ function renderForm(overrides: Partial<CommunityDashboardMappingFormProps> = {})
   return render(<CommunityDashboardMappingForm {...defaultProps} />);
 }
 
-function setupForm(overrides: Partial<CommunityDashboardMappingFormProps> = {}) {
-  const defaultProps: CommunityDashboardMappingFormProps = {
-    dashboardName: 'Test Dashboard',
-    libraryItemId: '123',
-    eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-    contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
-    datasourceTypes: ['prometheus'],
-    unmappedDsInputs: [],
-    constantInputs: [],
-    existingMappings: [],
-    onBack: jest.fn(),
-    onPreview: jest.fn(),
-    ...overrides,
-  };
-
-  return {
-    user: userEvent.setup(),
-    ...render(<CommunityDashboardMappingForm {...defaultProps} />),
-    props: defaultProps,
-  };
-}
-
 describe('CommunityDashboardMappingForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -140,7 +100,7 @@ describe('CommunityDashboardMappingForm', () => {
 
   describe('Rendering', () => {
     it('should render description text', () => {
-      renderForm();
+      setupForm();
 
       expect(
         screen.getByText('This dashboard requires datasource configuration. Select datasources for each input below.')
@@ -148,13 +108,13 @@ describe('CommunityDashboardMappingForm', () => {
     });
 
     it('should render back button', () => {
-      renderForm();
+      setupForm();
 
       expect(screen.getByRole('button', { name: /back to dashboards/i })).toBeInTheDocument();
     });
 
     it('should render preview button', () => {
-      renderForm();
+      setupForm();
 
       expect(screen.getByRole('button', { name: /preview dashboard/i })).toBeInTheDocument();
     });
@@ -162,14 +122,14 @@ describe('CommunityDashboardMappingForm', () => {
 
   describe('Auto-mapped datasources alert', () => {
     it('should show alert when existing mappings are provided', () => {
-      renderForm({ existingMappings: [createMockExistingMapping()] });
+      setupForm({ existingMappings: [createMockExistingMapping()] });
 
       expect(screen.getByText(/1 datasources were automatically configured/i)).toBeInTheDocument();
       expect(screen.getByText(/loki → DataSource loki-uid/i)).toBeInTheDocument();
     });
 
     it('should not show alert when no existing mappings', () => {
-      renderForm();
+      setupForm();
 
       expect(screen.queryByText(/datasources were automatically configured/i)).not.toBeInTheDocument();
     });
@@ -177,14 +137,14 @@ describe('CommunityDashboardMappingForm', () => {
 
   describe('Datasource inputs', () => {
     it('should render datasource configuration section when unmapped inputs exist', () => {
-      renderForm({ unmappedDsInputs: [createMockDataSourceInput()] });
+      setupForm({ unmappedDsInputs: [createMockDataSourceInput()] });
 
       expect(screen.getByText('Datasource Configuration')).toBeInTheDocument();
       expect(screen.getByText('Prometheus')).toBeInTheDocument();
     });
 
     it('should render multiple datasource inputs', () => {
-      renderForm({
+      setupForm({
         unmappedDsInputs: [
           createMockDataSourceInput({ name: 'DS_PROM', label: 'Prometheus' }),
           createMockDataSourceInput({ name: 'DS_LOKI', label: 'Loki', pluginId: 'loki' }),
@@ -196,7 +156,7 @@ describe('CommunityDashboardMappingForm', () => {
     });
 
     it('should not render datasource section when no unmapped inputs', () => {
-      renderForm();
+      setupForm();
 
       expect(screen.queryByText('Datasource Configuration')).not.toBeInTheDocument();
     });
@@ -204,14 +164,14 @@ describe('CommunityDashboardMappingForm', () => {
 
   describe('Constant inputs', () => {
     it('should render dashboard variables section when constant inputs exist', () => {
-      renderForm({ constantInputs: [createMockConstantInput()] });
+      setupForm({ constantInputs: [createMockConstantInput()] });
 
       expect(screen.getByText('Dashboard Variables')).toBeInTheDocument();
       expect(screen.getByText('Instance')).toBeInTheDocument();
     });
 
     it('should render input field with default value', () => {
-      renderForm({ constantInputs: [createMockConstantInput({ value: 'my-default-value' })] });
+      setupForm({ constantInputs: [createMockConstantInput({ value: 'my-default-value' })] });
 
       expect(screen.getByDisplayValue('my-default-value')).toBeInTheDocument();
     });
@@ -227,7 +187,7 @@ describe('CommunityDashboardMappingForm', () => {
     });
 
     it('should render multiple constant inputs', () => {
-      renderForm({
+      setupForm({
         constantInputs: [
           createMockConstantInput({ name: 'var_instance', label: 'Instance' }),
           createMockConstantInput({ name: 'var_env', label: 'Environment', value: 'prod' }),
@@ -251,13 +211,13 @@ describe('CommunityDashboardMappingForm', () => {
     });
 
     it('should enable preview button when no unmapped datasources', () => {
-      renderForm();
+      setupForm();
 
       expect(screen.getByRole('button', { name: /preview dashboard/i })).toBeEnabled();
     });
 
     it('should disable preview button when datasources are not mapped', () => {
-      renderForm({ unmappedDsInputs: [createMockDataSourceInput()] });
+      setupForm({ unmappedDsInputs: [createMockDataSourceInput()] });
 
       expect(screen.getByRole('button', { name: /preview dashboard/i })).toBeDisabled();
     });

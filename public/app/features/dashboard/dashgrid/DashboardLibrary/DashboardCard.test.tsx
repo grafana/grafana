@@ -1,17 +1,10 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen } from '@testing-library/react';
+import { render } from 'test/test-utils';
 
 import { PluginDashboard } from 'app/types/plugins';
 
 import { DashboardCard } from './DashboardCard';
 import { GnetDashboard } from './types';
-
-function setup(jsx: JSX.Element) {
-  return {
-    user: userEvent.setup(),
-    ...render(jsx),
-  };
-}
 
 // Helper functions for creating mock objects
 const createMockPluginDashboard = (overrides: Partial<PluginDashboard> = {}): PluginDashboard => ({
@@ -111,7 +104,7 @@ describe('DashboardCard', () => {
 
   describe('Button interactions', () => {
     it('should trigger onClick when button is clicked', async () => {
-      const { user } = setup(
+      const { user } = render(
         <DashboardCard title="Test Dashboard" dashboard={createMockPluginDashboard()} onClick={mockOnClick} />
       );
 
@@ -206,7 +199,7 @@ describe('DashboardCard', () => {
         grafanaComUrl: 'https://grafana.com/grafana/dashboards/456-loki/',
       });
 
-      const { user } = setup(
+      const { user } = render(
         <DashboardCard
           title="Test Dashboard"
           dashboard={createMockPluginDashboard()}
@@ -231,7 +224,7 @@ describe('DashboardCard', () => {
     it('should not show Grafana.com link when grafanaComUrl is not provided', async () => {
       const details = createMockDetails({ grafanaComUrl: undefined });
 
-      const { user } = setup(
+      const { user } = render(
         <DashboardCard
           title="Test Dashboard"
           dashboard={createMockPluginDashboard()}
