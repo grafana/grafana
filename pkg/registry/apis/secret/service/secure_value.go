@@ -141,7 +141,7 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 
 	keeperCfg, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, currentVersion.Namespace, currentVersion.Status.Keeper, contracts.ReadOpts{})
 	if err != nil {
-		return nil, false, fmt.Errorf("fetching keeper config: namespace=%+v %w", newSecureValue.Namespace, err)
+		return nil, false, fmt.Errorf("fetching keeper config: namespace=%+v keeper: %q %w", newSecureValue.Namespace, currentVersion.Status.Keeper, err)
 	}
 
 	if newSecureValue.Spec.Value == nil {
@@ -161,11 +161,14 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 
 	// Secure value updates use the keeper used to create the secure value
 	const updateIsSync = true
-	createdSv, err := s.createNewVersion(ctx, newSecureValue.Status.Keeper, keeperCfg, newSecureValue, actorUID)
+	createdSv, err := s.createNewVersion(ctx, currentVersion.Status.Keeper, keeperCfg, newSecureValue, actorUID)
 	return createdSv, updateIsSync, err
 }
 
 func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName string, keeperCfg secretv1beta1.KeeperConfig, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error) {
+	if keeperName == "" {
+		return nil, fmt.Errorf("keeper name is required, got empty string")
+	}
 	if err := s.secureValueMutator.Mutate(sv, admission.Create); err != nil {
 		return nil, err
 	}

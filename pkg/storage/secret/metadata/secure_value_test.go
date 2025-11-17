@@ -82,10 +82,10 @@ func (m *model) readActiveVersion(namespace, name string) *modelSecureValue {
 func (m *model) create(now time.Time, sv *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, error) {
 	keeper := m.getActiveKeeper(sv.Namespace)
 	sv = deepCopy(sv)
-	sv.Status.Keeper = keeper.name
 	modelSv := &modelSecureValue{SecureValue: sv, active: false, created: now}
 	modelSv.Status.Version = m.getNewVersionNumber(modelSv.Namespace, modelSv.Name)
 	modelSv.Status.ExternalID = fmt.Sprintf("%d", modelSv.Status.Version)
+	modelSv.Status.Keeper = keeper.name
 	m.secureValues = append(m.secureValues, modelSv)
 	m.setVersionToActive(modelSv.Namespace, modelSv.Name, modelSv.Status.Version)
 	return modelSv.SecureValue, nil
@@ -98,6 +98,7 @@ func (m *model) getActiveKeeper(namespace string) *modelKeeper {
 		}
 	}
 
+	// Default to the system keeper when there are no active keepers in the namespace
 	return &modelKeeper{namespace: namespace, name: contracts.SystemKeeperName, active: true}
 }
 
@@ -106,6 +107,10 @@ func (m *model) keeperExists(namespace, name string) bool {
 }
 
 func (m *model) findKeeper(namespace, name string) *modelKeeper {
+	// The system keeper is not in the list of keepers
+	if name == contracts.SystemKeeperName {
+		return &modelKeeper{namespace: namespace, name: contracts.SystemKeeperName, active: true}
+	}
 	for _, k := range m.keepers {
 		if k.namespace == namespace && k.name == name {
 			return k
@@ -143,17 +148,18 @@ func (m *model) setKeeperAsActive(namespace, keeperName string) error {
 }
 
 func (m *model) update(now time.Time, newSecureValue *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, bool, error) {
+	sv := m.readActiveVersion(newSecureValue.Namespace, newSecureValue.Name)
+	if sv == nil {
+		return nil, false, contracts.ErrSecureValueNotFound
+	}
+
 	// If the keeper doesn't exist, return an error
-	if !m.keeperExists(newSecureValue.Namespace, newSecureValue.Status.Keeper) {
+	if !m.keeperExists(sv.Namespace, sv.Status.Keeper) {
 		return nil, false, contracts.ErrKeeperNotFound
 	}
 
 	// If the payload doesn't contain a value, get the value from current version
 	if newSecureValue.Spec.Value == nil {
-		sv := m.readActiveVersion(newSecureValue.Namespace, newSecureValue.Name)
-		if sv == nil {
-			return nil, false, contracts.ErrSecureValueNotFound
-		}
 		newSecureValue.Spec.Value = sv.Spec.Value
 	}
 
@@ -244,9 +250,7 @@ var (
 				Value:       ptr.To(secretv1beta1.NewExposedSecureValue(rapid.SampledFrom([]string{"v1", "v2", "v3", "v4", "v5"}).Draw(t, "value"))),
 				Decrypters:  rapid.SliceOfDistinct(decryptersGen, func(v string) string { return v }).Draw(t, "decrypters"),
 			},
-			Status: secretv1beta1.SecureValueStatus{
-				Keeper: keeperNameGen.Draw(t, "keeper"),
-			},
+			Status: secretv1beta1.SecureValueStatus{},
 		}
 	})
 	updateSecureValueGen = rapid.Custom(func(t *rapid.T) *secretv1beta1.SecureValue {
@@ -457,7 +461,6 @@ func TestStateMachine(t *testing.T) {
 				sv := anySecureValueGen.Draw(t, "sv")
 
 				modelCreatedSv, modelErr := model.create(sut.Clock.Now(), deepCopy(sv))
-
 				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(deepCopy(sv)))
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
@@ -538,8 +541,8 @@ func TestStateMachine(t *testing.T) {
 
 				require.Equal(t, len(modelResult), len(result))
 				for name := range modelResult {
-					require.Equal(t, modelResult[name].Value(), result[name].Value())
 					require.Equal(t, modelResult[name].Error(), result[name].Error())
+					require.Equal(t, modelResult[name].Value(), result[name].Value())
 				}
 			},
 			"createKeeper": func(t *rapid.T) {
