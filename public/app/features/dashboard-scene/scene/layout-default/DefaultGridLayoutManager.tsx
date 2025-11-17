@@ -14,7 +14,6 @@ import {
   SceneComponentProps,
   SceneGridItemLike,
   useSceneObjectState,
-  SceneGridLayoutDragStartEvent,
   SceneObject,
 } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
@@ -39,7 +38,6 @@ import {
   getVizPanelKeyForPanelId,
   getGridItemKeyForPanelId,
   useDashboard,
-  getLayoutOrchestratorFor,
   getDashboardSceneFor,
 } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
@@ -123,17 +121,6 @@ export class DefaultGridLayoutManager
   }
 
   private _activationHandler() {
-    if (config.featureToggles.dashboardNewLayouts) {
-      this._subs.add(
-        this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) => {
-          const gridItem = panel.parent;
-          if (gridItem instanceof DashboardGridItem) {
-            getLayoutOrchestratorFor(this)?.startDraggingSync(evt, gridItem);
-          }
-        })
-      );
-    }
-
     this._subs.add(
       this.state.grid.subscribeToState(({ children: newChildren }, { children: prevChildren }) => {
         if (newChildren.length === prevChildren.length) {

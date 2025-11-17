@@ -3,7 +3,6 @@ import { createRef, CSSProperties, PointerEvent as ReactPointerEvent } from 'rea
 import { SceneLayout, SceneObjectBase, SceneObjectState, VizPanel, SceneGridItemLike } from '@grafana/scenes';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
-import { getLayoutOrchestratorFor } from '../../utils/utils';
 
 import { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayoutRenderer } from './AutoGridLayoutRenderer';
@@ -156,8 +155,6 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     document.body.addEventListener('pointermove', this._onDrag);
     document.body.addEventListener('pointerup', this._onDragEnd);
     document.body.classList.add('dashboard-draggable-transparent-selection');
-
-    getLayoutOrchestratorFor(this)?.startDraggingSync(evt, this._draggedGridItem);
   }
 
   // Stop inside dragging
