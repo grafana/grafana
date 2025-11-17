@@ -561,11 +561,6 @@ export interface FeatureToggles {
   */
   azureMonitorPrometheusExemplars?: boolean;
   /**
-  * Enables pinning of nav items
-  * @default true
-  */
-  pinNavItems?: boolean;
-  /**
   * Enables the gRPC server for authorization
   */
   authZGRPCServer?: boolean;

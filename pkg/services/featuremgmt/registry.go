@@ -968,13 +968,6 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:        "pinNavItems",
-			Description: "Enables pinning of nav items",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaFrontendSearchNavOrganise,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:              "authZGRPCServer",
 			Description:       "Enables the gRPC server for authorization",
 			Stage:             FeatureStageExperimental,
