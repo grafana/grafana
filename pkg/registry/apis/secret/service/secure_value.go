@@ -134,17 +134,17 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 		s.metrics.SecureValueUpdateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	keeperCfg, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, newSecureValue.Namespace, newSecureValue.Status.Keeper, contracts.ReadOpts{})
+	currentVersion, err := s.secureValueMetadataStorage.Read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, contracts.ReadOpts{})
+	if err != nil {
+		return nil, false, fmt.Errorf("reading secure value secret: %+w", err)
+	}
+
+	keeperCfg, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, currentVersion.Namespace, currentVersion.Status.Keeper, contracts.ReadOpts{})
 	if err != nil {
 		return nil, false, fmt.Errorf("fetching keeper config: namespace=%+v %w", newSecureValue.Namespace, err)
 	}
 
 	if newSecureValue.Spec.Value == nil {
-		currentVersion, err := s.secureValueMetadataStorage.Read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, contracts.ReadOpts{})
-		if err != nil {
-			return nil, false, fmt.Errorf("reading secure value secret: %+w", err)
-		}
-
 		keeper, err := s.keeperService.KeeperForConfig(keeperCfg)
 		if err != nil {
 			return nil, false, fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", newSecureValue.Namespace, newSecureValue.Status.Keeper, err)
