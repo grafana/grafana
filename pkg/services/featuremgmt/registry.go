@@ -818,14 +818,6 @@ var (
 			Owner:        grafanaDataProSquad,
 		},
 		{
-			Name:         "groupToNestedTableTransformation",
-			Description:  "Enables the group to nested table transformation",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDataProSquad,
-			Expression:   "true", // enabled by default,
-		},
-		{
 			Name:        "newPDFRendering",
 			Description: "New implementation for the dashboard-to-PDF rendering",
 			Stage:       FeatureStageGeneralAvailability,
