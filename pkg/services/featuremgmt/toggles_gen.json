@@ -3084,6 +3084,7 @@
         "name": "pinNavItems",
         "resourceVersion": "1762958248290",
         "creationTimestamp": "2024-06-10T11:40:03Z",
+        "deletionTimestamp": "2025-11-13T14:52:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
         }
