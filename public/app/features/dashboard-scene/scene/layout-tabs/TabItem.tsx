@@ -1,16 +1,7 @@
 import React from 'react';
 
 import { t } from '@grafana/i18n';
-import { logWarning } from '@grafana/runtime';
-import {
-  SceneObjectState,
-  SceneObjectBase,
-  sceneGraph,
-  VariableDependencyConfig,
-  SceneObject,
-  SceneGridItemLike,
-  SceneGridLayout,
-} from '@grafana/scenes';
+import { SceneObjectState, SceneObjectBase, sceneGraph, VariableDependencyConfig, SceneObject } from '@grafana/scenes';
 import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
@@ -22,15 +13,10 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getDashboardSceneFor } from '../../utils/utils';
-import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
-import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
-import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
-import { DashboardDropTarget } from '../types/DashboardDropTarget';
-import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { LayoutParent } from '../types/LayoutParent';
@@ -43,7 +29,6 @@ import { TabsLayoutManager } from './TabsLayoutManager';
 export interface TabItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
   title?: string;
-  isDropTarget?: boolean;
   conditionalRendering?: ConditionalRenderingGroup;
   repeatByVariable?: string;
   repeatedTabs?: TabItem[];
@@ -53,7 +38,7 @@ export interface TabItemState extends SceneObjectState {
 
 export class TabItem
   extends SceneObjectBase<TabItemState>
-  implements LayoutParent, BulkActionElement, EditableDashboardElement, DashboardDropTarget
+  implements LayoutParent, BulkActionElement, EditableDashboardElement
 {
   public static Component = TabItemRenderer;
 
@@ -183,49 +168,6 @@ export class TabItem
       this.setState({ repeatByVariable: repeat });
     } else {
       this.setState({ repeatedTabs: undefined, $variables: undefined, repeatByVariable: undefined });
-    }
-  }
-
-  public setIsDropTarget(isDropTarget: boolean) {
-    if (!!this.state.isDropTarget !== isDropTarget) {
-      this.setState({ isDropTarget });
-    }
-  }
-
-  public draggedGridItemOutside?(gridItem: SceneGridItemLike): void {
-    // Remove from source layout
-    if (gridItem instanceof DashboardGridItem || gridItem instanceof AutoGridItem) {
-      const layout = gridItem.parent;
-      if (gridItem instanceof DashboardGridItem && layout instanceof SceneGridLayout) {
-        const newChildren = layout.state.children.filter((child) => child !== gridItem);
-        layout.setState({ children: newChildren });
-      } else if (gridItem instanceof AutoGridItem && layout instanceof AutoGridLayout) {
-        const newChildren = layout.state.children.filter((child) => child !== gridItem);
-        layout.setState({ children: newChildren });
-      } else {
-        const warningMessage = 'Grid item has unexpected parent type';
-        console.warn(warningMessage);
-        logWarning(warningMessage);
-      }
-    }
-    this.setIsDropTarget(false);
-  }
-
-  public draggedGridItemInside(gridItem: SceneGridItemLike): void {
-    const layout = this.getLayout();
-
-    if (isDashboardLayoutGrid(layout)) {
-      layout.addGridItem(gridItem);
-    } else {
-      const warningMessage = 'Layout manager does not support addGridItem';
-      console.warn(warningMessage);
-      logWarning(warningMessage);
-    }
-    this.setIsDropTarget(false);
-
-    const parentLayout = this.getParentLayout();
-    if (parentLayout.state.currentTabSlug !== this.getSlug()) {
-      parentLayout.setState({ currentTabSlug: this.getSlug() });
     }
   }
 

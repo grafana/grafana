@@ -15,7 +15,7 @@ import { useSoloPanelContext } from '../SoloPanelContext';
 import { TabItem } from './TabItem';
 
 export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
-  const { title, key, isDropTarget, layout } = model.useState();
+  const { title, key, layout } = model.useState();
   const parentLayout = model.getParentLayout();
   const { currentTabSlug } = parentLayout.useState();
   const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
@@ -67,8 +67,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             className={cx(
               isConditionallyHidden && styles.hidden,
               isSelected && 'dashboard-selected-element',
-              isSelectable && !isSelected && 'dashboard-selectable-element',
-              isDropTarget && 'dashboard-drop-target'
+              isSelectable && !isSelected && 'dashboard-selectable-element'
             )}
             active={isActive}
             title={titleInterpolated}
@@ -89,7 +88,6 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
               onSelect?.(evt);
             }}
             label={titleInterpolated}
-            data-dashboard-drop-target-key={model.state.key}
             {...titleCollisionProps}
           />
         </div>
@@ -114,15 +112,12 @@ interface TabItemLayoutRendererProps {
 }
 
 export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererProps) {
-  const { layout, key } = tab.useState();
+  const { layout } = tab.useState();
   const styles = useStyles2(getStyles);
   const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(tab);
 
   return (
-    <TabContent
-      className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
-      data-dashboard-drop-target-key={key}
-    >
+    <TabContent className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}>
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}
     </TabContent>

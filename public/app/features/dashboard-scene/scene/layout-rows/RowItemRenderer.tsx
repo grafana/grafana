@@ -17,7 +17,7 @@ import { useSoloPanelContext } from '../SoloPanelContext';
 import { RowItem } from './RowItem';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
-  const { layout, collapse: isCollapsed, fillScreen, hideHeader: isHeaderHidden, isDropTarget, key } = model.useState();
+  const { layout, collapse: isCollapsed, fillScreen, hideHeader: isHeaderHidden, key } = model.useState();
   const isClone = isRepeatCloneOrChildOf(model);
   const { isEditing } = useDashboardState(model);
   const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] =
@@ -82,7 +82,6 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             dragProvided.innerRef(ref);
             model.containerRef.current = ref;
           }}
-          data-dashboard-drop-target-key={model.state.key}
           className={cx(
             styles.wrapper,
             !isCollapsed && styles.wrapperNotCollapsed,
@@ -91,8 +90,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             shouldGrow && styles.wrapperGrow,
             conditionalRenderingClass,
             !isClone && isSelected && 'dashboard-selected-element',
-            !isClone && !isSelected && selectableHighlight && 'dashboard-selectable-element',
-            isDropTarget && 'dashboard-drop-target'
+            !isClone && !isSelected && selectableHighlight && 'dashboard-selectable-element'
           )}
           onPointerDown={(evt) => {
             evt.stopPropagation();

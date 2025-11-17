@@ -1,16 +1,7 @@
 import React from 'react';
 
 import { t } from '@grafana/i18n';
-import { logWarning } from '@grafana/runtime';
-import {
-  sceneGraph,
-  SceneObject,
-  SceneObjectBase,
-  SceneObjectState,
-  VariableDependencyConfig,
-  SceneGridItemLike,
-  SceneGridLayout,
-} from '@grafana/scenes';
+import { sceneGraph, SceneObject, SceneObjectBase, SceneObjectState, VariableDependencyConfig } from '@grafana/scenes';
 import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
@@ -22,15 +13,10 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getDashboardSceneFor } from '../../utils/utils';
-import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
-import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
-import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
-import { DashboardDropTarget } from '../types/DashboardDropTarget';
-import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { LayoutParent } from '../types/LayoutParent';
@@ -56,7 +42,7 @@ export interface RowItemState extends SceneObjectState {
 
 export class RowItem
   extends SceneObjectBase<RowItemState>
-  implements LayoutParent, BulkActionElement, EditableDashboardElement, DashboardDropTarget
+  implements LayoutParent, BulkActionElement, EditableDashboardElement
 {
   public static Component = RowItemRenderer;
 
@@ -166,44 +152,6 @@ export class RowItem
 
     clearClipboard();
     store.set(LS_ROW_COPY_KEY, JSON.stringify({ elements, row: this.serialize() }));
-  }
-
-  public setIsDropTarget(isDropTarget: boolean) {
-    if (!!this.state.isDropTarget !== isDropTarget) {
-      this.setState({ isDropTarget });
-    }
-  }
-
-  public draggedGridItemOutside?(gridItem: SceneGridItemLike): void {
-    // Remove from source layout
-    if (gridItem instanceof DashboardGridItem || gridItem instanceof AutoGridItem) {
-      const layout = gridItem.parent;
-      if (gridItem instanceof DashboardGridItem && layout instanceof SceneGridLayout) {
-        const newChildren = layout.state.children.filter((child) => child !== gridItem);
-        layout.setState({ children: newChildren });
-      } else if (gridItem instanceof AutoGridItem && layout instanceof AutoGridLayout) {
-        const newChildren = layout.state.children.filter((child) => child !== gridItem);
-        layout.setState({ children: newChildren });
-      } else {
-        const warningMessage = 'Grid item has unexpected parent type';
-        console.warn(warningMessage);
-        logWarning(warningMessage);
-      }
-    }
-    this.setIsDropTarget(false);
-  }
-
-  public draggedGridItemInside(gridItem: SceneGridItemLike): void {
-    const layout = this.getLayout();
-
-    if (isDashboardLayoutGrid(layout)) {
-      layout.addGridItem(gridItem);
-    } else {
-      const warningMessage = 'Layout manager does not support addGridItem';
-      console.warn(warningMessage);
-      logWarning(warningMessage);
-    }
-    this.setIsDropTarget(false);
   }
 
   public onChangeTitle(title: string) {
