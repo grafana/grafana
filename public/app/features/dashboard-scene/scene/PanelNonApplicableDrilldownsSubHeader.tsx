@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'reac
 import { useMeasure } from 'react-use';
 
 import { DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
 import { Tooltip, measureText, useStyles2, useTheme2 } from '@grafana/ui';
 
@@ -15,7 +16,7 @@ interface Props {
   queries: DataQuery[];
 }
 
-export function PanelNonApplicableFiltersSubHeader({ filtersVar, groupByVar, queries }: Props) {
+export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, queries }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
@@ -79,7 +80,11 @@ export function PanelNonApplicableFiltersSubHeader({ filtersVar, groupByVar, que
   const remainingFilters = nonApplicable.slice(visibleCount);
 
   return (
-    <div ref={sizeRef} className={styles.container}>
+    <div
+      ref={sizeRef}
+      className={styles.container}
+      data-testid={selectors.components.Panels.Panel.PanelNonApplicableDrilldownsSubHeader}
+    >
       {visibleFilters.map((filter, index) => (
         <div key={`${filter}-${index}`} className={cx(styles.disabledPill, styles.strikethrough, styles.pill)}>
           {filter}

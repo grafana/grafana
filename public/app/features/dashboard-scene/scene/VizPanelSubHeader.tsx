@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import {
   SceneComponentProps,
   SceneObjectState,
@@ -7,9 +9,10 @@ import {
   GroupByVariable,
   SceneQueryRunner,
   VizPanel,
+  SceneDataState,
 } from '@grafana/scenes';
 
-import { PanelNonApplicableFiltersSubHeader } from './PanelNonApplicableFiltersSubHeader';
+import { PanelNonApplicableDrilldownsSubHeader } from './PanelNonApplicableDrilldownsSubHeader';
 
 export interface VizPanelSubHeaderState extends SceneObjectState {
   hideNonApplicableDrilldowns?: boolean;
@@ -23,48 +26,64 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
       hideNonApplicableDrilldowns: state.hideNonApplicableDrilldowns ?? false,
       ...state,
     });
+
+    this.addActivationHandler(this._onActivate);
+  }
+
+  private _onActivate = () => {
+    if (!this.parent || !(this.parent instanceof VizPanel)) {
+      throw new Error('VizPanelSubHeader can be used only with VizPanel');
+    }
+  };
+
+  public getData() {
+    const panel = this.parent;
+    const dataObject = panel ? sceneGraph.getData(panel) : undefined;
+    return dataObject?.useState();
+  }
+
+  public getQueryRunner(dataState?: SceneDataState): SceneQueryRunner | null {
+    const queryRunner = dataState?.$data;
+
+    if (!queryRunner || !(queryRunner instanceof SceneQueryRunner)) {
+      return null;
+    }
+
+    return queryRunner;
   }
 }
 
 export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHeader>) {
-  const panel = model.parent;
+  const data = model.getData();
+  const queryRunner = model.getQueryRunner(data);
 
-  if (!panel || !(panel instanceof VizPanel)) {
-    return null;
-  }
+  const queries = data?.data?.request?.targets ?? [];
 
-  const dataObject = panel ? sceneGraph.getData(panel) : undefined;
-  const data = dataObject?.useState();
+  const { variables } = sceneGraph.getVariables(model).useState();
+  const datasourceUid = queryRunner?.state.datasource?.uid;
 
-  if (!data) {
-    return null;
-  }
+  const interpolatedUid = useMemo(
+    () => (queryRunner ? sceneGraph.interpolate(queryRunner, datasourceUid) : undefined),
+    [queryRunner, datasourceUid]
+  );
 
-  const queryRunner = data.$data;
+  const adhocFiltersVariable = useMemo(
+    () => variables.find((variable) => variable instanceof AdHocFiltersVariable),
+    [variables]
+  );
+  const groupByVariable = useMemo(() => variables.find((variable) => variable instanceof GroupByVariable), [variables]);
 
-  if (!queryRunner || !(queryRunner instanceof SceneQueryRunner)) {
-    return null;
-  }
+  const supportsApplicability = useMemo(
+    () => supportsDrilldownsApplicability(interpolatedUid, adhocFiltersVariable, groupByVariable),
+    [interpolatedUid, adhocFiltersVariable, groupByVariable]
+  );
 
-  const dsUid = sceneGraph.interpolate(queryRunner, queryRunner.state.datasource?.uid);
-  const queries = data.data?.request?.targets ?? [];
-  const adhocFiltersVariable = sceneGraph
-    .getVariables(model)
-    .state.variables.find((variable) => variable instanceof AdHocFiltersVariable);
-  const groupByVariable = sceneGraph
-    .getVariables(model)
-    .state.variables.find((variable) => variable instanceof GroupByVariable);
-
-  if (
-    !dsUid ||
-    !model.state.hideNonApplicableDrilldowns ||
-    !supportsDrilldownsApplicability(dsUid, adhocFiltersVariable, groupByVariable)
-  ) {
+  if (!datasourceUid || model.state.hideNonApplicableDrilldowns || !supportsApplicability) {
     return null;
   }
 
   return (
-    <PanelNonApplicableFiltersSubHeader
+    <PanelNonApplicableDrilldownsSubHeader
       filtersVar={adhocFiltersVariable}
       groupByVar={groupByVariable}
       queries={queries}
@@ -73,11 +92,12 @@ export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPane
 }
 
 function supportsDrilldownsApplicability(
-  dsUid: string,
+  dsUid: string | undefined,
   filtersVar?: AdHocFiltersVariable,
   groupByVar?: GroupByVariable
 ) {
   if (
+    dsUid &&
     filtersVar &&
     filtersVar.isApplicabilityEnabled() &&
     dsUid === sceneGraph.interpolate(filtersVar, filtersVar.state.datasource?.uid)
@@ -86,6 +106,7 @@ function supportsDrilldownsApplicability(
   }
 
   if (
+    dsUid &&
     groupByVar &&
     groupByVar.isApplicabilityEnabled() &&
     dsUid === sceneGraph.interpolate(groupByVar, groupByVar.state.datasource?.uid)

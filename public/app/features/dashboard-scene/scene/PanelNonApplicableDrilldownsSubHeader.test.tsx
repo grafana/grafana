@@ -4,7 +4,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import { AdHocVariableFilter, DataQuery } from '@grafana/data';
 import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
 
-import { PanelNonApplicableFiltersSubHeader } from './PanelNonApplicableFiltersSubHeader';
+import { PanelNonApplicableDrilldownsSubHeader } from './PanelNonApplicableDrilldownsSubHeader';
 
 let measuredWidth = 400;
 
@@ -59,7 +59,7 @@ jest.mock('react-use', () => {
   };
 });
 
-type ComponentPropsType = ComponentProps<typeof PanelNonApplicableFiltersSubHeader>;
+type ComponentPropsType = ComponentProps<typeof PanelNonApplicableDrilldownsSubHeader>;
 
 const defaultQueries: DataQuery[] = [{ refId: 'A' } as DataQuery];
 
@@ -72,7 +72,7 @@ describe('PanelNonApplicableFiltersSubHeader', () => {
       ...props,
     };
 
-    return render(<PanelNonApplicableFiltersSubHeader {...merged} />);
+    return render(<PanelNonApplicableDrilldownsSubHeader {...merged} />);
   };
 
   beforeEach(() => {
