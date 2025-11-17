@@ -85,21 +85,16 @@ func ConvertDashboard_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha
 	out.APIVersion = dashv2alpha1.APIVERSION
 	out.Kind = in.Kind
 
-	// Wrap the provider to ensure Index() is called only once during this conversion.
-	// This prevents multiple DB queries and index builds when the provider is used in multiple places
-	// (e.g., getDefaultDatasourceType, getDatasourceTypeByUID, panel datasource conversions, etc.)
-	dsIndexProviderWrapped := schemaversion.WrapIndexProviderWithOnce(dsIndexProvider)
-
 	// Prepare context with namespace and service identity
-	// The datasource provider is passed as a parameter (captured in closure when conversions are registered)
-	ctx, _, err := prepareV1beta1ConversionContext(in, dsIndexProviderWrapped)
+	// The datasource provider is already wrapped with caching at registration time
+	ctx, _, err := prepareV1beta1ConversionContext(in, dsIndexProvider)
 	if err != nil {
 		// If context preparation fails, return error to be handled by wrapper
 		// The wrapper will set status and handle gracefully
 		return fmt.Errorf("failed to prepare conversion context: %w", err)
 	}
 
-	return convertDashboardSpec_V1beta1_to_V2alpha1(&in.Spec, &out.Spec, scope, ctx, dsIndexProviderWrapped)
+	return convertDashboardSpec_V1beta1_to_V2alpha1(&in.Spec, &out.Spec, scope, ctx, dsIndexProvider)
 }
 
 func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope, ctx context.Context, dsIndexProvider schemaversion.DataSourceIndexProvider) error {
