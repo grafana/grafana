@@ -25,6 +25,9 @@ Grafana Alerting provides a consolidated snapshot of your firing and pending Gra
 
 To see your firing and pending alerts in the alert page, go to **Alerts & IRM > Alerting > Alerts**.
 
+{{< figure src="/media/docs/alerting/alerts-page.png" max-width="750px" alt="Filter your firing and pending alerts in the Alert view." >}}
+
+
 ## How it works
 
 The Alerts page only shows alerts from Grafana-managed alert rules. Grafana uses a metric called `GRAFANA_ALERTS`, which is recorded in the default Mimir data source that is provisioned for cloud users.
