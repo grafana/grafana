@@ -215,10 +215,6 @@ const (
 	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
 	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
 
-	// FlagFormatString
-	// Enable format string transformer
-	FlagFormatString = "formatString"
-
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
@@ -379,10 +375,6 @@ const (
 	// Enables shared crosshair in table panel
 	FlagTableSharedCrosshair = "tableSharedCrosshair"
 
-	// FlagRegressionTransformation
-	// Enables regression analysis transformation
-	FlagRegressionTransformation = "regressionTransformation"
-
 	// FlagKubernetesFeatureToggles
 	// Use the kubernetes API for feature toggle management in the frontend
 	FlagKubernetesFeatureToggles = "kubernetesFeatureToggles"
@@ -442,10 +434,6 @@ const (
 	// FlagSqlExpressionsColumnAutoComplete
 	// Enables column autocomplete for SQL Expressions
 	FlagSqlExpressionsColumnAutoComplete = "sqlExpressionsColumnAutoComplete"
-
-	// FlagGroupToNestedTableTransformation
-	// Enables the group to nested table transformation
-	FlagGroupToNestedTableTransformation = "groupToNestedTableTransformation"
 
 	// FlagNewPDFRendering
 	// New implementation for the dashboard-to-PDF rendering
@@ -526,10 +514,6 @@ const (
 	// FlagAzureMonitorPrometheusExemplars
 	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
 	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
-
-	// FlagPinNavItems
-	// Enables pinning of nav items
-	FlagPinNavItems = "pinNavItems"
 
 	// FlagAuthZGRPCServer
 	// Enables the gRPC server for authorization
@@ -1093,4 +1077,8 @@ const (
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
+
+	// FlagTransformationsEmptyPlaceholder
+	// Show transformation quick-start cards in empty transformations state
+	FlagTransformationsEmptyPlaceholder = "transformationsEmptyPlaceholder"
 )
