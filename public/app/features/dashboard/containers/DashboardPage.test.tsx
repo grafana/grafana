@@ -46,14 +46,11 @@ jest.mock('app/features/query/components/QueryGroup', () => {
   };
 });
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/app_events', () => ({
   appEvents: {
     subscribe: () => {
       return { unsubscribe: () => {} };
     },
-  },
-  contextSrv: {
-    user: { orgId: 1 },
   },
 }));
 

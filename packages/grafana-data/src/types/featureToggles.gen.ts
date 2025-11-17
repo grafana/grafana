@@ -898,10 +898,6 @@ export interface FeatureToggles {
   */
   infinityRunQueriesInParallel?: boolean;
   /**
-  * Renders invite user button along the app
-  */
-  inviteUserExperimental?: boolean;
-  /**
   * Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
   * @default true
   */
