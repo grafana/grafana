@@ -1,4 +1,4 @@
-package tounifiedstorage
+package unifiedstorage
 
 import (
 	"context"
@@ -52,13 +52,11 @@ func (sp *foldersAndDashboardsMigrator) Exec(sess *xorm.Session, mg *migrator.Mi
 
 	m.log.Info("Starting migration for all organizations", "org_count", len(orgs))
 
-	// Migrate each organization
 	for _, org := range orgs {
 		namespace := fmt.Sprintf("org-%d", org.ID)
 		m.log.Info("Migrating organization", "org_id", org.ID, "org_name", org.Name, "namespace", namespace)
 
 		if err := m.executeMigration(ctx, sess, mg, namespace); err != nil {
-			// If validation fails, return error to prevent migration from being marked complete
 			return fmt.Errorf("migration failed for org %d (%s): %w", org.ID, org.Name, err)
 		}
 	}

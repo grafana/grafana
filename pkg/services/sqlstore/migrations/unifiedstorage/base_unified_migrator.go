@@ -1,4 +1,4 @@
-package tounifiedstorage
+package unifiedstorage
 
 import (
 	"context"
@@ -12,15 +12,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// LargeObjectSupport is a minimal interface for handling large objects
-// This is defined locally to avoid import cycles with apistore
 type LargeObjectSupport interface {
 	GroupResource() schema.GroupResource
 	Threshold() int
 }
 
-// MigrateOptions holds options for legacy migration
-// This is defined locally to avoid import cycles
 type MigrateOptions struct {
 	Namespace    string
 	Store        resourcepb.BulkStoreClient
@@ -32,17 +28,11 @@ type MigrateOptions struct {
 	Progress     func(count int, msg string)
 }
 
-// Dependencies holds the required dependencies for unified storage migrations
 type Dependencies struct {
-	LegacyMigrator  LegacyMigrator
+	Migrator        LegacyMigrator
 	BulkStoreClient resourcepb.BulkStoreClient
 }
 
-type ResourceClient interface {
-	resourcepb.BulkStoreClient
-}
-
-// unifiedStorageMigrator is the base for all unified storage data migrations
 type unifiedStorageMigrator struct {
 	baseMigrator
 	deps      *Dependencies
@@ -50,7 +40,6 @@ type unifiedStorageMigrator struct {
 	log       log.Logger
 }
 
-// newUnifiedStorageMigrator creates a new unified storage migrator instance
 func newUnifiedStorageMigrator(deps *Dependencies, resources []schema.GroupResource, logPrefix string) *unifiedStorageMigrator {
 	return &unifiedStorageMigrator{
 		deps:      deps,
@@ -59,12 +48,10 @@ func newUnifiedStorageMigrator(deps *Dependencies, resources []schema.GroupResou
 	}
 }
 
-// executeMigration runs the migration for all configured resources
 func (m *unifiedStorageMigrator) executeMigration(ctx context.Context, sess *xorm.Session, mg *migrator.Migrator, namespace string) error {
 	startTime := time.Now()
 	m.log.Info("Starting unified storage migration", "namespace", namespace, "resources", m.resources)
 
-	// Prepare migration options
 	opts := MigrateOptions{
 		Namespace:    namespace,
 		Store:        m.deps.BulkStoreClient,
@@ -79,14 +66,14 @@ func (m *unifiedStorageMigrator) executeMigration(ctx context.Context, sess *xor
 	}
 
 	// Execute the migration via legacy migrator
-	response, err := m.deps.LegacyMigrator.Migrate(ctx, opts)
+	response, err := m.deps.Migrator.Migrate(ctx, opts)
 	if err != nil {
 		m.log.Error("Migration failed", "error", err, "duration", time.Since(startTime))
 		return fmt.Errorf("failed to migrate resources: %w", err)
 	}
 
 	// Validate the migration results
-	if err := m.validateMigrationResults(ctx, sess, response); err != nil {
+	if err := m.validateMigrationResults(sess, response); err != nil {
 		m.log.Error("Migration validation failed", "error", err, "duration", time.Since(startTime))
 		return fmt.Errorf("migration validation failed: %w", err)
 	}
@@ -100,8 +87,7 @@ func (m *unifiedStorageMigrator) executeMigration(ctx context.Context, sess *xor
 	return nil
 }
 
-// validateMigrationResults validates the migration by comparing counts
-func (m *unifiedStorageMigrator) validateMigrationResults(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse) error {
+func (m *unifiedStorageMigrator) validateMigrationResults(sess *xorm.Session, response *resourcepb.BulkResponse) error {
 	// Check for rejected items
 	if len(response.Rejected) > 0 {
 		m.log.Warn("Migration had rejected items", "count", len(response.Rejected))
@@ -147,7 +133,6 @@ func (m *unifiedStorageMigrator) validateMigrationResults(ctx context.Context, s
 	return nil
 }
 
-// getLegacyCount retrieves the count of items in the legacy database
 func (m *unifiedStorageMigrator) getLegacyCount(sess *xorm.Session, group, resourceType, namespace string) (int64, error) {
 	// Parse namespace to get org ID
 	orgID, err := ParseOrgIDFromNamespace(namespace)
@@ -170,7 +155,6 @@ func (m *unifiedStorageMigrator) getLegacyCount(sess *xorm.Session, group, resou
 	return count, nil
 }
 
-// getLegacyTableInfo returns the table name and where clause for a given resource type
 func (m *unifiedStorageMigrator) getLegacyTableInfo(group, resource string) (table string, whereClause string) {
 	// Map unified storage group/resource to legacy tables
 	switch {
@@ -185,7 +169,6 @@ func (m *unifiedStorageMigrator) getLegacyTableInfo(group, resource string) (tab
 	}
 }
 
-// ParseOrgIDFromNamespace extracts the org ID from a namespace string
 func ParseOrgIDFromNamespace(namespace string) (int64, error) {
 	// Namespace format is typically "org-<id>" or "orgId-<id>"
 	// For now, assume format is known - this should use authlib.ParseNamespace in practice

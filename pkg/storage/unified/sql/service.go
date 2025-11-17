@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/search/sort"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/tounifiedstorage"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/unifiedstorage"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/prometheus/client_golang/prometheus"
@@ -382,8 +382,8 @@ func (s *service) starting(ctx context.Context) error {
 			featureToggles,
 		)
 
-		tounifiedstorage.AddMigrator(mg, &tounifiedstorage.Dependencies{
-			LegacyMigrator:  &migratorWrapper{legacyMigrator: migrator},
+		unifiedstorage.AddMigration(mg, &unifiedstorage.Dependencies{
+			Migrator:        &migratorWrapper{migrator: migrator},
 			BulkStoreClient: nil, // send client via wire dependencies after inside its own server, or:
 			// client, err := unified.ProvideUnifiedStorageClient(cfg, sqlStore, featureToggles)
 			//	unified.ProvideUnifiedStorageClient(&unified.Options{
@@ -413,11 +413,11 @@ func (s *service) starting(ctx context.Context) error {
 
 // migratorWrapper wraps legacy migrator to avoid import cycles
 type migratorWrapper struct {
-	legacyMigrator legacy.LegacyMigrator
+	migrator legacy.LegacyMigrator
 }
 
-func (m *migratorWrapper) Migrate(ctx context.Context, opts tounifiedstorage.MigrateOptions) (*resourcepb.BulkResponse, error) {
-	return m.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
+func (m *migratorWrapper) Migrate(ctx context.Context, opts unifiedstorage.MigrateOptions) (*resourcepb.BulkResponse, error) {
+	return m.migrator.Migrate(ctx, legacy.MigrateOptions{
 		Namespace:    "",
 		Store:        nil,
 		LargeObjects: nil,
