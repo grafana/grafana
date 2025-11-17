@@ -18,7 +18,6 @@ import {
   EventBus,
   DataFrame,
   Field,
-  PluginState,
 } from '@grafana/data';
 import { TextDimensionMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
@@ -69,7 +68,6 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
   isBaseMap: false,
   showLocation: true,
   hideOpacity: true,
-  state: PluginState.beta,
 
   /**
    * Function that configures transformation and returns a transformer

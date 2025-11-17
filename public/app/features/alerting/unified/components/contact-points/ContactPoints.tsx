@@ -14,7 +14,7 @@ import {
   TabsBar,
   Text,
 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { AccessControlAction } from 'app/types/accessControl';

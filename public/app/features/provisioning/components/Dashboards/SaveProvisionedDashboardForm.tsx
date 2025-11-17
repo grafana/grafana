@@ -55,7 +55,16 @@ export function SaveProvisionedDashboardForm({
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
-  const { handleSubmit, watch, control, reset, register } = methods;
+  const {
+    handleSubmit,
+    watch,
+    control,
+    reset,
+    register,
+    formState: { dirtyFields },
+  } = methods;
+  // button enabled if form comment is dirty or dashboard state is dirty
+  const isDirtyState = Boolean(dirtyFields.comment) || isDirty;
   const [workflow, ref, path] = watch(['workflow', 'ref', 'path']);
 
   // Update the form if default values change
@@ -86,7 +95,7 @@ export function SaveProvisionedDashboardForm({
   );
 
   const navigateToPreview = useCallback(
-    (ref: string, path: string, repoType: string) => {
+    (ref: string, path: string, repoType?: string) => {
       const url = buildResourceBranchRedirectUrl({
         baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
         paramName: 'ref',
@@ -110,7 +119,7 @@ export function SaveProvisionedDashboardForm({
   }, [dashboard, defaultValues.folder?.uid, drawer, panelEditor, request?.data?.resource]);
 
   const onWriteSuccess = useCallback(
-    ({ repoType }: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
+    (upsert: Resource<Dashboard>) => {
       handleDismiss();
       if (isNew && upsert?.metadata.name) {
         handleNewDashboard(upsert);
@@ -118,7 +127,7 @@ export function SaveProvisionedDashboardForm({
 
       // if pushed to an existing but non-configured branch, navigate to preview page
       if (ref !== repository?.branch && ref) {
-        navigateToPreview(ref, path, repoType);
+        navigateToPreview(ref, path, repository?.type);
         return;
       }
 
@@ -127,7 +136,7 @@ export function SaveProvisionedDashboardForm({
         editPanel: null,
       });
     },
-    [isNew, path, ref, repository?.branch, handleDismiss, handleNewDashboard, navigateToPreview]
+    [isNew, path, ref, repository?.branch, repository?.type, handleDismiss, handleNewDashboard, navigateToPreview]
   );
 
   const onBranchSuccess = useCallback(
@@ -147,6 +156,8 @@ export function SaveProvisionedDashboardForm({
     request,
     workflow,
     resourceType: 'dashboard',
+    repository,
+    selectedBranch: methods.getValues().ref,
     handlers: {
       onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
       onWriteSuccess,
@@ -155,15 +166,7 @@ export function SaveProvisionedDashboardForm({
   });
 
   // Submit handler for saving the form data
-  const handleFormSubmit = async ({
-    title,
-    description,
-    repo,
-    path,
-    comment,
-    ref,
-    folder,
-  }: ProvisionedDashboardFormData) => {
+  const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
     // Validate required fields
     if (!repo || !path) {
       console.error('Missing required fields for saving:', { repo, path });
@@ -288,7 +291,7 @@ export function SaveProvisionedDashboardForm({
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
               <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
             </Button>
-            <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty || readOnly}>
+            <Button variant="primary" type="submit" disabled={request.isLoading || readOnly || !isDirtyState}>
               {request.isLoading
                 ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
                 : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}

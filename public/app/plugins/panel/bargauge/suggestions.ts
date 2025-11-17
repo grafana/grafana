@@ -1,4 +1,4 @@
-import { VisualizationSuggestionsBuilder, VizOrientation } from '@grafana/data';
+import { FieldColorModeId, VisualizationSuggestionsBuilder, VizOrientation } from '@grafana/data';
 import { BarGaugeDisplayMode } from '@grafana/ui';
 import { SuggestionName } from 'app/types/suggestions';
 
@@ -44,7 +44,7 @@ export class BarGaugeSuggestionsSupplier {
         fieldConfig: {
           defaults: {
             color: {
-              mode: 'continuous-GrYlRd',
+              mode: FieldColorModeId.ContinuousGrYlRd,
             },
           },
           overrides: [],
@@ -64,7 +64,7 @@ export class BarGaugeSuggestionsSupplier {
         fieldConfig: {
           defaults: {
             color: {
-              mode: 'continuous-GrYlRd',
+              mode: FieldColorModeId.ContinuousGrYlRd,
             },
           },
           overrides: [],
@@ -84,7 +84,7 @@ export class BarGaugeSuggestionsSupplier {
         fieldConfig: {
           defaults: {
             color: {
-              mode: 'continuous-GrYlRd',
+              mode: FieldColorModeId.ContinuousGrYlRd,
             },
           },
           overrides: [],
@@ -104,7 +104,7 @@ export class BarGaugeSuggestionsSupplier {
         fieldConfig: {
           defaults: {
             color: {
-              mode: 'continuous-GrYlRd',
+              mode: FieldColorModeId.ContinuousGrYlRd,
             },
           },
           overrides: [],

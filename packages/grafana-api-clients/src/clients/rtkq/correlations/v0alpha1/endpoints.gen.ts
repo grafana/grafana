@@ -7,7 +7,7 @@ const injectedRtkApi = api
   .injectEndpoints({
     endpoints: (build) => ({
       getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
-        query: () => ({ url: `/apis/correlations.grafana.app/v0alpha1/` }),
+        query: () => ({ url: `/` }),
         providesTags: ['API Discovery'],
       }),
       listCorrelation: build.query<ListCorrelationApiResponse, ListCorrelationApiArg>({
@@ -511,10 +511,13 @@ export type Status = {
 export type Patch = object;
 export const {
   useGetApiResourcesQuery,
+  useLazyGetApiResourcesQuery,
   useListCorrelationQuery,
+  useLazyListCorrelationQuery,
   useCreateCorrelationMutation,
   useDeletecollectionCorrelationMutation,
   useGetCorrelationQuery,
+  useLazyGetCorrelationQuery,
   useReplaceCorrelationMutation,
   useDeleteCorrelationMutation,
   useUpdateCorrelationMutation,

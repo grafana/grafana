@@ -160,7 +160,7 @@ Log navigation in Explore has been significantly improved. We added pagination t
 
 You can now use the Plugin catalog app to easily manage your plugins from within Grafana. Install, update, and uninstall plugins without requiring a server restart.
 
-[Plugin catalog](../../administration/plugin-management/#plugin-catalog) was added as a result of this feature.
+[Plugin catalog](../../administration/plugin-management/#access-the-plugin-catalog) was added as a result of this feature.
 
 ### Performance improvements
 

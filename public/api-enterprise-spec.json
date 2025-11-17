@@ -406,6 +406,14 @@
             "name": "teamId",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetTeamRolesCommand"
+            }
           }
         ],
         "responses": {
@@ -2577,6 +2585,9 @@
     },
     "AddTeamMemberCommand": {
       "type": "object",
+      "required": [
+        "userId"
+      ],
       "properties": {
         "userId": {
           "type": "integer",
@@ -2973,6 +2984,10 @@
         },
         "name": {
           "description": "Name of annotation.",
+          "type": "string"
+        },
+        "placement": {
+          "description": "Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.",
           "type": "string"
         },
         "target": {
@@ -3969,6 +3984,9 @@
     },
     "CreateTeamCommand": {
       "type": "object",
+      "required": [
+        "name"
+      ],
       "properties": {
         "email": {
           "type": "string"
@@ -4320,6 +4338,20 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "DashboardVersionResponseMeta": {
+      "type": "object",
+      "properties": {
+        "continueToken": {
+          "type": "string"
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardVersionMeta"
+          }
         }
       }
     },
@@ -6144,8 +6176,8 @@
       }
     },
     "Permission": {
+      "description": "Permission is the model for access control permissions",
       "type": "object",
-      "title": "Permission is the model for access control permissions.",
       "properties": {
         "action": {
           "type": "string"
@@ -7162,6 +7194,16 @@
     },
     "RoleDTO": {
       "type": "object",
+      "required": [
+        "version",
+        "uid",
+        "name",
+        "displayName",
+        "description",
+        "group",
+        "updated",
+        "created"
+      ],
       "properties": {
         "created": {
           "type": "string",
@@ -7674,6 +7716,20 @@
         }
       }
     },
+    "SetTeamRolesCommand": {
+      "type": "object",
+      "properties": {
+        "includeHidden": {
+          "type": "boolean"
+        },
+        "roleUids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "SetUserRolesCommand": {
       "type": "object",
       "properties": {
@@ -7847,6 +7903,14 @@
     },
     "TeamDTO": {
       "type": "object",
+      "required": [
+        "id",
+        "uid",
+        "orgId",
+        "name",
+        "isProvisioned",
+        "memberCount"
+      ],
       "properties": {
         "accessControl": {
           "type": "object",
@@ -7864,6 +7928,7 @@
           "type": "string"
         },
         "id": {
+          "description": "@deprecated Use UID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -7977,6 +8042,9 @@
           "format": "int64"
         },
         "teamUID": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         },
         "userId": {
@@ -9420,10 +9488,7 @@
     "dashboardVersionsResponse": {
       "description": "",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/DashboardVersionMeta"
-        }
+        "$ref": "#/definitions/DashboardVersionResponseMeta"
       }
     },
     "deleteCorrelationResponse": {

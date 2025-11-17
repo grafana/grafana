@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { PluginLoadingStrategy } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { AdvisorRedirectNotice } from './AdvisorRedirectNotice';
 

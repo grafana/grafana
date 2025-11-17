@@ -266,7 +266,7 @@ http:
 You only need this if you don't handle the sub path serving via your reverse proxy configuration.
 {{< /admonition >}}
 
-If you don't want or can't use the reverse proxy to handle serving Grafana from a _sub path_, you can set the configuration variable `server_from_sub_path` to `true`.
+If you don't want or can't use the reverse proxy to handle serving Grafana from a _sub path_, you can set the configuration variable `serve_from_sub_path` to `true`.
 
 1. Include the sub path at the end of the `root_url`.
 1. Set `serve_from_sub_path` to `true`:
