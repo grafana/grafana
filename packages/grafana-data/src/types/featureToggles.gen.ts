@@ -327,11 +327,6 @@ export interface FeatureToggles {
   */
   cachingOptimizeSerializationMemoryUsage?: boolean;
   /**
-  * Add cumulative and window functions to the add field from calculation transformation
-  * @default true
-  */
-  addFieldFromCalculationStatFunctions?: boolean;
-  /**
   * Enable Grafana to sync configuration and state with a remote Alertmanager.
   */
   alertmanagerRemoteSecondary?: boolean;
