@@ -3,7 +3,7 @@ import { debounce } from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
 import { FetchDataArgs } from '@grafana/ui';
 import { updateNavIndex } from 'app/core/actions';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ThunkResult } from 'app/types/store';

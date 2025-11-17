@@ -1,6 +1,6 @@
 import { DataLinkBuiltInVars, PanelProps, urlUtil } from '@grafana/data';
 
-import { appEvents } from '../../../core/core';
+import { appEvents } from '../../../core/app_events';
 import { useBusEvent } from '../../../core/hooks/useBusEvent';
 import { VariablesChanged } from '../../../features/variables/types';
 
