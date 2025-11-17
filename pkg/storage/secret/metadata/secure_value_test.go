@@ -370,9 +370,8 @@ func TestModel(t *testing.T) {
 		sv4 := deepCopy(sv3)
 		sv4.Name = "i_dont_exist"
 		sv4.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue("sv4"))
-		sv4, _, err = m.update(now, sv4)
-		require.NoError(t, err)
-		require.EqualValues(t, 1, sv4.Status.Version)
+		_, _, err = m.update(now, sv4)
+		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
 	})
 
 	t.Run("deleting a secure value", func(t *testing.T) {
