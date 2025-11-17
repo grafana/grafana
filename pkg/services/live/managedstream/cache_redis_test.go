@@ -1,19 +1,19 @@
 package managedstream
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationRedisCacheStorage(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	u, ok := os.LookupEnv("REDIS_URL")
 	if !ok || u == "" {
@@ -40,7 +40,7 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 	require.NotNil(t, c)
 	testFrameCache(t, c)
 
-	keys, err := redisClient.Keys(redisClient.Context(), "*").Result()
+	keys, err := redisClient.Keys(t.Context(), "*").Result()
 	if err != nil {
 		require.NoError(t, err)
 	}
@@ -54,13 +54,18 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 
 func redisCleanup(t *testing.T, redisClient *redis.Client, prefix string) func() {
 	return func() {
-		keys, err := redisClient.Keys(redisClient.Context(), prefix+"*").Result()
+		ctx := t.Context()
+		ctx = context.WithoutCancel(ctx)
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		keys, err := redisClient.Keys(ctx, prefix+"*").Result()
 		if err != nil {
 			require.NoError(t, err)
 		}
 
 		for _, key := range keys {
-			_, err := redisClient.Del(redisClient.Context(), key).Result()
+			_, err := redisClient.Del(ctx, key).Result()
 			require.NoError(t, err)
 		}
 	}

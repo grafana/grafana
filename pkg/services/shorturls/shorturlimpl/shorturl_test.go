@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -19,9 +20,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationShortURLService(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	user := &user.SignedInUser{UserID: 1}
 	store := db.InitTestDB(t)
 

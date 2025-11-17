@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 )
 
@@ -20,7 +20,7 @@ func TestRenderer(t *testing.T) {
 
 		numLoaded := 0
 		numUnloaded := 0
-		loader := &fakes.FakeLoader{
+		loader := &pluginfakes.FakeLoader{
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
 				require.True(t, src.PluginClass(ctx) == plugins.ClassExternal)
 
@@ -59,7 +59,7 @@ func TestRenderer(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{ID: "test"},
 		}
-		loader := &fakes.FakeLoader{
+		loader := &pluginfakes.FakeLoader{
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
 				numLoaded++
 

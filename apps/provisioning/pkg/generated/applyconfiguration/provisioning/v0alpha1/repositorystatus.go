@@ -12,6 +12,7 @@ type RepositoryStatusApplyConfiguration struct {
 	Sync               *SyncStatusApplyConfiguration     `json:"sync,omitempty"`
 	Stats              []ResourceCountApplyConfiguration `json:"stats,omitempty"`
 	Webhook            *WebhookStatusApplyConfiguration  `json:"webhook,omitempty"`
+	DeleteError        *string                           `json:"deleteError,omitempty"`
 }
 
 // RepositoryStatusApplyConfiguration constructs a declarative configuration of the RepositoryStatus type for use with
@@ -62,5 +63,13 @@ func (b *RepositoryStatusApplyConfiguration) WithStats(values ...*ResourceCountA
 // If called multiple times, the Webhook field is set to the value of the last call.
 func (b *RepositoryStatusApplyConfiguration) WithWebhook(value *WebhookStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
 	b.Webhook = value
+	return b
+}
+
+// WithDeleteError sets the DeleteError field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the DeleteError field is set to the value of the last call.
+func (b *RepositoryStatusApplyConfiguration) WithDeleteError(value string) *RepositoryStatusApplyConfiguration {
+	b.DeleteError = &value
 	return b
 }

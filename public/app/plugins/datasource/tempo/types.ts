@@ -7,7 +7,6 @@ export interface TempoJsonData extends DataSourceJsonData {
   tracesToLogs?: TraceToLogsOptions;
   serviceMap?: {
     datasourceUid?: string;
-    histogramType?: 'classic' | 'native' | 'both';
   };
   search?: {
     hide?: boolean;
@@ -32,6 +31,7 @@ export interface TempoJsonData extends DataSourceJsonData {
 export interface TempoQuery extends TempoBase {
   queryType: TempoQueryType;
   serviceMapUseNativeHistograms?: boolean;
+  overrideStreamingEnabled?: boolean;
 }
 
 export interface MyDataSourceOptions extends DataSourceJsonData {}

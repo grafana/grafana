@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2, colorManipulator, deprecationWarning } from '@grafana/data';
+import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { ComponentSize } from '../../types/size';
-import { IconRenderer } from '../Button/Button';
+import { getActiveButtonStyles, IconRenderer } from '../Button/Button';
 import { getSvgSize } from '../Icon/utils';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { PopoverContent, TooltipPlacement } from '../Tooltip/types';
@@ -41,8 +41,18 @@ interface BasePropsWithAriaLabel extends BaseProps {
   ['aria-label']: string;
 }
 
-export type Props = BasePropsWithTooltip | BasePropsWithAriaLabel;
+interface BasePropsWithAriaLabelledBy extends BaseProps {
+  /** Reference to an element id that labels the button. No tooltip will be set in this case. */
+  ['aria-labelledby']: string;
+}
 
+export type Props = BasePropsWithTooltip | BasePropsWithAriaLabel | BasePropsWithAriaLabelledBy;
+
+/**
+ * This component looks just like an icon but behaves like a button.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-iconbutton--docs
+ */
 export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref) => {
   const { size = 'md', variant = 'secondary' } = props;
   let limitedIconSize: LimitedIconSize;
@@ -107,13 +117,17 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
   // overall size of the IconButton on hover
   // theme.spacing.gridSize originates from 2*4px for padding and letting the IconSize generally decide on the hoverSize
   const hoverSize = getSvgSize(size) + theme.spacing.gridSize;
+  const activeButtonStyle = getActiveButtonStyles(theme.colors.secondary, 'text');
 
-  let iconColor = theme.colors.text.primary;
+  let iconColor = theme.colors.primary.text;
+  let hoverColor = theme.colors.primary.transparent;
 
-  if (variant === 'primary') {
-    iconColor = theme.colors.primary.text;
+  if (variant === 'secondary') {
+    iconColor = theme.colors.secondary.text;
+    hoverColor = theme.colors.secondary.transparent;
   } else if (variant === 'destructive') {
     iconColor = theme.colors.error.text;
+    hoverColor = theme.colors.error.transparent;
   }
 
   return {
@@ -129,11 +143,21 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
       alignItems: 'center',
       padding: 0,
       color: iconColor,
+      borderRadius: theme.shape.radius.default,
+
+      '&:active': {
+        '&:before, &:hover:before': {
+          backgroundColor: activeButtonStyle.background,
+        },
+      },
 
       '&[disabled], &:disabled': {
         cursor: 'not-allowed',
         color: theme.colors.action.disabledText,
         opacity: 0.65,
+        '&:hover:before': {
+          backgroundColor: 'transparent',
+        },
       },
 
       '&:before': {
@@ -155,12 +179,9 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
 
       '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
 
-      '&:hover': {
-        '&:before': {
-          backgroundColor:
-            variant === 'secondary' ? theme.colors.action.hover : colorManipulator.alpha(iconColor, 0.12),
-          opacity: 1,
-        },
+      '&:hover:before': {
+        backgroundColor: hoverColor,
+        opacity: 1,
       },
     }),
     icon: css({

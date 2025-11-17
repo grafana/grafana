@@ -1,52 +1,7 @@
 import { template } from 'lodash';
 
-import { RawTimeRange, PanelPluginMeta, dateMath } from '@grafana/data';
-import config from 'app/core/config';
+import { RawTimeRange, dateMath } from '@grafana/data';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-
-export function ControllerTestContext(this: any) {
-  const self = this;
-
-  this.datasource = {};
-  this.$element = {};
-  this.$sanitize = {};
-  this.annotationsSrv = {};
-  this.contextSrv = {};
-  this.timeSrv = new TimeSrvStub();
-  this.templateSrv = TemplateSrvStub();
-  this.datasourceSrv = {
-    getMetricSources: () => {},
-    get: () => {
-      return {
-        then: (callback: (ds: any) => void) => {
-          callback(self.datasource);
-        },
-      };
-    },
-  };
-  this.isUtc = false;
-
-  this.createPanelController = (Ctrl: any) => {
-    return () => {
-      self.panel = new PanelModel({ type: 'test' });
-      self.dashboard = { meta: {} };
-      self.isUtc = false;
-      self.dashboard.getTimezone = () => {
-        return self.isUtc ? 'utc' : 'browser';
-      };
-      config.panels['test'] = { info: {} } as PanelPluginMeta;
-    };
-  };
-
-  this.setIsUtc = (isUtc = false) => {
-    self.isUtc = isUtc;
-  };
-}
-
-export function DashboardViewStateStub(this: any) {
-  this.registerPanel = () => {};
-}
 
 export class TimeSrvStub {
   time: RawTimeRange;
@@ -120,8 +75,6 @@ const allDeps = {
   ContextSrvStub,
   TemplateSrvStub,
   TimeSrvStub,
-  ControllerTestContext,
-  DashboardViewStateStub,
 };
 
 // for legacy

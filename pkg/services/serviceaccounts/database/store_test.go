@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -29,9 +30,7 @@ func TestMain(m *testing.M) {
 
 // Service Account should not create an org on its own
 func TestIntegrationStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	_, store := setupTestDatabase(t)
 	serviceAccountName := "new Service Account"
@@ -51,9 +50,8 @@ func TestIntegrationStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 }
 
 func TestIntegration_Store_CreateServiceAccount(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	serviceAccountName := "new Service Account"
 	t.Run("create service account", func(t *testing.T) {
 		_, store := setupTestDatabase(t)
@@ -173,9 +171,7 @@ func TestIntegration_Store_CreateServiceAccount(t *testing.T) {
 }
 
 func TestIntegrationStore_CreateServiceAccountRoleNone(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	_, store := setupTestDatabase(t)
 	orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
@@ -212,9 +208,8 @@ func TestIntegrationStore_CreateServiceAccountRoleNone(t *testing.T) {
 }
 
 func TestIntegrationStore_DeleteServiceAccount(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	cases := []struct {
 		desc        string
 		user        tests.TestUser
@@ -264,9 +259,8 @@ func setupTestDatabase(t *testing.T) (db.DB, *ServiceAccountsStoreImpl) {
 }
 
 func TestIntegrationStore_RetrieveServiceAccount(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	cases := []struct {
 		desc          string
 		user          tests.TestUser
@@ -323,9 +317,8 @@ func TestIntegrationStore_RetrieveServiceAccount(t *testing.T) {
 }
 
 func TestIntegrationStore_MigrateAllApiKeys(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	cases := []struct {
 		desc                    string
 		keys                    []tests.TestApiKey
@@ -443,9 +436,7 @@ func TestIntegrationStore_MigrateAllApiKeys(t *testing.T) {
 	}
 }
 func TestIntegrationServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, store := setupTestDatabase(t)
 
@@ -638,9 +629,7 @@ func TestIntegrationServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing
 }
 
 func TestIntegrationServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 

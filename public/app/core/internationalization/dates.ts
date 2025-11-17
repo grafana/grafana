@@ -9,7 +9,11 @@ const deepMemoize: typeof memoize = (fn) => memoize(fn, { isEqual: deepEqual });
 const isLocaleEnabled = config.featureToggles.localeFormatPreference;
 
 const createDateTimeFormatter = deepMemoize((locale: string, options: Intl.DateTimeFormatOptions) => {
-  return new Intl.DateTimeFormat(locale, options);
+  try {
+    return new Intl.DateTimeFormat(locale, options);
+  } catch {
+    return new Intl.DateTimeFormat('en-US', options);
+  }
 });
 
 const createDurationFormatter = deepMemoize((locale: string, options: Intl.DurationFormatOptions) => {

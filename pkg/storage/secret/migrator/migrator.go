@@ -181,4 +181,34 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		Length:   253, // Limit enforced by K8s.
 		Nullable: true,
 	}))
+
+	mg.AddMigration("add lease_token column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "lease_token",
+		Type:     migrator.DB_NVarchar,
+		Length:   36,
+		Nullable: true,
+	}))
+	mg.AddMigration("add lease_token index to "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
+		Cols: []string{"lease_token"},
+	}))
+	mg.AddMigration("add lease_created column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "lease_created",
+		Type:     migrator.DB_BigInt,
+		Nullable: false,
+		Default:  "0",
+	}))
+	mg.AddMigration("add lease_created index to "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
+		Cols: []string{"lease_created"},
+	}))
+
+	mg.AddMigration("add data_key_id column to "+TableNameEncryptedValue, migrator.NewAddColumnMigration(encryptedValueTable, &migrator.Column{
+		Name:     "data_key_id",
+		Type:     migrator.DB_NVarchar,
+		Length:   100,
+		Nullable: false,
+		Default:  "''",
+	}))
+	mg.AddMigration("add data_key_id index to "+TableNameEncryptedValue, migrator.NewAddIndexMigration(encryptedValueTable, &migrator.Index{
+		Cols: []string{"data_key_id"},
+	}))
 }

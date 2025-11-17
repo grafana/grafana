@@ -16,13 +16,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -37,12 +35,14 @@ var (
 )
 
 type folderStorage struct {
-	tableConverter       rest.TableConvertor
-	cfg                  *setting.Cfg
+	// Wrapped storage
+	store          grafanarest.Storage
+	tableConverter rest.TableConvertor
+
+	permissionsOnCreate  bool // cfg.RBAC.PermissionsOnCreation("folder")
 	features             featuremgmt.FeatureToggles
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
 	acService            accesscontrol.Service
-	store                grafanarest.Storage
 }
 
 func (s *folderStorage) New() runtime.Object {
@@ -86,6 +86,11 @@ func (s *folderStorage) Create(ctx context.Context,
 		return nil, &statusErr
 	}
 
+	// When cfg.RBAC.PermissionsOnCreation("folder") is not enabled
+	if !s.permissionsOnCreate {
+		return obj, err
+	}
+
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -108,6 +113,10 @@ func (s *folderStorage) Create(ctx context.Context,
 
 	parentUid := accessor.GetFolder()
 
+	// TODO: once the feature flag kubernetesAuthzResourcePermissionApis is removed AND the frontend is calling
+	// /apis directly (to set AnnoKeyGrantPermissions on root level folders), the below should be removed
+	// and we should instead initialize resourcePermissionsSvc in the RegisterAPIService function
+	// and rely on StorageOptions.Permissions.
 	err = s.setDefaultFolderPermissions(ctx, info.OrgID, user, p.Name, parentUid)
 	if err != nil {
 		return nil, err
@@ -129,20 +138,9 @@ func (s *folderStorage) Update(ctx context.Context,
 
 // GracefulDeleter
 func (s *folderStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, false, err
-	}
-
 	obj, async, err := s.store.Delete(ctx, name, deleteValidation, options)
 	if err != nil {
 		return obj, async, err
-	}
-
-	if accessErr := s.folderPermissionsSvc.DeleteResourcePermissions(ctx, info.OrgID, name); accessErr != nil {
-		// TODO: add a proper logger to this struct.
-		logger := log.New().FromContext(ctx)
-		logger.Warn("failed to delete folder permission after successfully deleting folder resource", "folder", name, "error", accessErr)
 	}
 
 	return obj, async, err
@@ -153,30 +151,34 @@ func (s *folderStorage) DeleteCollection(ctx context.Context, deleteValidation r
 	return nil, fmt.Errorf("DeleteCollection for folders not implemented")
 }
 
-func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string, parentUID string) error {
-	if !s.cfg.RBAC.PermissionsOnCreation("folder") {
+func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid, parentUID string) error {
+	var permissions []accesscontrol.SetResourcePermissionCommand
+
+	isNested := parentUID != ""
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
+		// No permissions on nested folders when kubernetesDashboards is enabled
 		return nil
 	}
 
-	var permissions []accesscontrol.SetResourcePermissionCommand
-
+	// Creator permissions always set with the legacy behaviour and set on root level folders for new behaviour
 	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := user.GetInternalID()
 		if err != nil {
 			return err
 		}
-
 		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 			UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 		})
 	}
-	isNested := parentUID != ""
+
 	if !isNested {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 		}...)
 	}
+
 	_, err := s.folderPermissionsSvc.SetPermissions(ctx, orgID, uid, permissions...)
 	if err != nil {
 		return err

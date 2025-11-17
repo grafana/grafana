@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V41 removes the deprecated time_options property from dashboard timepicker configuration.
 //
 // This migration addresses technical debt by cleaning up legacy timepicker settings that have
@@ -30,7 +32,7 @@ package schemaversion
 //	timepicker: {
 //	  refresh_intervals: ["5s", "10s", "30s", "1m"]
 //	}
-func V41(dash map[string]interface{}) error {
+func V41(_ context.Context, dash map[string]interface{}) error {
 	dash["schemaVersion"] = int(41)
 	if timepicker, ok := dash["timepicker"].(map[string]interface{}); ok {
 		// time_options is a legacy property that was not used since grafana version 5

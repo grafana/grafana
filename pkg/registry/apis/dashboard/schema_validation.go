@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	v0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	v1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	v2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
@@ -62,7 +63,7 @@ func (b *DashboardsAPIBuilder) ValidateDashboardSpec(ctx context.Context, obj ru
 	}
 
 	if alwaysLogSchemaValidationErrors && len(errors) > 0 {
-		b.log.Info("Schema validation errors during dashboard validation", "group_version", obj.GetObjectKind().GroupVersionKind().GroupVersion().String(), "name", accessor.GetName(), "errors", errors.ToAggregate().Error(), "schema_version_mismatch", schemaVersionError != nil)
+		logging.FromContext(ctx).Info("Schema validation errors during dashboard validation", "group_version", obj.GetObjectKind().GroupVersionKind().GroupVersion().String(), "name", accessor.GetName(), "errors", errors.ToAggregate().Error(), "schema_version_mismatch", schemaVersionError != nil)
 	}
 
 	if errorOnSchemaMismatches {

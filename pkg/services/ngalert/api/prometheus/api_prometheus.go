@@ -195,7 +195,7 @@ func getMatchersFromQuery(v url.Values) (labels.Matchers, error) {
 	return matchers, nil
 }
 
-func getStatesFromQuery(v url.Values) (map[eval.State]struct{}, error) {
+func GetStatesFromQuery(v url.Values) (map[eval.State]struct{}, error) {
 	states := make(map[eval.State]struct{})
 	for _, s := range v["state"] {
 		s = strings.ToLower(s)
@@ -219,7 +219,7 @@ func getStatesFromQuery(v url.Values) (map[eval.State]struct{}, error) {
 	return states, nil
 }
 
-func getHealthFromQuery(v url.Values) (map[string]struct{}, error) {
+func GetHealthFromQuery(v url.Values) (map[string]struct{}, error) {
 	health := make(map[string]struct{})
 	for _, s := range v["health"] {
 		s = strings.ToLower(s)
@@ -245,7 +245,7 @@ type ListAlertRulesStore interface {
 }
 
 type ListAlertRulesStoreV2 interface {
-	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesByGroupQuery) (ngmodels.RulesGroup, string, error)
+	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (ngmodels.RulesGroup, string, error)
 }
 
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
@@ -438,7 +438,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
-	stateFilterSet, err := getStatesFromQuery(opts.Query)
+	stateFilterSet, err := GetStatesFromQuery(opts.Query)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = err.Error()
@@ -446,7 +446,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		return ruleResponse
 	}
 
-	healthFilterSet, err := getHealthFromQuery(opts.Query)
+	healthFilterSet, err := GetHealthFromQuery(opts.Query)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = err.Error()
@@ -479,6 +479,17 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	ruleGroups := opts.Query["rule_group"]
 
 	receiverName := opts.Query.Get("receiver_name")
+	title := opts.Query.Get("search.rule_name")
+
+	var ruleType ngmodels.RuleTypeFilter
+	switch ngmodels.RuleType(opts.Query.Get("rule_type")) {
+	case ngmodels.RuleTypeAlerting:
+		ruleType = ngmodels.RuleTypeFilterAlerting
+	case ngmodels.RuleTypeRecording:
+		ruleType = ngmodels.RuleTypeFilterRecording
+	default:
+		ruleType = ngmodels.RuleTypeFilterAll
+	}
 
 	maxGroups := getInt64WithDefault(opts.Query, "group_limit", -1)
 	nextToken := opts.Query.Get("group_next_token")
@@ -487,7 +498,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		return ruleResponse
 	}
 
-	byGroupQuery := ngmodels.ListAlertRulesByGroupQuery{
+	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
 			OrgID:         opts.OrgID,
 			NamespaceUIDs: namespaceUIDs,
@@ -495,9 +506,11 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 			PanelID:       panelID,
 			RuleGroups:    ruleGroups,
 			ReceiverName:  receiverName,
+			SearchTitle:   title,
 		},
-		GroupLimit:         maxGroups,
-		GroupContinueToken: nextToken,
+		RuleType:      ruleType,
+		Limit:         maxGroups,
+		ContinueToken: nextToken,
 	}
 	ruleList, continueToken, err := store.ListAlertRulesByGroup(opts.Ctx, &byGroupQuery)
 	if err != nil {
@@ -583,7 +596,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
-	stateFilterSet, err := getStatesFromQuery(opts.Query)
+	stateFilterSet, err := GetStatesFromQuery(opts.Query)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = err.Error()
@@ -591,7 +604,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		return ruleResponse
 	}
 
-	healthFilterSet, err := getHealthFromQuery(opts.Query)
+	healthFilterSet, err := GetHealthFromQuery(opts.Query)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = err.Error()
@@ -624,6 +637,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 	ruleGroups := opts.Query["rule_group"]
 
 	receiverName := opts.Query.Get("receiver_name")
+	title := opts.Query.Get("search.rule_name")
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
 		OrgID:         opts.OrgID,
@@ -632,6 +646,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		PanelID:       panelID,
 		RuleGroups:    ruleGroups,
 		ReceiverName:  receiverName,
+		SearchTitle:   title,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {

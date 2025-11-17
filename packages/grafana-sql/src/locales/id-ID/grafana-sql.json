@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Nonaktif maksimum otomatis",
-        "content-auto-max-idle": "Jika diaktifkan, secara otomatis atur jumlah <1>Koneksi nonaktif maksimum</1> ke nilai yang sama dengan<3> Koneksi terbuka maksimum</3>. Jika jumlah maksimum koneksi terbuka tidak diatur, jumlah tersebut akan diatur ke default ({{defaultMaxIdle}}).",
-        "content-max-idle": "Jumlah maksimum koneksi dalam pool koneksi nonaktif. Jika <1>Koneksi terbuka maksimum</1> lebih besar dari 0 tetapi kurang dari <3>Koneksi nonaktif maksimum</3>, maka <5>Koneksi nonaktif maksimum</5> akan dikurangi agar sesuai dengan batas <8>Koneksi terbuka maksimum</8>. Jika diatur ke 0, tidak ada koneksi nonaktif yang dipertahankan.",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
         "content-max-lifetime": "Jumlah waktu maksimum dalam detik untuk menggunakan koneksi lagi. Jika diatur ke 0, koneksi digunakan kembali terus-menerus tanpa batas waktu.",
-        "content-max-open": "Jumlah koneksi terbuka maksimum ke basis data. Jika <1>Koneksi nonaktif maksimum</1> lebih besar dari 0 dan <3>Koneksi terbuka maksimum</3> kurang dari <5>Koneksi nonaktif maksimum</5>, maka <7>Koneksi nonaktif maksimum</7> akan dikurangi agar sesuai dengan batas <9>Koneksi terbuka maksimum</9>. Jika diatur ke 0, tidak ada batasan jumlah koneksi terbuka.",
+        "content-max-open": "",
         "max-idle": "Nonaktif maks",
         "max-lifetime": "Periode maks",
         "max-open": "Terbuka maks",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "Kueri Anda tidak valid. Periksa di bawah ini untuk detailnya. <1></1>Namun, Anda masih dapat menjalankan kueri ini.",
+        "content-invalid-query": "",
         "editor-modes": {
           "label-builder": "Pembangun",
           "label-code": "Kode"
@@ -76,7 +76,7 @@
         "tooltip-format-query": "Format kueri"
       },
       "query-validator": {
-        "query-will-process": "<0></0> Kueri ini akan memproses <2>{{bytes}}</2> saat dijalankan.",
+        "query-will-process": "",
         "validating-query": "Memvalidasi kueri..."
       },
       "raw-editor": {

@@ -817,6 +817,11 @@ func (in *RepositoryView) DeepCopy() *RepositoryView {
 func (in *RepositoryViewList) DeepCopyInto(out *RepositoryViewList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
+	if in.AllowedTargets != nil {
+		in, out := &in.AllowedTargets, &out.AllowedTargets
+		*out = make([]SyncTargetType, len(*in))
+		copy(*out, *in)
+	}
 	if in.AvailableRepositoryTypes != nil {
 		in, out := &in.AvailableRepositoryTypes, &out.AvailableRepositoryTypes
 		*out = make([]RepositoryType, len(*in))

@@ -407,8 +407,6 @@ func TestAPI_Annotations(t *testing.T) {
 				dashService.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{UID: dashUID, FolderUID: folderUID, FolderID: 1}, nil)
 				folderService := &foldertest.FakeService{}
 				folderService.ExpectedFolder = &folder.Folder{UID: folderUID, ID: 1}
-				folderDB := &foldertest.FakeFolderStore{}
-				folderDB.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(&folder.Folder{UID: folderUID, ID: 1}, nil)
 				hs.DashboardService = dashService
 				hs.folderService = folderService
 				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())

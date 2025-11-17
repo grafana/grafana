@@ -3,7 +3,7 @@ import * as React from 'react';
 import { t } from '@grafana/i18n';
 import { Modal, ModalTabsHeader, TabContent, Themeable2, withTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { SharePublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
 import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -130,16 +130,14 @@ class UnthemedShareModal extends React.Component<Props, State> {
     return tabs.find((t) => t.value === activeTab)!;
   }
 
-  renderTitle() {
-    const { panel } = this.props;
+  renderTitle(modalTitle: string) {
     const { activeTab } = this.state;
-    const title = panel ? t('share-modal.panel.title', 'Share Panel') : t('share-modal.dashboard.title', 'Share');
     const canEditDashboard = this.props.dashboard.canEditDashboard();
     const tabs = getTabs(canEditDashboard, this.props.panel, this.state.activeTab).tabs;
 
     return (
       <ModalTabsHeader
-        title={title}
+        title={modalTitle}
         icon="share-alt"
         tabs={tabs}
         activeTab={activeTab}
@@ -152,9 +150,10 @@ class UnthemedShareModal extends React.Component<Props, State> {
     const { dashboard, panel } = this.props;
     const activeTabModel = this.getActiveTab();
     const ActiveTab = activeTabModel.component;
+    const modalTitle = panel ? t('share-modal.panel.title', 'Share Panel') : t('share-modal.dashboard.title', 'Share');
 
     return (
-      <Modal isOpen={true} title={this.renderTitle()} onDismiss={this.props.onDismiss}>
+      <Modal ariaLabel={modalTitle} isOpen={true} title={this.renderTitle(modalTitle)} onDismiss={this.props.onDismiss}>
         <TabContent>
           <ActiveTab dashboard={dashboard} panel={panel} onDismiss={this.props.onDismiss} />
         </TabContent>

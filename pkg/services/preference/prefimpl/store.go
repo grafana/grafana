@@ -12,5 +12,5 @@ type store interface {
 	// Insert adds a new preference and returns its sequential ID
 	Insert(context.Context, *pref.Preference) (int64, error)
 	Update(context.Context, *pref.Preference) error
-	DeleteByUser(context.Context, int64) error
+	Delete(context.Context, *pref.DeleteCommand) error
 }

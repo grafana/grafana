@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
+import { useEffect } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
-import { Button, Drawer, IconButton, Spinner, useStyles2 } from '@grafana/ui';
+import { Button, Drawer, ErrorBoundary, ErrorWithStack, IconButton, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { getModKey } from 'app/core/utils/browser';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
@@ -28,6 +30,21 @@ export const ScopesSelector = () => {
     services?.scopesSelectorService.state
   );
 
+  // Keyboard shortcut for closing and applying
+  useEffect(() => {
+    if (!services?.scopesSelectorService) {
+      return;
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // ctrl/cmd + enter. Do a check up here to prevent conditional useEffect
+      if (event.key === 'Enter' && event.metaKey) {
+        services.scopesSelectorService.closeAndApply();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [services?.scopesSelectorService]);
+
   if (!services || !scopes || !scopes.state.enabled || !selectorServiceState) {
     return null;
   }
@@ -48,10 +65,11 @@ export const ScopesSelector = () => {
     removeAllScopes,
     closeAndApply,
     closeAndReset,
-    updateNode,
+    filterNode,
     selectScope,
     deselectScope,
     getRecentScopes,
+    toggleExpandedNode,
   } = scopesSelectorService;
 
   const recentScopes = getRecentScopes();
@@ -90,39 +108,56 @@ export const ScopesSelector = () => {
 
       {opened && (
         <Drawer title={t('scopes.selector.title', 'Select scopes')} size="sm" onClose={closeAndReset}>
-          <div className={styles.drawerContainer}>
-            <div className={styles.treeContainer}>
-              {loading || !tree ? (
-                <Spinner data-testid="scopes-selector-loading" />
-              ) : (
-                <>
-                  <ScopesTree
-                    tree={tree}
-                    loadingNodeName={loadingNodeName}
-                    onNodeUpdate={updateNode}
-                    recentScopes={recentScopes}
-                    selectedScopes={selectedScopes}
-                    scopeNodes={nodes}
-                    selectScope={selectScope}
-                    deselectScope={deselectScope}
-                    onRecentScopesSelect={(scopeIds: string[], parentNodeId?: string) => {
-                      scopesSelectorService.changeScopes(scopeIds, parentNodeId);
-                      scopesSelectorService.closeAndReset();
-                    }}
+          <ErrorBoundary boundaryName="scopes-selector">
+            {({ error, errorInfo }) => {
+              if (error) {
+                return (
+                  <ErrorWithStack
+                    error={error}
+                    title={t('scopes.selector.error-title', 'An unexpected error happened')}
+                    errorInfo={errorInfo}
                   />
-                </>
-              )}
-            </div>
+                );
+              }
+              return (
+                <div className={styles.drawerContainer}>
+                  <div className={styles.treeContainer}>
+                    {loading || !tree ? (
+                      <Spinner data-testid="scopes-selector-loading" />
+                    ) : (
+                      <>
+                        <ScopesTree
+                          tree={tree}
+                          loadingNodeName={loadingNodeName}
+                          filterNode={filterNode}
+                          recentScopes={recentScopes}
+                          selectedScopes={selectedScopes}
+                          scopeNodes={nodes}
+                          selectScope={selectScope}
+                          deselectScope={deselectScope}
+                          toggleExpandedNode={toggleExpandedNode}
+                          onRecentScopesSelect={(scopeIds: string[], parentNodeId?: string) => {
+                            scopesSelectorService.changeScopes(scopeIds, parentNodeId);
+                            scopesSelectorService.closeAndReset();
+                          }}
+                        />
+                      </>
+                    )}
+                  </div>
 
-            <div className={styles.buttonsContainer}>
-              <Button variant="primary" data-testid="scopes-selector-apply" onClick={closeAndApply}>
-                <Trans i18nKey="scopes.selector.apply">Apply</Trans>
-              </Button>
-              <Button variant="secondary" data-testid="scopes-selector-cancel" onClick={closeAndReset}>
-                <Trans i18nKey="scopes.selector.cancel">Cancel</Trans>
-              </Button>
-            </div>
-          </div>
+                  <div className={styles.buttonsContainer}>
+                    <Button variant="primary" data-testid="scopes-selector-apply" onClick={closeAndApply}>
+                      <Trans i18nKey="scopes.selector.apply">Apply</Trans>&nbsp;
+                      <Text variant="bodySmall">{`${getModKey()}+↵`}</Text>
+                    </Button>
+                    <Button variant="secondary" data-testid="scopes-selector-cancel" onClick={closeAndReset}>
+                      <Trans i18nKey="scopes.selector.cancel">Cancel</Trans>
+                    </Button>
+                  </div>
+                </div>
+              );
+            }}
+          </ErrorBoundary>
         </Drawer>
       )}
     </div>

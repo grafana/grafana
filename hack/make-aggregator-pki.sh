@@ -20,7 +20,7 @@ openssl x509 -req -days 3650 -in data/grafana-aggregator/client.csr -CA data/gra
 
 openssl req -out data/grafana-aggregator/server.csr -new -newkey rsa:4096 -nodes -keyout data/grafana-aggregator/server.key \
   -subj "/CN=localhost/O=aggregated" \
-  -addext "subjectAltName = DNS:v0alpha1.example.grafana.app.default.svc,DNS:localhost" \
+  -addext "subjectAltName = DNS:v0alpha1.example.grafana.app.default.svc,DNS:localhost,DNS:*.default.svc,DNS:*.default.svc.cluster.local" \
   -addext "extendedKeyUsage = serverAuth, clientAuth"
 openssl x509 -req -days 3650 -in data/grafana-aggregator/server.csr -CA data/grafana-aggregator/ca.crt -CAkey data/grafana-aggregator/ca.key \
   -set_serial 02 \

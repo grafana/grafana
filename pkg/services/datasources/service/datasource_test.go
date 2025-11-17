@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -24,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginfakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -40,6 +41,7 @@ import (
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -62,10 +64,22 @@ func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *data
 	return nil, datasources.ErrDataSourceNotFound
 }
 
-func TestIntegrationService_AddDataSource(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
+func (d *dataSourceMockRetriever) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, err
 	}
+	for _, dataSource := range d.res {
+		if name == dataSource.UID && ns.OrgID == dataSource.OrgID && group == dataSource.Type {
+			return dataSource, nil
+		}
+	}
+	return nil, datasources.ErrDataSourceNotFound
+}
+
+func TestIntegrationService_AddDataSource(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("should not fail if the plugin is not installed", func(t *testing.T) {
 		dsService := initDSService(t)
 		dsService.pluginStore = &pluginstore.FakePluginStore{
@@ -357,9 +371,8 @@ func TestService_getAvailableName(t *testing.T) {
 }
 
 func TestIntegrationService_UpdateDataSource(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("should return not found error if datasource not found", func(t *testing.T) {
 		dsService := initDSService(t)
 
@@ -810,9 +823,8 @@ func TestIntegrationService_UpdateDataSource(t *testing.T) {
 }
 
 func TestIntegrationService_DeleteDataSource(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("should not return an error if data source doesn't exist", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -1090,9 +1102,8 @@ func TestService_awsServiceNamespace(t *testing.T) {
 
 //nolint:goconst
 func TestIntegrationService_GetHttpTransport(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	cfg := &setting.Cfg{}
 
 	t.Run("Should use cached proxy", func(t *testing.T) {
@@ -1505,9 +1516,8 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 }
 
 func TestIntegrationService_getProxySettings(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
@@ -1586,9 +1596,8 @@ func TestIntegrationService_getProxySettings(t *testing.T) {
 }
 
 func TestIntegrationService_getTimeout(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	cfg := &setting.Cfg{}
 	originalTimeout := sdkhttpclient.DefaultTimeoutOptions.Timeout
 	sdkhttpclient.DefaultTimeoutOptions.Timeout = time.Minute
@@ -1623,9 +1632,8 @@ func TestIntegrationService_getTimeout(t *testing.T) {
 }
 
 func TestIntegrationService_GetDecryptedValues(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("should migrate and retrieve values from secure json data", func(t *testing.T) {
 		ds := &datasources.DataSource{
 			ID:   1,
@@ -1685,9 +1693,8 @@ func TestIntegrationService_GetDecryptedValues(t *testing.T) {
 }
 
 func TestIntegrationDataSource_CustomHeaders(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))

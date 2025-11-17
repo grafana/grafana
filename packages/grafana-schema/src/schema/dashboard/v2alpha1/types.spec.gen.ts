@@ -259,6 +259,8 @@ export interface FieldConfigSource {
 	defaults: FieldConfig;
 	// Overrides are the options applied to specific fields overriding the defaults.
 	overrides: {
+		// Describes config override rules created when interacting with Grafana.
+		__systemRef?: string;
 		matcher: MatcherConfig;
 		properties: DynamicConfigValue[];
 	}[];
@@ -318,6 +320,8 @@ export interface FieldConfig {
 	color?: FieldColor;
 	// The behavior when clicking on a result
 	links?: any[];
+	// Define interactive HTTP requests that can be triggered from data visualizations.
+	actions?: Action[];
 	// Alternative to empty string
 	noValue?: string;
 	// custom is specified by the FieldConfig field
@@ -455,7 +459,8 @@ export type ThresholdsMode = "absolute" | "percentage";
 export const defaultThresholdsMode = (): ThresholdsMode => ("absolute");
 
 export interface Threshold {
-	value: number;
+	// Value null means -Infinity
+	value: number | null;
 	color: string;
 }
 
@@ -504,6 +509,81 @@ export const defaultFieldColorModeId = (): FieldColorModeId => ("thresholds");
 export type FieldColorSeriesByMode = "min" | "max" | "last";
 
 export const defaultFieldColorSeriesByMode = (): FieldColorSeriesByMode => ("min");
+
+export interface Action {
+	type: ActionType;
+	title: string;
+	fetch?: FetchOptions;
+	infinity?: InfinityOptions;
+	confirmation?: string;
+	oneClick?: boolean;
+	variables?: ActionVariable[];
+	style?: {
+		backgroundColor?: string;
+	};
+}
+
+export const defaultAction = (): Action => ({
+	type: "fetch",
+	title: "",
+});
+
+export type ActionType = "fetch" | "infinity";
+
+export const defaultActionType = (): ActionType => ("fetch");
+
+export interface FetchOptions {
+	method: HttpRequestMethod;
+	url: string;
+	body?: string;
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	queryParams?: string[][];
+	headers?: string[][];
+}
+
+export const defaultFetchOptions = (): FetchOptions => ({
+	method: "GET",
+	url: "",
+});
+
+export type HttpRequestMethod = "GET" | "PUT" | "POST" | "DELETE" | "PATCH";
+
+export const defaultHttpRequestMethod = (): HttpRequestMethod => ("GET");
+
+export interface InfinityOptions {
+	method: HttpRequestMethod;
+	url: string;
+	body?: string;
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	queryParams?: string[][];
+	datasourceUid: string;
+	headers?: string[][];
+}
+
+export const defaultInfinityOptions = (): InfinityOptions => ({
+	method: "GET",
+	url: "",
+	datasourceUid: "",
+});
+
+export interface ActionVariable {
+	key: string;
+	name: string;
+	type: "string";
+}
+
+export const defaultActionVariable = (): ActionVariable => ({
+	key: "",
+	name: "",
+	type: ActionVariableType,
+});
+
+// Action variable type
+export const ActionVariableType = "string";
 
 export interface DynamicConfigValue {
 	id: string;
@@ -1338,6 +1418,7 @@ export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
 	key: "",
 	operator: "",
 	value: "",
+	origin: FilterOrigin,
 });
 
 // Determine the origin of the adhoc variable filter

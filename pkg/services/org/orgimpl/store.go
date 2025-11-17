@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -96,11 +95,6 @@ func (ss *sqlStore) Insert(ctx context.Context, orga *org.Org) (int64, error) {
 				return err
 			}
 		}
-		sess.PublishAfterCommit(&events.OrgCreated{
-			Timestamp: orga.Created,
-			Id:        orga.ID,
-			Name:      orga.Name,
-		})
 		return nil
 	})
 	if err != nil {
@@ -156,12 +150,6 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *org.UpdateOrgCommand) error
 			return org.ErrOrgNotFound.Errorf("failed to update organization with ID: %d", cmd.OrgId)
 		}
 
-		sess.PublishAfterCommit(&events.OrgUpdated{
-			Timestamp: orga.Updated,
-			Id:        orga.ID,
-			Name:      orga.Name,
-		})
-
 		return nil
 	})
 }
@@ -199,12 +187,6 @@ func (ss *sqlStore) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddress
 		if _, err := sess.ID(cmd.OrgID).Update(&org); err != nil {
 			return err
 		}
-
-		sess.PublishAfterCommit(&events.OrgUpdated{
-			Timestamp: org.Updated,
-			Id:        org.ID,
-			Name:      org.Name,
-		})
 
 		return nil
 	})
@@ -344,12 +326,6 @@ func (ss *sqlStore) CreateWithMember(ctx context.Context, cmd *org.CreateOrgComm
 		}
 
 		_, err := sess.Insert(&user)
-
-		sess.PublishAfterCommit(&events.OrgCreated{
-			Timestamp: orga.Created,
-			Id:        orga.ID,
-			Name:      orga.Name,
-		})
 
 		return err
 	}); err != nil {

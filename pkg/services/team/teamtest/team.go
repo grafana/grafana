@@ -58,7 +58,7 @@ func (s *FakeService) RemoveUsersMemberships(ctx context.Context, userID int64) 
 	return s.ExpectedError
 }
 
-func (s *FakeService) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error) {
+func (s *FakeService) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*team.TeamMemberDTO, error) {
 	return s.ExpectedMembers, s.ExpectedError
 }
 

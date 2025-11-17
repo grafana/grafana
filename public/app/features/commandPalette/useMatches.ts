@@ -190,10 +190,18 @@ function useInternalMatches(filtered: ActionImpl[], search: string): Match[] {
     const matchingIndices = fuzzySearch(haystack, throttledSearch);
 
     // Convert indices back to Match objects with proper scoring
-    const results: Match[] = matchingIndices.map((index, order) => ({
-      action: throttledFiltered[index],
-      score: matchingIndices.length - order, // Higher score for better ranked matches
-    }));
+    const results: Match[] = matchingIndices.map((index, order) => {
+      const name = throttledFiltered[index].name;
+      const fullNameMatch = name.toLowerCase() === throttledSearch.toLowerCase();
+      let score = matchingIndices.length - order; // Higher score for better ranked matches
+      if (fullNameMatch) {
+        score += 100; // Bumping for exact matches
+      }
+      return {
+        action: throttledFiltered[index],
+        score,
+      };
+    });
 
     return results;
   }, [throttledFiltered, throttledSearch]);

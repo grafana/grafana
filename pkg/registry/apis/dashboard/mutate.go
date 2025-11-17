@@ -26,6 +26,19 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 	if op != admission.Create && op != admission.Update {
 		return nil
 	}
+
+	switch a.GetResource().Resource {
+	case dashboardV0.DASHBOARD_RESOURCE:
+		return b.mutateDashboard(ctx, a)
+
+	case dashboardV0.LIBRARY_PANEL_RESOURCE:
+		return nil // nothing needed
+	}
+
+	return fmt.Errorf("unexpected resource: %+v", a.GetResource())
+}
+
+func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.Attributes) (err error) {
 	var internalID int64
 	obj := a.GetObject()
 	meta, err := utils.MetaAccessor(obj)
@@ -53,7 +66,7 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 			internalID = int64(id)
 		}
 		resourceInfo = dashboardV1.DashboardResourceInfo
-		migrationErr = migration.Migrate(v.Spec.Object, schemaversion.LATEST_VERSION)
+		migrationErr = migration.Migrate(ctx, v.Spec.Object, schemaversion.LATEST_VERSION)
 		if migrationErr != nil {
 			v.Status.Conversion = &dashboardV1.DashboardConversionStatus{
 				Failed: true,

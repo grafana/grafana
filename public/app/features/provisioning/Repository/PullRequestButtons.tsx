@@ -1,5 +1,5 @@
 import { Trans } from '@grafana/i18n';
-import { LinkButton } from '@grafana/ui';
+import { LinkButton, Stack } from '@grafana/ui';
 import { RepositoryUrLs } from 'app/api/clients/provisioning/v0alpha1';
 
 interface Props {
@@ -16,7 +16,7 @@ export function PullRequestButtons({ urls, jobType }: Props) {
   }
 
   return (
-    <>
+    <Stack>
       <LinkButton href={branchURL} icon="external-link-alt" variant="secondary" target="_blank">
         <Trans i18nKey="provisioning.repository-link.delete-or-move-job.view-branch">View branch</Trans>
       </LinkButton>
@@ -26,6 +26,6 @@ export function PullRequestButtons({ urls, jobType }: Props) {
       <LinkButton href={pullRequestURL} icon="external-link-alt" variant="secondary" target="_blank">
         <Trans i18nKey="provisioning.repository-link.delete-or-move-job.open-pull-request">Open pull request</Trans>
       </LinkButton>
-    </>
+    </Stack>
   );
 }

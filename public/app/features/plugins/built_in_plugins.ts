@@ -1,13 +1,11 @@
-const graphitePlugin = async () =>
-  await import(/* webpackChunkName: "graphitePlugin" */ 'app/plugins/datasource/graphite/module');
+import { config } from '@grafana/runtime';
+
 const cloudwatchPlugin = async () =>
   await import(/* webpackChunkName: "cloudwatchPlugin" */ 'app/plugins/datasource/cloudwatch/module');
 const dashboardDSPlugin = async () =>
   await import(/* webpackChunkName "dashboardDSPlugin" */ 'app/plugins/datasource/dashboard/module');
 const elasticsearchPlugin = async () =>
   await import(/* webpackChunkName: "elasticsearchPlugin" */ 'app/plugins/datasource/elasticsearch/module');
-const opentsdbPlugin = async () =>
-  await import(/* webpackChunkName: "opentsdbPlugin" */ 'app/plugins/datasource/opentsdb/module');
 const grafanaPlugin = async () =>
   await import(/* webpackChunkName: "grafanaPlugin" */ 'app/plugins/datasource/grafana/module');
 const influxdbPlugin = async () =>
@@ -44,8 +42,6 @@ const histogramPanel = async () =>
   await import(/* webpackChunkName: "histogramPanel" */ 'app/plugins/panel/histogram/module');
 const livePanel = async () => await import(/* webpackChunkName: "livePanel" */ 'app/plugins/panel/live/module');
 const logsPanel = async () => await import(/* webpackChunkName: "logsPanel" */ 'app/plugins/panel/logs/module');
-const newLogsPanel = async () =>
-  await import(/* webpackChunkName: "newLogsPanel" */ 'app/plugins/panel/logs-new/module');
 const newsPanel = async () => await import(/* webpackChunkName: "newsPanel" */ 'app/plugins/panel/news/module');
 const pieChartPanel = async () =>
   await import(/* webpackChunkName: "pieChartPanel" */ 'app/plugins/panel/piechart/module');
@@ -72,13 +68,14 @@ const heatmapPanel = async () =>
 const nodeGraph = async () =>
   await import(/* webpackChunkName: "nodeGraphPanel" */ 'app/plugins/panel/nodeGraph/module');
 
+const radialBar = async () =>
+  await import(/* webpackChunkName: "radialBarPanel" */ 'app/plugins/panel/radialbar/module');
+
 const builtInPlugins: Record<string, System.Module | (() => Promise<System.Module>)> = {
   // datasources
-  'core:plugin/graphite': graphitePlugin,
   'core:plugin/cloudwatch': cloudwatchPlugin,
   'core:plugin/dashboard': dashboardDSPlugin,
   'core:plugin/elasticsearch': elasticsearchPlugin,
-  'core:plugin/opentsdb': opentsdbPlugin,
   'core:plugin/grafana': grafanaPlugin,
   'core:plugin/influxdb': influxdbPlugin,
   'core:plugin/mixed': mixedPlugin,
@@ -106,16 +103,16 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/debug': debugPanel,
   'core:plugin/flamegraph': flamegraphPanel,
   'core:plugin/gettingstarted': gettingStartedPanel,
-  'core:plugin/gauge': gaugePanel,
+  'core:plugin/gauge': config.featureToggles.newGauge ? radialBar : gaugePanel,
   'core:plugin/piechart': pieChartPanel,
   'core:plugin/bargauge': barGaugePanel,
   'core:plugin/barchart': barChartPanel,
   'core:plugin/logs': logsPanel,
-  'core:plugin/logs-new': newLogsPanel,
   'core:plugin/traces': tracesPanel,
   'core:plugin/welcome': welcomeBanner,
   'core:plugin/nodeGraph': nodeGraph,
   'core:plugin/histogram': histogramPanel,
+  'core:plugin/radialbar': radialBar,
 };
 
 export default builtInPlugins;

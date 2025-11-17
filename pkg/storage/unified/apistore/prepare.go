@@ -100,6 +100,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if obj.GetFolder() != "" && !s.opts.EnableFolderSupport {
 		return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
 	}
+	if s.opts.MaximumNameLength > 0 && len(obj.GetName()) > s.opts.MaximumNameLength {
+		return v, apierrors.NewBadRequest(fmt.Sprintf("name exceeds maximum length (%d)", s.opts.MaximumNameLength))
+	}
 
 	v.grantPermissions = obj.GetAnnotation(utils.AnnoKeyGrantPermissions)
 	if v.grantPermissions != "" {

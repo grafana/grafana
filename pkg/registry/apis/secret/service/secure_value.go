@@ -11,14 +11,15 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apiserver/pkg/admission"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/codes"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service/metrics"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/codes"
 )
 
 var _ contracts.SecureValueService = (*SecureValueService)(nil)
@@ -145,7 +146,7 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 		}
 		logging.FromContext(ctx).Debug("retrieved keeper", "namespace", newSecureValue.Namespace, "keeperName", newSecureValue.Spec.Keeper, "type", keeperCfg.Type())
 
-		secret, err := keeper.Expose(ctx, keeperCfg, newSecureValue.Namespace, newSecureValue.Name, currentVersion.Status.Version)
+		secret, err := keeper.Expose(ctx, keeperCfg, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, currentVersion.Status.Version)
 		if err != nil {
 			return nil, false, fmt.Errorf("reading secret value from keeper: %w", err)
 		}
@@ -190,7 +191,7 @@ func (s *SecureValueService) createNewVersion(ctx context.Context, sv *secretv1b
 	// TODO: can we stop using external id?
 	// TODO: store uses only the namespace and returns and id. It could be a kv instead.
 	// TODO: check that the encrypted store works with multiple versions
-	externalID, err := keeper.Store(ctx, keeperCfg, createdSv.Namespace, createdSv.Name, createdSv.Status.Version, sv.Spec.Value.DangerouslyExposeAndConsumeValue())
+	externalID, err := keeper.Store(ctx, keeperCfg, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, sv.Spec.Value.DangerouslyExposeAndConsumeValue())
 	if err != nil {
 		return nil, fmt.Errorf("storing secure value in keeper: %w", err)
 	}
@@ -285,7 +286,7 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	hasPermissionFor, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
+	hasPermissionFor, _, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
 		Group:     secretv1beta1.APIGroup,
 		Resource:  secretv1beta1.SecureValuesResourceInfo.GetName(),
 		Namespace: namespace.String(),

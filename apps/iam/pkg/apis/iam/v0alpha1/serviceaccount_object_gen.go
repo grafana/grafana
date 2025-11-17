@@ -21,8 +21,6 @@ type ServiceAccount struct {
 
 	// Spec is the spec of the ServiceAccount
 	Spec ServiceAccountSpec `json:"spec" yaml:"spec"`
-
-	Status ServiceAccountStatus `json:"status" yaml:"status"`
 }
 
 func (o *ServiceAccount) GetSpec() any {
@@ -39,15 +37,11 @@ func (o *ServiceAccount) SetSpec(spec any) error {
 }
 
 func (o *ServiceAccount) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
+	return map[string]any{}
 }
 
 func (o *ServiceAccount) GetSubresource(name string) (any, bool) {
 	switch name {
-	case "status":
-		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -55,13 +49,6 @@ func (o *ServiceAccount) GetSubresource(name string) (any, bool) {
 
 func (o *ServiceAccount) SetSubresource(name string, value any) error {
 	switch name {
-	case "status":
-		cast, ok := value.(ServiceAccountStatus)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type ServiceAccountStatus", value)
-		}
-		o.Status = cast
-		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -233,7 +220,6 @@ func (o *ServiceAccount) DeepCopyInto(dst *ServiceAccount) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.Status.DeepCopyInto(&dst.Status)
 }
 
 // Interface compliance compile-time check
@@ -303,17 +289,5 @@ func (s *ServiceAccountSpec) DeepCopy() *ServiceAccountSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *ServiceAccountSpec) DeepCopyInto(dst *ServiceAccountSpec) {
-	resource.CopyObjectInto(dst, s)
-}
-
-// DeepCopy creates a full deep copy of ServiceAccountStatus
-func (s *ServiceAccountStatus) DeepCopy() *ServiceAccountStatus {
-	cpy := &ServiceAccountStatus{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
-
-// DeepCopyInto deep copies ServiceAccountStatus into another ServiceAccountStatus object
-func (s *ServiceAccountStatus) DeepCopyInto(dst *ServiceAccountStatus) {
 	resource.CopyObjectInto(dst, s)
 }

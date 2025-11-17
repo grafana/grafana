@@ -1,11 +1,19 @@
 import { render, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { config } from '@grafana/runtime';
+import { config, setPluginComponentsHook } from '@grafana/runtime';
+import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
 import { NavLandingPage } from './NavLandingPage';
 
 describe('NavLandingPage', () => {
+  beforeEach(() => {
+    setPluginComponentsHook(() => ({
+      components: [],
+      isLoading: false,
+    }));
+  });
+
   const mockSectionTitle = 'Section title';
   const mockId = 'section';
   const mockSectionUrl = 'mock-section-url';
@@ -82,5 +90,24 @@ describe('NavLandingPage', () => {
   it('renders the custom header when supplied', () => {
     setup(true);
     expect(screen.getByRole('heading', { name: 'Custom Header' })).toBeInTheDocument();
+  });
+
+  it('renders the ObservabilityLandingPage when the path is /observability', () => {
+    setPluginComponentsHook(() => ({
+      components: [
+        createComponentWithMeta(
+          {
+            title: 'Landing Page',
+            description: 'Landing Page description',
+            component: () => <div>ObservabilityLandingPage</div>,
+            pluginId: 'grafana-plugin-app',
+          },
+          'grafana/dynamic/nav-landing-page/nav-id-observability/v1'
+        ),
+      ],
+      isLoading: false,
+    }));
+    setup();
+    expect(screen.getByText('ObservabilityLandingPage')).toBeInTheDocument();
   });
 });

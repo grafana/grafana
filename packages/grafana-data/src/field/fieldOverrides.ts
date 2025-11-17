@@ -1,5 +1,5 @@
 import { isNumber, set, unset, get, cloneDeep } from 'lodash';
-import { useMemo, useRef } from 'react';
+import { createContext, useContext, useMemo, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
 import { ThresholdsMode, VariableFormatID } from '@grafana/schema';
@@ -257,6 +257,12 @@ function calculateRange(
   globalRange: NumericRange | undefined,
   data: DataFrame[]
 ): { range?: { min?: number | null; max?: number | null; delta: number }; newGlobalRange: NumericRange | undefined } {
+  // If range is defined with min/max, use it
+  if (isNumber(config.min) && isNumber(config.max)) {
+    const range = { min: config.min, max: config.max, delta: config.max - config.min };
+    return { range, newGlobalRange: globalRange ?? range };
+  }
+
   // Only calculate ranges when the field is a number and one of min/max is set to auto.
   if (field.type !== FieldType.number || (isNumber(config.min) && isNumber(config.max))) {
     return { newGlobalRange: globalRange };
@@ -583,12 +589,13 @@ export function useFieldOverrides(
   data: PanelData | undefined,
   timeZone: string,
   theme: GrafanaTheme2,
-  replace: InterpolateFunction,
-  dataLinkPostProcessor?: DataLinkPostProcessor
+  replace: InterpolateFunction
 ): PanelData | undefined {
   const fieldConfigRegistry = plugin?.fieldConfigRegistry;
   const structureRev = useRef(0);
   const prevSeries = usePrevious(data?.series);
+
+  const { dataLinkPostProcessor } = useDataLinksContext();
 
   return useMemo(() => {
     if (!fieldConfigRegistry || !fieldConfig || !data) {
@@ -650,3 +657,15 @@ export function getFieldDataContextClone(frame: DataFrame, field: Field, fieldSc
 
   return { value: { frame, field, data: [frame] } };
 }
+
+/**
+ * @internal
+ */
+export const DataLinksContext = createContext<{
+  dataLinkPostProcessor: DataLinkPostProcessor;
+}>({ dataLinkPostProcessor: defaultInternalLinkPostProcessor });
+
+/**
+ * @internal
+ */
+export const useDataLinksContext = () => useContext(DataLinksContext);

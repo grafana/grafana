@@ -41,7 +41,7 @@ jest.mock('@grafana/runtime', () => ({
           uid: string;
           name: string;
           type: string;
-          meta: { id: string };
+          meta: { id: string; builtIn?: boolean };
         };
       } = {
         prometheus: {
@@ -56,18 +56,21 @@ jest.mock('@grafana/runtime', () => ({
           type: 'loki',
           meta: { id: 'loki' },
         },
+        // grafana datasource is what we call "-- Grafana --" datasource and it's returned
+        // from datasourceSrv with meta: {builtIn: true}
         grafana: {
           uid: 'grafana-uid',
           name: 'Grafana',
           type: 'grafana',
-          meta: { id: 'grafana' },
+          meta: { id: 'grafana', builtIn: true },
         },
-        // "datasource" type is what we call "--Dashboard--" datasource
+        // "datasource" type is what we call "-- Dashboard --" datasource and it's returned
+        // from datasourceSrv with meta: {builtIn: true}
         datasource: {
           uid: '--Dashboard--',
           name: '--Dashboard--',
           type: 'datasource',
-          meta: { id: 'dashboard' },
+          meta: { id: 'dashboard', builtIn: true },
         },
       };
       return dsListTypeDSMock[dsType.type];
@@ -982,7 +985,8 @@ describe('processV2Datasources', () => {
 
 describe('processV2DatasourceInput', () => {
   // should not map grafana datasource input or dashboard datasource input
-  it('Should not map grafana datasource input', async () => {
+  // grafana datasource input is built in and
+  it('Should not map grafana datasource input (built in)', async () => {
     const queryVariable = {
       kind: 'QueryVariable',
       spec: {
@@ -1004,7 +1008,7 @@ describe('processV2DatasourceInput', () => {
     expect(result).toEqual({});
   });
 
-  it('Should not map dashboard datasource input', async () => {
+  it('Should not map dashboard datasource input (built in)', async () => {
     // create a panel with dashboard datasource input
     const panelQuery = {
       kind: 'PanelQuery',

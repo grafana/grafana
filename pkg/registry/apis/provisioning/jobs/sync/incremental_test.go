@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 func TestIncrementalSync_ContextCancelled(t *testing.T) {
@@ -29,7 +32,7 @@ func TestIncrementalSync_ContextCancelled(t *testing.T) {
 	progress.On("SetTotal", mock.Anything, 1).Return()
 	progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 
-	err := IncrementalSync(ctx, repo, "old-ref", "new-ref", repoResources, progress)
+	err := IncrementalSync(ctx, repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	require.EqualError(t, err, "context canceled")
 }
 
@@ -130,11 +133,11 @@ func TestIncrementalSync(t *testing.T) {
 
 				// Mock progress recording
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action:   repository.FileActionCreated,
-					Path:     "unsupported/path/",
-					Resource: resources.FolderResource.Resource,
-					Group:    resources.FolderResource.Group,
-					Name:     "test-folder",
+					Action: repository.FileActionCreated,
+					Path:   "unsupported/path/",
+					Kind:   resources.FolderKind.Kind,
+					Group:  resources.FolderResource.Group,
+					Name:   "test-folder",
 				}).Return()
 
 				progress.On("TooManyErrors").Return(nil)
@@ -185,15 +188,15 @@ func TestIncrementalSync(t *testing.T) {
 
 				// Mock resource deletion
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
-					Return("old-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
 				// Mock progress recording
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action:   repository.FileActionDeleted,
-					Path:     "dashboards/old.json",
-					Name:     "old-dashboard",
-					Resource: "Dashboard",
-					Group:    "dashboards",
+					Action: repository.FileActionDeleted,
+					Path:   "dashboards/old.json",
+					Name:   "old-dashboard",
+					Kind:   "Dashboard",
+					Group:  "dashboards",
 				}).Return()
 
 				progress.On("TooManyErrors").Return(nil)
@@ -221,15 +224,15 @@ func TestIncrementalSync(t *testing.T) {
 
 				// Mock resource rename
 				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old.json", "old-ref", "dashboards/new.json", "new-ref").
-					Return("renamed-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("renamed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
 				// Mock progress recording
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action:   repository.FileActionRenamed,
-					Path:     "dashboards/new.json",
-					Name:     "renamed-dashboard",
-					Resource: "Dashboard",
-					Group:    "dashboards",
+					Action: repository.FileActionRenamed,
+					Path:   "dashboards/new.json",
+					Name:   "renamed-dashboard",
+					Kind:   "Dashboard",
+					Group:  "dashboards",
 				}).Return()
 
 				progress.On("TooManyErrors").Return(nil)
@@ -309,7 +312,7 @@ func TestIncrementalSync(t *testing.T) {
 					return result.Action == repository.FileActionCreated &&
 						result.Path == "dashboards/test.json" &&
 						result.Name == "test-dashboard" &&
-						result.Resource == "Dashboard" &&
+						result.Kind == "Dashboard" &&
 						result.Group == "dashboards" &&
 						result.Error != nil &&
 						result.Error.Error() == "writing resource from file dashboards/test.json: write failed"
@@ -338,14 +341,14 @@ func TestIncrementalSync(t *testing.T) {
 
 				// Mock resource deletion error
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
-					Return("old-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("delete failed"))
+					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("delete failed"))
 
 				// Mock progress recording with error
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action == repository.FileActionDeleted &&
 						result.Path == "dashboards/old.json" &&
 						result.Name == "old-dashboard" &&
-						result.Resource == "Dashboard" &&
+						result.Kind == "Dashboard" &&
 						result.Group == "dashboards" &&
 						result.Error != nil &&
 						result.Error.Error() == "removing resource from file dashboards/old.json: delete failed"
@@ -386,7 +389,130 @@ func TestIncrementalSync(t *testing.T) {
 
 			tt.setupMocks(repo, repoResources, progress)
 
-			err := IncrementalSync(context.Background(), repo, tt.previousRef, tt.currentRef, repoResources, progress)
+			err := IncrementalSync(context.Background(), repo, tt.previousRef, tt.currentRef, repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+
+			if tt.expectedError != "" {
+				require.EqualError(t, err, tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+type compositeRepo struct {
+	*repository.MockVersioned
+	*repository.MockReader
+}
+
+func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMocks    func(*compositeRepo, *resources.MockRepositoryResources, *jobs.MockJobProgressRecorder)
+		expectedError string
+	}{
+		{
+			name: "delete folder when it no longer exists in git",
+			setupMocks: func(repo *compositeRepo, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action:      repository.FileActionDeleted,
+						Path:        "dashboards/old.json",
+						PreviousRef: "old-ref",
+					},
+				}
+				repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
+					Return("old-dashboard", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+
+				// if the folder is not found in git, there should be a call to remove the folder from grafana
+				repo.MockReader.On("Read", mock.Anything, "dashboards/", "").
+					Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
+				repoResources.On("RemoveFolder", mock.Anything, "folder-uid").Return(nil)
+
+				progress.On("Record", mock.Anything, mock.Anything).Return()
+				progress.On("TooManyErrors").Return(nil)
+			},
+		},
+		{
+			name: "keep folder when it still exists in git",
+			setupMocks: func(repo *compositeRepo, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action:      repository.FileActionDeleted,
+						Path:        "dashboards/old.json",
+						PreviousRef: "old-ref",
+					},
+				}
+				repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
+					Return("old-dashboard", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+				// if the folder still exists in git, there should not be a call to delete it from grafana
+				repo.MockReader.On("Read", mock.Anything, "dashboards/", "").
+					Return(&repository.FileInfo{}, nil)
+
+				progress.On("Record", mock.Anything, mock.Anything).Return()
+				progress.On("TooManyErrors").Return(nil)
+			},
+		},
+		{
+			name: "delete multiple folders when they no longer exist in git",
+			setupMocks: func(repo *compositeRepo, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action:      repository.FileActionDeleted,
+						Path:        "dashboards/old.json",
+						PreviousRef: "old-ref",
+					},
+					{
+						Action:      repository.FileActionDeleted,
+						Path:        "alerts/old-alert.yaml",
+						PreviousRef: "old-ref",
+					},
+				}
+				repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 2).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
+					Return("old-dashboard", "folder-uid-1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+				repoResources.On("RemoveResourceFromFile", mock.Anything, "alerts/old-alert.yaml", "old-ref").
+					Return("old-alert", "folder-uid-2", schema.GroupVersionKind{Kind: "Alert", Group: "alerts"}, nil)
+
+				// both not found in git, both should be deleted
+				repo.MockReader.On("Read", mock.Anything, "dashboards/", "").
+					Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
+				repo.MockReader.On("Read", mock.Anything, "alerts/", "").
+					Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
+				repoResources.On("RemoveFolder", mock.Anything, "folder-uid-1").Return(nil)
+				repoResources.On("RemoveFolder", mock.Anything, "folder-uid-2").Return(nil)
+
+				progress.On("Record", mock.Anything, mock.Anything).Return()
+				progress.On("TooManyErrors").Return(nil)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockVersioned := repository.NewMockVersioned(t)
+			mockReader := repository.NewMockReader(t)
+			repo := &compositeRepo{
+				MockVersioned: mockVersioned,
+				MockReader:    mockReader,
+			}
+			repoResources := resources.NewMockRepositoryResources(t)
+			progress := jobs.NewMockJobProgressRecorder(t)
+
+			tt.setupMocks(repo, repoResources, progress)
+
+			err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)

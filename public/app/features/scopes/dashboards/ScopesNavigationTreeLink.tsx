@@ -5,30 +5,21 @@ import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { GrafanaTheme2, IconName, locationUtil } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
+import { isCurrentPath, normalizePath } from './scopeNavgiationUtils';
+
 export interface ScopesNavigationTreeLinkProps {
   to: string;
   title: string;
   id: string;
 }
 
-// Helper function to get the base path for a dashboard URL for comparison purposes.
-// e.g., /d/dashboardId/slug -> /d/dashboardId
-//       /d/dashboardId      -> /d/dashboardId
-function getDashboardPathForComparison(pathname: string): string {
-  return pathname.split('/').slice(0, 3).join('/');
-}
-
 export function ScopesNavigationTreeLink({ to, title, id }: ScopesNavigationTreeLinkProps) {
   const styles = useStyles2(getStyles);
   const linkIcon = useMemo(() => getLinkIcon(to), [to]);
-  const isDashboard = to.startsWith('/d/');
   const locPathname = useLocation().pathname;
 
-  // For dashboards, the title is appended to the path when we navigate to just the dashboard id, hence we need to disregard this
-  const currentPath = isDashboard ? getDashboardPathForComparison(locPathname) : locPathname;
-
   // Ignore query params
-  const isCurrent = to.split('?')[0] === currentPath;
+  const isCurrent = isCurrentPath(locPathname, to);
 
   return (
     <Link
@@ -45,25 +36,30 @@ export function ScopesNavigationTreeLink({ to, title, id }: ScopesNavigationTree
 }
 
 function getLinkIcon(to: string) {
-  // Strip base URL and normalize path
-  const normalizedPath = locationUtil.stripBaseFromUrl(to);
-  for (const [key, value] of linkMap.entries()) {
-    if (normalizedPath.startsWith(key)) {
-      return value;
-    }
+  // Check for external links before stripping base (stripBaseFromUrl removes http:// for same-origin URLs)
+  if (to.startsWith('http')) {
+    return 'external-link-alt';
   }
 
-  return 'link';
+  // Strip base URL and normalize path (remove query params and hash)
+  const baseStripped = locationUtil.stripBaseFromUrl(to);
+  const normalizedPath = normalizePath(baseStripped);
+
+  // Check for dashboard paths with startsWith (e.g., /d/dashboard-id)
+  if (normalizedPath.startsWith('/d')) {
+    return 'apps';
+  }
+
+  // Use direct Map lookup for exact path matches
+  return linkMap.get(normalizedPath) ?? 'link';
 }
 
 const linkMap = new Map<string, IconName>([
-  ['http', 'external-link-alt'],
-  ['/d', 'apps'],
   ['/explore/metrics', 'drilldown'],
-  ['/a/grafana-metricsdrilldown-app/', 'drilldown'],
-  ['/a/grafana-lokiexplore-app/', 'drilldown'],
-  ['/a/grafana-exploretraces-app/', 'drilldown'],
-  ['/a/grafana-pyroscope-app/', 'drilldown'],
+  ['/a/grafana-metricsdrilldown-app', 'drilldown'],
+  ['/a/grafana-lokiexplore-app', 'drilldown'],
+  ['/a/grafana-exploretraces-app', 'drilldown'],
+  ['/a/grafana-pyroscope-app', 'drilldown'],
 ]);
 
 const getStyles = (theme: GrafanaTheme2) => {

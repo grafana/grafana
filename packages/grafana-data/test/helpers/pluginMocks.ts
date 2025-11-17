@@ -92,5 +92,6 @@ export function getMockPlugin(overrides?: Partial<PluginMeta>): PluginMeta {
     module: 'path/to/module',
   };
 
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return defaultsDeep(overrides || {}, defaults) as PluginMeta;
 }

@@ -2,9 +2,8 @@ import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
-import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   ResourceClient,
@@ -64,7 +63,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       delete obj.metadata.annotations[AnnoKeyMessage];
     }
 
-    if (options.folderUid) {
+    if (options.folderUid !== undefined) {
       obj.metadata.annotations = {
         ...obj.metadata.annotations,
         [AnnoKeyFolder]: options.folderUid,
@@ -91,7 +90,8 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardDataDTO>): SaveDashboardResponseDTO {
-    const slug = kbn.slugifyForUrl(v.spec.title.trim());
+    //TODO: use slug from response once implemented
+    const slug = '';
 
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
@@ -131,13 +131,13 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       const result: DashboardDTO = {
         meta: {
           ...dash.access,
-          slug: kbn.slugifyForUrl(dash.spec.title.trim()),
           isNew: false,
           isFolder: false,
           uid: dash.metadata.name,
           k8s: dash.metadata,
           version: dash.metadata.generation,
           created: dash.metadata.creationTimestamp,
+          publicDashboardEnabled: dash.access.isPublic,
         },
         dashboard: {
           ...dash.spec,
@@ -166,7 +166,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
       if (dash.metadata.annotations?.[AnnoKeyFolder]) {
         try {
-          const folder = await backendSrv.getFolderByUid(dash.metadata.annotations[AnnoKeyFolder]);
+          const folder = await getFolderByUidFacade(dash.metadata.annotations[AnnoKeyFolder]);
           result.meta.folderTitle = folder.title;
           result.meta.folderUrl = folder.url;
           result.meta.folderUid = folder.uid;

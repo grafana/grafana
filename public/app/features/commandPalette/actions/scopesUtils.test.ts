@@ -30,6 +30,7 @@ describe('mapScopeNodeToAction', () => {
       priority: SCOPES_PRIORITY,
       parent: 'parent1',
       perform: expect.any(Function),
+      subtitle: 'Parent Scope',
     });
   });
 
@@ -43,6 +44,7 @@ describe('mapScopeNodeToAction', () => {
       keywords: 'Scope 1 scope1',
       priority: SCOPES_PRIORITY,
       parent: 'parent1',
+      subtitle: 'Parent Scope',
     });
 
     // Non-leaf nodes don't have a perform function

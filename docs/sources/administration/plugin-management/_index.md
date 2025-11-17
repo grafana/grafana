@@ -20,7 +20,7 @@ Plugins enhance your Grafana experience with new ways to connect to and visualiz
 
 Read on for an overview on how to get started with plugins:
 
-- Plugins are available in the [plugin catalog](#plugin-catalog). They can be built by Grafana Labs, commercial partners, our community, or you can [build a plugin yourself](/developers/plugin-tools).
+- Plugins are available in the [plugin catalog](#access-the-plugin-catalog). They can be built by Grafana Labs, commercial partners, our community, or you can [build a plugin yourself](/developers/plugin-tools).
 - There are three [types of plugins](#types-of-plugins): panel, data source, and app plugins.
 - Learn [how to install](#install-a-plugin), [update](#update-a-plugin) and [verify](#verify-your-plugins) your plugins.
 
@@ -40,11 +40,11 @@ Grafana supports three types of plugins:
 
 Read more in [Types of plugins](plugin-types).
 
-## Plugin catalog
+## Access the Plugin catalog
 
-The Grafana plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and Organization administrators can access and use the plugin catalog. For more information about Grafana roles and permissions, refer to [Roles and permissions](../roles-and-permissions/).
+You can install and manage plugins from within Grafana. You need to have a Grafana Server administrator or Organization administrator role to access and use the plugin catalog. For more information about Grafana roles and permissions, refer to [Roles and permissions](../roles-and-permissions/).
 
-The following access rules apply depending on the user role:
+For app plugins, the following access rules apply:
 
 - If you are an **Org Admin**, you can configure app plugins, but you can't install, uninstall, or update them.
 - If you are a **Server Admin**, you can't configure app plugins, but you can install, uninstall, or update them.
@@ -57,6 +57,8 @@ To browse for available plugins:
 1. While logged into Grafana as an administrator, click **Administration > Plugins and data > Plugins** in the side menu to view installed and available plugins.
 1. Use the search box to filter based on name, keywords, organization and other metadata.
 1. Click the **Data sources**, **Panels**, or **Applications** buttons to filter by plugin type.
+
+If you're not logged in, you can also access the list of available plugins in the [Plugin catalog](https://grafana.com/grafana/plugins/).
 
 ## Manage your plugins
 

@@ -2,7 +2,7 @@ import { Page, Locator } from '@playwright/test';
 
 import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { getCell, getCellHeight } from './table-utils';
+import { getCell, getCellHeight, getColumnIdx } from './table-utils';
 
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
@@ -11,24 +11,6 @@ test.use({ viewport: { width: 2000, height: 1080 } });
 // helper utils
 const waitForTableLoad = async (loc: Page | Locator) => {
   await expect(loc.locator('.rdg')).toBeVisible();
-};
-
-const getColumnIdx = async (loc: Page | Locator, columnName: string) => {
-  // find the index of the column "Long text." The kitchen sink table will change over time, but
-  // we can just find the column programatically and use it throughout the test.
-  let result = -1;
-  const colCount = await loc.getByRole('columnheader').count();
-  for (let colIdx = 0; colIdx < colCount; colIdx++) {
-    const cell = await getCell(loc, 0, colIdx);
-    if ((await cell.textContent()) === columnName) {
-      result = colIdx;
-      break;
-    }
-  }
-  if (result === -1) {
-    throw new Error(`Could not find the "${columnName}" column in the table`);
-  }
-  return result;
 };
 
 const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGroups) => {
@@ -83,11 +65,11 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
     // test that hover overflow works.
-    const loremIpsumCell = await getCell(page, 1, longTextColIdx);
+    const loremIpsumCell = getCell(page, 1, longTextColIdx);
     await loremIpsumCell.scrollIntoViewIfNeeded();
     await loremIpsumCell.hover();
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
-    await (await getCell(page, 1, longTextColIdx + 1)).hover();
+    await getCell(page, 1, longTextColIdx + 1).hover();
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
     // enable cell inspect, confirm that hover no longer triggers.
@@ -158,15 +140,15 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     ).toBeVisible();
 
     // click the "State" column header to sort it.
-    const stateColumnHeader = await getCell(page, 0, 1);
+    const stateColumnHeader = getCell(page, 0, 1);
 
     await stateColumnHeader.getByText('Info').click();
     await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'ascending');
-    expect(getCell(page, 1, 1)).resolves.toContainText('down'); // down or down fast
+    await expect(getCell(page, 1, 1)).toContainText('down'); // down or down fast
 
     await stateColumnHeader.getByText('Info').click();
     await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'descending');
-    expect(getCell(page, 1, 1)).resolves.toContainText('up'); // up or up fast
+    await expect(getCell(page, 1, 1)).toContainText('up'); // up or up fast
 
     await stateColumnHeader.getByText('Info').click();
     await expect(stateColumnHeader).not.toHaveAttribute('aria-sort');
@@ -189,7 +171,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     const stateColumnHeader = page.getByRole('columnheader').nth(infoColumnIdx);
 
     // get the first value in the "State" column, filter it out, then check that it went away.
-    const firstStateValue = (await (await getCell(page, 1, infoColumnIdx)).textContent())!;
+    const firstStateValue = (await getCell(page, 1, infoColumnIdx).textContent())!;
     await stateColumnHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
     const filterContainer = dashboardPage.getByGrafanaSelector(
       selectors.components.Panels.Visualization.TableNG.Filters.Container
@@ -206,7 +188,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(filterContainer).not.toBeVisible();
 
     // did it actually filter out our value?
-    await expect(getCell(page, 1, infoColumnIdx)).resolves.not.toHaveText(firstStateValue);
+    await expect(getCell(page, 1, infoColumnIdx)).not.toHaveText(firstStateValue);
   });
 
   test('Tests pagination, row height adjustment', async ({ gotoDashboardPage, selectors, page }) => {
@@ -307,7 +289,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     const dataLinkColIdx = await getColumnIdx(page, 'Data Link');
 
     // Info column has a single DataLink by default.
-    const infoCell = await getCell(page, 1, infoColumnIdx);
+    const infoCell = getCell(page, 1, infoColumnIdx);
     await expect(infoCell.locator('a')).toBeVisible();
     expect(infoCell.locator('a')).toHaveAttribute('href');
     expect(infoCell.locator('a')).not.toHaveAttribute('aria-haspopup');
@@ -324,7 +306,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
         continue;
       }
 
-      const cell = await getCell(page, 1, colIdx);
+      const cell = getCell(page, 1, colIdx);
       await expect(cell.locator('a')).toBeVisible();
       expect(cell.locator('a')).toHaveAttribute('href');
       expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
@@ -337,7 +319,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     // loop thru the columns, click the links, observe that the tooltip appears, and close the tooltip.
     for (let colIdx = 0; colIdx < colCount; colIdx++) {
-      const cell = await getCell(page, 1, colIdx);
+      const cell = getCell(page, 1, colIdx);
       if (colIdx === infoColumnIdx) {
         // the Info column should still have its single link.
         expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
@@ -422,6 +404,50 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
     ).not.toBeVisible();
+  });
+
+  test('Styling overrides with styling from field', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+    ).toBeVisible();
+
+    await waitForTableLoad(page);
+
+    const infoColumnIdx = await getColumnIdx(page, 'Info');
+    const dataLinkColumnIdx = await getColumnIdx(page, 'Data Link');
+    const stateColumnHeader = page.getByRole('columnheader').nth(infoColumnIdx);
+
+    // filter to only "Up," which we have a style override on.
+    await stateColumnHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    const filterContainer = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Visualization.TableNG.Filters.Container
+    );
+
+    await expect(filterContainer).toBeVisible();
+
+    await filterContainer.getByTitle('up', { exact: true }).locator('label').click();
+    await filterContainer.getByRole('button', { name: 'Ok' }).click();
+
+    const cell = getCell(page, 1, dataLinkColumnIdx);
+    await expect(cell).toBeVisible();
+    await expect(cell).toHaveCSS('text-decoration', /line-through/);
+
+    // now filter out "up," and confirm that the style override isn't present.
+    await stateColumnHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    await expect(filterContainer).toBeVisible();
+
+    // select all, then click the first value to unselect it, filtering it out.
+    await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
+    await filterContainer.getByTitle('up', { exact: true }).locator('label').click();
+    await filterContainer.getByRole('button', { name: 'Ok' }).click();
+
+    await expect(cell).toBeVisible();
+    await expect(cell).not.toHaveCSS('text-decoration', /line-through/);
   });
 
   test('Empty Table panel', async ({ gotoDashboardPage, selectors }) => {

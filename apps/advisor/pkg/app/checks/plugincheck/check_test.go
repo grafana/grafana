@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/stretchr/testify/assert"
+
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
@@ -12,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestRun(t *testing.T) {
@@ -22,7 +23,7 @@ func TestRun(t *testing.T) {
 		pluginInfo         []repo.PluginInfo
 		pluginPreinstalled []string
 		pluginManaged      []string
-		pluginProvisioned  []string
+		pluginProvisioned  []provisionedplugins.Plugin
 		pluginErrors       []*plugins.Error
 		expectedFailures   []advisor.CheckReportFailure
 	}{
@@ -117,7 +118,7 @@ func TestRun(t *testing.T) {
 			pluginInfo: []repo.PluginInfo{
 				{Status: "deprecated", Slug: "plugin5", Version: "1.1.0"}, // This should be ignored
 			},
-			pluginProvisioned: []string{"plugin5"},
+			pluginProvisioned: []provisionedplugins.Plugin{{ID: "plugin5"}},
 			expectedFailures:  []advisor.CheckReportFailure{},
 		},
 		{
@@ -281,10 +282,10 @@ func (m *mockManagedPlugins) ManagedPlugins(ctx context.Context) []string {
 
 type mockProvisionedPlugins struct {
 	provisionedplugins.Manager
-	provisioned []string
+	provisioned []provisionedplugins.Plugin
 }
 
-func (m *mockProvisionedPlugins) ProvisionedPlugins(ctx context.Context) ([]string, error) {
+func (m *mockProvisionedPlugins) ProvisionedPlugins(_ context.Context) ([]provisionedplugins.Plugin, error) {
 	return m.provisioned, nil
 }
 

@@ -17,7 +17,7 @@ labels:
     - oss
 menuTitle: Query editor
 title: Amazon CloudWatch query editor
-weight: 300
+weight: 200
 refs:
   query-transform-data:
     - pattern: /docs/grafana/
@@ -34,12 +34,26 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#navigate-the-query-tab
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#navigate-the-query-tab
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+  alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+  add-template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
 ---
 
 # Amazon CloudWatch query editor
 
-This topic explains querying specific to the CloudWatch data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
+Grafana provides a query editor for the CloudWatch data source, which allows you to query, visualize, and alert on logs and metrics stored in Amazon CloudWatch. It is located on the [Explore](ref:explore) page. For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
 
 ## Choose a query editing mode
 
@@ -48,49 +62,100 @@ The CloudWatch data source can query data from both CloudWatch metrics and Cloud
 - [CloudWatch Metrics](#query-cloudwatch-metrics)
 - [CloudWatch Logs](#query-cloudwatch-logs)
 
-{{< figure src="/static/img/docs/cloudwatch/cloudwatch-query-editor-api-modes-8.3.0.png" max-width="500px" class="docs-image--right" caption="CloudWatch API modes" >}}
+Select the API to query using the drop-down to the right of the **Region** setting.
 
-Select which API to query by using the query mode switch on top of the editor.
+## CloudWatch Metrics query editor components
+
+The following are the components of the CloudWatch query editor.
+
+| **Setting**     | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Region**      | Select an AWS region if it differs from the default.                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **Namespace**   | The AWS service namespace. Examples: `AWS/EC2`, `AWS_Lambda`.                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **Metric name** | The name of the metric you want to visualize. Example: `CPUUtilization`.                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Statistic**   | Choose how to aggregate your data. Examples: `sum`, `average`, `maximum`.                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **Dimensions**  | Select dimensions from the drop-down. Examples: `InstanceId`, `FunctionName`, `latency`. You can add several dimensions to your query.                                                                                                                                                                                                                                                                                                                                      |
+| **Match exact** | _Optional_. When enabled, this option restricts query results to metrics that precisely match the specified dimensions and their values. All dimensions of the queried metric must be explicitly defined in the query to ensure an exact schema match. If disabled, the query will also return metrics that match the defined schema but possess additional dimensions.                                                                                                     |
+| **ID**          | _Optional_. Unique identifier required by the GetMetricData API for referencing queries in math expressions. Must start with a lowercase letter and can include letters, numbers, and underscores. If not specified, Grafana generates an ID using the pattern `query[refId]` (for example, `queryA`for the first query row).                                                                                                                                               |
+| **Period**      | The minimum time interval, in seconds, between data points. The default is `auto`. Valid values are 1, 5, 10, 30, or any multiple of 60. When set to auto or left blank, Grafana calculates the period using time range in seconds / 2000, then rounds up to the next value (60, 300, 900, 3600, 21600, 86400) based on the [CloudWatch retention policy](https://aws.amazon.com/about-aws/whats-new/2016/11/cloudwatch-extends-metrics-retention-and-new-user-interface/). |
+| **Label**       | _Optional_. Add a customized time series legend name. The label field overrides the default metric legend name using CloudWatch dynamic labels. Time-based dynamic labels like ${MIN_MAX_TIME_RANGE} derive legend values from the current timezone in the time range picker. For the full list of label patterns and limitations, refer to [CloudWatch dynamic labels](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/graph-dynamic-labels.html).          |
+
+## Use Builder mode
+
+Create a query in Builder mode:
+
+1. Browse and select a metric namespace, metric name, filter, group, and order options using information from the [Metrics Insights keywords table](#use-metrics-insights-keywords).
+1. For each of these keywords, choose from the list of available options.
+
+Grafana constructs a SQL query based on your selections.
+
+## Use Code mode
+
+You can also write your SQL query directly in a code editor by using Code mode.
+
+The code editor includes a built-in autocomplete feature that suggests keywords, aggregations, namespaces, metrics, labels, and label values.
+Suggestions appear after typing a space, comma, or dollar (`$`) character, or by pressing <key>CTRL</key>+<key>Space</key>.
+
+{{< admonition type="note" >}}
+Template variables in the code editor can interfere with autocompletion.
+{{< /admonition >}}
+
+To run the query, click **Run query** above the code editor.
 
 ## Query CloudWatch metrics
 
-You can build two types of queries with the CloudWatch query editor:
+You can create two types of queries in the CloudWatch query editor:
 
-- [Metric Search](#create-a-metric-search-query)
-- [Metric Query](#create-a-metric-insights-query), which uses the Metrics Insights feature
+- [Metric Search](#metric-search-queries), which help you retrieve and filter available metrics.
+- [Metric Query](#use-metric-insights-syntax), which use the Metrics Insights feature to fetch time series data.
 
-### Create a Metric Search query
+The query type you use depends on how you want to interact with AWS metrics. Use the drop-down in the upper middle of the query editor to select which type you want to create.
 
-To create a valid Metric Search query, specify the namespace, metric name, and at least one statistic. Dimensions are optional, but for a dimension to be considered part of the query it must have both a key and a value.
+### Metric Search queries
 
-If you enable `Match Exact`, you must also specify all dimensions of the metric you're querying so that the [metric schema](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) matches exactly. With `Match Exact` enabled the query only returns metrics that have the specified dimensions and no others, so dimensions that are on the metric but that are not being filtered on must be added as a wildcard (`*`) filter.
-If `Match Exact` is disabled, you can specify any number of dimensions on which you'd like to filter. With `Match Exact` disabled the query returns any metrics that match the namespace, metric name, and all defined dimensions, whether or not they have additional dimensions.
+Metric search queries help you discover and filter available metrics. These queries use wildcards and filters to find metrics without needing to know exact metric names.
+
+A valid metric query requires a specified namespace, metric name, and at least one statistic. Dimensions are optional, but if included, you must provide both a `key` and a `value`.
+
+The `Match Exact` option controls how dimension filtering is applied to metric queries. When you enable `match exact`, the query returns only metrics whose dimensions precisely match the specified criteria.
+
+This requires the following:
+
+- All dimensions present on the target metric must be explicitly specified.
+- Dimensions you don't want to filter by must use a wildcard (\*) filter.
+- The metric schema must match exactly as defined in the [CloudWatch metric schema](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) documentation.
+
+When `Match Exact` is disabled, you can specify any subset of dimensions for filtering. The query returns metrics that:
+
+- Match the specified namespace and metric name.
+- Match all defined dimension filters.
+- May contain additional dimensions beyond those specified.
+
+This mode provides more flexible querying but may return metrics with unexpected additional dimensions.
+
 The data source returns up to 100 metrics matching your filter criteria.
 
-You can also augment queries by using [template variables](../template-variables/).
+Enhance metric queries using template variables to create dynamic, reusable dashboards.
 
 #### Create dynamic queries with dimension wildcards
 
-Use the asterisk (`*`) wildcard for one or more dimension values to monitor a dynamic list of metrics.
+Use the asterisk (`*`) wildcard for dimension values to create dynamic queries that automatically monitor changing sets of AWS resources.
 
-{{< figure src="/static/img/docs/cloudwatch/cloudwatch-dimension-wildcard-8.3.0.png" max-width="500px" class="docs-image--right" caption="CloudWatch dimension wildcard" >}}
+{{< figure src="/static/img/docs/cloudwatch/cloudwatch-dimension-wildcard-8.3.0.png" max-width="500px" caption="CloudWatch dimension wildcard" >}}
 
-In this example, the query returns all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization`, and also queries ANY value for the `InstanceId` dimension.
-This can help you monitor metrics for AWS resources, like EC2 instances or containers.
+The query returns the average CPU utilization for all EC2 instances in the default region. With `Match Exact` disabled and `InstanceId` using a wildcard, the query retrieves metrics for any EC2 instance regardless of additional dimensions.
 
-When an auto-scaling event creates new instances, they automatically appear in the graph without you having to track the new instance IDs.
-This capability is currently limited to retrieving up to 100 metrics.
+Auto-scaling events add new instances to the graph without manual instance ID tracking. This feature supports up to 100 metrics.
 
-You can expand the [Query inspector](ref:query-transform-data-navigate-the-query-tab) button and click `Meta Data` to see the search expression that's automatically built to support wildcards.
+Click the [**Query inspector**](ref:query-transform-data-navigate-the-query-tab) button and select **Meta Data** to see the search expression that's automatically built to support wildcards.
 
 To learn more about search expressions, refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html).
 The search expression is defined by default in such a way that the queried metrics must match the defined dimension names exactly.
-This means that in the example, the query returns only metrics with exactly one dimension containing the name 'InstanceId'.
+This means that in the example, the query returns only metrics with exactly one dimension containing the name `InstanceId`.
 
 {{< figure src="/static/img/docs/cloudwatch/cloudwatch-meta-inspector-8.3.0.png" max-width="500px" class="docs-image--right" caption="CloudWatch Meta Inspector" >}}
 
-You can disable `Match Exact` to include metrics that have other dimensions defined.
-Disabling `Match Exact` also creates a search expression even if you don't use wildcards. We simply search for any metric that matches at least the namespace, metric name, and all defined dimensions.
+Disabling `Match Exact` includes metrics with additional dimensions and creates a search expression even without wildcards. Grafana searches for any metric matching at least the namespace, metric name, and all defined dimensions.
 
 #### Use multi-value template variables
 
@@ -100,47 +165,42 @@ This enables the use of multiple template variables in one query, and also lets 
 Search expressions are limited to 1,024 characters, so your query might fail if you have a long list of values.
 We recommend using the asterisk (`*`) wildcard instead of the `All` option to query all metrics that have any value for a certain dimension name.
 
-The use of multi-valued template variables is supported only for dimension values.
+Multi-valued template variables are supported only for dimension values.
 Using multi-valued template variables for `Region`, `Namespace`, or `Metric Name` is not supported.
 
 #### Use metric math expressions
 
-You can create new time series metrics by operating on top of CloudWatch metrics using mathematical functions.
-This includes support for arithmetic operators, unary subtraction, and other functions, and can be applied to CloudWatch metrics.
-For details on the available functions, refer to [AWS Metric Math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html).
+Create new time series metrics using mathematical functions on CloudWatch metrics. This supports arithmetic operators, unary subtraction, and other functions. For available functions, refer to [AWS Metric Math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html).
 
-For example, to apply arithmetic operations to a metric, apply a unique string id to the raw metric, then use this id and apply arithmetic operations to it in the Expression field of the new metric.
+To apply arithmetic operations, assign a unique string ID to the raw metric, then reference this ID in the `Expression` field of the new metric.
 
 {{< admonition type="note" >}}
-If you use the expression field to reference another query, like `queryA * 2`, you can't create an alert rule based on that query.
+If you use the expression field to reference another query, such as `queryA * 2`, you can't create an alert rule based on that query.
 {{< /admonition >}}
 
-#### Period macro
+### Query metrics across AWS monitoring accounts
 
-If you're using a CloudWatch [`SEARCH`](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) expression, you may want to use the `$__period_auto` macro rather than specifying a period explicitly. The `$__period_auto` macro will resolve to a [CloudWatch period](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html) that is suitable for the chosen time range.
+When you select `Builder` mode within the Metric search editor, a new Account field is displayed. Use the `Account` field to specify which of the linked monitoring accounts to target for the given query. By default, the `All` option is specified, which will target all linked accounts.
 
-#### Deep-link Grafana panels to the CloudWatch console
+While in `Code` mode, you can specify any math expression. If the Monitoring account badge displays in the query editor header, all `SEARCH` expressions entered in this field will be cross-account by default and can query metrics from linked accounts. Note that while queries run cross-account, the autocomplete feature currently doesn't fetch cross-account resources, so you'll need to manually specify resource names when writing cross-account queries.
+You can limit the search to one or a set of accounts, as documented in the [AWS documentation](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html).
 
-{{< figure src="/static/img/docs/v65/cloudwatch-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch deep linking" >}}
+### Period macro
 
-Left-clicking a time series in the panel shows a context menu with a link to `View in CloudWatch console`.
-Clicking that link opens a new tab that takes you to the CloudWatch console and displays all metrics for that query.
+If you use a CloudWatch [`SEARCH`](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) expression, consider using the `$__period_auto` macro rather than specifying a period explicitly. The `$__period_auto` macro will resolve to a [CloudWatch period](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html) that is suitable for the chosen time range.
+
+### Deep-link Grafana panels to the CloudWatch console
+
+Left-clicking a time series in the panel displays a context menu with a link to `View in CloudWatch console`.
+Clicking the link opens a new tab that takes you to the CloudWatch console and displays all metrics for that query.
 If you're not logged in to the CloudWatch console, the link forwards you to the login page.
-The provided link is valid for any account but displays the expected metrics only if you're logged in to the account that corresponds to the selected data source in Grafana.
+The link provided is valid for any account but displays the expected metrics only if you're logged in to the account that corresponds to the selected data source in Grafana.
+
+{{< figure src="/media/docs/cloudwatch/cloudwatch-deep-link-v12.1.png" caption="CloudWatch deep linking" >}}
 
 This feature is not available for metrics based on [metric math expressions](#metric-math-expressions).
 
-### Create a Metric Insights query
-
-The Metrics Query option in the CloudWatch data source is referred to as **Metric Insights** in the AWS console.
-It's a fast, flexible, SQL-based query engine that you can use to identify trends and patterns across millions of operational metrics in real time.
-
-The metrics query editor's Metrics Query option has two editing modes:
-
-- [Builder mode](#create-a-query-in-builder-mode), which provides a visual query-building interface
-- [Code mode](#create-a-query-in-code-mode), which provides a code editor for writing queries
-
-#### Use Metric Insights syntax
+### Use Metric Insights syntax
 
 Metric Insights uses a dialect of SQL and this query syntax:
 
@@ -157,9 +217,9 @@ For details about the Metrics Insights syntax, refer to the [AWS reference docum
 
 For information about Metrics Insights limits, refer to the [AWS feature documentation](https://docs.aws.amazon.com/console/cloudwatch/metricsinsights).
 
-You can also augment queries by using [template variables](../template-variables/).
+You can also augment queries by using [template variables](ref:add-template-variables).
 
-#### Use Metrics Insights keywords
+### Use Metrics Insights keywords
 
 This table summarizes common Metrics Insights query keywords:
 
@@ -174,124 +234,100 @@ This table summarizes common Metrics Insights query keywords:
 | `ORDER BY`   | Optional. Specifies the order in which time series are returned. Options are `ASC`, `DESC`.                                                                                                                  |
 | `LIMIT`      | Optional. Limits the number of time series returned.                                                                                                                                                         |
 
-#### Create a query in Builder mode
-
-**To create a query in Builder mode:**
-
-1. Browse and select a metric namespace, metric name, filter, group, and order options using information from the [Metrics Insights keywords table](#metrics-insights-keywords).
-1. For each of these keywords, choose from the list of possible options.
-
-Grafana constructs a SQL query based on your selections.
-
-#### Create a query in Code mode
-
-You can also write your SQL query directly in a code editor by using Code mode.
-
-The code editor has a built-in autocomplete feature that suggests keywords, aggregations, namespaces, metrics, labels, and label values.
-The suggestions appear after typing a space, comma, or dollar (`$`) character, or the keyboard combination <key>CTRL</key>+<key>Space</key>.
-
-{{< figure src="/static/img/docs/cloudwatch/cloudwatch-code-editor-autocomplete-8.3.0.png" max-width="500px" class="docs-image--right" caption="Code editor autocomplete" >}}
-
-{{< admonition type="note" >}}
-Template variables in the code editor can interfere with autocompletion.
-{{< /admonition >}}
-
-To run the query, click **Run query** above the code editor.
-
-### Common query editor fields
-
-Three fields located at the bottom of the metrics query editor are common to both Metric Search and Metric Query editors.
-
-#### Id
-
-The GetMetricData API requires that all queries have a unique ID. Use this field to specify an ID of choice. The ID can include numbers, letters, and underscore, and must start with a lowercase letter. If no ID is specified, grafana will generate an ID using the following pattern `query[refId of the current query row]`, such as `queryA` for the first query row in the panel editor.
-
-The ID can be used to reference queries in Metric Math expressions.
-
-#### Period
-
-A period is the length of time associated with a specific Amazon CloudWatch statistic. Periods are defined in numbers of seconds, and valid values for period are 1, 5, 10, 30, or any multiple of 60.
-
-If the period field is left blank or set to `auto`, then it calculates automatically based on the time range and [cloudwatch's retention policy](https://aws.amazon.com/about-aws/whats-new/2016/11/cloudwatch-extends-metrics-retention-and-new-user-interface/). The formula used is `time range in seconds / 2000`, and then it snaps to the next higher value in an array of predefined periods `[60, 300, 900, 3600, 21600, 86400]` after removing periods based on retention. By clicking `Show Query Preview` in the query editor, you can see what period Grafana used.
-
-#### Label
-
-The label field allows you to override the default name of the metric legend using CloudWatch dynamic labels. If you're using a time-based dynamic label such as `${MIN_MAX_TIME_RANGE}`, then the legend value is derived from the current timezone specified in the time range picker. To see the full list of label patterns and the dynamic label limitations, refer to the [CloudWatch dynamic labels](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/graph-dynamic-labels.html) documentation.
-
-> **Alias pattern deprecation:** Since Grafana v10.0, the alias field has been deprecated and replaced by dynamic
-> labels.
-> Any existing alias pattern is migrated upon upgrade to a corresponding dynamic label pattern.
-> For details on this change, refer to [issue #48434](https://github.com/grafana/grafana/issues/48434).
-
 ## Query CloudWatch Logs
 
-The logs query editor helps you write CloudWatch Logs Query Language queries across defined regions and log groups.
-It supports querying CloudWatch logs with Logs Insights Query Language, OpenSearch PPL and OpenSearch SQL.
+The logs query editor helps you write CloudWatch Logs Query Language queries across specified regions and log groups.
 
-### Create a CloudWatch Logs query
+Use the Log group selector to choose the target log groups for your query. When the Monitoring account badge appears in the query editor header, you can search and select log groups across multiple accounts. Use the `Account` field to filter log groups by account, and for large numbers of log groups, use prefix search to narrow the selection.
 
-1. Select the query language you would like to use in the Query Language dropdown.
-1. Select the region and up to 20 log groups to query.
+You can query CloudWatch Logs using three supported query language options:
+
+- **Logs Insights QL** - The AWS native query language specifically designed for CloudWatch Logs. It uses a SQL-like syntax with commands like `fields`, `filter`, `stats`, and `sort`. It's optimized for the CloudWatch log structure and offers built-in functions for parsing timestamps, extracting fields from JSON logs, and performing aggregations.
+- **OpenSearch PPL** - The OpenSearch query language is based on Elasticsearch's query DSL (Domain Specific Language). It uses a pipe-based syntax similar to Unix command-line tools or the Splunk search language, and supports complex boolean logic, range queries, wildcard matching, and full-text search capabilities.
+- **OpenSearch SQL** - OpenSearch SQL is a query language that uses a SQL-like syntax for querying data in OpenSearch. It supports standard SQL queries and is designed for users familiar with SQL.
+
+**Create a CloudWatch Logs query:**
+
+1. Select a region.
+1. Select **CloudWatch Logs** from the query type drop-down.
+1. Select the Logs Mode depending on whether you would like to query CloudWatch Logs Insights or Log Anomalies
+
+**Log Anomalies**
+
+[Anomaly detection](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/LogsAnomalyDetection.html) uses machine-learning and pattern recognition to establish baselines of typical log content.  
+The Log Anomalies query editor fetches the list of anomalies detected in your CloudWatch service. In order to query log anomalies in the editor, a log anomaly detector must be created in the AWS CloudWatch console first.
+The log trend cell shows the number of occurrences of the pattern over the selected query time range.
+The table shows 50 log anomalies at a time. If you would like to narrow down the list, you can filter anomalies by their ARN and suppressed state.
+
+In addition to this, you can use the Logs Insights QL editor and the `anomaly` command together with the `patterns` command to define and display log anomalies in real time. See the [CloudWatch Logs Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/LogsAnomalyDetection-Insights.html) documentation for more info.
+
+**Logs Insights**
+
+1. Select the query language you would like to use in the **Query Language** drop-down.
+1. Click **Select log groups** and choose up to 20 log groups to query.
+1. Use the main input area to write your logs query. Amazon CloudWatch only supports a subset of OpenSearch SQL and PPL commands. To find out more about the syntax supported, consult [Amazon CloudWatch Logs documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_Languages.html)
 
    {{< admonition type="note" >}}
-   Region and log groups are mandatory fields when querying with Logs Insights QL and OpenSearch PPL. Log group selection is not necessary when querying with OpenSearch SQL. However, selecting log groups simplifies writing logs queries by populating syntax suggestions with discovered log group fields.
+   You must specify the region and log groups when querying with **Logs Insights QL** and **OpenSearch PPL**. **OpenSearch SQL** doesn't require log group selection. However, selecting log groups simplifies query writing by populating syntax suggestions with discovered log group fields.
    {{< /admonition >}}
 
-1. Use the main input area to write your logs query. AWS CloudWatch only supports a subset of OpenSearch SQL and PPL commands. To find out more about the syntax supported, consult [Amazon CloudWatch Logs documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_Languages.html)
+Click **View in CloudWatch console** to interactively view, search, and analyze your log data in the CloudWatch Logs Insights console. If you're not logged in to the CloudWatch console, the link forwards you to the login page.
 
-   #### Querying Log groups with OpenSearch SQL
+### Query Log groups with OpenSearch SQL
 
-   When querying log groups with OpenSearch SQL, the log group identifier or ARN _must_ be explicitly stated in the `FROM` clause:
+When querying log groups with OpenSearch SQL, you **must** explicitly state the log group identifier or ARN in the `FROM` clause:
 
-   ```sql
-   SELECT window.start, COUNT(*) AS exceptionCount
-   FROM `log_group`
-   WHERE `@message` LIKE '%Exception%'
-   ```
+```sql
+SELECT window.start, COUNT(*) AS exceptionCount
+FROM `log_group`
+WHERE `@message` LIKE '%Exception%'
+```
 
-   or, when querying multiple log groups:
+or, when querying multiple log groups:
 
-   ```sql
-   SELECT window.start, COUNT(*) AS exceptionCount
-   FROM `logGroups( logGroupIdentifier: ['LogGroup1', 'LogGroup2'])`
-   WHERE `@message` LIKE '%Exception%'
-   ```
+```sql
+SELECT window.start, COUNT(*) AS exceptionCount
+FROM `logGroups( logGroupIdentifier: ['LogGroup1', 'LogGroup2'])`
+WHERE `@message` LIKE '%Exception%'
+```
 
 You can also write queries returning time series data by using the [`stats` command](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_Insights-Visualizing-Log-Data.html).
-When making `stats` queries in [Explore](ref:explore), make sure you are in Metrics Explore mode.
+When making `stats` queries in [Explore](ref:explore), ensure you are in Metrics Explore mode.
+
+### Create queries for alerting
+
+Alerting requires queries that return numeric data, which CloudWatch Logs supports.
+For example, you can enable alerts through the use of the `stats` command.
+
+The following is a valid query for alerting on messages that include the text "Exception":
+
+```
+filter @message like /Exception/
+    | stats count(*) as exceptionCount by bin(1h)
+    | sort exceptionCount desc
+```
+
+{{< admonition type="note" >}}
+If you receive an error like `input data must be a wide series but got ...` when trying to alert on a query, make sure that your query returns valid numeric data that can be output to a Time series panel.
+{{< /admonition >}}
+
+For more information on Grafana alerts, refer to [Alerting](ref:alerting).
 
 ## Cross-account observability
 
-The CloudWatch plugin allows monitoring and troubleshooting applications that span multiple accounts within a region. Using cross-account observability, you can seamlessly search, visualize, and analyze metrics and logs without worrying about account boundaries.
-
-### Get started
+The CloudWatch plugin monitors and troubleshoots applications that span multiple accounts within a region. Cross-account observability enables seamless searching, visualization, and analysis of metrics and logs across account boundaries.
 
 To enable cross-account observability, complete the following steps:
 
-1. Go to the [Amazon CloudWatch docs](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html) and follow the instructions on enabling cross-account observability.
+1. Go to the [Amazon CloudWatch documentation](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html) and follow the instructions for enabling cross-account observability.
 
-1. Add [two API actions](../#cross-account-observability-permissions) to the IAM policy attached to the role/user running the plugin.
+1. Add [two API actions](https://grafana.com//docs/grafana/latest/datasources/aws-cloudwatch/configure/#cross-account-observability-permissions) to the IAM policy attached to the role/user running the plugin.
 
 Cross-account querying is available in the plugin through the **Logs**, **Metric search**, and **Metric Insights** modes.
-After you have it configured, you'll see a **Monitoring account** badge in the query editor header.
+After you have configured it, you'll see a **Monitoring account** badge in the query editor header.
 
 {{< figure src="/static/img/docs/cloudwatch/cloudwatch-monitoring-badge-9.3.0.png" max-width="1200px" caption="Monitoring account badge" >}}
 
-### Metrics editor
+## Query caching
 
-When you select the `Builder` mode within the Metric search editor, a new Account field displays. Use the Account field to specify which of the linked accounts to target for the given query. By default, the `All` option is specified, which will target all linked accounts.
-
-While in `Code` mode, you can specify any math expression. If the Monitoring account badge displays in the query editor header, all `SEARCH` expressions entered in this field will be cross-account by default. You can limit the search to one or a set of accounts, as documented in the [AWS documentation](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html).
-
-### Logs editor
-
-The Log group selector allows you to specify what log groups to target in the logs query. If the Monitoring account badge is displayed in the query editor header, it is possible to search and select log groups across multiple accounts. You can use the Account field in the Log Group Selector to filter Log Groups by Account. If you have many log groups and do not see the log group you'd like to select in the selector, use the prefix search to narrow down the possible log groups.
-
-### Deep-link Grafana panels to the CloudWatch console
-
-{{< figure src="/static/img/docs/v70/cloudwatch-logs-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch Logs deep linking" >}}
-
-To view your query in the CloudWatch Logs Insights console, click the `CloudWatch Logs Insights` button next to the query editor.
-If you're not logged in to the CloudWatch console, the link forwards you to the login page.
-
-The provided link is valid for any account, but displays the expected metrics only if you're logged in to the account that corresponds to the selected data source in Grafana.
+When you enable [query and resource caching](/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching), Grafana temporarily stores the results of data source queries and resource requests. Query caching is available in CloudWatch Metrics in Grafana Cloud and Grafana Enterprise. It is not available in CloudWatch Logs Insights due to how query results are polled from AWS.

@@ -34,9 +34,18 @@ export function ScopesInput({
 }: ScopesInputProps) {
   const [tooltipVisible, setTooltipVisible] = useState(false);
 
-  const parentNodeId = appliedScopes[0]?.parentNodeId;
+  const scopeNodeId = appliedScopes[0]?.scopeNodeId;
+  const parentNodeIdFromUrl = appliedScopes[0]?.parentNodeId;
+
+  const { node: scopeNode, isLoading: scopeNodeLoading } = useScopeNode(scopeNodeId);
+
+  // Get parent from scope node if available, otherwise use parentNodeId from URL (for backward compatibility)
+  const parentNodeId = scopeNode?.spec.parentName ?? parentNodeIdFromUrl;
   const { node: parentNode, isLoading: parentNodeLoading } = useScopeNode(parentNodeId);
-  const parentNodeTitle = parentNode?.spec.title;
+
+  // Prioritize scope node subtitle over parent node title
+  const displayTitle = scopeNode?.spec.subTitle ?? parentNode?.spec.title;
+  const isLoadingTitle = scopeNodeLoading || parentNodeLoading;
 
   useEffect(() => {
     setTooltipVisible(false);
@@ -59,12 +68,8 @@ export function ScopesInput({
 
   const parentNodePrefix = useMemo(
     () =>
-      parentNodeLoading ? (
-        <Skeleton width={30} height={14} />
-      ) : parentNodeTitle ? (
-        <span>{parentNodeTitle}:</span>
-      ) : undefined,
-    [parentNodeLoading, parentNodeTitle]
+      isLoadingTitle ? <Skeleton width={30} height={14} /> : displayTitle ? <span>{displayTitle}:</span> : undefined,
+    [isLoadingTitle, displayTitle]
   );
 
   const input = useMemo(

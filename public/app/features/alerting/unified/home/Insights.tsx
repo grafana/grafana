@@ -289,7 +289,7 @@ function getGrafanaManagedScenes() {
             new SceneFlexLayout({
               children: [
                 getGrafanaEvalSuccessVsFailuresScene(cloudUsageDs, 'Evaluation success vs failures'),
-                getGrafanaMissedIterationsScene(cloudUsageDs, 'Iterations missed per evaluation group'),
+                getGrafanaMissedIterationsScene(cloudUsageDs, 'Iterations missed per alert rule'),
               ],
             }),
           ],

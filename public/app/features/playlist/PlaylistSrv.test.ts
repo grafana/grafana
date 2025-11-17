@@ -22,6 +22,8 @@ jest.mock('./utils', () => ({
 }));
 
 const mockPlaylist: Playlist = {
+  apiVersion: 'playlist.grafana.app/v0alpha1',
+  kind: 'Playlist',
   spec: {
     interval: '1s',
     title: 'The display',

@@ -13,11 +13,11 @@
       "label-resource-group": "Brongroep",
       "label-resource-name": "Naam van het object",
       "label-resource-number": "Bron {{resourceNum}}",
-      "label-resource-uri": "Bron-URI('s) ",
+      "label-resource-uri": "",
       "label-subscription": "Abonnement",
       "placeholder-resource-name": "naam",
       "tooltip-region": "Het codegebied van de bron. Optioneel voor één bron, maar verplicht bij het selecteren van meerdere bronnen.",
-      "tooltip-resource-uri": "Bewerk de <2>bron-uri</2> handmatig. Ondersteunt het gebruik van meerdere sjabloonvariabelen (bijv.: /subscriptions/$subId/resourceGroups/$rg)"
+      "tooltip-resource-uri": ""
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Totaal van de functie",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Basislogs",
-      "description-basic-logs": "Als je deze functie inschakelt, worden Azure Monitor-kosten per query gemaakt op dashboardpanelen die tabellen opvragen die zijn geconfigureerd voor <2>Basislogboeken</2>.",
+      "description-basic-logs": "",
       "label-enable-basic-logs": "Basislogboeken inschakelen"
     },
     "config-editor": {
@@ -227,16 +227,26 @@
       "select-resource": "Kies een bron"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Toepassen",
       "button-cancel": "Annuleren",
       "header-location": "Locatie",
+      "header-resource-group": "",
       "header-scope": "Bereik",
       "header-type": "Type",
       "heading-selection": "Selectie",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Eerste {{numResults}} resultaten weergeven",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Laden...",
+      "text-no-recent-resources": "",
       "text-no-resources": "Geen bronnen gevonden",
-      "title-error-occurred": "Er is een fout opgetreden bij het aanvragen van metagegevens van Azure Monitor"
+      "title-error-occurred": "Er is een fout opgetreden bij het aanvragen van metagegevens van Azure Monitor",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Bereik"

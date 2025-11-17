@@ -1,4 +1,5 @@
 import { Location } from 'history';
+import { Subject } from 'rxjs';
 
 import { ScopeDashboardBinding } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
@@ -17,6 +18,10 @@ jest.mock('@grafana/runtime', () => ({
   },
   locationService: {
     getLocation: jest.fn(),
+    // Mock getLocationObservable to return a mock observable
+    getLocationObservable: jest.fn().mockReturnValue({
+      subscribe: jest.fn(),
+    }),
   },
 }));
 
@@ -61,12 +66,11 @@ describe('ScopesDashboardsService', () => {
       expect(service.state.folders[''].folders['group1'].expanded).toBe(true);
     });
 
-    it('should expand folders when current location matches URL path and navigation endpoint is enabled', async () => {
-      // Enable the navigation endpoint feature toggle
+    it('should expand folder when location changes and matches a navigation URL', async () => {
       config.featureToggles.useScopesNavigationEndpoint = true;
 
-      // Mock current location to match a URL-based navigation
-      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/test-url' } as Location);
+      // Mock initial location
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
 
       const mockNavigations: ScopeNavigation[] = [
         {
@@ -85,10 +89,73 @@ describe('ScopesDashboardsService', () => {
       ];
 
       mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
-      await service.fetchDashboards(['scope1']);
 
-      // Verify that the folder is expanded because the current URL path matches
-      expect(service.state.folders[''].folders['group1'].expanded).toBe(true);
+      // Set up mock observable to emit location changes
+      const locationSubject = new Subject<Location>();
+      (locationService.getLocationObservable as jest.Mock).mockReturnValue(locationSubject);
+
+      // Create a new service instance that will subscribe to our mocked observable
+      const testService = new ScopesDashboardsService(mockApiClient);
+      await testService.fetchDashboards(['scope1']);
+
+      // Initially, folder should not be expanded since we're at '/'
+      expect(testService.state.folders[''].folders['group1'].expanded).toBe(false);
+
+      // Simulate location change to a URL that matches a navigation
+      locationSubject.next({ pathname: '/test-url' } as Location);
+
+      // Now the folder should be expanded because the location matches a navigation URL
+      expect(testService.state.folders[''].folders['group1'].expanded).toBe(true);
+
+      // Reset the feature toggle
+      config.featureToggles.useScopesNavigationEndpoint = false;
+    });
+
+    it('should not expand folder when location changes, matches a navigation URL in a folder which is already expanded', async () => {
+      config.featureToggles.useScopesNavigationEndpoint = true;
+
+      // Mock initial location
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            scope: 'scope1',
+            url: '/test-url',
+          },
+          status: {
+            title: 'Test URL',
+            groups: ['group1', 'group2'],
+          },
+          metadata: {
+            name: 'url1',
+          },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+
+      // Set up mock observable to emit location changes
+      const locationSubject = new Subject<Location>();
+      (locationService.getLocationObservable as jest.Mock).mockReturnValue(locationSubject);
+
+      // Create a new service instance that will subscribe to our mocked observable
+      const testService = new ScopesDashboardsService(mockApiClient);
+      await testService.fetchDashboards(['scope1']);
+
+      // Initially, folder should not be expanded since we're at '/'
+      expect(testService.state.folders[''].folders['group1'].expanded).toBe(false);
+
+      // Manually expand group1 to simulate it being already expanded
+      testService.updateFolder(['', 'group2'], true);
+      expect(testService.state.folders[''].folders['group2'].expanded).toBe(true);
+
+      // Simulate location change to a URL that matches a navigation
+      locationSubject.next({ pathname: '/test-url' } as Location);
+
+      // The folder should still be expanded (no change since it was already expanded)
+      expect(testService.state.folders[''].folders['group1'].expanded).toBe(false);
+      expect(testService.state.folders[''].folders['group2'].expanded).toBe(true);
 
       // Reset the feature toggle
       config.featureToggles.useScopesNavigationEndpoint = false;

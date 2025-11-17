@@ -11,7 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"sigs.k8s.io/structured-merge-diff/v4/fieldpath"
+	"sigs.k8s.io/structured-merge-diff/v6/fieldpath"
 
 	"github.com/grafana/grafana/pkg/aggregator/apis/aggregation"
 	"github.com/grafana/grafana/pkg/aggregator/registry/dataplaneservice"

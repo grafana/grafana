@@ -2,6 +2,9 @@ import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/preview-api';
 import { Meta, StoryFn } from '@storybook/react';
 
+import { IconButton } from '../IconButton/IconButton';
+import { Stack } from '../Layout/Stack/Stack';
+
 import { Collapse, ControlledCollapse } from './Collapse';
 import mdx from './Collapse.mdx';
 
@@ -22,7 +25,6 @@ const meta: Meta<typeof Collapse> = {
     children: 'Panel data',
     isOpen: false,
     label: 'Collapse panel',
-    collapsible: true,
   },
   argTypes: {
     onToggle: { action: 'toggled' },
@@ -54,6 +56,41 @@ export const Controlled: StoryFn<typeof ControlledCollapse> = (args) => {
 Controlled.parameters = {
   controls: {
     exclude: [...EXCLUDED_PROPS, 'isOpen'],
+  },
+};
+
+export const WithCustomLabel: StoryFn<typeof Collapse> = (args) => {
+  const [, updateArgs] = useArgs();
+  return (
+    <Collapse
+      {...args}
+      onToggle={() => {
+        action('onToggle')({ isOpen: !args.isOpen });
+        updateArgs({ isOpen: !args.isOpen });
+      }}
+      label={
+        <Stack flex={1} alignItems="center" justifyContent="space-between">
+          Collapse panel
+          <Stack alignItems="center">
+            <IconButton
+              onClick={(event) => {
+                event.stopPropagation();
+                action('onDeleteClick')();
+              }}
+              aria-label="Delete"
+              name="trash-alt"
+            />
+          </Stack>
+        </Stack>
+      }
+    >
+      <p>{args.children}</p>
+    </Collapse>
+  );
+};
+WithCustomLabel.parameters = {
+  controls: {
+    exclude: [...EXCLUDED_PROPS, 'label'],
   },
 };
 

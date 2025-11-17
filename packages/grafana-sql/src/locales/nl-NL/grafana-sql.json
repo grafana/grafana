@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Automatisch maximaal inactief",
-        "content-auto-max-idle": "Indien ingeschakeld, stel je het aantal <1>Maximale inactieve verbindingen</1> automatisch in op dezelfde waarde als<3> Max open verbindingen</3>. Als het aantal maximale open verbindingen niet is ingesteld, wordt dit ingesteld op de standaardwaarde ({{defaultMaxIdle}}).",
-        "content-max-idle": "Het maximale aantal verbindingen in de inactieve verbindingspool. Als <1>Max open verbindingen</1> groter is dan 0 maar kleiner dan de <3>Max inactieve verbindingen</3>, dan worden de <5>Max inactieve verbindingen</5> verminderd om overeen te komen met de limiet <8>Max open verbindingen</8>. Indien ingesteld op 0, blijven er geen inactieve verbindingen behouden.",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
         "content-max-lifetime": "De maximale hoeveelheid tijd in seconden dat een verbinding opnieuw kan worden gebruikt. Indien ingesteld op 0, worden verbindingen voor altijd hergebruikt.",
-        "content-max-open": "Het maximale aantal open verbindingen met de database. Als <1>Max inactieve verbindingen</1> groter is dan 0 en de <3>Max open verbindingen</3> kleiner is dan <5>Max inactieve verbindingen</5>, dan wordt <7>Max inactieve verbindingen</7> verminderd om overeen te komen met de limiet <9>Max open verbindingen</9>. Indien ingesteld op 0, is er geen limiet op het aantal open verbindingen.",
+        "content-max-open": "",
         "max-idle": "Max. inactief",
         "max-lifetime": "Max. levensduur",
         "max-open": "Max. open",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "Je query is ongeldig. Kijk hieronder voor meer informatie. <1></1>Je kunt deze query echter nog steeds uitvoeren.",
+        "content-invalid-query": "",
         "editor-modes": {
           "label-builder": "Bouwer",
           "label-code": "Code"
@@ -76,7 +76,7 @@
         "tooltip-format-query": "Query-formaat"
       },
       "query-validator": {
-        "query-will-process": "<0></0> Deze query zal <2>{{bytes}}</2> verwerken wanneer deze wordt uitgevoerd.",
+        "query-will-process": "",
         "validating-query": "Query valideren..."
       },
       "raw-editor": {

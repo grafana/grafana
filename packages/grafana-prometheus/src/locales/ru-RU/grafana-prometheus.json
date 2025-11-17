@@ -85,9 +85,9 @@
         "tooltip-classic-query": "Оригинальная реализация редактора запросов переменных Prometheus. Введите строку с правильным типом запроса и параметрами, указанными в документации. Например, {{exampleQuery}}.",
         "tooltip-label": "Возвращает список значений для метки с соответствующим названием во всех метриках, если не указана конкретная метрика.",
         "tooltip-metric-regex": "Возвращает список названий меток, при необходимости фильтруя их по указанному регулярному выражению метрики.",
-        "tooltip-query": "Возвращает список результатов запросов Prometheus для текущего запроса. Сюда могут входить функции Prometheus, например {{exampleQuery}}.",
+        "tooltip-query": "",
         "tooltip-query-type": "Плагин источника данных Prometheus предоставляет следующие типы запросов для переменных шаблона.",
-        "tooltip-series-query": "Укажите метрику с метками, только метрику или только метки, например {{example1}}, {{example2}} или {{example3}}. Возвращает список временных рядов, связанных с введенными данными."
+        "tooltip-series-query": ""
       },
       "selector-actions": {
         "aria-label-selector": "селектор",
@@ -175,16 +175,16 @@
         "label-scrape-interval": "Интервал опроса",
         "label-series-limit": "Лимит рядов",
         "label-use-series-endpoint": "Использовать конечную точку ряда",
-        "more-info": "Более подробную информацию о настройке типа и версии Prometheus в источниках данных см. в <2>документации по подготовке</2>.",
+        "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "Пример: {{example}}",
         "title-interval-behaviour": "Поведение интервалов",
         "title-other": "Прочее",
         "title-performance": "Производительность",
         "title-query-editor": "Редактор запросов",
         "tooltip-cache-level": "Устанавливает уровень кэширования в браузере для запросов редактора. Для источников данных с высокой кардинальностью рекомендуются более высокие настройки кэша.",
-        "tooltip-custom-query-parameters": "Добавьте пользовательские параметры в URL-адрес запроса Prometheus. Например, {{example1}}, {{example2}}, {{example3}}, или {{example4}}. Несколько параметров следует объединить с {{concatenationChar}}.",
+        "tooltip-custom-query-parameters": "",
         "tooltip-default-editor": "Установите параметр редактора по умолчанию для всех пользователей этого источника данных.",
-        "tooltip-disable-metrics-lookup": "При включении этого параметра будут отключены выбор метрик и поддержка метрик/меток при автозаполнении поля запроса. Функция полезна, если вы испытываете проблемы с производительностью при использовании более крупных экземляров Prometheus. ",
+        "tooltip-disable-metrics-lookup": "",
         "tooltip-disable-recording-rules-beta": "Функция отключит правила записи. Включите, чтобы улучшить производительность дашборда",
         "tooltip-http-method": "Для отправки запросов в источник данных Prometheus можно использовать HTTP-методы POST или GET. POST является рекомендуемым методом, поскольку позволяет выполнять более крупные запросы. Измените метод на GET, если вы используете версию Prometheus старше 2.1 или в вашей сети запрещены запросы POST.",
         "tooltip-incremental-querying-beta": "Функция изменит поведение относительных запросов по умолчанию. Вместо запроса свежих данных из экземпляра Prometheus, результаты запросов будут кэшироваться, и запрашиваться будут только новые записи. Включите, чтобы уменьшить нагрузку на базу данных и сеть.",
@@ -413,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Установить нижний предел для параметра шага",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "Выбрать разрешение",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "Тепловая карта",
           "label-table": "Таблица",
@@ -438,6 +441,7 @@
         "title-parsing-error-switch-builder": "Ошибка анализа. Переключиться в режим конструктора?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "Условные обозначения",
         "placeholder-select-legend-mode": "Выберите режим условных обозначений",
         "tooltip-legend": "Переопределение или шаблон имени ряда. Например, вместо {{templateExample}} будет использоваться значение метки для {{labelName}}."
@@ -475,18 +479,13 @@
         "aria-label-selector": "селектор"
       },
       "results-table": {
-        "content-descriptive-type": "При создании {{descriptiveType}} Prometheus отображает несколько рядов со счетчиком типов. ",
+        "content-descriptive-type": "",
         "description": "Описание",
         "message-expand-label-filters": "Метрики не найдены. Попробуйте расширить фильтры меток.",
         "message-expand-search": "Метрики не найдены. Попробуйте расширить поиск и фильтры.",
         "message-no-metrics-found": "В источнике данных нет метрик.",
         "name": "Имя",
         "type": "Тип"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Неоднозначные результаты анализа запроса."
-        }
       }
     }
   }

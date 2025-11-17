@@ -51,6 +51,9 @@ const (
 	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulerDefaultExecuteAlerts           = true
 	schedulerDefaultMaxAttempts             = 3
+	schedulerDefaultInitialRetryDelay       = 1 * time.Second
+	schedulerDefaultMaxRetryDelay           = 4 * time.Second
+	schedulerDefaultRandomizationFactor     = 0.1
 	schedulerDefaultLegacyMinInterval       = 1
 	screenshotsDefaultCapture               = false
 	screenshotsDefaultCaptureTimeout        = 10 * time.Second
@@ -106,6 +109,9 @@ type UnifiedAlertingSettings struct {
 	HARedisTLSConfig                dstls.ClientConfig
 	InitializationTimeout           time.Duration
 	MaxAttempts                     int64
+	InitialRetryDelay               time.Duration
+	MaxRetryDelay                   time.Duration
+	RandomizationFactor             float64
 	MinInterval                     time.Duration
 	EvaluationTimeout               time.Duration
 	EvaluationResultLimit           int
@@ -128,10 +134,11 @@ type UnifiedAlertingSettings struct {
 	PrometheusConversion          UnifiedAlertingPrometheusConversionSettings
 
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
-	MaxStateSaveConcurrency    int
-	StatePeriodicSaveInterval  time.Duration
-	StatePeriodicSaveBatchSize int
-	RulesPerRuleGroupLimit     int64
+	MaxStateSaveConcurrency        int
+	StatePeriodicSaveInterval      time.Duration
+	StatePeriodicSaveBatchSize     int
+	StatePeriodicSaveJitterEnabled bool
+	RulesPerRuleGroupLimit         int64
 
 	// Retention period for Alertmanager notification log entries.
 	NotificationLogRetention time.Duration
@@ -363,6 +370,27 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	uaCfg.MaxAttempts = ua.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
 
+	uaInitialRetryDelay, err := gtime.ParseDuration(valueAsString(ua, "initial_retry_delay", schedulerDefaultInitialRetryDelay.String()))
+	if err != nil {
+		cfg.Logger.Warn("failed to parse setting 'initial_retry_delay' as duration, falling back to the default value", "error", err, "default", schedulerDefaultInitialRetryDelay)
+		uaInitialRetryDelay = schedulerDefaultInitialRetryDelay
+	}
+	uaCfg.InitialRetryDelay = uaInitialRetryDelay
+
+	uaMaxRetryDelay, err := gtime.ParseDuration(valueAsString(ua, "max_retry_delay", schedulerDefaultMaxRetryDelay.String()))
+	if err != nil {
+		cfg.Logger.Warn("failed to parse setting 'max_retry_delay' as duration, falling back to the default value", "error", err, "default", schedulerDefaultMaxRetryDelay)
+		uaMaxRetryDelay = schedulerDefaultMaxRetryDelay
+	}
+	uaCfg.MaxRetryDelay = uaMaxRetryDelay
+
+	uaRandomizationFactor := ua.Key("randomization_factor").MustFloat64(schedulerDefaultRandomizationFactor)
+	if uaRandomizationFactor < 0 || uaRandomizationFactor > 1 {
+		cfg.Logger.Warn("randomization_factor must be between 0 and 1, falling back to the default value", "value", uaRandomizationFactor, "default", schedulerDefaultRandomizationFactor)
+		uaRandomizationFactor = schedulerDefaultRandomizationFactor
+	}
+	uaCfg.RandomizationFactor = uaRandomizationFactor
+
 	uaCfg.BaseInterval = SchedulerBaseInterval
 
 	// TODO: This was promoted from a feature toggle and is now the default behavior.
@@ -532,6 +560,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 
 	uaCfg.StatePeriodicSaveBatchSize = ua.Key("state_periodic_save_batch_size").MustInt(1)
+
+	uaCfg.StatePeriodicSaveJitterEnabled = ua.Key("state_periodic_save_jitter_enabled").MustBool(false)
 
 	uaCfg.NotificationLogRetention, err = gtime.ParseDuration(valueAsString(ua, "notification_log_retention", (5 * 24 * time.Hour).String()))
 	if err != nil {

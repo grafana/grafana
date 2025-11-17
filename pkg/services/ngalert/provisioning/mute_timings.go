@@ -247,7 +247,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 		return err
 	}
 
-	if isMuteTimeInUseInRoutes(existing.Name, revision.Config.AlertmanagerConfig.Route) {
+	if isTimeIntervalInUseInRoutes(existing.Name, revision.Config.AlertmanagerConfig.Route) {
 		ns, _ := svc.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
 		// ignore error here because it's not important
 		return MakeErrTimeIntervalInUse(true, maps.Keys(ns))
@@ -275,15 +275,20 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 	})
 }
 
-func isMuteTimeInUseInRoutes(name string, route *definitions.Route) bool {
+func isTimeIntervalInUseInRoutes(name string, route *definitions.Route) bool {
 	if route == nil {
 		return false
 	}
 	if slices.Contains(route.MuteTimeIntervals, name) {
 		return true
 	}
+
+	if slices.Contains(route.ActiveTimeIntervals, name) {
+		return true
+	}
+
 	for _, route := range route.Routes {
-		if isMuteTimeInUseInRoutes(name, route) {
+		if isTimeIntervalInUseInRoutes(name, route) {
 			return true
 		}
 	}

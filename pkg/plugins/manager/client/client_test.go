@@ -10,13 +10,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
 
 func TestQueryData(t *testing.T) {
 	t.Run("Empty registry should return not registered error", func(t *testing.T) {
-		registry := fakes.NewFakePluginRegistry()
+		registry := pluginfakes.NewFakePluginRegistry()
 		client := ProvideService(registry)
 		_, err := client.QueryData(context.Background(), &backend.QueryDataRequest{})
 		require.Error(t, err)
@@ -63,7 +64,7 @@ func TestQueryData(t *testing.T) {
 
 		for _, tc := range tcs {
 			t.Run(fmt.Sprintf("Plugin client error %q should return expected error", tc.err), func(t *testing.T) {
-				registry := fakes.NewFakePluginRegistry()
+				registry := pluginfakes.NewFakePluginRegistry()
 				p := &plugins.Plugin{
 					JSONData: plugins.JSONData{
 						ID: "grafana",
@@ -96,7 +97,7 @@ func TestQueryData(t *testing.T) {
 
 func TestCheckHealth(t *testing.T) {
 	t.Run("empty plugin registry should return plugin not registered error", func(t *testing.T) {
-		registry := fakes.NewFakePluginRegistry()
+		registry := pluginfakes.NewFakePluginRegistry()
 		client := ProvideService(registry)
 		_, err := client.CheckHealth(context.Background(), &backend.CheckHealthRequest{})
 		require.Error(t, err)
@@ -129,7 +130,7 @@ func TestCheckHealth(t *testing.T) {
 
 		for _, tc := range tcs {
 			t.Run(fmt.Sprintf("Plugin client error %q should return expected error", tc.err), func(t *testing.T) {
-				registry := fakes.NewFakePluginRegistry()
+				registry := pluginfakes.NewFakePluginRegistry()
 				p := &plugins.Plugin{
 					JSONData: plugins.JSONData{
 						ID: "grafana",
@@ -157,10 +158,9 @@ func TestCheckHealth(t *testing.T) {
 }
 
 func TestIntegrationCallResource(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-	registry := fakes.NewFakePluginRegistry()
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	registry := pluginfakes.NewFakePluginRegistry()
 	p := &plugins.Plugin{
 		JSONData: plugins.JSONData{
 			ID: "pid",

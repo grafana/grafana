@@ -67,10 +67,16 @@ class HistoryAPIDatasource extends RuntimeDataSource<HistoryAPIQuery> {
 
     const labelFilters = parseBackendLabelFilters(labels);
 
-    const historyResult = await getHistory(from, to, labelFilters);
+    const historyResult = await getHistory(
+      from,
+      to,
+      labelFilters,
+      stateTo !== 'all' ? stateTo : undefined,
+      stateFrom !== 'all' ? stateFrom : undefined
+    );
 
     return {
-      data: historyResultToDataFrame(historyResult, { stateTo, stateFrom, labels }),
+      data: historyResultToDataFrame(historyResult, { labels }),
     };
   }
 
@@ -90,7 +96,13 @@ class HistoryAPIDatasource extends RuntimeDataSource<HistoryAPIQuery> {
  * @param labels optional label filters for backend filtering
  * @returns the history events filtered by time and labels
  */
-export const getHistory = (from: number, to: number, labels?: Record<string, string>) => {
+export const getHistory = (
+  from: number,
+  to: number,
+  labels?: Record<string, string>,
+  current?: string,
+  previous?: string
+) => {
   return dispatch(
     stateHistoryApi.endpoints.getRuleHistory.initiate(
       {
@@ -98,6 +110,8 @@ export const getHistory = (from: number, to: number, labels?: Record<string, str
         to: to,
         limit: LIMIT_EVENTS,
         labels: labels,
+        current: current,
+        previous: previous,
       },
       {
         forceRefetch: Boolean(getTimeSrv().getAutoRefreshInteval().interval), // force refetch in case we are using the refresh option

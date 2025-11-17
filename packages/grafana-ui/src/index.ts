@@ -14,6 +14,7 @@ import { SecretFormField } from './components/SecretFormField/SecretFormField';
 import * as commonOptionsBuilder from './options/builder';
 import * as styleMixins from './themes/mixins';
 import * as DOMUtil from './utils/dom';
+import * as floatingUtils from './utils/floating';
 import * as ReactUtils from './utils/reactUtils';
 
 export { Icon } from './components/Icon/Icon';
@@ -352,6 +353,7 @@ export { EventsCanvas } from './components/uPlot/geometries/EventsCanvas';
 export { TooltipPlugin2 } from './components/uPlot/plugins/TooltipPlugin2';
 export { EventBusPlugin } from './components/uPlot/plugins/EventBusPlugin';
 export { KeyboardPlugin } from './components/uPlot/plugins/KeyboardPlugin';
+export { XAxisInteractionAreaPlugin } from './components/uPlot/plugins/XAxisInteractionAreaPlugin';
 
 export { type PlotTooltipInterpolator, type PlotSelection, FIXED_UNIT } from './components/uPlot/types';
 export { type UPlotConfigPrepFn } from './components/uPlot/config/UPlotConfigBuilder';
@@ -437,7 +439,7 @@ export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
 export { fuzzyMatch } from './utils/fuzzy';
 export { logOptions } from './utils/logOptions';
 
-export { DOMUtil, ReactUtils };
+export { DOMUtil, ReactUtils, floatingUtils };
 
 export { ThemeContext } from '@grafana/data';
 export {

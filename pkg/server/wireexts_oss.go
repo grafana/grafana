@@ -15,13 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	apisregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	gsmKMSProviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	secretService "github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -66,12 +65,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 var provisioningExtras = wire.NewSet(
-	webhooks.ProvideWebhooks,
-	repository.ProvideFactory,
-	extras.ProvideProvisioningOSSExtras,
 	extras.ProvideProvisioningOSSRepositoryExtras,
 )
 
@@ -146,6 +143,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
 	wire.Struct(new(unified.Options), "*"),
 	unified.ProvideUnifiedStorageClient,
+	sql.ProvideStorageBackend,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 	apisregistry.WireSetExts,
@@ -153,6 +151,7 @@ var wireExtsBasicSet = wire.NewSet(
 	secret.ProvideSecureValueClient,
 	provisioningExtras,
 	configProviderExtras,
+	advisor.ProvideAppInstaller,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -196,6 +195,9 @@ var wireExtsModuleServerSet = wire.NewSet(
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
+	// Overriden by enterprise
+	ProvideNoopModuleRegisterer,
+	sql.ProvideStorageBackend,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(

@@ -13,11 +13,11 @@
       "label-resource-group": "Resource Group",
       "label-resource-name": "Resource Name",
       "label-resource-number": "Resource {{resourceNum}}",
-      "label-resource-uri": "Resource URI(s) ",
+      "label-resource-uri": "Resource URI(s)",
       "label-subscription": "Subscription",
       "placeholder-resource-name": "name",
       "tooltip-region": "The code region of the resource. Optional for one resource but mandatory when selecting multiple ones.",
-      "tooltip-resource-uri": "Manually edit the <2>resource uri</2>. Supports the use of multiple template variables (ex: /subscriptions/$subId/resourceGroups/$rg)"
+      "tooltip-resource-uri": "Manually edit the <2>resource uri</2> . Supports the use of multiple template variables (ex: /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Aggregate function",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Basic Logs",
-      "description-basic-logs": "Enabling this feature incurs Azure Monitor per-query costs on dashboard panels that query tables configured for <2>Basic Logs</2>.",
+      "description-basic-logs": "Enabling this feature incurs Azure Monitor per-query costs on dashboard panels that query tables configured for <2>Basic Logs</2> .",
       "label-enable-basic-logs": "Enable Basic Logs"
     },
     "config-editor": {
@@ -227,16 +227,26 @@
       "select-resource": "Select a resource"
     },
     "resource-picker": {
+      "browse-tab": "Browse",
       "button-apply": "Apply",
       "button-cancel": "Cancel",
       "header-location": "Location",
+      "header-resource-group": "Resource Group",
       "header-scope": "Scope",
       "header-type": "Type",
       "heading-selection": "Selection",
+      "locations-filter": "Locations",
+      "locations-filter-placeholder": "Select a location",
+      "recent-tab": "Recent",
       "result-limit": "Showing first {{numResults}} results",
+      "subscriptions-filter": "Subscriptions",
+      "subscriptions-filter-placeholder": "Select a subscription",
       "text-loading": "Loading...",
+      "text-no-recent-resources": "No recent resources found",
       "text-no-resources": "No resources found",
-      "title-error-occurred": "An error occurred while requesting resources from Azure Monitor"
+      "title-error-occurred": "An error occurred while requesting resources from Azure Monitor",
+      "types-filter": "Resource Types",
+      "types-filter-placeholder": "Select a resource type"
     },
     "scope-selector": {
       "label": "Scope"

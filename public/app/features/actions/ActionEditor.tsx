@@ -3,28 +3,33 @@ import { memo } from 'react';
 
 import {
   Action,
+  ActionType,
+  DataSourceInstanceSettings,
   GrafanaTheme2,
   httpMethodOptions,
   HttpRequestMethod,
   VariableSuggestion,
+  InfinityOptions,
+  FetchOptions,
   ActionVariable,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
-  Switch,
+  ColorPicker,
   Field,
   InlineField,
   InlineFieldRow,
-  RadioButtonGroup,
   JSONFormatter,
+  RadioButtonGroup,
+  Switch,
   useStyles2,
-  ColorPicker,
   useTheme2,
 } from '@grafana/ui';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 
 import { ActionVariablesEditor } from './ActionVariablesEditor';
+import { ConnectionPicker } from './ConnectionPicker';
 import { ParamsEditor } from './ParamsEditor';
 
 interface ActionEditorProps {
@@ -37,9 +42,55 @@ interface ActionEditorProps {
 
 const LABEL_WIDTH = 13;
 
+const DEFAULT_HTTP_CONFIG: FetchOptions = {
+  method: HttpRequestMethod.POST,
+  url: '',
+  body: '{}',
+  queryParams: [],
+  headers: [['Content-Type', 'application/json']],
+};
+
 export const ActionEditor = memo(({ index, value, onChange, suggestions, showOneClick }: ActionEditorProps) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
+
+  const getActionConfig = (): FetchOptions | InfinityOptions => {
+    if (value.type === ActionType.Infinity) {
+      return (
+        value[ActionType.Infinity] || {
+          ...DEFAULT_HTTP_CONFIG,
+          datasourceUid: '',
+        }
+      );
+    }
+
+    return value[ActionType.Fetch] || DEFAULT_HTTP_CONFIG;
+  };
+
+  const updateActionConfig = (updates: Partial<FetchOptions | InfinityOptions>) => {
+    const configKey = value.type === ActionType.Infinity ? ActionType.Infinity : ActionType.Fetch;
+    const baseConfig = getActionConfig();
+
+    const updatedConfig = {
+      ...baseConfig,
+      ...updates,
+      ...(value.type === ActionType.Infinity && {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        datasourceUid: (baseConfig as InfinityOptions).datasourceUid || '',
+      }),
+    };
+
+    onChange(index, {
+      ...value,
+      [configKey]: updatedConfig,
+    });
+  };
+
+  const updateConfig =
+    <K extends keyof (FetchOptions & InfinityOptions)>(field: K) =>
+    (newValue: (FetchOptions & InfinityOptions)[K]) => {
+      updateActionConfig({ [field]: newValue });
+    };
 
   const onTitleChange = (title: string) => {
     onChange(index, { ...value, title });
@@ -49,40 +100,6 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     onChange(index, { ...value, confirmation });
   };
 
-  const onOneClickChanged = () => {
-    onChange(index, { ...value, oneClick: !value.oneClick });
-  };
-
-  const onUrlChange = (url: string) => {
-    onChange(index, {
-      ...value,
-      fetch: {
-        ...value.fetch,
-        url,
-      },
-    });
-  };
-
-  const onBodyChange = (body: string) => {
-    onChange(index, {
-      ...value,
-      fetch: {
-        ...value.fetch,
-        body,
-      },
-    });
-  };
-
-  const onMethodChange = (method: HttpRequestMethod) => {
-    onChange(index, {
-      ...value,
-      fetch: {
-        ...value.fetch,
-        method,
-      },
-    });
-  };
-
   const onVariablesChange = (variables: ActionVariable[]) => {
     onChange(index, {
       ...value,
@@ -90,25 +107,15 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     });
   };
 
-  const onQueryParamsChange = (queryParams: Array<[string, string]>) => {
-    onChange(index, {
-      ...value,
-      fetch: {
-        ...value.fetch,
-        queryParams,
-      },
-    });
+  const onOneClickChanged = () => {
+    onChange(index, { ...value, oneClick: !value.oneClick });
   };
 
-  const onHeadersChange = (headers: Array<[string, string]>) => {
-    onChange(index, {
-      ...value,
-      fetch: {
-        ...value.fetch,
-        headers,
-      },
-    });
-  };
+  const onUrlChange = updateConfig('url');
+  const onBodyChange = updateConfig('body');
+  const onMethodChange = updateConfig('method');
+  const onQueryParamsChange = updateConfig('queryParams');
+  const onHeadersChange = updateConfig('headers');
 
   const onBackgroundColorChange = (backgroundColor: string) => {
     onChange(index, {
@@ -118,6 +125,33 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         backgroundColor,
       },
     });
+  };
+
+  const onConnectionChange = (connectionType: string | DataSourceInstanceSettings) => {
+    const baseAction = {
+      title: value.title,
+      confirmation: value.confirmation,
+      oneClick: value.oneClick,
+      variables: value.variables,
+      style: value.style,
+    };
+
+    if (typeof connectionType === 'string') {
+      onChange(index, {
+        ...baseAction,
+        type: ActionType.Fetch,
+        [ActionType.Fetch]: getActionConfig(),
+      });
+    } else {
+      onChange(index, {
+        ...baseAction,
+        type: ActionType.Infinity,
+        [ActionType.Infinity]: {
+          ...getActionConfig(),
+          datasourceUid: connectionType.uid,
+        },
+      });
+    }
   };
 
   const renderJSON = (data = '{}') => {
@@ -133,9 +167,12 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     }
   };
 
+  const actionConfig = getActionConfig();
   const shouldRenderJSON =
-    value.fetch.method !== HttpRequestMethod.GET &&
-    value.fetch.headers?.some(([name, value]) => name === 'Content-Type' && value === 'application/json');
+    actionConfig.method !== HttpRequestMethod.GET &&
+    actionConfig.headers?.some(
+      ([name, value]: [string, string]) => name === 'Content-Type' && value === 'application/json'
+    );
 
   return (
     <div className={styles.listItem}>
@@ -168,20 +205,6 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
           )}
         />
       </Field>
-
-      <Field label={t('grafana-ui.action-editor.button.style', 'Button style')}>
-        <InlineField
-          label={t('actions.action-editor.button.style.background-color', 'Color')}
-          labelWidth={LABEL_WIDTH}
-          className={styles.colorPicker}
-        >
-          <ColorPicker
-            color={value?.style?.backgroundColor || theme.colors.secondary.main}
-            onChange={onBackgroundColorChange}
-          />
-        </InlineField>
-      </Field>
-
       {showOneClick && (
         <Field
           label={t('grafana-ui.data-link-inline-editor.one-click', 'One click')}
@@ -195,13 +218,19 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       )}
 
       <InlineFieldRow>
-        <InlineField
-          label={t('grafana-ui.action-editor.modal.action-method', 'Method')}
-          labelWidth={LABEL_WIDTH}
-          grow={true}
-        >
+        <InlineField label={t('grafana-ui.action-editor.modal.connection', 'Connection')} labelWidth={LABEL_WIDTH}>
+          <ConnectionPicker
+            actionType={value.type}
+            datasourceUid={value?.[ActionType.Infinity]?.datasourceUid}
+            onChange={onConnectionChange}
+          />
+        </InlineField>
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField label={t('grafana-ui.action-editor.modal.action-method', 'Method')} labelWidth={LABEL_WIDTH}>
           <RadioButtonGroup<HttpRequestMethod>
-            value={value?.fetch.method}
+            value={actionConfig.method}
             options={httpMethodOptions}
             onChange={onMethodChange}
             fullWidth
@@ -212,7 +241,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       <InlineFieldRow>
         <InlineField label={t('actions.action-editor.label-url', 'URL')} labelWidth={LABEL_WIDTH} grow={true}>
           <SuggestionsInput
-            value={value.fetch.url}
+            value={actionConfig.url}
             onChange={onUrlChange}
             suggestions={suggestions}
             placeholder={t('actions.action-editor.placeholder-url', 'URL')}
@@ -232,22 +261,22 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         label={t('grafana-ui.action-editor.modal.action-query-params', 'Query parameters')}
         className={styles.fieldGap}
       >
-        <ParamsEditor value={value?.fetch.queryParams ?? []} onChange={onQueryParamsChange} suggestions={suggestions} />
+        <ParamsEditor value={actionConfig.queryParams ?? []} onChange={onQueryParamsChange} suggestions={suggestions} />
       </Field>
 
       <Field label={t('actions.action-editor.label-headers', 'Headers')}>
         <ParamsEditor
-          value={value?.fetch.headers ?? []}
+          value={actionConfig.headers ?? []}
           onChange={onHeadersChange}
           suggestions={suggestions}
           contentTypeHeader={true}
         />
       </Field>
 
-      {value?.fetch.method !== HttpRequestMethod.GET && (
+      {actionConfig.method !== HttpRequestMethod.GET && (
         <Field label={t('grafana-ui.action-editor.modal.action-body', 'Body')} className={styles.inputField}>
           <SuggestionsInput
-            value={value.fetch.body}
+            value={actionConfig.body}
             onChange={onBodyChange}
             suggestions={suggestions}
             type={HTMLElementType.TextAreaElement}
@@ -258,9 +287,22 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       {shouldRenderJSON && (
         <>
           <br />
-          {renderJSON(value?.fetch.body)}
+          {renderJSON(actionConfig.body)}
         </>
       )}
+
+      <Field label={t('grafana-ui.action-editor.button.style', 'Button style')} style={{ marginTop: '8px' }}>
+        <InlineField
+          label={t('actions.action-editor.button.style.background-color', 'Color')}
+          labelWidth={LABEL_WIDTH}
+          className={styles.colorPicker}
+        >
+          <ColorPicker
+            color={value?.style?.backgroundColor || theme.colors.secondary.main}
+            onChange={onBackgroundColorChange}
+          />
+        </InlineField>
+      </Field>
     </div>
   );
 });

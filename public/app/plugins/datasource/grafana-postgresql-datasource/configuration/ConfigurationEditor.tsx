@@ -113,7 +113,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
 
       <Divider />
 
-      <Collapse collapsible label="User Permissions" isOpen={isOpen} onToggle={() => setIsOpen((x) => !x)}>
+      <Collapse label="User Permissions" isOpen={isOpen} onToggle={() => setIsOpen((x) => !x)}>
         The database user should only be granted SELECT permissions on the specified database &amp; tables you want to
         query. <br />
         Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
@@ -159,7 +159,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           />
         </Field>
 
-        <Field label="Password" required>
+        <Field label="Password">
           <SecretInput
             width={WIDTH_LONG}
             placeholder="Password"

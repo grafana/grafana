@@ -11,7 +11,7 @@ import (
 func ExportAll(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	// FIXME: should we sign with grafana user?
 
-	folderClient, err := clients.Folder()
+	folderClient, err := clients.Folder(ctx)
 	if err != nil {
 		return err
 	}

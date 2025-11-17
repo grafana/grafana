@@ -40,7 +40,7 @@ func ProvideService(
 	l := log.New("annotations")
 	l.Debug("Initializing annotations service")
 
-	xormStore := NewXormStore(cfg, log.New("annotations.sql"), db, tagService)
+	xormStore := NewXormStore(cfg, log.New("annotations.sql"), db, tagService, reg)
 	write := xormStore
 
 	var read readStore
@@ -56,7 +56,7 @@ func ProvideService(
 	return &RepositoryImpl{
 		db:       db,
 		features: features,
-		authZ:    accesscontrol.NewAuthService(db, features, dashSvc),
+		authZ:    accesscontrol.NewAuthService(db, features, dashSvc, cfg),
 		reader:   read,
 		writer:   write,
 	}

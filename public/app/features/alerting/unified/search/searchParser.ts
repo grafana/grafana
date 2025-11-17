@@ -16,6 +16,7 @@ const filterTokenToTypeMap: Record<number, string> = {
   [terms.DashboardToken]: 'dashboard',
   [terms.PluginsToken]: 'plugins',
   [terms.ContactPointToken]: 'contactPoint',
+  [terms.RuleSourceToken]: 'source',
 };
 
 // This enum allows to configure parser behavior
@@ -33,6 +34,7 @@ export enum FilterSupportedTerm {
   dashboard = 'dashboardFilter',
   plugins = 'pluginsFilter',
   contactPoint = 'contactPointFilter',
+  source = 'sourceFilter',
 }
 
 export type QueryFilterMapper = Record<number, (filter: string) => void>;

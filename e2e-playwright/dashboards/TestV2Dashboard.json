@@ -413,7 +413,84 @@
       "to": "now"
     },
     "title": "TEST!!!!",
-    "variables": []
+    "variables": [
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "allowCustomValue": true,
+          "current": {
+            "text": ["1", "2", "3", "4"],
+            "value": ["1", "2", "3", "4"]
+          },
+          "hide": "dontHide",
+          "includeAll": true,
+          "multi": true,
+          "name": "c1",
+          "options": [
+            {
+              "selected": true,
+              "text": "1",
+              "value": "1"
+            },
+            {
+              "selected": true,
+              "text": "2",
+              "value": "2"
+            },
+            {
+              "selected": true,
+              "text": "3",
+              "value": "3"
+            },
+            {
+              "selected": true,
+              "text": "4",
+              "value": "4"
+            }
+          ],
+          "query": "1,2,3,4",
+          "skipUrlSync": false
+        }
+      },
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "allowCustomValue": true,
+          "current": {
+            "text": ["A", "B", "C", "D"],
+            "value": ["A", "B", "C", "D"]
+          },
+          "hide": "dontHide",
+          "includeAll": true,
+          "multi": true,
+          "name": "c2",
+          "options": [
+            {
+              "selected": true,
+              "text": "A",
+              "value": "A"
+            },
+            {
+              "selected": true,
+              "text": "B",
+              "value": "B"
+            },
+            {
+              "selected": true,
+              "text": "C",
+              "value": "C"
+            },
+            {
+              "selected": true,
+              "text": "D",
+              "value": "D"
+            }
+          ],
+          "query": "A,B,C,D",
+          "skipUrlSync": false
+        }
+      }
+    ]
   },
   "status": {}
 }

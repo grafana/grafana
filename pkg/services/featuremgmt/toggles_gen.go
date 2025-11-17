@@ -35,10 +35,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagCorrelations
-	// Correlations page
-	FlagCorrelations = "correlations"
-
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
@@ -67,10 +63,6 @@ const (
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
 
-	// FlagEditPanelCSVDragAndDrop
-	// Enables drag and drop for CSV and Excel files
-	FlagEditPanelCSVDragAndDrop = "editPanelCSVDragAndDrop"
-
 	// FlagLogsContextDatasourceUi
 	// Allow datasource to provide custom UI for context view
 	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
@@ -90,6 +82,14 @@ const (
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
+
+	// FlagStarsFromAPIServer
+	// populate star status from apiserver
+	FlagStarsFromAPIServer = "starsFromAPIServer"
+
+	// FlagKubernetesStars
+	// Routes stars requests from /api to the /apis endpoint
+	FlagKubernetesStars = "kubernetesStars"
 
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
@@ -135,14 +135,6 @@ const (
 	// Enables extra themes
 	FlagExtraThemes = "extraThemes"
 
-	// FlagPluginsFrontendSandbox
-	// Enables the plugins frontend sandbox
-	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
-
-	// FlagRecordedQueriesMulti
-	// Enables writing multiple items from a single query within Recorded Queries
-	FlagRecordedQueriesMulti = "recordedQueriesMulti"
-
 	// FlagLogsExploreTableVisualisation
 	// A table visualisation for logs in Explore
 	FlagLogsExploreTableVisualisation = "logsExploreTableVisualisation"
@@ -175,13 +167,13 @@ const (
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
 
-	// FlagFeatureToggleAdminPage
-	// Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.
-	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
-
 	// FlagAwsAsyncQueryCaching
 	// Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
+
+	// FlagQueryCacheRequestDeduplication
+	// Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
+	FlagQueryCacheRequestDeduplication = "queryCacheRequestDeduplication"
 
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
@@ -215,10 +207,6 @@ const (
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
 
-	// FlagPanelMonitoring
-	// Enables panel monitoring through logs and measurements
-	FlagPanelMonitoring = "panelMonitoring"
-
 	// FlagEnableNativeHTTPHistogram
 	// Enables native HTTP Histograms
 	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
@@ -226,10 +214,6 @@ const (
 	// FlagDisableClassicHTTPHistogram
 	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
 	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
-
-	// FlagFormatString
-	// Enable format string transformer
-	FlagFormatString = "formatString"
 
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
@@ -244,8 +228,28 @@ const (
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
 	// FlagKubernetesShortURLs
-	// Routes short url requests from /api to the /apis endpoint
+	// Enables k8s short url api and uses it under the hood when handling legacy /api
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
+
+	// FlagUseKubernetesShortURLsAPI
+	// Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+	FlagUseKubernetesShortURLsAPI = "useKubernetesShortURLsAPI"
+
+	// FlagKubernetesAlertingRules
+	// Adds support for Kubernetes alerting and recording rules
+	FlagKubernetesAlertingRules = "kubernetesAlertingRules"
+
+	// FlagKubernetesCorrelations
+	// Adds support for Kubernetes correlations
+	FlagKubernetesCorrelations = "kubernetesCorrelations"
+
+	// FlagKubernetesLogsDrilldown
+	// Adds support for Kubernetes logs drilldown
+	FlagKubernetesLogsDrilldown = "kubernetesLogsDrilldown"
+
+	// FlagKubernetesQueryCaching
+	// Adds support for Kubernetes querycaching
+	FlagKubernetesQueryCaching = "kubernetesQueryCaching"
 
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
@@ -270,6 +274,10 @@ const (
 	// FlagQueryService
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
 	FlagQueryService = "queryService"
+
+	// FlagQueryServiceWithConnections
+	// Adds datasource connections to the query service
+	FlagQueryServiceWithConnections = "queryServiceWithConnections"
 
 	// FlagQueryServiceRewrite
 	// Rewrite requests targeting /ds/query to the query service
@@ -303,6 +311,10 @@ const (
 	// Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
 	FlagAlertingProvenanceLockWrites = "alertingProvenanceLockWrites"
 
+	// FlagAlertingUIUseBackendFilters
+	// Enables the UI to use certain backend-side filters
+	FlagAlertingUIUseBackendFilters = "alertingUIUseBackendFilters"
+
 	// FlagAlertmanagerRemotePrimary
 	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
 	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
@@ -310,10 +322,6 @@ const (
 	// FlagAnnotationPermissionUpdate
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
-
-	// FlagExtractFieldsNameDeduplication
-	// Make sure extracted field names are unique in the dataframe
-	FlagExtractFieldsNameDeduplication = "extractFieldsNameDeduplication"
 
 	// FlagDashboardSceneForViewers
 	// Enables dashboard rendering using Scenes for viewer roles
@@ -330,6 +338,14 @@ const (
 	// FlagDashboardNewLayouts
 	// Enables experimental new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
+
+	// FlagDashboardUndoRedo
+	// Enables undo/redo in dynamic dashboards
+	FlagDashboardUndoRedo = "dashboardUndoRedo"
+
+	// FlagUnlimitedLayoutsNesting
+	// Enables unlimited dashboard panel grouping
+	FlagUnlimitedLayoutsNesting = "unlimitedLayoutsNesting"
 
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
@@ -355,17 +371,9 @@ const (
 	// Enable filtering menu displayed when text of a log line is selected
 	FlagLogRowsPopoverMenu = "logRowsPopoverMenu"
 
-	// FlagPluginsSkipHostEnvVars
-	// Disables passing host environment variable to plugin processes
-	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
-
 	// FlagTableSharedCrosshair
 	// Enables shared crosshair in table panel
 	FlagTableSharedCrosshair = "tableSharedCrosshair"
-
-	// FlagRegressionTransformation
-	// Enables regression analysis transformation
-	FlagRegressionTransformation = "regressionTransformation"
 
 	// FlagKubernetesFeatureToggles
 	// Use the kubernetes API for feature toggle management in the frontend
@@ -391,12 +399,16 @@ const (
 	// Enable the secrets management API and services under app platform
 	FlagSecretsManagementAppPlatform = "secretsManagementAppPlatform"
 
+	// FlagSecretsManagementAppPlatformUI
+	// Enable the secrets management app platform UI
+	FlagSecretsManagementAppPlatformUI = "secretsManagementAppPlatformUI"
+
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
 
 	// FlagAlertingSaveStateCompressed
-	// Enables the compressed protobuf-based alert state storage
+	// Enables the compressed protobuf-based alert state storage. Default is enabled.
 	FlagAlertingSaveStateCompressed = "alertingSaveStateCompressed"
 
 	// FlagScopeApi
@@ -407,9 +419,9 @@ const (
 	// Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
 	FlagUseScopeSingleNodeEndpoint = "useScopeSingleNodeEndpoint"
 
-	// FlagPromQLScope
-	// In-development feature that will allow injection of labels into prometheus queries.
-	FlagPromQLScope = "promQLScope"
+	// FlagUseMultipleScopeNodesEndpoint
+	// Makes the frontend use the &#39;names&#39; param for fetching multiple scope nodes at once
+	FlagUseMultipleScopeNodesEndpoint = "useMultipleScopeNodesEndpoint"
 
 	// FlagLogQLScope
 	// In-development feature that will allow injection of labels into loki queries.
@@ -423,17 +435,9 @@ const (
 	// Enables column autocomplete for SQL Expressions
 	FlagSqlExpressionsColumnAutoComplete = "sqlExpressionsColumnAutoComplete"
 
-	// FlagGroupToNestedTableTransformation
-	// Enables the group to nested table transformation
-	FlagGroupToNestedTableTransformation = "groupToNestedTableTransformation"
-
 	// FlagNewPDFRendering
 	// New implementation for the dashboard-to-PDF rendering
 	FlagNewPDFRendering = "newPDFRendering"
-
-	// FlagTlsMemcached
-	// Use TLS-enabled memcached in the enterprise caching feature
-	FlagTlsMemcached = "tlsMemcached"
 
 	// FlagKubernetesAggregator
 	// Enable grafana&#39;s embedded kube-aggregator
@@ -472,20 +476,20 @@ const (
 	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
 
 	// FlagQueryLibrary
-	// Renamed feature toggle, enables Saved queries feature
+	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
 
-	// FlagSavedQueries
-	// Enables Saved Queries feature
-	FlagSavedQueries = "savedQueries"
+	// FlagDashboardLibrary
+	// Enable dashboard library experiments that are production ready
+	FlagDashboardLibrary = "dashboardLibrary"
+
+	// FlagSuggestedDashboards
+	// Enable suggested dashboards when creating new dashboards
+	FlagSuggestedDashboards = "suggestedDashboards"
 
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
 	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
-
-	// FlagNewDashboardSharingComponent
-	// Enables the new sharing drawer design
-	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
 
 	// FlagAlertingListViewV2
 	// Enables the new alert list view design
@@ -511,10 +515,6 @@ const (
 	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
 	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
 
-	// FlagPinNavItems
-	// Enables pinning of nav items
-	FlagPinNavItems = "pinNavItems"
-
 	// FlagAuthZGRPCServer
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
@@ -526,6 +526,10 @@ const (
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
+
+	// FlagZanzanaNoLegacyClient
+	// Use openFGA as main authorization engine and disable legacy RBAC clietn.
+	FlagZanzanaNoLegacyClient = "zanzanaNoLegacyClient"
 
 	// FlagReloadDashboardsOnParamsChange
 	// Enables reload of dashboards on scopes, time range and variables changes
@@ -554,6 +558,10 @@ const (
 	// FlagNewFiltersUI
 	// Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
 	FlagNewFiltersUI = "newFiltersUI"
+
+	// FlagVizActionsAuth
+	// Allows authenticated API calls in actions
+	FlagVizActionsAuth = "vizActionsAuth"
 
 	// FlagAlertingPrometheusRulesPrimary
 	// Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
@@ -619,13 +627,13 @@ const (
 	// Enables time pickers sync
 	FlagTimeRangeProvider = "timeRangeProvider"
 
+	// FlagTimeRangePan
+	// Enables time range panning functionality
+	FlagTimeRangePan = "timeRangePan"
+
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
-
-	// FlagPreinstallAutoUpdate
-	// Enables automatic updates for pre-installed plugins
-	FlagPreinstallAutoUpdate = "preinstallAutoUpdate"
 
 	// FlagPlaylistsReconciler
 	// Enables experimental reconciler for playlists
@@ -683,6 +691,10 @@ const (
 	// Enable enrichment per rule in the alerting UI.
 	FlagAlertingEnrichmentPerRule = "alertingEnrichmentPerRule"
 
+	// FlagAlertingEnrichmentAssistantInvestigations
+	// Enable Assistant Investigations enrichment type.
+	FlagAlertingEnrichmentAssistantInvestigations = "alertingEnrichmentAssistantInvestigations"
+
 	// FlagAlertingAIAnalyzeCentralStateHistory
 	// Enable AI-analyze central state history.
 	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
@@ -700,7 +712,7 @@ const (
 	FlagUnifiedStorageSearchUI = "unifiedStorageSearchUI"
 
 	// FlagElasticsearchCrossClusterSearch
-	// Enables cross cluster search in the Elasticsearch datasource
+	// Enables cross cluster search in the Elasticsearch data source
 	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
 
 	// FlagUnifiedHistory
@@ -731,10 +743,6 @@ const (
 	// Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
 	FlagTeamHttpHeadersTempo = "teamHttpHeadersTempo"
 
-	// FlagTemplateVariablesUsesCombobox
-	// Use new **Combobox** component for template variables
-	FlagTemplateVariablesUsesCombobox = "templateVariablesUsesCombobox"
-
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
 	FlagGrafanaAdvisor = "grafanaAdvisor"
@@ -752,7 +760,7 @@ const (
 	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
 
 	// FlagNewLogsPanel
-	// Enables the new logs panel in Explore
+	// Enables the new logs panel
 	FlagNewLogsPanel = "newLogsPanel"
 
 	// FlagGrafanaconThemes
@@ -762,6 +770,9 @@ const (
 	// FlagAlertingJiraIntegration
 	// Enables the new Jira integration for contact points in cloud alert managers.
 	FlagAlertingJiraIntegration = "alertingJiraIntegration"
+
+	// FlagAlertingUseNewSimplifiedRoutingHashAlgorithm
+	FlagAlertingUseNewSimplifiedRoutingHashAlgorithm = "alertingUseNewSimplifiedRoutingHashAlgorithm"
 
 	// FlagUseScopesNavigationEndpoint
 	// Use the scopes navigation endpoint instead of the dashboardbindings endpoint
@@ -795,10 +806,6 @@ const (
 	// Enables running Infinity queries in parallel
 	FlagInfinityRunQueriesInParallel = "infinityRunQueriesInParallel"
 
-	// FlagInviteUserExperimental
-	// Renders invite user button along the app
-	FlagInviteUserExperimental = "inviteUserExperimental"
-
 	// FlagAlertingMigrationUI
 	// Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
 	FlagAlertingMigrationUI = "alertingMigrationUI"
@@ -823,10 +830,6 @@ const (
 	// Enables the unified storage grpc connection pool
 	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
 
-	// FlagExtensionSidebar
-	// Enables the extension sidebar
-	FlagExtensionSidebar = "extensionSidebar"
-
 	// FlagAlertingRulePermanentlyDelete
 	// Enables UI functionality to permanently delete alert rules
 	FlagAlertingRulePermanentlyDelete = "alertingRulePermanentlyDelete"
@@ -838,10 +841,6 @@ const (
 	// FlagMultiTenantTempCredentials
 	// use multi-tenant path for awsTempCredentials
 	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
-
-	// FlagLocalizationForPlugins
-	// Enables localization for plugins
-	FlagLocalizationForPlugins = "localizationForPlugins"
 
 	// FlagUnifiedNavbars
 	// Enables unified navbars
@@ -871,10 +870,6 @@ const (
 	// Enables auto-updating of users installed plugins
 	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
 
-	// FlagMultiTenantFrontend
-	// Register MT frontend
-	FlagMultiTenantFrontend = "multiTenantFrontend"
-
 	// FlagAlertingListViewV2PreviewToggle
 	// Enables the alerting list view v2 preview toggle
 	FlagAlertingListViewV2PreviewToggle = "alertingListViewV2PreviewToggle"
@@ -891,9 +886,17 @@ const (
 	// Registers AuthZ /apis endpoint
 	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
 
+	// FlagKubernetesAuthZHandlerRedirect
+	// Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthZHandlerRedirect = "kubernetesAuthZHandlerRedirect"
+
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints
 	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
+
+	// FlagKubernetesAuthzZanzanaSync
+	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
+	FlagKubernetesAuthzZanzanaSync = "kubernetesAuthzZanzanaSync"
 
 	// FlagKubernetesAuthnMutation
 	// Enables create, delete, and update mutations for resources owned by IAM identity
@@ -903,13 +906,17 @@ const (
 	// Enables restore deleted dashboards feature
 	FlagRestoreDashboards = "restoreDashboards"
 
-	// FlagSkipTokenRotationIfRecent
-	// Skip token rotation if it was already rotated less than 5 seconds ago
-	FlagSkipTokenRotationIfRecent = "skipTokenRotationIfRecent"
-
 	// FlagAlertEnrichment
 	// Enable configuration of alert enrichments in Grafana Cloud.
 	FlagAlertEnrichment = "alertEnrichment"
+
+	// FlagAlertEnrichmentMultiStep
+	// Allow multiple steps per enrichment.
+	FlagAlertEnrichmentMultiStep = "alertEnrichmentMultiStep"
+
+	// FlagAlertEnrichmentConditional
+	// Enable conditional alert enrichment steps.
+	FlagAlertEnrichmentConditional = "alertEnrichmentConditional"
 
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
@@ -939,13 +946,13 @@ const (
 	// Set this to true to enable all app chrome extensions registered by plugins.
 	FlagEnableAppChromeExtensions = "enableAppChromeExtensions"
 
+	// FlagEnableDashboardEmptyExtensions
+	// Set this to true to enable all dashboard empty state extensions registered by plugins.
+	FlagEnableDashboardEmptyExtensions = "enableDashboardEmptyExtensions"
+
 	// FlagFoldersAppPlatformAPI
 	// Enables use of app platform API for folders
 	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
-
-	// FlagEnablePluginImporter
-	// Set this to true to use the new PluginImporter functionality
-	FlagEnablePluginImporter = "enablePluginImporter"
 
 	// FlagOtelLogsFormatting
 	// Applies OTel formatting templates to displayed logs
@@ -955,17 +962,9 @@ const (
 	// Enables the notification history feature
 	FlagAlertingNotificationHistory = "alertingNotificationHistory"
 
-	// FlagPluginAssetProvider
-	// Allows decoupled core plugins to load from the Grafana CDN
-	FlagPluginAssetProvider = "pluginAssetProvider"
-
 	// FlagUnifiedStorageSearchDualReaderEnabled
 	// Enable dual reader for unified storage search
 	FlagUnifiedStorageSearchDualReaderEnabled = "unifiedStorageSearchDualReaderEnabled"
-
-	// FlagDashboardDsAdHocFiltering
-	// Enables adhoc filtering support for the dashboard datasource
-	FlagDashboardDsAdHocFiltering = "dashboardDsAdHocFiltering"
 
 	// FlagDashboardLevelTimeMacros
 	// Supports __from and __to macros that always use the dashboard level time range
@@ -975,9 +974,9 @@ const (
 	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
 	FlagAlertmanagerRemoteSecondaryWithRemoteState = "alertmanagerRemoteSecondaryWithRemoteState"
 
-	// FlagAdhocFiltersInTooltips
-	// Enable adhoc filter buttons in visualization tooltips
-	FlagAdhocFiltersInTooltips = "adhocFiltersInTooltips"
+	// FlagRestrictedPluginApis
+	// Enables sharing a list of APIs with a list of plugins
+	FlagRestrictedPluginApis = "restrictedPluginApis"
 
 	// FlagFavoriteDatasources
 	// Enable favorite datasources
@@ -991,11 +990,95 @@ const (
 	// Enables new design for the Clickhouse data source configuration page
 	FlagNewClickhouseConfigPageDesign = "newClickhouseConfigPageDesign"
 
-	// FlagUnifiedStorageSearchAfterWriteExperimentalAPI
-	// Enable experimental search-after-write guarantees to unified-storage search endpoints
-	FlagUnifiedStorageSearchAfterWriteExperimentalAPI = "unifiedStorageSearchAfterWriteExperimentalAPI"
-
 	// FlagTeamFolders
 	// Enables team folders functionality
 	FlagTeamFolders = "teamFolders"
+
+	// FlagInteractiveLearning
+	// Enables the interactive learning app
+	FlagInteractiveLearning = "interactiveLearning"
+
+	// FlagAlertingTriage
+	// Enables the alerting triage feature
+	FlagAlertingTriage = "alertingTriage"
+
+	// FlagGraphiteBackendMode
+	// Enables the Graphite data source full backend mode
+	FlagGraphiteBackendMode = "graphiteBackendMode"
+
+	// FlagAzureResourcePickerUpdates
+	// Enables the updated Azure Monitor resource picker
+	FlagAzureResourcePickerUpdates = "azureResourcePickerUpdates"
+
+	// FlagPrometheusTypeMigration
+	// Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
+	FlagPrometheusTypeMigration = "prometheusTypeMigration"
+
+	// FlagPluginContainers
+	// Enables running plugins in containers
+	FlagPluginContainers = "pluginContainers"
+
+	// FlagTempoSearchBackendMigration
+	// Run search queries through the tempo backend
+	FlagTempoSearchBackendMigration = "tempoSearchBackendMigration"
+
+	// FlagCdnPluginsLoadFirst
+	// Prioritize loading plugins from the CDN before other sources
+	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
+
+	// FlagCdnPluginsUrls
+	// Enable loading plugins via declarative URLs
+	FlagCdnPluginsUrls = "cdnPluginsUrls"
+
+	// FlagPluginInstallAPISync
+	// Enable syncing plugin installations to the installs API
+	FlagPluginInstallAPISync = "pluginInstallAPISync"
+
+	// FlagNewGauge
+	// Enable new gauge visualization
+	FlagNewGauge = "newGauge"
+
+	// FlagNewVizSuggestions
+	// Enable new visualization suggestions
+	FlagNewVizSuggestions = "newVizSuggestions"
+
+	// FlagPreventPanelChromeOverflow
+	// Restrict PanelChrome contents with overflow: hidden;
+	FlagPreventPanelChromeOverflow = "preventPanelChromeOverflow"
+
+	// FlagJaegerEnableGrpcEndpoint
+	// Enable querying trace data through Jaeger&#39;s gRPC endpoint (HTTP)
+	FlagJaegerEnableGrpcEndpoint = "jaegerEnableGrpcEndpoint"
+
+	// FlagPluginStoreServiceLoading
+	// Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
+	FlagPluginStoreServiceLoading = "pluginStoreServiceLoading"
+
+	// FlagNewPanelPadding
+	// Increases panel padding globally
+	FlagNewPanelPadding = "newPanelPadding"
+
+	// FlagOnlyStoreActionSets
+	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
+	FlagOnlyStoreActionSets = "onlyStoreActionSets"
+
+	// FlagPanelTimeSettings
+	// Enables a new panel time settings drawer
+	FlagPanelTimeSettings = "panelTimeSettings"
+
+	// FlagDashboardTemplates
+	// Enable template dashboards
+	FlagDashboardTemplates = "dashboardTemplates"
+
+	// FlagKubernetesAnnotations
+	// Enables app platform API for annotations
+	FlagKubernetesAnnotations = "kubernetesAnnotations"
+
+	// FlagAwsDatasourcesHttpProxy
+	// Enables http proxy settings for aws datasources
+	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
+
+	// FlagTransformationsEmptyPlaceholder
+	// Show transformation quick-start cards in empty transformations state
+	FlagTransformationsEmptyPlaceholder = "transformationsEmptyPlaceholder"
 )

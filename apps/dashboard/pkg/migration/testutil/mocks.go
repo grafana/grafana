@@ -1,16 +1,50 @@
 package testutil
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
-type TestDataSourceProvider struct{}
+// DataSourceConfig defines different test configurations
+type DataSourceConfig string
 
-type TestPanelProvider struct {
-	customPanels []schemaversion.PanelPluginInfo
+const (
+	// StandardTestConfig provides datasources for standard migration tests
+	StandardTestConfig DataSourceConfig = "standard"
+	// DevDashboardConfig provides datasources matching dev dashboard requirements
+	DevDashboardConfig DataSourceConfig = "dev-dashboard"
+)
+
+// ConfigurableDataSourceProvider provides flexible datasource configurations for different test scenarios
+type ConfigurableDataSourceProvider struct {
+	config DataSourceConfig
 }
 
-func (m *TestDataSourceProvider) GetDataSourceInfo() []schemaversion.DataSourceInfo {
+// NewDataSourceProvider creates a provider with the specified configuration
+func NewDataSourceProvider(config DataSourceConfig) *ConfigurableDataSourceProvider {
+	return &ConfigurableDataSourceProvider{config: config}
+}
+
+func (p *ConfigurableDataSourceProvider) GetDataSourceInfo(_ context.Context) []schemaversion.DataSourceInfo {
+	switch p.config {
+	case StandardTestConfig:
+		return p.getStandardTestDataSources()
+	case DevDashboardConfig:
+		return p.getDevDashboardDataSources()
+	default:
+		return p.getStandardTestDataSources()
+	}
+}
+
+// Index builds the index directly from the datasources
+func (p *ConfigurableDataSourceProvider) Index(ctx context.Context) *schemaversion.DatasourceIndex {
+	datasources := p.GetDataSourceInfo(ctx)
+	return schemaversion.NewDatasourceIndex(datasources)
+}
+
+// getStandardTestDataSources returns datasources for standard migration tests
+func (p *ConfigurableDataSourceProvider) getStandardTestDataSources() []schemaversion.DataSourceInfo {
 	return []schemaversion.DataSourceInfo{
 		{
 			Default:    true,
@@ -24,7 +58,7 @@ func (m *TestDataSourceProvider) GetDataSourceInfo() []schemaversion.DataSourceI
 			Default:    false,
 			UID:        "non-default-test-ds-uid",
 			Type:       "loki",
-			APIVersion: "1",
+			APIVersion: "v1",
 			Name:       "Non Default Test Datasource Name",
 			ID:         2,
 		},
@@ -60,57 +94,83 @@ func (m *TestDataSourceProvider) GetDataSourceInfo() []schemaversion.DataSourceI
 			Name:       "-- Mixed --",
 			ID:         6,
 		},
-	}
-}
-
-func (m *TestPanelProvider) GetPanels() []schemaversion.PanelPluginInfo {
-	if len(m.customPanels) > 0 {
-		return m.customPanels
-	}
-
-	// Default panels
-	return []schemaversion.PanelPluginInfo{
 		{
-			ID:      "gauge",
-			Version: "1.0.0",
+			Default:    false,
+			UID:        "influx-uid",
+			Type:       "influxdb",
+			APIVersion: "v1",
+			Name:       "InfluxDB Test Datasource",
+			ID:         7,
 		},
 		{
-			ID:      "stat",
-			Version: "1.0.0",
+			Default:    false,
+			UID:        "cloudwatch-uid",
+			Type:       "cloudwatch",
+			APIVersion: "v1",
+			Name:       "CloudWatch Test Datasource",
+			ID:         8,
 		},
 		{
-			ID:      "table",
-			Version: "1.0.0",
+			Default:    false,
+			UID:        "-- Grafana --",
+			Type:       "grafana",
+			APIVersion: "v1",
+			Name:       "-- Grafana --",
+			ID:         9,
 		},
-		// Note: grafana-singlestat-panel is not included to match frontend test environment
-		// This ensures both frontend and backend migrations produce the same result
 	}
 }
 
-func (m *TestPanelProvider) GetPanelPlugin(id string) schemaversion.PanelPluginInfo {
-	// check if it exists in the list of mocked panels
-	for _, panel := range m.GetPanels() {
-		if panel.ID == id {
-			return panel
-		}
-	}
-
-	return schemaversion.PanelPluginInfo{}
-}
-
-// GetTestDataSourceProvider returns a singleton instance of the test provider
-func GetTestDataSourceProvider() *TestDataSourceProvider {
-	return &TestDataSourceProvider{}
-}
-
-// GetTestPanelProvider returns a singleton instance of the test panel provider
-func GetTestPanelProvider() *TestPanelProvider {
-	return &TestPanelProvider{}
-}
-
-// GetTestPanelProviderWithCustomPanels returns a test panel provider with custom panels
-func GetTestPanelProviderWithCustomPanels(customPanels []schemaversion.PanelPluginInfo) *TestPanelProvider {
-	return &TestPanelProvider{
-		customPanels: customPanels,
+// getDevDashboardDataSources returns datasources for dev dashboard tests
+func (p *ConfigurableDataSourceProvider) getDevDashboardDataSources() []schemaversion.DataSourceInfo {
+	return []schemaversion.DataSourceInfo{
+		{
+			Default:    true,
+			UID:        "testdata-type-uid",
+			Type:       "grafana-testdata-datasource",
+			APIVersion: "v1",
+			Name:       "grafana-testdata-datasource",
+			ID:         1,
+		},
+		{
+			Default:    false,
+			UID:        "testdata",
+			Type:       "grafana-testdata-datasource",
+			APIVersion: "", // Frontend testdata datasource has no apiVersion
+			Name:       "TestData",
+			ID:         2,
+		},
+		{
+			Default:    false,
+			UID:        "prometheus-uid",
+			Type:       "prometheus",
+			APIVersion: "v1",
+			Name:       "Prometheus",
+			ID:         3,
+		},
+		{
+			Default:    false,
+			UID:        "loki-uid",
+			Type:       "loki",
+			APIVersion: "v1",
+			Name:       "Loki",
+			ID:         4,
+		},
+		{
+			Default:    false,
+			UID:        "elasticsearch-uid",
+			Type:       "elasticsearch",
+			APIVersion: "v1",
+			Name:       "Elasticsearch",
+			ID:         5,
+		},
+		{
+			Default:    false,
+			UID:        "-- Mixed --",
+			Type:       "mixed",
+			APIVersion: "v1",
+			Name:       "-- Mixed --",
+			ID:         6,
+		},
 	}
 }

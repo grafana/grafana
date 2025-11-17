@@ -388,6 +388,7 @@ describe('RulesFilterV2', () => {
       expect(analytics.trackAlertRuleFilterEvent).toHaveBeenCalled();
       const callArg = (analytics.trackAlertRuleFilterEvent as jest.Mock).mock.calls.at(-1)?.[0];
       expect(callArg.filterMethod).toBe('search-input');
+      expect(callArg.filterVariant).toBe('v2');
       expect(callArg.filter).toMatchObject({ ruleName: 'test', ruleState: 'firing' });
     });
 
@@ -400,6 +401,7 @@ describe('RulesFilterV2', () => {
       expect(analytics.trackAlertRuleFilterEvent).toHaveBeenCalled();
       const callArg = (analytics.trackAlertRuleFilterEvent as jest.Mock).mock.calls.at(-1)?.[0];
       expect(callArg.filterMethod).toBe('search-input');
+      expect(callArg.filterVariant).toBe('v2');
       expect(callArg.filter).toMatchObject({ ruleState: 'firing' });
     });
 

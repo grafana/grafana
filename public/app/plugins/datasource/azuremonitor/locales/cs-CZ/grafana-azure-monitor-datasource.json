@@ -13,11 +13,11 @@
       "label-resource-group": "Skupina zdrojů",
       "label-resource-name": "Název zdroje",
       "label-resource-number": "Zdroj {{resourceNum}}",
-      "label-resource-uri": "URI zdroje ",
+      "label-resource-uri": "",
       "label-subscription": "Předplatné",
       "placeholder-resource-name": "název",
       "tooltip-region": "Oblast kódu zdroje. Volitelné pro jeden zdroj, ale povinné při výběru více zdrojů.",
-      "tooltip-resource-uri": "Ručně upravte <2>identifikátor URI zdroje</2>. Podporuje použití více proměnných šablony (např.: /subscriptions/$subId/resourceGroups/$rg)"
+      "tooltip-resource-uri": ""
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Funkce agregování",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Základní protokoly",
-      "description-basic-logs": "Povolení této funkce zapříčiní vznik nákladů Azure Monitor na dotaz na panelech nástěnek, které dotazují tabulky nakonfigurované pro <2>základní protokoly</2>.",
+      "description-basic-logs": "",
       "label-enable-basic-logs": "Povolit základní protokoly"
     },
     "config-editor": {
@@ -227,16 +227,26 @@
       "select-resource": "Vyberte zdroj"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Použít",
       "button-cancel": "Zrušit",
       "header-location": "Poloha",
+      "header-resource-group": "",
       "header-scope": "Rozsah",
       "header-type": "Typ",
       "heading-selection": "Výběr",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Zobrazují se první {{numResults}} výsledky",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Načítání…",
+      "text-no-recent-resources": "",
       "text-no-resources": "Nebyly nalezeny žádné zdroje",
-      "title-error-occurred": "Při požadování zdrojů ze služby Azure Monitor došlo k chybě"
+      "title-error-occurred": "Při požadování zdrojů ze služby Azure Monitor došlo k chybě",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Rozsah"

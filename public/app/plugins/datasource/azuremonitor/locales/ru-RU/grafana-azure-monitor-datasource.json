@@ -13,11 +13,11 @@
       "label-resource-group": "Группа ресурсов",
       "label-resource-name": "Имя ресурса",
       "label-resource-number": "Ресурс {{resourceNum}}",
-      "label-resource-uri": "URI ресурса ",
+      "label-resource-uri": "",
       "label-subscription": "Подписка",
       "placeholder-resource-name": "имя",
       "tooltip-region": "Область кода ресурса. Необязательно для одного ресурса, но обязательно при выборе нескольких.",
-      "tooltip-resource-uri": "Вручную измените <2>URI ресурса</2>. Поддерживает использование нескольких переменных шаблона (например, /subscriptions/$subId/resourceGroups/$rg)"
+      "tooltip-resource-uri": ""
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Агрегатная функция",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Базовые журналы",
-      "description-basic-logs": "Включение этой функции влечет за собой затраты на каждый запрос Azure Monitor на панелях дашбордов, связанный с таблицами для <2>базовых журналов</2>.",
+      "description-basic-logs": "",
       "label-enable-basic-logs": "Включить базовые журналы"
     },
     "config-editor": {
@@ -227,16 +227,26 @@
       "select-resource": "Выбрать ресурс"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Применить",
       "button-cancel": "Отмена",
       "header-location": "Расположение",
+      "header-resource-group": "",
       "header-scope": "Область применения",
       "header-type": "Тип",
       "heading-selection": "Выбор",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Показано первых результатов: {{numResults}}",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Загрузка…",
+      "text-no-recent-resources": "",
       "text-no-resources": "Ресурсы не найдены",
-      "title-error-occurred": "Ошибка при запросе ресурсов из Azure Monitor"
+      "title-error-occurred": "Ошибка при запросе ресурсов из Azure Monitor",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Область"

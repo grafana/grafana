@@ -44,6 +44,7 @@ describe('browse-dashboards services', () => {
         location: 'abc-123',
         from: expectedFrom,
         limit: PAGE_SIZE,
+        offset: expectedFrom,
       });
     });
   });

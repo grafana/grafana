@@ -170,6 +170,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   timeFrom?: any;
   timeShift?: any;
   hideTimeOverride?: boolean;
+  timeCompare?: string;
   declare options: {
     [key: string]: any;
   };
@@ -509,7 +510,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const oldOptions = this.getOptionsToRemember();
     const prevFieldConfig = this.fieldConfig;
     const oldPluginId = this.type;
-    const wasAngular = this.isAngularPlugin() || Boolean(autoMigrateAngular[oldPluginId]);
+    const angularId = this.autoMigrateFrom || oldPluginId;
+    const wasAngular = Boolean(autoMigrateAngular[angularId]);
     this.cachedPluginOptions[oldPluginId] = {
       properties: oldOptions,
       fieldConfig: prevFieldConfig,
@@ -616,12 +618,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   hasTitle() {
     return this.title && this.title.length > 0;
-  }
-
-  isAngularPlugin(): boolean {
-    return (
-      (this.plugin && this.plugin.angularPanelCtrl) !== undefined || (this.plugin?.meta?.angular?.detected ?? false)
-    );
   }
 
   destroy() {

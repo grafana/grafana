@@ -2,6 +2,7 @@ import { PureComponent } from 'react';
 import * as React from 'react';
 
 import { isEmptyObject, SelectableValue, VariableRefresh } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinner, Stack } from '@grafana/ui';
@@ -29,6 +30,8 @@ interface State {
   externalEnabled: boolean;
   sharingButtonText: string;
 }
+
+const selectors = e2eSelectors.pages.ShareDashboardModal.SnapshotScene;
 
 export class ShareSnapshot extends PureComponent<Props, State> {
   private dashboard: DashboardModel;
@@ -280,7 +283,12 @@ export class ShareSnapshot extends PureComponent<Props, State> {
               {sharingButtonText}
             </Button>
           )}
-          <Button variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
+          <Button
+            variant="primary"
+            disabled={isLoading}
+            onClick={this.createSnapshot()}
+            data-testid={selectors.PublishSnapshot}
+          >
             <Trans i18nKey="share-modal.snapshot.local-button">Publish Snapshot</Trans>
           </Button>
         </Modal.ButtonRow>
@@ -297,9 +305,15 @@ export class ShareSnapshot extends PureComponent<Props, State> {
           <Input
             id="snapshot-url-input"
             value={snapshotUrl}
+            data-testid={selectors.CopyUrlInput}
             readOnly
             addonAfter={
-              <ClipboardButton icon="copy" variant="primary" getText={this.getSnapshotUrl}>
+              <ClipboardButton
+                icon="copy"
+                variant="primary"
+                getText={this.getSnapshotUrl}
+                data-testid={selectors.CopyUrlButton}
+              >
                 <Trans i18nKey="share-modal.snapshot.copy-link-button">Copy</Trans>
               </ClipboardButton>
             }

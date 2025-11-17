@@ -333,6 +333,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
   ];
 
+  if (cfg.featureToggles.alertingTriage) {
+    routes.push({
+      path: '/alerting/alerts',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
+      component: importAlertingComponent(
+        () => import(/* webpackChunkName: "AlertingTriage" */ 'app/features/alerting/unified/triage/Triage')
+      ),
+    });
+  }
+
   return routes;
 }
 

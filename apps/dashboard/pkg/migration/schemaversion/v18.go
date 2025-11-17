@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V18 migrates gauge panel options from the legacy `options-gauge` format to the new `options` format.
 // This migration restructures gauge panel configuration to use the modern options structure with valueOptions.
 //
@@ -42,13 +44,13 @@ package schemaversion
 //	    }
 //	  }
 //	]
-func V18(dashboard map[string]interface{}) error {
+func V18(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 18
 
-	panels, ok := dashboard["panels"].([]interface{})
-	if !ok {
+	if !IsArray(dashboard["panels"]) {
 		return nil
 	}
+	panels := dashboard["panels"].([]interface{})
 
 	for _, p := range panels {
 		panel, ok := p.(map[string]interface{})
@@ -89,12 +91,15 @@ func migrateGaugePanelOptions(panel map[string]interface{}) {
 
 	options["valueOptions"] = valueOptions
 
-	if thresholds, ok := optionsGauge["thresholds"].([]interface{}); ok && len(thresholds) > 0 {
-		reversedThresholds := make([]interface{}, len(thresholds))
-		for i, threshold := range thresholds {
-			reversedThresholds[len(thresholds)-1-i] = threshold
+	if IsArray(optionsGauge["thresholds"]) {
+		thresholds := optionsGauge["thresholds"].([]interface{})
+		if len(thresholds) > 0 {
+			reversedThresholds := make([]interface{}, len(thresholds))
+			for i, threshold := range thresholds {
+				reversedThresholds[len(thresholds)-1-i] = threshold
+			}
+			options["thresholds"] = reversedThresholds
 		}
-		options["thresholds"] = reversedThresholds
 	}
 
 	// Copy any other properties from options-gauge to options

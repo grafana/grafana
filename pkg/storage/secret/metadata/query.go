@@ -28,6 +28,9 @@ var (
 	sqlSecureValueList             = mustTemplate("secure_value_list.sql")
 	sqlSecureValueCreate           = mustTemplate("secure_value_create.sql")
 	sqlSecureValueUpdateExternalId = mustTemplate("secure_value_updateExternalId.sql")
+	sqlSecureValueDelete           = mustTemplate("secure_value_delete.sql")
+	sqlSecureValueLeaseInactive    = mustTemplate("secure_value_lease_inactive.sql")
+	sqlSecureValueListByLeaseToken = mustTemplate("secure_value_list_by_lease_token.sql")
 
 	sqlGetLatestSecureValueVersion     = mustTemplate("secure_value_get_latest_version.sql")
 	sqlSecureValueSetVersionToActive   = mustTemplate("secure_value_set_version_to_active.sql")
@@ -206,5 +209,41 @@ type updateExternalIdSecureValue struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r updateExternalIdSecureValue) Validate() error {
+	return nil // TODO
+}
+
+type deleteSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+	Version   int64
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r deleteSecureValue) Validate() error {
+	return nil // TODO
+}
+
+type leaseInactiveSecureValues struct {
+	sqltemplate.SQLTemplate
+	LeaseToken   string
+	MaxBatchSize uint16
+	MinAge       int64
+	LeaseTTL     int64
+	Now          int64
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r leaseInactiveSecureValues) Validate() error {
+	return nil // TODO
+}
+
+type listSecureValuesByLeaseToken struct {
+	sqltemplate.SQLTemplate
+	LeaseToken string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r listSecureValuesByLeaseToken) Validate() error {
 	return nil // TODO
 }

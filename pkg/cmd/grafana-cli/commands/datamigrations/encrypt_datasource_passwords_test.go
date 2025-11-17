@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -21,9 +22,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationPasswordMigrationCommand(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// setup datasources with password, basic_auth and none
 	store := db.InitTestDB(t)

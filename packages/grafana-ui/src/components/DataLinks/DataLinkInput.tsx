@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
+import { autoUpdate, offset, useFloating } from '@floating-ui/react';
 import Prism, { Grammar, LanguageMap } from 'prismjs';
 import { memo, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
@@ -12,6 +12,7 @@ import { DataLinkBuiltInVars, GrafanaTheme2, VariableOrigin, VariableSuggestion 
 
 import { SlatePrism } from '../../slate-plugins/slate-prism';
 import { useStyles2 } from '../../themes/ThemeContext';
+import { getPositioningMiddleware } from '../../utils/floating';
 import { SCHEMA, makeValue } from '../../utils/slate';
 import { getInputStyles } from '../Input/Input';
 import { Portal } from '../Portal/Portal';
@@ -97,13 +98,7 @@ export const DataLinkInput = memo(
       offset(({ rects }) => ({
         alignmentAxis: rects.reference.width,
       })),
-      flip({
-        fallbackAxisSideDirection: 'start',
-        // see https://floating-ui.com/docs/flip#combining-with-shift
-        crossAxis: false,
-        boundary: document.body,
-      }),
-      shift(),
+      ...getPositioningMiddleware(),
     ];
 
     const { refs, floatingStyles } = useFloating({

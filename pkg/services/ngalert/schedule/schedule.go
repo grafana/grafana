@@ -31,9 +31,6 @@ type ScheduleService interface {
 	Run(context.Context) error
 }
 
-// retryDelay represents how long to wait between each failed rule evaluation.
-const retryDelay = 1 * time.Second
-
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
 //
 //go:generate mockery --name AlertsSender --structname AlertsSenderMock --inpackage --filename alerts_sender_mock.go --with-expecter
@@ -67,7 +64,7 @@ type schedule struct {
 	// each rule gets its own channel and routine
 	registry ruleRegistry
 
-	maxAttempts int64
+	retryConfig RetryConfig
 
 	clock clock.Clock
 
@@ -112,9 +109,17 @@ type schedule struct {
 	recordingWriter RecordingWriter
 }
 
+// RetryConfig configures the exponential backoff for alert rule and recording rule evaluations.
+type RetryConfig struct {
+	MaxAttempts         int64
+	InitialRetryDelay   time.Duration
+	MaxRetryDelay       time.Duration
+	RandomizationFactor float64
+}
+
 // SchedulerCfg is the scheduler configuration.
 type SchedulerCfg struct {
-	MaxAttempts            int64
+	RetryConfig            RetryConfig
 	BaseInterval           time.Duration
 	C                      clock.Clock
 	MinRuleInterval        time.Duration
@@ -136,14 +141,14 @@ type SchedulerCfg struct {
 // NewScheduler returns a new scheduler.
 func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 	const minMaxAttempts = int64(1)
-	if cfg.MaxAttempts < minMaxAttempts {
-		cfg.Log.Warn("Invalid scheduler maxAttempts, using a safe minimum", "configured", cfg.MaxAttempts, "actual", minMaxAttempts)
-		cfg.MaxAttempts = minMaxAttempts
+	if cfg.RetryConfig.MaxAttempts < minMaxAttempts {
+		cfg.Log.Warn("Invalid scheduler maxAttempts, using a safe minimum", "configured", cfg.RetryConfig.MaxAttempts, "actual", minMaxAttempts)
+		cfg.RetryConfig.MaxAttempts = minMaxAttempts
 	}
 
 	sch := schedule{
 		registry:               newRuleRegistry(),
-		maxAttempts:            cfg.MaxAttempts,
+		retryConfig:            cfg.RetryConfig,
 		clock:                  cfg.C,
 		baseInterval:           cfg.BaseInterval,
 		log:                    cfg.Log,
@@ -168,7 +173,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 }
 
 func (sch *schedule) Run(ctx context.Context) error {
-	sch.log.Info("Starting scheduler", "tickInterval", sch.baseInterval, "maxAttempts", sch.maxAttempts)
+	sch.log.Info("Starting scheduler", "tickInterval", sch.baseInterval, "maxAttempts", sch.retryConfig.MaxAttempts)
 	t := ticker.New(sch.clock, sch.baseInterval, sch.metrics.Ticker, sch.log)
 	defer t.Stop()
 
@@ -296,10 +301,11 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	updatedRules := make([]ngmodels.AlertRuleKeyWithVersion, 0, len(updated)) // this is needed for tests only
 	restartedRules := make([]Rule, 0)
 	missingFolder := make(map[string][]string)
+
 	ruleFactory := newRuleFactory(
 		sch.appURL,
 		sch.disableGrafanaFolder,
-		sch.maxAttempts,
+		sch.retryConfig,
 		sch.alertsSender,
 		sch.stateManager,
 		sch.evaluatorFactory,

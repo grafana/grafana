@@ -1,11 +1,12 @@
 #!/bin/bash
 
-cd ../../
+# Support running this file from tilt (where the cwd is devenv/frontend-service), or directly from the root
+if [[ -f build-grafana.sh ]]; then
+  cd ../../
+fi
 
-echo "Go mod cache: $(go env GOMODCACHE), $(ls -1 $(go env GOMODCACHE) | wc -l) items"
-echo "Go build cache: $(go env GOCACHE), $(ls -1 $(go env GOCACHE) | wc -l) items"
-
-# Set cross-compilation env vars only on macOS (Darwin)
+# The docker container, even on macOS, is linux, so we need to cross-compile
+# on macOS hosts to work on linux.
 if [[ "$(uname)" == "Darwin" ]]; then
   echo "Setting up cross-compilation environment for macOS"
   export CGO_ENABLED=0
@@ -13,19 +14,19 @@ if [[ "$(uname)" == "Darwin" ]]; then
   export GOARCH=arm64
 fi
 
-# It's not used by default now that we have CGO-less builds, but keeping this here for a
-# little bit in case it causes issues for anyone.
-if [[ -n "$USE_ZIG" ]]; then
-  echo "Using Zig for cross-compilation"
-  export CGO_ENABLED=1
-  export CC="zig cc -target aarch64-linux"
-  export CXX="zig c++ -target aarch64-linux"
-fi
-
 # Need to build version into the binary so plugin compatibility works correctly
 VERSION=$(jq -r .version package.json)
 
+# Build enterprise if it is linked in
+EXTRA_TAGS=""
+if [[ -f pkg/extensions/ext.go ]]; then
+  EXTRA_TAGS="-tags enterprise"
+fi
+
+# EXTRA_TAGS is intentionally unquoted to build the command
+# shellcheck disable=SC2086
 go build -v \
   -ldflags "-X main.version=${VERSION}" \
   -gcflags "all=-N -l" \
+  ${EXTRA_TAGS} \
   -o ./devenv/frontend-service/build/grafana ./pkg/cmd/grafana

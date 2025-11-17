@@ -4,6 +4,7 @@ import { RequireAtLeastOne } from 'type-fest';
 
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack } from '@grafana/ui';
+import { EnrichmentDrawerExtension } from 'app/features/alerting/unified/components/rule-list/extensions/EnrichmentDrawerExtension';
 import AlertRuleMenu from 'app/features/alerting/unified/components/rule-viewer/AlertRuleMenu';
 import { useDeleteModal } from 'app/features/alerting/unified/components/rule-viewer/DeleteModal';
 import { RedirectToCloneRule } from 'app/features/alerting/unified/components/rules/CloneRule';
@@ -50,6 +51,7 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
   const [deleteModal, showDeleteModal] = useDeleteModal(redirectToListView);
 
   const [showSilenceDrawer, setShowSilenceDrawer] = useState<boolean>(false);
+  const [showEnrichmentDrawer, setShowEnrichmentDrawer] = useState<boolean>(false);
 
   const [redirectToClone, setRedirectToClone] = useState<
     { identifier: RuleIdentifier; isProvisioned: boolean } | undefined
@@ -111,11 +113,15 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
         identifier={identifier}
         handleDelete={(identifier, groupIdentifier) => showDeleteModal(identifier, groupIdentifier)}
         handleSilence={() => setShowSilenceDrawer(true)}
+        handleManageEnrichments={() => setShowEnrichmentDrawer(true)}
         handleDuplicateRule={() => setRedirectToClone({ identifier, isProvisioned })}
       />
       {deleteModal}
       {silenceableRule && showSilenceDrawer && (
         <SilenceGrafanaRuleDrawer ruleUid={ruleUid} onClose={() => setShowSilenceDrawer(false)} />
+      )}
+      {ruleUid && showEnrichmentDrawer && (
+        <EnrichmentDrawerExtension ruleUid={ruleUid} onClose={() => setShowEnrichmentDrawer(false)} />
       )}
       {redirectToClone?.identifier && (
         <RedirectToCloneRule

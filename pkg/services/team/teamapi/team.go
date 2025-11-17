@@ -344,6 +344,13 @@ type SearchTeamsParams struct {
 	// If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.
 	// required:false
 	Query string `json:"query"`
+	// in:query
+	// required:false
+	// default: false
+	AccessControl bool `json:"accesscontrol"`
+	// in:query
+	// required:false
+	Sort string `json:"sort"`
 }
 
 // swagger:parameters createTeam
@@ -431,7 +438,8 @@ func (tapi *TeamAPI) validateTeam(c *contextmodel.ReqContext, teamID int64, prov
 		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
 	}
 
-	if teamDTO.IsProvisioned {
+	isGroupSyncEnabled := tapi.cfg.Raw.Section("auth.scim").Key("group_sync_enabled").MustBool(false)
+	if isGroupSyncEnabled && teamDTO.IsProvisioned {
 		return response.Error(http.StatusBadRequest, provisionedMessage, err)
 	}
 

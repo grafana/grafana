@@ -31,6 +31,9 @@ outputs:
   dockerfile:
     description: Whether the dockerfile or self have changed in any way
     value: ${{ steps.changed-files.outputs.dockerfile_any_changed || 'true' }}
+  devenv:
+    description: Whether the devenv or self have changed in any way
+    value: ${{ steps.changed-files.outputs.devenv_any_changed || 'true' }}
 runs:
   using: composite
   steps:
@@ -86,7 +89,6 @@ runs:
             - '.github/actions/change-detection/**'
             - '**.cue'
             - '.prettier*'
-            - '.betterer*'
             - '.yarnrc.yml'
             - 'eslint.config.js'
             - 'jest.config.js'
@@ -137,6 +139,9 @@ runs:
             - '.vale.ini'
             - '.github/actions/change-detection/**'
             - '${{ inputs.self }}'
+          devenv:
+            - 'devenv/**'
+            - '${{ inputs.self }}'
     - name: Print all change groups
       shell: bash
       run: |
@@ -158,3 +163,5 @@ runs:
         echo " --> ${{ steps.changed-files.outputs.docs_all_changed_files }}"
         echo "Dockerfile: ${{ steps.changed-files.outputs.dockerfile_any_changed || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.dockerfile_all_changed_files }}"
+        echo "devenv: ${{ steps.changed-files.outputs.devenv_any_changed || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.devenv_all_changed_files }}"

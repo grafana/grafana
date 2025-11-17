@@ -12,12 +12,12 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/validator"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegration_SecureValueClient_CRUD(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	setup := testutils.Setup(t)
 
 	validator := validator.ProvideSecureValueValidator()

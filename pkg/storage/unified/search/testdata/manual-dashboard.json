@@ -221,8 +221,7 @@
         "apiVersion": "dashboard.grafana.app",
         "metadata": {
           "name": "ccc",
-          "namespace": "ns",
-          "creationTimestamp": null
+          "namespace": "ns"
         }
       }
     },
@@ -264,8 +263,7 @@
         "apiVersion": "dashboard.grafana.app",
         "metadata": {
           "name": "bbb",
-          "namespace": "ns",
-          "creationTimestamp": null
+          "namespace": "ns"
         }
       }
     },
@@ -309,8 +307,7 @@
         "apiVersion": "dashboard.grafana.app",
         "metadata": {
           "name": "aaa",
-          "namespace": "ns",
-          "creationTimestamp": null
+          "namespace": "ns"
         }
       }
     }

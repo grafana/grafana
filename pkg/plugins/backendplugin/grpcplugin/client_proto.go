@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	trace "go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
@@ -44,12 +44,20 @@ type protoClient struct {
 }
 
 type ProtoClientOpts struct {
-	PluginJSON     plugins.JSONData
-	ExecutablePath string
-	ExecutableArgs []string
-	Env            []string
-	Logger         log.Logger
-	Tracer         trace.Tracer
+	PluginJSON      plugins.JSONData
+	ExecutablePath  string
+	ExecutableArgs  []string
+	Env             []string
+	ContainerMode   ContainerModeOpts
+	SkipHostEnvVars bool
+	Logger          log.Logger
+	Tracer          trace.Tracer
+}
+
+type ContainerModeOpts struct {
+	Enabled bool
+	Image   string
+	Tag     string
 }
 
 func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
@@ -60,6 +68,12 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 			executablePath:   opts.ExecutablePath,
 			executableArgs:   opts.ExecutableArgs,
 			versionedPlugins: pluginSet,
+			containerMode: containerModeOpts{
+				enabled: opts.ContainerMode.Enabled,
+				image:   opts.ContainerMode.Image,
+				tag:     opts.ContainerMode.Tag,
+			},
+			skipHostEnvVars: opts.SkipHostEnvVars,
 		},
 		opts.Logger,
 		opts.Tracer,

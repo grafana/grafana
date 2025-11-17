@@ -2,11 +2,9 @@ import { css, cx } from '@emotion/css';
 import {
   arrow,
   autoUpdate,
-  flip,
   FloatingArrow,
   FloatingFocusManager,
   offset,
-  shift,
   useClick,
   useDismiss,
   useFloating,
@@ -19,6 +17,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { getPositioningMiddleware } from '../../utils/floating';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { IconButton } from '../IconButton/IconButton';
 
@@ -49,6 +48,11 @@ export interface ToggletipProps {
   onOpen?: () => void;
 }
 
+/**
+ * Toggletips, similar to Tooltips, provide contextual support for users when needed. They are hidden by default, a UI trigger or text link are clicked to set them to their visible state. Toggletips, unlike tooltips, are persistent until a user takes action to dismiss them by clicking on the required “X” (close) trigger. Toggletips are capable of containing varying types of complex content including interactive components, buttons, and dropdowns.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-toggletip--docs
+ */
 export const Toggletip = memo(
   ({
     children,
@@ -69,19 +73,14 @@ export const Toggletip = memo(
     const style = styles[theme];
     const [controlledVisible, setControlledVisible] = useState(show);
     const isOpen = show ?? controlledVisible;
+    const floatingUIPlacement = getPlacement(placement);
 
     // the order of middleware is important!
     // `arrow` should almost always be at the end
     // see https://floating-ui.com/docs/arrow#order
     const middleware = [
       offset(8),
-      flip({
-        fallbackAxisSideDirection: 'end',
-        // see https://floating-ui.com/docs/flip#combining-with-shift
-        crossAxis: false,
-        boundary: document.body,
-      }),
-      shift(),
+      ...getPositioningMiddleware(floatingUIPlacement),
       arrow({
         element: arrowRef,
       }),
@@ -89,7 +88,7 @@ export const Toggletip = memo(
 
     const { context, refs, floatingStyles } = useFloating({
       open: isOpen,
-      placement: getPlacement(placement),
+      placement: floatingUIPlacement,
       onOpenChange: (open) => {
         if (show === undefined) {
           setControlledVisible(open);

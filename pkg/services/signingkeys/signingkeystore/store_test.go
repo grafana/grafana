@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -18,9 +19,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationSigningKeyStore(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx, store := context.Background(), NewSigningKeyStore(db.InitTestDB(t))
 

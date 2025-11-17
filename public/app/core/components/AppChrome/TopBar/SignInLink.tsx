@@ -4,12 +4,12 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { isFrontendService } from 'app/core/utils/isFrontendService';
 
 export function SignInLink() {
-  const femt = Boolean(config.featureToggles.multiTenantFrontend);
+  const femt = isFrontendService();
   const location = useLocation();
   const styles = useStyles2(getStyles);
   let loginUrl = femt

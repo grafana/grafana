@@ -22,7 +22,7 @@ import {
   PluginExtensionPoints,
   PluginExtensionTypes,
 } from '@grafana/data';
-import { usePluginLinks } from '@grafana/runtime';
+import { usePluginLinks, usePluginComponents } from '@grafana/runtime';
 import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
 import { TraceViewPluginExtensionContext } from '../types/trace';
@@ -34,6 +34,7 @@ import { trace } from './mocks';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   usePluginLinks: jest.fn(),
+  usePluginComponents: jest.fn(),
   reportInteraction: jest.fn(),
 }));
 
@@ -92,6 +93,10 @@ const setup = (pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean }
   const mockUsePluginLinks = usePluginLinks as jest.MockedFunction<typeof usePluginLinks>;
   mockUsePluginLinks.mockReturnValue(pluginLinks);
 
+  const mockUsePluginComponents = usePluginComponents as jest.MockedFunction<typeof usePluginComponents>;
+  mockUsePluginComponents.mockReturnValue({ components: [], isLoading: false });
+
+  const viewRangeTime: [number, number] = [0, 0];
   const defaultProps = {
     trace,
     timeZone: '',
@@ -99,10 +104,6 @@ const setup = (pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean }
     setSearch: jest.fn(),
     showSpanFilters: true,
     setShowSpanFilters: jest.fn(),
-    showSpanFilterMatchesOnly: false,
-    setShowSpanFilterMatchesOnly: jest.fn(),
-    showCriticalPathSpansOnly: false,
-    setShowCriticalPathSpansOnly: jest.fn(),
     spanFilterMatches: undefined,
     setFocusedSpanIdForSearch: jest.fn(),
     datasourceType: 'tempo',
@@ -110,11 +111,15 @@ const setup = (pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean }
     data: new MutableDataFrame(),
     datasourceName: 'test-datasource',
     datasourceUid: 'test-datasource-uid',
+    updateNextViewRangeTime: jest.fn(),
+    updateViewRangeTime: jest.fn(),
+    viewRange: { time: { current: viewRangeTime } },
   };
 
   return {
     ...render(<TracePageHeader {...defaultProps} />),
     mockUsePluginLinks,
+    mockUsePluginComponents,
   };
 };
 
@@ -128,16 +133,11 @@ describe('TracePageHeader test', () => {
     setup();
 
     const header = document.querySelector('header');
-    const method = getByText(header!, 'POST');
-    const status = getByText(header!, '200');
-    const url = getByText(header!, '/v2/gamma/792edh2w897y2huehd2h89');
-    const duration = getByText(header!, '2.36s');
-    const timestampElement = getByText(header!, '2023-02-05 08:50:56.289');
-    expect(method).toBeInTheDocument();
-    expect(status).toBeInTheDocument();
-    expect(url).toBeInTheDocument();
-    expect(duration).toBeInTheDocument();
-    expect(timestampElement).toBeInTheDocument();
+    expect(getByText(header!, 'POST')).toBeInTheDocument();
+    expect(getByText(header!, '200')).toBeInTheDocument();
+    expect(getByText(header!, '/v2/gamma/792edh2w897y2huehd2h89')).toBeInTheDocument();
+    expect(screen.getAllByText('2.36s')[0]).toBeInTheDocument();
+    expect(getByText(header!, '2023-02-05 08:50:56.289')).toBeInTheDocument();
   });
 
   describe('Plugin Extensions', () => {
@@ -294,7 +294,6 @@ describe('TracePageHeader test', () => {
 
       const button = screen.getByRole('button', { name: /Test Extension/i });
       expect(button).toBeInTheDocument();
-      expect(button).toHaveClass('css-7byezq-button'); // Grafana button primary class
     });
 
     it('should render extension icons when provided', () => {
@@ -480,7 +479,6 @@ describe('TracePageHeader test', () => {
       const buttonElement = feedbackButton.closest('a');
 
       expect(buttonElement).toBeInTheDocument();
-      expect(buttonElement).toHaveClass('css-125ehy6-button'); // Secondary variant class
 
       // Check for icon
       const iconElement = buttonElement?.querySelector('svg');

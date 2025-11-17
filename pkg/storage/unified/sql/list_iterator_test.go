@@ -19,15 +19,15 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 func TestIntegrationListIter(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := context.Background()
 
 	grafanaDB := db.InitTestDB(t)
@@ -87,14 +87,23 @@ func TestIntegrationListIter(t *testing.T) {
 						Group:     item.group,
 						Name:      item.name,
 					},
-					Value:      item.value,
-					PreviousRV: 0,
+					Value: item.value,
 				},
 			})
 			if err != nil {
 				return fmt.Errorf("failed to insert test data: %w", err)
 			}
-			_, err = dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
+
+			if _, err = dbutil.Exec(ctx, tx, sqlResourceUpdateRV, sqlResourceUpdateRVRequest{
+				SQLTemplate: sqltemplate.New(dialect),
+				GUIDToRV: map[string]int64{
+					item.guid: item.resourceVersion,
+				},
+			}); err != nil {
+				return fmt.Errorf("failed to insert test data: %w", err)
+			}
+
+			if _, err = dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
 				SQLTemplate:     sqltemplate.New(dialect),
 				GUID:            item.guid,
 				ResourceVersion: item.resourceVersion,
@@ -110,8 +119,7 @@ func TestIntegrationListIter(t *testing.T) {
 					PreviousRV: item.resourceVersion,
 					Type:       1,
 				},
-			})
-			if err != nil {
+			}); err != nil {
 				return fmt.Errorf("failed to insert resource version: %w", err)
 			}
 		}

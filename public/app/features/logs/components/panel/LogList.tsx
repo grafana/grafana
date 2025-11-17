@@ -23,7 +23,10 @@ import { ConfirmModal, Icon, PopoverContent, useStyles2, useTheme2 } from '@graf
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
+import { LogListFieldSelector } from '../fieldSelector/FieldSelector';
+
 import { InfiniteScrollMode, InfiniteScroll, LoadMoreLogsType } from './InfiniteScroll';
+import { LogDetailsContextProvider, useLogDetailsContext } from './LogDetailsContext';
 import { getGridTemplateColumns, LogLineTimestampResolution } from './LogLine';
 import { LogLineDetails, LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
@@ -31,7 +34,7 @@ import { LogListContextProvider, LogListState, useLogListContext } from './LogLi
 import { LogListControls } from './LogListControls';
 import { LOG_LIST_SEARCH_HEIGHT, LogListSearch } from './LogListSearch';
 import { LogListSearchContextProvider, useLogListSearchContext } from './LogListSearchContext';
-import { preProcessLogs, LogListModel } from './processing';
+import { preProcessLogs, LogListModel, getLevelsFromLogs } from './processing';
 import { useKeyBindings } from './useKeyBindings';
 import { usePopoverMenu } from './usePopoverMenu';
 import { LogLineVirtualization, getLogLineSize, LogFieldDimension, ScrollToLogsEvent } from './virtualization';
@@ -40,6 +43,7 @@ export interface Props {
   app: CoreApp;
   containerElement: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
+  dataFrames?: DataFrame[];
   detailsMode?: LogLineDetailsMode;
   displayedFields: string[];
   enableLogDetails: boolean;
@@ -66,7 +70,7 @@ export interface Props {
   onClickFilterOutString?: (value: string, refId?: string) => void;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  onLogOptionsChange?: (option: LogListControlOptions, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
@@ -75,9 +79,17 @@ export interface Props {
   permalinkedLogId?: string;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
+  prettifyJSON?: boolean;
   setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
+  showFieldSelector?: boolean;
+  /**
+   * Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata
+   * @alpha
+   */
+  showLogAttributes?: boolean;
   showTime: boolean;
+  showUniqueLabels?: boolean;
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
   timestampResolution?: LogLineTimestampResolution;
@@ -88,7 +100,7 @@ export interface Props {
 
 export type LogListFontSize = 'default' | 'small';
 
-export type LogListControlOptions = keyof LogListState | 'wrapLogMessage' | 'prettifyJSON';
+export type LogListOptions = keyof LogListState | 'wrapLogMessage' | 'prettifyLogMessage' | 'defaultDisplayedFields';
 
 type LogListComponentProps = Omit<
   Props,
@@ -107,9 +119,10 @@ type LogListComponentProps = Omit<
 export const LogList = ({
   app,
   displayedFields,
+  dataFrames,
   containerElement,
   logOptionsStorageKey,
-  detailsMode = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.detailsMode`) ?? 'sidebar') : 'sidebar',
+  detailsMode,
   dedupStrategy,
   enableLogDetails,
   eventBus,
@@ -143,9 +156,13 @@ export const LogList = ({
   permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
+  prettifyJSON = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.prettifyLogMessage`, true) : true,
   setDisplayedFields,
   showControls,
+  showFieldSelector,
+  showLogAttributes,
   showTime,
+  showUniqueLabels,
   sortOrder,
   syntaxHighlighting = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true) : true,
   timeRange,
@@ -158,9 +175,7 @@ export const LogList = ({
       app={app}
       containerElement={containerElement}
       dedupStrategy={dedupStrategy}
-      detailsMode={detailsMode}
       displayedFields={displayedFields}
-      enableLogDetails={enableLogDetails}
       filterLevels={filterLevels}
       fontSize={fontSize}
       getRowContextQuery={getRowContextQuery}
@@ -186,36 +201,51 @@ export const LogList = ({
       permalinkedLogId={permalinkedLogId}
       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
       pinnedLogs={pinnedLogs}
+      prettifyJSON={prettifyJSON}
       setDisplayedFields={setDisplayedFields}
       showControls={showControls}
+      showLogAttributes={showLogAttributes}
       showTime={showTime}
+      showUniqueLabels={showUniqueLabels}
       sortOrder={sortOrder}
       syntaxHighlighting={syntaxHighlighting}
       timestampResolution={timestampResolution}
       wrapLogMessage={wrapLogMessage}
     >
-      <LogListSearchContextProvider>
-        <LogListComponent
-          containerElement={containerElement}
-          eventBus={eventBus}
-          getFieldLinks={getFieldLinks}
-          grammar={grammar}
-          initialScrollPosition={initialScrollPosition}
-          infiniteScrollMode={infiniteScrollMode}
-          loading={loading}
-          loadMore={loadMore}
-          logs={logs}
-          showControls={showControls}
-          timeRange={timeRange}
-          timeZone={timeZone}
-        />
-      </LogListSearchContextProvider>
+      <LogDetailsContextProvider
+        containerElement={containerElement}
+        detailsMode={detailsMode}
+        enableLogDetails={enableLogDetails}
+        logs={logs}
+        logOptionsStorageKey={logOptionsStorageKey}
+        showControls={showControls}
+      >
+        <LogListSearchContextProvider>
+          <LogListComponent
+            containerElement={containerElement}
+            dataFrames={dataFrames}
+            eventBus={eventBus}
+            getFieldLinks={getFieldLinks}
+            grammar={grammar}
+            initialScrollPosition={initialScrollPosition}
+            infiniteScrollMode={infiniteScrollMode}
+            loading={loading}
+            loadMore={loadMore}
+            logs={logs}
+            showControls={showControls}
+            showFieldSelector={showFieldSelector}
+            timeRange={timeRange}
+            timeZone={timeZone}
+          />
+        </LogListSearchContextProvider>
+      </LogDetailsContextProvider>
     </LogListContextProvider>
   );
 };
 
 const LogListComponent = ({
   containerElement,
+  dataFrames,
   eventBus = new EventBusSrv(),
   getFieldLinks,
   grammar,
@@ -225,6 +255,7 @@ const LogListComponent = ({
   loadMore,
   logs,
   showControls,
+  showFieldSelector,
   timeRange,
   timeZone,
 }: LogListComponentProps) => {
@@ -232,7 +263,6 @@ const LogListComponent = ({
     app,
     displayedFields,
     dedupStrategy,
-    detailsMode,
     filterLevels,
     fontSize,
     forceEscape,
@@ -242,13 +272,13 @@ const LogListComponent = ({
     onClickFilterOutString,
     permalinkedLogId,
     prettifyJSON,
-    showDetails,
     showTime,
+    showUniqueLabels,
     sortOrder,
     timestampResolution,
-    toggleDetails,
     wrapLogMessage,
   } = useLogListContext();
+  const { detailsMode, showDetails, toggleDetails } = useLogDetailsContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(getListHeight(containerElement, app));
   const theme = useTheme2();
@@ -261,8 +291,13 @@ const LogListComponent = ({
     () =>
       wrapLogMessage
         ? []
-        : virtualization.calculateFieldDimensions(processedLogs, displayedFields, timestampResolution),
-    [displayedFields, processedLogs, timestampResolution, virtualization, wrapLogMessage]
+        : virtualization.calculateFieldDimensions(
+            processedLogs,
+            displayedFields,
+            timestampResolution,
+            showUniqueLabels
+          ),
+    [displayedFields, processedLogs, showUniqueLabels, timestampResolution, virtualization, wrapLogMessage]
   );
   const styles = useStyles2(getStyles, dimensions, displayedFields, { showTime });
   const widthContainer = wrapperRef.current ?? containerElement;
@@ -292,11 +327,13 @@ const LogListComponent = ({
     [filterLogs, levelFilteredLogs, matchingUids]
   );
 
+  // When log lines report size discrepancies, we debounce the calculation reset to give time to
+  // use the smallest log index to reset the heights.
   const debouncedResetAfterIndex = useMemo(() => {
     return debounce((index: number) => {
       listRef.current?.resetAfterIndex(index);
       overflowIndexRef.current = Infinity;
-    }, 25);
+    }, 0);
   }, []);
 
   const debouncedScrollToItem = useMemo(() => {
@@ -337,17 +374,17 @@ const LogListComponent = ({
   }, [wrapLogMessage, showDetails, displayedFields, dedupStrategy]);
 
   useLayoutEffect(() => {
-    if (widthRef.current !== widthContainer.clientWidth) {
-      widthRef.current = widthContainer.clientWidth;
-      debouncedResetAfterIndex(0);
-    }
-  });
-
-  useLayoutEffect(() => {
-    const handleResize = debounce(() => {
+    const handleResize = (entry: ResizeObserverEntry) => {
       setListHeight(getListHeight(containerElement, app, searchVisible));
-    }, 50);
-    const observer = new ResizeObserver(() => handleResize());
+      if (widthRef.current !== entry.contentRect.width) {
+        widthRef.current = entry.contentRect.width;
+      }
+    };
+    const observer = new ResizeObserver((entries: ResizeObserverEntry[]) => {
+      if (entries.length) {
+        handleResize(entries[0]);
+      }
+    });
     observer.observe(containerElement);
     return () => observer.disconnect();
   }, [app, containerElement, searchVisible]);
@@ -393,10 +430,6 @@ const LogListComponent = ({
     [handleTextSelection, toggleDetails]
   );
 
-  const handleLogDetailsResize = useCallback(() => {
-    debouncedResetAfterIndex(0);
-  }, [debouncedResetAfterIndex]);
-
   const focusLogLine = useCallback(
     (log: LogListModel) => {
       const index = filteredLogs.findIndex((filteredLog) => filteredLog.uid === log.uid);
@@ -407,6 +440,8 @@ const LogListComponent = ({
     [debouncedScrollToItem, filteredLogs]
   );
 
+  const logLevels = useMemo(() => getLevelsFromLogs(processedLogs), [processedLogs]);
+
   if (!containerElement || listHeight == null) {
     // Wait for container to be rendered
     return null;
@@ -414,7 +449,7 @@ const LogListComponent = ({
 
   return (
     <div className={styles.logListContainer}>
-      {showControls && <LogListControls eventBus={eventBus} />}
+      {showControls && <LogListControls logLevels={logLevels} eventBus={eventBus} />}
       {detailsMode === 'sidebar' && showDetails.length > 0 && (
         <LogLineDetails
           containerElement={containerElement}
@@ -422,7 +457,7 @@ const LogListComponent = ({
           logs={filteredLogs}
           timeRange={timeRange}
           timeZone={timeZone}
-          onResize={handleLogDetailsResize}
+          showControls={showControls}
         />
       )}
       <div className={styles.logListWrapper} ref={wrapperRef}>
@@ -505,6 +540,9 @@ const LogListComponent = ({
           )}
         </InfiniteScroll>
       </div>
+      {showFieldSelector && processedLogs.length > 0 && dataFrames && (
+        <LogListFieldSelector containerElement={containerElement} dataFrames={dataFrames} logs={processedLogs} />
+      )}
     </div>
   );
 };

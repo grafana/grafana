@@ -1,5 +1,7 @@
 import { Property } from 'csstype';
 import memoize from 'micro-memoize';
+import WKT from 'ol/format/WKT';
+import Geometry from 'ol/geom/Geometry';
 import { CSSProperties } from 'react';
 import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
@@ -15,6 +17,9 @@ import {
   DisplayValueAlignmentFactors,
   DataFrame,
   DisplayProcessor,
+  isDataFrame,
+  FieldSparkline,
+  DecimalCount,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -25,10 +30,11 @@ import {
 } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
+import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellOptions } from '../types';
 
 import { inferPills } from './Cells/PillCell';
-import { AutoCellRenderer, getCellRenderer } from './Cells/renderers';
+import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
 import {
   TableRow,
@@ -692,7 +698,7 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
 
   // Creates a function that converts a DataFrame into an array of TableRows
   // Uses new Function() for performance as it's faster than creating rows using loops
-  const convert = new Function('frame', fnBody) as unknown as FrameToRowsConverter;
+  const convert = new Function('frame', fnBody) as FrameToRowsConverter;
   return convert(frame);
 };
 
@@ -843,6 +849,21 @@ export const processNestedTableRows = (
 
 /**
  * @internal
+ * Calculate the footer height based on the maximum reducer count
+ */
+export const calculateFooterHeight = (fields: Field[]): number => {
+  let maxReducerCount = 0;
+  for (const field of fields) {
+    maxReducerCount = Math.max(maxReducerCount, field.config.custom?.footer?.reducers?.length ?? 0);
+  }
+
+  // Base height (+ padding) + height per reducer
+  return maxReducerCount > 0 ? maxReducerCount * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2 : 0;
+};
+
+/**
+ * @internal
+ * returns the display name of a field
  * returns the display name of a field.
  * We intentionally do not want to use @grafana/data's getFieldDisplayName here,
  * instead we have a call to cacheFieldDisplayNames up in TablePanel to handle this
@@ -935,15 +956,6 @@ export function getApplyToRowBgFn(
 }
 
 /** @internal */
-export function withDataLinksActionsTooltip(field: Field, cellType: TableCellDisplayMode) {
-  return (
-    cellType !== TableCellDisplayMode.DataLinks &&
-    cellType !== TableCellDisplayMode.Actions &&
-    (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0) > 1
-  );
-}
-
-/** @internal */
 export function canFieldBeColorized(
   cellType: TableCellDisplayMode,
   applyToRowBgFn?: (rowIndex: number) => CSSProperties
@@ -955,26 +967,139 @@ export function canFieldBeColorized(
   );
 }
 
-export const displayJsonValue: DisplayProcessor = (value: unknown): DisplayValue => {
-  let displayValue: string;
+export const displayJsonValue: (field: Field) => DisplayProcessor = (field: Field, decimals?: DecimalCount) => {
+  const origDisplay = field.display!;
+  return (value: unknown): DisplayValue => {
+    const displayValue = origDisplay(value, decimals);
 
-  // Handle string values that might be JSON
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value);
-      displayValue = JSON.stringify(parsed, null, ' ');
-    } catch {
-      displayValue = value; // Keep original if not valid JSON
+    let jsonText: string;
+    if (!Array.isArray(value) && !isPlainObject(value)) {
+      const formattedValue = formattedValueToString(displayValue);
+      try {
+        const parsed = JSON.parse(formattedValue);
+        jsonText = JSON.stringify(parsed, null, ' ');
+      } catch {
+        jsonText = formattedValue; // Keep original if not valid JSON
+      }
+    } else {
+      jsonText = JSON.stringify(value, null, ' ');
     }
-  } else {
-    // For non-string values, stringify them
-    try {
-      displayValue = JSON.stringify(value, null, ' ');
-    } catch (error) {
-      // Handle circular references or other stringify errors
-      displayValue = String(value);
+
+    return { ...displayValue, text: jsonText };
+  };
+};
+
+export function prepareSparklineValue(value: unknown, field: Field): FieldSparkline | undefined {
+  if (Array.isArray(value)) {
+    return {
+      y: {
+        name: `${field.name}-sparkline`,
+        type: FieldType.number,
+        values: value,
+        config: {},
+      },
+    };
+  }
+
+  if (isDataFrame(value)) {
+    const timeField = value.fields.find((x) => x.type === FieldType.time);
+    const numberField = value.fields.find((x) => x.type === FieldType.number);
+
+    if (timeField && numberField) {
+      return { x: timeField, y: numberField };
     }
   }
 
-  return { text: displayValue, numeric: Number.NaN };
-};
+  return;
+}
+
+function isPlainObject(value: unknown): value is object {
+  return typeof value === 'object' && value != null && !Array.isArray(value);
+}
+
+export function buildInspectValue(value: unknown, field: Field): [string, TableCellInspectorMode] {
+  const cellOptions = getCellOptions(field);
+
+  let inspectValue: string;
+  let mode = TableCellInspectorMode.text;
+
+  if (field.type === FieldType.geo && value instanceof Geometry) {
+    inspectValue = new WKT().writeGeometry(value, {
+      featureProjection: 'EPSG:3857',
+      dataProjection: 'EPSG:4326',
+    });
+    mode = TableCellInspectorMode.code;
+  } else if (
+    cellOptions.type === TableCellDisplayMode.Sparkline ||
+    getAutoRendererDisplayMode(field) === TableCellDisplayMode.Sparkline
+  ) {
+    // rather than JSON.stringify this, manually format it to make the coordinate tuples more legible to the user.
+    const fieldSparkline = prepareSparklineValue(value, field);
+    inspectValue = '[';
+    if (fieldSparkline != null) {
+      // if an x value exists, render as a tuple [x,y], otherwise just y
+      const buildValString: (idx: number) => string =
+        fieldSparkline.x != null
+          ? (idx) => `[${fieldSparkline.x!.values[idx] ?? 'null'}, ${fieldSparkline.y.values[idx] ?? 'null'}]`
+          : (idx) => `${fieldSparkline.y.values[idx] ?? 'null'}`;
+      for (let i = 0; i < fieldSparkline.y.values.length; i++) {
+        inspectValue += `\n  ${buildValString(i)}${i === fieldSparkline.y.values.length - 1 ? '\n' : ','}`;
+      }
+    }
+    inspectValue += ']';
+    mode = TableCellInspectorMode.code;
+  } else if (cellOptions.type === TableCellDisplayMode.JSONView || Array.isArray(value) || isPlainObject(value)) {
+    inspectValue = JSON.stringify(value, null, '  ');
+    mode = TableCellInspectorMode.code;
+  } else {
+    inspectValue = String(value ?? '');
+  }
+
+  return [inspectValue, mode];
+}
+
+export function getSummaryCellTextAlign(textAlign: TextAlign, cellType: TableCellDisplayMode): TextAlign {
+  // gauge is weird. left-aligned gauge has the viz on the left and its numbers on the right, and vice-versa.
+  // if you center-aligned your gauge... ok.
+  if (cellType === TableCellDisplayMode.Gauge) {
+    return (
+      {
+        left: 'right',
+        right: 'left',
+        center: 'center',
+      } as const
+    )[textAlign];
+  }
+
+  return textAlign;
+}
+
+// we keep this set to avoid spamming the heck out of the console, since it's quite likely that if we fail to parse
+// a value once, it'll happen again and again for many rows in a table, and spamming the console is slow.
+let warnedAboutStyleJsonSet = new Set<string>();
+export function parseStyleJson(rawValue: unknown): CSSProperties | void {
+  // confirms existence of value and serves as a type guard
+  if (typeof rawValue === 'string') {
+    try {
+      const parsedJsonValue = JSON.parse(rawValue);
+      if (parsedJsonValue != null && typeof parsedJsonValue === 'object' && !Array.isArray(parsedJsonValue)) {
+        return parsedJsonValue;
+      }
+    } catch (e) {
+      if (!warnedAboutStyleJsonSet.has(rawValue)) {
+        console.error(`encountered invalid cell style JSON: ${rawValue}`, e);
+        warnedAboutStyleJsonSet.add(rawValue);
+      }
+    }
+  }
+}
+
+// Safari 26 introduced rendering bugs which require us to disable several features of the table.
+export const IS_SAFARI_26 = (() => {
+  if (navigator == null) {
+    return false;
+  }
+  const userAgent = navigator.userAgent;
+  const safariVersionMatch = userAgent.match(/Version\/(\d+)\./);
+  return safariVersionMatch && parseInt(safariVersionMatch[1], 10) === 26;
+})();

@@ -5,20 +5,21 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestParser(t *testing.T) {
 	clients := NewMockResourceClients(t)
-	clients.On("ForKind", dashboardV0.DashboardResourceInfo.GroupVersionKind()).
+	clients.On("ForKind", mock.Anything, dashboardV0.DashboardResourceInfo.GroupVersionKind()).
 		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
-	clients.On("ForKind", dashboardV1.DashboardResourceInfo.GroupVersionKind()).
+	clients.On("ForKind", mock.Anything, dashboardV1.DashboardResourceInfo.GroupVersionKind()).
 		Return(nil, dashboardV1.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
 
 	parser := &parser{

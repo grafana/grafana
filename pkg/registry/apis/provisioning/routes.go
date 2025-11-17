@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -150,24 +150,29 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: check if lister could list too many repositories or resources
-	all, err := b.repositoryLister.Repositories(u.GetNamespace()).List(labels.Everything())
+	all, err := GetRepositoriesInNamespace(request.WithNamespace(r.Context(), u.GetNamespace()), b.store)
 	if err != nil {
 		errhttp.Write(r.Context(), err, w)
 		return
 	}
 
+	legacyStorage := false
+	if b.storageStatus != nil {
+		legacyStorage = dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus)
+	}
+
 	settings := provisioning.RepositoryViewList{
-		Items: make([]provisioning.RepositoryView, len(all)),
+		Items:          make([]provisioning.RepositoryView, len(all)),
+		AllowedTargets: b.allowedTargets,
 		// FIXME: this shouldn't be here in provisioning but at the dual writer or something about the storage
-		LegacyStorage:            dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus),
+		LegacyStorage:            legacyStorage,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
+		AllowImageRendering:      b.allowImageRendering,
 	}
 
 	for i, val := range all {
-		branch := ""
-		if val.Spec.GitHub != nil {
-			branch = val.Spec.GitHub.Branch
-		}
+		branch := val.Branch()
+
 		settings.Items[i] = provisioning.RepositoryView{
 			Name:      val.Name,
 			Title:     val.Spec.Title,

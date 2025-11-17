@@ -10,16 +10,17 @@ import (
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
 	userutils "github.com/grafana/dskit/user"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func ProvideSearchDistributorServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) (grpcserver.Provider, error) {
@@ -89,8 +90,6 @@ var (
 	searchRingRead = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
 		return s != ring.ACTIVE
 	})
-	// operation used by the search-servers to check if they own the namespace
-	searchOwnerRead = ring.NewOp([]ring.InstanceState{ring.JOINING, ring.ACTIVE, ring.LEAVING}, nil)
 )
 
 func (ds *distributorServer) Search(ctx context.Context, r *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
@@ -164,11 +163,9 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 		md = make(metadata.MD)
 	}
 
-	ds.log.Info("distributing request to ", "methodName", methodName, "instanceId", inst.Id, "namespace", namespace)
-
 	err = grpc.SetHeader(ctx, metadata.Pairs("proxied-instance-id", inst.Id))
 	if err != nil {
-		ds.log.Debug("error setting grpc header", err, "err")
+		ds.log.Debug("error setting grpc header", "err", err)
 	}
 
 	return userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), namespace), client.(*RingClient).Client, nil

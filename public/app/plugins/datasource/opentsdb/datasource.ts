@@ -26,8 +26,7 @@ import {
   ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { FetchResponse, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { AnnotationEditor } from './components/AnnotationEditor';
 import { prepareAnnotation } from './migrations';
@@ -38,7 +37,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   url: string;
   name: string;
   withCredentials: boolean;
-  basicAuth: any;
+  basicAuth: string;
   tsdbVersion: number;
   tsdbResolution: number;
   lookupLimit: number;
@@ -196,7 +195,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     );
   }
 
-  targetContainsTemplate(target: any) {
+  targetContainsTemplate(target: OpenTsdbQuery) {
     if (target.filters && target.filters.length > 0) {
       for (let i = 0; i < target.filters.length; i++) {
         if (this.templateSrv.containsTemplate(target.filters[i].filter)) {

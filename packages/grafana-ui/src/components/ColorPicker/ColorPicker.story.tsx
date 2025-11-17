@@ -21,7 +21,7 @@ const meta: Meta<typeof ColorPicker> = {
   },
   args: {
     enableNamedColors: false,
-    color: '#0000ff',
+    color: '#ee0000',
   },
 };
 
@@ -60,7 +60,7 @@ export const CustomTrigger: StoryFn<typeof ColorPicker> = ({ color, enableNamedC
           ref={ref}
           onMouseLeave={hideColorPicker}
           onClick={showColorPicker}
-          style={{ color }}
+          style={{ color: 'white', backgroundColor: color, padding: '8px' }}
           className={clearButton}
         >
           Open color picker

@@ -125,12 +125,15 @@ func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBa
 			resourceUID := fmt.Sprintf("test123-%d", i)
 
 			// Create a mock access client with the test case's permission map
-			checksPerformed := []types.CheckRequest{}
+			checksPerformed := []CheckRequestEX{}
 			mockAccess := &mockAccessClient{
 				allowed:    false, // Default to false
 				allowedMap: tc.permissionMap,
-				checkFn: func(req types.CheckRequest) {
-					checksPerformed = append(checksPerformed, req)
+				checkFn: func(req types.CheckRequest, folder string) {
+					checksPerformed = append(checksPerformed, CheckRequestEX{
+						CheckRequest: req,
+						Folder:       folder,
+					})
 				},
 			}
 
@@ -167,7 +170,7 @@ func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBa
 					}
 				}`, resourceName, resourceUID, nsPrefix+"-ns1", tc.initialFolder, i)
 
-				checksPerformed = []types.CheckRequest{}
+				checksPerformed = []CheckRequestEX{}
 				created, err := server.Create(ctx, &resourcepb.CreateRequest{
 					Value: []byte(resourceJSON),
 					Key:   key,
@@ -232,7 +235,7 @@ func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBa
 				}`, resourceName, resourceUID, nsPrefix+"-ns1", tc.targetFolder, i)
 
 				mockAccess.allowed = false // Reset to use the map
-				checksPerformed = []types.CheckRequest{}
+				checksPerformed = []CheckRequestEX{}
 
 				updated, err := server.Update(ctx, &resourcepb.UpdateRequest{
 					Key:             key,
@@ -494,18 +497,18 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 type mockAccessClient struct {
 	allowed    bool
 	allowedMap map[string]bool
-	checkFn    func(types.CheckRequest)
+	checkFn    func(types.CheckRequest, string)
 	compileFn  func(user types.AuthInfo, req types.ListRequest) types.ItemChecker
 }
 
-func (m *mockAccessClient) Check(ctx context.Context, user types.AuthInfo, req types.CheckRequest) (types.CheckResponse, error) {
+func (m *mockAccessClient) Check(ctx context.Context, user types.AuthInfo, req types.CheckRequest, folder string) (types.CheckResponse, error) {
 	if m.checkFn != nil {
-		m.checkFn(req)
+		m.checkFn(req, folder)
 	}
 
 	// Check specific folder:verb mappings if provided
 	if m.allowedMap != nil {
-		key := fmt.Sprintf("%s:%s", req.Folder, req.Verb)
+		key := fmt.Sprintf("%s:%s", folder, req.Verb)
 		if allowed, exists := m.allowedMap[key]; exists {
 			return types.CheckResponse{Allowed: allowed}, nil
 		}
@@ -514,9 +517,9 @@ func (m *mockAccessClient) Check(ctx context.Context, user types.AuthInfo, req t
 	return types.CheckResponse{Allowed: m.allowed}, nil
 }
 
-func (m *mockAccessClient) Compile(ctx context.Context, user types.AuthInfo, req types.ListRequest) (types.ItemChecker, error) {
+func (m *mockAccessClient) Compile(ctx context.Context, user types.AuthInfo, req types.ListRequest) (types.ItemChecker, types.Zookie, error) {
 	if m.compileFn != nil {
-		return m.compileFn(user, req), nil
+		return m.compileFn(user, req), types.NoopZookie{}, nil
 	}
 	return func(name, folder string) bool {
 		key := fmt.Sprintf("%s:%s", folder, req.Verb)
@@ -524,5 +527,10 @@ func (m *mockAccessClient) Compile(ctx context.Context, user types.AuthInfo, req
 			return allowed
 		}
 		return m.allowed
-	}, nil
+	}, types.NoopZookie{}, nil
+}
+
+type CheckRequestEX struct {
+	types.CheckRequest
+	Folder string
 }

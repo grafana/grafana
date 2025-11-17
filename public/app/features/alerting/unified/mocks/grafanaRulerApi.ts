@@ -162,154 +162,158 @@ export const time_plus_10 = time_0 + 10 * 1000;
 export const time_plus_30 = time_0 + 30 * 1000;
 
 // returns 4 transitions. times is an array of 4 timestamps.
-export const getHistoryResponse = (times: number[]) => ({
-  schema: {
-    fields: [
-      {
-        name: 'time',
-        type: FieldType.time,
-        labels: {},
+export const getHistoryResponse = (times: number[]) => {
+  const timeValues = [...times];
+  const lineValues = [
+    {
+      schemaVersion: 1,
+      previous: 'Pending',
+      current: 'Alerting',
+      value: {
+        A: 1,
+        B: 1,
+        C: 1,
       },
-      {
-        name: 'line',
-        type: FieldType.other,
-        labels: {},
+      condition: 'C',
+      dashboardUID: '',
+      panelID: 0,
+      fingerprint: '141da2d491f61029',
+      ruleTitle: 'alert1',
+      ruleID: 7,
+      ruleUID: 'adnpo0g62bg1sb',
+      labels: {
+        alertname: 'alert1',
+        grafana_folder: 'FOLDER A',
+        handler: '/alerting/*',
       },
-      {
-        name: 'labels',
-        type: FieldType.other,
-        labels: {},
+    },
+    {
+      schemaVersion: 1,
+      previous: 'Alerting',
+      current: 'Normal',
+      value: {
+        A: 1,
+        B: 1,
+        C: 1,
       },
-    ],
-  },
-  data: {
-    values: [
-      [...times],
-      [
-        {
-          schemaVersion: 1,
-          previous: 'Pending',
-          current: 'Alerting',
-          value: {
-            A: 1,
-            B: 1,
-            C: 1,
-          },
-          condition: 'C',
-          dashboardUID: '',
-          panelID: 0,
-          fingerprint: '141da2d491f61029',
-          ruleTitle: 'alert1',
-          ruleID: 7,
-          ruleUID: 'adnpo0g62bg1sb',
-          labels: {
-            alertname: 'alert1',
-            grafana_folder: 'FOLDER A',
-            handler: '/alerting/*',
-          },
-        },
-        {
-          schemaVersion: 1,
-          previous: 'Alerting',
-          current: 'Normal',
-          value: {
-            A: 1,
-            B: 1,
-            C: 1,
-          },
-          condition: 'C',
-          dashboardUID: '',
-          panelID: 0,
-          fingerprint: '141da2d491f61030',
-          ruleTitle: 'alert2',
-          ruleID: 3,
-          ruleUID: 'adna1xso80hdsd',
-          labels: {
-            alertname: 'alert2',
-            grafana_folder: 'FOLDER A',
-            handler: '/alerting/*',
-          },
-        },
-        {
-          schemaVersion: 1,
-          previous: 'Normal',
-          current: 'Pending',
-          value: {
-            A: 1,
-            B: 1,
-            C: 1,
-          },
-          condition: 'C',
-          dashboardUID: '',
-          panelID: 0,
+      condition: 'C',
+      dashboardUID: '',
+      panelID: 0,
+      fingerprint: '141da2d491f61030',
+      ruleTitle: 'alert2',
+      ruleID: 3,
+      ruleUID: 'adna1xso80hdsd',
+      labels: {
+        alertname: 'alert2',
+        grafana_folder: 'FOLDER A',
+        handler: '/alerting/*',
+      },
+    },
+    {
+      schemaVersion: 1,
+      previous: 'Normal',
+      current: 'Pending',
+      value: {
+        A: 1,
+        B: 1,
+        C: 1,
+      },
+      condition: 'C',
+      dashboardUID: '',
+      panelID: 0,
 
-          fingerprint: '141da2d491f61031',
-          ruleTitle: 'alert1',
-          ruleID: 7,
-          ruleUID: 'adnpo0g62bg1sb',
-          labels: {
-            alertname: 'alert1',
-            grafana_folder: 'FOLDER A',
-            handler: '/alerting/*',
-          },
+      fingerprint: '141da2d491f61031',
+      ruleTitle: 'alert1',
+      ruleID: 7,
+      ruleUID: 'adnpo0g62bg1sb',
+      labels: {
+        alertname: 'alert1',
+        grafana_folder: 'FOLDER A',
+        handler: '/alerting/*',
+      },
+    },
+    {
+      schemaVersion: 1,
+      previous: 'Pending',
+      current: 'Alerting',
+      value: {
+        A: 1,
+        B: 1,
+        C: 1,
+      },
+      condition: 'C',
+      dashboardUID: '',
+      panelID: 0,
+      fingerprint: '5d438530c73fc657',
+      ruleTitle: 'alert2',
+      ruleID: 3,
+      ruleUID: 'adna1xso80hdsd',
+      labels: {
+        alertname: 'alert2',
+        grafana_folder: 'FOLDER A',
+        handler: '/alerting/*',
+      },
+    },
+  ];
+  const labelsValues = [
+    {
+      folderUID: 'edlvwh5881z40e',
+      from: 'state-history',
+      group: 'GROUP111',
+      level: 'info',
+      orgID: '1',
+      service_name: 'unknown_service',
+    },
+    {
+      folderUID: 'edlvwh5881z40e',
+      from: 'state-history',
+      group: 'GROUP111',
+      level: 'info',
+      orgID: '1',
+      service_name: 'unknown_service',
+    },
+    {
+      folderUID: 'edlvwh5881z40e',
+      from: 'state-history',
+      group: 'GROUP111',
+      level: 'info',
+      orgID: '1',
+      service_name: 'unknown_service',
+    },
+    {
+      folderUID: 'edlvwh5881z40e',
+      from: 'state-history',
+      group: 'GROUP111',
+      level: 'info',
+      orgID: '1',
+      service_name: 'unknown_service',
+    },
+  ];
+
+  const values: [number[], typeof lineValues, typeof labelsValues] = [timeValues, lineValues, labelsValues];
+
+  return {
+    schema: {
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          labels: {},
         },
         {
-          schemaVersion: 1,
-          previous: 'Pending',
-          current: 'Alerting',
-          value: {
-            A: 1,
-            B: 1,
-            C: 1,
-          },
-          condition: 'C',
-          dashboardUID: '',
-          panelID: 0,
-          fingerprint: '5d438530c73fc657',
-          ruleTitle: 'alert2',
-          ruleID: 3,
-          ruleUID: 'adna1xso80hdsd',
-          labels: {
-            alertname: 'alert2',
-            grafana_folder: 'FOLDER A',
-            handler: '/alerting/*',
-          },
+          name: 'line',
+          type: FieldType.other,
+          labels: {},
+        },
+        {
+          name: 'labels',
+          type: FieldType.other,
+          labels: {},
         },
       ],
-      [
-        {
-          folderUID: 'edlvwh5881z40e',
-          from: 'state-history',
-          group: 'GROUP111',
-          level: 'info',
-          orgID: '1',
-          service_name: 'unknown_service',
-        },
-        {
-          folderUID: 'edlvwh5881z40e',
-          from: 'state-history',
-          group: 'GROUP111',
-          level: 'info',
-          orgID: '1',
-          service_name: 'unknown_service',
-        },
-        {
-          folderUID: 'edlvwh5881z40e',
-          from: 'state-history',
-          group: 'GROUP111',
-          level: 'info',
-          orgID: '1',
-          service_name: 'unknown_service',
-        },
-        {
-          folderUID: 'edlvwh5881z40e',
-          from: 'state-history',
-          group: 'GROUP111',
-          level: 'info',
-          orgID: '1',
-          service_name: 'unknown_service',
-        },
-      ],
-    ],
-  },
-});
+    },
+    data: {
+      values,
+    },
+  };
+};

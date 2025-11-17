@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -31,9 +32,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("Testing Team commands and queries", func(t *testing.T) {
 		sqlStore, cfg := db.InitTestDBWithCfg(t)
 		teamSvc, err := ProvideService(sqlStore, cfg, tracing.InitializeTracerForTest())
@@ -503,9 +503,8 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 }
 
 func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	type searchTeamsTestCase struct {
 		desc              string
 		query             *team.SearchTeamsQuery
@@ -587,9 +586,8 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 // TestSQLStore_GetTeamMembers_ACFilter tests the accesscontrol filtering of
 // team members based on the signed in user permissions
 func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testOrgID := int64(2)
 	userIds := make([]int64, 4)
 

@@ -55,6 +55,8 @@ export interface TimeRangePickerProps {
   onChangeFiscalYearStartMonth?: (month: number) => void;
   onMoveBackward: () => void;
   onMoveForward: () => void;
+  moveForwardTooltip?: string;
+  moveBackwardTooltip?: string;
   onZoom: () => void;
   onError?: (error?: string) => void;
   history?: TimeRange[];
@@ -71,6 +73,9 @@ export interface State {
   isOpen: boolean;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-timerangepicker--docs
+ */
 export function TimeRangePicker(props: TimeRangePickerProps) {
   const [isOpen, setOpen] = useState(false);
 
@@ -78,6 +83,8 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     value,
     onMoveBackward,
     onMoveForward,
+    moveForwardTooltip,
+    moveBackwardTooltip,
     onZoom,
     onError,
     timeZone,
@@ -150,11 +157,14 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   return (
     <ButtonGroup className={styles.container}>
       <ToolbarButton
-        aria-label={t('time-picker.range-picker.backwards-time-aria-label', 'Move time range backwards')}
         variant={variant}
         onClick={onMoveBackward}
-        icon="angle-left"
+        icon="angle-double-left"
         type="button"
+        iconSize="xl"
+        tooltip={
+          moveBackwardTooltip ?? t('time-picker.range-picker.backwards-time-aria-label', 'Move time range backwards')
+        }
         narrow
       />
 
@@ -207,12 +217,15 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
       {timeSyncButton}
 
       <ToolbarButton
-        aria-label={t('time-picker.range-picker.forwards-time-aria-label', 'Move time range forwards')}
         onClick={onMoveForward}
-        icon="angle-right"
-        narrow
+        icon="angle-double-right"
         type="button"
         variant={variant}
+        iconSize="xl"
+        tooltip={
+          moveForwardTooltip ?? t('time-picker.range-picker.forwards-time-aria-label', 'Move time range forwards')
+        }
+        narrow
       />
 
       <Tooltip content={ZoomOutTooltip} placement="bottom">

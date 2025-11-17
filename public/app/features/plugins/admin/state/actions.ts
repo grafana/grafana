@@ -7,7 +7,7 @@ import { Settings } from 'app/core/config';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { StoreState, ThunkResult } from 'app/types/store';
 
-import { invalidatePluginInCache } from '../../loader/cache';
+import { clearPluginInfoInCache } from '../../loader/pluginInfoCache';
 import {
   getRemotePlugins,
   getPluginErrors,
@@ -206,7 +206,7 @@ export const install = createAsyncThunk<
     await updatePanels();
 
     if (installType !== PluginStatus.INSTALL) {
-      invalidatePluginInCache(id);
+      clearPluginInfoInCache(id);
     }
 
     return { id, changes };
@@ -231,7 +231,7 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>
       await uninstallPlugin(id);
       await updatePanels();
 
-      invalidatePluginInCache(id);
+      clearPluginInfoInCache(id);
 
       return {
         id,

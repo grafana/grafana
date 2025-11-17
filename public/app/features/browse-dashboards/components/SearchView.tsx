@@ -136,7 +136,8 @@ export function SearchView({
     onTagSelected: stateManager.onAddTag,
     keyboardEvents,
     onDatasourceChange: searchState.datasource ? stateManager.onDatasourceChange : undefined,
-    onClickItem: stateManager.onSearchItemClicked,
+    onClickItem: searchState.deleted ? undefined : stateManager.onSearchItemClicked,
+    trackingSource: 'browseDashboardsPage_SearchView',
   };
 
   return <SearchResultsTable {...props} />;

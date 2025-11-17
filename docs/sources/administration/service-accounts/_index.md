@@ -15,7 +15,7 @@ labels:
     - cloud
 menuTitle: Service accounts
 title: Service accounts
-weight: 800
+weight: 4200
 refs:
   service-accounts:
     - pattern: /docs/grafana/

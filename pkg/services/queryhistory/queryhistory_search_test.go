@@ -5,13 +5,13 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationGetQueriesFromQueryHistory(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testScenario(t, "When users tries to get query in empty query history, it should return empty result", false, false,
 		func(t *testing.T, sc scenarioContext) {
 			sc.reqContext.Req.Form.Add("datasourceUid", "test")

@@ -99,20 +99,22 @@ describe('BootstrapStep', () => {
       shouldSkipSync: true,
     });
 
-    (useModeOptions as jest.Mock).mockReturnValue([
-      {
-        target: 'instance',
-        label: 'Sync all resources with external storage',
-        description: 'Resources will be synced with external storage',
-        subtitle: 'Use this option if you want to sync your entire instance',
-      },
-      {
-        target: 'folder',
-        label: 'Sync external storage to a new Grafana folder',
-        description: 'A new Grafana folder will be created',
-        subtitle: 'Use this option to sync into a new folder',
-      },
-    ]);
+    (useModeOptions as jest.Mock).mockReturnValue({
+      enabledOptions: [
+        {
+          target: 'instance',
+          label: 'Sync all resources with external storage',
+          description: 'Resources will be synced with external storage',
+          subtitle: 'Use this option if you want to sync your entire instance',
+        },
+        {
+          target: 'folder',
+          label: 'Sync external storage to a new Grafana folder',
+          description: 'A new Grafana folder will be created',
+          subtitle: 'Use this option to sync into a new folder',
+        },
+      ],
+    });
   });
 
   describe('rendering', () => {
@@ -140,9 +142,8 @@ describe('BootstrapStep', () => {
 
     it('should render correct info for GitHub repository type', async () => {
       setup();
-      expect(await screen.findByText('Grafana instance')).toBeInTheDocument();
-      expect(screen.getByText('External storage')).toBeInTheDocument();
-      expect(screen.getAllByText('Empty')).toHaveLength(2); // Both should show empty
+      expect(screen.getAllByText('External storage')).toHaveLength(2);
+      expect(screen.getAllByText('Empty')).toHaveLength(3); // Three elements should have the role "Empty" (2 external + 1 unmanaged)
     });
 
     it('should render correct info for local file repository type', async () => {
@@ -170,7 +171,7 @@ describe('BootstrapStep', () => {
 
       setup();
 
-      expect(await screen.findByText('2 files')).toBeInTheDocument();
+      expect(await screen.getAllByText('2 files')).toHaveLength(2);
     });
 
     it('should display resource counts when resources exist', async () => {
@@ -213,6 +214,7 @@ describe('BootstrapStep', () => {
       setup({
         settingsData: {
           legacyStorage: true,
+          allowImageRendering: true,
           items: [],
           availableRepositoryTypes: [],
         },
@@ -232,25 +234,36 @@ describe('BootstrapStep', () => {
     });
 
     it('should only display instance option when legacy storage exists', async () => {
-      (useModeOptions as jest.Mock).mockReturnValue([
-        {
-          target: 'instance',
-          label: 'Sync all resources with external storage',
-          description: 'Resources will be synced with external storage',
-          subtitle: 'Use this option if you want to sync your entire instance',
-        },
-      ]);
+      (useModeOptions as jest.Mock).mockReturnValue({
+        enabledOptions: [
+          {
+            target: 'instance',
+            label: 'Sync all resources with external storage',
+            description: 'Resources will be synced with external storage',
+            subtitle: 'Use this option if you want to sync your entire instance',
+          },
+        ],
+        disabledOptions: [
+          {
+            target: 'folder',
+            label: 'Sync external storage to a new Grafana folder',
+            description: 'A new Grafana folder will be created',
+            subtitle: 'Use this option to sync into a new folder',
+          },
+        ],
+      });
 
       setup({
         settingsData: {
           legacyStorage: true,
+          allowImageRendering: true,
           items: [],
           availableRepositoryTypes: [],
         },
       });
 
       expect(await screen.findByText('Sync all resources with external storage')).toBeInTheDocument();
-      expect(screen.queryByText('Sync external storage to a new Grafana folder')).not.toBeInTheDocument();
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).not.toBeChecked();
     });
 
     it('should allow selecting different sync targets', async () => {

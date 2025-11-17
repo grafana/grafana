@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Combobox, Field, Input, SecretInput, Stack } from '@grafana/ui';
 
+import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { useBranchOptions } from '../hooks/useBranchOptions';
 import { getHasTokenInstructions } from '../utils/git';
@@ -11,7 +12,7 @@ import { isGitProvider } from '../utils/repositoryTypes';
 import { getGitProviderFields, getLocalProviderFields } from './fields';
 import { WizardFormData } from './types';
 
-export function ConnectStep() {
+export const ConnectStep = memo(function ConnectStep() {
   const {
     register,
     control,
@@ -25,7 +26,11 @@ export function ConnectStep() {
 
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
-  const [repositoryUrl = '', repositoryToken = ''] = watch(['repository.url', 'repository.token']);
+  const [repositoryUrl = '', repositoryToken = '', repositoryTokenUser = ''] = watch([
+    'repository.url',
+    'repository.token',
+    'repository.tokenUser',
+  ]);
   const isGitBased = isGitProvider(type);
 
   const {
@@ -36,6 +41,7 @@ export function ConnectStep() {
     repositoryType: type,
     repositoryUrl,
     repositoryToken,
+    repositoryTokenUser,
   });
 
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
@@ -66,6 +72,7 @@ export function ConnectStep() {
                   id="token"
                   placeholder={gitFields.tokenConfig.placeholder}
                   isConfigured={tokenConfigured}
+                  invalid={!!errors?.repository?.token?.message}
                   onReset={() => {
                     setValue('repository.token', '');
                     setTokenConfigured(false);
@@ -167,6 +174,8 @@ export function ConnectStep() {
           />
         </Field>
       )}
+
+      <FreeTierLimitNote limitType="connection" />
     </Stack>
   );
-}
+});

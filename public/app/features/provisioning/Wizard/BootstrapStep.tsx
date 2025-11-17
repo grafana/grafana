@@ -1,11 +1,17 @@
-import { useEffect } from 'react';
+import { css } from '@emotion/css';
+import { memo, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Trans, t } from '@grafana/i18n';
-import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Box, Card, Field, Icon, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
+import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
+
+import { BootstrapStepCardIcons } from './BootstrapStepCardIcons';
+import { BootstrapStepResourceCounting } from './BootstrapStepResourceCounting';
 import { useStepStatus } from './StepStatusContext';
 import { useModeOptions } from './hooks/useModeOptions';
 import { useResourceStats } from './hooks/useResourceStats';
@@ -16,7 +22,7 @@ export interface Props {
   repoName: string;
 }
 
-export function BootstrapStep({ settingsData, repoName }: Props) {
+export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoName }: Props) {
   const { setStepStatusInfo } = useStepStatus();
   const {
     register,
@@ -28,9 +34,11 @@ export function BootstrapStep({ settingsData, repoName }: Props) {
   } = useFormContext<WizardFormData>();
 
   const selectedTarget = watch('repository.sync.target');
-  const options = useModeOptions(repoName, settingsData);
-  const { target } = options[0];
+  const repositoryType = watch('repository.type');
+  const { enabledOptions, disabledOptions } = useModeOptions(repoName, settingsData);
+  const { target } = enabledOptions?.[0];
   const { resourceCountString, fileCountString, isLoading } = useResourceStats(repoName, settingsData?.legacyStorage);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     // Pick a name nice name based on type+settings
@@ -60,46 +68,45 @@ export function BootstrapStep({ settingsData, repoName }: Props) {
   return (
     <Stack direction="column" gap={2}>
       <Stack direction="column" gap={2}>
-        <Box alignItems="center" padding={4}>
-          <Stack direction="row" gap={4} alignItems="flex-start" justifyContent="center">
-            <Stack direction="column" gap={1} alignItems="center">
-              <Text color="secondary">
-                <Trans i18nKey="provisioning.bootstrap-step.grafana">Grafana instance</Trans>
-              </Text>
-              <Stack direction="row" gap={2}>
-                <Text variant="h4">{resourceCountString}</Text>
-              </Stack>
-            </Stack>
-            <Stack direction="column" gap={1} alignItems="center">
-              <Text color="secondary">
-                <Trans i18nKey="provisioning.bootstrap-step.ext-storage">External storage</Trans>
-              </Text>
-              <Text variant="h4">{fileCountString}</Text>
-            </Stack>
-          </Stack>
-        </Box>
-
         <Controller
           name="repository.sync.target"
           control={control}
           render={({ field: { ref, onChange, ...field } }) => (
             <>
-              {options.map((action) => (
+              {enabledOptions?.map((action) => (
                 <Card
                   key={action.target}
                   isSelected={action.target === selectedTarget}
                   onClick={() => {
-                    onChange(action.target);
+                    if (!action.disabled) {
+                      onChange(action.target);
+                    }
                   }}
                   noMargin
+                  disabled={action.disabled}
                   {...field}
                 >
-                  <Card.Heading>{action.label}</Card.Heading>
+                  <Card.Heading>
+                    <Text variant="h5">{action.label}</Text>
+                  </Card.Heading>
                   <Card.Description>
+                    <div className={styles.divider} />
+
+                    <Box paddingBottom={2}>
+                      <BootstrapStepCardIcons target={action.target} repoType={repositoryType} />
+                    </Box>
                     <Stack direction="column" gap={3}>
                       {action.description}
                       <Text color="primary">{action.subtitle}</Text>
+                      <FreeTierLimitNote limitType="resource" />
                     </Stack>
+                    <div className={styles.divider} />
+
+                    <BootstrapStepResourceCounting
+                      target={action.target}
+                      fileCountString={fileCountString}
+                      resourceCountString={resourceCountString}
+                    />
                   </Card.Description>
                 </Card>
               ))}
@@ -130,11 +137,48 @@ export function BootstrapStep({ settingsData, repoName }: Props) {
                 'My repository connection'
               )}
               // Autofocus the title field if it's the only available option
-              autoFocus={options.length === 1 && options[0].target === 'folder'}
+              autoFocus={enabledOptions?.length === 1 && enabledOptions[0]?.target === 'folder'}
             />
           </Field>
+        )}
+
+        {disabledOptions?.length > 0 && (
+          <>
+            {/* Unavailable options */}
+            <Box marginTop={3}>
+              <Text variant="h4">
+                {t('provisioning.bootstrap-step.unavailable-options.title', 'Unavailable options')}
+              </Text>
+            </Box>
+            {disabledOptions?.map((action) => (
+              <Card key={action.target} noMargin disabled={action.disabled}>
+                <Card.Heading>
+                  <Text variant="h5">{action.label}</Text>
+                </Card.Heading>
+                <Card.Description>
+                  <div className={styles.divider} />
+                  <Icon name="info-circle" className={styles.infoIcon} /> {action.disabledReason}
+                </Card.Description>
+              </Card>
+            ))}
+          </>
         )}
       </Stack>
     </Stack>
   );
-}
+});
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  divider: css({
+    height: 1,
+    width: '100%',
+    backgroundColor: theme.colors.border.medium,
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+  }),
+  infoIcon: css({
+    color: theme.colors.primary.main,
+    marginRight: theme.spacing(0.25),
+    marginBottom: theme.spacing(0.25),
+  }),
+});

@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
@@ -89,7 +88,6 @@ type DataSourceHandler struct {
 	dsInfo                 DataSourceInfo
 	rowLimit               int64
 	userError              string
-	pool                   *pgxpool.Pool
 }
 
 type QueryJson struct {
@@ -108,7 +106,6 @@ func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) er
 	// for security purposes.
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
-		logger.Error("Query error", "err", err)
 		return fmt.Errorf("failed to connect to server - %s", e.userError)
 	}
 
@@ -491,7 +488,6 @@ type dataQueryModel struct {
 	Interval          time.Duration
 	columnNames       []string
 	columnTypes       []*sql.ColumnType
-	columnTypesPGX    []string
 	timeIndex         int
 	timeEndIndex      int
 	metricIndex       int

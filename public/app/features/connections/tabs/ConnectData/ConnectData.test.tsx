@@ -4,7 +4,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getCatalogPluginMock, getPluginsStateMock } from 'app/features/plugins/admin/mocks/mockHelpers';
 import { CatalogPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -166,12 +166,5 @@ describe('Add new connection', () => {
     // Should show the modal if the user has no permissions
     await userEvent.click(await screen.findByText('Sample data source'));
     expect(screen.queryByText(new RegExp(exampleSentenceInModal))).toBeInTheDocument();
-  });
-
-  test('Show request data source and roadmap links', async () => {
-    renderPage([getCatalogPluginMock(), mockCatalogDataSourcePlugin]);
-
-    expect(await screen.findByText('Request a new data source')).toBeInTheDocument();
-    expect(await screen.findByText('View roadmap')).toBeInTheDocument();
   });
 });

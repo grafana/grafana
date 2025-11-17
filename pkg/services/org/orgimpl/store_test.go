@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -34,9 +35,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationOrgDataAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ss := db.InitTestDB(t)
 	orgStore := sqlStore{
@@ -277,9 +276,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 }
 
 func TestIntegrationOrgUserDataAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ss := db.InitTestDB(t)
 	orgUserStore := sqlStore{
@@ -568,9 +565,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 
 // This test will be refactore after the CRUD store  refactor
 func TestIntegrationSQLStore_AddOrgUser(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	store, cfg := db.InitTestDBWithCfg(t)
 	defer func() {
@@ -640,9 +635,7 @@ func TestIntegrationSQLStore_AddOrgUser(t *testing.T) {
 }
 
 func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	store, cfg := db.InitTestDBWithCfg(t)
 	orgUserStore := sqlStore{
@@ -755,9 +748,8 @@ func hasWildcardScope(user identity.Requester, action string) bool {
 }
 
 func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	// The millisecond part is not stored in the DB
 	constNow := time.Date(2022, 8, 17, 20, 34, 58, 0, time.UTC)
 	userimpl.MockTimeNow(constNow)
@@ -821,9 +813,7 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 }
 
 func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	store, cfg := db.InitTestDBWithCfg(t, sqlstore.InitTestDBOpt{})
 	orgUserStore := sqlStore{
@@ -899,9 +889,8 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 }
 
 func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	store, cfg := db.InitTestDBWithCfg(t)
 	orgUserStore := sqlStore{
 		db:      store,

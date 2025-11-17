@@ -73,6 +73,8 @@ type Service interface {
 
 	// this is more "forward compatible", for example supports per-query time ranges
 	QueryDataNew(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
+
+	GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (expr.SQLSchemas, error)
 }
 
 // Gives us compile time error if the service does not adhere to the contract of the interface
@@ -234,7 +236,13 @@ func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheSer
 		headers:                    headers,
 		concurrentQueryLimit:       16, // TODO: make it configurable
 	}
-	return s.QueryDataNew(ctx, nil, false, reqDTO)
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.QueryDataNew(ctx, user, false, reqDTO)
 }
 
 // handleExpressions handles queries when there is an expression.
@@ -325,9 +333,12 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 }
 
 func getTimeRange(query *simplejson.Json, globalFrom string, globalTo string) (string, string, error) {
-	tr, ok := query.CheckGet("timeRange")
-	if !ok { // timeRange json node does not exist, use global from/to
-		return globalFrom, globalTo, nil
+	tr, ok := query.CheckGet("_timeRange")
+	if !ok { // timeRange json node does not exist
+		tr, ok = query.CheckGet("timeRange") // try the old name for backward compatibility
+		if !ok {                             // timeRange json node does not exist, use global from/to
+			return globalFrom, globalTo, nil
+		}
 	}
 	from, err := tr.Get("from").String()
 	if err != nil {

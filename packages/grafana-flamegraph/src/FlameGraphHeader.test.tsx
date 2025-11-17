@@ -8,8 +8,12 @@ import FlameGraphHeader from './FlameGraphHeader';
 import { ColorScheme, SelectedView } from './types';
 
 jest.mock('@grafana/assistant', () => ({
-  useAssistant: jest.fn(() => [false, null]), // [isAvailable, openAssistant]
-  createContext: jest.fn(),
+  useAssistant: jest.fn().mockReturnValue({
+    isAvailable: false,
+    openAssistant: undefined,
+  }),
+  createAssistantContextItem: jest.fn(),
+  OpenAssistantButton: () => <div>OpenAssistantButton</div>,
 }));
 
 describe('FlameGraphHeader', () => {

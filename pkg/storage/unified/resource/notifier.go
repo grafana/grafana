@@ -73,7 +73,7 @@ func (n *notifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
 
 	initialRV, err := n.lastEventResourceVersion(ctx)
 	if errors.Is(err, ErrNotFound) {
-		initialRV = 0 // No events yet, start from the beginning
+		initialRV = snowflakeFromTime(time.Now()) // No events yet, start from the beginning
 	} else if err != nil {
 		n.log.Error("Failed to get last event resource version", "error", err)
 	}
@@ -86,7 +86,7 @@ func (n *notifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
 			case <-ctx.Done():
 				return
 			case <-time.After(opts.PollInterval):
-				for evt, err := range n.eventStore.ListSince(ctx, lastRV-opts.LookbackPeriod.Nanoseconds()) {
+				for evt, err := range n.eventStore.ListSince(ctx, subtractDurationFromSnowflake(lastRV, opts.LookbackPeriod)) {
 					if err != nil {
 						n.log.Error("Failed to list events since", "error", err)
 						continue

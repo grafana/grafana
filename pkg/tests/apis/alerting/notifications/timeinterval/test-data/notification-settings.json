@@ -14,10 +14,13 @@
             ]
           ],
           "mute_time_intervals": [
-            "test-interval", "persisted-interval"
+            "test-interval",
+            "persisted-interval"
           ],
           "active_time_intervals": [
-            "test-interval", "persisted-interval"
+            "test-interval",
+            "persisted-interval",
+            "test-interval-for-active-time-interval"
           ]
         }
       ]
@@ -34,6 +37,15 @@
       },
       {
         "name": "persisted-interval",
+        "time_intervals": [
+          {
+            "start_time": "06:00",
+            "end_time": "23:59"
+          }
+        ]
+      },
+      {
+        "name": "test-interval-for-active-time-interval",
         "time_intervals": [
           {
             "start_time": "06:00",

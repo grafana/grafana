@@ -7,6 +7,7 @@ import {
   type PluginExtensionExposedComponentConfig,
   type PluginExtensionAddedFunctionConfig,
   PluginExtensionPoints,
+  PluginExtensionPointPatterns,
 } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc } from '@grafana/data/internal';
 import { config, isPluginExtensionLink } from '@grafana/runtime';
@@ -20,14 +21,6 @@ export function assertPluginExtensionLink(
 ): asserts extension is PluginExtensionLink {
   if (!isPluginExtensionLink(extension)) {
     throw new Error(errorMessage);
-  }
-}
-
-export function assertLinkPathIsValid(pluginId: string, path: string) {
-  if (!isLinkPathValid(pluginId, path)) {
-    throw new Error(
-      `Invalid link extension. The "path" is required and should start with "/a/${pluginId}/" (currently: "${path}"). Skipping the extension.`
-    );
   }
 }
 
@@ -61,10 +54,6 @@ export function assertIsNotPromise(value: unknown, errorMessage = 'The provided 
   }
 }
 
-export function isLinkPathValid(pluginId: string, path: string) {
-  return Boolean(typeof path === 'string' && path.length > 0 && path.startsWith(`/a/${pluginId}/`));
-}
-
 export function isExtensionPointIdValid({
   extensionPointId,
   pluginId,
@@ -91,7 +80,13 @@ export function isExtensionPointIdValid({
     return false;
   }
 
-  if (!isInsidePlugin && !Object.values<string>(PluginExtensionPoints).includes(extensionPointId)) {
+  if (
+    !isInsidePlugin &&
+    !Object.values<string>(PluginExtensionPoints).includes(extensionPointId) &&
+    !Object.values<string>(PluginExtensionPointPatterns).some((extensionPointPattern) =>
+      extensionPointId.match(extensionPointPattern)
+    )
+  ) {
     log.error(errors.INVALID_EXTENSION_POINT_ID_GRAFANA_EXPOSED);
     return false;
   }

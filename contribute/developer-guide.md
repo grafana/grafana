@@ -18,7 +18,7 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
-brew install node@22
+brew install node@24
 ```
 
 ### Windows
@@ -61,7 +61,7 @@ To remove precommit hooks:
 make lefthook-uninstall
 ```
 
-> We strongly encourage contributors who work on the frontend to install the precommit hooks, even if your IDE formats on save. By doing so, the `.betterer.results` file is kept in sync.
+> We strongly encourage contributors who work on the frontend to install the precommit hooks, even if your IDE formats on save. By doing so, the `eslint-suppressions.json` file is kept in sync.
 
 ## Build Grafana
 
@@ -134,7 +134,13 @@ Next, we'll explain how to build and run the web server that serves these fronte
 
 ### Backend
 
-Build and run the backend by running `make run` in the root directory of the repository. This command compiles the Go source code and starts a web server.
+Build and run the backend by running
+
+```
+make run
+```
+
+in the root directory of the repository. This command compiles the Go source code and starts a web server.
 
 > **Troubleshooting:** Are you having problems with [too many open files](#troubleshooting)?
 
@@ -150,7 +156,8 @@ When you log in for the first time, Grafana asks you to change your password.
 
 #### Build on Windows
 
-The Grafana backend includes SQLite, a database which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download). Eventually, if you use [Scoop](https://scoop.sh), you can install GCC through that.
+The Grafana backend includes SQLite, a database which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC with binutils version 2.37 or later.
+We recommend [MinGW x64](https://www.mingw-w64.org/downloads). Eventually, if you use [Scoop](https://scoop.sh), you can install GCC through that.
 
 You can build the back-end as follows:
 
@@ -311,7 +318,7 @@ ulimit -a
 To change the number of open files allowed, run:
 
 ```
-ulimit -S -n 4096
+ulimit -S -n 8000
 ```
 
 The number of files needed may be different on your environment. To determine the number of open files needed by `make run`, run:

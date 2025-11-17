@@ -47,6 +47,10 @@ func (f inMemoryFS) Open(fn string) (fs.File, error) {
 	return &inMemoryFile{path: fn, reader: bytes.NewReader(f.files[fn])}, nil
 }
 
+func (f inMemoryFS) Type() string {
+	return "in-memory"
+}
+
 // NewFakeFS returns a new FS that always returns ErrFileNotExist when trying to Open() and empty Files().
 func NewFakeFS() FS {
 	return NewInMemoryFS(nil)

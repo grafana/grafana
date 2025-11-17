@@ -11,19 +11,20 @@ import {
   LogsSortOrder,
   systemDateFormats,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { FieldDef, getAllFields } from '../logParser';
-import { identifyOTelLanguage, getOtelFormattedBody } from '../otel/formats';
+import { identifyOTelLanguage, getOtelAttributesField, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
 import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
 import { LogLineVirtualization } from './virtualization';
 
 const TRUNCATION_DEFAULT_LENGTH = 50000;
-const NEWLINES_REGEX = /(\r\n|\n|\r)/g;
+export const NEWLINES_REGEX = /(\r\n|\n|\r)/g;
 
 export class LogListModel implements LogRowModel {
   collapsed: boolean | undefined = undefined;
@@ -53,11 +54,13 @@ export class LogListModel implements LogRowModel {
   timeUtc: string;
   uid: string;
   uniqueLabels: Labels | undefined;
+  uniqueLabelsExpanded = false;
 
   private _body: string | undefined = undefined;
   private _currentSearch: string | undefined = undefined;
   private _grammar?: Grammar;
   private _highlightedBody: string | undefined = undefined;
+  private _highlightedLogAttributesTokens: Array<string | Token> | undefined = undefined;
   private _highlightTokens: Array<string | Token> | undefined = undefined;
   private _fields: FieldDef[] | undefined = undefined;
   private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
@@ -113,6 +116,10 @@ export class LogListModel implements LogRowModel {
       raw = escapeUnescapedString(raw);
     }
     this.raw = raw;
+
+    if (config.featureToggles.otelLogsFormatting && this.otelLanguage) {
+      this.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME] = getOtelAttributesField(this, wrapLogMessage);
+    }
   }
 
   clone() {
@@ -136,7 +143,7 @@ export class LogListModel implements LogRowModel {
           this.raw = reStringified;
         }
       } catch (error) {}
-      const raw = config.featureToggles.otelLogsFormatting && this.otelLanguage ? getOtelFormattedBody(this) : this.raw;
+      const raw = this.raw;
       this._body = this.collapsed
         ? raw.substring(0, this._virtualization?.getTruncationLength(null) ?? TRUNCATION_DEFAULT_LENGTH)
         : raw;
@@ -178,6 +185,19 @@ export class LogListModel implements LogRowModel {
       this._highlightTokens = Prism.tokenize(body, { ...extraGrammar, ...this._grammar });
     }
     return this._highlightTokens;
+  }
+
+  get highlightedLogAttributesTokens() {
+    if (this._highlightedLogAttributesTokens === undefined) {
+      const attributes = this.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME] ?? '';
+      if (!attributes) {
+        return [];
+      }
+      this._grammar = this._grammar ?? generateLogGrammar(this);
+      const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
+      this._highlightedLogAttributesTokens = Prism.tokenize(attributes, { ...extraGrammar, ...this._grammar });
+    }
+    return this._highlightedLogAttributesTokens;
   }
 
   get isJSON() {
@@ -249,6 +269,7 @@ export class LogListModel implements LogRowModel {
   setCurrentSearch(search: string | undefined) {
     this._currentSearch = search;
     this._highlightTokens = undefined;
+    this._highlightedLogAttributesTokens = undefined;
   }
 }
 
@@ -325,4 +346,21 @@ function countNewLines(log: string, limit = Infinity) {
     }
   }
   return count;
+}
+
+export function getLevelsFromLogs(logs: LogListModel[]) {
+  const levels = new Set<LogLevel>();
+  for (const log of logs) {
+    levels.add(log.logLevel);
+  }
+  return Array.from(levels).filter((level) => level != null);
+}
+
+export function getNormalizedFieldName(field: string) {
+  if (field === LOG_LINE_BODY_FIELD_NAME) {
+    return t('logs.log-line-details.log-line-field', 'Log line');
+  } else if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME) {
+    return t('logs.log-line-details.log-attributes-field', 'OTel attributes');
+  }
+  return field;
 }

@@ -13,11 +13,11 @@
       "label-resource-group": "Erőforráscsoport",
       "label-resource-name": "Erőforrásnév",
       "label-resource-number": "Erőforrás {{resourceNum}}",
-      "label-resource-uri": "Erőforrás-URI-k ",
+      "label-resource-uri": "",
       "label-subscription": "Előfizetés",
       "placeholder-resource-name": "név",
       "tooltip-region": "Az erőforrás kódterülete. Egy erőforrás esetén nem kötelező, de több erőforrás kiválasztásakor kötelező.",
-      "tooltip-resource-uri": "Az <2>erőforrás-uri</2> manuálisan szerkesztendő. Több sablonváltozó használatát támogatja (pl.: /subscriptions/$subId/resourceGroups/$rg)"
+      "tooltip-resource-uri": ""
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Összesítési függvény",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Alapvető naplók",
-      "description-basic-logs": "A funkció engedélyezése esetén lekérdezésenkénti Azure Monitor-költségek merülnek fel azon irányítópult-paneleken, amelyek lekérdezik az <2>Alapvető naplókhoz</2> konfigurált táblákat.",
+      "description-basic-logs": "",
       "label-enable-basic-logs": "Alapvető naplók engedélyezése"
     },
     "config-editor": {
@@ -227,16 +227,26 @@
       "select-resource": "Válasszon ki egy erőforrást"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Alkalmaz",
       "button-cancel": "Mégse",
       "header-location": "Hely",
+      "header-resource-group": "",
       "header-scope": "Hatókör",
       "header-type": "Típus",
       "heading-selection": "Kiválasztás",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Az első {{numResults}} találat megjelenítése",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Betöltés…",
+      "text-no-recent-resources": "",
       "text-no-resources": "Nem található erőforrás",
-      "title-error-occurred": "Hiba történt az erőforrások Azure Monitor szolgáltatásból történő lekérése során"
+      "title-error-occurred": "Hiba történt az erőforrások Azure Monitor szolgáltatásból történő lekérése során",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Hatókör"

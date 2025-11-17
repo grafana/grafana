@@ -1,10 +1,8 @@
 import {
   arrow,
   autoUpdate,
-  flip,
   FloatingArrow,
   offset,
-  shift,
   useDismiss,
   useFloating,
   useFocus,
@@ -18,6 +16,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { getPositioningMiddleware } from '../../utils/floating';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
 
@@ -35,24 +34,22 @@ export interface TooltipProps {
   interactive?: boolean;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-tooltip--docs
+ */
 export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
   ({ children, theme, interactive, show, placement, content }, forwardedRef) => {
     const arrowRef = useRef(null);
     const [controlledVisible, setControlledVisible] = useState(show);
     const isOpen = show ?? controlledVisible;
+    const floatingUIPlacement = getPlacement(placement);
 
     // the order of middleware is important!
     // `arrow` should almost always be at the end
     // see https://floating-ui.com/docs/arrow#order
     const middleware = [
       offset(8),
-      flip({
-        fallbackAxisSideDirection: 'end',
-        // see https://floating-ui.com/docs/flip#combining-with-shift
-        crossAxis: false,
-        boundary: document.body,
-      }),
-      shift(),
+      ...getPositioningMiddleware(floatingUIPlacement),
       arrow({
         element: arrowRef,
       }),
@@ -60,7 +57,7 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
 
     const { context, refs, floatingStyles } = useFloating({
       open: isOpen,
-      placement: getPlacement(placement),
+      placement: floatingUIPlacement,
       onOpenChange: setControlledVisible,
       middleware,
       whileElementsMounted: autoUpdate,

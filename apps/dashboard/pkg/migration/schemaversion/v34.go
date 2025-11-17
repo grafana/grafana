@@ -1,5 +1,10 @@
 package schemaversion
 
+import (
+	"context"
+	"fmt"
+)
+
 // V34 migrates CloudWatch queries that use multiple statistics into separate queries.
 //
 // This migration addresses CloudWatch queries where a single query uses multiple statistics
@@ -53,31 +58,33 @@ package schemaversion
 //	  { name: "CloudWatch Alerts - Maximum", dimensions: {"InstanceId": "i-123"}, namespace: "AWS/EC2", region: "us-east-1", prefixMatching: false, statistic: "Maximum" },
 //	  { name: "CloudWatch Alerts - Minimum", dimensions: {"InstanceId": "i-123"}, namespace: "AWS/EC2", region: "us-east-1", prefixMatching: false, statistic: "Minimum" }
 //	]
-func V34(dashboard map[string]interface{}) error {
+func V34(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = int(34)
 
-	// Migrate panel queries if panels exist
-	panels, _ := dashboard["panels"].([]interface{})
-	for _, panel := range panels {
-		p, ok := panel.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		migrateCloudWatchQueriesInPanel(p)
-
-		// Handle nested panels in collapsed rows
-		nestedPanels, hasNested := p["panels"].([]interface{})
-		if !hasNested {
-			continue
-		}
-
-		for _, nestedPanel := range nestedPanels {
-			np, ok := nestedPanel.(map[string]interface{})
+	// Migrate panel queries if panels exist and are an array
+	if panelsValue, exists := dashboard["panels"]; exists && IsArray(panelsValue) {
+		panels := panelsValue.([]interface{})
+		for _, panel := range panels {
+			p, ok := panel.(map[string]interface{})
 			if !ok {
 				continue
 			}
-			migrateCloudWatchQueriesInPanel(np)
+
+			migrateCloudWatchQueriesInPanel(p)
+
+			// Handle nested panels in collapsed rows
+			if !IsArray(p["panels"]) {
+				continue
+			}
+			nestedPanels := p["panels"].([]interface{})
+
+			for _, nestedPanel := range nestedPanels {
+				np, ok := nestedPanel.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				migrateCloudWatchQueriesInPanel(np)
+			}
 		}
 	}
 
@@ -89,10 +96,10 @@ func V34(dashboard map[string]interface{}) error {
 
 // migrateCloudWatchQueriesInPanel migrates CloudWatch queries within a panel that use multiple statistics.
 func migrateCloudWatchQueriesInPanel(panel map[string]interface{}) {
-	targets, ok := panel["targets"].([]interface{})
-	if !ok {
+	if !IsArray(panel["targets"]) {
 		return
 	}
+	targets := panel["targets"].([]interface{})
 
 	var newTargets []interface{}
 	var additionalTargets []interface{}
@@ -109,20 +116,32 @@ func migrateCloudWatchQueriesInPanel(panel map[string]interface{}) {
 			continue
 		}
 
-		// Add CloudWatch fields if missing
-		if _, exists := t["metricEditorMode"]; !exists {
-			t["metricEditorMode"] = 0
+		// Add CloudWatch fields if missing (matches frontend migrateCloudWatchQuery logic)
+		if _, hasMetricQueryType := t["metricQueryType"]; !hasMetricQueryType {
+			t["metricQueryType"] = 0 // MetricQueryType.Search
 		}
-		if _, exists := t["metricQueryType"]; !exists {
-			t["metricQueryType"] = 0
+
+		if _, hasMetricEditorMode := t["metricEditorMode"]; !hasMetricEditorMode {
+			metricQueryType := GetIntValue(t, "metricQueryType", 0)
+			if metricQueryType == 1 { // MetricQueryType.Insights
+				t["metricEditorMode"] = 1 // MetricEditorMode.Code
+			} else {
+				expression := GetStringValue(t, "expression")
+				if expression != "" {
+					t["metricEditorMode"] = 1 // MetricEditorMode.Code
+				} else {
+					t["metricEditorMode"] = 0 // MetricEditorMode.Builder
+				}
+			}
 		}
 
 		// Get valid statistics (including null and empty strings)
 		validStats, isEmpty := getValidStatistics(t["statistics"])
 
-		// Handle empty array case (preserve it)
+		// Handle empty array case (delete statistics field like frontend)
 		if isEmpty {
-			// Keep empty array as-is
+			// Delete statistics field to match frontend behavior
+			delete(t, "statistics")
 			newTargets = append(newTargets, t)
 			continue
 		}
@@ -136,21 +155,20 @@ func migrateCloudWatchQueriesInPanel(panel map[string]interface{}) {
 			// No valid statistics - keep query as-is
 			newTargets = append(newTargets, t)
 		case 1:
-			// Single statistic - set statistic field if not null
+			// Single statistic - set statistic field
+			// Frontend doesn't set statistic property for null values
 			if validStats[0] != nil {
-				if statString, ok := validStats[0].(string); ok {
-					t["statistic"] = statString
-				}
+				t["statistic"] = validStats[0]
 			}
 			newTargets = append(newTargets, t)
 		default:
 			// Multiple statistics - create separate queries
 			for i, stat := range validStats {
 				newQuery := copyMap(t)
+				// Set statistic field
+				// Frontend doesn't set statistic property for null values
 				if stat != nil {
-					if statString, ok := stat.(string); ok {
-						newQuery["statistic"] = statString
-					}
+					newQuery["statistic"] = stat
 				}
 
 				if i == 0 {
@@ -173,10 +191,10 @@ func migrateCloudWatchAnnotationQueries(dashboard map[string]interface{}) {
 		return
 	}
 
-	annotationsList, ok := annotations["list"].([]interface{})
-	if !ok {
+	if !IsArray(annotations["list"]) {
 		return
 	}
+	annotationsList := annotations["list"].([]interface{})
 
 	var additionalAnnotations []interface{}
 
@@ -191,14 +209,15 @@ func migrateCloudWatchAnnotationQueries(dashboard map[string]interface{}) {
 		}
 
 		// Get original name for suffix generation
-		originalName, _ := a["name"].(string)
+		originalName := GetStringValue(a, "name")
 
 		// Get valid statistics (including null and empty strings)
 		validStats, isEmpty := getValidStatistics(a["statistics"])
 
-		// Handle empty array case (preserve it)
+		// Handle empty array case (delete statistics field like frontend)
 		if isEmpty {
-			// Keep empty array as-is
+			// Delete statistics field to match frontend behavior
+			delete(a, "statistics")
 			annotationsList[i] = a
 			continue
 		}
@@ -210,12 +229,11 @@ func migrateCloudWatchAnnotationQueries(dashboard map[string]interface{}) {
 			delete(a, "statistics")
 			annotationsList[i] = a
 		case 1:
-			// Single statistic - set statistic field if not null
+			// Single statistic - set statistic field (matches frontend behavior)
 			delete(a, "statistics")
+			// Frontend doesn't set statistic property for null values
 			if validStats[0] != nil {
-				if statString, ok := validStats[0].(string); ok {
-					a["statistic"] = statString
-				}
+				a["statistic"] = validStats[0]
 			}
 			annotationsList[i] = a
 		default:
@@ -223,11 +241,10 @@ func migrateCloudWatchAnnotationQueries(dashboard map[string]interface{}) {
 			delete(a, "statistics")
 			for j, stat := range validStats {
 				newAnnotation := copyMap(a)
-
+				// Set statistic field (matches frontend behavior)
+				// Frontend doesn't set statistic property for null values
 				if stat != nil {
-					if statString, ok := stat.(string); ok {
-						newAnnotation["statistic"] = statString
-					}
+					newAnnotation["statistic"] = stat
 				}
 
 				// Add suffix to name
@@ -262,14 +279,9 @@ func getValidStatistics(statisticsField interface{}) ([]interface{}, bool) {
 		return nil, true // Return nil with true flag to indicate "empty array"
 	}
 
-	var valid []interface{}
-	for _, stat := range statistics {
-		// Include null and strings (including empty strings)
-		if stat == nil || isString(stat) {
-			valid = append(valid, stat)
-		}
-	}
-	return valid, false
+	// Frontend processes ALL values in statistics array, regardless of type
+	// It doesn't filter out invalid types - it processes them as-is
+	return statistics, false
 }
 
 // getSuffixForStat returns the appropriate suffix for annotation names
@@ -283,7 +295,20 @@ func getSuffixForStat(stat interface{}) string {
 		}
 		return statString
 	}
-	return ""
+	// For non-string types, convert to string representation like JavaScript does
+	switch v := stat.(type) {
+	case map[string]interface{}:
+		return "[object Object]" // JavaScript behavior for objects
+	case []interface{}:
+		return "" // JavaScript behavior for arrays (empty string)
+	case bool:
+		if v {
+			return "true"
+		}
+		return "false"
+	default:
+		return fmt.Sprintf("%v", stat) // Numbers and other types
+	}
 }
 
 // copyMap creates a shallow copy of a map
@@ -293,12 +318,6 @@ func copyMap(original map[string]interface{}) map[string]interface{} {
 		copy[k] = v
 	}
 	return copy
-}
-
-// isString checks if value is a string
-func isString(value interface{}) bool {
-	_, ok := value.(string)
-	return ok
 }
 
 // isCloudWatchQuery checks if a query target is a CloudWatch query.

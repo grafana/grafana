@@ -19,7 +19,7 @@ import { QuerySettings } from './QuerySettings';
 export type Props = DataSourcePluginOptionsEditorProps<LokiOptions>;
 
 const makeJsonUpdater =
-  <T extends any>(field: keyof LokiOptions) =>
+  <T,>(field: keyof LokiOptions) =>
   (options: DataSourceSettings<LokiOptions>, value: T): DataSourceSettings<LokiOptions> => {
     return {
       ...options,

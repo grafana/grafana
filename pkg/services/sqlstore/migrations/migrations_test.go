@@ -19,6 +19,7 @@ import (
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMigrations(t *testing.T) {
@@ -72,9 +73,7 @@ func TestMigrations(t *testing.T) {
 }
 
 func TestIntegrationMigrationLock(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	dbType := sqlutil.GetTestDBType()
 	// skip for SQLite since there is no database locking (only migrator locking)

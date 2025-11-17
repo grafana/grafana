@@ -27,6 +27,8 @@ type ZanzanaClientSettings struct {
 	// URL called to perform exchange request.
 	// Only used when mode is set to client.
 	TokenExchangeURL string
+	// Namespace to use for the token.
+	TokenNamespace string
 }
 
 type ZanzanaServerSettings struct {
@@ -112,6 +114,10 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zc.TokenExchangeURL = clientSec.Key("token_exchange_url").MustString("")
 	zc.Addr = clientSec.Key("address").MustString("")
 	zc.ServerCertFile = clientSec.Key("tls_cert").MustString("")
+
+	// TODO: read Token and TokenExchangeURL from grpc_client_authentication section
+	grpcClientAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	zc.TokenNamespace = grpcClientAuthSection.Key("token_namespace").MustString("stacks-" + cfg.StackID)
 
 	cfg.ZanzanaClient = zc
 

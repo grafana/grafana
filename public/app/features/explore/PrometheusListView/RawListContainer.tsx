@@ -16,7 +16,11 @@ import {
   RawPrometheusListItemEmptyValue,
 } from './utils/getRawPrometheusListItemsFromDataFrame';
 
-export type instantQueryRawVirtualizedListData = { Value: string; __name__: string; [index: string]: string };
+export type instantQueryRawVirtualizedListData = {
+  Value: string;
+  __name__?: string;
+  [index: string]: string | undefined;
+};
 
 export interface RawListContainerProps {
   tableResult: DataFrame;
@@ -122,6 +126,7 @@ const RawListContainer = (props: RawListContainerProps) => {
           className={styles.switchWrapper}
           label={t('explore.raw-list-container.label-expand-results', 'Expand results')}
           htmlFor={'isExpandedView'}
+          noMargin
         >
           <div className={styles.switch}>
             <Switch
@@ -170,7 +175,7 @@ const RawListContainer = (props: RawListContainerProps) => {
                       isExpandedView={isExpandedView}
                       valueLabels={filteredValueLabels}
                       totalNumberOfValues={valueLabels.length}
-                      listKey={items[index].__name__}
+                      listKey={items[index].__name__ || `item-${index}`}
                       listItemData={items[index]}
                     />
                   </div>

@@ -33,6 +33,8 @@ interface MetricsBrowserContextType {
   // Data and selection state
   metrics: Metric[];
   labelKeys: string[];
+  isLoadingLabelKeys: boolean;
+  isLoadingLabelValues: boolean;
   labelValues: Record<string, string[]>;
   selectedMetric: string;
   selectedLabelKeys: string[];
@@ -78,6 +80,8 @@ export function MetricsBrowserProvider({
     validationStatus,
     metrics,
     labelKeys,
+    isLoadingLabelKeys,
+    isLoadingLabelValues,
     labelValues,
     selectedMetric,
     selectedLabelKeys,
@@ -109,6 +113,8 @@ export function MetricsBrowserProvider({
       getSelector,
       metrics,
       labelKeys,
+      isLoadingLabelKeys,
+      isLoadingLabelValues,
       labelValues,
       selectedMetric,
       selectedLabelKeys,
@@ -128,16 +134,18 @@ export function MetricsBrowserProvider({
       setSeriesLimit,
       validationStatus,
       onChange,
-      metrics,
       getSelector,
+      metrics,
       labelKeys,
+      isLoadingLabelKeys,
+      isLoadingLabelValues,
       labelValues,
       selectedMetric,
       selectedLabelKeys,
       selectedLabelValues,
+      handleSelectedMetricChange,
       handleSelectedLabelKeyChange,
       handleSelectedLabelValueChange,
-      handleSelectedMetricChange,
       handleValidation,
       handleClear,
     ]

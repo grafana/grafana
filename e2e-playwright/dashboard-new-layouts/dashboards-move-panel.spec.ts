@@ -8,6 +8,7 @@ test.use({
   featureToggles: {
     kubernetesDashboards: true,
     dashboardNewLayouts: true,
+    dashboardUndoRedo: true,
     groupByVariable: true,
   },
   // these tests require a larger viewport
@@ -46,7 +47,7 @@ test.describe(
 
     // Note, moving a panel from a nested row to a parent row currently just deletes the panel
     // This test will need to be updated once the correct behavior is implemented.
-    test('can move panel from nested row to parent row', async ({ gotoDashboardPage, selectors, page }) => {
+    test.skip('can move panel from nested row to parent row', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();

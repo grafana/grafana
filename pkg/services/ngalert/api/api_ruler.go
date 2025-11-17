@@ -264,6 +264,7 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 // RouteGetRulesConfig returns all alert rules that are available to the current user
 func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Response {
 	if strings.ToLower(c.Query("deleted")) == "true" {
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) {
 			return ErrResp(http.StatusBadRequest, errors.New("restore of deleted rules is not enabled"), "")
 		}
@@ -550,6 +551,9 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 			updates := make([]ngmodels.UpdateRule, 0, len(finalChanges.Update))
 			for _, update := range finalChanges.Update {
 				logger.Debug("Updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
+				if ngmodels.IsNoGroupRuleGroup(update.Existing.RuleGroup) && !ngmodels.IsNoGroupRuleGroup(update.New.RuleGroup) {
+					return fmt.Errorf("%w: cannot move rule out of this group", ngmodels.ErrAlertRuleFailedValidation)
+				}
 				updates = append(updates, ngmodels.UpdateRule{
 					Existing: update.Existing,
 					New:      *update.New,

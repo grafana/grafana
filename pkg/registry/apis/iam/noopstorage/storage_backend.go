@@ -61,3 +61,9 @@ func (c *StorageBackendImpl) WatchWriteEvents(ctx context.Context) (<-chan *reso
 func (c *StorageBackendImpl) WriteEvent(context.Context, resource.WriteEvent) (int64, error) {
 	return 0, errNoopStorage
 }
+
+func (c *StorageBackendImpl) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
+	return func(yield func(resource.ResourceLastImportTime, error) bool) {
+		yield(resource.ResourceLastImportTime{}, errNoopStorage)
+	}
+}

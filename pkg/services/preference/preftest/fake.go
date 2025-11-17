@@ -35,6 +35,6 @@ func (f *FakePreferenceService) Patch(ctx context.Context, cmd *pref.PatchPrefer
 	return f.ExpectedError
 }
 
-func (f *FakePreferenceService) DeleteByUser(context.Context, int64) error {
+func (f *FakePreferenceService) Delete(context.Context, *pref.DeleteCommand) error {
 	return f.ExpectedError
 }
