@@ -100,7 +100,7 @@ client_secret = 0ldS3cretKey
 rendering_ignore_https_errors = true
 
 [feature_toggles]
-enable = newNavigation
+newNavigation = true
 ```
 
 You can override variables on Linux machines with:
@@ -2832,13 +2832,17 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise](../
 
 ### `[feature_toggles]`
 
+#### `feature_name = true|false`
+
+Set each feature toggle to `true` to enable it or `false` to disable it. Some feature toggles are on by default, so set the toggle to `false` to disable that default behavior, for example, `exploreMixedDatasource = false`.
+
 #### `enable`
 
-Keys of features to enable, separated by space.
+{{< admonition type="note" >}}
+This option is deprecated and will be removed in a future major release. Use individual toggle entries instead.
+{{< /admonition >}}
 
-#### `FEATURE_TOGGLE_NAME = false`
-
-Some feature toggles for stable features are on by default. Use this setting to disable an on-by-default feature toggle with the name FEATURE_TOGGLE_NAME, for example, `exploreMixedDatasource = false`.
+Keys of features to enable, separated by spaces.
 
 <hr>
 
