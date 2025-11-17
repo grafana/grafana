@@ -474,25 +474,7 @@ function GroupField({
   return (
     <>
       <Label>
-        <Stack gap={0.5} alignItems="center">
-          <span>
-            <Trans i18nKey="alerting.search.property.evaluation-group">Evaluation group</Trans>
-          </span>
-          <Tooltip
-            content={
-              <Trans i18nKey="alerting.rules-filter.evaluation-group-tooltip">
-                Showing the first 500 evaluation groups. If you have more groups or can&apos;t find yours, use the
-                search input above with group: syntax (e.g., group:cpu-usage).
-              </Trans>
-            }
-          >
-            <Icon
-              name="info-circle"
-              size="sm"
-              title={t('alerting.rules-filter.evaluation-group-tooltip-title', 'Evaluation group filter help')}
-            />
-          </Tooltip>
-        </Stack>
+        <Trans i18nKey="alerting.search.property.evaluation-group">Evaluation group</Trans>
       </Label>
       <Controller
         name="groupName"
