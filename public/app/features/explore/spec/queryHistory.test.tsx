@@ -50,7 +50,7 @@ jest.mock('@grafana/runtime', () => ({
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: () => true,
     isSignedIn: true,

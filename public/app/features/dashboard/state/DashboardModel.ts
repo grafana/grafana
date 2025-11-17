@@ -35,7 +35,7 @@ import {
   templateVariableValueUpdated,
 } from 'app/types/events';
 
-import { appEvents } from '../../../core/core';
+import { appEvents } from '../../../core/app_events';
 import { dispatch } from '../../../store/store';
 import {
   VariablesChanged,

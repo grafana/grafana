@@ -3,10 +3,11 @@ import { ConnectedProps, connect } from 'react-redux';
 
 import { t } from '@grafana/i18n';
 import { Stack } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
-import { appEvents, contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
 import { StoreState } from 'app/types/store';

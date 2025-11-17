@@ -38,9 +38,9 @@ jest.mock('@grafana/runtime', () => {
 
 jest.mock('../hooks/usePluginConfig.tsx', () => ({ usePluginConfig: jest.fn(() => ({ value: { meta: {} } })) }));
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
-    ...jest.requireActual('app/core/core').contextSrv,
+    ...jest.requireActual('app/core/services/context_srv').contextSrv,
     hasPermission: (action: string) => true,
     hasPermissionInMetadata: (action: string, object: WithAccessControlMetadata) => true,
   },

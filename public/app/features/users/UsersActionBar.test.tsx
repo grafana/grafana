@@ -6,7 +6,7 @@ import { config } from 'app/core/config';
 import { Props, UsersActionBarUnconnected } from './UsersActionBar';
 import { searchQueryChanged } from './state/reducers';
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: () => true,
   },

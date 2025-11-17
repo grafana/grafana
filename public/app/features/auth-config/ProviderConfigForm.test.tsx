@@ -62,7 +62,7 @@ const testConfig: SSOProvider = {
   },
 };
 
-jest.mock('app/core/core', () => {
+jest.mock('app/core/services/context_srv', () => {
   return {
     contextSrv: {
       isGrafanaAdmin: true,

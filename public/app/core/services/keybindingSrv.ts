@@ -1,7 +1,7 @@
 import { toggleAssistant, isAssistantAvailable } from '@grafana/assistant';
 import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent, locationUtil } from '@grafana/data';
 import { LocationService } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
@@ -21,8 +21,8 @@ import {
 } from '../../types/events';
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { HelpModal } from '../components/help/HelpModal';
-import { contextSrv } from '../core';
 import { RouteDescriptor } from '../navigation/types';
+import { contextSrv } from '../services/context_srv';
 
 import { mousetrap } from './mousetrap';
 import { toggleTheme } from './theme';

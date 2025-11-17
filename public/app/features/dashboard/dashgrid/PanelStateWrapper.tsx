@@ -32,7 +32,7 @@ import {
   SeriesVisibilityChangeMode,
   AdHocFilterItem,
 } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { profiler } from 'app/core/profiler';
 import { annotationServer } from 'app/features/annotations/api';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';

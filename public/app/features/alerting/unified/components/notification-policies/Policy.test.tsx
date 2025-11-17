@@ -4,7 +4,7 @@ import { first, noop } from 'lodash';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { ReceiversState } from 'app/features/alerting/unified/types/alerting';
 import {
   AlertmanagerGroup,

@@ -8,8 +8,8 @@ import { TextEncoder, TextDecoder } from 'util';
 jest.isolateModulesAsync(async () => {
   const { EventBusSrv } = await import('@grafana/data');
   const testAppEvents = new EventBusSrv();
-  jest.mock('../app/core/core', () => ({
-    ...jest.requireActual('../app/core/core'),
+  jest.mock('../app/core/app_events', () => ({
+    ...jest.requireActual('../app/core/app_events'),
     appEvents: testAppEvents,
   }));
 });

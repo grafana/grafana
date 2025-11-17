@@ -20,8 +20,8 @@ import {
   TextLink,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { contextSrv } from 'app/core/core';
 import { useNavModel } from 'app/core/hooks/useNavModel';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AddCorrelationForm } from './Forms/AddCorrelationForm';

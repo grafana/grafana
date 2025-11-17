@@ -12,7 +12,7 @@ import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 import { updateConfig } from '../../../../core/config';
 import { getDataFrameVars, LinkSrv } from '../link_srv';
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   appEvents: {
     subscribe: () => {},
   },

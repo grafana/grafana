@@ -10,11 +10,10 @@ import { backendSrv } from '../../core/services/backend_srv';
 import { OrgDetailsPage, Props } from './OrgDetailsPage';
 import { setOrganizationName } from './state/reducers';
 
-jest.mock('app/core/core', () => {
+jest.mock('app/core/services/context_srv', () => {
   return {
-    ...jest.requireActual('app/core/core'),
     contextSrv: {
-      ...jest.requireActual('app/core/core').contextSrv,
+      ...jest.requireActual('app/core/services/context_srv').contextSrv,
       hasPermission: () => true,
     },
   };

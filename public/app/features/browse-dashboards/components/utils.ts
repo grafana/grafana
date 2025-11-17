@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { ResourceRef } from 'app/features/provisioning/components/BulkActions/useBulkActionJob';
 
 import { DashboardTreeSelection, DashboardViewItemWithUIItems, BrowseDashboardsPermissions } from '../types';
