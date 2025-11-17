@@ -339,12 +339,8 @@ describe('CommandPaletteDynamicRegistry', () => {
   describe('Search Functionality', () => {
     it('should execute search across all registered providers', async () => {
       const registry = new CommandPaletteDynamicRegistry();
-      const mockSearchProvider1 = jest.fn().mockResolvedValue([
-        { id: 'result1', title: 'Result 1' },
-      ]);
-      const mockSearchProvider2 = jest.fn().mockResolvedValue([
-        { id: 'result2', title: 'Result 2' },
-      ]);
+      const mockSearchProvider1 = jest.fn().mockResolvedValue([{ id: 'result1', title: 'Result 1' }]);
+      const mockSearchProvider2 = jest.fn().mockResolvedValue([{ id: 'result2', title: 'Result 2' }]);
 
       registry.register({
         pluginId: 'plugin1',
@@ -772,9 +768,7 @@ describe('CommandPaletteDynamicRegistry', () => {
     it('should continue searching other providers if one fails', async () => {
       const registry = new CommandPaletteDynamicRegistry();
       const failingProvider = jest.fn().mockRejectedValue(new Error('Failed'));
-      const successProvider = jest.fn().mockResolvedValue([
-        { id: 'success', title: 'Success Result' },
-      ]);
+      const successProvider = jest.fn().mockResolvedValue([{ id: 'success', title: 'Success Result' }]);
 
       registry.register({
         pluginId: 'failing-plugin',
@@ -900,9 +894,7 @@ describe('CommandPaletteDynamicRegistry', () => {
 
     it('should include config information in search result', async () => {
       const registry = new CommandPaletteDynamicRegistry();
-      const mockSearchProvider = jest.fn().mockResolvedValue([
-        { id: 'test', title: 'Test' },
-      ]);
+      const mockSearchProvider = jest.fn().mockResolvedValue([{ id: 'test', title: 'Test' }]);
 
       registry.register({
         pluginId,
@@ -928,4 +920,3 @@ describe('CommandPaletteDynamicRegistry', () => {
     });
   });
 });
-
