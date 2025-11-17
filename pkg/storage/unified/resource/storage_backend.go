@@ -226,9 +226,32 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	if err := event.Validate(); err != nil {
 		return 0, fmt.Errorf("invalid event: %w", err)
 	}
+
 	rv := k.snowflake.Generate().Int64()
 
 	namespace := convertEmptyToClusterNamespace(event.Key.Namespace, k.withExperimentalClusterScope)
+
+	// When PreviousRV is not 0, fetch the latest resource and verify that the RV matches the PreviousRV
+	if event.PreviousRV != 0 {
+		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
+			Group:     event.Key.Group,
+			Resource:  event.Key.Resource,
+			Namespace: namespace,
+			Name:      event.Key.Name,
+		})
+		if err != nil {
+			if errors.Is(err, ErrNotFound) {
+				// Resource doesn't exist, but PreviousRV was provided
+				return 0, fmt.Errorf("optimistic locking failed: resource not found")
+			}
+			return 0, fmt.Errorf("failed to fetch latest resource: %w", err)
+		}
+
+		// Verify the current RV matches the PreviousRV
+		if latestKey.ResourceVersion != event.PreviousRV {
+			return 0, fmt.Errorf("optimistic locking failed: requested RV %d does not match saved RV %d", event.PreviousRV, latestKey.ResourceVersion)
+		}
+	}
 
 	obj := event.Object
 	// Write data.
@@ -265,7 +288,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	}
 
 	// Write the data
-	err := k.dataStore.Save(ctx, DataKey{
+	dataKey := DataKey{
 		Group:           event.Key.Group,
 		Resource:        event.Key.Resource,
 		Namespace:       namespace,
@@ -273,13 +296,72 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		ResourceVersion: rv,
 		Action:          action,
 		Folder:          obj.GetFolder(),
-	}, bytes.NewReader(event.Value))
+	}
+	err := k.dataStore.Save(ctx, dataKey, bytes.NewReader(event.Value))
 	if err != nil {
 		return 0, fmt.Errorf("failed to write data: %w", err)
 	}
 
+	// Optimistic concurrency control to verify our write is the latest version
+	// and that the resource still had the expected PreviousRV when we wrote it
+	if event.PreviousRV != 0 {
+		// Update operations: verify PreviousRV matches and our write is latest
+		// Get both the latest and predecessor
+		latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
+			Group:     event.Key.Group,
+			Resource:  event.Key.Resource,
+			Namespace: namespace,
+			Name:      event.Key.Name,
+		})
+		if err != nil {
+			// If we can't read the latest version, clean up what we wrote
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return 0, fmt.Errorf("failed to check latest version: %w", err)
+		}
+
+		// Check if the RV we just wrote is the latest. If not, a concurrent write with higher RV happened
+		if latestKey.ResourceVersion != rv {
+			// Delete the data we just wrote since it's not the latest
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return 0, fmt.Errorf("optimistic locking failed: concurrent modification detected")
+		}
+
+		if prevKey.ResourceVersion != event.PreviousRV {
+			// Another concurrent write happened between our read and write
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return 0, fmt.Errorf("optimistic locking failed: resource was modified concurrently (expected previous RV %d, found %d)", event.PreviousRV, prevKey.ResourceVersion)
+		}
+	} else if event.Type == resourcepb.WatchEvent_ADDED {
+		// Create operations: verify our write is the latest version
+		latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
+			Group:     event.Key.Group,
+			Resource:  event.Key.Resource,
+			Namespace: namespace,
+			Name:      event.Key.Name,
+		})
+		if err != nil {
+			// If we can't read the latest version, clean up what we wrote
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return 0, fmt.Errorf("failed to check latest version: %w", err)
+		}
+
+		// Check if the RV we just wrote is the latest. If not, a concurrent create with higher RV happened
+		if latestKey.ResourceVersion != rv {
+			// Delete the data we just wrote since it's not the latest
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
+		}
+
+		// Verify that the immediate predecessor is not a create
+		if prevKey.Action == DataActionCreated {
+			// Another concurrent create happened - delete our write and return error
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
+		}
+	}
+
 	// Write event
-	err = k.eventStore.Save(ctx, Event{
+	eventData := Event{
 		Namespace:       namespace,
 		Group:           event.Key.Group,
 		Resource:        event.Key.Resource,
@@ -288,8 +370,11 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		Action:          action,
 		Folder:          obj.GetFolder(),
 		PreviousRV:      event.PreviousRV,
-	})
+	}
+	err = k.eventStore.Save(ctx, eventData)
 	if err != nil {
+		// Clean up the data we wrote since event save failed
+		_ = k.dataStore.Delete(ctx, dataKey)
 		return 0, fmt.Errorf("failed to save event: %w", err)
 	}
 

@@ -37,6 +37,12 @@ func (p *ConfigurableDataSourceProvider) GetDataSourceInfo(_ context.Context) []
 	}
 }
 
+// Index builds the index directly from the datasources
+func (p *ConfigurableDataSourceProvider) Index(ctx context.Context) *schemaversion.DatasourceIndex {
+	datasources := p.GetDataSourceInfo(ctx)
+	return schemaversion.NewDatasourceIndex(datasources)
+}
+
 // getStandardTestDataSources returns datasources for standard migration tests
 func (p *ConfigurableDataSourceProvider) getStandardTestDataSources() []schemaversion.DataSourceInfo {
 	return []schemaversion.DataSourceInfo{
