@@ -4214,7 +4214,8 @@
       "metadata": {
         "name": "unifiedStorageHistoryPruner",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-17T10:36:38Z"
+        "creationTimestamp": "2025-03-17T10:36:38Z",
+        "deletionTimestamp": "2025-11-17T12:35:33Z"
       },
       "spec": {
         "description": "Enables the unified storage history pruner",
