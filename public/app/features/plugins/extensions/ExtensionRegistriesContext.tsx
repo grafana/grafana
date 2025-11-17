@@ -3,6 +3,7 @@ import { PropsWithChildren, createContext, useContext } from 'react';
 import { AddedComponentsRegistry } from 'app/features/plugins/extensions/registry/AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from 'app/features/plugins/extensions/registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from 'app/features/plugins/extensions/registry/AddedLinksRegistry';
+import { CommandPaletteDynamicRegistry } from 'app/features/plugins/extensions/registry/CommandPaletteDynamicRegistry';
 import { ExposedComponentsRegistry } from 'app/features/plugins/extensions/registry/ExposedComponentsRegistry';
 
 import { PluginExtensionRegistries } from './registry/types';
@@ -16,6 +17,9 @@ export const AddedLinksRegistryContext = createContext<AddedLinksRegistry | unde
 export const AddedComponentsRegistryContext = createContext<AddedComponentsRegistry | undefined>(undefined);
 export const AddedFunctionsRegistryContext = createContext<AddedFunctionsRegistry | undefined>(undefined);
 export const ExposedComponentsRegistryContext = createContext<ExposedComponentsRegistry | undefined>(undefined);
+export const CommandPaletteDynamicRegistryContext = createContext<CommandPaletteDynamicRegistry | undefined>(
+  undefined
+);
 
 export function useAddedLinksRegistry(): AddedLinksRegistry {
   const context = useContext(AddedLinksRegistryContext);
@@ -49,6 +53,14 @@ export function useExposedComponentsRegistry(): ExposedComponentsRegistry {
   return context;
 }
 
+export function useCommandPaletteDynamicRegistry(): CommandPaletteDynamicRegistry {
+  const context = useContext(CommandPaletteDynamicRegistryContext);
+  if (!context) {
+    throw new Error('No `CommandPaletteDynamicRegistryContext` found.');
+  }
+  return context;
+}
+
 export const ExtensionRegistriesProvider = ({
   registries,
   children,
@@ -58,7 +70,9 @@ export const ExtensionRegistriesProvider = ({
       <AddedComponentsRegistryContext.Provider value={registries.addedComponentsRegistry}>
         <AddedFunctionsRegistryContext.Provider value={registries.addedFunctionsRegistry}>
           <ExposedComponentsRegistryContext.Provider value={registries.exposedComponentsRegistry}>
-            {children}
+            <CommandPaletteDynamicRegistryContext.Provider value={registries.commandPaletteDynamicRegistry}>
+              {children}
+            </CommandPaletteDynamicRegistryContext.Provider>
           </ExposedComponentsRegistryContext.Provider>
         </AddedFunctionsRegistryContext.Provider>
       </AddedComponentsRegistryContext.Provider>
