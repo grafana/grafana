@@ -8,7 +8,7 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { generatedAPI, ListStarsApiResponse } from 'app/api/clients/preferences/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import kbn from 'app/core/utils/kbn';
 import { dispatch } from 'app/store/store';
 
