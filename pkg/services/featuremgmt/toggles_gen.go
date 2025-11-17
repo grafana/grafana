@@ -215,10 +215,6 @@ const (
 	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
 	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
 
-	// FlagFormatString
-	// Enable format string transformer
-	FlagFormatString = "formatString"
-
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
@@ -302,10 +298,6 @@ const (
 	// FlagCachingOptimizeSerializationMemoryUsage
 	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
 	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
-
-	// FlagAddFieldFromCalculationStatFunctions
-	// Add cumulative and window functions to the add field from calculation transformation
-	FlagAddFieldFromCalculationStatFunctions = "addFieldFromCalculationStatFunctions"
 
 	// FlagAlertmanagerRemoteSecondary
 	// Enable Grafana to sync configuration and state with a remote Alertmanager.
@@ -1077,4 +1069,8 @@ const (
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
+
+	// FlagTransformationsEmptyPlaceholder
+	// Show transformation quick-start cards in empty transformations state
+	FlagTransformationsEmptyPlaceholder = "transformationsEmptyPlaceholder"
 )
