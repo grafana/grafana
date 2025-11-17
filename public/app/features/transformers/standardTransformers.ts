@@ -1,5 +1,4 @@
 import { TransformerRegistryItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { getFilterByValueTransformRegistryItem } from './FilterByValueTransformer/FilterByValueTransformerEditor';
 import { getHeatmapTransformRegistryItem } from './calculateHeatmap/HeatmapTransformerEditor';
