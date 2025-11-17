@@ -3133,7 +3133,7 @@ __metadata:
     marked-mangle: "npm:1.1.12"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.47"
-    ol: "npm:10.6.1"
+    ol: "npm:10.7.0"
     papaparse: "npm:5.5.3"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
@@ -3852,7 +3852,7 @@ __metadata:
     monaco-editor: "npm:0.34.1"
     msw: "npm:^2.10.2"
     msw-storybook-addon: "npm:^2.0.5"
-    ol: "npm:10.6.1"
+    ol: "npm:10.7.0"
     prismjs: "npm:1.30.0"
     process: "npm:^0.11.10"
     rc-cascader: "npm:3.34.0"
@@ -19106,7 +19106,7 @@ __metadata:
     node-forge: "npm:^1.3.1"
     node-notifier: "npm:10.0.1"
     nx: "npm:21.3.11"
-    ol: "npm:10.6.1"
+    ol: "npm:10.7.0"
     ol-ext: "npm:4.0.36"
     ol-mapbox-style: "npm:^13.0.1"
     open: "npm:^10.2.0"
@@ -25313,16 +25313,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol@npm:10.6.1":
-  version: 10.6.1
-  resolution: "ol@npm:10.6.1"
+"ol@npm:10.7.0":
+  version: 10.7.0
+  resolution: "ol@npm:10.7.0"
   dependencies:
     "@types/rbush": "npm:4.0.0"
     earcut: "npm:^3.0.0"
     geotiff: "npm:^2.1.3"
     pbf: "npm:4.0.1"
     rbush: "npm:^4.0.0"
-  checksum: 10/f112a2907ff8644b19cf29fcabdf34a4c124828f6efb9687d27a12ad5b76588cfda436b9100147d29875eaa1e4543d788514db35ecdbaaa7d19e4c4bd9e183a8
+  checksum: 10/f39fdb6a4d8e89114b0c2a450a59e12c7a040c8c546a27909347a80279355412f9cb197709c9715cfce5f989fc9861d9be7ce4c629c939a9ade0fe01ac980e0d
   languageName: node
   linkType: hard
 
