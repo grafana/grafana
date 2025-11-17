@@ -4,8 +4,8 @@ import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService 
 import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
-import { contextSrv } from 'app/core/core';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import {
