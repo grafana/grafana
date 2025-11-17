@@ -8,7 +8,9 @@ name: "CodeQL checks"
 on:
   workflow_dispatch:
   push:
-    branches: ['**'] # run on all branches
+    branches:
+      - main
+      - release-*.*.*
     paths-ignore:
       - '**/*.cue'
       - '**/*.json'
@@ -74,6 +76,7 @@ jobs:
       name: Set go version
       uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
       with:
+        cache: false
         go-version-file: go.mod
 
     # Initializes the CodeQL tools for scanning.
