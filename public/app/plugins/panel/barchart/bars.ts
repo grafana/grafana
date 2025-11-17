@@ -714,8 +714,9 @@ export function populateMarkerList(
     if (
       marker.groupIdx !== dataIdx ||
       seriesIdx !== marker.seriesIdx //match to bar
-    ) continue;
-    
+    )
+      continue;
+
     if (xOri === ScaleOrientation.Horizontal) {
       // Compute marker position at center of bar
       const markerX = barX + wid / 2;
@@ -752,7 +753,6 @@ export function populateMarkerList(
       };
       resolvedMarkerList.push(m);
     }
-    
   }
   return resolvedMarkerList;
 }

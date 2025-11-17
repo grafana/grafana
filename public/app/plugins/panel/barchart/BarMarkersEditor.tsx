@@ -45,7 +45,7 @@ export const BarMarkersEditor = ({ context, onChange, value }: StandardEditorPro
       },
     };
     markers = [...markers, newMarker];
-    
+
     onChange(markers);
   };
 
@@ -74,9 +74,7 @@ export const BarMarkersEditor = ({ context, onChange, value }: StandardEditorPro
   };
 
   const handleSettingChange = (id: number, field: keyof MarkerGroup, newValue: string | number | undefined) => {
-    markers = markers.map((marker: MarkerGroup) =>
-      marker.id === id ? { ...marker, [field]: newValue } : marker
-    );
+    markers = markers.map((marker: MarkerGroup) => (marker.id === id ? { ...marker, [field]: newValue } : marker));
     onChange(markers);
   };
 

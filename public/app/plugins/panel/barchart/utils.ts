@@ -366,7 +366,10 @@ export const prepConfig = ({
   let markerMin = 0;
   let markerMax = 0;
   for (let i = 0; i < markerData.length; i++) {
-    const vals = markerData[i].values.filter((v) => v != null);
+    const vals = markerData[i].values.filter((v) => Number.isFinite(v));
+    if (vals.length === 0) {
+      continue;
+    }
     markerMin = Math.min(...vals, markerMin);
     markerMax = Math.max(...vals, markerMax);
   }
