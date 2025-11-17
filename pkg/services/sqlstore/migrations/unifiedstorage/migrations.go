@@ -1,4 +1,4 @@
-package tounifiedstorage
+package unifiedstorage
 
 import (
 	"context"
@@ -17,8 +17,8 @@ type LegacyMigrator interface {
 	Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error)
 }
 
-// AddMigrator registers unified storage migrations with the provided dependencies
-func AddMigrator(mg *migrator.Migrator, deps *Dependencies) {
+// AddMigration registers unified storage migrations with the provided dependencies
+func AddMigration(mg *migrator.Migrator, deps *Dependencies) {
 	// Check if dependencies are available
 	if deps == nil {
 		mg.Logger.Warn("Unified storage migrations enabled but dependencies not provided - skipping migrations")
