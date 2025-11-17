@@ -1788,6 +1788,7 @@
         "name": "formatString",
         "resourceVersion": "1762442825881",
         "creationTimestamp": "2023-10-13T18:17:12Z",
+        "deletionTimestamp": "2025-11-12T00:00:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
         }
@@ -1963,6 +1964,7 @@
         "name": "groupToNestedTableTransformation",
         "resourceVersion": "1762442825881",
         "creationTimestamp": "2024-02-07T14:28:26Z",
+        "deletionTimestamp": "2025-11-12T14:33:44Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-06 15:27:05.88172 +0000 UTC"
         }
@@ -3084,6 +3086,7 @@
         "name": "pinNavItems",
         "resourceVersion": "1762958248290",
         "creationTimestamp": "2024-06-10T11:40:03Z",
+        "deletionTimestamp": "2025-11-13T14:52:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
         }

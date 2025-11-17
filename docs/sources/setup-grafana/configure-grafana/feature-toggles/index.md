@@ -38,7 +38,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `transformationsRedesign`              | Enables the transformations redesign                                                                                                                          | Yes                |
 | `awsAsyncQueryCaching`                 | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled                            | Yes                |
 | `dashgpt`                              | Enable AI powered features in dashboards                                                                                                                      | Yes                |
-| `formatString`                         | Enable format string transformer                                                                                                                              | Yes                |
 | `kubernetesDashboards`                 | Use the kubernetes API in the frontend for dashboards                                                                                                         | Yes                |
 | `addFieldFromCalculationStatFunctions` | Add cumulative and window functions to the add field from calculation transformation                                                                          | Yes                |
 | `annotationPermissionUpdate`           | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
@@ -49,11 +48,9 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `logRowsPopoverMenu`                   | Enable filtering menu displayed when text of a log line is selected                                                                                           | Yes                |
 | `alertingQueryOptimization`            | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
 | `onPremToCloudMigrations`              | Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.                                 | Yes                |
-| `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                                              | Yes                |
 | `cloudWatchNewLabelParsing`            | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
 | `pluginProxyPreserveTrailingSlash`     | Preserve plugin proxy trailing slash.                                                                                                                         |                    |
 | `azureMonitorPrometheusExemplars`      | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                  | Yes                |
-| `pinNavItems`                          | Enables pinning of nav items                                                                                                                                  | Yes                |
 | `ssoSettingsLDAP`                      | Use the new SSO Settings API to configure LDAP                                                                                                                | Yes                |
 | `cloudWatchRoundUpEndTime`             | Round up end time for metric queries to the next minute to avoid missing data                                                                                 | Yes                |
 | `newFiltersUI`                         | Enables new combobox style UI for the Ad hoc filters variable in scenes architecture                                                                          | Yes                |
@@ -94,7 +91,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudWatchBatchQueries`        | Runs CloudWatch metrics queries as separate batches                                                    |
 | `pdfTables`                     | Enables generating table data as PDF in reporting                                                      |
 | `canvasPanelPanZoom`            | Allow pan and zoom in canvas panel                                                                     |
-| `regressionTransformation`      | Enables regression analysis transformation                                                             |
 | `alertingSaveStateCompressed`   | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |
 | `sqlExpressions`                | Enables SQL Expressions, which can execute SQL queries against data source results.                    |
 | `queryLibrary`                  | Enables Saved queries (query library) feature                                                          |
