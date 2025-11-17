@@ -42,6 +42,7 @@ export function getGrafanaFilter(filterState: RulesFilter) {
     title: useBackendFilters ? titleSearch : undefined,
     type: useBackendFilters ? normalizedFilterState.ruleType : undefined,
     dashboardUid: useBackendFilters ? normalizedFilterState.dashboardUid : undefined,
+    searchGroupName: useBackendFilters ? normalizedFilterState.groupName : undefined,
   };
 
   const grafanaFilterProcessingConfig: RuleFilterConfig = {
@@ -60,7 +61,7 @@ export function getGrafanaFilter(filterState: RulesFilter) {
 
   const grafanaGroupFilterConfig: GroupFilterConfig = {
     namespace: namespaceFilter,
-    groupName: groupNameFilter,
+    groupName: useBackendFilters ? null : groupNameFilter,
   };
 
   return {
